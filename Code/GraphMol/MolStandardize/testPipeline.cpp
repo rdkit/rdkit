@@ -26,14 +26,14 @@ TEST_CASE("VALIDATION_ERRORS_WITH_DEFAULT_OPTIONS") {
   MolStandardize::Pipeline pipeline;
 
   SECTION("parse error") {
-    const char* molblock = R"(
+    const char *molblock = R"(
              sldfj;ldskfj sldkjfsd;lkf 
 M  V30 BEGIN CTAB
 )";
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -45,7 +45,7 @@ M  V30 BEGIN CTAB
   }
 
   SECTION("failing RDKit validation, no atoms") {
-    const char* molblock = R"(
+    const char *molblock = R"(
           10052313452D          
 
   0  0  0     0  0            999 V3000
@@ -57,7 +57,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -71,7 +71,7 @@ M  END
   }
 
   SECTION("failing RDKit validation, bad valence status") {
-    const char* molblock = R"(
+    const char *molblock = R"(
           10242314442D          
 
   0  0  0     0  0            999 V3000
@@ -96,7 +96,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -112,7 +112,7 @@ M  END
   }
 
   SECTION("failing Isotopes validation") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 01312409582D          
 
   0  0  0     0  0            999 V3000
@@ -131,7 +131,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -145,7 +145,7 @@ M  END
   }
 
   SECTION("failing features validation, query atom") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 01162413552D          
 
   0  0  0     0  0            999 V3000
@@ -164,7 +164,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -178,7 +178,7 @@ M  END
   }
 
   SECTION("failing features validation, aromatic bonds") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 02272411562D          
 
   0  0  0     0  0            999 V3000
@@ -208,7 +208,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -222,7 +222,7 @@ M  END
   }
 
   SECTION("failing features validation, dative bonds") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 07222412542D          
 
   0  0  0     0  0            999 V3000
@@ -247,7 +247,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -261,7 +261,7 @@ M  END
   }
 
   SECTION("failing features validation, enhanced stereo") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 01162411552D          
 
   0  0  0     0  0            999 V3000
@@ -287,7 +287,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -301,7 +301,7 @@ M  END
   }
 
   SECTION("failing radical validation, disallowed radical") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 02082417212D          
 
   0  0  0     0  0            999 V3000
@@ -320,7 +320,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -334,7 +334,7 @@ M  END
   }
 
   SECTION("failing 2D validation, non-null Z coords") {
-    const char* molblock = R"(
+    const char *molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -353,7 +353,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -367,7 +367,7 @@ M  END
   }
 
   SECTION("failing validation, clashing atoms") {
-    const char* molblock = R"(
+    const char *molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -390,7 +390,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -404,7 +404,7 @@ M  END
   }
 
   SECTION("failing validation, abnormally long bonds") {
-    const char* molblock = R"(
+    const char *molblock = R"(
           01112413352D          
 
   0  0  0     0  0            999 V3000
@@ -428,7 +428,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -490,7 +490,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -502,7 +502,7 @@ M  END
   }
 
   SECTION("failing stereo validation, too many stereo bonds (3 subst. case)") {
-    const char* molblock = R"(
+    const char *molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -525,7 +525,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -540,7 +540,7 @@ M  END
 
   SECTION(
       "failing stereo validation, adjacent stereo bonds w/ like direction (4 subst. case)") {
-    const char* molblock = R"(
+    const char *molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -565,7 +565,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -580,7 +580,7 @@ M  END
 
   SECTION(
       "failing validation, not 2D + adjacent stereo bonds w/ like direction (4 subst. case)") {
-    const char* molblock = R"(
+    const char *molblock = R"(
                     2D          
 
   0  0  0     0  0            999 V3000
@@ -605,7 +605,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -627,7 +627,7 @@ TEST_CASE("VALIDATION_WITH_ALLOW_EMPTY_MOLS_OPTION") {
   MolStandardize::Pipeline pipeline(options);
 
   SECTION("no atoms produces no error") {
-    const char* molblock = R"(
+    const char *molblock = R"(
           10052313452D          
 
   0  0  0     0  0            999 V3000
@@ -639,7 +639,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -656,7 +656,7 @@ TEST_CASE("VALIDATION_WITH_DISALLOWED_LONG_BONDS_IN_RINGS") {
   MolStandardize::Pipeline pipeline(options);
 
   SECTION("report long bonds in rings") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 02222409302D          
 
   0  0  0     0  0            999 V3000
@@ -706,7 +706,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -724,7 +724,7 @@ TEST_CASE("STANDARDIZATION") {
   MolStandardize::Pipeline pipeline;
 
   SECTION("disconnect metal") {
-    const char* molblock = R"(
+    const char *molblock = R"(
           10282320572D          
 
   0  0  0     0  0            999 V3000
@@ -749,7 +749,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -764,24 +764,24 @@ M  END
             MolStandardize::PipelineStatus::METALS_DISCONNECTED);
 
     std::unique_ptr<RWMol> mol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(mol);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CC(=O)O");
 
     std::unique_ptr<RWMol> outputMol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(outputMol);
     std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "CC(=O)O");
   }
 
   SECTION("normalize nitro") {
-    const char* molblock = R"(
+    const char *molblock = R"(
           10282320572D          
 
   0  0  0     0  0            999 V3000
@@ -804,7 +804,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -818,7 +818,7 @@ M  END
             MolStandardize::PipelineStatus::NO_EVENT);
 
     std::unique_ptr<RWMol> mol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(mol);
 
     std::string smiles{MolToSmiles(*mol)};
@@ -826,7 +826,7 @@ M  END
   }
 
   SECTION("Phosphate normalization") {
-    const char* molblock_a = R"(
+    const char *molblock_a = R"(
   Mrv2311 04152413292D          
 
   0  0  0     0  0            999 V3000
@@ -851,7 +851,7 @@ M  END
 
     MolStandardize::PipelineResult result_a = pipeline.run(molblock_a);
 
-    for (auto& info : result_a.log) {
+    for (auto &info : result_a.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -870,13 +870,13 @@ M  END
             MolStandardize::PipelineStatus::PROTONATION_CHANGED);
 
     std::unique_ptr<RWMol> mol_a(
-        MolBlockToMol(result_a.outputMolBlock, false, false));
+        MolBlockToMol(result_a.outputMolData, false, false));
     REQUIRE(mol_a);
 
     std::string smiles_a{MolToSmiles(*mol_a)};
     REQUIRE(smiles_a == "CP(C)(=O)S");
 
-    const char* molblock_b = R"(
+    const char *molblock_b = R"(
   Mrv2311 04152413292D          
 
   0  0  0     0  0            999 V3000
@@ -901,7 +901,7 @@ M  END
 
     MolStandardize::PipelineResult result_b = pipeline.run(molblock_b);
 
-    for (auto& info : result_b.log) {
+    for (auto &info : result_b.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -920,7 +920,7 @@ M  END
             MolStandardize::PipelineStatus::PROTONATION_CHANGED);
 
     std::unique_ptr<RWMol> mol_b(
-        MolBlockToMol(result_b.outputMolBlock, false, false));
+        MolBlockToMol(result_b.outputMolData, false, false));
     REQUIRE(mol_b);
 
     std::string smiles_b{MolToSmiles(*mol_b)};
@@ -928,7 +928,7 @@ M  END
   }
 
   SECTION("normalize w/ RDKit's default normalizer transformations") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 03112410152D          
 
   0  0  0     0  0            999 V3000
@@ -955,7 +955,7 @@ M  END
 
     MolStandardize::PipelineResult result = customizedPipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -970,7 +970,7 @@ M  END
             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
 
     std::unique_ptr<RWMol> mol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(mol);
 
     std::string smiles{MolToSmiles(*mol)};
@@ -979,7 +979,7 @@ M  END
 
   SECTION(
       "normalization of 1,3- 1,5- conjugated systems favors application within rings") {
-    const char* molblock{};
+    const char *molblock{};
     MolStandardize::PipelineResult result;
     std::unique_ptr<RWMol> parentMol;
     std::string parentSmiles;
@@ -1017,7 +1017,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1030,7 +1030,7 @@ M  END
             (MolStandardize::PipelineStatus::NORMALIZATION_APPLIED |
              MolStandardize::PipelineStatus::PROTONATION_CHANGED));
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CN1CCCN=C1N");
@@ -1068,7 +1068,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1081,7 +1081,7 @@ M  END
             (MolStandardize::PipelineStatus::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CN1CCCN=C1N");
@@ -1119,7 +1119,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1132,7 +1132,7 @@ M  END
             (MolStandardize::PipelineStatus::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CN1C=CC(N)=NC1");
@@ -1170,7 +1170,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1183,14 +1183,14 @@ M  END
             (MolStandardize::PipelineStatus::NORMALIZATION_APPLIED |
              MolStandardize::PROTONATION_CHANGED));
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CN1C=CC(N)=NC1");
   }
 
   SECTION("standardize zwitterion") {
-    const char* molblock = R"(
+    const char *molblock = R"(
           10282320572D          
 
   0  0  0     0  0            999 V3000
@@ -1217,7 +1217,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1234,20 +1234,20 @@ M  END
              MolStandardize::PipelineStatus::FRAGMENTS_REMOVED));
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "NCC(=O)O");
 
     std::unique_ptr<RWMol> outputMol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(outputMol);
     std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "[NH3+]CC(=O)[O-]");
   }
 
   SECTION("standardize zwitterion with quaternary nitrogen") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 02052411472D          
 
   0  0  0     0  0            999 V3000
@@ -1278,7 +1278,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1291,20 +1291,20 @@ M  END
             MolStandardize::PipelineStatus::NO_EVENT);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "C[N+](C)(C)CC(=O)O");
 
     std::unique_ptr<RWMol> outputMol(
-        MolBlockToMol(result.outputMolBlock, false, false));
+        MolBlockToMol(result.outputMolData, false, false));
     REQUIRE(outputMol);
     std::string outputSmiles{MolToSmiles(*outputMol)};
     REQUIRE(outputSmiles == "C[N+](C)(C)CC(=O)[O-]");
   }
 
   SECTION("uncharge tertiary amine w/ explicit hydrogen") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 02012412352D          
 
   0  0  0     0  0            999 V3000
@@ -1329,7 +1329,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1340,17 +1340,17 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::PROTONATION_CHANGED);
-    REQUIRE(result.parentMolBlock == result.outputMolBlock);
+    REQUIRE(result.parentMolData == result.outputMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CN(C)C");
   }
 
   SECTION("standardize preserves explicit Hs on chiral centers") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 03112410582D          
 
   0  0  0     0  0            999 V3000
@@ -1404,7 +1404,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1420,17 +1420,17 @@ M  END
             (MolStandardize::PipelineStatus::METALS_DISCONNECTED |
              MolStandardize::PipelineStatus::FRAGMENTS_REMOVED |
              MolStandardize::PipelineStatus::PROTONATION_CHANGED));
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[H][C@](C)(F)CCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
   }
 
   SECTION("standardize preserves isotopically marked explicit Hs") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 03112410572D          
 
   0  0  0     0  0            999 V3000
@@ -1480,7 +1480,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1497,17 +1497,17 @@ M  END
              //| MolStandardize::PipelineStatus::NORMALIZATION_APPLIED
              | MolStandardize::PipelineStatus::FRAGMENTS_REMOVED |
              MolStandardize::PipelineStatus::PROTONATION_CHANGED));
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[2H]CCCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
   }
 
   SECTION("standardize preserves generic explicit Hs") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 03112410542D          
 
   0  0  0     0  0            999 V3000
@@ -1557,7 +1557,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1573,10 +1573,10 @@ M  END
             (MolStandardize::PipelineStatus::METALS_DISCONNECTED |
              MolStandardize::PipelineStatus::FRAGMENTS_REMOVED |
              MolStandardize::PipelineStatus::PROTONATION_CHANGED));
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "[H]CCCC[S+]([O-])C1=CC=C(C(=O)O)C=C1");
@@ -1584,7 +1584,7 @@ M  END
 
   SECTION(
       "standardize doesn't remove wedged bonds from non-stereogenic centers") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 03112410512D          
 
   0  0  0     0  0            999 V3000
@@ -1632,7 +1632,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1648,17 +1648,17 @@ M  END
             (MolStandardize::PipelineStatus::METALS_DISCONNECTED |
              MolStandardize::PipelineStatus::FRAGMENTS_REMOVED |
              MolStandardize::PipelineStatus::PROTONATION_CHANGED));
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CC(C)C[S+]([O-])C1=CC=C(C(=O)O)C=C1");
 
     Chirality::reapplyMolBlockWedging(*parentMol);
 
-    const Bond* wedged = nullptr;
+    const Bond *wedged = nullptr;
     for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::BEGINWEDGE) {
@@ -1677,7 +1677,7 @@ M  END
   }
 
   SECTION("standardize removes wavy bonds from tetrahedral centers") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 05172413472D          
 
   0  0  0     0  0            999 V3000
@@ -1704,7 +1704,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1718,10 +1718,10 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CCC(C)(F)Cl");
@@ -1729,7 +1729,7 @@ M  END
     Chirality::reapplyMolBlockWedging(*parentMol);
 
     // no wavy bond is expected to be found
-    const Bond* wavy = nullptr;
+    const Bond *wavy = nullptr;
     for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::UNKNOWN) {
@@ -1742,12 +1742,12 @@ M  END
 
   SECTION(
       "standardize replaces wavy bonds with double bonds w/ stereo type 'either'") {
-    const char* molblock;
+    const char *molblock;
     MolStandardize::PipelineResult result;
     std::unique_ptr<RWMol> parentMol;
     std::string parentSmiles;
-    const Bond* wavy;
-    const Bond* doubleBond;
+    const Bond *wavy;
+    const Bond *doubleBond;
 
     // simplest case: wavy bond adjacent a double bond
     molblock = R"(
@@ -1773,7 +1773,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1787,9 +1787,9 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC=CC");
@@ -1849,7 +1849,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1863,9 +1863,9 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC=CC(C)(F)Cl");
@@ -1928,7 +1928,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -1942,9 +1942,9 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC=CC(C)(F)Cl");
@@ -2009,7 +2009,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -2023,9 +2023,9 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC1=CCCCCC1");
@@ -2083,7 +2083,7 @@ M  END
 
     result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -2097,9 +2097,9 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
-    parentMol.reset(MolBlockToMol(result.parentMolBlock, false, false));
+    parentMol.reset(MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     parentSmiles = MolToSmiles(*parentMol);
     REQUIRE(parentSmiles == "CC=C(C)C");
@@ -2131,7 +2131,7 @@ M  END
   }
 
   SECTION("pipeline doesn't remove stereo bonds from biaryls") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 02092409022D          
 
   0  0  0     0  0            999 V3000
@@ -2172,7 +2172,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -2183,15 +2183,15 @@ M  END
     REQUIRE((result.status &
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NO_EVENT);
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
 
     Chirality::reapplyMolBlockWedging(*parentMol);
 
-    const Bond* wedged = nullptr;
+    const Bond *wedged = nullptr;
     for (auto bond : parentMol->bonds()) {
       auto bondDir = bond->getBondDir();
       if (bondDir == Bond::BondDir::BEGINWEDGE) {
@@ -2208,7 +2208,7 @@ M  END
   }
 
   SECTION("SO2H normalization") {
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 03122408072D          
 
   0  0  0     0  0            999 V3000
@@ -2231,7 +2231,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -2246,16 +2246,16 @@ M  END
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NORMALIZATION_APPLIED);
 
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> inputMol(
-        MolBlockToMol(result.inputMolBlock, false, false));
+        MolBlockToMol(result.inputMolData, false, false));
     REQUIRE(inputMol);
     std::string inputSmiles{MolToSmiles(*inputMol)};
     REQUIRE(inputSmiles == "C[SH](=O)=O");
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "CS(=O)O");
@@ -2263,7 +2263,7 @@ M  END
 
   SECTION("Neutralization of carbocations") {
     // verify that carbocations are not uncharged
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 06132416082D          
 
   0  0  0     0  0            999 V3000
@@ -2293,7 +2293,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -2305,10 +2305,10 @@ M  END
              MolStandardize::PipelineStatus::STRUCTURE_MODIFICATION) ==
             MolStandardize::PipelineStatus::NO_EVENT);
 
-    REQUIRE(result.outputMolBlock == result.parentMolBlock);
+    REQUIRE(result.outputMolData == result.parentMolData);
 
     std::unique_ptr<RWMol> parentMol(
-        MolBlockToMol(result.parentMolBlock, false, false));
+        MolBlockToMol(result.parentMolData, false, false));
     REQUIRE(parentMol);
     std::string parentSmiles{MolToSmiles(*parentMol)};
     REQUIRE(parentSmiles == "C1=CC=C[CH+]C=C1");
@@ -2318,7 +2318,7 @@ M  END
     // Test that the failing application of some normalization transform
     // doesn't result in unexpected changes to the input
     // (test case based on GitHub #7189)
-    const char* molblock = R"(
+    const char *molblock = R"(
   Mrv2311 05292413242D          
 
   0  0  0     0  0            999 V3000
@@ -2346,7 +2346,7 @@ M  END
 
     MolStandardize::PipelineResult result = pipeline.run(molblock);
 
-    for (auto& info : result.log) {
+    for (auto &info : result.log) {
       std::cerr << info.status << " " << info.detail << std::endl;
     }
 
@@ -2384,8 +2384,8 @@ void smilesSerialize(MolStandardize::RWMOL_SPTR_PAIR output,
                      const MolStandardize::PipelineOptions &) {
   const ROMol &outputMol = *output.first;
   const ROMol &parentMol = *output.second;
-  result.outputMolBlock = MolToSmiles(outputMol);
-  result.parentMolBlock = MolToSmiles(parentMol);
+  result.outputMolData = MolToSmiles(outputMol);
+  result.parentMolData = MolToSmiles(parentMol);
 }
 
 }  // namespace
@@ -2402,9 +2402,9 @@ TEST_CASE("custom pipeline stages") {
     auto mb = MolToMolBlock(*m);
     auto res = pipeline.run(mb);
     CHECK(res.status == MolStandardize::PipelineStatus::NO_EVENT);
-    CHECK(res.outputMolBlock == res.parentMolBlock);
-    CHECK(res.inputMolBlock.find("CHG") != std::string::npos);
-    CHECK(res.outputMolBlock.find("CHG") == std::string::npos);
+    CHECK(res.outputMolData == res.parentMolData);
+    CHECK(res.inputMolData.find("CHG") != std::string::npos);
+    CHECK(res.outputMolData.find("CHG") == std::string::npos);
 
     // silly example, demonstrate that we can handle SMILES
     pipeline.setValidationSteps({});  // no validation
@@ -2412,8 +2412,8 @@ TEST_CASE("custom pipeline stages") {
     pipeline.setSerialize(&smilesSerialize);
     res = pipeline.run("CCC[O-]");
     CHECK(res.status == MolStandardize::PipelineStatus::NO_EVENT);
-    CHECK(res.outputMolBlock == res.parentMolBlock);
-    CHECK(res.outputMolBlock == "CCCO");
-    CHECK(res.inputMolBlock == "CCC[O-]");
+    CHECK(res.outputMolData == res.parentMolData);
+    CHECK(res.outputMolData == "CCCO");
+    CHECK(res.inputMolData == "CCC[O-]");
   }
 }

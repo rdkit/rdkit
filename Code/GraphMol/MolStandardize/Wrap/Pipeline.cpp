@@ -130,12 +130,12 @@ void wrap_pipeline() {
       .def_readonly("status", &MolStandardize::PipelineResult::status)
       .def_readonly("stage", &MolStandardize::PipelineResult::stage)
       .def_readonly("log", &MolStandardize::PipelineResult::log)
-      .def_readonly("inputMolBlock",
-                    &MolStandardize::PipelineResult::inputMolBlock)
-      .def_readonly("outputMolBlock",
-                    &MolStandardize::PipelineResult::outputMolBlock)
-      .def_readonly("parentMolBlock",
-                    &MolStandardize::PipelineResult::parentMolBlock);
+      .def_readonly("inputMolData",
+                    &MolStandardize::PipelineResult::inputMolData)
+      .def_readonly("outputMolData",
+                    &MolStandardize::PipelineResult::outputMolData)
+      .def_readonly("parentMolData",
+                    &MolStandardize::PipelineResult::parentMolData);
 
   python::class_<MolStandardize::Pipeline>("Pipeline")
       .def(python::init<const MolStandardize::PipelineOptions &>())

@@ -1626,11 +1626,11 @@ M  END
                       | rdMolStandardize.PipelineStatus.FRAGMENTS_REMOVED
                       | rdMolStandardize.PipelineStatus.PROTONATION_CHANGED))
 
-    parentMol = Chem.MolFromMolBlock(result.parentMolBlock, sanitize=False)
+    parentMol = Chem.MolFromMolBlock(result.parentMolData, sanitize=False)
     parentSmiles = Chem.MolToSmiles(parentMol)
     self.assertEqual(parentSmiles, "CC(=O)O")
 
-    outputMol = Chem.MolFromMolBlock(result.outputMolBlock, sanitize=False)
+    outputMol = Chem.MolFromMolBlock(result.outputMolData, sanitize=False)
     outputSmiles = Chem.MolToSmiles(outputMol)
     self.assertEqual(outputSmiles, "CC(=O)O")
 
@@ -1663,11 +1663,11 @@ M  END
     self.assertEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
                      rdMolStandardize.PipelineStatus.NO_EVENT)
 
-    parentMol = Chem.MolFromMolBlock(result.parentMolBlock, sanitize=False)
+    parentMol = Chem.MolFromMolBlock(result.parentMolData, sanitize=False)
     parentSmiles = Chem.MolToSmiles(parentMol)
     self.assertEqual(parentSmiles, "C[N+](=O)[O-]")
 
-    outputMol = Chem.MolFromMolBlock(result.outputMolBlock, sanitize=False)
+    outputMol = Chem.MolFromMolBlock(result.outputMolData, sanitize=False)
     outputSmiles = Chem.MolToSmiles(outputMol)
     self.assertEqual(outputSmiles, "C[N+](=O)[O-]")
 
@@ -1706,11 +1706,11 @@ M  END
                      (rdMolStandardize.PipelineStatus.METALS_DISCONNECTED
                       | rdMolStandardize.PipelineStatus.FRAGMENTS_REMOVED))
 
-    parentMol = Chem.MolFromMolBlock(result.parentMolBlock, sanitize=False)
+    parentMol = Chem.MolFromMolBlock(result.parentMolData, sanitize=False)
     parentSmiles = Chem.MolToSmiles(parentMol)
     self.assertEqual(parentSmiles, "NCC(=O)O")
 
-    outputMol = Chem.MolFromMolBlock(result.outputMolBlock, sanitize=False)
+    outputMol = Chem.MolFromMolBlock(result.outputMolData, sanitize=False)
     outputSmiles = Chem.MolToSmiles(outputMol)
     self.assertEqual(outputSmiles, "[NH3+]CC(=O)[O-]")
 
@@ -1749,7 +1749,7 @@ M  END
     self.assertEqual((result.status & rdMolStandardize.PipelineStatus.STRUCTURE_MODIFICATION),
                      rdMolStandardize.PipelineStatus.NORMALIZATION_APPLIED)
 
-    outputMol = Chem.MolFromMolBlock(result.outputMolBlock, sanitize=False)
+    outputMol = Chem.MolFromMolBlock(result.outputMolData, sanitize=False)
     outputSmiles = Chem.MolToSmiles(outputMol)
     self.assertEqual(outputSmiles, "C[S+](C)[O-]")
 

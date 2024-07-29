@@ -34,7 +34,7 @@ void PipelineResult::append(PipelineStatus newStatus, const std::string &info) {
 PipelineResult Pipeline::run(const std::string &molblock) const {
   PipelineResult result;
   result.status = NO_EVENT;
-  result.inputMolBlock = molblock;
+  result.inputMolData = molblock;
 
   // parse the molblock into an RWMol instance
   result.stage = static_cast<uint32_t>(PipelineStage::PARSING_INPUT);
@@ -129,12 +129,12 @@ void serialize(RWMOL_SPTR_PAIR output, PipelineResult &result,
 
   try {
     if (!options.outputV2000) {
-      result.outputMolBlock = MolToV3KMolBlock(outputMol);
-      result.parentMolBlock = MolToV3KMolBlock(parentMol);
+      result.outputMolData = MolToV3KMolBlock(outputMol);
+      result.parentMolData = MolToV3KMolBlock(parentMol);
     } else {
       try {
-        result.outputMolBlock = MolToV2KMolBlock(outputMol);
-        result.parentMolBlock = MolToV2KMolBlock(parentMol);
+        result.outputMolData = MolToV2KMolBlock(outputMol);
+        result.parentMolData = MolToV2KMolBlock(parentMol);
       } catch (ValueErrorException &e) {
         result.append(OUTPUT_ERROR,
                       "Can't write molecule to V2000 output format: " +
@@ -183,7 +183,7 @@ RWMOL_SPTR prepareForValidation(RWMOL_SPTR mol, PipelineResult &result,
   } catch (MolSanitizeException &) {
     result.append(
         PREPARE_FOR_VALIDATION_ERROR,
-        "An unexpected error occurred while preparing the molecule for validation.");
+        "An error occurred while preparing the molecule for validation.");
   }
 
   return mol;
@@ -278,7 +278,7 @@ RWMOL_SPTR prepareForStandardization(RWMOL_SPTR mol, PipelineResult &result,
   } catch (MolSanitizeException &) {
     result.append(
         PREPARE_FOR_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while preparing the molecule for standardization.");
+        "An error occurred while preparing the molecule for standardization.");
   }
 
   return mol;
@@ -301,7 +301,7 @@ RWMOL_SPTR standardize(RWMOL_SPTR mol, PipelineResult &result,
   } catch (...) {
     result.append(
         METAL_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while processing the bonding of metal species.");
+        "An error occurred while processing the bonding of metal species.");
     return mol;
   }
 
@@ -329,7 +329,7 @@ RWMOL_SPTR standardize(RWMOL_SPTR mol, PipelineResult &result,
   } catch (...) {
     result.append(
         NORMALIZER_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while normalizing the representation of some functional groups");
+        "An error occurred while normalizing the representation of some functional groups");
     return mol;
   }
 
@@ -347,7 +347,7 @@ RWMOL_SPTR standardize(RWMOL_SPTR mol, PipelineResult &result,
   } catch (...) {
     result.append(
         FRAGMENT_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while removing the disconnected fragments");
+        "An error occurred while removing the disconnected fragments");
     return mol;
   }
 
@@ -547,7 +547,7 @@ RWMOL_SPTR_PAIR makeParent(RWMOL_SPTR mol, PipelineResult &result,
   } catch (...) {
     result.append(
         CHARGE_STANDARDIZATION_ERROR,
-        "An unexpected error occurred while normalizing the compound's charge status");
+        "An error occurred while normalizing the compound's charge status");
     return {{}, {}};
   }
 
