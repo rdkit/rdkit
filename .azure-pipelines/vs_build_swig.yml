@@ -15,7 +15,7 @@ steps:
         cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        cairo eigen swig=4.1
+        cairo eigen swig=4.2
     call activate rdkit_build
   displayName: Install dependencies
 - script: |
