@@ -148,31 +148,34 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT PipelineResult {
   std::string outputMolData;
   std::string parentMolData;
 
-  void append(PipelineStatus newStatus, const std::string& info);
+  void append(PipelineStatus newStatus, const std::string &info);
 };
 
 using RWMOL_SPTR_PAIR = std::pair<RWMOL_SPTR, RWMOL_SPTR>;
 
 namespace Operations {
-RWMOL_SPTR prepareForValidation(RWMOL_SPTR mol, PipelineResult& result,
-                                const PipelineOptions& options);
-RWMOL_SPTR validate(RWMOL_SPTR mol, PipelineResult& result,
-                    const PipelineOptions& options);
-RWMOL_SPTR prepareForStandardization(RWMOL_SPTR mol, PipelineResult& result,
-                                     const PipelineOptions& options);
-RWMOL_SPTR standardize(RWMOL_SPTR mol, PipelineResult& result,
-                       const PipelineOptions& options);
-RWMOL_SPTR reapplyWedging(RWMOL_SPTR mol, PipelineResult& result,
-                          const PipelineOptions& options);
-RWMOL_SPTR cleanup2D(RWMOL_SPTR mol, PipelineResult& result,
-                     const PipelineOptions& options);
-RWMOL_SPTR_PAIR makeParent(RWMOL_SPTR mol, PipelineResult& result,
-                           const PipelineOptions& options);
+RDKIT_MOLSTANDARDIZE_EXPORT RWMOL_SPTR prepareForValidation(
+    RWMOL_SPTR mol, PipelineResult &result, const PipelineOptions &options);
+RDKIT_MOLSTANDARDIZE_EXPORT RWMOL_SPTR validate(RWMOL_SPTR mol,
+                                                PipelineResult &result,
+                                                const PipelineOptions &options);
+RDKIT_MOLSTANDARDIZE_EXPORT RWMOL_SPTR prepareForStandardization(
+    RWMOL_SPTR mol, PipelineResult &result, const PipelineOptions &options);
+RDKIT_MOLSTANDARDIZE_EXPORT RWMOL_SPTR standardize(
+    RWMOL_SPTR mol, PipelineResult &result, const PipelineOptions &options);
+RDKIT_MOLSTANDARDIZE_EXPORT RWMOL_SPTR reapplyWedging(
+    RWMOL_SPTR mol, PipelineResult &result, const PipelineOptions &options);
+RDKIT_MOLSTANDARDIZE_EXPORT RWMOL_SPTR cleanup2D(
+    RWMOL_SPTR mol, PipelineResult &result, const PipelineOptions &options);
+RDKIT_MOLSTANDARDIZE_EXPORT RWMOL_SPTR_PAIR makeParent(
+    RWMOL_SPTR mol, PipelineResult &result, const PipelineOptions &options);
 
-RWMOL_SPTR parse(const std::string& molblock, PipelineResult& result,
-                 const PipelineOptions& options);
-void serialize(RWMOL_SPTR_PAIR output, PipelineResult& result,
-               const PipelineOptions& options);
+RDKIT_MOLSTANDARDIZE_EXPORT RWMOL_SPTR parse(const std::string &molblock,
+                                             PipelineResult &result,
+                                             const PipelineOptions &options);
+RDKIT_MOLSTANDARDIZE_EXPORT void serialize(RWMOL_SPTR_PAIR output,
+                                           PipelineResult &result,
+                                           const PipelineOptions &options);
 
 using ParseOperation = decltype(&parse);
 using SerializeOperation = decltype(&serialize);
@@ -207,15 +210,15 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Pipeline {
 
  public:
   Pipeline() = default;
-  explicit Pipeline(const PipelineOptions& o) : options(o){};
+  explicit Pipeline(const PipelineOptions &o) : options(o){};
   ~Pipeline() = default;
 
-  PipelineResult run(const std::string& molblock) const;
+  PipelineResult run(const std::string &molblock) const;
 
-  void setValidationSteps(const Operations::PipelineVector& steps) {
+  void setValidationSteps(const Operations::PipelineVector &steps) {
     validationSteps = steps;
   }
-  void setStandardizationSteps(const Operations::PipelineVector& steps) {
+  void setStandardizationSteps(const Operations::PipelineVector &steps) {
     standardizationSteps = steps;
   }
   void setMakeParent(Operations::ParentOperation op) { makeParent = op; }
