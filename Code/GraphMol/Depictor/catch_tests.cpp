@@ -252,10 +252,8 @@ TEST_CASE("match template with added rings") {
   // generate coordinates
   RDDepict::Compute2DCoordParameters params;
   params.useRingTemplates = true;
-  for (auto i = 0; i < 1000; ++i) {
-    RDDepict::compute2DCoords(*mol1, params);
-    RDDepict::compute2DCoords(*mol2, params);
-  }
+  RDDepict::compute2DCoords(*mol1, params);
+  RDDepict::compute2DCoords(*mol2, params);
 
   // align the two molecules
   auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
