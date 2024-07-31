@@ -359,26 +359,19 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   }
 
   // make a mol out of the induced subgraph using the ring system atoms
-  RDKit::RWMol rs_mol(*dp_mol);
-
-  // track original indices so that we can map template coordinates correctly
-  for (auto &at : rs_mol.atoms()) {
-    at->setProp(RDKit::common_properties::molAtomMapNumber, at->getIdx());
-  }
+  RDKit::RWMol rs_mol(*dp_mol, true);
 
   boost::dynamic_bitset<> rs_atoms(dp_mol->getNumAtoms());
   for (auto aidx : ringSystemAtoms) {
     rs_atoms.set(aidx);
   }
 
-  // rs_mol.beginBatchEdit();
+  constexpr int DUMMY_ATOMIC_NUM = 200;
   for (auto &at : rs_mol.atoms()) {
     if (!rs_atoms.test(at->getIdx())) {
-      at->setAtomicNum(200);
-      // rs_mol.removeAtom(at->getIdx());
+      at->setAtomicNum(DUMMY_ATOMIC_NUM);
     }
   }
-  // rs_mol.commitBatchEdit();
   auto numBonds = rs_mol.getNumBonds();
   for (auto bnd : rs_mol.bonds()) {
     if (!rs_atoms.test(bnd->getBeginAtomIdx()) ||
@@ -403,12 +396,12 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     auto degreeCounts = [](const RDKit::ROMol &mol) {
       std::array<int, 4> degrees_count({0, 0, 0, 0});
       for (auto atom : mol.atoms()) {
-        if (atom->getAtomicNum() == 200) {
+        if (atom->getAtomicNum() == DUMMY_ATOMIC_NUM) {
           continue;
         }
         auto degree = 0u;
         for (auto nbr : mol.atomNeighbors(atom)) {
-          if (nbr->getAtomicNum() != 200) {
+          if (nbr->getAtomicNum() != DUMMY_ATOMIC_NUM) {
             ++degree;
             if (degree == 4) {
               break;
@@ -438,10 +431,9 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   // copy over new coordinates
   const auto &conf = template_mol->getConformer();
   for (auto &[template_aidx, rs_aidx] : match) {
-    auto mol_aidx = rs_mol.getAtomWithIdx(rs_aidx)->getAtomMapNum();
-    EmbeddedAtom new_at(mol_aidx, conf.getAtomPos(template_aidx));
+    EmbeddedAtom new_at(rs_aidx, conf.getAtomPos(template_aidx));
     new_at.df_fixed = true;
-    d_eatoms.emplace(mol_aidx, new_at);
+    d_eatoms.emplace(rs_aidx, new_at);
   }
   this->setupNewNeighs();
   this->setupAttachmentPoints();
