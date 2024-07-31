@@ -236,9 +236,10 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
           }
         }
       }
-      // note that the set of ring is not SSSR because we use symmetrizeSSSR, so
-      // we cannot force a check for only one fused ring. Instead we make sure
-      // that this ring shares only one atom or one bond (two consecutive atoms)
+      // note that the set of rings is not SSSR because we use symmetrizeSSSR,
+      // so we cannot force a check for only one fused ring. Instead we make
+      // sure that this ring shares only one atom or one bond (two consecutive
+      // atoms)
       if (nIntersectingAtoms == 1 ||
           (nIntersectingAtoms == 2 &&
            mol.getBondBetweenAtoms(aid1, aid2) != nullptr)) {
