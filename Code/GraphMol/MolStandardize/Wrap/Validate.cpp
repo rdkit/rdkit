@@ -17,25 +17,23 @@ using namespace RDKit;
 
 namespace {
 
-struct ValidationMethodWrap : MolStandardize::ValidationMethod, python::wrapper<MolStandardize::ValidationMethod>
-{
-    std::vector<MolStandardize::ValidationErrorInfo> validate(
-      const ROMol &mol, bool reportAllFailures) const override
-    {
-        return this->get_override("validate")(mol, reportAllFailures);
-    }
+struct ValidationMethodWrap
+    : MolStandardize::ValidationMethod,
+      python::wrapper<MolStandardize::ValidationMethod> {
+  std::vector<MolStandardize::ValidationErrorInfo> validate(
+      const ROMol &mol, bool reportAllFailures) const override {
+    return this->get_override("validate")(mol, reportAllFailures);
+  }
 
-    std::shared_ptr<MolStandardize::ValidationMethod> copy() const override
-    {
-        return this->get_override("copy")();
-    }
+  std::shared_ptr<MolStandardize::ValidationMethod> copy() const override {
+    return this->get_override("copy")();
+  }
 };
 
 // Wrap ValidationMethod::validate and convert the returned
 // vector into a python list of strings
-python::list pythonValidateMethod(
-    const MolStandardize::ValidationMethod & self, const ROMol &mol,
-    bool reportAllFailures) {
+python::list pythonValidateMethod(const MolStandardize::ValidationMethod &self,
+                                  const ROMol &mol, bool reportAllFailures) {
   python::list res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
@@ -104,62 +102,111 @@ struct validate_wrapper {
     std::string docString = "";
 
     python::class_<ValidationMethodWrap, boost::noncopyable>("ValidationMethod")
-      .def("validate", pythonValidateMethod,
-            (python::arg("self"), python::arg("mol"),
-            python::arg("reportAllFailures") = false),
-            "")
-      ;
+        .def("validate", pythonValidateMethod,
+             (python::arg("self"), python::arg("mol"),
+              python::arg("reportAllFailures") = false),
+             "");
 
-    python::class_<
-      MolStandardize::RDKitValidation,
-      python::bases<MolStandardize::ValidationMethod>,
-      boost::noncopyable>("RDKitValidation")
-      ;
+    python::class_<MolStandardize::RDKitValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("RDKitValidation");
 
-    python::class_<
-      MolStandardize::NoAtomValidation,
-      python::bases<MolStandardize::ValidationMethod>,
-      boost::noncopyable>("NoAtomValidation")
-      ;
+    python::class_<MolStandardize::NoAtomValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("NoAtomValidation");
 
-    python::class_<
-      MolStandardize::FragmentValidation,
-      python::bases<MolStandardize::ValidationMethod>,
-      boost::noncopyable>("FragmentValidation")
-      ;
+    python::class_<MolStandardize::FragmentValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("FragmentValidation");
 
-    python::class_<
-      MolStandardize::NeutralValidation,
-      python::bases<MolStandardize::ValidationMethod>,
-      boost::noncopyable>("NeutralValidation")
-      ;
+    python::class_<MolStandardize::NeutralValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("NeutralValidation");
 
-    python::class_<
-      MolStandardize::IsotopeValidation,
-      python::bases<MolStandardize::ValidationMethod>,
-      boost::noncopyable>("IsotopeValidation")
-      ;
+    python::class_<MolStandardize::IsotopeValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("IsotopeValidation")
+        .def(python::init<bool>(python::arg("strict") = false))
+        .def_readwrite("strict", &MolStandardize::IsotopeValidation::strict);
 
-    python::class_<
-      MolStandardize::MolVSValidation,
-      python::bases<MolStandardize::ValidationMethod>,
-      boost::noncopyable>("MolVSValidation")
-        .def("__init__", python::make_constructor(&getMolVSValidation))
-      ;
+    python::class_<MolStandardize::MolVSValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("MolVSValidation")
+        .def("__init__", python::make_constructor(&getMolVSValidation));
 
-    python::class_<
-      MolStandardize::AllowedAtomsValidation,
-      python::bases<MolStandardize::ValidationMethod>,
-      boost::noncopyable>("AllowedAtomsValidation", python::no_init)
-        .def("__init__", python::make_constructor(&getAllowedAtomsValidation))
-      ;
+    python::class_<MolStandardize::AllowedAtomsValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("AllowedAtomsValidation",
+                                       python::no_init)
+        .def("__init__", python::make_constructor(&getAllowedAtomsValidation));
 
-    python::class_<
-      MolStandardize::DisallowedAtomsValidation,
-      python::bases<MolStandardize::ValidationMethod>,
-      boost::noncopyable>("DisallowedAtomsValidation", python::no_init)
-        .def("__init__", python::make_constructor(&getDisallowedAtomsValidation))
-      ;
+    python::class_<MolStandardize::DisallowedAtomsValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("DisallowedAtomsValidation",
+                                       python::no_init)
+        .def("__init__",
+             python::make_constructor(&getDisallowedAtomsValidation));
+
+    python::class_<MolStandardize::FeaturesValidation,
+                   python::bases<MolStandardize::ValidationMethod>>(
+        "FeaturesValidation")
+        .def(python::init<bool, bool, bool, bool, bool, bool>(
+            (python::arg("allowEnhancedStereo") = false,
+             python::arg("allowAromaticBondType") = false,
+             python::arg("allowDativeBondType") = false,
+             python::arg("allowQueries") = false,
+             python::arg("allowDummmies") = false,
+             python::arg("allowAtomAliases") = false)))
+        .def_readwrite("allowEnhancedStereo",
+                       &MolStandardize::FeaturesValidation::allowEnhancedStereo)
+        .def_readwrite(
+            "allowAromaticBondType",
+            &MolStandardize::FeaturesValidation::allowAromaticBondType)
+        .def_readwrite("allowDativeBondType",
+                       &MolStandardize::FeaturesValidation::allowDativeBondType)
+        .def_readwrite("allowQueries",
+                       &MolStandardize::FeaturesValidation::allowQueries)
+        .def_readwrite("allowDummies",
+                       &MolStandardize::FeaturesValidation::allowDummies)
+        .def_readwrite("allowAtomAliases",
+                       &MolStandardize::FeaturesValidation::allowAtomAliases);
+
+    python::class_<MolStandardize::DisallowedRadicalValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("DisallowedRadicalValidation");
+
+    python::class_<MolStandardize::Is2DValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("Is2DValidation")
+        .def(python::init<double>(python::arg("threshold") = 1e-3))
+        .def_readwrite("threshold", &MolStandardize::Is2DValidation::threshold);
+
+    python::class_<MolStandardize::Layout2DValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("Layout2DValidation")
+        .def(python::init<double, double, bool, bool, double>(
+            (python::arg("clashLimit") = 0.15,
+             python::arg("bondLengthLimit") = 25.,
+             python::arg("allowLongBondsInRings") = true,
+             python::arg("allowAtomBondClashExemption") = true,
+             python::arg("minMedianBondLength") = false)))
+        .def_readwrite("clashLimit",
+                       &MolStandardize::Layout2DValidation::clashLimit)
+        .def_readwrite("bondLengthLimit",
+                       &MolStandardize::Layout2DValidation::bondLengthLimit)
+        .def_readwrite(
+            "allowLongBondsInRings",
+            &MolStandardize::Layout2DValidation::allowLongBondsInRings)
+        .def_readwrite(
+            "allowAtomBondClashExemption",
+            &MolStandardize::Layout2DValidation::allowAtomBondClashExemption)
+        .def_readwrite(
+            "minMedianBondLength",
+            &MolStandardize::Layout2DValidation::minMedianBondLength);
+
+    python::class_<MolStandardize::StereoValidation,
+                   python::bases<MolStandardize::ValidationMethod>,
+                   boost::noncopyable>("StereoValidation");
 
     python::def("ValidateSmiles", standardizeSmilesHelper, (python::arg("mol")),
                 docString.c_str());

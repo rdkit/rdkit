@@ -2256,6 +2256,37 @@ M  END
     CHECK(molb.find("SUBST=-2") != std::string::npos);
     CHECK(molb.find("SUBST=-1") != std::string::npos);
   }
+  SECTION("RBCNT") {
+    auto mol = R"CTAB(test
+  Mrv2007 03132018122D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -16.6248 7.1666 0 0 RBCNT=3
+M  V30 2 C -15.2911 7.9366 0 0 RBCNT=-2
+M  V30 3 N -13.9574 7.1666 0 0 RBCNT=-1
+M  V30 4 C -17.9585 7.9366 0 0 RBCNT=4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+
+    auto smarts = MolToSmarts(*mol);
+    CHECK(smarts == "[#6&x3](-[#6&x0]-[#7&x0])-[#6&x4]");
+
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("RBCNT=3") != std::string::npos);
+    CHECK(molb.find("RBCNT=-2") != std::string::npos);
+    CHECK(molb.find("RBCNT=-1") != std::string::npos);
+  }
   SECTION("bond props") {
     auto mol = R"CTAB(bogus example
   Mrv2007 03132017102D
