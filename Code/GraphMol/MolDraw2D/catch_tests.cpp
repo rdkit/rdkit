@@ -9845,5 +9845,5 @@ TEST_CASE("Draw hetero atoms in black if highlighted") {
       std::sregex_token_iterator());
   CHECK(nRed == 3);
 
-  //  check_file_hash("testHighlightHeteroAtoms.svg");
+  check_file_hash("testHighlightHeteroAtoms.svg");
 }
