@@ -1377,3 +1377,38 @@ TEST_CASE("Equivalent bonds") {
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
+
+TEST_CASE("Exact atom type match") {
+  {
+    auto m1 = "c1ccccc1NCC"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C1CCCCC1NCC"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    opts.similarityThreshold = 0.1;
+    opts.exactAtomTypeMatch = false;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    CHECK(res.front().getAtomMatches().size() == 4);
+    CHECK(res.front().getBondMatches().size() == 3);
+    CHECK(res.front().getSmarts() == "[#6]-NCC");
+    check_smarts_ok(*m1, *m2, res.front());
+  }
+  {
+    auto m1 = "c1ccccc1NCC"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C1CCCCC1NCC"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    opts.similarityThreshold = 0.1;
+    opts.exactAtomTypeMatch = true;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    CHECK(res.front().getAtomMatches().size() == 3);
+    CHECK(res.front().getBondMatches().size() == 2);
+    CHECK(res.front().getSmarts() == "NCC");
+    check_smarts_ok(*m1, *m2, res.front());
+  }
+}
