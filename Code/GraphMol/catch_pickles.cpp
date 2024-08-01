@@ -229,3 +229,16 @@ TEST_CASE("parsing old pickles with many features") {
   CHECK(m2.getNumAtoms() == m->getNumAtoms());
   CHECK(MolToCXSmiles(*m) == MolToCXSmiles(m2));
 }
+
+TEST_CASE("github #7675 : pickling HasProp queries") {
+  SECTION("basics") {
+    auto mol = "CC"_smarts;
+    REQUIRE(mol);
+    mol->getAtomWithIdx(0)->expandQuery(makeHasPropQuery<Atom>("foo"));
+    mol->getBondWithIdx(0)->expandQuery(makeHasPropQuery<Bond>("foo"));
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    RWMol mol2(pkl);
+    REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
+  }
+}
