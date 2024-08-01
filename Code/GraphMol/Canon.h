@@ -21,6 +21,12 @@ class ROMol;
 class Atom;
 class Bond;
 
+class RigorousEnhancedStereoException : public std::runtime_error {
+ public:
+  explicit RigorousEnhancedStereoException(std::string message)
+      : std::runtime_error(message) {};
+};
+
 namespace Canon {
 const int MAX_NATOMS = 5000;  //!< used in the canonical traversal code
 const int MAX_CYCLES = 1000;  //!< used in the canonical traversal code
@@ -136,6 +142,8 @@ RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT void canonicalizeEnhancedStereo(
     ROMol &mol, const std::vector<unsigned int> *atomRanks = nullptr);
+
+void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol);
 
 }  // end of namespace Canon
 }  // end of namespace RDKit

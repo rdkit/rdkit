@@ -23,12 +23,6 @@ class Atom;
 class Bond;
 class ROMol;
 
-class RigorousEnhancedStereoException : public std::runtime_error {
- public:
-  explicit RigorousEnhancedStereoException(std::string message)
-      : std::runtime_error(message){};
-};
-
 struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool doIsomericSmiles =
       true;              /**< include stereochemistry and isotope information */
@@ -381,10 +375,6 @@ inline std::string MolFragmentToCXSmiles(
   \param mol : the molecule in question.
 
  */
-
-RDKIT_SMILESPARSE_EXPORT std::string canonicalizeStereoGroups(
-    const std::unique_ptr<RWMol> &mol, const SmilesWriteParams &params,
-    std::uint32_t flags, RestoreBondDirOption restoreBondDirs);
 
 void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
                                      const std::string &details_json);
