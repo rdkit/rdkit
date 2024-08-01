@@ -1902,7 +1902,7 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
 }
 
 TEST_CASE(
-    "Github #76764: reaction pickling does not honor PicklePropertiesOptions") {
+    "Github #7674: reaction pickling does not honor PicklePropertiesOptions") {
   auto pklOpts = MolPickler::getDefaultPickleProperties();
   SECTION("as reported") {
     auto rxnb = R"RXN($RXN
