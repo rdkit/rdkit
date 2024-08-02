@@ -31,6 +31,7 @@
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/MonomerInfo.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -2255,6 +2256,37 @@ M  END
     CHECK(molb.find("SUBST=-2") != std::string::npos);
     CHECK(molb.find("SUBST=-1") != std::string::npos);
   }
+  SECTION("RBCNT") {
+    auto mol = R"CTAB(test
+  Mrv2007 03132018122D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -16.6248 7.1666 0 0 RBCNT=3
+M  V30 2 C -15.2911 7.9366 0 0 RBCNT=-2
+M  V30 3 N -13.9574 7.1666 0 0 RBCNT=-1
+M  V30 4 C -17.9585 7.9366 0 0 RBCNT=4
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 1 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+
+    auto smarts = MolToSmarts(*mol);
+    CHECK(smarts == "[#6&x3](-[#6&x0]-[#7&x0])-[#6&x4]");
+
+    auto molb = MolToV3KMolBlock(*mol);
+    CHECK(molb.find("RBCNT=3") != std::string::npos);
+    CHECK(molb.find("RBCNT=-2") != std::string::npos);
+    CHECK(molb.find("RBCNT=-1") != std::string::npos);
+  }
   SECTION("bond props") {
     auto mol = R"CTAB(bogus example
   Mrv2007 03132017102D
@@ -3014,6 +3046,60 @@ TEST_CASE("test bond flavors when writing PDBs", "[bug]") {
       int flavor = 2 | 8;
       auto pdb = MolToPDBBlock(*m, confId, flavor);
       CHECK(pdb.find("CONECT") == std::string::npos);
+    }
+  }
+}
+
+TEST_CASE("test output with incomplete monomer info", "[bug][writer]") {
+  SECTION("basics") {
+    {
+      auto m = "Cl"_smiles;
+      REQUIRE(m);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("HETATM    1 CL1  UNL     1") != std::string::npos);
+    }
+    {
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setResidueName("HCL");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1 CL1  HCL     0") != std::string::npos);
+    }
+    {
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setResidueName("HCL");
+      info->setName("Cl1");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1  Cl1 HCL     0") != std::string::npos);
+    }
+    {
+      // 1. should add spaces for padding if the atom name is too short
+      // 2. should add spaces for missing residue name.
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setName("CL");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      CHECK(pdb.find("ATOM      1   CL         0") != std::string::npos);
+    }
+    {
+      // 1. Test that atom names get truncated to 4 letters.
+      // 2. Test that residue names get truncated to 3 letters.
+      auto m = "Cl"_smiles;
+      // will get deleted by ~Atom()
+      AtomPDBResidueInfo *info = new AtomPDBResidueInfo();
+      info->setName("CHLORINE_ATOM1");
+      info->setResidueName("CHLORINE_MOLECULE1");
+      m->getAtomWithIdx(0)->setMonomerInfo(info);
+      std::string pdb = MolToPDBBlock(*m, -1);
+      std::cout << pdb << std::endl;
+      CHECK(pdb.find("ATOM      1 CHLO CHL     0") != std::string::npos);
     }
   }
 }

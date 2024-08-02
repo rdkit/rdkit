@@ -506,36 +506,46 @@ bool hasStereoAssigned(const ROMol &mol) {
   return mol.hasProp(common_properties::_StereochemDone);
 }
 }  // namespace
-const std::string NumAtomStereoCentersVersion = "1.0.0";
+const std::string NumAtomStereoCentersVersion = "1.0.1";
 unsigned int numAtomStereoCenters(const ROMol &mol) {
+  std::unique_ptr<ROMol> tmol;
+  const ROMol *mptr = &mol;
   if (!hasStereoAssigned(mol)) {
-    throw ValueErrorException(
-        "numStereoCenters called without stereo being assigned");
+    tmol.reset(new ROMol(mol));
+    constexpr bool cleanIt = true;
+    constexpr bool force = true;
+    constexpr bool flagPossible = true;
+    MolOps::assignStereochemistry(*tmol, cleanIt, force, flagPossible);
+    mptr = tmol.get();
   }
 
   unsigned int res = 0;
-  for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
-       ++atom) {
-    if ((*atom)->hasProp(common_properties::_ChiralityPossible)) {
-      res++;
+  for (const auto &atom : mptr->atoms()) {
+    if (atom->hasProp(common_properties::_ChiralityPossible)) {
+      ++res;
     }
   }
   return res;
 }
 
-const std::string NumUnspecifiedAtomStereoCentersVersion = "1.0.0";
+const std::string NumUnspecifiedAtomStereoCentersVersion = "1.0.1";
 unsigned int numUnspecifiedAtomStereoCenters(const ROMol &mol) {
+  std::unique_ptr<ROMol> tmol;
+  const ROMol *mptr = &mol;
   if (!hasStereoAssigned(mol)) {
-    throw ValueErrorException(
-        "numUnspecifiedStereoCenters called without stereo being assigned");
+    tmol.reset(new ROMol(mol));
+    constexpr bool cleanIt = true;
+    constexpr bool force = true;
+    constexpr bool flagPossible = true;
+    MolOps::assignStereochemistry(*tmol, cleanIt, force, flagPossible);
+    mptr = tmol.get();
   }
 
   unsigned int res = 0;
-  for (ROMol::ConstAtomIterator atom = mol.beginAtoms(); atom != mol.endAtoms();
-       ++atom) {
-    if ((*atom)->hasProp(common_properties::_ChiralityPossible) &&
-        (*atom)->getChiralTag() == Atom::CHI_UNSPECIFIED) {
-      res++;
+  for (const auto &atom : mptr->atoms()) {
+    if (atom->hasProp(common_properties::_ChiralityPossible) &&
+        atom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
+      ++res;
     }
   }
   return res;

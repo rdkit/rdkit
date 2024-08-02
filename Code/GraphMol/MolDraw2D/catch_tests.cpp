@@ -339,6 +339,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testWedgingShouldBeOnSingleBond.svg", 1002741488U},
     {"testDuplicateEnhancedStereoLabelsAddAnnotationTrue.svg", 1462263453U},
     {"testDuplicateEnhancedStereoLabelsAddAnnotationFalse.svg", 2980189527U},
+    {"testComplexQueryAtomMap.svg", 722421835U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -9792,4 +9793,30 @@ TEST_CASE("avoid duplicate enhanced stereo labels") {
       CHECK(nOccurrences == 2);
     }
   }
+}
+
+TEST_CASE("Draw atom map numbers on complex query atoms") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+    "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
+REQUIRE(rxn);
+{
+  // Use NO_FREETYPE so that the characters appear in an
+  // easily found manner in the SVG.
+  MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::string svgFile = "testComplexQueryAtomMap.svg";
+  std::ofstream outs(svgFile);
+  outs << text;
+  outs.close();
+  check_file_hash(svgFile);
+  std::regex regex(std::string("<text\\s+.*>:</text>"));
+  size_t nOccurrences = std::distance(
+      std::sregex_token_iterator(text.begin(), text.end(), regex),
+      std::sregex_token_iterator());
+  // there should be 6 colons drawn
+  CHECK(nOccurrences == 6);
+
+}
 }

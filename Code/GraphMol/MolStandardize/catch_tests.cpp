@@ -1679,3 +1679,31 @@ TEST_CASE("superParent with multiple mols") {
   }
 #endif
 }
+
+TEST_CASE(
+    "github #7642: Multithreaded InPlace standardization functions seg fault if there's a duplicate molecule") {
+  auto mol = "CC"_smiles;
+  REQUIRE(mol);
+  std::vector<RWMol *> mols{mol.get(), mol.get()};
+  int numThreads = 1;
+  CHECK_THROWS_AS(MolStandardize::cleanupInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::normalizeInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::reionizeInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::removeFragmentsInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::tautomerParentInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::fragmentParentInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::stereoParentInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::isotopeParentInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::chargeParentInPlace(mols, numThreads),
+                  ValueErrorException);
+  CHECK_THROWS_AS(MolStandardize::superParentInPlace(mols, numThreads),
+                  ValueErrorException);
+}

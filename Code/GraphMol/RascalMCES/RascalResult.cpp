@@ -12,6 +12,7 @@
 #include <set>
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
@@ -35,13 +36,17 @@ RascalResult::RascalResult(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                            bool timedOut, bool swapped, double tier1Sim,
                            double tier2Sim, bool ringMatchesRingOnly,
                            bool singleLargestFrag, int maxFragSep,
-                           bool exactConnectionsMatch)
+                           bool exactConnectionsMatch,
+                           const std::string &equivalentAtoms,
+                           bool ignoreBondOrders)
     : d_timedOut(timedOut),
       d_tier1Sim(tier1Sim),
       d_tier2Sim(tier2Sim),
       d_ringMatchesRingOnly(ringMatchesRingOnly),
       d_maxFragSep(maxFragSep),
-      d_exactConnectionsMatch(exactConnectionsMatch) {
+      d_exactConnectionsMatch(exactConnectionsMatch),
+      d_equivalentAtoms(equivalentAtoms),
+      d_ignoreBondOrders(ignoreBondOrders) {
   const std::vector<std::vector<int>> *mol1AdjMatrix;
   if (swapped) {
     d_mol1.reset(new RDKit::ROMol(mol2));
@@ -73,6 +78,8 @@ RascalResult::RascalResult(const RascalResult &other)
       d_timedOut(other.d_timedOut),
       d_tier1Sim(other.d_tier1Sim),
       d_tier2Sim(other.d_tier2Sim),
+      d_equivalentAtoms(other.d_equivalentAtoms),
+      d_ignoreBondOrders(other.d_ignoreBondOrders),
       d_numFrags(other.d_numFrags),
       d_ringNonRingBondScore(other.d_ringNonRingBondScore),
       d_atomMatchScore(other.d_atomMatchScore),
@@ -97,6 +104,7 @@ RascalResult &RascalResult::operator=(const RascalResult &other) {
   d_atomMatches = other.d_atomMatches;
   d_smarts = other.d_smarts;
   d_timedOut = other.d_timedOut;
+  d_equivalentAtoms = other.d_equivalentAtoms;
   d_numFrags = other.d_numFrags;
   d_ringNonRingBondScore = other.d_ringNonRingBondScore;
   d_atomMatchScore = other.d_atomMatchScore;
@@ -240,13 +248,17 @@ std::string RascalResult::createSmartsString() const {
   for (const auto &bm : d_bondMatches) {
     RDKit::QueryBond b;
     auto mol1Bond = d_mol1->getBondWithIdx(bm.first);
+    auto mol2Bond = d_mol2->getBondWithIdx(bm.second);
     b.setBeginAtomIdx(atomMap[mol1Bond->getBeginAtomIdx()]);
     b.setEndAtomIdx(atomMap[mol1Bond->getEndAtomIdx()]);
-    b.setQuery(makeBondOrderEqualsQuery(mol1Bond->getBondType()));
-    auto mol2Bond = d_mol2->getBondWithIdx(bm.second);
-    if (mol1Bond->getBondType() != mol2Bond->getBondType()) {
-      b.expandQuery(makeBondOrderEqualsQuery(mol2Bond->getBondType()),
-                    Queries::COMPOSITE_OR);
+    if (d_ignoreBondOrders) {
+      b.setQuery(makeBondNullQuery());
+    } else {
+      b.setQuery(makeBondOrderEqualsQuery(mol1Bond->getBondType()));
+      if (mol1Bond->getBondType() != mol2Bond->getBondType()) {
+        b.expandQuery(makeBondOrderEqualsQuery(mol2Bond->getBondType()),
+                      Queries::COMPOSITE_OR);
+      }
     }
     if (d_ringMatchesRingOnly && !mol1Bond->getIsAromatic() &&
         !mol2Bond->getIsAromatic() &&
@@ -258,7 +270,7 @@ std::string RascalResult::createSmartsString() const {
     smartsMol.addBond(&b, false);
   }
   std::string smt = RDKit::MolToSmarts(smartsMol, true);
-  details::cleanSmarts(smt);
+  details::cleanSmarts(smt, d_equivalentAtoms);
   return smt;
 }
 
@@ -742,7 +754,7 @@ void extractClique(const std::vector<unsigned int> &clique,
   std::sort(bondMatches.begin(), bondMatches.end());
 }
 
-void cleanSmarts(std::string &smarts) {
+void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
   const static std::vector<std::pair<std::regex, std::string>> repls{
       {std::regex(R"(\[#6&A\])"), "C"},
       {std::regex(R"(\[#6&A&R\])"), "[C&R]"},
@@ -770,6 +782,26 @@ void cleanSmarts(std::string &smarts) {
     for (auto [patt, repl] : repls) {
       smarts = std::regex_replace(smarts, patt, repl);
     }
+  }
+
+  // Convert the equivalent atoms from wierd atomic numbers to the
+  // original SMARTS pattern
+  std::vector<std::string> classSmarts;
+  boost::split(classSmarts, equivalentAtoms, boost::is_any_of(" "));
+  int atNum = 110;
+  for (auto &smt : classSmarts) {
+    // The SMARTS come out with &A or &a after the atomic number
+    // depending on the aromaticity of the underlying atom but
+    // the original SMARTS for the equivalent atom should take
+    // that into account.  For example [*] needs to match both
+    // aromatic and aliphatic atoms.  Include the case of no
+    // &[Aa] for good measure.
+    auto atNumStr = std::to_string(atNum);
+    std::regex a1(R"(\[#)" + atNumStr + R"(&[Aa]\])");
+    smarts = std::regex_replace(smarts, a1, smt);
+    std::regex a2(R"(\[#)" + atNumStr + R"(\])");
+    smarts = std::regex_replace(smarts, a2, smt);
+    ++atNum;
   }
 }
 

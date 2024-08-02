@@ -35,7 +35,7 @@ using std::uint32_t;
 namespace RDKit {
 
 const int32_t MolPickler::versionMajor = 16;
-const int32_t MolPickler::versionMinor = 1;
+const int32_t MolPickler::versionMinor = 2;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -359,6 +359,10 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
             ->getVal(),
         static_cast<const EqualityQuery<int, T const *, true> *>(query)
             ->getTol()));
+  } else if (typeid(*query) == typeid(HasPropQuery<T const *>)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_PROPERTY,
+        static_cast<const HasPropQuery<T const *> *>(query)->getPropName()));
   } else if (typeid(*query) == typeid(Query<int, T const *, true>)) {
     return QueryDetails(MolPickler::QUERY_NULL);
   } else if (typeid(*query) == typeid(RangeQuery<int, T const *, true>)) {
@@ -449,6 +453,13 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
           streamWrite(ss, val);
         }
 
+      } break;
+      case 5: {
+        auto v =
+            boost::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
+        streamWrite(ss, std::get<0>(v));
+        const auto &pval = std::get<1>(v);
+        streamWrite(ss, MolPickler::QUERY_VALUE, pval);
       } break;
       default:
         throw MolPicklerException(
@@ -588,6 +599,16 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
     case MolPickler::QUERY_NULL:
       res = new Query<int, T const *, true>();
       break;
+    case MolPickler::QUERY_PROPERTY: {
+      streamRead(ss, tag, version);
+      if (tag != MolPickler::QUERY_VALUE) {
+        throw MolPicklerException(
+            "Bad pickle format: QUERY_VALUE tag not found.");
+      }
+      std::string propName = "";
+      streamRead(ss, propName, version);
+      res = makeHasPropQuery<T>(propName);
+    } break;
     default:
       throw MolPicklerException("unknown query-type tag encountered");
   }

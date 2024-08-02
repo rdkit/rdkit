@@ -195,8 +195,7 @@ template <typename FUNCTYPE>
 void mtinPlaceHelper2(python::object pymols, int numThreads,
                       python::object params, bool skip_standardize,
                       FUNCTYPE func) {
-  const auto *ps =
-      &RDKit::MolStandardize::defaultCleanupParameters;
+  const auto *ps = &RDKit::MolStandardize::defaultCleanupParameters;
   if (params) {
     ps = python::extract<RDKit::MolStandardize::CleanupParameters *>(params);
   }
@@ -387,6 +386,7 @@ void wrap_metal();
 void wrap_fragment();
 void wrap_normalize();
 void wrap_tautomer();
+void wrap_pipeline();
 
 BOOST_PYTHON_MODULE(rdMolStandardize) {
   python::scope().attr("__doc__") =
@@ -668,4 +668,5 @@ BOOST_PYTHON_MODULE(rdMolStandardize) {
   wrap_fragment();
   wrap_normalize();
   wrap_tautomer();
+  wrap_pipeline();
 }

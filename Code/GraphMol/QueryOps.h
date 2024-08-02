@@ -822,14 +822,12 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
 
  public:
   HasPropQuery() : Queries::EqualityQuery<int, TargetPtr, true>(), propname() {
-    // default is to just do a number of rings query:
-    this->setDescription("AtomHasProp");
-    this->setDataFunc(0);
+    this->setDescription("HasProp");
+    this->setDataFunc(nullptr);
   }
   explicit HasPropQuery(std::string v)
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(std::move(v)) {
-    // default is to just do a number of rings query:
-    this->setDescription("AtomHasProp");
+    this->setDescription("HasProp");
     this->setDataFunc(nullptr);
   }
 
@@ -848,6 +846,8 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
     res->d_description = this->d_description;
     return res;
   }
+
+  const std::string &getPropName() const { return propname; }
 };
 
 typedef Queries::EqualityQuery<int, Atom const *, true> ATOM_PROP_QUERY;
