@@ -2106,6 +2106,50 @@ INT_VECT findStereoAtoms(const Bond *bond) {
   }
 }
 
+namespace {
+bool areMesoAtomsRingStereo(const ROMol &mol,
+                            const boost::dynamic_bitset<> &mesoAtoms) {
+  // const Atom *atom1 = mol.getAtomWithIdx(mesoGroup.first);
+  // const Atom *atom2 = mol.getAtomWithIdx(mesoGroup.second);
+
+  const auto ringInfo = mol.getRingInfo();
+  for (const auto &aring : ringInfo->atomRings()) {
+    // are meso atoms in this ring?
+    bool hasMesoAtoms = false;
+    for (const auto atomIdx : aring) {
+      if (mesoAtoms[atomIdx]) {
+        hasMesoAtoms = true;
+        // FIX: can probably do the loop over ring members here.
+        break;
+      }
+    }
+    if (hasMesoAtoms) {
+      // are there other atoms in the ring with stereo defined?
+      for (const auto atomIdx : aring) {
+        if (mesoAtoms.test(atomIdx)) {
+          continue;
+        }
+        const auto atom = mol.getAtomWithIdx(atomIdx);
+        if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+bool allGroupAtomsMeso(const boost::dynamic_bitset<> &mesoAtoms,
+                       const std::vector<Atom *> &atoms) {
+  for (const auto atom : atoms) {
+    if (!mesoAtoms[atom->getIdx()]) {
+      return false;
+    }
+  }
+  return true;
+}
+}  // namespace
+
 void cleanupStereoGroups(ROMol &mol) {
   const auto &sgs = mol.getStereoGroups();
   if (sgs.empty()) {
@@ -2118,19 +2162,14 @@ void cleanupStereoGroups(ROMol &mol) {
   for (const auto &mg : mesoGroups) {
     mesoAtoms.set(mg.first);
     mesoAtoms.set(mg.second);
+  }
+  if (mesoAtoms.count()) {
     for (auto i = 0u; i < sgs.size(); ++i) {
-      if (skipStereoGroups[i]) {
-        continue;
-      }
       const auto &atoms = sgs[i].getAtoms();
-
-      if (atoms.size() == 2) {
-        if ((atoms[0]->getIdx() == mg.first &&
-             atoms[1]->getIdx() == mg.second) ||
-            (atoms[1]->getIdx() == mg.first &&
-             atoms[0]->getIdx() == mg.second)) {
-          skipStereoGroups[i] = true;
-        }
+      if (atoms.size() == mesoAtoms.count() &&
+          allGroupAtomsMeso(mesoAtoms, atoms) &&
+          !areMesoAtomsRingStereo(mol, mesoAtoms)) {
+        skipStereoGroups[i] = true;
       }
     }
   }

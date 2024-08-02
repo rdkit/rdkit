@@ -5974,8 +5974,8 @@ TEST_CASE("meso centers and stereo groups") {
         "N[C@H]1CC[C@@H](O)CC1 |o1:1,4|",
         "N[C@H]1CC[C@@H](O)CC1 |&1:1,4|",
         "N[C@H]1CC[C@@H](O)CC1 |a:1,4|",
-        "C[C@@H](Cl)C([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |o1:8,11|",
-        "C[C@@H](Cl)[C@H]([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |&1:1,4;o2:8,11|",
+        "C[C@@H](Cl)C([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |o1:8,11,4,1|",
+        "C[C@@H](Cl)[C@H]([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O |&1:1,4,8,11|",
     };
     for (const auto &smiles : smileses) {
       INFO(smiles);
@@ -6020,6 +6020,22 @@ TEST_CASE("meso centers and stereo groups") {
       CHECK(m->getStereoGroups().size() == sz);
     }
   }
+  SECTION("larger meso groups are removed") {
+    std::vector<std::pair<std::string, std::pair<unsigned int, unsigned int>>>
+        data = {
+            {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@H](C)Cl |&1:1,3,6,8|", {2, 0}},
+            {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@H](C)Cl |&1:1,8|", {2, 1}},
+            {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@H](C)Cl |&1:1,8,&2:3,6|", {2, 2}},
+        };
+    for (const auto &[smiles, sz] : data) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      CHECK(Chirality::findMesoCenters(*m).size() == sz.first);
+      CHECK(m->getStereoGroups().size() == sz.second);
+      // m->debugMol(std::cerr);
+    }
+  }
   SECTION("stereo groups involved in ring stereo are not removed") {
     std::vector<std::pair<std::string, std::pair<unsigned int, unsigned int>>>
         data = {
@@ -6027,7 +6043,10 @@ TEST_CASE("meso centers and stereo groups") {
             {"C[C@@H]1[C@H](F)C[C@@H](Br)C[C@H](F)[C@@H]1C |&1:1,10|", {2, 1}},
             {"C[C@@H]1[C@H](F)C[C@@H](Br)C[C@@H](F)[C@@H]1C |&1:1,10|", {0, 1}},
             {"C[C@@H]1[C@H](F)C[CH](Br)C[C@H](F)[C@@H]1C |&1:1,10|", {2, 1}},
-        };
+            {"C[C@@H]1[C@H](F)C[CH](Br)C[C@H](F)[C@@H]1C |&1:1,2,8,10|",
+             {2, 0}},
+            {"C[C@@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@H](C)C1 |o1:1,7,o2:5,11|",
+             {1, 2}}};
     for (const auto &[smiles, sz] : data) {
       INFO(smiles);
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
