@@ -71,20 +71,13 @@ void getAtomsToInvert(const ROMol &mol,
       // get the neighbors in the new order
 
       std::vector<unsigned int> nbrs;
-      std::vector<unsigned int> atomIds;
       unsigned int nSwapsNbrs = 0;
-      unsigned int nSwapsAtomIds = 0;
       for (const auto &nbr : mol.atomNeighbors(oAtom)) {
         nbrs.push_back(revOrder[nbr->getIdx()]);
-        atomIds.push_back(nbr->getIdx());
       }
 
       nSwapsNbrs = countSwaps(nbrs);
-      nSwapsAtomIds = countSwaps(atomIds);
-      if (nSwapsAtomIds % 2) {
-        nSwapsAtomIds = nSwapsAtomIds;
-      }
-      // if ((nSwapsNbrs + nSwapsAtomIds) % 2) {
+
       if ((nSwapsNbrs) % 2) {
         atomsToInvert.push_back(nIdx);
       }
