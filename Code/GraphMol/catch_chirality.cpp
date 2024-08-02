@@ -6020,6 +6020,23 @@ TEST_CASE("meso centers and stereo groups") {
       CHECK(m->getStereoGroups().size() == sz);
     }
   }
+  SECTION("stereo groups involved in ring stereo are not removed") {
+    std::vector<std::pair<std::string, std::pair<unsigned int, unsigned int>>>
+        data = {
+            {"C[C@@H]1CC[C@@H](Br)CC[C@@H]1C |&1:1,8|", {1, 1}},
+            {"C[C@@H]1[C@H](F)C[C@@H](Br)C[C@H](F)[C@@H]1C |&1:1,10|", {2, 1}},
+            {"C[C@@H]1[C@H](F)C[C@@H](Br)C[C@@H](F)[C@@H]1C |&1:1,10|", {0, 1}},
+            {"C[C@@H]1[C@H](F)C[CH](Br)C[C@H](F)[C@@H]1C |&1:1,10|", {2, 1}},
+        };
+    for (const auto &[smiles, sz] : data) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      CHECK(Chirality::findMesoCenters(*m).size() == sz.first);
+      CHECK(m->getStereoGroups().size() == sz.second);
+      // m->debugMol(std::cerr);
+    }
+  }
 }
 
 TEST_CASE("findMesoCenters bug") {
