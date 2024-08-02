@@ -348,8 +348,6 @@ struct filtercat_wrapper {
         .def("GetName", &FilterMatcherBase::getName, python::args("self"))
         .def("__str__", &FilterMatcherBase::getName, python::args("self"));
 
-    python::register_ptr_to_python<boost::shared_ptr<FilterMatcherBase>>();
-
     python::class_<SmartsMatcher,
                    python::bases<FilterMatcherBase>>(
         "SmartsMatcher", SmartsMatcherDoc,

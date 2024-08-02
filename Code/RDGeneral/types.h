@@ -169,6 +169,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;      // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;    // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;         // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRingBondCount;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molSubstCount;      // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molAttachPoint;     // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molAttachOrder;     // int

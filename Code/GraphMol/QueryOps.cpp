@@ -1121,7 +1121,8 @@ void finalizeQueryFromDescription(
   } else if (descr == "AtomInNRings" || descr == "RecursiveStructure") {
     // don't need to do anything here because the classes
     // automatically have everything set
-  } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor") {
+  } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor" ||
+             descr == "HasProp") {
     // don't need to do anything here because the classes
     // automatically have everything set
   } else {
@@ -1160,7 +1161,8 @@ void finalizeQueryFromDescription(
   } else if (descr == "BondNull") {
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
-  } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor") {
+  } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor" ||
+             descr == "HasProp") {
     // don't need to do anything here because the classes
     // automatically have everything set
   } else {

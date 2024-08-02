@@ -5947,3 +5947,22 @@ TEST_CASE("findMesoCenters") {
     }
   }
 }
+
+TEST_CASE(
+    "github #7598: FindPotentialStereo() missing some results if cleanIt is False") {
+  SECTION("as reported") {
+    std::vector<std::string> smileses = {"C[C@H](F)C(C)[C@H](F)C",
+                                         "CC([C@H](C)F)[C@@H](C)F",
+                                         "CC([C@H](C)F)[C@H](F)C"};
+    for (const auto &smi : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      bool flagPossible = true;
+      for (bool cleanIt : {true, false}) {
+        auto si = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
+        INFO(smi + " " + std::to_string(cleanIt));
+        CHECK(si.size() == 3);
+      }
+    }
+  }
+}
