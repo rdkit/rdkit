@@ -1900,3 +1900,49 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
         "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]");
   }
 }
+
+TEST_CASE(
+    "Github #7674: reaction pickling does not honor PicklePropertiesOptions") {
+  auto pklOpts = MolPickler::getDefaultPickleProperties();
+  SECTION("as reported") {
+    auto rxnb = R"RXN($RXN
+
+  Mrv17183    050301241900
+
+  1  1
+$MOL
+
+  Mrv1718305032419002D          
+
+  1  0  0  0  0  0            999 V2000
+    3.1458   -0.1208    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+V    1 Amine.Cyclic
+M  END
+$MOL
+
+  Mrv1718305032419002D          
+
+  1  0  0  0  0  0            999 V2000
+    3.1458   -0.1208    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+M  END
+"""
+
+molblock = """FOO
+FOO  0   0.00000     0.00000
+ 
+  1  0  0  0  0  0  0  0  0  0999 V2000
+    1.3051    0.6772    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+V    1 Amine.Cyclic
+M  END)RXN";
+    auto rxn = v2::ReactionParser::ReactionFromRxnBlock(rxnb);
+    REQUIRE(rxn);
+    REQUIRE(rxn->getReactants()[0]->getAtomWithIdx(0)->hasProp("molFileValue"));
+    MolPickler::setDefaultPickleProperties(PicklerOps::AllProps);
+    std::string pkl;
+    ReactionPickler::pickleReaction(*rxn, pkl, PicklerOps::AllProps);
+    ChemicalReaction rxn2;
+    ReactionPickler::reactionFromPickle(pkl, rxn2);
+    CHECK(rxn2.getReactants()[0]->getAtomWithIdx(0)->hasProp("molFileValue"));
+  }
+  MolPickler::setDefaultPickleProperties(pklOpts);
+}
