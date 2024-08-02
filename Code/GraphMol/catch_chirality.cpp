@@ -5981,6 +5981,14 @@ TEST_CASE("findMesoCenters bug") {
             {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@@H](C)Cl", {}},
             {"Cl[C@H](C)[C@H](C)C[C@@H](C)[C@@H](C)Cl", {}},
             {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@H](C)Cl", {{1, 8}, {3, 6}}},
+            {"Cl[C@H](C)CC[C@H](C)CC[C@H](C)CC[C@@H](C)Cl",
+             {}},  //< as reported
+            {"Cl[C@H](C)CC[C@H](C)CC[C@H](C)CC[C@H](C)Cl", {{1, 13}, {5, 9}}},
+            // larger examples, propagating outwards
+            {"Cl[C@H](C)[C@@H](Cl)[C@H](C)C[C@H](C)[C@H](Cl)[C@H](Cl)C", {}},
+            {"Cl[C@H](C)[C@@H](Cl)[C@H](C)C[C@H](C)[C@@H](Cl)[C@H](Cl)C", {}},
+            {"Cl[C@H](C)[C@@H](Cl)[C@H](C)C[C@H](C)[C@@H](Cl)[C@@H](Cl)C",
+             {{1, 12}, {3, 10}, {5, 8}}},
 
         };
     for (auto &[smi, expected] : cases) {
