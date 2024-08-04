@@ -340,7 +340,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDuplicateEnhancedStereoLabelsAddAnnotationTrue.svg", 1462263453U},
     {"testDuplicateEnhancedStereoLabelsAddAnnotationFalse.svg", 2980189527U},
     {"testComplexQueryAtomMap.svg", 722421835U},
-    {"testHighlightHeteroAtoms.svg", 4252266230U},
+    {"testHighlightHeteroAtoms_1.svg", 1769258632U},
+    {"testHighlightHeteroAtoms_2.svg", 2573581284U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -9822,28 +9823,54 @@ TEST_CASE("Draw atom map numbers on complex query atoms") {
 }
 
 TEST_CASE("Draw hetero atoms in black if highlighted") {
-  auto mol = "OC(=O)c1ccc(C(=O)O)cc1"_smiles;
-  REQUIRE(mol);
-  MolDraw2DSVG drawer(350, 300, 350, 300, NO_FREETYPE);
-  drawer.drawOptions().highlightColour = DrawColour(1, 0.0, 0.0);
-  std::vector<int> highlightAtoms = {0, 1, 2};
-  drawer.drawMolecule(*mol, "", &highlightAtoms);
-  drawer.finishDrawing();
-  auto text = drawer.getDrawingText();
-  std::ofstream outs("testHighlightHeteroAtoms.svg");
-  outs << text;
-  outs.close();
-  // there should be 3 black characters and 3 red
-  std::regex regex1("<text .*;fill:#000000.*</text>");
-  size_t nBlack = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), regex1),
-      std::sregex_token_iterator());
-  CHECK(nBlack == 3);
-  std::regex regex2("<text .*;fill:#FF0000.*</text>");
-  size_t nRed = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), regex2),
-      std::sregex_token_iterator());
-  CHECK(nRed == 3);
-
-  check_file_hash("testHighlightHeteroAtoms.svg");
+  {
+    auto mol = "OC(=O)c1ccc(C(=O)O)cc1"_smiles;
+    REQUIRE(mol);
+    MolDraw2DSVG drawer(350, 300, 350, 300, NO_FREETYPE);
+    drawer.drawOptions().highlightColour = DrawColour(1, 0.0, 0.0);
+    std::vector<int> highlightAtoms = {0, 1, 2};
+    drawer.drawMolecule(*mol, "", &highlightAtoms);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testHighlightHeteroAtoms_1.svg");
+    outs << text;
+    outs.close();
+    // there should be 3 black characters and 3 red
+    std::regex regex1("<text .*;fill:#000000.*</text>");
+    size_t nBlack = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex1),
+        std::sregex_token_iterator());
+    CHECK(nBlack == 3);
+    std::regex regex2("<text .*;fill:#FF0000.*</text>");
+    size_t nRed = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex2),
+        std::sregex_token_iterator());
+    CHECK(nRed == 3);
+    check_file_hash("testHighlightHeteroAtoms_1.svg");
+  }
+  {
+    auto mol = "OC(=O)c1ccc(C(=O)O)cc1"_smiles;
+    REQUIRE(mol);
+    MolDraw2DSVG drawer(350, 300, 350, 300, NO_FREETYPE);
+    setDarkMode(drawer);
+    std::vector<int> highlightAtoms = {0, 1, 2};
+    drawer.drawMolecule(*mol, "", &highlightAtoms);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testHighlightHeteroAtoms_2.svg");
+    outs << text;
+    outs.close();
+    // there should be 3 "carbon" characters and 3 pinky ones
+    std::regex regex1("<text .*;fill:#CCCCCC.*</text>");
+    size_t nBlack = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex1),
+        std::sregex_token_iterator());
+    CHECK(nBlack == 3);
+    std::regex regex2("<text .*;fill:#FF3333.*</text>");
+    size_t nRed = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex2),
+        std::sregex_token_iterator());
+    CHECK(nRed == 3);
+    check_file_hash("testHighlightHeteroAtoms_2.svg");
+  }
 }
