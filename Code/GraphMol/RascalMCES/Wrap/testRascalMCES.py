@@ -203,7 +203,7 @@ class TestCase(unittest.TestCase):
   def testExactAtomTypeMatch(self):
     opts = rdRascalMCES.RascalOptions()
     opts.similarityThreshold = 0.1
-    opts.exactAtomTypeMatch = True
+    opts.ignoreAtomAromaticity = False
     mol1 = Chem.MolFromSmiles('c1ccccc1NCC')
     mol2 = Chem.MolFromSmiles('C1CCCCC1NCC')
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)

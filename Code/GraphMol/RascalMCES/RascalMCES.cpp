@@ -125,7 +125,7 @@ void getAtomLabels(const ROMol &mol, const RascalOptions &opts,
     if (opts.exactConnectionsMatch) {
       label += "X" + std::to_string(a->getDegree());
     }
-    if (opts.exactAtomTypeMatch && a->getIsAromatic()) {
+    if (!opts.ignoreAtomAromaticity && a->getIsAromatic()) {
       label = "a" + label;
     }
     atomLabels[a->getIdx()] = label;

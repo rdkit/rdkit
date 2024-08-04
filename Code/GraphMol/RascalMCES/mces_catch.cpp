@@ -1378,7 +1378,7 @@ TEST_CASE("Equivalent bonds") {
   }
 }
 
-TEST_CASE("Exact atom type match") {
+TEST_CASE("Atom aromaticity match") {
   {
     auto m1 = "c1ccccc1NCC"_smiles;
     REQUIRE(m1);
@@ -1387,7 +1387,7 @@ TEST_CASE("Exact atom type match") {
 
     RascalOptions opts;
     opts.similarityThreshold = 0.1;
-    opts.exactAtomTypeMatch = false;
+    opts.ignoreAtomAromaticity = true;
     auto res = rascalMCES(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 4);
@@ -1403,7 +1403,7 @@ TEST_CASE("Exact atom type match") {
 
     RascalOptions opts;
     opts.similarityThreshold = 0.1;
-    opts.exactAtomTypeMatch = true;
+    opts.ignoreAtomAromaticity = false;
     auto res = rascalMCES(*m1, *m2, opts);
     REQUIRE(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 3);
