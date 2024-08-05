@@ -57,7 +57,7 @@ AngleConstraintContrib::AngleConstraintContrib(
     const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                  std::max(1.0e-5, r[1].lengthSq())};
     double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
-    std::clamp(cosTheta, -1.0, 1.0);
+    cosTheta = std::clamp(cosTheta, -1.0, 1.0);
     angle = RAD2DEG * acos(cosTheta);
   }
   dp_forceField = owner;
@@ -97,7 +97,7 @@ double AngleConstraintContrib::getEnergy(double *pos) const {
   const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                std::max(1.0e-5, r[1].lengthSq())};
   double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
-  std::clamp(cosTheta, -1.0, 1.0);
+  cosTheta = std::clamp(cosTheta, -1.0, 1.0);
   const double angle = RAD2DEG * acos(cosTheta);
   const double angleTerm = computeAngleTerm(angle);
   return d_forceConstant * angleTerm * angleTerm;
@@ -118,7 +118,7 @@ void AngleConstraintContrib::getGrad(double *pos, double *grad) const {
   const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                std::max(1.0e-5, r[1].lengthSq())};
   double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
-  std::clamp(cosTheta, -1.0, 1.0);
+  cosTheta = std::clamp(cosTheta, -1.0, 1.0);
   const double angle = RAD2DEG * acos(cosTheta);
   const double angleTerm = computeAngleTerm(angle);
 
