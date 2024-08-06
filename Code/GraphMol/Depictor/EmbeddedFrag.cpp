@@ -391,6 +391,19 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     } else if (mol->getRingInfo()->numRings() != ring_count) {
       continue;
     }
+    // also check if the mol atoms have the same connectivity as the template
+    auto degreeCounts = [](const RDKit::ROMol &mol) {
+      std::array<int, 4> degrees_count({0, 0, 0, 0});
+      for (auto atom : mol.atoms()) {
+        auto degree = std::clamp(atom->getDegree(), 0u, 4u);
+        degrees_count[degree]++;
+      }
+      return degrees_count;
+    };
+    if (degreeCounts(rs_mol) != degreeCounts(*mol)) {
+      continue;
+    }
+
     RDKit::SubstructMatchParameters params;
     params.maxMatches = 1;
     auto matches = RDKit::SubstructMatch(RDKit::ROMol(rs_mol), *mol, params);
@@ -400,7 +413,6 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
       break;
     }
   }
-
   if (!template_mol) {
     return false;
   }
@@ -421,11 +433,12 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
 
 // find any atoms in the ring that are in trans double bonds
 // and mirror them into the ring
-static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT& ring, RDGeom::INT_POINT2D_MAP& coords)
-{
+static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
+                                 const RDKit::INT_VECT &ring,
+                                 RDGeom::INT_POINT2D_MAP &coords) {
   // a nice place for C++23 generator coroutines...
   RDKit::INT_VECT transRingAtoms;
-  for (size_t i=0; i<ring.size(); ++i) {
+  for (size_t i = 0; i < ring.size(); ++i) {
     const auto atom1 = ring[i];
     const auto atom2 = ring[(i + 1) % ring.size()];
     const auto bond = mol.getBondBetweenAtoms(atom1, atom2);
@@ -438,12 +451,14 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
     }
 
     // We care about bonds that are trans with respect to this ring
-    const auto& neighbors = bond->getStereoAtoms();
+    const auto &neighbors = bond->getStereoAtoms();
     if (neighbors.size() != 2) {
       continue;
     }
-    const auto leftIsIn = std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
-    const auto rightIsIn = std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
+    const auto leftIsIn =
+        std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
+    const auto rightIsIn =
+        std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
     bool isTrans = false;
     if (stype == RDKit::Bond::STEREOTRANS || stype == RDKit::Bond::STEREOE) {
       if (leftIsIn == rightIsIn) {
@@ -458,7 +473,6 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
       continue;
     }
 
-
     // Mirror one atom in each trans bond across the line defined by its two
     // neighbors. This bumps it into the ring
     const auto left = ring[(i + ring.size() - 1) % ring.size()];
@@ -470,8 +484,10 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
     const auto d = last - ref;
     const double a = (d.x * d.x - d.y * d.y) / d.dotProduct(d);
     const double b = 2 * d.x * d.y / d.dotProduct(d);
-    const double x = a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
-    const double y = b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
+    const double x =
+        a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
+    const double y =
+        b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
     coords[atom1] = RDGeom::Point2D(x, y);
   }
 }
@@ -483,42 +499,55 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
 void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                                    bool useRingTemplates) {
   PRECONDITION(dp_mol, "");
-  // ok this is what we are going to do here
-  // embed each of the individual rings. Then
-  // find the largest ring , leave that at the origin
-  // and fuse each of remaining rings
+  // Look for a template for the whole system. Failing that simplify the system
+  // to a set of core atoms and  look for a template for those. If that fails,
+  // start from a single ring. Then add rings one by one
 
-  // get the union of the atoms in the rings
   RDKit::INT_VECT funion;
-  RDKit::Union(fusedRings, funion);
-
+  // look for a template that matches the entire fused ring system
   if (useRingTemplates && fusedRings.size() > 1) {
+    RDKit::Union(fusedRings, funion);
     bool found_template = matchToTemplate(funion, fusedRings.size());
     if (found_template) {
+      // we are done
       return;
     }
   }
-
-  // embed each of the rings independently and find the largest ring
   std::vector<RDGeom::INT_POINT2D_MAP> coords;
   coords.reserve(fusedRings.size());
-  // FIX for issue 197
-  // find the ring with the max substituents
-  // If there are multiple pick the largest
-  auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
   for (const auto &ring : fusedRings) {
     auto ring_coords = embedRing(ring);
     mirrorTransRingAtoms(*dp_mol, ring, ring_coords);
     coords.push_back(ring_coords);
   }
-
-  this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);
-
   RDKit::INT_VECT doneRings;
-  doneRings.push_back(firstRingId);
 
-  // now loop over the remaining rings and attach then one at a time
+  if (useRingTemplates) {
+    RDKit::INT_VECT coreRingsIds;
+    auto coreRings = findCoreRings(fusedRings, coreRingsIds, *dp_mol);
+    if (coreRings.size() > 1 && coreRings.size() < fusedRings.size()) {
+      // look for a template that matches the core ring system
+      RDKit::Union(coreRings, funion);
+      bool found_template = matchToTemplate(funion, coreRings.size());
+      if (found_template) {
+        doneRings = coreRingsIds;
+      }
+    }
+  }
+
+  // if not embed find a ring as a starting point
+  if (doneRings.empty()) {
+    // FIX for issue 197
+    // find the ring with the max substituents
+    // If there are multiple pick the largest
+    auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
+
+    this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);
+    doneRings.push_back(firstRingId);
+  }
+  RDKit::Union(fusedRings, funion);
+  // now loop over the remaining rings and attach them one at a time
   // the order is determined by how many atoms a ring has in common with
   // the atoms already embedded
   while (d_eatoms.size() < funion.size()) {  // ) {
@@ -550,7 +579,6 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       embRing.Transform(trans);
       reflectIfNecessaryDensity(embRing, aid1, aid2);
     }
-
     this->mergeRing(embRing, commonAtomIds.size(), pinAtoms);
     doneRings.push_back(nextId);
   }

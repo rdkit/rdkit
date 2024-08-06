@@ -70,7 +70,8 @@ typedef std::list<PAIR_D_I_I> LIST_PAIR_DII;
 
   where A is the angle between a and b
  */
-RDKIT_DEPICTOR_EXPORT RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring);
+RDKIT_DEPICTOR_EXPORT RDGeom::INT_POINT2D_MAP embedRing(
+    const RDKit::INT_VECT &ring);
 
 RDKIT_DEPICTOR_EXPORT void transformPoints(RDGeom::INT_POINT2D_MAP &nringCor,
                                            const RDGeom::Transform2D &trans);
@@ -138,6 +139,20 @@ RDKIT_DEPICTOR_EXPORT RDGeom::Point2D reflectPoint(const RDGeom::Point2D &point,
 RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
                                                   const RDKit::INT_VECT &nbrs,
                                                   const RDKit::ROMol &mol);
+
+//! \brief From a given set of fused rings find the "core" rings, i.e. the rings
+//! that are left after iteratively removing rings that are fused with only one
+//! other ring by one or two atoms
+/*
+  \param fusedRings   list of all the rings in the fused system
+  \param coreRingsIds this is where the IDs of the core rings are written
+    \param mol          the molecule of interest
+
+  \return list of rings that represent the core
+*/
+RDKIT_DEPICTOR_EXPORT RDKit::VECT_INT_VECT findCoreRings(
+    const RDKit::VECT_INT_VECT &fusedRings, RDKit::INT_VECT &coreRingsIds,
+    const RDKit::ROMol &mol);
 
 //! \brief From a given set of rings find the ring the largest common elements
 /// with other rings
@@ -341,7 +356,7 @@ RDKIT_DEPICTOR_EXPORT void getNbrAtomAndBondIds(unsigned int aid,
          E
    For example in the above situation on the pairs (b1, b3) and (b1, b4) will be
   returned
-   All other permutations can be achieved via a rotatable bond flip.
+  // All other permutations can be achieved via a rotatable bond flip.
 
    ARGUMENTS:
    \param center - location of the central atom
@@ -363,7 +378,8 @@ inline int getAtomDepictRank(const RDKit::Atom *at) {
   return maxDeg * anum + deg;
 }
 
-RDKIT_DEPICTOR_EXPORT bool hasTerminalRGroupOrQueryHydrogen(const RDKit::ROMol &query);
+RDKIT_DEPICTOR_EXPORT bool hasTerminalRGroupOrQueryHydrogen(
+    const RDKit::ROMol &query);
 RDKIT_DEPICTOR_EXPORT std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
     RDKit::RWMol &templateMol);
 RDKIT_DEPICTOR_EXPORT void reducedToFullMatches(
