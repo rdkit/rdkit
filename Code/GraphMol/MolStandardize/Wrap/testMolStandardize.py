@@ -1753,25 +1753,6 @@ M  END
     outputSmiles = Chem.MolToSmiles(outputMol)
     self.assertEqual(outputSmiles, "C[S+](C)[O-]")
 
-  def test26PipelineAllowEmptyMoleculesOption(self):
-    options = rdMolStandardize.PipelineOptions()
-    options.allowEmptyMolecules = True
-    pipeline = rdMolStandardize.Pipeline(options)
-
-    # no atoms
-    molblock = '''
-          10052313452D          
-
-  0  0  0     0  0            999 V3000
-M  V30 BEGIN CTAB
-M  V30 COUNTS 0 0 0 0 0
-M  V30 END CTAB
-M  END
-'''
-    result = pipeline.run(molblock)
-    self.assertEqual(result.stage, rdMolStandardize.PipelineStage.COMPLETED)
-    self.assertEqual(result.status, rdMolStandardize.PipelineStatus.NO_EVENT)
-
 
 if __name__ == "__main__":
   unittest.main()

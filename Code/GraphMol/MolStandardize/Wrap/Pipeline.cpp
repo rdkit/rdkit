@@ -31,8 +31,6 @@ void wrap_pipeline() {
                      &MolStandardize::PipelineOptions::strictParsing)
       .def_readwrite("reportAllFailures",
                      &MolStandardize::PipelineOptions::reportAllFailures)
-      .def_readwrite("allowEmptyMolecules",
-                     &MolStandardize::PipelineOptions::allowEmptyMolecules)
       .def_readwrite("allowEnhancedStereo",
                      &MolStandardize::PipelineOptions::allowEnhancedStereo)
       .def_readwrite("allowAromaticBondType",

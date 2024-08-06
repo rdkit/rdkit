@@ -26,7 +26,6 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT PipelineOptions {
 
   // validation
   bool reportAllFailures{true};
-  bool allowEmptyMolecules{false};
   bool allowEnhancedStereo{false};
   bool allowAromaticBondType{false};
   bool allowDativeBondType{false};
