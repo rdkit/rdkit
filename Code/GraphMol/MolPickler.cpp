@@ -467,6 +467,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         auto v =
             boost::get<std::tuple<MolPickler::Tags, Dict::Pair, double>>(qdetails);
         streamWrite(ss, std::get<0>(v));
+        // The tolerance is pickled first as we can't pickle the Dict::Pair with the QUERY_VALUE tag
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<2>(v));
         streamWriteProp(ss, std::get<1>(v), MolPickler::getCustomPropHandlers());
       } break;
@@ -646,7 +647,6 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
           res = makePropQuery<T, double>(pair.key, rdvalue_cast<double>(pair.val), tolerance);
           break;
         case RDTypeTag::StringTag:
-          // what about bit vect?if (pair.key != "HasPropValueQuery")
           res = makePropQuery<T, std::string>(pair.key, rdvalue_cast<std::string>(pair.val), tolerance);
           break;
         case RDTypeTag::AnyTag: {
