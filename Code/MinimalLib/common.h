@@ -1000,6 +1000,7 @@ std::string get_mol_frags_mappings(
   return buffer.GetString();
 }
 
+#ifdef RDK_BUILD_INCHI_SUPPORT
 std::string parse_inchi_options(const char *details_json) {
   std::string options;
   if (details_json && strlen(details_json)) {
@@ -1011,6 +1012,7 @@ std::string parse_inchi_options(const char *details_json) {
   }
   return options;
 }
+#endif
 
 struct LogHandle {
  public:

@@ -48,7 +48,9 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
+#ifdef RDK_BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
+#endif
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -227,6 +229,7 @@ extern "C" char *get_rxn_svg(const char *pkl, size_t pkl_sz,
   return str_to_c(MinimalLib::rxn_to_svg(rxn, width, height, details_json));
 }
 
+#ifdef RDK_BUILD_INCHI_SUPPORT
 extern "C" char *get_inchi(const char *pkl, size_t pkl_sz,
                            const char *details_json) {
   if (!pkl || !pkl_sz) {
@@ -254,6 +257,7 @@ extern "C" char *get_inchikey_for_inchi(const char *inchi) {
   }
   return str_to_c(InchiToInchiKey(inchi));
 }
+#endif
 
 extern "C" char *get_mol(const char *input, size_t *pkl_sz,
                          const char *details_json) {

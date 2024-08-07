@@ -39,11 +39,13 @@ RDKIT_RDKITCFFI_EXPORT char *get_cxsmarts(const char *pkl, size_t pkl_sz,
                                           const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_json(const char *pkl, size_t pkl_sz,
                                       const char *details_json);
+#ifdef RDK_BUILD_INCHI_SUPPORT
 RDKIT_RDKITCFFI_EXPORT char *get_inchi(const char *pkl, size_t pkl_sz,
                                        const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_inchi_for_molblock(const char *ctab,
                                                     const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char *get_inchikey_for_inchi(const char *inchi);
+#endif
 RDKIT_RDKITCFFI_EXPORT char *get_rxn(const char *input, size_t *mol_sz,
                                      const char *details_json);
 RDKIT_RDKITCFFI_EXPORT char **get_mol_frags(const char *pkl, size_t pkl_sz,
