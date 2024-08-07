@@ -17,7 +17,6 @@ target_compile_definitions(ForceField PRIVATE RDKIT_FORCEFIELD_BUILD)
 rdkit_headers(Contrib.h
               ForceField.h
               AngleConstraint.h
-              Params.h
               DEST ForceField)
 
 rdkit_headers(UFF/AngleBend.h

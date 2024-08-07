@@ -9,12 +9,11 @@
 //
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_MMFFPARAMS_H__
-#define __RD_MMFFPARAMS_H__
+#ifndef RD_MMFFPARAMS_H
+#define RD_MMFFPARAMS_H
 
 #include <memory>
 #include <RDGeneral/Invariant.h>
-#include <ForceField/Params.h>
 #include <cmath>
 #include <string>
 #include <vector>

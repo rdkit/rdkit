@@ -8,13 +8,17 @@
 //  of the RDKit source tree.
 //
 #include "AngleConstraint.h"
-#include "Params.h"
 #include <cmath>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 
-namespace ForceFields {
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
+namespace ForceFields {
+constexpr double DEG2RAD = M_PI / 180.0;
+constexpr double RAD2DEG = 180.0 / M_PI;
 AngleConstraintContrib::AngleConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
     double minAngleDeg, double maxAngleDeg, double forceConst) {
@@ -49,9 +53,9 @@ AngleConstraintContrib::AngleConstraintContrib(
 
   double angle = 0.0;
   if (relative) {
-    const RDGeom::Point3D p1 = *((RDGeom::Point3D *)pos[idx1]);
-    const RDGeom::Point3D p2 = *((RDGeom::Point3D *)pos[idx2]);
-    const RDGeom::Point3D p3 = *((RDGeom::Point3D *)pos[idx3]);
+    const RDGeom::Point3D &p1 = *((RDGeom::Point3D *)pos[idx1]);
+    const RDGeom::Point3D &p2 = *((RDGeom::Point3D *)pos[idx2]);
+    const RDGeom::Point3D &p3 = *((RDGeom::Point3D *)pos[idx3]);
     const RDGeom::Point3D r[2] = {p1 - p2, p3 - p2};
     const double rLengthSq[2] = {std::max(1.0e-5, r[0].lengthSq()),
                                  std::max(1.0e-5, r[1].lengthSq())};

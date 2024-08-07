@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_ANGLECONSTRAINT_H__
-#define __RD_ANGLECONSTRAINT_H__
+#ifndef RD_ANGLECONSTRAINT_H
+#define RD_ANGLECONSTRAINT_H
 #include <iostream>
 #include <ForceField/Contrib.h>
 
