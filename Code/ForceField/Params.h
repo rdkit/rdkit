@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2024 Paolo Tosco and other RDKit contributors
+//  Copyright (C) 2004-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,14 +8,15 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_UFFANGLECONSTRAINT_H__
-#define __RD_UFFANGLECONSTRAINT_H__
-#include <iostream>
-#include <ForceField/AngleConstraint.h>
+#ifndef __RD_FFPARAMS_H__
+#define __RD_FFPARAMS_H__
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace ForceFields {
-namespace UFF {
-using AngleConstraintContrib = ForceFields::AngleConstraintContrib;
-}  // namespace UFF
+constexpr double DEG2RAD = M_PI / 180.0;
+constexpr double RAD2DEG = 180 / M_PI;
 }  // namespace ForceFields
 #endif

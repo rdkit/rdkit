@@ -1,8 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2024 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,7 +14,7 @@
 #include <RDGeneral/Invariant.h>
 
 namespace ForceFields {
-namespace UFF {
+
 AngleConstraintContrib::AngleConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
     double minAngleDeg, double maxAngleDeg, double forceConst) {
@@ -29,6 +26,7 @@ AngleConstraintContrib::AngleConstraintContrib(
   URANGE_CHECK(idx3, owner->positions().size());
   PRECONDITION(!(minAngleDeg > maxAngleDeg),
                "minAngleDeg must be <= maxAngleDeg");
+
   dp_forceField = owner;
   d_at1Idx = idx1;
   d_at2Idx = idx2;
@@ -48,6 +46,7 @@ AngleConstraintContrib::AngleConstraintContrib(
   URANGE_CHECK(idx3, pos.size());
   PRECONDITION(!(minAngleDeg > maxAngleDeg),
                "minAngleDeg must be <= maxAngleDeg");
+
   double angle = 0.0;
   if (relative) {
     const RDGeom::Point3D p1 = *((RDGeom::Point3D *)pos[idx1]);
@@ -139,5 +138,4 @@ void AngleConstraintContrib::getGrad(double *pos, double *grad) const {
     g[i][2] += dedp[i].z;
   }
 }
-}  // namespace UFF
 }  // namespace ForceFields
