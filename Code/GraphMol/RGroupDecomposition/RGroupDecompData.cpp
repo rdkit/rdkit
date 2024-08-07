@@ -36,7 +36,7 @@ RGroupDecompData::RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
   prepareCores();
 }
 
-void RGroupDecompData::addInputCore(const ROMol& inputCore) {
+void RGroupDecompData::addInputCore(const ROMol &inputCore) {
   if (params.doEnumeration) {
     if (const auto bundle = MolEnumerator::enumerate(inputCore);
         !bundle.empty()) {
@@ -46,11 +46,10 @@ void RGroupDecompData::addInputCore(const ROMol& inputCore) {
     } else {
       addCore(inputCore);
     }
-  } else  {
+  } else {
     addCore(inputCore);
   }
 }
-
 
 void RGroupDecompData::addCore(const ROMol &inputCore) {
   if (params.allowMultipleRGroupsOnUnlabelled && !params.onlyMatchAtRGroups) {
@@ -511,9 +510,7 @@ void RGroupDecompData::relabelRGroup(RGroupData &rgroup,
   rgroup.labelled = true;
 
   // Restore any core matches that we have set to dummy
-  for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-       ++atIt) {
-    Atom *atom = *atIt;
+  for (auto atom : mol.atoms()) {
     if (atom->hasProp(RLABEL_CORE_INDEX)) {
       // don't need to set IsAromatic on atom - that seems to have been saved
       atom->setAtomicNum(

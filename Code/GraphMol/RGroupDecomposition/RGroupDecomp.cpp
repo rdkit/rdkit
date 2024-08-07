@@ -58,12 +58,12 @@ const std::string RLABEL_TYPE = "tempRlabelType";
 const std::string RLABEL_CORE_INDEX = "rLabelCoreIndex";
 const std::string SIDECHAIN_RLABELS = "sideChainRlabels";
 const std::string done = "RLABEL_PROCESSED";
-const std::string CORE = "Core";
-const std::string RPREFIX = "R";
 const std::string _rgroupInputDummy = "_rgroupInputDummy";
 const std::string UNLABELED_CORE_ATTACHMENT = "unlabeledCoreAttachment";
 
 namespace {
+static const std::string TARGET_ATOM_IDX = "__rgdTargetAtomIdx";
+static const std::string TARGET_BOND_IDX = "__rgdTargetBondIdx";
 void ADD_MATCH(R_DECOMP &match, int rlabel) {
   if (match.find(rlabel) == match.end()) {
     match[rlabel] = boost::make_shared<RGroupData>();
@@ -82,6 +82,73 @@ RGroupDecomposition::RGroupDecomposition(
 
 RGroupDecomposition::~RGroupDecomposition() { delete data; }
 
+void RGroupDecomposition::labelAtomBondIndices(RWMol &mol) {
+  for (const auto targetAtom : mol.atoms()) {
+    targetAtom->setProp(TARGET_ATOM_IDX, targetAtom->getIdx());
+  }
+  for (const auto targetBond : mol.bonds()) {
+    targetBond->setProp(TARGET_BOND_IDX, targetBond->getIdx());
+  }
+}
+
+void RGroupDecomposition::setTargetAtomBondIndices(
+    ROMol &mol, bool includeBondsToRLabels) const {
+  std::vector<int> atomIndices(mol.getNumAtoms(), -1);
+  std::vector<int> bondIndices(mol.getNumBonds(), -1);
+  int largestAtomIdx = -1;
+  bool isHydrogen = RGroupData::isMolHydrogen(mol);
+  for (const auto atom : mol.atoms()) {
+    int targetAtomIdx;
+    if (atom->getPropIfPresent(TARGET_ATOM_IDX, targetAtomIdx)) {
+      atom->clearProp(TARGET_ATOM_IDX);
+      if ((atom->getAtomicNum() == 1 && data->params.removeHydrogensPostMatch &&
+           !isHydrogen) ||
+          (atom->getAtomicNum() == 0 && !atom->hasProp(_rgroupInputDummy))) {
+        continue;
+      }
+      int atomIdx = atom->getIdx();
+      atomIndices[atomIdx] = targetAtomIdx;
+      largestAtomIdx = std::max(atomIdx, largestAtomIdx);
+    }
+  }
+  atomIndices.resize(largestAtomIdx + 1);
+  int largestBondIdx = -1;
+  for (const auto bond : mol.bonds()) {
+    int targetBondIdx;
+    if (bond->getPropIfPresent(TARGET_BOND_IDX, targetBondIdx)) {
+      bond->clearProp(TARGET_BOND_IDX);
+      if ((bond->getBeginAtom()->getAtomicNum() == 1 ||
+           bond->getEndAtom()->getAtomicNum() == 1) &&
+          data->params.removeHydrogensPostMatch && !isHydrogen) {
+        continue;
+      }
+      if (!includeBondsToRLabels &&
+          ((bond->getBeginAtom()->getAtomicNum() == 0 &&
+            !bond->getBeginAtom()->hasProp(_rgroupInputDummy)) ||
+           (bond->getEndAtom()->getAtomicNum() == 0 &&
+            !bond->getEndAtom()->hasProp(_rgroupInputDummy)))) {
+        continue;
+      }
+      int bondIdx = bond->getIdx();
+      bondIndices[bondIdx] = targetBondIdx;
+      largestBondIdx = std::max(bondIdx, largestBondIdx);
+    }
+  }
+  bondIndices.resize(largestBondIdx + 1);
+  std::vector<int> highlightAtoms;
+  highlightAtoms.reserve(atomIndices.size());
+  std::copy_if(atomIndices.begin(), atomIndices.end(),
+               std::back_inserter(highlightAtoms),
+               [](const auto atomIdx) { return atomIdx != -1; });
+  std::vector<int> highlightBonds;
+  highlightBonds.reserve(bondIndices.size());
+  std::copy_if(bondIndices.begin(), bondIndices.end(),
+               std::back_inserter(highlightBonds),
+               [](const auto bondIdx) { return bondIdx != -1; });
+  mol.setProp(common_properties::_rgroupTargetAtoms, highlightAtoms);
+  mol.setProp(common_properties::_rgroupTargetBonds, highlightBonds);
+}
+
 int RGroupDecomposition::getMatchingCoreIdx(
     const ROMol &mol, std::vector<MatchVectType> *matches) {
   RWMol rwmol(mol);
@@ -94,7 +161,8 @@ int RGroupDecomposition::getMatchingCoreIdx(
     for (const auto &match : matchesTmp) {
       MatchVectType heavyMatch;
       heavyMatch.reserve(match.size());
-      std::copy_if(std::make_move_iterator(match.begin()),
+      std::copy_if(
+          std::make_move_iterator(match.begin()),
           std::make_move_iterator(match.end()), std::back_inserter(heavyMatch),
           [numAtoms](const auto &pair) { return pair.second < numAtoms; });
       std::sort(heavyMatch.begin(), heavyMatch.end());
@@ -162,14 +230,17 @@ int RGroupDecomposition::getMatchingCoreInternal(
         std::cerr << "baseMatch ";
         for (const auto &pair : baseMatch) std::cerr << "(" << pair.first <<","
         << pair.second << "),"; std::cerr << std::endl; std::cerr <<
-        "matchesIncludingRGroups "; for (const auto &matchWithDummy : matchesIncludingRGroups)
-        { for (const auto &pair : matchWithDummy) std::cerr << "(" << pair.first
+        "matchesIncludingRGroups "; for (const auto &matchWithDummy :
+        matchesIncludingRGroups) { for (const auto &pair : matchWithDummy)
+        std::cerr << "(" << pair.first
         <<"," << pair.second << "),"; std::cerr << " /// ";
         }
         std::cerr << std::endl;
         */
-        tmatches.insert(tmatches.end(), std::make_move_iterator(matchesIncludingRGroups.cbegin()),
-                        std::make_move_iterator(matchesIncludingRGroups.cend()));
+        tmatches.insert(
+            tmatches.end(),
+            std::make_move_iterator(matchesIncludingRGroups.cbegin()),
+            std::make_move_iterator(matchesIncludingRGroups.cend()));
       }
     }
     if (tmatches.empty()) {
@@ -220,9 +291,10 @@ int RGroupDecomposition::getMatchingCoreInternal(
               }
             }
           }
-        } else if (core.second.isTerminalRGroupWithUserLabel(match.first)
-              && data->params.onlyMatchAtRGroups && !core.second.checkAllBondsToRGroupPresent(
-              mol, match.second, targetToCoreIndices)) {
+        } else if (core.second.isTerminalRGroupWithUserLabel(match.first) &&
+                   data->params.onlyMatchAtRGroups &&
+                   !core.second.checkAllBondsToRGroupPresent(
+                       mol, match.second, targetToCoreIndices)) {
           // labelled R-group
           passes_filter = false;
         }
@@ -240,7 +312,8 @@ int RGroupDecomposition::getMatchingCoreInternal(
       // tmatches_heavy_nbrs.size() = tmatches.size(), and
       // tmatches.size() cannot be empty, otherwise we should not be here
       // but let's check it in case something changes upstream
-      CHECK_INVARIANT(!tmatches_heavy_nbrs.empty(), "tmatches_heavy_nbrs must not be empty");
+      CHECK_INVARIANT(!tmatches_heavy_nbrs.empty(),
+                      "tmatches_heavy_nbrs must not be empty");
       int min_heavy_nbrs = *std::min_element(tmatches_heavy_nbrs.begin(),
                                              tmatches_heavy_nbrs.end());
       if (!rcore || (min_heavy_nbrs < global_min_heavy_nbrs &&
@@ -274,15 +347,17 @@ int RGroupDecomposition::getMatchingCoreInternal(
 }
 
 int RGroupDecomposition::add(const ROMol &inmol) {
-  // get the sidechains if possible
-  //  Add hs for better symmetrization
-  RWMol mol(inmol);
+  RWMOL_SPTR mol(new RWMol(inmol));
   const RCore *rcore;
   std::vector<MatchVectType> tmatches;
-  auto core_idx = getMatchingCoreInternal(mol, rcore, tmatches);
+  // Add Hs for better symmetrization
+  auto core_idx = getMatchingCoreInternal(*mol, rcore, tmatches);
   if (rcore == nullptr) {
     BOOST_LOG(rdDebugLog) << "No core matches" << std::endl;
     return -1;
+  }
+  if (data->params.includeTargetMolInResults) {
+    labelAtomBondIndices(*mol);
   }
 
   if (tmatches.size() > 1) {
@@ -297,7 +372,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     }
   }
   // mark any wildcards in input molecule:
-  for (auto &atom : mol.atoms()) {
+  for (auto &atom : mol->atoms()) {
     if (atom->getAtomicNum() == 0) {
       atom->setProp(_rgroupInputDummy, true);
       // clean any existing R group numbers
@@ -324,9 +399,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     const bool replaceDummies = false;
     const bool labelByIndex = true;
     const bool requireDummyMatch = false;
-    // TODO see if we need replaceCoreAtomsWithMolMatches or can just use rcore->core
-    auto coreCopy = rcore->replaceCoreAtomsWithMolMatches(mol, tmatche);
-    tMol.reset(replaceCore(mol, *coreCopy, tmatche, replaceDummies,
+    // TODO see if we need replaceCoreAtomsWithMolMatches or can just use
+    // rcore->core
+    auto coreCopy = rcore->replaceCoreAtomsWithMolMatches(*mol, tmatche);
+    tMol.reset(replaceCore(*mol, *coreCopy, tmatche, replaceDummies,
                            labelByIndex, requireDummyMatch));
 #ifdef VERBOSE
     std::cerr << "Core Match core_idx " << core_idx << " idx "
@@ -341,9 +417,10 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       // rlabel rgroups
       MOL_SPTR_VECT fragments = MolOps::getMolFrags(*tMol, false);
       std::set<int> coreAtomAnyMatched;
+      // get the sidechains
       for (size_t i = 0; i < fragments.size(); ++i) {
-        std::vector<int> rlabelsOnSideChain;
         const auto &newMol = fragments[i];
+        std::vector<int> rlabelsOnSideChain;
         newMol->setProp<int>("core", core_idx);
         newMol->setProp<int>("idx", data->matches.size());
         newMol->setProp<int>("frag_idx", i);
@@ -359,22 +436,22 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             // this is the index of the core atom that the R group
             // atom is attached to
             unsigned int coreAtomIndex = sideChainAtom->getIsotope();
-            int rlabel;
             auto coreAtom = rcore->core->getAtomWithIdx(coreAtomIndex);
             coreAtomAnyMatched.insert(coreAtomIndex);
+            int rlabel;
             if (coreAtom->getPropIfPresent(RLABEL, rlabel)) {
               std::vector<int> rlabelsOnSideChainAtom;
-              sideChainAtom->getPropIfPresent(SIDECHAIN_RLABELS, rlabelsOnSideChainAtom);
+              sideChainAtom->getPropIfPresent(SIDECHAIN_RLABELS,
+                                              rlabelsOnSideChainAtom);
               rlabelsOnSideChainAtom.push_back(rlabel);
               sideChainAtom->setProp(SIDECHAIN_RLABELS, rlabelsOnSideChainAtom);
-
               data->labels.insert(rlabel);  // keep track of all labels used
               rlabelsOnSideChain.push_back(rlabel);
-              if (const auto [bondIdx, end] = newMol->getAtomBonds(sideChainAtom);
+              if (const auto [bondIdx, end] =
+                      newMol->getAtomBonds(sideChainAtom);
                   bondIdx != end) {
                 auto connectingBond = (*newMol)[*bondIdx];
-                if (connectingBond->getStereo() >
-                    Bond::BondStereo::STEREOANY) {
+                if (connectingBond->getStereo() > Bond::BondStereo::STEREOANY) {
                   // TODO: how to handle bond stereo on rgroups connected to
                   // core by stereo double bonds
                   connectingBond->setStereo(Bond::BondStereo::STEREOANY);
@@ -386,7 +463,9 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             sideChainAtom->clearProp(_rgroupInputDummy);
           }
         }
-
+        if (data->params.includeTargetMolInResults) {
+          setTargetAtomBondIndices(*newMol, true);
+        }
         if (!rlabelsOnSideChain.empty()) {
 #ifdef VERBOSE
           std::string newCoreSmi = MolToSmiles(*newMol, true);
@@ -408,7 +487,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
             // GJ I think if we ever get here that it's really an error and I
             // believe that I've fixed the case where this code was called.
             // Still, I'm too scared to delete the block.
-            RWMol newCore(mol);
+            RWMol newCore(*mol);
 
             for (const auto &mvpair : tmatche) {
               const Atom *coreAtm = rcore->core->getAtomWithIdx(mvpair.first);
@@ -447,7 +526,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         // non-hydrogen substituents
         auto numberUserGroupsInMatch = std::accumulate(
             match.begin(), match.end(), 0,
-            [](int sum, const std::pair<int, boost::shared_ptr<RGroupData>> &p) {
+            [](int sum,
+               const std::pair<int, boost::shared_ptr<RGroupData>> &p) {
               return p.first > 0 && !p.second->is_hydrogen ? ++sum : sum;
             });
         int numberMissingUserGroups =
@@ -455,9 +535,15 @@ int RGroupDecomposition::add(const ROMol &inmol) {
         CHECK_INVARIANT(numberMissingUserGroups >= 0,
                         "Data error in missing user rgroup count");
         const auto extractedCore =
-            rcore->extractCoreFromMolMatch(mol, tmatche, params());
+            rcore->extractCoreFromMolMatch(*mol, tmatche, params());
+        if (data->params.includeTargetMolInResults) {
+          setTargetAtomBondIndices(*extractedCore, false);
+        }
         potentialMatches.emplace_back(core_idx, numberMissingUserGroups, match,
                                       extractedCore);
+        if (data->params.includeTargetMolInResults) {
+          potentialMatches.back().setTargetMoleculeForHighlights(mol);
+        }
       }
     }
   }
@@ -607,6 +693,11 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
     // make a new rgroup entry
     groups.push_back(RGroupRow());
     RGroupRow &out_rgroups = groups.back();
+    if (data->params.includeTargetMolInResults) {
+      out_rgroups.emplace(RGroupData::getMolLabel(),
+                          it->getTargetMoleculeForHighlights(
+                              data->params.removeHydrogensPostMatch));
+    }
 
     const R_DECOMP &in_rgroups = it->rgroups;
 
@@ -615,11 +706,12 @@ RGroupRows RGroupDecomposition::getRGroupsAsRows() const {
       CHECK_INVARIANT(realLabel != data->finalRlabelMapping.end(),
                       "unprocessed rlabel, please call process() first.");
       Rs_seen.setIsUsed(realLabel->second);
-      out_rgroups[RPREFIX + std::to_string(realLabel->second)] =
-          rgroup.second->combinedMol;
+      out_rgroups.emplace(RGroupData::getRGroupLabel(realLabel->second),
+                          rgroup.second->combinedMol);
     }
 
-    out_rgroups[CORE] = outputCoreMolecule(*it, Rs_seen);
+    out_rgroups.emplace(RGroupData::getCoreLabel(),
+                        outputCoreMolecule(*it, Rs_seen));
   }
   return groups;
 }
@@ -629,7 +721,10 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   std::vector<RGroupMatch> permutation = data->GetCurrentBestPermutation();
 
   RGroupColumns groups;
-  std::unordered_set<std::string> rGroupWithRealMol{CORE};
+  std::unordered_set<std::string> rGroupWithRealMol{RGroupData::getCoreLabel()};
+  if (data->params.includeTargetMolInResults) {
+    rGroupWithRealMol.insert(RGroupData::getMolLabel());
+  }
 
   auto usedLabelMap = UsedLabelMap(data->finalRlabelMapping);
 
@@ -637,6 +732,11 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
   for (auto it = permutation.begin(); it != permutation.end(); ++it, ++molidx) {
     auto Rs_seen(usedLabelMap);
     const R_DECOMP &in_rgroups = it->rgroups;
+    if (data->params.includeTargetMolInResults) {
+      groups[RGroupData::getMolLabel()].push_back(
+          it->getTargetMoleculeForHighlights(
+              data->params.removeHydrogensPostMatch));
+    }
 
     for (const auto &rgroup : in_rgroups) {
       const auto realLabel = data->finalRlabelMapping.find(rgroup.first);
@@ -648,7 +748,7 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
       CHECK_INVARIANT(!Rs_seen.getIsUsed(realLabel->second),
                       "R group label appears multiple times!");
       Rs_seen.setIsUsed(realLabel->second);
-      std::string r = RPREFIX + std::to_string(realLabel->second);
+      auto r = RGroupData::getRGroupLabel(realLabel->second);
       RGroupColumn &col = groups[r];
       if (molidx && col.size() < molidx - 1) {
         col.resize(molidx - 1);
@@ -656,12 +756,13 @@ RGroupColumns RGroupDecomposition::getRGroupsAsColumns() const {
       col.push_back(rgroup.second->combinedMol);
       rGroupWithRealMol.insert(r);
     }
-    groups[CORE].push_back(outputCoreMolecule(*it, Rs_seen));
+    groups[RGroupData::getCoreLabel()].push_back(
+        outputCoreMolecule(*it, Rs_seen));
 
     // add empty entries to columns where this molecule didn't appear
     for (const auto &realLabel : data->finalRlabelMapping) {
       if (!Rs_seen.getIsUsed(realLabel.second)) {
-        std::string r = RPREFIX + std::to_string(realLabel.second);
+        auto r = RGroupData::getRGroupLabel(realLabel.second);
         groups[r].push_back(boost::make_shared<RWMol>());
       }
     }

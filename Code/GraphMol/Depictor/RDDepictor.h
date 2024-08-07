@@ -220,7 +220,7 @@ struct RDKIT_DEPICTOR_EXPORT ConstrainedDepictionParams {
   bool forceRDKit = false;
   //! if true, terminal dummy atoms in the reference are ignored
   /// if they match an implicit hydrogen in the molecule or if they are
-  /// attached top a query atom; defaults to false
+  /// attached to a query atom; defaults to false
   bool allowRGroups = false;
   //! if false (default), a part of the molecule is hard-constrained
   /// to have the same coordinates as the reference, and the rest of
