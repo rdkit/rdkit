@@ -1080,16 +1080,6 @@ python::object findMesoHelper(const ROMol &mol, bool includeIsotopes,
   }
   return python::tuple(res);
 }
-  
-python::tuple findAllPathsOfLengthNHelper(const ROMol &mol,
-					 unsigned int targetLen,
-					 bool useBonds = true,
-					 bool useHs = false,
-					 int rootedAtAtom = -1,
-					 bool onlyShortestPaths = false) {
-  return sequenceToTuple(findAllPathsOfLengthN(mol, targetLen, useBonds, useHs,
-					       rootedAtAtom, onlyShortestPaths));
-}
 
 struct molops_wrapper {
   static void wrap() {
@@ -1996,7 +1986,7 @@ RETURNS:
        has 3 _subgraphs_ of length 3: (0,1,2),(0,1,3),(2,1,3)\n\
        but only 2 _paths_ of length 3: (0,1,3),(2,1,3)\n\
 \n";
-    python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthNHelper,
+    python::def("FindAllPathsOfLengthN", &findAllPathsOfLengthN,
                 (python::arg("mol"), python::arg("length"),
                  python::arg("useBonds") = true, python::arg("useHs") = false,
                  python::arg("rootedAtAtom") = -1,

@@ -370,94 +370,181 @@ struct rdkit_pickle_suite : python::pickle_suite {
   static bool getstate_manages_dict() { return true; }
 };
 
-template<typename T>
-void addToList(python::list &l, const T &v) {
-  l.append(v);
-}
+// vec_to_tuple - converts a vector<T> to a tuple
+// vecvec_to_tuple - converts a vector<vector<T>> to a tuple
+// list_to_tuple - converts a std::list<T> to a tuple
+// listvec_to_tuple - converts a list<vec<T>> to tuple
 
+// From boost::python examples
 template<typename T>
-void addToList(python::list &l, const std::vector<T> &v) {
-  l.append(python::list(v));
-}
-
-template<typename T>
-void addToList(python::list &l, const std::list<T> &v) {
-  l.append(python::list(v));
-}
-
-template<typename T>
-void addToList(python::list &l, const std::vector<std::vector<T>> &v) {
-  for(auto &element: v) {
-    addToList(l, element);
+struct vec_to_tuple {
+  typedef std::vector<T> iter;
+  static PyObject *convert(const iter &p) {
+    python::list result;
+    for(auto elem: p)
+      result.append(elem);
+    return boost::python::incref(result.ptr());
   }
-}
 
+  static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
+};
+
+// Helper for convenience.
 template<typename T>
-void addToList(python::list &l, const std::list<std::vector<T>> &v) {
-  for(auto &element: v) {
-    addToList(l, element);
+struct vec_to_python_converter {
+  typedef std::vector<T> iter;
+  vec_to_python_converter() {
+    if (is_python_converter_registered<iter>()) {
+      std::cerr
+          << "Warning: iterable_to_python_converter: Python converter already registered for type "
+          << typeid(iter).name() << std::endl;
+      return;
+    }
+
+    boost::python::to_python_converter<std::vector<T>,
+				       vec_to_tuple<T>, true>();
+
   }
-}
-
-// For simple sequences, i.e. vectors of ints, use
-//  python::list(vect);
-// This is for vectors of vectors and more complicated objects
-template<class T>
-python::list sequenceToList(const std::vector<T> &v) {
-  python::list result;
-  addToList(result, v);
-  return result;
-}
-
-template<class T>
-python::list sequenceToList(const std::list<T> &v) {
-  python::list result;
-  addToList(result, v);
-  return result;
-}
-
-///////////////////////////////////////////////////////////////
-template<typename T>
-void addToTuple(python::list &l, const std::vector<T> &v) {
-  l.append(python::tuple(v));
-}
+};
 
 template<typename T>
-void addToTuple(python::list &l, const std::list<T> &v) {
-  l.append(python::tuple(v));
-}
-
-template<typename T>
-void addToTuple(python::list &l, const std::vector<std::vector<T>> &v) {
-  for(auto &element: v) {
-    addToTuple(l, element);
+struct vecvec_to_tuple {
+  typedef std::vector<std::vector<T>> iter;
+  static PyObject *convert(const iter &p) {
+    python::list result;
+    for(auto &vec: p) {
+      python::list l;
+      for(auto &elem: vec) {
+	l.append(elem);
+      }
+      result.append(python::tuple(l));
+    }
+    return boost::python::incref(result.ptr());
   }
-}
+
+  static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
+};
+
+
+template< typename T>
+struct vecvec_to_python_converter {
+  typedef std::vector<std::vector<T>> iter;
+  vecvec_to_python_converter() {
+    if (is_python_converter_registered<iter>()) {
+      std::cerr
+          << "Warning: iterable_to_python_converter: Python converter already registered for type "
+          << typeid(iter).name() << std::endl;
+      return;
+    }
+
+    boost::python::to_python_converter<iter,
+				       vecvec_to_tuple<T>, true>();
+
+  }
+};
+
+// std::list implementation
+template<typename T>
+struct list_to_tuple {
+  typedef std::list<T> iter;
+  static PyObject *convert(const iter &p) {
+    python::list result;
+    for(auto elem: p)
+      result.append(elem);
+    return boost::python::incref(result.ptr());
+  }
+
+  static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
+};
+
+// Helper for convenience.
+template<typename T>
+struct list_to_python_converter {
+  typedef std::list<T> iter;
+  list_to_python_converter() {
+    if (is_python_converter_registered<iter>()) {
+      std::cerr
+          << "Warning: iterable_to_python_converter: Python converter already registered for type "
+          << typeid(iter).name() << std::endl;
+      return;
+    }
+
+    boost::python::to_python_converter<std::list<T>,
+				       list_to_tuple<T>, true>();
+
+  }
+};
 
 template<typename T>
-void addToTuple(python::list &l, const std::list<std::vector<T>> &v) {
-  for(auto &element: v) {
-    addToTuple(l, element);
+struct listvec_to_tuple {
+  typedef std::list<std::vector<T>> iter;
+  static PyObject *convert(const iter &p) {
+    python::list result;
+    for(auto &vec: p) {
+      python::list l;
+      for(auto &elem: vec) {
+	l.append(elem);
+      }
+      result.append(python::tuple(l));
+    }
+    return boost::python::incref(result.ptr());
   }
-}
 
-// For simple sequences, i.e. vectors of ints, use
-//  python::tuple(vect);
-// This is for vectors of vectors and more complicated objects
-template<class T>
-python::tuple sequenceToTuple(const std::vector<T> &v) {
-  python::list result;
-  addToTuple(result, v);
-  return python::tuple(result);
-}
-
-template<class T>
-python::tuple sequenceToTuple(const std::list<T> &v) {
-  python::list result;
-  addToTuple(result, v);
-  return python::tuple(result);
-}
+  static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
+};
 
 
+template< typename T>
+struct listvec_to_python_converter {
+  typedef std::list<std::vector<T>> iter;
+  listvec_to_python_converter() {
+    if (is_python_converter_registered<iter>()) {
+      std::cerr
+          << "Warning: iterable_to_python_converter: Python converter already registered for type "
+          << typeid(iter).name() << std::endl;
+      return;
+    }
 
+    boost::python::to_python_converter<iter,
+				       listvec_to_tuple<T>, true>();
+
+  }
+};
+
+// python::list -> std::vector, std::list  converter since the indexing suite is wicked slow
+//  (at least for c++->python)
+struct pylist_converter
+{
+
+  template <typename Container>
+  pylist_converter&
+  from_python()
+  {
+    boost::python::converter::registry::push_back(
+      &pylist_converter::convertible,
+      &pylist_converter::construct<Container>,
+      boost::python::type_id<Container>());
+    return *this;
+  }
+
+  static void* convertible(PyObject* object)
+  {
+    return PySequence_Check(object) ? object : NULL;
+  }
+
+  template <typename Container>
+  static void construct(
+    PyObject* object,
+    boost::python::converter::rvalue_from_python_stage1_data* data)
+  {
+    namespace python = boost::python;
+    // Object is a borrowed reference, so create a handle indicting it is
+    // borrowed for proper reference counting.
+    python::handle<> handle(python::borrowed(object));
+    boost::python::object iterable(handle);
+
+    data->convertible = new Container( boost::python::stl_input_iterator< typename Container::value_type >( iterable ),
+				       boost::python::stl_input_iterator< typename Container::value_type >( ) );    
+  }
+};
 #endif

@@ -255,18 +255,27 @@ BOOST_PYTHON_MODULE(rdBase) {
       "Module containing basic definitions for wrapped C++ code\n"
       "\n";
   RDLog::InitLogs();
-  RegisterVectorConverter<int>();
-  RegisterVectorConverter<unsigned>();
-  RegisterVectorConverter<double>();
-  RegisterVectorConverter<std::string>(1);
-  RegisterVectorConverter<std::vector<int>>();
-  RegisterVectorConverter<std::vector<unsigned>>();
-  RegisterVectorConverter<std::vector<double>>();
+  vec_to_python_converter<int>();
+  vec_to_python_converter<unsigned int>();
+  vec_to_python_converter<double>();
+  vec_to_python_converter<std::string>();
+
+  vecvec_to_python_converter<int>();
+  vecvec_to_python_converter<unsigned int>();
+  vecvec_to_python_converter<double>();
+  vecvec_to_python_converter<std::string>();
+
   path_converter();
 
-  RegisterListConverter<int>();
-  RegisterListConverter<std::vector<int>>();
-  RegisterListConverter<std::vector<unsigned int>>();
+  // can add std::list<int> ... if necessary as well
+  pylist_converter()
+    .from_python<std::vector<int>>()
+    .from_python<std::vector<unsigned int>>();
+
+  list_to_python_converter<int>();
+  list_to_python_converter<unsigned>();
+  listvec_to_python_converter<int>();
+  listvec_to_python_converter<unsigned>();
 
   python::register_exception_translator<IndexErrorException>(
       &translate_index_error);
