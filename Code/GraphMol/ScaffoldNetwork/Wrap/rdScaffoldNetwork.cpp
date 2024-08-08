@@ -68,6 +68,14 @@ struct scaffoldnetwork_pickle_suite : rdkit_pickle_suite {
 };
 #endif
 
+StringVectorRef getNodes(RDKit::ScaffoldNetwork::ScaffoldNetwork &sn) {
+  return StringVectorRef(sn.nodes);
+}
+
+UnsignedIntVectorRef getCounts(RDKit::ScaffoldNetwork::ScaffoldNetwork &sn) {
+  return UnsignedIntVectorRef(sn.counts);
+}
+
 BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
   python::scope().attr("__doc__") =
       "Module containing functions for creating a Scaffold Network";
@@ -149,9 +157,9 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       // enable pickle support
       .def_pickle(scaffoldnetwork_pickle_suite())
 #endif
-      .def_readonly("nodes", &ScaffoldNetwork::ScaffoldNetwork::nodes,
+      .add_property("nodes", &getNodes,
                     "the sequence of SMILES defining the nodes")
-      .def_readonly("counts", &ScaffoldNetwork::ScaffoldNetwork::counts,
+      .add_property("counts", &getCounts,
                     "the number of times each node was encountered while "
                     "building the network.")
       .def_readonly("molCounts", &ScaffoldNetwork::ScaffoldNetwork::molCounts,

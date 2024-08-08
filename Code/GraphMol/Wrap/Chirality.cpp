@@ -16,8 +16,13 @@
 #include <RDBoost/Wrap.h>
 
 namespace python = boost::python;
-
 namespace RDKit {
+namespace {
+  UnsignedIntVectorRef getControllingAtoms(Chirality::StereoInfo &st) {
+    return UnsignedIntVectorRef(st.controllingAtoms);
+  }
+}
+
 struct chirality_wrapper {
   static void wrap() {
     python::enum_<Chirality::StereoType>("StereoType")
@@ -55,9 +60,9 @@ struct chirality_wrapper {
                        "stereo descriptor")
         .def_readwrite("permutation", &Chirality::StereoInfo::permutation,
                        "permutation index (used for non-tetrahedral chirality)")
-        .def_readonly("controllingAtoms",
-                      &Chirality::StereoInfo::controllingAtoms,
-                      "indices of the atoms controlling the stereo");
+        .add_property("controllingAtoms", &getControllingAtoms,
+		      "indices of the atoms controlling the stereo"
+		      );
   };
 };
 }  // namespace RDKit

@@ -370,4 +370,243 @@ struct rdkit_pickle_suite : python::pickle_suite {
   static bool getstate_manages_dict() { return true; }
 };
 
+// vec_to_tuple - converts a vector<T> to a tuple
+// vecvec_to_tuple - converts a vector<vector<T>> to a tuple
+// list_to_tuple - converts a std::list<T> to a tuple
+// listvec_to_tuple - converts a list<vec<T>> to tuple
+
+// From boost::python examples
+template<typename T>
+struct vec_to_tuple {
+  typedef std::vector<T> iter;
+  static PyObject *convert(const iter &p) {
+    python::list result;
+    for(auto elem: p)
+      result.append(elem);
+    return boost::python::incref(python::tuple(result).ptr());
+  }
+
+  static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
+};
+
+// Helper for convenience.
+template<typename T>
+struct vec_to_python_converter {
+  typedef std::vector<T> iter;
+  vec_to_python_converter() {
+    if (is_python_converter_registered<iter>()) {
+      std::cerr
+          << "Warning: iterable_to_python_converter: Python converter already registered for type "
+          << typeid(iter).name() << std::endl;
+      return;
+    }
+
+    boost::python::to_python_converter<std::vector<T>,
+				       vec_to_tuple<T>, true>();
+
+  }
+};
+
+template<typename T>
+struct vecvec_to_tuple {
+  typedef std::vector<std::vector<T>> iter;
+  static PyObject *convert(const iter &p) {
+    python::list result;
+    for(auto &vec: p) {
+      python::list l;
+      for(auto &elem: vec) {
+	l.append(elem);
+      }
+      result.append(python::tuple(l));
+    }
+    return boost::python::incref(result.ptr());
+  }
+
+  static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
+};
+
+
+template< typename T>
+struct vecvec_to_python_converter {
+  typedef std::vector<std::vector<T>> iter;
+  vecvec_to_python_converter() {
+    if (is_python_converter_registered<iter>()) {
+      std::cerr
+          << "Warning: iterable_to_python_converter: Python converter already registered for type "
+          << typeid(iter).name() << std::endl;
+      return;
+    }
+
+    boost::python::to_python_converter<iter,
+				       vecvec_to_tuple<T>, true>();
+
+  }
+};
+
+// std::list implementation
+template<typename T>
+struct list_to_tuple {
+  typedef std::list<T> iter;
+  static PyObject *convert(const iter &p) {
+    python::list result;
+    for(auto elem: p)
+      result.append(elem);
+    return boost::python::incref(python::tuple(result).ptr());
+  }
+
+  static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
+};
+
+// Helper for convenience.
+template<typename T>
+struct list_to_python_converter {
+  typedef std::list<T> iter;
+  list_to_python_converter() {
+    if (is_python_converter_registered<iter>()) {
+      std::cerr
+          << "Warning: iterable_to_python_converter: Python converter already registered for type "
+          << typeid(iter).name() << std::endl;
+      return;
+    }
+
+    boost::python::to_python_converter<std::list<T>,
+				       list_to_tuple<T>, true>();
+
+  }
+};
+
+template<typename T>
+struct listvec_to_tuple {
+  typedef std::list<std::vector<T>> iter;
+  static PyObject *convert(const iter &p) {
+    python::list result;
+    for(auto &vec: p) {
+      python::list l;
+      for(auto &elem: vec) {
+	l.append(elem);
+      }
+      result.append(python::tuple(l));
+    }
+    return boost::python::incref(result.ptr());
+  }
+
+  static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
+};
+
+
+template< typename T>
+struct listvec_to_python_converter {
+  typedef std::list<std::vector<T>> iter;
+  listvec_to_python_converter() {
+    if (is_python_converter_registered<iter>()) {
+      std::cerr
+          << "Warning: iterable_to_python_converter: Python converter already registered for type "
+          << typeid(iter).name() << std::endl;
+      return;
+    }
+
+    boost::python::to_python_converter<iter,
+				       listvec_to_tuple<T>, true>();
+
+  }
+};
+
+// python::list -> std::vector, std::list  converter since the indexing suite is wicked slow
+//  (at least for c++->python)
+struct pylist_converter
+{
+
+  template <typename Container>
+  pylist_converter&
+  from_python()
+  {
+    boost::python::converter::registry::push_back(
+      &pylist_converter::convertible,
+      &pylist_converter::construct<Container>,
+      boost::python::type_id<Container>());
+    return *this;
+  }
+
+  static void* convertible(PyObject* object)
+  {
+    return PySequence_Check(object) ? object : NULL;
+  }
+
+  template <typename Container>
+  static void construct(
+    PyObject* object,
+    boost::python::converter::rvalue_from_python_stage1_data* data)
+  {
+    namespace python = boost::python;
+    // Object is a borrowed reference, so create a handle indicting it is
+    // borrowed for proper reference counting.
+    python::handle<> handle(python::borrowed(object));
+    boost::python::object iterable(handle);
+
+    data->convertible = new Container( boost::python::stl_input_iterator< typename Container::value_type >( iterable ),
+				       boost::python::stl_input_iterator< typename Container::value_type >( ) );    
+  }
+};
+
+// Return these from helper funtions as
+//  IntVectorRref &foo()...
+template<typename T>
+class VecWrap {
+public:
+  std::vector<T> *container;
+  bool owns_container=false;
+  // Simulate std::vector...
+  typedef typename std::vector<T>::value_type value_type;
+  typedef typename std::vector<T>::difference_type difference_type;
+  typedef typename std::vector<T>::size_type size_type;
+  typedef typename std::vector<T>::const_reference const_reference;
+  typedef typename std::vector<T>::reference reference;
+  typedef typename std::vector<T>::const_iterator const_iterator;
+  typedef typename std::vector<T>::iterator iterator;
+  typedef typename std::vector<T>::iterator InputIterator;
+
+  VecWrap() : container(nullptr) {}
+  VecWrap(std::vector<T> &vector) : container(&vector) {}
+  VecWrap(const VecWrap<T>& rhs) : container(&(*rhs.container)) {};
+  VecWrap(VecWrap<T> &&rhs) : container(&(*rhs.container)) {} // prob don't need
+  VecWrap(InputIterator first, InputIterator last) : container(new std::vector<T>(first, last)),
+						     owns_container(true) {
+    
+  }
+
+  ~VecWrap() {
+    if (owns_container)
+      delete container;
+  }
+  bool operator==(const VecWrap<T>& rhs) const { return *container == *rhs.container; }
+  bool operator!=(const VecWrap<T>& rhs) const { return *container != *rhs.container; }
+  bool operator<(const VecWrap<T>& rhs) const  { return *container < *rhs.container; }
+  bool operator==(const std::vector<T>& rhs) const { return *container == rhs; }
+  bool operator!=(const std::vector<T>& rhs) const { return *container != rhs; }
+  bool operator<(const std::vector<T>& rhs) const { return *container < rhs; }
+    
+  // read-only methods...
+  inline bool empty() const { return container->empty(); }
+  inline const_iterator begin() const { return container->begin(); }
+  inline const_iterator end() const { return container->end(); }
+  inline size_type size() const { return container->size(); }
+  inline const_reference operator[] (size_type n) const { return (*container)[n]; }
+  // write methods...
+  inline iterator begin() { return container->begin(); }
+  inline iterator end() { return container->end(); }
+  inline reference operator[] (size_type n) { return (*container)[n]; }
+  inline iterator insert (const_iterator position, const value_type& val) { return container->insert(position, val); }
+  inline iterator insert (const_iterator position, InputIterator first, InputIterator last) { return container->insert(position, first, last); }
+  inline void push_back (const value_type& val) { return container->push_back(val); }
+  inline void push_back (value_type&& val) { return container->push_back(val); }
+  inline iterator erase (const_iterator position) { return container->erase(position); }
+  inline iterator erase (const_iterator first, const_iterator last) { return container->erase(first, last); }
+
+private:
+
+};
+
+typedef  VecWrap<int> IntVectorRef;
+typedef  VecWrap<unsigned int> UnsignedIntVectorRef;
+typedef  VecWrap<std::string> StringVectorRef;
 #endif
