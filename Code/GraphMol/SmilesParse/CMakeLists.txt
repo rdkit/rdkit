@@ -1,9 +1,23 @@
-if(RDK_USE_FLEXBISON)
-  FIND_PACKAGE(BISON)
-  FIND_PACKAGE(FLEX)
+set(FLEX_VERSION 2.6.4)
+
+if (RDK_USE_FLEXBISON)
+    FIND_PACKAGE(BISON 3.8.2 REQUIRED)
+    FIND_PACKAGE(FLEX ${FLEX_VERSION} REQUIRED)
 else(RDK_USE_FLEXBISON)
-  set(FLEX_EXECUTABLE "")
-  set(BISON_EXECUTABLE "")
+    set(FLEX_EXECUTABLE "")
+    set(BISON_EXECUTABLE "")
+
+    # we need the FlexLexer.h header for the C++ Scanner if with or without the
+    # RDKIT_USE_FLEX_BISON option
+    Include(FetchContent)
+
+    FetchContent_Declare(flex
+                         GIT_REPOSITORY https://github.com/westes/flex.git
+                         GIT_TAG       v${FLEX_VERSION})
+    FetchContent_MakeAvailable(flex)
+
+    set(FLEX_INCLUDE_DIR ${flex_SOURCE_DIR}/src)
+
 endif(RDK_USE_FLEXBISON)
 
 if(MSVC)
@@ -18,23 +32,28 @@ endif()
 if(FLEX_EXECUTABLE)
   FLEX_TARGET(SmilesL smiles.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp
-             COMPILE_FLAGS "-Pyysmiles_" )
+             COMPILE_FLAGS "-Pyysmiles_ --noline" )
   FLEX_TARGET(SmartsL smarts.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp
               COMPILE_FLAGS "-Pyysmarts_" )
   SET(FLEX_OUTPUT_FILES ${FLEX_SmilesL_OUTPUTS} ${FLEX_SmartsL_OUTPUTS})
+
 else(FLEX_EXECUTABLE)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp COPYONLY)
   FILE(GLOB FLEX_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/lex.*.cpp")
+
 endif(FLEX_EXECUTABLE)
+
+# makes FlexLexer.h discoverable
+include_directories(${FLEX_INCLUDE_DIR})
 
 if(BISON_EXECUTABLE)
   BISON_TARGET(SmilesY smiles.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp
-               COMPILE_FLAGS "-pyysmiles_" )
+               COMPILE_FLAGS "-pyysmiles_ --no-lines" )
   BISON_TARGET(SmartsY smarts.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp
                COMPILE_FLAGS "-pyysmarts_" )
@@ -48,6 +67,8 @@ else(BISON_EXECUTABLE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp COPYONLY)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles_location.tab.hpp.cmake
+                 ${CMAKE_CURRENT_SOURCE_DIR}/smiles_location.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.hpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp.cmake
