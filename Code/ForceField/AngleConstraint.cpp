@@ -17,7 +17,6 @@
 #endif
 
 namespace ForceFields {
-constexpr double DEG2RAD = M_PI / 180.0;
 constexpr double RAD2DEG = 180.0 / M_PI;
 AngleConstraintContrib::AngleConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, unsigned int idx3,
@@ -128,7 +127,7 @@ void AngleConstraintContrib::getGrad(double *pos, double *grad) const {
   double dE_dTheta = 2.0 * RAD2DEG * d_forceConstant * angleTerm;
 
   RDGeom::Point3D rp = r[1].crossProduct(r[0]);
-  double prefactor = dE_dTheta / (std::max)(1.0e-5, rp.length());
+  double prefactor = dE_dTheta / std::max(1.0e-5, rp.length());
   double t[2] = {-prefactor / rLengthSq[0], prefactor / rLengthSq[1]};
   RDGeom::Point3D dedp[3];
   dedp[0] = r[0].crossProduct(rp) * t[0];
