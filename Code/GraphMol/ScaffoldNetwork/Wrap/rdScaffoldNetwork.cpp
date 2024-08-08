@@ -68,12 +68,12 @@ struct scaffoldnetwork_pickle_suite : rdkit_pickle_suite {
 };
 #endif
 
-std::vector<std::string> getNodes(const RDKit::ScaffoldNetwork::ScaffoldNetwork &sn) {
-  return sn.nodes;
+StringVectorRef getNodes(RDKit::ScaffoldNetwork::ScaffoldNetwork &sn) {
+  return StringVectorRef(sn.nodes);
 }
 
-std::vector<unsigned int> getCounts(const RDKit::ScaffoldNetwork::ScaffoldNetwork &sn) {
-  return sn.counts;
+UnsignedIntVectorRef getCounts(RDKit::ScaffoldNetwork::ScaffoldNetwork &sn) {
+  return UnsignedIntVectorRef(sn.counts);
 }
 
 BOOST_PYTHON_MODULE(rdScaffoldNetwork) {

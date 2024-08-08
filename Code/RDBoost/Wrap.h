@@ -383,7 +383,7 @@ struct vec_to_tuple {
     python::list result;
     for(auto elem: p)
       result.append(elem);
-    return boost::python::incref(result.ptr());
+    return boost::python::incref(python::tuple(result).ptr());
   }
 
   static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
@@ -451,7 +451,7 @@ struct list_to_tuple {
     python::list result;
     for(auto elem: p)
       result.append(elem);
-    return boost::python::incref(result.ptr());
+    return boost::python::incref(python::tuple(result).ptr());
   }
 
   static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
@@ -547,4 +547,66 @@ struct pylist_converter
 				       boost::python::stl_input_iterator< typename Container::value_type >( ) );    
   }
 };
+
+// Return these from helper funtions as
+//  IntVectorRref &foo()...
+template<typename T>
+class VecWrap {
+public:
+  std::vector<T> *container;
+  bool owns_container=false;
+  // Simulate std::vector...
+  typedef typename std::vector<T>::value_type value_type;
+  typedef typename std::vector<T>::difference_type difference_type;
+  typedef typename std::vector<T>::size_type size_type;
+  typedef typename std::vector<T>::const_reference const_reference;
+  typedef typename std::vector<T>::reference reference;
+  typedef typename std::vector<T>::const_iterator const_iterator;
+  typedef typename std::vector<T>::iterator iterator;
+  typedef typename std::vector<T>::iterator InputIterator;
+
+  VecWrap() : container(nullptr) {}
+  VecWrap(std::vector<T> &vector) : container(&vector) {}
+  VecWrap(const VecWrap<T>& rhs) : container(&(*rhs.container)) {};
+  VecWrap(VecWrap<T> &&rhs) : container(&(*rhs.container)) {} // prob don't need
+  VecWrap(InputIterator first, InputIterator last) : container(new std::vector<T>(first, last)),
+						     owns_container(true) {
+    
+  }
+
+  ~VecWrap() {
+    if (owns_container)
+      delete container;
+  }
+  bool operator==(const VecWrap<T>& rhs) const { return *container == *rhs.container; }
+  bool operator!=(const VecWrap<T>& rhs) const { return *container != *rhs.container; }
+  bool operator<(const VecWrap<T>& rhs) const  { return *container < *rhs.container; }
+  bool operator==(const std::vector<T>& rhs) const { return *container == rhs; }
+  bool operator!=(const std::vector<T>& rhs) const { return *container != rhs; }
+  bool operator<(const std::vector<T>& rhs) const { return *container < rhs; }
+    
+  // read-only methods...
+  inline bool empty() const { return container->empty(); }
+  inline const_iterator begin() const { return container->begin(); }
+  inline const_iterator end() const { return container->end(); }
+  inline size_type size() const { return container->size(); }
+  inline const_reference operator[] (size_type n) const { return (*container)[n]; }
+  // write methods...
+  inline iterator begin() { return container->begin(); }
+  inline iterator end() { return container->end(); }
+  inline reference operator[] (size_type n) { return (*container)[n]; }
+  inline iterator insert (const_iterator position, const value_type& val) { return container->insert(position, val); }
+  inline iterator insert (const_iterator position, InputIterator first, InputIterator last) { return container->insert(position, first, last); }
+  inline void push_back (const value_type& val) { return container->push_back(val); }
+  inline void push_back (value_type&& val) { return container->push_back(val); }
+  inline iterator erase (const_iterator position) { return container->erase(position); }
+  inline iterator erase (const_iterator first, const_iterator last) { return container->erase(first, last); }
+
+private:
+
+};
+
+typedef  VecWrap<int> IntVectorRef;
+typedef  VecWrap<unsigned int> UnsignedIntVectorRef;
+typedef  VecWrap<std::string> StringVectorRef;
 #endif

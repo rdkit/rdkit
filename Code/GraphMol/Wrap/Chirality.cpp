@@ -18,8 +18,8 @@
 namespace python = boost::python;
 namespace RDKit {
 namespace {
-  std::vector<unsigned int> controllingAtoms(const Chirality::StereoInfo &st) {
-    return st.controllingAtoms;
+  UnsignedIntVectorRef getControllingAtoms(Chirality::StereoInfo &st) {
+    return UnsignedIntVectorRef(st.controllingAtoms);
   }
 }
 
@@ -60,9 +60,9 @@ struct chirality_wrapper {
                        "stereo descriptor")
         .def_readwrite("permutation", &Chirality::StereoInfo::permutation,
                        "permutation index (used for non-tetrahedral chirality)")
-        .add_property("controllingAtoms",
-                      &controllingAtoms,
-                      "indices of the atoms controlling the stereo");
+        .add_property("controllingAtoms", &getControllingAtoms,
+		      "indices of the atoms controlling the stereo"
+		      );
   };
 };
 }  // namespace RDKit
