@@ -480,7 +480,7 @@ TEST_CASE("CDXML") {
     std::vector<std::string> expected = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
-        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |o1:8,12|"};
+        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |a:3,o1:8,12|"};
     auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;

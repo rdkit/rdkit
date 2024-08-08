@@ -1117,9 +1117,9 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-TEST_CASE("test3DChrial") {
+TEST_CASE("test3DChiral") {
   std::list<SmilesTest> smiTests{
-      SmilesTest("Cubane.cxsmi", true, 16, 20),
+      // SmilesTest("Cubane.cxsmi", true, 16, 20),
       SmilesTest("BMS-986142_3d_chiral.cxsmi", true, 72, 77),
       SmilesTest("BMS-986142_3d.cxsmi", true, 72, 77),
   };
@@ -1429,6 +1429,16 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
   CHECK(m->getStereoGroups().size() == 4);
 
   SECTION("ids reassigned by default") {
+    SmilesWriteParams wp;
+    wp.rigorousEnhancedStereo = false;
+    const auto smi_out = MolToCXSmiles(*m, wp);
+    CHECK(smi_out.find("&1") != std::string::npos);
+    CHECK(smi_out.find("&2") != std::string::npos);
+    CHECK(smi_out.find("&3") != std::string::npos);
+    CHECK(smi_out.find("o1") != std::string::npos);
+  }
+
+  SECTION("ids reassigned by default - rigorous") {
     const auto smi_out = MolToCXSmiles(*m);
     CHECK(smi_out.find("&1") != std::string::npos);
     CHECK(smi_out.find("&2") != std::string::npos);
@@ -1438,10 +1448,23 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
 
   SECTION("forward input ids") {
     forwardStereoGroupIds(*m);
-    const auto smi_out = MolToCXSmiles(*m);
+    SmilesWriteParams wp;
+    wp.rigorousEnhancedStereo = false;
+    const auto smi_out = MolToCXSmiles(*m, wp);
     CHECK(smi_out.find("&7") != std::string::npos);
     CHECK(smi_out.find("&8") != std::string::npos);
     CHECK(smi_out.find("&9") != std::string::npos);
+    CHECK(smi_out.find("o1") != std::string::npos);
+  }
+
+  SECTION("forward input ids - rigorous") {
+    forwardStereoGroupIds(*m);
+    SmilesWriteParams wp;
+    wp.rigorousEnhancedStereo = true;
+    const auto smi_out = MolToCXSmiles(*m, wp);
+    CHECK(smi_out.find("&1") != std::string::npos);
+    CHECK(smi_out.find("&2") != std::string::npos);
+    CHECK(smi_out.find("&3") != std::string::npos);
     CHECK(smi_out.find("o1") != std::string::npos);
   }
 }

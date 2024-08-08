@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "SmilesWrite.h"
+#include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
@@ -18,6 +19,8 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <boost/algorithm/string.hpp>
+
 #include <RDGeneral/utils.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -220,8 +223,10 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
   }
   // this was originally only done for the organic subset,
   // applying it to other atom-types is a fix for Issue 3152751:
-  // Only accept for atom->getAtomicNum() in [5, 6, 7, 8, 14, 15, 16, 33, 34, 52]
-  if (!params.doKekule && atom->getIsAromatic() && symb[0] >= 'A' && symb[0] <= 'Z') {
+  // Only accept for atom->getAtomicNum() in [5, 6, 7, 8, 14, 15, 16, 33, 34,
+  // 52]
+  if (!params.doKekule && atom->getIsAromatic() && symb[0] >= 'A' &&
+      symb[0] <= 'Z') {
     switch (atom->getAtomicNum()) {
       case 5:
       case 6:
@@ -431,7 +436,7 @@ std::string FragmentSmilesConstruct(
   std::list<unsigned int> ringClosuresToErase;
 
   if (params.canonical && params.doIsomericSmiles) {
-    Canon::canonicalizeEnhancedStereo(mol, &ranks);
+    RDKit::Canon::canonicalizeEnhancedStereo(mol, &ranks);
   }
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
@@ -580,8 +585,9 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     // but that should not be:
     if (params.doIsomericSmiles) {
       tmol->setProp(common_properties::_doIsoSmiles, 1);
+
       if (!tmol->hasProp(common_properties::_StereochemDone)) {
-        MolOps::assignStereochemistry(*tmol, true);
+        MolOps::assignStereochemistry(*tmol, params.cleanStereo);
       }
     }
     if (!doingCXSmiles) {
@@ -644,11 +650,38 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
           unsigned int rankNum = 0;
           atom->getPropIfPresent("_canonicalRankingNumber", rankNum);
           ranks[atom->getIdx()] = rankNum;
-        }
+        };
       } else {
-        bool breakTies = true;
-        Canon::rankMolAtoms(*tmol, ranks, breakTies, params.doIsomericSmiles,
-                            params.doIsomericSmiles);
+        bool breakTies = false;
+        const bool includeChiralPresence = false;
+        bool includeIsotopes = false;
+        bool includeChirality = false;
+        bool includeStereoGroups = false;
+        bool useNonStereoRanks = false;
+        const bool includeAtomMaps = true;
+        if (params.useStereoToBreakTies) {
+          // get the ranking WITHOUT stereochemistry, and save them
+          // this is used in RigourousEnhancedStereo to make sure all
+          // smiles generatesd have the same basic smiles structure
+          // except tot stereochemistry
+
+          Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
+                              includeIsotopes, includeAtomMaps,
+                              useNonStereoRanks, includeChiralPresence,
+                              includeStereoGroups);
+          for (auto atom : tmol->atoms()) {
+            atom->setProp("_canonicalRankingNumber", ranks[atom->getIdx()]);
+          }
+        }
+        breakTies = true;
+        includeChirality = params.doIsomericSmiles;
+        useNonStereoRanks = params.useStereoToBreakTies;
+        includeIsotopes = params.doIsomericSmiles;
+        includeStereoGroups = params.doIsomericSmiles;
+
+        Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
+                            includeIsotopes, includeAtomMaps, useNonStereoRanks,
+                            includeChiralPresence, includeStereoGroups);
       }
     } else {
       std::iota(ranks.begin(), ranks.end(), 0);
@@ -712,7 +745,10 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       tmp[ti] = std::make_tuple(vfragsmi[ti], allAtomOrdering[ti],
                                 allBondOrdering[ti]);
     }
-    std::sort(tmp.begin(), tmp.end());
+
+    if (!params.doNotSortFragments) {
+      std::sort(tmp.begin(), tmp.end());
+    }
 
     for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
       result += std::get<0>(tmp[ti]);
@@ -748,28 +784,43 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
               true);
   return result;
 }
-}  // namespace detail
-}  // namespace SmilesWrite
-std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
-  bool doingCXSmiles = false;
-  return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
+
+std::string MolToCXSmiles_internal(ROMol &romol,
+                                   const SmilesWriteParams &params,
+                                   std::uint32_t flags,
+                                   RestoreBondDirOption restoreBondDirs) {
+  std::unique_ptr<RWMol> trwmol(new RWMol(romol));
+
+  return MolToCXSmiles_internal(*trwmol.get(), params, flags, restoreBondDirs);
 }
 
-std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
-                          std::uint32_t flags,
-                          RestoreBondDirOption restoreBondDirs) {
-  RWMol trwmol(romol);
+std::string MolToCXSmiles_internal(RWMol *rwmol,
+                                   const SmilesWriteParams &params,
+                                   std::uint32_t flags,
+                                   RestoreBondDirOption restoreBondDirs) {
+  // std::unique_ptr<RWMol> rwmol(new RWMol(romol));
 
   bool doingCXSmiles = true;
 
-  auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles);
+  auto res = SmilesWrite::detail::MolToSmiles(*rwmol, params, doingCXSmiles);
   if (res.empty()) {
     return res;
   }
+
+  std::vector<unsigned int> atomOrder =
+      rwmol->getProp<std::vector<unsigned int>>(
+          common_properties::_smilesAtomOutputOrder);
+  rwmol->setProp(common_properties::_smilesAtomOutputOrder, atomOrder, true);
+
+  std::vector<unsigned int> bondOrder =
+      rwmol->getProp<std::vector<unsigned int>>(
+          common_properties::_smilesBondOutputOrder);
+  rwmol->setProp(common_properties::_smilesBondOutputOrder, bondOrder, true);
+
   if (restoreBondDirs == RestoreBondDirOptionTrue) {
-    RDKit::Chirality::reapplyMolBlockWedging(trwmol);
+    RDKit::Chirality::reapplyMolBlockWedging(*rwmol);
   } else if (restoreBondDirs == RestoreBondDirOptionClear) {
-    for (auto bond : trwmol.bonds()) {
+    for (auto bond : rwmol->bonds()) {
       if (!canHaveDirection(*bond)) {
         continue;
       }
@@ -789,11 +840,40 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
                SmilesWrite::CXSmilesFields::CX_BOND_CFG);
   }
 
-  auto cxext = SmilesWrite::getCXExtensions(trwmol, flags);
+  if (params.cleanStereo) {
+    if (rwmol->needsUpdatePropertyCache()) {
+      rwmol->updatePropertyCache(false);
+    }
+    MolOps::assignStereochemistry(*rwmol, true);
+    Chirality::cleanupStereoGroups(*rwmol);
+  }
+
+  auto cxext = SmilesWrite::getCXExtensions(*rwmol, flags);
   if (!cxext.empty()) {
     res += " " + cxext;
   }
   return res;
+}
+
+}  // namespace detail
+}  // namespace SmilesWrite
+
+std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
+  bool doingCXSmiles = false;
+  return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
+}
+
+std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
+                          std::uint32_t flags,
+                          RestoreBondDirOption restoreBondDirs) {
+  std::unique_ptr<RWMol> trwmol(new RWMol(romol));
+
+  if (params.canonical && params.rigorousEnhancedStereo) {
+    RDKit::Canon::canonicalizeStereoGroups(trwmol);
+  }
+
+  return SmilesWrite::detail::MolToCXSmiles_internal(trwmol.get(), params,
+                                                     flags, restoreBondDirs);
 }
 
 std::vector<std::string> MolToRandomSmilesVect(
@@ -1001,4 +1081,19 @@ std::string MolFragmentToCXSmiles(const ROMol &mol,
   }
   return res;
 }
+
+namespace {
+
+enum class ChiralItemType {
+  ATOM,
+  BOND,
+};
+class ChiralItem {
+ public:
+  ChiralItemType chiralAtomType;
+  unsigned int id;
+};
+
+}  // namespace
+
 }  // namespace RDKit

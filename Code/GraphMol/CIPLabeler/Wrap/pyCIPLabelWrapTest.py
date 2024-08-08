@@ -2,7 +2,6 @@ import unittest
 
 from rdkit import Chem
 
-
 class TestCase(unittest.TestCase):
 
   def testLabelAtomsList(self):

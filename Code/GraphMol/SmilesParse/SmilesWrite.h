@@ -16,6 +16,7 @@
 #include <memory>
 #include <cstdint>
 #include <limits>
+#include <GraphMol/RWMol.h>
 
 namespace RDKit {
 class Atom;
@@ -30,12 +31,22 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
                             is not canonical and that this will thrown an
                             exception if the molecule cannot be kekulized. */
   bool canonical = true; /**< generate canonical SMILES */
+  bool cleanStereo = true;       /**< generate canonical SMILES */
   bool allBondsExplicit = false; /**< include symbols for all bonds */
   bool allHsExplicit = false;    /**< provide hydrogen counts for every atom */
   bool doRandom = false; /**< randomize the output order. The resulting SMILES
                             is not canonical */
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
                              atom. The resulting SMILES is not canonical */
+  bool rigorousEnhancedStereo = true; /**< if true, use a more rigorous
+             treatment of enhanced stereochemisty
+             is performed */
+  bool useStereoToBreakTies =
+      false; /**< if true, ranks are determined without stereo,
+then again using the previous ranks and the stereo information */
+  bool doNotSortFragments = false; /**< if true, the fragments will not be
+                                      sorted before generating the SMILES - used
+                                      in canonlication of enahnanced stereo */
   bool includeDativeBonds =
       true; /**< include the RDKit extension for dative bonds. Otherwise dative
                bonds will be written as single bonds*/
@@ -358,6 +369,12 @@ inline std::string MolFragmentToCXSmiles(
   return MolFragmentToCXSmiles(mol, ps, atomsToUse, bondsToUse, atomSymbols,
                                bondSymbols);
 }
+
+// ! \brief returns canonical RWMol including rationalization of stereo groups
+/*!
+  \param mol : the molecule in question.
+
+ */
 
 void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
                                      const std::string &details_json);

@@ -437,6 +437,10 @@ RDKIT_GRAPHMOL_EXPORT void adjustQueryProperties(
 RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
     const ROMol &mol, const std::vector<unsigned int> &newOrder);
 
+RDKIT_GRAPHMOL_EXPORT void getAtomsToInvert(
+    const ROMol &mol, const std::vector<unsigned int> &newOrder,
+    std::vector<unsigned int> &atomsToInvert);
+
 //! @}
 
 //! \name Sanitization

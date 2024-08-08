@@ -32,6 +32,9 @@ typedef enum {
   FIND_RING_TYPE_FAST,
   FIND_RING_TYPE_SSSR,
   FIND_RING_TYPE_SYMM_SSSR,
+  FIND_RING_TYPE_SYMM_SSSR_DUMMY,  // for use with the canonicalization of
+                                   // SMARTS - no actually ring information is
+                                   // stored
   FIND_RING_TYPE_OTHER_OR_UNKNOWN
 } FIND_RING_TYPE;
 
@@ -71,6 +74,18 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
 
   bool isSymmSssr() const {
     return df_init && df_find_type_type == FIND_RING_TYPE_SYMM_SSSR;
+  }
+
+  bool isSymmSssrOrDummy() const {
+    return (df_init && (df_find_type_type == FIND_RING_TYPE_SYMM_SSSR ||
+                        df_find_type_type == FIND_RING_TYPE_SYMM_SSSR_DUMMY));
+  }
+
+  bool isFindFastOrBetterOrDummy() const {
+    return df_init && (df_find_type_type == FIND_RING_TYPE_FAST ||
+                       df_find_type_type == FIND_RING_TYPE_SSSR ||
+                       df_find_type_type == FIND_RING_TYPE_SYMM_SSSR ||
+                       df_find_type_type == FIND_RING_TYPE_SYMM_SSSR_DUMMY);
   }
 
   //! adds a ring to our data
