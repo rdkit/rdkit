@@ -1577,6 +1577,10 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      &RDKit::SmilesWriteParams::rigorousEnhancedStereo,
                      "Rigorous treatment of unique enhanced stereo groups")
       .def_readwrite(
+          "rigorousEnhancedStereoIncludeAbsGroups",
+          &RDKit::SmilesWriteParams::rigorousEnhancedStereoIncludeAbsGroups,
+          "Rigorous treatment incluide Absoute groups")
+      .def_readwrite(
           "cleanStereo", &RDKit::SmilesWriteParams::cleanStereo,
           "chiral centers are removed if they have duplicate sidechains")
       .def_readwrite("allBondsExplicit",

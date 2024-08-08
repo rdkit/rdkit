@@ -143,7 +143,8 @@ RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void canonicalizeEnhancedStereo(
     ROMol &mol, const std::vector<unsigned int> *atomRanks = nullptr);
 
-void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol);
+RDKIT_GRAPHMOL_EXPORT void canonicalizeStereoGroups(
+    std::unique_ptr<RWMol> &mol, bool outputAbsoluteGroup = true);
 
 }  // end of namespace Canon
 }  // end of namespace RDKit

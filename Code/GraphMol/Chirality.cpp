@@ -3817,7 +3817,7 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
   // without)
   const bool breakTies = false;
   const bool includeChiralPresence = true;
-  const bool includeStereoGroups = true;
+  const bool includeStereoGroups = false;
   const bool useNonStereoRanks = false;
   bool includeChirality = true;
   std::vector<unsigned int> chiralRanks;

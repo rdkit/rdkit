@@ -1672,14 +1672,42 @@ bool doTwoBondsVaryTheSame(const OrderedSet<RankedValue> &allRankedValues,
 
 void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
                                        RDKit::StereoGroupType stereoGroupType,
-                                       bool saveNewAbsoluteGroups = true) {
+                                       bool outputAbsoluteGroups = true) {
   // this expanded a mol with stereo groups to a vector of values that have no
   // stereo groups, then determines the stereo groups from that set
   //
 
-  auto origAtereoGroups =
+  auto origStereoGroups =
       mol->getStereoGroups();  // to retorore mol is an error is detected
   try {
+    std::vector<unsigned int> ranks(mol->getNumAtoms());
+
+    mol->updatePropertyCache(true);
+
+    bool breakTies = false;
+    bool includeChirality = false;
+    const bool includeIsotopes = false;
+    const bool includeAtomMaps = true;
+    bool useNonStereoRanks = false;
+    const bool includeChiralPresence = true;
+    bool includeStereoGroups = false;
+
+    // get the non-stereo rankings - these do NOT change as we iterate over the
+    // enhanced possibilties.  They also do not change if the re-entrant call is
+    // mae
+
+    std::string dummyProp;
+    if (!mol->getAtomWithIdx(0)->getPropIfPresent("_canonicalRankingNumber",
+                                                  dummyProp)) {
+      Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
+                          includeIsotopes, includeAtomMaps, useNonStereoRanks,
+                          includeChiralPresence, includeStereoGroups);
+
+      for (auto atom : mol->atoms()) {
+        atom->setProp("_canonicalRankingNumber", ranks[atom->getIdx()]);
+      }
+    }
+
     OrderedSet<RankedValue> allRankedValues;
 
     std::vector<StereoGroup> groupsToProcess;
@@ -1734,26 +1762,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
                                           false);
       }
 
-      unsigned int nAtoms = newMol->getNumAtoms();
-      std::vector<unsigned int> ranks(nAtoms);
-
       newMol->updatePropertyCache(true);
-
-      bool breakTies = false;
-      bool includeChirality = false;
-      const bool includeIsotopes = false;
-      const bool includeAtomMaps = true;
-      bool useNonStereoRanks = false;
-      const bool includeChiralPresence = true;
-      bool includeStereoGroups = false;
-
-      Canon::rankMolAtoms(*newMol, ranks, breakTies, includeChirality,
-                          includeIsotopes, includeAtomMaps, useNonStereoRanks,
-                          includeChiralPresence, includeStereoGroups);
-
-      for (auto atom : newMol->atoms()) {
-        atom->setProp("_canonicalRankingNumber", ranks[atom->getIdx()]);
-      }
 
       includeChirality = true;
       useNonStereoRanks = true;
@@ -1869,7 +1878,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
     std::vector<StereoGroup> newGroups;
 
     if (allRankedValues.size() == 1) {
-      if (!saveNewAbsoluteGroups) {
+      if (!outputAbsoluteGroups) {
         // return bestNewMol;
         mol = std::unique_ptr<RWMol>(bestNewMol.release());
         return;
@@ -1899,7 +1908,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
             allRankedValues[0].getChiralAtoms()[index1].getAtomId();
 
         if (!doesAtomChiralityVary(allRankedValues, index1)) {
-          if (saveNewAbsoluteGroups) {
+          if (outputAbsoluteGroups) {
             absGroupAtoms.push_back(bestNewMol->getAtomWithIdx(atomIndex1));
           }
           atomsDone[index1] = true;
@@ -1963,7 +1972,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
             allRankedValues[0].getChiralBonds()[index1].getBondId();
 
         if (!doesBondStereoVary(allRankedValues, index1)) {
-          if (saveNewAbsoluteGroups) {
+          if (outputAbsoluteGroups) {
             absGroupBonds.push_back(bestNewMol->getBondWithIdx(bondIndex1));
           }
           bondsDone[index1] = true;
@@ -2001,8 +2010,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
       }
     }
     // if the abs group is not empty, add it
-
-    if (saveNewAbsoluteGroups &&
+    if (outputAbsoluteGroups &&
         (absGroupAtoms.size() != 0 || absGroupBonds.size() != 0)) {
       std::sort(absGroupAtoms.begin(), absGroupAtoms.end(),
                 [](Atom *a, Atom *b) { return a->getIdx() < b->getIdx(); });
@@ -2030,7 +2038,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
 
     /* code */
   } catch (const RigorousEnhancedStereoException &e) {
-    mol->setStereoGroups(origAtereoGroups);
+    mol->setStereoGroups(origStereoGroups);
     throw;  // re-throw the error
   }
 }
@@ -2097,8 +2105,8 @@ void canonicalizeEnhancedStereo(ROMol &mol,
                                                     // to atom CCW
       } else {
         foundRefState =
-            Atom::ChiralType::CHI_TETRAHEDRAL_CW;  // convert atropisomer CW to
-                                                   // atom CW
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW;  // convert atropisomer CW
+                                                   // to atom CW
       }
     }
     // we will use CCW as the "canonical" state for chirality, so if the
@@ -2122,8 +2130,8 @@ void canonicalizeEnhancedStereo(ROMol &mol,
     }
 #endif
     if (foundRefState != refState) {
-      // we need to flip everyone... so loop over the other atoms and bonds and
-      // flip them all:
+      // we need to flip everyone... so loop over the other atoms and bonds
+      // and flip them all:
 
       for (auto atom : sgAtoms) {
         atom->invertChirality();
@@ -2144,26 +2152,68 @@ void canonicalizeEnhancedStereo(ROMol &mol,
   mol.setStereoGroups(newSgs);
 }
 
-void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol) {
-  // this returns a mol that has a caononical rep for the enhanced stereo groups
-  // it expands the given mol to all possible non-stereo-group mols, then
-  // determines a single set of stereo groups that uniquely represent that
-  // group.
+void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol,
+                              bool outputAbsoluteGroups) {
+  // this returns a mol that has a caononical rep for the enhanced stereo
+  // groups it expands the given mol to all possible non-stereo-group mols,
+  // then determines a single set of stereo groups that uniquely represent
+  // that group.
 
-  // if there are both OR and AND groups, the AND groups are done first,
-  // then the OR groups in a recursive call the the working routine
+  // if there are both OR and AND groups, the AND groups are done first
+  // by haveing the working routine call itself for pre-prosing the AND
+  // groups
 
   if (mol->getStereoGroups().empty()) {
     return;
   }
 
-  // if there is only one group and it is absolute,
-  // simply return
+  // if there is only one group and it is absolute, simply return
 
-  if (mol.get()->getStereoGroups().size() == 1 &&
-      mol.get()->getStereoGroups()[0].getGroupType() ==
-          StereoGroupType::STEREO_ABSOLUTE) {
-    return;
+  if (mol.get()->getStereoGroups().size() == 1) {
+    auto &sg = mol->getStereoGroups()[0];
+    if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      return;
+    }
+
+    //  see if it is a simple compund, which has only one stereo group (not abs)
+    // and if has two or fewer atoms in the group, and all chiral atoms are in
+    // that group.
+    //
+    // further more, if the findMeso routine matches the simple groups, it
+    // should be removed
+    //
+
+    if (sg.getAtoms().size() <= 2 && sg.getBonds().size() == 0) {
+      bool isSimple = true;
+
+      for (auto &atom : mol->atoms()) {
+        if ((atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+             atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) &&
+            !boost::algorithm::contains(mol->getStereoGroups()[0].getAtoms(),
+                                        std::vector<Atom *>{atom})) {
+          isSimple = false;
+          break;
+        }
+      }
+
+      if (isSimple) {
+        auto res = Chirality::findMesoCenters(*mol);
+        if (res.size() == 1) {
+          std::vector<StereoGroup>
+              newGroups;  // might be emtpy, or a single ABS group
+
+          if (outputAbsoluteGroups) {
+            newGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
+                                   sg.getAtoms(), sg.getBonds());
+          }
+          mol->setStereoGroups(newGroups);
+        }
+
+        return;  // we will not process the simple ones.   If the meso atoms
+
+        // were found, the one group was removed
+      }
+    }
   }
 
   std::vector<RDKit::StereoGroup> orGroups;  // empty vector of new groups
@@ -2176,16 +2226,18 @@ void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol) {
     }
   }
 
+  for (auto atom : mol->atoms()) {
+    atom->clearProp("_canonicalRankingNumber");
+  }
+
   try {
-    // std::unique_ptr<RWMol> canonMol;
     if (orGroups.size() == 0) {
       RDKit::Canon::canonicalizeStereoGroups_internal(
-          mol, StereoGroupType::STEREO_AND);
+          mol, StereoGroupType::STEREO_AND, outputAbsoluteGroups);
     } else {
       RDKit::Canon::canonicalizeStereoGroups_internal(
-          mol, StereoGroupType::STEREO_OR);
+          mol, StereoGroupType::STEREO_OR, outputAbsoluteGroups);
     }
-
     return;
   } catch (const RigorousEnhancedStereoException &e) {
     // SmilesWriteParams newParams(params);
@@ -2193,6 +2245,7 @@ void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol) {
     return;
   }
 }
+
 };  // namespace Canon
 
 }  // namespace RDKit
