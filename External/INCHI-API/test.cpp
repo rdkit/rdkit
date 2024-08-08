@@ -243,7 +243,7 @@ void testGithubIssue40() {
     ROMol *m = InchiToMol(inchi, tmp);
     TEST_ASSERT(m);
 
-    double mw = Descriptors::calcAMW(*m);
+    double mw = MolOps::getAvgMolWt(*m);
     TEST_ASSERT(feq(mw, 187.202));
 
     delete m;
