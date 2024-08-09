@@ -49,8 +49,6 @@ AngleConstraintContrib::AngleConstraintContrib(
   URANGE_CHECK(idx3, pos.size());
   PRECONDITION(!(minAngleDeg > maxAngleDeg),
                "minAngleDeg must be <= maxAngleDeg");
-
-  double angle = 0.0;
   if (relative) {
     const RDGeom::Point3D &p1 = *((RDGeom::Point3D *)pos[idx1]);
     const RDGeom::Point3D &p2 = *((RDGeom::Point3D *)pos[idx2]);
@@ -60,16 +58,16 @@ AngleConstraintContrib::AngleConstraintContrib(
                                  std::max(1.0e-5, r[1].lengthSq())};
     double cosTheta = r[0].dotProduct(r[1]) / sqrt(rLengthSq[0] * rLengthSq[1]);
     cosTheta = std::clamp(cosTheta, -1.0, 1.0);
-    angle = RAD2DEG * acos(cosTheta);
+    const double angle = RAD2DEG * acos(cosTheta);
+    minAngleDeg += angle;
+    maxAngleDeg += angle;
   }
+  RANGE_CHECK(0.0, minAngleDeg, 180.0);
+  RANGE_CHECK(0.0, maxAngleDeg, 180.0);
   dp_forceField = owner;
   d_at1Idx = idx1;
   d_at2Idx = idx2;
   d_at3Idx = idx3;
-  minAngleDeg += angle;
-  maxAngleDeg += angle;
-  RANGE_CHECK(0.0, minAngleDeg, 180.0);
-  RANGE_CHECK(0.0, maxAngleDeg, 180.0);
   d_minAngleDeg = minAngleDeg;
   d_maxAngleDeg = maxAngleDeg;
   d_forceConstant = forceConst;
