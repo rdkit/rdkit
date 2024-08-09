@@ -307,25 +307,24 @@ struct iterable_converter {
 };
 
 /// Simple Boost.Python custom converter from pathlib.Path to std::string
-template <typename T=std::string>
+template <typename T = std::string>
 struct path_converter {
   path_converter() {
-    python::converter::registry::push_back(
-      &path_converter::convertible,
-      &path_converter::construct,
-      boost::python::type_id<T>()
-    );
+    python::converter::registry::push_back(&path_converter::convertible,
+                                           &path_converter::construct,
+                                           boost::python::type_id<T>());
   }
 
   /// Check PyObject is a pathlib.Path
-  static void* convertible(PyObject *object) {
+  static void *convertible(PyObject *object) {
     // paranoia
     if (object == nullptr) {
       return nullptr;
     }
     python::object boost_object(python::handle<>(python::borrowed(object)));
 
-    std::string object_classname = boost::python::extract<std::string>(boost_object.attr("__class__").attr("__name__"));
+    std::string object_classname = boost::python::extract<std::string>(
+        boost_object.attr("__class__").attr("__name__"));
     // pathlib.Path is always specialized to the below derived classes
     if (object_classname == "WindowsPath" || object_classname == "PosixPath") {
       return object;
@@ -337,11 +336,13 @@ struct path_converter {
   /// Construct a std::string from pathlib.Path using its own __str__ attribute
   static void construct(
       PyObject *object,
-      boost::python::converter::rvalue_from_python_stage1_data* data
-  ) {
-    void* storage = ((boost::python::converter::rvalue_from_python_storage<T>*) data)->storage.bytes;
+      boost::python::converter::rvalue_from_python_stage1_data *data) {
+    void *storage =
+        ((boost::python::converter::rvalue_from_python_storage<T> *)data)
+            ->storage.bytes;
     python::object boost_object{python::handle<>{python::borrowed(object)}};
-    new (storage) T{boost::python::extract<std::string>{boost_object.attr("__str__")()}};
+    new (storage)
+        T{boost::python::extract<std::string>{boost_object.attr("__str__")()}};
     data->convertible = storage;
   }
 };
@@ -376,13 +377,12 @@ struct rdkit_pickle_suite : python::pickle_suite {
 // listvec_to_tuple - converts a list<vec<T>> to tuple
 
 // From boost::python examples
-template<typename T>
+template <typename T>
 struct vec_to_tuple {
   typedef std::vector<T> iter;
   static PyObject *convert(const iter &p) {
     python::list result;
-    for(auto elem: p)
-      result.append(elem);
+    for (auto elem : p) result.append(elem);
     return boost::python::incref(python::tuple(result).ptr());
   }
 
@@ -390,7 +390,7 @@ struct vec_to_tuple {
 };
 
 // Helper for convenience.
-template<typename T>
+template <typename T>
 struct vec_to_python_converter {
   typedef std::vector<T> iter;
   vec_to_python_converter() {
@@ -401,21 +401,19 @@ struct vec_to_python_converter {
       return;
     }
 
-    boost::python::to_python_converter<std::vector<T>,
-				       vec_to_tuple<T>, true>();
-
+    boost::python::to_python_converter<std::vector<T>, vec_to_tuple<T>, true>();
   }
 };
 
-template<typename T>
+template <typename T>
 struct vecvec_to_tuple {
   typedef std::vector<std::vector<T>> iter;
   static PyObject *convert(const iter &p) {
     python::list result;
-    for(auto &vec: p) {
+    for (auto &vec : p) {
       python::list l;
-      for(auto &elem: vec) {
-	l.append(elem);
+      for (auto &elem : vec) {
+        l.append(elem);
       }
       result.append(python::tuple(l));
     }
@@ -425,8 +423,7 @@ struct vecvec_to_tuple {
   static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
 };
 
-
-template< typename T>
+template <typename T>
 struct vecvec_to_python_converter {
   typedef std::vector<std::vector<T>> iter;
   vecvec_to_python_converter() {
@@ -437,20 +434,17 @@ struct vecvec_to_python_converter {
       return;
     }
 
-    boost::python::to_python_converter<iter,
-				       vecvec_to_tuple<T>, true>();
-
+    boost::python::to_python_converter<iter, vecvec_to_tuple<T>, true>();
   }
 };
 
 // std::list implementation
-template<typename T>
+template <typename T>
 struct list_to_tuple {
   typedef std::list<T> iter;
   static PyObject *convert(const iter &p) {
     python::list result;
-    for(auto elem: p)
-      result.append(elem);
+    for (auto elem : p) result.append(elem);
     return boost::python::incref(python::tuple(result).ptr());
   }
 
@@ -458,7 +452,7 @@ struct list_to_tuple {
 };
 
 // Helper for convenience.
-template<typename T>
+template <typename T>
 struct list_to_python_converter {
   typedef std::list<T> iter;
   list_to_python_converter() {
@@ -469,21 +463,19 @@ struct list_to_python_converter {
       return;
     }
 
-    boost::python::to_python_converter<std::list<T>,
-				       list_to_tuple<T>, true>();
-
+    boost::python::to_python_converter<std::list<T>, list_to_tuple<T>, true>();
   }
 };
 
-template<typename T>
+template <typename T>
 struct listvec_to_tuple {
   typedef std::list<std::vector<T>> iter;
   static PyObject *convert(const iter &p) {
     python::list result;
-    for(auto &vec: p) {
+    for (auto &vec : p) {
       python::list l;
-      for(auto &elem: vec) {
-	l.append(elem);
+      for (auto &elem : vec) {
+        l.append(elem);
       }
       result.append(python::tuple(l));
     }
@@ -493,8 +485,7 @@ struct listvec_to_tuple {
   static PyTypeObject const *get_pytype() { return &PyTuple_Type; }
 };
 
-
-template< typename T>
+template <typename T>
 struct listvec_to_python_converter {
   typedef std::list<std::vector<T>> iter;
   listvec_to_python_converter() {
@@ -505,108 +496,121 @@ struct listvec_to_python_converter {
       return;
     }
 
-    boost::python::to_python_converter<iter,
-				       listvec_to_tuple<T>, true>();
-
+    boost::python::to_python_converter<iter, listvec_to_tuple<T>, true>();
   }
 };
 
-// python::list -> std::vector, std::list  converter since the indexing suite is wicked slow
-//  (at least for c++->python)
-struct pylist_converter
-{
-
+// python::list -> std::vector, std::list  converter since the indexing suite is
+// wicked slow (at least for c++->python)
+struct pylist_converter {
   template <typename Container>
-  pylist_converter&
-  from_python()
-  {
+  pylist_converter &from_python() {
     boost::python::converter::registry::push_back(
-      &pylist_converter::convertible,
-      &pylist_converter::construct<Container>,
-      boost::python::type_id<Container>());
+        &pylist_converter::convertible, &pylist_converter::construct<Container>,
+        boost::python::type_id<Container>());
     return *this;
   }
 
-  static void* convertible(PyObject* object)
-  {
+  static void *convertible(PyObject *object) {
     return PySequence_Check(object) ? object : NULL;
   }
 
   template <typename Container>
   static void construct(
-    PyObject* object,
-    boost::python::converter::rvalue_from_python_stage1_data* data)
-  {
+      PyObject *object,
+      boost::python::converter::rvalue_from_python_stage1_data *data) {
     namespace python = boost::python;
     // Object is a borrowed reference, so create a handle indicting it is
     // borrowed for proper reference counting.
     python::handle<> handle(python::borrowed(object));
     boost::python::object iterable(handle);
 
-    data->convertible = new Container( boost::python::stl_input_iterator< typename Container::value_type >( iterable ),
-				       boost::python::stl_input_iterator< typename Container::value_type >( ) );    
+    data->convertible = new Container(
+        boost::python::stl_input_iterator<typename Container::value_type>(
+            iterable),
+        boost::python::stl_input_iterator<typename Container::value_type>());
   }
 };
 
+//! These are used if you want to return mutable references to vectors from
+///! functions
 // Return these from helper funtions as
-//  IntVectorRref &foo()...
-template<typename T>
+//  IntVectorRef &foo()...
+template <typename T>
 class VecWrap {
-public:
+ public:
   std::vector<T> *container;
-  bool owns_container=false;
+  bool owns_container = false;
   // Simulate std::vector...
-  typedef typename std::vector<T>::value_type value_type;
-  typedef typename std::vector<T>::difference_type difference_type;
-  typedef typename std::vector<T>::size_type size_type;
-  typedef typename std::vector<T>::const_reference const_reference;
-  typedef typename std::vector<T>::reference reference;
-  typedef typename std::vector<T>::const_iterator const_iterator;
-  typedef typename std::vector<T>::iterator iterator;
-  typedef typename std::vector<T>::iterator InputIterator;
+  using value_type = typename std::vector<T>::value_type;
+  using difference_type = typename std::vector<T>::difference_type;
+  using size_type = typename std::vector<T>::size_type;
+  using const_reference = typename std::vector<T>::const_reference;
+  using reference = typename std::vector<T>::reference;
+  using const_iterator = typename std::vector<T>::const_iterator;
+  using iterator = typename std::vector<T>::iterator;
+  using InputIterator = typename std::vector<T>::iterator;
 
   VecWrap() : container(nullptr) {}
   VecWrap(std::vector<T> &vector) : container(&vector) {}
-  VecWrap(const VecWrap<T>& rhs) : container(&(*rhs.container)) {};
-  VecWrap(VecWrap<T> &&rhs) : container(&(*rhs.container)) {} // prob don't need
-  VecWrap(InputIterator first, InputIterator last) : container(new std::vector<T>(first, last)),
-						     owns_container(true) {
-    
-  }
+  VecWrap(const VecWrap<T> &rhs) : container(&(*rhs.container)){};
+  VecWrap(VecWrap<T> &&rhs)
+      : container(&(*rhs.container)) {}  // prob don't need
+  VecWrap(InputIterator first, InputIterator last)
+      : container(new std::vector<T>(first, last)), owns_container(true) {}
 
   ~VecWrap() {
-    if (owns_container)
+    if (owns_container) {
       delete container;
+    }
   }
-  bool operator==(const VecWrap<T>& rhs) const { return *container == *rhs.container; }
-  bool operator!=(const VecWrap<T>& rhs) const { return *container != *rhs.container; }
-  bool operator<(const VecWrap<T>& rhs) const  { return *container < *rhs.container; }
-  bool operator==(const std::vector<T>& rhs) const { return *container == rhs; }
-  bool operator!=(const std::vector<T>& rhs) const { return *container != rhs; }
-  bool operator<(const std::vector<T>& rhs) const { return *container < rhs; }
-    
+  bool operator==(const VecWrap<T> &rhs) const {
+    return *container == *rhs.container;
+  }
+  bool operator!=(const VecWrap<T> &rhs) const {
+    return *container != *rhs.container;
+  }
+  bool operator<(const VecWrap<T> &rhs) const {
+    return *container < *rhs.container;
+  }
+  bool operator==(const std::vector<T> &rhs) const { return *container == rhs; }
+  bool operator!=(const std::vector<T> &rhs) const { return *container != rhs; }
+  bool operator<(const std::vector<T> &rhs) const { return *container < rhs; }
+
   // read-only methods...
   inline bool empty() const { return container->empty(); }
   inline const_iterator begin() const { return container->begin(); }
   inline const_iterator end() const { return container->end(); }
   inline size_type size() const { return container->size(); }
-  inline const_reference operator[] (size_type n) const { return (*container)[n]; }
+  inline const_reference operator[](size_type n) const {
+    return (*container)[n];
+  }
   // write methods...
   inline iterator begin() { return container->begin(); }
   inline iterator end() { return container->end(); }
-  inline reference operator[] (size_type n) { return (*container)[n]; }
-  inline iterator insert (const_iterator position, const value_type& val) { return container->insert(position, val); }
-  inline iterator insert (const_iterator position, InputIterator first, InputIterator last) { return container->insert(position, first, last); }
-  inline void push_back (const value_type& val) { return container->push_back(val); }
-  inline void push_back (value_type&& val) { return container->push_back(val); }
-  inline iterator erase (const_iterator position) { return container->erase(position); }
-  inline iterator erase (const_iterator first, const_iterator last) { return container->erase(first, last); }
+  inline reference operator[](size_type n) { return (*container)[n]; }
+  inline iterator insert(const_iterator position, const value_type &val) {
+    return container->insert(position, val);
+  }
+  inline iterator insert(const_iterator position, InputIterator first,
+                         InputIterator last) {
+    return container->insert(position, first, last);
+  }
+  inline void push_back(const value_type &val) {
+    return container->push_back(val);
+  }
+  inline void push_back(value_type &&val) { return container->push_back(val); }
+  inline iterator erase(const_iterator position) {
+    return container->erase(position);
+  }
+  inline iterator erase(const_iterator first, const_iterator last) {
+    return container->erase(first, last);
+  }
 
-private:
-
+ private:
 };
 
-typedef  VecWrap<int> IntVectorRef;
-typedef  VecWrap<unsigned int> UnsignedIntVectorRef;
-typedef  VecWrap<std::string> StringVectorRef;
+using IntVectorRef = VecWrap<int>;
+using UnsignedIntVectorRef = VecWrap<unsigned int>;
+using StringVectorRef = VecWrap<std::string>;
 #endif
