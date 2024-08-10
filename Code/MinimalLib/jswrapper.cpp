@@ -372,11 +372,13 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_v3Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
+#ifdef RDK_BUILD_INCHI_SUPPORT
       .function("get_inchi",
                 select_overload<std::string(const std::string &) const>(
                     &JSMol::get_inchi))
       .function("get_inchi",
                 select_overload<std::string() const>(&JSMol::get_inchi))
+#endif
       .function("get_json", &JSMol::get_json)
       .function("get_svg",
                 select_overload<std::string() const>(&JSMol::get_svg))
@@ -645,7 +647,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   function("prefer_coordgen", &prefer_coordgen);
   function("use_legacy_stereo_perception", &use_legacy_stereo_perception);
   function("allow_non_tetrahedral_chirality", &allow_non_tetrahedral_chirality);
+#ifdef RDK_BUILD_INCHI_SUPPORT
   function("get_inchikey_for_inchi", &get_inchikey_for_inchi);
+#endif
   function("get_mol", &get_mol, allow_raw_pointers());
   function("get_mol", &get_mol_no_details, allow_raw_pointers());
   function("get_mol_from_uint8array", &get_mol_from_uint8array,
