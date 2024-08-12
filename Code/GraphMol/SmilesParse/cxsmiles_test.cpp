@@ -674,7 +674,7 @@ class SmilesTest {
       : fileName(fileNameInit),
         expectedResult(expectedResultInit),
         atomCount(atomCountInit),
-        bondCount(bondCountInit){};
+        bondCount(bondCountInit) {};
 
   bool isRxnTest() const { return false; }
 };
@@ -782,6 +782,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       SmilesWriteParams ps;
       ps.canonical = true;
       ps.doIsomericSmiles = true;
+      ps.rigorousEnhancedStereo = true;
 
       unsigned int flags = SmilesWrite::CXSmilesFields::CX_COORDS |
                            SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |

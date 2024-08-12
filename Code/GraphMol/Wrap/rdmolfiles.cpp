@@ -1579,7 +1579,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "rigorousEnhancedStereoIncludeAbsGroups",
           &RDKit::SmilesWriteParams::rigorousEnhancedStereoIncludeAbsGroups,
-          "Rigorous treatment incluide Absoute groups")
+          "Rigorous treatment include Absoute groups option")
       .def_readwrite(
           "cleanStereo", &RDKit::SmilesWriteParams::cleanStereo,
           "chiral centers are removed if they have duplicate sidechains")
@@ -1725,6 +1725,14 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL)
       .value("CX_ALL_BUT_COORDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+
+  python::enum_<RDKit::Canon::StereoGroupAbsOptions>("StereoGroupAbsOptions")
+      .value(
+          "OnlyIncludeWhenOtherGroupsExist",
+          RDKit::Canon::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist)
+      .value("NeverInclude", RDKit::Canon::StereoGroupAbsOptions::NeverInclude)
+      .value("AlwaysInclude",
+             RDKit::Canon::StereoGroupAbsOptions::AlwaysInclude);
 
   python::enum_<RDKit::RestoreBondDirOption>("RestoreBondDirOption")
       .value("RestoreBondDirOptionClear",

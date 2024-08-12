@@ -869,7 +869,8 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
   std::unique_ptr<RWMol> trwmol(new RWMol(romol));
 
   if (params.canonical && params.rigorousEnhancedStereo) {
-    RDKit::Canon::canonicalizeStereoGroups(trwmol);
+    RDKit::Canon::canonicalizeStereoGroups(
+        trwmol, params.rigorousEnhancedStereoIncludeAbsGroups);
   }
 
   return SmilesWrite::detail::MolToCXSmiles_internal(trwmol.get(), params,

@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <limits>
 #include <GraphMol/RWMol.h>
+#include <GraphMol/Canon.h>
 
 namespace RDKit {
 class Atom;
@@ -38,9 +39,12 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
                             is not canonical */
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
                              atom. The resulting SMILES is not canonical */
-  bool rigorousEnhancedStereo = true; /**< if true, use a more rigorous
+  bool rigorousEnhancedStereo = false; /**< if true, use a more rigorous
              treatment of enhanced stereochemisty
              is performed */
+  Canon::StereoGroupAbsOptions rigorousEnhancedStereoIncludeAbsGroups =
+      Canon::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist;
+
   bool useStereoToBreakTies =
       false; /**< if true, ranks are determined without stereo,
 then again using the previous ranks and the stereo information */

@@ -274,6 +274,10 @@ TEST_CASE("enhanced stereo canonicalization") {
 TEST_CASE("pseudoTest1") {
   SECTION("pseudoTest1") {
     std::vector<std::tuple<std::string, std::string, std::string>> tests = {
+
+        {"CC1=C(N2C=CC=C2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|",
+         "CC1=C(N2C=CC=C2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,a:2,&1:8|",
+         "CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|"},
         {"O=C(CCCc1ccccc1)OC[C@H]1C[C@@H]2O[C@H]1[C@@H]1[C@H]2C(=O)OC1=O |a:18,19,o1:13,15,17|",
          "O=C(CCCc1ccccc1)OC[C@@H]1C[C@H]2O[C@@H]1[C@@H]1[C@H]2C(=O)OC1=O |a:18,19,o1:13,15,17|",
          "O=C(CCCc1ccccc1)OC[C@@H]1C[C@H]2O[C@@H]1[C@H]1C(=O)OC(=O)[C@H]12 |a:18,24,o1:13,15,17|"},
@@ -295,26 +299,26 @@ TEST_CASE("pseudoTest1") {
 
         {"CCNC(=O)c1ccc(/C(=C2/C[C@H]3CC[C@@H](C2)N3CCc2ccccc2)c2ccccc2)cc1 |&1:12,15|",
          "CCNC(=O)c1ccc(\\C(=C2/C[C@@H]3CC[C@H](C2)N3CCc2ccccc2)c2ccccc2)cc1 |&1:12,15|",
-         "CCNC(=O)c1ccc(/C(=C2/C[C@H]3CC[C@@H](C2)N3CCc2ccccc2)c2ccccc2)cc1 |a:12,15|"},
+         "CCNC(=O)c1ccc(/C(=C2/C[C@H]3CC[C@@H](C2)N3CCc2ccccc2)c2ccccc2)cc1"},
         {"C[C@H](O)[C@@H](C)[C@H](C)[C@H](C)O |&1:1,&2:3,5,&3:7|",
          "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)O |&1:1,&2:3,5,&3:7|",
          "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)O |&1:1,&2:3,5,&3:7|"},
 
         {"C[C@@H](Cl)C[C@H](C)Cl |a:1,4,|", "C[C@@H](Cl)C[C@H](C)Cl |o1:1,4,|",
-         "C[C@H](Cl)C[C@@H](C)Cl |a:1,4|"},
+         "C[C@H](Cl)C[C@@H](C)Cl"},
         {"C[C@H](Cl)C[C@@H](C)Cl |a:1,4,|", "C[C@@H](Cl)C[C@H](C)Cl |&1:1,4,|",
-         "C[C@H](Cl)C[C@@H](C)Cl |a:1,4|"},
+         "C[C@H](Cl)C[C@@H](C)Cl"},
 
         {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@H]1CC[C@@H](O)CC1 |o1:1,4|",
-         "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},
+         "N[C@@H]1CC[C@H](O)CC1"},
         {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@H]1CC[C@@H](O)CC1 |&1:1,4|",
-         "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},
+         "N[C@@H]1CC[C@H](O)CC1"},
         {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@@H]1CC[C@H](O)CC1 |a:1,4|",
-         "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},
+         "N[C@@H]1CC[C@H](O)CC1"},
         {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@@H]1CC[C@H](O)CC1 |o1:1,4|",
-         "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},
+         "N[C@@H]1CC[C@H](O)CC1"},
         {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@@H]1CC[C@H](O)CC1 |&1:1,4|",
-         "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},
+         "N[C@@H]1CC[C@H](O)CC1"},
 
         // {"C[C@H]1C[C@@H](C)C[C@@H](C)C1 |o1:1,o2:6,o3:3|",
         //  "C[C@@H]1C[C@H](C)C[C@@H](C)C1 |a:3,o1:6,o3:1|",
@@ -346,11 +350,11 @@ TEST_CASE("pseudoTest1") {
         {"N[C@H]1CC[C@@H](O)CC1", "N[C@@H]1CC[C@H](O)CC1",
          "N[C@@H]1CC[C@H](O)CC1"},
         {"N[C@H]1CC[C@@H](O)CC1 |o2:1,4|", "N[C@@H]1CC[C@H](O)CC1 |o2:1,4|",
-         "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},  // qqqq check this one
+         "N[C@@H]1CC[C@H](O)CC1"},
         {"N[C@H]1CC[C@@H](O)CC1 |&2:1,4|", "N[C@@H]1CC[C@H](O)CC1 |&2:1,4|",
-         "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},
+         "N[C@@H]1CC[C@H](O)CC1"},
         {"N[C@H]1CC[C@@H](O)CC1 |a:1,4|", "N[C@@H]1CC[C@H](O)CC1 |a:1,4|",
-         "N[C@@H]1CC[C@H](O)CC1 |a:1,4|"},
+         "N[C@@H]1CC[C@H](O)CC1"},
 
         // no enhanced stereo
         {"CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1",
@@ -360,7 +364,7 @@ TEST_CASE("pseudoTest1") {
         // enhance stereo abs,abs,abs
         {"CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,11,14|",
          "CC(C)[C@H]1CCCCN1C(=O)[C@@H]1CC[C@H](C)CC1 |a:3,11,14|",
-         "CC(C)[C@H]1CCCCN1C(=O)[C@@H]1CC[C@H](C)CC1 |a:3,11,14|"},
+         "CC(C)[C@H]1CCCCN1C(=O)[C@@H]1CC[C@H](C)CC1"},
 
         // abs, abs, or and abs, or abs
 

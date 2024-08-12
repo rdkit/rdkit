@@ -1670,9 +1670,9 @@ bool doTwoBondsVaryTheSame(const OrderedSet<RankedValue> &allRankedValues,
   return true;
 }
 
-void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
-                                       RDKit::StereoGroupType stereoGroupType,
-                                       bool outputAbsoluteGroups = true) {
+void canonicalizeStereoGroups_internal(
+    std::unique_ptr<RWMol> &mol, RDKit::StereoGroupType stereoGroupType,
+    StereoGroupAbsOptions outputAbsoluteGroups) {
   // this expanded a mol with stereo groups to a vector of values that have no
   // stereo groups, then determines the stereo groups from that set
   //
@@ -1759,7 +1759,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
 
       if (andGroupsToKeep.size() > 0) {
         canonicalizeStereoGroups_internal(newMol, StereoGroupType::STEREO_AND,
-                                          false);
+                                          StereoGroupAbsOptions::NeverInclude);
       }
 
       newMol->updatePropertyCache(true);
@@ -1878,8 +1878,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
     std::vector<StereoGroup> newGroups;
 
     if (allRankedValues.size() == 1) {
-      if (!outputAbsoluteGroups) {
-        // return bestNewMol;
+      if (outputAbsoluteGroups == StereoGroupAbsOptions::NeverInclude) {
         mol = std::unique_ptr<RWMol>(bestNewMol.release());
         return;
       }
@@ -1908,7 +1907,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
             allRankedValues[0].getChiralAtoms()[index1].getAtomId();
 
         if (!doesAtomChiralityVary(allRankedValues, index1)) {
-          if (outputAbsoluteGroups) {
+          if (outputAbsoluteGroups != StereoGroupAbsOptions::NeverInclude) {
             absGroupAtoms.push_back(bestNewMol->getAtomWithIdx(atomIndex1));
           }
           atomsDone[index1] = true;
@@ -1972,7 +1971,7 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
             allRankedValues[0].getChiralBonds()[index1].getBondId();
 
         if (!doesBondStereoVary(allRankedValues, index1)) {
-          if (outputAbsoluteGroups) {
+          if (outputAbsoluteGroups != StereoGroupAbsOptions::NeverInclude) {
             absGroupBonds.push_back(bestNewMol->getBondWithIdx(bondIndex1));
           }
           bondsDone[index1] = true;
@@ -2009,17 +2008,6 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
                                ++groupCount);
       }
     }
-    // if the abs group is not empty, add it
-    if (outputAbsoluteGroups &&
-        (absGroupAtoms.size() != 0 || absGroupBonds.size() != 0)) {
-      std::sort(absGroupAtoms.begin(), absGroupAtoms.end(),
-                [](Atom *a, Atom *b) { return a->getIdx() < b->getIdx(); });
-      std::sort(absGroupBonds.begin(), absGroupBonds.end(),
-                [](Bond *a, Bond *b) { return a->getIdx() < b->getIdx(); });
-
-      newGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE, absGroupAtoms,
-                             absGroupBonds, 0);
-    }
 
     // keep the groups from the best mol, if it had them from a call to this
     // routine for the other kind of stereo groups.
@@ -2028,6 +2016,21 @@ void canonicalizeStereoGroups_internal(std::unique_ptr<RWMol> &mol,
       for (auto grp : bestNewMol->getStereoGroups()) {
         newGroups.push_back(grp);
       }
+    }
+
+    // if the abs group is not empty, add it
+    if ((outputAbsoluteGroups == StereoGroupAbsOptions::AlwaysInclude ||
+         (outputAbsoluteGroups ==
+              StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist &&
+          !newGroups.empty())) &&
+        (absGroupAtoms.size() != 0 || absGroupBonds.size() != 0)) {
+      std::sort(absGroupAtoms.begin(), absGroupAtoms.end(),
+                [](Atom *a, Atom *b) { return a->getIdx() < b->getIdx(); });
+      std::sort(absGroupBonds.begin(), absGroupBonds.end(),
+                [](Bond *a, Bond *b) { return a->getIdx() < b->getIdx(); });
+
+      newGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE, absGroupAtoms,
+                             absGroupBonds, 0);
     }
 
     bestNewMol->setStereoGroups(newGroups);
@@ -2152,8 +2155,42 @@ void canonicalizeEnhancedStereo(ROMol &mol,
   mol.setStereoGroups(newSgs);
 }
 
+void addSingleAbsGroup(ROMol &mol) {
+  // all chiral centers are added to an abs group
+  // if there are not chiral centers, no group is added
+
+  std::vector<StereoGroup> sgs;
+  std::vector<Atom *> chiralAtoms;
+  std::vector<Bond *> chiralBonds;
+  for (auto &atom : mol.atoms()) {
+    if (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+        atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
+      chiralAtoms.push_back(atom);
+    }
+  }
+  for (auto &bond : mol.bonds()) {
+    if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+        bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+      chiralBonds.push_back(bond);
+    }
+  }
+
+  if (!chiralAtoms.empty() || !chiralBonds.empty()) {
+    sgs.emplace_back(StereoGroupType::STEREO_ABSOLUTE, chiralAtoms,
+                     chiralBonds);
+  }
+  mol.setStereoGroups(sgs);  // could be empty, or have one abs group
+}
+
+void clearStereoGroups(ROMol &mol) {
+  // all chiral centers are added to an abs group
+  // if there are not chiral centers, no group is added
+  std::vector<StereoGroup> sgs;
+  mol.setStereoGroups(sgs);
+}
+
 void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol,
-                              bool outputAbsoluteGroups) {
+                              StereoGroupAbsOptions outputAbsoluteGroups) {
   // this returns a mol that has a caononical rep for the enhanced stereo
   // groups it expands the given mol to all possible non-stereo-group mols,
   // then determines a single set of stereo groups that uniquely represent
@@ -2163,26 +2200,29 @@ void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol,
   // by haveing the working routine call itself for pre-prosing the AND
   // groups
 
-  if (mol->getStereoGroups().empty()) {
+  auto sgCount = mol->getStereoGroups().size();
+  if (sgCount == 0 ||
+      (sgCount == 1 && mol->getStereoGroups()[0].getGroupType() ==
+                           StereoGroupType::STEREO_ABSOLUTE)) {
+    if (outputAbsoluteGroups == StereoGroupAbsOptions::AlwaysInclude) {
+      addSingleAbsGroup(*mol);
+    } else {
+      clearStereoGroups(*mol);
+    }
     return;
   }
 
-  // if there is only one group and it is absolute, simply return
+  //  see if it is a simple compound, which has only one stereo group (not
+  //  abs)
+  // and if has two or fewer atoms in the group, and all chiral atoms are in
+  // that group.
+  //
+  // further more, if the findMeso routine matches the simple groups, it
+  // should be removed
+  //
 
-  if (mol.get()->getStereoGroups().size() == 1) {
+  if (sgCount == 1) {
     auto &sg = mol->getStereoGroups()[0];
-    if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
-      return;
-    }
-
-    //  see if it is a simple compund, which has only one stereo group (not abs)
-    // and if has two or fewer atoms in the group, and all chiral atoms are in
-    // that group.
-    //
-    // further more, if the findMeso routine matches the simple groups, it
-    // should be removed
-    //
-
     if (sg.getAtoms().size() <= 2 && sg.getBonds().size() == 0) {
       bool isSimple = true;
 
@@ -2195,23 +2235,29 @@ void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol,
           break;
         }
       }
-
+      if (isSimple) {
+        for (auto &bond : mol->bonds()) {
+          if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+               bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) &&
+              !boost::algorithm::contains(mol->getStereoGroups()[0].getBonds(),
+                                          std::vector<Bond *>{bond})) {
+            isSimple = false;
+            break;
+          }
+        }
+      }
       if (isSimple) {
         auto res = Chirality::findMesoCenters(*mol);
         if (res.size() == 1) {
-          std::vector<StereoGroup>
-              newGroups;  // might be emtpy, or a single ABS group
-
-          if (outputAbsoluteGroups) {
-            newGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
-                                   sg.getAtoms(), sg.getBonds());
+          if (outputAbsoluteGroups == StereoGroupAbsOptions::AlwaysInclude) {
+            addSingleAbsGroup(*mol);
+          } else {
+            clearStereoGroups(*mol);
           }
-          mol->setStereoGroups(newGroups);
         }
 
         return;  // we will not process the simple ones.   If the meso atoms
-
-        // were found, the one group was removed
+                 // were found, the one group was removed
       }
     }
   }

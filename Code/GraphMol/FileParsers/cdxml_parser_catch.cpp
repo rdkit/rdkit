@@ -484,10 +484,12 @@ TEST_CASE("CDXML") {
     auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
+    SmilesWriteParams wp;
+    wp.rigorousEnhancedStereo = true;
     for (auto &mol : mols) {
       mol.get()->clearConformers();
       CHECK(MolToSmiles(*mol) == expected[i]);
-      CHECK(MolToCXSmiles(*mol) == expected_cx[i++]);
+      CHECK(MolToCXSmiles(*mol, wp) == expected_cx[i++]);
     }
   }
   SECTION("Bad CDXML") {
