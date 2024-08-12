@@ -785,15 +785,6 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
   return result;
 }
 
-std::string MolToCXSmiles_internal(ROMol &romol,
-                                   const SmilesWriteParams &params,
-                                   std::uint32_t flags,
-                                   RestoreBondDirOption restoreBondDirs) {
-  std::unique_ptr<RWMol> trwmol(new RWMol(romol));
-
-  return MolToCXSmiles_internal(*trwmol.get(), params, flags, restoreBondDirs);
-}
-
 std::string MolToCXSmiles_internal(RWMol *rwmol,
                                    const SmilesWriteParams &params,
                                    std::uint32_t flags,
