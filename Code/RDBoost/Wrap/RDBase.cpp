@@ -269,8 +269,8 @@ BOOST_PYTHON_MODULE(rdBase) {
 
   // can add std::list<int> ... if necessary as well
   pylist_converter()
-    .from_python<std::vector<int>>()
-    .from_python<std::vector<unsigned int>>();
+      .from_python<std::vector<int>>()
+      .from_python<std::vector<unsigned int>>();
 
   list_to_python_converter<int>();
   list_to_python_converter<unsigned>();
@@ -278,14 +278,14 @@ BOOST_PYTHON_MODULE(rdBase) {
   listvec_to_python_converter<unsigned>();
 
   python::class_<IntVectorRef>("IntVectorRef")
-    .def(python::vector_indexing_suite<IntVectorRef>());
+      .def(python::vector_indexing_suite<IntVectorRef>());
 
   python::class_<UnsignedIntVectorRef>("UnsignedIntVectorRef")
-    .def(python::vector_indexing_suite<UnsignedIntVectorRef>());
+      .def(python::vector_indexing_suite<UnsignedIntVectorRef>());
 
   python::class_<StringVectorRef>("StringVectorRef")
-    .def(python::vector_indexing_suite<StringVectorRef>());
-  
+      .def(python::vector_indexing_suite<StringVectorRef>());
+
   python::register_exception_translator<IndexErrorException>(
       &translate_index_error);
   python::register_exception_translator<ValueErrorException>(

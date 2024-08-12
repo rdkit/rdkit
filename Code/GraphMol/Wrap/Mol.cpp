@@ -156,9 +156,7 @@ class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() = default;
-  // since we don't use the vector indexing suite, we don't currently support pass by reference anymore
-  //  for std::vector<...>
-  bool operator()(const ROMol &m, const std::vector<unsigned int> match) {
+  bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
     return python::extract<bool>(dp_obj(boost::ref(m), match));
   }
 

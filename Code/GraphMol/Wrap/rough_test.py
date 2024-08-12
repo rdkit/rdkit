@@ -6554,16 +6554,15 @@ M  END
     self.assertEqual(si[0].specified, Chem.StereoSpecified.Specified)
     self.assertEqual(si[0].centeredOn, 1)
     self.assertEqual(si[0].descriptor, Chem.StereoDescriptor.Tet_CCW)
-    
     self.assertEqual(si[1].type, Chem.StereoType.Bond_Double)
     self.assertEqual(si[1].specified, Chem.StereoSpecified.Unspecified)
     self.assertEqual(si[1].centeredOn, 3)
     self.assertEqual(si[1].descriptor, Chem.StereoDescriptor.NoValue)
     self.assertEqual(list(si[1].controllingAtoms),
                      [1, Chem.StereoInfo.NOATOM, 5, Chem.StereoInfo.NOATOM])
+    self.assertEqual(list(si[0].controllingAtoms), [0, 2, 3])
     si[0].controllingAtoms.append(10)
     self.assertEqual(list(si[0].controllingAtoms), [0, 2, 3, 10])
-    
 
   def testNewFindMolChiralCenters(self):
     mol = Chem.MolFromSmiles('C[C@H](F)C=CC(F)Cl')
@@ -6721,7 +6720,7 @@ M  END
 
   def test_get_set_positions(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
-    pos = np.zeros([3,3], np.double)
+    pos = np.zeros([3, 3], np.double)
     pos[0][1] = 1
     pos[0][2] = 2
     pos[1][0] = 3
@@ -6734,8 +6733,7 @@ M  END
     m.GetConformer(0).SetPositions(pos)
     pos2 = m.GetConformer(0).GetPositions()
 
-    self.assertTrue( (pos==pos2).all())
-    
+    self.assertTrue((pos == pos2).all())
 
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
