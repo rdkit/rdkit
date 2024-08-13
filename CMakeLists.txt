@@ -318,7 +318,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       # Determine correct installation directory for Python bindings
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+        ${Python3_EXECUTABLE} -c "import sys; import sysconfig; \
           base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
           schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
           print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
@@ -372,7 +372,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # check to see if we can find nbval,
   execute_process(
     COMMAND
-    ${PYTHON_EXECUTABLE} -c "import nbval"
+    ${Python3_EXECUTABLE} -c "import nbval"
     ERROR_VARIABLE nbvalERR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT nbvalERR)
