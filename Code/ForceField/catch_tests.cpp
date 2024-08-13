@@ -15,13 +15,9 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/ForceFieldHelpers/FFConvenience.h>
 
-#include <ForceField/ForceField.h>
-#include <ForceField/UFF/Params.h>
-#include <ForceField/UFF/Utils.h>
-#include <ForceField/AngleConstraint.h>
 #include <ForceField/AngleConstraints.h>
 #include <ForceField/DistanceConstraints.h>
-#include <GraphMol/FileParsers/FileParsers.h>
+#include <ForceField/UFF/Params.h>
 
 using namespace RDKit;
 

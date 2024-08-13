@@ -21,7 +21,6 @@
 #include <ForceField/ForceField.h>
 #include <ForceField/DistanceConstraints.h>
 #include <ForceField/AngleConstraints.h>
-#include <ForceField/UFF/AngleConstraint.h>
 #include <ForceField/UFF/Inversions.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleContribs.h>
