@@ -10,6 +10,7 @@
 #include <iostream>
 #include <GraphMol/RDKitBase.h>
 #include <ForceField/UFF/Params.h>
+#include <ForceField/UFF/Utils.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <ForceField/UFF/AngleBend.h>
 #include <ForceField/UFF/TorsionAngle.h>

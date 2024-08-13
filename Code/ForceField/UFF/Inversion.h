@@ -52,28 +52,6 @@ class RDKIT_FORCEFIELD_EXPORT InversionContrib : public ForceFieldContrib {
   int d_at4Idx{-1};
   double d_forceConstant, d_C0, d_C1, d_C2;
 };
-
-namespace Utils {
-//! calculates and returns the cosine of the Y angle in an improper torsion
-//! (see UFF paper, equation 19)
-RDKIT_FORCEFIELD_EXPORT double calculateCosY(const RDGeom::Point3D &iPoint,
-                                             const RDGeom::Point3D &jPoint,
-                                             const RDGeom::Point3D &kPoint,
-                                             const RDGeom::Point3D &lPoint);
-
-//! calculates and returns the UFF force constant for an improper torsion
-/*!
-
-  \param at2AtomicNum   atomic number for atom 2
-  \param isCBoundToO    boolean flag; true if atom 2 is sp2 carbon bound to sp2
-  oxygen
-
-  \return the force constant
-
-*/
-RDKIT_FORCEFIELD_EXPORT std::tuple<double, double, double, double>
-calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO);
-}  // namespace Utils
 }  // namespace UFF
 }  // namespace ForceFields
 #endif
