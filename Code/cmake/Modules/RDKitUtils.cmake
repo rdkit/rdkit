@@ -145,7 +145,7 @@ macro(rdkit_python_extension)
   CAR(RDKPY_NAME ${RDKPY_DEFAULT_ARGS})
   CDR(RDKPY_SOURCES ${RDKPY_DEFAULT_ARGS})
   if(RDK_BUILD_PYTHON_WRAPPERS)
-    PYTHON_ADD_MODULE(${RDKPY_NAME} ${RDKPY_SOURCES})
+    Python3_add_library(${RDKPY_NAME} MODULE ${RDKPY_SOURCES})
     set_target_properties(${RDKPY_NAME} PROPERTIES PREFIX "")
 
     if(WIN32)
@@ -158,7 +158,7 @@ macro(rdkit_python_extension)
                               ${RDK_PYTHON_OUTPUT_DIRECTORY}/${RDKPY_DEST})
     endif(WIN32)
 
-    target_link_libraries(${RDKPY_NAME} ${RDKPY_LINK_LIBRARIES}
+    target_link_libraries(${RDKPY_NAME} PUBLIC ${RDKPY_LINK_LIBRARIES}
                           RDBoost rdkit_py_base rdkit_base )
     if("${PYTHON_LDSHARED}" STREQUAL "")
     else()
