@@ -19,7 +19,7 @@
 #include <Numerics/EigenSolvers/PowerEigenSolver.h>
 #include <RDGeneral/utils.h>
 #include <ForceField/ForceField.h>
-#include <ForceField/UFF/DistanceConstraint.h>
+#include <ForceField/DistanceConstraints.h>
 #include <ForceField/UFF/AngleConstraint.h>
 #include <ForceField/UFF/Inversions.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
@@ -363,6 +363,8 @@ void add12Terms(ForceFields::ForceField *ff,
                 RDGeom::Point3DPtrVect &positions, double forceConstant,
                 unsigned int numAtoms) {
   PRECONDITION(ff, "bad force field");
+  auto distContribs =
+      std::make_unique<ForceFields::DistanceConstraintContribs>(ff);
   for (const auto &bond : etkdgDetails.bonds) {
     unsigned int i = bond.first;
     unsigned int j = bond.second;
@@ -372,9 +374,11 @@ void add12Terms(ForceFields::ForceField *ff,
       atomPairs[j * numAtoms + i] = 1;
     }
     double d = ((*positions[i]) - (*positions[j])).length();
-    auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
-        ff, i, j, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL, forceConstant);
-    ff->contribs().emplace_back(contrib);
+    distContribs->addContrib(i, j, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL,
+                             forceConstant);
+  }
+  if (!distContribs->empty()) {
+    ff->contribs().emplace_back(distContribs.release());
   }
 }
 //! Add 1-3 distance constraints with padding at current positions to force
@@ -401,6 +405,8 @@ void add13Terms(ForceFields::ForceField *ff,
                 const boost::dynamic_bitset<> &isImproperConstrained,
                 bool useBasicKnowledge, unsigned int numAtoms) {
   PRECONDITION(ff, "bad force field");
+  auto distContribs =
+      std::make_unique<ForceFields::DistanceConstraintContribs>(ff);
   for (const auto &angle : etkdgDetails.angles) {
     unsigned int i = angle[0];
     unsigned int j = angle[1];
@@ -418,10 +424,12 @@ void add13Terms(ForceFields::ForceField *ff,
       ff->contribs().emplace_back(contrib);
     } else if (!isImproperConstrained[j]) {
       double d = ((*positions[i]) - (*positions[k])).length();
-      auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
-          ff, i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL, forceConstant);
-      ff->contribs().emplace_back(contrib);
+      distContribs->addContrib(i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL,
+                               forceConstant);
     }
+  }
+  if (!distContribs->empty()) {
+    ff->contribs().emplace_back(distContribs.release());
   }
 }
 
@@ -449,6 +457,8 @@ void addLongRangeDistanceConstraints(
     double knownDistanceForceConstant, const BoundsMatrix &mmat,
     unsigned int numAtoms) {
   PRECONDITION(ff, "bad force field");
+  auto distContribs =
+      std::make_unique<ForceFields::DistanceConstraintContribs>(ff);
   double fdist = knownDistanceForceConstant;
   for (unsigned int i = 1; i < numAtoms; ++i) {
     for (unsigned int j = 0; j < i; ++j) {
@@ -465,11 +475,12 @@ void addLongRangeDistanceConstraints(
           u += KNOWN_DIST_TOL;
           fdist = knownDistanceForceConstant;
         }
-        auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
-            ff, i, j, l, u, fdist);
-        ff->contribs().emplace_back(contrib);
+        distContribs->addContrib(i, j, l, u, fdist);
       }
     }
+  }
+  if (!distContribs->empty()) {
+    ff->contribs().emplace_back(distContribs.release());
   }
 }
 
