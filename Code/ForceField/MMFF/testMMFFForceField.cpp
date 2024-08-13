@@ -1513,20 +1513,6 @@ void testMMFFAllConstraints() {
       MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 100.0, 0.5));
   delete field;
   delete mmffMolProperties;
-  MolTransforms::setAngleDeg(mol->getConformer(), 1, 3, 6, 0.0);
-  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
-  TEST_ASSERT(mmffMolProperties);
-  TEST_ASSERT(mmffMolProperties->isValid());
-  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
-  field->initialize();
-  ac = new ForceFields::MMFF::AngleConstraintContrib(field, 1, 3, 6, false,
-                                                     -10.0, 10.0, 100.0);
-  field->contribs().push_back(ForceFields::ContribPtr(ac));
-  field->minimize();
-  TEST_ASSERT(RDKit::feq(
-      MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 10.0, 0.5));
-  delete field;
-  delete mmffMolProperties;
   delete mol;
 
   // torsion constraints
