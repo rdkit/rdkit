@@ -53,7 +53,7 @@ std::vector<ValidationErrorInfo> RDKitValidation::validate(
 
   unsigned int na = mol.getNumAtoms();
 
-  if (!na) {
+  if (!na && !allowEmptyMolecules) {
     errors.emplace_back("ERROR: [NoAtomValidation] Molecule has no atoms");
   }
 
