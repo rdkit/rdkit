@@ -1,14 +1,12 @@
 
 rdkit_library(ForceField
-              ForceField.cpp AngleConstraint.cpp
+              ForceField.cpp AngleConstraint.cpp DistanceConstraint.cpp
               UFF/AngleBend.cpp UFF/BondStretch.cpp UFF/Nonbonded.cpp
               UFF/Inversion.cpp UFF/TorsionAngle.cpp
-              UFF/DistanceConstraint.cpp
               UFF/TorsionConstraint.cpp UFF/PositionConstraint.cpp
               UFF/Params.cpp 
               MMFF/AngleBend.cpp MMFF/BondStretch.cpp MMFF/StretchBend.cpp
               MMFF/OopBend.cpp MMFF/TorsionAngle.cpp MMFF/Nonbonded.cpp
-              MMFF/DistanceConstraint.cpp
               MMFF/TorsionConstraint.cpp MMFF/PositionConstraint.cpp
               MMFF/Params.cpp
               LINK_LIBRARIES Optimizer Trajectory)
@@ -17,6 +15,7 @@ target_compile_definitions(ForceField PRIVATE RDKIT_FORCEFIELD_BUILD)
 rdkit_headers(Contrib.h
               ForceField.h
               AngleConstraint.h
+              DistanceConstraint.h
               DEST ForceField)
 
 rdkit_headers(UFF/AngleBend.h
