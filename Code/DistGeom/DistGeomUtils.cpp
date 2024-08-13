@@ -20,6 +20,7 @@
 #include <RDGeneral/utils.h>
 #include <ForceField/ForceField.h>
 #include <ForceField/DistanceConstraints.h>
+#include <ForceField/AngleConstraints.h>
 #include <ForceField/UFF/AngleConstraint.h>
 #include <ForceField/UFF/Inversions.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
@@ -407,6 +408,8 @@ void add13Terms(ForceFields::ForceField *ff,
   PRECONDITION(ff, "bad force field");
   auto distContribs =
       std::make_unique<ForceFields::DistanceConstraintContribs>(ff);
+  auto angleContribs =
+      std::make_unique<ForceFields::AngleConstraintContribs>(ff);
   for (const auto &angle : etkdgDetails.angles) {
     unsigned int i = angle[0];
     unsigned int j = angle[1];
@@ -419,14 +422,15 @@ void add13Terms(ForceFields::ForceField *ff,
     }
     // check for triple bonds
     if (useBasicKnowledge && angle[3]) {
-      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
-          ff, i, j, k, 179.0, 180.0, 1);
-      ff->contribs().emplace_back(contrib);
+      angleContribs->addContrib(i, j, k, 179.0, 180.0, 1);
     } else if (!isImproperConstrained[j]) {
       double d = ((*positions[i]) - (*positions[k])).length();
       distContribs->addContrib(i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL,
                                forceConstant);
     }
+  }
+  if (!angleContribs->empty()) {
+    ff->contribs().emplace_back(angleContribs.release());
   }
   if (!distContribs->empty()) {
     ff->contribs().emplace_back(distContribs.release());
@@ -584,13 +588,16 @@ ForceFields::ForceField *construct3DImproperForceField(
                           isImproperConstrained);
 
   // Check that SP Centers have an angle of 180 degrees.
+  auto angleContrib =
+      std::make_unique<ForceFields::AngleConstraintContribs>(field);
   for (const auto &angle : angles) {
     if (angle[3]) {
-      auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
-          field, angle[0], angle[1], angle[2], 179.0, 180.0,
-          oobForceScalingFactor);
-      field->contribs().emplace_back(contrib);
+      angleContrib->addContrib(angle[0], angle[1], angle[2], 179.0, 180.0,
+                               oobForceScalingFactor);
     }
+  }
+  if (!angleContrib->empty()) {
+    field->contribs().emplace_back(angleContrib.release());
   }
   return field;
 }  // construct3DImproperForceField
