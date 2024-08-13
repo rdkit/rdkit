@@ -40,7 +40,6 @@
 #include <map>
 #include <algorithm>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
-#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include "GraphMol/ChemReactions/ReactionRunner.h"
@@ -420,27 +419,24 @@ bool isMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol,
         "initReactantMatchers() must be called first");
   }
   which = 0;
-  for (auto iter = rxn.beginAgentTemplates(); iter != rxn.endAgentTemplates();
-       ++iter, ++which) {
-    if (iter->get()->getNumHeavyAtoms() != mol.getNumHeavyAtoms()) {
+  for (auto templ : rxn.getAgents()) {
+    if (templ->getNumHeavyAtoms() != mol.getNumHeavyAtoms()) {
+      ++which;
       continue;
     }
-    if (iter->get()->getNumBonds() != mol.getNumBonds()) {
+    if (templ->getNumBonds() != mol.getNumBonds()) {
+      ++which;
       continue;
     }
-    // not possible, update property cache not possible for const molecules
-    //      if(iter->get()->getRingInfo()->numRings() !=
-    //      mol.getRingInfo()->numRings()){
-    //          return false;
-    //      }
-    if (RDKit::Descriptors::calcAMW(*iter->get()) !=
-        RDKit::Descriptors::calcAMW(mol)) {
+    if (MolOps::getAvgMolWt(*templ) != MolOps::getAvgMolWt(mol)) {
+      ++which;
       continue;
     }
-    auto tvect = SubstructMatch(mol, **iter, rxn.getSubstructParams());
+    auto tvect = SubstructMatch(mol, *templ, rxn.getSubstructParams());
     if (!tvect.empty()) {
       return true;
     }
+    ++which;
   }
   return false;
 }
