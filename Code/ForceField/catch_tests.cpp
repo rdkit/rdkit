@@ -1,6 +1,7 @@
 
 //
 //  Copyright (C) 2024 Niels Maeder and other RDKit contributors
+//
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license

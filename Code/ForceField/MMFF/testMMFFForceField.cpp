@@ -1,6 +1,6 @@
 // $Id$
 //
-// Copyright (C)  2013 Paolo Tosco
+// Copyright (C)  2013-2024 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
