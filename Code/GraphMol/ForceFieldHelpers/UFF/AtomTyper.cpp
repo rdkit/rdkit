@@ -14,7 +14,6 @@
 #include <ForceField/UFF/BondStretch.h>
 #include <ForceField/UFF/AngleBend.h>
 #include <ForceField/UFF/TorsionAngle.h>
-#include <ForceField/UFF/Inversion.h>
 #include <ForceField/UFF/Nonbonded.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
