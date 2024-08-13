@@ -1,5 +1,5 @@
 
-rdkit_library(ForceField
+rdkit_library(ForceField AngleConstraints.cpp DistanceConstraints.cpp
               ForceField.cpp AngleConstraint.cpp
               UFF/AngleBend.cpp UFF/BondStretch.cpp UFF/Nonbonded.cpp
               UFF/Inversion.cpp UFF/TorsionAngle.cpp
@@ -43,6 +43,11 @@ rdkit_headers(MMFF/AngleBend.h
               MMFF/TorsionConstraint.h
               MMFF/PositionConstraint.h
               MMFF/Params.h DEST ForceField/MMFF)
+
+rdkit_catch_test(ForceFieldsCatch 
+                 catch_tests.cpp
+                 LINK_LIBRARIES 
+                 ForceField ForceFieldHelpers)
 
 add_subdirectory(UFF)
 add_subdirectory(MMFF)
