@@ -21,9 +21,9 @@
 #include <ForceField/ForceField.h>
 #include <ForceField/UFF/DistanceConstraint.h>
 #include <ForceField/UFF/AngleConstraint.h>
-#include <ForceField/UFF/Inversion.h>
+#include <ForceField/UFF/Inversions.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
-#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleM6.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleContribs.h>
 #include <boost/dynamic_bitset.hpp>
 #include <ForceField/MMFF/Nonbonded.h>
 
@@ -269,6 +269,8 @@ void addImproperTorsionTerms(ForceFields::ForceField *ff,
                              const std::vector<std::vector<int>> &improperAtoms,
                              boost::dynamic_bitset<> &isImproperConstrained) {
   PRECONDITION(ff, "bad force field");
+  auto inversionContribs =
+      std::make_unique<ForceFields::UFF::InversionContribs>(ff);
   for (const auto &improperAtom : improperAtoms) {
     std::vector<int> n(4);
     for (unsigned int i = 0; i < 3; ++i) {
@@ -293,13 +295,15 @@ void addImproperTorsionTerms(ForceFields::ForceField *ff,
           break;
       }
 
-      auto *contrib = new ForceFields::UFF::InversionContrib(
-          ff, improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
+      inversionContribs->addContrib(
+          improperAtom[n[0]], improperAtom[n[1]], improperAtom[n[2]],
           improperAtom[n[3]], improperAtom[4],
           static_cast<bool>(improperAtom[5]), forceScalingFactor);
-      ff->contribs().emplace_back(contrib);
       isImproperConstrained[improperAtom[n[1]]] = 1;
     }
+  }
+  if (!inversionContribs->empty()) {
+    ff->contribs().emplace_back(inversionContribs.release());
   }
 }
 
@@ -319,6 +323,8 @@ void addExperimentalTorsionTerms(
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails,
     boost::dynamic_bitset<> &atomPairs, unsigned int numAtoms) {
   PRECONDITION(ff, "bad force field");
+  auto torsionContribs =
+      std::make_unique<ForceFields::CrystalFF::TorsionAngleContribs>(ff);
   for (unsigned int t = 0; t < etkdgDetails.expTorsionAtoms.size(); ++t) {
     int i = etkdgDetails.expTorsionAtoms[t][0];
     int j = etkdgDetails.expTorsionAtoms[t][1];
@@ -329,10 +335,12 @@ void addExperimentalTorsionTerms(
     } else {
       atomPairs[l * numAtoms + i] = 1;
     }
-    auto *contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(
-        ff, i, j, k, l, etkdgDetails.expTorsionAngles[t].second,
-        etkdgDetails.expTorsionAngles[t].first);
-    ff->contribs().emplace_back(contrib);
+    torsionContribs->addContrib(i, j, k, l,
+                                etkdgDetails.expTorsionAngles[t].second,
+                                etkdgDetails.expTorsionAngles[t].first);
+  }
+  if (!torsionContribs->empty()) {
+    ff->contribs().emplace_back(torsionContribs.release());
   }
 }
 
