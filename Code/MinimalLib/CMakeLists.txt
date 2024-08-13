@@ -47,7 +47,7 @@ if(RDK_BUILD_CFFI_LIB)
         MolStandardize DistGeomHelpers ForceFieldHelpers DistGeometry
         ForceField Alignment
         MolInterchange Abbreviations CIPLabeler 
-        MolDraw2D Depictor 
+        MolDraw2D Depictor Descriptors
         SubstructMatch FileParsers 
         SmilesParse GraphMol RDGeometryLib RDGeneral RGroupDecomposition)
     if(RDK_BUILD_INCHI_SUPPORT)
