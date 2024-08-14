@@ -92,18 +92,18 @@ void InversionContribs::getGrad(double *pos, double *grad) const {
     if (isDoubleZero(dJI) || isDoubleZero(dJK) || isDoubleZero(dJL)) {
       return;
     }
-    rJI /= dJI;
-    rJK /= dJK;
-    rJL /= dJL;
+    rJI.normalize();
+    rJK.normalize();
+    rJL.normalize();
 
     RDGeom::Point3D n = (-rJI).crossProduct(rJK);
-    n /= n.length();
+    n.normalize();
     double cosY = n.dotProduct(rJL);
-    clipToOne(cosY);
+    cosY = std::clamp(cosY, -1.0, 1.0);
     const double sinYSq = 1.0 - cosY * cosY;
     const double sinY = std::max(sqrt(sinYSq), 1.0e-8);
     double cosTheta = rJI.dotProduct(rJK);
-    clipToOne(cosTheta);
+    cosTheta = std::clamp(cosTheta, -1.0, 1.0);
     const double sinThetaSq = 1.0 - cosTheta * cosTheta;
     const double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
     // sin(2 * W) = 2 * sin(W) * cos(W) = 2 * cos(Y) * sin(Y)

@@ -11,14 +11,13 @@
 #ifndef RD_UFFINVERSIONS_H
 #define RD_UFFINVERSIONS_H
 #include <ForceField/Contrib.h>
-#include <tuple>
-#include <Geometry/point.h>
+#include <vector>
 
 namespace ForceFields {
 namespace UFF {
 class AtomicParams;
 
-struct InversionContribsParams {
+struct RDKIT_FORCEFIELD_EXPORT InversionContribsParams {
   unsigned int idx1{0};       //!< index of atom1 in the ForceField's positions
   unsigned int idx2{0};       //!< index of atom2 in the ForceField's positions
   unsigned int idx3{0};       //!< index of atom3 in the ForceField's positions

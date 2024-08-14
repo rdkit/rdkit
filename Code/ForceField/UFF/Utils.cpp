@@ -22,12 +22,12 @@ double calculateCosY(const RDGeom::Point3D &iPoint,
   RDGeom::Point3D rJI = iPoint - jPoint;
   RDGeom::Point3D rJK = kPoint - jPoint;
   RDGeom::Point3D rJL = lPoint - jPoint;
-  rJI /= rJI.length();
-  rJK /= rJK.length();
-  rJL /= rJL.length();
+  rJI.normalize();
+  rJK.normalize();
+  rJL.normalize();
 
   RDGeom::Point3D n = rJI.crossProduct(rJK);
-  n /= n.length();
+  n.normalize();
 
   return n.dotProduct(rJL);
 }

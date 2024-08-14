@@ -20,15 +20,16 @@
 #include <ForceField/UFF/Params.h>
 
 using namespace RDKit;
+namespace {
 
-double _get_dist(const ROMol &mol, unsigned int idx1, unsigned int idx2) {
+double get_dist(const ROMol &mol, unsigned int idx1, unsigned int idx2) {
   return (mol.getConformer().getAtomPos(idx1) -
           mol.getConformer().getAtomPos(idx2))
       .length();
 }
 
-double _get_angle(const ROMol &mol, unsigned int idx1, unsigned int idx2,
-                  unsigned int idx3) {
+double get_angle(const ROMol &mol, unsigned int idx1, unsigned int idx2,
+                 unsigned int idx3) {
   const auto &pos1 = mol.getConformer().getAtomPos(idx1);
   const auto &pos2 = mol.getConformer().getAtomPos(idx2);
   const auto &pos3 = mol.getConformer().getAtomPos(idx3);
@@ -39,6 +40,7 @@ double _get_angle(const ROMol &mol, unsigned int idx1, unsigned int idx2,
   cosTheta = std::clamp(cosTheta, -1.0, 1.0);
   return ForceFields::UFF::RAD2DEG * acos(cosTheta);
 }
+}  // namespace
 
 TEST_CASE("Test DistanceConstraintContribs") {
   auto mol =
@@ -50,30 +52,28 @@ TEST_CASE("Test DistanceConstraintContribs") {
     auto forceField = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
     REQUIRE(forceField);
     forceField->initialize();
-    auto contribs =
-        new ForceFields::DistanceConstraintContribs(forceField.get());
-    REQUIRE(contribs);
+    auto contribs = std::make_unique<ForceFields::DistanceConstraintContribs>(
+        forceField.get());
     contribs->addContrib(0, 1, 3.0, 3.0, 1);
     contribs->addContrib(0, 2, 4.0, 4.0, 1);
-    forceField->contribs().emplace_back(contribs);
+    forceField->contribs().emplace_back(contribs.release());
     CHECK(forceField->minimize() == 0);
-    CHECK(feq(_get_dist(*mol, 0, 1), 3.0));
-    CHECK(feq(_get_dist(*mol, 0, 2), 4.0));
+    CHECK(feq(get_dist(*mol, 0, 1), 3.0));
+    CHECK(feq(get_dist(*mol, 0, 2), 4.0));
   }
   SECTION("relative distance minimization") {
     auto forceField = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
     REQUIRE(forceField);
     forceField->initialize();
-    auto contribs =
-        new ForceFields::DistanceConstraintContribs(forceField.get());
-    REQUIRE(contribs);
+    auto contribs = std::make_unique<ForceFields::DistanceConstraintContribs>(
+        forceField.get());
     contribs->addContrib(0, 1, true, 1.0, 1.0, 1);
     contribs->addContrib(0, 2, false, 4.0, 4.0, 1);
-    forceField->contribs().emplace_back(contribs);
-    auto before = _get_dist(*mol, 0, 1);
+    forceField->contribs().emplace_back(contribs.release());
+    auto before = get_dist(*mol, 0, 1);
     CHECK(forceField->minimize() == 0);
-    CHECK(feq(_get_dist(*mol, 0, 1), 1.0 + before));
-    CHECK(feq(_get_dist(*mol, 0, 2), 4.0));
+    CHECK(feq(get_dist(*mol, 0, 1), 1.0 + before));
+    CHECK(feq(get_dist(*mol, 0, 2), 4.0));
   }
 }
 
@@ -87,27 +87,27 @@ TEST_CASE("Test AngleConstraintContribs") {
     auto forceField = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
     REQUIRE(forceField);
     forceField->initialize();
-    auto contribs = new ForceFields::AngleConstraintContribs(forceField.get());
-    REQUIRE(contribs);
+    auto contribs = std::make_unique<ForceFields::AngleConstraintContribs>(
+        forceField.get());
     contribs->addContrib(0, 1, 2, 120.0, 120.0, 1);
     contribs->addContrib(1, 2, 3, 160.0, 160.0, 1);
-    forceField->contribs().emplace_back(contribs);
+    forceField->contribs().emplace_back(contribs.release());
     CHECK(forceField->minimize() == 0);
-    CHECK(feq(_get_angle(*mol, 0, 1, 2), 120.0));
-    CHECK(feq(_get_angle(*mol, 1, 2, 3), 160.0));
+    CHECK(feq(get_angle(*mol, 0, 1, 2), 120.0));
+    CHECK(feq(get_angle(*mol, 1, 2, 3), 160.0));
   }
   SECTION("relative angle minimization") {
     auto forceField = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
     REQUIRE(forceField);
     forceField->initialize();
-    auto contribs = new ForceFields::AngleConstraintContribs(forceField.get());
-    REQUIRE(contribs);
+    auto contribs = std::make_unique<ForceFields::AngleConstraintContribs>(
+        forceField.get());
     contribs->addContrib(0, 1, 2, true, 5.0, 5.0, 1);
     contribs->addContrib(1, 2, 3, false, 160.0, 160.0, 1);
-    forceField->contribs().emplace_back(contribs);
-    auto before = _get_angle(*mol, 0, 1, 2);
+    forceField->contribs().emplace_back(contribs.release());
+    auto before = get_angle(*mol, 0, 1, 2);
     CHECK(forceField->minimize() == 0);
-    CHECK(feq(_get_angle(*mol, 0, 1, 2), before + 5.0));
-    CHECK(feq(_get_angle(*mol, 1, 2, 3), 160.0));
+    CHECK(feq(get_angle(*mol, 0, 1, 2), before + 5.0));
+    CHECK(feq(get_angle(*mol, 1, 2, 3), 160.0));
   }
 }

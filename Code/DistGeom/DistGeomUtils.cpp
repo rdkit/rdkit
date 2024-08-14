@@ -587,16 +587,16 @@ ForceFields::ForceField *construct3DImproperForceField(
                           isImproperConstrained);
 
   // Check that SP Centers have an angle of 180 degrees.
-  auto angleContrib =
+  auto angleContribs =
       std::make_unique<ForceFields::AngleConstraintContribs>(field);
   for (const auto &angle : angles) {
     if (angle[3]) {
-      angleContrib->addContrib(angle[0], angle[1], angle[2], 179.0, 180.0,
-                               oobForceScalingFactor);
+      angleContribs->addContrib(angle[0], angle[1], angle[2], 179.0, 180.0,
+                                oobForceScalingFactor);
     }
   }
-  if (!angleContrib->empty()) {
-    field->contribs().emplace_back(angleContrib.release());
+  if (!angleContribs->empty()) {
+    field->contribs().emplace_back(angleContribs.release());
   }
   return field;
 }  // construct3DImproperForceField

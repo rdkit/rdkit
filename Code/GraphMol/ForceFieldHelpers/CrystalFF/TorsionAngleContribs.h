@@ -11,9 +11,7 @@
 #include <RDGeneral/export.h>
 #ifndef RD_TORSIONANGLECONTRIBS_H
 #define RD_TORSIONANGLECONTRIBS_H
-
 #include <ForceField/Contrib.h>
-#include <tuple>
 #include <vector>
 
 namespace RDGeom {
@@ -30,7 +28,7 @@ namespace CrystalFF {
 
 //! A term to capture all torsion constraint potentials.
 //!
-struct TorsionAngleContribsParams {
+struct RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribsParams {
   unsigned int idx1{0};
   unsigned int idx2{0};
   unsigned int idx3{0};

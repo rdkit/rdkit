@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (C)  2013-2024 Paolo Tosco and other RDKit contributors
 //
