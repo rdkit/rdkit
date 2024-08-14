@@ -6718,7 +6718,7 @@ M  END
 
   def test_get_set_positions(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
-    pos = np.zeros([3,3], np.double)
+    pos = np.zeros([3, 3], np.double)
     pos[0][1] = 1
     pos[0][2] = 2
     pos[1][0] = 3
@@ -6731,8 +6731,7 @@ M  END
     m.GetConformer(0).SetPositions(pos)
     pos2 = m.GetConformer(0).GetPositions()
 
-    self.assertTrue( (pos==pos2).all())
-    
+    self.assertTrue((pos == pos2).all())
 
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
@@ -8212,6 +8211,18 @@ M  END
     self.assertEqual(centers, expected)
     centers = Chem.FindMesoCenters(mol, includeIsotopes=False)
     self.assertEqual(centers, ())
+
+  def testCleanupStereoGroups(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(False)
+    mol = Chem.MolFromSmiles('N[C@H]1CC[C@@H](O)CC1')
+    mol = Chem.RWMol(mol)
+    group1 = Chem.CreateStereoGroup(Chem.StereoGroupType.STEREO_OR, mol, [1, 4])
+    mol.SetStereoGroups([group1])
+    self.assertEqual(len(mol.GetStereoGroups()), 1)
+    Chem.CleanupStereoGroups(mol)
+    self.assertEqual(len(mol.GetStereoGroups()), 0)
+    Chem.SetUseLegacyStereoPerception(origVal)
 
 
 if __name__ == '__main__':
