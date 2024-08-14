@@ -7,9 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "ForceField.h"
 #include "AngleConstraint.h"
 #include <cmath>
-#include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 
 #ifndef M_PI
