@@ -9,8 +9,8 @@
 //
 #include "ForceField.h"
 #include "DistanceConstraint.h"
-#include <cmath>
 #include <RDGeneral/Invariant.h>
+#include <cmath>
 
 namespace ForceFields {
 DistanceConstraintContrib::DistanceConstraintContrib(

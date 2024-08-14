@@ -9,9 +9,9 @@
 //
 #include "PositionConstraint.h"
 #include "ForceField.h"
+#include <RDGeneral/Invariant.h>
 #include <algorithm>
 #include <cmath>
-#include <RDGeneral/Invariant.h>
 
 namespace ForceFields {
 PositionConstraintContrib::PositionConstraintContrib(ForceField *owner,
