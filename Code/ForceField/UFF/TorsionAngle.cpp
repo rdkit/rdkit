@@ -53,8 +53,9 @@ void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
                        1.0 / d[1] * (t[0].z - cosPhi * t[1].z)};
 
   g[0][0] += sinTerm * (dCos_dT[1] * r[1].z - dCos_dT[2] * r[1].y);
-  g[0][1] += sinTerm * (dCos_dT[0] * r[1].z - dCos_dT[2] * r[1].x);
-  g[0][2] += sinTerm * (dCos_dT[1] * r[1].x - dCos_dT[0] * r[1].y);
+  g[0][1] += sinTerm * (dCos_dT[2] * r[1].x - dCos_dT[0] * r[1].z);
+  g[0][2] += sinTerm * (dCos_dT[0] * r[1].y - dCos_dT[1] * r[1].x);
+
 
   g[1][0] += sinTerm *
              (dCos_dT[1] * (r[1].z - r[0].z) + dCos_dT[2] * (r[0].y - r[1].y) +
