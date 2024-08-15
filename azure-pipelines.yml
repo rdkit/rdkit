@@ -50,7 +50,7 @@ jobs:
   pool:
     vmImage: windows-2019
   variables:
-    boost_version: 1.71.0
+    boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python38
   steps:
@@ -60,7 +60,7 @@ jobs:
   pool:
     vmImage: windows-2019
   variables:
-    boost_version: 1.71.0
+    boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
     python_name: python38
   steps:
@@ -70,7 +70,7 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    boost_version: 1.69.0
+    boost_version: 1.71.0
     number_of_cores: nproc
     compiler: gxx_linux-64
     cc: gcc-10
