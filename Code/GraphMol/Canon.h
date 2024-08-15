@@ -150,7 +150,7 @@ typedef enum {
 } StereoGroupAbsOptions;
 
 RDKIT_GRAPHMOL_EXPORT void canonicalizeStereoGroups(
-    std::unique_ptr<RWMol> &mol, StereoGroupAbsOptions outputAbsoluteGroups =
+    std::unique_ptr<ROMol> &mol, StereoGroupAbsOptions outputAbsoluteGroups =
                                      OnlyIncludeWhenOtherGroupsExist);
 
 }  // end of namespace Canon

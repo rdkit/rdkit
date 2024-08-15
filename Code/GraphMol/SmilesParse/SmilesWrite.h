@@ -39,18 +39,6 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
                             is not canonical */
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
                              atom. The resulting SMILES is not canonical */
-  bool rigorousEnhancedStereo = false; /**< if true, use a more rigorous
-             treatment of enhanced stereochemisty
-             is performed */
-  Canon::StereoGroupAbsOptions rigorousEnhancedStereoIncludeAbsGroups =
-      Canon::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist;
-
-  bool useStereoToBreakTies =
-      false; /**< if true, ranks are determined without stereo,
-then again using the previous ranks and the stereo information */
-  bool doNotSortFragments = false; /**< if true, the fragments will not be
-                                      sorted before generating the SMILES - used
-                                      in canonlication of enahnanced stereo */
   bool includeDativeBonds =
       true; /**< include the RDKit extension for dative bonds. Otherwise dative
                bonds will be written as single bonds*/

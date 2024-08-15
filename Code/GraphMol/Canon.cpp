@@ -1271,7 +1271,7 @@ unsigned int countSwaps(std::vector<unsigned int> &nbrs) {
 }
 }  // namespace
 
-void buildTree(int atomIndexToAdd, const RWMol *mol,
+void buildTree(int atomIndexToAdd, const ROMol *mol,
                std::vector<unsigned int> &chosenOrder,
                std::vector<int> &reverseOrder,
                std::vector<unsigned int> &ranks) {
@@ -1671,7 +1671,7 @@ bool doTwoBondsVaryTheSame(const OrderedSet<RankedValue> &allRankedValues,
 }
 
 void canonicalizeStereoGroups_internal(
-    std::unique_ptr<RWMol> &mol, RDKit::StereoGroupType stereoGroupType,
+    std::unique_ptr<ROMol> &mol, RDKit::StereoGroupType stereoGroupType,
     StereoGroupAbsOptions outputAbsoluteGroups) {
   // this expanded a mol with stereo groups to a vector of values that have no
   // stereo groups, then determines the stereo groups from that set
@@ -1725,11 +1725,11 @@ void canonicalizeStereoGroups_internal(
     mol->setStereoGroups(
         andGroupsToKeep);  // these groups might be empty, especially if we
                            // are PROCESSING AND groups
-    std::unique_ptr<RWMol> bestNewMol;
+    std::unique_ptr<ROMol> bestNewMol;
     auto newMolCount = std::pow(2, groupsToProcess.size());
 
     for (unsigned int molIndex = 0; molIndex < newMolCount; ++molIndex) {
-      auto newMol = std::unique_ptr<RWMol>(new RWMol(*(mol.get())));
+      auto newMol = std::unique_ptr<ROMol>(new RWMol(*(mol.get())));
 
       for (unsigned int grpIndex = 0; grpIndex < groupsToProcess.size();
            ++grpIndex) {
@@ -1879,7 +1879,7 @@ void canonicalizeStereoGroups_internal(
 
     if (allRankedValues.size() == 1) {
       if (outputAbsoluteGroups == StereoGroupAbsOptions::NeverInclude) {
-        mol = std::unique_ptr<RWMol>(bestNewMol.release());
+        mol = std::unique_ptr<ROMol>(bestNewMol.release());
         return;
       }
 
@@ -2036,7 +2036,7 @@ void canonicalizeStereoGroups_internal(
     bestNewMol->setStereoGroups(newGroups);
 
     // return bestNewMol;
-    mol = std::unique_ptr<RWMol>(bestNewMol.release());
+    mol = std::unique_ptr<ROMol>(bestNewMol.release());
     return;
 
     /* code */
@@ -2189,7 +2189,7 @@ void clearStereoGroups(ROMol &mol) {
   mol.setStereoGroups(sgs);
 }
 
-void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol,
+void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
                               StereoGroupAbsOptions outputAbsoluteGroups) {
   // this returns a mol that has a caononical rep for the enhanced stereo
   // groups it expands the given mol to all possible non-stereo-group mols,
@@ -2286,8 +2286,6 @@ void canonicalizeStereoGroups(std::unique_ptr<RWMol> &mol,
     }
     return;
   } catch (const RigorousEnhancedStereoException &e) {
-    // SmilesWriteParams newParams(params);
-    // newParams.rigorousEnhancedStereo = false;
     return;
   }
 }
