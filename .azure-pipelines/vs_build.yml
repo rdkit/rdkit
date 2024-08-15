@@ -43,7 +43,6 @@ steps:
     -DRDK_SWIG_STATIC=OFF ^
     -DRDK_TEST_MULTITHREADED=ON ^
     -DRDK_BOOST_PYTHON3_NAME=$(python_name) ^
-    -DBoost_NO_BOOST_CMAKE=TRUE ^
     -DCMAKE_INCLUDE_PATH=%CONDA_PREFIX%/Library/include ^
     -DCMAKE_LIBRARY_PATH="%CONDA_PREFIX%/Library/lib
   displayName: Configure build (Run CMake)
