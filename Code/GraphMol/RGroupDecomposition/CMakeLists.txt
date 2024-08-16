@@ -23,7 +23,7 @@ rdkit_test(testRGroupDecompInternals testRGroupInternals.cpp
 rdkit_catch_test(rgroupCatchTests catch_rgd.cpp 
 		LINK_LIBRARIES RGroupDecomposition )
 
-find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS program_options)
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS program_options CONFIG)
 if(RDK_BUILD_CPP_TESTS AND Boost_FOUND)
 	add_executable(gaExample GaExample.cpp)
 	if(NOT Boost_USE_STATIC_LIBS)
