@@ -8,7 +8,7 @@ steps:
     conda config --set solver libmamba
     conda create --name rdkit_build ^
         boost=$(boost_version) boost-cpp=$(boost_version) ^
-        libbost-python-devel=(boost_version) ^
+        libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
         numpy matplotlib=3.8 cairo pillow eigen pandas=2.1
