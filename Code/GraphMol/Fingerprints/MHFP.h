@@ -99,7 +99,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
            each atom. Default: <tt>3</tt>.
     \param rings whether the rings (SSSR) are extrected from the molecule and
            added to the shingling. Given the molecule
-           <tt>"C1CCCCCC1C(=O)C"</tt>, "<tt>C1CCCCCC1"</tt> would be added
+           <tt>"C1CCCCCC1C(=O)C"</tt>, <tt>"C1CCCCCC1"</tt> would be added
            to the shingling. Default: <tt>true</tt>.
     \param isomeric whether the SMILES added to the shingling are isomeric.
            Default: <tt>false</tt>.
@@ -138,7 +138,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
            each atom. Default: <tt>3</tt>.
     \param rings whether the rings (SSSR) are extrected from the molecule and
            added to the shingling. Given the molecule
-           <tt>"C1CCCCCC1C(=O)C"</tt>, "<tt>C1CCCCCC1"</tt> would be added
+           <tt>"C1CCCCCC1C(=O)C"</tt>, <tt>"C1CCCCCC1"</tt> would be added
            to the shingling. Default: <tt>true</tt>.
     \param isomeric whether the SMILES added to the shingling are isomeric.
            Default: <tt>false</tt>.
@@ -188,7 +188,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
            each atom. Default: <tt>3</tt>.
     \param rings whether the rings (SSSR) are extrected from the molecule and
            added to the shingling. Given the molecule
-           <tt>"C1CCCCCC1C(=O)C"</tt>, "<tt>C1CCCCCC1"</tt> would be added
+           <tt>"C1CCCCCC1C(=O)C"</tt>, <tt>"C1CCCCCC1"</tt> would be added
            to the shingling. Default: <tt>true</tt>.
     \param isomeric whether the SMILES added to the shingling are isomeric.
            Default: <tt>false</tt>.
