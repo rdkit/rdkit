@@ -2107,9 +2107,8 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   >>> rxn = AllChem.ReactionFromSmarts('[C:1]F >> [C:1]Br')
   >>> ps=rxn.RunReactants([m])
   >>> clearAllAtomProps(ps[0][0])
-  >>> wp = Chem.SmilesWriteParams()
-  >>> wp.rigorousEnhancedStereo = True
-  >>> Chem.MolToCXSmiles(ps[0][0], wp)
+  >>> mOut = Chem.CanonicalizeStereoGroups(ps[0][0])
+  >>> Chem.MolToCXSmiles(mOut)
   'C[C@H](Br)C[C@H](O)Cl |a:4,&1:1|'
 
 .. |EnhancedSSS_A|  image:: ./images/EnhancedStereoSSS_molA.png
