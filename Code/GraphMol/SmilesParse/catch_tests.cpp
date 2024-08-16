@@ -2583,18 +2583,21 @@ TEST_CASE("ensure unused features are not used") {
   SECTION("enhanced stereo") {
     // if we aren't doing CXSMILES then the enhanced stereo shouldn't enter into
     // consideration in canonicalization
-    auto mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
+    std::unique_ptr<ROMol> mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol1);
-    auto mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
+    std::unique_ptr<ROMol> mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol2);
     std::vector<unsigned int> ranks;
     SmilesWriteParams ps;
     ps.doIsomericSmiles = true;
-    ps.rigorousEnhancedStereo = true;
+    // ps.rigorousEnhancedStereo = true;
     auto smiles = MolToSmiles(*mol1, ps);
     CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl");
     smiles = MolToSmiles(*mol2, ps);
     CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl");
+
+    Canon::canonicalizeStereoGroups(mol1);
+    Canon::canonicalizeStereoGroups(mol2);
 
     smiles = MolToCXSmiles(*mol1, ps);
     CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |a:1,&1:6|");

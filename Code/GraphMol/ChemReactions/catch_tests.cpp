@@ -101,9 +101,7 @@ TEST_CASE("Github #2366 Enhanced Stereo", "[Reaction][StereoGroup][bug]") {
     auto p = prods[0][0];
 
     clearAtomMappingProps(*p);
-    SmilesWriteParams wp;
-    wp.rigorousEnhancedStereo = false;
-    CHECK(MolToCXSmiles(*p, wp) == "FC(Cl)[C@H](Cl)Br |&1:3|");
+    CHECK(MolToCXSmiles(*p) == "FC(Cl)[C@H](Cl)Br |&1:3|");
   }
   SECTION("Reaction splits StereoGroup") {
     ROMOL_SPTR mol("F[C@H](Cl)[C@@H](Cl)Br |&1:1,3|"_smiles);

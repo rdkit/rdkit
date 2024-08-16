@@ -485,11 +485,13 @@ TEST_CASE("CDXML") {
     CHECK(mols.size() == expected.size());
     int i = 0;
     SmilesWriteParams wp;
-    wp.rigorousEnhancedStereo = true;
     for (auto &mol : mols) {
-      mol.get()->clearConformers();
-      CHECK(MolToSmiles(*mol) == expected[i]);
-      CHECK(MolToCXSmiles(*mol, wp) == expected_cx[i++]);
+      auto tomol = std::unique_ptr<ROMol>(mol.release());
+      tomol.get()->clearConformers();
+      Canon::canonicalizeStereoGroups(tomol);
+
+      CHECK(MolToSmiles(*tomol) == expected[i]);
+      CHECK(MolToCXSmiles(*tomol, wp) == expected_cx[i++]);
     }
   }
   SECTION("Bad CDXML") {

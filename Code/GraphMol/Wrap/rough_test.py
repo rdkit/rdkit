@@ -5603,7 +5603,7 @@ M  END
     stgs[0].SetWriteId(7)
     self.assertEqual(stgs[0].GetWriteId(), 7)
     wp = Chem.SmilesWriteParams()
-    wp.rigorousEnhancedStereo = False
+    # wp.rigorousEnhancedStereo = False
     self.assertEqual(Chem.MolToCXSmiles(m, wp), 'C[C@H](O)Cl |o7:1|')
 
     # ids are forwarded to copies of the mol
@@ -7770,8 +7770,9 @@ M  END
 
     ps = Chem.SmilesWriteParams()
     ps.canonical = True
-    ps.rigorousEnhancedStereo = True
-    ps.rigorousEnhancedStereoIncludeAbsGroups = Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist
+
+    m = Chem.CanonicalizeStereoGroups(m)
+    # m = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist)
     smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
 
     print("smi: " + str(smi))

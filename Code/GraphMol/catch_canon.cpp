@@ -401,15 +401,18 @@ TEST_CASE("pseudoTest1") {
       rps.sanitize = true;
       rps.removeHs = false;
 
-      std::unique_ptr<RWMol> mol1{SmilesToMol(smi1, rps)};
+      std::unique_ptr<ROMol> mol1{SmilesToMol(smi1, rps)};
       REQUIRE(mol1);
-      std::unique_ptr<RWMol> mol2{SmilesToMol(smi2, rps)};
+      std::unique_ptr<ROMol> mol2{SmilesToMol(smi2, rps)};
       REQUIRE(mol2);
 
       SmilesWriteParams wps;
       wps.canonical = true;
       wps.cleanStereo = false;
-      wps.rigorousEnhancedStereo = true;
+      // wps.rigorousEnhancedStereo = true;
+
+      RDKit::Canon::canonicalizeStereoGroups(mol1);
+      RDKit::Canon::canonicalizeStereoGroups(mol2);
 
       auto outSmi1 = MolToCXSmiles(*mol1, wps);
       auto outSmi2 = MolToCXSmiles(*mol2, wps);
@@ -496,7 +499,7 @@ TEST_CASE("more enhanced stereo canonicalization") {
     Canon::canonicalizeEnhancedStereo(*m1);
     Canon::canonicalizeEnhancedStereo(*m2);
     SmilesWriteParams wp;
-    wp.rigorousEnhancedStereo = false;
+    // wp.rigorousEnhancedStereo = false;
     CHECK(MolToCXSmiles(*m1, wp) == MolToCXSmiles(*m2, wp));
   }
   SECTION("case 3") {
@@ -509,7 +512,7 @@ TEST_CASE("more enhanced stereo canonicalization") {
     Canon::canonicalizeEnhancedStereo(*m1);
     Canon::canonicalizeEnhancedStereo(*m2);
     SmilesWriteParams wp;
-    wp.rigorousEnhancedStereo = false;
+    // wp.rigorousEnhancedStereo = false;
     CHECK(MolToCXSmiles(*m1, wp) == MolToCXSmiles(*m2, wp));
   }
   SECTION("case 4") {
@@ -533,7 +536,7 @@ TEST_CASE("more enhanced stereo canonicalization") {
     forwardStereoGroupIds(*m1);
     forwardStereoGroupIds(*m2);
     SmilesWriteParams wp;
-    wp.rigorousEnhancedStereo = false;
+    // wp.rigorousEnhancedStereo = false;
 
     auto cx1 = MolToCXSmiles(*m1, wp);
     auto cx2 = MolToCXSmiles(*m2, wp);
@@ -545,10 +548,10 @@ TEST_CASE("more enhanced stereo canonicalization") {
   }
 
   SECTION("case 5a") {
-    auto m1 =
+    std::unique_ptr<ROMol> m1 =
         "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"_smiles;
     REQUIRE(m1);
-    auto m2 =
+    std::unique_ptr<ROMol> m2 =
         "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&3:3,5,&2:7,o1:1,r|"_smiles;
     REQUIRE(m2);
 
@@ -556,7 +559,9 @@ TEST_CASE("more enhanced stereo canonicalization") {
     forwardStereoGroupIds(*m2);
 
     SmilesWriteParams wp;
-    wp.rigorousEnhancedStereo = true;
+    // wp.rigorousEnhancedStereo = true;
+    RDKit::Canon::canonicalizeStereoGroups(m1);
+    RDKit::Canon::canonicalizeStereoGroups(m2);
 
     auto cx1 = MolToCXSmiles(*m1, wp);
     auto cx2 = MolToCXSmiles(*m2, wp);
@@ -581,9 +586,9 @@ TEST_CASE("more enhanced stereo canonicalization") {
     Canon::canonicalizeEnhancedStereo(*m1);
     Canon::canonicalizeEnhancedStereo(*m2);
     SmilesWriteParams wp;
-    wp.rigorousEnhancedStereo = false;
-    // auto cx1 = MolToCXSmiles(*m1, wp);
-    // auto cx2 = MolToCXSmiles(*m2, wp);
+    // wp.rigorousEnhancedStereo = false;
+    //  auto cx1 = MolToCXSmiles(*m1, wp);
+    //  auto cx2 = MolToCXSmiles(*m2, wp);
     CHECK(MolToCXSmiles(*m1, wp) == MolToCXSmiles(*m2, wp));
 
     // "read" ids are also reset!
