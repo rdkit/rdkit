@@ -605,8 +605,7 @@ TEST_CASE("tracking failure causes") {
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid == 0);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 2);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] == 5);
-
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] == 13);
     auto fail_cp = ps.failures;
     // make sure we reset the counts each time
     cid = DGeomHelpers::EmbedMolecule(*mol, ps);
@@ -751,7 +750,7 @@ TEST_CASE("Macrocycle bounds matrix") {
     RDGeom::Point3D pos_1 = conf.getAtomPos(1);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
     CHECK((pos_1 - pos_4).length() < 3.9);
-    CHECK((pos_1 - pos_4).length() > 3.8);
+    CHECK((pos_1 - pos_4).length() > 3.7);
   }
 }
 
@@ -991,6 +990,26 @@ TEST_CASE("github #7552") {
       REQUIRE(mol);
       MolOps::addHs(*mol);
       CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == 0);
+    }
+  }
+}
+
+TEST_CASE("No overlapping atoms") {
+  auto ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 1;
+  ps.enableSequentialRandomSeeds = true;
+  auto mol = "COc1cc2cc(OC)c1OCCOC[C@H](C)OC(=O)[C@@H]CNC(=O)[C@H]2"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
+  for (const auto &cid : cids) {
+    CHECK(cid >= 0);
+    const auto conf = mol->getConformer(cid);
+    for (unsigned int i = 1; i < mol->getNumAtoms(); ++i) {
+      for (unsigned int j = 0; j < i; ++j) {
+        auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
+        CHECK(length > 1.0);
+      }
     }
   }
 }

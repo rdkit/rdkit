@@ -397,22 +397,23 @@ void add13Terms(ForceFields::ForceField *ff,
     unsigned int i = angle[0];
     unsigned int j = angle[1];
     unsigned int k = angle[2];
-
-    if (i < k) {
-      atomPairs[i * numAtoms + k] = 1;
-    } else {
-      atomPairs[k * numAtoms + i] = 1;
-    }
     // check for triple bonds
     if (useBasicKnowledge && angle[3]) {
       auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           ff, i, j, k, 179.0, 180.0, 1);
       ff->contribs().emplace_back(contrib);
-    } else if (!isImproperConstrained[j]) {
+    } else if (isImproperConstrained[j]) {
+      continue;
+    } else {
       double d = ((*positions[i]) - (*positions[k])).length();
       auto *contrib = new ForceFields::UFF::DistanceConstraintContrib(
           ff, i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL, forceConstant);
       ff->contribs().emplace_back(contrib);
+    }
+    if (i < k) {
+      atomPairs[i * numAtoms + k] = 1;
+    } else {
+      atomPairs[k * numAtoms + i] = 1;
     }
   }
 }

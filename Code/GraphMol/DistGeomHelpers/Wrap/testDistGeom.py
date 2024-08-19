@@ -228,7 +228,7 @@ class TestCase(unittest.TestCase):
     params.pruneRmsThresh = 1.5
     params.useSymmetryForPruning = False
     nconfs = []
-    expected = [4, 5, 5, 7, 5, 3]
+    expected = [4, 5, 5, 6, 7, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
@@ -686,7 +686,7 @@ class TestCase(unittest.TestCase):
     AllChem.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
     self.assertEqual(cnts[AllChem.EmbedFailureCauses.INITIAL_COORDS], 2)
-    self.assertEqual(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 5)
+    self.assertEqual(cnts[AllChem.EmbedFailureCauses.ETK_MINIMIZATION], 13)
 
   def testCoordMap(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("OCCC"))
