@@ -400,12 +400,12 @@ void add13Terms(ForceFields::ForceField *ff,
     unsigned int i = angle[0];
     unsigned int j = angle[1];
     unsigned int k = angle[2];
-    // check for triple bonds
     if (i < k) {
       atomPairs[i * numAtoms + k] = 1;
     } else {
       atomPairs[k * numAtoms + i] = 1;
     }
+    // check for triple bonds
     if (useBasicKnowledge && angle[3]) {
       auto *contrib = new ForceFields::UFF::AngleConstraintContrib(
           ff, i, j, k, 179.0, 180.0, 1);
