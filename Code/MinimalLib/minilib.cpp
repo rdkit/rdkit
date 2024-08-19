@@ -30,6 +30,10 @@
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
 #include <GraphMol/FMCS/FMCS.h>
 #endif
+#ifdef RDK_BUILD_MINIMAL_LIB_ZIP
+#include <GraphMol/ChemTransforms/MolFragmenter.h>
+#endif
+
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
@@ -1001,3 +1005,16 @@ JSLog *set_log_capture(const std::string &log_name) {
 void enable_logging() { RDKit::MinimalLib::LogHandle::enableLogging(); }
 
 void disable_logging() { RDKit::MinimalLib::LogHandle::disableLogging(); }
+
+#ifdef RDK_BUILD_MINIMAL_LIB_ZIP
+JSMol * get_molzip(const JSMol &a, const JSMol &b, const std::string &details_json) {
+
+  MolzipParams p = MolzipParams();
+  if (!details_json.empty())
+    parseMolzipParametersJSON(details_json.c_str(), &p);
+
+  std::unique_ptr<RDKit::ROMol> out = molzip(*(a.d_mol.get()), *(b.d_mol.get()), p);
+
+  return new JSMol(new RDKit::RWMol(*(out).get()));
+}
+#endif
