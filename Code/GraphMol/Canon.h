@@ -143,15 +143,22 @@ RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT void canonicalizeEnhancedStereo(
     ROMol &mol, const std::vector<unsigned int> *atomRanks = nullptr);
 
-typedef enum {
-  OnlyIncludeWhenOtherGroupsExist = 0,
-  NeverInclude,
-  AlwaysInclude
-} StereoGroupAbsOptions;
+enum class StereoGroupAbsOptions {
+  OnlyIncludeWhenOtherGroupsExist =
+      0,  // when stereo groups are canonicalized, ABS groups are added only
+          // when other Stereo Groups are added this prevents a mol from having
+          // JUST an ABS stereo group
+  NeverInclude,  // Abs groups are never included, Just AND and OR groups after
+                 // stereo group canonicalization
+  AlwaysInclude  // when stereo groups are canonicalized, ABS groups are added
+                 // only when other Stereo Groups are added this prevents a mol
+                 // from having JUST an ABS stereo group
+};
 
 RDKIT_GRAPHMOL_EXPORT void canonicalizeStereoGroups(
-    std::unique_ptr<ROMol> &mol, StereoGroupAbsOptions outputAbsoluteGroups =
-                                     OnlyIncludeWhenOtherGroupsExist);
+    std::unique_ptr<ROMol> &mol,
+    StereoGroupAbsOptions outputAbsoluteGroups =
+        StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist);
 
 }  // end of namespace Canon
 }  // end of namespace RDKit

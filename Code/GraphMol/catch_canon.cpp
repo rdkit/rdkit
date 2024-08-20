@@ -409,7 +409,6 @@ TEST_CASE("pseudoTest1") {
       SmilesWriteParams wps;
       wps.canonical = true;
       wps.cleanStereo = false;
-      // wps.rigorousEnhancedStereo = true;
 
       RDKit::Canon::canonicalizeStereoGroups(mol1);
       RDKit::Canon::canonicalizeStereoGroups(mol2);
@@ -498,9 +497,7 @@ TEST_CASE("more enhanced stereo canonicalization") {
     REQUIRE(m2);
     Canon::canonicalizeEnhancedStereo(*m1);
     Canon::canonicalizeEnhancedStereo(*m2);
-    SmilesWriteParams wp;
-    // wp.rigorousEnhancedStereo = false;
-    CHECK(MolToCXSmiles(*m1, wp) == MolToCXSmiles(*m2, wp));
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
   }
   SECTION("case 3") {
     auto m1 =
@@ -511,9 +508,7 @@ TEST_CASE("more enhanced stereo canonicalization") {
     REQUIRE(m2);
     Canon::canonicalizeEnhancedStereo(*m1);
     Canon::canonicalizeEnhancedStereo(*m2);
-    SmilesWriteParams wp;
-    // wp.rigorousEnhancedStereo = false;
-    CHECK(MolToCXSmiles(*m1, wp) == MolToCXSmiles(*m2, wp));
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
   }
   SECTION("case 4") {
     auto m1 =
@@ -535,16 +530,11 @@ TEST_CASE("more enhanced stereo canonicalization") {
 
     forwardStereoGroupIds(*m1);
     forwardStereoGroupIds(*m2);
-    SmilesWriteParams wp;
-    // wp.rigorousEnhancedStereo = false;
 
-    auto cx1 = MolToCXSmiles(*m1, wp);
-    auto cx2 = MolToCXSmiles(*m2, wp);
-    CHECK(cx1 != cx2);
-    CHECK(cx1.find("&7:") != std::string::npos);
-    CHECK(cx1.find("&8:") != std::string::npos);
-    CHECK(cx2.find("&2:") != std::string::npos);
-    CHECK(cx2.find("&3:") != std::string::npos);
+    auto cx1 = MolToCXSmiles(*m1);
+    auto cx2 = MolToCXSmiles(*m2);
+    CHECK(cx1 == "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)O |o1:1,&7:7,&8:3,5|");
+    CHECK(cx2 == "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)O |o1:1,&2:7,&3:3,5|");
   }
 
   SECTION("case 5a") {
@@ -558,18 +548,13 @@ TEST_CASE("more enhanced stereo canonicalization") {
     forwardStereoGroupIds(*m1);
     forwardStereoGroupIds(*m2);
 
-    SmilesWriteParams wp;
-    // wp.rigorousEnhancedStereo = true;
     RDKit::Canon::canonicalizeStereoGroups(m1);
     RDKit::Canon::canonicalizeStereoGroups(m2);
 
-    auto cx1 = MolToCXSmiles(*m1, wp);
-    auto cx2 = MolToCXSmiles(*m2, wp);
-    CHECK(cx1 == cx2);
-    CHECK(cx1.find("&1:") != std::string::npos);
-    CHECK(cx1.find("&2:") != std::string::npos);
-    CHECK(cx2.find("&1:") != std::string::npos);
-    CHECK(cx2.find("&2:") != std::string::npos);
+    auto cx1 = MolToCXSmiles(*m1);
+    auto cx2 = MolToCXSmiles(*m2);
+    CHECK(cx1 == "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)O |o1:1,&1:3,5,&2:7|");
+    CHECK(cx2 == "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)O |o1:1,&1:3,5,&2:7|");
   }
   SECTION("case 6") {
     auto m1 =
@@ -585,19 +570,13 @@ TEST_CASE("more enhanced stereo canonicalization") {
     // Canonicalization resets the Stereo Group IDs
     Canon::canonicalizeEnhancedStereo(*m1);
     Canon::canonicalizeEnhancedStereo(*m2);
-    SmilesWriteParams wp;
-    // wp.rigorousEnhancedStereo = false;
-    //  auto cx1 = MolToCXSmiles(*m1, wp);
-    //  auto cx2 = MolToCXSmiles(*m2, wp);
-    CHECK(MolToCXSmiles(*m1, wp) == MolToCXSmiles(*m2, wp));
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
 
     // "read" ids are also reset!
     forwardStereoGroupIds(*m1);
     forwardStereoGroupIds(*m2);
 
-    // cx1 = MolToCXSmiles(*m1, wp);
-    // cx2 = MolToCXSmiles(*m2, wp);
-    CHECK(MolToCXSmiles(*m1, wp) == MolToCXSmiles(*m2, wp));
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
   }
 }
 

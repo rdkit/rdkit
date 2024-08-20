@@ -42,7 +42,7 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
       nullptr};  // if provided, this is used to order bonds
   unsigned int bondIdx{0};
 
-  bondholder(){};
+  bondholder() {};
   bondholder(Bond::BondType bt, Bond::BondStereo bs, unsigned int ni,
              unsigned int nsc, unsigned int bidx)
       : bondType(bt),
@@ -309,7 +309,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
     }
 
     if (df_useNonStereoRanks) {
-      // use the atom-mapping numbers if they were assigned
+      // use the non-stereo ranks if they were assigned
       int rankingNumber_i = 0;
       int rankingNumber_j = 0;
       dp_atoms[i].atom->getPropIfPresent("_canonicalRankingNumber",
@@ -424,11 +424,13 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
           if (ivi != ivj) {
             // now check the current classes of the other members of the SG
             std::set<unsigned int> sgi;
-            for (auto sgat : dp_mol->getStereoGroups()[ivi - 1].getAtoms()) {
+            for (const auto sgat :
+                 dp_mol->getStereoGroups()[ivi - 1].getAtoms()) {
               sgi.insert(dp_atoms[sgat->getIdx()].index);
             }
             std::set<unsigned int> sgj;
-            for (auto sgat : dp_mol->getStereoGroups()[ivj - 1].getAtoms()) {
+            for (const auto sgat :
+                 dp_mol->getStereoGroups()[ivj - 1].getAtoms()) {
               sgj.insert(dp_atoms[sgat->getIdx()].index);
             }
             if (sgi < sgj) {
@@ -511,13 +513,8 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       : dp_atoms(atoms),
         dp_mol(&m),
         dp_atomsInPlay(atomsInPlay),
-        dp_bondsInPlay(bondsInPlay),
-        df_useNbrs(false),
-        df_useIsotopes(true),
-        df_useChirality(true),
-        df_useChiralityRings(true),
-        df_useAtomMaps(true),
-        df_useNonStereoRanks(false) {}
+        dp_bondsInPlay(bondsInPlay) {}
+
   int operator()(int i, int j) const {
     if (dp_atomsInPlay && !((*dp_atomsInPlay)[i] || (*dp_atomsInPlay)[j])) {
       return 0;

@@ -54,7 +54,7 @@ class MolAtropTest {
         : atomCount(atomCountInit),
           bondCount(bondCountInit),
           fileName(fileNameInit),
-          expectedResult(expectedResultInit){};
+          expectedResult(expectedResultInit) {};
   };
 
   void generateNewExpectedFilesIfSoSpecified(std::string filename,
@@ -76,7 +76,6 @@ class MolAtropTest {
 
   void testMolFiles(const MolTest *molFileTest) {
     BOOST_LOG(rdInfoLog) << "testing mol files with atropisomers" << std::endl;
-    std::cout << molFileTest->fileName << std::endl;
 
     std::string rdbase = getenv("RDBASE");
     std::string fName = rdbase +

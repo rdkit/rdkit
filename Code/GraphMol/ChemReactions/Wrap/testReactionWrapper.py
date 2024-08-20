@@ -792,10 +792,8 @@ def _getProductCXSMILES(product):
   for a in product.GetAtoms():
     for k in a.GetPropsAsDict():
       a.ClearProp(k)
-  wp = Chem.SmilesWriteParams()
-  wp.rigorousEnhancedStereo = False
 
-  return Chem.MolToCXSmiles(product, wp)
+  return Chem.MolToCXSmiles(product)
 
 
 def _reactAndSummarize(rxn_smarts, *smiles):

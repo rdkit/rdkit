@@ -19,10 +19,6 @@
 #include <RDGeneral/utils.h>
 #include <algorithm>
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/algorithm/string.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-
 namespace RDKit {
 namespace Canon {
 namespace details {
@@ -1258,30 +1254,19 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 }
 
 namespace {
-unsigned int countSwaps(std::vector<unsigned int> &nbrs) {
-  unsigned int swaps = 0;
-  for (unsigned int i = 0; i < nbrs.size(); ++i) {
-    for (unsigned int j = i + 1; j < nbrs.size(); ++j) {
-      if (nbrs[i] > nbrs[j]) {
-        ++swaps;
-      }
-    }
-  }
-  return swaps;
-}
-}  // namespace
 
 void buildTree(int atomIndexToAdd, const ROMol *mol,
                std::vector<unsigned int> &chosenOrder,
                std::vector<int> &reverseOrder,
                std::vector<unsigned int> &ranks) {
   // build a tree of the atoms in the molecule
-  // starting with the atom at startingAtomIndex
+  // starting with the atom at atomIndexToAdd
   // and using the ranks to determine
-  // the order of the neighbors in each atoms in the tree.
+  // the order of the neighbors in each atom in the tree.
   //
-  // atomsDone is a bool vector that is used to keep track of which atoms
-  // have been added to the tree
+  // The chosenOrder is the list of old atom numbers in the order they are
+  // chosen reverseOrder is the reference for each old atom number to its new
+  // place in the new chosenOrder.
   //
   // the tree is built by adding, recursively, the neighbor atoms in order of
   // rank
@@ -1294,6 +1279,7 @@ void buildTree(int atomIndexToAdd, const ROMol *mol,
 
   std::vector<std::pair<unsigned int, unsigned int>> nbrRanks;
   nbrRanks.reserve(mol->getAtomDegree(atomToAdd));
+
   for (const auto nbr : mol->atomNeighbors(atomToAdd)) {
     nbrRanks.push_back(std::make_pair(ranks[nbr->getIdx()], nbr->getIdx()));
   }
@@ -1315,8 +1301,8 @@ class ChiralAtomItem {
   ChiralAtomItem(const RDKit::Atom *atomInit,
                  const std::vector<unsigned int> &atomsToInvert)
       : atomId(atomInit->getIdx()), chiralType(atomInit->getChiralTag()) {
-    if (boost::algorithm::contains(atomsToInvert,
-                                   std::vector<unsigned int>{atomId})) {
+    if (std::find(atomsToInvert.begin(), atomsToInvert.end(), atomId) !=
+        atomsToInvert.end()) {
       if (chiralType == Atom::CHI_TETRAHEDRAL_CW) {
         chiralType = Atom::CHI_TETRAHEDRAL_CCW;
       } else if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
@@ -1425,20 +1411,10 @@ class RankedValue {
 
  public:
   void AddAtom(Atom *atom, const std::vector<unsigned int> &atomsToInvert) {
-    ChiralAtomItem chiralAtomItem(atom, atomsToInvert);
-    if (std::find(chiralAtomItems.begin(), chiralAtomItems.end(),
-                  chiralAtomItem) == chiralAtomItems.end()) {
-      chiralAtomItems.push_back(chiralAtomItem);
-    }
+    chiralAtomItems.emplace_back(atom, atomsToInvert);
   }
 
-  void AddBond(Bond *bond) {
-    ChiralBondItem chiralBondItem(bond);
-    if (std::find(chiralBondItems.begin(), chiralBondItems.end(),
-                  chiralBondItem) == chiralBondItems.end()) {
-      chiralBondItems.push_back(chiralBondItem);
-    }
-  }
+  void AddBond(Bond *bond) { chiralBondItems.emplace_back(bond); }
 
   unsigned int getNumChiralAtoms() const { return chiralAtomItems.size(); }
   unsigned int getNumChiralBonds() const { return chiralBondItems.size(); }
@@ -1651,17 +1627,87 @@ bool doTwoBondsVaryTheSame(const std::set<RankedValue> &allRankedValues,
   return true;
 }
 
+unsigned int countSwaps(std::vector<unsigned int> &nbrs) {
+  unsigned int swaps = 0;
+  for (unsigned int i = 0; i < nbrs.size(); ++i) {
+    for (unsigned int j = i + 1; j < nbrs.size(); ++j) {
+      if (nbrs[i] > nbrs[j]) {
+        ++swaps;
+      }
+    }
+  }
+  return swaps;
+}
+
+// the call to renumberAtoms will NOT invert chiral atoms.
+// it does return the atoms in the order handed to it, which could be the order
+// of atoms for a possible smiles string.
+//
+// RDKit internally bases the chiral atoms on the order of the bonds
+// to an atom, and the renumber function below does not change the order of the
+// bonds to an atom.  So, the chiral atoms are still correct and are unchanged
+// by renumber.
+//
+//  this routine determines which atoms would be inverted in an actual
+// smiles were it to be generated.  This allows processing of a mol in a
+// smiles-like order without actually generating a smiles string.
+
+void getAtomsToInvert(const ROMol &mol,
+                      const std::vector<unsigned int> &newOrder,
+                      std::vector<unsigned int> &atomsToInvert) {
+  unsigned int nAts = mol.getNumAtoms();
+  PRECONDITION(newOrder.size() == nAts, "bad newOrder size");
+
+  std::vector<unsigned int> revOrder(nAts);
+  for (unsigned int nIdx = 0; nIdx < nAts; ++nIdx) {
+    unsigned int oIdx = newOrder[nIdx];
+    if (oIdx > nAts) {
+      throw ValueErrorException("idx value exceeds numAtoms");
+    }
+    revOrder[oIdx] = nIdx;
+  }
+
+  // ------
+  // newOrder[i] : which atom should be in position i of the new mol
+  // revOrder[i] : where atom i of the original mol landed in the new mol
+
+  // copy over the atoms:
+  for (unsigned int nIdx = 0; nIdx < nAts; ++nIdx) {
+    unsigned int oIdx = newOrder[nIdx];
+    const Atom *oAtom = mol.getAtomWithIdx(oIdx);
+
+    if (oAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+      // get the neighbors in the new order
+
+      std::vector<unsigned int> nbrs;
+      nbrs.reserve(oAtom->getDegree());
+
+      for (const auto &nbr : mol.atomNeighbors(oAtom)) {
+        nbrs.push_back(revOrder[nbr->getIdx()]);
+      }
+
+      if ((countSwaps(nbrs)) % 2) {
+        atomsToInvert.push_back(nIdx);
+      }
+    }
+  }
+
+  return;
+}
+}  // namespace
+
 void canonicalizeStereoGroups_internal(
     std::unique_ptr<ROMol> &mol, RDKit::StereoGroupType stereoGroupType,
     StereoGroupAbsOptions outputAbsoluteGroups) {
-  // this expanded a mol with stereo groups to a vector of values that have no
-  // stereo groups, then determines the stereo groups from that set
-  //
+  // this expands a mol with stereo groups to a vector of values that are the
+  // result of expanding the stereo groups, then determines the stereo groups
+  // from that set
 
   auto origStereoGroups =
       mol->getStereoGroups();  // to restore mol if an error is detected
   try {
     std::vector<unsigned int> ranks(mol->getNumAtoms());
+    mol->updatePropertyCache(true);
 
     // get the non-stereo rankings - these do NOT change as we iterate over the
     // enhanced possibilties.  They also do not change if the re-entrant call is
@@ -1752,7 +1798,6 @@ void canonicalizeStereoGroups_internal(
       // mol - not fragments - it really is NOT the same order as generating a
       // smiles
 
-      // std::vector<bool> atomsDone(mol->getNumAtoms(), false);
       std::vector<unsigned int> chosenOrder;
       std::vector<int> reversedOrder(newMol->getNumAtoms(), -1);
       while (true) {
@@ -1786,7 +1831,7 @@ void canonicalizeStereoGroups_internal(
       // inverted in a smiles string
 
       std::vector<unsigned int> atomsToInvert;
-      MolOps::getAtomsToInvert(*newMol.get(), chosenOrder, atomsToInvert);
+      getAtomsToInvert(*newMol.get(), chosenOrder, atomsToInvert);
 
       newMol.reset((RWMol *)MolOps::renumberAtoms(*newMol.get(), chosenOrder));
 
@@ -2201,20 +2246,21 @@ void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
   // and if has two or fewer atoms in the group, and all chiral atoms are in
   // that group.
   //
-  // further more, if the findMeso routine matches the simple groups, it
+  // furthermore, if the findMeso routine matches the simple group, it
   // should be removed
   //
 
   if (sgCount == 1) {
-    auto &sg = mol->getStereoGroups()[0];
-    if (sg.getAtoms().size() <= 2 && sg.getBonds().size() == 0) {
+    const auto &sg = mol->getStereoGroups()[0];
+    const auto &sgats = sg.getAtoms();
+    const auto &sgBonds = sg.getBonds();
+    if (sgats.size() <= 2 && sgBonds.size() == 0) {
       bool isSimple = true;
 
       for (auto &atom : mol->atoms()) {
         if ((atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
              atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) &&
-            !boost::algorithm::contains(mol->getStereoGroups()[0].getAtoms(),
-                                        std::vector<Atom *>{atom})) {
+            std::find(sgats.begin(), sgats.end(), atom) == sgats.end()) {
           isSimple = false;
           break;
         }
@@ -2223,8 +2269,8 @@ void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
         for (auto &bond : mol->bonds()) {
           if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
                bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) &&
-              !boost::algorithm::contains(mol->getStereoGroups()[0].getBonds(),
-                                          std::vector<Bond *>{bond})) {
+              std::find(sgBonds.begin(), sgBonds.end(), bond) ==
+                  sgBonds.end()) {
             isSimple = false;
             break;
           }

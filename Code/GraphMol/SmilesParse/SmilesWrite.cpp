@@ -645,28 +645,20 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     std::vector<unsigned int> bondOrdering;
 
     if (params.canonical) {
-      if (tmol->hasProp("_canonicalRankingNumbers")) {
-        for (const auto atom : tmol->atoms()) {
-          unsigned int rankNum = 0;
-          atom->getPropIfPresent("_canonicalRankingNumber", rankNum);
-          ranks[atom->getIdx()] = rankNum;
-        };
-      } else {
-        const bool breakTies = true;
-        const bool includeChiralPresence = false;
-        const bool includeIsotopes = params.doIsomericSmiles;
-        ;
-        const bool includeChirality = params.doIsomericSmiles;
-        ;
-        const bool includeStereoGroups = params.doIsomericSmiles;
-        ;
-        const bool useNonStereoRanks = false;
-        const bool includeAtomMaps = true;
+      const bool breakTies = true;
+      const bool includeChiralPresence = false;
+      const bool includeIsotopes = params.doIsomericSmiles;
+      ;
+      const bool includeChirality = params.doIsomericSmiles;
+      ;
+      const bool includeStereoGroups = params.doIsomericSmiles;
+      ;
+      const bool useNonStereoRanks = false;
+      const bool includeAtomMaps = true;
 
-        Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
-                            includeIsotopes, includeAtomMaps, useNonStereoRanks,
-                            includeChiralPresence, includeStereoGroups);
-      }
+      Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
+                          includeIsotopes, includeAtomMaps, useNonStereoRanks,
+                          includeChiralPresence, includeStereoGroups);
     } else {
       std::iota(ranks.begin(), ranks.end(), 0);
     }

@@ -40,6 +40,10 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 namespace RDKit {
 
 namespace v2 {
@@ -52,9 +56,9 @@ namespace MarvinParser {
 */
 class MarvinCMLReader {
  public:
-  MarvinCMLReader(){};
+  MarvinCMLReader() {};
 
-  ~MarvinCMLReader(){};
+  ~MarvinCMLReader() {};
 
   std::unique_ptr<RWMol> parseMolecule(boost::property_tree::ptree molTree,
                                        bool sanitize = false,
