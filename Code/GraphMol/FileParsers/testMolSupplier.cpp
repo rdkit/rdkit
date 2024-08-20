@@ -2838,9 +2838,7 @@ void testGitHub3517() {
   TEST_ASSERT(!sdsup.atEnd());
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
 
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
