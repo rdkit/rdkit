@@ -4391,9 +4391,7 @@ void testParserErrorMessage() {
   }
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
   testPass();
   testFail();
