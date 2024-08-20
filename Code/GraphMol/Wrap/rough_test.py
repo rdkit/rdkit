@@ -8223,7 +8223,6 @@ M  END
     self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False),
                      "c1ccc([NH2:1])cc1")
     
-    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
