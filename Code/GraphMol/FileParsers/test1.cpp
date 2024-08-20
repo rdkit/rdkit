@@ -1630,8 +1630,7 @@ void testMissingFiles() {
 
   std::string fName;
   bool ok;
-  RWMol *m;
-  (void)m;
+  [[maybe_unused]] RWMol *m;
   fName = "bogus_file.mol";
   ok = false;
   try {
@@ -5569,9 +5568,7 @@ void testMultiThreadedSwitcher() {
 }
 #endif
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   //  std::locale::global(std::locale("de_DE.UTF-8"));
 
   RDLog::InitLogs();

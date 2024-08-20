@@ -200,9 +200,7 @@ void testGithub8201() {
   delete fp;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
   test1();
   test2();
