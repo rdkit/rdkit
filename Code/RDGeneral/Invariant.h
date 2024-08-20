@@ -191,8 +191,4 @@ RDKIT_RDGENERAL_EXPORT std::ostream &operator<<(std::ostream &s,
 #define rdcast static_cast
 #endif
 
-// Silence warnings for unused params while
-//   still indicating that they are unused
-#define RDUNUSED_PARAM(x) (void)x;
-
 #endif

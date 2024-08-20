@@ -683,8 +683,6 @@ void testIssue239() {
   BOOST_LOG(rdErrorLog) << "    Testing Issue239." << std::endl;
 
   RWMol *mol;
-  int needMore;
-  (void)needMore;  // add test later
   ForceFields::ForceField *field;
   double e1, e2;
 
@@ -697,7 +695,7 @@ void testIssue239() {
   field = UFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  needMore = field->minimize(200, 1e-6, 1e-3);
+  [[maybe_unused]] int needMore = field->minimize(200, 1e-6, 1e-3);
   e1 = field->calcEnergy();
   needMore = field->minimize(200, 1e-6, 1e-3);
   e2 = field->calcEnergy();

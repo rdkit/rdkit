@@ -60,50 +60,47 @@ std::string GetClass(const EnumerationStrategyBase *en) {
 
 namespace EnumerationStrategyPickler {
 
-void pickle(const boost::shared_ptr<EnumerationStrategyBase> &enumerator,
-            std::ostream &ss) {
+void pickle([[maybe_unused]] const boost::shared_ptr<EnumerationStrategyBase>
+                &enumerator,
+            [[maybe_unused]] std::ostream &ss) {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   boost::archive::text_oarchive ar(ss);
   ar & enumerator;
 #else
-  RDUNUSED_PARAM(enumerator);
-  RDUNUSED_PARAM(ss);
   PRECONDITION(0, "BOOST SERIALIZATION NOT INSTALLED");
 #endif
 }
 
-void pickle(const boost::shared_ptr<EnumerationStrategyBase> &enumerator,
-            std::string &s) {
+void pickle([[maybe_unused]] const boost::shared_ptr<EnumerationStrategyBase>
+                &enumerator,
+            [[maybe_unused]] std::string &s) {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   std::stringstream ss;
   pickle(enumerator, ss);
   s = ss.str();
 #else
-  RDUNUSED_PARAM(enumerator);
-  RDUNUSED_PARAM(s);
   PRECONDITION(0, "BOOST SERIALIZATION NOT INSTALLED");
 #endif
 }
 
-boost::shared_ptr<EnumerationStrategyBase> fromPickle(std::istream &pickle) {
+boost::shared_ptr<EnumerationStrategyBase> fromPickle(
+    [[maybe_unused]] std::istream &pickle) {
   boost::shared_ptr<EnumerationStrategyBase> enumerator;
 #ifdef RDK_USE_BOOST_SERIALIZATION
   boost::archive::text_iarchive ar(pickle);
   ar & enumerator;
   return enumerator;
 #else
-  RDUNUSED_PARAM(pickle);
   PRECONDITION(0, "BOOST SERIALIZATION NOT INSTALLED");
 #endif
 }
 
 boost::shared_ptr<EnumerationStrategyBase> fromPickle(
-    const std::string &pickle) {
+    [[maybe_unused]] const std::string &pickle) {
 #ifdef RDK_USE_BOOST_SERIALIZATION
   std::stringstream ss(pickle);
   return fromPickle(ss);
 #else
-  RDUNUSED_PARAM(pickle);
   PRECONDITION(0, "BOOST SERIALIZATION NOT INSTALLED");
   return boost::shared_ptr<EnumerationStrategyBase>();
 #endif

@@ -708,11 +708,11 @@ void updateDrawerParamsHelper(RDKit::MolDraw2D &obj, std::string json) {
 }
 
 std::string molToSVG(const ROMol &mol, unsigned int width, unsigned int height,
-                     python::object pyHighlightAtoms, bool kekulize,
+                     python::object pyHighlightAtoms,
+                     [[maybe_unused]] bool kekulize,  // FIXME: we really should
+                                                      // be using kekulize here
                      unsigned int lineWidthMult, bool includeAtomCircles,
                      int confId) {
-  // FIX: we really should be using kekulize here
-  RDUNUSED_PARAM(kekulize);
   std::unique_ptr<std::vector<int>> highlightAtoms =
       pythonObjectToVect(pyHighlightAtoms, static_cast<int>(mol.getNumAtoms()));
   std::stringstream outs;
