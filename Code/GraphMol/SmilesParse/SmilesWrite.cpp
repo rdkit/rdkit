@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 #include "SmilesWrite.h"
-#include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
@@ -19,7 +18,6 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#include <boost/algorithm/string.hpp>
 
 #include <RDGeneral/utils.h>
 #include <boost/property_tree/ptree.hpp>
@@ -436,7 +434,7 @@ std::string FragmentSmilesConstruct(
   std::list<unsigned int> ringClosuresToErase;
 
   if (params.canonical && params.doIsomericSmiles) {
-    RDKit::Canon::canonicalizeEnhancedStereo(mol, &ranks);
+    Canon::canonicalizeEnhancedStereo(mol, &ranks);
   }
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
@@ -779,16 +777,6 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
     return res;
   }
 
-  std::vector<unsigned int> atomOrder =
-      rwmol->getProp<std::vector<unsigned int>>(
-          common_properties::_smilesAtomOutputOrder);
-  rwmol->setProp(common_properties::_smilesAtomOutputOrder, atomOrder, true);
-
-  std::vector<unsigned int> bondOrder =
-      rwmol->getProp<std::vector<unsigned int>>(
-          common_properties::_smilesBondOutputOrder);
-  rwmol->setProp(common_properties::_smilesBondOutputOrder, bondOrder, true);
-
   if (restoreBondDirs == RestoreBondDirOptionTrue) {
     RDKit::Chirality::reapplyMolBlockWedging(*rwmol);
   } else if (restoreBondDirs == RestoreBondDirOptionClear) {
@@ -1032,19 +1020,5 @@ std::string MolFragmentToCXSmiles(const ROMol &mol,
   }
   return res;
 }
-
-namespace {
-
-enum class ChiralItemType {
-  ATOM,
-  BOND,
-};
-class ChiralItem {
- public:
-  ChiralItemType chiralAtomType;
-  unsigned int id;
-};
-
-}  // namespace
 
 }  // namespace RDKit

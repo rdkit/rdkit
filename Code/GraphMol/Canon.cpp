@@ -1707,11 +1707,13 @@ void canonicalizeStereoGroups_internal(
       mol->getStereoGroups();  // to restore mol if an error is detected
   try {
     std::vector<unsigned int> ranks(mol->getNumAtoms());
-    mol->updatePropertyCache(true);
+    if (mol->needsUpdatePropertyCache()) {
+      mol->updatePropertyCache(true);
+    }
 
-    // get the non-stereo rankings - these do NOT change as we iterate over the
-    // enhanced possibilties.  They also do not change if the re-entrant call is
-    // mae
+    // get the non-stereo rankings - these do NOT change as we iterate over
+    // the enhanced possibilties.  They also do not change if the re-entrant
+    // call is mae
     bool breakTies = false;
     bool includeChirality = false;
     const bool includeIsotopes = false;

@@ -408,7 +408,6 @@ TEST_CASE("pseudoTest1") {
 
       SmilesWriteParams wps;
       wps.canonical = true;
-      wps.cleanStereo = false;
 
       RDKit::Canon::canonicalizeStereoGroups(mol1);
       RDKit::Canon::canonicalizeStereoGroups(mol2);

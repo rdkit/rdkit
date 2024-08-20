@@ -2590,7 +2590,6 @@ TEST_CASE("ensure unused features are not used") {
     std::vector<unsigned int> ranks;
     SmilesWriteParams ps;
     ps.doIsomericSmiles = true;
-    // ps.rigorousEnhancedStereo = true;
     auto smiles = MolToSmiles(*mol1, ps);
     CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl");
     smiles = MolToSmiles(*mol2, ps);

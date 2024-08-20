@@ -18,6 +18,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/Canon.h>
 
 using namespace RDKit;
 using namespace RDKit::v2::CDXMLParser;

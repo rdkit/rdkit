@@ -944,18 +944,13 @@ TEST_CASE("atropisomers", "[basic]") {
   }
 }
 
-std::string cipLabels(std::string molBlock,
-                      unsigned int maxRecursiveIterations) {
-  std::cout << "cipLabels - using new stereo" << std::endl;
-  RDKit::Chirality::setUseLegacyStereoPerception(false);
-
+std::string cipLabels(std::string molBlock) {
   RDKit::ROMol *mol = nullptr;
   std::string result = "";
   try {
     // try parsing the mol block with sanitize ob
     try {
       mol = MolBlockToMol(molBlock, true, false);
-      std::cout << "parsing with sanitize worked!" << std::endl;
     } catch (...) {
       delete mol;
       mol = nullptr;
@@ -971,7 +966,7 @@ std::string cipLabels(std::string molBlock,
     std::vector<std::string> atomsArray;
     std::vector<std::string> bondsArray;
 
-    RDKit::CIPLabeler::assignCIPLabels(*mol, maxRecursiveIterations);
+    RDKit::CIPLabeler::assignCIPLabels(*mol);
     for (auto atom : mol->atoms()) {
       if (atom->hasProp(common_properties::_CIPCode)) {
         std::string thisVal =
@@ -1073,7 +1068,7 @@ M  END
  )";
 
     UseLegacyStereoPerceptionFixture useLegacy(false);
-    auto found = cipLabels(molBlock, 5000000);
+    auto found = cipLabels(molBlock);
 
     CHECK(
         found ==

@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Canon.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"

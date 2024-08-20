@@ -127,7 +127,6 @@ class MolAtropTest {
         std::string expectedFileName = fName + ".expected.cxsmi";
         SmilesWriteParams ps;
         ps.canonical = false;
-        ps.cleanStereo = true;
         ps.doKekule = true;
 
         unsigned int flags = SmilesWrite::CXSmilesFields::CX_COORDS |
