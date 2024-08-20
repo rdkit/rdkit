@@ -12,8 +12,4 @@
 #include <fstream>
 #include <RDGeneral/RDLog.h>
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-  RDLog::InitLogs();
-}
+int main() { RDLog::InitLogs(); }
