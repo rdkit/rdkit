@@ -1876,9 +1876,7 @@ void test17() {
   delete mol;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
 
   // FIX: need a test for handling Hs in the SLN itself. This should be done for

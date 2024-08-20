@@ -2818,8 +2818,7 @@ YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len , yyscan
 
 static void yynoreturn yy_fatal_error (const char* msg , yyscan_t yyscanner)
 {
-	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-	(void)yyg;
+	[[maybe_unused]] struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	fprintf( stderr, "%s\n", msg );
 	exit( YY_EXIT_FAILURE );
 }
@@ -3129,8 +3128,7 @@ int yylex_destroy  (yyscan_t yyscanner)
 #ifndef yytext_ptr
 static void yy_flex_strncpy (char* s1, const char * s2, int n , yyscan_t yyscanner)
 {
-	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-	(void)yyg;
+	[[maybe_unused]] struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	int i;
 	for ( i = 0; i < n; ++i )
@@ -3151,15 +3149,13 @@ static int yy_flex_strlen (const char * s , yyscan_t yyscanner)
 
 void *yyalloc (yy_size_t  size , yyscan_t yyscanner)
 {
-	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-	(void)yyg;
+	[[maybe_unused]] struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	return malloc(size);
 }
 
 void *yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 {
-	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-	(void)yyg;
+	[[maybe_unused]] struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
 	/* The cast to (char *) in the following accommodates both
 	 * implementations that use char* generic pointers, and those
@@ -3173,8 +3169,7 @@ void *yyrealloc  (void * ptr, yy_size_t  size , yyscan_t yyscanner)
 
 void yyfree (void * ptr , yyscan_t yyscanner)
 {
-	struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-	(void)yyg;
+	[[maybe_unused]] struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 	free( (char *) ptr );	/* see yyrealloc() for (char *) cast */
 }
 
