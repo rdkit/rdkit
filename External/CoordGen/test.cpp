@@ -567,9 +567,7 @@ M  END
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
 #if 1
   test2();
