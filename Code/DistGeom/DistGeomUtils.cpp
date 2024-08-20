@@ -303,7 +303,7 @@ void addImproperTorsionTerms(ForceFields::ForceField *ff,
     }
   }
   if (!inversionContribs->empty()) {
-    ff->contribs().emplace_back(inversionContribs.release());
+    ff->contribs().push_back(std::move(inversionContribs));
   }
 }
 
@@ -340,7 +340,7 @@ void addExperimentalTorsionTerms(
                                 etkdgDetails.expTorsionAngles[t].first);
   }
   if (!torsionContribs->empty()) {
-    ff->contribs().emplace_back(torsionContribs.release());
+    ff->contribs().push_back(std::move(torsionContribs));
   }
 }
 
@@ -378,7 +378,7 @@ void add12Terms(ForceFields::ForceField *ff,
                              forceConstant);
   }
   if (!distContribs->empty()) {
-    ff->contribs().emplace_back(distContribs.release());
+    ff->contribs().push_back(std::move(distContribs));
   }
 }
 //! Add 1-3 distance constraints with padding at current positions to force
@@ -429,10 +429,10 @@ void add13Terms(ForceFields::ForceField *ff,
     }
   }
   if (!angleContribs->empty()) {
-    ff->contribs().emplace_back(angleContribs.release());
+    ff->contribs().push_back(std::move(angleContribs));
   }
   if (!distContribs->empty()) {
-    ff->contribs().emplace_back(distContribs.release());
+    ff->contribs().push_back(std::move(distContribs));
   }
 }
 
@@ -483,7 +483,7 @@ void addLongRangeDistanceConstraints(
     }
   }
   if (!distContribs->empty()) {
-    ff->contribs().emplace_back(distContribs.release());
+    ff->contribs().push_back(std::move(distContribs));
   }
 }
 
@@ -596,7 +596,7 @@ ForceFields::ForceField *construct3DImproperForceField(
     }
   }
   if (!angleContribs->empty()) {
-    field->contribs().emplace_back(angleContribs.release());
+    field->contribs().push_back(std::move(angleContribs));
   }
   return field;
 }  // construct3DImproperForceField

@@ -56,7 +56,7 @@ TEST_CASE("Test DistanceConstraintContribs") {
         forceField.get());
     contribs->addContrib(0, 1, 3.0, 3.0, 1);
     contribs->addContrib(0, 2, 4.0, 4.0, 1);
-    forceField->contribs().emplace_back(contribs.release());
+    forceField->contribs().push_back(std::move(contribs));
     CHECK(forceField->minimize() == 0);
     CHECK(feq(get_dist(*mol, 0, 1), 3.0));
     CHECK(feq(get_dist(*mol, 0, 2), 4.0));
@@ -69,7 +69,7 @@ TEST_CASE("Test DistanceConstraintContribs") {
         forceField.get());
     contribs->addContrib(0, 1, true, 1.0, 1.0, 1);
     contribs->addContrib(0, 2, false, 4.0, 4.0, 1);
-    forceField->contribs().emplace_back(contribs.release());
+    forceField->contribs().push_back(std::move(contribs));
     auto before = get_dist(*mol, 0, 1);
     CHECK(forceField->minimize() == 0);
     CHECK(feq(get_dist(*mol, 0, 1), 1.0 + before));
@@ -91,7 +91,7 @@ TEST_CASE("Test AngleConstraintContribs") {
         forceField.get());
     contribs->addContrib(0, 1, 2, 120.0, 120.0, 1);
     contribs->addContrib(1, 2, 3, 160.0, 160.0, 1);
-    forceField->contribs().emplace_back(contribs.release());
+    forceField->contribs().push_back(std::move(contribs));
     CHECK(forceField->minimize() == 0);
     CHECK(feq(get_angle(*mol, 0, 1, 2), 120.0));
     CHECK(feq(get_angle(*mol, 1, 2, 3), 160.0));
@@ -104,7 +104,7 @@ TEST_CASE("Test AngleConstraintContribs") {
         forceField.get());
     contribs->addContrib(0, 1, 2, true, 5.0, 5.0, 1);
     contribs->addContrib(1, 2, 3, false, 160.0, 160.0, 1);
-    forceField->contribs().emplace_back(contribs.release());
+    forceField->contribs().push_back(std::move(contribs));
     auto before = get_angle(*mol, 0, 1, 2);
     CHECK(forceField->minimize() == 0);
     CHECK(feq(get_angle(*mol, 0, 1, 2), before + 5.0));
