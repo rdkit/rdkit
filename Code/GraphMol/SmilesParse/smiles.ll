@@ -1,6 +1,9 @@
 %option reentrant
 %option bison-bridge
 %option noyywrap
+%option never-interactive
+%option nodefault
+%option nostdinit
 
 %{
 
@@ -11,15 +14,7 @@
 //   @@ All Rights Reserved  @@
 //
 
-#if defined(__CYGWIN__) && !defined(fileno)
-// -std=c++11 turns off recent posix features
-extern "C" int fileno(FILE*);
-#endif
-
 #include <cstdio>
-#ifdef WIN32
-#include <io.h>
-#endif
 
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/types.h>
@@ -359,7 +354,7 @@ s		    {	yylval->atom = new Atom( 16 );
 \%              { return PERCENT_TOKEN; }
 
 [0]		{ yylval->ival = 0; return ZERO_TOKEN; }
-[1-9]		{ yylval->ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
+[1-9]		{ yylval->ival = yytext[0] - '0'; return NONZERO_DIGIT_TOKEN; }
 
 
 

@@ -40,7 +40,9 @@
 #include <DataStructs/BitOps.h>
 #include <DataStructs/ExplicitBitVect.h>
 
+#ifdef RDK_BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
+#endif
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -120,10 +122,12 @@ std::string JSMolBase::get_svg_with_highlights(const std::string &details) const
   return MinimalLib::mol_to_svg(get(), w, h, details);
 }
 
+#ifdef RDK_BUILD_INCHI_SUPPORT
 std::string JSMolBase::get_inchi(const std::string &options) const {
   ExtraInchiReturnValues rv;
   return MolToInchi(get(), rv, !options.empty() ? options.c_str() : nullptr);
 }
+#endif
 std::string JSMolBase::get_molblock(const std::string &details) const {
   return MinimalLib::molblock_helper(get(), details.c_str(), false);
 }
@@ -774,9 +778,11 @@ unsigned int JSSubstructLibrary::count_matches(const JSMolBase &q,
 }
 #endif
 
+#ifdef RDK_BUILD_INCHI_SUPPORT
 std::string get_inchikey_for_inchi(const std::string &input) {
   return InchiToInchiKey(input);
 }
+#endif
 
 JSMolBase *get_mol_copy(const JSMolBase &other) {
   return new JSMol(new RWMol(other.get()));

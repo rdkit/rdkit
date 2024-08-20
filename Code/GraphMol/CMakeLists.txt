@@ -8,7 +8,7 @@ rdkit_library(GraphMol
         Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
               NontetrahedralStereo.cpp Atropisomers.cpp
-              WedgeBonds.cpp
+              WedgeBonds.cpp MolProps.cpp
         SHARED
               LINK_LIBRARIES RDGeometryLib RDGeneral )
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
@@ -196,3 +196,7 @@ rdkit_catch_test(pickleTestsCatch catch_pickles.cpp
 
 rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
         LINK_LIBRARIES GraphMol)
+
+rdkit_catch_test(molopsTestsCatch catch_molops.cpp
+        LINK_LIBRARIES SmilesParse GraphMol)
+

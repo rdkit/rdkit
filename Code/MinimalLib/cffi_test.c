@@ -364,6 +364,7 @@ M  END",
   free(molblock);
   molblock = NULL;
 
+#ifdef RDK_BUILD_INCHI_SUPPORT
   //---------
   // InChI
   char *inchi = get_inchi(pkl, pkl_size, NULL);
@@ -385,6 +386,7 @@ M  END",
   assert(!strcmp(inchi, "InChI=1/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H"));
   free(inchi);
   free(molblock);
+#endif
 
   //---------
   // queries

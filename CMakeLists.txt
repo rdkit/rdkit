@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.16)
 
 project (RDKit)
 
@@ -71,7 +71,7 @@ option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 
-set(RDK_BOOST_VERSION "1.58.0")
+set(RDK_BOOST_VERSION "1.70.0")
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
@@ -85,7 +85,7 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(NOT UNIX OR APPLE)
+if(NOT UNIX OR APPLE OR CYGWIN)
   if(RDK_USE_BOOST_STACKTRACE)
     MESSAGE("Disabling boost::stacktrace on non-linux platform")
     set(RDK_USE_BOOST_STACKTRACE OFF)
@@ -150,7 +150,7 @@ set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 set(RDKit_DataDir "${CMAKE_CURRENT_SOURCE_DIR}/Data")
 
 #include catch
-find_package(Catch2 3)
+find_package(Catch2 3 QUIET)
 if(NOT Catch2_FOUND)
   Include(FetchContent)
 
@@ -290,57 +290,26 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(PythonInterp)
-  if (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
-    set(Python_ADDITIONAL_VERSIONS "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}")
-  endif (PYTHONINTERP_FOUND AND NOT Python_ADDITIONAL_VERSIONS)
-
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    message(FATAL_ERROR "ERROR: The RDKit no longer supports Python 2.\nIf you have Python 3 installed, you can tell cmake where to find it using the -DPYTHON_EXECUTABLE argument.")
-  endif()
-
-  find_package(PythonLibs)
-  target_include_directories(rdkit_base INTERFACE ${PYTHON_INCLUDE_DIR})
+  find_package(Python3 COMPONENTS Interpreter Development NumPy)
+  target_include_directories(rdkit_base INTERFACE ${Python3_INCLUDE_DIRS})
+  target_include_directories(rdkit_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
 
   # determine linkage of python
   execute_process(
       COMMAND
-      ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
+      ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('Py_ENABLE_SHARED'))"
       OUTPUT_VARIABLE Py_ENABLE_SHARED
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    target_link_libraries(rdkit_py_base INTERFACE ${PYTHON_LIBRARIES} )
+    target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARY} )
   endif()
 
-  find_package(NumPy REQUIRED)
-  target_include_directories(rdkit_base INTERFACE ${PYTHON_NUMPY_INCLUDE_PATH})
-
-  if(PYTHON_VERSION_MAJOR EQUAL 3)
-    # Find boost-python3 using name specified as command line option then fall back to commonly used names
-    set(RDK_BOOST_PYTHON3_NAME "python3" CACHE STRING "Name of the boost python3 library. If installed as libboost_python-xxx.so, use python-xxx.")
-    list(APPEND Boost_Python_Names "${RDK_BOOST_PYTHON3_NAME}" "python-py3${PYTHON_VERSION_MINOR}" "python3")
-  endif(PYTHON_VERSION_MAJOR EQUAL 3)
-
-  # Boost 1.67+ uses a version suffix like "python36" or "python27"
-  list(APPEND Boost_Python_Names "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
-
-  # Try each potential boost-python name until one works
-  foreach(Boost_Python_LibN ${Boost_Python_Names})
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "${Boost_Python_LibN}" QUIET)
-    if(Boost_FOUND)
-      set(Boost_Python_Lib ${Boost_Python_LibN})
-      break()
-    endif()
-  endforeach()
-  # Finally just try "python" and hope it is a compatible version
-  if(NOT Boost_FOUND)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS python REQUIRED)
-    set(Boost_Python_Lib "python")
-  endif()
-
-  target_link_libraries(rdkit_py_base INTERFACE Boost::${Boost_Python_Lib})
+   
+  find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" REQUIRED CONFIG)
+  
+  target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
 
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
@@ -349,7 +318,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
       # Determine correct installation directory for Python bindings
       execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sys; import sysconfig; \
+        ${Python3_EXECUTABLE} -c "import sys; import sysconfig; \
           base_key = 'base' if sys.platform == 'win32' else 'platbase'; \
           schema = 'nt' if sys.platform == 'win32' else 'posix_prefix'; \
           print(sysconfig.get_path('platlib', schema, vars={base_key: '${CMAKE_INSTALL_PREFIX}'}))"
@@ -390,13 +359,12 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
     # We strip off the first word though (which will be the compiler name).
     execute_process(
         COMMAND
-        ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
+        ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDSHARED').lstrip().split(' ', 1)[1])"
         OUTPUT_VARIABLE PYTHON_LDSHARED
         OUTPUT_STRIP_TRAILING_WHITESPACE
      )
-     message("PYTHON Py_ENABLE_SHARED: ${Py_ENABLE_SHARED}")
-     message("PYTHON USING LINK LINE: ${PYTHON_LDSHARED}")
   endif()
+
 
   install(TARGETS rdkit_py_base EXPORT ${RDKit_EXPORTED_TARGETS}
           COMPONENT dev )
@@ -404,7 +372,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   # check to see if we can find nbval,
   execute_process(
     COMMAND
-    ${PYTHON_EXECUTABLE} -c "import nbval"
+    ${Python3_EXECUTABLE} -c "import nbval"
     ERROR_VARIABLE nbvalERR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT nbvalERR)
@@ -414,7 +382,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif()
 
 else(RDK_BUILD_PYTHON_WRAPPERS)
-  find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
+  find_package(Boost ${RDK_BOOST_VERSION} REQUIRED CONFIG)
 endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 find_package(Eigen3)
@@ -450,7 +418,7 @@ else()
 endif()
 
 if(RDK_USE_BOOST_SERIALIZATION)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams REQUIRED)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system serialization iostreams REQUIRED CONFIG)
     target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_SERIALIZATION)
     if(NOT Boost_USE_STATIC_LIBS)
@@ -460,7 +428,7 @@ endif()
 
 if(RDK_USE_BOOST_IOSTREAMS)
     target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_IOSTREAMS)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system iostreams REQUIRED CONFIG)
     target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
 
     if (NOT Boost_USE_STATIC_LIBS)
@@ -469,7 +437,7 @@ if(RDK_USE_BOOST_IOSTREAMS)
 
     # deal with zlib
     if (WIN32)
-      find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib)
+      find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS zlib CONFIG)
       if(Boost_zlib_FOUND)
         set(zlib_lib Boost::zlib)
       endif()

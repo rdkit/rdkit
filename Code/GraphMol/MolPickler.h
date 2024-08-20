@@ -146,6 +146,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINSYMMSSSR,
     BEGINFASTFIND,
     BEGINFINDOTHERORUNKNOWN,
+    QUERY_PROPERTY,
     // add new entries above here
     INVALID_TAG = 255
   } Tags;
@@ -305,11 +306,14 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 };
 
 namespace PicklerOps {
+// clang-format off
 using QueryDetails = boost::variant<
     MolPickler::Tags, std::tuple<MolPickler::Tags, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,
-    std::tuple<MolPickler::Tags, std::set<int32_t>>>;
+    std::tuple<MolPickler::Tags, std::set<int32_t>>,
+    std::tuple<MolPickler::Tags, std::string>>;
+// clang-format on
 template <class T>
 QueryDetails getQueryDetails(const Queries::Query<int, T const *, true> *query);
 

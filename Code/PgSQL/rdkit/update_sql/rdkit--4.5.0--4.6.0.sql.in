@@ -1,0 +1,23 @@
+CREATE OPERATOR @<> (
+    LEFTARG = mol,
+    RIGHTARG = mol,
+    PROCEDURE = mol_ne,
+    COMMUTATOR = '@<>',
+    NEGATOR = '@=',
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
+);
+
+@RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL@
+
+CREATE OPERATOR @<> (
+    LEFTARG = reaction,
+    RIGHTARG = reaction,
+    PROCEDURE = reaction_ne,
+    COMMUTATOR = '@<>',
+    NEGATOR = '@=',
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
+);
+
+@RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL@

@@ -1423,13 +1423,19 @@ void testKappa2() {
                       4.133000, 4.133000, 4.133000};
     unsigned int idx = 0;
     while (sdata[idx] != "EOS") {
-      ROMol *mol;
-      mol = SmilesToMol(sdata[idx]);
+      v2::SmilesParse::SmilesParserParams ps;
+      ps.sanitize = false;
+      auto mol = v2::SmilesParse::MolFromSmiles(sdata[idx], ps);
       TEST_ASSERT(mol);
+      // we have some structures with unhappy valences, so be careful about the
+      // sanitization:
+      mol->updatePropertyCache(false);
+      unsigned int opThatFailed;
+      MolOps::sanitizeMol(*mol, opThatFailed,
+                          MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_PROPERTIES);
       double v = calcKappa2(*mol);
       TEST_ASSERT(feq(v, ddata[idx], 0.002));
       ++idx;
-      delete mol;
     }
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -1447,13 +1453,19 @@ void testKappa3() {
                       8.000000, 2.500000, 3.265000, 2.844000};
     unsigned int idx = 0;
     while (sdata[idx] != "EOS") {
-      ROMol *mol;
-      mol = SmilesToMol(sdata[idx]);
+      v2::SmilesParse::SmilesParserParams ps;
+      ps.sanitize = false;
+      auto mol = v2::SmilesParse::MolFromSmiles(sdata[idx], ps);
       TEST_ASSERT(mol);
+      // we have some structures with unhappy valences, so be careful about the
+      // sanitization:
+      mol->updatePropertyCache(false);
+      unsigned int opThatFailed;
+      MolOps::sanitizeMol(*mol, opThatFailed,
+                          MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_PROPERTIES);
       double v = calcKappa3(*mol);
       TEST_ASSERT(feq(v, ddata[idx], 0.002));
       ++idx;
-      delete mol;
     }
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -1981,16 +1993,14 @@ void testStereoCounting() {
   names.emplace_back("NumUnspecifiedAtomStereoCenters");
   Properties prop(names);
 
-  try {
-    prop.computeProperties(*m);
-    TEST_ASSERT(0);  // didn't catch exception
-  } catch (ValueErrorException &) {
-    BOOST_LOG(rdErrorLog) << "---Caught stereo value error---" << std::endl;
-  }
+  // the stereo perception is done automatically:
+  std::vector<double> res = prop.computeProperties(*m);
+  TEST_ASSERT(res[0] == 1);
+  TEST_ASSERT(res[1] == 1);
 
   delete m;
   m = SmilesToMol("NC(C)(F)C(=O)O", sanitize);
-  std::vector<double> res = prop.computeProperties(*m);
+  res = prop.computeProperties(*m);
   TEST_ASSERT(res[0] == 1);
   TEST_ASSERT(res[1] == 1);
   delete m;

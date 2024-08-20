@@ -216,6 +216,21 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
   */
   double distance(unsigned int i, unsigned int j, double *pos = nullptr) const;
 
+  //! returns the squared distance between two points
+  /*!
+    \param i point index
+    \param j point index
+    \param pos (optional) If this argument is provided, it will be used
+        to provide the positions of points. \c pos should be
+        \c 3*this->numPoints() long.
+
+    \return the squared distance
+
+    <b>Note:</b>
+      The internal distance matrix is not updated
+  */
+  double distance2(unsigned int i, unsigned int j, double *pos = nullptr) const;
+
   //! returns the dimension of the forcefield
   unsigned int dimension() const { return d_dimension; }
 

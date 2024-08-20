@@ -5869,11 +5869,100 @@ M  END
                 [](RDGeom::Point3D &pos) { pos *= 6.0; });
 
   // Reset chirality and the original bond direction
-  // (it was stripper after parsing m for the first time)
+  // (it was stripped after parsing m for the first time)
   at->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
   m->getBondBetweenAtoms(2, 3)->setBondDir(Bond::BondDir::BEGINWEDGE);
 
   MolOps::assignChiralTypesFromBondDirs(*m);
 
   CHECK(at->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+}
+
+TEST_CASE("findMesoCenters") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+
+  SECTION("basics") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        cases{
+            {"C[C@@H](Cl)C[C@H](C)Cl", {{1, 4}}},
+            {"C[C@@H](Cl)C[C@@H](Cl)C", {{1, 4}}},
+            {"C[C@H](Cl)C[C@H](C)Cl", {}},
+            {"OC(F)C([C@H](F)O)[C@@H](F)O", {{4, 7}}},
+            {"N[C@H]1CC[C@@H](O)CC1", {{1, 4}}},
+            {"N[C@H]1CC[C@H](O)CC1", {{1, 4}}},
+            {"N[C@H]1CC[C@@H](N)CC1", {{1, 4}}},
+            {"N[C@H]1CC[C@H](N)CC1", {{1, 4}}},
+            {"N[C@H]1C[C@@H](N)C1", {{1, 3}}},
+            {"N[C@H]1C[C@H](N)C1", {{1, 3}}},
+            {"C1CC[C@H]2CCCC[C@H]2C1", {{3, 8}}},
+            // multiple groups
+            {"C[C@@H](Cl)C([C@H](C)Cl)C([C@H](F)O)[C@@H](F)O",
+             {{1, 4}, {8, 11}}},
+            {"C1[C@H](F)C[C@H]1C[C@H]1C[C@H](N)C1", {{1, 4}, {6, 8}}},
+            // not sure if this next one is right:
+            {"N[C@H]1[C@H](F)[C@@H](N)[C@@H]1F", {{1, 4}, {2, 6}}},
+        };
+    for (auto &[smi, expected] : cases) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      REQUIRE(res.size() == expected.size());
+      CHECK(res == expected);
+      for (auto [a1, a2] : res) {
+        unsigned int oa = m->getNumAtoms() + 1;
+        CHECK(m->getAtomWithIdx(a1)->getPropIfPresent(
+            common_properties::_mesoOtherAtom, oa));
+        CHECK(oa == a2);
+        CHECK(m->getAtomWithIdx(a2)->getPropIfPresent(
+            common_properties::_mesoOtherAtom, oa));
+        CHECK(oa == a1);
+      }
+    }
+  }
+  SECTION("with enhanced stereo") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        cases{{"N[C@H]1CC[C@@H](O)CC1 |o1:1,4|", {{1, 4}}}};
+    for (auto &[smi, expected] : cases) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      REQUIRE(res.size() == expected.size());
+      CHECK(res == expected);
+    }
+  }
+  SECTION("options") {
+    {
+      auto m = "[13CH3][C@@H](C)C[C@@H](C)[13CH3]"_smiles;
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      REQUIRE(res.size() == 1);
+      CHECK(res == std::vector<std::pair<unsigned int, unsigned int>>{{1, 4}});
+      bool includeIsotopes = false;
+      res = Chirality::findMesoCenters(*m, includeIsotopes);
+      REQUIRE(res.empty());
+    }
+  }
+}
+
+TEST_CASE(
+    "github #7598: FindPotentialStereo() missing some results if cleanIt is False") {
+  SECTION("as reported") {
+    std::vector<std::string> smileses = {"C[C@H](F)C(C)[C@H](F)C",
+                                         "CC([C@H](C)F)[C@@H](C)F",
+                                         "CC([C@H](C)F)[C@H](F)C"};
+    for (const auto &smi : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      bool flagPossible = true;
+      for (bool cleanIt : {true, false}) {
+        auto si = Chirality::findPotentialStereo(*m, cleanIt, flagPossible);
+        INFO(smi + " " + std::to_string(cleanIt));
+        CHECK(si.size() == 3);
+      }
+    }
+  }
 }

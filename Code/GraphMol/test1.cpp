@@ -1608,7 +1608,6 @@ void testHasValenceViolation() {
            "[Na]([H])[H]",
            "[Og][Og]([Og])([Og])([Og])([Og])([Og])[Og]",
            "[Lv-2]",
-           "[Lv-4]",
            "[Lv+4]",
            "[Lv+8]"
            "*",              // dummy atom, which also accounts for wildcards
@@ -1627,7 +1626,8 @@ void testHasValenceViolation() {
            // when passing through the valence calculation code; will file
            // RDKit issues to address within the valence code separately.
            // "[C+5]",
-           "C(C)(C)(C)(C)C", "S(C)(C)(C)(C)(C)(C)C",
+           "C(C)(C)(C)(C)C",
+           "S(C)(C)(C)(C)(C)(C)C",
            // "[C+](C)(C)(C)C",
            "[C-](C)(C)(C)C",
            // "[C](C)(C)(C)C |^1:0|",  //  pentavalent due to unpaired electron
@@ -1643,6 +1643,7 @@ void testHasValenceViolation() {
            // "[O+7]",
            "[F-2]",
            // "[F+2]",
+           "[Lv-4]",
        }) {
     auto mol = to_mol(smiles);
     auto atom = mol->getAtomWithIdx(0);

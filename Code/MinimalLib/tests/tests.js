@@ -47,11 +47,14 @@ function test_basics() {
     var mol = RDKitModule.get_mol("c1ccccc1O");
     assert(mol !== null);
     assert.equal(mol.get_smiles(),"Oc1ccccc1");
-    assert.equal(mol.get_inchi(),"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
-    assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi()),"ISWSIDIOOBJBQZ-UHFFFAOYSA-N");
-    
-    assert.equal(mol.get_inchi("-FixedH"),"InChI=1/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
-    assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi("-FixedH")),"ISWSIDIOOBJBQZ-UHFFFAOYNA-N");
+    if (typeof Object.getPrototypeOf(mol).get_inchi === 'function') {
+        assert.equal(mol.get_inchi(),"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
+        assert.equal(mol.get_inchi("-FixedH"),"InChI=1/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
+    }
+    if (typeof RDKitModule.get_inchikey_for_inchi === 'function') {
+        assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi("-FixedH")),"ISWSIDIOOBJBQZ-UHFFFAOYNA-N");
+        assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi()),"ISWSIDIOOBJBQZ-UHFFFAOYSA-N");
+    }
 
     var mb = mol.get_molblock();
     assert(mb.search("M  END")>0);
@@ -3309,28 +3312,28 @@ M  END
 
 function test_get_molblock_use_molblock_wedging() {
     var mb = `
-    RDKit          2D
+     RDKit          2D
 
- 9 10  0  0  1  0  0  0  0  0999 V2000
-   1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-   2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-   1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-   2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
- 2  1  1  1
- 2  3  1  0
- 4  3  1  0
- 4  5  1  0
- 6  5  1  0
- 6  7  1  1
- 6  8  1  0
- 8  9  1  1
- 8  2  1  0
- 4  9  1  1
+  9 10  0  0  1  0  0  0  0  0999 V2000
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  4  3  1  0
+  4  5  1  0
+  6  5  1  0
+  6  7  1  1
+  6  8  1  0
+  8  9  1  1
+  8  2  1  0
+  4  9  1  1
 M  END
 `;
     var mol = RDKitModule.get_mol(mb);
@@ -3431,6 +3434,7 @@ initRDKitModule().then(function(instance) {
     test_make_dummies_queries();
     test_smiles_smarts_params();
     test_wedged_bond_atropisomer();
+    test_get_molblock_use_molblock_wedging();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

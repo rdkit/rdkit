@@ -1599,35 +1599,35 @@ void testIssue191() {
 }
 
 void testIssue256() {
-  Mol *mol;
-  Bond *bond;
-  std::string smi;
-
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 256: SMILES yields incorrect structure"
                        << std::endl;
 
-  smi = "C1CC[C+]1=1CCC1";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  bond = mol->getBondBetweenAtoms(3, 0);
-  TEST_ASSERT(bond)
-  TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
-  bond = mol->getBondBetweenAtoms(3, 6);
-  TEST_ASSERT(bond)
-  TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
-  delete mol;
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.sanitize = false;
+  {
+    auto smi = "C1CC[C+]1=1CCC1";
+    auto mol = v2::SmilesParse::MolFromSmiles(smi, ps);
+    TEST_ASSERT(mol);
+    auto bond = mol->getBondBetweenAtoms(3, 0);
+    TEST_ASSERT(bond)
+    TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
+    bond = mol->getBondBetweenAtoms(3, 6);
+    TEST_ASSERT(bond)
+    TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
+  }
 
-  smi = "C1CC[C+]=11CCC1";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  bond = mol->getBondBetweenAtoms(3, 0);
-  TEST_ASSERT(bond)
-  TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
-  bond = mol->getBondBetweenAtoms(3, 6);
-  TEST_ASSERT(bond)
-  TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
-  delete mol;
+  {
+    auto smi = "C1CC[C+]=11CCC1";
+    auto mol = v2::SmilesParse::MolFromSmiles(smi, ps);
+    TEST_ASSERT(mol);
+    auto bond = mol->getBondBetweenAtoms(3, 0);
+    TEST_ASSERT(bond)
+    TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
+    bond = mol->getBondBetweenAtoms(3, 6);
+    TEST_ASSERT(bond)
+    TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
+  }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -4397,7 +4397,8 @@ void testGithub6349() {
     }
 
     std::string molBlock = MolToMolBlock(*molFromSmarts);
-    std::unique_ptr<ROMol> molFromBlock(MolBlockToMol(molBlock, /*sanitize =*/false, /*removeHs =*/false));
+    std::unique_ptr<ROMol> molFromBlock(
+        MolBlockToMol(molBlock, /*sanitize =*/false, /*removeHs =*/false));
     {
       std::string smi = MolToSmiles(*molFromBlock);
       TEST_ASSERT(smi == refSmi);

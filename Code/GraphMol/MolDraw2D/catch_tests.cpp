@@ -337,6 +337,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testWedgeNonSingleBonds-7.svg", 3641456570U},
     {"testWedgeNonSingleBonds-8.svg", 3209701539U},
     {"testWedgingShouldBeOnSingleBond.svg", 1002741488U},
+    {"testDuplicateEnhancedStereoLabelsAddAnnotationTrue.svg", 1462263453U},
+    {"testDuplicateEnhancedStereoLabelsAddAnnotationFalse.svg", 2980189527U},
+    {"testComplexQueryAtomMap.svg", 722421835U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -9758,4 +9761,62 @@ M  END
     auto dat2 = *std::sregex_iterator(text.begin(), text.end(), regex2);
     CHECK(dat2.empty());  // check the bond is single
   }
+}
+
+TEST_CASE("avoid duplicate enhanced stereo labels") {
+  static const std::string AND1("and1");
+  auto m = "C[C@H](O)[C@H](C)F |&1:1,3,r|"_smiles;
+  REQUIRE(m);
+  for (bool addStereoAnnotation : {false, true}) {
+    int panelHeight = -1;
+    int panelWidth = -1;
+    bool noFreeType = true;
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawOptions().addStereoAnnotation = addStereoAnnotation;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile(std::string(
+        "testDuplicateEnhancedStereoLabelsAddAnnotation" +
+        std::string(addStereoAnnotation ? "True" : "False") + ".svg"));
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    for (const char &c : AND1) {
+      std::regex regex(std::string("<text\\s+.*>") + c +
+                       std::string("</text>"));
+      size_t nOccurrences = std::distance(
+          std::sregex_token_iterator(text.begin(), text.end(), regex),
+          std::sregex_token_iterator());
+      // there should be only 2 "and1" labels, not 4
+      CHECK(nOccurrences == 2);
+    }
+  }
+}
+
+TEST_CASE("Draw atom map numbers on complex query atoms") {
+  std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+    "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
+REQUIRE(rxn);
+{
+  // Use NO_FREETYPE so that the characters appear in an
+  // easily found manner in the SVG.
+  MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::string svgFile = "testComplexQueryAtomMap.svg";
+  std::ofstream outs(svgFile);
+  outs << text;
+  outs.close();
+  check_file_hash(svgFile);
+  std::regex regex(std::string("<text\\s+.*>:</text>"));
+  size_t nOccurrences = std::distance(
+      std::sregex_token_iterator(text.begin(), text.end(), regex),
+      std::sregex_token_iterator());
+  // there should be 6 colons drawn
+  CHECK(nOccurrences == 6);
+
+}
 }

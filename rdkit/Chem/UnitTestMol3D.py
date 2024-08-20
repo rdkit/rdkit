@@ -489,6 +489,11 @@ class TestCase(unittest.TestCase):
     sis = list(AllChem.EnumerateStereoisomers(m))
     self.assertEqual(len(sis), 8)
 
+  def testGithub7608(self):
+    m = Chem.MolFromSmiles('N=C(N1CCC1)NCCOc2ccc(C(F)(F)F)cc2')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 1)
+
 
 if __name__ == '__main__':
   unittest.main()

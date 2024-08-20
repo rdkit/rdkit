@@ -61,7 +61,8 @@ RDKIT_RASCALMCES_EXPORT void extractClique(
     std::vector<std::pair<int, int>> &bondMatches);
 
 // do some simple cleaning of the SMARTS, to make it more user-friendly.
-RDKIT_RASCALMCES_EXPORT void cleanSmarts(std::string &smarts);
+RDKIT_RASCALMCES_EXPORT void cleanSmarts(std::string &smarts,
+                                         const std::string &equivalentAtoms);
 
 // Primarily for debugging, these write out the corresponding bonds/atoms
 // in Python list format, for ease of cut/paste into a highlighted image

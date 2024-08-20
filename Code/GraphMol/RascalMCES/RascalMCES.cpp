@@ -24,6 +24,7 @@
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
@@ -82,10 +83,10 @@ struct RascalStartPoint {
   // Some parts require mol2 to be the larger molecule.  This records if they
   // have been swapped with respect to the input molecules.
   bool d_swapped{false};
-  // Pointers the input molecules, swapped if necessary, so that d_mol1 is
-  // always the smaller molecule.  These should never be deleted.
-  const ROMol *d_mol1;
-  const ROMol *d_mol2;
+  // Pointers to copies of the input molecules, swapped if necessary,
+  // so that d_mol1 is always the smaller molecule.
+  std::unique_ptr<ROMol> d_mol1;
+  std::unique_ptr<ROMol> d_mol2;
 
   std::vector<std::vector<int>> d_adjMatrix1, d_adjMatrix2;
   std::vector<std::pair<int, int>> d_vtxPairs;
@@ -255,14 +256,28 @@ void getBondLabels(const ROMol &mol, const RascalOptions &opts,
   getAtomLabels(mol, opts, atomLabels);
   bondLabels = std::vector<std::string>(mol.getNumBonds());
   for (const auto &b : mol.bonds()) {
-    if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
-      bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] +
-                                std::to_string(b->getBondType()) +
-                                atomLabels[b->getEndAtomIdx()];
+    std::string bondType;
+    if (opts.ignoreBondOrders) {
+      bondType = "0";
     } else {
-      bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] +
-                                std::to_string(b->getBondType()) +
-                                atomLabels[b->getBeginAtomIdx()];
+      bondType = std::to_string(b->getBondType());
+    }
+    if (b->getBeginAtom()->getAtomicNum() == b->getEndAtom()->getAtomicNum()) {
+      if (b->getEndAtom()->getDegree() < b->getBeginAtom()->getDegree()) {
+        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] + bondType +
+                                  atomLabels[b->getBeginAtomIdx()];
+      } else {
+        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] + bondType +
+                                  atomLabels[b->getEndAtomIdx()];
+      }
+    } else {
+      if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
+        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] + bondType +
+                                  atomLabels[b->getEndAtomIdx()];
+      } else {
+        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] + bondType +
+                                  atomLabels[b->getBeginAtomIdx()];
+      }
     }
   }
 }
@@ -970,18 +985,54 @@ void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
   }
 }
 
+// Set the atomic number of the atoms that match the SMARTS in
+// RascalOptions.EquivalentAtoms to 110, 111 etc.  These will
+// be mapped back at the end.
+void assignEquivalentAtoms(ROMol &mol, const std::string &equivalentAtoms) {
+  if (equivalentAtoms.empty()) {
+    return;
+  }
+  std::vector<std::string> classSmarts;
+  boost::split(classSmarts, equivalentAtoms, boost::is_any_of(" "),
+               boost::token_compress_on);
+  if (classSmarts.size() > 9) {
+    throw ValueErrorException(
+        "Too many classes of equivalent atoms.  Maximum is 9.");
+  }
+  int atNum = 110;
+  for (auto &smt : classSmarts) {
+    if (smt.empty()) {
+      continue;
+    }
+    auto qmol = v2::SmilesParse::MolFromSmarts(smt);
+    std::vector<RDKit::MatchVectType> hits_vect;
+    if (RDKit::SubstructMatch(mol, *qmol, hits_vect)) {
+      for (const auto &hv : hits_vect) {
+        for (const auto &h : hv) {
+          auto a = mol.getAtomWithIdx(h.second);
+          a->setAtomicNum(atNum);
+        }
+      }
+    }
+    ++atNum;
+  }
+}
+
 RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
                                          const RascalOptions &opts) {
   RascalStartPoint starter;
   if (mol1->getNumAtoms() <= mol2->getNumAtoms()) {
     starter.d_swapped = false;
-    starter.d_mol1 = mol1;
-    starter.d_mol2 = mol2;
+    starter.d_mol1.reset(new ROMol(*mol1));
+    starter.d_mol2.reset(new ROMol(*mol2));
   } else {
     starter.d_swapped = true;
-    starter.d_mol1 = mol2;
-    starter.d_mol2 = mol1;
+    starter.d_mol1.reset(new ROMol(*mol2));
+    starter.d_mol2.reset(new ROMol(*mol1));
   }
+  assignEquivalentAtoms(*starter.d_mol1, opts.equivalentAtoms);
+  assignEquivalentAtoms(*starter.d_mol2, opts.equivalentAtoms);
+
   std::map<int, std::vector<std::pair<int, int>>> degSeqs1, degSeqs2;
   starter.d_tier1Sim =
       details::tier1Sim(*starter.d_mol1, *starter.d_mol2, degSeqs1, degSeqs2);
@@ -1065,7 +1116,8 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
                      starter.d_adjMatrix2, c, starter.d_vtxPairs, timedOut,
                      starter.d_swapped, starter.d_tier1Sim, starter.d_tier2Sim,
                      opts.ringMatchesRingOnly, opts.singleLargestFrag,
-                     opts.maxFragSeparation, opts.exactConnectionsMatch));
+                     opts.maxFragSeparation, opts.exactConnectionsMatch,
+                     opts.equivalentAtoms, opts.ignoreBondOrders));
   }
   std::sort(results.begin(), results.end(), details::resultCompare);
   return results;
