@@ -22,11 +22,9 @@ T *MolIOEnter(T *self) {
 }
 
 template <typename T>
-bool MolIOExit(T *self, python::object exc_type, python::object exc_val,
-               python::object traceback) {
-  RDUNUSED_PARAM(exc_type);
-  RDUNUSED_PARAM(exc_val);
-  RDUNUSED_PARAM(traceback);
+bool MolIOExit(T *self, [[maybe_unused]] python::object exc_type,
+               [[maybe_unused]] python::object exc_val,
+               [[maybe_unused]] python::object traceback) {
   self->close();
   return false;
 }
