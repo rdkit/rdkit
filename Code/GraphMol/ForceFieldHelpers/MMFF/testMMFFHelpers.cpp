@@ -443,8 +443,6 @@ void testIssue239() {
   BOOST_LOG(rdErrorLog) << "    Testing Issue239." << std::endl;
 
   RWMol *mol;
-  int needMore;
-  (void)needMore;  // Add test later
   ForceFields::ForceField *field;
   double e1, e2;
 
@@ -457,7 +455,7 @@ void testIssue239() {
   field = MMFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  needMore = field->minimize(200, 1.0e-6, 1.0e-3);
+  [[maybe_unused]] int needMore = field->minimize(200, 1.0e-6, 1.0e-3);
   e1 = field->calcEnergy();
   needMore = field->minimize(200, 1.0e-6, 1.0e-3);
   e2 = field->calcEnergy();
@@ -575,8 +573,6 @@ void testIssue242() {
   BOOST_LOG(rdErrorLog) << "    Testing Issue242." << std::endl;
 
   RWMol *mol, *mol2;
-  int needMore;
-  (void)needMore;  // add test later
   ForceFields::ForceField *field = nullptr, *field2 = nullptr;
   std::string mb1, mb2;
   double e1, e2;
@@ -609,7 +605,7 @@ void testIssue242() {
   BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
   // TEST_ASSERT(feq(e2,e1,0.1));
 
-  needMore = field->minimize(200, 1.0e-4);
+  [[maybe_unused]] int needMore = field->minimize(200, 1.0e-4);
   needMore = field2->minimize(200, 1.0e-4);
   e1 = field->calcEnergy();
   e2 = field2->calcEnergy();
