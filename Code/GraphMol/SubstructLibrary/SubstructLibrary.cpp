@@ -563,9 +563,8 @@ bool SubstructLibrary::hasMatch(const ExtendedQueryMol &query,
              .size() > 0;
 }
 
-void SubstructLibrary::toStream(std::ostream &ss) const {
+void SubstructLibrary::toStream([[maybe_unused]] std::ostream &ss) const {
 #ifndef RDK_USE_BOOST_SERIALIZATION
-  RDUNUSED_PARAM(ss);
   PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
   boost::archive::text_oarchive ar(ss);
@@ -579,9 +578,8 @@ std::string SubstructLibrary::Serialize() const {
   return ss.str();
 }
 
-void SubstructLibrary::initFromStream(std::istream &ss) {
+void SubstructLibrary::initFromStream([[maybe_unused]] std::istream &ss) {
 #ifndef RDK_USE_BOOST_SERIALIZATION
-  RDUNUSED_PARAM(ss);
   PRECONDITION(0, "Boost SERIALIZATION is not enabled")
 #else
   boost::archive::text_iarchive ar(ss);

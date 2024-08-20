@@ -114,10 +114,7 @@ void testWrite() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-
+int main() {
   testOr();
   testAnd();
   testWrite();
