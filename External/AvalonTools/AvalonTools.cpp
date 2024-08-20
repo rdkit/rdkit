@@ -193,9 +193,8 @@ std::string getCanonSmiles(ROMol &mol, int flags) {
 }
 
 void getAvalonCountFP(const ROMol &mol, SparseIntVect<boost::uint32_t> &res,
-                      unsigned int nBits, bool isQuery, bool resetVect,
-                      unsigned int bitFlags) {
-  (void)resetVect;
+                      unsigned int nBits, bool isQuery,
+                      [[maybe_unused]] bool resetVect, unsigned int bitFlags) {
   struct reaccs_molecule_t *mp = molToReaccs(mol);
   reaccsToCounts(mp, res, bitFlags, isQuery, nBits);
   FreeMolecule(mp);
