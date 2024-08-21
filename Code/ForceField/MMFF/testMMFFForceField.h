@@ -1,4 +1,3 @@
-// $Id$
 //
 // Copyright (C)  2013 Paolo Tosco
 //
