@@ -4,7 +4,7 @@ include_directories(${RDKit_ExternalDir}/rapidjson-1.1.0/include)
 if(RDK_BUILD_MINIMAL_LIB)
     set(MINIMAL_LIB_LIBRARIES "MolInterchange_static;Abbreviations_static;"
         "CIPLabeler_static;MolDraw2D_static;Depictor_static;"
-        "SubstructMatch_static;FileParsers_static;"
+        "Descriptors_static;SubstructMatch_static;FileParsers_static;"
         "SmilesParse_static;GraphMol_static;RDGeometryLib_static;"
         "RDGeneral_static;RGroupDecomposition_static")
     if(RDK_BUILD_INCHI_SUPPORT)
