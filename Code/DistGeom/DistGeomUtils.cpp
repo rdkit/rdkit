@@ -395,6 +395,8 @@ void add12Terms(ForceFields::ForceField *ff,
   distances \param isImproperConstrained bit vector with length of total num
   atoms of the molecule where index of every central atom of improper torsion is
   set to one \param useBasicKnowledge whether to use basic knowledge terms
+  \param mmat Bounds matrix from which 13 distances are used in case an angle
+  is part of an improper torsion
   \param numAtoms number of atoms in molecule
 
 */
@@ -403,7 +405,8 @@ void add13Terms(ForceFields::ForceField *ff,
                 boost::dynamic_bitset<> &atomPairs,
                 RDGeom::Point3DPtrVect &positions, double forceConstant,
                 const boost::dynamic_bitset<> &isImproperConstrained,
-                bool useBasicKnowledge, unsigned int numAtoms) {
+                bool useBasicKnowledge, const BoundsMatrix &mmat,
+                unsigned int numAtoms) {
   PRECONDITION(ff, "bad force field");
   auto distContribs =
       std::make_unique<ForceFields::DistanceConstraintContribs>(ff);
@@ -413,7 +416,6 @@ void add13Terms(ForceFields::ForceField *ff,
     unsigned int i = angle[0];
     unsigned int j = angle[1];
     unsigned int k = angle[2];
-
     if (i < k) {
       atomPairs[i * numAtoms + k] = 1;
     } else {
@@ -422,7 +424,10 @@ void add13Terms(ForceFields::ForceField *ff,
     // check for triple bonds
     if (useBasicKnowledge && angle[3]) {
       angleContribs->addContrib(i, j, k, 179.0, 180.0, 1);
-    } else if (!isImproperConstrained[j]) {
+    } else if (isImproperConstrained[j]) {
+      distContribs->addContrib(i, k, mmat.getLowerBound(i, k),
+                               mmat.getUpperBound(i, k), forceConstant);
+    } else {
       double d = ((*positions[i]) - (*positions[k])).length();
       distContribs->addContrib(i, k, d - KNOWN_DIST_TOL, d + KNOWN_DIST_TOL,
                                forceConstant);
@@ -511,8 +516,7 @@ ForceFields::ForceField *construct3DForceField(
   add12Terms(field, etkdgDetails, atomPairs, positions,
              KNOWN_DIST_FORCE_CONSTANT, N);
   add13Terms(field, etkdgDetails, atomPairs, positions,
-             KNOWN_DIST_FORCE_CONSTANT, isImproperConstrained, true, N);
-
+             KNOWN_DIST_FORCE_CONSTANT, isImproperConstrained, true, mmat, N);
   // minimum distance for all other atom pairs that aren't constrained
   addLongRangeDistanceConstraints(field, etkdgDetails, atomPairs, positions,
                                   KNOWN_DIST_FORCE_CONSTANT, mmat, N);
@@ -560,7 +564,7 @@ ForceFields::ForceField *constructPlain3DForceField(
   add12Terms(field, etkdgDetails, atomPairs, positions,
              KNOWN_DIST_FORCE_CONSTANT, N);
   add13Terms(field, etkdgDetails, atomPairs, positions,
-             KNOWN_DIST_FORCE_CONSTANT, isImproperConstrained, false, N);
+             KNOWN_DIST_FORCE_CONSTANT, isImproperConstrained, false, mmat, N);
   // minimum distance for all other atom pairs that aren't constrained
   addLongRangeDistanceConstraints(field, etkdgDetails, atomPairs, positions,
                                   KNOWN_DIST_FORCE_CONSTANT, mmat, N);
