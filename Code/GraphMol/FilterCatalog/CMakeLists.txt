@@ -2,9 +2,8 @@ if(NOT RDK_USE_BOOST_SERIALIZATION)
     message("== Making FilterCatalog without boost Serialization support")
 endif()
 
-find_package(PythonInterp)
-if (PYTHONINTERP_FOUND)
-  if(DEFINED PYTHON_VERSION_STRING AND ${PYTHON_VERSION_STRING} VERSION_GREATER "2.6" )
+find_package(Python3 COMPONENTS Interpreter)
+if (Python3::Interpreter)
         message("== Updating Filters.cpp from pains file")
         execute_process(
           COMMAND
@@ -14,7 +13,6 @@ if (PYTHONINTERP_FOUND)
         if(NOT rc EQUAL 0)
           message(FATAL_ERROR "Failed updating Filters.cpp from wehi_pains.csv")
         endif(NOT rc EQUAL 0)
-  endif()
 endif()
 
 
