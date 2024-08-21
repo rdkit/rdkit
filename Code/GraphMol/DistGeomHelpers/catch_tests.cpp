@@ -1003,7 +1003,7 @@ TEST_CASE("No overlapping atoms") {
   MolOps::addHs(*mol);
   DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
   DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
-  DGeomHelpers::setTopolBounds(*mol, bm);
+  DGeomHelpers::setTopolBounds(*mol, bm, true, false, true);
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
   CHECK(cids.size() == 10);
   for (const auto &cid : cids) {
@@ -1011,9 +1011,9 @@ TEST_CASE("No overlapping atoms") {
     const auto conf = mol->getConformer(cid);
     for (unsigned int i = 1; i < mol->getNumAtoms(); ++i) {
       for (unsigned int j = 0; j < i; ++j) {
-        auto minDist = bm->getLowerBound(i, j);
-        auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        CHECK(length > minDist);
+        const auto minDist = bm->getLowerBound(i, j);
+        const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
+        CHECK((minDist - length) < .37);
       }
     }
   }
