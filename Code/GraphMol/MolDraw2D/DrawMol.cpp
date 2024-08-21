@@ -3231,9 +3231,16 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
-    Point2D const &at1_cds = atCds_[atom->getIdx()];
-    Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
-    otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+    auto bond =
+        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
+    // Don't do anything if the wedge is to a triple bond.  It gets
+    // really messed up especially if the two bonds aren't exactly
+    // co-linear which happens sometimes in a cluttered layout (Github 7620).
+    if (bond->getBondType() != 3) {
+      Point2D const &at1_cds = atCds_[atom->getIdx()];
+      Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
+      otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+    }
   }
 }
 
@@ -3248,7 +3255,12 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           otherNeighbor(bond->getEndAtom(), bond->getBeginAtom(), 0, *drawMol_);
       auto bond1 = drawMol_->getBondBetweenAtoms(bond->getEndAtomIdx(),
                                                  thirdAtom->getIdx());
-      // If the bonds a co-linear, don't do anything (Github7036)
+      // Don't do anything if it's a triple bond.  Moving the central
+      // line to the wedge corner is clearly wrong.
+      if (bond1->getBondType() == 3) {
+        continue;
+      }
+      // If the bonds are co-linear, don't do anything (Github7036)
       auto b1 = atCds_[bond->getEndAtomIdx()].directionVector(
           atCds_[bond->getBeginAtomIdx()]);
       auto b2 = atCds_[bond1->getEndAtomIdx()].directionVector(

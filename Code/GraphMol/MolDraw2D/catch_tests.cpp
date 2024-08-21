@@ -327,7 +327,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"AtropCanon1.svg", 1587179714U},
     {"AtropManyChiralsEnhanced.svg", 3871032500U},
     {"testGithub6968.svg", 1554428830U},
-    {"testGithub7036.svg", 2355702607U},
+    {"testGithub7036_False.svg", 2355702607U},
+    {"testGithub7036_True.svg", 3114678646U},
     {"testWedgeNonSingleBonds-1.svg", 865601717U},
     {"testWedgeNonSingleBonds-2.svg", 2960559495U},
     {"testWedgeNonSingleBonds-3.svg", 1428196589U},
@@ -9406,16 +9407,24 @@ TEST_CASE("Github7036 - triple bond to wedge not right") {
   // ends in the wrong place when the incident bond is
   // a wedge.  Wedge to single bond included for visual
   // check that that isn't broken in the fix.
+  // Make sure it works for both coords generators.
+  // Tracking down issue 7620 demonstrated this was not
+  // always the case.
   auto m = "C1[C@@H](CN)CCN[C@H]1C#N"_smiles;
   REQUIRE(m);
-  {
+  bool currCoordGen = RDDepict::preferCoordGen;
+  for (bool preferCoordGen : {false, true}) {
+    RDDepict::preferCoordGen = preferCoordGen;
     MolDraw2DSVG drawer(350, 300);
     drawer.drawOptions().addAtomIndices = true;
     drawer.drawOptions().addBondIndices = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
-    std::ofstream outs("testGithub7036.svg");
+    std::string svgFile(
+        std::string("testGithub7036_" +
+                    std::string(preferCoordGen ? "True" : "False") + ".svg"));
+    std::ofstream outs(svgFile);
     outs << text;
     outs.close();
 
@@ -9436,8 +9445,9 @@ TEST_CASE("Github7036 - triple bond to wedge not right") {
     double dot = pts[0].directionVector(pts[1]).dotProduct(
         pts[2].directionVector(pts[3]));
     CHECK_THAT(fabs(dot), Catch::Matchers::WithinAbs(1.0, 0.001));
-    check_file_hash("testGithub7036.svg");
+    check_file_hash(svgFile);
   }
+  RDDepict::preferCoordGen = currCoordGen;
 }
 
 TEST_CASE("Github7317 - very long bond not drawn to both atoms") {
@@ -9797,26 +9807,25 @@ TEST_CASE("avoid duplicate enhanced stereo labels") {
 
 TEST_CASE("Draw atom map numbers on complex query atoms") {
   std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
-    "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
-REQUIRE(rxn);
-{
-  // Use NO_FREETYPE so that the characters appear in an
-  // easily found manner in the SVG.
-  MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
-  drawer.drawReaction(*rxn);
-  drawer.finishDrawing();
-  auto text = drawer.getDrawingText();
-  std::string svgFile = "testComplexQueryAtomMap.svg";
-  std::ofstream outs(svgFile);
-  outs << text;
-  outs.close();
-  check_file_hash(svgFile);
-  std::regex regex(std::string("<text\\s+.*>:</text>"));
-  size_t nOccurrences = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), regex),
-      std::sregex_token_iterator());
-  // there should be 6 colons drawn
-  CHECK(nOccurrences == 6);
-
-}
+      "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  {
+    // Use NO_FREETYPE so that the characters appear in an
+    // easily found manner in the SVG.
+    MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile = "testComplexQueryAtomMap.svg";
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    std::regex regex(std::string("<text\\s+.*>:</text>"));
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex),
+        std::sregex_token_iterator());
+    // there should be 6 colons drawn
+    CHECK(nOccurrences == 6);
+  }
 }
