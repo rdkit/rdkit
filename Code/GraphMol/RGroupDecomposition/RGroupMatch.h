@@ -17,6 +17,7 @@ typedef std::map<int, RData> R_DECOMP;
 
 //! RGroupMatch is the decomposition for a single molecule
 struct RGroupMatch {
+ public:
   size_t core_idx;  // index of the matching core
   size_t numberMissingUserRGroups;
   R_DECOMP rgroups;        // rlabel->RGroupData mapping
@@ -32,7 +33,7 @@ struct RGroupMatch {
   std::string toString() const {
     auto rGroupsString = std::accumulate(
         rgroups.cbegin(), rgroups.cend(), std::string(),
-        [](std::string s, const std::pair<int, RData>& rgroup) {
+        [](std::string s, const std::pair<int, RData> &rgroup) {
           return std::move(s) + "\n\t(" + std::to_string(rgroup.first) + ':' +
                  rgroup.second->toString() + ')';
         });
