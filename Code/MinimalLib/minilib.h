@@ -25,7 +25,8 @@ class JSMolBase {
   JSMolBase(const JSMolBase &) = delete;
   JSMolBase &operator=(const JSMolBase &) = delete;
   virtual ~JSMolBase(){};
-  virtual RDKit::RWMol &get() const = 0;
+  virtual const RDKit::RWMol &get() const = 0;
+  virtual RDKit::RWMol &get() = 0;
   std::string get_smiles() const;
   std::string get_smiles(const std::string &details) const;
   std::string get_cxsmiles() const;
@@ -113,7 +114,7 @@ class JSMolBase {
   is_valid() const;
   int has_coords() const;
 
-  std::string get_stereo_tags() const;
+  std::string get_stereo_tags();
   std::string get_aromatic_form() const;
   void convert_to_aromatic_form();
   std::string get_kekule_form() const;
@@ -178,7 +179,11 @@ class JSMol : public JSMolBase {
     d_mol.reset(new RDKit::RWMol(other.get()));
     return *this;
   }
-  RDKit::RWMol &get() const {
+  const RDKit::RWMol &get() const {
+    checkNotNull();
+    return *d_mol.get();
+  }
+  RDKit::RWMol &get() {
     checkNotNull();
     return *d_mol.get();
   }
@@ -197,11 +202,16 @@ class JSMolShared : public JSMolBase {
     d_mol = other.d_mol;
     return *this;
   }
-  RDKit::RWMol &get() const {
+  const RDKit::RWMol &get() const {
+    checkNotNull();
+    return static_cast<RDKit::RWMol &>(*d_mol.get());
+  }
+  RDKit::RWMol &get() {
     checkNotNull();
     return static_cast<RDKit::RWMol &>(*d_mol.get());
   }
   const RDKit::ROMOL_SPTR &get_sptr() const { return d_mol; }
+  RDKit::ROMOL_SPTR &get_sptr() { return d_mol; }
 
  private:
   void checkNotNull() const { CHECK_INVARIANT(d_mol, "d_mol cannot be null"); }

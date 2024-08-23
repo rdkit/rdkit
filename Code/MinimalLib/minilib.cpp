@@ -283,7 +283,7 @@ std::string get_avalon_fp_as_binary_text(const std::string &details) const {
 }
 #endif
 
-std::string JSMolBase::get_stereo_tags() const {
+std::string JSMolBase::get_stereo_tags() {
   rj::Document doc;
   doc.SetObject();
 
