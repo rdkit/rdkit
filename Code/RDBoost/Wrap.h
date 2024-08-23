@@ -23,7 +23,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <memory>
 
-#include <boost/python/suite/indexing/vector_indexing_suite.hpp>
+#include "rdkit_vector_indexing_suite.hpp"
 #include <cstdint>
 #include "list_indexing_suite.hpp"
 #include <RDGeneral/BoostEndInclude.h>
@@ -76,10 +76,10 @@ void RegisterVectorConverter(const char *name, bool noproxy = false) {
   }
   if (noproxy) {
     python::class_<std::vector<T>>(name).def(
-        python::vector_indexing_suite<std::vector<T>, 1>());
+        boost::python::rdkit_vector_indexing_suite<std::vector<T>, 1>());
   } else {
     python::class_<std::vector<T>>(name).def(
-        python::vector_indexing_suite<std::vector<T>>());
+        boost::python::rdkit_vector_indexing_suite<std::vector<T>>());
   }
 }
 
@@ -88,6 +88,27 @@ void RegisterVectorConverter(bool noproxy = false) {
   std::string name = "_vect";
   name += typeid(T).name();
   RegisterVectorConverter<T>(name.c_str(), noproxy);
+}
+
+template <typename T>
+void RegisterOriginalVectorConverter(const char *name, bool noproxy = false) {
+  if (is_python_converter_registered<std::vector<T>>()) {
+    return;
+  }
+  if (noproxy) {
+    python::class_<std::vector<T>>(name).def(
+        boost::python::vector_indexing_suite<std::vector<T>, 1>());
+  } else {
+    python::class_<std::vector<T>>(name).def(
+        boost::python::vector_indexing_suite<std::vector<T>>());
+  }
+}
+
+template <typename T>
+void RegisterOriginalVectorConverter(bool noproxy = false) {
+  std::string name = "_vect";
+  name += typeid(T).name();
+  RegisterOriginalVectorConverter<T>(name.c_str(), noproxy);
 }
 
 //! \brief Registers a templated converter for returning \c lists of a

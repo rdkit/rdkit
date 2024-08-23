@@ -142,8 +142,6 @@ struct enumeration_wrapper {
   static void wrap() {
     std::string docString;
 
-    RegisterVectorConverter<std::vector<std::string>>("VectorOfStringVectors");
-    RegisterVectorConverter<boost::uint64_t>("VectSizeT");
     RegisterVectorConverter<MOL_SPTR_VECT>("VectMolVect");
 
     python::class_<RDKit::EnumerateLibraryBase, RDKit::EnumerateLibraryBase *,

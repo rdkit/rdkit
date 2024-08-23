@@ -54,7 +54,7 @@ BOOST_PYTHON_MODULE(rdAbbreviations) {
   python::scope().attr("__doc__") =
       "Module containing functions for working with molecular abbreviations";
   // RegisterVectorConverter<Abbreviations::AbbreviationMatch>();
-  RegisterVectorConverter<Abbreviations::AbbreviationDefinition>();
+  RegisterOriginalVectorConverter<Abbreviations::AbbreviationDefinition>();
 
   python::class_<Abbreviations::AbbreviationDefinition>(
       "AbbreviationDefinition", "Abbreviation Definition",
