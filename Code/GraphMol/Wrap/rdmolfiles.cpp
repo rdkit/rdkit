@@ -1582,7 +1582,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "resulting SMILES is not canonical")
       .def_readwrite(
           "includeDativeBonds", &RDKit::SmilesWriteParams::includeDativeBonds,
-          "include the RDKit extension for dative bonds. Otherwise dative bonds will be written as single bonds");
+          "include the RDKit extension for dative bonds. Otherwise dative bonds will be written as single bonds")
+      .def_readwrite(
+          "ignoreAtomMapNumbers",
+          &RDKit::SmilesWriteParams::ignoreAtomMapNumbers,
+          "ignore atom map numbers when canonicalizing the molecule");
 
   python::def("MolToSmiles",
               (std::string(*)(const ROMol &,
@@ -1609,6 +1613,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - doRandom: (optional) if true, randomize the traversal of the molecule graph,\n\
       so we can generate random smiles. Defaults to false.\n\
+    - ignoreAtomMapNumbers (optional) if true, ignores any atom map numbers when\n\
+      canonicalizing the molecule \n\
 \n\
   RETURNS:\n\
 \n\
@@ -1616,12 +1622,13 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n";
   python::def(
       "MolToSmiles",
-      (std::string(*)(const ROMol &, bool, bool, int, bool, bool, bool,
+      (std::string(*)(const ROMol &, bool, bool, int, bool, bool, bool, bool,
                       bool))RDKit::MolToSmiles,
       (python::arg("mol"), python::arg("isomericSmiles") = true,
        python::arg("kekuleSmiles") = false, python::arg("rootedAtAtom") = -1,
        python::arg("canonical") = true, python::arg("allBondsExplicit") = false,
-       python::arg("allHsExplicit") = false, python::arg("doRandom") = false),
+       python::arg("allHsExplicit") = false, python::arg("doRandom") = false,
+       python::arg("ignoreAtomMapNumbers") = false),
       docString.c_str());
 
   docString =
