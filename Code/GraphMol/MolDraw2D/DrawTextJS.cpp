@@ -12,7 +12,9 @@
 // to draw text onto a picture.
 #ifdef __EMSCRIPTEN__
 #include <sstream>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/MolDraw2D/DrawTextJS.h>
 #include <GraphMol/MolDraw2D/MolDraw2DJS.h>
