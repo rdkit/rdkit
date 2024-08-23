@@ -1514,7 +1514,7 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
 }
 
 TEST_CASE(
-    "Github #7725: double bond geometry not perceived with c: or t: are in CXSMILES") {
+    "Github #7725: double bond geometry not perceived even though c: or t: are in CXSMILES") {
   SECTION("as reported") {
     auto m = "C/C=C/C1=CC=CC=C1 |c:5,7,t:3|"_smiles;
     REQUIRE(m);
