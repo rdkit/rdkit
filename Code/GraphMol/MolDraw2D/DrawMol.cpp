@@ -3236,7 +3236,7 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
     // Don't do anything if the wedge is to a triple bond.  It gets
     // really messed up especially if the two bonds aren't exactly
     // co-linear which happens sometimes in a cluttered layout (Github 7620).
-    if (bond->getBondType() != 3) {
+    if (bond->getBondType() != Bond::BondType::TRIPLE) {
       Point2D const &at1_cds = atCds_[atom->getIdx()];
       Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
       otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
@@ -3257,7 +3257,7 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
                                                  thirdAtom->getIdx());
       // Don't do anything if it's a triple bond.  Moving the central
       // line to the wedge corner is clearly wrong.
-      if (bond1->getBondType() == 3) {
+      if (bond1->getBondType() == Bond::BondType::TRIPLE) {
         continue;
       }
       // If the bonds are co-linear, don't do anything (Github7036)
