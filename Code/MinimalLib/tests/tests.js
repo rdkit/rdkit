@@ -3041,6 +3041,103 @@ M  END
     mol.delete();
 }
 
+function test_assign_chiral_tags_from_mol_parity() {
+    let mol;
+    const artemisininCTAB = `68827
+  -OEChem-03262404452D
+
+ 20 23  0     1  0  0  0  0  0999 V2000
+    4.3177    0.4203    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7899    1.1100    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4870   -0.3207    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5402    1.3953    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.4004   -1.8275    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6664   -0.2988    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    3.7655    0.1351    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    4.7603   -1.3362    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    2.8959   -0.4383    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    5.5674    0.1351    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    3.9042   -1.9296    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5430    1.1100    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9657   -1.4776    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6389   -1.8668    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    5.1664    1.8919    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    4.1664    1.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0000    0.0059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5237   -1.3465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6330   -2.8668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3890    2.8668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  6  1  1  0  0  0  0
+  2 10  1  0  0  0  0
+  2 15  1  0  0  0  0
+  3 10  1  0  0  0  0
+  3 18  1  0  0  0  0
+  4 15  1  0  0  0  0
+  5 18  2  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  6 10  1  0  0  0  0
+  7  9  1  0  0  0  0
+  7 12  1  0  0  0  0
+  8 11  1  0  0  0  0
+  8 14  1  0  0  0  0
+  9 13  1  0  0  0  0
+  9 17  1  0  0  0  0
+ 11 13  1  0  0  0  0
+ 12 16  1  0  0  0  0
+ 14 18  1  0  0  0  0
+ 14 19  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 15 20  1  0  0  0  0
+M  END
+`;
+    try {
+        mol = RDKitModule.get_mol(artemisininCTAB);
+        assert(mol);
+        assert(mol.get_smiles() === 'CC1CCC2C(C)C(=O)OC3OC4(C)CCC1C32OO4');
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+    }
+    try {
+        mol = RDKitModule.get_mol(artemisininCTAB, JSON.stringify({ assignChiralTypesFromMolParity: true }));
+        assert(mol);
+        assert(mol.get_smiles() === 'C[C@@H]1CC[C@H]2[C@@H](C)C(=O)O[C@@H]3O[C@@]4(C)CC[C@@H]1[C@]32OO4');
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+    }
+}
+
+function test_make_dummies_queries() {
+    let mol;
+    let query;
+    let match;
+    try {
+        mol = RDKitModule.get_mol('CN');
+        assert(mol);
+        query = RDKitModule.get_mol('*N');
+        assert(query);
+        match = JSON.parse(mol.get_substruct_match(query));
+        assert(!match.atoms);
+        query.delete();
+        query = RDKitModule.get_mol('*N', JSON.stringify(({ makeDummiesQueries: true })));
+        assert(query);
+        match = JSON.parse(mol.get_substruct_match(query));
+        assert(match.atoms.toString() === [0, 1].toString());
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+        if (query) {
+            query.delete();
+        }
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3119,6 +3216,8 @@ initRDKitModule().then(function(instance) {
     test_smiles_smarts_params();
     test_wedged_bond_atropisomer();
     test_get_molblock_use_molblock_wedging();
+    test_assign_chiral_tags_from_mol_parity();
+    test_make_dummies_queries();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
