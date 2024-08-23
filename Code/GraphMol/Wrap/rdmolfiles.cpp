@@ -1586,7 +1586,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "ignoreAtomMapNumbers",
           &RDKit::SmilesWriteParams::ignoreAtomMapNumbers,
-          "ignore atom map numbers when generating canonical SMILES");
+          "ignore atom map numbers when canonicalizing the molecule");
 
   python::def("MolToSmiles",
               (std::string(*)(const ROMol &,
@@ -1613,8 +1613,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - doRandom: (optional) if true, randomize the traversal of the molecule graph,\n\
       so we can generate random smiles. Defaults to false.\n\
-    - ignoreAtomMapNumbers (optional) if true, ignores any atom map numbers when\n"
-      "  generating canonical SMILES \n\
+    - ignoreAtomMapNumbers (optional) if true, ignores any atom map numbers when\n\
+      canonicalizing the molecule \n\
 \n\
   RETURNS:\n\
 \n\
