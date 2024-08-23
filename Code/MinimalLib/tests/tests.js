@@ -2327,19 +2327,31 @@ function test_mol_list() {
             }
         }
         assert.equal(molList.size(), 2);
-        let i = 0;
-        while (!molList.at_end()) {
-            try {
-                mol = molList.next();
-            } finally {
-                if (mol) {
-                    ++i;
-                    mol.delete();
+        // Modifications to molecules in the molList should persist
+        // as the underlying C++ object is a shared_ptr
+        [0, 1].forEach((loopIdx) => {
+            let i = 0;
+            molList.reset();
+            while (!molList.at_end()) {
+                try {
+                    mol = molList.next();
+                    assert(mol);
+                    if (loopIdx == 0) {
+                        assert(!mol.has_prop('molIdx'));
+                        mol.set_prop('molIdx', `${++i}`);
+                    } else {
+                        assert(mol.has_prop('molIdx'));
+                        i = parseInt(mol.get_prop('molIdx'));
+                    }
+                } finally {
+                    if (mol) {
+                        mol.delete();
+                    }
                 }
             }
-        }
-        assert.equal(i, 2);
-        assert(molList.at_end());
+            assert.equal(i, 2);
+            assert(molList.at_end());
+        });
         try {
             mol = molList.pop(0);
             assert.equal(mol.get_num_atoms(), 4);
@@ -3138,6 +3150,32 @@ function test_make_dummies_queries() {
     }
 }
 
+function test_get_mol_copy() {
+    let mol;
+    let mol_copy1;
+    let mol_copy2;
+    try {
+        mol = RDKitModule.get_mol('c1ccccn1');
+        assert(mol);
+        mol_copy1 = RDKitModule.get_mol_copy(mol);
+        assert(mol_copy1);
+        mol_copy2 = mol.copy();
+        assert(mol_copy2);
+        assert(mol.get_molblock() === mol_copy1.get_molblock());
+        assert(mol.get_molblock() === mol_copy2.get_molblock());
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+        if (mol_copy1) {
+            mol_copy1.delete();
+        }
+        if (mol_copy2) {
+            mol_copy2.delete();
+        }
+    }
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3218,6 +3256,7 @@ initRDKitModule().then(function(instance) {
     test_get_molblock_use_molblock_wedging();
     test_assign_chiral_tags_from_mol_parity();
     test_make_dummies_queries();
+    test_get_mol_copy();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
