@@ -28,7 +28,8 @@ class JSMolBase {
   JSMolBase(const JSMolBase &) = delete;
   JSMolBase &operator=(const JSMolBase &) = delete;
   virtual ~JSMolBase(){};
-  virtual RDKit::RWMol& get() const = 0;
+  virtual const RDKit::RWMol &get() const = 0;
+  virtual RDKit::RWMol &get() = 0;
   std::string get_smiles() const;
   std::string get_smiles(const std::string &details) const;
   std::string get_cxsmiles() const;
@@ -116,7 +117,7 @@ class JSMolBase {
   is_valid() const;
   int has_coords() const;
 
-  std::string get_stereo_tags() const;
+  std::string get_stereo_tags();
   std::string get_aromatic_form() const;
   void convert_to_aromatic_form();
   std::string get_kekule_form() const;
@@ -153,7 +154,9 @@ class JSMolBase {
   void straighten_depiction() { straighten_depiction(false); }
   std::pair<JSMolList *, std::string> get_frags(
       const std::string &details_json) const;
-  std::pair<JSMolList *, std::string> get_frags() const { return get_frags("{}"); }
+  std::pair<JSMolList *, std::string> get_frags() const {
+    return get_frags("{}");
+  }
   unsigned int get_num_atoms(bool heavyOnly) const;
   unsigned int get_num_atoms() const { return get_num_atoms(false); };
   unsigned int get_num_bonds() const;
@@ -173,14 +176,16 @@ class JSMol : public JSMolBase {
  public:
   JSMol() : d_mol(new RDKit::RWMol()) {}
   JSMol(RDKit::RWMol *mol) : d_mol(mol) { checkNotNull(); }
-  JSMol(const JSMol &other) {
-    d_mol.reset(new RDKit::RWMol(other.get()));
-  }
+  JSMol(const JSMol &other) { d_mol.reset(new RDKit::RWMol(other.get())); }
   JSMol &operator=(const JSMol &other) {
     d_mol.reset(new RDKit::RWMol(other.get()));
     return *this;
   }
-  RDKit::RWMol& get() const {
+  const RDKit::RWMol &get() const {
+    checkNotNull();
+    return *d_mol.get();
+  }
+  RDKit::RWMol &get() {
     checkNotNull();
     return *d_mol.get();
   }
@@ -199,13 +204,16 @@ class JSMolShared : public JSMolBase {
     d_mol = other.d_mol;
     return *this;
   }
-  RDKit::RWMol& get() const {
+  const RDKit::RWMol &get() const {
     checkNotNull();
     return static_cast<RDKit::RWMol &>(*d_mol.get());
   }
-  const RDKit::ROMOL_SPTR& get_sptr() const {
-    return d_mol;
+  RDKit::RWMol &get() {
+    checkNotNull();
+    return static_cast<RDKit::RWMol &>(*d_mol.get());
   }
+  const RDKit::ROMOL_SPTR &get_sptr() const { return d_mol; }
+  RDKit::ROMOL_SPTR &get_sptr() { return d_mol; }
 
  private:
   void checkNotNull() const { CHECK_INVARIANT(d_mol, "d_mol cannot be null"); }
@@ -344,7 +352,8 @@ std::string get_mcs_as_json(const JSMolList &mols,
                             const std::string &details_json);
 std::string get_mcs_as_smarts(const JSMolList &mols,
                               const std::string &details_json);
-JSMolBase *get_mcs_as_mol(const JSMolList &mols, const std::string &details_json);
+JSMolBase *get_mcs_as_mol(const JSMolList &mols,
+                          const std::string &details_json);
 #endif
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP

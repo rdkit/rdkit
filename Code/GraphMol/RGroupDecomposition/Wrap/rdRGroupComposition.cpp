@@ -123,12 +123,11 @@ class RGroupDecompositionHelper {
 
     for (const auto &side_chains : groups) {
       python::dict dict;
-      for (const auto &side_chain : side_chains) {
-        const auto &mol = side_chain.second;
+      for (const auto &[lbl, mol] : side_chains) {
         if (asSmiles) {
-          dict[side_chain.first] = MolToSmiles(*mol, true);
+          dict[lbl] = MolToSmiles(*mol, true);
         } else {
-          dict[side_chain.first] = mol;
+          dict[lbl] = mol;
         }
       }
       result.append(dict);

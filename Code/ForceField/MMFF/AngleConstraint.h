@@ -10,7 +10,6 @@
 #include <RDGeneral/export.h>
 #ifndef RD_MMFFANGLECONSTRAINT_H
 #define RD_MMFFANGLECONSTRAINT_H
-#include <iostream>
 #include <ForceField/AngleConstraint.h>
 
 namespace ForceFields {

@@ -10,7 +10,6 @@
 #include <RDGeneral/export.h>
 #ifndef RD_UFFANGLECONSTRAINT_H
 #define RD_UFFANGLECONSTRAINT_H
-#include <iostream>
 #include <ForceField/AngleConstraint.h>
 
 namespace ForceFields {
