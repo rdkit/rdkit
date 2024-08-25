@@ -3231,6 +3231,15 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
+    auto bond =
+        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
+    // If it's a double bond that straddles the atom-atom vector it also looks
+    // odd or completely wrong, depending on the rest of the molecule
+    // (Github 7739).
+    if (bond->getBondType() == Bond::BondType::DOUBLE &&
+        atom->getDegree() > 2 && thirdAtom->getDegree() == 1) {
+      continue;
+    }
     Point2D const &at1_cds = atCds_[atom->getIdx()];
     Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
     otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
@@ -3248,7 +3257,7 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           otherNeighbor(bond->getEndAtom(), bond->getBeginAtom(), 0, *drawMol_);
       auto bond1 = drawMol_->getBondBetweenAtoms(bond->getEndAtomIdx(),
                                                  thirdAtom->getIdx());
-      // If the bonds a co-linear, don't do anything (Github7036)
+      // If the bonds are co-linear, don't do anything (Github7036)
       auto b1 = atCds_[bond->getEndAtomIdx()].directionVector(
           atCds_[bond->getBeginAtomIdx()]);
       auto b2 = atCds_[bond1->getEndAtomIdx()].directionVector(

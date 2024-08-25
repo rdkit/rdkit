@@ -324,8 +324,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub6685_3.svg", 409385402U},
     {"testGithub6685_4.svg", 1239628830U},
     {"bad_lasso_1.svg", 726527516U},
-    {"AtropCanon1.svg", 1587179714U},
-    {"AtropManyChiralsEnhanced.svg", 3871032500U},
+    {"AtropCanon1.svg", 3008831860U},
+    {"AtropManyChiralsEnhanced.svg", 348414093U},
     {"testGithub6968.svg", 1554428830U},
     {"testGithub7036.svg", 2355702607U},
     {"testWedgeNonSingleBonds-1.svg", 865601717U},
@@ -340,6 +340,11 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDuplicateEnhancedStereoLabelsAddAnnotationTrue.svg", 1462263453U},
     {"testDuplicateEnhancedStereoLabelsAddAnnotationFalse.svg", 2980189527U},
     {"testComplexQueryAtomMap.svg", 722421835U},
+    {"testGithub_7739_1.svg", 52079325U},
+    {"testGithub_7739_2.svg", 2531167697U},
+    {"testGithub_7739_3.svg", 1126644226U},
+    {"testGithub_7739_4.svg", 9844878U},
+    {"testGithub_7739_5.svg", 2541364166U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -9304,7 +9309,8 @@ TEST_CASE("atropisomers") {
     MOL_PTR_VECT ms{mol.get()};
     {
       MolDraw2DSVG drawer(500, 200, 250, 200);
-      // drawer.drawOptions().prepareMolsBeforeDrawing = false;
+      drawer.drawOptions().addAtomIndices = true;
+      drawer.drawOptions().addBondIndices = true;
       std::vector<std::string> legends = {"AtropCanon1"};
       drawer.drawMolecules(ms, &legends);
       drawer.finishDrawing();
@@ -9315,6 +9321,7 @@ TEST_CASE("atropisomers") {
       check_file_hash("AtropCanon1.svg");
     }
   }
+#if 1
   {
     auto mol =
         "O=C1C=CNC(=O)N1C(=C)[C@]([C@H](C)Br)([C@@H](F)C)[C@H](Cl)C |(2.8625,1.0561,;2.2921,-0.5174,;3.4688,-1.0018,;3.6019,-2.4682,;2.3988,-3.3169,;1.0621,-2.6992,;0.1062,-3.9298,;0.9288,-1.2328,;-0.5563,-0.6124,;-1.5367,-1.8,;-0.8947,0.9647,;-0.8778,2.5678,;-0.1398,3.9298,;-1.9563,3.6407,;0.5974,1.3136,;1.1268,-0.0778,;1.9954,1.9251,;-2.4534,0.7177,;-3.6019,1.737,;-3.4495,-0.4655,),wD:14.15,wU:7.7,11.13,10.14,17.18,o1:7,10,14,&1:11,17|"_smiles;
@@ -9344,6 +9351,7 @@ TEST_CASE("atropisomers") {
       check_file_hash("AtropManyChiralsEnhanced.svg");
     }
   }
+#endif
 }
 
 TEST_CASE("Github6968 - bad bond highlights with triple bonds") {
@@ -9797,26 +9805,178 @@ TEST_CASE("avoid duplicate enhanced stereo labels") {
 
 TEST_CASE("Draw atom map numbers on complex query atoms") {
   std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
-    "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
-REQUIRE(rxn);
-{
-  // Use NO_FREETYPE so that the characters appear in an
-  // easily found manner in the SVG.
-  MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
-  drawer.drawReaction(*rxn);
-  drawer.finishDrawing();
-  auto text = drawer.getDrawingText();
-  std::string svgFile = "testComplexQueryAtomMap.svg";
-  std::ofstream outs(svgFile);
-  outs << text;
-  outs.close();
-  check_file_hash(svgFile);
-  std::regex regex(std::string("<text\\s+.*>:</text>"));
-  size_t nOccurrences = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), regex),
-      std::sregex_token_iterator());
-  // there should be 6 colons drawn
-  CHECK(nOccurrences == 6);
-
+      "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  {
+    // Use NO_FREETYPE so that the characters appear in an
+    // easily found manner in the SVG.
+    MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile = "testComplexQueryAtomMap.svg";
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    std::regex regex(std::string("<text\\s+.*>:</text>"));
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex),
+        std::sregex_token_iterator());
+    // there should be 6 colons drawn
+    CHECK(nOccurrences == 6);
+  }
 }
+
+TEST_CASE("Github 7739 - Bad multi-coloured wedge") {
+  std::string fileStem = "testGithub_7739_";
+  {
+    auto mol =
+        "O=C1C=CNC(=O)N1C(=C)[C@]([C@H](C)Br)([C@@H](F)C)[C@H](Cl)C |(2.8625,1.0561,;2.2921,-0.5174,;3.4688,-1.0018,;3.6019,-2.4682,;2.3988,-3.3169,;1.0621,-2.6992,;0.1062,-3.9298,;0.9288,-1.2328,;-0.5563,-0.6124,;-1.5367,-1.8,;-0.8947,0.9647,;-0.8778,2.5678,;-0.1398,3.9298,;-1.9563,3.6407,;0.5974,1.3136,;1.1268,-0.0778,;1.9954,1.9251,;-2.4534,0.7177,;-3.6019,1.737,;-3.4495,-0.4655,),wD:14.15,wU:7.7,11.13,10.14,17.18,o1:7,10,14,&1:11,17|"_smiles;
+    REQUIRE(mol);
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    MolDraw2DSVG drawer(600, 600);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    std::string legend = fileStem + "1";
+    drawer.drawMolecule(*mol, legend);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(fileStem + "1.svg");
+    outs << text;
+    outs.flush();
+    // In the original, buggy version, there were 3 triangles making
+    // up the black part of bond 6.  There are only 2 in the fixed version.
+    std::regex bond6(
+        "<path class='bond-6 atom-7 atom-5' .*style='fill:#000000;"
+        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), bond6),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 2);
+
+    check_file_hash(fileStem + "1.svg");
+  }
+  // This next not broke in early iterations of the fixing.
+  {
+    auto mol =
+        "N=c1nc([C@@H]2CCCCN2)cc(N)n1O |(0.81024,2.46595,;0.80944,1.46595,;-0.05696,0.966747,;-0.05776,-0.0332533,;-0.92416,-0.532653,;-1.78976,-0.0318533,;-2.65616,-0.531253,;-2.65696,-1.53125,;-1.79136,-2.03185,;-0.92496,-1.53265,;0.80784,-0.534053,;1.67424,-0.0346533,;2.53984,-0.535253,;1.67504,0.965347,;2.54144,1.46475,),wU:4.3|"_smiles;
+    REQUIRE(mol);
+
+    MolDraw2DSVG drawer(600, 600);
+    MolDraw2DUtils::prepareMolForDrawing(*mol);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    std::string legend = fileStem + "2";
+    drawer.drawMolecule(*mol, legend);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(fileStem + "2.svg");
+    outs << text;
+    outs.flush();
+    std::regex bond3(
+        "<path class='bond-3 atom-4 atom-3' .*style='fill:#000000;"
+        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), bond3),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 2);
+    check_file_hash(fileStem + "2.svg");
+  }
+
+  {
+    auto mol =
+        "O=C1C=CNC(=O)C1C(=C)[C@]([C@H](C)Br)([C@@H](F)C)[C@H](Cl)C |(2.8625,1.0561,;2.2921,-0.5174,;3.4688,-1.0018,;3.6019,-2.4682,;2.3988,-3.3169,;1.0621,-2.6992,;0.1062,-3.9298,;0.9288,-1.2328,;-0.5563,-0.6124,;-1.5367,-1.8,;-0.8947,0.9647,;-0.8778,2.5678,;-0.1398,3.9298,;-1.9563,3.6407,;0.5974,1.3136,;1.1268,-0.0778,;1.9954,1.9251,;-2.4534,0.7177,;-3.6019,1.737,;-3.4495,-0.4655,),wD:14.15,wU:7.7,11.13,10.14,17.18,o1:7,10,14,&1:11,17|"_smiles;
+    REQUIRE(mol);
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    MolDraw2DSVG drawer(600, 600);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    std::string legend = fileStem + "3";
+    drawer.drawMolecule(*mol, legend);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(fileStem + "3.svg");
+    outs << text;
+    outs.flush();
+    std::regex bond19(
+        "<path class='bond-19 atom-7 atom-1' .*style='fill:#000000;"
+        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), bond19),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 1);
+    check_file_hash(fileStem + "3.svg");
+  }
+  {
+    auto mol =
+        "C=C1C=CNC(=O)C1C(=C)[C@]([C@H](C)Br)([C@@H](F)C)[C@H](Cl)C |(2.8625,1.0561,;2.2921,-0.5174,;3.4688,-1.0018,;3.6019,-2.4682,;2.3988,-3.3169,;1.0621,-2.6992,;0.1062,-3.9298,;0.9288,-1.2328,;-0.5563,-0.6124,;-1.5367,-1.8,;-0.8947,0.9647,;-0.8778,2.5678,;-0.1398,3.9298,;-1.9563,3.6407,;0.5974,1.3136,;1.1268,-0.0778,;1.9954,1.9251,;-2.4534,0.7177,;-3.6019,1.737,;-3.4495,-0.4655,),wD:14.15,wU:7.7,11.13,10.14,17.18,o1:7,10,14,&1:11,17|"_smiles;
+    REQUIRE(mol);
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    MolDraw2DSVG drawer(600, 600);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    std::string legend = fileStem + "4";
+    drawer.drawMolecule(*mol, legend);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(fileStem + "4.svg");
+    outs << text;
+    outs.flush();
+    std::regex bond19(
+        "<path class='bond-19 atom-7 atom-1' .*style='fill:#000000;"
+        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), bond19),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 1);
+    check_file_hash(fileStem + "4.svg");
+  }
+  {
+    auto mol = "C1[C@@H](C=C)CCN[C@H]1C#N"_smiles;
+    REQUIRE(mol);
+    bool kekulize = true;
+    bool addChiralHs = true;
+    bool wedgeBonds = true;
+    bool forceCoords = true;
+    bool wavyBonds = true;
+    MolDraw2DUtils::prepareMolForDrawing(*mol, kekulize, addChiralHs,
+                                         wedgeBonds, forceCoords, wavyBonds);
+    MolDraw2DSVG drawer(600, 600);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    std::string legend = fileStem + "5";
+    drawer.drawMolecule(*mol, legend);
+    drawer.finishDrawing();
+    std::string text = drawer.getDrawingText();
+    std::ofstream outs(fileStem + "5.svg");
+    outs << text;
+    outs.flush();
+    std::regex bond19(
+        "<path class='bond-1 atom-1 atom-2' .*style='fill:#000000;"
+        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), bond19),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 1);
+    check_file_hash(fileStem + "5.svg");
+  }
 }
