@@ -33,6 +33,8 @@ WORKDIR /opt/boost_${BOOST_UNDERSCORE_VERSION}
 RUN ./bootstrap.sh --prefix=/opt/boost --with-libraries=system && \
   ./b2 install
 
+# Ensure that the boost files exist
+RUN ls -l /opt/boost/include/boost
 
 WORKDIR /opt
 RUN git clone https://github.com/emscripten-core/emsdk.git
@@ -50,8 +52,7 @@ WORKDIR /src/build
 
 RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
 SHELL ["/bin/bash", "-c", "-l"]
-RUN source /opt/emsdk/emsdk_env.sh
-RUN emcmake cmake -DBoost_INCLUDE_DIR=/opt/boost/include -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
+RUN emcmake cmake -DBOOST_ROOT=/opt/boost -DBoost_INCLUDE_DIR=/opt/boost/include -DBoost_USE_STATIC_LIBS=ON -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON \
   -DRDK_USE_BOOST_SERIALIZATION=OFF -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_BUILD_THREADSAFE_SSS=OFF \
   -DRDK_BUILD_DESCRIPTORS3D=OFF -DRDK_TEST_MULTITHREADED=OFF \
