@@ -3822,13 +3822,13 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
   bool includeChirality = true;
   std::vector<unsigned int> chiralRanks;
   Canon::rankMolAtoms(mol, chiralRanks, breakTies, includeChirality,
-                      includeIsotopes, includeAtomMaps, useNonStereoRanks,
-                      includeChiralPresence, includeStereoGroups);
+                      includeIsotopes, includeAtomMaps, includeChiralPresence,
+                      includeStereoGroups, useNonStereoRanks);
   includeChirality = false;
   std::vector<unsigned int> presenceRanks;
   Canon::rankMolAtoms(mol, presenceRanks, breakTies, includeChirality,
-                      includeIsotopes, includeAtomMaps, useNonStereoRanks,
-                      includeChiralPresence, includeStereoGroups);
+                      includeIsotopes, includeAtomMaps, includeChiralPresence,
+                      includeStereoGroups, useNonStereoRanks);
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     if (!specifiedChiralAts[i]) {
       continue;

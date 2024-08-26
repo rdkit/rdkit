@@ -1272,6 +1272,8 @@ void buildTree(int atomIndexToAdd, const ROMol *mol,
   // rank
   //
 
+  PRECONDITION(mol, "bad molecule");
+
   chosenOrder.push_back(atomIndexToAdd);
   reverseOrder[atomIndexToAdd] = chosenOrder.size() - 1;
 
@@ -1703,378 +1705,337 @@ void canonicalizeStereoGroups_internal(
   // result of expanding the stereo groups, then determines the stereo groups
   // from that set
 
-  auto origStereoGroups =
-      mol->getStereoGroups();  // to restore mol if an error is detected
-  try {
-    std::vector<unsigned int> ranks(mol->getNumAtoms());
-    if (mol->needsUpdatePropertyCache()) {
-      mol->updatePropertyCache(true);
+  std::set<RankedValue> allRankedValues;
+
+  std::vector<StereoGroup> groupsToProcess;
+  std::vector<StereoGroup> andGroupsToKeep;
+
+  for (auto &grp : mol->getStereoGroups()) {
+    if (stereoGroupType == grp.getGroupType()) {
+      groupsToProcess.push_back(grp);
+    } else if (stereoGroupType == StereoGroupType::STEREO_OR &&
+               grp.getGroupType() == StereoGroupType::STEREO_AND) {
+      andGroupsToKeep.push_back(grp);
+    }
+  }
+
+  mol->setStereoGroups(
+      andGroupsToKeep);  // these groups might be empty, especially if we
+                         // are PROCESSING AND groups
+  std::unique_ptr<ROMol> bestNewMol;
+  auto newMolCount = std::pow(2, groupsToProcess.size());
+
+  for (unsigned int molIndex = 0; molIndex < newMolCount; ++molIndex) {
+    auto newMol = std::unique_ptr<ROMol>(new RWMol(*(mol.get())));
+
+    for (unsigned int grpIndex = 0; grpIndex < groupsToProcess.size();
+         ++grpIndex) {
+      if (molIndex & (1 << grpIndex)) {
+        for (auto atomPtr : groupsToProcess[grpIndex].getAtoms()) {
+          if (atomPtr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
+            newMol->getAtomWithIdx(atomPtr->getIdx())
+                ->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+          } else if (atomPtr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
+            newMol->getAtomWithIdx(atomPtr->getIdx())
+                ->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+          }
+        }
+        // do any  atropisomer bonds in this stereo group
+
+        for (auto bond : groupsToProcess[grpIndex].getBonds()) {
+          if (bond->getStereo() == Bond::STEREOATROPCW) {
+            newMol->getBondWithIdx(bond->getIdx())
+                ->setStereo(Bond::Bond::STEREOATROPCCW);
+          } else if (bond->getStereo() == Bond::STEREOATROPCCW) {
+            newMol->getBondWithIdx(bond->getIdx())
+                ->setStereo(Bond::Bond::STEREOATROPCW);
+          }
+        }
+      }
     }
 
-    // get the non-stereo rankings - these do NOT change as we iterate over
-    // the enhanced possibilties.  They also do not change if the re-entrant
-    // call is mae
-    bool breakTies = false;
-    bool includeChirality = false;
+    if (!andGroupsToKeep.empty()) {
+      canonicalizeStereoGroups_internal(newMol, StereoGroupType::STEREO_AND,
+                                        StereoGroupAbsOptions::NeverInclude);
+    }
+    std::vector<unsigned int> ranks(mol->getNumAtoms());
+
+    const bool breakTies = false;
+    const bool includeChirality = true;
     const bool includeIsotopes = false;
     const bool includeAtomMaps = true;
-    bool useNonStereoRanks = false;
+    const bool useNonStereoRanks = true;
     const bool includeChiralPresence = true;
-    bool includeStereoGroups = false;
+    const bool includeStereoGroups = true;
 
-    std::string dummyProp;
-    if (!mol->getAtomWithIdx(0)->getPropIfPresent("_canonicalRankingNumber",
-                                                  dummyProp)) {
-      Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
-                          includeIsotopes, includeAtomMaps, useNonStereoRanks,
-                          includeChiralPresence, includeStereoGroups);
+    Canon::rankMolAtoms(*newMol, ranks, breakTies, includeChirality,
+                        includeIsotopes, includeAtomMaps, includeChiralPresence,
+                        includeStereoGroups, useNonStereoRanks);
 
-      for (auto atom : mol->atoms()) {
-        atom->setProp("_canonicalRankingNumber", ranks[atom->getIdx()]);
-      }
-    }
+    // create an atoms ordering as if a smiles, but do this for the entire
+    // mol - not fragments - it really is NOT the same order as generating a
+    // smiles
 
-    std::set<RankedValue> allRankedValues;
+    std::vector<unsigned int> chosenOrder;
+    std::vector<int> reversedOrder(newMol->getNumAtoms(), -1);
+    while (true) {
+      int startingAtomIndex = -1;
+      unsigned int lowestRank = UINT_MAX;
 
-    std::vector<StereoGroup> groupsToProcess;
-    std::vector<StereoGroup> andGroupsToKeep;
-
-    for (auto &grp : mol->getStereoGroups()) {
-      if (stereoGroupType == grp.getGroupType()) {
-        groupsToProcess.push_back(grp);
-      } else if (stereoGroupType == StereoGroupType::STEREO_OR &&
-                 grp.getGroupType() == StereoGroupType::STEREO_AND) {
-        andGroupsToKeep.push_back(grp);
-      }
-    }
-
-    mol->setStereoGroups(
-        andGroupsToKeep);  // these groups might be empty, especially if we
-                           // are PROCESSING AND groups
-    std::unique_ptr<ROMol> bestNewMol;
-    auto newMolCount = std::pow(2, groupsToProcess.size());
-
-    for (unsigned int molIndex = 0; molIndex < newMolCount; ++molIndex) {
-      auto newMol = std::unique_ptr<ROMol>(new RWMol(*(mol.get())));
-
-      for (unsigned int grpIndex = 0; grpIndex < groupsToProcess.size();
-           ++grpIndex) {
-        if (molIndex & (1 << grpIndex)) {
-          for (auto atomPtr : groupsToProcess.at(grpIndex).getAtoms()) {
-            if (atomPtr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) {
-              newMol->getAtomWithIdx(atomPtr->getIdx())
-                  ->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-            } else if (atomPtr->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
-              newMol->getAtomWithIdx(atomPtr->getIdx())
-                  ->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-            }
-          }
-          // do any  atropisomer bonds in this stereo group
-
-          for (auto bond : groupsToProcess.at(grpIndex).getBonds()) {
-            if (bond->getStereo() == Bond::STEREOATROPCW) {
-              newMol->getBondWithIdx(bond->getIdx())
-                  ->setStereo(Bond::Bond::STEREOATROPCCW);
-            } else if (bond->getStereo() == Bond::STEREOATROPCCW) {
-              newMol->getBondWithIdx(bond->getIdx())
-                  ->setStereo(Bond::Bond::STEREOATROPCW);
-            }
-          }
-        }
-      }
-
-      if (!andGroupsToKeep.empty()) {
-        canonicalizeStereoGroups_internal(newMol, StereoGroupType::STEREO_AND,
-                                          StereoGroupAbsOptions::NeverInclude);
-      }
-
-      includeChirality = true;
-      useNonStereoRanks = true;
-      breakTies = true;
-      includeStereoGroups = true;
-      Canon::rankMolAtoms(*newMol, ranks, breakTies, includeChirality,
-                          includeIsotopes, includeAtomMaps, useNonStereoRanks,
-                          includeChiralPresence, includeStereoGroups);
-
-      // create an atoms ordering as if a smiles, but do this for the entire
-      // mol - not fragments - it really is NOT the same order as generating a
-      // smiles
-
-      std::vector<unsigned int> chosenOrder;
-      std::vector<int> reversedOrder(newMol->getNumAtoms(), -1);
-      while (true) {
-        int startingAtomIndex = -1;
-        unsigned int lowestRank = UINT_MAX;
-
-        for (unsigned int i = 0; i < newMol->getNumAtoms(); ++i) {
-          if (reversedOrder[i] != -1) {
-            continue;
-          }
-          if (ranks[i] < lowestRank) {
-            lowestRank = ranks[i];
-            startingAtomIndex = i;
-          }
-        }
-        if (startingAtomIndex == -1) {
-          break;  // all atoms are done
-        }
-
-        buildTree(startingAtomIndex, newMol.get(), chosenOrder, reversedOrder,
-                  ranks);
-      }
-      if (newMol->getNumAtoms() != chosenOrder.size()) {
-        throw RigorousEnhancedStereoException("atomOrdering size mismatch");
-      }
-
-      // the call to renumberAtoms will NOT invert chiral atoms as would
-      // happen if a smiles string were to be generated.
-      //
-      // the call to getAtomsToInvert will determine which atoms would be
-      // inverted in a smiles string
-
-      std::vector<unsigned int> atomsToInvert;
-      getAtomsToInvert(*newMol.get(), chosenOrder, atomsToInvert);
-
-      newMol.reset((RWMol *)MolOps::renumberAtoms(*newMol.get(), chosenOrder));
-
-      RankedValue newRankedValue;
-
-      std::vector<unsigned int> atomIndicesInStereoGroups;
-      std::vector<unsigned int> bondIndicesInStereoGroups;
-
-      for (auto grp : newMol->getStereoGroups()) {
-        for (auto atomPtr : grp.getAtoms()) {
-          atomIndicesInStereoGroups.push_back(atomPtr->getIdx());
-        }
-        for (auto bondPtr : grp.getBonds()) {
-          bondIndicesInStereoGroups.push_back(bondPtr->getIdx());
-        }
-      }
-
-      // now get all chiral centers and atrop bonds that are not in the stereo
-      // groups
-
-      for (auto atom : newMol->atoms()) {
-        if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
-            std::find(atomIndicesInStereoGroups.begin(),
-                      atomIndicesInStereoGroups.end(),
-                      atom->getIdx()) == atomIndicesInStereoGroups.end()) {
-          newRankedValue.AddAtom(atom, atomsToInvert);
-        }
-      }
-
-      for (auto bond : newMol->bonds()) {
-        if (bond->getStereo() != Bond::STEREONONE &&
-            std::find(bondIndicesInStereoGroups.begin(),
-                      bondIndicesInStereoGroups.end(),
-                      bond->getIdx()) == bondIndicesInStereoGroups.end()) {
-          newRankedValue.AddBond(bond);
-        }
-      }
-
-      atomIndicesInStereoGroups.clear();  // not needed past here
-      bondIndicesInStereoGroups.clear();  // not needed past here
-
-      auto insertResult = allRankedValues.insert(newRankedValue);
-
-      if (insertResult.second && newRankedValue == *allRankedValues.begin()) {
-        bestNewMol = std::move(newMol);
-      }
-      if (!newRankedValue.equivalentTo(*allRankedValues.begin())) {
-        throw RigorousEnhancedStereoException("smiles are not the same");
-      }
-    }
-
-    // now figure out the stereo groups to create
-
-    std::vector<bool> atomsDone(allRankedValues.begin()->getNumChiralAtoms(),
-                                false);
-    std::vector<bool> bondsDone(allRankedValues.begin()->getNumChiralBonds(),
-                                false);
-
-    std::vector<Atom *> absGroupAtoms;
-    std::vector<Bond *> absGroupBonds;
-
-    // if there is only one smiles, then there is no variation and
-    // add stereo groups are actual abs (and there is only one group)
-
-    std::vector<StereoGroup> newGroups;
-
-    if (allRankedValues.size() == 1) {
-      if (outputAbsoluteGroups == StereoGroupAbsOptions::NeverInclude) {
-        mol.swap(bestNewMol);
-        return;
-      }
-
-      for (const auto &chiralAtom : allRankedValues.begin()->getChiralAtoms()) {
-        absGroupAtoms.push_back(
-            bestNewMol->getAtomWithIdx(chiralAtom.getAtomId()));
-      }
-      for (const auto &chiralBond : allRankedValues.begin()->getChiralBonds()) {
-        absGroupBonds.push_back(
-            bestNewMol->getBondWithIdx(chiralBond.getBondId()));
-      }
-
-    } else {
-      // Now make the new stereo-enhanced mol
-
-      unsigned int groupCount = 0;
-
-      for (unsigned int index1 = 0;
-           index1 < allRankedValues.begin()->getNumChiralAtoms(); ++index1) {
-        if (atomsDone[index1]) {
+      for (unsigned int i = 0; i < newMol->getNumAtoms(); ++i) {
+        if (reversedOrder[i] != -1) {
           continue;
         }
-
-        unsigned int atomIndex1 =
-            allRankedValues.begin()->getChiralAtoms()[index1].getAtomId();
-
-        if (!doesAtomChiralityVary(allRankedValues, index1)) {
-          if (outputAbsoluteGroups != StereoGroupAbsOptions::NeverInclude) {
-            absGroupAtoms.push_back(bestNewMol->getAtomWithIdx(atomIndex1));
-          }
-          atomsDone[index1] = true;
-          continue;
+        if (ranks[i] < lowestRank) {
+          lowestRank = ranks[i];
+          startingAtomIndex = i;
         }
+      }
+      if (startingAtomIndex == -1) {
+        break;  // all atoms are done
+      }
 
-        std::vector<Atom *> atomsToAdd;
-        atomsToAdd.push_back(bestNewMol->getAtomWithIdx(atomIndex1));
+      buildTree(startingAtomIndex, newMol.get(), chosenOrder, reversedOrder,
+                ranks);
+    }
+    if (newMol->getNumAtoms() != chosenOrder.size()) {
+      throw ValueErrorException("atomOrdering size mismatch");
+    }
+
+    // the call to renumberAtoms will NOT invert chiral atoms as would
+    // happen if a smiles string were to be generated.
+    //
+    // the call to getAtomsToInvert will determine which atoms would be
+    // inverted in a smiles string
+
+    std::vector<unsigned int> atomsToInvert;
+    getAtomsToInvert(*newMol.get(), chosenOrder, atomsToInvert);
+
+    newMol.reset((RWMol *)MolOps::renumberAtoms(*newMol.get(), chosenOrder));
+
+    RankedValue newRankedValue;
+
+    boost::dynamic_bitset<> atomIndicesInStereoGroups(newMol->getNumAtoms());
+    boost::dynamic_bitset<> bondIndicesInStereoGroups(newMol->getNumBonds());
+
+    for (auto grp : newMol->getStereoGroups()) {
+      for (auto atomPtr : grp.getAtoms()) {
+        atomIndicesInStereoGroups.set(atomPtr->getIdx());
+      }
+      for (auto bondPtr : grp.getBonds()) {
+        bondIndicesInStereoGroups.set(bondPtr->getIdx());
+      }
+    }
+
+    // now get all chiral centers and atrop bonds that are not in the stereo
+    // groups
+
+    for (auto atom : newMol->atoms()) {
+      if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+          !atomIndicesInStereoGroups[atom->getIdx()]) {
+        newRankedValue.AddAtom(atom, atomsToInvert);
+      }
+    }
+
+    for (auto bond : newMol->bonds()) {
+      if (bond->getStereo() != Bond::STEREONONE &&
+          !bondIndicesInStereoGroups[bond->getIdx()]) {
+        newRankedValue.AddBond(bond);
+      }
+    }
+
+    atomIndicesInStereoGroups.clear();  // not needed past here
+    bondIndicesInStereoGroups.clear();  // not needed past here
+
+    auto insertResult = allRankedValues.insert(newRankedValue);
+
+    if (insertResult.second && newRankedValue == *allRankedValues.begin()) {
+      bestNewMol = std::move(newMol);
+    }
+    TEST_ASSERT(newRankedValue.equivalentTo(*allRankedValues.begin()));
+  }
+
+  // now figure out the stereo groups to create
+
+  std::vector<bool> atomsDone(allRankedValues.begin()->getNumChiralAtoms(),
+                              false);
+  std::vector<bool> bondsDone(allRankedValues.begin()->getNumChiralBonds(),
+                              false);
+
+  std::vector<Atom *> absGroupAtoms;
+  std::vector<Bond *> absGroupBonds;
+
+  // if there is only one smiles, then there is no variation and
+  // add stereo groups are actual abs (and there is only one group)
+
+  std::vector<StereoGroup> newGroups;
+
+  if (allRankedValues.size() == 1) {
+    if (outputAbsoluteGroups == StereoGroupAbsOptions::NeverInclude) {
+      mol.swap(bestNewMol);
+      return;
+    }
+
+    for (const auto &chiralAtom : allRankedValues.begin()->getChiralAtoms()) {
+      absGroupAtoms.push_back(
+          bestNewMol->getAtomWithIdx(chiralAtom.getAtomId()));
+    }
+    for (const auto &chiralBond : allRankedValues.begin()->getChiralBonds()) {
+      absGroupBonds.push_back(
+          bestNewMol->getBondWithIdx(chiralBond.getBondId()));
+    }
+
+  } else {
+    // Now make the new stereo-enhanced mol
+
+    unsigned int groupCount = 0;
+
+    for (unsigned int index1 = 0;
+         index1 < allRankedValues.begin()->getNumChiralAtoms(); ++index1) {
+      if (atomsDone[index1]) {
+        continue;
+      }
+
+      unsigned int atomIndex1 =
+          allRankedValues.begin()->getChiralAtoms()[index1].getAtomId();
+
+      if (!doesAtomChiralityVary(allRankedValues, index1)) {
+        if (outputAbsoluteGroups != StereoGroupAbsOptions::NeverInclude) {
+          absGroupAtoms.push_back(bestNewMol->getAtomWithIdx(atomIndex1));
+        }
         atomsDone[index1] = true;
-
-        // now look through all other possible atoms and bonds to see if they
-        // vary the same way as the first one in the group
-
-        for (unsigned int index2 = index1 + 1;
-             index2 < allRankedValues.begin()->getNumChiralAtoms(); ++index2) {
-          if (atomsDone[index2]) {
-            continue;
-          }
-          unsigned int atomIndex2 =
-              allRankedValues.begin()->getChiralAtoms()[index2].getAtomId();
-
-          if (doTwoAtomsVaryTheSame(allRankedValues, index1, index2)) {
-            atomsToAdd.push_back(bestNewMol->getAtomWithIdx(atomIndex2));
-            atomsDone[index2] = true;
-          }
-        }
-
-        std::vector<Bond *> bondsToAdd;
-        for (unsigned int index2 = 0;
-             index2 < allRankedValues.begin()->getNumChiralBonds(); ++index2) {
-          if (bondsDone[index2]) {
-            continue;
-          }
-
-          auto bondIndex2 =
-              allRankedValues.begin()->getChiralBonds()[index2].getBondId();
-
-          if (doAtomAndBondVaryTheSame(allRankedValues, index1, index2)) {
-            bondsToAdd.push_back(bestNewMol->getBondWithIdx(bondIndex2));
-            bondsDone[index2] = true;
-          }
-        }
-
-        std::sort(atomsToAdd.begin(), atomsToAdd.end(),
-                  [](const Atom *a, const Atom *b) {
-                    return a->getIdx() < b->getIdx();
-                  });
-        std::sort(bondsToAdd.begin(), bondsToAdd.end(),
-                  [](const Bond *a, const Bond *b) {
-                    return a->getIdx() < b->getIdx();
-                  });
-        newGroups.emplace_back(stereoGroupType, atomsToAdd, bondsToAdd,
-                               ++groupCount);
+        continue;
       }
 
-      // now any groups that only involve bonds
+      std::vector<Atom *> atomsToAdd;
+      atomsToAdd.push_back(bestNewMol->getAtomWithIdx(atomIndex1));
+      atomsDone[index1] = true;
 
-      for (unsigned int index1 = 0;
-           index1 < allRankedValues.begin()->getNumChiralBonds(); ++index1) {
-        if (bondsDone[index1]) {
+      // now look through all other possible atoms and bonds to see if they
+      // vary the same way as the first one in the group
+
+      for (unsigned int index2 = index1 + 1;
+           index2 < allRankedValues.begin()->getNumChiralAtoms(); ++index2) {
+        if (atomsDone[index2]) {
+          continue;
+        }
+        unsigned int atomIndex2 =
+            allRankedValues.begin()->getChiralAtoms()[index2].getAtomId();
+
+        if (doTwoAtomsVaryTheSame(allRankedValues, index1, index2)) {
+          atomsToAdd.push_back(bestNewMol->getAtomWithIdx(atomIndex2));
+          atomsDone[index2] = true;
+        }
+      }
+
+      std::vector<Bond *> bondsToAdd;
+      for (unsigned int index2 = 0;
+           index2 < allRankedValues.begin()->getNumChiralBonds(); ++index2) {
+        if (bondsDone[index2]) {
           continue;
         }
 
-        unsigned int bondIndex1 =
-            allRankedValues.begin()->getChiralBonds()[index1].getBondId();
+        auto bondIndex2 =
+            allRankedValues.begin()->getChiralBonds()[index2].getBondId();
 
-        if (!doesBondStereoVary(allRankedValues, index1)) {
-          if (outputAbsoluteGroups != StereoGroupAbsOptions::NeverInclude) {
-            absGroupBonds.push_back(bestNewMol->getBondWithIdx(bondIndex1));
-          }
-          bondsDone[index1] = true;
-          continue;
+        if (doAtomAndBondVaryTheSame(allRankedValues, index1, index2)) {
+          bondsToAdd.push_back(bestNewMol->getBondWithIdx(bondIndex2));
+          bondsDone[index2] = true;
         }
-
-        std::vector<Bond *> bondsToAdd;
-        bondsToAdd.push_back(bestNewMol->getBondWithIdx(bondIndex1));
-        bondsDone[index1] = true;
-
-        // now look through all other possible bonds to see if they vary
-        // the same way as the first one in the group
-
-        for (unsigned int index2 = index1 + 1;
-             index2 < allRankedValues.begin()->getNumChiralBonds(); ++index2) {
-          if (bondsDone[index2]) {
-            continue;
-          }
-          unsigned int bondIndex2 =
-              allRankedValues.begin()->getChiralBonds()[index2].getBondId();
-
-          if (doTwoBondsVaryTheSame(allRankedValues, bondIndex1, bondIndex2)) {
-            bondsToAdd.push_back(bestNewMol->getBondWithIdx(bondIndex2));
-            bondsDone[index2] = true;
-          }
-        }
-
-        std::sort(bondsToAdd.begin(), bondsToAdd.end(),
-                  [](const Bond *a, const Bond *b) {
-                    return a->getIdx() < b->getIdx();
-                  });
-        std::vector<Atom *> atomsToAdd;  // nothing added to this one here
-        newGroups.emplace_back(stereoGroupType, atomsToAdd, bondsToAdd,
-                               ++groupCount);
       }
-    }
 
-    // keep the groups from the best mol, if it had them from a call to this
-    // routine for the other kind of stereo groups.
-
-    if (!bestNewMol->getStereoGroups().empty()) {
-      for (auto grp : bestNewMol->getStereoGroups()) {
-        newGroups.push_back(grp);
-      }
-    }
-
-    // if the abs group is not empty, add it
-    if ((outputAbsoluteGroups == StereoGroupAbsOptions::AlwaysInclude ||
-         (outputAbsoluteGroups ==
-              StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist &&
-          !newGroups.empty())) &&
-        (!absGroupAtoms.empty() || !absGroupBonds.empty())) {
-      std::sort(absGroupAtoms.begin(), absGroupAtoms.end(),
+      std::sort(atomsToAdd.begin(), atomsToAdd.end(),
                 [](const Atom *a, const Atom *b) {
                   return a->getIdx() < b->getIdx();
                 });
-      std::sort(absGroupBonds.begin(), absGroupBonds.end(),
+      std::sort(bondsToAdd.begin(), bondsToAdd.end(),
                 [](const Bond *a, const Bond *b) {
                   return a->getIdx() < b->getIdx();
                 });
-
-      newGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE, absGroupAtoms,
-                             absGroupBonds, 0);
+      newGroups.emplace_back(stereoGroupType, atomsToAdd, bondsToAdd,
+                             ++groupCount);
     }
 
-    bestNewMol->setStereoGroups(newGroups);
+    // now any groups that only involve bonds
 
-    // return bestNewMol;
-    mol = std::unique_ptr<ROMol>(bestNewMol.release());
-    return;
+    for (unsigned int index1 = 0;
+         index1 < allRankedValues.begin()->getNumChiralBonds(); ++index1) {
+      if (bondsDone[index1]) {
+        continue;
+      }
 
-    /* code */
-  } catch (const RigorousEnhancedStereoException &e) {
-    mol->setStereoGroups(origStereoGroups);
-    throw;  // re-throw the error
+      unsigned int bondIndex1 =
+          allRankedValues.begin()->getChiralBonds()[index1].getBondId();
+
+      if (!doesBondStereoVary(allRankedValues, index1)) {
+        if (outputAbsoluteGroups != StereoGroupAbsOptions::NeverInclude) {
+          absGroupBonds.push_back(bestNewMol->getBondWithIdx(bondIndex1));
+        }
+        bondsDone[index1] = true;
+        continue;
+      }
+
+      std::vector<Bond *> bondsToAdd;
+      bondsToAdd.push_back(bestNewMol->getBondWithIdx(bondIndex1));
+      bondsDone[index1] = true;
+
+      // now look through all other possible bonds to see if they vary
+      // the same way as the first one in the group
+
+      for (unsigned int index2 = index1 + 1;
+           index2 < allRankedValues.begin()->getNumChiralBonds(); ++index2) {
+        if (bondsDone[index2]) {
+          continue;
+        }
+        unsigned int bondIndex2 =
+            allRankedValues.begin()->getChiralBonds()[index2].getBondId();
+
+        if (doTwoBondsVaryTheSame(allRankedValues, bondIndex1, bondIndex2)) {
+          bondsToAdd.push_back(bestNewMol->getBondWithIdx(bondIndex2));
+          bondsDone[index2] = true;
+        }
+      }
+
+      std::sort(bondsToAdd.begin(), bondsToAdd.end(),
+                [](const Bond *a, const Bond *b) {
+                  return a->getIdx() < b->getIdx();
+                });
+      std::vector<Atom *> atomsToAdd;  // nothing added to this one here
+      newGroups.emplace_back(stereoGroupType, atomsToAdd, bondsToAdd,
+                             ++groupCount);
+    }
   }
+
+  // keep the groups from the best mol, if it had them from a call to this
+  // routine for the other kind of stereo groups.
+
+  if (!bestNewMol->getStereoGroups().empty()) {
+    for (auto grp : bestNewMol->getStereoGroups()) {
+      newGroups.push_back(grp);
+    }
+  }
+
+  // if the abs group is not empty, add it
+  if ((outputAbsoluteGroups == StereoGroupAbsOptions::AlwaysInclude ||
+       (outputAbsoluteGroups ==
+            StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist &&
+        !newGroups.empty())) &&
+      (!absGroupAtoms.empty() || !absGroupBonds.empty())) {
+    std::sort(
+        absGroupAtoms.begin(), absGroupAtoms.end(),
+        [](const Atom *a, const Atom *b) { return a->getIdx() < b->getIdx(); });
+    std::sort(
+        absGroupBonds.begin(), absGroupBonds.end(),
+        [](const Bond *a, const Bond *b) { return a->getIdx() < b->getIdx(); });
+
+    newGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE, absGroupAtoms,
+                           absGroupBonds, 0);
+  }
+
+  bestNewMol->setStereoGroups(newGroups);
+
+  mol = std::unique_ptr<ROMol>(bestNewMol.release());
+  return;
 }
 
 void canonicalizeEnhancedStereo(ROMol &mol,
@@ -2277,49 +2238,71 @@ void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
             break;
           }
         }
-      }
-      if (isSimple) {
-        auto res = Chirality::findMesoCenters(*mol);
-        if (res.size() == 1) {
-          if (outputAbsoluteGroups == StereoGroupAbsOptions::AlwaysInclude) {
-            addSingleAbsGroup(*mol);
-          } else {
-            clearStereoGroups(*mol);
-          }
-        }
 
-        return;  // we will not process the simple ones.   If the meso atoms
-                 // were found, the one group was removed
+        if (isSimple) {
+          auto res = Chirality::findMesoCenters(*mol);
+          if (res.size() == 1) {
+            if (outputAbsoluteGroups == StereoGroupAbsOptions::AlwaysInclude) {
+              addSingleAbsGroup(*mol);
+            } else {
+              clearStereoGroups(*mol);
+            }
+          }
+
+          return;  // we will not process the simple ones.   If the meso atoms
+                   // were found, the one group was removed
+        }
       }
     }
   }
 
-  std::vector<RDKit::StereoGroup> orGroups;  // empty vector of new groups
-  std::vector<RDKit::StereoGroup> andGroups;
+  bool foundOrGroup = false;
   for (auto &stg : mol->getStereoGroups()) {
     if (stg.getGroupType() == StereoGroupType::STEREO_OR) {
-      orGroups.push_back(stg);
-    } else if (stg.getGroupType() == StereoGroupType::STEREO_AND) {
-      andGroups.push_back(stg);
+      foundOrGroup = true;
+      break;
     }
   }
+
+  if (mol->needsUpdatePropertyCache()) {
+    mol->updatePropertyCache(true);
+  }
+
+  // get the non-stereo rankings - these do NOT change as we iterate over
+  // the enhanced possibilties.  They also do not change if the re-entrant
+  // call is made
+
+  std::vector<unsigned int> ranks(mol->getNumAtoms());
+
+  const bool breakTies = false;
+  const bool includeChirality = false;
+  const bool includeIsotopes = false;
+  const bool includeAtomMaps = true;
+  const bool useNonStereoRanks = false;
+  const bool includeChiralPresence = true;
+  const bool includeStereoGroups = false;
+
+  Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality, includeIsotopes,
+                      includeAtomMaps, includeChiralPresence,
+                      includeStereoGroups, useNonStereoRanks);
 
   for (auto atom : mol->atoms()) {
-    atom->clearProp("_canonicalRankingNumber");
+    atom->setProp(common_properties::_CanonicalRankingNumber,
+                  ranks[atom->getIdx()]);
   }
 
-  try {
-    if (orGroups.size() == 0) {
-      RDKit::Canon::canonicalizeStereoGroups_internal(
-          mol, StereoGroupType::STEREO_AND, outputAbsoluteGroups);
-    } else {
-      RDKit::Canon::canonicalizeStereoGroups_internal(
-          mol, StereoGroupType::STEREO_OR, outputAbsoluteGroups);
-    }
-    return;
-  } catch (const RigorousEnhancedStereoException &e) {
-    return;
+  // try {
+  if (!foundOrGroup) {
+    RDKit::Canon::canonicalizeStereoGroups_internal(
+        mol, StereoGroupType::STEREO_AND, outputAbsoluteGroups);
+  } else {
+    RDKit::Canon::canonicalizeStereoGroups_internal(
+        mol, StereoGroupType::STEREO_OR, outputAbsoluteGroups);
   }
+  return;
+  // } catch (const RigorousEnhancedStereoException &e) {
+  //   return;
+  // }
 }
 
 };  // namespace Canon

@@ -312,10 +312,10 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       // use the non-stereo ranks if they were assigned
       int rankingNumber_i = 0;
       int rankingNumber_j = 0;
-      dp_atoms[i].atom->getPropIfPresent("_canonicalRankingNumber",
-                                         rankingNumber_i);
-      dp_atoms[j].atom->getPropIfPresent("_canonicalRankingNumber",
-                                         rankingNumber_j);
+      dp_atoms[i].atom->getPropIfPresent(
+          common_properties::_CanonicalRankingNumber, rankingNumber_i);
+      dp_atoms[j].atom->getPropIfPresent(
+          common_properties::_CanonicalRankingNumber, rankingNumber_j);
       if (rankingNumber_i < rankingNumber_j) {
         return -1;
       } else if (rankingNumber_i > rankingNumber_j) {
@@ -843,8 +843,8 @@ RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(unsigned int nAtoms, int *order,
 RDKIT_GRAPHMOL_EXPORT void rankMolAtoms(
     const ROMol &mol, std::vector<unsigned int> &res, bool breakTies = true,
     bool includeChirality = true, bool includeIsotopes = true,
-    bool includeAtomMaps = true, bool useNonStereoRanks = false,
-    bool includeChiralPresence = false, bool includeStereoGroups = true);
+    bool includeAtomMaps = true, bool includeChiralPresence = false,
+    bool includeStereoGroups = true, bool useNonStereoRanks = false);
 
 RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,

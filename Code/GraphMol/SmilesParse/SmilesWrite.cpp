@@ -655,8 +655,9 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       const bool includeAtomMaps = true;
 
       Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
-                          includeIsotopes, includeAtomMaps, useNonStereoRanks,
-                          includeChiralPresence, includeStereoGroups);
+                          includeIsotopes, includeAtomMaps,
+                          includeChiralPresence, includeStereoGroups,
+                          useNonStereoRanks);
     } else {
       std::iota(ranks.begin(), ranks.end(), 0);
     }
@@ -768,19 +769,19 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
 std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
                           std::uint32_t flags,
                           RestoreBondDirOption restoreBondDirs) {
-  std::unique_ptr<RWMol> rwmol(new RWMol(romol));
+  RWMol trwmol(romol);
 
   bool doingCXSmiles = true;
 
-  auto res = SmilesWrite::detail::MolToSmiles(*rwmol, params, doingCXSmiles);
+  auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles);
   if (res.empty()) {
     return res;
   }
 
   if (restoreBondDirs == RestoreBondDirOptionTrue) {
-    RDKit::Chirality::reapplyMolBlockWedging(*rwmol);
+    RDKit::Chirality::reapplyMolBlockWedging(trwmol);
   } else if (restoreBondDirs == RestoreBondDirOptionClear) {
-    for (auto bond : rwmol->bonds()) {
+    for (auto bond : trwmol.bonds()) {
       if (!canHaveDirection(*bond)) {
         continue;
       }
@@ -801,14 +802,14 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
   }
 
   if (params.cleanStereo) {
-    if (rwmol->needsUpdatePropertyCache()) {
-      rwmol->updatePropertyCache(false);
+    if (trwmol.needsUpdatePropertyCache()) {
+      trwmol.updatePropertyCache(false);
     }
-    MolOps::assignStereochemistry(*rwmol, true);
-    Chirality::cleanupStereoGroups(*rwmol);
+    MolOps::assignStereochemistry(trwmol, true);
+    Chirality::cleanupStereoGroups(trwmol);
   }
 
-  auto cxext = SmilesWrite::getCXExtensions(*rwmol, flags);
+  auto cxext = SmilesWrite::getCXExtensions(trwmol, flags);
   if (!cxext.empty()) {
     res += " " + cxext;
   }

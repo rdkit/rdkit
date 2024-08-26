@@ -2587,7 +2587,6 @@ TEST_CASE("ensure unused features are not used") {
     REQUIRE(mol1);
     std::unique_ptr<ROMol> mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol2);
-    std::vector<unsigned int> ranks;
     SmilesWriteParams ps;
     ps.doIsomericSmiles = true;
     auto smiles = MolToSmiles(*mol1, ps);
@@ -2595,19 +2594,34 @@ TEST_CASE("ensure unused features are not used") {
     smiles = MolToSmiles(*mol2, ps);
     CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl");
 
-    Canon::canonicalizeStereoGroups(mol1);
-    Canon::canonicalizeStereoGroups(mol2);
-
     smiles = MolToCXSmiles(*mol1, ps);
-    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |a:1,&1:6|");
+    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|");
     smiles = MolToCXSmiles(*mol2, ps);
-    CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |a:1,&1:6|");
+    CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|");
 
     ps.doIsomericSmiles = false;
     smiles = MolToSmiles(*mol1, ps);
     CHECK(smiles == "FC(Cl)NCOC(F)Cl");
     smiles = MolToSmiles(*mol2, ps);
     CHECK(smiles == "FC(Cl)NCOC(F)Cl");
+  }
+
+  SECTION("enhanced stereo canonicalized") {
+    std::unique_ptr<ROMol> mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
+    REQUIRE(mol1);
+    std::unique_ptr<ROMol> mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
+    REQUIRE(mol2);
+
+    SmilesWriteParams ps;
+    ps.doIsomericSmiles = true;
+
+    Canon::canonicalizeStereoGroups(mol1);
+    Canon::canonicalizeStereoGroups(mol2);
+
+    auto smiles = MolToCXSmiles(*mol1, ps);
+    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |a:1,&1:6|");
+    smiles = MolToCXSmiles(*mol2, ps);
+    CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |a:1,&1:6|");
   }
 
   SECTION("problematic cases") {

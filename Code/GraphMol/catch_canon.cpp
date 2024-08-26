@@ -406,14 +406,11 @@ TEST_CASE("pseudoTest1") {
       std::unique_ptr<ROMol> mol2{SmilesToMol(smi2, rps)};
       REQUIRE(mol2);
 
-      SmilesWriteParams wps;
-      wps.canonical = true;
-
       RDKit::Canon::canonicalizeStereoGroups(mol1);
       RDKit::Canon::canonicalizeStereoGroups(mol2);
 
-      auto outSmi1 = MolToCXSmiles(*mol1, wps);
-      auto outSmi2 = MolToCXSmiles(*mol2, wps);
+      auto outSmi1 = MolToCXSmiles(*mol1);
+      auto outSmi2 = MolToCXSmiles(*mol2);
 
       CHECK(outSmi1 == outSmi2);
       CHECK(outSmi1 == smiExpected);
@@ -869,8 +866,8 @@ TEST_CASE("chiral presence and ranking") {
     const bool useNonStereoRanks = false;
 
     Canon::rankMolAtoms(*mol, ranks, breakTies, includeChirality,
-                        includeIsotopes, includeAtomMaps, useNonStereoRanks,
-                        includeChiralPresence, includeStereoGroups);
+                        includeIsotopes, includeAtomMaps, includeChiralPresence,
+                        includeStereoGroups, useNonStereoRanks);
     CHECK(ranks[1] != ranks[4]);
     CHECK(ranks[1] != ranks[7]);
     CHECK(ranks[4] == ranks[7]);

@@ -759,8 +759,8 @@ void updateAtomNeighborNumSwaps(
 
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes,
-                  bool includeAtomMaps, bool useNonStereoRanks,
-                  bool includeChiralPresence, bool includeStereoGroups) {
+                  bool includeAtomMaps, bool includeChiralPresence,
+                  bool includeStereoGroups, bool useNonStereoRanks) {
   if (!mol.getNumAtoms()) {
     return;
   }

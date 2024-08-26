@@ -784,8 +784,6 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       ps.canonical = true;
       ps.doIsomericSmiles = true;
 
-      Canon::canonicalizeStereoGroups(smilesMol);
-
       unsigned int flags = SmilesWrite::CXSmilesFields::CX_COORDS |
                            SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
                            SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
@@ -820,13 +818,12 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       CHECK(getExpectedValue(expectedFileName) == outMolStr);
     }
     smilesMol =
-        std::unique_ptr<ROMol>(SmilesToMol(inputSmiles, smilesParserParams));
+        std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
     {
       std::string mrvBlock;
       std::string expectedFileName = fName + ".expected.mrv";
       std::string outMolStr = "";
       try {
-        MolOps::Kekulize(*((RWMol *)smilesMol.get()));
         RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
         outMolStr = MolToMrvBlock(*smilesMol, true, -1, true, false);
       } catch (const RDKit::KekulizeException &e) {
@@ -871,7 +868,7 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
     smilesParserParams.sanitize = true;
     smilesParserParams.removeHs = false;
 
-    std::unique_ptr<RWMol> smilesMol(
+    std::unique_ptr<ROMol> smilesMol(
         SmilesToMol(inputSmiles, smilesParserParams));
 
     REQUIRE(smilesMol);
@@ -880,6 +877,8 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
 
     // test kekule and canonicalization
     {
+      Canon::canonicalizeStereoGroups(smilesMol);
+
       std::string expectedMrvName = fName + ".kekule_expected.cxsmi";
       SmilesWriteParams ps;
       ps.canonical = true;
@@ -906,6 +905,8 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
 
     smilesMol =
         std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
+
+    Canon::canonicalizeStereoGroups(smilesMol);
 
     // test round trip back to smiles
     {
@@ -1112,7 +1113,6 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
 
     for (auto smiTest : smiTests) {
       printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
-      // RDDepict::preferCoordGen = true;
       testOneAtropisomersCanon(&smiTest);
     }
   }
@@ -1433,14 +1433,6 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
   CHECK(m->getStereoGroups().size() == 4);
 
   SECTION("ids reassigned by default") {
-    const auto smi_out = MolToCXSmiles(*m);
-    CHECK(smi_out.find("&1") != std::string::npos);
-    CHECK(smi_out.find("&2") != std::string::npos);
-    CHECK(smi_out.find("&3") != std::string::npos);
-    CHECK(smi_out.find("o1") != std::string::npos);
-  }
-
-  SECTION("ids reassigned by default - rigorous") {
     const auto smi_out = MolToCXSmiles(*m);
     CHECK(smi_out.find("&1") != std::string::npos);
     CHECK(smi_out.find("&2") != std::string::npos);

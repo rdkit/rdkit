@@ -2565,10 +2565,6 @@ ARGUMENTS:\n\
                 Chirality::removeNonExplicit3DChirality, (python::arg("mol")),
                 docString.c_str());
 
-    python::def("ReapplyMolBlockWedging", reapplyWedging,
-                (python::arg("mol"), python::arg("allBondTypes") = true),
-                docString.c_str());
-
     python::enum_<RDKit::Canon::StereoGroupAbsOptions>("StereoGroupAbsOptions")
         .value("OnlyIncludeWhenOtherGroupsExist",
                RDKit::Canon::StereoGroupAbsOptions::
