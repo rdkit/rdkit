@@ -151,20 +151,16 @@ jobs:
 #  steps:
 #  - template: .azure-pipelines/linux_build_fuzzer.yml
 
-- job: MinimalLib_Docker_Linux_amd64
+- job: MinimalLib_Docker_MacOS_amd64
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-latest
+    vmImage: macos-latest
   variables:
-    # The variables aren't necessary for this job,
-    # but they are included for consistency and just in case
-    # it would break without them.
-    python: python=3.11
+    compiler: clangxx_osx-64
+    compiler_version: 12.0
     boost_version: 1.84.0
-    compiler: gxx_linux-64
-    cc: gcc-10
-    cxx: g++-10
-    number_of_cores: nproc
-    python_name: python311
+    number_of_cores: sysctl -n hw.ncpu
+    python: python=3.11
+    target_platform: 10.13
   steps:
   - template: .azure-pipelines/minimallib_build.yml
