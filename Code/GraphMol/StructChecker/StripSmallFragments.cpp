@@ -10,7 +10,6 @@
 #include <map>
 
 #include "../MolOps.h"
-#include "../Descriptors/MolDescriptors.h"
 #include "StripSmallFragments.h"
 #include "../SmilesParse/SmilesWrite.h"
 #include "../FileParsers/MolFileStereochem.h"
@@ -25,23 +24,11 @@
 namespace RDKit {
 namespace StructureCheck {
 
-static inline std::string getMolecularFormula(const ROMol &mol) {
-  return RDKit::Descriptors::calcMolFormula(mol);
-}
-
 void AddMWMF(RWMol &mol,
              bool pre) {  // set formula & mass properties "MW_PRE" "MW_POST"
   double mass = 0.0;
-  mass = RDKit::Descriptors::calcExactMW(mol);
-  /*
-          for (unsigned i = 0; i < mol.getNumAtoms(); i++) {
-               const Atom& atom = *mol.getAtomWithIdx(i);
-               mass += atom.getMass();
-               mass += atom.getNumImplicitHs() * 1.0080; // and add implicit
-     Hydrogens mass
-           }
-  */
-  std::string formula = getMolecularFormula(mol);
+  mass = RDKit::MolOps::getExactMolWt(mol);
+  std::string formula = RDKit::MolOps::getMolFormula(mol);
   if (!formula.empty()) mol.setProp((pre ? "MF_PRE" : "MF_POST"), formula);
   char propertyValue[64];
   snprintf(propertyValue, sizeof(propertyValue), "%g", mass);

@@ -272,6 +272,14 @@ class TestCase(unittest.TestCase):
     self.assertEqual(
       """INFO: [ValenceValidation] Explicit valence for atom # 1 O, 3, is greater than permitted""",
       msg[0])
+    mol = Chem.MolFromSmiles("")
+    msg = vm.validate(mol)
+    self.assertEqual(len(msg), 1)
+    self.assertEqual("ERROR: [NoAtomValidation] Molecule has no atoms", msg[0])
+    vm.allowEmptyMolecules = True
+    msg = vm.validate(mol)
+    self.assertEqual(len(msg), 0)
+
 
     vm2 = rdMolStandardize.MolVSValidation([rdMolStandardize.FragmentValidation()])
     # with no argument it also works
