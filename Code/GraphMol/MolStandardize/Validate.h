@@ -80,12 +80,17 @@ class RDKIT_MOLSTANDARDIZE_EXPORT CompositeValidation
 */
 class RDKIT_MOLSTANDARDIZE_EXPORT RDKitValidation : public ValidationMethod {
  public:
+  RDKitValidation(bool allowEmptyMolecules = false)
+      : allowEmptyMolecules(allowEmptyMolecules){};
+
   std::vector<ValidationErrorInfo> validate(
       const ROMol &mol, bool reportAllFailures) const override;
 
   std::shared_ptr<ValidationMethod> copy() const override {
     return std::make_shared<RDKitValidation>(*this);
   }
+
+  bool allowEmptyMolecules;
 };
 
 //////////////////////////////

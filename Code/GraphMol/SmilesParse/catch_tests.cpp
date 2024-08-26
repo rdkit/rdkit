@@ -2930,3 +2930,16 @@ TEST_CASE("Canonicalization of meso structures") {
     }
   }
 }
+
+TEST_CASE("Ignore atom map numbers") {
+  SmilesWriteParams params;
+  auto m1 = "[NH2:1]c1ccccc1"_smiles;
+  CHECK(MolToSmiles(*m1, params) == "c1ccc([NH2:1])cc1");
+  params.ignoreAtomMapNumbers = true;
+  CHECK(MolToSmiles(*m1, params) == "[NH2:1]c1ccccc1");
+  auto m2 = "Nc1ccccc1"_smiles;
+  m1->getAtomWithIdx(0)->setAtomMapNum(0);
+  CHECK(MolToSmiles(*m1, params) == MolToSmiles(*m2, params));
+  CHECK(MolToSmiles(*m1, true, false, -1, true, false, false, false, true) ==
+        MolToSmiles(*m2, true, false, -1, true, false, false, false, true));
+}

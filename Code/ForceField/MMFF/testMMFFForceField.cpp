@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C)  2013 Paolo Tosco
+// Copyright (C)  2013-2024 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,8 +14,8 @@
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <ForceField/MMFF/Params.h>
-#include <ForceField/MMFF/DistanceConstraint.h>
-#include <ForceField/MMFF/AngleConstraint.h>
+#include <ForceField/DistanceConstraints.h>
+#include <ForceField/AngleConstraints.h>
 #include <ForceField/MMFF/TorsionConstraint.h>
 #include <ForceField/MMFF/PositionConstraint.h>
 #include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
@@ -1449,7 +1448,7 @@ void testMMFFAllConstraints() {
   MMFF::MMFFMolProperties *mmffMolProperties;
 
   // distance constraints
-  ForceFields::MMFF::DistanceConstraintContrib *dc;
+  ForceFields::DistanceConstraintContribs *dc;
   mol = RDKit::MolBlockToMol(molBlock, true, false);
   TEST_ASSERT(mol);
   MolTransforms::setBondLength(mol->getConformer(), 1, 3, 2.0);
@@ -1459,9 +1458,9 @@ void testMMFFAllConstraints() {
   field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
   TEST_ASSERT(field);
   field->initialize();
-  dc = new ForceFields::MMFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0,
-                                                        1.0e5);
-  field->contribs().push_back(ForceFields::ContribPtr(dc));
+  dc = new ForceFields::DistanceConstraintContribs(field);
+  dc->addContrib(1, 3, 2.0, 2.0, 1.0e5);
+  field->contribs().emplace_back(dc);
   field->minimize();
   TEST_ASSERT(RDKit::feq(
       MolTransforms::getBondLength(mol->getConformer(), 1, 3), 2.0, 0.1));
@@ -1472,9 +1471,9 @@ void testMMFFAllConstraints() {
   TEST_ASSERT(mmffMolProperties->isValid());
   field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
   field->initialize();
-  dc = new ForceFields::MMFF::DistanceConstraintContrib(field, 1, 3, true, -0.2,
-                                                        0.2, 1.0e5);
-  field->contribs().push_back(ForceFields::ContribPtr(dc));
+  dc = new ForceFields::DistanceConstraintContribs(field);
+  dc->addContrib(1, 3, true, -0.2, 0.2, 1.0e5);
+  field->contribs().emplace_back(dc);
   field->minimize();
   TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.79);
   delete field;
@@ -1482,7 +1481,7 @@ void testMMFFAllConstraints() {
   delete mol;
 
   // angle constraints
-  ForceFields::MMFF::AngleConstraintContrib *ac;
+  ForceFields::AngleConstraintContribs *ac;
   mol = RDKit::MolBlockToMol(molBlock, true, false);
   TEST_ASSERT(mol);
   MolTransforms::setAngleDeg(mol->getConformer(), 1, 3, 6, 90.0);
@@ -1492,9 +1491,9 @@ void testMMFFAllConstraints() {
   field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
   TEST_ASSERT(field);
   field->initialize();
-  ac = new ForceFields::MMFF::AngleConstraintContrib(field, 1, 3, 6, 90.0, 90.0,
-                                                     100.0);
-  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  ac = new ForceFields::AngleConstraintContribs(field);
+  ac->addContrib(1, 3, 6, 90.0, 90.0, 100.0);
+  field->contribs().emplace_back(ac);
   field->minimize();
   TEST_ASSERT(RDKit::feq(
       MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 90.0, 0.5));
@@ -1505,26 +1504,12 @@ void testMMFFAllConstraints() {
   TEST_ASSERT(mmffMolProperties->isValid());
   field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
   field->initialize();
-  ac = new ForceFields::MMFF::AngleConstraintContrib(field, 1, 3, 6, true,
-                                                     -10.0, 10.0, 100.0);
-  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  ac = new ForceFields::AngleConstraintContribs(field);
+  ac->addContrib(1, 3, 6, true, -10.0, 10.0, 100.0);
+  field->contribs().emplace_back(ac);
   field->minimize();
   TEST_ASSERT(RDKit::feq(
       MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 100.0, 0.5));
-  delete field;
-  delete mmffMolProperties;
-  MolTransforms::setAngleDeg(mol->getConformer(), 1, 3, 6, 0.0);
-  mmffMolProperties = new MMFF::MMFFMolProperties(*mol);
-  TEST_ASSERT(mmffMolProperties);
-  TEST_ASSERT(mmffMolProperties->isValid());
-  field = RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
-  field->initialize();
-  ac = new ForceFields::MMFF::AngleConstraintContrib(field, 1, 3, 6, false,
-                                                     -10.0, 10.0, 100.0);
-  field->contribs().push_back(ForceFields::ContribPtr(ac));
-  field->minimize();
-  TEST_ASSERT(RDKit::feq(
-      MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 10.0, 0.5));
   delete field;
   delete mmffMolProperties;
   delete mol;
@@ -1740,9 +1725,9 @@ void testMMFFCopy() {
         RDKit::MMFF::constructForceField(*mol, mmffMolProperties);
     TEST_ASSERT(field);
     field->initialize();
-    auto *dc = new ForceFields::MMFF::DistanceConstraintContrib(
-        field, 1, 3, 2.0, 2.0, 1.0e5);
-    field->contribs().push_back(ForceFields::ContribPtr(dc));
+    auto *dc = new ForceFields::DistanceConstraintContribs(field);
+    dc->addContrib(1, 3, 2.0, 2.0, 1.0e5);
+    field->contribs().emplace_back(dc);
     field->minimize();
     TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);
 

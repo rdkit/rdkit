@@ -575,7 +575,12 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     ROMol *tmol = mols[fragIdx].get();
 
     // update property cache
+    std::vector<int> atomMapNums(tmol->getNumAtoms(), 0);
     for (auto atom : tmol->atoms()) {
+      if (params.ignoreAtomMapNumbers) {
+        atomMapNums[atom->getIdx()] = atom->getAtomMapNum();
+        atom->setAtomMapNum(0);
+      }
       atom->updatePropertyCache(false);
     }
 
@@ -658,6 +663,11 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
                           includeIsotopes, includeAtomMaps,
                           includeChiralPresence, includeStereoGroups,
                           useNonStereoRanks);
+      if (params.ignoreAtomMapNumbers) {
+        for (auto atom : tmol->atoms()) {
+          atom->setAtomMapNum(atomMapNums[atom->getIdx()]);
+        }
+      }
     } else {
       std::iota(ranks.begin(), ranks.end(), 0);
     }

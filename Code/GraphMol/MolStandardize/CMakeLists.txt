@@ -19,7 +19,7 @@ rdkit_library(MolStandardize
     TautomerCatalog/TautomerCatalogEntry.cpp
     TautomerCatalog/TautomerCatalogParams.cpp
     TautomerCatalog/TautomerCatalogUtils.cpp
-        LINK_LIBRARIES ChemReactions ChemTransforms SmilesParse SubstructMatch Descriptors GraphMol )
+        LINK_LIBRARIES ChemReactions ChemTransforms SmilesParse SubstructMatch GraphMol )
 target_compile_definitions(MolStandardize PRIVATE RDKIT_MOLSTANDARDIZE_BUILD)
 
 rdkit_headers(

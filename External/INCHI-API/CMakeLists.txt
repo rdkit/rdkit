@@ -93,7 +93,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
   rdkit_test(testInchi test.cpp
     LINK_LIBRARIES
     RDInchiLib 
-    FileParsers SmilesParse Descriptors )
+    FileParsers SmilesParse )
 endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

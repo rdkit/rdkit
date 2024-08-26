@@ -1,8 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2024 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,13 +7,12 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "ForceField.h"
 #include "DistanceConstraint.h"
-#include <cmath>
-#include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
+#include <cmath>
 
 namespace ForceFields {
-namespace UFF {
 DistanceConstraintContrib::DistanceConstraintContrib(
     ForceField *owner, unsigned int idx1, unsigned int idx2, double minLen,
     double maxLen, double forceConst) {
@@ -41,18 +37,18 @@ DistanceConstraintContrib::DistanceConstraintContrib(
   URANGE_CHECK(idx1, pos.size());
   URANGE_CHECK(idx2, pos.size());
   PRECONDITION(maxLen >= minLen, "bad bounds");
-
-  double dist = 0.0;
   if (relative) {
-    RDGeom::Point3D p1 = *((RDGeom::Point3D *)pos[idx1]);
-    RDGeom::Point3D p2 = *((RDGeom::Point3D *)pos[idx2]);
-    dist = (p1 - p2).length();
+    RDGeom::Point3D &p1 = *((RDGeom::Point3D *)pos[idx1]);
+    RDGeom::Point3D &p2 = *((RDGeom::Point3D *)pos[idx2]);
+    const auto dist = (p1 - p2).length();
+    minLen = std::max(dist + minLen, 0.0);
+    maxLen = std::max(dist + maxLen, 0.0);
   }
+  d_minLen = minLen;
+  d_maxLen = maxLen;
   dp_forceField = owner;
   d_end1Idx = idx1;
   d_end2Idx = idx2;
-  d_minLen = std::max(dist + minLen, 0.0);
-  d_maxLen = std::max(dist + maxLen, 0.0);
   d_forceConstant = forceConst;
 }
 
@@ -98,5 +94,4 @@ void DistanceConstraintContrib::getGrad(double *pos, double *grad) const {
     grad[3 * d_end2Idx + i] -= dGrad;
   }
 }
-}  // namespace UFF
 }  // namespace ForceFields

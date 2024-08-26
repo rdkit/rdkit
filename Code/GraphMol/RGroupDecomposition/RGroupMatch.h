@@ -32,7 +32,7 @@ struct RGroupMatch {
   std::string toString() const {
     auto rGroupsString = std::accumulate(
         rgroups.cbegin(), rgroups.cend(), std::string(),
-        [](std::string s, const std::pair<int, RData>& rgroup) {
+        [](std::string s, const std::pair<int, RData> &rgroup) {
           return std::move(s) + "\n\t(" + std::to_string(rgroup.first) + ':' +
                  rgroup.second->toString() + ')';
         });

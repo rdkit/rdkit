@@ -3,10 +3,14 @@ include_directories(${RDKit_ExternalDir}/rapidjson-1.1.0/include)
 
 if(RDK_BUILD_MINIMAL_LIB)
     set(MINIMAL_LIB_LIBRARIES "MolInterchange_static;Abbreviations_static;"
-        "CIPLabeler_static;MolDraw2D_static;Depictor_static;RDInchiLib_static;"
-        "SubstructMatch_static;FileParsers_static;"
+        "CIPLabeler_static;MolDraw2D_static;Depictor_static;"
+        "Descriptors_static;SubstructMatch_static;FileParsers_static;"
         "SmilesParse_static;GraphMol_static;RDGeometryLib_static;"
         "RDGeneral_static;RGroupDecomposition_static")
+    if(RDK_BUILD_INCHI_SUPPORT)
+        add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
+        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};RDInchiLib_static")
+    endif()
     if(RDK_BUILD_MINIMAL_LIB_RXN)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_RXN)
         set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};ChemReactions_static")
@@ -43,9 +47,13 @@ if(RDK_BUILD_CFFI_LIB)
         MolStandardize DistGeomHelpers ForceFieldHelpers DistGeometry
         ForceField Alignment
         MolInterchange Abbreviations CIPLabeler 
-        MolDraw2D Depictor 
-        RDInchiLib SubstructMatch FileParsers 
+        MolDraw2D Depictor Descriptors
+        SubstructMatch FileParsers 
         SmilesParse GraphMol RDGeometryLib RDGeneral RGroupDecomposition)
+    if(RDK_BUILD_INCHI_SUPPORT)
+        add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
+        list(APPEND LIBS_TO_USE RDInchiLib)
+    endif()
     if(RDK_URF_LIBS)
         list(APPEND LIBS_TO_USE RingDecomposerLib)
     endif()

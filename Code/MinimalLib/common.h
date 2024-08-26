@@ -101,9 +101,11 @@ RWMol *mol_from_input(const std::string &input,
   bool mergeQueryHs = false;
   bool setAromaticity = true;
   bool fastFindRings = true;
+  bool assignChiralTypesFromMolParity = false;
   bool assignStereo = true;
   bool assignCIPLabels = false;
   bool mappedDummiesAreRGroups = false;
+  bool makeDummiesQueries = false;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
   if (!details_json.empty()) {
@@ -116,9 +118,11 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(mergeQueryHs);
     LPT_OPT_GET(setAromaticity);
     LPT_OPT_GET(fastFindRings);
+    LPT_OPT_GET(assignChiralTypesFromMolParity);
     LPT_OPT_GET(assignStereo);
     LPT_OPT_GET(assignCIPLabels);
     LPT_OPT_GET(mappedDummiesAreRGroups);
+    LPT_OPT_GET(makeDummiesQueries);
   }
   try {
     if (input.find("M  END") != std::string::npos) {
@@ -166,6 +170,9 @@ RWMol *mol_from_input(const std::string &input,
           MolOps::fastFindRings(*res);
         }
       }
+      if (assignChiralTypesFromMolParity) {
+        MolOps::assignChiralTypesFromMolParity(*res);
+      }
       if (assignStereo) {
         MolOps::assignStereochemistry(*res, true, true, true);
       }
@@ -177,6 +184,11 @@ RWMol *mol_from_input(const std::string &input,
       }
       if (mappedDummiesAreRGroups) {
         relabelMappedDummies(*res);
+      }
+      if (makeDummiesQueries) {
+        auto ps = MolOps::AdjustQueryParameters::noAdjustments();
+        ps.makeDummiesQueries = true;
+        MolOps::adjustQueryProperties(*res, &ps);
       }
     } catch (...) {
       delete res;
@@ -1000,6 +1012,7 @@ std::string get_mol_frags_mappings(
   return buffer.GetString();
 }
 
+#ifdef RDK_BUILD_INCHI_SUPPORT
 std::string parse_inchi_options(const char *details_json) {
   std::string options;
   if (details_json && strlen(details_json)) {
@@ -1011,6 +1024,7 @@ std::string parse_inchi_options(const char *details_json) {
   }
   return options;
 }
+#endif
 
 struct LogHandle {
  public:

@@ -327,7 +327,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"AtropCanon1.svg", 1587179714U},
     {"AtropManyChiralsEnhanced.svg", 3871032500U},
     {"testGithub6968.svg", 1554428830U},
-    {"testGithub7036.svg", 2355702607U},
+    {"testGithub7036_1.svg", 3059737542U},
+    {"testGithub7036_2.svg", 3229829837U},
     {"testWedgeNonSingleBonds-1.svg", 865601717U},
     {"testWedgeNonSingleBonds-2.svg", 2960559495U},
     {"testWedgeNonSingleBonds-3.svg", 1428196589U},
@@ -9406,19 +9407,28 @@ TEST_CASE("Github7036 - triple bond to wedge not right") {
   // ends in the wrong place when the incident bond is
   // a wedge.  Wedge to single bond included for visual
   // check that that isn't broken in the fix.
-  auto m = "C1[C@@H](CN)CCN[C@H]1C#N"_smiles;
-  REQUIRE(m);
-  {
+  // Make sure it works for both coords generators.
+  // Tracking down issue 7620 demonstrated this was not
+  // always the case.
+  // The 2 different layouts should be checked as the initial fix didn't work
+  // with the 2nd layout.
+  std::vector<std::string> smiles = {
+      "N#C[C@H]1C[C@@H](CN)CCN1 |(4.10168,-1.04221,;2.70424,-0.4971,;1.30679,0.0480054,;0.135989,-0.889667,;-1.26146,-0.344561,;-2.43226,-1.28223,;-3.82971,-0.737127,;-1.48811,1.13822,;-0.317308,2.07589,;1.08014,1.53078,),wU:2.1,4.4|",
+      "N#C[C@H]1C[C@@H](CN)CCN1 |(-2.255,-1.6954,;-1.388,-1.1972,;-0.521,-0.699,;-0.519,0.301,;0.348,0.7992,;0.35,1.7992,;1.217,2.2976,;1.213,0.2976,;1.211,-0.7024,;0.344,-1.2006,),wU:2.1,4.4|"};
+  for (int i = 0; i < 2; ++i) {
+    auto m = v2::SmilesParse::MolFromSmiles(smiles[i]);
+    REQUIRE(m);
     MolDraw2DSVG drawer(350, 300);
     drawer.drawOptions().addAtomIndices = true;
     drawer.drawOptions().addBondIndices = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
-    std::ofstream outs("testGithub7036.svg");
+    std::string svgFile(
+        std::string("testGithub7036_" + std::string(i ? "1" : "2") + ".svg"));
+    std::ofstream outs(svgFile);
     outs << text;
     outs.close();
-
     std::regex bond(
         "<path class='bond-8 atom-8 atom-9' d='M (-?\\d+.\\d+),(-?\\d+.\\d+)"
         " L (-?\\d+.\\d+),(-?\\d+.\\d+)' style=");
@@ -9436,7 +9446,7 @@ TEST_CASE("Github7036 - triple bond to wedge not right") {
     double dot = pts[0].directionVector(pts[1]).dotProduct(
         pts[2].directionVector(pts[3]));
     CHECK_THAT(fabs(dot), Catch::Matchers::WithinAbs(1.0, 0.001));
-    check_file_hash("testGithub7036.svg");
+    check_file_hash(svgFile);
   }
 }
 
@@ -9797,26 +9807,25 @@ TEST_CASE("avoid duplicate enhanced stereo labels") {
 
 TEST_CASE("Draw atom map numbers on complex query atoms") {
   std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
-    "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
-REQUIRE(rxn);
-{
-  // Use NO_FREETYPE so that the characters appear in an
-  // easily found manner in the SVG.
-  MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
-  drawer.drawReaction(*rxn);
-  drawer.finishDrawing();
-  auto text = drawer.getDrawingText();
-  std::string svgFile = "testComplexQueryAtomMap.svg";
-  std::ofstream outs(svgFile);
-  outs << text;
-  outs.close();
-  check_file_hash(svgFile);
-  std::regex regex(std::string("<text\\s+.*>:</text>"));
-  size_t nOccurrences = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), regex),
-      std::sregex_token_iterator());
-  // there should be 6 colons drawn
-  CHECK(nOccurrences == 6);
-
-}
+      "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  {
+    // Use NO_FREETYPE so that the characters appear in an
+    // easily found manner in the SVG.
+    MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile = "testComplexQueryAtomMap.svg";
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    std::regex regex(std::string("<text\\s+.*>:</text>"));
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex),
+        std::sregex_token_iterator());
+    // there should be 6 colons drawn
+    CHECK(nOccurrences == 6);
+  }
 }
