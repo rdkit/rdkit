@@ -24,5 +24,5 @@ steps:
     sudo docker run hello-world
   displayName: Install docker
 - bash: |
-    DOCKER_BUILDKIT=1 docker build --no-cache --platform=linux/amd64 -f Code/MinimalLib/ci.Dockerfile . 
+    DOCKER_BUILDKIT=1 docker build --progress=plain -f Code/MinimalLib/ci.Dockerfile . 
   displayName: Build minimal lib with docker
