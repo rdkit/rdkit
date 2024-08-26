@@ -41,8 +41,6 @@ WORKDIR /opt/emsdk
 RUN ./emsdk install ${EMSDK_VERSION} && \
   ./emsdk activate ${EMSDK_VERSION}
 
-#RUN source ./emsdk_env.sh
-
 RUN mkdir /src
 WORKDIR /src
 COPY . /src
@@ -51,7 +49,8 @@ RUN mkdir build
 WORKDIR /src/build
 
 RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
-# SHELL ["/bin/bash", "-c", "-l"]
+SHELL ["/bin/bash", "-c", "-l"]
+RUN source /opt/emsdk/emsdk_env.sh
 RUN emcmake cmake -DBoost_INCLUDE_DIR=/opt/boost/include -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON \
   -DRDK_USE_BOOST_SERIALIZATION=OFF -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_BUILD_THREADSAFE_SSS=OFF \
