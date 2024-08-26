@@ -25,7 +25,7 @@ namespace MolProccesing {
 auto defaultSupplierOptions = GeneralMolSupplier::SupplierOptions();
 
 namespace details {
-std::unique_ptr<FileParsers::MolSupplier> getSupplier(
+inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     const std::string &fileName,
     const GeneralMolSupplier::SupplierOptions &options) {
   static bool firstCall = true;
