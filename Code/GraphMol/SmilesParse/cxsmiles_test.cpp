@@ -1512,3 +1512,23 @@ TEST_CASE("github #7414: CXSmiles writer does not use default conformer ID") {
     CHECK(MolToCXSmiles(*m) == "CC |(-0.75,0,;0.75,0,)|");
   }
 }
+
+TEST_CASE(
+    "Github #7725: double bond geometry not perceived even though c: or t: are in CXSMILES") {
+  SECTION("as reported") {
+    auto m = "C/C=C/C1=CC=CC=C1 |c:5,7,t:3|"_smiles;
+    REQUIRE(m);
+    CHECK((m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(1)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+  }
+  SECTION("include actual double bond stereo in a ring") {
+    auto m = "C/C=C/C1CCCC=CCCCCC1 |t:7|"_smiles;
+    CHECK((m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(1)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    CHECK((m->getBondWithIdx(7)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(7)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(7)->getStereoAtoms() == std::vector<int>{6, 9});
+  }
+}
