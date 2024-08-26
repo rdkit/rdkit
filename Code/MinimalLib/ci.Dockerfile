@@ -3,7 +3,7 @@ ARG BOOST_MAJOR_VERSION="1"
 ARG BOOST_MINOR_VERSION="84"
 ARG BOOST_PATCH_VERSION="0"
 
-FROM debian:bookworm as build-stage
+FROM debian:bookworm AS build-stage
 ARG EMSDK_VERSION
 ARG BOOST_MAJOR_VERSION
 ARG BOOST_MINOR_VERSION
@@ -51,7 +51,7 @@ RUN mkdir build
 WORKDIR /src/build
 
 RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
-SHELL ["/bin/bash", "-c", "-l"]
+# SHELL ["/bin/bash", "-c", "-l"]
 RUN emcmake cmake -DBoost_INCLUDE_DIR=/opt/boost/include -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DRDK_BUILD_PYTHON_WRAPPERS=OFF -DRDK_BUILD_CPP_TESTS=OFF -DRDK_BUILD_INCHI_SUPPORT=ON \
   -DRDK_USE_BOOST_SERIALIZATION=OFF -DRDK_OPTIMIZE_POPCNT=OFF -DRDK_BUILD_THREADSAFE_SSS=OFF \
@@ -85,6 +85,6 @@ RUN /opt/emsdk/node/*/bin/node tests.js
 # Copy js and wasm rdkit files to use in browser
 # This feature requires the BuildKit backend
 # https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
-FROM scratch as export-stage
+FROM scratch AS export-stage
 COPY --from=build-stage /src/rdkit/Code/MinimalLib/demo /
 COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /
