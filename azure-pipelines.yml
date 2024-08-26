@@ -154,17 +154,17 @@ jobs:
 - job: MinimalLib_Docker_Linux_amd64
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-latest
   variables:
     # The variables aren't necessary for this job,
     # but they are included for consistency and just in case
     # it would break without them.
-    python: python=3.8
-    boost_version: 1.71.0
+    python: python=3.11
+    boost_version: 1.84.0
     compiler: gxx_linux-64
-    number_of_cores: nproc
-    python_name: python38
     cc: gcc-10
     cxx: g++-10
+    number_of_cores: nproc
+    python_name: python311
   steps:
   - template: .azure-pipelines/minimallib_build.yml

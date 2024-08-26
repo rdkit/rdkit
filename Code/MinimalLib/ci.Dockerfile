@@ -22,7 +22,7 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
   xz-utils \
   nodejs
 
-ENV LANG C
+ENV LANG=C
 
 WORKDIR /opt
 ARG BOOST_DOT_VERSION="${BOOST_MAJOR_VERSION}.${BOOST_MINOR_VERSION}.${BOOST_PATCH_VERSION}"
