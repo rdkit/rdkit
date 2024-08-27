@@ -115,8 +115,10 @@ std::unique_ptr<FileParsers::MolSupplier> getSupplier(
 #endif
   }
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
   FileParsers::MultithreadedMolSupplier::Parameters params;
   params.numWriterThreads = getNumThreadsToUse(opt.numWriterThreads);
+#endif
   //! Dispatch to the appropriate supplier
   if (fileFormat == "sdf") {
     FileParsers::MolFileParserParams parseParams;
