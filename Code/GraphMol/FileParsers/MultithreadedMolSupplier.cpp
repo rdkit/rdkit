@@ -37,8 +37,10 @@ void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;
   while (extractNextRecord(record, lineNum, index)) {
-    auto r = std::tuple<std::string, unsigned int, unsigned int>{
-        record, lineNum, index};
+    if (readCallback) {
+      record = readCallback(record, index);
+    }
+    auto r = std::make_tuple(record, lineNum, index);
     d_inputQueue->push(r);
   }
   d_inputQueue->setDone();
@@ -49,12 +51,15 @@ void MultithreadedMolSupplier::writer() {
   while (d_inputQueue->pop(r)) {
     try {
       auto mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
-      auto temp = std::tuple<RWMol*, std::string, unsigned int>{
+      if (mol && writeCallback) {
+        writeCallback(*mol, std::get<0>(r), std::get<2>(r));
+      }
+      auto temp = std::tuple<RWMol *, std::string, unsigned int>{
           mol, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(temp);
     } catch (...) {
       // fill the queue wih a null value
-      auto nullValue = std::tuple<RWMol*, std::string, unsigned int>{
+      auto nullValue = std::tuple<RWMol *, std::string, unsigned int>{
           nullptr, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(nullValue);
     }
@@ -76,6 +81,9 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
     d_lastItemText = std::get<1>(r);
     d_lastRecordId = std::get<2>(r);
     std::unique_ptr<RWMol> res{std::get<0>(r)};
+    if (res && nextCallback) {
+      nextCallback(*res, *this);
+    }
     return res;
   }
   return nullptr;
