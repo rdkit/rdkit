@@ -134,10 +134,12 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   std::string d_lastItemText;  //!< stores last extracted record
   const unsigned int d_numReaderThread = 1;  //!< number of reader thread
 
-  ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>
-      *d_inputQueue;  //!< concurrent input queue
-  ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>
-      *d_outputQueue;  //!< concurrent output queue
+  std::unique_ptr<
+      ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>>
+      d_inputQueue;  //!< concurrent input queue
+  std::unique_ptr<
+      ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>>
+      d_outputQueue;  //!< concurrent output queue
   Parameters d_params;
   std::function<void(RWMol &, const MultithreadedMolSupplier &)> nextCallback =
       nullptr;
