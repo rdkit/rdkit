@@ -50,6 +50,9 @@ void MultithreadedMolSupplier::writer() {
       if (mol && writeCallback) {
         writeCallback(*mol, std::get<0>(r), std::get<2>(r));
       }
+      if (!mol) {
+        std::cerr << "!!!!! " << std::get<2>(r) << std::endl;
+      }
       auto temp = std::tuple<RWMol *, std::string, unsigned int>{
           mol, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(temp);

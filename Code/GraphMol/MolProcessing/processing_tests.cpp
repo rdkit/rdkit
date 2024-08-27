@@ -15,38 +15,40 @@
 #include <GraphMol/MolProcessing/Processing.h>
 #include <RDGeneral/RDLog.h>
 
+using namespace RDKit;
+
 TEST_CASE("getFingerprintsForMolsInFile") {
-#if 1
   std::string dirName = getenv("RDBASE");
   dirName += "/Data/NCI/";
-  std::string fileName = dirName + "first_200.props.sdf";
-  auto res = RDKit::MolProccesing::getFingerprintsForMolsInFile<>(fileName);
+  SECTION("SDF") {
+    std::string fileName = dirName + "first_200.props.sdf";
+    auto res = MolProccesing::getFingerprintsForMolsInFile<>(fileName);
 
-  CHECK(res.first.size() == 201);
-  CHECK(res.second.size() == res.first.size());
-  CHECK(res.second.count() <= res.first.size());
-  for (auto i = 0u; i < res.first.size(); ++i) {
-    if (res.second[i]) {
-      CHECK(res.first[i]);
-    } else {
-      CHECK(!res.first[i]);
+    CHECK(res.size() == 200);
+    for (auto i = 0u; i < res.size(); ++i) {
+      INFO(i);
+      CHECK(res[i]);
     }
   }
-#else
-  std::string fileName =
-      "/home/glandrum/Datasets/COD/COD_2021aug02.organic.sdf.gz";
-  RDKit::GeneralMolSupplier::SupplierOptions options;
-  boost::logging::disable_logs("rdApp.*");
-  {
-    std::cerr << "defaults!" << std::endl;
-    auto res = RDKit::MolProccesing::getFingerprintsForMolsInFile<>(fileName);
+  SECTION("SMILES") {
+    std::string fileName = dirName + "first_5K.smi";
+    GeneralMolSupplier::SupplierOptions options;
+    options.titleLine = false;
+    boost::logging::disable_logs("rdApp.*");
+    {
+      std::cerr << "defaults!" << std::endl;
+      auto res =
+          MolProccesing::getFingerprintsForMolsInFile<>(fileName, options);
+      CHECK(res.size() == 4999);
+    }
+    {
+      std::cerr << "one thread" << std::endl;
+      RDKit::GeneralMolSupplier::SupplierOptions options;
+      options.numWriterThreads = 1;
+      options.titleLine = false;
+      auto res = RDKit::MolProccesing::getFingerprintsForMolsInFile<>(fileName,
+                                                                      options);
+      CHECK(res.size() == 4999);
+    }
   }
-  {
-    std::cerr << "one thread" << std::endl;
-    RDKit::GeneralMolSupplier::SupplierOptions options;
-    options.numWriterThreads = 1;
-    auto res =
-        RDKit::MolProccesing::getFingerprintsForMolsInFile<>(fileName, options);
-  }
-#endif
 }

@@ -19,6 +19,10 @@
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#endif
+
 namespace RDKit {
 namespace MolProccesing {
 
@@ -35,13 +39,34 @@ inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
   }
   return GeneralMolSupplier::getSupplier(fileName, options);
 }
+
 }  // namespace details
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
+namespace {
+std::mutex &fp_mutex_get() {
+  // create on demand
+  static std::mutex _mutex;
+  return _mutex;
+}
+
+void fp_mutex_create() {
+  std::mutex &mutex = fp_mutex_get();
+  std::lock_guard<std::mutex> test_lock(mutex);
+}
+
+std::mutex &get_fp_mutex() {
+  static std::once_flag flag;
+  std::call_once(flag, fp_mutex_create);
+  return fp_mutex_get();
+}
+}  // namespace
+#endif
 //! \brief Get fingerprints for all of the molecules in a file
 /*!
    \param fileName the name of the file to read
    \param options options controlling how the file is read, if not provided
-           four threads will be used when reading the file
+           four threads will be used whegn reading the file
    \param generator the fingerprint generator to use, if not provided,
            Morgan fingerprints with radius of 3 will be used.
 
@@ -50,9 +75,7 @@ inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
            successfully read
 */
 template <typename OutputType = std::uint32_t>
-std::pair<std::vector<std::unique_ptr<ExplicitBitVect>>,
-          boost::dynamic_bitset<>>
-getFingerprintsForMolsInFile(
+std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
     const std::string &fileName,
     const GeneralMolSupplier::SupplierOptions &options = defaultSupplierOptions,
     FingerprintGenerator<OutputType> *generator = nullptr) {
@@ -64,31 +87,44 @@ getFingerprintsForMolsInFile(
     generator = morgan.get();
   }
   std::map<unsigned int, std::unique_ptr<ExplicitBitVect>> fingerprints;
-  boost::dynamic_bitset<> passed;
   auto tsuppl =
       dynamic_cast<v2::FileParsers::MultithreadedMolSupplier *>(suppl.get());
 
+  auto fpfunc = [&](RWMol &mol, const std::string &, unsigned int recordId) {
+    auto fp = generator->getFingerprint(mol);
+    {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+      std::lock_guard<std::mutex> lock(get_fp_mutex());
+#endif
+      fingerprints[recordId].reset(fp);
+    }
+  };
   if (tsuppl) {
-    auto fpfunc = [&](RWMol &mol, const std::string &, unsigned int recordId) {
-      fingerprints[recordId].reset(generator->getFingerprint(mol));
-    };
     tsuppl->setWriteCallback(fpfunc);
     while (!tsuppl->atEnd()) {
       auto mol = tsuppl->next();
+    }
+    auto maxv = tsuppl->getLastRecordId();
+    for (const auto &pr : fingerprints) {
+      maxv = std::max(maxv, pr.first);
+    }
+    std::vector<std::unique_ptr<ExplicitBitVect>> fp_res(maxv);
+    for (auto &fp : fingerprints) {
+      fp_res[fp.first - 1] = std::move(fp.second);
+    }
+    return fp_res;
+  } else {
+    std::vector<std::unique_ptr<ExplicitBitVect>> fp_res;
+    while (!suppl->atEnd()) {
+      auto mol = suppl->next();
       if (mol) {
-        passed.push_back(true);
+        auto fp = generator->getFingerprint(*mol);
+        fp_res.emplace_back(fp);
       } else {
-        passed.push_back(false);
+        fp_res.emplace_back(nullptr);
       }
     }
-    std::vector<std::unique_ptr<ExplicitBitVect>> fp_res(fingerprints.size());
-    for (auto &fp : fingerprints) {
-      fp_res[fp.first] = std::move(fp.second);
-    }
-    return std::make_pair(std::move(fp_res), passed);
-  } else {
-    throw FileParseException(
-        "Could not cast supplier to MultithreadedMolSupplier");
+    return fp_res;
   }
 }
 
