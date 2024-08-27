@@ -60,14 +60,35 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! returns the text block for the last extracted item
   std::string getLastItemText() const;
 
+  //! sets the callback to be applied to molecules before they are returned by
+  ///! the next() function
+  /*!
+    \param cb: a function that takes a reference to an RWMol and a const
+    reference to the MultithreadedMolSupplier. This can modify the molecule in
+    place
+
+   */
   template <typename T>
   void setNextCallback(T cb) {
     nextCallback = cb;
   }
+  //! sets the callback to be applied to molecules after they are processed, but
+  ///! before they are written to the output queue
+  /*!
+    \param cb: a function that takes a reference to an RWMol, a const reference
+    to the string record, and an unsigned int record id. This can modify the
+    molecule in place
+  */
   template <typename T>
   void setWriteCallback(T cb) {
     writeCallback = cb;
   }
+  //! sets the callback to be applied to input text records before they are
+  ///! added to the input queue
+  /*!
+    \param cb: a function that takes a const reference to the string record and
+    an unsigned int record id and returns the modified string record
+  */
   template <typename T>
   void setReadCallback(T cb) {
     readCallback = cb;
