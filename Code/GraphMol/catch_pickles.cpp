@@ -242,3 +242,43 @@ TEST_CASE("github #7675 : pickling HasProp queries") {
     REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
   }
 }
+
+TEST_CASE("pickling HasPropWithValue queries") {
+  SECTION("basics") {
+    if (0){
+      auto mol = "CC"_smarts;
+      REQUIRE(mol);
+      mol->getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, int>("foo", 1, 2));
+      mol->getBondWithIdx(0)->expandQuery(makePropQuery<Bond, int>("bar", 1, 0));
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol mol2(pkl);
+      REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(mol2.getAtomWithIdx(1)->hasQuery());
+    }
+    {
+      auto mol = "CC"_smarts;
+      REQUIRE(mol);
+      mol->getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, std::string>("foo", "asdfs"));
+      mol->getBondWithIdx(0)->expandQuery(makePropQuery<Bond, std::string>("bar", "dsafasdf"));
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol mol2(pkl);
+      REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(mol2.getAtomWithIdx(1)->hasQuery());
+    }
+    {
+      auto mol = "CC"_smarts;
+      REQUIRE(mol);
+      ExplicitBitVect bv(10);
+      mol->getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, ExplicitBitVect>("foo", bv, 0.1));
+      mol->getBondWithIdx(0)->expandQuery(makePropQuery<Bond, ExplicitBitVect>("bar", bv, 0.1));
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol mol2(pkl);
+      REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(mol2.getAtomWithIdx(1)->hasQuery());
+    }
+  }
+  
+}
