@@ -19,6 +19,7 @@
 #include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
 
+#include <functional>
 #include <atomic>
 #include <boost/tokenizer.hpp>
 
@@ -44,6 +45,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   ~MultithreadedMolSupplier() override;
   //! pop elements from the output queue
   std::unique_ptr<RWMol> next() override;
+
   //! returns true when all records have been read from the supplier
   bool atEnd() override;
 
@@ -57,6 +59,19 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   unsigned int getLastRecordId() const;
   //! returns the text block for the last extracted item
   std::string getLastItemText() const;
+
+  template <typename T>
+  void setNextCallback(T cb) {
+    nextCallback = cb;
+  }
+  template <typename T>
+  void setWriteCallback(T cb) {
+    writeCallback = cb;
+  }
+  template <typename T>
+  void setReadCallback(T cb) {
+    readCallback = cb;
+  }
 
  protected:
   //! starts reader and writer threads
@@ -103,6 +118,12 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>
       *d_outputQueue;  //!< concurrent output queue
   Parameters d_params;
+  std::function<void(RWMol &, const MultithreadedMolSupplier &)> nextCallback =
+      nullptr;
+  std::function<void(RWMol &, const std::string &, unsigned int)>
+      writeCallback = nullptr;
+  std::function<std::string(const std::string &, unsigned int)> readCallback =
+      nullptr;
 };
 }  // namespace FileParsers
 }  // namespace v2
