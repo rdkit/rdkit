@@ -63,18 +63,33 @@ getFingerprintsForMolsInFile(
     morgan.reset(MorganFingerprint::getMorganGenerator<OutputType>(3));
     generator = morgan.get();
   }
-  std::vector<std::unique_ptr<ExplicitBitVect>> fingerprints;
+  std::map<unsigned int, std::unique_ptr<ExplicitBitVect>> fingerprints;
   boost::dynamic_bitset<> passed;
-  while (!suppl->atEnd()) {
-    auto mol = suppl->next();
-    if (mol) {
-      fingerprints.emplace_back(generator->getFingerprint(*mol));
-      passed.push_back(true);
-    } else {
-      passed.push_back(false);
+  auto tsuppl =
+      dynamic_cast<v2::FileParsers::MultithreadedMolSupplier *>(suppl.get());
+
+  if (tsuppl) {
+    auto fpfunc = [&](RWMol &mol, const std::string &, unsigned int recordId) {
+      fingerprints[recordId].reset(generator->getFingerprint(mol));
+    };
+    tsuppl->setWriteCallback(fpfunc);
+    while (!tsuppl->atEnd()) {
+      auto mol = tsuppl->next();
+      if (mol) {
+        passed.push_back(true);
+      } else {
+        passed.push_back(false);
+      }
     }
+    std::vector<std::unique_ptr<ExplicitBitVect>> fp_res(fingerprints.size());
+    for (auto &fp : fingerprints) {
+      fp_res[fp.first] = std::move(fp.second);
+    }
+    return std::make_pair(std::move(fp_res), passed);
+  } else {
+    throw FileParseException(
+        "Could not cast supplier to MultithreadedMolSupplier");
   }
-  return std::make_pair(std::move(fingerprints), passed);
 }
 
 }  // namespace MolProccesing

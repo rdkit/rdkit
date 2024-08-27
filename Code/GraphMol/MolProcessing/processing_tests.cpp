@@ -22,9 +22,16 @@ TEST_CASE("getFingerprintsForMolsInFile") {
   std::string fileName = dirName + "first_200.props.sdf";
   auto res = RDKit::MolProccesing::getFingerprintsForMolsInFile<>(fileName);
 
-  REQUIRE(res.first.size() == 200);
-  REQUIRE(res.second.size() >= res.first.size());
-  REQUIRE(res.second.count() == res.first.size());
+  CHECK(res.first.size() == 201);
+  CHECK(res.second.size() == res.first.size());
+  CHECK(res.second.count() <= res.first.size());
+  for (auto i = 0u; i < res.first.size(); ++i) {
+    if (res.second[i]) {
+      CHECK(res.first[i]);
+    } else {
+      CHECK(!res.first[i]);
+    }
+  }
 #else
   std::string fileName =
       "/home/glandrum/Datasets/COD/COD_2021aug02.organic.sdf.gz";
