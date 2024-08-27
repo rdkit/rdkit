@@ -126,7 +126,7 @@ std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     parseParams.removeHs = opt.removeHs;
     parseParams.strictParsing = opt.strictParsing;
 #ifdef RDK_BUILD_THREADSAFE_SSS
-    if (opt.numWriterThreads > 1) {
+    if (params.numWriterThreads > 1) {
       auto sdsup = new FileParsers::MultithreadedSDMolSupplier(
           strm, true, params, parseParams);
       std::unique_ptr<FileParsers::MolSupplier> p(sdsup);
@@ -148,7 +148,7 @@ std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     parseParams.titleLine = opt.titleLine;
     parseParams.parseParameters.sanitize = opt.sanitize;
 #ifdef RDK_BUILD_THREADSAFE_SSS
-    if (opt.numWriterThreads > 0) {
+    if (params.numWriterThreads > 1) {
       FileParsers::MultithreadedSmilesMolSupplier *smsup =
           new FileParsers::MultithreadedSmilesMolSupplier(strm, true, params,
                                                           parseParams);
