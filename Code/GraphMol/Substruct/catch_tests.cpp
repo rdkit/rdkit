@@ -19,6 +19,8 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/QueryOps.h>
+#include <GraphMol/MolPickler.h>
 
 using namespace RDKit;
 typedef std::tuple<std::string, std::string, size_t> matchCase;
@@ -539,5 +541,179 @@ TEST_CASE(
   {
     auto matches = SubstructMatch(*m, *q, ps);
     CHECK(matches.size() == num_atoms);
+  }
+}
+
+TEST_CASE("pickling HasPropWithValue queries") {
+  SubstructMatchParameters ps;
+  SECTION("basics int") {
+    auto mol = "CC"_smarts;
+    auto target = "CC"_smiles;
+    REQUIRE(mol);
+    REQUIRE(target);
+
+    RWMol mol2(*mol);
+    RWMol mol3(*mol);
+
+    mol->getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, int>("foo", 1, 1));
+    mol->getBondWithIdx(0)->expandQuery(makePropQuery<Bond, int>("bar", 1, 0));
+
+    mol2.getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, int>("foo", 1, 0));
+    mol2.getBondWithIdx(0)->expandQuery(makePropQuery<Bond, int>("bar", 1, 0));
+    mol3.getAtomWithIdx(0)->expandQuery(makePropQuery<Atom, int>("foo", 2, 0));
+    mol3.getBondWithIdx(0)->expandQuery(makePropQuery<Bond, int>("bar", 2, 0));
+
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    target->getAtomWithIdx(0)->setProp<int>("foo", 2);
+    target->getBondWithIdx(0)->setProp<int>("bar", 1);
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+
+    {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol2, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol2, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+    }
+  }
+  SECTION("basics string") {
+    auto mol = "CC"_smarts;
+    auto target = "CC"_smiles;
+    REQUIRE(mol);
+    REQUIRE(target);
+
+    RWMol mol2(*mol);
+    RWMol mol3(*mol);
+
+    mol->getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, std::string>("foo", "asdfs"));
+    mol->getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, std::string>("bar", "dsafasdf"));
+
+    mol2.getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, std::string>("foo", "asdfs"));
+    mol2.getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, std::string>("bar", "dsa"));
+    mol3.getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, std::string>("foo", "asd"));
+    mol3.getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, std::string>("bar", "dsafasdf"));
+
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    target->getAtomWithIdx(0)->setProp<std::string>("foo", "asdfs");
+    target->getBondWithIdx(0)->setProp<std::string>("bar", "dsafasdf");
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+
+    {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol2, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol3, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+    }
+  }
+  SECTION("basics EBV") {
+    auto mol = "CC"_smarts;
+    auto target = "CC"_smiles;
+    REQUIRE(mol);
+    REQUIRE(target);
+
+    ExplicitBitVect bv(10);
+    bv.setBit(0);
+    bv.setBit(2);
+    bv.setBit(3);
+    bv.setBit(5);
+    bv.setBit(7);
+    bv.setBit(9);
+
+    RWMol mol2(*mol);
+    RWMol mol3(*mol);
+
+    mol->getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, ExplicitBitVect>("foo", bv, 0.0));
+    mol->getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, ExplicitBitVect>("bar", bv, 0.0));
+    ExplicitBitVect bv2(bv);
+    bv2.unsetBit(9);
+    mol2.getAtomWithIdx(0)->expandQuery(
+        makePropQuery<Atom, ExplicitBitVect>("foo", bv2, 0.0));
+    mol3.getBondWithIdx(0)->expandQuery(
+        makePropQuery<Bond, ExplicitBitVect>("bar", bv2, 0.0));
+
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+
+    target->getAtomWithIdx(0)->setProp<ExplicitBitVect>("foo", bv);
+    target->getBondWithIdx(0)->setProp<ExplicitBitVect>("bar", bv);
+    CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
+    CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
+    CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
+    {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol2, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+    }
+    {
+      std::string pkl;
+      MolPickler::pickleMol(mol3, pkl);
+      RWMol pklmol(pkl);
+      REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
+      CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+    }
   }
 }

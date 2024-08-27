@@ -479,12 +479,12 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
     if (res->hasProp(SmilesParseOps::detail::_needsDetectBondStereo)) {
       // we encountered either wiggly bond in the CXSMILES,
       // these need to be handled the same way they were in mol files
-
-      res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
-
-      MolOps::clearSingleBondDirFlags(*res);
-      MolOps::detectBondStereochemistry(*res);
+      if (conf || conf3d) {
+        MolOps::clearSingleBondDirFlags(*res);
+      }
+      MolOps::setDoubleBondNeighborDirections(*res, conf ? conf : conf3d);
     }
+    res->clearProp(SmilesParseOps::detail::_needsDetectBondStereo);
     // figure out stereochemistry:
     bool cleanIt = true, force = true, flagPossible = true;
     MolOps::assignStereochemistry(*res, cleanIt, force, flagPossible);

@@ -147,6 +147,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINFASTFIND,
     BEGINFINDOTHERORUNKNOWN,
     QUERY_PROPERTY,
+    QUERY_PROPERTY_WITH_VALUE,
     // add new entries above here
     INVALID_TAG = 255
   } Tags;
@@ -312,7 +313,8 @@ using QueryDetails = boost::variant<
     std::tuple<MolPickler::Tags, int32_t, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,
     std::tuple<MolPickler::Tags, std::set<int32_t>>,
-    std::tuple<MolPickler::Tags, std::string>>;
+    std::tuple<MolPickler::Tags, std::string>,
+    std::tuple<MolPickler::Tags, Dict::Pair, double>>;
 // clang-format on
 template <class T>
 QueryDetails getQueryDetails(const Queries::Query<int, T const *, true> *query);

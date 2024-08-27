@@ -83,12 +83,13 @@ def _getSmartsSaltsFromFile(filename):
 class SaltRemover(object):
   defnFilename = os.path.join(RDConfig.RDDataDir, 'Salts.txt')
 
-  def __init__(self, defnFilename=None, defnData=None, defnFormat=InputFormat.SMARTS):
+  def __init__(self, defnFilename=None, defnData=None, defnFormat=InputFormat.SMARTS, useChirality=False):
     if defnFilename:
       self.defnFilename = defnFilename
     self.defnData = defnData
     self.salts = None
     self.defnFormat = defnFormat
+    self.useChirality = useChirality
     self._initPatterns()
 
   def _initPatterns(self):
@@ -261,13 +262,13 @@ class SaltRemover(object):
         return m
       res = m
 
-      t = Chem.DeleteSubstructs(res, salt, True)
+      t = Chem.DeleteSubstructs(res, salt, True, useChirality=self.useChirality)
       if not t or (notEverything and t.GetNumAtoms() == 0):
         return res
       res = t
       while res.GetNumAtoms() and nAts > res.GetNumAtoms():
         nAts = res.GetNumAtoms()
-        t = Chem.DeleteSubstructs(res, salt, True)
+        t = Chem.DeleteSubstructs(res, salt, True, useChirality=self.useChirality)
         if notEverything and t.GetNumAtoms() == 0:
           break
         res = t
