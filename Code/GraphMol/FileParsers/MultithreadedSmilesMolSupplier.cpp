@@ -21,7 +21,6 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
   // set df_takeOwnership = true
   initFromSettings(true, params, parseParams);
-  startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
@@ -32,14 +31,12 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
   dp_inStream = inStream;
   initFromSettings(takeOwnership, params, parseParams);
-  startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
   dp_inStream = nullptr;
   initFromSettings(true, d_params, d_parseParams);
-  startThreads();
 }
 
 MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {

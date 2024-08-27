@@ -20,10 +20,12 @@ MultithreadedMolSupplier::~MultithreadedMolSupplier() {
   d_inputQueue->clear();
   // delete the pointer to the input queue
   delete d_inputQueue;
-  std::tuple<RWMol*, std::string, unsigned int> r;
-  while (d_outputQueue->pop(r)) {
-    RWMol* m = std::get<0>(r);
-    delete m;
+  if (df_started) {
+    std::tuple<RWMol *, std::string, unsigned int> r;
+    while (d_outputQueue->pop(r)) {
+      RWMol *m = std::get<0>(r);
+      delete m;
+    }
   }
   // destroy all objects in the output queue
   d_outputQueue->clear();
@@ -65,7 +67,11 @@ void MultithreadedMolSupplier::writer() {
 }
 
 std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
-  std::tuple<RWMol*, std::string, unsigned int> r;
+  if (!df_started) {
+    startThreads();
+    df_started = true;
+  }
+  std::tuple<RWMol *, std::string, unsigned int> r;
   if (d_outputQueue->pop(r)) {
     d_lastItemText = std::get<1>(r);
     d_lastRecordId = std::get<2>(r);
@@ -76,8 +82,11 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
 }
 
 void MultithreadedMolSupplier::endThreads() {
+  if (!df_started) {
+    return;
+  }
   d_readerThread.join();
-  for (auto& thread : d_writerThreads) {
+  for (auto &thread : d_writerThreads) {
     thread.join();
   }
 }

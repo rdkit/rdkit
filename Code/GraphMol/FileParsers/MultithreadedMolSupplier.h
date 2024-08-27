@@ -92,6 +92,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   std::thread d_readerThread;                    //!< single reader thread
 
  protected:
+  std::atomic<bool> df_started = false;
   std::atomic<unsigned int> d_lastRecordId =
       0;                       //!< stores last extracted record id
   std::string d_lastItemText;  //!< stores last extracted record

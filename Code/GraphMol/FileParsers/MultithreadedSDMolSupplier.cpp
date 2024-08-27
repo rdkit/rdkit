@@ -21,7 +21,7 @@ MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
   dp_inStream = openAndCheckStream(fileName);
   initFromSettings(true, params, parseParams);
   POSTCONDITION(dp_inStream, "bad instream");
-  startThreads();
+  // startThreads();
 }
 
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
@@ -31,13 +31,13 @@ MultithreadedSDMolSupplier::MultithreadedSDMolSupplier(
   dp_inStream = inStream;
   initFromSettings(takeOwnership, params, parseParams);
   POSTCONDITION(dp_inStream, "bad instream");
-  startThreads();
+  // startThreads();
 }
 
 MultithreadedSDMolSupplier::MultithreadedSDMolSupplier() {
   dp_inStream = nullptr;
   initFromSettings(false, d_params, d_parseParams);
-  startThreads();
+  // startThreads();
 }
 
 void MultithreadedSDMolSupplier::initFromSettings(
