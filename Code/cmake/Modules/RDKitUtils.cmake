@@ -25,7 +25,7 @@ endif()
 set(RDKit_BUILDNAME "${CMAKE_SYSTEM_NAME}|${CMAKE_SYSTEM_VERSION}|${systemAttribute}|${compilerID}|${bit3264}")
 set(RDKit_EXPORTED_TARGETS rdkit-targets)
 
-set(PYTEST_CMD "-m pytest")
+set(PYTEST_CMD "-m;pytest")
 if(NOT RDK_INSTALL_INTREE)
   set(PYTEST_CMD "${CMAKE_SOURCE_DIR}/Scripts/rdkit_pytest.py")
 endif(NOT RDK_INSTALL_INTREE)
