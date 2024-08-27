@@ -73,6 +73,7 @@ void testSdf() {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   struct SupplierOptions opt;
+  opt.numWriterThreads = 1;
   auto sdsup = getSupplier(fname, opt);
   unsigned int i = 0;
   while (!sdsup->atEnd()) {
@@ -132,6 +133,7 @@ void testSmi() {
   opt_smi.smilesColumn = 1;
   opt_smi.nameColumn = 0;
   opt_smi.titleLine = true;
+  opt_smi.numWriterThreads = 1;
   auto sup = getSupplier(fname, opt_smi);
   unsigned int i = 0;
   while (!sup->atEnd()) {
@@ -142,7 +144,9 @@ void testSmi() {
       mol->getProp("TPSA", mname);
       CHECK_INVARIANT(mname == "82.78", "");
     }
-    i++;
+    if (mol) {
+      i++;
+    }
   }
   TEST_ASSERT(i == 10);
 
