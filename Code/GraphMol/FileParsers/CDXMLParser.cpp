@@ -369,6 +369,8 @@ bool parse_fragment(RWMol &mol, ptree &frag,
               order = Bond::BondType::AROMATIC;
             } else if (attr.second.data() == "any") {
               order = Bond::BondType::UNSPECIFIED;
+	    } else if (attr.second.data() == "dative") {
+              order = Bond::BondType::DATIVE;
             } else {
               int bond_order = stoi(attr.second.data());
 
