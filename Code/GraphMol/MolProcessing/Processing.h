@@ -20,6 +20,7 @@
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
+#include <thread>
 #include <mutex>
 #endif
 
@@ -32,11 +33,10 @@ namespace details {
 inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     const std::string &fileName,
     const GeneralMolSupplier::SupplierOptions &options) {
-  static bool firstCall = true;
-  if (firstCall) {
-    defaultSupplierOptions.numWriterThreads = 4;
-    firstCall = false;
-  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  static std::once_flag flag;
+  std::call_once(flag, []() { defaultSupplierOptions.numWriterThreads = 4; });
+#endif
   return GeneralMolSupplier::getSupplier(fileName, options);
 }
 
@@ -87,24 +87,25 @@ std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
     generator = morgan.get();
   }
   std::map<unsigned int, std::unique_ptr<ExplicitBitVect>> fingerprints;
+
+  // if we are using a multi-threaded supplier then we can register a write
+  // callback to do our processing multi-threaded too
+#ifdef RDK_BUILD_THREADSAFE_SSS
   auto tsuppl =
       dynamic_cast<v2::FileParsers::MultithreadedMolSupplier *>(suppl.get());
-
-  auto fpfunc = [&](RWMol &mol, const std::string &, unsigned int recordId) {
-    auto fp = generator->getFingerprint(mol);
-    {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-      std::lock_guard<std::mutex> lock(get_fp_mutex());
-#endif
-      fingerprints[recordId].reset(fp);
-    }
-  };
   if (tsuppl) {
+    auto fpfunc = [&](RWMol &mol, const std::string &, unsigned int recordId) {
+      auto fp = generator->getFingerprint(mol);
+      {
+        std::lock_guard<std::mutex> lock(get_fp_mutex());
+        fingerprints[recordId].reset(fp);
+      }
+    };
     tsuppl->setWriteCallback(fpfunc);
     while (!tsuppl->atEnd()) {
       auto mol = tsuppl->next();
     }
-    auto maxv = tsuppl->getLastRecordId();
+    auto maxv = 0u;
     for (const auto &pr : fingerprints) {
       maxv = std::max(maxv, pr.first);
     }
@@ -114,6 +115,10 @@ std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
     }
     return fp_res;
   } else {
+#else
+  {
+#endif
+    // otherwise we just loop through the molecules
     std::vector<std::unique_ptr<ExplicitBitVect>> fp_res;
     while (!suppl->atEnd()) {
       auto mol = suppl->next();

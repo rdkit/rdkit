@@ -36,13 +36,11 @@ TEST_CASE("getFingerprintsForMolsInFile") {
     options.titleLine = false;
     boost::logging::disable_logs("rdApp.*");
     {
-      std::cerr << "defaults!" << std::endl;
       auto res =
           MolProccesing::getFingerprintsForMolsInFile<>(fileName, options);
       CHECK(res.size() == 4999);
     }
     {
-      std::cerr << "one thread" << std::endl;
       RDKit::GeneralMolSupplier::SupplierOptions options;
       options.numWriterThreads = 1;
       options.titleLine = false;
