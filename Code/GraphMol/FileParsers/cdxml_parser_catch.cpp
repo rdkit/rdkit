@@ -1187,3 +1187,14 @@ TEST_CASE("Github #7528 - read fragments in groups") {
     REQUIRE(mols.size() == 2);
   }
 }
+
+TEST_CASE("Github #7501 - dative bonds") {
+  std::string cdxmlbase =
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
+  SECTION("case 1") {
+    auto fname = cdxmlbase + "github7501-dative.cdxml";
+    CDXMLParserParams params;
+    auto mols = MolsFromCDXMLFile(fname, params);
+    CHECK(MolToSmiles(*mols[0]) == "CC(C)->[Os]12<-CCCN->1CC=N->2"); // All datives to the Oxygen
+  }
+}
