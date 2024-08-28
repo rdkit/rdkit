@@ -379,11 +379,21 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
   DEBUG_MSG("nbr_ct: " << nbr_ct);
 
   // transform fit coords
+  Conformer &fit_conformer = fit.getConformer(fitConfId);
+  if (3 * fit.getNumAtoms() != fitShape.coord.size()) {
+    // Hs were removed
+    fitShape.coord.resize(3 * fit.getNumAtoms());
+    for (unsigned int i = 0; i < fit.getNumAtoms(); ++i) {
+      const auto &pos = fit_conformer.getAtomPos(i);
+      fitShape.coord[i * 3] = pos.x;
+      fitShape.coord[i * 3 + 1] = pos.y;
+      fitShape.coord[i * 3 + 2] = pos.z;
+    }
+  }
   vector<float> transformed(fit.getNumAtoms() * 3);
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
                                 fit.getNumAtoms(), matrix.data());
 
-  Conformer &fit_conformer = fit.getConformer();
   for (unsigned i = 0; i < fit.getNumAtoms(); ++i) {
     RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
     // both conformers have been translated to the origin, translate the fit

@@ -27,7 +27,7 @@ TEST_CASE("basic alignment") {
     auto [nbr_st, nbr_ct] = AlignMolecule(*ref, cp, matrix);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.773, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.303, 0.005));
-    for (auto i = 0; i < probe->getNumAtoms(); ++i) {
+    for (auto i = 0u; i < probe->getNumAtoms(); ++i) {
       CHECK(probe->getConformer().getAtomPos(i).x !=
             cp.getConformer().getAtomPos(i).x);
     }
@@ -65,7 +65,7 @@ TEST_CASE("bulk") {
   auto suppl = v2::FileParsers::SDMolSupplier(dirName + "/bulk.pubchem.sdf");
   auto ref = suppl[0];
   REQUIRE(ref);
-  for (auto i = 1; i < suppl.length(); ++i) {
+  for (auto i = 1u; i < suppl.length(); ++i) {
     auto probe = suppl[1];
     REQUIRE(probe);
     std::vector<float> matrix(12, 0.0);
@@ -76,5 +76,31 @@ TEST_CASE("bulk") {
     CHECK_THAT(nbr_ct,
                Catch::Matchers::WithinAbs(
                    probe->getProp<float>("shape_align_color_tanimoto"), 0.005));
+  }
+}
+
+TEST_CASE("handling molecules with Hs") {
+  std::string dirName = getenv("RDBASE");
+  dirName += "/External/pubchem_shape/test_data";
+
+  v2::FileParsers::MolFileParserParams params;
+  params.removeHs = false;
+  auto suppl =
+      v2::FileParsers::SDMolSupplier(dirName + "/align_with_hs.sdf", params);
+  auto ref = suppl[0];
+  REQUIRE(ref);
+  auto probe = suppl[1];
+  REQUIRE(probe);
+  SECTION("basics") {
+    RWMol cp(*probe);
+    std::vector<float> matrix(12, 0.0);
+    auto [nbr_st, nbr_ct] = AlignMolecule(*ref, cp, matrix);
+    CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.837, 0.005));
+    CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.694, 0.005));
+    for (auto i = 0u; i < cp.getNumAtoms(); ++i) {
+      // the failure mode here was that Hs had HUGE coordinates
+      auto pos = cp.getConformer().getAtomPos(i);
+      CHECK((pos.x > -10 && pos.x < 10));
+    }
   }
 }
