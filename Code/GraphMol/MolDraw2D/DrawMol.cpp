@@ -3237,6 +3237,13 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
     // really messed up especially if the two bonds aren't exactly
     // co-linear which happens sometimes in a cluttered layout (Github 7620).
     if (bond->getBondType() != Bond::BondType::TRIPLE) {
+      // If it's a double bond that straddles the atom-atom vector it also looks
+      // odd or completely wrong, depending on the rest of the molecule
+      // (Github 7739).
+      if (bond->getBondType() == Bond::BondType::DOUBLE &&
+          atom->getDegree() > 2 && thirdAtom->getDegree() == 1) {
+        continue;
+      }
       Point2D const &at1_cds = atCds_[atom->getIdx()];
       Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
       otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
