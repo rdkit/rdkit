@@ -9857,9 +9857,11 @@ TEST_CASE("Github 7739 - Bad multi-coloured wedge") {
     outs.flush();
     // In the original, buggy version, there were 3 triangles making
     // up the black part of bond 6.  There are only 2 in the fixed version.
+    // std::regex bond6(
+    //     "<path class='bond-6 atom-7 atom-5' .*style='fill:#000000;"
+    //     "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
     std::regex bond6(
-        "<path class='bond-6 atom-7 atom-5' .*style='fill:#000000;"
-        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+        "<path class='bond-6 atom-5 atom-7' .*style='fill:none;fill-rule:evenodd;stroke:#0000");
     size_t nOccurrences = std::distance(
         std::sregex_token_iterator(text.begin(), text.end(), bond6),
         std::sregex_token_iterator());
