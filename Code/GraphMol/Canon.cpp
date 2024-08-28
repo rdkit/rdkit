@@ -1409,14 +1409,18 @@ class ChiralBondItem {
 class RankedValue {
  private:
   std::vector<ChiralAtomItem> chiralAtomItems;
-  std::vector<ChiralBondItem> chiralBondItems;
+  mutable std::vector<ChiralBondItem> chiralBondItems;
+  mutable bool bondsSorted = false;
 
  public:
   void AddAtom(Atom *atom, const std::vector<unsigned int> &atomsToInvert) {
     chiralAtomItems.emplace_back(atom, atomsToInvert);
   }
 
-  void AddBond(Bond *bond) { chiralBondItems.emplace_back(bond); }
+  void AddBond(Bond *bond) {
+    chiralBondItems.emplace_back(bond);
+    bondsSorted = false;
+  }
 
   unsigned int getNumChiralAtoms() const { return chiralAtomItems.size(); }
   unsigned int getNumChiralBonds() const { return chiralBondItems.size(); }
@@ -1426,6 +1430,13 @@ class RankedValue {
   }
 
   const std::vector<ChiralBondItem> &getChiralBonds() const {
+    if (!bondsSorted) {
+      if (chiralBondItems.size() > 1) {
+        std::sort(chiralBondItems.begin(), chiralBondItems.end());
+      }
+      bondsSorted = true;
+    }
+
     return chiralBondItems;
   }
 
@@ -1831,14 +1842,18 @@ void canonicalizeStereoGroups_internal(
     // groups
 
     for (auto atom : newMol->atoms()) {
-      if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+      // if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
+      if ((atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW ||
+           atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW) &&
           !atomIndicesInStereoGroups[atom->getIdx()]) {
         newRankedValue.AddAtom(atom, atomsToInvert);
       }
     }
 
     for (auto bond : newMol->bonds()) {
-      if (bond->getStereo() != Bond::STEREONONE &&
+      // if (bond->getStereo() != Bond::STEREONONE &&
+      if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCCW ||
+           bond->getStereo() == Bond::BondStereo::STEREOATROPCW) &&
           !bondIndicesInStereoGroups[bond->getIdx()]) {
         newRankedValue.AddBond(bond);
       }
@@ -1852,7 +1867,10 @@ void canonicalizeStereoGroups_internal(
     if (insertResult.second && newRankedValue == *allRankedValues.begin()) {
       bestNewMol = std::move(newMol);
     }
-    TEST_ASSERT(newRankedValue.equivalentTo(*allRankedValues.begin()));
+
+    if (!newRankedValue.equivalentTo(*allRankedValues.begin())) {
+      throw RigorousEnhancedStereoException("ranked items  are not equivalent");
+    }
   }
 
   // now figure out the stereo groups to create
@@ -2291,18 +2309,20 @@ void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
                   ranks[atom->getIdx()]);
   }
 
-  // try {
-  if (!foundOrGroup) {
-    RDKit::Canon::canonicalizeStereoGroups_internal(
-        mol, StereoGroupType::STEREO_AND, outputAbsoluteGroups);
-  } else {
-    RDKit::Canon::canonicalizeStereoGroups_internal(
-        mol, StereoGroupType::STEREO_OR, outputAbsoluteGroups);
+  auto savedStereoGroups = mol->getStereoGroups();
+  try {
+    if (!foundOrGroup) {
+      RDKit::Canon::canonicalizeStereoGroups_internal(
+          mol, StereoGroupType::STEREO_AND, outputAbsoluteGroups);
+    } else {
+      RDKit::Canon::canonicalizeStereoGroups_internal(
+          mol, StereoGroupType::STEREO_OR, outputAbsoluteGroups);
+    }
+    return;
+  } catch (const RigorousEnhancedStereoException &e) {
+    mol->setStereoGroups(savedStereoGroups);
+    return;
   }
-  return;
-  // } catch (const RigorousEnhancedStereoException &e) {
-  //   return;
-  // }
 }
 
 };  // namespace Canon

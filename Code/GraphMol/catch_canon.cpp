@@ -417,8 +417,38 @@ TEST_CASE("pseudoTest1") {
       CHECK(outSmi2 == smiExpected);
     }
   }
-}
 
+  SECTION("pseudoTestFails") {
+    std::vector<std::string> tests = {
+        "CNC(=O)[C@@H](NC(=O)[C@H](OCc1cc(F)ccc1F)[C@@H](O)[C@@H](O)[C@H](OCc1cc(F)ccc1F)C(=O)N[C@H](C(=O)NC)C(C)C)C(C)C |o1:19,23,&1:8,37|",
+        "CNC(=O)C(NC(=O)[C@H](OCc1ccccc1)[C@@H](O)[C@@H](O)[C@H](OCc1ccccc1)C(=O)NC(C(=O)NC)[C@@H](C)O)[C@H](C)O |o1:38,41,&1:17,21|",
+        "CCC(=O)NC[C@H]1CN(c2cc(F)c(N3C[C@H]4[C@H](N)[C@H]4C3)c(F)c2)C(=O)O1 |o1:16,17,&1:6,19|",
+        "Cc1cc(O)c([C@@]2(C)CC[C@@H]3C[C@@]32C)cc1-c1cc([C@]2(C)CC[C@H]3C[C@@]32C)c(O)cc1C |o1:6,23,&1:19,25|",
+        "C[N+]12CC[C@@]34c5ccccc5N5[C@@H]6OCC=C7C[N+]8(C)CC[C@]9%10c%11ccccc%11N([C@@H]%11OCC=C(C1)[C@H](C[C@@H]32)[C@@H]%11[C@H]54)[C@H]9[C@H]6[C@H]7C[C@@H]%108.[Cl-].[Cl-] |o1:42,45,&1:22,41|",
+        "Cl.Oc1ccc2c3c1O[C@H]1c4[nH]c5c(c4C[C@@]4(O)[C@@H](C2)N(CC2CC2)CC[C@]314)C[C@]1(O)[C@H]2Cc3ccc(O)c4c3[C@]1(CCN2CC1CC1)[C@H]5O4 |o1:29,40,&1:16,48|",
+        "O=C1NC(=O)c2c1c1c3ccccc3n3c1c1c2c2ccccc2n1[C@@H]1[C@H](O)[C@H](O)[C@H](O)[C@H]3N1Cc1ccccc1 |o1:26,32,&1:25,30|",
+    };
+
+    UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+
+    for (const auto &smi1 : tests) {
+      INFO(smi1);
+
+      SmilesParserParams rps;
+      rps.sanitize = true;
+      rps.removeHs = false;
+
+      std::unique_ptr<ROMol> mol1{SmilesToMol(smi1, rps)};
+      REQUIRE(mol1);
+
+      RDKit::Canon::canonicalizeStereoGroups(mol1);
+
+      auto outSmi1 = MolToCXSmiles(*mol1);
+
+      CHECK(outSmi1 == smi1);
+    }
+  }
+}
 TEST_CASE("using enhanced stereo in rankMolAtoms") {
   SECTION("basics: different ranks") {
     std::vector<std::string> smis{

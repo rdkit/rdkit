@@ -48,6 +48,12 @@ typedef union {
   Bond *bond;
 } MolStackUnion;
 
+class RigorousEnhancedStereoException : public std::runtime_error {
+ public:
+  explicit RigorousEnhancedStereoException(std::string message)
+      : std::runtime_error(message) {};
+};
+
 //! these are the actual elements in the molecular stack
 class RDKIT_GRAPHMOL_EXPORT MolStackElem {
  public:
