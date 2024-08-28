@@ -16,12 +16,12 @@ else()
 endif()
 
 if(needDownload)
-  set(PUBCHEM_COMMIT_SHA 169a241)
+  set(PUBCHEM_COMMIT_SHA 27f063f)
   if(NOT DEFINED PUBCHEMSHAPE_URL)
     set(PUBCHEMSHAPE_URL "https://github.com/ncbi/pubchem-align3d/archive/${PUBCHEM_COMMIT_SHA}.tar.gz")
   endif()
   if(NOT DEFINED PUBCHEMSHAPE_MD5SUM)
-    set(PUBCHEMSHAPE_MD5SUM "97ae9388968b2c4983b94632aa668d95")
+    set(PUBCHEMSHAPE_MD5SUM "4f763a1cdff13a1dd2bd4c4612e06462")
   endif()
   if(NOT DEFINED PUBCHEMSHAPE_BASE)
     string(REGEX REPLACE "^.*/" "" PUBCHEMSHAPE_BASE "${PUBCHEMSHAPE_URL}")
@@ -30,7 +30,9 @@ if(needDownload)
   execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf  
     ${CMAKE_CURRENT_SOURCE_DIR}/${PUBCHEM_COMMIT_SHA}.tar.gz 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-  execute_process(COMMAND ${CMAKE_COMMAND} -E rename "${CMAKE_CURRENT_SOURCE_DIR}/pubchem-align3d-${PUBCHEM_COMMIT_SHA}*" 
+
+  file(GLOB tar_dirname ${CMAKE_CURRENT_SOURCE_DIR}/pubchem-align3d-${PUBCHEM_COMMIT_SHA}*)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E rename ${tar_dirname} 
        ${PUBCHEMSHAPE_DIR}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
