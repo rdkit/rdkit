@@ -1,3 +1,100 @@
+# Release_2024.03.6
+(Changes relative to Release_2024.03.5)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Christoph Berg, David Cosgrove, Andrew Kane, Eisuke Kawashima, Brian Kelley,
+Joos Kiener, Phong Lam, Niels Kristian Kjærgård Madsen, Amanda P, Julianus
+Pfeuffer, Ricardo Rodriguez, Ernst-Georg Schmid, Junior Sen, Paolo Tosco, Chad
+Townsend, Riccardo Vianello, nmaeder, spparel, buerbaumer
+
+
+## New Features and Enhancements:
+  - GIST index improvements for @=
+ (github pull #7547 from ergo70)
+  - Rascal atom and bond equivalences
+ (github pull #7612 from DavidACosgrove)
+  - Add support for building the CFFI lib without InChI
+ (github pull #7698 from ankane)
+  - Move calculation of molecular weight, exact molecular weight, and moleuclar formula to MolOps
+ (github issue #7701 from greglandrum)
+  - Add more "contribs" classes for use in conformer generation
+ (github pull #7711 from nmaeder)
+  - Allow atom map numbers to be ignored when generating canonical SMILES
+ (github pull #7732 from DavidACosgrove)
+  - Expose two additional boolean flags for mol creation to MinimalLib
+ (github pull #7743 from ptosco)
+  - Complement JSMol with JSMolShared
+ (github pull #7744 from ptosco)
+  - Fix vectToString such that it outputs valid JSON
+ (github pull #7749 from ptosco)
+  - SaltRemover loses E/Z configuration
+ (github issue #7750 from JuniorSen)
+
+## Bug Fixes:
+  - rdMolDescriptors.CalcNumAtomStereoCenters fails on Sanitized Molecule
+ (github issue #6757 from C-Townsend)
+  - Pre-condition violations for BCUT descriptor calculations
+ (github issue #7364 from paulsonak)
+  - PostgreSQL 17: ERROR:  commutator operator = is already the commutator of operator =
+ (github issue #7459 from df7cb)
+  - Index anomaly with mol @= mol operator on PostgreSQL. Exact match is extremely slow!
+ (github issue #7493 from ergo70)
+  - CDXML Parser doesn't recognize dative bonds
+ (github issue #7501 from kienerj)
+  - Handling of chiral sulfur in aromatic rings
+ (github issue #7556 from spparel)
+  - Stub files contain duplicate argument names
+ (github issue #7583 from nielskm)
+  - Update commutator/negator settings for operator @=
+ (github pull #7596 from rvianello)
+  - EnumerateStereoisomers Runtime error when enumerate guanidine derivatives on rdkit 2024.03.4
+ (github issue #7608 from phonglam3103)
+  - Bad solid wedge to alkyne group
+ (github issue #7620 from DavidACosgrove)
+  - Deprecation warning from Descriptors.CalcMolDescriptors
+ (github issue #7625 from kienerj)
+  - Fix parsing RBCNT from mol files, and add exporting it
+ (github pull #7638 from ricrogz)
+  - Multithreaded InPlace standardization functions seg fault if there's a duplicate molecule
+ (github issue #7642 from greglandrum)
+  - MinimalLib: fix misformatted molblock and make sure unit test is actually executed
+ (github pull #7647 from ptosco)
+  - Reaction pickling does not honor PicklePropertiesOptions
+ (github issue #7674 from jpfeuffer)
+  - Make sure angleconstraints only take angles between 0 and 180 degrees.
+ (github pull #7688 from nmaeder)
+  - Determine bonds calls debugMol in certain cases
+ (github issue #7691 from bp-kelley)
+  - Double-bond geometry lost from CXSMILES?
+ (github issue #7725 from greglandrum)
+  - Ensure 13 bounds constraints are added to angles that are part of an improper torsion
+ (github pull #7729 from nmaeder)
+  - Bad 2-colour wedge
+ (github issue #7739 from DavidACosgrove)
+
+## Cleanup work:
+  - fix(rdmolfiles): fix parameters and docstrings
+ (github pull #7648 from e-kwsm)
+  - Refactor distgeom minimizations
+ (github pull #7652 from nmaeder)
+  - Fix some missing headers when doing "make install"
+ (github pull #7667 from greglandrum)
+  - Remove Descriptors as a dependency of many other RDKit libraries
+ (github pull #7700 from greglandrum)
+  - Reduce code duplication in ff
+ (github pull #7715 from nmaeder)
+  - Some cmake cleanup work
+ (github pull #7720 from greglandrum)
+  - doc: fix -Wdocumentation-html
+ (github pull #7721 from e-kwsm)
+  - Code cleanup, minor refactoring and typos
+ (github pull #7742 from ptosco)
+
+
 # Release_2024.03.5
 (Changes relative to Release_2024.03.4)
 
