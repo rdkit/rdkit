@@ -17,6 +17,7 @@
 #include "BondStretch.h"
 #include "AngleBend.h"
 #include "TorsionAngle.h"
+#include "Inversions.h"
 #include "Inversion.h"
 #include "Nonbonded.h"
 

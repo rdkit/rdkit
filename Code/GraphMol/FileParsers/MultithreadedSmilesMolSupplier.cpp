@@ -21,7 +21,6 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(!(dp_inStream->eof()), "early EOF");
   // set df_takeOwnership = true
   initFromSettings(true, params, parseParams);
-  startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
@@ -32,14 +31,12 @@ MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier(
   CHECK_INVARIANT(!(inStream->eof()), "early EOF");
   dp_inStream = inStream;
   initFromSettings(takeOwnership, params, parseParams);
-  startThreads();
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
 MultithreadedSmilesMolSupplier::MultithreadedSmilesMolSupplier() {
   dp_inStream = nullptr;
   initFromSettings(true, d_params, d_parseParams);
-  startThreads();
 }
 
 MultithreadedSmilesMolSupplier::~MultithreadedSmilesMolSupplier() {
@@ -57,12 +54,12 @@ void MultithreadedSmilesMolSupplier::initFromSettings(
   d_params = params;
   d_parseParams = parseParams;
   d_params.numWriterThreads = getNumThreadsToUse(d_params.numWriterThreads);
-  d_inputQueue =
+  d_inputQueue.reset(
       new ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>(
-          d_params.sizeInputQueue);
-  d_outputQueue =
+          d_params.sizeInputQueue));
+  d_outputQueue.reset(
       new ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>(
-          d_params.sizeOutputQueue);
+          d_params.sizeOutputQueue));
   df_end = false;
   d_line = -1;
 }

@@ -2289,6 +2289,100 @@ void test_assign_cip_labels() {
   use_legacy_stereo_perception(orig_setting);
 }
 
+void test_assign_chiral_tags_from_mol_parity() {
+  printf("--------------------------\n");
+  printf("  test_assign_chiral_tags_from_mol_parity\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *smiles;
+  const char *artemisininCTAB = "68827\n\
+  -OEChem-03262404452D\n\
+\n\
+ 20 23  0     1  0  0  0  0  0999 V2000\n\
+    4.3177    0.4203    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.7899    1.1100    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.4870   -0.3207    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.5402    1.3953    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    7.4004   -1.8275    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    4.6664   -0.2988    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0\n\
+    3.7655    0.1351    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0\n\
+    4.7603   -1.3362    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n\
+    2.8959   -0.4383    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n\
+    5.5674    0.1351    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n\
+    3.9042   -1.9296    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    3.5430    1.1100    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.9657   -1.4776    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.6389   -1.8668    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0\n\
+    5.1664    1.8919    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0\n\
+    4.1664    1.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    2.0000    0.0059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    6.5237   -1.3465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.6330   -2.8668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+    5.3890    2.8668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  4  1  0  0  0  0\n\
+  6  1  1  0  0  0  0\n\
+  2 10  1  0  0  0  0\n\
+  2 15  1  0  0  0  0\n\
+  3 10  1  0  0  0  0\n\
+  3 18  1  0  0  0  0\n\
+  4 15  1  0  0  0  0\n\
+  5 18  2  0  0  0  0\n\
+  6  7  1  0  0  0  0\n\
+  6  8  1  0  0  0  0\n\
+  6 10  1  0  0  0  0\n\
+  7  9  1  0  0  0  0\n\
+  7 12  1  0  0  0  0\n\
+  8 11  1  0  0  0  0\n\
+  8 14  1  0  0  0  0\n\
+  9 13  1  0  0  0  0\n\
+  9 17  1  0  0  0  0\n\
+ 11 13  1  0  0  0  0\n\
+ 12 16  1  0  0  0  0\n\
+ 14 18  1  0  0  0  0\n\
+ 14 19  1  0  0  0  0\n\
+ 15 16  1  0  0  0  0\n\
+ 15 20  1  0  0  0  0\n\
+M  END\n\
+";
+  mpkl = get_mol(artemisininCTAB, &mpkl_size, "");
+  assert(mpkl);
+  smiles = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smiles, "CC1CCC2C(C)C(=O)OC3OC4(C)CCC1C32OO4"));
+  free(smiles);
+  free(mpkl);
+  mpkl = get_mol(artemisininCTAB, &mpkl_size, "{\"assignChiralTypesFromMolParity\":true}");
+  assert(mpkl);
+  smiles = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smiles, "C[C@@H]1CC[C@H]2[C@@H](C)C(=O)O[C@@H]3O[C@@]4(C)CC[C@@H]1[C@]32OO4"));
+  free(smiles);
+  free(mpkl);
+}
+
+void test_make_dummies_queries() {
+  printf("--------------------------\n");
+  printf("  test_make_dummies_queries\n");
+  char *mpkl;
+  size_t mpkl_size;
+  char *qpkl;
+  size_t qpkl_size;
+  char *json;
+  mpkl = get_mol("CN", &mpkl_size, "");
+  assert(mpkl);
+  qpkl = get_mol("*N", &qpkl_size, "");
+  assert(qpkl);
+  json = get_substruct_match(mpkl, mpkl_size, qpkl, qpkl_size, "");
+  assert(!strcmp(json, "{}"));
+  free(json);
+  free(qpkl);
+  qpkl = get_mol("*N", &qpkl_size, "{\"makeDummiesQueries\":true}");
+  assert(qpkl);
+  json = get_substruct_match(mpkl, mpkl_size, qpkl, qpkl_size, "");
+  assert(!strcmp(json, "{\"atoms\":[0,1],\"bonds\":[0]}"));
+  free(json);
+  free(qpkl);
+  free(mpkl);
+}
+
 void test_smiles_smarts_params() {
   printf("--------------------------\n");
   printf("  test_smiles_smarts_params\n");
@@ -2622,6 +2716,8 @@ int main() {
   test_capture_logs();
   test_relabel_mapped_dummies();
   test_assign_cip_labels();
+  test_assign_chiral_tags_from_mol_parity();
+  test_make_dummies_queries();
   test_smiles_smarts_params();
   test_wedged_bond_atropisomer();
   test_get_molblock_use_molblock_wedging();

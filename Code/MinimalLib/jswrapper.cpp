@@ -45,12 +45,9 @@ class JSDrawerFromDetails : public MinimalLib::DrawerFromDetails {
   emscripten::val d_ctx;
 };
 
-std::string draw_to_canvas_with_offset(JSMol &self, emscripten::val canvas,
+std::string draw_to_canvas_with_offset(JSMolBase &self, emscripten::val canvas,
                                        int offsetx, int offsety, int width,
                                        int height) {
-  if (!self.d_mol) {
-    return "no molecule";
-  }
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
   if (width < 0) {
     width = canvas["width"].as<int>();
@@ -60,26 +57,22 @@ std::string draw_to_canvas_with_offset(JSMol &self, emscripten::val canvas,
   }
   std::unique_ptr<MolDraw2DJS> d2d(new MolDraw2DJS(width, height, ctx));
   d2d->setOffset(offsetx, offsety);
-  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, *self.d_mol);
+  MolDraw2DUtils::prepareAndDrawMolecule(*d2d, self.get());
   return "";
 }
 
-std::string draw_to_canvas(JSMol &self, emscripten::val canvas, int width,
+std::string draw_to_canvas(JSMolBase &self, emscripten::val canvas, int width,
                            int height) {
   return draw_to_canvas_with_offset(self, canvas, 0, 0, width, height);
 }
 
-std::string draw_to_canvas_with_highlights(JSMol &self, emscripten::val canvas,
+std::string draw_to_canvas_with_highlights(JSMolBase &self, emscripten::val canvas,
                                            const std::string &details) {
-  if (!self.d_mol) {
-    return "no molecule";
-  }
-
   auto ctx = canvas.call<emscripten::val>("getContext", std::string("2d"));
   int width = canvas["width"].as<int>();
   int height = canvas["height"].as<int>();
   JSDrawerFromDetails jsDrawer(ctx, width, height, details);
-  return jsDrawer.draw_mol(*self.d_mol);
+  return jsDrawer.draw_mol(self.get());
 }
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
@@ -122,7 +115,7 @@ std::string draw_rxn_to_canvas_with_highlights(JSReaction &self,
 }
 #endif
 
-JSMol *get_mol_no_details(const std::string &input) {
+JSMolBase *get_mol_no_details(const std::string &input) {
   return get_mol(input, std::string());
 }
 
@@ -131,7 +124,7 @@ std::string get_mcs_as_json_no_details(const JSMolList &mols) {
   return get_mcs_as_json(mols, std::string());
 }
 
-JSMol *get_mcs_as_mol_no_details(const JSMolList &mols) {
+JSMolBase *get_mcs_as_mol_no_details(const JSMolList &mols) {
   return get_mcs_as_mol(mols, std::string());
 }
 
@@ -159,11 +152,11 @@ emscripten::val uint_vector_to_uint32array(
   return res;
 }
 
-emscripten::val get_as_uint8array(const JSMol &self) {
+emscripten::val get_as_uint8array(const JSMolBase &self) {
   return binary_string_to_uint8array(self.get_pickle());
 }
 
-JSMol *get_mol_from_uint8array(const emscripten::val &pklAsUInt8Array) {
+JSMolBase *get_mol_from_uint8array(const emscripten::val &pklAsUInt8Array) {
   return get_mol_from_pickle(pklAsUInt8Array.as<std::string>());
 }
 
@@ -173,8 +166,8 @@ JSReaction *get_rxn_no_details(const std::string &input) {
 }
 #endif
 
-std::string generate_aligned_coords_helper(JSMol &self,
-                                           const JSMol &templateMol,
+std::string generate_aligned_coords_helper(JSMolBase &self,
+                                           const JSMolBase &templateMol,
                                            const emscripten::val &param) {
   if (param.typeOf().as<std::string>() != "string") {
     throw std::runtime_error(
@@ -183,13 +176,13 @@ std::string generate_aligned_coords_helper(JSMol &self,
   return self.generate_aligned_coords(templateMol, param.as<std::string>());
 }
 
-emscripten::val get_morgan_fp_as_uint8array(const JSMol &self,
+emscripten::val get_morgan_fp_as_uint8array(const JSMolBase &self,
                                             const std::string &details) {
   auto fp = self.get_morgan_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_morgan_fp_as_uint8array(const JSMol &self) {
+emscripten::val get_morgan_fp_as_uint8array(const JSMolBase &self) {
   return get_morgan_fp_as_uint8array(self, "{}");
 }
 
@@ -205,60 +198,60 @@ std::string parse_pattern_fp_param(const emscripten::val &param,
   return details;
 }
 
-std::string get_pattern_fp_helper(const JSMol &self,
+std::string get_pattern_fp_helper(const JSMolBase &self,
                                   const emscripten::val &param) {
   auto details = parse_pattern_fp_param(param, "get_pattern_fp");
   return self.get_pattern_fp(details);
 }
 
 emscripten::val get_pattern_fp_as_uint8array_helper(
-    const JSMol &self, const emscripten::val &param) {
+    const JSMolBase &self, const emscripten::val &param) {
   auto details = parse_pattern_fp_param(param, "get_pattern_fp_as_uint8array");
   auto fp = self.get_pattern_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_pattern_fp_as_uint8array(const JSMol &self) {
+emscripten::val get_pattern_fp_as_uint8array(const JSMolBase &self) {
   auto fp = self.get_pattern_fp_as_binary_text("{}");
   return binary_string_to_uint8array(fp);
 }
 
 emscripten::val get_topological_torsion_fp_as_uint8array(
-    const JSMol &self, const std::string &details) {
+    const JSMolBase &self, const std::string &details) {
   auto fp = self.get_topological_torsion_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_topological_torsion_fp_as_uint8array(const JSMol &self) {
+emscripten::val get_topological_torsion_fp_as_uint8array(const JSMolBase &self) {
   return get_topological_torsion_fp_as_uint8array(self, "{}");
 }
 
-emscripten::val get_rdkit_fp_as_uint8array(const JSMol &self,
+emscripten::val get_rdkit_fp_as_uint8array(const JSMolBase &self,
                                            const std::string &details) {
   auto fp = self.get_rdkit_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_rdkit_fp_as_uint8array(const JSMol &self) {
+emscripten::val get_rdkit_fp_as_uint8array(const JSMolBase &self) {
   return get_rdkit_fp_as_uint8array(self, "{}");
 }
 
-emscripten::val get_atom_pair_fp_as_uint8array(const JSMol &self,
+emscripten::val get_atom_pair_fp_as_uint8array(const JSMolBase &self,
                                                const std::string &details) {
   auto fp = self.get_atom_pair_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_atom_pair_fp_as_uint8array(const JSMol &self) {
+emscripten::val get_atom_pair_fp_as_uint8array(const JSMolBase &self) {
   return get_atom_pair_fp_as_uint8array(self, "{}");
 }
 
-emscripten::val get_maccs_fp_as_uint8array(const JSMol &self) {
+emscripten::val get_maccs_fp_as_uint8array(const JSMolBase &self) {
   auto fp = self.get_maccs_fp_as_binary_text();
   return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
+emscripten::val get_frags_helper(const JSMolBase &self, const std::string &details) {
   auto res = self.get_frags(details);
   auto obj = emscripten::val::object();
   obj.set("molList", res.first);
@@ -266,7 +259,7 @@ emscripten::val get_frags_helper(JSMol &self, const std::string &details) {
   return obj;
 }
 
-emscripten::val get_frags_helper(JSMol &self) {
+emscripten::val get_frags_helper(const JSMolBase &self) {
   return get_frags_helper(self, "{}");
 }
 
@@ -284,23 +277,23 @@ emscripten::val get_pattern_fp_as_uint8array_from_sslib(
 }
 
 emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
-                                           const JSMol &q, bool useChirality,
+                                           const JSMolBase &q, bool useChirality,
                                            int numThreads, int maxResults) {
   auto indices = self.d_sslib->size()
-                     ? self.d_sslib->getMatches(*q.d_mol, true, useChirality,
+                     ? self.d_sslib->getMatches(q.get(), true, useChirality,
                                                 false, numThreads, maxResults)
                      : std::vector<unsigned int>();
   return uint_vector_to_uint32array(indices);
 }
 
 emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
-                                           const JSMol &q, int maxResults) {
+                                           const JSMolBase &q, int maxResults) {
   return get_matches_as_uint32array(self, q, self.d_defaultUseChirality,
                                     self.d_defaultNumThreads, maxResults);
 }
 
 emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
-                                           const JSMol &q) {
+                                           const JSMolBase &q) {
   return get_matches_as_uint32array(self, q, self.d_defaultUseChirality,
                                     self.d_defaultNumThreads,
                                     self.d_defaultMaxResults);
@@ -308,19 +301,19 @@ emscripten::val get_matches_as_uint32array(const JSSubstructLibrary &self,
 #endif
 
 #ifdef RDK_BUILD_AVALON_SUPPORT
-emscripten::val get_avalon_fp_as_uint8array(const JSMol &self,
+emscripten::val get_avalon_fp_as_uint8array(const JSMolBase &self,
                                             const std::string &details) {
   auto fp = self.get_avalon_fp_as_binary_text(details);
   return binary_string_to_uint8array(fp);
 }
 
-emscripten::val get_avalon_fp_as_uint8array(const JSMol &self) {
+emscripten::val get_avalon_fp_as_uint8array(const JSMolBase &self) {
   return get_avalon_fp_as_uint8array(self, "{}");
 }
 #endif
 
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
-emscripten::val get_mmpa_frags_helper(const JSMol &self, unsigned int minCuts,
+emscripten::val get_mmpa_frags_helper(const JSMolBase &self, unsigned int minCuts,
                                       unsigned int maxCuts,
                                       unsigned int maxCutBonds) {
   auto obj = emscripten::val::object();
@@ -338,219 +331,211 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   register_vector<std::string>("StringList");
   register_vector<JSMolList *>("JSMolListList");
 
-  class_<JSMol>("Mol")
-      .function("is_valid", &JSMol::is_valid)
-      .function("has_coords", &JSMol::has_coords)
+  class_<JSMolBase>("Mol")
+      .function("is_valid", &JSMolBase::is_valid)
+      .function("has_coords", &JSMolBase::has_coords)
       .function("get_smiles",
-                select_overload<std::string() const>(&JSMol::get_smiles))
+                select_overload<std::string() const>(&JSMolBase::get_smiles))
       .function("get_smiles",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_smiles))
+                    &JSMolBase::get_smiles))
       .function("get_cxsmiles",
-                select_overload<std::string() const>(&JSMol::get_cxsmiles))
+                select_overload<std::string() const>(&JSMolBase::get_cxsmiles))
       .function("get_cxsmiles",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_cxsmiles))
+                    &JSMolBase::get_cxsmiles))
       .function("get_smarts",
-                select_overload<std::string() const>(&JSMol::get_smarts))
+                select_overload<std::string() const>(&JSMolBase::get_smarts))
       .function("get_smarts",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_smarts))
+                    &JSMolBase::get_smarts))
       .function("get_cxsmarts",
-                select_overload<std::string() const>(&JSMol::get_cxsmarts))
+                select_overload<std::string() const>(&JSMolBase::get_cxsmarts))
       .function("get_cxsmarts",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_cxsmarts))
+                    &JSMolBase::get_cxsmarts))
       .function("get_molblock",
-                select_overload<std::string() const>(&JSMol::get_molblock))
+                select_overload<std::string() const>(&JSMolBase::get_molblock))
       .function("get_molblock",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_molblock))
+                    &JSMolBase::get_molblock))
       .function("get_v3Kmolblock",
-                select_overload<std::string() const>(&JSMol::get_v3Kmolblock))
+                select_overload<std::string() const>(&JSMolBase::get_v3Kmolblock))
       .function("get_v3Kmolblock",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_v3Kmolblock))
+                    &JSMolBase::get_v3Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
 #ifdef RDK_BUILD_INCHI_SUPPORT
       .function("get_inchi",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_inchi))
+                    &JSMolBase::get_inchi))
       .function("get_inchi",
-                select_overload<std::string() const>(&JSMol::get_inchi))
+                select_overload<std::string() const>(&JSMolBase::get_inchi))
 #endif
-      .function("get_json", &JSMol::get_json)
+      .function("get_json", &JSMolBase::get_json)
       .function("get_svg",
-                select_overload<std::string() const>(&JSMol::get_svg))
+                select_overload<std::string() const>(&JSMolBase::get_svg))
       .function("get_svg",
-                select_overload<std::string(int, int) const>(&JSMol::get_svg))
+                select_overload<std::string(int, int) const>(&JSMolBase::get_svg))
 
-      .function("get_svg_with_highlights", &JSMol::get_svg_with_highlights)
+      .function("get_svg_with_highlights", &JSMolBase::get_svg_with_highlights)
 #ifdef __EMSCRIPTEN__
       .function("draw_to_canvas_with_offset", &draw_to_canvas_with_offset)
       .function("draw_to_canvas", &draw_to_canvas)
       .function("draw_to_canvas_with_highlights",
                 &draw_to_canvas_with_highlights)
-      .function("generate_aligned_coords",
-                select_overload<std::string(JSMol &, const JSMol &,
-                                            const emscripten::val &)>(
-                    generate_aligned_coords_helper))
-      .function("get_morgan_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &)>(
-                    get_morgan_fp_as_uint8array))
+      .function(
+          "generate_aligned_coords",
+          select_overload<std::string(JSMolBase &, const JSMolBase &, const val &)>(
+              generate_aligned_coords_helper))
       .function(
           "get_morgan_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, const std::string &)>(
-              get_morgan_fp_as_uint8array))
+          select_overload<val(const JSMolBase &)>(get_morgan_fp_as_uint8array))
+      .function("get_morgan_fp_as_uint8array",
+                select_overload<val(const JSMolBase &, const std::string &)>(
+                    get_morgan_fp_as_uint8array))
+      .function("get_pattern_fp",
+                select_overload<std::string(const JSMolBase &, const val &)>(
+                    get_pattern_fp_helper))
       .function(
-          "get_pattern_fp",
-          select_overload<std::string(const JSMol &, const emscripten::val &)>(
-              get_pattern_fp_helper))
+          "get_pattern_fp_as_uint8array",
+          select_overload<val(const JSMolBase &)>(get_pattern_fp_as_uint8array))
       .function("get_pattern_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &)>(
-                    get_pattern_fp_as_uint8array))
-      .function("get_pattern_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &,
-                                                const emscripten::val &)>(
+                select_overload<val(const JSMolBase &, const val &)>(
                     get_pattern_fp_as_uint8array_helper))
       .function("get_topological_torsion_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &)>(
+                select_overload<val(const JSMolBase &)>(
                     get_topological_torsion_fp_as_uint8array))
-      .function(
-          "get_topological_torsion_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, const std::string &)>(
-              get_topological_torsion_fp_as_uint8array))
+      .function("get_topological_torsion_fp_as_uint8array",
+                select_overload<val(const JSMolBase &, const std::string &)>(
+                    get_topological_torsion_fp_as_uint8array))
       .function("get_rdkit_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &)>(
+                select_overload<val(const JSMolBase &)>(get_rdkit_fp_as_uint8array))
+      .function("get_rdkit_fp_as_uint8array",
+                select_overload<val(const JSMolBase &, const std::string &)>(
                     get_rdkit_fp_as_uint8array))
       .function(
-          "get_rdkit_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, const std::string &)>(
-              get_rdkit_fp_as_uint8array))
-      .function("get_atom_pair_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &)>(
-                    get_atom_pair_fp_as_uint8array))
-      .function(
           "get_atom_pair_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, const std::string &)>(
-              get_atom_pair_fp_as_uint8array))
+          select_overload<val(const JSMolBase &)>(get_atom_pair_fp_as_uint8array))
+      .function("get_atom_pair_fp_as_uint8array",
+                select_overload<val(const JSMolBase &, const std::string &)>(
+                    get_atom_pair_fp_as_uint8array))
       .function("get_maccs_fp_as_uint8array", &get_maccs_fp_as_uint8array)
-      .function("get_frags",
-                select_overload<emscripten::val(JSMol &, const std::string &)>(
-                    get_frags_helper),
-                allow_raw_pointers())
-      .function("get_frags",
-                select_overload<emscripten::val(JSMol &)>(get_frags_helper),
+      .function(
+          "get_frags",
+          select_overload<val(const JSMolBase &, const std::string &)>(get_frags_helper),
+          allow_raw_pointers())
+      .function("get_frags", select_overload<val(const JSMolBase &)>(get_frags_helper),
                 allow_raw_pointers())
 #ifdef RDK_BUILD_AVALON_SUPPORT
-      .function("get_avalon_fp_as_uint8array",
-                select_overload<emscripten::val(const JSMol &)>(
-                    get_avalon_fp_as_uint8array))
       .function(
           "get_avalon_fp_as_uint8array",
-          select_overload<emscripten::val(const JSMol &, const std::string &)>(
-              get_avalon_fp_as_uint8array))
+          select_overload<val(const JSMolBase &)>(get_avalon_fp_as_uint8array))
+      .function("get_avalon_fp_as_uint8array",
+                select_overload<val(const JSMolBase &, const std::string &)>(
+                    get_avalon_fp_as_uint8array))
 #endif
 #endif
-      .function("get_substruct_match", &JSMol::get_substruct_match)
-      .function("get_substruct_matches", &JSMol::get_substruct_matches)
-      .function("get_descriptors", &JSMol::get_descriptors)
+      .function("get_substruct_match", &JSMolBase::get_substruct_match)
+      .function("get_substruct_matches", &JSMolBase::get_substruct_matches)
+      .function("get_descriptors", &JSMolBase::get_descriptors)
       .function("get_morgan_fp",
-                select_overload<std::string() const>(&JSMol::get_morgan_fp))
+                select_overload<std::string() const>(&JSMolBase::get_morgan_fp))
       .function("get_morgan_fp",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_morgan_fp))
+                    &JSMolBase::get_morgan_fp))
       .function("get_pattern_fp",
-                select_overload<std::string() const>(&JSMol::get_pattern_fp))
+                select_overload<std::string() const>(&JSMolBase::get_pattern_fp))
       .function("get_topological_torsion_fp",
                 select_overload<std::string() const>(
-                    &JSMol::get_topological_torsion_fp))
+                    &JSMolBase::get_topological_torsion_fp))
       .function("get_topological_torsion_fp",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_topological_torsion_fp))
+                    &JSMolBase::get_topological_torsion_fp))
       .function("get_rdkit_fp",
-                select_overload<std::string() const>(&JSMol::get_rdkit_fp))
+                select_overload<std::string() const>(&JSMolBase::get_rdkit_fp))
       .function("get_rdkit_fp",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_rdkit_fp))
+                    &JSMolBase::get_rdkit_fp))
       .function("get_atom_pair_fp",
-                select_overload<std::string() const>(&JSMol::get_atom_pair_fp))
+                select_overload<std::string() const>(&JSMolBase::get_atom_pair_fp))
       .function("get_atom_pair_fp",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_atom_pair_fp))
-      .function("get_maccs_fp", &JSMol::get_maccs_fp)
+                    &JSMolBase::get_atom_pair_fp))
+      .function("get_maccs_fp", &JSMolBase::get_maccs_fp)
 #ifdef RDK_BUILD_AVALON_SUPPORT
       .function("get_avalon_fp",
-                select_overload<std::string() const>(&JSMol::get_avalon_fp))
+                select_overload<std::string() const>(&JSMolBase::get_avalon_fp))
       .function("get_avalon_fp",
                 select_overload<std::string(const std::string &) const>(
-                    &JSMol::get_avalon_fp))
+                    &JSMolBase::get_avalon_fp))
 #endif
 
       // functionality primarily useful in ketcher
-      .function("get_stereo_tags", &JSMol::get_stereo_tags)
-      .function("get_aromatic_form", &JSMol::get_aromatic_form)
-      .function("convert_to_aromatic_form", &JSMol::convert_to_aromatic_form)
-      .function("get_kekule_form", &JSMol::get_kekule_form)
-      .function("convert_to_kekule_form", &JSMol::convert_to_kekule_form)
+      .function("get_stereo_tags", &JSMolBase::get_stereo_tags)
+      .function("get_aromatic_form", &JSMolBase::get_aromatic_form)
+      .function("convert_to_aromatic_form", &JSMolBase::convert_to_aromatic_form)
+      .function("get_kekule_form", &JSMolBase::get_kekule_form)
+      .function("convert_to_kekule_form", &JSMolBase::convert_to_kekule_form)
       .function("set_new_coords",
-                select_overload<bool()>(&JSMol::set_new_coords))
+                select_overload<bool()>(&JSMolBase::set_new_coords))
       .function("get_new_coords",
-                select_overload<std::string() const>(&JSMol::get_new_coords))
+                select_overload<std::string() const>(&JSMolBase::get_new_coords))
       .function("set_new_coords",
-                select_overload<bool(bool)>(&JSMol::set_new_coords))
+                select_overload<bool(bool)>(&JSMolBase::set_new_coords))
       .function("get_new_coords", select_overload<std::string(bool) const>(
-                                      &JSMol::get_new_coords))
-      .function("has_prop", &JSMol::has_prop)
+                                      &JSMolBase::get_new_coords))
+      .function("has_prop", &JSMolBase::has_prop)
       .function("get_prop_list",
                 select_overload<std::vector<std::string>(
                     bool includePrivate, bool includeComputed) const>(
-                    &JSMol::get_prop_list))
+                    &JSMolBase::get_prop_list))
       .function(
           "get_prop_list",
           select_overload<std::vector<std::string>(bool includePrivate) const>(
-              &JSMol::get_prop_list))
+              &JSMolBase::get_prop_list))
       .function("get_prop_list",
                 select_overload<std::vector<std::string>() const>(
-                    &JSMol::get_prop_list))
+                    &JSMolBase::get_prop_list))
       .function(
           "set_prop",
           select_overload<bool(const std::string &, const std::string &, bool)>(
-              &JSMol::set_prop))
+              &JSMolBase::set_prop))
       .function("set_prop",
                 select_overload<bool(const std::string &, const std::string &)>(
-                    &JSMol::set_prop))
-      .function("get_prop", &JSMol::get_prop)
-      .function("clear_prop", &JSMol::clear_prop)
+                    &JSMolBase::set_prop))
+      .function("get_prop", &JSMolBase::get_prop)
+      .function("clear_prop", &JSMolBase::clear_prop)
       .function("condense_abbreviations",
-                select_overload<std::string()>(&JSMol::condense_abbreviations))
+                select_overload<std::string()>(&JSMolBase::condense_abbreviations))
       .function("condense_abbreviations",
                 select_overload<std::string(double, bool)>(
-                    &JSMol::condense_abbreviations))
-      .function("add_hs", &JSMol::add_hs)
-      .function("add_hs_in_place", &JSMol::add_hs_in_place)
-      .function("remove_hs", &JSMol::remove_hs)
-      .function("remove_hs_in_place", &JSMol::remove_hs_in_place)
+                    &JSMolBase::condense_abbreviations))
+      .function("add_hs", &JSMolBase::add_hs)
+      .function("add_hs_in_place", &JSMolBase::add_hs_in_place)
+      .function("remove_hs", &JSMolBase::remove_hs)
+      .function("remove_hs_in_place", &JSMolBase::remove_hs_in_place)
       .function("normalize_depiction",
-                select_overload<double()>(&JSMol::normalize_depiction))
+                select_overload<double()>(&JSMolBase::normalize_depiction))
       .function("normalize_depiction",
-                select_overload<double(int)>(&JSMol::normalize_depiction))
+                select_overload<double(int)>(&JSMolBase::normalize_depiction))
       .function("normalize_depiction", select_overload<double(int, double)>(
-                                           &JSMol::normalize_depiction))
+                                           &JSMolBase::normalize_depiction))
       .function("straighten_depiction",
-                select_overload<void()>(&JSMol::straighten_depiction))
+                select_overload<void()>(&JSMolBase::straighten_depiction))
       .function("straighten_depiction",
-                select_overload<void(bool)>(&JSMol::straighten_depiction))
+                select_overload<void(bool)>(&JSMolBase::straighten_depiction))
       .function("get_num_atoms", select_overload<unsigned int(bool) const>(
-                                     &JSMol::get_num_atoms))
+                                     &JSMolBase::get_num_atoms))
       .function("get_num_atoms",
-                select_overload<unsigned int() const>(&JSMol::get_num_atoms))
-      .function("get_num_bonds", &JSMol::get_num_bonds)
+                select_overload<unsigned int() const>(&JSMolBase::get_num_atoms))
+      .function("get_num_bonds", &JSMolBase::get_num_bonds)
+      .function("copy", select_overload<JSMolBase *(const JSMolBase &)>(get_mol_copy),
+                allow_raw_pointers())
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
       .function("get_mmpa_frags",
-                select_overload<emscripten::val(const JSMol &, unsigned int,
-                                                unsigned int, unsigned int)>(
-                    get_mmpa_frags_helper))
+                select_overload<val(const JSMolBase &, unsigned int, unsigned int,
+                                    unsigned int)>(get_mmpa_frags_helper))
 #endif
       ;
 
@@ -596,44 +581,42 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
 #ifdef __EMSCRIPTEN__
       .function("add_trusted_smiles_and_pattern_fp",
                 select_overload<int(JSSubstructLibrary &, const std::string &,
-                                    const emscripten::val &)>(
+                                    const val &)>(
                     add_trusted_smiles_and_pattern_fp_helper))
       .function("get_pattern_fp_as_uint8array",
-                select_overload<emscripten::val(const JSSubstructLibrary &,
-                                                unsigned int)>(
+                select_overload<val(const JSSubstructLibrary &, unsigned int)>(
                     get_pattern_fp_as_uint8array_from_sslib))
+      .function(
+          "get_matches_as_uint32array",
+          select_overload<val(const JSSubstructLibrary &, const JSMolBase &, bool,
+                              int, int)>(get_matches_as_uint32array))
+      .function(
+          "get_matches_as_uint32array",
+          select_overload<val(const JSSubstructLibrary &, const JSMolBase &, int)>(
+              get_matches_as_uint32array))
       .function("get_matches_as_uint32array",
-                select_overload<emscripten::val(const JSSubstructLibrary &,
-                                                const JSMol &, bool, int, int)>(
-                    get_matches_as_uint32array))
-      .function("get_matches_as_uint32array",
-                select_overload<emscripten::val(const JSSubstructLibrary &,
-                                                const JSMol &, int)>(
-                    get_matches_as_uint32array))
-      .function("get_matches_as_uint32array",
-                select_overload<emscripten::val(const JSSubstructLibrary &,
-                                                const JSMol &)>(
+                select_overload<val(const JSSubstructLibrary &, const JSMolBase &)>(
                     get_matches_as_uint32array))
 #endif
       .function("get_mol", &JSSubstructLibrary::get_mol, allow_raw_pointers())
       .function(
           "get_matches",
-          select_overload<std::string(const JSMol &, bool, int, int) const>(
+          select_overload<std::string(const JSMolBase &, bool, int, int) const>(
               &JSSubstructLibrary::get_matches))
       .function("get_matches",
-                select_overload<std::string(const JSMol &, int) const>(
+                select_overload<std::string(const JSMolBase &, int) const>(
                     &JSSubstructLibrary::get_matches))
       .function("get_matches",
-                select_overload<std::string(const JSMol &) const>(
+                select_overload<std::string(const JSMolBase &) const>(
                     &JSSubstructLibrary::get_matches))
       .function("count_matches",
-                select_overload<unsigned int(const JSMol &, bool, int) const>(
+                select_overload<unsigned int(const JSMolBase &, bool, int) const>(
                     &JSSubstructLibrary::count_matches))
       .function("count_matches",
-                select_overload<unsigned int(const JSMol &, bool) const>(
+                select_overload<unsigned int(const JSMolBase &, bool) const>(
                     &JSSubstructLibrary::count_matches))
       .function("count_matches",
-                select_overload<unsigned int(const JSMol &) const>(
+                select_overload<unsigned int(const JSMolBase &) const>(
                     &JSSubstructLibrary::count_matches))
       .function("size", &JSSubstructLibrary::size)
 #endif

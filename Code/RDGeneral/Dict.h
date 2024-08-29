@@ -172,7 +172,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
      \param what  the key to lookup
      \param res   a reference used to return the result
 
-     <B>Notes:</b>
+     <b>Notes:</b>
       - If \c res is a \c std::string, every effort will be made
         to convert the specified element to a string using the
         \c boost::lexical_cast machinery.
@@ -213,7 +213,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
      \param what  the key to lookup
      \param res   a reference used to return the result
 
-     <B>Notes:</b>
+     <b>Notes:</b>
       - If \c res is a \c std::string, every effort will be made
         to convert the specified element to a string using the
         \c boost::lexical_cast machinery.

@@ -363,14 +363,12 @@ class TestCase(unittest.TestCase):
     os.unlink('testData/bzr/search.out')
 
   def test4CreateOptions(self):
-    if os.path.exists('testData/bzr/Compounds.sqlt'):
-      os.unlink('testData/bzr/Compounds.sqlt')
-    if os.path.exists('testData/bzr/AtomPairs.sqlt'):
-      os.unlink('testData/bzr/AtomPairs.sqlt')
-    if os.path.exists('testData/bzr/Descriptors.sqlt'):
-      os.unlink('testData/bzr/Descriptors.sqlt')
-    if os.path.exists('testData/bzr/Fingerprints.sqlt'):
-      os.unlink('testData/bzr/Fingerprints.sqlt')
+    for fn in ('Compounds.sqlt', 'AtomPairs.sqlt', 'Descriptors.sqlt', 'Fingerprints.sqlt'):
+      if os.path.exists(f'testData/bzr/{fn}'):
+        try:
+          os.unlink(f'testData/bzr/{fn}')
+        except PermissionError:
+          pass
 
     p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr',
                           '--molFormat=smiles', '--noExtras', '--noSmiles', 'testData/bzr.smi'))
@@ -394,14 +392,12 @@ class TestCase(unittest.TestCase):
     conn = None
     d = None
 
-    if os.path.exists('testData/bzr/Compounds.sqlt'):
-      os.unlink('testData/bzr/Compounds.sqlt')
-    if os.path.exists('testData/bzr/AtomPairs.sqlt'):
-      os.unlink('testData/bzr/AtomPairs.sqlt')
-    if os.path.exists('testData/bzr/Descriptors.sqlt'):
-      os.unlink('testData/bzr/Descriptors.sqlt')
-    if os.path.exists('testData/bzr/Fingerprints.sqlt'):
-      os.unlink('testData/bzr/Fingerprints.sqlt')
+    for fn in ('Compounds.sqlt', 'AtomPairs.sqlt', 'Descriptors.sqlt', 'Fingerprints.sqlt'):
+      if os.path.exists(f'testData/bzr/{fn}'):
+        try:
+          os.unlink(f'testData/bzr/{fn}')
+        except PermissionError:
+          pass
 
     p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr',
                           '--molFormat=smiles', '--noSmiles', '--noFingerprints', '--noLayeredFps',
@@ -486,14 +482,12 @@ class TestCase(unittest.TestCase):
     self.assertTrue(os.path.exists('testData/bzr/Fingerprints.sqlt'))
 
   def test5TestBackwardsCompat(self):
-    if os.path.exists('testData/bzr/Compounds.sqlt'):
-      os.unlink('testData/bzr/Compounds.sqlt')
-    if os.path.exists('testData/bzr/AtomPairs.sqlt'):
-      os.unlink('testData/bzr/AtomPairs.sqlt')
-    if os.path.exists('testData/bzr/Descriptors.sqlt'):
-      os.unlink('testData/bzr/Descriptors.sqlt')
-    if os.path.exists('testData/bzr/Fingerprints.sqlt'):
-      os.unlink('testData/bzr/Fingerprints.sqlt')
+    for fn in ('Compounds.sqlt', 'AtomPairs.sqlt', 'Descriptors.sqlt', 'Fingerprints.sqlt'):
+      if os.path.exists(f'testData/bzr/{fn}'):
+        try:
+          os.unlink(f'testData/bzr/{fn}')
+        except PermissionError:
+          pass
 
     p = subprocess.Popen((sys.executable, 'CreateDb.py', '--dbDir=testData/bzr', '--noFingerprints',
                           '--noDescriptors', 'testData/bzr.sdf'))
