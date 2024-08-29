@@ -127,16 +127,12 @@ std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     parseParams.strictParsing = opt.strictParsing;
 #ifdef RDK_BUILD_THREADSAFE_SSS
     if (params.numWriterThreads > 1) {
-      auto sdsup = new FileParsers::MultithreadedSDMolSupplier(
+      return std::make_unique<FileParsers::MultithreadedSDMolSupplier>(
           strm, true, params, parseParams);
-      std::unique_ptr<FileParsers::MolSupplier> p(sdsup);
-      return p;
     }
 #endif
-    FileParsers::ForwardSDMolSupplier *sdsup =
-        new FileParsers::ForwardSDMolSupplier(strm, true, parseParams);
-    std::unique_ptr<FileParsers::MolSupplier> p(sdsup);
-    return p;
+    return std::make_unique<FileParsers::ForwardSDMolSupplier>(strm, true,
+                                                               parseParams);
   }
 
   else if (fileFormat == "smi" || fileFormat == "csv" || fileFormat == "txt" ||
@@ -149,27 +145,20 @@ std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     parseParams.parseParameters.sanitize = opt.sanitize;
 #ifdef RDK_BUILD_THREADSAFE_SSS
     if (params.numWriterThreads > 1) {
-      FileParsers::MultithreadedSmilesMolSupplier *smsup =
-          new FileParsers::MultithreadedSmilesMolSupplier(strm, true, params,
-                                                          parseParams);
-      std::unique_ptr<FileParsers::MolSupplier> p(smsup);
-      return p;
+      return std::make_unique<FileParsers::MultithreadedSmilesMolSupplier>(
+          strm, true, params, parseParams);
     }
 #endif
-    FileParsers::SmilesMolSupplier *smsup =
-        new FileParsers::SmilesMolSupplier(strm, true, parseParams);
-    std::unique_ptr<FileParsers::MolSupplier> p(smsup);
-    return p;
+    return std::make_unique<FileParsers::SmilesMolSupplier>(strm, true,
+                                                            parseParams);
   }
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
   else if (fileFormat == "mae") {
     FileParsers::MaeMolSupplierParams parseParams;
     parseParams.sanitize = opt.sanitize;
     parseParams.removeHs = opt.removeHs;
-    FileParsers::MaeMolSupplier *maesup =
-        new FileParsers::MaeMolSupplier(strm, true, parseParams);
-    std::unique_ptr<FileParsers::MolSupplier> p(maesup);
-    return p;
+    return std::make_unique<FileParsers::MaeMolSupplier>(strm, true,
+                                                         parseParams);
   }
 #endif
   else if (fileFormat == "tdt") {
@@ -178,10 +167,8 @@ std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     parseParams.confId2D = opt.confId2D;
     parseParams.confId3D = opt.confId3D;
     parseParams.parseParameters.sanitize = opt.sanitize;
-    FileParsers::TDTMolSupplier *tdtsup =
-        new FileParsers::TDTMolSupplier(strm, true, parseParams);
-    std::unique_ptr<FileParsers::MolSupplier> p(tdtsup);
-    return p;
+    return std::make_unique<FileParsers::TDTMolSupplier>(strm, true,
+                                                         parseParams);
   }
   throw BadFileException("Unsupported file format: " + fileFormat);
 }
