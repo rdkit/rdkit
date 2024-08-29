@@ -9,6 +9,7 @@ CREATE OR REPLACE FUNCTION gbfp_sortsupport(internal)
     LANGUAGE C STRICT;
 
 DROP OPERATOR CLASS IF EXISTS gist_mol_ops USING gist;
+DROP OPERATOR FAMILY IF EXISTS gist_mol_ops USING gist;
 
 CREATE OPERATOR CLASS gist_mol_ops
 DEFAULT FOR TYPE mol USING gist
@@ -29,6 +30,7 @@ AS
 STORAGE         bytea;
 
 DROP OPERATOR CLASS IF EXISTS gist_qmol_ops USING gist;
+DROP OPERATOR FAMILY IF EXISTS gist_qmol_ops USING gist;
 
 CREATE OPERATOR CLASS gist_qmol_ops
 DEFAULT FOR TYPE qmol USING gist
@@ -49,6 +51,7 @@ AS
 STORAGE         bytea;
 
 DROP OPERATOR CLASS IF EXISTS gist_bfp_ops USING gist;
+DROP OPERATOR FAMILY IF EXISTS gist_bfp_ops USING gist;
 
 CREATE OPERATOR CLASS gist_bfp_ops
 DEFAULT FOR TYPE bfp USING gist
