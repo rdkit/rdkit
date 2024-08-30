@@ -27,13 +27,11 @@ python::tuple getFingerprintsHelper32(
   }
 
   std::vector<std::unique_ptr<ExplicitBitVect>> fps;
-  std::cerr << "GO!" << std::endl;
   {
     NOGIL gil;
-    fps = MolProccesing::getFingerprintsForMolsInFile(fileName, options,
+    fps = MolProcessing::getFingerprintsForMolsInFile(fileName, options,
                                                       generator);
   }
-  std::cerr << "back! " << fps.size() << std::endl;
   python::list pyFingerprints;
   for (auto &fp : fps) {
     pyFingerprints.append(fp.release());
@@ -47,7 +45,7 @@ python::tuple getFingerprintsHelper64(
   std::vector<std::unique_ptr<ExplicitBitVect>> fps;
   {
     NOGIL gil;
-    fps = MolProccesing::getFingerprintsForMolsInFile(fileName, options,
+    fps = MolProcessing::getFingerprintsForMolsInFile(fileName, options,
                                                       generator);
   }
 
