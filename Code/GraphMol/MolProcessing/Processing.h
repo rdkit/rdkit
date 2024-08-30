@@ -26,13 +26,15 @@
 
 namespace RDKit {
 namespace MolProcessing {
-
-auto defaultSupplierOptions = GeneralMolSupplier::SupplierOptions();
-
+namespace details {
+RDKIT_MOLPROCESSING_EXPORT extern GeneralMolSupplier::SupplierOptions
+    defaultSupplierOptions;
+}
 template <typename OutputType = std::uint32_t>
 std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
     const std::string &fileName,
-    const GeneralMolSupplier::SupplierOptions &options = defaultSupplierOptions,
+    const GeneralMolSupplier::SupplierOptions &options =
+        details::defaultSupplierOptions,
     FingerprintGenerator<OutputType> *generator = nullptr);
 
 }  // namespace MolProcessing

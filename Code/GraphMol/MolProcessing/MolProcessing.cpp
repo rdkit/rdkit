@@ -12,7 +12,9 @@
 
 namespace RDKit {
 namespace MolProcessing {
+
 namespace details {
+GeneralMolSupplier::SupplierOptions defaultSupplierOptions;
 inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     const std::string &fileName,
     const GeneralMolSupplier::SupplierOptions &options) {
@@ -107,7 +109,7 @@ std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
       if (mol) {
         auto fp = generator->getFingerprint(*mol);
         fp_res.emplace_back(fp);
-      } else if(!suppl->atEnd()) {
+      } else if (!suppl->atEnd()) {
         fp_res.emplace_back(nullptr);
       }
     }
