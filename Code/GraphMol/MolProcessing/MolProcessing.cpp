@@ -107,7 +107,7 @@ std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
       if (mol) {
         auto fp = generator->getFingerprint(*mol);
         fp_res.emplace_back(fp);
-      } else {
+      } else if(!suppl->atEnd()) {
         fp_res.emplace_back(nullptr);
       }
     }
