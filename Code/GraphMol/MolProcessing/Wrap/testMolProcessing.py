@@ -25,7 +25,7 @@ class TestCase(unittest.TestCase):
 
   def test1(self):
     fpg = rdFingerprintGenerator.GetMorganGenerator()
-
+    print('call 1')
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.smiFile)
     self.assertEqual(len(fps), 499)
     with Chem.SmilesMolSupplier(self.smiFile, delimiter='\t') as suppl:
@@ -34,6 +34,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(DataStructs.TanimotoSimilarity(fps[0], fps[1]),
                      DataStructs.TanimotoSimilarity(nfps[0], nfps[1]))
 
+    print('call 2')
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.sdFile)
     self.assertEqual(len(fps), 200)
     with Chem.SDMolSupplier(self.sdFile) as suppl:
@@ -44,6 +45,7 @@ class TestCase(unittest.TestCase):
   def test2(self):
     fpg = rdFingerprintGenerator.GetMorganGenerator(radius=2)
 
+    print('call 3')
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.smiFile, generator=fpg)
     self.assertEqual(len(fps), 499)
     with Chem.SmilesMolSupplier(self.smiFile, delimiter='\t') as suppl:

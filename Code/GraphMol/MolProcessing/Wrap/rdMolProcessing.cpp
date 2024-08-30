@@ -9,6 +9,7 @@
 //
 
 #include <RDBoost/python.h>
+#include <RDBoost/Wrap.h>
 #include <GraphMol/MolProcessing/Processing.h>
 #include <GraphMol/FileParsers/GeneralFileReader.h>
 
@@ -25,9 +26,14 @@ python::tuple getFingerprintsHelper32(
         python::extract<FingerprintGenerator<std::uint32_t> *>(pyGenerator);
   }
 
-  auto fps =
-      MolProccesing::getFingerprintsForMolsInFile(fileName, options, generator);
-
+  std::vector<std::unique_ptr<ExplicitBitVect>> fps;
+  std::cerr << "GO!" << std::endl;
+  {
+    NOGIL gil;
+    fps = MolProccesing::getFingerprintsForMolsInFile(fileName, options,
+                                                      generator);
+  }
+  std::cerr << "back! " << fps.size() << std::endl;
   python::list pyFingerprints;
   for (auto &fp : fps) {
     pyFingerprints.append(fp.release());
@@ -38,8 +44,12 @@ python::tuple getFingerprintsHelper32(
 python::tuple getFingerprintsHelper64(
     const std::string &fileName, FingerprintGenerator<std::uint64_t> *generator,
     const GeneralMolSupplier::SupplierOptions &options) {
-  auto fps =
-      MolProccesing::getFingerprintsForMolsInFile(fileName, options, generator);
+  std::vector<std::unique_ptr<ExplicitBitVect>> fps;
+  {
+    NOGIL gil;
+    fps = MolProccesing::getFingerprintsForMolsInFile(fileName, options,
+                                                      generator);
+  }
 
   python::list pyFingerprints;
   for (auto &fp : fps) {

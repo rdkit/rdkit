@@ -95,16 +95,21 @@ std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
       dynamic_cast<v2::FileParsers::MultithreadedMolSupplier *>(suppl.get());
   if (tsuppl) {
     auto fpfunc = [&](RWMol &mol, const std::string &, unsigned int recordId) {
+      std::cerr << "   !!! " << recordId << std::endl;
       auto fp = generator->getFingerprint(mol);
       {
+        std::cerr << "       wait " << std::endl;
         std::lock_guard<std::mutex> lock(get_fp_mutex());
+        std::cerr << "       gotit " << std::endl;
         fingerprints[recordId].reset(fp);
       }
     };
     tsuppl->setWriteCallback(fpfunc);
+    std::cerr << "   go go go " << std::endl;
     while (!tsuppl->atEnd()) {
       auto mol = tsuppl->next();
     }
+    std::cerr << "   back " << fingerprints.size() << std::endl;
     auto maxv = 0u;
     for (const auto &pr : fingerprints) {
       maxv = std::max(maxv, pr.first);
