@@ -115,6 +115,20 @@ inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
 #endif
   }
 
+  if ((!(*strm)) || strm->bad()) {
+    std::ostringstream errout;
+    errout << "Bad input file " << path;
+    delete strm;
+    throw BadFileException(errout.str());
+  }
+  strm->peek();
+  if (strm->bad() || strm->eof()) {
+    std::ostringstream errout;
+    errout << "Invalid input file " << path;
+    delete strm;
+    throw BadFileException(errout.str());
+  }
+
 #ifdef RDK_BUILD_THREADSAFE_SSS
   FileParsers::MultithreadedMolSupplier::Parameters params;
   params.numWriterThreads = getNumThreadsToUse(opt.numWriterThreads);

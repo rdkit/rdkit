@@ -25,7 +25,6 @@ class TestCase(unittest.TestCase):
 
   def test1(self):
     fpg = rdFingerprintGenerator.GetMorganGenerator()
-
     fps = rdMolProcessing.GetFingerprintsForMolsInFile(self.smiFile)
     self.assertEqual(len(fps), 499)
     with Chem.SmilesMolSupplier(self.smiFile, delimiter='\t') as suppl:
