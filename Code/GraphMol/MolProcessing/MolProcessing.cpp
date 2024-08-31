@@ -26,8 +26,8 @@ inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
 }
 }  // namespace details
 
-#ifdef RDK_BUILD_THREADSAFE_SSS
 namespace {
+#ifdef RDK_BUILD_THREADSAFE_SSS
 inline std::mutex &fp_mutex_get() {
   // create on demand
   static std::mutex _mutex;
@@ -44,8 +44,69 @@ inline std::mutex &get_fp_mutex() {
   std::call_once(flag, fp_mutex_create);
   return fp_mutex_get();
 }
-}  // namespace
+
+template <typename T>
+void mtWorker(v2::FileParsers::MultithreadedMolSupplier *suppl,
+              std::function<T *(RWMol &)> func,
+              std::vector<std::unique_ptr<T>> &results) {
+  PRECONDITION(suppl, "no supplier");
+  std::map<unsigned int, std::unique_ptr<T>> accum;
+
+  auto workerfunc = [&](RWMol &mol, const std::string &,
+                        unsigned int recordId) {
+    auto item = func(mol);
+    {
+      std::lock_guard<std::mutex> lock(get_fp_mutex());
+      accum[recordId].reset(item);
+    }
+  };
+  suppl->setWriteCallback(workerfunc);
+  // loop over the supplier to make sure we read everything
+  while (!suppl->atEnd()) {
+    auto mol = suppl->next();
+  }
+  // convert the map to a vector and get the results in the input order
+  auto maxv = 0u;
+  for (const auto &pr : accum) {
+    maxv = std::max(maxv, pr.first);
+  }
+  results.resize(maxv);
+  for (auto &pr : accum) {
+    results[pr.first - 1] = std::move(pr.second);
+  }
+}
 #endif
+
+template <typename T>
+void worker(v2::FileParsers::MolSupplier *suppl,
+            std::function<T *(RWMol &)> func,
+            std::vector<std::unique_ptr<T>> &results) {
+  PRECONDITION(suppl, "no supplier");
+  // if we are using a multi-threaded supplier then we can register a write
+  // callback to do our processing multi-threaded too
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  auto tsuppl =
+      dynamic_cast<v2::FileParsers::MultithreadedMolSupplier *>(suppl);
+  if (tsuppl) {
+    mtWorker(tsuppl, func, results);
+  } else {
+#else
+  {
+#endif
+    // otherwise we just loop through the molecules
+    while (!suppl->atEnd()) {
+      auto mol = suppl->next();
+      if (mol) {
+        auto fp = func(*mol);
+        results.emplace_back(fp);
+      } else if (!suppl->atEnd()) {
+        results.emplace_back(nullptr);
+      }
+    }
+  }
+}
+}  // namespace
+
 //! \brief Get fingerprints for all of the molecules in a file
 /*!
    \param fileName the name of the file to read
@@ -70,51 +131,12 @@ std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
     morgan.reset(MorganFingerprint::getMorganGenerator<OutputType>(3));
     generator = morgan.get();
   }
-  std::map<unsigned int, std::unique_ptr<ExplicitBitVect>> fingerprints;
-
-  // if we are using a multi-threaded supplier then we can register a write
-  // callback to do our processing multi-threaded too
-#ifdef RDK_BUILD_THREADSAFE_SSS
-  auto tsuppl =
-      dynamic_cast<v2::FileParsers::MultithreadedMolSupplier *>(suppl.get());
-  if (tsuppl) {
-    auto fpfunc = [&](RWMol &mol, const std::string &, unsigned int recordId) {
-      auto fp = generator->getFingerprint(mol);
-      {
-        std::lock_guard<std::mutex> lock(get_fp_mutex());
-        fingerprints[recordId].reset(fp);
-      }
-    };
-    tsuppl->setWriteCallback(fpfunc);
-    while (!tsuppl->atEnd()) {
-      auto mol = tsuppl->next();
-    }
-    auto maxv = 0u;
-    for (const auto &pr : fingerprints) {
-      maxv = std::max(maxv, pr.first);
-    }
-    std::vector<std::unique_ptr<ExplicitBitVect>> fp_res(maxv);
-    for (auto &fp : fingerprints) {
-      fp_res[fp.first - 1] = std::move(fp.second);
-    }
-    return fp_res;
-  } else {
-#else
-  {
-#endif
-    // otherwise we just loop through the molecules
-    std::vector<std::unique_ptr<ExplicitBitVect>> fp_res;
-    while (!suppl->atEnd()) {
-      auto mol = suppl->next();
-      if (mol) {
-        auto fp = generator->getFingerprint(*mol);
-        fp_res.emplace_back(fp);
-      } else if (!suppl->atEnd()) {
-        fp_res.emplace_back(nullptr);
-      }
-    }
-    return fp_res;
-  }
+  std::function<ExplicitBitVect *(RWMol &)> func = [&](RWMol &mol) {
+    return generator->getFingerprint(mol);
+  };
+  std::vector<std::unique_ptr<ExplicitBitVect>> results;
+  worker(suppl.get(), func, results);
+  return results;
 }
 
 template RDKIT_MOLPROCESSING_EXPORT
