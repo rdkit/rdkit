@@ -17,13 +17,14 @@ namespace python = boost::python;
 using namespace RDKit;
 
 namespace {
-python::tuple getFingerprintsHelper32(
+template <typename OutputType>
+python::tuple getFingerprintsHelper(
     const std::string &fileName, python::object pyGenerator,
     const GeneralMolSupplier::SupplierOptions &options) {
-  FingerprintGenerator<std::uint32_t> *generator = nullptr;
+  FingerprintGenerator<OutputType> *generator = nullptr;
   if (pyGenerator) {
     generator =
-        python::extract<FingerprintGenerator<std::uint32_t> *>(pyGenerator);
+        python::extract<FingerprintGenerator<OutputType> *>(pyGenerator);
   }
 
   std::vector<std::unique_ptr<ExplicitBitVect>> fps;
@@ -32,23 +33,6 @@ python::tuple getFingerprintsHelper32(
     fps = MolProcessing::getFingerprintsForMolsInFile(fileName, options,
                                                       generator);
   }
-  python::list pyFingerprints;
-  for (auto &fp : fps) {
-    pyFingerprints.append(fp.release());
-  }
-
-  return python::tuple(pyFingerprints);
-}
-python::tuple getFingerprintsHelper64(
-    const std::string &fileName, FingerprintGenerator<std::uint64_t> *generator,
-    const GeneralMolSupplier::SupplierOptions &options) {
-  std::vector<std::unique_ptr<ExplicitBitVect>> fps;
-  {
-    NOGIL gil;
-    fps = MolProcessing::getFingerprintsForMolsInFile(fileName, options,
-                                                      generator);
-  }
-
   python::list pyFingerprints;
   for (auto &fp : fps) {
     pyFingerprints.append(fp.release());
@@ -92,12 +76,19 @@ BOOST_PYTHON_MODULE(rdMolProcessing) {
                      "used for TDT files");
 
   python::def(
-      "GetFingerprintsForMolsInFile", &getFingerprintsHelper32,
+      "GetFingerprintsForMolsInFile",
+      (python::tuple(*)(const std::string &, python::object,
+                        const GeneralMolSupplier::SupplierOptions &))
+          getFingerprintsHelper<std::uint32_t>,
       (python::arg("filename"), python::arg("generator") = python::object(),
        python::arg("options") = GeneralMolSupplier::SupplierOptions()),
-      "returns the fingerprints for the molecules in a file");
-  python::def("GetFingerprintsForMolsInFile", &getFingerprintsHelper64,
-              (python::arg("filename"), python::arg("generator"),
-               python::arg("options") = GeneralMolSupplier::SupplierOptions()),
-              "returns the fingerprints for the molecules in a file");
+      "returns the fingerprints for the molecules in a file (32 bit version)");
+  python::def(
+      "GetFingerprintsForMolsInFile",
+      (python::tuple(*)(const std::string &, python::object,
+                        const GeneralMolSupplier::SupplierOptions &))
+          getFingerprintsHelper<std::uint64_t>,
+      (python::arg("filename"), python::arg("generator") = python::object(),
+       python::arg("options") = GeneralMolSupplier::SupplierOptions()),
+      "returns the fingerprints for the molecules in a file (64 bit version)");
 }
