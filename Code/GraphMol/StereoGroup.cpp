@@ -2,7 +2,9 @@
 #include <utility>
 #include <vector>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "StereoGroup.h"
 #include "Atom.h"
