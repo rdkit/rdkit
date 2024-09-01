@@ -1122,7 +1122,7 @@ void finalizeQueryFromDescription(
     // don't need to do anything here because the classes
     // automatically have everything set
   } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor" ||
-             descr == "HasProp") {
+             descr == "HasProp" || descr == "HasPropWithValue") {
     // don't need to do anything here because the classes
     // automatically have everything set
   } else {
@@ -1162,7 +1162,7 @@ void finalizeQueryFromDescription(
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
   } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor" ||
-             descr == "HasProp") {
+             descr == "HasProp" || descr == "HasPropWithValue") {
     // don't need to do anything here because the classes
     // automatically have everything set
   } else {
