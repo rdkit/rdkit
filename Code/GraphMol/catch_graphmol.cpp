@@ -4087,6 +4087,40 @@ M  END
   }
 }
 
+TEST_CASE("Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group", "[RWMol]") {
+  {
+    auto mol = "C1CC1"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getStereoGroups().empty());
+    auto other = "C1CNC1"_smiles;
+    CHECK(other->getStereoGroups().empty());
+    REQUIRE(other);
+    mol->insertMol(*other);
+    CHECK(mol->getStereoGroups().empty());
+    auto molblock = MolToMolBlock(*mol);
+    auto molblockV3k = MolToV3KMolBlock(*mol);
+    CHECK(molblock.find("V2000") != std::string::npos);
+    CHECK(molblockV3k.find("V3000") != std::string::npos);
+    CHECK(molblockV3k.find("STEABS ATOMS=(0)") == std::string::npos);
+  }
+  {
+    auto mol = "CC[C@H](C)N |&1:2,r,lp:4:1|"_smiles;
+    REQUIRE(mol);
+    CHECK(!mol->getStereoGroups().empty());
+    auto other = "CC[C@H](C)O |o1:2,r,lp:4:2|"_smiles;
+    CHECK(!other->getStereoGroups().empty());
+    REQUIRE(other);
+    mol->insertMol(*other);
+    CHECK(!mol->getStereoGroups().empty());
+    auto molblock = MolToMolBlock(*mol);
+    CHECK(molblock.find("V2000") == std::string::npos);
+    CHECK(molblock.find("V3000") != std::string::npos);
+    CHECK(molblock.find("STERAC1 ATOMS=(1 3)") != std::string::npos);
+    CHECK(molblock.find("STEREL1 ATOMS=(1 8)") != std::string::npos);
+    CHECK(molblock.find("STEABS ATOMS=(0)") == std::string::npos);
+  }
+}
+
 TEST_CASE("Hybridization of dative bonded atoms") {
   const std::vector<Atom::HybridizationType> ref_hybridizations = {
       Atom::HybridizationType::SP3, Atom::HybridizationType::SP3,
