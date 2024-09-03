@@ -387,24 +387,17 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
         template_atom1_neighbor == -1 || template_atom2_neighbor == -1) {
       return false;
     }
-    auto conf = template_mol.getConformer();
-    RDGeom::Point2D atom1_loc(conf.getAtomPos(template_atom1));
-    RDGeom::Point2D atom2_loc(conf.getAtomPos(template_atom2));
-    RDGeom::Point2D atom1_neighbor_loc(
-        conf.getAtomPos(template_atom1_neighbor));
-    RDGeom::Point2D atom2_neighbor_loc(
-        conf.getAtomPos(template_atom2_neighbor));
+    const auto &conf = template_mol.getConformer();
+    const auto &atom1_loc = conf.getAtomPos(template_atom1);
+    const auto &atom2_loc = conf.getAtomPos(template_atom2);
+    const auto &atom1_neighbor_loc = conf.getAtomPos(template_atom1_neighbor);
+    const auto &atom2_neighbor_loc = conf.getAtomPos(template_atom2_neighbor);
     // check if the two neighbors are on the same side of the bond
-    auto x1 = atom1_neighbor_loc.x;
-    auto y1 = atom1_neighbor_loc.y;
-    auto x2 = atom1_loc.x;
-    auto y2 = atom1_loc.y;
-    auto x3 = atom2_loc.x;
-    auto y3 = atom2_loc.y;
-    auto x4 = atom2_neighbor_loc.x;
-    auto y4 = atom2_neighbor_loc.y;
-    auto cross1 = (x3 - x2) * (y1 - y2) - (y3 - y2) * (x1 - x2);
-    auto cross2 = (x3 - x2) * (y4 - y2) - (y3 - y2) * (x4 - x2);
+    const auto v12 = atom1_neighbor_loc - atom1_loc;
+    const auto v42 = atom2_neighbor_loc - atom1_loc;
+    const auto v32 = atom2_loc - atom1_loc;
+    auto cross1 = v32.x * v12.y - v32.y * v12.x;
+    auto cross2 = v32.x * v42.y - v32.y * v42.x;
     bool is_cis = cross1 * cross2 > 0;
     if (is_cis != (bond->getStereo() == RDKit::Bond::STEREOZ ||
                    bond->getStereo() == RDKit::Bond::STEREOCIS)) {
