@@ -90,28 +90,41 @@ class DrawerFromDetails {
     }
     initDrawer(molDrawingDetails);
     const ROMol *molPtr = &mol;
-    std::unique_ptr<ROMol> origWedgingMol;
-    if (molDrawingDetails.useMolBlockWedging) {
-      origWedgingMol.reset(new ROMol(mol));
-      Chirality::reapplyMolBlockWedging(*origWedgingMol);
-      molPtr = origWedgingMol.get();
-      drawer().drawOptions().useMolBlockWedging = false;
+    std::unique_ptr<RWMol> drawnMol;
+    bool haveMultiMap = (!molDrawingDetails.atomMultiMap.empty() ||
+      !molDrawingDetails.bondMultiMap.empty());
+    if (molDrawingDetails.useMolBlockWedging || haveMultiMap) {
+      drawnMol.reset(new RWMol(mol));
+      molPtr = static_cast<ROMol *>(drawnMol.get());
+      if (molDrawingDetails.useMolBlockWedging) {
+        Chirality::reapplyMolBlockWedging(*drawnMol);
+        drawer().drawOptions().useMolBlockWedging = false;
+      }
     }
     drawer().setOffset(molDrawingDetails.offsetx, molDrawingDetails.offsety);
-
-    MolDraw2DUtils::prepareAndDrawMolecule(
-        drawer(), *molPtr, molDrawingDetails.legend, &molDrawingDetails.atomIds,
-        &molDrawingDetails.bondIds,
-        molDrawingDetails.atomMap.empty() ? nullptr
-                                          : &molDrawingDetails.atomMap,
-        molDrawingDetails.bondMap.empty() ? nullptr
-                                          : &molDrawingDetails.bondMap,
-        molDrawingDetails.radiiMap.empty() ? nullptr
-                                           : &molDrawingDetails.radiiMap,
-        -1, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
-        molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
-        molDrawingDetails.wavyBonds);
-
+    if (!haveMultiMap) {
+      MolDraw2DUtils::prepareAndDrawMolecule(
+          drawer(), *molPtr, molDrawingDetails.legend, &molDrawingDetails.atomIds,
+          &molDrawingDetails.bondIds,
+          molDrawingDetails.atomMap.empty() ? nullptr
+                                            : &molDrawingDetails.atomMap,
+          molDrawingDetails.bondMap.empty() ? nullptr
+                                            : &molDrawingDetails.bondMap,
+          molDrawingDetails.radiiMap.empty() ? nullptr
+                                            : &molDrawingDetails.radiiMap,
+          -1, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
+          molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
+          molDrawingDetails.wavyBonds);
+    } else {
+      MolDraw2DUtils::prepareMolForDrawing(
+          *drawnMol, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
+          molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
+          molDrawingDetails.wavyBonds);
+      drawer().drawMoleculeWithHighlights(
+          *drawnMol, molDrawingDetails.legend, molDrawingDetails.atomMultiMap,
+          molDrawingDetails.bondMultiMap, molDrawingDetails.radiiMap,
+          molDrawingDetails.lineWidthMultiplierMap);
+    }
     return finalizeDrawing();
   }
   std::string draw_rxn(const ChemicalReaction &rxn) {
