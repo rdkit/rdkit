@@ -92,7 +92,7 @@ class DrawerFromDetails {
     const ROMol *molPtr = &mol;
     std::unique_ptr<RWMol> drawnMol;
     bool haveMultiMap = (!molDrawingDetails.atomMultiMap.empty() ||
-      !molDrawingDetails.bondMultiMap.empty());
+                         !molDrawingDetails.bondMultiMap.empty());
     if (molDrawingDetails.useMolBlockWedging || haveMultiMap) {
       drawnMol.reset(new RWMol(mol));
       molPtr = static_cast<ROMol *>(drawnMol.get());
@@ -104,14 +104,14 @@ class DrawerFromDetails {
     drawer().setOffset(molDrawingDetails.offsetx, molDrawingDetails.offsety);
     if (!haveMultiMap) {
       MolDraw2DUtils::prepareAndDrawMolecule(
-          drawer(), *molPtr, molDrawingDetails.legend, &molDrawingDetails.atomIds,
-          &molDrawingDetails.bondIds,
+          drawer(), *molPtr, molDrawingDetails.legend,
+          &molDrawingDetails.atomIds, &molDrawingDetails.bondIds,
           molDrawingDetails.atomMap.empty() ? nullptr
                                             : &molDrawingDetails.atomMap,
           molDrawingDetails.bondMap.empty() ? nullptr
                                             : &molDrawingDetails.bondMap,
           molDrawingDetails.radiiMap.empty() ? nullptr
-                                            : &molDrawingDetails.radiiMap,
+                                             : &molDrawingDetails.radiiMap,
           -1, molDrawingDetails.kekulize, molDrawingDetails.addChiralHs,
           molDrawingDetails.wedgeBonds, molDrawingDetails.forceCoords,
           molDrawingDetails.wavyBonds);
