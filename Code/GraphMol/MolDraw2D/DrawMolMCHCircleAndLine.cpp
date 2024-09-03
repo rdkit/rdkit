@@ -203,6 +203,7 @@ void DrawMolMCHCircleAndLine::calcSymbolEllipse(unsigned int atomIdx,
                                                 Point2D &centre,
                                                 double &xradius,
                                                 double &yradius) const {
+  PRECONDITION(atomIdx < atCds_.size() && atomIdx < atomLabels_.size(), "")
   centre = atCds_[atomIdx];
   getAtomRadius(atomIdx, xradius, yradius);
   if (drawOptions_.atomHighlightsAreCircles || !atomLabels_[atomIdx] ||
