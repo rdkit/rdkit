@@ -372,7 +372,8 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
   double totalDensity();
 
   // returns true if fused rings found a template
-  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
+  bool matchToTemplate(const RDKit::VECT_INT_VECT &fusedRings,
+                       const RDKit::INT_VECT &ringSystemAtoms,
                        unsigned int ring_count);
 
   void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
