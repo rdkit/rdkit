@@ -230,7 +230,6 @@ TEST_CASE("use ring system templates") {
 TEST_CASE("templates are aware of E/Z stereochemistry") {
   // this is a molecule we have a template for
   auto mol1 =
-      ""
       "CCC1C2=N[C@@](C)(C3N/C(=C(/C)C4=N/C(=C\\C5=N/C(=C\\2C)[C@@](C)(CC(N)=O)C5CCC(N)=O)C(C)(C)C4CCC(N)=O)[C@](C)(CCC(=O)NC)C3C)C1(C)C"_smiles;
   // and this is the same molecule with different stereochemistry on double
   // bonds
