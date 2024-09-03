@@ -365,8 +365,8 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
     }
     int atom1_neighbor = neighbors[0];
     int atom2_neighbor = neighbors[1];
-    int atom1 = bond->getBeginAtom()->getIdx();
-    int atom2 = bond->getEndAtom()->getIdx();
+    int atom1 = bond->getBeginAtomIdx();
+    int atom2 = bond->getEndAtomIdx();
     // find the template atoms that correspond to the four atoms
     int template_atom1 = -1;
     int template_atom2 = -1;
