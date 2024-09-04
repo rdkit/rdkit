@@ -129,9 +129,6 @@ std::string chemicalReactionToRxnToString(
   res += ">";
   res +=
       chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles, params);
-  res += ">";
-  res += chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles,
-                                           canonical);
 
   if (params.includeCX) {
     // I think this will work? combine reactants, agents and products into a
