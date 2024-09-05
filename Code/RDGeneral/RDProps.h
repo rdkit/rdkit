@@ -30,8 +30,9 @@ class RDProps {
   }
   RDProps(RDProps &&o) noexcept = default;
   RDProps &operator=(RDProps &&rhs) noexcept = default;
+  virtual ~RDProps() = default;
 
-  void clear() { d_props.reset(); }
+  virtual void clear() { d_props.reset(); }
   //! gets the underlying Dictionary
   const Dict &getDict() const { return d_props; }
   Dict &getDict() { return d_props; }

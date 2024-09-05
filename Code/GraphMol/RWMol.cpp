@@ -134,6 +134,10 @@ RWMol &RWMol::operator=(const RWMol &other) {
   return *this;
 }
 
+RWMol::~RWMol() {
+  clear();
+}
+
 void RWMol::insertMol(const ROMol &other) {
   auto origNumAtoms = getNumAtoms();
   auto origNumBonds = getNumBonds();
