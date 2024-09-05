@@ -18,25 +18,25 @@ MultithreadedMolSupplier::~MultithreadedMolSupplier() {
   endThreads();
   // destroy all objects in the input queue
   d_inputQueue->clear();
-  // delete the pointer to the input queue
-  delete d_inputQueue;
-  std::tuple<RWMol*, std::string, unsigned int> r;
-  while (d_outputQueue->pop(r)) {
-    RWMol* m = std::get<0>(r);
-    delete m;
+  if (df_started) {
+    std::tuple<RWMol *, std::string, unsigned int> r;
+    while (d_outputQueue->pop(r)) {
+      RWMol *m = std::get<0>(r);
+      delete m;
+    }
   }
   // destroy all objects in the output queue
   d_outputQueue->clear();
-  // delete the pointer to the output queue
-  delete d_outputQueue;
 }
 
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;
   while (extractNextRecord(record, lineNum, index)) {
-    auto r = std::tuple<std::string, unsigned int, unsigned int>{
-        record, lineNum, index};
+    if (readCallback) {
+      record = readCallback(record, index);
+    }
+    auto r = std::make_tuple(record, lineNum, index);
     d_inputQueue->push(r);
   }
   d_inputQueue->setDone();
@@ -47,12 +47,15 @@ void MultithreadedMolSupplier::writer() {
   while (d_inputQueue->pop(r)) {
     try {
       auto mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
-      auto temp = std::tuple<RWMol*, std::string, unsigned int>{
+      if (mol && writeCallback) {
+        writeCallback(*mol, std::get<0>(r), std::get<2>(r));
+      }
+      auto temp = std::tuple<RWMol *, std::string, unsigned int>{
           mol, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(temp);
     } catch (...) {
       // fill the queue wih a null value
-      auto nullValue = std::tuple<RWMol*, std::string, unsigned int>{
+      auto nullValue = std::tuple<RWMol *, std::string, unsigned int>{
           nullptr, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(nullValue);
     }
@@ -65,19 +68,29 @@ void MultithreadedMolSupplier::writer() {
 }
 
 std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
-  std::tuple<RWMol*, std::string, unsigned int> r;
+  if (!df_started) {
+    df_started = true;
+    startThreads();
+  }
+  std::tuple<RWMol *, std::string, unsigned int> r;
   if (d_outputQueue->pop(r)) {
     d_lastItemText = std::get<1>(r);
     d_lastRecordId = std::get<2>(r);
     std::unique_ptr<RWMol> res{std::get<0>(r)};
+    if (res && nextCallback) {
+      nextCallback(*res, *this);
+    }
     return res;
   }
   return nullptr;
 }
 
 void MultithreadedMolSupplier::endThreads() {
+  if (!df_started) {
+    return;
+  }
   d_readerThread.join();
-  for (auto& thread : d_writerThreads) {
+  for (auto &thread : d_writerThreads) {
     thread.join();
   }
 }
