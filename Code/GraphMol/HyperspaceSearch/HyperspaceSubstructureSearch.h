@@ -37,6 +37,11 @@ namespace HyperspaceSSSearch {
 std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
                                              unsigned int maxBondSplits,
                                              const std::string &libName);
+
+namespace details {
+std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
+    const ROMol &query, unsigned int maxBondSplits);
+}  // namespace details
 }  // namespace HyperspaceSSSearch
 }  // namespace RDKit
 

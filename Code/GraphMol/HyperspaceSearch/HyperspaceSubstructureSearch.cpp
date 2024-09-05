@@ -32,6 +32,8 @@
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
+#include "Hyperspace.h"
+
 namespace RDKit {
 namespace HyperspaceSSSearch {
 namespace details {
@@ -57,7 +59,11 @@ std::vector<std::vector<unsigned int>> getBondCombinations(int numSplits,
 }
 
 // Split the molecule into fragments.  maxBondSplits gives the maximum number
-// of bonds to be used in each split.
+// of bonds to be used in each split.  There will 1 vector of molecules
+// for each split i.e. maxBondSplits in total, the first with 1 split, the 2nd
+// with 2 etc.  Each ROMol contains a split molecule containing the fragments
+// after the split (the SMILES will be dot-connected with isotope-labelled
+// dummies showing the split bonds).
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits) {
   std::cout << "Splitting " << MolToSmiles(query) << " with " << maxBondSplits
@@ -133,15 +139,22 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   }
   return fragments;
 }
+
 }  // namespace details
 
 std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
                                              unsigned int maxBondSplits,
                                              const std::string &libName) {
-  std::vector<std::unique_ptr<ROMol>> results;
   std::cout << "Searching library " << libName << " for structures containing "
             << MolToSmiles(query) << std::endl;
-  auto fragments = details::splitMolecule(query, maxBondSplits);
+  Hyperspace hyperspace(libName);
+  std::cout << "Number of reactions : " << hyperspace.numReactions()
+            << std::endl;
+  auto &reactions = hyperspace.reactions();
+  for (const auto &r : reactions) {
+    std::cout << r->d_id << " : " << r->d_reagents.size() << std::endl;
+  }
+  auto results = hyperspace.search(query, maxBondSplits);
   return results;
 }
 
