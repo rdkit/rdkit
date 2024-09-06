@@ -33,4 +33,13 @@ for m in rxn.GetProducts():
 
 # print(rdChemReactions.ReactionToSmarts(rxn))
 # print(rdChemReactions.ReactionToSmarts(rxn, includeCX=True))
-print(rdChemReactions.ReactionToSmarts(rxn, includeCX=True))
+# ps = Chem.SmilesWriteParams()
+# print(dir(ps))
+# ps.includeCX = True
+
+# print(ps.includeCX)
+
+# ps.adfgadgh = False
+print(rdChemReactions.ReactionToCXSmarts(rxn))
+
+print(dir(rdChemReactions))

@@ -74,6 +74,7 @@ enum CXSmilesFields : uint32_t { CXSMILESFIELDS_ENUM_ITEMS };
   }
 
 //! \brief returns the cxsmiles data for a molecule
+// TODO: update this to take a vector of mol pointers
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
     const ROMol &mol, std::uint32_t flags = CXSmilesFields::CX_ALL);
 
