@@ -457,7 +457,7 @@ endif()
 target_include_directories(rdkit_base INTERFACE
                            $<BUILD_INTERFACE:${RDKit_CodeDir}>
                            $<INSTALL_INTERFACE:${RDKit_HdrDir}>
-                           ${Boost_INCLUDE_DIR}
+                           ${Boost_INCLUDE_DIRS}
                            )
 target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
 
