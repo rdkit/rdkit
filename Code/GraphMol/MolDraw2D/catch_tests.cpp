@@ -9992,3 +9992,50 @@ TEST_CASE("Github 7739 - Bad multi-coloured wedge") {
     check_file_hash(fileStem + "5.svg");
   }
 }
+
+TEST_CASE("idx out of bounds should not cause a segfault") {
+  auto m = "C"_smiles;
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    std::map<int, std::vector<DrawColour>> atomCols{{2, {DrawColour(0, 0, 0)}}};
+    std::map<int, std::vector<DrawColour>> bondCols;
+    std::map<int, double> atomRads{{2, 1.0}};
+    std::map<int, int> bondMults;
+    REQUIRE_THROWS_AS(
+        drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
+                                          atomRads, bondMults),
+        Invar::Invariant);
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    std::map<int, std::vector<DrawColour>> atomCols;
+    std::map<int, std::vector<DrawColour>> bondCols{{2, {DrawColour(0, 0, 0)}}};
+    std::map<int, double> atomRads;
+    std::map<int, int> bondMults;
+    REQUIRE_THROWS_AS(
+        drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
+                                          atomRads, bondMults),
+        Invar::Invariant);
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    std::map<int, std::vector<DrawColour>> atomCols{{0, {DrawColour(0, 0, 0)}}};
+    std::map<int, std::vector<DrawColour>> bondCols;
+    std::map<int, double> atomRads{{2, 1.0}};
+    std::map<int, int> bondMults;
+    REQUIRE_NOTHROW(
+        drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
+                                          atomRads, bondMults));
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    std::map<int, std::vector<DrawColour>> atomCols;
+    std::map<int, std::vector<DrawColour>> bondCols{{0, {DrawColour(0, 0, 0)}}};
+    std::map<int, double> atomRads;
+    std::map<int, int> bondMults{{2, 10}};
+    REQUIRE_THROWS_AS(
+        drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
+                                          atomRads, bondMults),
+        Invar::Invariant);
+  }
+}

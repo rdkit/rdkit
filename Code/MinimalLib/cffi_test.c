@@ -2295,7 +2295,8 @@ void test_assign_chiral_tags_from_mol_parity() {
   char *mpkl;
   size_t mpkl_size;
   char *smiles;
-  const char *artemisininCTAB = "68827\n\
+  const char *artemisininCTAB =
+      "68827\n\
   -OEChem-03262404452D\n\
 \n\
  20 23  0     1  0  0  0  0  0999 V2000\n\
@@ -2350,10 +2351,13 @@ M  END\n\
   assert(!strcmp(smiles, "CC1CCC2C(C)C(=O)OC3OC4(C)CCC1C32OO4"));
   free(smiles);
   free(mpkl);
-  mpkl = get_mol(artemisininCTAB, &mpkl_size, "{\"assignChiralTypesFromMolParity\":true}");
+  mpkl = get_mol(artemisininCTAB, &mpkl_size,
+                 "{\"assignChiralTypesFromMolParity\":true}");
   assert(mpkl);
   smiles = get_smiles(mpkl, mpkl_size, NULL);
-  assert(!strcmp(smiles, "C[C@@H]1CC[C@H]2[C@@H](C)C(=O)O[C@@H]3O[C@@]4(C)CC[C@@H]1[C@]32OO4"));
+  assert(!strcmp(
+      smiles,
+      "C[C@@H]1CC[C@H]2[C@@H](C)C(=O)O[C@@H]3O[C@@]4(C)CC[C@@H]1[C@]32OO4"));
   free(smiles);
   free(mpkl);
 }
@@ -2663,9 +2667,9 @@ M  END\n\
   char *mpkl;
   char *mpkl_copy;
   size_t mpkl_size;
-  const char *mb_rdkit_wedging;
-  const char *mb_rdkit_wedging_post_orig;
-  const char *mb_orig_wedging;
+  char *mb_rdkit_wedging;
+  char *mb_rdkit_wedging_post_orig;
+  char *mb_orig_wedging;
   mpkl = get_mol(mb, &mpkl_size, "");
   assert(mpkl && mpkl_size);
   mpkl_copy = malloc(mpkl_size);
@@ -2685,6 +2689,36 @@ M  END\n\
   free(mb_orig_wedging);
   free(mpkl);
   free(mpkl_copy);
+}
+
+void test_multi_highlights() {
+  printf("--------------------------\n");
+  printf("  test_multi_highlights\n");
+  const char *smi =
+      "[H]c1cc2c(-c3ccnc(Nc4ccc(F)c(F)c4)n3)c(-c3cccc(C(F)(F)F)c3)nn2nc1C";
+  const char *details =
+      "{\"width\":250,\"height\":200,\"highlightAtomMultipleColors\":{\"15\":[[0.941,0.894,0.259]],\"17\":[[0,0.62,0.451]],\"21\":[[0.902,0.624,0]],\"22\":[[0.902,0.624,0]],\"23\":[[0.902,0.624,0]],\"24\":[[0.902,0.624,0]],\"25\":[[0.902,0.624,0]],\"26\":[[0.902,0.624,0]],\"27\":[[0.902,0.624,0]],\"28\":[[0.902,0.624,0]],\"29\":[[0.902,0.624,0]],\"30\":[[0.902,0.624,0]],\"35\":[[0.337,0.706,0.914]]},\"highlightBondMultipleColors\":{\"14\":[[0.941,0.894,0.259]],\"16\":[[0,0.62,0.451]],\"20\":[[0.902,0.624,0]],\"21\":[[0.902,0.624,0]],\"22\":[[0.902,0.624,0]],\"23\":[[0.902,0.624,0]],\"24\":[[0.902,0.624,0]],\"25\":[[0.902,0.624,0]],\"26\":[[0.902,0.624,0]],\"27\":[[0.902,0.624,0]],\"28\":[[0.902,0.624,0]],\"29\":[[0.902,0.624,0]],\"34\":[[0.337,0.706,0.914]],\"38\":[[0.902,0.624,0]]},\"highlightAtomRadii\":{\"15\":0.4,\"17\":0.4,\"21\":0.4,\"22\":0.4,\"23\":0.4,\"24\":0.4,\"25\":0.4,\"26\":0.4,\"27\":0.4,\"28\":0.4,\"29\":0.4,\"30\":0.4,\"35\":0.4},\"highlightLineWidthMultipliers\":{\"14\":2,\"16\":2,\"20\":2,\"21\":2,\"22\":2,\"23\":2,\"24\":2,\"25\":2,\"26\":2,\"27\":2,\"28\":2,\"29\":2,\"34\":2,\"38\":2}}";
+  const char *colors[] = {"#009E73", "#55B4E9", "#E69F00", "#EFE342", NULL};
+  char *mpkl;
+  char *svg_with_details;
+  char *svg_without_details;
+  size_t mpkl_size;
+  int i;
+  mpkl = get_mol(smi, &mpkl_size, "{\"removeHs\":false}");
+  assert(mpkl && mpkl_size);
+  svg_with_details = get_svg(mpkl, mpkl_size, details);
+  assert(strstr(svg_with_details, "ellipse"));
+  for (i = 0; colors[i]; ++i) {
+    assert(strstr(svg_with_details, colors[i]));
+  }
+  svg_without_details = get_svg(mpkl, mpkl_size, "");
+  assert(!strstr(svg_without_details, "ellipse"));
+  for (i = 0; colors[i]; ++i) {
+    assert(!strstr(svg_without_details, colors[i]));
+  }
+  free(svg_with_details);
+  free(svg_without_details);
+  free(mpkl);
 }
 
 int main() {
@@ -2721,5 +2755,6 @@ int main() {
   test_smiles_smarts_params();
   test_wedged_bond_atropisomer();
   test_get_molblock_use_molblock_wedging();
+  test_multi_highlights();
   return 0;
 }
