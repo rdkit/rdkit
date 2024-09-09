@@ -363,8 +363,6 @@ TEST_CASE("chiralRandomTest") {
         std::unique_ptr<ROMol> nmol{MolOps::renumberAtoms(*mol1, nVect)};
         RDKit::canonicalizeStereoGroups(nmol);
 
-        SmilesWriteParams wp;
-
         auto outSmi1 = MolToCXSmiles(*nmol);
 
         if (smiExpected == "") {
