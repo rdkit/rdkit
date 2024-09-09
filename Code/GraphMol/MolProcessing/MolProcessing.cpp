@@ -28,21 +28,10 @@ inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
 
 namespace {
 #ifdef RDK_BUILD_THREADSAFE_SSS
-inline std::mutex &fp_mutex_get() {
+inline std::mutex &get_fp_mutex() {
   // create on demand
   static std::mutex _mutex;
   return _mutex;
-}
-
-inline void fp_mutex_create() {
-  std::mutex &mutex = fp_mutex_get();
-  std::lock_guard<std::mutex> test_lock(mutex);
-}
-
-inline std::mutex &get_fp_mutex() {
-  static std::once_flag flag;
-  std::call_once(flag, fp_mutex_create);
-  return fp_mutex_get();
 }
 
 template <typename T>
