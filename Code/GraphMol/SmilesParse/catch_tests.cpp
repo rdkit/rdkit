@@ -28,6 +28,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 using namespace RDKit;
 
@@ -2615,8 +2616,8 @@ TEST_CASE("ensure unused features are not used") {
     SmilesWriteParams ps;
     ps.doIsomericSmiles = true;
 
-    Canon::canonicalizeStereoGroups(mol1);
-    Canon::canonicalizeStereoGroups(mol2);
+    RDKit::canonicalizeStereoGroups(mol1);
+    RDKit::canonicalizeStereoGroups(mol2);
 
     auto smiles = MolToCXSmiles(*mol1, ps);
     CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |a:1,&1:6|");

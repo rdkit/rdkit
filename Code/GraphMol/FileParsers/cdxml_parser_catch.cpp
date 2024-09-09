@@ -18,7 +18,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
-#include <GraphMol/Canon.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 using namespace RDKit;
 using namespace RDKit::v2::CDXMLParser;
@@ -489,7 +489,7 @@ TEST_CASE("CDXML") {
     for (auto &mol : mols) {
       auto tomol = std::unique_ptr<ROMol>(mol.release());
       tomol.get()->clearConformers();
-      Canon::canonicalizeStereoGroups(tomol);
+      RDKit::canonicalizeStereoGroups(tomol);
 
       CHECK(MolToSmiles(*tomol) == expected[i]);
       CHECK(MolToCXSmiles(*tomol, wp) == expected_cx[i++]);
@@ -1200,6 +1200,7 @@ TEST_CASE("Github #7501 - dative bonds") {
     auto fname = cdxmlbase + "github7501-dative.cdxml";
     CDXMLParserParams params;
     auto mols = MolsFromCDXMLFile(fname, params);
-    CHECK(MolToSmiles(*mols[0]) == "CC(C)->[Os]12<-CCCN->1CC=N->2"); // All datives to the Oxygen
+    CHECK(MolToSmiles(*mols[0]) ==
+          "CC(C)->[Os]12<-CCCN->1CC=N->2");  // All datives to the Oxygen
   }
 }

@@ -17,7 +17,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Chirality.h>
-#include <GraphMol/Canon.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
@@ -877,7 +877,7 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
 
     // test kekule and canonicalization
     {
-      Canon::canonicalizeStereoGroups(smilesMol);
+      RDKit::canonicalizeStereoGroups(smilesMol);
 
       std::string expectedMrvName = fName + ".kekule_expected.cxsmi";
       SmilesWriteParams ps;
@@ -906,7 +906,7 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
     smilesMol =
         std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
 
-    Canon::canonicalizeStereoGroups(smilesMol);
+    RDKit::canonicalizeStereoGroups(smilesMol);
 
     // test round trip back to smiles
     {
@@ -1451,7 +1451,7 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
 
   SECTION("forward input ids - rigorous") {
     forwardStereoGroupIds(*m);
-    Canon::canonicalizeStereoGroups(m);
+    RDKit::canonicalizeStereoGroups(m);
     const auto smi_out = MolToCXSmiles(*m);
     CHECK(smi_out.find("&1") != std::string::npos);
     CHECK(smi_out.find("&2") != std::string::npos);

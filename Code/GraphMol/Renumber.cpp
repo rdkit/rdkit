@@ -55,6 +55,13 @@ ROMol *renumberAtoms(const ROMol &mol,
       }
       nAtom->setProp(common_properties::_ringStereoAtoms, nAtoms, true);
     }
+
+    unsigned int otherAtom;
+    if (nAtom->getPropIfPresent(common_properties::_ringStereoOtherAtom,
+                                otherAtom)) {
+      otherAtom = revOrder[otherAtom];
+      nAtom->setProp(common_properties::_ringStereoOtherAtom, otherAtom, true);
+    }
   }
 
   // now the bonds:

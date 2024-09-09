@@ -35,7 +35,7 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 #include <GraphMol/Chirality.h>
-#include <GraphMol/Canon.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 #include <sstream>
 namespace python = boost::python;
@@ -900,10 +900,10 @@ python::tuple detectChemistryProblemsHelper(const ROMol &mol,
 }
 
 ROMol *canonicalizeStereoGroupsHelper(
-    ROMol &mol, Canon::StereoGroupAbsOptions stereoGroupAbsOptions) {
+    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions) {
   auto mol_uptr = std::unique_ptr<ROMol>(new ROMol(mol));
 
-  Canon::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions);
+  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions);
   return mol_uptr.release();
   ;
 }
@@ -2565,14 +2565,11 @@ ARGUMENTS:\n\
                 Chirality::removeNonExplicit3DChirality, (python::arg("mol")),
                 docString.c_str());
 
-    python::enum_<RDKit::Canon::StereoGroupAbsOptions>("StereoGroupAbsOptions")
+    python::enum_<RDKit::StereoGroupAbsOptions>("StereoGroupAbsOptions")
         .value("OnlyIncludeWhenOtherGroupsExist",
-               RDKit::Canon::StereoGroupAbsOptions::
-                   OnlyIncludeWhenOtherGroupsExist)
-        .value("NeverInclude",
-               RDKit::Canon::StereoGroupAbsOptions::NeverInclude)
-        .value("AlwaysInclude",
-               RDKit::Canon::StereoGroupAbsOptions::AlwaysInclude);
+               RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist)
+        .value("NeverInclude", RDKit::StereoGroupAbsOptions::NeverInclude)
+        .value("AlwaysInclude", RDKit::StereoGroupAbsOptions::AlwaysInclude);
 
     docString =
         "Rationalize Enhanced Stereo indications to a canonical form \n\
@@ -2588,7 +2585,7 @@ ARGUMENTS:\n\
         "CanonicalizeStereoGroups", canonicalizeStereoGroupsHelper,
         (python::arg("mol"),
          python::arg("outputAbsoluteGroups") =
-             Canon::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist),
+             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
 

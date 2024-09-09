@@ -11,11 +11,6 @@
 #ifndef RD_CANON_H
 #define RD_CANON_H
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <tuple>
-#include <boost/dynamic_bitset.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-
 namespace RDKit {
 class ROMol;
 class Atom;
@@ -47,12 +42,6 @@ typedef union {
   Atom *atom;
   Bond *bond;
 } MolStackUnion;
-
-class RigorousEnhancedStereoException : public std::runtime_error {
- public:
-  explicit RigorousEnhancedStereoException(std::string message)
-      : std::runtime_error(message) {};
-};
 
 //! these are the actual elements in the molecular stack
 class RDKIT_GRAPHMOL_EXPORT MolStackElem {
@@ -142,23 +131,6 @@ RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT void canonicalizeEnhancedStereo(
     ROMol &mol, const std::vector<unsigned int> *atomRanks = nullptr);
-
-enum class StereoGroupAbsOptions {
-  OnlyIncludeWhenOtherGroupsExist =
-      0,  // when stereo groups are canonicalized, ABS groups are added only
-          // when other Stereo Groups are added this prevents a mol from having
-          // JUST an ABS stereo group
-  NeverInclude,  // Abs groups are never included, Just AND and OR groups after
-                 // stereo group canonicalization
-  AlwaysInclude  // when stereo groups are canonicalized, ABS groups are added
-                 // only when other Stereo Groups are added this prevents a mol
-                 // from having JUST an ABS stereo group
-};
-
-RDKIT_GRAPHMOL_EXPORT void canonicalizeStereoGroups(
-    std::unique_ptr<ROMol> &mol,
-    StereoGroupAbsOptions outputAbsoluteGroups =
-        StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist);
 
 }  // end of namespace Canon
 }  // end of namespace RDKit

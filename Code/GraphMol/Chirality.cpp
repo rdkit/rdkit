@@ -2199,7 +2199,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
   // have it already:
   // NOTE, if called from the SMART code, the ring info will be DUMMY, and
   // contains no information
-  if (!mol.getRingInfo()->isFindFastOrBetterOrDummy()) {
+  if (!mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
 
