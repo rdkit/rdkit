@@ -35,9 +35,9 @@ inline std::mutex &get_fp_mutex() {
 }
 
 template <typename T>
-void mtWorker(v2::FileParsers::MultithreadedMolSupplier *suppl,
-              std::function<T *(RWMol &)> func,
-              std::vector<std::unique_ptr<T>> &results) {
+std::vector<std::unique_ptr<T>> mtWorker(
+    v2::FileParsers::MultithreadedMolSupplier *suppl,
+    std::function<T *(RWMol &)> func) {
   PRECONDITION(suppl, "no supplier");
   std::map<unsigned int, std::unique_ptr<T>> accum;
 
@@ -59,17 +59,17 @@ void mtWorker(v2::FileParsers::MultithreadedMolSupplier *suppl,
   for (const auto &pr : accum) {
     maxv = std::max(maxv, pr.first);
   }
-  results.resize(maxv);
+  std::vector<std::unique_ptr<T>> results(maxv);
   for (auto &pr : accum) {
     results[pr.first - 1] = std::move(pr.second);
   }
+  return results;
 }
 #endif
 
 template <typename T>
-void worker(v2::FileParsers::MolSupplier *suppl,
-            std::function<T *(RWMol &)> func,
-            std::vector<std::unique_ptr<T>> &results) {
+std::vector<std::unique_ptr<T>> worker(v2::FileParsers::MolSupplier *suppl,
+                                       std::function<T *(RWMol &)> func) {
   PRECONDITION(suppl, "no supplier");
   // if we are using a multi-threaded supplier then we can register a write
   // callback to do our processing multi-threaded too
@@ -77,12 +77,13 @@ void worker(v2::FileParsers::MolSupplier *suppl,
   auto tsuppl =
       dynamic_cast<v2::FileParsers::MultithreadedMolSupplier *>(suppl);
   if (tsuppl) {
-    mtWorker(tsuppl, func, results);
+    return mtWorker(tsuppl, func);
   } else {
 #else
   {
 #endif
     // otherwise we just loop through the molecules
+    std::vector<std::unique_ptr<T>> results;
     while (!suppl->atEnd()) {
       auto mol = suppl->next();
       if (mol) {
@@ -92,6 +93,7 @@ void worker(v2::FileParsers::MolSupplier *suppl,
         results.emplace_back(nullptr);
       }
     }
+    return results;
   }
 }
 }  // namespace
@@ -123,8 +125,7 @@ std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprintsForMolsInFile(
   std::function<ExplicitBitVect *(RWMol &)> func = [&](RWMol &mol) {
     return generator->getFingerprint(mol);
   };
-  std::vector<std::unique_ptr<ExplicitBitVect>> results;
-  worker(suppl.get(), func, results);
+  auto results = worker(suppl.get(), func);
   return results;
 }
 
