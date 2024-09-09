@@ -6,11 +6,11 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-#include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "pubchem-align3d/shape_functions.hpp"
 #include "PubChemShape.hpp"
@@ -110,7 +110,7 @@ class ss_matcher {
   ~ss_matcher() { delete m_matcher; };
 
  private:
-  ss_matcher() : m_pattern("") {};
+  ss_matcher() : m_pattern(""){};
   std::string m_pattern;
   bool m_needCopies{false};
   const RDKit::ROMol *m_matcher{nullptr};
