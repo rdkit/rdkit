@@ -52,9 +52,8 @@ python::tuple alignMol2(const ShapeInput &ref, RDKit::ROMol &probe,
                     max_preiters, max_postiters);
   return python::make_tuple(nbr_st, nbr_ct);
 }
-ShapeInputStruct *prepConf(const RDKit::ROMol &mol, int confId,
-                           bool useColors) {
-  return new ShapeInputStruct(PrepareConformer(mol, confId, useColors));
+ShapeInput *prepConf(const RDKit::ROMol &mol, int confId, bool useColors) {
+  return new ShapeInput(PrepareConformer(mol, confId, useColors));
 }
 }  // namespace helpers
 
@@ -81,8 +80,7 @@ void wrap_pubchemshape() {
                python::arg("useColors") = true),
               "returns a shape object for a molecule",
               python::return_value_policy<python::manage_new_object>());
-  python::class_<ShapeInputStruct, boost::noncopyable>("ShapeInput",
-                                                       python::no_init)
+  python::class_<ShapeInput, boost::noncopyable>("ShapeInput", python::no_init)
       .def_readwrite("coord", &ShapeInput::coord)
       .def_readwrite("alpha_vector", &ShapeInput::alpha_vector)
       .def_readwrite("atom_type_vector", &ShapeInput::atom_type_vector)
