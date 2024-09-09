@@ -22,7 +22,7 @@ TEST_CASE("getFingerprintsForMolsInFile") {
   dirName += "/Data/NCI/";
   SECTION("SDF") {
     std::string fileName = dirName + "first_200.props.sdf";
-    auto res = MolProccesing::getFingerprintsForMolsInFile<>(fileName);
+    auto res = MolProcessing::getFingerprintsForMolsInFile<>(fileName);
 
     CHECK(res.size() == 200);
     for (auto i = 0u; i < res.size(); ++i) {
@@ -37,14 +37,14 @@ TEST_CASE("getFingerprintsForMolsInFile") {
     boost::logging::disable_logs("rdApp.*");
     {
       auto res =
-          MolProccesing::getFingerprintsForMolsInFile<>(fileName, options);
+          MolProcessing::getFingerprintsForMolsInFile<>(fileName, options);
       CHECK(res.size() == 4999);
     }
     {
       RDKit::GeneralMolSupplier::SupplierOptions options;
       options.numWriterThreads = 1;
       options.titleLine = false;
-      auto res = RDKit::MolProccesing::getFingerprintsForMolsInFile<>(fileName,
+      auto res = RDKit::MolProcessing::getFingerprintsForMolsInFile<>(fileName,
                                                                       options);
       CHECK(res.size() == 4999);
     }
