@@ -59,6 +59,7 @@ __pycache__/
 /Code/GraphMol/SmilesParse/smarts.tab.hpp
 /Code/GraphMol/SmilesParse/smiles.tab.cpp
 /Code/GraphMol/SmilesParse/smiles.tab.hpp
+/Code/GraphMol/SmilesParse/smiles_location.tab.hpp
 
 /External/**/*.tar.gz
 /External/**/*.zip

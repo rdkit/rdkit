@@ -1,9 +1,9 @@
-if(RDK_USE_FLEXBISON)
-  FIND_PACKAGE(BISON)
-  FIND_PACKAGE(FLEX)
+if (RDK_USE_FLEXBISON)
+    FIND_PACKAGE(BISON 3.8.0 REQUIRED)
+    FIND_PACKAGE(FLEX 2.6.0 REQUIRED)
 else(RDK_USE_FLEXBISON)
-  set(FLEX_EXECUTABLE "")
-  set(BISON_EXECUTABLE "")
+    set(FLEX_EXECUTABLE "")
+    set(BISON_EXECUTABLE "")
 endif(RDK_USE_FLEXBISON)
 
 if(MSVC)
@@ -15,10 +15,11 @@ if(CMAKE_COMPILER_IS_CLANG AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 15)
 set_source_files_properties(smarts.tab.cpp smiles.tab.cpp PROPERTIES COMPILE_OPTIONS "-Wno-unused-but-set-variable")
 endif()
 
+
 if(FLEX_EXECUTABLE)
   FLEX_TARGET(SmilesL smiles.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmiles.cpp
-             COMPILE_FLAGS "-Pyysmiles_" )
+              COMPILE_FLAGS "-Pyysmiles_" )
   FLEX_TARGET(SmartsL smarts.ll
               ${CMAKE_CURRENT_SOURCE_DIR}/lex.yysmarts.cpp
               COMPILE_FLAGS "-Pyysmarts_" )
@@ -34,7 +35,8 @@ endif(FLEX_EXECUTABLE)
 if(BISON_EXECUTABLE)
   BISON_TARGET(SmilesY smiles.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp
-               COMPILE_FLAGS "-pyysmiles_" )
+               DEFINES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.hpp
+               COMPILE_FLAGS "-pyysmiles_ -Wall -Werror" )
   BISON_TARGET(SmartsY smarts.yy
                ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp
                COMPILE_FLAGS "-pyysmarts_" )
@@ -48,6 +50,8 @@ else(BISON_EXECUTABLE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smiles.tab.cpp COPYONLY)
+  CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smiles_location.tab.hpp.cmake
+                 ${CMAKE_CURRENT_SOURCE_DIR}/smiles_location.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.hpp.cmake
                  ${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.hpp COPYONLY)
   CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/smarts.tab.cpp.cmake
@@ -55,10 +59,13 @@ else(BISON_EXECUTABLE)
   FILE(GLOB BISON_OUTPUT_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.tab.?pp")
 endif(BISON_EXECUTABLE)
 
+# do this to make FlexLexer.h discoverable
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
               SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
+              SmilesASTParser.cpp SmilesMolBuilder.cpp
               ${BISON_OUTPUT_FILES}
               ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol RDGeneral)
