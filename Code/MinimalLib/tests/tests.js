@@ -3176,6 +3176,19 @@ function test_get_mol_copy() {
     }
 }
 
+function test_multi_highlights() {
+    const mol = RDKitModule.get_mol('[H]c1cc2c(-c3ccnc(Nc4ccc(F)c(F)c4)n3)c(-c3cccc(C(F)(F)F)c3)nn2nc1C', JSON.stringify({removeHs: false}));
+    const details = '{"width":250,"height":200,"highlightAtomMultipleColors":{"15":[[0.941,0.894,0.259]],"17":[[0,0.62,0.451]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"30":[[0.902,0.624,0]],"35":[[0.337,0.706,0.914]]},"highlightBondMultipleColors":{"14":[[0.941,0.894,0.259]],"16":[[0,0.62,0.451]],"20":[[0.902,0.624,0]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"34":[[0.337,0.706,0.914]],"38":[[0.902,0.624,0]]},"highlightAtomRadii":{"15":0.4,"17":0.4,"21":0.4,"22":0.4,"23":0.4,"24":0.4,"25":0.4,"26":0.4,"27":0.4,"28":0.4,"29":0.4,"30":0.4,"35":0.4},"highlightLineWidthMultipliers":{"14":2,"16":2,"20":2,"21":2,"22":2,"23":2,"24":2,"25":2,"26":2,"27":2,"28":2,"29":2,"34":2,"38":2}}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('ellipse'));
+    const COLORS = ['#009E73', '#55B4E9', '#E69F00', '#EFE342'];
+    assert(COLORS.every((color) => svgWithDetails.includes(color)));
+    const svgWithOutDetails = mol.get_svg_with_highlights('');
+    assert(!svgWithOutDetails.includes('ellipse'));
+    assert(!COLORS.some((color) => svgWithOutDetails.includes(color)));
+    mol.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3257,6 +3270,7 @@ initRDKitModule().then(function(instance) {
     test_assign_chiral_tags_from_mol_parity();
     test_make_dummies_queries();
     test_get_mol_copy();
+    test_multi_highlights();
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

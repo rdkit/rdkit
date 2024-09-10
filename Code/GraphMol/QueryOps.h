@@ -865,6 +865,8 @@ Queries::EqualityQuery<int, const Target *, true> *makeHasPropQuery(
 // ! Query whether an atom has a property with a value
 class HasPropWithValueQueryBase {
   public:
+  HasPropWithValueQueryBase() = default;
+  virtual ~HasPropWithValueQueryBase() = default;
   virtual Dict::Pair getPair() const = 0;
   virtual double getTolerance() const = 0;
 };
