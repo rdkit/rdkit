@@ -57,6 +57,21 @@ TEST_CASE("basic alignment") {
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.773, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.000, 0.005));
   }
+  SECTION("we are re-entrant") {
+    RWMol cp(*probe);
+    std::vector<float> matrix(12, 0.0);
+    auto [nbr_st, nbr_ct] = AlignMolecule(*ref, cp, matrix);
+    RWMol cp2(cp);
+    auto [nbr_st2, nbr_ct2] = AlignMolecule(*ref, cp2, matrix);
+    CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(nbr_st2, 0.005));
+    CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(nbr_ct2, 0.005));
+
+    for (auto i = 0u; i < probe->getNumAtoms(); ++i) {
+      CHECK_THAT(cp.getConformer().getAtomPos(i).x,
+                 Catch::Matchers::WithinAbs(cp2.getConformer().getAtomPos(i).x,
+                                            0.005));
+    }
+  }
 }
 
 TEST_CASE("bulk") {

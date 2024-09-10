@@ -47,7 +47,7 @@ rdkit_library(PubChemShape PubChemShape.cpp SHARED
  LINK_LIBRARIES pubchem_align3d SmilesParse SubstructMatch)
 target_compile_definitions(PubChemShape PRIVATE RDKIT_PUBCHEMSHAPE_BUILD)
 
-rdkit_headers(PubChemShape.h DEST GraphMol)
+rdkit_headers(PubChemShape.hpp DEST GraphMol)
 
 rdkit_catch_test(shape_test test.cpp LINK_LIBRARIES PubChemShape FileParsers)
 

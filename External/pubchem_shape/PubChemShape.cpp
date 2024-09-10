@@ -15,14 +15,7 @@
 #include "pubchem-align3d/shape_functions.hpp"
 #include "PubChemShape.hpp"
 
-using namespace std;
-
-#define ERRORTHROW(msg_stream)     \
-  do {                             \
-    ostringstream os;              \
-    os << msg_stream;              \
-    throw runtime_error(os.str()); \
-  } while (0)
+constexpr auto pubchemFeatureName = "PUBCHEM_PHARMACOPHORE_FEATURES";
 
 // #define DEBUG_MSG(msg_stream) cout << msg_stream << '\n'
 #define DEBUG_MSG(msg_stream)
@@ -110,7 +103,7 @@ class ss_matcher {
   ~ss_matcher() { delete m_matcher; };
 
  private:
-  ss_matcher() : m_pattern(""){};
+  ss_matcher() : m_pattern("") {};
   std::string m_pattern;
   bool m_needCopies{false};
   const RDKit::ROMol *m_matcher{nullptr};
@@ -175,54 +168,60 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
   //   e.g. RWMol uses [0..N-1] and SDF uses [1..N], with atoms in the same
   //   order
 
-  vector<pair<vector<unsigned int>, unsigned int>> feature_idx_type;
+  std::vector<std::pair<std::vector<unsigned int>, unsigned int>>
+      feature_idx_type;
 
   if (useColors) {
     std::string features;
-    if (mol.getPropIfPresent("PUBCHEM_PHARMACOPHORE_FEATURES", features)) {
+    if (mol.getPropIfPresent(pubchemFeatureName, features)) {
       // regular atoms have type 0; feature "atoms" (features represented by a
       // single point+radius) must have type > 0
-      static const map<string, unsigned int> atomTypes = {
+      static const std::map<std::string, unsigned int> atomTypes = {
           {"acceptor", 1}, {"anion", 2},      {"cation", 3},
           {"donor", 4},    {"hydrophobe", 5}, {"rings", 6},
       };
 
-      istringstream iss(features);
-      string line;
+      std::istringstream iss(features);
+      std::string line;
       unsigned int n = 0;
-      while (getline(iss, line)) {
+      while (std::getline(iss, line)) {
         if (n == 0) {
           feature_idx_type.resize(stoul(line));
         }
 
         else {
           unsigned int f = n - 1;
-          if (f >= feature_idx_type.size()) ERRORTHROW("Too many features");
+          if (f >= feature_idx_type.size()) {
+            throw ValueErrorException("Too many features");
+          }
 
-          istringstream iss2(line);
-          string token;
+          std::istringstream iss2(line);
+          std::string token;
           unsigned int t = 0;
-          while (getline(iss2, token, ' ')) {
+          while (std::getline(iss2, token, ' ')) {
             if (t == 0) {
               feature_idx_type[f].first.resize(stoul(token));
             } else if (t <= feature_idx_type[f].first.size()) {
               feature_idx_type[f].first[t - 1] = stoul(token) - 1;
             } else {
-              map<string, unsigned int>::const_iterator type =
-                  atomTypes.find(token);
-              if (type == atomTypes.end()) ERRORTHROW("Invalid feature type");
+              auto type = atomTypes.find(token);
+              if (type == atomTypes.end()) {
+                throw ValueErrorException("Invalid feature type: " + token);
+              }
               feature_idx_type[f].second = type->second;
             }
             ++t;
           }
-          if (t != (feature_idx_type[f].first.size() + 2))
-            ERRORTHROW("Wrong number of tokens in feature");
+          if (t != (feature_idx_type[f].first.size() + 2)) {
+            throw ValueErrorException("Wrong number of tokens in feature");
+          }
         }
 
         ++n;
       }
-      if (n != (feature_idx_type.size() + 1))
-        ERRORTHROW("Wrong number of features");
+      if (n != (feature_idx_type.size() + 1)) {
+        throw ValueErrorException("Wrong number of features");
+      }
 
       DEBUG_MSG("# features: " << feature_idx_type.size());
     } else {
@@ -249,8 +248,9 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
   // unpack atoms
 
   auto &conformer = mol.getConformer(confId);
-  if (!conformer.is3D()) ERRORTHROW("Conformer must be 3D");
-
+  if (!conformer.is3D()) {
+    throw ValueErrorException("Conformer must be 3D");
+  }
   unsigned int nAtoms = mol.getNumAtoms();
   // DEBUG_MSG("num atoms: " << nAtoms);
 
@@ -259,7 +259,7 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
 
   unsigned int nAlignmentAtoms = nHeavyAtoms + feature_idx_type.size();
 
-  vector<double> rad_vector(nAlignmentAtoms);
+  std::vector<double> rad_vector(nAlignmentAtoms);
   res.atom_type_vector.resize(nAlignmentAtoms, 0);
 
   RDGeom::Point3D ave;
@@ -269,7 +269,8 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
       ave += conformer.getAtomPos(i);
 
       if (vdw_radii.find(Z) == vdw_radii.end()) {
-        ERRORTHROW("No VdW radius for atom with Z=" << Z);
+        throw ValueErrorException("No VdW radius for atom with Z=" +
+                                  std::to_string(Z));
       }
       rad_vector[i] = vdw_radii.at(Z);
     }
@@ -300,8 +301,9 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
     RDGeom::Point3D floc;
     for (unsigned int j = 0; j < feature_idx_type[i].first.size(); ++j) {
       unsigned int idx = feature_idx_type[i].first[j];
-      if (idx >= nAtoms || mol.getAtomWithIdx(idx)->getAtomicNum() <= 1)
-        ERRORTHROW("Invalid feature atom index");
+      if (idx >= nAtoms || mol.getAtomWithIdx(idx)->getAtomicNum() <= 1) {
+        throw ValueErrorException("Invalid feature atom index");
+      }
       floc += conformer.getAtomPos(idx);
     }
     floc /= feature_idx_type[i].first.size();
@@ -353,7 +355,7 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
   DEBUG_MSG("Fit details:");
   auto fitShape = PrepareConformer(fit, fitConfId, useColors);
 
-  set<unsigned int> jointColorAtomTypeSet;
+  std::set<unsigned int> jointColorAtomTypeSet;
   Align3D::getJointColorTypeSet(
       refShape.atom_type_vector.data(), refShape.atom_type_vector.size(),
       fitShape.atom_type_vector.data(), fitShape.atom_type_vector.size(),
@@ -390,7 +392,7 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
       fitShape.coord[i * 3 + 2] = pos.z;
     }
   }
-  vector<float> transformed(fit.getNumAtoms() * 3);
+  std::vector<float> transformed(fit.getNumAtoms() * 3);
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
                                 fit.getNumAtoms(), matrix.data());
 
@@ -398,9 +400,9 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
     RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
     // both conformers have been translated to the origin, translate the fit
     // conformer back to the steric center of the reference.
-    pos.x = transformed[i * 3] - refShape.shift[0];
-    pos.y = transformed[(i * 3) + 1] - refShape.shift[1];
-    pos.z = transformed[(i * 3) + 2] - refShape.shift[2];
+    pos.x = transformed[i * 3] - refShape.shift[0] + fitShape.shift[0];
+    pos.y = transformed[(i * 3) + 1] - refShape.shift[1] + fitShape.shift[1];
+    pos.z = transformed[(i * 3) + 2] - refShape.shift[2] + fitShape.shift[2];
   }
   fit.setProp("shape_align_shape_tanimoto", nbr_st);
   fit.setProp("shape_align_color_tanimoto", nbr_ct);
