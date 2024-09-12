@@ -7131,6 +7131,23 @@ void testGithubIssue868() {
                 std::string::npos);
     delete m;
   }
+  {
+    sstrm.str("");
+    TEST_ASSERT(sstrm.str() == "");
+    // github 7687 - merge with more than one option in or
+    std::string sma = "[#6]-[#1,#6,#7]";
+    RWMol *m = SmartsToMol(sma);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    MolOps::mergeQueryHs(*m);
+    std::cerr << sstrm.str() << std::endl;
+    TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
+                                 "ORs is not supported") != std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") !=
+                std::string::npos);
+    delete m;
+  }
+
   rdWarningLog->ClearTee();
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -8474,6 +8491,8 @@ void testHasQueryHs() {
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle) ==
               has_only_query_hs);
 
+  auto github7687 = "[#1,#6,#7]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687) == has_unmergeable_hs );
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

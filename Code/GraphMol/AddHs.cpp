@@ -1105,8 +1105,13 @@ HydrogenType isQueryH(const Atom *atom) {
     if (atom->getQuery()->getDescription() == "AtomOr") {
       hasOr = true;
     }
-    std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
-        atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
+    // Because we can have AtomOr -> AtomOr -> AtomOr nodes, we need
+    //  to have a stack of stacks to descent into the children and come back up
+    std::list<std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE>> childStacks;
+    childStacks.push_back(std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE>(
+                          atom->getQuery()->beginChildren(), atom->getQuery()->endChildren()));
+    auto &childStack = childStacks.back();
+    
     // the logic gets too complicated if there's an OR in the children, so
     // just punt on those (with a warning)
     while (!(hasHQuery && hasOr) && childStack.size()) {
@@ -1114,6 +1119,9 @@ HydrogenType isQueryH(const Atom *atom) {
       childStack.pop_front();
       if (query->getDescription() == "AtomOr") {
         hasOr = true;
+        childStacks.push_back(std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE>(
+                                    query->beginChildren(), query->endChildren()));
+        childStack = childStacks.back();
       } else if (query->getDescription() == "AtomAtomicNum") {
         if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
             !query->getNegation()) {
@@ -1124,6 +1132,12 @@ HydrogenType isQueryH(const Atom *atom) {
         for (child1 = query->beginChildren(); child1 != query->endChildren();
              ++child1) {
           childStack.push_back(*child1);
+        }
+      }
+      if(childStack.empty()) {
+        if(childStacks.size() > 1) {
+          childStacks.pop_back();
+          childStack = childStacks.back();
         }
       }
     }
