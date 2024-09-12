@@ -8493,6 +8493,10 @@ void testHasQueryHs() {
 
   auto github7687 = "[#1,#6,#7]"_smarts;
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687) == has_unmergeable_hs );
+  auto github7687b = "[1;#7,#1,#6]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687b) == has_unmergeable_hs );
+  auto github7687c = "[1&#7,#1,#6]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687c) == has_unmergeable_hs );
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
