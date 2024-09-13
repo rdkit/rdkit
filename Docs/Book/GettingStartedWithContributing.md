@@ -128,6 +128,35 @@ RDKit does not at the moment has a dedicated style guide or linter setup that yo
 
 ## Contributing to the Code - C++
 
+### A note on Modern C++
+
+In order to continue to allow the code to be built on older systems, the RDKit
+is currently using a subset of what's available in modern C++ compilers. The
+latest language standard supported by the RDKit is C++17; the expectation is
+that it should be possible to build the RDKit with g++ v8.0.
+
+### Naming conventions
+
+We use camelCase for everything.
+
+Class and namespace names start with an upper-case letter, i.e.
+`ExplicitBitVect` or `MolFragmenter`. Function and method names start with a
+lower-case letter, e.g. `ROMol::getNumAtoms()`.
+
+### Formatting
+
+We are following the formatting suggestions from [Google's C++ style
+guidelines](https://google.github.io/styleguide/cppguide.html). We strongly
+suggest using an auto-formatter like
+[clang-format](http://clang.llvm.org/docs/ClangFormat.html) to do the
+formatting. Clang-format can be integrated with editors like emacs, vim, or
+atom to automatically format code as you write/save it. It's an amazing time
+saver! *Note* that at least version 3.8 of clang-format is required,
+unfortunately the configuration files are not backwards compatible.
+
+There is a .clang-format config file at the root of the repository; code layout
+should be based on this configuration.
+
 ### Adding a new unit test
 
 New unit tests should use the Catch2 test framework ([https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)). Test files are called “catch\_something.cpp”, and are placed directly in the code folders. If you contribute a small change / bug-fix, you don't need a new file, but just add a TEST\_CASE. Example:
