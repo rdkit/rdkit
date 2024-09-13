@@ -156,5 +156,8 @@ RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
  */
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(const std::map<std::string, ROMOL_SPTR> &row,
 							  const MolzipParams &params=MolzipParams());
+
+RDKIT_CHEMTRANSFORMS_EXPORT void parseMolzipParametersJSON(const char* json,
+                MolzipParams* params);
 }  // namespace RDKit
 #endif

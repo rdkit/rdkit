@@ -353,3 +353,7 @@ std::string get_mcs_as_smarts(const JSMolList &mols,
 JSMolBase *get_mcs_as_mol(const JSMolList &mols,
                           const std::string &details_json);
 #endif
+
+#ifdef RDK_BUILD_MINIMAL_LIB_ZIP
+JSMol * get_molzip(const JSMol &a, const JSMol &b, const std::string &details_json);
+#endif

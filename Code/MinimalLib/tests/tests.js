@@ -1965,6 +1965,30 @@ function test_get_mmpa_frags() {
     }
 }
 
+function test_link_frags() {
+    {
+        var mol1 = RDKitModule.get_mol("F/C=C/[*:1]");
+        var mol2 = RDKitModule.get_mol("[*:1]F");
+        var expectedLinkage = "F/C=C/F";
+        var mol = RDKitModule.link(mol1, mol2);
+        assert(mol.get_smiles === expectedLinkage);
+        mol1.delete();
+        mol2.delete();
+        mol.delete();
+    }
+    {
+        var mol1 = RDKitModule.get_mol("[C@H]([Xe])(F)([V])");
+        var mol2 = RDKitModule.get_mol("[Xe]N.[V]I");
+        var expectedLinkage = "N[C@@H](F)I";
+        var details = JSON.stringify({ Label: 'AtomType', AtomSymbols: 'Xe,V' });
+        var mol = RDKitModule.link(mol1, mol2, details);
+        assert(mol.get_smiles === expectedLinkage);
+        mol1.delete();
+        mol2.delete();
+        mol.delete();
+    }
+}
+
 function test_hs_in_place() {
     {
         var mol = RDKitModule.get_mol("CC");

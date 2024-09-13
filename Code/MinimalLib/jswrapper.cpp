@@ -133,6 +133,12 @@ std::string get_mcs_as_smarts_no_details(const JSMolList &mols) {
 }
 #endif
 
+#ifdef RDK_BUILD_MINIMAL_LIB_ZIP
+JSMol * get_molzip_no_details(const JSMol &a, const JSMol &b) {
+  return get_molzip(a, b, std::string());
+}
+#endif
+
 emscripten::val binary_string_to_uint8array(const std::string &pkl) {
   emscripten::val view(emscripten::typed_memory_view(
       pkl.size(), reinterpret_cast<const unsigned char *>(pkl.c_str())));
@@ -654,5 +660,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   function("get_mcs_as_mol", &get_mcs_as_mol_no_details, allow_raw_pointers());
   function("get_mcs_as_smarts", &get_mcs_as_smarts);
   function("get_mcs_as_smarts", &get_mcs_as_smarts_no_details);
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_ZIP
+  function("link", &get_molzip, allow_raw_pointers());
+  function("link", &get_molzip_no_details, allow_raw_pointers());
 #endif
 }

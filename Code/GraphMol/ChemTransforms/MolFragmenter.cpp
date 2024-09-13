@@ -31,6 +31,8 @@
 #include <boost/functional/hash.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <algorithm>
@@ -1170,6 +1172,56 @@ std::unique_ptr<ROMol> molzip(const std::map<std::string, ROMOL_SPTR> &row,
   }
 
   return molzip(mols, params);
+}
+
+void parseMolzipParametersJSON(const char* json, MolzipParams* params) {
+  if (!params || !json || !strlen(json))
+    return;
+
+  std::istringstream ss;
+  ss.str(json);
+  boost::property_tree::ptree pt;
+  boost::property_tree::read_json(ss, pt);
+
+  auto& p = *params;
+  std::string label = pt.get<std::string>("Label", "");
+  if (label == "AtomMapNumber")
+    p.label = MolzipLabel::AtomMapNumber;
+  else if (label == "Isotope")
+    p.label = MolzipLabel::Isotope;
+  else if (label == "FragmentOnBonds")
+    p.label = MolzipLabel::FragmentOnBonds;
+  else if (label == "AtomType")
+    p.label = MolzipLabel::AtomType;
+  else if (label == "AtomProperty")
+    p.label = MolzipLabel::AtomProperty;
+  else if (label != "")
+    throw ValueErrorException("Unknown label");
+
+  std::string atomSymbolsRow = pt.get<std::string>("AtomSymbols", "");
+
+  if (atomSymbolsRow != "") {
+    std::string::iterator it = atomSymbolsRow.begin();
+    std::vector<std::string> atomSymbols;
+    std::string atomSymbol = "";
+
+    for (; it != atomSymbolsRow.end(); ++it) {
+      if (*it == ',') {
+        atomSymbols.push_back(atomSymbol);
+        atomSymbol = "";
+      }
+      else
+        atomSymbol += *it;
+      if (next(it) == atomSymbolsRow.end())
+        atomSymbols.push_back(atomSymbol);
+    }
+
+    p.atomSymbols = atomSymbols;
+  }
+  
+  p.atomProperty = pt.get<std::string>("AtomProperty", p.atomProperty);
+  p.enforceValenceRules = pt.get<bool>("EnforceValenceRules", p.enforceValenceRules);
+  p.generateCoordinates = pt.get<bool>("GenerateCoordinates", p.generateCoordinates); 
 }
 
 }  // end of namespace RDKit
