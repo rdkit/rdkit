@@ -22,9 +22,34 @@ Really helpful things you can do that don't involve serious coding:
 
 #### GitHub Issues vs Discussions
 
-If you have a question about the RDKit or aren't sure if what you're seeing is the right behavior please use the [Discussions tab](https://github.com/rdkit/rdkit/discussions) instead of posting it as an issue. Most of the time the unexpected behaviour is an issue from your side - "guilty until proven innocent"!
+If you have a question about the RDKit or aren't sure if what you're seeing is the right behavior please use the [Discussions tab](https://github.com/rdkit/rdkit/discussions) instead of posting it as an issue. More often than not the unexpected behaviour is an issue from your side - "guilty until proven innocent"!
 
-If you have a suggestion for a new RDKit feature or enhancement please consider starting a discussion about it using the Discussions tab before creating a feature request. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do in the RDKit.
+The following code snippet using the `Chem.DetectChemistryProblem(mol)` function provides a good test for whether your observed behaviour is a true bug, or just input that RDKit doesn't like (mol.Debug() is also useful for this purpose):
+
+```
+m = Chem.MolFromSmiles('c1nccc1O(C)C',sanitize=False)
+errs = Chem.DetectChemistryProblems(m)
+
+OUTPUTS: Explicit valence for atom # 5 O, 3, is greater than permitted
+OUTPUTS: Can't kekulize mol.  Unkekulized atoms: 0 1 2 3 4
+
+errs[0].GetType()
+OUTPUTS: 'AtomValenceException'
+
+errs[0].Message(),errs[0].GetAtomIdx()
+OUTPUTS: ('Explicit valence for atom # 5 O, 3, is greater than permitted', 5)
+
+errs[1].GetType()
+OUTPUTS: 'KekulizeException'
+
+errs[1].GetAtomIndices()
+OUTPUTS: (0, 1, 2, 3, 4)
+
+errs[1].Message()
+OUTPUTS: "Can't kekulize mol.  Unkekulized atoms: 0 1 2 3 4"
+```
+
+If you have a suggestion for a new RDKit feature or enhancement please consider starting a discussion about it using the Discussions tab before creating a pull request. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do in the RDKit.
 
 If you are sure that what you're seeing is wrong behaviour, please use the template below as it will help understand the underlying bug report. If you do not provide the information requested we may not be able to help you and will probably close the issue. Issues should be reported [here](https://github.com/rdkit/rdkit/issues).
 
@@ -60,6 +85,8 @@ Add any other context about the problem here.
 
 -----------------------------------------
 ```
+
+Please mark all issues/discussions with the relevant tag!
 
 ### If you are a developer
 
