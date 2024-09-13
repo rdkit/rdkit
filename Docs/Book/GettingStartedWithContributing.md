@@ -22,17 +22,22 @@ Really helpful things you can do that don't involve serious coding:
 
 #### GitHub Issues vs Discussions
 
-
 ### If you are a developer
 
 It’s generally a good idea to check with Greg or one of the maintainers before adding significant new functionality.
 
-● Contribute interesting scripts/libraries for the Contrib folder 
-
+Code contributions can be made as follows:
+- Core C++ functionality + relevant wrappers
+- Python scripts
+- JavaScript
+- Java
+- KNIME nodes
 
 ### If you have 5 minutes to spare 
-cleaning up issues
-answering questions
+- Cleaning up GitHub issues that have been resolved or that should be under discussions
+- Answering questions on the [GitHub Discussions](https://github.com/rdkit/rdkit/discussions) board or [Stack Overflow](https://stackoverflow.com/questions/tagged/rdkit)
+
+### How to Submit Code/Docs Contributions
 
 ## Contributing to the RDKit Docs 
 
