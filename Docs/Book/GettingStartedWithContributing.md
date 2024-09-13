@@ -46,7 +46,7 @@ This guide already assumes that you are familiar with [the rdkit basics](https:/
 
 Wim summarizes and links whatever is here: https://github.com/rdkit/rdkit/issues/3052
 
-Instructions how to setup IDE here: https://github.com/rdkit/rdkit/issues/3052 . Extended instruction on how to set up your environment for Python development are here: https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html
+Instructions how to setup IDE are here: https://github.com/rdkit/rdkit/issues/3052 . Extended instruction on how to set up your environment for Python development are here in a post on the [RDKit blog](https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html). At the bottom, it includes a recipe for cloning a local fork on which you can then run and test the updated code.
 
 
 
