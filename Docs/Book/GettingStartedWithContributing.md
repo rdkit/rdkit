@@ -86,8 +86,20 @@ More details on what code contributions (including documentation) should look li
 Contributions are made to the RDKit Codebase via GitHub pull requests. A summary of how to do this is given here. For a more in-depth overview see [this fantastic set of slides](https://github.com/rdkit/UGM_2016/blob/master/Presentations/Landrum_Schneider_GitHub_Git_and_RDKit.pdf) from Greg and Nadine. 
 
 **Step 1** Create a fork of the main [RDKit repo](https://github.com/rdkit/rdkit) to your own GitHub account.
+![Fork RDKit](../Book/images/rdkit_fork_clone.png)
+**Step 2** Clone from you fork to a local repo 
 
+`git clone https://github.com/rdkit/rdkit.git`
 
+**Step 2** Do code development on your local repository
+
+**Step 3** Create and run tests locally 
+
+**Step 4** Push your bug fix or new feature to your local repository
+`git push`
+
+**Step 5** Create a pull request to the RDKit repo
+`git pull https://github.com/rdkit/rdkit.git`
 
 
 ## Contributing to the RDKit Docs 
