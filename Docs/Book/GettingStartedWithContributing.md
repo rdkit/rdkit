@@ -133,8 +133,13 @@ Contributions are made to the RDKit Codebase via GitHub pull requests. A summary
 
 ## Running the tests (C++ and Python)
 
+Code changes should generally come with an associated unit test; also, please
+run the tests to make sure your changes did not break any existing tests!
+(If a test breaks, it may be a bug in your changes, or if the behavior change
+is the point of the commit, the old test may need to be updated.)
+
 The unit tests are run from the build directory (`$RDBASE/build`) using the
-`[ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html)` command. See
+[ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html) command. See
 the help message for a full list of options, but some frequently useful options
 include:
 
