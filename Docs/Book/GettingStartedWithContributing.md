@@ -44,7 +44,7 @@ Here we already assume that you are familiar with the rdkit basics, Git and how 
  - https://github.com/rdkit/UGM_2016/blob/master/Presentations/Landrum_Schneider_GitHub_Git_and_RDKit.pdf
 
 
-Instructions how to setup IDE here: https://github.com/rdkit/rdkit/issues/3052
+Instructions how to setup IDE here: https://github.com/rdkit/rdkit/issues/3052 . Extended instruction on how to set up your environment for Python development are here: https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html
 
 
 code style guide
