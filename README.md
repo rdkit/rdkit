@@ -55,6 +55,10 @@ and in the [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on Git
 
 Installation instructions are available in [Docs/Book/Install.md](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Install.md).
 
+## Contributing
+
+See [Docs/Book/GettingStartedWithContributing.md](https://github.com/rdkit/rdkit/blob/master/Docs/Book/GettingStartedWithContributing.md)
+
 #### Binary distributions, anaconda, homebrew
 
   * [binaries for conda python](https://anaconda.org/rdkit/rdkit) or, if you are using the conda-forge stack, the RDKit is also [available from conda-forge](https://anaconda.org/conda-forge/rdkit).
