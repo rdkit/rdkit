@@ -65,6 +65,58 @@ RDKit does not at the moment has a dedicated style guide or a linter that you sh
 
 ## Contributing to the Code - C++
 
+### Adding a new unit test
+
+New unit tests should use the Catch2 test framework ([https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)). Test files are called “catch\_something.cpp”, and are placed directly in the code folders. If you contribute a small change / bug-fix, you don't need a new file, but just add a TEST\_CASE. Example:
+
+```c++
+TEST_CASE("test basic Mol features", "[ROMol]") {
+  SECTION("basics") {
+    {
+      // shortcut to create a molecule from SMILES
+      auto m = "CCO"_smiles;
+      // check that the molecule was created successfully
+      REQUIRE(m);
+      // test some functionality
+      int nAtoms = m->getNumAtoms();
+      CHECK(nAtoms == 3);
+    }
+  }
+}
+```
+
+### Adding a new test file
+
+For larger features, you can create a separate test file “catch\_myfeature.cpp” in the respective folder:
+
+```c++
+#include "RDGeneral/test.h"
+#include <catch2 /catch_all.hpp>
+#include <GraphMol /SmilesParse/SmilesParse.h>
+
+using namespace RDKit;
+
+TEST_CASE("test basic Mol features", "[ROMol]") {
+  SECTION("basics") {
+    {
+    // shortcut to create a molecule from SMILES
+    auto m = "CCO"_smiles;
+    // check that the molecule was created successfully
+    REQUIRE(m);
+    // test some functionality
+    int nAtoms = m->getNumAtoms();
+    CHECK(nAtoms == 3);
+    }
+  }
+}
+```
+
+Additionally, adapt the CMakeLists.txt of the respective folder. You will have to adapt filenames and add needed libraries (in this example, FileParsers contains the functionality to parse SMILES.
+
+```
+rdkit_catch_test(dummyTest catch_dummy.cpp LINK_LIBRARIES FileParsers)
+```
+
 ## Miscellaneous Contributions
 
 ### Java
