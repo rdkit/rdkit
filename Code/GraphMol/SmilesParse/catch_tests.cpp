@@ -2711,11 +2711,14 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     CHECK(SubstructMatch(*mol1, *qmol2, sssparams).size() ==
           static_cast<size_t>(!sssparams.useChirality));
   }
+
   SECTION("Issue #7572: prevent rootAtAtom if more than one fragment exists.") {
     auto mol1 =
         "C(C)Oc1c(Cl)c(C(=O)[O-])c(Cl)c(OCC)c1C(=O)[O-].O=C([O-])C#CC#CC(=O)[O-].[Zn][Zn]"_smiles;
     REQUIRE(mol1);
-    CHECK_THROWS_AS(MolToSmiles(*mol1), Invar::InvariantException);
+    auto ps = SmilesWriteParams();
+    ps.rootedAtAtom = 20;
+    CHECK_THROWS_AS(MolToSmiles(*mol1, ps), Invar::Invariant);
   }
 }
 
