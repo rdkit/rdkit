@@ -21,13 +21,17 @@ Really helpful things you can do that don't involve serious coding:
 - Write blog posts (either your own or for the [RDKit blog](https://greglandrum.github.io/rdkit-blog/))
 
 #### GitHub Issues vs Discussions
-If you have a question about the RDKit or aren't sure if what you're seeing is the right behavior please use the Discussions tab (https://github.com/rdkit/rdkit/discussions) instead of posting it as an issue. Most of the time the unexpected behaviour is an issue from your side. 
+
+If you have a question about the RDKit or aren't sure if what you're seeing is the right behavior please use the [Discussions tab](https://github.com/rdkit/rdkit/discussions) instead of posting it as an issue. Most of the time the unexpected behaviour is an issue from your side - "guilty until proven innocent"!
+
 If you have a suggestion for a new RDKit feature or enhancement please consider starting a discussion about it using the Discussions tab before creating a feature request. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do in the RDKit.
 
-If you are sure that what you're seeing is wrong behaviour, please use the template below as it will help understand the underlying bug report. If you do not provide the information requested we may not be able to help you and will probably close the issue. Issues should be reported to https://github.com/rdkit/rdkit/issues.
-It is also possible to report a report a vulnerability at https://github.com/rdkit/rdkit/security/advisories/.
+If you are sure that what you're seeing is wrong behaviour, please use the template below as it will help understand the underlying bug report. If you do not provide the information requested we may not be able to help you and will probably close the issue. Issues should be reported [here](https://github.com/rdkit/rdkit/issues).
+
+It is also possible to report a report a [vulnerability](https://github.com/rdkit/rdkit/security/advisories/).
 This submission will only be viewable to repository maintainers and you will be credited if the advisory is published.
 
+```
 -----------------------------------------
 TEMPLATE
 
@@ -54,8 +58,8 @@ If applicable, add screenshots to help explain your problem.
 **Additional context**
 Add any other context about the problem here.
 
-
 -----------------------------------------
+```
 
 ### If you are a developer
 
@@ -73,6 +77,7 @@ Code contributions can be made as follows:
 More details on what code contributions (including documentation) should look like are given in the following sections. 
 
 ### If you have 5 minutes to spare 
+
 - Cleaning up GitHub issues that have been resolved or that should be under discussions
 - Answering questions on the [GitHub Discussions](https://github.com/rdkit/rdkit/discussions) board or [Stack Overflow](https://stackoverflow.com/questions/tagged/rdkit)
 
