@@ -131,6 +131,18 @@ Contributions are made to the RDKit Codebase via GitHub pull requests. A summary
 
 ## Contributing to the RDKit Docs 
 
+## Running the tests (C++ and Python)
+
+The unit tests are run from the build directory (`$RDBASE/build`) using the
+`[ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html)` command. See
+the help message for a full list of options, but some frequently useful options
+include:
+
+    -j <n>               Run in parallel with <n> workers
+    -N                   Only list the tests that would be run
+    -R <regex>           Only run tests matching a regular expression
+    --output-on-failure  Print the stdout/stderr of failing tests
+
 ## Contributing to the Code - Python 
 
 This guide already assumes that you are familiar with [the rdkit basics](https://www.rdkit.org/docs/GettingStartedInPython.html), version control with [Git](https://git-scm.com/) and GitHub features such as commits and pull requests. If not, there is a very [neat presentation from UGM 2016](https://github.com/rdkit/UGM_2016/blob/master/Presentations/Landrum_Schneider_GitHub_Git_and_RDKit.pdf) that you should definitely look at before you start.
