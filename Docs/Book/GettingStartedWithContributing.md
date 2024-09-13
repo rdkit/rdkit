@@ -125,9 +125,9 @@ Contributions are made to the RDKit Codebase via GitHub pull requests. A summary
 **Step 4** Push your bug fix or new feature to your local repository
 `git push`
 
-**Step 5** Create a pull request to the RDKit repo
-`git pull https://github.com/rdkit/rdkit.git`
+**Step 5** Create a pull request to the [RDKit repo](https://github.com/rdkit/rdkit.git)
 
+![Pull Request 1 RDKit](../Book/images/pull_req1.png)
 
 ## Contributing to the RDKit Docs 
 
