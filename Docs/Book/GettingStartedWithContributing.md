@@ -52,9 +52,23 @@ Instructions how to setup IDE here: https://github.com/rdkit/rdkit/issues/3052 .
 
 ### Coding Style
 
-RDKit does not at the moment has a dedicated style guide or a linter that you should use. However, there are a few rules that you might want to adhere to so that the code and API design stays coherent:
+RDKit does not at the moment has a dedicated style guide or linter setup that you should use for Python. However, there are a few rules that you might want to adhere to so that the code and API design stays coherent (sidenote: it is currently not):
 
-- use **camel case** for **ModuleNames**, "ClassNames", "MethodNames"
+- Use `CamelCase` for `PackageNames`, `ModuleNames`, `ClassNames`, `MethodNames`, `FunctionNames`, but note the different style for `functionAttributeNames` and `methodAttributeNames`
+ - These recommendations are made based on the most commonly found patterns in the `Chem` module. However, you may see small inconsistencies here and then...
+   - ![style](style.png "Abnormal Style")
+- Use `snake_case` names for local variables inside methods and functions. However, `justlowercase` is also fine.
+- Use multi-line Python strings to document modules and methods, i.e.:
+
+ ```python
+ def xy():
+    """ This is a documentation string.
+    
+    It is continued here...
+    """
+    pass
+ ```
+- Use double quotes (`"`) for string literals.
 
 ## Contributing to the Code - C++
 
