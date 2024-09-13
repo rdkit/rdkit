@@ -35,11 +35,17 @@ Code contributions can be made as follows:
 - Java
 - KNIME nodes
 
+More details on what code contributions (including documentation) should look like are given in the following sections. 
+
 ### If you have 5 minutes to spare 
 - Cleaning up GitHub issues that have been resolved or that should be under discussions
 - Answering questions on the [GitHub Discussions](https://github.com/rdkit/rdkit/discussions) board or [Stack Overflow](https://stackoverflow.com/questions/tagged/rdkit)
 
 ### How to Submit Code/Docs Contributions
+
+Contributions are made to the RDKit Codebase via GitHub pull requests. A summary of how to do this is given here. For a more in-depth overview see [this fantastic set of slides](https://github.com/rdkit/UGM_2016/blob/master/Presentations/Landrum_Schneider_GitHub_Git_and_RDKit.pdf) from Greg and Nadine. 
+
+
 
 ## Contributing to the RDKit Docs 
 
