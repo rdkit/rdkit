@@ -17,12 +17,14 @@ Really helpful things you can do that don't involve serious coding:
     - In-code documentation: comments explaining what the code does or references
     - This Getting Started guide! 
 - Contributing tutorials
-- Ideas for improvements 
+- Ideas for improvements (with the appropriate tags!) 
 - Write blog posts (either your own or for the [RDKit blog](https://greglandrum.github.io/rdkit-blog/))
 
 #### GitHub Issues vs Discussions
 
 ### If you are a developer
+
+Submitting new features and or bug fixes is certainly nice. For ideas on where to get started have a look at the [GitHub issues](https://github.com/rdkit/rdkit/issues). We try to remember to tag issues that are relatively small and self-contained as [good for beginners](https://github.com/rdkit/rdkit/labels/good%20for%20beginners); take a look at that list and see if there's anything that looks interesting. If you have questions, ask by adding a comment to the issue.
 
 It’s generally a good idea to check with Greg or one of the maintainers before adding significant new functionality.
 
