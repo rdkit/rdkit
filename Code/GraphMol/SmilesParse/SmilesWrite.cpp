@@ -533,7 +533,11 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
   PRECONDITION(
       params.rootedAtAtom < 0 ||
           static_cast<unsigned int>(params.rootedAtAtom) < mol.getNumAtoms(),
-      "rootedAtomAtom must be less than the number of atoms");
+      "rootedAtAtom must be less than the number of atoms");
+  PRECONDITION(
+      params.rootedAtAtom < 0 || MolOps::getMolFrags(mol).size() == 1,
+      "rootedAtAtom can only be used with molecules that have a single fragment");
+
   int rootedAtAtom = params.rootedAtAtom;
   std::vector<std::vector<int>> fragsMolAtomMapping;
   auto mols =
