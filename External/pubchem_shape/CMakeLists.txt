@@ -34,7 +34,13 @@ if(needDownload)
   file(GLOB tar_dirname ${CMAKE_CURRENT_SOURCE_DIR}/pubchem-align3d-${PUBCHEM_COMMIT_SHA}*)
   execute_process(COMMAND ${CMAKE_COMMAND} -E rename ${tar_dirname} 
        ${PUBCHEMSHAPE_DIR}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  set (types_hpp ${PUBCHEMSHAPE_DIR}/types.hpp)
+  file(READ ${types_hpp} types_hpp_data)
+  if (NOT "${types_hpp_data}" MATCHES "#include[ ]+<cstdint>")
+      string(REGEX REPLACE "(#define[ ]+ALIGN3D_+TYPES_+HPP)" "\\1\n\n#include <cstdint>\n" types_hpp_data "${types_hpp_data}")
+      file(WRITE ${types_hpp} "${types_hpp_data}")
+  endif()
 endif()
 
 rdkit_library(pubchem_align3d ./pubchem-align3d/shape_functions1.cpp 
