@@ -125,26 +125,31 @@ Contributions are made to the RDKit Codebase via GitHub pull requests. A summary
 
 ![Fork RDKit](../Book/images/rdkit_fork_clone.png)
 
-**Step 2** Clone from you fork to a local repo 
+**Step 2** Clone your fork to make a local copy to work from.
 
 `git clone https://github.com/YOURUSERNAME/rdkit.git`
 
-**Step 2** Do code development on your local repository
+**Step 3** Make your changes to your local copy. For development of features we generally recommend working on a [branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-and-deleting-branches-within-your-repository), and regularly **commit** your changes incase you need to undo something you've changed.
 
-**Step 3** Add tests for your new functionality and run all tests locally to check you've not broken anything else!
+```
+git commit -a -m "update what and how section"
 
-**Step 4** Push your bug fix or new feature to your local repository
+OUTPUT: [contributing_docs 08780075f] update what and how section
+ 1 file changed, 38 insertions(+), 27 deletions(-)
+```
+
+**Step 4** Add tests for your new functionality and run all tests locally to check you've not broken anything else (see below for how to do this)!
+
+**Step 5** Push your bug fix or new feature to your local repository
 `git push`
 
-**Step 5** Create a pull request to the [RDKit repo](https://github.com/rdkit/rdkit.git) filling in the requested information.
+**Step 6** Create a pull request to the [RDKit repo](https://github.com/rdkit/rdkit.git) filling in the requested information.
 
 ![Pull Request 1 RDKit](../Book/images/pull_req1.png)
 
 ![Pull Request 2 RDKit](../Book/images/pull_req2.png)
 
-## Contributing to the RDKit Docs 
-
-## Running the tests (C++ and Python)
+### Running the tests (C++ and Python)
 
 Code changes should generally come with an associated unit test; also, please
 run the tests to make sure your changes did not break any existing tests!
@@ -160,6 +165,8 @@ include:
     -N                   Only list the tests that would be run
     -R <regex>           Only run tests matching a regular expression
     --output-on-failure  Print the stdout/stderr of failing tests
+
+## Contributing to the RDKit Docs 
 
 ## Contributing to the Code - Python 
 
