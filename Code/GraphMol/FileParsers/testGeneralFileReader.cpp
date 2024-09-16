@@ -73,15 +73,15 @@ void testSdf() {
   std::string fname =
       rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
   struct SupplierOptions opt;
+  opt.numWriterThreads = 1;
   auto sdsup = getSupplier(fname, opt);
   unsigned int i = 0;
   while (!sdsup->atEnd()) {
-    ROMol* nmol = sdsup->next();
+    auto nmol = sdsup->next();
     TEST_ASSERT(nmol || sdsup->atEnd());
     if (nmol) {
       TEST_ASSERT(nmol->hasProp(common_properties::_Name));
       TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
-      delete nmol;
       i++;
     }
   }
@@ -94,11 +94,10 @@ void testSdf() {
   auto sdsupMulti = getSupplier(fname, optConcurrent);
   i = 0;
   while (!sdsupMulti->atEnd()) {
-    ROMol* nmol = sdsupMulti->next();
+    auto nmol = sdsupMulti->next();
     if (nmol) {
       TEST_ASSERT(nmol->hasProp(common_properties::_Name));
       TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
-      delete nmol;
       i++;
     }
   }
@@ -111,11 +110,10 @@ void testSdf() {
   auto sdsup2 = getSupplier(fname, opt);
   i = 0;
   while (!sdsup2->atEnd()) {
-    ROMol* nmol = sdsup2->next();
+    auto nmol = sdsup2->next();
     if (nmol) {
       TEST_ASSERT(nmol->hasProp(common_properties::_Name));
       TEST_ASSERT(nmol->hasProp("NCI_AIDS_Antiviral_Screen_Conclusion"));
-      delete nmol;
       i++;
     }
   }
@@ -135,18 +133,20 @@ void testSmi() {
   opt_smi.smilesColumn = 1;
   opt_smi.nameColumn = 0;
   opt_smi.titleLine = true;
+  opt_smi.numWriterThreads = 1;
   auto sup = getSupplier(fname, opt_smi);
   unsigned int i = 0;
   while (!sup->atEnd()) {
-    ROMol* mol = sup->next();
+    auto mol = sup->next();
     if (i == 3) {
       mol->getProp(common_properties::_Name, mname);
       CHECK_INVARIANT(mname == "4", "");
       mol->getProp("TPSA", mname);
       CHECK_INVARIANT(mname == "82.78", "");
     }
-    delete mol;
-    i++;
+    if (mol) {
+      i++;
+    }
   }
   TEST_ASSERT(i == 10);
 
@@ -155,9 +155,8 @@ void testSmi() {
   auto supMulti = getSupplier(fname, opt_smi);
   i = 0;
   while (!supMulti->atEnd()) {
-    ROMol* mol = supMulti->next();
+    auto mol = supMulti->next();
     if (mol) {
-      delete mol;
       i++;
     }
   }
@@ -189,7 +188,7 @@ void testMae() {
   //! Test atom properties
   TEST_ASSERT(nmol->getNumAtoms() == 19);
   for (int i = 0; i < 19; ++i) {
-    const auto* atom = nmol->getAtomWithIdx(i);
+    const auto *atom = nmol->getAtomWithIdx(i);
 
     //! The integer property is present for all atoms
     TEST_ASSERT(atom->hasProp("i_m_minimize_atom_index"));
@@ -223,10 +222,9 @@ void testMae() {
   fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
   auto cmaesup = getSupplier(fname, opt);
 
-  std::shared_ptr<ROMol> nmol2;
-  nmol2.reset(cmaesup->next());
-  const Atom* atom = nmol2->getAtomWithIdx(0);
-  auto* info = (AtomPDBResidueInfo*)(atom->getMonomerInfo());
+  std::shared_ptr<ROMol> nmol2(cmaesup->next());
+  const Atom *atom = nmol2->getAtomWithIdx(0);
+  auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
   TEST_ASSERT(info->getResidueName() == "ARG ");
   TEST_ASSERT(info->getChainId() == "A");
   TEST_ASSERT(info->getResidueNumber() == 5);
@@ -245,7 +243,7 @@ void testTdt() {
 
   unsigned int i = 0;
   while (!suppl->atEnd()) {
-    ROMol* nmol = suppl->next();
+    auto nmol = suppl->next();
     if (nmol) {
       std::string prop1, prop2;
       TEST_ASSERT(nmol->getNumAtoms() > 0);
@@ -262,7 +260,6 @@ void testTdt() {
       //! and no conformer:
       TEST_ASSERT(!nmol->getNumConformers());
 
-      delete nmol;
       i++;
     }
   }

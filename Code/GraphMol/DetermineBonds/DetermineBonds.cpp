@@ -347,7 +347,6 @@ void addBondOrdering(RWMol &mol,
   }
 
   if (MolOps::getFormalCharge(mol) != charge) {
-    mol.debugMol(std::cerr);
     std::stringstream ss;
     ss << "Final molecular charge (" << charge << ") does not match input ("
        << MolOps::getFormalCharge(mol)

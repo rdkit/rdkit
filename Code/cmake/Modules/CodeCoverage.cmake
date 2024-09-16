@@ -86,6 +86,7 @@ IF ( NOT (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "Covera
   MESSAGE( WARNING "Code coverage results with an optimized (non-Debug) build may be misleading" )
 ENDIF() # NOT CMAKE_BUILD_TYPE STREQUAL "Debug"
 
+find_package(Python3 COMPONENTS Interpreter)
 
 # Param _targetname     The name of new the custom make target
 # Param _testrunner     The name of the target which runs the tests.
@@ -118,7 +119,7 @@ FUNCTION(SETUP_TARGET_FOR_COVERAGE _targetname _testrunner _outputname)
 		# Capturing lcov counters and generating report
 		COMMAND ${LCOV_PATH} --directory . --capture --output-file ${_outputname}.info
 		COMMAND ${LCOV_PATH} --remove ${_outputname}.info 'tests/*' '/usr/*' '*.ll' '*.yy' --output-file ${_outputname}.info.cleaned
-                COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Code/cmake/Modules/fixup_coverage.py ${CMAKE_SOURCE_DIR} ${_outputname}.info.cleaned
+                COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Code/cmake/Modules/fixup_coverage.py ${CMAKE_SOURCE_DIR} ${_outputname}.info.cleaned
 
 		COMMAND ${GENHTML_PATH} -o ${_outputname} ${_outputname}.info.cleaned
 		COMMAND ${CMAKE_COMMAND} -E remove ${_outputname}.info ${_outputname}.info.cleaned
@@ -142,7 +143,7 @@ ENDFUNCTION() # SETUP_TARGET_FOR_COVERAGE
 #   Pass them in list form, e.g.: "-j;2" for -j 2
 FUNCTION(SETUP_TARGET_FOR_COVERAGE_COBERTURA _targetname _testrunner _outputname)
 
-	IF(NOT PYTHON_EXECUTABLE)
+	IF(NOT Python3_EXECUTABLE)
 		MESSAGE(FATAL_ERROR "Python not found! Aborting...")
 	ENDIF() # NOT PYTHON_EXECUTABLE
 

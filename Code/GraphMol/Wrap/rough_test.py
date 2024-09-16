@@ -8213,7 +8213,16 @@ M  END
     centers = Chem.FindMesoCenters(mol, includeIsotopes=False)
     self.assertEqual(centers, ())
 
-
+  def testIgnoreAtomMapNumbers(self):
+    mol = Chem.MolFromSmiles("[NH2:1]c1ccccc1")
+    ps = Chem.SmilesWriteParams()
+    ps.ignoreAtomMapNumbers = True
+    self.assertEqual(Chem.MolToSmiles(mol, ps), "[NH2:1]c1ccccc1")
+    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=True),
+                     "[NH2:1]c1ccccc1")
+    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False),
+                     "c1ccc([NH2:1])cc1")
+    
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

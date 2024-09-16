@@ -19,6 +19,7 @@
 #include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
 
+#include <functional>
 #include <atomic>
 #include <boost/tokenizer.hpp>
 
@@ -44,6 +45,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   ~MultithreadedMolSupplier() override;
   //! pop elements from the output queue
   std::unique_ptr<RWMol> next() override;
+
   //! returns true when all records have been read from the supplier
   bool atEnd() override;
 
@@ -57,6 +59,40 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   unsigned int getLastRecordId() const;
   //! returns the text block for the last extracted item
   std::string getLastItemText() const;
+
+  //! sets the callback to be applied to molecules before they are returned by
+  ///! the next() function
+  /*!
+    \param cb: a function that takes a reference to an RWMol and a const
+    reference to the MultithreadedMolSupplier. This can modify the molecule in
+    place
+
+   */
+  template <typename T>
+  void setNextCallback(T cb) {
+    nextCallback = cb;
+  }
+  //! sets the callback to be applied to molecules after they are processed, but
+  ///! before they are written to the output queue
+  /*!
+    \param cb: a function that takes a reference to an RWMol, a const reference
+    to the string record, and an unsigned int record id. This can modify the
+    molecule in place
+  */
+  template <typename T>
+  void setWriteCallback(T cb) {
+    writeCallback = cb;
+  }
+  //! sets the callback to be applied to input text records before they are
+  ///! added to the input queue
+  /*!
+    \param cb: a function that takes a const reference to the string record and
+    an unsigned int record id and returns the modified string record
+  */
+  template <typename T>
+  void setReadCallback(T cb) {
+    readCallback = cb;
+  }
 
  protected:
   //! starts reader and writer threads
@@ -92,16 +128,25 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   std::thread d_readerThread;                    //!< single reader thread
 
  protected:
+  std::atomic<bool> df_started = false;
   std::atomic<unsigned int> d_lastRecordId =
       0;                       //!< stores last extracted record id
   std::string d_lastItemText;  //!< stores last extracted record
   const unsigned int d_numReaderThread = 1;  //!< number of reader thread
 
-  ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>
-      *d_inputQueue;  //!< concurrent input queue
-  ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>
-      *d_outputQueue;  //!< concurrent output queue
+  std::unique_ptr<
+      ConcurrentQueue<std::tuple<std::string, unsigned int, unsigned int>>>
+      d_inputQueue;  //!< concurrent input queue
+  std::unique_ptr<
+      ConcurrentQueue<std::tuple<RWMol *, std::string, unsigned int>>>
+      d_outputQueue;  //!< concurrent output queue
   Parameters d_params;
+  std::function<void(RWMol &, const MultithreadedMolSupplier &)> nextCallback =
+      nullptr;
+  std::function<void(RWMol &, const std::string &, unsigned int)>
+      writeCallback = nullptr;
+  std::function<std::string(const std::string &, unsigned int)> readCallback =
+      nullptr;
 };
 }  // namespace FileParsers
 }  // namespace v2

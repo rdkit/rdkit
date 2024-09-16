@@ -14,7 +14,6 @@
 typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/types.h>
 
