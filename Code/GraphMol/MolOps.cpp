@@ -101,7 +101,7 @@ void nitrogenCleanup(RWMol &mol, Atom *atom) {
         break;
       }
     }  // end of loop over the first neigh
-  }    // if this atom is 5 coordinate nitrogen
+  }  // if this atom is 5 coordinate nitrogen
   // force a recalculation of the explicit valence here
   atom->setIsAromatic(aromHolder);
   atom->calcExplicitValence(false);
@@ -660,21 +660,21 @@ std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
   return res;
 }
 
-std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
-                                    INT_VECT *frags,
-                                    VECT_INT_VECT *fragsMolAtomMapping,
-                                    bool copyConformers) {
+namespace {
+std::vector<ROMol *> getRawFrags(const ROMol &mol, bool sanitizeFrags,
+                                 INT_VECT *frags,
+                                 VECT_INT_VECT *fragsMolAtomMapping,
+                                 bool copyConformers) {
   std::unique_ptr<INT_VECT> mappingStorage;
   if (!frags) {
     mappingStorage.reset(new INT_VECT);
     frags = mappingStorage.get();
   }
   int nFrags = getMolFrags(mol, *frags);
-  std::vector<RWMOL_SPTR> res;
+  std::vector<RWMol *> res;
   if (nFrags == 1) {
     auto *tmp = new RWMol(mol);
-    RWMOL_SPTR sptr(tmp);
-    res.push_back(sptr);
+    res.push_back(tmp);
     if (fragsMolAtomMapping) {
       INT_VECT comp;
       for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
@@ -743,7 +743,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
         // empirical. This is mainly intended to catch situations like proteins
         // where you have a bunch of single-atom fragments (waters); the
         // standard approach below ends up being horribly inefficient there
-        RWMOL_SPTR frag(new RWMol());
+        RWMol *frag = new RWMol();
         res.push_back(frag);
         std::map<unsigned int, unsigned int> atomIdxMap;
         for (auto aid : comp) {
@@ -773,7 +773,7 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
           }
         }
       } else {
-        RWMOL_SPTR frag(new RWMol(mol));
+        RWMol *frag = new RWMol(mol);
         res.push_back(frag);
         frag->beginBatchEdit();
         for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
@@ -800,7 +800,16 @@ std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
     }
   }
 
-  return std::vector<ROMOL_SPTR>(res.begin(), res.end());
+  return std::vector<ROMol *>(res.begin(), res.end());
+}
+}  // namespace
+std::vector<ROMOL_SPTR> getMolFrags(const ROMol &mol, bool sanitizeFrags,
+                                    INT_VECT *frags,
+                                    VECT_INT_VECT *fragsMolAtomMapping,
+                                    bool copyConformers) {
+  auto rawFrags = getRawFrags(mol, sanitizeFrags, frags, fragsMolAtomMapping,
+                              copyConformers);
+  return std::vector<ROMOL_SPTR>(rawFrags.begin(), rawFrags.end());
 }
 
 unsigned int getMolFrags(const ROMol &mol, INT_VECT &mapping) {
@@ -831,15 +840,28 @@ unsigned int getMolFrags(const ROMol &mol, VECT_INT_VECT &frags) {
   return rdcast<unsigned int>(frags.size());
 }
 
+unsigned int getMolFrags(const ROMol &mol,
+                         std::vector<std::unique_ptr<ROMol>> &molFrags,
+                         bool sanitizeFrags, std::vector<int> *frags,
+                         std::vector<std::vector<int>> *fragsMolAtomMapping,
+                         bool copyConformers) {
+  auto rawFrags = getRawFrags(mol, sanitizeFrags, frags, fragsMolAtomMapping,
+                              copyConformers);
+  molFrags.clear();
+  for (auto &mf : rawFrags) {
+    molFrags.emplace_back(mf);
+  }
+  return rdcast<unsigned int>(molFrags.size());
+}
+
+namespace {
 template <typename T>
-std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+std::map<T, ROMol *> getRawFragsWithQuery(
     const ROMol &mol, T (*query)(const ROMol &, const Atom *),
     bool sanitizeFrags, const std::vector<T> *whiteList, bool negateList) {
-  PRECONDITION(query, "no query");
-
   std::vector<T> assignments(mol.getNumAtoms());
   std::vector<int> ids(mol.getNumAtoms(), -1);
-  std::map<T, boost::shared_ptr<ROMol>> res;
+  std::map<T, ROMol *> res;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     T where = query(mol, mol.getAtomWithIdx(i));
     if (whiteList) {
@@ -853,9 +875,9 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
     }
     assignments[i] = where;
     if (res.find(where) == res.end()) {
-      res[where] = boost::shared_ptr<ROMol>(new ROMol());
+      res[where] = new ROMol();
     }
-    auto *frag = static_cast<RWMol *>(res[where].get());
+    auto *frag = static_cast<RWMol *>(res[where]);
     ids[i] = frag->addAtom(mol.getAtomWithIdx(i)->copy(), false, true);
     // loop over neighbors and add bonds in the fragment to all atoms
     // that are already in the same fragment
@@ -875,7 +897,7 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
   // update conformers
   for (auto cit = mol.beginConformers(); cit != mol.endConformers(); ++cit) {
     for (auto iter = res.begin(); iter != res.end(); ++iter) {
-      ROMol *newM = iter->second.get();
+      ROMol *newM = iter->second;
       auto *conf = new Conformer(newM->getNumAtoms());
       conf->setId((*cit)->getId());
       conf->set3D((*cit)->is3D());
@@ -892,9 +914,21 @@ std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
   }
   if (sanitizeFrags) {
     for (auto iter = res.begin(); iter != res.end(); ++iter) {
-      sanitizeMol(*static_cast<RWMol *>(iter->second.get()));
+      sanitizeMol(*static_cast<RWMol *>(iter->second));
     }
   }
+  return res;
+}
+}  // namespace
+template <typename T>
+std::map<T, boost::shared_ptr<ROMol>> getMolFragsWithQuery(
+    const ROMol &mol, T (*query)(const ROMol &, const Atom *),
+    bool sanitizeFrags, const std::vector<T> *whiteList, bool negateList) {
+  PRECONDITION(query, "no query");
+
+  auto rawRes =
+      getRawFragsWithQuery(mol, query, sanitizeFrags, whiteList, negateList);
+  std::map<T, boost::shared_ptr<ROMol>> res(rawRes.begin(), rawRes.end());
   return res;
 }
 template RDKIT_GRAPHMOL_EXPORT std::map<std::string, boost::shared_ptr<ROMol>>
@@ -911,6 +945,37 @@ getMolFragsWithQuery(const ROMol &mol,
                      unsigned int (*query)(const ROMol &, const Atom *),
                      bool sanitizeFrags, const std::vector<unsigned int> *,
                      bool);
+
+template <typename T>
+unsigned int getMolFragsWithQuery(const ROMol &mol,
+                                  T (*query)(const ROMol &, const Atom *),
+                                  std::map<T, std::unique_ptr<ROMol>> &molFrags,
+                                  bool sanitizeFrags,
+                                  const std::vector<T> *whiteList,
+                                  bool negateList) {
+  PRECONDITION(query, "no query");
+
+  auto rawRes =
+      getRawFragsWithQuery(mol, query, sanitizeFrags, whiteList, negateList);
+  molFrags.clear();
+  for (auto &rr : rawRes) {
+    molFrags.insert(
+        std::make_pair(rr.first, std::unique_ptr<ROMol>(rr.second)));
+  }
+  return rdcast<unsigned int>(molFrags.size());
+}
+template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, std::string (*query)(const ROMol &, const Atom *),
+    std::map<std::string, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags,
+    const std::vector<std::string> *, bool);
+template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, int (*query)(const ROMol &, const Atom *),
+    std::map<int, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags,
+    const std::vector<int> *, bool);
+template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, unsigned int (*query)(const ROMol &, const Atom *),
+    std::map<unsigned int, std::unique_ptr<ROMol>> &molFrags,
+    bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 
 #if 0
     void findSpanningTree(const ROMol &mol,INT_VECT &mst){

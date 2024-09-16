@@ -43,6 +43,7 @@ void test1() {
   INT_VECT iv;
   unsigned int count;
   std::vector<ROMOL_SPTR> frags;
+  std::vector<std::unique_ptr<ROMol>> otherFrags;
 
   smi = "CCCC(=O)O";
   m = SmilesToMol(smi);
@@ -52,6 +53,9 @@ void test1() {
   frags = MolOps::getMolFrags(*m);
   CHECK_INVARIANT(frags.size() == 1, "bad frag count");
   TEST_ASSERT(frags[0]->getNumAtoms() == 6);
+  count = MolOps::getMolFrags(*m, otherFrags);
+  CHECK_INVARIANT(count == 1, "bad frag count");
+  CHECK_INVARIANT(otherFrags.size() == 1, "bad frag count");
   delete m;
 
   smi = "CCCC(=O)[O-].[Na+]";
@@ -70,6 +74,14 @@ void test1() {
   TEST_ASSERT(iv.size() == 7);
   TEST_ASSERT(iv[0] == 0)
   TEST_ASSERT(iv[6] == 1)
+  count = MolOps::getMolFrags(*m, otherFrags, true, &iv);
+  CHECK_INVARIANT(count == 2, "bad frag count");
+  CHECK_INVARIANT(otherFrags.size() == 2, "bad frag count");
+  TEST_ASSERT(frags[0]->getNumAtoms() == 6);
+  TEST_ASSERT(frags[1]->getNumAtoms() == 1);
+  TEST_ASSERT(iv.size() == 7);
+  TEST_ASSERT(iv[0] == 0)
+  TEST_ASSERT(iv[6] == 1)
   delete m;
 
   smi = "CCCC(=O)[O-].[Na+].[NH4+].[Cl-]";
@@ -83,6 +95,13 @@ void test1() {
   TEST_ASSERT(frags[1]->getNumAtoms() == 1);
   TEST_ASSERT(frags[2]->getNumAtoms() == 1);
   TEST_ASSERT(frags[3]->getNumAtoms() == 1);
+  count = MolOps::getMolFrags(*m, otherFrags);
+  CHECK_INVARIANT(count == 4, "bad frag count");
+  CHECK_INVARIANT(otherFrags.size() == 4, "bad frag count");
+  TEST_ASSERT(otherFrags[0]->getNumAtoms() == 6);
+  TEST_ASSERT(otherFrags[1]->getNumAtoms() == 1);
+  TEST_ASSERT(otherFrags[2]->getNumAtoms() == 1);
+  TEST_ASSERT(otherFrags[3]->getNumAtoms() == 1);
   delete m;
 };
 
@@ -5227,6 +5246,20 @@ void testMolFragsWithQuery() {
     TEST_ASSERT(res[7]->getNumBonds() == 1);
     TEST_ASSERT(res[8]->getNumAtoms() == 1);
     TEST_ASSERT(res[8]->getNumBonds() == 0);
+
+    std::map<int, std::unique_ptr<ROMol>> otherRes;
+    MolOps::getMolFragsWithQuery(*m, getAtNum, otherRes);
+    TEST_ASSERT(otherRes.size() == 3);
+    TEST_ASSERT(otherRes.find(6) != otherRes.end());
+    TEST_ASSERT(otherRes.find(7) != otherRes.end());
+    TEST_ASSERT(otherRes.find(8) != otherRes.end());
+    TEST_ASSERT(otherRes.find(5) == otherRes.end());
+    TEST_ASSERT(otherRes[6]->getNumAtoms() == 5);
+    TEST_ASSERT(otherRes[6]->getNumBonds() == 4);
+    TEST_ASSERT(otherRes[7]->getNumAtoms() == 2);
+    TEST_ASSERT(otherRes[7]->getNumBonds() == 1);
+    TEST_ASSERT(otherRes[8]->getNumAtoms() == 1);
+    TEST_ASSERT(otherRes[8]->getNumBonds() == 0);
     delete m;
   }
   {
@@ -5247,6 +5280,17 @@ void testMolFragsWithQuery() {
     TEST_ASSERT(res[6]->getNumBonds() == 4);
     TEST_ASSERT(res[8]->getNumAtoms() == 1);
     TEST_ASSERT(res[8]->getNumBonds() == 0);
+    std::map<int, std::unique_ptr<ROMol>> otherRes;
+    MolOps::getMolFragsWithQuery(*m, getAtNum, otherRes, true, &keep);
+    TEST_ASSERT(otherRes.size() == 2);
+    TEST_ASSERT(otherRes.find(6) != otherRes.end());
+    TEST_ASSERT(otherRes.find(7) == otherRes.end());
+    TEST_ASSERT(otherRes.find(8) != otherRes.end());
+    TEST_ASSERT(otherRes[6]->getNumAtoms() == 5);
+    TEST_ASSERT(otherRes[6]->getNumBonds() == 4);
+    TEST_ASSERT(otherRes[8]->getNumAtoms() == 1);
+    TEST_ASSERT(otherRes[8]->getNumBonds() == 0);
+
     delete m;
   }
   {
@@ -5265,6 +5309,15 @@ void testMolFragsWithQuery() {
     TEST_ASSERT(res.find(8) == res.end());
     TEST_ASSERT(res[7]->getNumAtoms() == 2);
     TEST_ASSERT(res[7]->getNumBonds() == 1);
+
+    std::map<int, std::unique_ptr<ROMol>> otherRes;
+    MolOps::getMolFragsWithQuery(*m, getAtNum, otherRes, true, &keep, true);
+    TEST_ASSERT(otherRes.size() == 1);
+    TEST_ASSERT(otherRes.find(6) == otherRes.end());
+    TEST_ASSERT(otherRes.find(7) != otherRes.end());
+    TEST_ASSERT(otherRes.find(8) == otherRes.end());
+    TEST_ASSERT(otherRes[7]->getNumAtoms() == 2);
+    TEST_ASSERT(otherRes[7]->getNumBonds() == 1);
 
     delete m;
   }
