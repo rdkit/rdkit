@@ -3567,9 +3567,9 @@ DrawColour DrawMol::getColour(int atom_idx) const {
     // atom has a symbol, it should be the same colour as carbon.  This
     // function should only be called if there is an atom symbol.
     if (highlightedAtom) {
-      if (drawOptions_.atomColourPalette.find(6) !=
-          drawOptions_.atomColourPalette.end()) {
-        retval = drawOptions_.atomColourPalette.at(6);
+      if (auto it = drawOptions_.atomColourPalette.find(6);
+          it != drawOptions_.atomColourPalette.end()) {
+        retval = it->second;
       } else {
         // Use the default if no carbon.
         retval = drawOptions_.atomColourPalette.at(-1);
