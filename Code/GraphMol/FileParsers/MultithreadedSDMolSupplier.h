@@ -51,7 +51,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
   void initFromSettings(bool takeOwnership, const Parameters &params,
                         const MolFileParserParams &parseParams);
 
-  Parameters d_params;
   bool df_end = false;  //!< have we reached the end of the file?
   int d_line = 0;       //!< line number we are currently on
   bool df_processPropertyLists = true;

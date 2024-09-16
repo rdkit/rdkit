@@ -1,8 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2024 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,13 +8,12 @@
 //  of the RDKit source tree.
 //
 #include "PositionConstraint.h"
-#include <cmath>
-#include <ForceField/ForceField.h>
+#include "ForceField.h"
 #include <RDGeneral/Invariant.h>
 #include <algorithm>
+#include <cmath>
 
 namespace ForceFields {
-namespace MMFF {
 PositionConstraintContrib::PositionConstraintContrib(ForceField *owner,
                                                      unsigned int idx,
                                                      double maxDispl,
@@ -68,5 +64,4 @@ void PositionConstraintContrib::getGrad(double *pos, double *grad) const {
     grad[3 * d_atIdx + i] += dGrad;
   }
 }
-}  // namespace MMFF
 }  // namespace ForceFields
