@@ -214,8 +214,13 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      "class of equivalent atoms.")
       .def_readwrite("ignoreBondOrders",
                      &RDKit::RascalMCES::RascalOptions::ignoreBondOrders,
-                     "If True, will treat all bonds as the same,\n"
-                     "irrespective of order.  Default=False.");
+                     "If True, will treat all bonds as the same,"
+                     " irrespective of order.  Default=False.")
+      .def_readwrite("ignoreAtomAromaticity",
+                     &RDKit::RascalMCES::RascalOptions::ignoreAtomAromaticity,
+                     "If True, matches atoms solely on atomic number."
+                     "  If False, will treat aromatic and aliphatic atoms"
+                     " as different.  Default=True.");
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of "
