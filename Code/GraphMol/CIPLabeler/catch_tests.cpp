@@ -943,3 +943,25 @@ TEST_CASE("atropisomers", "[basic]") {
     }
   }
 }
+
+// Do we annotate/label the molecule with the ranks of their neighbors?
+TEST_CASE("neighbor_annotations", "[basic]") {
+  SECTION("chirality") {
+    auto mol = R"(C1C[C@H](C)C(=O)C[C@H]1O)"_smiles;
+    CIPLabeler::assignCIPLabels(*mol, 10);
+    auto a = mol->getAtomWithIdx(2);
+    auto ranked_neighbors = a->getProp<std::vector<int>>("_CIPNeighborRanks");
+    CHECK(ranked_neighbors == std::vector{1, 2, 3});
+  }
+
+  SECTION("bond_stereo") {
+    auto mol = R"([H]/C=C(N)/C)"_smiles;
+    auto b = mol->getBondWithIdx(1);
+    auto& stereo_atoms = b->getStereoAtoms();
+    CHECK(stereo_atoms[1] == 4);
+    CIPLabeler::assignCIPLabels(*mol, 10);
+    // did the stereoatom switch to the highest CIP ranked neighbor?
+    stereo_atoms = b->getStereoAtoms();
+    CHECK(stereo_atoms[1] == 3);
+  }
+}

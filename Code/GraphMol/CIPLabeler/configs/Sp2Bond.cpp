@@ -122,6 +122,14 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
     }
   }
 
+  {
+    // At this point, edges1 and edges2 are sorted by priority starting from
+    // this node. Record that now! - they may be resorted after processing
+    // other nodes.
+    std::vector<Atom*> updated_carriers = {edges1[0]->getEnd()->getAtom(),
+                                           edges2[0]->getEnd()->getAtom()};
+  }
+
   if (config == Bond::STEREOCIS) {
     if (priority1.isPseudoAsymetric() != priority2.isPseudoAsymetric()) {
       return Descriptor::seqCis;
