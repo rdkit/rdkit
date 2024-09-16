@@ -86,7 +86,6 @@ struct RGroupMatch {
                       [this, &oldBondEnds](const auto &bondIdx) {
                         const auto bond =
                             targetMolForHighlights->getBondWithIdx(bondIdx);
-                        CHECK_INVARIANT(bond, "bond must not be null");
                         const auto beginAtom = bond->getBeginAtom();
                         const auto endAtom = bond->getEndAtom();
                         oldBondEnds[bondIdx].first = beginAtom->getIdx();
