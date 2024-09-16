@@ -62,6 +62,8 @@ class RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecomposition {
                                 const UsedLabelMap &usedRGroupMap) const;
   int getMatchingCoreInternal(RWMol &mol, const RCore *&rcore,
                               std::vector<MatchVectType> &matches);
+  static void labelAtomBondIndices(RWMol &mol);
+  void setTargetAtomBondIndices(ROMol &mol, bool includeBondsToRLabels) const;
 
  public:
   RGroupDecomposition(const ROMol &core,

@@ -17,41 +17,49 @@
 
 namespace RDKit {
 
-typedef enum {
-  IsotopeLabels = 0x01,
-  AtomMapLabels = 0x02,
-  AtomIndexLabels = 0x04,
-  RelabelDuplicateLabels = 0x08,
-  MDLRGroupLabels = 0x10,
-  DummyAtomLabels = 0x20,  // These are rgroups but will get relabelled
-  AutoDetect = 0xFF,
-} RGroupLabels;
+#define RGROUPLABELS_ENUM_ITEMS                                         \
+  RGD_ENUM_ITEM(IsotopeLabels, 1 << 0)                                  \
+  RGD_ENUM_ITEM(AtomMapLabels, 1 << 1)                                  \
+  RGD_ENUM_ITEM(AtomIndexLabels, 1 << 2)                                \
+  RGD_ENUM_ITEM(RelabelDuplicateLabels, 1 << 3)                         \
+  RGD_ENUM_ITEM(MDLRGroupLabels, 1 << 4)                                \
+  RGD_ENUM_ITEM(DummyAtomLabels,                                        \
+                1 << 5) /* These are rgroups but will get relabelled */ \
+  RGD_ENUM_ITEM(AutoDetect, 0xFF)
 
-typedef enum {
-  Greedy = 0x01,
-  GreedyChunks = 0x02,
-  Exhaustive = 0x04,  // not really useful for large sets
-  NoSymmetrization = 0x08,
-  GA = 0x10,
-} RGroupMatching;
+#define RGROUPMATCHING_ENUM_ITEMS                                          \
+  RGD_ENUM_ITEM(Greedy, 1 << 0)                                            \
+  RGD_ENUM_ITEM(GreedyChunks, 1 << 1)                                      \
+  RGD_ENUM_ITEM(Exhaustive, 1 << 2) /* not really useful for large sets */ \
+  RGD_ENUM_ITEM(NoSymmetrization, 1 << 3)                                  \
+  RGD_ENUM_ITEM(GA, 1 << 4)
 
-typedef enum {
-  AtomMap = 0x01,
-  Isotope = 0x02,
-  MDLRGroup = 0x04,
-} RGroupLabelling;
+#define RGROUPLABELLING_ENUM_ITEMS \
+  RGD_ENUM_ITEM(AtomMap, 1 << 0)   \
+  RGD_ENUM_ITEM(Isotope, 1 << 1)   \
+  RGD_ENUM_ITEM(MDLRGroup, 1 << 2)
 
-typedef enum {
-  // DEPRECATED, remove the following line in release 2021.03
-  None = 0x0,
-  NoAlignment = 0x0,
-  MCS = 0x01,
-} RGroupCoreAlignment;
+#define RGROUPCOREALIGNMENT_ENUM_ITEMS \
+  RGD_ENUM_ITEM(NoAlignment, 0)        \
+  RGD_ENUM_ITEM(MCS, 1 << 0)
 
-typedef enum {
-  Match = 0x1,
-  FingerprintVariance = 0x4,
-} RGroupScore;
+#define RGROUPSCORE_ENUM_ITEMS \
+  RGD_ENUM_ITEM(Match, 1 << 0) \
+  RGD_ENUM_ITEM(FingerprintVariance, 1 << 2)
+
+#define RGD_ENUM_ITEM(k, v) k = v,
+typedef enum { RGROUPLABELS_ENUM_ITEMS } RGroupLabels;
+
+typedef enum { RGROUPMATCHING_ENUM_ITEMS } RGroupMatching;
+
+typedef enum { RGROUPLABELLING_ENUM_ITEMS } RGroupLabelling;
+
+typedef enum { RGROUPCOREALIGNMENT_ENUM_ITEMS } RGroupCoreAlignment;
+
+typedef enum { RGROUPSCORE_ENUM_ITEMS } RGroupScore;
+#undef RGD_ENUM_ITEM
+#define RGD_STD_MAP_ITEM(k) {#k, k},
+#define RGD_ENUM_ITEM(k, v) RGD_STD_MAP_ITEM(k)
 
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   unsigned int labels = AutoDetect;
@@ -72,11 +80,18 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   bool removeHydrogensPostMatch = true;
   //! allow labelled Rgroups of degree 2 or more
   bool allowNonTerminalRGroups = false;
-  // unlabelled core atoms can have multiple rgroups
+  //! unlabelled core atoms can have multiple rgroups
   bool allowMultipleRGroupsOnUnlabelled = false;
   // extended query settings for core matching
   bool doTautomers = false;
   bool doEnumeration = false;
+  //! include target molecule (featuring explicit hydrogens where they
+  //! coincide with R groups in the core) into RGD results,
+  //! and set _rgroupTargetAtoms and _rgroupTargetBonds properties
+  //! on R groups and core as vectors of target atom and bond indices
+  //! to enable highlighting for SAR analysis (see
+  //! https://greglandrum.github.io/rdkit-blog/posts/2021-08-07-rgd-and-highlighting.html)
+  bool includeTargetMolInResults = false;
 
   double timeout = -1.0;  ///< timeout in seconds. <=0 indicates no timeout
 
@@ -117,6 +132,11 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   int indexOffset{-1};
   void checkNonTerminal(const Atom &atom) const;
 };
+
+void updateRGroupDecompositionParametersFromJSON(
+    RGroupDecompositionParameters &params, const std::string &details_json);
+void updateRGroupDecompositionParametersFromJSON(
+    RGroupDecompositionParameters &params, const char *details_json);
 
 }  // namespace RDKit
 
