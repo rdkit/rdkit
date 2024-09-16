@@ -4,27 +4,45 @@ We are really happy to have new contributors help make the RDKit better. This do
 
 ## What and How to Contribute
 
-### If you are not a developer
+### If You Are Not a Developer
 
-Really helpful things you can do that don't involve serious coding:
+You don't need to be a developer to be able to make really helpful contributions to the RDKit. Some of these activities are also a good place to start for beginners who want to make code contributions to get a feel for how the toolkit is structured.
+
+Some things you can do that don't involve serious coding:
 
 - Being an active part of the community and asking/answering questions on Github
-- Submitting high-quality bug reports via [GitHub issues](https://github.com/rdkit/rdkit/issues)
+- Submitting high-quality bug reports via [GitHub issues](https://github.com/rdkit/rdkit/issues). Some guidelines for best practices will be given in the section below. 
 - Contributing documentation
     - Fixing pieces you find to be unclear or wrong
-    - Adding references where available 
+    - Adding references where available
     - Adding new sections or examples
-    - In-code documentation: comments explaining what the code does or references
-    - This Getting Started guide! 
+    - In-code documentation: comments explaining what the code does or adding references
+    - Adding to this Getting Started guide! 
 - Contributing tutorials
 - Ideas for improvements (with the appropriate tags!) 
 - Write blog posts (either your own or for the [RDKit blog](https://greglandrum.github.io/rdkit-blog/))
+- Cleaning up GitHub issues that have been resolved or that should be under discussions
+- Answering questions on the [GitHub Discussions](https://github.com/rdkit/rdkit/discussions) board or [Stack Overflow](https://stackoverflow.com/questions/tagged/rdkit)
 
-#### GitHub Issues vs Discussions
+Many of these also do not require a large time commitment and can be done if you have a spare 5 minutes - a little goes a long way! 
 
-If you have a question about the RDKit or aren't sure if what you're seeing is the right behavior please use the [Discussions tab](https://github.com/rdkit/rdkit/discussions) instead of posting it as an issue. More often than not the unexpected behaviour is an issue from your side - "guilty until proven innocent"!
+### A Note on GitHub Issues vs Discussions
 
-The following code snippet using the `Chem.DetectChemistryProblem(mol)` function provides a good test for whether your observed behaviour is a true bug, or just input that RDKit doesn't like (mol.Debug() is also useful for this purpose):
+RDKit makes use of both the Issues and Discussions functionality on GitHub.
+
+#### Discussions
+
+The [Discussions tab](https://github.com/rdkit/rdkit/discussions) is used to ask questions about the RDKit, and for help if you cannot find the functionality you need or for debugging errors in your code. If you aren't sure if what you're seeing is the right behavior we would recommend posting this as a discussion first (unless you are 100% certain it is a genuine bug) instead of posting it as an issue. More often than not the unexpected behaviour is an issue from your side - "guilty until proven innocent"!
+
+If you have a suggestion for a new RDKit feature or enhancement starting a discussion first before creating a pull request is a useful exercise. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do in the RDKit.
+
+#### Issues
+
+The [Issues tab](https://github.com/rdkit/rdkit/issues) is used to report undesirable behaviour, either due to a bug in the code (tag as **bug**) or due to implementation choice (tag as **enhancement**). Small, self-contained suggestions are tagged as **good for beginners** and suggestions for future UGMs are tagged **Hackathon Idea**, both of which are a good place to start if you are looking for ideas. 
+
+*A Note on Bug Reports*
+
+As mentioned above, if you encounter unexpected behaviour that you are reasonably convinced is a **bug**, it can also be reported via the issues tab. If the "bug" you have observed happens only for a specific example, we would recommend first checking your inputs using the following code snippet. The `Chem.DetectChemistryProblem(mol)` function provides a good test for whether your observed behaviour is a true bug, or just input that RDKit doesn't like (mol.Debug() is also useful for this purpose):
 
 ```
 m = Chem.MolFromSmiles('c1nccc1O(C)C',sanitize=False)
@@ -49,12 +67,7 @@ errs[1].Message()
 OUTPUTS: "Can't kekulize mol.  Unkekulized atoms: 0 1 2 3 4"
 ```
 
-If you have a suggestion for a new RDKit feature or enhancement please consider starting a discussion about it using the Discussions tab before creating a pull request. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do in the RDKit.
-
-If you are sure that what you're seeing is wrong behaviour, please use the template below as it will help understand the underlying bug report. If you do not provide the information requested we may not be able to help you and will probably close the issue. Issues should be reported [here](https://github.com/rdkit/rdkit/issues).
-
-It is also possible to report a report a [vulnerability](https://github.com/rdkit/rdkit/security/advisories/).
-This submission will only be viewable to repository maintainers and you will be credited if the advisory is published.
+When reporting bugs, please use the template below (which appears when you open a new issue in GitHub) as it will help the maintainers understand the issue reported. If you do not provide the information requested we may not be able to help you and will probably close the issue. 
 
 ```
 -----------------------------------------
@@ -86,37 +99,35 @@ Add any other context about the problem here.
 -----------------------------------------
 ```
 
+It is also possible to report a report a [vulnerability](https://github.com/rdkit/rdkit/security/advisories/). This submission will only be viewable to repository maintainers and you will be credited if the advisory is published.
+
 Please mark all issues/discussions with the relevant tag!
 
-### If you are a developer
+### If You Are a Developer
 
-Submitting new features and or bug fixes is certainly nice. For ideas on where to get started have a look at the [GitHub issues](https://github.com/rdkit/rdkit/issues). We try to remember to tag issues that are relatively small and self-contained as [good for beginners](https://github.com/rdkit/rdkit/labels/good%20for%20beginners); take a look at that list and see if there's anything that looks interesting. If you have questions, ask by adding a comment to the issue.
-
-It’s generally a good idea to check with Greg or one of the maintainers before adding significant new functionality.
+Submitting new features and or bug fixes is certainly nice. For ideas on where to get started have a look at the [GitHub issues](https://github.com/rdkit/rdkit/issues). We try to remember to tag issues that are relatively small and self-contained as [good for beginners](https://github.com/rdkit/rdkit/labels/good%20for%20beginners); take a look at that list and see if there's anything that looks interesting. If you have questions, ask by adding a comment to the issue, and if you intend to resolve the issue add a comment to let the maintainers know. It’s also generally a good idea to check with Greg or one of the maintainers before adding significant new functionality.
 
 Code contributions can be made as follows:
 - Core C++ functionality + relevant wrappers
-- Python scripts
+- Core Python functionality and scripts (note C++ is preferred for functionality, with the exception of Python-specific tools e.g. PandasTools)
 - JavaScript
 - Java
 - KNIME nodes
+- Postgres Cartridge
 
 More details on what code contributions (including documentation) should look like are given in the following sections. 
 
-### If you have 5 minutes to spare 
-
-- Cleaning up GitHub issues that have been resolved or that should be under discussions
-- Answering questions on the [GitHub Discussions](https://github.com/rdkit/rdkit/discussions) board or [Stack Overflow](https://stackoverflow.com/questions/tagged/rdkit)
-
-### How to Submit Code/Docs Contributions
+### How to Submit Code/Documentation Contributions
 
 Contributions are made to the RDKit Codebase via GitHub pull requests. A summary of how to do this is given here. For a more in-depth overview see [this fantastic set of slides](https://github.com/rdkit/UGM_2016/blob/master/Presentations/Landrum_Schneider_GitHub_Git_and_RDKit.pdf) from Greg and Nadine. 
 
 **Step 1** Create a fork of the main [RDKit repo](https://github.com/rdkit/rdkit) to your own GitHub account.
+
 ![Fork RDKit](../Book/images/rdkit_fork_clone.png)
+
 **Step 2** Clone from you fork to a local repo 
 
-`git clone https://github.com/rdkit/rdkit.git`
+`git clone https://github.com/YOURUSERNAME/rdkit.git`
 
 **Step 2** Do code development on your local repository
 
