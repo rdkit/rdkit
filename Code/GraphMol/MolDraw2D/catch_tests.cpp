@@ -341,7 +341,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testDuplicateEnhancedStereoLabelsAddAnnotationFalse.svg", 2980189527U},
     {"testComplexQueryAtomMap.svg", 722421835U},
     {"testHighlightHeteroAtoms_1.svg", 1769258632U},
-    {"testHighlightHeteroAtoms_2.svg", 2573581284U},
+    {"testHighlightHeteroAtoms_2.svg", 893937335U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -9861,7 +9861,7 @@ TEST_CASE("Draw hetero atoms in black if highlighted") {
     outs << text;
     outs.close();
     // there should be 3 "carbon" characters and 3 pinky ones
-    std::regex regex1("<text .*;fill:#CCCCCC.*</text>");
+    std::regex regex1("<text .*;fill:#E5E5E5.*</text>");
     size_t nBlack = std::distance(
         std::sregex_token_iterator(text.begin(), text.end(), regex1),
         std::sregex_token_iterator());

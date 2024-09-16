@@ -3550,11 +3550,10 @@ DrawColour DrawMol::getColour(int atom_idx) const {
     if (highlightedAtom) {
       if (drawOptions_.atomColourPalette.find(6) !=
           drawOptions_.atomColourPalette.end()) {
-        // if -1 is in the palette, we use that for undefined colors
-        retval = drawOptions_.atomColourPalette.find(-1)->second;
+        retval = drawOptions_.atomColourPalette.find(6)->second;
       } else {
-        // if all else fails, default to black:
-        retval = DrawColour(0.0, 0.0, 0.0);
+        // Use the default if no carbon.
+        retval = drawOptions_.atomColourPalette.find(-1)->second;
       }
     }
   }
