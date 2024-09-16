@@ -143,9 +143,9 @@ class PythonFilterMatch : public FilterMatcherBase {
   bool incref;
 
  public:
-  PythonFilterMatch(PyObject *self)
+  PythonFilterMatch(PyObject *callback)
       : FilterMatcherBase("Python Filter Matcher"),
-        functor(self),
+        functor(callback),
         incref(false){};
 
   // ONLY CALLED FROM C++ from the copy operation
@@ -565,7 +565,7 @@ struct filtercat_wrapper {
         .def_pickle(filtercatalog_pickle_suite());
 
     python::class_<PythonFilterMatch, python::bases<FilterMatcherBase>>(
-        "PythonFilterMatcher", python::init<PyObject *>(python::args("self")));
+        "PythonFilterMatcher", python::init<PyObject *>(python::args("self", "callback")));
 
     python::def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
                 "Returns True if the FilterCatalog is serializable "
