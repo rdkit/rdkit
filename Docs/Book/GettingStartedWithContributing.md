@@ -151,20 +151,28 @@ OUTPUT: [contributing_docs 08780075f] update what and how section
 
 ### Running the tests (C++ and Python)
 
-Code changes should generally come with an associated unit test; also, please
-run the tests to make sure your changes did not break any existing tests!
-(If a test breaks, it may be a bug in your changes, or if the behavior change
-is the point of the commit, the old test may need to be updated.)
+Code changes should generally come with an associated unit test; also, please run the tests to make sure your changes did not break any existing tests! If a test breaks, it may be a bug in your changes, or if the behavior change is the point of the commit, the old test may need to be updated.
 
 The unit tests are run from the build directory (`$RDBASE/build`) using the
-[ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html) command. See
-the help message for a full list of options, but some frequently useful options
-include:
+[ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html) command. 
+
+```
+RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
+```
+
+See the help message for a full list of options, but some frequently useful options include:
 
     -j <n>               Run in parallel with <n> workers
     -N                   Only list the tests that would be run
     -R <regex>           Only run tests matching a regular expression
     --output-on-failure  Print the stdout/stderr of failing tests
+
+If working only in Python, the tests can be run as follows:
+
+```
+$ cd $RDBASE/rdkit/Chem
+$ python $RDBASE/rdkit/TestRunner.py test_list.py
+```
 
 ## Contributing to the RDKit Docs 
 
@@ -282,7 +290,7 @@ TEST_CASE("test basic Mol features", "[ROMol]") {
 }
 ```
 
-Additionally, adapt the CMakeLists.txt of the respective folder. You will have to adapt filenames and add needed libraries (in this example, FileParsers contains the functionality to parse SMILES.
+Additionally, adapt the CMakeLists.txt of the respective folder. You will have to adapt filenames and add needed libraries (in this example, FileParsers contains the functionality to parse SMILES).
 
 ```
 rdkit_catch_test(dummyTest catch_dummy.cpp LINK_LIBRARIES FileParsers)
