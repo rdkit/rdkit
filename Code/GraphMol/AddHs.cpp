@@ -1123,35 +1123,6 @@ HydrogenType isQueryH(const Atom *atom) {
     } else if (atom->getQuery()->getDescription() == "AtomAnd") {
       res = queryHasHs(atom->getQuery(), false);
     }
-<<<<<<< Updated upstream
-    // Because we can have AtomOr -> AtomOr -> AtomOr nodes, we need
-    //  to have a stack of stacks to descent into the children and come back up
-    std::list<std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE>> childStacks;
-    childStacks.push_back(std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE>(
-                          atom->getQuery()->beginChildren(), atom->getQuery()->endChildren()));
-    auto &childStack = childStacks.back();
-    
-    // the logic gets too complicated if there's an OR in the children, so
-    // just punt on those (with a warning)
-    while (!(hasHQuery && hasOr) && childStack.size()) {
-      QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
-      childStack.pop_front();
-      if (query->getDescription() == "AtomOr") {
-        hasOr = true;
-        childStacks.push_back(std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE>(
-                                    query->beginChildren(), query->endChildren()));
-        childStack = childStacks.back();
-      } else if (query->getDescription() == "AtomAtomicNum") {
-        if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
-            !query->getNegation()) {
-          hasHQuery = true;
-        }
-      } else {
-        QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
-        for (child1 = query->beginChildren(); child1 != query->endChildren();
-             ++child1) {
-          childStack.push_back(*child1);
-=======
     if(res.first) { // hasH
         if(res.second) { // inOr
           BOOST_LOG(rdWarningLog) << "WARNING: merging explicit H queries involved "
@@ -1161,13 +1132,6 @@ HydrogenType isQueryH(const Atom *atom) {
           return HydrogenType::UnMergableQueryHydrogen;
         } else {
           return HydrogenType::QueryHydrogen;
->>>>>>> Stashed changes
-        }
-      }
-      if(childStack.empty()) {
-        if(childStacks.size() > 1) {
-          childStacks.pop_back();
-          childStack = childStacks.back();
         }
       }
     }
