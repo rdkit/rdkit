@@ -95,7 +95,7 @@ M  END
             var cores = new ROMol_Vect();
             cores.Add(core);
             var rgd = new RGroupDecomposition(cores, rgdParameters);
-            var mol1 = RWMol.MolFromSmiles("C/C=C/C1=CC=CC=C1");
+            var mol1 = RWMol.MolFromSmiles("C/C=C/C1=CC=CC=C1");
             Assert.Equal(0, rgd.add(mol1));
             Assert.True(rgd.process());
             var rows = rgd.getRGroupsAsRows();
