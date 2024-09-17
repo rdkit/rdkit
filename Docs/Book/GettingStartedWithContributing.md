@@ -121,15 +121,15 @@ More details on what code contributions (including documentation) should look li
 
 Contributions are made to the RDKit Codebase via GitHub pull requests. A summary of how to do this is given here. For a more in-depth overview see [this fantastic set of slides](https://github.com/rdkit/UGM_2016/blob/master/Presentations/Landrum_Schneider_GitHub_Git_and_RDKit.pdf) from Greg and Nadine. 
 
-**Step 1** Create a fork of the main [RDKit repo](https://github.com/rdkit/rdkit) to your own GitHub account.
+**Step 1:** Create a fork of the main [RDKit repo](https://github.com/rdkit/rdkit) to your own GitHub account.
 
 ![Fork RDKit](../Book/images/rdkit_fork_clone.png)
 
-**Step 2** Clone your fork to make a local copy to work from.
+**Step 2:** Clone your fork to make a local copy to work from.
 
 `git clone https://github.com/YOURUSERNAME/rdkit.git`
 
-**Step 3** Make your changes to your local copy. For development of features we generally recommend working on a [branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-and-deleting-branches-within-your-repository), and regularly **commit** your changes incase you need to undo something you've changed.
+**Step 3:** Make your changes to your local copy. For development of features we generally recommend working on a [branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-and-deleting-branches-within-your-repository), and regularly **commit** your changes incase you need to undo something you've changed.
 
 ```
 git commit -a -m "update what and how section"
@@ -138,12 +138,12 @@ OUTPUT: [contributing_docs 08780075f] update what and how section
  1 file changed, 38 insertions(+), 27 deletions(-)
 ```
 
-**Step 4** Add tests for your new functionality and run all tests locally to check you've not broken anything else (see below for how to do this)!
+**Step 4:** Add tests for your new functionality and run all tests locally to check you've not broken anything else (see below for how to do this)!
 
-**Step 5** Push your bug fix or new feature to your local repository
+**Step 5:** Push your bug fix or new feature to your local repository
 `git push`
 
-**Step 6** Create a pull request to the [RDKit repo](https://github.com/rdkit/rdkit.git) filling in the requested information.
+**Step 6:** Create a pull request to the [RDKit repo](https://github.com/rdkit/rdkit.git) filling in the requested information.
 
 ![Pull Request 1 RDKit](../Book/images/pull_req1.png)
 
@@ -180,17 +180,11 @@ $ python $RDBASE/rdkit/TestRunner.py test_list.py
 
 This guide already assumes that you are familiar with [the rdkit basics](https://www.rdkit.org/docs/GettingStartedInPython.html), version control with [Git](https://git-scm.com/) and GitHub features such as commits and pull requests. If not, there is a very [neat presentation from UGM 2016](https://github.com/rdkit/UGM_2016/blob/master/Presentations/Landrum_Schneider_GitHub_Git_and_RDKit.pdf) that you should definitely look at before you start.
 
-
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 ### Setting up your Environment
 
 Wim summarizes and links whatever is here: https://github.com/rdkit/rdkit/issues/3052
 
 Instructions how to setup IDE are here: https://github.com/rdkit/rdkit/issues/3052 . Extended instruction on how to set up your environment for Python development are here in a post on the [RDKit blog](https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html). At the bottom, it includes a recipe for cloning a local fork on which you can then run and test the updated code.
-
 
 
 ### Coding Style
