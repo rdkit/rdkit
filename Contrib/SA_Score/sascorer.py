@@ -46,8 +46,7 @@ def numBridgeheadsAndSpiro(mol, ri=None):
   nBridgehead = rdMolDescriptors.CalcNumBridgeheadAtoms(mol)
   return nBridgehead, nSpiro
 
-# 4294967295 was the default length of the Morgan fingerprint
-mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2, fpSize=4294967295)
+mfpgen = rdFingerprintGenerator.GetMorganGenerator(radius=2)
 
 def calculateScore(m):
   if _fscores is None:
