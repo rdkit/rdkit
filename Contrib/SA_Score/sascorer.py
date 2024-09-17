@@ -53,7 +53,7 @@ def calculateScore(m):
     readFragmentScores()
 
   # fragment score
-  fp = mfpgen.GetCountFingerprint(m)
+  fp = mfpgen.GetSparseCountFingerprint(m)
   fps = fp.GetNonzeroElements()
   score1 = 0.
   nf = 0
