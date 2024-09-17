@@ -59,8 +59,10 @@ class VectIter:
 def __vect__iter__(vect):
     return VectIter(vect)
 
+VECT_WRAPS = {'MatchTypeVect', 'UnsignedLong_Vect', 'VectSizeT', 'VectorOfStringVectors'}
+
 for name, object in vars(rdBase).items():
-  if name.startswith("_list") or name.startswith("_vect"):
+  if name.startswith("_list") or name.startswith("_vect") or name in VECT_WRAPS:
     if hasattr(object, "__iter__"):
       object.__iter__ = __vect__iter__
 
