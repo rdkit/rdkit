@@ -173,7 +173,10 @@ include:
 This guide already assumes that you are familiar with [the rdkit basics](https://www.rdkit.org/docs/GettingStartedInPython.html), version control with [Git](https://git-scm.com/) and GitHub features such as commits and pull requests. If not, there is a very [neat presentation from UGM 2016](https://github.com/rdkit/UGM_2016/blob/master/Presentations/Landrum_Schneider_GitHub_Git_and_RDKit.pdf) that you should definitely look at before you start.
 
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 ### Setting up your Environment
 
 Wim summarizes and links whatever is here: https://github.com/rdkit/rdkit/issues/3052
