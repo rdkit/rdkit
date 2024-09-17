@@ -359,25 +359,26 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   }
 
   // make a mol out of the induced subgraph using the ring system atoms
-  RDKit::RWMol rs_mol(*dp_mol);
-
-  // track original indices so that we can map template coordinates correctly
-  for (auto &at : rs_mol.atoms()) {
-    at->setProp(RDKit::common_properties::molAtomMapNumber, at->getIdx());
-  }
+  RDKit::RWMol rs_mol(*dp_mol, true);
 
   boost::dynamic_bitset<> rs_atoms(dp_mol->getNumAtoms());
   for (auto aidx : ringSystemAtoms) {
     rs_atoms.set(aidx);
   }
 
-  rs_mol.beginBatchEdit();
-  for (auto &at : dp_mol->atoms()) {
+  constexpr int DUMMY_ATOMIC_NUM = 200;
+  for (auto &at : rs_mol.atoms()) {
     if (!rs_atoms.test(at->getIdx())) {
-      rs_mol.removeAtom(at->getIdx());
+      at->setAtomicNum(DUMMY_ATOMIC_NUM);
     }
   }
-  rs_mol.commitBatchEdit();
+  auto numBonds = rs_mol.getNumBonds();
+  for (auto bnd : rs_mol.bonds()) {
+    if (!rs_atoms.test(bnd->getBeginAtomIdx()) ||
+        !rs_atoms.test(bnd->getEndAtomIdx())) {
+      --numBonds;
+    }
+  }
 
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
@@ -386,7 +387,7 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
        coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
     // To reduce how often we have to do substructure matches, check ring info
     // and bond count first
-    if (mol->getNumBonds() != rs_mol.getNumBonds()) {
+    if (mol->getNumBonds() != numBonds) {
       continue;
     } else if (mol->getRingInfo()->numRings() != ring_count) {
       continue;
@@ -395,7 +396,18 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     auto degreeCounts = [](const RDKit::ROMol &mol) {
       std::array<int, 4> degrees_count({0, 0, 0, 0});
       for (auto atom : mol.atoms()) {
-        auto degree = std::clamp(atom->getDegree(), 0u, 4u);
+        if (atom->getAtomicNum() == DUMMY_ATOMIC_NUM) {
+          continue;
+        }
+        auto degree = 0u;
+        for (auto nbr : mol.atomNeighbors(atom)) {
+          if (nbr->getAtomicNum() != DUMMY_ATOMIC_NUM) {
+            ++degree;
+            if (degree == 4) {
+              break;
+            }
+          }
+        }
         degrees_count[degree]++;
       }
       return degrees_count;
@@ -403,10 +415,9 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     if (degreeCounts(rs_mol) != degreeCounts(*mol)) {
       continue;
     }
-
     RDKit::SubstructMatchParameters params;
     params.maxMatches = 1;
-    auto matches = RDKit::SubstructMatch(RDKit::ROMol(rs_mol), *mol, params);
+    auto matches = RDKit::SubstructMatch(rs_mol, *mol, params);
     if (!matches.empty()) {
       match = matches[0];
       template_mol = mol;
@@ -418,13 +429,11 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   }
 
   // copy over new coordinates
-  auto conf = template_mol->getConformer();
+  const auto &conf = template_mol->getConformer();
   for (auto &[template_aidx, rs_aidx] : match) {
-    auto mol_aidx = rs_mol.getAtomWithIdx(rs_aidx)->getAtomMapNum();
-    RDGeom::Point2D loc(conf.getAtomPos(template_aidx));
-    EmbeddedAtom new_at(mol_aidx, loc);
+    EmbeddedAtom new_at(rs_aidx, conf.getAtomPos(template_aidx));
     new_at.df_fixed = true;
-    d_eatoms.emplace(mol_aidx, new_at);
+    d_eatoms.emplace(rs_aidx, new_at);
   }
   this->setupNewNeighs();
   this->setupAttachmentPoints();

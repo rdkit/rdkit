@@ -211,35 +211,38 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
       if (removedRings[currRingId] || removedARing) {
         continue;
       }
-      std::set<int> allIntersectingAtoms;
-      RDKit::INT_VECT commmonAtoms;
+      auto nIntersectingAtoms = 0u;
+      int aid1 = -1;
+      int aid2 = -1;
       for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
            otherRingId++) {
         if (currRingId == otherRingId || removedRings[otherRingId]) {
           continue;
         }
+        RDKit::INT_VECT commmonAtoms;
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
                          commmonAtoms);
-        if (commmonAtoms.size() > 0) {
-          for (auto rii : commmonAtoms) {
-            allIntersectingAtoms.insert(rii);
+        for (auto rii : commmonAtoms) {
+          if (rii != aid1 && rii != aid2) {
+            ++nIntersectingAtoms;
+            if (aid1 == -1) {
+              aid1 = rii;
+            } else {
+              aid2 = rii;
+            }
+            if (nIntersectingAtoms == 2) {
+              break;
+            }
           }
         }
       }
-      // note that the set of ring is not SSSR because we use symmetrizeSSSR, so
-      // we cannot force a check for only one fused ring. Instead we make sure
-      // that this ring shares only one atom or one bond (two consecutive atoms)
-      auto hasOneOrTwoConsecutiveAtoms = [mol](const RDKit::INT_VECT &vec) {
-        if (vec.size() == 1) {
-          return true;
-        } else if (vec.size() == 2) {
-          return mol.getBondBetweenAtoms(vec[0], vec[1]) != nullptr;
-        }
-        return false;
-      };
-      RDKit::INT_VECT allIntersectingAtomsVec(allIntersectingAtoms.begin(),
-                                              allIntersectingAtoms.end());
-      if (hasOneOrTwoConsecutiveAtoms(allIntersectingAtomsVec)) {
+      // note that the set of rings is not SSSR because we use symmetrizeSSSR,
+      // so we cannot force a check for only one fused ring. Instead we make
+      // sure that this ring shares only one atom or one bond (two consecutive
+      // atoms)
+      if (nIntersectingAtoms == 1 ||
+          (nIntersectingAtoms == 2 &&
+           mol.getBondBetweenAtoms(aid1, aid2) != nullptr)) {
         removedRings[currRingId] = true;
         removedARing = true;
       }
