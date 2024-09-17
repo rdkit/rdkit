@@ -194,71 +194,56 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
 }
 
 RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
-                                   RDKit::INT_VECT &coreRingsIds) {
+                                   RDKit::INT_VECT &coreRingsIds,
+                                   const RDKit::ROMol &mol) {
   // simplify the fused rings to a set of core rings by iteratively removing
   // rings that share only one or two consecutive atoms. These
   // are trivial to embed after the core rings have been embedded and will make
   // template matching more powerful since it will not be affected by the side
   // rings
 
-  RDKit::INT_VECT removedRings;
+  boost::dynamic_bitset<> removedRings(fusedRings.size());
   bool removedARing = false;
   do {
     removedARing = false;
     for (unsigned int currRingId = 0; currRingId < fusedRings.size();
          currRingId++) {
-      if (std::find(removedRings.begin(), removedRings.end(), currRingId) !=
-              removedRings.end() ||
-          removedARing) {
+      if (removedRings[currRingId] || removedARing) {
         continue;
       }
-      std::set<int> allIntersectingAtoms;
-      RDKit::INT_VECT commmonAtoms;
+      auto nIntersectingAtoms = 0u;
+      int aid1 = -1;
+      int aid2 = -1;
       for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
            otherRingId++) {
-        if (currRingId == otherRingId ||
-            (std::find(removedRings.begin(), removedRings.end(), otherRingId) !=
-             removedRings.end())) {
+        if (currRingId == otherRingId || removedRings[otherRingId]) {
           continue;
         }
+        RDKit::INT_VECT commmonAtoms;
         RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
                          commmonAtoms);
-        if (commmonAtoms.size() > 0) {
-          for (auto rii : commmonAtoms) {
-            allIntersectingAtoms.insert(rii);
+        for (auto rii : commmonAtoms) {
+          if (rii != aid1 && rii != aid2) {
+            ++nIntersectingAtoms;
+            if (aid1 == -1) {
+              aid1 = rii;
+            } else {
+              aid2 = rii;
+            }
+            if (nIntersectingAtoms == 2) {
+              break;
+            }
           }
         }
       }
-      // note that the set of ring is not SSSR because we use symmetrizeSSSR, so
-      // we cannot force a check for only one fused ring. Instead we make sure
-      // that this ring shares only one atom or one bond (two consecutive atoms)
-      auto hasOneOrTwoConsecutiveAtoms = [fusedRings, currRingId](
-                                             const RDKit::INT_VECT &vec) {
-        if (vec.size() == 1) {
-          return true;
-        }
-        if (vec.size() == 2) {
-          auto ring = fusedRings[currRingId];
-          auto pos1 = find(ring.begin(), ring.end(), vec[0]);
-          auto pos2 = find(ring.begin(), ring.end(), vec[1]);
-
-          if (pos1 == ring.end() || pos2 == ring.end()) {
-            return false;
-          }
-          int pos1I = pos1 - ring.begin();
-          int pos2I = pos2 - ring.begin();
-          // check if the positions in the ring vector of the two
-          // elements are consecutive
-          return (abs(pos1I - pos2I) == 1 ||
-                  (pos1I == 0 && pos2I == static_cast<int>(ring.size()) - 1) ||
-                  (pos2I == 0 && pos1I == static_cast<int>(ring.size()) - 1));
-        }
-        return false;
-      };
-      RDKit::INT_VECT allIntersectingAtomsVec(allIntersectingAtoms.begin(),
-                                              allIntersectingAtoms.end());
-      if (hasOneOrTwoConsecutiveAtoms(allIntersectingAtomsVec)) {
-        removedRings.push_back(currRingId);
+      // note that the set of rings is not SSSR because we use symmetrizeSSSR,
+      // so we cannot force a check for only one fused ring. Instead we make
+      // sure that this ring shares only one atom or one bond (two consecutive
+      // atoms)
+      if (nIntersectingAtoms == 1 ||
+          (nIntersectingAtoms == 2 &&
+           mol.getBondBetweenAtoms(aid1, aid2) != nullptr)) {
+        removedRings[currRingId] = true;
         removedARing = true;
       }
     }
@@ -266,8 +251,7 @@ RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
   RDKit::VECT_INT_VECT res;
   for (unsigned int currRingId = 0; currRingId < fusedRings.size();
        currRingId++) {
-    if (std::find(removedRings.begin(), removedRings.end(), currRingId) ==
-        removedRings.end()) {
+    if (!removedRings[currRingId]) {
       res.push_back(fusedRings[currRingId]);
       coreRingsIds.push_back(currRingId);
     }
