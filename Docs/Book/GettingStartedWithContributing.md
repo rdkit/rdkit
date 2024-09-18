@@ -167,7 +167,7 @@ See the help message for a full list of options, but some frequently useful opti
     -R <regex>           Only run tests matching a regular expression
     --output-on-failure  Print the stdout/stderr of failing tests
 
-If working only in Python, the tests can be run as follows:
+If working only in Python (having followed [Greg's set up instructions](https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html)), the tests can be run as follows:
 
 ```
 $ cd $RDBASE/rdkit/Chem
@@ -175,6 +175,30 @@ $ python $RDBASE/rdkit/TestRunner.py test_list.py
 ```
 
 ## Contributing to the RDKit Docs 
+
+Documentation contributions are a great place to begin with making RDKit contributions. In addition to producing documentation for your own submissions, it is really useful to contribute documentation for functionality already within the toolkit. This can include:
+- Fixing or expanding pieces of documentation that are unclear, wrong or missing suitable examples
+- Adding in references for methods where available
+- Adding new sections or examples:
+  - From blog posts about RDKit:
+      - [RDKit blog](https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html)
+      - [Practical Chemoinformatics](https://practicalcheminformatics.blogspot.com/)
+      - [Is life worth living?](https://iwatobipen.wordpress.com/)
+      - [Mac in Chem](https://macinchem.org/?s=rdkit)
+      - [Cheminformania](https://www.cheminformania.com/?s=rdkit)
+  - From UGM talks (links to the relevant repositories can be found in the GitHub README.md)
+  - To this guide if instructions need updated!
+
+### A Whistle Stop Tour of the RDKit Documentation
+
+RDKit documentation: https://www.rdkit.org/docs/index.html
+
+RDKit Cookbook: https://www.rdkit.org/docs/Cookbook.html
+
+RDKit book: https://www.rdkit.org/docs/RDKit_Book.html
+
+rdkit blog: https://greglandrum.github.io/rdkit-blog/
+
 
 ## Contributing to the Code - Python 
 
