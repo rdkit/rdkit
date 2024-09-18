@@ -552,7 +552,7 @@ if(NOT RDK_INSTALL_INTREE)
 
 
   endif(RDK_BUILD_PYTHON_WRAPPERS)
-  install(FILES README license.txt
+  install(FILES README.md license.txt
           DESTINATION ${RDKit_ShareDir}
           COMPONENT base
           )
