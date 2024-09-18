@@ -213,7 +213,6 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
     smiles = set(
       Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
-    print(smiles)
     self.assertEqual(len(smiles), 4)
 
   def testEnumerateStereoisomersLargeRandomSample(self):
@@ -236,15 +235,8 @@ class TestCase(unittest.TestCase):
     opts = AllChem.StereoEnumerationOptions(maxIsomers=2)
     smiles = set(
       Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts))
-    # Python 3.8 switch how tuples were hashed, so we get different results there
-    if sys.version_info < (3, 8):
-      expected = set([
-        'C/C(F)=C/[C@@H](Cl)/C=C(/Br)[C@@H](N)I',
-        'C/C(F)=C/[C@H](Cl)/C=C(\\Br)[C@H](N)I',
-      ])
-    else:
-      expected = set(
-        ['C/C(F)=C\\[C@H](Cl)/C=C(\\Br)[C@H](N)I', 'C/C(F)=C/[C@@H](Cl)/C=C(\\Br)[C@H](N)I'])
+    expected = set(
+      ['C/C(F)=C\\[C@H](Cl)/C=C(/Br)[C@H](N)I', 'C/C(F)=C/[C@@H](Cl)/C=C(/Br)[C@H](N)I'])
     self.assertEqual(smiles, expected)
 
   def testEnumerateStereoisomersMaxIsomersShouldBeReturnedEvenWithTryEmbedding(self):
@@ -291,15 +283,24 @@ class TestCase(unittest.TestCase):
         self.count += 1
         return c
 
+    # start with the non-seeded version, just to make sure we get everything
+    mol = Chem.MolFromSmiles('CCCC(=C(CCl)C(C)CBr)[C@H](F)C(C)C')
+    opts = AllChem.StereoEnumerationOptions()
+    smiles = list(
+      Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
+    self.assertEqual(smiles, [
+      'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(/CCl)[C@@H](C)CBr)[C@H](F)C(C)C',
+      'CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C'
+    ])
     rand = DeterministicRandom()
     opts = AllChem.StereoEnumerationOptions(rand=rand, maxIsomers=3)
-    mol = Chem.MolFromSmiles('CCCC(=C(CCl)C(C)CBr)[C@H](F)C(C)C')
-    smiles = [
-      Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)
-    ]
+    smiles = list(
+      sorted(
+        Chem.MolToSmiles(i, isomericSmiles=True)
+        for i in AllChem.EnumerateStereoisomers(mol, opts)))
     self.assertEqual(smiles, [
-      'CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C',
-      'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C'
+      'CCC/C(=C(/CCl)[C@@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C',
+      'CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C'
     ])
 
   def testEnumerateStereoisomersOnlyUnassigned(self):
@@ -322,7 +323,6 @@ class TestCase(unittest.TestCase):
     smiles = set(
       Chem.MolToSmiles(i, isomericSmiles=True)
       for i in AllChem.EnumerateStereoisomers(fully_assigned, opts))
-    print(smiles)
     self.assertEqual(
       smiles,
       set([
@@ -339,7 +339,6 @@ class TestCase(unittest.TestCase):
       Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol, opts)
     ]
     self.assertEqual(len(smiles), 4)
-    print(set(smiles))
     self.assertEqual(len(set(smiles)), 3)
 
     mol = Chem.MolFromSmiles('FC(Cl)C(Cl)F')
@@ -413,7 +412,6 @@ class TestCase(unittest.TestCase):
 
     opts = AllChem.StereoEnumerationOptions(onlyUnassigned=False, unique=False)
     smiles = [Chem.MolToSmiles(m) for m in AllChem.EnumerateStereoisomers(mol, opts)]
-    print('!!!!', smiles)
     self.assertEqual(len(smiles), len(set(smiles)))
     self.assertEqual(len(smiles), 2**3)
 
@@ -475,6 +473,26 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(prods), 2)
     for prod in prods:
       self.assertEqual(len(prod.GetStereoGroups()), 0)
+
+  def testGithub7516(self):
+    m = Chem.MolFromSmiles('CC1CC(C)C1')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 2)
+    self.assertEqual(Chem.MolToSmiles(sis[0]), 'C[C@H]1C[C@@H](C)C1')
+    self.assertEqual(Chem.MolToSmiles(sis[1]), 'C[C@H]1C[C@H](C)C1')
+
+    m = Chem.MolFromSmiles('COC(=O)C1CC(NC(N)=O)C1')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 2)
+
+    m = Chem.MolFromSmiles('O=C(NC1CC2[NH+](C(C1)CC2)Cc3ccccc3)N')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 8)
+
+  def testGithub7608(self):
+    m = Chem.MolFromSmiles('N=C(N1CCC1)NCCOc2ccc(C(F)(F)F)cc2')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 1)
 
 
 if __name__ == '__main__':

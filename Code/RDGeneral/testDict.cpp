@@ -424,7 +424,7 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
   }
   {
     Dict d;
@@ -434,9 +434,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
   }
   {
     Dict d;
@@ -446,9 +446,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1.2,0,]");
+    TEST_ASSERT(sv == "[1.2,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[1.2,0,]");
+    TEST_ASSERT(sv == "[1.2,0]");
   }
   {
     Dict d;
@@ -458,9 +458,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[10001,0,]");
+    TEST_ASSERT(sv == "[10001,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[10001,0,]");
+    TEST_ASSERT(sv == "[10001,0]");
   }
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;

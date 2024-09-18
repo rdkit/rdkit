@@ -20,6 +20,7 @@
 #include <GraphMol/Descriptors/OxidationNumbers.h>
 #include <GraphMol/Descriptors/PMI.h>
 #include <GraphMol/Descriptors/DCLV.h>
+#include <GraphMol/Descriptors/BCUT.h>
 
 using namespace RDKit;
 
@@ -603,5 +604,36 @@ TEST_CASE("DCLV") {
     CHECK(dclv.getSurfaceArea() == Catch::Approx(296.466).epsilon(0.05));
     CHECK(dclv.getVolume() == Catch::Approx(411.972).epsilon(0.05));
     CHECK(dclv.getVDWVolume() == Catch::Approx(139.97).epsilon(0.05));
+  }
+}
+
+TEST_CASE("Github #7364: BCUT descriptors failing for moleucles with Hs") {
+  SECTION("as reported") {
+    auto m = "CCOC#CCC(C(=O)c1ccc(C)cc1)N1CCCC1"_smiles;
+    REQUIRE(m);
+    RWMol m2 = *m;
+    MolOps::addHs(m2);
+    auto ref = Descriptors::BCUT2D(*m);
+    auto val = Descriptors::BCUT2D(m2);
+    CHECK(ref.size() == val.size());
+    CHECK(ref == val);
+  }
+}
+
+TEST_CASE(
+    "Github #6757: numAtomStereoCenters fails if molecule is sanitized a second time") {
+  SECTION("as reported") {
+    auto m = "C[C@H](F)Cl"_smiles;
+    REQUIRE(m);
+    CHECK(Descriptors::numAtomStereoCenters(*m) == 1);
+    CHECK(Descriptors::numUnspecifiedAtomStereoCenters(*m) == 0);
+    MolOps::sanitizeMol(*m);
+    CHECK(Descriptors::numAtomStereoCenters(*m) == 1);
+  }
+  SECTION("expanded") {
+    auto m = "C[C@H](F)C(O)Cl"_smiles;
+    REQUIRE(m);
+    CHECK(Descriptors::numAtomStereoCenters(*m) == 2);
+    CHECK(Descriptors::numUnspecifiedAtomStereoCenters(*m) == 1);
   }
 }

@@ -7,7 +7,7 @@ rdkit_library(MarvinParser
 target_compile_definitions(MarvinParser PRIVATE RDKIT_MARVINPARSER_BUILD)
 
 rdkit_headers(MarvinParser.h
-              DEST GraphMol/MarvinParser)
+              DEST GraphMol/MarvinParse)
 
 rdkit_test(testMrvToMol testMrvToMol.cpp
            LINK_LIBRARIES MarvinParser FileParsers SubstructMatch )

@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (c) 2001-2008 greg Landrum and Rational Discovery LLC
+// Copyright (c) 2001-2024 greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,7 +13,6 @@
 #include "base64.h"
 #include <RDGeneral/StreamOps.h>
 #include <sstream>
-#include <limits>
 
 #ifdef WIN32
 #include <ios>
@@ -150,7 +148,7 @@ SparseBitVect SparseBitVect::operator~() const {
 //
 // """ -------------------------------------------------------
 bool SparseBitVect::getBit(const unsigned int which) const {
-  if (which >= d_size) {
+  if (!checkIndex(which)) {
     throw IndexErrorException(which);
   }
   return dp_bits->count(which) > 0u;
@@ -163,7 +161,7 @@ bool SparseBitVect::getBit(const unsigned int which) const {
 //
 // """ -------------------------------------------------------
 bool SparseBitVect::getBit(const IntVectIter which) const {
-  if (*which < 0 || static_cast<unsigned int>(*which) >= d_size) {
+  if (!checkIndex(which)) {
     throw IndexErrorException(*which);
   }
   return dp_bits->count(*which) > 0u;
@@ -176,7 +174,7 @@ bool SparseBitVect::getBit(const IntVectIter which) const {
 //
 // """ -------------------------------------------------------
 bool SparseBitVect::getBit(const IntSetIter which) const {
-  if (*which < 0 || static_cast<unsigned int>(*which) >= d_size) {
+  if (!checkIndex(which)) {
     throw IndexErrorException(*which);
   }
   return dp_bits->count(*which) > 0u;
@@ -193,11 +191,10 @@ bool SparseBitVect::setBit(const unsigned int which) {
   if (!dp_bits) {
     throw ValueErrorException("BitVect not properly initialized.");
   }
-  std::pair<IntSetIter, bool> res;
-  if (which >= d_size) {
+  if (!checkIndex(which)) {
     throw IndexErrorException(which);
   }
-  res = dp_bits->insert(which);
+  auto res = dp_bits->insert(which);
   return !(res.second);
 }
 
@@ -213,11 +210,10 @@ bool SparseBitVect::setBit(const IntSetIter which) {
   if (!dp_bits) {
     throw ValueErrorException("BitVect not properly initialized.");
   }
-  std::pair<IntSetIter, bool> res;
-  if (*which < 0 || static_cast<unsigned int>(*which) >= d_size) {
+  if (!checkIndex(which)) {
     throw IndexErrorException(*which);
   }
-  res = dp_bits->insert(*which);
+  auto res = dp_bits->insert(*which);
   return !(res.second);
 }
 
@@ -232,7 +228,7 @@ bool SparseBitVect::unsetBit(const unsigned int which) {
   if (!dp_bits) {
     throw ValueErrorException("BitVect not properly initialized.");
   }
-  if (which >= d_size) {
+  if (!checkIndex(which)) {
     throw IndexErrorException(which);
   }
 

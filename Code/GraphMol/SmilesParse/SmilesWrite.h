@@ -39,6 +39,8 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool includeDativeBonds =
       true; /**< include the RDKit extension for dative bonds. Otherwise dative
                bonds will be written as single bonds*/
+  bool ignoreAtomMapNumbers = false; /**< If true, ignores any atom map numbers
+                                        when canonicalizing the molecule */
 };
 
 namespace SmilesWrite {
@@ -147,7 +149,7 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
 RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
     const ROMol &mol, const SmilesWriteParams &params);
 
-//! \brief returns canonical SMILES for a molecule
+//! \brief returns SMILES for a molecule, canonical by default
 /*!
   \param mol : the molecule in question.
   \param doIsomericSmiles : include stereochemistry and isotope information
@@ -163,13 +165,18 @@ RDKIT_SMILESPARSE_EXPORT std::string MolToSmiles(
   \param allBondsExplicit : if true, symbols will be included for all bonds.
   \param allHsExplicit : if true, hydrogen counts will be provided for every
   atom.
+  \param doRandom : if true, the first atom in the SMILES string will be
+  selected at random and the SMILES string will not be canonical
+  \param ignoreAtomMapNumbers : if true, ignores any atom map numbers when
+  canonicalizing the molecule
  */
 inline std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
                                bool doKekule = false, int rootedAtAtom = -1,
                                bool canonical = true,
                                bool allBondsExplicit = false,
                                bool allHsExplicit = false,
-                               bool doRandom = false) {
+                               bool doRandom = false,
+                               bool ignoreAtomMapNumbers = false) {
   SmilesWriteParams ps;
   ps.doIsomericSmiles = doIsomericSmiles;
   ps.doKekule = doKekule;
@@ -178,6 +185,7 @@ inline std::string MolToSmiles(const ROMol &mol, bool doIsomericSmiles = true,
   ps.allBondsExplicit = allBondsExplicit;
   ps.allHsExplicit = allHsExplicit;
   ps.doRandom = doRandom;
+  ps.ignoreAtomMapNumbers = ignoreAtomMapNumbers;
   return MolToSmiles(mol, ps);
 };
 

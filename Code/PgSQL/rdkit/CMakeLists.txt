@@ -260,6 +260,22 @@ else()
   set(RDKIT_PG_BFP_GIST_SORTSUPPORT "")
 endif()
 
+if (${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 17.0)
+  set(RDKIT_PG_ATEQ_COMMUTATOR "'@='")
+  set(RDKIT_PG_ATEQ_NEGATOR "'@<>'")
+  set(RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL "ALTER OPERATOR @= (mol, mol) SET (
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>'
+);")
+  set(RDKIT_PG_ALTER_OPERATOR_ATEQ_REACTION "ALTER OPERATOR @= (reaction, reaction) SET (
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>'
+);")
+else()
+  set(RDKIT_PG_ATEQ_COMMUTATOR "'='")
+  set(RDKIT_PG_ATEQ_NEGATOR "'<>'")
+endif()
+
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 file(GLOB files "update_sql/*.in")

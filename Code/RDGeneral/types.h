@@ -132,7 +132,9 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereochemCand;  // chirality bool COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereoWarning;  // obsolete ?
-RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _ringStereoOtherAtom;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _mesoOtherAtom;        // int
 
 // Smiles parsing
 RDKIT_RDGENERAL_EXPORT extern const std::string _SmilesStart;  // int
@@ -167,6 +169,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;      // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;    // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;         // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRingBondCount;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molSubstCount;      // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molAttachPoint;     // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molAttachOrder;     // int
@@ -211,6 +214,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string NullBond;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupAtomMaps;
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupBonds;
+RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetAtoms;
+RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetBonds;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactantAtomIdx;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactionMapNum;
 

@@ -35,6 +35,9 @@ rdkit_test(testFPB testFPB.cpp
 rdkit_test(testMultiFPB testMultiFPB.cpp
            LINK_LIBRARIES DataStructs )
 
+rdkit_catch_test(catchDataStructs catch_tests.cpp
+           LINK_LIBRARIES DataStructs )
+
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)
 endif()

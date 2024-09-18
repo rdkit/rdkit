@@ -47,11 +47,14 @@ function test_basics() {
     var mol = RDKitModule.get_mol("c1ccccc1O");
     assert(mol !== null);
     assert.equal(mol.get_smiles(),"Oc1ccccc1");
-    assert.equal(mol.get_inchi(),"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
-    assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi()),"ISWSIDIOOBJBQZ-UHFFFAOYSA-N");
-    
-    assert.equal(mol.get_inchi("-FixedH"),"InChI=1/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
-    assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi("-FixedH")),"ISWSIDIOOBJBQZ-UHFFFAOYNA-N");
+    if (typeof Object.getPrototypeOf(mol).get_inchi === 'function') {
+        assert.equal(mol.get_inchi(),"InChI=1S/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
+        assert.equal(mol.get_inchi("-FixedH"),"InChI=1/C6H6O/c7-6-4-2-1-3-5-6/h1-5,7H");
+    }
+    if (typeof RDKitModule.get_inchikey_for_inchi === 'function') {
+        assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi("-FixedH")),"ISWSIDIOOBJBQZ-UHFFFAOYNA-N");
+        assert.equal(RDKitModule.get_inchikey_for_inchi(mol.get_inchi()),"ISWSIDIOOBJBQZ-UHFFFAOYSA-N");
+    }
 
     var mb = mol.get_molblock();
     assert(mb.search("M  END")>0);
@@ -2324,19 +2327,31 @@ function test_mol_list() {
             }
         }
         assert.equal(molList.size(), 2);
-        let i = 0;
-        while (!molList.at_end()) {
-            try {
-                mol = molList.next();
-            } finally {
-                if (mol) {
-                    ++i;
-                    mol.delete();
+        // Modifications to molecules in the molList should persist
+        // as the underlying C++ object is a shared_ptr
+        [0, 1].forEach((loopIdx) => {
+            let i = 0;
+            molList.reset();
+            while (!molList.at_end()) {
+                try {
+                    mol = molList.next();
+                    assert(mol);
+                    if (loopIdx == 0) {
+                        assert(!mol.has_prop('molIdx'));
+                        mol.set_prop('molIdx', `${++i}`);
+                    } else {
+                        assert(mol.has_prop('molIdx'));
+                        i = parseInt(mol.get_prop('molIdx'));
+                    }
+                } finally {
+                    if (mol) {
+                        mol.delete();
+                    }
                 }
             }
-        }
-        assert.equal(i, 2);
-        assert(molList.at_end());
+            assert.equal(i, 2);
+            assert(molList.at_end());
+        });
         try {
             mol = molList.pop(0);
             assert.equal(mol.get_num_atoms(), 4);
@@ -2896,7 +2911,7 @@ function test_smiles_smarts_params() {
   4  9  1  1
 M  END
 `;
-        const mol = RDKitModule.get_mol(bicyclo221heptane, JSON.stringify({useMolBlockWedging: true}));
+        const mol = RDKitModule.get_mol(bicyclo221heptane);
         {
             const canonicalCXSmiles = mol.get_cxsmiles();
             const [_, canonicalSmiles, wedging] = canonicalCXSmiles.match(/^(\S+) \|\([^\)]+\),([^\|]+)\|$/);
@@ -2943,6 +2958,422 @@ M  END
         });
         assert(chiralQuery.get_cxsmarts(JSON.stringify({doIsomericSmiles: false})) === 'N-[C&H1](-C(-O)=O)-C(-C)-C |atomProp:1.atomProp.1&#46;234|');
     }
+}
+
+function test_wedged_bond_atropisomer() {
+    var atropisomer = `
+  Mrv2311 05242408162D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 2.0006 -1.54 0 0
+M  V30 2 N 2.0006 -3.08 0 0
+M  V30 3 C 0.6669 -3.85 0 0
+M  V30 4 C -0.6668 -3.08 0 0
+M  V30 5 C -0.6668 -1.54 0 0
+M  V30 6 C -2.0006 -0.77 0 0
+M  V30 7 C 0.6669 -0.77 0 0
+M  V30 8 C 0.6669 0.77 0 0
+M  V30 9 C -0.6668 1.54 0 0
+M  V30 10 C -2.0006 0.77 0 0
+M  V30 11 C -0.6668 3.08 0 0
+M  V30 12 C 0.6669 3.85 0 0
+M  V30 13 C 2.0006 3.08 0 0
+M  V30 14 C 2.0006 1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 1 7 5 CFG=3
+M  V30 7 2 7 1
+M  V30 8 1 7 8
+M  V30 9 2 8 9
+M  V30 10 1 9 10
+M  V30 11 1 9 11
+M  V30 12 2 11 12
+M  V30 13 1 12 13
+M  V30 14 2 13 14
+M  V30 15 1 8 14
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+`;
+    var mol = RDKitModule.get_mol(atropisomer);
+    assert(mol);
+    var svg = mol.get_svg_with_highlights(JSON.stringify({
+        useMolBlockWedging: true, noFreetype: true
+    }));
+    assert(svg.match(/<path class='bond-5 atom-6 atom-4'.*style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1\.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' \/>/g).length > 6);
+    assert(!svg.match(/<path class='bond-5 atom-6 atom-4'.*style='fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2\.0px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1' \/>/g));
+    mol.delete();
+}
+
+function test_get_molblock_use_molblock_wedging() {
+    var mb = `
+     RDKit          2D
+
+  9 10  0  0  1  0  0  0  0  0999 V2000
+    1.4885   -4.5513    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0405   -3.9382    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8610   -4.0244    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.1965   -3.2707    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.0250   -2.4637    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.2045   -2.3775    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.7920   -1.6630    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.8690   -3.1311    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5834   -2.7186    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  1
+  2  3  1  0
+  4  3  1  0
+  4  5  1  0
+  6  5  1  0
+  6  7  1  1
+  6  8  1  0
+  8  9  1  1
+  8  2  1  0
+  4  9  1  1
+M  END
+`;
+    var mol = RDKitModule.get_mol(mb);
+    assert(mol);
+    var molCopy = RDKitModule.get_mol_copy(mol);
+    assert(molCopy);
+    var mbRDKitWedging = mol.get_molblock();
+    assert(mbRDKitWedging !== mb);
+    var mbOrigWedging = mol.get_molblock(JSON.stringify({useMolBlockWedging: true}));
+    assert(mb === mbOrigWedging);
+    var mbRDKitWedgingPostOrig = mol.get_molblock();
+    assert(mb !== mbRDKitWedgingPostOrig);
+    assert(mbRDKitWedging === mbRDKitWedgingPostOrig);
+    mol.delete();
+}
+
+function test_assign_chiral_tags_from_mol_parity() {
+    let mol;
+    const artemisininCTAB = `68827
+  -OEChem-03262404452D
+
+ 20 23  0     1  0  0  0  0  0999 V2000
+    4.3177    0.4203    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    5.7899    1.1100    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.4870   -0.3207    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5402    1.3953    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    7.4004   -1.8275    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    4.6664   -0.2988    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    3.7655    0.1351    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    4.7603   -1.3362    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    2.8959   -0.4383    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    5.5674    0.1351    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0
+    3.9042   -1.9296    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    3.5430    1.1100    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.9657   -1.4776    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6389   -1.8668    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    5.1664    1.8919    0.0000 C   0  0  2  0  0  0  0  0  0  0  0  0
+    4.1664    1.8919    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.0000    0.0059    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    6.5237   -1.3465    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.6330   -2.8668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.3890    2.8668    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  4  1  0  0  0  0
+  6  1  1  0  0  0  0
+  2 10  1  0  0  0  0
+  2 15  1  0  0  0  0
+  3 10  1  0  0  0  0
+  3 18  1  0  0  0  0
+  4 15  1  0  0  0  0
+  5 18  2  0  0  0  0
+  6  7  1  0  0  0  0
+  6  8  1  0  0  0  0
+  6 10  1  0  0  0  0
+  7  9  1  0  0  0  0
+  7 12  1  0  0  0  0
+  8 11  1  0  0  0  0
+  8 14  1  0  0  0  0
+  9 13  1  0  0  0  0
+  9 17  1  0  0  0  0
+ 11 13  1  0  0  0  0
+ 12 16  1  0  0  0  0
+ 14 18  1  0  0  0  0
+ 14 19  1  0  0  0  0
+ 15 16  1  0  0  0  0
+ 15 20  1  0  0  0  0
+M  END
+`;
+    try {
+        mol = RDKitModule.get_mol(artemisininCTAB);
+        assert(mol);
+        assert(mol.get_smiles() === 'CC1CCC2C(C)C(=O)OC3OC4(C)CCC1C32OO4');
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+    }
+    try {
+        mol = RDKitModule.get_mol(artemisininCTAB, JSON.stringify({ assignChiralTypesFromMolParity: true }));
+        assert(mol);
+        assert(mol.get_smiles() === 'C[C@@H]1CC[C@H]2[C@@H](C)C(=O)O[C@@H]3O[C@@]4(C)CC[C@@H]1[C@]32OO4');
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+    }
+}
+
+function test_make_dummies_queries() {
+    let mol;
+    let query;
+    let match;
+    try {
+        mol = RDKitModule.get_mol('CN');
+        assert(mol);
+        query = RDKitModule.get_mol('*N');
+        assert(query);
+        match = JSON.parse(mol.get_substruct_match(query));
+        assert(!match.atoms);
+        query.delete();
+        query = RDKitModule.get_mol('*N', JSON.stringify(({ makeDummiesQueries: true })));
+        assert(query);
+        match = JSON.parse(mol.get_substruct_match(query));
+        assert(match.atoms.toString() === [0, 1].toString());
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+        if (query) {
+            query.delete();
+        }
+    }
+}
+
+function test_get_mol_copy() {
+    let mol;
+    let mol_copy1;
+    let mol_copy2;
+    try {
+        mol = RDKitModule.get_mol('c1ccccn1');
+        assert(mol);
+        mol_copy1 = RDKitModule.get_mol_copy(mol);
+        assert(mol_copy1);
+        mol_copy2 = mol.copy();
+        assert(mol_copy2);
+        assert(mol.get_molblock() === mol_copy1.get_molblock());
+        assert(mol.get_molblock() === mol_copy2.get_molblock());
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+        if (mol_copy1) {
+            mol_copy1.delete();
+        }
+        if (mol_copy2) {
+            mol_copy2.delete();
+        }
+    }
+}
+
+function test_multi_highlights() {
+    const mol = RDKitModule.get_mol('[H]c1cc2c(-c3ccnc(Nc4ccc(F)c(F)c4)n3)c(-c3cccc(C(F)(F)F)c3)nn2nc1C', JSON.stringify({removeHs: false}));
+    const details = '{"width":250,"height":200,"highlightAtomMultipleColors":{"15":[[0.941,0.894,0.259]],"17":[[0,0.62,0.451]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"30":[[0.902,0.624,0]],"35":[[0.337,0.706,0.914]]},"highlightBondMultipleColors":{"14":[[0.941,0.894,0.259]],"16":[[0,0.62,0.451]],"20":[[0.902,0.624,0]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"34":[[0.337,0.706,0.914]],"38":[[0.902,0.624,0]]},"highlightAtomRadii":{"15":0.4,"17":0.4,"21":0.4,"22":0.4,"23":0.4,"24":0.4,"25":0.4,"26":0.4,"27":0.4,"28":0.4,"29":0.4,"30":0.4,"35":0.4},"highlightLineWidthMultipliers":{"14":2,"16":2,"20":2,"21":2,"22":2,"23":2,"24":2,"25":2,"26":2,"27":2,"28":2,"29":2,"34":2,"38":2}}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('ellipse'));
+    const COLORS = ['#009E73', '#55B4E9', '#E69F00', '#EFE342'];
+    assert(COLORS.every((color) => svgWithDetails.includes(color)));
+    const svgWithOutDetails = mol.get_svg_with_highlights('');
+    assert(!svgWithOutDetails.includes('ellipse'));
+    assert(!COLORS.some((color) => svgWithOutDetails.includes(color)));
+    mol.delete();
+}
+
+const getFoundRgdRowAsMap = (row) => Object.fromEntries(Object.entries(row).map(([rlabel, mol]) => {
+    try {
+        assert(mol);
+        assert(mol instanceof RDKitModule.Mol);
+        const smi = mol.get_smiles();
+        return [rlabel, smi];
+    } finally {
+        if (mol) {
+            mol.delete();
+        }
+    }
+}));
+
+const getExpectedRgdRowAsMap = (row) => Object.fromEntries(row.split(' ').map((rgroup) => {
+    const match = rgroup.match(/^([^:]+):(.+)$/);
+    assert(match);
+    return match.slice(1);
+}));
+
+const getExpectedRgdAsCols = (rowArray) => {
+    const res = {};
+    rowArray.forEach((row, i) => {
+        const rgroupToSmiMap = getExpectedRgdRowAsMap(row);
+        Object.entries(rgroupToSmiMap).forEach(([rlabel, smi]) => {
+            if (!i) {
+                res[rlabel] = [];
+            }
+            const arr = res[rlabel];
+            assert(Array.isArray(arr));
+            arr.push(smi);
+        });
+    });
+    return res;
+};
+
+function test_singlecore_rgd() {
+    const ringData3 = ['c1cocc1CCl', 'c1c[nH]cc1CI', 'c1cscc1CF'];
+    const expectedRingData3Rgd = ['Core:c1cc([*:1])co1 R1:ClC[*:1]',
+                                  'Core:c1cc([*:1])c[nH]1 R1:IC[*:1]',
+                                  'Core:c1cc([*:1])cs1 R1:FC[*:1]'];
+    const expectedRingData3RgdAsCols = getExpectedRgdAsCols(expectedRingData3Rgd);
+    const core = RDKitModule.get_qmol('*1***[*:1]1');
+    assert(core);
+    try {
+        const scoreMethods = ['Match', 'FingerprintVariance'];
+        scoreMethods.forEach((scoreMethod) => {
+            const params = {
+                scoreMethod,
+                allowNonTerminalRGroups: true,
+            };
+            const rgd = RDKitModule.get_rgd(core, JSON.stringify(params));
+            ringData3.forEach((ringData, i) => {
+                const mol = RDKitModule.get_mol(ringData);
+                assert(mol);
+                try {
+                    const res = rgd.add(mol);
+                    assert(res === i);
+                } finally {
+                    mol.delete();
+                }
+            });
+            rgd.process();
+            const rows = rgd.get_rgroups_as_rows();
+            assert(Array.isArray(rows));
+            assert(rows.length === ringData3.length);
+            rows.forEach((row, i) => {
+                const expectedRowMapping = getExpectedRgdRowAsMap(expectedRingData3Rgd[i]);
+                const foundMapping = getFoundRgdRowAsMap(row);
+                assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping).length);
+                Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                    assert(expectedRowMapping[rlabel] && expectedRowMapping[rlabel] === smi);
+                });
+            })
+            const cols = rgd.get_rgroups_as_columns();
+            assert(typeof cols === 'object');
+            assert(Object.keys(cols).length === Object.keys(expectedRingData3RgdAsCols).length);
+            Object.keys(cols).forEach((rlabel) => {
+                const expectedRGroupsAsSmiles = expectedRingData3RgdAsCols[rlabel];
+                assert(Array.isArray(expectedRGroupsAsSmiles));
+                const rgroupsAsMolList = cols[rlabel];
+                assert(rgroupsAsMolList);
+                assert(rgroupsAsMolList instanceof RDKitModule.MolList);
+                try {
+                    assert(expectedRGroupsAsSmiles.length === rgroupsAsMolList.size());
+                    let i = 0;
+                    while (!rgroupsAsMolList.at_end()) {
+                        const mol = rgroupsAsMolList.next();
+                        assert(mol);
+                        try {
+                            assert(mol.get_smiles() === expectedRGroupsAsSmiles[i++]);
+                        } finally {
+                            mol.delete();
+                        }
+                    }
+                } finally {
+                    rgroupsAsMolList.delete();
+                }
+            });
+        });
+    } finally {
+        core.delete();
+    }
+}
+
+function test_multicore_rgd() {
+    const smiArray = [
+        'C1CCNC(Cl)CC1', 'C1CC(Cl)NCCC1', 'C1CCNC(I)CC1', 'C1CC(I)NCCC1',
+        'C1CCSC(Cl)CC1', 'C1CC(Cl)SCCC1', 'C1CCSC(I)CC1', 'C1CC(I)SCCC1',
+        'C1CCOC(Cl)CC1', 'C1CC(Cl)OCCC1', 'C1CCOC(I)CC1', 'C1CC(I)OCCC1'
+    ];
+    const expectedRgd = [
+        'Core:C1CCNC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCNC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCNC([*:1])CC1 R1:I[*:1]',  'Core:C1CCNC([*:1])CC1 R1:I[*:1]',
+        'Core:C1CCSC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCSC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCSC([*:1])CC1 R1:I[*:1]',  'Core:C1CCSC([*:1])CC1 R1:I[*:1]',
+        'Core:C1CCOC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCOC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCOC([*:1])CC1 R1:I[*:1]',  'Core:C1CCOC([*:1])CC1 R1:I[*:1]'
+    ];
+    const expectedRgdAsCols = getExpectedRgdAsCols(expectedRgd);
+
+    const cores = molListFromSmiArray(['C1CCNCCC1', 'C1CCOCCC1', 'C1CCSCCC1']);
+    try {
+        const rgd = RDKitModule.get_rgd(cores);
+        smiArray.forEach((smi, i) => {
+            const mol = RDKitModule.get_mol(smi);
+            assert(mol);
+            try {
+                assert(rgd.add(mol) === i);
+            } finally {
+                mol.delete();
+            }
+        });
+        assert(rgd.process());
+        const rows = rgd.get_rgroups_as_rows();
+        assert(Array.isArray(rows));
+        assert(rows.length === smiArray.length);
+        rows.forEach((row, i) => {
+            const expectedRowMapping = getExpectedRgdRowAsMap(expectedRgd[i]);
+            const foundMapping = getFoundRgdRowAsMap(row);
+            assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping).length);
+            Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                assert(expectedRowMapping[rlabel] && expectedRowMapping[rlabel] === smi);
+            });
+        })
+        const cols = rgd.get_rgroups_as_columns();
+        assert(typeof cols === 'object');
+        assert(Object.keys(cols).length === Object.keys(expectedRgdAsCols).length);
+        Object.keys(cols).forEach((rlabel) => {
+            const expectedRGroupsAsSmiles = expectedRgdAsCols[rlabel];
+            assert(Array.isArray(expectedRGroupsAsSmiles));
+            const rgroupsAsMolList = cols[rlabel];
+            assert(rgroupsAsMolList);
+            assert(rgroupsAsMolList instanceof RDKitModule.MolList);
+            try {
+                assert(expectedRGroupsAsSmiles.length === rgroupsAsMolList.size());
+                let i = 0;
+                while (!rgroupsAsMolList.at_end()) {
+                    const mol = rgroupsAsMolList.next();
+                    assert(mol);
+                    try {
+                        assert(mol.get_smiles() === expectedRGroupsAsSmiles[i++]);
+                    } finally {
+                        mol.delete();
+                    }
+                }
+            } finally {
+                rgroupsAsMolList.delete();
+            }
+        });
+    } finally {
+        cores.delete();
+    }
+}
+
+function test_multi_highlights() {
+    const mol = RDKitModule.get_mol('[H]c1cc2c(-c3ccnc(Nc4ccc(F)c(F)c4)n3)c(-c3cccc(C(F)(F)F)c3)nn2nc1C', JSON.stringify({removeHs: false}));
+    const details = '{"width":250,"height":200,"highlightAtomMultipleColors":{"15":[[0.941,0.894,0.259]],"17":[[0,0.62,0.451]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"30":[[0.902,0.624,0]],"35":[[0.337,0.706,0.914]]},"highlightBondMultipleColors":{"14":[[0.941,0.894,0.259]],"16":[[0,0.62,0.451]],"20":[[0.902,0.624,0]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"34":[[0.337,0.706,0.914]],"38":[[0.902,0.624,0]]},"highlightAtomRadii":{"15":0.4,"17":0.4,"21":0.4,"22":0.4,"23":0.4,"24":0.4,"25":0.4,"26":0.4,"27":0.4,"28":0.4,"29":0.4,"30":0.4,"35":0.4},"highlightLineWidthMultipliers":{"14":2,"16":2,"20":2,"21":2,"22":2,"23":2,"24":2,"25":2,"26":2,"27":2,"28":2,"29":2,"34":2,"38":2}}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('ellipse'));
+    const COLORS = ['#009E73', '#55B4E9', '#E69F00', '#EFE342'];
+    assert(COLORS.every((color) => svgWithDetails.includes(color)));
+    const svgWithOutDetails = mol.get_svg_with_highlights('');
+    assert(!svgWithOutDetails.includes('ellipse'));
+    assert(!COLORS.some((color) => svgWithOutDetails.includes(color)));
+    mol.delete();
 }
 
 initRDKitModule().then(function(instance) {
@@ -3021,6 +3452,16 @@ initRDKitModule().then(function(instance) {
     test_relabel_mapped_dummies();
     test_assign_cip_labels();
     test_smiles_smarts_params();
+    test_wedged_bond_atropisomer();
+    test_get_molblock_use_molblock_wedging();
+    test_assign_chiral_tags_from_mol_parity();
+    test_make_dummies_queries();
+    test_get_mol_copy();
+    test_multi_highlights();
+    if (RDKitModule.RGroupDecomposition)  {
+        test_singlecore_rgd();
+        test_multicore_rgd();
+    }
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

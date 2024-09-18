@@ -450,7 +450,9 @@ bool areStereobondControllingAtomsDupes(
     const ROMol &mol, const Bond &bond, unsigned controllingAtom1,
     unsigned controllingAtom2, const std::vector<unsigned> &atomRanks,
     const boost::dynamic_bitset<> &possibleAtoms,
-    const boost::dynamic_bitset<> &knownAtoms) {
+    const boost::dynamic_bitset<> &knownAtoms,
+    const boost::dynamic_bitset<> &possibleBonds,
+    const boost::dynamic_bitset<> &knownBonds) {
   PRECONDITION(controllingAtom1 != Chirality::StereoInfo::NOATOM &&
                    controllingAtom2 != Chirality::StereoInfo::NOATOM,
                "Missing a controlling atom");
@@ -497,10 +499,26 @@ bool areStereobondControllingAtomsDupes(
         if (possibleAtoms[oppositeIdx] || knownAtoms[oppositeIdx]) {
           return false;
         }
+
+        // atropisomer test: find the bond from the opposite atom that in not in
+        // the ring (if there are three bonds total)
+
+        if (mol.getAtomWithIdx(oppositeIdx)->getDegree() == 3) {
+          for (const auto &nbr :
+               mol.atomBonds(mol.getAtomWithIdx(oppositeIdx))) {
+            auto outOtherAtom = nbr->getOtherAtomIdx(oppositeIdx);
+            auto bondOutPosItr =
+                std::find(ring.begin(), ring.end(), outOtherAtom);
+            if (bondOutPosItr == ring.end()) {
+              if (possibleBonds[nbr->getIdx()] || knownBonds[nbr->getIdx()]) {
+                return false;
+              }
+            }
+          }
+        }
       }
     }
   }
-
   return true;
 }
 
@@ -658,12 +676,14 @@ void flagRingStereo(ROMol &mol,
           nHere += 1 + toAtomOppositePossible;
           possibleAtomsInRing.set(aidx);
           possibleAtomsInRing.set(oppositeIdx);
+          mol.getAtomWithIdx(aidx)->setProp(
+              common_properties::_ringStereoOtherAtom, oppositeIdx);
           continue;
         }
       }
 
-      // if the atom is in more than one ring, explore the common edge to see
-      // if we can find another potentially chiral atom
+      // if the atom is in more than one ring, explore the common edge to
+      // see if we can find another potentially chiral atom
       if (ringInfo->numAtomRings(aidx) > 1) {
         auto previousOtherIdx = aidx;
         for (size_t step = 1; step <= halfSize; ++step) {
@@ -680,6 +700,10 @@ void flagRingStereo(ROMol &mol,
             nHere += 2;
             possibleAtomsInRing.set(aidx);
             possibleAtomsInRing.set(otherIdx);
+            mol.getAtomWithIdx(aidx)->setProp(
+                common_properties::_ringStereoOtherAtom, otherIdx);
+            mol.getAtomWithIdx(otherIdx)->setProp(
+                common_properties::_ringStereoOtherAtom, aidx);
             break;
           }
           previousOtherIdx = otherIdx;
@@ -724,9 +748,9 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
           for (auto nbrIdx : sinfo.controllingAtoms) {
             auto rnk = aranks[nbrIdx];
             if (std::find(nbrs.begin(), nbrs.end(), rnk) != nbrs.end()) {
-              // ok, we just hit a duplicate rank. If the atom we're concerned
-              // about is a candidate for ring stereo and the bond to the atom
-              // with the duplicate rank is a ring bond
+              // ok, we just hit a duplicate rank. If the atom we're
+              // concerned about is a candidate for ring stereo and the bond
+              // to the atom with the duplicate rank is a ring bond
               if (possibleRingStereoAtoms[aidx]) {
                 auto bnd = mol.getBondBetweenAtoms(aidx, nbrIdx);
                 if (!bnd || !possibleRingStereoBonds[bnd->getIdx()]) {
@@ -743,15 +767,6 @@ bool updateAtoms(ROMol &mol, const std::vector<unsigned int> &aranks,
           }
         }
         if (!haveADupe) {
-          // std::cerr << "NBRS from " << aidx << ": ";
-          // std::copy(sinfo.controllingAtoms.begin(),
-          //           sinfo.controllingAtoms.end(),
-          //           std::ostream_iterator<int>(std::cerr, " "));
-          // std::cerr << std::endl;
-          // std::copy(nbrs.begin(), nbrs.end(),
-          //           std::ostream_iterator<int>(std::cerr, " "));
-          // std::cerr << std::endl;
-
           auto acs = atomSymbols[aidx];
           if (!possibleAtoms[aidx]) {
             auto sortednbrs = nbrs;
@@ -860,8 +875,8 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
             sinfo.controllingAtoms[1] != Chirality::StereoInfo::NOATOM) {
           if (areStereobondControllingAtomsDupes(
                   mol, *bond, sinfo.controllingAtoms[0],
-                  sinfo.controllingAtoms[1], aranks, possibleAtoms,
-                  knownAtoms)) {
+                  sinfo.controllingAtoms[1], aranks, possibleAtoms, knownAtoms,
+                  possibleBonds, knownBonds)) {
             haveADupe = true;
           } else if (aranks[sinfo.controllingAtoms[0]] <
                      aranks[sinfo.controllingAtoms[1]]) {
@@ -873,8 +888,8 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
             sinfo.controllingAtoms[3] != Chirality::StereoInfo::NOATOM) {
           if (areStereobondControllingAtomsDupes(
                   mol, *bond, sinfo.controllingAtoms[2],
-                  sinfo.controllingAtoms[3], aranks, possibleAtoms,
-                  knownAtoms)) {
+                  sinfo.controllingAtoms[3], aranks, possibleAtoms, knownAtoms,
+                  possibleBonds, knownBonds)) {
             haveADupe = true;
           } else if (aranks[sinfo.controllingAtoms[2]] <
                      aranks[sinfo.controllingAtoms[3]]) {
@@ -993,14 +1008,14 @@ void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
 
 std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                                    bool cleanIt) {
-  // This potentially does two passes of "canonicalization" to identify stereo
-  // atoms/bonds:
-  //   - if cleanIt is true we start with a pass which ignores possible stereo
-  //   atoms/bonds and which removes the stereo spec from any atom/bond which
-  //   doesn't have unique neighbors
-  //   - if flagPossible is true we do a pass where each unspecified possible
-  //   stereocenter is treated as if it were different from all others. This
-  //   allows us to identify every possible stereo atom/bond
+  // This potentially does two passes of "canonicalization" to identify
+  // stereo atoms/bonds:
+  //   - if cleanIt is true we start with a pass which ignores possible
+  //   stereo atoms/bonds and which removes the stereo spec from any
+  //   atom/bond which doesn't have unique neighbors
+  //   - if flagPossible is true we do a pass where each unspecified
+  //   possible stereocenter is treated as if it were different from all
+  //   others. This allows us to identify every possible stereo atom/bond
 
   boost::dynamic_bitset<> knownAtoms(mol.getNumAtoms());
   std::vector<std::string> atomSymbols(mol.getNumAtoms());
@@ -1014,16 +1029,16 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   initBondInfo(mol, flagPossible, cleanIt, knownBonds, bondSymbols,
                possibleBonds);
 
-  // copy the original sets of possible atoms/bonds. We need them in the second
-  // pass
+  // copy the original sets of possible atoms/bonds. We need them in the
+  // second pass
   auto origPossibleAtoms = possibleAtoms;
   auto origPossibleBonds = possibleBonds;
 
-  // tracks the number of rings with possible ring stereo that the atom is in
-  //  (only set for potential stereoatoms)
+  // tracks the number of rings with possible ring stereo that the atom is
+  // in (only set for potential stereoatoms)
   std::vector<unsigned int> possibleRingStereoAtoms(mol.getNumAtoms());
-  // tracks the number of rings with possible ring stereo that the bond is in
-  //  (set for all bonds)
+  // tracks the number of rings with possible ring stereo that the bond is
+  // in (set for all bonds)
   std::vector<unsigned int> possibleRingStereoBonds(mol.getNumBonds());
 
   // identify atoms which can be involved in ring stereo
@@ -1079,18 +1094,22 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
     const bool includeIsotopes = false;
     const bool breakTies = false;
     const bool includeAtomMaps = false;
+    const bool includeChiralPresence = false;
     // Now apply the canonical atom ranking code with basic connectivity
     // invariants The necessary condition for chirality is that an atom's
     // neighbors must have unique ranks
-    Canon::rankFragmentAtoms(
-        mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
-        breakTies, includeChirality, includeIsotopes, includeAtomMaps);
+    Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
+                             &atomSymbols, &bondSymbols, breakTies,
+                             includeChirality, includeIsotopes, includeAtomMaps,
+                             includeChiralPresence);
 #endif
-    // check if any new atoms definitely now have stereo; do another loop if so
+    // check if any new atoms definitely now have stereo; do another loop if
+    // so
     needAnotherRound = updateAtoms(
         mol, aranks, atomSymbols, possibleAtoms, knownAtoms, fixedAtoms,
         possibleRingStereoAtoms, possibleRingStereoBonds, res);
-    // check if any new bonds definitely now have stereo; do another loop if so
+    // check if any new bonds definitely now have stereo; do another loop if
+    // so
     needAnotherRound |=
         updateBonds(mol, aranks, bondSymbols, possibleAtoms, possibleBonds,
                     knownAtoms, knownBonds, fixedBonds, res);
@@ -1099,85 +1118,85 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   if (cleanIt) {
     // remove stereo specs from atoms/bonds which should not have them
     cleanMolStereo(mol, fixedAtoms, knownAtoms, fixedBonds, knownBonds);
+  }
+  if (flagPossible && (possibleAtoms != origPossibleAtoms ||
+                       possibleBonds != origPossibleBonds)) {
+    // if we're doing "flagPossible" mode and have done some cleanup, then
+    // we need to do another iteration
 
-    if (flagPossible && (possibleAtoms != origPossibleAtoms ||
-                         possibleBonds != origPossibleBonds)) {
-      // if we're doing "flagPossible" mode and have done some cleanup, then we
-      // need to do another iteration
-
-      possibleAtoms = origPossibleAtoms;
-      // flag every center/bond where we removed stereo as possible:
-      for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
-        if (!fixedAtoms[i] && knownAtoms[i]) {
-          possibleAtoms[i] = 1;
-          knownAtoms[i] = 0;
-        }
-        if (possibleAtoms[i]) {
-          atomSymbols[i] += "_" + std::to_string(i);
-        }
+    possibleAtoms = origPossibleAtoms;
+    // flag every center/bond where we removed stereo as possible:
+    for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
+      if (!fixedAtoms[i] && knownAtoms[i]) {
+        possibleAtoms[i] = 1;
+        knownAtoms[i] = 0;
       }
-      possibleBonds = origPossibleBonds;
-      for (auto i = 0u; i < mol.getNumBonds(); ++i) {
-        if (!fixedBonds[i] && knownBonds[i]) {
-          possibleBonds[i] = 1;
-          knownBonds[i] = 0;
-        }
-        if (possibleBonds[i]) {
-          bondSymbols[i] += "_" + std::to_string(i);
-        }
+      if (possibleAtoms[i]) {
+        atomSymbols[i] += "_" + std::to_string(i);
       }
-
-      flagRingStereo(mol, possibleRingStereoAtoms, possibleRingStereoBonds,
-                     knownAtoms, &possibleAtoms, knownBonds, &possibleBonds);
-
-      needAnotherRound = true;
-      while (needAnotherRound) {
-        res.clear();
-
-        // std::copy(atomSymbols.begin(), atomSymbols.end(),
-        //           std::ostream_iterator<std::string>(std::cerr, " "));
-        // std::cerr << std::endl;
-        // std::copy(bondSymbols.begin(), bondSymbols.end(),
-        //           std::ostream_iterator<std::string>(std::cerr, " "));
-        // std::cerr << std::endl;
-
-#if LOCAL_CANON
-        Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false,
-                                              &atomSymbols, &bondSymbols,
-                                              atomsInPlay, bondsInPlay, true);
-        needsInit = false;
-
-        const bool includeChirality = false;
-        const bool breakTies = false;
-        memset(atomOrder, 0, mol.getNumAtoms() * sizeof(int));
-        Canon::detail::rankWithFunctor(ftor, breakTies, atomOrder, true,
-                                       includeChirality, &atomsInPlay,
-                                       &bondsInPlay);
-        for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-          aranks[atomOrder[i]] = canonAtoms[atomOrder[i]].index;
-        }
-
-#else
-        // we will use the canonicalization code
-        const bool breakTies = false;
-        const bool includeChirality = false;
-        const bool includeIsotopes = false;
-        const bool includeAtomMaps = false;
-        Canon::rankFragmentAtoms(
-            mol, aranks, atomsInPlay, bondsInPlay, &atomSymbols, &bondSymbols,
-            breakTies, includeChirality, includeIsotopes, includeAtomMaps);
-#endif
-        // fixedAtoms.reset();
-        // fixedBonds.reset();
-        needAnotherRound = updateAtoms(
-            mol, aranks, atomSymbols, possibleAtoms, knownAtoms, fixedAtoms,
-            possibleRingStereoAtoms, possibleRingStereoBonds, res);
-        needAnotherRound |=
-            updateBonds(mol, aranks, bondSymbols, possibleAtoms, possibleBonds,
-                        knownAtoms, knownBonds, fixedBonds, res);
+    }
+    possibleBonds = origPossibleBonds;
+    for (auto i = 0u; i < mol.getNumBonds(); ++i) {
+      if (!fixedBonds[i] && knownBonds[i]) {
+        possibleBonds[i] = 1;
+        knownBonds[i] = 0;
+      }
+      if (possibleBonds[i]) {
+        bondSymbols[i] += "_" + std::to_string(i);
       }
     }
 
+    flagRingStereo(mol, possibleRingStereoAtoms, possibleRingStereoBonds,
+                   knownAtoms, &possibleAtoms, knownBonds, &possibleBonds);
+
+    needAnotherRound = true;
+    while (needAnotherRound) {
+      res.clear();
+
+      // std::copy(atomSymbols.begin(), atomSymbols.end(),
+      //           std::ostream_iterator<std::string>(std::cerr, " "));
+      // std::cerr << std::endl;
+      // std::copy(bondSymbols.begin(), bondSymbols.end(),
+      //           std::ostream_iterator<std::string>(std::cerr, " "));
+      // std::cerr << std::endl;
+
+#if LOCAL_CANON
+      Canon::detail::initFragmentCanonAtoms(mol, canonAtoms, false,
+                                            &atomSymbols, &bondSymbols,
+                                            atomsInPlay, bondsInPlay, true);
+      needsInit = false;
+
+      const bool includeChirality = false;
+      const bool breakTies = false;
+      memset(atomOrder, 0, mol.getNumAtoms() * sizeof(int));
+      Canon::detail::rankWithFunctor(ftor, breakTies, atomOrder, true,
+                                     includeChirality, &atomsInPlay,
+                                     &bondsInPlay);
+      for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
+        aranks[atomOrder[i]] = canonAtoms[atomOrder[i]].index;
+      }
+
+#else
+      // we will use the canonicalization code
+      const bool breakTies = false;
+      const bool includeChirality = false;
+      const bool includeIsotopes = false;
+      const bool includeAtomMaps = false;
+      const bool includeChiralPresence = false;
+      Canon::rankFragmentAtoms(mol, aranks, atomsInPlay, bondsInPlay,
+                               &atomSymbols, &bondSymbols, breakTies,
+                               includeChirality, includeIsotopes,
+                               includeAtomMaps, includeChiralPresence);
+#endif
+      needAnotherRound = updateAtoms(
+          mol, aranks, atomSymbols, possibleAtoms, knownAtoms, fixedAtoms,
+          possibleRingStereoAtoms, possibleRingStereoBonds, res);
+      needAnotherRound |=
+          updateBonds(mol, aranks, bondSymbols, possibleAtoms, possibleBonds,
+                      knownAtoms, knownBonds, fixedBonds, res);
+    }
+  }
+  if (cleanIt) {
     for (const auto atom : mol.atoms()) {
       atom->setProp<unsigned int>(common_properties::_ChiralAtomRank,
                                   aranks[atom->getIdx()]);
@@ -1207,8 +1226,8 @@ std::vector<StereoInfo> findPotentialStereo(ROMol &mol, bool cleanIt,
   return res;
 }
 
-// const_casts are always ugly, but we know that findPotentialStereo() doesn't
-// modify the molecule if cleanIt is false:
+// const_casts are always ugly, but we know that findPotentialStereo()
+// doesn't modify the molecule if cleanIt is false:
 std::vector<StereoInfo> findPotentialStereo(const ROMol &mol) {
   bool cleanIt = false;
   return findPotentialStereo(const_cast<ROMol &>(mol), cleanIt);

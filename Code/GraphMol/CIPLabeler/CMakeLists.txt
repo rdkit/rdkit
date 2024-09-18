@@ -27,7 +27,7 @@ target_compile_definitions(CIPLabeler PRIVATE RDKIT_CIPLABELER_BUILD)
 
 rdkit_headers(CIPLabeler.h
               TooManyNodesException.h
-              DEST CIPLabeler)
+              DEST GraphMol/CIPLabeler)
 
 rdkit_catch_test(testCIPLabeler catch_tests.cpp 
                  CIPMol.cpp CIPLabeler.cpp

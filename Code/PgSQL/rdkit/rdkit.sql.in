@@ -1370,10 +1370,20 @@ CREATE OPERATOR @= (
     LEFTARG = mol,
     RIGHTARG = mol,
     PROCEDURE = mol_eq,
-    COMMUTATOR = '=',
-    NEGATOR = '<>',
+    COMMUTATOR = @RDKIT_PG_ATEQ_COMMUTATOR@,
+    NEGATOR = @RDKIT_PG_ATEQ_NEGATOR@,
     RESTRICT = eqsel,
     JOIN = eqjoinsel
+);
+
+CREATE OPERATOR @<> (
+    LEFTARG = mol,
+    RIGHTARG = mol,
+    PROCEDURE = mol_ne,
+    COMMUTATOR = '@<>',
+    NEGATOR = '@=',
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
 );
 
 
@@ -1681,10 +1691,20 @@ CREATE OPERATOR @= (
     LEFTARG = reaction,
     RIGHTARG = reaction,
     PROCEDURE = reaction_eq,
-    COMMUTATOR = '=',
-    NEGATOR = '<>',
+    COMMUTATOR = @RDKIT_PG_ATEQ_COMMUTATOR@,
+    NEGATOR = @RDKIT_PG_ATEQ_NEGATOR@,
     RESTRICT = eqsel,
     JOIN = eqjoinsel
+);
+
+CREATE OPERATOR @<> (
+    LEFTARG = reaction,
+    RIGHTARG = reaction,
+    PROCEDURE = reaction_ne,
+    COMMUTATOR = '@<>',
+    NEGATOR = '@=',
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
 );
 
 
