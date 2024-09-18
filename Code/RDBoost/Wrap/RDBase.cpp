@@ -257,11 +257,20 @@ BOOST_PYTHON_MODULE(rdBase) {
   RDLog::InitLogs();
   RegisterVectorConverter<int>();
   RegisterVectorConverter<unsigned>();
+  RegisterVectorConverter<size_t>("UnsignedLong_Vect");
+  RegisterVectorConverter<boost::uint64_t>("VectSizeT");
+
+
   RegisterVectorConverter<double>();
   RegisterVectorConverter<std::string>(1);
   RegisterVectorConverter<std::vector<int>>();
   RegisterVectorConverter<std::vector<unsigned>>();
   RegisterVectorConverter<std::vector<double>>();
+  RegisterVectorConverter<std::vector<std::string>>("VectorOfStringVectors");
+
+  RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
+      
+
   path_converter();
 
   RegisterListConverter<int>();

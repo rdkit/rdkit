@@ -6952,6 +6952,39 @@ void testSimpleAromaticity() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testMMFFAromaticity() {
+  {
+    BOOST_LOG(rdInfoLog)
+        << "-----------------------\n Testing MMFF94 aromaticity" << std::endl;
+
+    // test one known difference between RDKit and MMFF94 aromaticity models:
+    // the latter does not recognize azulene as aromatic
+
+    std::string smiles = "C1=CC=C2C=CC=C2C=C1";
+    RWMol *m = SmilesToMol(smiles);
+    MolOps::Kekulize(*m, true);
+
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_RDKIT);
+    int arombondcount = 0;
+    for (auto b : m->bonds()) {
+      if (b->getIsAromatic()) arombondcount++;
+    }
+    // all bonds, except the fused one, should be aromatic
+    TEST_ASSERT(arombondcount == 10);
+    TEST_ASSERT(m->getBondBetweenAtoms(3, 7)->getIsAromatic() == false);
+
+    MolOps::setAromaticity(*m, MolOps::AROMATICITY_MMFF94);
+    arombondcount = 0;
+    for (auto b : m->bonds()) {
+      if (b->getIsAromatic()) arombondcount++;
+    }
+    // no aromatics here
+    TEST_ASSERT(arombondcount == 0);
+    delete m;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 //! really dumb aromaticity: any conjugated ring bond is aromatic
 int customAromaticity(RWMol &m) {
   m.updatePropertyCache();
@@ -8634,6 +8667,7 @@ int main() {
   testKekulizeErrorReporting();
   testGithubIssue868();
   testSimpleAromaticity();
+  testMMFFAromaticity();
   testGithubIssue1730();
   testCustomAromaticity();
   testGithubIssue908();

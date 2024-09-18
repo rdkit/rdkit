@@ -346,6 +346,66 @@ void EmbeddedFrag::setupAttachmentPoints() {
   }
 }
 
+// check if the stereochemistry of the template matches the stereochemistry of
+// the molecule
+static bool checkStereoChemistry(const RDKit::ROMol &mol,
+                                 const RDKit::ROMol &template_mol,
+                                 RDKit::MatchVectType match) {
+  for (auto bond : mol.bonds()) {
+    if (bond->getBondType() != RDKit::Bond::DOUBLE ||
+        bond->getStereo() == RDKit::Bond::STEREOANY ||
+        bond->getStereo() == RDKit::Bond::STEREONONE) {
+      continue;
+    }
+    // get the four atoms around the double bond
+    auto neighbors = bond->getStereoAtoms();
+    if (neighbors.size() != 2) {
+      continue;
+    }
+    int atom1_neighbor = neighbors[0];
+    int atom2_neighbor = neighbors[1];
+    int atom1 = bond->getBeginAtomIdx();
+    int atom2 = bond->getEndAtomIdx();
+    // find the template atoms that correspond to the four atoms
+    int template_atom1 = -1;
+    int template_atom2 = -1;
+    int template_atom1_neighbor = -1;
+    int template_atom2_neighbor = -1;
+    for (auto &[template_aidx, rs_aidx] : match) {
+      if (rs_aidx == atom1) {
+        template_atom1 = template_aidx;
+      } else if (rs_aidx == atom2) {
+        template_atom2 = template_aidx;
+      } else if (rs_aidx == atom1_neighbor) {
+        template_atom1_neighbor = template_aidx;
+      } else if (rs_aidx == atom2_neighbor) {
+        template_atom2_neighbor = template_aidx;
+      }
+    }
+    if (template_atom1 == -1 || template_atom2 == -1 ||
+        template_atom1_neighbor == -1 || template_atom2_neighbor == -1) {
+      return false;
+    }
+    const auto &conf = template_mol.getConformer();
+    const auto &atom1_loc = conf.getAtomPos(template_atom1);
+    const auto &atom2_loc = conf.getAtomPos(template_atom2);
+    const auto &atom1_neighbor_loc = conf.getAtomPos(template_atom1_neighbor);
+    const auto &atom2_neighbor_loc = conf.getAtomPos(template_atom2_neighbor);
+    // check if the two neighbors are on the same side of the bond
+    const auto v12 = atom1_neighbor_loc - atom1_loc;
+    const auto v42 = atom2_neighbor_loc - atom1_loc;
+    const auto v32 = atom2_loc - atom1_loc;
+    auto cross1 = v32.x * v12.y - v32.y * v12.x;
+    auto cross2 = v32.x * v42.y - v32.y * v42.x;
+    bool is_cis = cross1 * cross2 > 0;
+    if (is_cis != (bond->getStereo() == RDKit::Bond::STEREOZ ||
+                   bond->getStereo() == RDKit::Bond::STEREOCIS)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
                                    unsigned int ring_count) {
   CoordinateTemplates &coordinate_templates =
@@ -395,9 +455,11 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     params.maxMatches = 1;
     auto matches = RDKit::SubstructMatch(RDKit::ROMol(rs_mol), *mol, params);
     if (!matches.empty()) {
-      match = matches[0];
-      template_mol = mol;
-      break;
+      if (checkStereoChemistry(rs_mol, *mol, matches[0])) {
+        match = matches[0];
+        template_mol = mol;
+        break;
+      }
     }
   }
 
@@ -421,11 +483,12 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
 
 // find any atoms in the ring that are in trans double bonds
 // and mirror them into the ring
-static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT& ring, RDGeom::INT_POINT2D_MAP& coords)
-{
+static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
+                                 const RDKit::INT_VECT &ring,
+                                 RDGeom::INT_POINT2D_MAP &coords) {
   // a nice place for C++23 generator coroutines...
   RDKit::INT_VECT transRingAtoms;
-  for (size_t i=0; i<ring.size(); ++i) {
+  for (size_t i = 0; i < ring.size(); ++i) {
     const auto atom1 = ring[i];
     const auto atom2 = ring[(i + 1) % ring.size()];
     const auto bond = mol.getBondBetweenAtoms(atom1, atom2);
@@ -438,12 +501,14 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
     }
 
     // We care about bonds that are trans with respect to this ring
-    const auto& neighbors = bond->getStereoAtoms();
+    const auto &neighbors = bond->getStereoAtoms();
     if (neighbors.size() != 2) {
       continue;
     }
-    const auto leftIsIn = std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
-    const auto rightIsIn = std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
+    const auto leftIsIn =
+        std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
+    const auto rightIsIn =
+        std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
     bool isTrans = false;
     if (stype == RDKit::Bond::STEREOTRANS || stype == RDKit::Bond::STEREOE) {
       if (leftIsIn == rightIsIn) {
@@ -458,7 +523,6 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
       continue;
     }
 
-
     // Mirror one atom in each trans bond across the line defined by its two
     // neighbors. This bumps it into the ring
     const auto left = ring[(i + ring.size() - 1) % ring.size()];
@@ -470,8 +534,10 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
     const auto d = last - ref;
     const double a = (d.x * d.x - d.y * d.y) / d.dotProduct(d);
     const double b = 2 * d.x * d.y / d.dotProduct(d);
-    const double x = a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
-    const double y = b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
+    const double x =
+        a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
+    const double y =
+        b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
     coords[atom1] = RDGeom::Point2D(x, y);
   }
 }

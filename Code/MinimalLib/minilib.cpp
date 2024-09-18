@@ -925,3 +925,63 @@ JSLog *set_log_capture(const std::string &log_name) {
 void enable_logging() { RDKit::MinimalLib::LogHandle::enableLogging(); }
 
 void disable_logging() { RDKit::MinimalLib::LogHandle::disableLogging(); }
+
+#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
+JSRGroupDecomposition::JSRGroupDecomposition(const JSMolBase &core,
+                                             const std::string &details_json) {
+  RGroupDecompositionParameters params;
+  updateRGroupDecompositionParametersFromJSON(params, details_json);
+  d_decomp.reset(new RGroupDecomposition(core.get(), params));
+}
+
+JSRGroupDecomposition::JSRGroupDecomposition(const JSMolList &cores,
+                                             const std::string &details_json) {
+  RGroupDecompositionParameters params;
+  updateRGroupDecompositionParametersFromJSON(params, details_json);
+  d_decomp.reset(new RGroupDecomposition(cores.mols(), params));
+}
+
+int JSRGroupDecomposition::add(const JSMolBase &mol) {
+  return d_decomp->add(mol.get());
+}
+
+bool JSRGroupDecomposition::process() { return d_decomp->process(); }
+
+std::map<std::string, std::unique_ptr<JSMolList>>
+JSRGroupDecomposition::getRGroupsAsColumns() const {
+  auto cols = d_decomp->getRGroupsAsColumns();
+  std::map<std::string, std::unique_ptr<JSMolList>> res;
+  std::transform(
+      cols.begin(), cols.end(), std::inserter(res, res.begin()),
+      [](const auto &keyValuePair) {
+        return std::make_pair(
+            std::move(keyValuePair.first),
+            std::unique_ptr<JSMolList>(new JSMolList(keyValuePair.second)));
+      });
+  return res;
+}
+
+std::vector<std::map<std::string, std::unique_ptr<JSMolBase>>>
+JSRGroupDecomposition::getRGroupsAsRows() const {
+  auto rows = d_decomp->getRGroupsAsRows();
+  std::vector<std::map<std::string, std::unique_ptr<JSMolBase>>> res;
+  res.reserve(rows.size());
+  std::transform(
+      rows.begin(), rows.end(), std::back_inserter(res),
+      [](const auto &originalMap) {
+        std::map<std::string, std::unique_ptr<JSMolBase>> transformedMap;
+        std::transform(
+            originalMap.begin(), originalMap.end(),
+            std::inserter(transformedMap, transformedMap.begin()),
+            [](const auto &keyValuePair) {
+              CHECK_INVARIANT(keyValuePair.second,
+                              "ROMOL_SPTR must not be null");
+              return std::make_pair(
+                  std::move(keyValuePair.first),
+                  std::unique_ptr<JSMolBase>(new JSMolShared(keyValuePair.second)));
+            });
+        return transformedMap;
+      });
+  return res;
+}
+#endif
