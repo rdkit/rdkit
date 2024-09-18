@@ -48,6 +48,20 @@ If you've found a bug or would like to request a feature, please [create an issu
 
 We also have a [LinkedIn group](https://www.linkedin.com/groups/RDKit-8192558/about)
 
+We have a yearly user group meeting (the UGM) where members of the community do presentations and lightning talks on things they've done with the RDKit. Materials from past UGMs, which can quite useful, are also online:
+  * [2012 UGM, London](http://www.rdkit.org/UGM/2012/)
+  * [2013 UGM, Hinxton](https://github.com/rdkit/UGM_2013)
+  * [2014 UGM, Darmstadt](https://github.com/rdkit/UGM_2014)
+  * [2015 UGM, Zurich](https://github.com/rdkit/UGM_2015)
+  * [2016 UGM, Basel](https://github.com/rdkit/UGM_2016)
+  * [2017 UGM, Berlin](https://github.com/rdkit/UGM_2017)
+  * [2018 UGM, Cambridge](https://github.com/rdkit/UGM_2018)
+  * [2019 UGM, Hamburg](https://github.com/rdkit/UGM_2019)
+  * [2020 UGM, virtual](https://github.com/rdkit/UGM_2020)
+  * [2021 UGM, virtual](https://github.com/rdkit/UGM_2021)
+  * [2022 UGM, Berlin](https://github.com/rdkit/UGM_2022)
+  * [2023 UGM, Mainz](https://github.com/rdkit/UGM_2023)
+  * [2024 UGM, Zurich](https://github.com/rdkit/UGM_2024)
 
 ## License
 
