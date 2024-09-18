@@ -2893,3 +2893,34 @@ TEST_CASE("Ignore atom map numbers") {
   CHECK(MolToSmiles(*m1, true, false, -1, true, false, false, false, true) ==
         MolToSmiles(*m2, true, false, -1, true, false, false, false, true));
 }
+
+TEST_CASE("Github #7340", "[Reaction][CX][CXSmiles]") {
+  SECTION("Test getCXExtensions with a Vector"){
+    const MOL_SPTR_VECT mol_sptr_vect = {
+      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles, 
+      "C1CCCCC1 |$;label2;$|"_smiles, 
+      "CC(=O)O |$;label1;$|"_smiles, 
+      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles, 
+    };  
+
+    for (const auto& entry : mol_sptr_vect) {
+      MolToSmiles(*entry);
+    }
+
+    // Create the MOL_SPTR_VECT to hold the molecular pointers
+    std::string cxExt = SmilesWrite::getCXExtensions(mol_sptr_vect, RDKit::SmilesWrite::CXSmilesFields::CX_ALL);
+
+    CHECK(cxExt == "|(0,1.5,;1.5,1.5,;1.5,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,),$_R1;;;;;label2;;;;;;label1;;;star_e;;star_e$,Sg:n:15::ht:::|");
+  }
+
+  SECTION("Expects an error"){
+    const MOL_SPTR_VECT mol_sptr_vect = {
+      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles, 
+      "C1CCCCC1 |$;label2;$|"_smiles, 
+      "CC(=O)O |$;label1;$|"_smiles, 
+      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles, 
+    };  
+
+    CHECK_THROWS_AS(SmilesWrite::getCXExtensions(mol_sptr_vect, RDKit::SmilesWrite::CXSmilesFields::CX_ALL), ValueErrorException);
+  }
+}

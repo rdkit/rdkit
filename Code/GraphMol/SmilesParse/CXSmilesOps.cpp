@@ -2371,52 +2371,49 @@ void appendToCXExtension(const std::string &addition, std::string &base) {
 }
 
 }  // namespace
-// std::string getVECCXExtensions(const std::vector<std::shared_ptr<ROMol>>, std::uint32_t flags) {
-//   std::cout << "getCXExtensions" << std::endl;
 
-// }
-// std::string getCXExtensions(const MOL_SPTR_VECT &mols, std::uint32_t flags) { // TODO: New use boost::lsshared_ptr
+std::string getCXExtensions(const MOL_SPTR_VECT &mols, std::uint32_t flags) {
+    for (const auto& mol : mols) {
+      if (!mol->hasProp(RDKit::common_properties::_smilesAtomOutputOrder) ||
+          !mol->hasProp(RDKit::common_properties::_smilesBondOutputOrder)) {
+        throw ValueErrorException("Input molecule does not have the required "
+                                  "smiles ordering properties set");
+      }
+    }
+    RDKit::RWMol rwmol;
 
-//     // make an RWMol with all mols in all_templates combined with atomOutputOrder and bondOutputOrder updated
-//     RDKit::RWMol rwmol;
+    std::vector<unsigned int> atomOrdering;
+    std::vector<unsigned int> bondOrdering;
 
-//     int at_count = 0;
-//     int bond_count = 0;
-//     std::vector<unsigned int> prevAtomOrdering;
-//     std::vector<unsigned int> prevBondOrdering;
+    for (const auto& mol : mols) {
+      const auto at_count = rwmol.getNumAtoms();
+      const auto bond_count = rwmol.getNumBonds();
 
-//     for (const auto& mol : mols) {
-//       rwmol.insertMol(*mol);
+      std::vector<unsigned int> prevAtomOrdering;
+      std::vector<unsigned int> prevBondOrdering;
 
-//       // getting the smiles atom and bond output ordering
-//       std::vector<unsigned int> prevAtomOrdering;
-//       std::vector<unsigned int> prevBondOrdering;
-//       mol->getProp(RDKit::common_properties::_smilesAtomOutputOrder, prevAtomOrdering);
-//       mol->getProp(RDKit::common_properties::_smilesBondOutputOrder, prevBondOrdering);
-//       for (auto i : prevAtomOrdering) {
-//         atomOrdering.push_back(i + at_count);
-//       }
-//       for (auto i : prevBondOrdering) {
-//         bondOrdering.push_back(i + bnd_count);
-//       }
-//       at_count = rwmol.getNumAtoms();
-//       bnd_count = rwmol.getNumBonds();
-//     }
+      rwmol.insertMol(*mol);
 
-//     rwmol.setProp(RDKit::common_properties::_smilesAtomOutputOrder, atomOrdering, true); // TODO: Need to get since the SMILES atom order might not be the same as the index order for our RDKit molecule...
-//     rwmol.setProp(RDKit::common_properties::_smilesBondOutputOrder, bondOrdering, true);
+      mol->getProp(RDKit::common_properties::_smilesAtomOutputOrder, prevAtomOrdering);
+      mol->getProp(RDKit::common_properties::_smilesBondOutputOrder, prevBondOrdering);
+      for (auto i : prevAtomOrdering) {
+        atomOrdering.push_back(i + at_count);
+      }
+      for (auto i : prevBondOrdering) {
+        bondOrdering.push_back(i + bond_count);
+      }
+    }
 
-//     // call getCXExtensions
-//     return getCXExtensions(rwmol, flags);
-// }
+    rwmol.setProp(RDKit::common_properties::_smilesAtomOutputOrder, atomOrdering, true); 
+    rwmol.setProp(RDKit::common_properties::_smilesBondOutputOrder, bondOrdering, true);
+
+
+    // call getCXExtensions
+    return getCXExtensions(rwmol, flags);
+}
 
 std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
-  // TODO
-  // move logic from insertTemplates to here and combine all the mols in the input vector
-
   std::string res = "|";
-  // we will need atom and bond orderings. Get them now:
-  // TODO: we will need to update this to account for each molecule in the input vector
   const std::vector<unsigned int> &atomOrder =
       mol.getProp<std::vector<unsigned int>>(
           common_properties::_smilesAtomOutputOrder);

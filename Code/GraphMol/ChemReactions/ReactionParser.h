@@ -149,7 +149,6 @@ inline std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
   return ChemicalReactionToRxnSmiles(rxn, params);
 }
 
-// TODO: NEW Functions are defined below... for C++
 //! returns the reaction SMARTS for a reaction with CX extension
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnCXSmarts(const ChemicalReaction &rxn,
                                         const SmilesWriteParams &params);

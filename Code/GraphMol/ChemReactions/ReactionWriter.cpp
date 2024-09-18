@@ -91,22 +91,13 @@ std::string chemicalReactionTemplatesToString(
   return res;
 }
 
-/*
-* next step: figuring out how CX extensions work -- what properties do these extensions set? I have some examples in the description of the PR
-
-* printprops as dict...
-*
-*/
 void insertTemplates(const RDKit::ChemicalReaction &rxn,
                     RDKit::RWMol &rwmol, std::vector<unsigned int> &atomOrdering,
                     std::vector<unsigned int> &bondOrdering, RDKit::ReactionMoleculeType type) {
-  auto at_count = rwmol.getNumAtoms();
-  auto bnd_count = rwmol.getNumBonds();
-  std::vector<unsigned int> prevAtomOrdering;
-  std::vector<unsigned int> prevBondOrdering;
-
   for (auto begin = getStartIterator(rxn, type);
         begin != getEndIterator(rxn, type); ++begin) {
+    const auto at_count = rwmol.getNumAtoms();
+    const auto bnd_count = rwmol.getNumBonds();
     rwmol.insertMol(**begin);
 
     // getting the smiles atom and bond output ordering
@@ -120,66 +111,37 @@ void insertTemplates(const RDKit::ChemicalReaction &rxn,
     for (auto i : prevBondOrdering) {
       bondOrdering.push_back(i + bnd_count);
     }
-    at_count = rwmol.getNumAtoms();
-    bnd_count = rwmol.getNumBonds();
   }
 }
 
 std::string chemicalReactionToRxnToString(
     const RDKit::ChemicalReaction &rxn, bool toSmiles,
     const RDKit::SmilesWriteParams &params, bool includeCX) {
-  std::cout << "here1\n";
   std::string res = "";
   res +=
       chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles, params);
-  std::cout << "here2\n";
   res += ">";
   res += chemicalReactionTemplatesToString(rxn, RDKit::Agent, toSmiles, params);
-  std::cout << "here3\n";
   res += ">";
   res +=
       chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles, params);
-  std::cout << "here4\n";
 
-  std::cout << "in here\n";
-  std::cout << "includeCX: " << params.includeCX << std::endl;
 
 
   if (includeCX) {
-    // I think this will work? combine reactants, agents and products into a
-    // single molecule and get the cxextension for that
-    // blank rwmol
     RDKit::RWMol rwmol;
     std::vector<unsigned int> atomOrdering;
     std::vector<unsigned int> bondOrdering;
 
-    // TODO
-    /*
-     * what I'm doing right now is making a 'super molecule' out of all the reactants, agents
-     * and products, and getting the total atom & bond ordering, then using that to get the extension
-     * and add that to the reaction cxsmarts
-     * 
-     * what we want to do instead is send a vector of all the reactants, agents & products to getCXExtensions
-     * and have that return the CX extension directly 
-     *
-    */
     insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Reactant);
     insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Agent);
     insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Product);
 
-    rwmol.setProp(RDKit::common_properties::_smilesAtomOutputOrder, atomOrdering, true); // TODO: Need to get since the SMILES atom order might not be the same as the index order for our RDKit molecule...
-    rwmol.setProp(RDKit::common_properties::_smilesBondOutputOrder, bondOrdering, true); // in python can get _smilesAtomOutputOrder property and see how it works...
-
-    // ignore atom properties -- really this is to avoid the atom map numbers, maybe we just want to remove
-    // those
-
-    // make vector of all reactants, agents and product
-    // MOL_SPTR_VECT all_templates; 
-
-    // insert reactants, agents, and products into all_templates
+    rwmol.setProp(RDKit::common_properties::_smilesAtomOutputOrder, atomOrdering, true); 
+    rwmol.setProp(RDKit::common_properties::_smilesBondOutputOrder, bondOrdering, true); 
 
     auto flags = RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS ^ RDKit::SmilesWrite::CXSmilesFields::CX_ALL;
-    auto ext = RDKit::SmilesWrite::getCXExtensions(rwmol, flags); // this should take vect<ROMol> of reactants, agents, and products
+    auto ext = RDKit::SmilesWrite::getCXExtensions(rwmol, flags); 
     if (!ext.empty()) {
       res += " ";
       res += ext;
@@ -220,7 +182,6 @@ std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
 //! returns the reaction SMARTS for a reaction with CX extension
 std::string ChemicalReactionToRxnCXSmarts(const ChemicalReaction &rxn,
                                         const SmilesWriteParams &params) {
-  std::cout << "before calling\n";
   return chemicalReactionToRxnToString(rxn, false, params, true);
 };
 
