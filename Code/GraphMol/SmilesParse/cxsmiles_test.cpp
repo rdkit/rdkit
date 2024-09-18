@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
@@ -673,7 +674,7 @@ class SmilesTest {
       : fileName(fileNameInit),
         expectedResult(expectedResultInit),
         atomCount(atomCountInit),
-        bondCount(bondCountInit){};
+        bondCount(bondCountInit) {};
 
   bool isRxnTest() const { return false; }
 };
@@ -1509,5 +1510,25 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     REQUIRE(m);
     auto smi = MolToCXSmarts(*m);
     CHECK(smi == "[#7H3]-[Fe]-[#7H3] |C:0.0,2.1|");
+  }
+}
+
+TEST_CASE(
+    "Github #7725: double bond geometry not perceived even though c: or t: are in CXSMILES") {
+  SECTION("as reported") {
+    auto m = "C/C=C/C1=CC=CC=C1 |c:5,7,t:3|"_smiles;
+    REQUIRE(m);
+    CHECK((m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(1)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+  }
+  SECTION("include actual double bond stereo in a ring") {
+    auto m = "C/C=C/C1CCCC=CCCCCC1 |t:7|"_smiles;
+    CHECK((m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(1)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    CHECK((m->getBondWithIdx(7)->getStereo() == Bond::STEREOTRANS ||
+           m->getBondWithIdx(7)->getStereo() == Bond::STEREOE));
+    CHECK(m->getBondWithIdx(7)->getStereoAtoms() == std::vector<int>{6, 9});
   }
 }

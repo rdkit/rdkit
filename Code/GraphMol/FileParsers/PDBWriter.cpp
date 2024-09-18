@@ -38,13 +38,18 @@
 // flavor & 32 : Write TER record
 
 namespace RDKit {
+
+// Get the next atom number of an element, formatted as a 2-letter string.
+std::string GetDefaultAtomNumber(const Atom* atom,
+        std::map<unsigned int, unsigned int> &elem);
+
 std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
                            std::map<unsigned int, unsigned int> &elem) {
   PRECONDITION(atom, "bad atom");
   std::stringstream ss;
 
   std::string symb = atom->getSymbol();
-  char at1, at2, at3, at4;
+  char at1, at2;
   switch (symb.length()) {
     case 0:
       at1 = ' ';
@@ -68,13 +73,19 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
     ss << (info->getIsHeteroAtom() ? "HETATM" : "ATOM  ");
     ss << std::setw(5) << atom->getIdx() + 1;
     ss << ' ';
-    ss << info->getName();  // Always 4 characters?
+    const std::string& name = info->getName();
+    if (name.empty()) {
+      std::string atnum = GetDefaultAtomNumber(atom, elem);
+      ss << at1 << at2 << atnum;
+    } else {
+      ss << std::setw(4) << name.substr(0, 4);
+    }
     const char *ptr = info->getAltLoc().c_str();
     if (*ptr == '\0') {
       ptr = " ";
     }
     ss << *ptr;
-    ss << info->getResidueName();  // Always 3 characters?
+    ss << std::setw(3) << info->getResidueName().substr(0, 3);
     ss << ' ';
     ptr = info->getChainId().c_str();
     if (*ptr == '\0') {
@@ -90,36 +101,11 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
     ss << "   ";
   } else {
     info = (AtomPDBResidueInfo *)nullptr;
-    unsigned int atno = atom->getAtomicNum();
-    if (elem.find(atno) == elem.end()) {
-      elem[atno] = 1;
-      at3 = '1';
-      at4 = ' ';
-    } else {
-      unsigned int tmp = elem[atno] + 1;
-      elem[atno] = tmp;
-      if (tmp < 10) {
-        at3 = tmp + '0';
-        at4 = ' ';
-      } else if (tmp < 100) {
-        at3 = (tmp / 10) + '0';
-        at4 = (tmp % 10) + '0';
-      } else if (tmp < 360) {
-        at3 = ((tmp - 100) / 10) + 'A';
-        at4 = ((tmp - 100) % 10) + '0';
-      } else if (tmp < 1036) {
-        at3 = ((tmp - 360) / 26) + 'A';
-        at4 = ((tmp - 360) % 26) + 'A';
-      } else {
-        at3 = ' ';
-        at4 = ' ';
-      }
-    }
-
+    std::string atnum = GetDefaultAtomNumber(atom, elem);
     ss << "HETATM";
     ss << std::setw(5) << atom->getIdx() + 1;
     ss << ' ';
-    ss << at1 << at2 << at3 << at4;
+    ss << at1 << at2 << atnum;
     ss << " UNL     1    ";
   }
 
@@ -151,6 +137,31 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
     ss << "  ";
   }
   return ss.str();
+}
+
+std::string GetDefaultAtomNumber(const Atom* atom, std::map<unsigned int, unsigned int> &elem) {
+  std::string ret = "  ";
+  unsigned int atno = atom->getAtomicNum();
+  if (elem.find(atno) == elem.end()) {
+    elem[atno] = 1;
+    ret[0] = '1';
+  } else {
+    unsigned int tmp = elem[atno] + 1;
+    elem[atno] = tmp;
+    if (tmp < 10) {
+      ret[0] = tmp + '0';
+    } else if (tmp < 100) {
+      ret[0] = (tmp / 10) + '0';
+      ret[1] = (tmp % 10) + '0';
+    } else if (tmp < 360) {
+      ret[0] = ((tmp - 100) / 10) + 'A';
+      ret[1] = ((tmp - 100) % 10) + '0';
+    } else if (tmp < 1036) {
+      ret[0] = ((tmp - 360) / 26) + 'A';
+      ret[1] = ((tmp - 360) % 26) + 'A';
+    }
+  }
+  return ret;
 }
 
 std::string GetPDBBondLines(const Atom *atom, bool all, bool both, bool mult,

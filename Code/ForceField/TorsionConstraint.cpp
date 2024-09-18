@@ -1,8 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2024 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,19 +7,23 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include "ForceField.h"
 #include "TorsionConstraint.h"
-#include "Params.h"
-#include <cmath>
-
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/math/special_functions/round.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-
-#include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 
+#include <boost/math/special_functions/round.hpp>
+
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 namespace ForceFields {
-namespace UFF {
+constexpr double RAD2DEG = 180.0 / M_PI;
+
 inline void checkPrecondition(const ForceField *owner, unsigned int idx1,
                               unsigned int idx2, unsigned int idx3,
                               unsigned int idx4, double minDihedralDeg,
@@ -154,5 +155,4 @@ void TorsionConstraintContrib::getGrad(double *pos, double *grad) const {
     g[i][2] += dedp[i].z;
   }
 }
-}  // namespace UFF
 }  // namespace ForceFields

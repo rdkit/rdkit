@@ -100,8 +100,8 @@ class _GetBondsIterator(_GetRDKitObjIterator):
     return self._mol.GetBondWithIdx(i)
 
 
-rdchem.Mol.GetAtoms = lambda m: _GetAtomsIterator(m)
-rdchem.Mol.GetBonds = lambda m: _GetBondsIterator(m)
+rdchem.Mol.GetAtoms = lambda self: _GetAtomsIterator(self)
+rdchem.Mol.GetBonds = lambda self: _GetBondsIterator(self)
 
 
 def QuickSmartsMatch(smi, sma, unique=True, display=False):

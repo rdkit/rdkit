@@ -260,6 +260,25 @@ TEST_CASE("match template with added rings") {
   CHECK(rmsd < 0.2);
 }
 
+TEST_CASE("templates are aware of E/Z stereochemistry") {
+  // this is a molecule we have a template for
+  auto mol1 =
+      "CCC1C2=N[C@@](C)(C3N/C(=C(/C)C4=N/C(=C\\C5=N/C(=C\\2C)[C@@](C)(CC(N)=O)C5CCC(N)=O)C(C)(C)C4CCC(N)=O)[C@](C)(CCC(=O)NC)C3C)C1(C)C"_smiles;
+  // and this is the same molecule with different stereochemistry on double
+  // bonds
+  auto mol2 =
+      "CCC1C2=N[C@@](C)(C3N/C(=C(\\C)C4=N/C(=C/C5=N/C(=C/2C)[C@@](C)(CC(N)=O)C5CCC(N)=O)C(C)(C)C4CCC(N)=O)[C@](C)(CCC(=O)NC)C3C)C1(C)C"_smiles;
+
+  // generate coordinates for the two molecules, they should be different
+  // because only the first one matches the template
+  RDDepict::Compute2DCoordParameters params;
+  params.useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol1, params);
+  RDDepict::compute2DCoords(*mol2, params);
+  auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
+  CHECK(rmsd > 1.);
+}
+
 TEST_CASE("dative bonds and rings") {
   auto mol = "O->[Pt]1(<-O)<-NC2CCC2N->1"_smiles;
   REQUIRE(mol);

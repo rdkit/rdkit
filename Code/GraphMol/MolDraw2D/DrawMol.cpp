@@ -171,14 +171,6 @@ void DrawMol::finishCreateDrawObjects() {
 // ****************************************************************************
 void DrawMol::initDrawMolecule(const ROMol &mol) {
   drawMol_.reset(new RWMol(mol));
-  if (!isReactionMol_) {
-    if (drawOptions_.prepareMolsBeforeDrawing) {
-      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
-    } else if (!mol.getNumConformers()) {
-      const bool canonOrient = true;
-      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
-    }
-  }
   if (drawOptions_.centreMoleculesBeforeDrawing) {
     if (drawMol_->getNumConformers()) {
       centerMolForDrawing(*drawMol_, confId_);
@@ -189,6 +181,14 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
   }
   if (drawOptions_.useMolBlockWedging) {
     Chirality::reapplyMolBlockWedging(*drawMol_);
+  }
+  if (!isReactionMol_) {
+    if (drawOptions_.prepareMolsBeforeDrawing) {
+      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
+    } else if (!mol.getNumConformers()) {
+      const bool canonOrient = true;
+      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
+    }
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
@@ -220,7 +220,9 @@ void DrawMol::extractAll(double scale) {
   extractHighlights(scale);
   extractAttachments();
   extractAtomNotes();
-  extractStereoGroups();
+  if (!drawOptions_.addStereoAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -1373,6 +1375,10 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     }
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
+    std::string mapNum;
+    if (atom.getPropIfPresent("molAtomMapNumber", mapNum)) {
+      symbol += ":" + mapNum;
+    }
   } else if (drawOptions_.atomLabelDeuteriumTritium &&
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
@@ -1382,10 +1388,9 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     std::vector<std::string> preText, postText;
 
     // first thing after the symbol is the atom map
-    if (atom.hasProp("molAtomMapNumber")) {
-      std::string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
+    std::string mapNum;
+    if (atom.getPropIfPresent("molAtomMapNumber", mapNum)) {
+      postText.push_back(std::string(":") + mapNum);
     }
 
     if (0 != atom.getFormalCharge()) {
@@ -3226,9 +3231,23 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
-    Point2D const &at1_cds = atCds_[atom->getIdx()];
-    Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
-    otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+    auto bond =
+        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
+    // Don't do anything if the wedge is to a triple bond.  It gets
+    // really messed up especially if the two bonds aren't exactly
+    // co-linear which happens sometimes in a cluttered layout (Github 7620).
+    if (bond->getBondType() != Bond::BondType::TRIPLE) {
+      // If it's a double bond that straddles the atom-atom vector it also looks
+      // odd or completely wrong, depending on the rest of the molecule
+      // (Github 7739).
+      if (bond->getBondType() == Bond::BondType::DOUBLE &&
+          atom->getDegree() > 2 && thirdAtom->getDegree() == 1) {
+        continue;
+      }
+      Point2D const &at1_cds = atCds_[atom->getIdx()];
+      Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
+      otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+    }
   }
 }
 
@@ -3243,7 +3262,12 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           otherNeighbor(bond->getEndAtom(), bond->getBeginAtom(), 0, *drawMol_);
       auto bond1 = drawMol_->getBondBetweenAtoms(bond->getEndAtomIdx(),
                                                  thirdAtom->getIdx());
-      // If the bonds a co-linear, don't do anything (Github7036)
+      // Don't do anything if it's a triple bond.  Moving the central
+      // line to the wedge corner is clearly wrong.
+      if (bond1->getBondType() == Bond::BondType::TRIPLE) {
+        continue;
+      }
+      // If the bonds are co-linear, don't do anything (Github7036)
       auto b1 = atCds_[bond->getEndAtomIdx()].directionVector(
           atCds_[bond->getBeginAtomIdx()]);
       auto b2 = atCds_[bond1->getEndAtomIdx()].directionVector(
@@ -3492,11 +3516,11 @@ DrawColour DrawMol::getColour(int atom_idx) const {
   PRECONDITION(rdcast<int>(atomicNums_.size()) > atom_idx, "bad atom_idx");
 
   DrawColour retval = getColourByAtomicNum(atomicNums_[atom_idx], drawOptions_);
-  bool highlightedAtom = false;
+  bool highlightedAtom =
+      highlightAtoms_.end() !=
+      find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx);
   if (!drawOptions_.circleAtoms && !drawOptions_.continuousHighlight) {
-    if (highlightAtoms_.end() !=
-        find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx)) {
-      highlightedAtom = true;
+    if (highlightedAtom) {
       retval = drawOptions_.highlightColour;
     }
     // over-ride with explicit colour from highlightMap if there is one
@@ -3536,6 +3560,19 @@ DrawColour DrawMol::getColour(int atom_idx) const {
       }
       if (numBonds == numHighBonds && highCol) {
         retval = *highCol;
+      }
+    }
+  } else {
+    // There's going to be a colour behind the atom, so if the
+    // atom has a symbol, it should be the same colour as carbon.  This
+    // function should only be called if there is an atom symbol.
+    if (highlightedAtom) {
+      if (auto it = drawOptions_.atomColourPalette.find(6);
+          it != drawOptions_.atomColourPalette.end()) {
+        retval = it->second;
+      } else {
+        // Use the default if no carbon.
+        retval = drawOptions_.atomColourPalette.at(-1);
       }
     }
   }

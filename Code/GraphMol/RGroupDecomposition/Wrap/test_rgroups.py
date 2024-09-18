@@ -32,6 +32,8 @@
 
 import unittest
 from collections import OrderedDict
+import json
+import itertools
 
 # the RGD code can generate a lot of warnings. disable them
 from rdkit import Chem, RDLogger, rdBase
@@ -847,6 +849,91 @@ M  END
     for rgroup in rgroups:
       self.assertEqual(Chem.MolToSmiles(Chem.molzip(rgroup)),
                        Chem.CanonSmiles("C1NNO1"))
+
+  def testIncludeTargetMolInResults(self):
+    core = Chem.MolFromSmiles("c1cc(-c2c([*:1])nn3nc([*:2])ccc23)nc(N(c2ccc([*:4])c([*:3])c2))n1")
+    self.assertIsNotNone(core)
+    mols = [Chem.MolFromSmiles(smi) for smi in [
+      "Cc1ccc2c(c3ccnc(Nc4cccc(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccc(F)cc5",
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccc(F)cc6",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5",
+      "C1CC1c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4",
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CC5)cc1F",
+      "C1CCC(CC1)c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4",
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CCCCC5)cc1F",
+      "COCCOc1cnn2ncc(c3ccnc(Nc4cccc(OC)c4)n3)c2c1",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccccc5",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccccc5",
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccccc6",
+      "Cc1ccc2c(c3ccnc(Nc4ccccc4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5cccc(c5)C(F)(F)F",
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6cccc(c6)C(F)(F)F",
+    ]]
+    self.assertTrue(all(mols))
+    ps = RGroupDecompositionParameters()
+    ps.includeTargetMolInResults = True
+    rgd = RGroupDecomposition(core, ps)
+    for mol in mols:
+      self.assertNotEqual(rgd.Add(mol), -1)
+    self.assertTrue(rgd.Process())
+    def checkRow(row):
+      targetMol = None
+      # These are sets of int tuples rather just plain int tuples
+      # because there can be cyclic R groups with 2 attachment points
+      # in that case it is OK for 2 R groups to have exactly the same
+      # target atom and bond indices
+      allAtomIndices = set()
+      allBondIndices = set()
+      for rlabel, rgroup in row.items():
+        if rlabel == "Mol":
+          targetMol = rgroup
+        else:
+          numNonRAtoms = len([atom for atom in rgroup.GetAtoms() if atom.GetAtomicNum() > 0 or not atom.GetAtomMapNum()])
+          self.assertGreater(rgroup.GetNumAtoms(), numNonRAtoms)
+          numBonds = 0
+          if rlabel == "Core":
+            numBonds = len([bond for bond in rgroup.GetBonds() if (
+              bond.GetBeginAtom().GetAtomicNum() > 0 or not bond.GetBeginAtom().GetAtomMapNum()
+            ) and (
+              bond.GetEndAtom().GetAtomicNum() > 0 or not bond.GetEndAtom().GetAtomMapNum()
+            )])
+          else:
+            numBonds = rgroup.GetNumBonds()
+          self.assertTrue(rgroup.HasProp("_rgroupTargetAtoms"))
+          atomIndices = tuple(json.loads(rgroup.GetProp("_rgroupTargetAtoms")))
+          self.assertTrue(rgroup.HasProp("_rgroupTargetBonds"))
+          bondIndices = tuple(json.loads(rgroup.GetProp("_rgroupTargetBonds")))
+          self.assertEqual(len(atomIndices), numNonRAtoms)
+          allAtomIndices.add(atomIndices)
+          self.assertEqual(len(bondIndices), numBonds)
+          allBondIndices.add(bondIndices)
+      self.assertIsNotNone(targetMol)
+      flattenedAtomIndices = list(itertools.chain.from_iterable(allAtomIndices))
+      uniqueAtomIndices = set(flattenedAtomIndices)
+      self.assertEqual(len(flattenedAtomIndices), len(uniqueAtomIndices))
+      self.assertEqual(len(flattenedAtomIndices), targetMol.GetNumAtoms())
+      flattenedBondIndices = list(itertools.chain.from_iterable(allBondIndices))
+      uniqueBondIndices = set(flattenedBondIndices)
+      self.assertEqual(len(flattenedBondIndices), len(uniqueBondIndices))
+      self.assertEqual(len(flattenedBondIndices), targetMol.GetNumBonds())
+    rows = rgd.GetRGroupsAsRows()
+    self.assertEqual(len(rows), len(mols))
+    for row in rows:
+      checkRow(row)
+    cols = rgd.GetRGroupsAsColumns()
+    rows = []
+    for i in range(len(mols)):
+      row = {}
+      for rlabel, rgroups in cols.items():
+        self.assertEqual(len(rgroups), len(mols))
+        row[rlabel] = rgroups[i]
+      rows.append(row)
+    self.assertEqual(len(rows), len(mols))
+    for row in rows:
+      checkRow(row)
+
 
 if __name__ == '__main__':
   rdBase.DisableLog("rdApp.debug")

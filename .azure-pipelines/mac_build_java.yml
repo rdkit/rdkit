@@ -21,7 +21,7 @@ steps:
         libcxx=$(compiler_version) cmake=3.26 \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        cairo eigen swig=4.1
+        cairo eigen swig=4.2
     conda activate rdkit_build
   displayName: Setup build environment
 - bash: |

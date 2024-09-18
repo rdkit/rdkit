@@ -1,5 +1,5 @@
 //
-// Copyright (C)  2004-2021 Greg Landrum and other RDKit contributors
+// Copyright (C)  2004-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,8 +21,8 @@
 #include <ForceField/UFF/AngleBend.h>
 #include <ForceField/UFF/Nonbonded.h>
 #include <ForceField/UFF/TorsionAngle.h>
-#include <ForceField/UFF/DistanceConstraint.h>
-#include <ForceField/UFF/AngleConstraint.h>
+#include <ForceField/DistanceConstraints.h>
+#include <ForceField/AngleConstraints.h>
 #include <ForceField/UFF/TorsionConstraint.h>
 #include <ForceField/UFF/PositionConstraint.h>
 
@@ -1269,14 +1269,13 @@ void testUFFDistanceConstraints() {
   ff.initialize();
 
   // C_3 - C_3, r0=1.514, k01=699.5918
-  ForceFields::ForceFieldContrib *bs;
-  bs = new ForceFields::UFF::DistanceConstraintContrib(&ff, 0, 1, 1.35, 1.55,
-                                                       1000.0);
-  ff.contribs().push_back(ForceFields::ContribPtr(bs));
+  auto distContribs = new ForceFields::DistanceConstraintContribs(&ff);
+  distContribs->addContrib(0, 1, 1.35, 1.55, 1000.0);
+  ff.contribs().emplace_back(distContribs);
   double E;
-  E = bs->getEnergy(p);
+  E = distContribs->getEnergy(p);
   TEST_ASSERT(RDKit::feq(E, 0.0));
-  bs->getGrad(p, g);
+  distContribs->getGrad(p, g);
   for (int i = 0; i < 6; i++) {
     TEST_ASSERT(RDKit::feq(g[i], 0.0));
   }
@@ -1284,9 +1283,9 @@ void testUFFDistanceConstraints() {
   ff.initialize();
   (*ff.positions()[1])[0] = 1.20;
   p[3] = 1.20;
-  E = bs->getEnergy(p);
+  E = distContribs->getEnergy(p);
   TEST_ASSERT(RDKit::feq(E, 11.25));
-  bs->getGrad(p, g);
+  distContribs->getGrad(p, g);
   TEST_ASSERT(RDKit::feq(g[0], 150.0));
   TEST_ASSERT(RDKit::feq(g[3], -150.0));
   TEST_ASSERT(RDKit::feq(g[1], 0.0));
@@ -1366,63 +1365,53 @@ void testUFFAllConstraints() {
   ForceFields::ForceField *field;
 
   // distance constraints
-  ForceFields::UFF::DistanceConstraintContrib *dc;
+  ForceFields::DistanceConstraintContribs *dc;
   mol = RDKit::MolBlockToMol(molBlock, true, false);
   TEST_ASSERT(mol);
   MolTransforms::setBondLength(mol->getConformer(), 1, 3, 2.0);
   field = RDKit::UFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0, 2.0,
-                                                       1.0e5);
-  field->contribs().push_back(ForceFields::ContribPtr(dc));
+  dc = new ForceFields::DistanceConstraintContribs(field);
+  dc->addContrib(1, 3, 2.0, 2.0, 1.0e5);
+  field->contribs().emplace_back(dc);
   field->minimize();
   TEST_ASSERT(RDKit::feq(
       MolTransforms::getBondLength(mol->getConformer(), 1, 3), 2.0, 0.1));
   delete field;
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
-  dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, true, -0.2,
-                                                       0.2, 1.0e5);
-  field->contribs().push_back(ForceFields::ContribPtr(dc));
+  dc = new ForceFields::DistanceConstraintContribs(field);
+  dc->addContrib(1, 3, true, -0.2, 0.2, 1.0e5);
+  field->contribs().emplace_back(dc);
   field->minimize();
   TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.79);
   delete field;
   delete mol;
 
   // angle constraints
-  ForceFields::UFF::AngleConstraintContrib *ac;
+  ForceFields::AngleConstraintContribs *ac;
   mol = RDKit::MolBlockToMol(molBlock, true, false);
   TEST_ASSERT(mol);
   MolTransforms::setAngleDeg(mol->getConformer(), 1, 3, 6, 90.0);
   field = RDKit::UFF::constructForceField(*mol);
   TEST_ASSERT(field);
   field->initialize();
-  ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, 90.0, 90.0,
-                                                    100.0);
-  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  ac = new ForceFields::AngleConstraintContribs(field);
+  ac->addContrib(1, 3, 6, 90.0, 90.0, 100.0);
+  field->contribs().emplace_back(ac);
   field->minimize();
   TEST_ASSERT(RDKit::feq(
       MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 90.0, 0.5));
   delete field;
   field = RDKit::UFF::constructForceField(*mol);
   field->initialize();
-  ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, true, -10.0,
-                                                    10.0, 100.0);
-  field->contribs().push_back(ForceFields::ContribPtr(ac));
+  ac = new ForceFields::AngleConstraintContribs(field);
+  ac->addContrib(1, 3, 6, true, -10.0, 10.0, 100.0);
+  field->contribs().emplace_back(ac);
   field->minimize();
   TEST_ASSERT(RDKit::feq(
       MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 100.0, 0.5));
-  delete field;
-  MolTransforms::setAngleDeg(mol->getConformer(), 1, 3, 6, 0.0);
-  field = RDKit::UFF::constructForceField(*mol);
-  field->initialize();
-  ac = new ForceFields::UFF::AngleConstraintContrib(field, 1, 3, 6, false,
-                                                    -10.0, 10.0, 100.0);
-  field->contribs().push_back(ForceFields::ContribPtr(ac));
-  field->minimize();
-  TEST_ASSERT(RDKit::feq(
-      MolTransforms::getAngleDeg(mol->getConformer(), 1, 3, 6), 10.0, 0.5));
   delete field;
   delete mol;
 
@@ -1551,9 +1540,9 @@ void testUFFCopy() {
     ForceFields::ForceField *field = RDKit::UFF::constructForceField(*mol);
     TEST_ASSERT(field);
     field->initialize();
-    auto *dc = new ForceFields::UFF::DistanceConstraintContrib(field, 1, 3, 2.0,
-                                                               2.0, 1.0e5);
-    field->contribs().push_back(ForceFields::ContribPtr(dc));
+    auto dc = new ForceFields::DistanceConstraintContribs(field);
+    dc->addContrib(1, 3, 2.0, 2.0, 1.0e5);
+    field->contribs().emplace_back(dc);
     field->minimize();
     TEST_ASSERT(MolTransforms::getBondLength(mol->getConformer(), 1, 3) > 1.99);
 

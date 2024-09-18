@@ -27,7 +27,7 @@ def generateAll():
     r = get3D(m, True)
     print(r)
   end = time.time()
-  print end - start
+  print(end - start)
 
 
 def simple_case():
@@ -35,9 +35,9 @@ def simple_case():
   smi = 'CCC(C)COCCCC'
   m = Chem.MolFromSmiles(smi)
   T = get3D(m, False)
-  print T
+  print(T)
   end = time.time()
-  print end - start
+  print(end - start)
 
 
 if (__name__ == '__main__'):
@@ -49,6 +49,6 @@ if (__name__ == '__main__'):
   smi = 'CCC(C)COCCCC'
   m = Chem.MolFromSmiles(smi)
   T = get3D(m, False)
-  print T
+  print(T)
   end = time.time()
-  print end - start
+  print(end - start)
