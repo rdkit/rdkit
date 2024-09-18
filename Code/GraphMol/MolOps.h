@@ -541,8 +541,12 @@ typedef enum {
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
   AROMATICITY_MDL = 0x4,
+  AROMATICITY_MMFF94 = 0x8,
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
 } AromaticityModel;
+
+
+RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 
 //! Sets up the aromaticity for a molecule
 /*!
