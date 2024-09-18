@@ -322,8 +322,6 @@ struct filtercat_wrapper {
         .def_readwrite("target", &std::pair<int, int>::second)
         .def("__getitem__", &GetMatchVectItem, python::args("self", "idx"));
 
-    RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
-
     python::class_<FilterMatch, boost::shared_ptr<FilterMatch>>(
         "FilterMatch", FilterMatchDoc,
         python::init<boost::shared_ptr<FilterMatcherBase>, MatchVectType>(
