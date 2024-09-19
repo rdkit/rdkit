@@ -78,7 +78,11 @@ struct PyLogStream : std::ostream, std::streambuf {
   }
 
   ~PyLogStream() {
+#if PY_VERSION_HEX < 0x30d0000
     if (!_Py_IsFinalizing()) {
+#else
+    if (!Py_IsFinalizing()) {
+#endif
       Py_XDECREF(logfn);
     }
   }
