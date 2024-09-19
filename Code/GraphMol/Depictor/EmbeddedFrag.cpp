@@ -453,7 +453,7 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
       continue;
     }
     // also check if the mol atoms have the same connectivity as the template
-    auto degreeCounts = [](const RDKit::ROMol &mol) {
+    auto degreeCounts = [DUMMY_ATOMIC_NUM](const RDKit::ROMol &mol) {
       std::array<int, 4> degrees_count({0, 0, 0, 0});
       for (auto atom : mol.atoms()) {
         if (atom->getAtomicNum() == DUMMY_ATOMIC_NUM) {
