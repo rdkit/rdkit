@@ -52,7 +52,7 @@ const std::vector<std::string> supportedCompressionFormats{"gz"};
 //! returns true on success, otherwise false
 //! Note: Error handeling is done in the getSupplier method
 
-void determineFormat(const std::string path, std::string &fileFormat,
+inline void determineFormat(const std::string path, std::string &fileFormat,
                      std::string &compressionFormat) {
   //! filename without compression format
   std::string basename;
@@ -96,7 +96,7 @@ void determineFormat(const std::string path, std::string &fileFormat,
       - the caller owns the memory and therefore the pointer must be deleted
 */
 
-std::unique_ptr<FileParsers::MolSupplier> getSupplier(
+inline std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     const std::string &path, const struct SupplierOptions &opt) {
   std::string fileFormat = "";
   std::string compressionFormat = "";
@@ -113,6 +113,20 @@ std::unique_ptr<FileParsers::MolSupplier> getSupplier(
     throw BadFileException(
         "compressed files are only supported if the RDKit is built with boost::iostreams support");
 #endif
+  }
+
+  if ((!(*strm)) || strm->bad()) {
+    std::ostringstream errout;
+    errout << "Bad input file " << path;
+    delete strm;
+    throw BadFileException(errout.str());
+  }
+  strm->peek();
+  if (strm->bad() || strm->eof()) {
+    std::ostringstream errout;
+    errout << "Invalid input file " << path;
+    delete strm;
+    throw BadFileException(errout.str());
   }
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
