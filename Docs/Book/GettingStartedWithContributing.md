@@ -6,7 +6,7 @@ We are really happy to have new contributors help make the RDKit better. This do
 
 ### If You Are Not a Developer
 
-You don't need to be a developer to be able to make really helpful contributions to the RDKit. Some of these activities are also a good place to start for beginners who want to make code contributions to get a feel for how the toolkit is structured.
+You don't need to be a developer to be able to make really helpful contributions to the RDKit. Some of these activities are also a good place to start for beginners who want to eventually make code contributions to get a feel for how the toolkit is structured.
 
 Some things you can do that don't involve serious coding:
 
@@ -32,17 +32,17 @@ RDKit makes use of both the Issues and Discussions functionality on GitHub.
 
 #### Discussions
 
-The [Discussions tab](https://github.com/rdkit/rdkit/discussions) is used to ask questions about the RDKit, and for help if you cannot find the functionality you need or for debugging errors in your code. If you aren't sure if what you're seeing is the right behavior we would recommend posting this as a discussion first (unless you are 100% certain it is a genuine bug) instead of posting it as an issue. More often than not the unexpected behaviour is an issue from your side - "guilty until proven innocent"!
+The [Discussions tab](https://github.com/rdkit/rdkit/discussions) is used to ask questions about the RDKit and for help if you cannot find the functionality you need, or for debugging errors in your code. If you aren't sure if what you're seeing is the right behavior we would recommend posting this as a discussion first (unless you are 100% certain it is a genuine bug) instead of posting it as an issue. More often than not the unexpected behaviour is an issue from your side - "guilty until proven innocent"!
 
-If you have a suggestion for a new RDKit feature or enhancement starting a discussion first before creating a pull request is a useful exercise. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do in the RDKit.
+If you have a suggestion for a new RDKit feature or enhancement starting a discussion first before creating a pull request is a useful exercise. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do.
 
 #### Issues
 
-The [Issues tab](https://github.com/rdkit/rdkit/issues) is used to report undesirable behaviour, either due to a bug in the code (tag as **bug**) or due to implementation choice (tag as **enhancement**). Small, self-contained suggestions are tagged as **good for beginners** and suggestions for future UGMs are tagged **Hackathon Idea**, both of which are a good place to start if you are looking for ideas. 
+The [Issues tab](https://github.com/rdkit/rdkit/issues) is used to report undesirable behaviour, either due to a bug in the code (tag as **bug**) or implementation choice, or to suggest new features (tag both as **enhancement**). Small, self-contained suggestions are tagged as **good for beginners** and suggestions for future UGMs are tagged **Hackathon Idea**, both of which are a good place to start if you are looking for ideas. 
 
 *A Note on Bug Reports*
 
-As mentioned above, if you encounter unexpected behaviour that you are reasonably convinced is a **bug**, it can also be reported via the issues tab. If the "bug" you have observed happens only for a specific example, we would recommend first checking your inputs using the following code snippet. The `Chem.DetectChemistryProblem(mol)` function provides a good test for whether your observed behaviour is a true bug, or just input that RDKit doesn't like (mol.Debug() is also useful for this purpose):
+As mentioned above, if you encounter unexpected behaviour that you are reasonably convinced is a **bug**, it can be reported via the issues tab. If the "bug" you have observed happens only for a specific example, we would recommend first checking your inputs using the following code snippet. The `Chem.DetectChemistryProblem(mol)` function provides a good test for whether your observed behaviour is a true bug, or just input that RDKit doesn't like (`mol.Debug()` is also useful for this purpose):
 
 ```
 m = Chem.MolFromSmiles('c1nccc1O(C)C',sanitize=False)
@@ -109,7 +109,7 @@ Submitting new features and or bug fixes is certainly nice. For ideas on where t
 
 Code contributions can be made as follows:
 - Core C++ functionality + relevant wrappers
-- Core Python functionality and scripts (note C++ is preferred for functionality, with the exception of Python-specific tools e.g. PandasTools)
+- Core Python functionality and scripts (note C++ is preferred for functionality, with the exception of Python-specific modules e.g. PandasTools)
 - JavaScript
 - Java
 - KNIME nodes
@@ -140,7 +140,7 @@ OUTPUT: [contributing_docs 08780075f] update what and how section
 
 **Step 4:** Add tests for your new functionality and run all tests locally to check you've not broken anything else (see below for how to do this)!
 
-**Step 5:** Push your bug fix or new feature to your local repository
+**Step 5:** Push your bug fix or new feature to your remote repository
 `git push`
 
 **Step 6:** Create a pull request to the [RDKit repo](https://github.com/rdkit/rdkit.git) filling in the requested information.
@@ -186,18 +186,21 @@ Documentation contributions are a great place to begin with making RDKit contrib
       - [Is life worth living?](https://iwatobipen.wordpress.com/)
       - [Mac in Chem](https://macinchem.org/?s=rdkit)
       - [Cheminformania](https://www.cheminformania.com/?s=rdkit)
-  - From UGM talks (links to the relevant repositories can be found in the GitHub README.md)
+  - From UGM talks (the relevant repositories can be found on the main GitHub page)
   - To this guide if instructions need updated!
 
 ### A Whistle Stop Tour of the RDKit Documentation
 
-RDKit documentation: https://www.rdkit.org/docs/index.html
+The RDKit documentation consists of several different sections. Here we'll give an overview of how each of these is generated, and what contributions should go where. 
 
-RDKit Cookbook: https://www.rdkit.org/docs/Cookbook.html
+An index of the RDKit documentation can be found [here](https://www.rdkit.org/docs/index.html). The major parts of the documentation (excluding the Overview and Installation instructions, which generally won't require community contributions) are as follows: 
+- The [Python API](https://www.rdkit.org/docs/api-docs.html) and [C++ API](https://www.rdkit.org/docs/cppapi/index.html) docs are generated automatically from the codebase.
+- The "Getting Started With" guides for [Python](https://www.rdkit.org/docs/GettingStartedInPython.html) and [C++](https://www.rdkit.org/docs/GettingStartedInC%2B%2B.html) provide an overview of how to use the core functionality of RDKit. 
+- The [RDKit Cookbook](https://www.rdkit.org/docs/Cookbook.html) contains more in-depth example recipes in Python for how to use RDKit for common tasks, generally contributed by the community.
+- The [RDKit Book](https://www.rdkit.org/docs/RDKit_Book.html) more technical details about how various parts of the RDKit work.  
+- Not strictly speaking documentation but we'll include it here for completeness, Greg writes a [Blog](https://greglandrum.github.io/rdkit-blog/) highlighting in more detail how to use new and existing bits of the RDKit.
 
-RDKit book: https://www.rdkit.org/docs/RDKit_Book.html
-
-rdkit blog: https://greglandrum.github.io/rdkit-blog/
+### How to Write RDKit Documentation
 
 
 ## Contributing to the Code - Python 
