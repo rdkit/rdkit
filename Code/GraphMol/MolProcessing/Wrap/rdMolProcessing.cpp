@@ -10,7 +10,7 @@
 
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
-#include <GraphMol/MolProcessing/Processing.h>
+#include <GraphMol/MolProcessing/MolProcessing.h>
 #include <GraphMol/FileParsers/GeneralFileReader.h>
 
 namespace python = boost::python;

@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "Processing.h"
+#include "MolProcessing.h"
 
 namespace RDKit {
 namespace MolProcessing {
