@@ -65,8 +65,8 @@ TEST_CASE("callbacks SDF") {
   SECTION("nextCallbackException") {
     std::map<unsigned int, unsigned int> callbackNats;
     auto callback =
-        [&](RWMol &mol,
-            const v2::FileParsers::MultithreadedMolSupplier &suppl) {
+        [&](RWMol &,
+            const v2::FileParsers::MultithreadedMolSupplier &) {
           throw std::runtime_error(
               "This is not the callback you are looking for");
         };
@@ -101,7 +101,7 @@ TEST_CASE("callbacks SDF") {
     }
   }
   SECTION("writeCallbackException") {
-    auto callback = [](RWMol &mol, const std::string &, unsigned int recordId) {
+    auto callback = [](RWMol &, const std::string &, unsigned int) {
       throw std::runtime_error("You cannot pass!");
     };
     auto &suppl = sdsuppl;
@@ -139,9 +139,8 @@ TEST_CASE("callbacks SDF") {
     }
   }
   SECTION("readCallbackException") {
-    auto callback = [](const std::string &sdf, unsigned int recordId) {
+    auto callback = [](const std::string &, unsigned int) -> std::string {
       throw std::runtime_error("I'm Sorry Dave. I'm afraid I can't do that.");
-      return std::string(sdf);
     };
     auto &suppl = sdsuppl;
 
