@@ -91,29 +91,6 @@ std::string chemicalReactionTemplatesToString(
   return res;
 }
 
-void insertTemplates(const RDKit::ChemicalReaction &rxn,
-                    RDKit::RWMol &rwmol, std::vector<unsigned int> &atomOrdering,
-                    std::vector<unsigned int> &bondOrdering, RDKit::ReactionMoleculeType type) {
-  for (auto begin = getStartIterator(rxn, type);
-        begin != getEndIterator(rxn, type); ++begin) {
-    const auto at_count = rwmol.getNumAtoms();
-    const auto bnd_count = rwmol.getNumBonds();
-    rwmol.insertMol(**begin);
-
-    // getting the smiles atom and bond output ordering
-    std::vector<unsigned int> prevAtomOrdering;
-    std::vector<unsigned int> prevBondOrdering;
-    (*begin)->getProp(RDKit::common_properties::_smilesAtomOutputOrder, prevAtomOrdering);
-    (*begin)->getProp(RDKit::common_properties::_smilesBondOutputOrder, prevBondOrdering);
-    for (auto i : prevAtomOrdering) {
-      atomOrdering.push_back(i + at_count);
-    }
-    for (auto i : prevBondOrdering) {
-      bondOrdering.push_back(i + bnd_count);
-    }
-  }
-}
-
 std::string chemicalReactionToRxnToString(
     const RDKit::ChemicalReaction &rxn, bool toSmiles,
     const RDKit::SmilesWriteParams &params, bool includeCX) {
@@ -127,21 +104,20 @@ std::string chemicalReactionToRxnToString(
       chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles, params);
 
 
-
   if (includeCX) {
-    RDKit::RWMol rwmol;
-    std::vector<unsigned int> atomOrdering;
-    std::vector<unsigned int> bondOrdering;
+    RDKit::MOL_SPTR_VECT mols;
 
-    insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Reactant);
-    insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Agent);
-    insertTemplates(rxn, rwmol, atomOrdering, bondOrdering, RDKit::Product);
+    // Collect reactants, agents, and products into mols vector
+    for (auto type : {RDKit::Reactant, RDKit::Agent, RDKit::Product}) {
+      for (auto begin = getStartIterator(rxn, type);
+           begin != getEndIterator(rxn, type); ++begin) {
+        mols.push_back(*begin);
+      }
+    }
 
-    rwmol.setProp(RDKit::common_properties::_smilesAtomOutputOrder, atomOrdering, true); 
-    rwmol.setProp(RDKit::common_properties::_smilesBondOutputOrder, bondOrdering, true); 
-
+    // Get CX extensions using the new getCXExtensions function
     auto flags = RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS ^ RDKit::SmilesWrite::CXSmilesFields::CX_ALL;
-    auto ext = RDKit::SmilesWrite::getCXExtensions(rwmol, flags); 
+    auto ext = RDKit::SmilesWrite::getCXExtensions(mols, flags); 
     if (!ext.empty()) {
       res += " ";
       res += ext;
