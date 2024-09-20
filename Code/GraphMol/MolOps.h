@@ -88,6 +88,32 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
 /*!
 
   \param mol     the molecule of interest
+  \param molFrags used to return the disconnected fragments as molecules.
+                  Any contents on input will be cleared.
+  \param sanitizeFrags  toggles sanitization of the fragments after
+                        they are built
+  \param frags used to return the mapping of Atoms->fragments.
+     if provided, \c frags will be <tt>mol->getNumAtoms()</tt> long
+         on return and will contain the fragment assignment for each Atom.
+  \param fragsMolAtomMapping  used to return the Atoms in each fragment
+     On return \c mapping will be \c numFrags long, and each entry
+     will contain the indices of the Atoms in that fragment.
+   \param copyConformers  toggles copying conformers of the fragments after
+                        they are built
+  \return the number of fragments found.
+
+*/
+RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
+    const ROMol &mol, std::vector<std::unique_ptr<ROMol>> &molFrags,
+    bool sanitizeFrags = true, std::vector<int> *frags = nullptr,
+    std::vector<std::vector<int>> *fragsMolAtomMapping = nullptr,
+    bool copyConformers = true);
+
+//! splits a molecule into its component fragments
+/// (disconnected components of the molecular graph)
+/*!
+
+  \param mol     the molecule of interest
   \param sanitizeFrags  toggles sanitization of the fragments after
                         they are built
   \param frags used to return the mapping of Atoms->fragments.
@@ -121,12 +147,35 @@ RDKIT_GRAPHMOL_EXPORT std::vector<boost::shared_ptr<ROMol>> getMolFrags(
   \return a map of the fragments and their labels
 
 */
+
 template <typename T>
 RDKIT_GRAPHMOL_EXPORT std::map<T, boost::shared_ptr<ROMol>>
 getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
                      bool sanitizeFrags = true,
                      const std::vector<T> *whiteList = nullptr,
                      bool negateList = false);
+//! splits a molecule into pieces based on labels assigned using a query,
+//! putting them into a map of std::unique_ptr<ROMol>.
+/*!
+
+  \param mol     the molecule of interest
+  \param query   the query used to "label" the molecule for fragmentation
+  \param molFrags used to return the disconnected fragments as molecules.
+                 Any contents on input will be cleared.
+  \param sanitizeFrags  toggles sanitization of the fragments after
+                        they are built
+  \param whiteList  if provided, only labels in the list will be kept
+  \param negateList if true, the white list logic will be inverted: only labels
+                    not in the list will be kept
+
+  \return the number of fragments
+
+*/
+template <typename T>
+RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, T (*query)(const ROMol &, const Atom *),
+    std::map<T, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags = true,
+    const std::vector<T> *whiteList = nullptr, bool negateList = false);
 
 #if 0
     //! finds a molecule's minimum spanning tree (MST)
