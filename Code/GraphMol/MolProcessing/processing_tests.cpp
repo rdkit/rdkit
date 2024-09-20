@@ -12,7 +12,7 @@
 #include <catch2/catch_all.hpp>
 #include "RDGeneral/test.h"
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/MolProcessing/Processing.h>
+#include <GraphMol/MolProcessing/MolProcessing.h>
 #include <RDGeneral/RDLog.h>
 
 using namespace RDKit;
