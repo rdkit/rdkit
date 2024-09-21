@@ -59,6 +59,7 @@ option(RDK_BUILD_MOLINTERCHANGE_SUPPORT "build in support for CommonChem molecul
 option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
 option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementation of xyz2mol (in the DetermineBonds library)" OFF )
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
+option(RDK_BUILD_PUBCHEMSHAPE_SUPPORT "build the rdkit wrapper around pubchem-align3d" ON )
 option(RDK_USE_URF "Build support for Florian Flachsenberg's URF library" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
@@ -138,7 +139,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 set(RDKit_Year "2024")
 set(RDKit_Month "09")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "pre")
+set(RDKit_RevisionModifier "b1")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -457,7 +458,7 @@ endif()
 target_include_directories(rdkit_base INTERFACE
                            $<BUILD_INTERFACE:${RDKit_CodeDir}>
                            $<INSTALL_INTERFACE:${RDKit_HdrDir}>
-                           ${Boost_INCLUDE_DIR}
+                           ${Boost_INCLUDE_DIRS}
                            )
 target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
 

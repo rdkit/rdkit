@@ -143,9 +143,9 @@ class PythonFilterMatch : public FilterMatcherBase {
   bool incref;
 
  public:
-  PythonFilterMatch(PyObject *self)
+  PythonFilterMatch(PyObject *callback)
       : FilterMatcherBase("Python Filter Matcher"),
-        functor(self),
+        functor(callback),
         incref(false){};
 
   // ONLY CALLED FROM C++ from the copy operation
@@ -321,8 +321,6 @@ struct filtercat_wrapper {
         .def_readwrite("query", &std::pair<int, int>::first)
         .def_readwrite("target", &std::pair<int, int>::second)
         .def("__getitem__", &GetMatchVectItem, python::args("self", "idx"));
-
-    RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
 
     python::class_<FilterMatch, boost::shared_ptr<FilterMatch>>(
         "FilterMatch", FilterMatchDoc,
@@ -565,7 +563,7 @@ struct filtercat_wrapper {
         .def_pickle(filtercatalog_pickle_suite());
 
     python::class_<PythonFilterMatch, python::bases<FilterMatcherBase>>(
-        "PythonFilterMatcher", python::init<PyObject *>(python::args("self")));
+        "PythonFilterMatcher", python::init<PyObject *>(python::args("self", "callback")));
 
     python::def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
                 "Returns True if the FilterCatalog is serializable "

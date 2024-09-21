@@ -217,6 +217,7 @@ RDKIT_FORCEFIELDHELPERS_EXPORT bool areAtomsInSameRingOfSize(
     const ROMol &mol, const unsigned int ringSize, const unsigned int numAtoms,
     ...);
 RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int sanitizeMMFFMol(RWMol &mol);
+//! \deprecated, please use MolOps::setMMFFAromaticity instead
 RDKIT_FORCEFIELDHELPERS_EXPORT void setMMFFAromaticity(RWMol &mol);
 RDKIT_FORCEFIELDHELPERS_EXPORT unsigned int getMMFFStretchBendType(
     const unsigned int angleType, const unsigned int bondType1,

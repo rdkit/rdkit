@@ -1772,6 +1772,7 @@ to the terminal dummy atoms.\n\
         .value("AROMATICITY_RDKIT", MolOps::AROMATICITY_RDKIT)
         .value("AROMATICITY_SIMPLE", MolOps::AROMATICITY_SIMPLE)
         .value("AROMATICITY_MDL", MolOps::AROMATICITY_MDL)
+        .value("AROMATICITY_MMFF94", MolOps::AROMATICITY_MMFF94)
         .value("AROMATICITY_CUSTOM", MolOps::AROMATICITY_CUSTOM)
         .export_values();
 
