@@ -41,8 +41,8 @@ The [RDKit blog](https://greglandrum.github.io/rdkit-blog/) often has useful tip
 
 If you have questions, comments, or suggestions, the best places for those are:
 
-  * The [mailing list](https://sourceforge.net/p/rdkit/mailman/)
   * [GitHub discussions](https://github.com/rdkit/rdkit/discussions)
+  * The [mailing list](https://sourceforge.net/p/rdkit/mailman/)
 
 If you've found a bug or would like to request a feature, please [create an issue](https://github.com/rdkit/rdkit/issues)
 
