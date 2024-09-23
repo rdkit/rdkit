@@ -176,7 +176,7 @@ $ python $RDBASE/rdkit/TestRunner.py test_list.py
 
 ## Contributing to the RDKit Docs 
 
-Documentation contributions are a great place to begin with making RDKit contributions. In addition to producing documentation for your own submissions, it is really useful to contribute documentation for functionality already within the toolkit. This can include:
+Writing documentation is a great place to begin with contributing to the RDKit. In addition to producing documentation for your own submissions, it is really useful to contribute documentation for functionality already within the toolkit. This can include:
 - Fixing or expanding pieces of documentation that are unclear, wrong or missing suitable examples
 - Adding in references for methods where available
 - Adding new sections or examples:
@@ -187,6 +187,7 @@ Documentation contributions are a great place to begin with making RDKit contrib
       - [Mac in Chem](https://macinchem.org/?s=rdkit)
       - [Cheminformania](https://www.cheminformania.com/?s=rdkit)
   - From UGM talks (the relevant repositories can be found on the main GitHub page)
+  - Translation to other languages (e.g. see the [Japanese](https://www.rdkit.org/docs_jp/The_RDKit_Book_jp.html) copy of the RDKit Book)
   - To this guide if instructions need updated!
 
 ### A Whistle Stop Tour of the RDKit Documentation
@@ -197,11 +198,51 @@ An index of the RDKit documentation can be found [here](https://www.rdkit.org/do
 - The [Python API](https://www.rdkit.org/docs/api-docs.html) and [C++ API](https://www.rdkit.org/docs/cppapi/index.html) docs are generated automatically from the codebase.
 - The "Getting Started With" guides for [Python](https://www.rdkit.org/docs/GettingStartedInPython.html) and [C++](https://www.rdkit.org/docs/GettingStartedInC%2B%2B.html) provide an overview of how to use the core functionality of RDKit. 
 - The [RDKit Cookbook](https://www.rdkit.org/docs/Cookbook.html) contains more in-depth example recipes in Python for how to use RDKit for common tasks, generally contributed by the community.
-- The [RDKit Book](https://www.rdkit.org/docs/RDKit_Book.html) more technical details about how various parts of the RDKit work.  
+- The [RDKit Book](https://www.rdkit.org/docs/RDKit_Book.html) gives more technical details about how various parts of the RDKit work.  
 - Not strictly speaking documentation but we'll include it here for completeness, Greg writes a [Blog](https://greglandrum.github.io/rdkit-blog/) highlighting in more detail how to use new and existing bits of the RDKit.
 
 ### How to Write RDKit Documentation
 
+The RDKit documentation is written mostly in [reStructuredText](https://docutils.sourceforge.io/rst.html). Full tutorials can be found online, but a brief overview will be given here to get you started. 
+
+*Headings*
+
+```
+This is a TITLE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+This is a HEADING 
+**************
+
+This is a SUBHEADING
+========================
+```
+
+*Code Examples*
+
+The RDKit docs support inclusion of Sphinx doctests to allow the result of a code example to appear in the text. 
+
+```
+.. doctest::
+
+  >>> mol = Chem.MolFromSmiles('CO(C)C')
+  >>> print(print(mol.GetNumAtoms()))
+  4
+```
+
+*Hyperlinks*
+
+```
+`RDKit Website`_
+
+.. _RDKit Website: https://www.rdkit.org/
+```
+
+*Images*
+
+```
+.. image:: pathtoimage/name.png
+```
 
 ## Contributing to the Code - Python 
 
