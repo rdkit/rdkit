@@ -722,8 +722,8 @@ BOOST_PYTHON_MODULE(rdFingerprintGenerator) {
       .def("SetCountBounds", &setCountBoundsHelper,
            python::args("self", "bounds"), "set the bins for the count bounds");
 
-  wrapGenerator<std::uint32_t>("FingeprintGenerator32");
-  wrapGenerator<std::uint64_t>("FingeprintGenerator64");
+  wrapGenerator<std::uint32_t>("FingerprintGenerator32");
+  wrapGenerator<std::uint64_t>("FingerprintGenerator64");
 
   python::enum_<FPType>("FPType")
       .value("RDKitFP", FPType::RDKitFP)

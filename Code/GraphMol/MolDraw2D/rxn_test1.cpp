@@ -50,23 +50,23 @@ static const bool DELETE_WITH_GOOD_HASH = true;
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"rxn_test1_1.svg", 2645695747U},   {"rxn_test1_2.svg", 2640646320U},
     {"rxn_test1_3.svg", 2781928588U},   {"rxn_test1_4.svg", 437863065U},
-    {"rxn_test1_5.svg", 2762972460U},   {"rxn_test1_6.svg", 3761578104U},
-    {"rxn_test1_7.svg", 1881564163U},   {"rxn_test2_1.svg", 3791815067U},
+    {"rxn_test1_5.svg", 2762972460U},   {"rxn_test1_6.svg", 2941728011U},
+    {"rxn_test1_7.svg", 1389845691U},   {"rxn_test2_1.svg", 3791815067U},
     {"rxn_test2_2_1.svg", 2068242269U}, {"rxn_test2_2_2.svg", 269990608U},
     {"rxn_test2_2_3.svg", 1544919807U}, {"rxn_test2_2_4.svg", 2015871327U},
-    {"rxn_test3_1.svg", 2165658826U},   {"rxn_test4_1.svg", 3239755313U},
-    {"rxn_test4_2.svg", 4127054729U},
+    {"rxn_test3_1.svg", 1359061920U},   {"rxn_test4_1.svg", 1727161552U},
+    {"rxn_test4_2.svg", 2032588691U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 1788608017U},   {"rxn_test1_2.svg", 823823509U},
-    {"rxn_test1_3.svg", 1377786051U},   {"rxn_test1_4.svg", 857944362U},
-    {"rxn_test1_5.svg", 4077811587U},   {"rxn_test1_6.svg", 3464747970U},
-    {"rxn_test1_7.svg", 2955631040U},   {"rxn_test2_1.svg", 706601656U},
-    {"rxn_test2_2_1.svg", 152711069U},  {"rxn_test2_2_2.svg", 1696961942U},
-    {"rxn_test2_2_3.svg", 4141786420U}, {"rxn_test2_2_4.svg", 793880456U},
-    {"rxn_test3_1.svg", 2145858565U},   {"rxn_test4_1.svg", 3386568263U},
-    {"rxn_test4_2.svg", 3251940560U},
+    {"rxn_test1_1.svg", 703524479U},    {"rxn_test1_2.svg", 1280072916U},
+    {"rxn_test1_3.svg", 2600700359U},   {"rxn_test1_4.svg", 3286429351U},
+    {"rxn_test1_5.svg", 2368838440U},   {"rxn_test1_6.svg", 3851812310U},
+    {"rxn_test1_7.svg", 279033885U},    {"rxn_test2_1.svg", 2282193956U},
+    {"rxn_test2_2_1.svg", 2357406436U}, {"rxn_test2_2_2.svg", 2972357489U},
+    {"rxn_test2_2_3.svg", 3425980762U}, {"rxn_test2_2_4.svg", 4275243270U},
+    {"rxn_test3_1.svg", 1325773479U},   {"rxn_test4_1.svg", 1889252812U},
+    {"rxn_test4_2.svg", 1207887408U},
 };
 #endif
 

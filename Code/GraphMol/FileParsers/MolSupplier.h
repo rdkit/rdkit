@@ -108,7 +108,6 @@ class RDKIT_FILEPARSERS_EXPORT MolSupplier {
       delete strm;
       throw BadFileException(errout.str());
     }
-
     strm->peek();
     if (strm->bad() || strm->eof()) {
       std::ostringstream errout;

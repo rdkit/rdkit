@@ -9,7 +9,7 @@
 //
 
 #include <catch2/catch_all.hpp>
-
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include "RDDepictor.h"
@@ -225,6 +225,26 @@ TEST_CASE("use ring system templates") {
   diff =
       mol->getConformer().getAtomPos(10) - mol->getConformer().getAtomPos(11);
   TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
+}
+
+TEST_CASE("templates are aware of E/Z stereochemistry") {
+  // this is a molecule we have a template for
+  auto mol1 =
+      "CCC1C2=N[C@@](C)(C3N/C(=C(/C)C4=N/C(=C\\C5=N/C(=C\\2C)[C@@](C)(CC(N)=O)C5CCC(N)=O)C(C)(C)C4CCC(N)=O)[C@](C)(CCC(=O)NC)C3C)C1(C)C"_smiles;
+  // and this is the same molecule with different stereochemistry on double
+  // bonds
+  auto mol2 =
+      "CCC1C2=N[C@@](C)(C3N/C(=C(\\C)C4=N/C(=C/C5=N/C(=C/2C)[C@@](C)(CC(N)=O)C5CCC(N)=O)C(C)(C)C4CCC(N)=O)[C@](C)(CCC(=O)NC)C3C)C1(C)C"_smiles;
+
+  // generate coordinates for the two molecules, they should be different
+  // because only the first one matches the template
+  RDDepict::Compute2DCoordParameters params;
+  params.useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol1, params);
+  RDDepict::compute2DCoords(*mol2, params);
+
+  auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
+  CHECK(rmsd > 1.);
 }
 
 TEST_CASE("dative bonds and rings") {
@@ -1097,7 +1117,7 @@ M  END
 
 TEST_CASE("generate aligned coords R group match") {
   auto templateRef = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   7  7  0  0  0  0  0  0  0  0999 V2000
    -0.5804    1.2045    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1295,9 +1315,9 @@ M  END
     0.0000    0.6187    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.7144    0.2062    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -0.7144   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  3      
-  2  3  1  4      
-  1  4  1  4      
+  1  2  2  3
+  2  3  1  4
+  1  4  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
@@ -1506,9 +1526,9 @@ M  END
     0.3572    0.2062    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     1.0716    0.6187    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
    -1.0716   -0.6187    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  3      
-  2  3  1  4      
-  1  4  1  4      
+  1  2  2  3
+  2  3  1  4
+  1  4  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);
@@ -1757,13 +1777,13 @@ M  END
    -0.9971    1.0600    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.7282    0.2855    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
     0.9971    1.0270    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  2  3  1  0      
-  3  4  1  0      
-  2  5  2  3      
-  5  6  1  4      
-  3  7  2  0      
-  7  8  1  4      
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  2  5  2  3
+  5  6  1  4
+  3  7  2  0
+  7  8  1  4
 M  END
 )CTAB"_ctab;
     REQUIRE(mol);

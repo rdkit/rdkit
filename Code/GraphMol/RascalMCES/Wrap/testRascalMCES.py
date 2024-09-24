@@ -199,6 +199,17 @@ class TestCase(unittest.TestCase):
     self.assertEqual(results[0].numFragments, 1)
     self.assertEqual(results[0].smartsString, 'C~C~C~C')
     
+
+  def testExactAtomTypeMatch(self):
+    opts = rdRascalMCES.RascalOptions()
+    opts.similarityThreshold = 0.1
+    opts.ignoreAtomAromaticity = False
+    mol1 = Chem.MolFromSmiles('c1ccccc1NCC')
+    mol2 = Chem.MolFromSmiles('C1CCCCC1NCC')
+    results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+    self.assertEqual(results[0].numFragments, 1)
+    self.assertEqual(results[0].smartsString, 'NCC')
+
     
 if __name__ == "__main__":
   unittest.main()

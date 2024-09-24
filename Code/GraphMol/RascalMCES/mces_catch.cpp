@@ -1290,7 +1290,7 @@ TEST_CASE("Equivalent atoms") {
     opts.similarityThreshold = 0.5;
     opts.equivalentAtoms = "[F,Cl,Br,I]";
     auto res = rascalMCES(*m1, *m2, opts);
-    CHECK(res.size() == 1);
+    REQUIRE(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 8);
     CHECK(res.front().getSmarts() ==
           "c1:c:c(-[F,Cl,Br,I]):c:c:c:1-[F,Cl,Br,I]");
@@ -1306,7 +1306,7 @@ TEST_CASE("Equivalent atoms") {
     opts.similarityThreshold = 0.5;
     opts.equivalentAtoms = "[F,Cl,Br,I] [c,n]";
     auto res = rascalMCES(*m1, *m2, opts);
-    CHECK(res.size() == 1);
+    REQUIRE(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 7);
     CHECK(res.front().getSmarts() ==
           "[c,n]1:[c,n]:[c,n]:[c,n]:[c,n]:[c,n]:1-[F,Cl,Br,I]");
@@ -1322,7 +1322,7 @@ TEST_CASE("Equivalent atoms") {
     opts.similarityThreshold = 0.5;
     opts.equivalentAtoms = "[*]";
     auto res = rascalMCES(*m1, *m2, opts);
-    CHECK(res.size() == 1);
+    REQUIRE(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 6);
     CHECK(res.front().getSmarts() == "[*]1:[*]:[*]:[*]:[*]:[*]:1");
     check_smarts_ok(*m1, *m2, res.front());
@@ -1352,7 +1352,7 @@ TEST_CASE("Equivalent bonds") {
     opts.similarityThreshold = 0.5;
     opts.ignoreBondOrders = true;
     auto res = rascalMCES(*m1, *m2, opts);
-    CHECK(res.size() == 1);
+    REQUIRE(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 4);
     CHECK(res.front().getBondMatches().size() == 3);
     CHECK(res.front().getSmarts() == "C~C~C~C");
@@ -1369,11 +1369,46 @@ TEST_CASE("Equivalent bonds") {
     opts.equivalentAtoms = "[#6,#7]";
     opts.ignoreBondOrders = true;
     auto res = rascalMCES(*m1, *m2, opts);
-    CHECK(res.size() == 1);
+    REQUIRE(res.size() == 1);
     CHECK(res.front().getAtomMatches().size() == 9);
     CHECK(res.front().getBondMatches().size() == 9);
     CHECK(res.front().getSmarts() ==
           "[#6,#7]1~[#6,#7]~[#6,#7](~[#6,#7](~O)~O)~[#6,#7]~[#6,#7]~[#6,#7]~1");
+    check_smarts_ok(*m1, *m2, res.front());
+  }
+}
+
+TEST_CASE("Atom aromaticity match") {
+  {
+    auto m1 = "c1ccccc1NCC"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C1CCCCC1NCC"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    opts.similarityThreshold = 0.1;
+    opts.ignoreAtomAromaticity = true;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    CHECK(res.front().getAtomMatches().size() == 4);
+    CHECK(res.front().getBondMatches().size() == 3);
+    CHECK(res.front().getSmarts() == "[#6]-NCC");
+    check_smarts_ok(*m1, *m2, res.front());
+  }
+  {
+    auto m1 = "c1ccccc1NCC"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C1CCCCC1NCC"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    opts.similarityThreshold = 0.1;
+    opts.ignoreAtomAromaticity = false;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    CHECK(res.front().getAtomMatches().size() == 3);
+    CHECK(res.front().getBondMatches().size() == 2);
+    CHECK(res.front().getSmarts() == "NCC");
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
