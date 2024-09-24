@@ -593,7 +593,8 @@ TEST_CASE("double bond stereo not honored in conformer generator") {
   }
 }
 
-TEST_CASE("tracking failure causes"){SECTION("basics"){
+TEST_CASE("tracking failure causes"){
+SECTION("basics"){
     auto mol =
         "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
 REQUIRE(mol);

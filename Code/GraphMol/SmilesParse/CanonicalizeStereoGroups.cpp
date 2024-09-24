@@ -1000,7 +1000,9 @@ void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
     SmilesWriteParams wp;
     wp.canonical = false;
     auto finalSmiles = MolToCXSmiles(*mol, wp);
-    mol.reset(SmilesToMol(finalSmiles));
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    mol.reset(SmilesToMol(finalSmiles, ps));
 
     return;
   } catch (const RigorousEnhancedStereoException &e) {
