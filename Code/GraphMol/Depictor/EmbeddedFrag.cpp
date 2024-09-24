@@ -453,7 +453,13 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
       continue;
     }
     // also check if the mol atoms have the same connectivity as the template
+#ifdef _MSC_VER
+    // MSVC++ doesn't like implicitly capturing constexpr variables, this is a bug
     auto degreeCounts = [DUMMY_ATOMIC_NUM](const RDKit::ROMol &mol) {
+#else
+    // clang generates warnings if you explicitly capture a constexpr variable
+    auto degreeCounts = [](const RDKit::ROMol &mol) {
+#endif
       std::array<int, 5> degrees_count({0, 0, 0, 0, 0});
       for (auto atom : mol.atoms()) {
         if (atom->getAtomicNum() == DUMMY_ATOMIC_NUM) {
