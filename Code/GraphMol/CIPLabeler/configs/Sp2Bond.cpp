@@ -128,6 +128,7 @@ Descriptor Sp2Bond::label(Node *root1, Digraph &digraph, const Rules &comp) {
     // other nodes.
     std::vector<Atom*> updated_carriers = {edges1[0]->getEnd()->getAtom(),
                                            edges2[0]->getEnd()->getAtom()};
+    setCarriers(std::move(updated_carriers));
   }
 
   if (config == Bond::STEREOCIS) {

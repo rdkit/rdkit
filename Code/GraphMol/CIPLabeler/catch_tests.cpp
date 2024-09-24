@@ -948,20 +948,22 @@ TEST_CASE("atropisomers", "[basic]") {
 TEST_CASE("neighbor_annotations", "[basic]") {
   SECTION("chirality") {
     auto mol = R"(C1C[C@H](C)C(=O)C[C@H]1O)"_smiles;
-    CIPLabeler::assignCIPLabels(*mol, 10);
+    CIPLabeler::assignCIPLabels(*mol, 100);
     auto a = mol->getAtomWithIdx(2);
     auto ranked_neighbors = a->getProp<std::vector<int>>("_CIPNeighborRanks");
-    CHECK(ranked_neighbors == std::vector{1, 2, 3});
+    CHECK(ranked_neighbors == std::vector{4, 1, 3});
   }
 
   SECTION("bond_stereo") {
-    auto mol = R"([H]/C=C(N)/C)"_smiles;
-    auto b = mol->getBondWithIdx(1);
-    auto& stereo_atoms = b->getStereoAtoms();
-    CHECK(stereo_atoms[1] == 4);
-    CIPLabeler::assignCIPLabels(*mol, 10);
+    auto mol = R"(C/C=C(C)/N)"_smiles;
+    mol->getBondWithIdx(1)->setStereoAtoms(0, 3);
+    auto& stereo_atoms1 = mol->getBondWithIdx(1)->getStereoAtoms();
+    CHECK(stereo_atoms1[0] == 0);
+    CHECK(stereo_atoms1[1] == 3);
+    CIPLabeler::assignCIPLabels(*mol, 100);
     // did the stereoatom switch to the highest CIP ranked neighbor?
-    stereo_atoms = b->getStereoAtoms();
-    CHECK(stereo_atoms[1] == 3);
+    auto& stereo_atoms2 = mol->getBondWithIdx(1)->getStereoAtoms();
+    CHECK(stereo_atoms2[0] == 0);
+    CHECK(stereo_atoms2[1] == 4);
   }
 }
