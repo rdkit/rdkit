@@ -11,7 +11,6 @@
 
 #include <list>
 #include <sstream>
-#include <deque>
 
 #include "Digraph.h"
 #include "CIPMol.h"
@@ -75,12 +74,10 @@ int Digraph::getNumNodes() const { return d_nodes.size(); }
 
 std::vector<Node *> Digraph::getNodes(Atom *atom) const {
   std::vector<Node *> result;
-  std::deque<Node*> queue = {getCurrentRoot()};
+  std::vector<Node*> queue = {getCurrentRoot()};
 
-  while (!queue.empty()) {
-    auto node = queue.front();
-    queue.pop_front();
-
+  for (size_t i=0; i<queue.size(); ++i) {
+    auto node = queue[i];
     if (atom == node->getAtom()) {
       result.push_back(node);
     }
