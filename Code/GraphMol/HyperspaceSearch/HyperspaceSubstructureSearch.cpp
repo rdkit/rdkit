@@ -22,7 +22,6 @@
 // fingerprint for the initial synthon screening.
 
 #include <algorithm>
-#include <numeric>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
@@ -39,23 +38,36 @@ namespace HyperspaceSSSearch {
 namespace details {
 
 // get a vector of vectors of unsigned ints that are all combinations of
-// numSplits chosen from numMolBonds e.g. all combinations of 3 bonds from a
+// M items chosen from N e.g. all combinations of 3 bonds from a
 // molecule. A modified form of the code in the first answer from
 // https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c
-std::vector<std::vector<unsigned int>> getBondCombinations(int numSplits,
-                                                           int numMolBonds) {
-  std::string allBonds(numSplits, 1);
-  allBonds.resize(numMolBonds, 0);
+std::vector<std::vector<unsigned int>> combMFromN(unsigned int m,
+                                                  unsigned int n) {
+  std::string allN(m, 1);
+  allN.resize(n, 0);
   std::vector<std::vector<unsigned int>> combs;
   do {
     combs.push_back(std::vector<unsigned int>());
-    for (int i = 0; i < numMolBonds; ++i) {
-      if (allBonds[i]) {
+    for (unsigned int i = 0; i < n; ++i) {
+      if (allN[i]) {
         combs.back().push_back(i);
       }
     }
-  } while (std::prev_permutation(allBonds.begin(), allBonds.end()));
+  } while (std::prev_permutation(allN.begin(), allN.end()));
   return combs;
+}
+
+std::vector<std::vector<unsigned int>> permMFromN(unsigned int m,
+                                                  unsigned int n) {
+  std::vector<std::vector<unsigned int>> perms;
+  auto combs = combMFromN(m, n);
+  for (auto &c : combs) {
+    do {
+      perms.push_back(c);
+    } while (std::next_permutation(c.begin(), c.end()));
+  }
+
+  return perms;
 }
 
 // Split the molecule into fragments.  maxBondSplits gives the maximum number
@@ -85,9 +97,15 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   }
   std::vector<int> fragAtoms;
 
+  // Keep the molecule itself (i.e. 0 splits).  It will probably produce
+  // lots of hits but one can imagine a use for it.
+  fragments.push_back(std::vector<std::unique_ptr<ROMol>>());
+  fragments.back().emplace_back(new ROMol(query));
+
+  // Now do the splits.
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
     std::cout << "Splitting with up to " << i << " bonds" << std::endl;
-    auto combs = getBondCombinations(i, static_cast<int>(query.getNumBonds()));
+    auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
     fragments.push_back(std::vector<std::unique_ptr<ROMol>>());
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
     for (unsigned int j = 1; j <= i; ++j) {
@@ -142,6 +160,21 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
 
 }  // namespace details
 
+// Do a substructure search for query in the hyperspace.
+std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
+                                             unsigned int maxBondSplits,
+                                             Hyperspace &hyperspace) {
+  auto &reactions = hyperspace.reactions();
+  for (const auto &r : reactions) {
+    std::cout << "reaction " << r.first
+              << "  number of synthons : " << r.second->d_reagents.size()
+              << std::endl;
+  }
+  auto results = hyperspace.search(query, maxBondSplits);
+  return results;
+}
+
+// overload taking the name of the hyperspace file.
 std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
                                              unsigned int maxBondSplits,
                                              const std::string &libName) {
@@ -152,7 +185,9 @@ std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
             << std::endl;
   auto &reactions = hyperspace.reactions();
   for (const auto &r : reactions) {
-    std::cout << r->d_id << " : " << r->d_reagents.size() << std::endl;
+    std::cout << "reaction " << r.first
+              << "  number of synthons : " << r.second->d_reagents.size()
+              << std::endl;
   }
   auto results = hyperspace.search(query, maxBondSplits);
   return results;

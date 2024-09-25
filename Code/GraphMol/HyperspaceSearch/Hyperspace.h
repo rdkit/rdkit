@@ -11,6 +11,7 @@
 #ifndef RDKIT_HYPERSPACE_H
 #define RDKIT_HYPERSPACE_H
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -30,6 +31,7 @@ struct Reagent {
 };
 
 struct ReactionSet {
+  ReactionSet(const std::string &id) : d_id(id) {}
   std::string d_id;
   std::vector<std::vector<std::unique_ptr<Reagent>>> d_reagents;
   boost::dynamic_bitset<> d_connectors;
@@ -66,26 +68,39 @@ class Hyperspace {
   explicit Hyperspace(const std::string &fileName);
 
   int numReactions() const { return d_reactions.size(); }
-  const std::vector<std::unique_ptr<ReactionSet>> &reactions() const {
+  const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
     return d_reactions;
   }
 
+  // Do a substructure search for query in the hyperspace.  Return vector of
+  // molecules that match.
   std::vector<std::unique_ptr<ROMol>> search(const ROMol &query,
                                              unsigned int maxBondSplits);
 
+  // Search this particular fragmented molecule against the reactions.  The
+  // fragments should be from 1 splitting, so between 2 and 4 members.
+  std::vector<std::unique_ptr<ROMol>> searchFragSet(const ROMol &fraggedMol);
+
  private:
   std::string d_fileName;
-  std::vector<std::unique_ptr<ReactionSet>> d_reactions;
+  std::map<std::string, std::unique_ptr<ReactionSet>> d_reactions;
 
   void readFile();
   // scan through the connectors ([1*], [2*] etc.) in the reagents in reach
   // ReagentSet and set bits in d_connectors accordingly.
   void assignConnectorsUsed();
 
-  // Search this particular fragmented molecule against the reactions.  The
-  // fragments should be from 1 splitting, so between 2 and 4 members.
-  std::vector<std::unique_ptr<ROMol>> searchFragSet(
-      std::unique_ptr<ROMol> &fraggedMol);
+  // Build the molecules from the reagents identified in reagentsToUse.
+  // There should be bitset in reagentsToUse for each reagent set.
+  // If not, it will fail.
+  void buildHits(const std::vector<boost::dynamic_bitset<>> &reagentsToUse,
+                 const std::string &reaction_id,
+                 std::vector<std::unique_ptr<ROMol>> &results);
+  // get the subset of reagents for the given reaction to use for this
+  // enumeration.
+  std::vector<std::vector<ROMol *>> getReagentsToUse(
+      const std::vector<boost::dynamic_bitset<>> &reagentsToUse,
+      const std::string &reaction_id) const;
 };
 
 }  // namespace HyperspaceSSSearch

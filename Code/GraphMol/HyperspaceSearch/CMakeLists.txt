@@ -7,7 +7,8 @@ target_compile_definitions(HyperspaceSearch PRIVATE RDKIT_HYPERSPACE_SEARCH_BUIL
 rdkit_headers(HyperspaceSubstructureSearch.h Hyperspace.h
         DEST GraphMol/HyperspaceSearch)
 
-rdkit_catch_test(testHyperspaceSearch hyperspace_search_catch.cpp LINK_LIBRARIES HyperspaceSearch)
+rdkit_catch_test(testHyperspaceSearch hyperspace_search_catch.cpp
+        LINK_LIBRARIES SubstructMatch SubstructLibrary HyperspaceSearch)
 
 #if (RDK_BUILD_PYTHON_WRAPPERS)
 #    add_subdirectory(Wrap)
