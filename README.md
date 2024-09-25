@@ -11,7 +11,7 @@ The [RDKit](https://www.rdkit.org) is a collection of cheminformatics and machin
   * Core data structures and algorithms in C++
   * [Python 3.x wrapper](https://www.rdkit.org/docs/GettingStartedInPython.html) generated using Boost.Python
   * Java and C# wrappers generated with SWIG
-  * JavaScript and CFFI wrappers around important functionality
+  * JavaScript (generated with emscripten) and CFFI wrappers around important functionality
   * 2D and 3D molecular operations
   * [Descriptor](https://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-descriptors) and [Fingerprint](http://www.rdkit.org/docs/GettingStartedInPython.html#list-of-available-fingerprints) generation for machine learning
   * Molecular database [cartridge](https://www.rdkit.org/docs/Cartridge.html) for PostgreSQL supporting substructure and similarity searches as well as many descriptor calculators
