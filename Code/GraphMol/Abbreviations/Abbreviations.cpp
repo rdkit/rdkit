@@ -19,7 +19,7 @@ namespace RDKit {
 
 namespace Abbreviations {
 
-void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
+void applyMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
   boost::dynamic_bitset<> atomsToRemove(mol.getNumAtoms());
   boost::dynamic_bitset<> bondsToRemove(mol.getNumBonds());
   std::vector<unsigned int> prevAtomMapping;
@@ -30,7 +30,7 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
       mol.getPropIfPresent(common_properties::origAtomMapping,
                            prevAtomMapping) &&
       mol.getPropIfPresent(common_properties::origBondMapping, prevBondMapping);
-  for (const auto& amatch : matches) {
+  for (const auto &amatch : matches) {
     // throughout this remember that atom 0 in the match is the dummy
 
     // convert atom 1 to be the abbreviation so that we don't have to
@@ -57,7 +57,7 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
     connectingAtom->setHybridization(Atom::HybridizationType::SP);
 
     for (unsigned int i = 2; i < amatch.match.size(); ++i) {
-      const auto& pr = amatch.match.at(i);
+      const auto &pr = amatch.match.at(i);
       CHECK_INVARIANT(!atomsToRemove[pr.second], "overlapping matches");
       atomsToRemove.set(pr.second);
       for (const auto bond : mol.atomBonds(mol.getAtomWithIdx(pr.second))) {
@@ -72,7 +72,7 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
           // if this neighbor isn't in the match:
           auto nbrIdx = bond->getOtherAtomIdx(pr.second);
           if (!std::any_of(amatch.match.begin(), amatch.match.end(),
-                           [nbrIdx](const std::pair<int, int>& tpr) {
+                           [nbrIdx](const std::pair<int, int> &tpr) {
                              return tpr.second == rdcast<int>(nbrIdx);
                            })) {
             mol.addBond(nbrIdx, connectIdx, Bond::BondType::SINGLE);
@@ -125,14 +125,14 @@ void applyMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
   mol.setProp(common_properties::origBondMapping, bondMapping);
 }
 
-void labelMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
-  for (const auto& amatch : matches) {
+void labelMatches(RWMol &mol, const std::vector<AbbreviationMatch> &matches) {
+  for (const auto &amatch : matches) {
     // throughout this remember that atom 0 in the match is the dummy
     SubstanceGroup sg(&mol, "SUP");
     sg.setProp("LABEL", amatch.abbrev.label);
 
     for (unsigned int i = 1; i < amatch.match.size(); ++i) {
-      const auto& pr = amatch.match[i];
+      const auto &pr = amatch.match[i];
       sg.addAtomWithIdx(pr.second);
     }
     auto bnd =
@@ -145,7 +145,7 @@ void labelMatches(RWMol& mol, const std::vector<AbbreviationMatch>& matches) {
 }
 
 std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
-    const ROMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
+    const ROMol &mol, const std::vector<AbbreviationDefinition> &abbrevs,
     double maxCoverage) {
   std::vector<AbbreviationMatch> res;
   auto nAtoms = mol.getNumAtoms();
@@ -163,7 +163,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
   boost::dynamic_bitset<> firstAts(mol.getNumAtoms());
   boost::dynamic_bitset<> covered(mol.getNumAtoms());
 
-  for (const auto& abbrev : abbrevs) {
+  for (const auto &abbrev : abbrevs) {
     CHECK_INVARIANT(abbrev.mol, "molecule is null");
     if (maxCoverage > 0) {
       unsigned int nDummies;
@@ -174,7 +174,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
       }
     }
     auto matches = SubstructMatch(mol, *abbrev.mol);
-    for (const auto& match : matches) {
+    for (const auto &match : matches) {
       CHECK_INVARIANT(match.size() > 1, "bad match size");
       // if we've already covered the first non-dummy atom or used it as a first
       // atom skip this.
@@ -183,7 +183,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
       }
       bool keepIt = true;
       for (unsigned int i = 2; i < match.size(); ++i) {
-        const auto& pr = match[i];
+        const auto &pr = match[i];
         if (covered[pr.second]) {
           keepIt = false;
           break;
@@ -193,7 +193,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
         continue;
       }
       for (unsigned int i = 1; i < match.size(); ++i) {
-        const auto& pr = match[i];
+        const auto &pr = match[i];
         covered.set(pr.second);
       }
       dummies.set(match[0].second);
@@ -203,7 +203,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
       }
     }
   }
-  for (const auto& itm : tres) {
+  for (const auto &itm : tres) {
     // if the dummy in this wasn't a first atom anywhere
     if (!firstAts[itm.match[0].second]) {
       res.push_back(std::move(itm));
@@ -219,7 +219,7 @@ std::vector<AbbreviationMatch> findApplicableAbbreviationMatches(
 }
 
 void condenseMolAbbreviations(
-    RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
+    RWMol &mol, const std::vector<AbbreviationDefinition> &abbrevs,
     double maxCoverage, bool sanitize) {
   auto applicable =
       findApplicableAbbreviationMatches(mol, abbrevs, maxCoverage);
@@ -227,13 +227,13 @@ void condenseMolAbbreviations(
   if (sanitize) {
     auto ringInfo = mol.getRingInfo();
     if (!ringInfo->isSymmSssr()) {
-    MolOps::symmetrizeSSSR(mol);
+      MolOps::symmetrizeSSSR(mol);
     }
   }
 };
 
-void labelMolAbbreviations(RWMol& mol,
-                           const std::vector<AbbreviationDefinition>& abbrevs,
+void labelMolAbbreviations(RWMol &mol,
+                           const std::vector<AbbreviationDefinition> &abbrevs,
                            double maxCoverage) {
   auto applicable =
       findApplicableAbbreviationMatches(mol, abbrevs, maxCoverage);
@@ -241,10 +241,10 @@ void labelMolAbbreviations(RWMol& mol,
 };
 
 RDKIT_ABBREVIATIONS_EXPORT void condenseAbbreviationSubstanceGroups(
-    RWMol& mol) {
-  auto& molSGroups = getSubstanceGroups(mol);
+    RWMol &mol) {
+  auto &molSGroups = getSubstanceGroups(mol);
   std::vector<AbbreviationMatch> abbrevMatches;
-  for (const auto& sg : molSGroups) {
+  for (const auto &sg : molSGroups) {
     if (sg.getProp<std::string>("TYPE") == "SUP") {
       AbbreviationMatch abbrevMatch;
       std::string label = "abbrev";

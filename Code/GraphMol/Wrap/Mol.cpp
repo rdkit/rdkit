@@ -172,9 +172,9 @@ void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol(){};
+  ReadWriteMol() {};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId){};
+      : RWMol(m, quickCopy, confId) {};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {

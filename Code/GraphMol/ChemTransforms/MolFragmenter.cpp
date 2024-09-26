@@ -418,7 +418,7 @@ std::vector<std::pair<Bond *, std::vector<int>>> getNbrBondStereo(
     RWMol &mol, const Bond *bnd) {
   PRECONDITION(bnd, "null bond");
   // loop over neighboring double bonds and remove their stereo atom
-  std::vector<std::pair<Bond *, std::vector<int>>>  res;
+  std::vector<std::pair<Bond *, std::vector<int>>> res;
   const auto bgn = bnd->getBeginAtom();
   const auto end = bnd->getEndAtom();
   for (const auto *atom : {bgn, end}) {
@@ -1173,4 +1173,3 @@ std::unique_ptr<ROMol> molzip(const std::map<std::string, ROMOL_SPTR> &row,
 }
 
 }  // end of namespace RDKit
-

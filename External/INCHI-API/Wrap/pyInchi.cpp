@@ -34,9 +34,9 @@
 #include "../inchi.h"
 
 namespace {
-boost::python::tuple MolToInchi(const RDKit::ROMol& mol, std::string options) {
+boost::python::tuple MolToInchi(const RDKit::ROMol &mol, std::string options) {
   RDKit::ExtraInchiReturnValues rv;
-  const char* _options = nullptr;
+  const char *_options = nullptr;
   if (options.size()) {
     _options = options.c_str();
   }
@@ -45,10 +45,10 @@ boost::python::tuple MolToInchi(const RDKit::ROMol& mol, std::string options) {
                                    rv.logPtr, rv.auxInfoPtr);
 }
 
-boost::python::tuple MolBlockToInchi(const std::string& molblock,
+boost::python::tuple MolBlockToInchi(const std::string &molblock,
                                      std::string options) {
   RDKit::ExtraInchiReturnValues rv;
-  const char* _options = nullptr;
+  const char *_options = nullptr;
   if (options.size()) {
     _options = options.c_str();
   }
@@ -56,10 +56,10 @@ boost::python::tuple MolBlockToInchi(const std::string& molblock,
   return boost::python::make_tuple(inchi, rv.returnCode, rv.messagePtr,
                                    rv.logPtr, rv.auxInfoPtr);
 }
-boost::python::tuple InchiToMol(const std::string& inchi, bool sanitize,
+boost::python::tuple InchiToMol(const std::string &inchi, bool sanitize,
                                 bool removeHs) {
   RDKit::ExtraInchiReturnValues rv;
-  RDKit::ROMol* mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
+  RDKit::ROMol *mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
   if (mol == nullptr) {
     return boost::python::make_tuple(boost::python::object(), rv.returnCode,
                                      rv.messagePtr, rv.logPtr);

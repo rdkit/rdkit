@@ -262,7 +262,7 @@ void getExperimentalTorsions(
             BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
           }
         }  // if not donePaths
-      }    // end loop over matches
+      }  // end loop over matches
 
     }  // end loop over patterns
   }
@@ -359,8 +359,8 @@ void getExperimentalTorsions(
         }
 
       }  // loop over atoms in ring
-    }    // loop over rings
-  }      // if useBasicKnowledge
+    }  // loop over rings
+  }  // if useBasicKnowledge
 
 }  // end function
 

@@ -34,9 +34,9 @@ namespace MMPA {
 */
 
 RDKIT_MMPA_EXPORT bool fragmentMol(
-    const ROMol& mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& result,
+    const ROMol &mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &result,
     unsigned int maxCuts = 3, unsigned int maxCutBonds = 20,
-    const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
+    const std::string &pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
 
 //! fragments a Molecule for processing with the Matched Molecular Pairs
 //!  MMPA algorithm (Hussain et al)
@@ -55,9 +55,9 @@ RDKIT_MMPA_EXPORT bool fragmentMol(
  \return true if the molecule was fragmented, false otherwise.
 */
 RDKIT_MMPA_EXPORT bool fragmentMol(
-    const ROMol& mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& result,
+    const ROMol &mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &result,
     unsigned int minCuts, unsigned int maxCuts, unsigned int maxCutBonds,
-    const std::string& pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
+    const std::string &pattern = "[#6+0;!$(*=,#[!#6])]!@!=!#[*]");
 
 //! fragments a Molecule for processing with the Matched Molecular Pairs
 //!  MMPA algorithm (Hussain et al)
@@ -73,8 +73,8 @@ RDKIT_MMPA_EXPORT bool fragmentMol(
  \return true if the molecule was fragmented, false otherwise.
 */
 RDKIT_MMPA_EXPORT bool fragmentMol(
-    const ROMol& mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>& result,
-    const std::vector<unsigned int>& bondsToCut, unsigned int minCuts = 1,
+    const ROMol &mol, std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> &result,
+    const std::vector<unsigned int> &bondsToCut, unsigned int minCuts = 1,
     unsigned int maxCuts = 3);
 
 }  // namespace MMPA

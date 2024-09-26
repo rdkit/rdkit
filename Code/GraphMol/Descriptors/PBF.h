@@ -53,7 +53,7 @@ namespace RDKit {
 class ROMol;
 namespace Descriptors {
 const std::string PBFVersion = "1.0.0";
-RDKIT_DESCRIPTORS_EXPORT double PBF(const ROMol&, int confId = -1);
+RDKIT_DESCRIPTORS_EXPORT double PBF(const ROMol &, int confId = -1);
 }  // namespace Descriptors
 }  // namespace RDKit
 #endif

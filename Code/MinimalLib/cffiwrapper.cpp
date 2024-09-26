@@ -238,7 +238,8 @@ extern "C" char *get_inchi(const char *pkl, size_t pkl_sz,
   auto mol = mol_from_pkl(pkl, pkl_sz);
   ExtraInchiReturnValues rv;
   auto options = MinimalLib::parse_inchi_options(details_json);
-  return str_to_c(MolToInchi(mol, rv, !options.empty() ? options.c_str() : nullptr));
+  return str_to_c(
+      MolToInchi(mol, rv, !options.empty() ? options.c_str() : nullptr));
 }
 
 extern "C" char *get_inchi_for_molblock(const char *ctab,
@@ -248,7 +249,8 @@ extern "C" char *get_inchi_for_molblock(const char *ctab,
   }
   ExtraInchiReturnValues rv;
   auto options = MinimalLib::parse_inchi_options(details_json);
-  return str_to_c(MolBlockToInchi(ctab, rv, !options.empty() ? options.c_str() : nullptr));
+  return str_to_c(
+      MolBlockToInchi(ctab, rv, !options.empty() ? options.c_str() : nullptr));
 }
 
 extern "C" char *get_inchikey_for_inchi(const char *inchi) {
