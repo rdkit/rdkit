@@ -1,7 +1,7 @@
 
 rdkit_library(HyperspaceSearch
         HyperspaceSubstructureSearch.cpp Hyperspace.cpp
-        LINK_LIBRARIES SmilesParse FileParsers ChemTransforms SubstructMatch GraphMol)
+        LINK_LIBRARIES SmilesParse FileParsers ChemTransforms Fingerprints SubstructMatch GraphMol)
 target_compile_definitions(HyperspaceSearch PRIVATE RDKIT_HYPERSPACE_SEARCH_BUILD)
 
 rdkit_headers(HyperspaceSubstructureSearch.h Hyperspace.h

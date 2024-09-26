@@ -9,6 +9,7 @@
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -99,11 +100,13 @@ TEST_CASE("Urea 1", "[Urea 1]") {
     auto results = hyperspace.searchFragSet(*fraggedMol);
     CHECK(results.size() == 1);
   }
+#if 1
   SECTION("Single molecule with fragging") {
     auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
     auto results = SSSearch(*queryMol, 3, hyperspace);
     CHECK(results.size() == 2);
   }
+#endif
 }
 
 TEST_CASE("Simple query 1", "[Simple query 1]") {

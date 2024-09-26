@@ -17,17 +17,38 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include <DataStructs/ExplicitBitVect.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+
 namespace RDKit {
 class ROMol;
 
 namespace HyperspaceSSSearch {
 
 struct Reagent {
-  std::string d_smiles;
-  std::string d_id;
-  std::unique_ptr<ROMol> d_mol;
   explicit Reagent(const std::string &smi, const std::string &id)
       : d_smiles(smi), d_id(id) {}
+
+  std::string d_smiles;
+  std::string d_id;
+
+  const std::unique_ptr<ROMol> &mol() {
+    if (!d_mol) {
+      d_mol = v2::SmilesParse::MolFromSmiles(d_smiles);
+    }
+    return d_mol;
+  }
+  const std::unique_ptr<ExplicitBitVect> &pattFP() {
+    if (!d_pattFP) {
+      d_pattFP.reset(PatternFingerprintMol(*mol(), 2048));
+    }
+    return d_pattFP;
+  }
+
+ private:
+  std::unique_ptr<ROMol> d_mol;
+  std::unique_ptr<ExplicitBitVect> d_pattFP;
 };
 
 struct ReactionSet {
