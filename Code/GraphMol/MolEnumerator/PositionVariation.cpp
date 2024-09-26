@@ -75,9 +75,9 @@ void PositionVariationOp::initFromMol() {
 
 std::vector<size_t> PositionVariationOp::getVariationCounts() const {
   std::vector<size_t> res(d_variationPoints.size());
-  std::transform(
-      d_variationPoints.begin(), d_variationPoints.end(), res.begin(),
-      [](const auto&  pr) -> size_t { return pr.second.size(); });
+  std::transform(d_variationPoints.begin(), d_variationPoints.end(),
+                 res.begin(),
+                 [](const auto &pr) -> size_t { return pr.second.size(); });
   return res;
 }
 

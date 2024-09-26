@@ -22,13 +22,13 @@ namespace RDKit {
 namespace {
 
 std::unique_ptr<MolStandardize::TautomerTransform> getTautomer(
-    const std::string& name, const std::string& smarts,
-    const std::string& bond_str, const std::string& charge_str) {
+    const std::string &name, const std::string &smarts,
+    const std::string &bond_str, const std::string &charge_str) {
   std::vector<Bond::BondType> bond_types =
       MolStandardize::stringToBondType(bond_str);
   std::vector<int> charges = MolStandardize::stringToCharge(charge_str);
 
-  ROMol* tautomer = SmartsToMol(smarts);
+  ROMol *tautomer = SmartsToMol(smarts);
   if (!tautomer) {
     throw ValueErrorException("cannot parse tautomer SMARTS: " + smarts);
   }
@@ -38,7 +38,7 @@ std::unique_ptr<MolStandardize::TautomerTransform> getTautomer(
 }
 
 std::unique_ptr<MolStandardize::TautomerTransform> getTautomer(
-    const std::string& tmpStr) {
+    const std::string &tmpStr) {
   if (tmpStr.length() == 0 || tmpStr.substr(0, 2) == "//") {
     // empty or comment line
     return nullptr;
@@ -90,7 +90,7 @@ namespace MolStandardize {
 
 std::vector<Bond::BondType> stringToBondType(std::string bond_str) {
   std::vector<Bond::BondType> bonds;
-  for (const auto& c : bond_str) {
+  for (const auto &c : bond_str) {
     switch (c) {
       case '-':
         bonds.push_back(Bond::SINGLE);
@@ -111,7 +111,7 @@ std::vector<Bond::BondType> stringToBondType(std::string bond_str) {
 
 std::vector<int> stringToCharge(std::string charge_str) {
   std::vector<int> charges;
-  for (const auto& c : charge_str) {
+  for (const auto &c : charge_str) {
     switch (c) {
       case '+':
         charges.push_back(1);
@@ -140,7 +140,7 @@ std::vector<TautomerTransform> readTautomers(std::string fileName) {
   return tautomers;
 }
 
-std::vector<TautomerTransform> readTautomers(std::istream& inStream,
+std::vector<TautomerTransform> readTautomers(std::istream &inStream,
                                              int nToRead) {
   if (inStream.bad()) {
     throw BadFileException("Bad stream contents.");
@@ -169,9 +169,9 @@ std::vector<TautomerTransform> readTautomers(std::istream& inStream,
 }
 
 std::vector<TautomerTransform> readTautomers(
-    const TautomerTransformDefs& data) {
+    const TautomerTransformDefs &data) {
   std::vector<TautomerTransform> tautomers;
-  for (const auto& tpl : data) {
+  for (const auto &tpl : data) {
     auto transform = getTautomer(std::get<0>(tpl), std::get<1>(tpl),
                                  std::get<2>(tpl), std::get<3>(tpl));
     if (transform) {

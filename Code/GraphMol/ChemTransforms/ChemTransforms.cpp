@@ -119,10 +119,10 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
   // all matches on the molecule - list of list of atom ids
   VECT_INT_VECT matches;
   matches.reserve(fgpMatches.size());
-  for (const auto& mati : fgpMatches) {
+  for (const auto &mati : fgpMatches) {
     INT_VECT match;  // each match onto the molecule - list of atoms ids
     match.reserve(mati.size());
-    for (const auto&  mi : mati) {
+    for (const auto &mi : mati) {
       match.push_back(mi.second);
     }
     matches.push_back(std::move(match));
@@ -133,9 +133,9 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
   if (onlyFrags) {
     VECT_INT_VECT frags;
     MolOps::getMolFrags(*res, frags);
-    for (auto& fi : frags) {
+    for (auto &fi : frags) {
       std::sort(fi.begin(), fi.end());
-      for (auto& mxi : matches) {
+      for (auto &mxi : matches) {
         std::sort(mxi.begin(), mxi.end());
         if (fi == mxi) {
           INT_VECT tmp;
@@ -143,13 +143,13 @@ ROMol *deleteSubstructs(const ROMol &mol, const ROMol &query, bool onlyFrags,
           delList = tmp;
           break;
         }  // end of if we found a matching fragment
-      }    // end of loop over matches
-    }      // end of loop over fragments
+      }  // end of loop over matches
+    }  // end of loop over fragments
   } else {
     // in this case we want to delete any matches we find
     // simply loop over the matches and collect the atoms that need to
     // be removed
-    for (const auto& mxi : matches) {
+    for (const auto &mxi : matches) {
       INT_VECT tmp;
       Union(mxi, delList, tmp);
       delList = tmp;

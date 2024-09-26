@@ -28,11 +28,11 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationDefinition {
   std::string smarts;
   std::shared_ptr<ROMol> mol;                  //!< optional
   std::vector<unsigned int> extraAttachAtoms;  //!< optional
-  bool operator==(const AbbreviationDefinition& other) const {
+  bool operator==(const AbbreviationDefinition &other) const {
     return label == other.label && displayLabel == other.displayLabel &&
            displayLabelW == other.displayLabelW && smarts == other.smarts;
   }
-  bool operator!=(const AbbreviationDefinition& other) const {
+  bool operator!=(const AbbreviationDefinition &other) const {
     return !(*this == other);
   }
 };
@@ -43,10 +43,10 @@ struct RDKIT_ABBREVIATIONS_EXPORT AbbreviationMatch {
                     AbbreviationDefinition abbrevArg)
       : match(std::move(matchArg)), abbrev(std::move(abbrevArg)) {}
   AbbreviationMatch() : match(), abbrev() {}
-  bool operator==(const AbbreviationMatch& other) const {
+  bool operator==(const AbbreviationMatch &other) const {
     return abbrev == other.abbrev && match == other.match;
   }
-  bool operator!=(const AbbreviationMatch& other) const {
+  bool operator!=(const AbbreviationMatch &other) const {
     return !(*this == other);
   }
 };
@@ -89,11 +89,11 @@ Format of the text data:
 
 */
 RDKIT_ABBREVIATIONS_EXPORT std::vector<AbbreviationDefinition>
-parseAbbreviations(const std::string& text, bool removeExtraDummies = false,
+parseAbbreviations(const std::string &text, bool removeExtraDummies = false,
                    bool allowConnectionToDummies = false);
 //! \brief equivalent to calling \c parseAbbreviations(text,true,true)
 inline std::vector<AbbreviationDefinition> parseLinkers(
-    const std::string& text) {
+    const std::string &text) {
   return parseAbbreviations(text, true, true);
 };
 }  // namespace Utils
@@ -107,28 +107,28 @@ inline std::vector<AbbreviationDefinition> parseLinkers(
 */
 RDKIT_ABBREVIATIONS_EXPORT std::vector<AbbreviationMatch>
 findApplicableAbbreviationMatches(
-    const ROMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
+    const ROMol &mol, const std::vector<AbbreviationDefinition> &abbrevs,
     double maxCoverage = 0.4);
 //! applies the abbreviation matches to a molecule, modifying it in place.
 //! the modified molecule is not sanitized
 RDKIT_ABBREVIATIONS_EXPORT void applyMatches(
-    RWMol& mol, const std::vector<AbbreviationMatch>& matches);
+    RWMol &mol, const std::vector<AbbreviationMatch> &matches);
 //! creates "SUP" SubstanceGroups on the molecule describing the abbreviation
 RDKIT_ABBREVIATIONS_EXPORT void labelMatches(
-    RWMol& mol, const std::vector<AbbreviationMatch>& matches);
+    RWMol &mol, const std::vector<AbbreviationMatch> &matches);
 //! convenience function for finding and applying abbreviations
 //! the modified molecule is not sanitized
 RDKIT_ABBREVIATIONS_EXPORT void condenseMolAbbreviations(
-    RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
+    RWMol &mol, const std::vector<AbbreviationDefinition> &abbrevs,
     double maxCoverage = 0.4, bool sanitize = true);
 //! convenience function for finding and labeling abbreviations as SUP
 //! SubstanceGroups
 RDKIT_ABBREVIATIONS_EXPORT void labelMolAbbreviations(
-    RWMol& mol, const std::vector<AbbreviationDefinition>& abbrevs,
+    RWMol &mol, const std::vector<AbbreviationDefinition> &abbrevs,
     double maxCoverage = 0.4);
 //! collapses abbreviation (i.e. "SUP") substance groups
 //! the modified molecule is not sanitized
-RDKIT_ABBREVIATIONS_EXPORT void condenseAbbreviationSubstanceGroups(RWMol& mol);
+RDKIT_ABBREVIATIONS_EXPORT void condenseAbbreviationSubstanceGroups(RWMol &mol);
 
 }  // namespace Abbreviations
 }  // namespace RDKit

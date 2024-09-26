@@ -139,7 +139,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
                              includeChirality),
         df_onlyNonzeroInvariants(onlyNonzeroInvariants),
         d_radius(radius),
-        df_includeRedundantEnvironments(includeRedundantEnvironments){};
+        df_includeRedundantEnvironments(includeRedundantEnvironments) {};
 };
 
 /**

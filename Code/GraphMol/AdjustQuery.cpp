@@ -491,7 +491,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       }
       qa->expandQuery(nq);
     }  // end of adjust ring chain
-  }    // end of loop over atoms
+  }  // end of loop over atoms
   if (params.useStereoCareForBonds) {
     for (auto bnd : mol.bonds()) {
       if (bnd->getBondType() == Bond::BondType::DOUBLE) {

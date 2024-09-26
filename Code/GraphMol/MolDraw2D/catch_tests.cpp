@@ -9811,28 +9811,27 @@ TEST_CASE("avoid duplicate enhanced stereo labels") {
 
 TEST_CASE("Draw atom map numbers on complex query atoms") {
   std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
-    "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
-REQUIRE(rxn);
-{
-  // Use NO_FREETYPE so that the characters appear in an
-  // easily found manner in the SVG.
-  MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
-  drawer.drawReaction(*rxn);
-  drawer.finishDrawing();
-  auto text = drawer.getDrawingText();
-  std::string svgFile = "testComplexQueryAtomMap.svg";
-  std::ofstream outs(svgFile);
-  outs << text;
-  outs.close();
-  check_file_hash(svgFile);
-  std::regex regex(std::string("<text\\s+.*>:</text>"));
-  size_t nOccurrences = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), regex),
-      std::sregex_token_iterator());
-  // there should be 6 colons drawn
-  CHECK(nOccurrences == 6);
-
-}
+      "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  {
+    // Use NO_FREETYPE so that the characters appear in an
+    // easily found manner in the SVG.
+    MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile = "testComplexQueryAtomMap.svg";
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    std::regex regex(std::string("<text\\s+.*>:</text>"));
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex),
+        std::sregex_token_iterator());
+    // there should be 6 colons drawn
+    CHECK(nOccurrences == 6);
+  }
 }
 
 TEST_CASE("Draw hetero atoms in black if highlighted") {
@@ -10079,9 +10078,8 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
     std::map<int, std::vector<DrawColour>> bondCols;
     std::map<int, double> atomRads{{2, 1.0}};
     std::map<int, int> bondMults;
-    REQUIRE_NOTHROW(
-        drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
-                                          atomRads, bondMults));
+    REQUIRE_NOTHROW(drawer.drawMoleculeWithHighlights(
+        *m, "nocrash", atomCols, bondCols, atomRads, bondMults));
   }
   {
     MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);

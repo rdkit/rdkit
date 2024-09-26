@@ -54,7 +54,7 @@ class MolAtropTest {
         : atomCount(atomCountInit),
           bondCount(bondCountInit),
           fileName(fileNameInit),
-          expectedResult(expectedResultInit){};
+          expectedResult(expectedResultInit) {};
   };
 
   void generateNewExpectedFilesIfSoSpecified(std::string filename,
