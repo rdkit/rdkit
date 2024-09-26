@@ -119,8 +119,8 @@ class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
     RDUNUSED_PARAM(version);
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
 
-    ar &arg1;
-    ar &arg2;
+    ar & arg1;
+    ar & arg2;
   }
 #endif
 };
@@ -179,8 +179,8 @@ class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
-    ar &arg1;
-    ar &arg2;
+    ar & arg1;
+    ar & arg2;
   }
 #endif
 };
@@ -234,7 +234,7 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
-    ar &arg1;
+    ar & arg1;
   }
 #endif
 };
@@ -349,19 +349,19 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
     std::string res;
     MolPickler::pickleMol(*d_pattern.get(), res);
-    ar &res;
-    ar &d_min_count;
-    ar &d_max_count;
+    ar & res;
+    ar & d_min_count;
+    ar & d_max_count;
   }
   template <class Archive>
   void load(Archive &ar, const unsigned int version) {
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
     RDUNUSED_PARAM(version);
     std::string res;
-    ar &res;
+    ar & res;
     d_pattern = boost::shared_ptr<ROMol>(new ROMol(res));
-    ar &d_min_count;
-    ar &d_max_count;
+    ar & d_min_count;
+    ar & d_max_count;
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
@@ -460,7 +460,7 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
-    ar &d_offPatterns;
+    ar & d_offPatterns;
   }
 #endif
 };
@@ -551,8 +551,8 @@ class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
     ar &boost::serialization::base_object<FilterMatcherBase>(*this);
-    ar &d_children;
-    ar &d_matcher;
+    ar & d_children;
+    ar & d_matcher;
   }
 #endif
 };

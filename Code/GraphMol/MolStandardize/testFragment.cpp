@@ -299,7 +299,7 @@ void testWhiteSpaceInSmarts() {
   std::vector<size_t> reference_sizes({0, 0, 1});
 
   auto reference = reference_sizes.cbegin();
-  for (const auto& smarts : data) {
+  for (const auto &smarts : data) {
     std::istringstream input(smarts);
     auto groups = readFuncGroups(input);
     TEST_ASSERT(groups.size() == *reference);
@@ -317,13 +317,13 @@ void testFragmentWithoutSmarts() {
        "//   Name	SMARTS\nnonsense no new line",
        "//   Name	SMARTS\nnonsense with tab\t\n"});
 
-  for (const auto& smarts : data) {
+  for (const auto &smarts : data) {
     bool ok = false;
     std::istringstream input(smarts);
     std::vector<std::shared_ptr<RDKit::ROMol>> groups;
     try {
       groups = readFuncGroups(input);
-    } catch (const ValueErrorException&) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);
@@ -348,7 +348,7 @@ void testParameters() {
     bool ok = false;
     try {
       auto groups = readFuncGroups(data);
-    } catch (const ValueErrorException&) {
+    } catch (const ValueErrorException &) {
       ok = true;
     }
     TEST_ASSERT(ok);

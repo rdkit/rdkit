@@ -51,14 +51,14 @@ std::vector<double> getG(int n) {
   return res;
 }
 
-std::vector<double> prepareIState(const ROMol& mol) {
+std::vector<double> prepareIState(const ROMol &mol) {
   std::vector<double> IState = moldata3D.GetIStateDrag(
       mol);  // get the real IState value not the EState!
   return IState;
 }
 
-void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
-                std::vector<double>& res) {
+void getRDFDesc(double *DM, const ROMol &mol, const Conformer &conf,
+                std::vector<double> &res) {
   // std::vector<double> reserror(210, 0); need to avoid the res NaNs
   // if (numAtoms < 4) return reserror;
   // if (!conf.is3D()) return reserror;
@@ -122,9 +122,9 @@ void getRDFDesc(double* DM, const ROMol& mol, const Conformer& conf,
   res = R1;
 }
 
-void getRDFDescCustom(double* DM, const ROMol& mol, const Conformer& conf,
-                      std::vector<double>& res,
-                      const std::string& customAtomPropName) {
+void getRDFDescCustom(double *DM, const ROMol &mol, const Conformer &conf,
+                      std::vector<double> &res,
+                      const std::string &customAtomPropName) {
   int numAtoms = conf.getNumAtoms();
 
   std::vector<double> R = getG(30);
@@ -146,20 +146,20 @@ void getRDFDescCustom(double* DM, const ROMol& mol, const Conformer& conf,
   res = R1;
 }
 
-void GetRDF(double* dist3D, const ROMol& mol, const Conformer& conf,
-            std::vector<double>& res) {
+void GetRDF(double *dist3D, const ROMol &mol, const Conformer &conf,
+            std::vector<double> &res) {
   getRDFDesc(dist3D, mol, conf, res);
 }
 
-void GetRDFone(double* dist3D, const ROMol& mol, const Conformer& conf,
-               std::vector<double>& res, const std::string customAtomPropName) {
+void GetRDFone(double *dist3D, const ROMol &mol, const Conformer &conf,
+               std::vector<double> &res, const std::string customAtomPropName) {
   getRDFDescCustom(dist3D, mol, conf, res, customAtomPropName);
 }
 
 }  // end of anonymous namespace
 
-void RDF(const ROMol& mol, std::vector<double>& res, int confId,
-         const std::string& customAtomPropName) {
+void RDF(const ROMol &mol, std::vector<double> &res, int confId,
+         const std::string &customAtomPropName) {
   // RDF010u RDF015u RDF020u RDF025u RDF030u RDF035u RDF040u RDF045u RDF050u
   // RDF055u RDF060u RDF065u RDF070u RDF075u RDF080u RDF085u RDF090u RDF095u
   // RDF100u RDF105u RDF110u RDF115u RDF120u RDF125u RDF130u RDF135u RDF140u
@@ -193,10 +193,10 @@ void RDF(const ROMol& mol, std::vector<double>& res, int confId,
   // int numAtoms = mol.getNumAtoms();
   // if (numAtoms < 4) return reserror;
 
-  const Conformer& conf = mol.getConformer(confId);
+  const Conformer &conf = mol.getConformer(confId);
   // if (!conf.is3D()) return reserror;
 
-  double* dist3D =
+  double *dist3D =
       MolOps::get3DDistanceMat(mol, confId, false, true);  // 3D distance matrix
 
   if (customAtomPropName != "") {

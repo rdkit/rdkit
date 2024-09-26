@@ -1195,6 +1195,7 @@ TEST_CASE("Github #7501 - dative bonds") {
     auto fname = cdxmlbase + "github7501-dative.cdxml";
     CDXMLParserParams params;
     auto mols = MolsFromCDXMLFile(fname, params);
-    CHECK(MolToSmiles(*mols[0]) == "CC(C)->[Os]12<-CCCN->1CC=N->2"); // All datives to the Oxygen
+    CHECK(MolToSmiles(*mols[0]) ==
+          "CC(C)->[Os]12<-CCCN->1CC=N->2");  // All datives to the Oxygen
   }
 }

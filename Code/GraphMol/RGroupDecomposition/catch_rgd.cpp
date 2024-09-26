@@ -978,22 +978,22 @@ TEST_CASE("includeTargetMolInResults") {
       "c1cc(-c2c([*:1])nn3nc([*:2])ccc23)nc(N(c2ccc([*:4])c([*:3])c2))n1"_smiles;
   REQUIRE(core);
   std::vector<ROMOL_SPTR> mols{
-    "Cc1ccc2c(c3ccnc(Nc4cccc(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccc(F)cc6"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
-    "C1CC1c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4"_smiles,
-    "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CC5)cc1F"_smiles,
-    "C1CCC(CC1)c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4"_smiles,
-    "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CCCCC5)cc1F"_smiles,
-    "COCCOc1cnn2ncc(c3ccnc(Nc4cccc(OC)c4)n3)c2c1"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccccc5"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccccc5"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccccc6"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccccc4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
-    "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6cccc(c6)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4cccc(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccc(F)cc6"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "C1CC1c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4"_smiles,
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CC5)cc1F"_smiles,
+      "C1CCC(CC1)c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4"_smiles,
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CCCCC5)cc1F"_smiles,
+      "COCCOc1cnn2ncc(c3ccnc(Nc4cccc(OC)c4)n3)c2c1"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccccc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccccc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccccc6"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccccc4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6cccc(c6)C(F)(F)F"_smiles,
   };
   bool areMolsNonNull = std::all_of(mols.begin(), mols.end(),
                                     [](const auto &mol) { return mol; });
@@ -1030,7 +1030,7 @@ TEST_CASE("includeTargetMolInResults") {
               std::count_if(bonds.begin(), bonds.end(), [](const auto &bond) {
                 return (bond->getBeginAtom()->getAtomicNum() > 0 ||
                         !bond->getBeginAtom()->getAtomMapNum()) &&
-                      (bond->getEndAtom()->getAtomicNum() > 0 ||
+                       (bond->getEndAtom()->getAtomicNum() > 0 ||
                         !bond->getEndAtom()->getAtomMapNum());
               });
         } else {
@@ -1049,28 +1049,36 @@ TEST_CASE("includeTargetMolInResults") {
       }
     }
     REQUIRE(targetMol);
-    auto flattenedAtomIndices = std::accumulate(allAtomIndices.begin(), allAtomIndices.end(),
-      std::vector<int>{}, [](std::vector<int> &acc, const std::vector<int> &v) {
-        acc.insert(acc.end(), std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
-        return acc;
-      });
-    auto uniqueAtomIndices = std::accumulate(allAtomIndices.begin(), allAtomIndices.end(),
-      std::set<int>{}, [](std::set<int> &acc, const std::vector<int> &v) {
-        acc.insert(std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
-        return acc;
-      });
+    auto flattenedAtomIndices = std::accumulate(
+        allAtomIndices.begin(), allAtomIndices.end(), std::vector<int>{},
+        [](std::vector<int> &acc, const std::vector<int> &v) {
+          acc.insert(acc.end(), std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    auto uniqueAtomIndices = std::accumulate(
+        allAtomIndices.begin(), allAtomIndices.end(), std::set<int>{},
+        [](std::set<int> &acc, const std::vector<int> &v) {
+          acc.insert(std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
     CHECK(flattenedAtomIndices.size() == uniqueAtomIndices.size());
     CHECK(flattenedAtomIndices.size() == targetMol->getNumAtoms());
-    auto flattenedBondIndices = std::accumulate(allBondIndices.begin(), allBondIndices.end(),
-      std::vector<int>{}, [](std::vector<int> &acc, const std::vector<int> &v) {
-        acc.insert(acc.end(), std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
-        return acc;
-      });
-    auto uniqueBondIndices = std::accumulate(allBondIndices.begin(), allBondIndices.end(),
-      std::set<int>{}, [](std::set<int> &acc, const std::vector<int> &v) {
-        acc.insert(std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
-        return acc;
-      });
+    auto flattenedBondIndices = std::accumulate(
+        allBondIndices.begin(), allBondIndices.end(), std::vector<int>{},
+        [](std::vector<int> &acc, const std::vector<int> &v) {
+          acc.insert(acc.end(), std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    auto uniqueBondIndices = std::accumulate(
+        allBondIndices.begin(), allBondIndices.end(), std::set<int>{},
+        [](std::set<int> &acc, const std::vector<int> &v) {
+          acc.insert(std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
     CHECK(flattenedBondIndices.size() == uniqueBondIndices.size());
     CHECK(flattenedBondIndices.size() == targetMol->getNumBonds());
   };

@@ -27,7 +27,7 @@ class JSMolBase {
  public:
   JSMolBase(const JSMolBase &) = delete;
   JSMolBase &operator=(const JSMolBase &) = delete;
-  virtual ~JSMolBase(){};
+  virtual ~JSMolBase() {};
   virtual const RDKit::RWMol &get() const = 0;
   virtual RDKit::RWMol &get() = 0;
   std::string get_smiles() const;
@@ -168,6 +168,7 @@ class JSMolBase {
 
   static constexpr int d_defaultWidth = 250;
   static constexpr int d_defaultHeight = 200;
+
  protected:
   JSMolBase() = default;
 };
@@ -223,8 +224,8 @@ class JSMolShared : public JSMolBase {
 class JSMolList {
  public:
   JSMolList(const std::vector<RDKit::ROMOL_SPTR> &mols)
-      : d_mols(mols), d_idx(0){};
-  JSMolList() : d_idx(0){};
+      : d_mols(mols), d_idx(0) {};
+  JSMolList() : d_idx(0) {};
   JSMolBase *next();
   size_t append(const JSMolBase &mol);
   size_t insert(size_t idx, const JSMolBase &mol);
@@ -360,16 +361,17 @@ JSMolBase *get_mcs_as_mol(const JSMolList &mols,
 class JSRGroupDecomposition {
  public:
   JSRGroupDecomposition(const JSMolBase &core, const std::string &details_json);
-  JSRGroupDecomposition(const JSMolBase &core) : JSRGroupDecomposition(core, ""){};
+  JSRGroupDecomposition(const JSMolBase &core)
+      : JSRGroupDecomposition(core, "") {};
   JSRGroupDecomposition(const JSMolList &cores,
                         const std::string &details_json);
   JSRGroupDecomposition(const JSMolList &cores)
-      : JSRGroupDecomposition(cores, ""){};
+      : JSRGroupDecomposition(cores, "") {};
   int add(const JSMolBase &mol);
   bool process();
   std::map<std::string, std::unique_ptr<JSMolList>> getRGroupsAsColumns() const;
-  std::vector<std::map<std::string, std::unique_ptr<JSMolBase>>> getRGroupsAsRows()
-      const;
+  std::vector<std::map<std::string, std::unique_ptr<JSMolBase>>>
+  getRGroupsAsRows() const;
 
  private:
   std::unique_ptr<RDKit::RGroupDecomposition> d_decomp;

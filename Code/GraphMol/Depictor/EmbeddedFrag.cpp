@@ -454,7 +454,8 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
     }
     // also check if the mol atoms have the same connectivity as the template
 #ifdef _MSC_VER
-    // MSVC++ doesn't like implicitly capturing constexpr variables, this is a bug
+    // MSVC++ doesn't like implicitly capturing constexpr variables, this is a
+    // bug
     auto degreeCounts = [DUMMY_ATOMIC_NUM](const RDKit::ROMol &mol) {
 #else
     // clang generates warnings if you explicitly capture a constexpr variable

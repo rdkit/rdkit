@@ -42,7 +42,7 @@ struct RDKIT_FORCEFIELD_EXPORT InversionContribsParams {
         C0(C0),
         C1(C1),
         C2(C2),
-        forceConstant(forceConstant){};
+        forceConstant(forceConstant) {};
 };
 //! A term to capture all Inversion Contributionss.
 class RDKIT_FORCEFIELD_EXPORT InversionContribs : public ForceFieldContrib {

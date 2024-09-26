@@ -19,22 +19,22 @@
 namespace python = boost::python;
 
 template <typename T>
-void InitFromBase64(T& self, const std::string& inD) {
+void InitFromBase64(T &self, const std::string &inD) {
   self.initFromText(inD.c_str(), inD.length(), true);
 };
 
 template <typename T>
-std::string ToBase64(T& self) {
+std::string ToBase64(T &self) {
   std::string tmp;
   tmp = self.toString();
-  const char* txt = Base64Encode(tmp.c_str(), tmp.length());
+  const char *txt = Base64Encode(tmp.c_str(), tmp.length());
   std::string res(txt);
   delete[] txt;
   return res;
 };
 
 template <typename T>
-void SetBitsFromList(T* bv, python::object onBitList) {
+void SetBitsFromList(T *bv, python::object onBitList) {
   PySequenceHolder<int> bitL(onBitList);
   for (unsigned int i = 0; i < bitL.size(); i++) {
     bv->setBit(bitL[i]);
@@ -42,7 +42,7 @@ void SetBitsFromList(T* bv, python::object onBitList) {
 }
 
 template <typename T>
-void UnSetBitsFromList(T* bv, python::object offBitList) {
+void UnSetBitsFromList(T *bv, python::object offBitList) {
   PySequenceHolder<int> bitL(offBitList);
   for (unsigned int i = 0; i < bitL.size(); i++) {
     bv->unsetBit(bitL[i]);
@@ -51,7 +51,7 @@ void UnSetBitsFromList(T* bv, python::object offBitList) {
 
 // used to support __getitem__
 template <typename T>
-int get_VectItem(const T& self, int which) {
+int get_VectItem(const T &self, int which) {
   if (which < 0) {
     if (which + static_cast<int>(self.getNumBits()) < 0) {
       throw IndexErrorException(which);
@@ -64,7 +64,7 @@ int get_VectItem(const T& self, int which) {
 
 // used to support __setitem__
 template <typename T>
-int set_VectItem(T& self, int which, const int val) {
+int set_VectItem(T &self, int which, const int val) {
   if (which < 0) {
     if (which + static_cast<int>(self.getNumBits()) < 0) {
       throw IndexErrorException(which);
@@ -81,14 +81,14 @@ int set_VectItem(T& self, int which, const int val) {
 
 // used to support getOnBits()
 template <typename T>
-IntVect GetOnBits(const T& self) {
+IntVect GetOnBits(const T &self) {
   IntVect res;
   self.getOnBits(res);
   return res;
 }
 
 template <typename T>
-python::object BVToBinary(const T& bv) {
+python::object BVToBinary(const T &bv) {
   std::string res = bv.toString();
   python::object retval = python::object(
       python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
