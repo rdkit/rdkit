@@ -413,8 +413,14 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
       maxValence = ovalens.back();
       offset -= atom.getFormalCharge();
     }
+    // we have historically accepted two-coordinate [H-] as a valid atom. This
+    // is highly questionable, but changing it requires some thought. For now we
+    // will just keep accepting it
+    if (atom.getAtomicNum() == 1 && atom.getFormalCharge() == -1) {
+      maxValence = 2;
+    }
     // maxValence == -1 signifies that we'll take anything at the high end
-    if (maxValence > 0 && ovalens.back() > 0 && (res + offset) > maxValence) {
+    if (maxValence >= 0 && ovalens.back() >= 0 && (res + offset) > maxValence) {
       // the explicit valence is greater than any
       // allowed valence for the atoms
 
