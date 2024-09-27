@@ -75,7 +75,6 @@ __pycache__/
 /External/catch/catch/
 /External/rapidjson*/
 
-
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
 
@@ -137,12 +136,12 @@ __pycache__/
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store
 
-rdkit/fragmentshetero_atom_mutations_fuzzing.csv
-rdkit/fragmentsnot_changed_during_fuzzing.csv
-rdkit/hetero_atom_mutations.csv
-rdkit/not_changed.csv
-rdkit/similarityMap1_out.svg
-rdkit/similarityMap1_out2.svg
+/rdkit/fragmentshetero_atom_mutations_fuzzing.csv
+/rdkit/fragmentsnot_changed_during_fuzzing.csv
+/rdkit/hetero_atom_mutations.csv
+/rdkit/not_changed.csv
+/rdkit/similarityMap1_out.svg
+/rdkit/similarityMap1_out2.svg
 
 # JS distribution or temp files
 Code/MinimalLib/dist
