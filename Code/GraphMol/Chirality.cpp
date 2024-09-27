@@ -1089,6 +1089,68 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
   }
 }
 
+struct PrecomputedBondFeatures {
+  //! Pairs of {atom index, counts}, strided by 8 for each atom.
+  std::vector<std::pair<std::uint8_t,int>> countsAndNeighborIndices;
+  //! Number of neighbors per atom.
+  std::vector<std::uint8_t> numNeighbors;
+
+};
+
+constexpr int kMaxBonds = 8;
+
+//! Lookup neighbor indices and compute counts for each atom.
+PrecomputedBondFeatures computeBondFeatures(const ROMol& mol) {
+  PrecomputedBondFeatures features;
+  const unsigned int numAtoms = mol.getNumAtoms();
+  features.countsAndNeighborIndices.resize(numAtoms * kMaxBonds);
+  features.numNeighbors.resize(numAtoms, 0);
+
+  for (size_t atomIdx = 0; atomIdx < numAtoms; atomIdx++) {
+    int indexOffset = atomIdx * kMaxBonds;
+    for (const auto bond : mol.atomBonds(mol[atomIdx])) {
+      const unsigned int nbrIdx = bond->getOtherAtomIdx(atomIdx);
+      features.numNeighbors[nbrIdx]++;
+      auto& [count, neighborIndex] = features.countsAndNeighborIndices[indexOffset];
+      neighborIndex = nbrIdx;
+
+      // put the neighbor in 2N times where N is the bond order as a double.
+      // this is to treat aromatic linkages on fair footing. i.e. at least in
+      // the first iteration --c(:c):c and --C(=C)-C should look the same.
+      // this was part of issue 3009911
+
+      // a special case for chiral phosphorus compounds
+      // (this was leading to incorrect assignment of R/S labels ):
+      bool isChiralPhosphorusSpecialCase = false;
+      if (bond->getBondType() == Bond::DOUBLE) {
+        const Atom *nbr = mol[nbrIdx];
+        if (nbr->getAtomicNum() == 15) {
+          unsigned int nbrDeg = nbr->getDegree();
+          isChiralPhosphorusSpecialCase = nbrDeg == 3 || nbrDeg == 4;
+        }
+      };
+
+      // general justification of this is:
+      // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
+      // Multiple-Bond Unsaturation and Aromaticity". It contains several
+      // conventions of which convention (b) is the one applying here:
+      // "(b) Contributions by d orbitals to bonds of quadriligant atoms are
+      // neglected."
+      // FIX: this applies to more than just P
+      if (isChiralPhosphorusSpecialCase) {
+        count += 1;
+      } else {
+        count += getTwiceBondType(*bond);
+      }
+
+      ++indexOffset;
+    }
+
+
+  }
+  return features;
+}
+
 void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
                      UINT_VECT &ranks, bool seedWithInvars) {
   PRECONDITION(invars.size() == mol.getNumAtoms(), "bad invars size");
@@ -1140,9 +1202,9 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
   unsigned int numIts = 0;
   int lastNumRanks = -1;
   unsigned int numRanks = *std::max_element(ranks.begin(), ranks.end()) + 1;
-  std::vector<unsigned int> counts(ranks.size());
-  std::vector<unsigned int> updatedNbrIdxs;
-  updatedNbrIdxs.reserve(8);
+
+  PrecomputedBondFeatures bondFeatures = computeBondFeatures(mol);
+
   while (numRanks < numAtoms && numIts < maxIts &&
          (lastNumRanks < 0 ||
           static_cast<unsigned int>(lastNumRanks) < numRanks)) {
@@ -1152,57 +1214,26 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     // for each atom, get a sorted list of its neighbors' ranks:
     //
     for (unsigned int index = 0; index < numAtoms; ++index) {
-      // Note: counts is cleaned up when we drain into cipEntries.
-      updatedNbrIdxs.clear();
 
-      // start by pushing on our neighbors' ranks:
-      for (const auto bond : mol.atomBonds(mol[index])) {
-        unsigned int nbrIdx = bond->getOtherAtomIdx(index);
-        updatedNbrIdxs.push_back(nbrIdx);
+      const unsigned int indexOffset = kMaxBonds * index;
+      const int numNeighbors = bondFeatures.numNeighbors[index];
 
-        // put the neighbor in 2N times where N is the bond order as a double.
-        // this is to treat aromatic linkages on fair footing. i.e. at least in
-        // the first iteration --c(:c):c and --C(=C)-C should look the same.
-        // this was part of issue 3009911
-
-        // a special case for chiral phosphorus compounds
-        // (this was leading to incorrect assignment of R/S labels ):
-        bool isChiralPhosphorusSpecialCase = false;
-        if (bond->getBondType() == Bond::DOUBLE) {
-          const Atom *nbr = mol[nbrIdx];
-          if (nbr->getAtomicNum() == 15) {
-            unsigned int nbrDeg = nbr->getDegree();
-            isChiralPhosphorusSpecialCase = nbrDeg == 3 || nbrDeg == 4;
-          }
-        };
-
-        // general justification of this is:
-        // Paragraph 2.2. in the 1966 article is "Valence-Bond Conventions:
-        // Multiple-Bond Unsaturation and Aromaticity". It contains several
-        // conventions of which convention (b) is the one applying here:
-        // "(b) Contributions by d orbitals to bonds of quadriligant atoms are
-        // neglected."
-        // FIX: this applies to more than just P
-        if (isChiralPhosphorusSpecialCase) {
-          counts[nbrIdx] += 1;
-        } else {
-          counts[nbrIdx] += getTwiceBondType(*bond);
-        }
-      }
+      auto* sortBegin = &bondFeatures.countsAndNeighborIndices[indexOffset];
+      auto* sortEnd = sortBegin + numNeighbors + 1;
 
       // For each of our neighbors' ranks weighted by bond type, copy it N times
       // to our cipEntry in reverse rank order, where N is the weight.
-      if (updatedNbrIdxs.size() > 1) {  // compare vs 1 for performance.
-        std::sort(std::begin(updatedNbrIdxs), std::end(updatedNbrIdxs),
-                  [&ranks](unsigned int idx1, unsigned int idx2) {
-                    return ranks[idx1] > ranks[idx2];
+      if (numNeighbors > 1) {  // compare vs 1 for performance.
+        std::sort(sortBegin, sortEnd,
+                  [&ranks](const std::pair<int, int>& countAndIdx1,
+                           const std::pair<int, int>& countAndIdx2) {
+                    return ranks[countAndIdx1.second] > ranks[countAndIdx2.second];
                   });
       }
       auto &cipEntry = cipEntries[index];
-      for (auto nbrIdx : updatedNbrIdxs) {
-        unsigned int count = counts[nbrIdx];
-        cipEntry.insert(cipEntry.end(), count, ranks[nbrIdx] + 1);
-        counts[nbrIdx] = 0;
+      for (auto* iter = sortBegin; iter != sortEnd; ++iter) {
+        const auto& [count, idx] = *iter;
+        cipEntry.insert(cipEntry.end(), count, ranks[idx] + 1);
       }
       // add a zero for each coordinated H as long as we're not a query atom
       if (!mol[index]->hasQuery()) {
