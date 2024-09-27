@@ -17,45 +17,53 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/HyperspaceSearch/Reagent.h>
 
 namespace RDKit {
 class ROMol;
 
 namespace HyperspaceSSSearch {
 
-struct Reagent {
-  explicit Reagent(const std::string &smi, const std::string &id)
-      : d_smiles(smi), d_id(id) {}
-
-  std::string d_smiles;
-  std::string d_id;
-
-  const std::unique_ptr<ROMol> &mol() {
-    if (!d_mol) {
-      d_mol = v2::SmilesParse::MolFromSmiles(d_smiles);
-    }
-    return d_mol;
-  }
-  const std::unique_ptr<ExplicitBitVect> &pattFP() {
-    if (!d_pattFP) {
-      d_pattFP.reset(PatternFingerprintMol(*mol(), 2048));
-    }
-    return d_pattFP;
-  }
-
- private:
-  std::unique_ptr<ROMol> d_mol;
-  std::unique_ptr<ExplicitBitVect> d_pattFP;
-};
-
-struct ReactionSet {
-  ReactionSet(const std::string &id) : d_id(id) {}
+// All the reagents for a particular reaction, plus some extra info.
+struct ReagentSet {
+  ReagentSet(const std::string &id) : d_id(id) {}
   std::string d_id;
   std::vector<std::vector<std::unique_ptr<Reagent>>> d_reagents;
   boost::dynamic_bitset<> d_connectors;
+
+  const std::vector<std::shared_ptr<ROMol>> &connectorRegions() const {
+    if (d_connectorRegions.empty()) {
+      std::set<std::string> smis;
+      for (const auto &rset : d_reagents) {
+        for (const auto &r : rset) {
+          for (const auto &cr : r->connRegions()) {
+            auto smi = MolToSmiles(*cr);
+            if (smis.insert(smi).second) {
+              d_connectorRegions.push_back(cr);
+            }
+          }
+        }
+      }
+    }
+    return d_connectorRegions;
+  }
+
+  const std::unique_ptr<ExplicitBitVect> &connRegFP() const {
+    if (!d_connRegFP && !connectorRegions().empty()) {
+      d_connRegFP.reset(PatternFingerprintMol(*connectorRegions().front()));
+      for (size_t i = 1; i < connectorRegions().size(); ++i) {
+        std::unique_ptr<ExplicitBitVect> fp(
+            PatternFingerprintMol(*connectorRegions()[i]));
+        *d_connRegFP |= *fp;
+      }
+    }
+    return d_connRegFP;
+  }
+
+ private:
+  mutable std::vector<std::shared_ptr<ROMol>> d_connectorRegions;
+  mutable std::unique_ptr<ExplicitBitVect> d_connRegFP;
 };
 
 class Hyperspace {
@@ -80,7 +88,7 @@ class Hyperspace {
    * with a direct bond of the appropriate type.
    *
    * Throws a std::runtime_error if it doesn't think the format is correct,
-   * which is does by checking that the first line is as above and subsequent
+   * which it does by checking that the first line is as above and subsequent
    * lines have 4 fields.
    * The formatting has been relaxed such that any whitespace may be used as
    * the field separator.
@@ -89,7 +97,7 @@ class Hyperspace {
   explicit Hyperspace(const std::string &fileName);
 
   int numReactions() const { return d_reactions.size(); }
-  const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
+  const std::map<std::string, std::unique_ptr<ReagentSet>> &reactions() const {
     return d_reactions;
   }
 
@@ -104,10 +112,10 @@ class Hyperspace {
 
  private:
   std::string d_fileName;
-  std::map<std::string, std::unique_ptr<ReactionSet>> d_reactions;
+  std::map<std::string, std::unique_ptr<ReagentSet>> d_reactions;
 
   void readFile();
-  // scan through the connectors ([1*], [2*] etc.) in the reagents in reach
+  // scan through the connectors ([1*], [2*] etc.) in the reagents in each
   // ReagentSet and set bits in d_connectors accordingly.
   void assignConnectorsUsed();
 

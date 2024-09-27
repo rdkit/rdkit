@@ -12,6 +12,7 @@
 #include <regex>
 #include <string>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/dynamic_bitset.hpp>
 
 #include <GraphMol/MolOps.h>
@@ -41,6 +42,12 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::search(
   RDKit::MatchVectType dontCare;
 
   auto fragments = details::splitMolecule(query, maxBondSplits);
+  //  for (const auto &frags : fragments) {
+  //    std::cout << "****************************" << std::endl;
+  //    for (const auto &f : frags) {
+  //      std::cout << MolToSmiles(*f) << std::endl;
+  //    }
+  //  }
   for (auto &fragSet : fragments) {
     for (auto &fraggedMol : fragSet) {
       auto theseResults = searchFragSet(*fraggedMol);
@@ -95,7 +102,7 @@ void Hyperspace::readFile() {
     //    std::cout << nextReag[0] << " : " << nextReag[1] << std::endl;
     if (auto it = d_reactions.find(nextReag[3]); it == d_reactions.end()) {
       d_reactions.insert(std::make_pair(
-          nextReag[3], std::make_unique<ReactionSet>(nextReag[3])));
+          nextReag[3], std::make_unique<ReagentSet>(nextReag[3])));
     }
     auto &currReaction = d_reactions[nextReag[3]];
     size_t synthonId = std::stoi(nextReag[2]);
@@ -126,8 +133,8 @@ void Hyperspace::assignConnectorsUsed() {
         }
       }
     }
-    std::cout << "Connectors : " << reaction->d_id << " : "
-              << reaction->d_connectors << std::endl;
+    //    std::cout << "Connectors : " << reaction->d_id << " : "
+    //              << reaction->d_connectors << std::endl;
   }
 }
 
@@ -148,17 +155,17 @@ boost::dynamic_bitset<> getConnectorPattern(const ROMol &mol) {
 // in the reaction onto the connectors in the fragments.
 // E.g. if the reaction has 3 connectors, 1, 2 and 3 and the fragged mol has
 // 2, return all permutations of 2 from 3.  It's ok if the fragged mol doesn't
-// have all the connections in the reaction, although this may well result in a
-// lot of hits.
+// have all the connections in the reaction, although this may well result in
+// a lot of hits.
 std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
     const std::vector<std::unique_ptr<ROMol>> &molFrags,
     const boost::dynamic_bitset<> &fragConns,
     const boost::dynamic_bitset<> &reactionConns) {
   std::vector<std::vector<std::unique_ptr<RWMol>>> connPerms;
-  for (const auto &mf : molFrags) {
-    std::cout << MolToSmiles(*mf) << " ";
-  }
-  std::cout << " :: " << fragConns << " : " << reactionConns << std::endl;
+  //  for (const auto &mf : molFrags) {
+  //    std::cout << MolToSmiles(*mf) << " ";
+  //  }
+  //  std::cout << " :: " << fragConns << " : " << reactionConns << std::endl;
   auto bitsToInts =
       [](const boost::dynamic_bitset<> &bits) -> std::vector<int> {
     std::vector<int> ints;
@@ -171,17 +178,18 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
   };
   auto numFragConns = fragConns.count();
   auto rConns = bitsToInts(reactionConns);
-  std::cout << "Num frag conns : " << numFragConns
-            << " num reaction conns : " << reactionConns.count() << std::endl;
+  //  std::cout << "Num frag conns : " << numFragConns
+  //            << " num reaction conns : " << reactionConns.count() <<
+  //            std::endl;
   auto perms = details::permMFromN(numFragConns, reactionConns.count());
-  std::cout << "PERMS" << std::endl;
+  //  std::cout << "PERMS" << std::endl;
 
   for (const auto &perm : perms) {
-    std::cout << "Next perm : ";
-    for (auto &i : perm) {
-      std::cout << i << " ";
-    }
-    std::cout << std::endl;
+    //    std::cout << "Next perm : ";
+    //    for (auto &i : perm) {
+    //      std::cout << i << " ";
+    //    }
+    //    std::cout << std::endl;
     connPerms.push_back(std::vector<std::unique_ptr<RWMol>>());
     // Copy the fragments and set the isotope numbers according to this
     // permutation.
@@ -197,10 +205,10 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
         }
       }
     }
-    for (const auto &f : connPerms.back()) {
-      std::cout << MolToSmiles(*f) << "::";
-    }
-    std::cout << std::endl;
+    //    for (const auto &f : connPerms.back()) {
+    //      std::cout << MolToSmiles(*f) << "::";
+    //    }
+    //    std::cout << std::endl;
   }
 
   return connPerms;
@@ -212,7 +220,7 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
 // fragmentation, without generating the combinations of connector numbers.
 std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     std::vector<std::unique_ptr<ROMol>> &molFrags,
-    std::unique_ptr<ReactionSet> &reaction) {
+    std::unique_ptr<ReagentSet> &reaction) {
   std::vector<boost::dynamic_bitset<>> reagsToUse;
   std::vector<std::unique_ptr<ExplicitBitVect>> pattFPs;
   for (const auto &frag : molFrags) {
@@ -262,9 +270,9 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     }
   }
 
-  for (const auto &pf : passedFPs) {
-    std::cout << "passFPs : " << pf << std::endl;
-  }
+  //  for (const auto &pf : passedFPs) {
+  //    std::cout << "passFPs : " << pf << std::endl;
+  //  }
   return passedFPs;
 }
 
@@ -272,9 +280,9 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
 // a substructure match.  Only do this for those reagents that have already
 // passed previous screening, and are flagged as such in passedScreens.
 std::vector<boost::dynamic_bitset<>> getHitReagents(
-    std::vector<std::unique_ptr<RWMol>> &fraggedMol,
+    std::vector<std::unique_ptr<RWMol>> &molFrags,
     const std::vector<boost::dynamic_bitset<>> &passedScreens,
-    std::unique_ptr<ReactionSet> &reaction) {
+    std::unique_ptr<ReagentSet> &reaction) {
   RDKit::MatchVectType dontCare;
   std::vector<boost::dynamic_bitset<>> reagsToUse;
   for (const auto &reagSet : reaction->d_reagents) {
@@ -284,7 +292,7 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   // The tests must be applied for all permutations of reagent list against
   // fragment.
   auto reagentOrders =
-      details::permMFromN(fraggedMol.size(), reaction->d_reagents.size());
+      details::permMFromN(molFrags.size(), reaction->d_reagents.size());
 
   for (const auto &ro : reagentOrders) {
     //    std::cout << "Reagent orders : ";
@@ -304,14 +312,15 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
       for (size_t j = 0; j < reagSet.size(); ++j) {
         if (passedScreensSet[j]) {
           auto &reag = reagSet[j];
-          //        std::cout << "seeing if reagent " << reag->d_smiles << " of
+          //        std::cout << "seeing if reagent " << reag->d_smiles << "
+          //        of
           //        "
           //        << ro[i]
-          //                  << " has " << MolToSmiles(*fraggedMol[i]) <<
+          //                  << " has " << MolToSmiles(*molFrags[i]) <<
           //                  std::endl;
-          if (SubstructMatch(*reag->mol(), *fraggedMol[i], dontCare)) {
+          if (SubstructMatch(*reag->mol(), *molFrags[i], dontCare)) {
             //          std::cout << "match " << reag->d_smiles << " has "
-            //                    << MolToSmiles(*fraggedMol[i]) << std::endl;
+            //                    << MolToSmiles(*molFrags[i]) << std::endl;
             thisPass[ro[i]][j] = true;
             fragsMatched[i] = true;
           }
@@ -327,8 +336,8 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   }
   // If all bits in one of the bitsets is unset, it means that nothing matched
   // that reagent.  If at least one of the bitsets has a set bit, all products
-  // incorporating the reagent with no bits sets must match the query so should
-  // be used.
+  // incorporating the reagent with no bits sets must match the query so
+  // should be used.
   bool someSet = false;
   for (auto &rtu : reagsToUse) {
     if (rtu.count()) {
@@ -345,6 +354,51 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   }
   return reagsToUse;
 }
+
+// Return true if all the fragments have a connector region that matches
+// something in the reaction, false otherwise.
+bool checkConnectorRegions(std::vector<std::unique_ptr<ROMol>> &molFrags,
+                           std::unique_ptr<ReagentSet> &reaction) {
+  const auto &rxnConnRegs = reaction->connectorRegions();
+  const auto &rxnConnRegsFP = reaction->connRegFP();
+  RDKit::MatchVectType dontCare;
+
+  for (const auto &frag : molFrags) {
+    auto connRegs = getConnRegion(*frag);
+    std::vector<std::unique_ptr<ROMol>> splitConnRegs;
+    MolOps::getMolFrags(*connRegs, splitConnRegs, false);
+    bool connRegFound = false;
+    for (const auto &cr : splitConnRegs) {
+      std::unique_ptr<ExplicitBitVect> crfp(PatternFingerprintMol(*cr));
+      //      std::cout << "Conn region : " << MolToSmiles(*cr) << std::endl;
+      if (AllProbeBitsMatch(*crfp, *rxnConnRegsFP)) {
+        //        std::cout << MolToSmiles(*cr) << " might be in " <<
+        //        reaction->d_id
+        //                  << std::endl;
+        for (const auto &rxncr : rxnConnRegs) {
+          if (SubstructMatch(*rxncr, *cr, dontCare)) {
+            connRegFound = true;
+            break;
+          }
+        }
+      }
+      if (connRegFound) {
+        //        std::cout << "   It was" << std::endl;
+        break;
+      } else {
+        //        std::cout << "   It wasn't" << std::endl;
+      }
+    }
+    if (!connRegFound) {
+      //      std::cout << MolToSmiles(*frag) << " didn't have a conn reg
+      //      match"
+      //                << std::endl;
+      return false;
+    }
+  }
+  //  std::cout << "CONN Reg OK" << std::endl;
+  return true;
+}
 }  // namespace
 
 std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
@@ -356,13 +410,13 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
 
   std::vector<std::unique_ptr<ROMol>> molFrags;
   auto numFrags = MolOps::getMolFrags(fraggedMol, molFrags, false);
-  std::cout << "Num frags : " << numFrags << std::endl;
+  //  std::cout << "Num frags : " << numFrags << std::endl;
   auto conns = getConnectorPattern(fraggedMol);
   for (auto &it : d_reactions) {
     auto &reaction = it.second;
-    std::cout << "Searching for " << MolToSmiles(fraggedMol) << " in "
-              << reaction->d_id << " : " << reaction->d_reagents.size()
-              << std::endl;
+    //    std::cout << "Searching for " << MolToSmiles(fraggedMol) << " in "
+    //              << reaction->d_id << " : " << reaction->d_reagents.size()
+    //              << std::endl;
     // It can't be a hit if the number of fragments is more than the number
     // of reagent sets because some of the molecule won't be matched in any
     // of the potential products.  It can be less, in which case the unused
@@ -372,6 +426,11 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
       continue;
     }
 
+    // Check that all the frags have a connector region that matches something
+    // in this reaction set.  Skip if not.
+    if (!checkConnectorRegions(molFrags, reaction)) {
+      continue;
+    }
     auto passedScreens = screenReagentsWithFPs(molFrags, reaction);
 
     // If none of the reagents passed the screens, move right along, nothing
@@ -396,9 +455,17 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     for (auto &connComb : connCombs) {
       auto theseReagents = getHitReagents(connComb, passedScreens, reaction);
       if (!theseReagents.empty()) {
-        buildHits(theseReagents, it.first, results);
-        for (const auto &tr : theseReagents) {
-          std::cout << "reagents : " << tr << std::endl;
+        //        for (const auto &tr : theseReagents) {
+        //          std::cout << "reagents : " << tr << std::endl;
+        //        }
+        int totReags =
+            std::reduce(theseReagents.begin(), theseReagents.end(), 0,
+                        [&](int prevRes, const boost::dynamic_bitset<> &s2) {
+                          return prevRes + s2.count();
+                        });
+        //        std::cout << "totReags : " << totReags << std::endl;
+        if (totReags) {
+          buildHits(theseReagents, it.first, results);
         }
       }
     }
@@ -442,9 +509,10 @@ void Hyperspace::buildHits(
   if (reagentsToUse.empty()) {
     return;
   }
-  std::cout << "Build hits with " << reaction_id << std::endl;
+  //  std::cout << "Build hits with " << reaction_id << std::endl;
   auto reags = getReagentsToUse(reagentsToUse, reaction_id);
   if (reags.empty()) {
+    //    std::cout << "Nothing to do" << std::endl;
     return;
   }
 
@@ -457,23 +525,24 @@ void Hyperspace::buildHits(
   MolzipParams params;
   params.label = MolzipLabel::Isotope;
   while (stepper.d_currState[0] != numReags[0]) {
-    std::cout << "Step : ";
-    for (auto &i : stepper.d_currState) {
-      std::cout << i << " ";
-    }
-    std::cout << std::endl;
+    //    std::cout << "Step : ";
+    //    for (auto &i : stepper.d_currState) {
+    //      std::cout << i << " ";
+    //    }
+    //    std::cout << std::endl;
     std::unique_ptr<ROMol> combMol(
         new ROMol(*reags[0][stepper.d_currState[0]]));
-    for (int i = 0; i < numReactions; ++i) {
-      std::cout << MolToSmiles(*reags[i][stepper.d_currState[i]]) << " ";
-    }
-    std::cout << std::endl;
+    //    for (int i = 0; i < numReactions; ++i) {
+    //      std::cout << MolToSmiles(*reags[i][stepper.d_currState[i]]) << "
+    //      ";
+    //    }
+    //    std::cout << std::endl;
     for (int i = 1; i < numReactions; ++i) {
       combMol.reset(combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
     }
-    std::cout << "Comb mol : " << MolToSmiles(*combMol) << std::endl;
+    //    std::cout << "Comb mol : " << MolToSmiles(*combMol) << std::endl;
     auto prod = molzip(*combMol, params);
-    std::cout << "Zipped : " << MolToSmiles(*prod) << std::endl;
+    //    std::cout << "Zipped : " << MolToSmiles(*prod) << std::endl;
     results.push_back(std::move(prod));
     stepper.step();
   }

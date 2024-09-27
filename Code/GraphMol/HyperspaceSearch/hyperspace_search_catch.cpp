@@ -10,13 +10,13 @@
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/HyperspaceSearch/Hyperspace.h>
+#include <GraphMol/HyperspaceSearch/HyperspaceSubstructureSearch.h>
+#include <GraphMol/HyperspaceSearch/Reagent.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <catch2/catch_all.hpp>
-
-#include "Hyperspace.h"
-#include "HyperspaceSubstructureSearch.h"
 
 using namespace RDKit;
 using namespace RDKit::HyperspaceSSSearch;
@@ -94,12 +94,14 @@ TEST_CASE("Urea 1", "[Urea 1]") {
   std::string libName =
       fName + "/Code/GraphMol/HyperspaceSearch/data/urea_space.txt";
   Hyperspace hyperspace(libName);
+#if 1
   SECTION("Single fragged molecule") {
     auto fraggedMol =
         "O=C(NC1COC1)[1*].O=C(Nc1c(CN[1*])cc[s]1)[2*].Fc1nccnc1[2*]"_smiles;
     auto results = hyperspace.searchFragSet(*fraggedMol);
     CHECK(results.size() == 1);
   }
+#endif
 #if 1
   SECTION("Single molecule with fragging") {
     auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
@@ -110,8 +112,8 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 }
 
 TEST_CASE("Simple query 1", "[Simple query 1]") {
-  std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
+  //  std::string libName =
+  //      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
   Hyperspace hyperspace(LIB_NAME);
   SECTION("Single fragged molecule") {
     auto fraggedMol = "c1ccccc1[1*].C1CCCN1C(=O)[1*]"_smiles;
@@ -137,4 +139,38 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
               << subsLib->getMol(i)->getProp<std::string>("_Name") << std::endl;
   }
 #endif
+}
+
+TEST_CASE("Connector Regions", "[Connector Regions]") {
+  SECTION("Single tests") {
+    auto m1 = "[1*]CN(C[2*])Cc1ccccc1"_smiles;
+    REQUIRE(m1);
+    CHECK(MolToSmiles(*getConnRegion(*m1)) == "[1*]CN(C)C[1*]");
+
+    auto m2 = "[1*]CN(C[2*])Cc1ccc(CN(C[3*])C[1*])cc1"_smiles;
+    REQUIRE(m2);
+    CHECK(MolToSmiles(*getConnRegion(*m2)) == "[1*]CN(C)C[1*].[1*]CN(C)C[1*]");
+
+    auto m3 = "[2*]C"_smiles;
+    REQUIRE(m3);
+    CHECK(MolToSmiles(*getConnRegion(*m3)) == "[1*]C");
+
+    auto m4 = "[1*]c1cnccc1"_smiles;
+    REQUIRE(m4);
+    CHECK(MolToSmiles(*getConnRegion(*m4)) == "[1*]c(cc)cn");
+  }
+
+  SECTION("Built from file") {
+    std::string libName =
+        fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
+    Hyperspace hyperspace(libName);
+    for (const auto &rs : hyperspace.reactions()) {
+      std::cout << rs.first << " :";
+      for (const auto &cr : rs.second->connectorRegions()) {
+        std::cout << " " << MolToSmiles(*cr);
+      }
+      std::cout << std::endl;
+      CHECK(rs.second->connectorRegions().size() == 30);
+    }
+  }
 }
