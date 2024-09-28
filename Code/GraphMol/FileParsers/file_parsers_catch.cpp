@@ -7156,7 +7156,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit) {};
+        newSgroupCount(newSgroupCountInit){};
 };
 
 void testFragmentation(const FragTest &fragTest) {
@@ -7394,7 +7394,7 @@ TEST_CASE("MolToV2KMolBlock") {
     };
     for (const auto &smi : smileses) {
       INFO(smi);
-      auto m = SmilesToMol(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
       REQUIRE(m);
       CHECK_THROWS_AS(MolToV2KMolBlock(*m), ValueErrorException);
     }
