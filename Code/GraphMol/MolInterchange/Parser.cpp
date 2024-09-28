@@ -58,7 +58,7 @@ namespace MolInterchange {
 
 namespace {
 struct DefaultValueCache {
-  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs) {};
+  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs){};
   const rj::Value &rjDefaults;
   mutable std::map<const char *, int> intMap;
   mutable std::map<const char *, bool> boolMap;
@@ -970,10 +970,13 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
     }
     for (const auto &molval : doc["molecules"].GetArray()) {
       auto *mol = new RWMol();
+
+      // Add the mol to res, so that it is managed in case processMol throws
+      res.emplace_back(static_cast<ROMol *>(mol));
+
       processMol(mol, molval, atomDefaults, bondDefaults, params);
       mol->updatePropertyCache(params.strictValenceCheck);
       mol->setProp(common_properties::_StereochemDone, 1);
-      res.emplace_back(static_cast<ROMol *>(mol));
     }
   }
 
