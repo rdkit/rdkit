@@ -157,12 +157,12 @@ bool assignBondDirs(RWMol &mol, INT_PAIR_VECT &zBondPairs,
                 // not assigned, then add to queue
                 queue.push(std::make_pair(otherBond->getIdx(), _dir));
               }  // end if otherBond's bond direction check
-            }  // end if there is a match
-          }  // end loop over pairs in _rules
-        }  // end for _ to go thru rule sets
-      }  // end if this bond is assigned
-    }  // end if queue is empty
-  }  // end while on pending set and queue
+            }    // end if there is a match
+          }      // end loop over pairs in _rules
+        }        // end for _ to go thru rule sets
+      }          // end if this bond is assigned
+    }            // end if queue is empty
+  }              // end while on pending set and queue
   return true;
 }
 
@@ -1246,18 +1246,32 @@ void cleanUp(RWMol &mol) {
         break;
 
     }  // end the switch block
-  }  // end the for loop that iterates over atoms
+  }    // end the for loop that iterates over atoms
 }  // end cleanUp
+
+class ManagedCharArray {
+ public:
+  ManagedCharArray() = delete;
+  ManagedCharArray(const std::string &str) : m_data(new char[str.size() + 1]) {
+    strcpy(m_data, str.c_str());
+  }
+  ~ManagedCharArray() { delete[] m_data; }
+  char *get() { return m_data; }
+
+ private:
+  char *m_data = nullptr;
+};
+
 }  // namespace
 
 RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
                   bool sanitize, bool removeHs) {
   // input
-  char *_inchi = new char[inchi.size() + 1];
+  ManagedCharArray _inchi(inchi);
   char options[1] = "";
-  strcpy(_inchi, inchi.c_str());
+
   inchi_InputINCHI inchiInput;
-  inchiInput.szInChI = _inchi;
+  inchiInput.szInChI = _inchi.get();
   inchiInput.szOptions = options;
 
   // creating RWMol for return
@@ -1629,7 +1643,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
                   << "Unrecognized stereo0D type (" << (int)stereo0DPtr->type
                   << ") is ignored!" << std::endl;
           }  // end switch stereotype
-        }  // end for loop over all stereo0D entries
+        }    // end for loop over all stereo0D entries
         // set the bond directions
         if (!assignBondDirs(*m, zBondPairs, eBondPairs)) {
           BOOST_LOG(rdWarningLog)
@@ -1637,10 +1651,9 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
           ;
         }
       }  // end if (if stereo0D presents)
-    }  // end if (if return code is success)
+    }    // end if (if return code is success)
 
     // clean up
-    delete[] _inchi;
     FreeStructFromINCHI(&inchiOutput);
   }
 
