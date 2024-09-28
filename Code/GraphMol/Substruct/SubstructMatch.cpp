@@ -175,7 +175,7 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               std::set<MatchVectType> *matches, unsigned int bi,
                               unsigned int ei);
 
-typedef std::list<
+typedef std::vector<
     std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor>>
     ssPairType;
 
@@ -388,7 +388,7 @@ class AtomLabelFunctor {
  public:
   AtomLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps) {};
+      : d_query(query), d_mol(mol), d_params(ps){};
   bool operator()(unsigned int i, unsigned int j) const {
     bool res = false;
     if (d_params.useChirality) {
@@ -415,7 +415,7 @@ class BondLabelFunctor {
  public:
   BondLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps) {};
+      : d_query(query), d_mol(mol), d_params(ps){};
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (d_params.useChirality) {
@@ -503,7 +503,7 @@ std::vector<MatchVectType> SubstructMatch(
   detail::BondLabelFunctor bondLabeler(query, mol, params);
   MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
-  std::list<detail::ssPairType> pms;
+  std::vector<detail::ssPairType> pms;
 #if 0
   bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
 				atomLabeler,bondLabeler,pms);
@@ -629,7 +629,7 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
 
   matches.clear();
   matches.resize(0);
-  std::list<detail::ssPairType> pms;
+  std::vector<detail::ssPairType> pms;
 #if 0
       bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
 				    atomLabeler,bondLabeler,pms);
