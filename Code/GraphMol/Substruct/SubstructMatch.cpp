@@ -201,9 +201,6 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
   if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
     // EFF: we can no-doubt do better than this
     std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
-    for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-      aids[i] = m_c[i];
-    }
     if (d_params.useGenericMatchers &&
         !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
       return false;
@@ -388,7 +385,7 @@ class AtomLabelFunctor {
  public:
   AtomLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query), d_mol(mol), d_params(ps) {};
   bool operator()(unsigned int i, unsigned int j) const {
     bool res = false;
     if (d_params.useChirality) {
@@ -415,7 +412,7 @@ class BondLabelFunctor {
  public:
   BondLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query), d_mol(mol), d_params(ps) {};
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (d_params.useChirality) {
