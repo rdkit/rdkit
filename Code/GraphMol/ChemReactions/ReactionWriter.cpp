@@ -93,7 +93,7 @@ std::string chemicalReactionTemplatesToString(
 
 std::string chemicalReactionToRxnToString(
     const RDKit::ChemicalReaction &rxn, bool toSmiles,
-    const RDKit::SmilesWriteParams &params, bool includeCX) {
+    const RDKit::SmilesWriteParams &params, bool includeCX, std::uint32_t flags = RDKit::SmilesWrite::CXSmilesFields::CX_ALL) {
   std::string res = "";
   res +=
       chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles, params);
@@ -116,7 +116,7 @@ std::string chemicalReactionToRxnToString(
     }
 
     // Get CX extensions using the new getCXExtensions function
-    auto flags = RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS ^ RDKit::SmilesWrite::CXSmilesFields::CX_ALL;
+    // auto flags = RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS ^ RDKit::SmilesWrite::CXSmilesFields::CX_ALL;
     auto ext = RDKit::SmilesWrite::getCXExtensions(mols, flags); 
     if (!ext.empty()) {
       res += " ";
@@ -157,14 +157,16 @@ std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
 
 //! returns the reaction SMARTS for a reaction with CX extension
 std::string ChemicalReactionToRxnCXSmarts(const ChemicalReaction &rxn,
-                                        const SmilesWriteParams &params) {
-  return chemicalReactionToRxnToString(rxn, false, params, true);
+                                        const SmilesWriteParams &params,
+                                        std::uint32_t flags) {
+  return chemicalReactionToRxnToString(rxn, false, params, true, flags);
 };
 
 //! returns the reaction SMILES for a reaction with CX extension
 std::string ChemicalReactionToRxnCXSmiles(const ChemicalReaction &rxn,
-                                        const SmilesWriteParams &params) {
-  return chemicalReactionToRxnToString(rxn, true, params, true);
+                                        const SmilesWriteParams &params,
+                                        std::uint32_t flags) {
+  return chemicalReactionToRxnToString(rxn, true, params, true, flags);
 };
 
 //! returns an RXN block for a reaction

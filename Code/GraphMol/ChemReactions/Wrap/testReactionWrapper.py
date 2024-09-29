@@ -1235,7 +1235,11 @@ class CXExtensionsTests(unittest.TestCase):
     )
     rxnCXSmarts = rdChemReactions.ReactionFromSmarts(CXSmarts_string)
     self.assertIsNotNone(rxnCXSmarts)
-    rxnCXSmarts_string = rdChemReactions.ReactionToCXSmarts(rxnCXSmarts)
+
+    params = Chem.SmilesWriteParams()
+    flags = Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_ATOM_PROPS
+
+    rxnCXSmarts_string = rdChemReactions.ReactionToCXSmarts(rxnCXSmarts, params, flags)
     expected_rxnCXSmarts_string = (
       "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>O=C=O>"
       "[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
@@ -1250,8 +1254,9 @@ class CXExtensionsTests(unittest.TestCase):
 
     reaction_smarts = f'{reactant1}.{reactant2}>O=C=O>{product} {cxExtension}'
     reaction = rdChemReactions.ReactionFromSmarts(reaction_smarts)
-
-    cxsmiles_reaction_string = Chem.rdChemReactions.ReactionToCXSmiles(reaction)
+    params = Chem.SmilesWriteParams()
+    flags = Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_ATOM_PROPS
+    cxsmiles_reaction_string = Chem.rdChemReactions.ReactionToCXSmiles(reaction, params, flags)
     self.assertIsNotNone(cxsmiles_reaction_string)
 
     expected_cxsmiles_reaction_string = (

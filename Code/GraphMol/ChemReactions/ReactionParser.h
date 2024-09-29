@@ -151,7 +151,7 @@ inline std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
 
 //! returns the reaction SMARTS for a reaction with CX extension
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnCXSmarts(const ChemicalReaction &rxn,
-                                        const SmilesWriteParams &params);
+                                        const SmilesWriteParams &params, std::uint32_t flags = SmilesWrite::CXSmilesFields::CX_ALL);
 //! \overload
 inline std::string ChemicalReactionToRxnCXSmarts(const ChemicalReaction &rxn) {
   SmilesWriteParams params;
@@ -161,9 +161,9 @@ inline std::string ChemicalReactionToRxnCXSmarts(const ChemicalReaction &rxn) {
 
 //! returns the reaction SMILES for a reaction with CX extension
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnCXSmiles(const ChemicalReaction &rxn,
-                                        const SmilesWriteParams &params = SmilesWriteParams());
+                                        const SmilesWriteParams &params, std::uint32_t flags = SmilesWrite::CXSmilesFields::CX_ALL);
 //! \overload
-inline std::string ChemicalReactionToRxnCXSmiles(const ChemicalReaction &rxn, bool canonical) {
+inline std::string ChemicalReactionToRxnCXSmiles(const ChemicalReaction &rxn, bool canonical = true) {
   SmilesWriteParams params;
   params.canonical = canonical;
   return ChemicalReactionToRxnCXSmiles(rxn, params);
