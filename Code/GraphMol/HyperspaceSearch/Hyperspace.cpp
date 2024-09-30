@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <regex>
+#include <set>
 #include <string>
 
 #include <boost/dynamic_bitset.hpp>
@@ -49,12 +50,20 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::search(
   //      std::cout << MolToSmiles(*f) << std::endl;
   //    }
   //  }
+  // Keep track of the result names so we can weed out duplicates by
+  // reaction and reagents.  Different splits may give rise to the same
+  // reagent combination.  This will keep the same molecule produced via
+  // different reactions which I think makes sense.
+  std::set<std::string> resultsNames;
   for (auto &fragSet : fragments) {
     auto theseResults = searchFragSet(fragSet);
     // Just for safety, do a final check
     for (auto &hitMol : theseResults) {
-      if (SubstructMatch(*hitMol, query, dontCare)) {
+      auto molName = hitMol->getProp<std::string>(common_properties::_Name);
+      if (resultsNames.find(molName) == resultsNames.end() &&
+          SubstructMatch(*hitMol, query, dontCare)) {
         results.emplace_back(std::unique_ptr<ROMol>(hitMol.release()));
+        resultsNames.insert(molName);
       }
     }
   }
@@ -93,6 +102,9 @@ void Hyperspace::readFile() {
 
   while (getline(ifs, nextLine)) {
     ++lineNum;
+    if (nextLine.empty() || nextLine[0] == '#') {
+      continue;
+    }
     auto nextReag = splitLine(nextLine, regexz);
     if (nextReag.size() != 4) {
       throw std::runtime_error("Bad format for hyperspace file " + d_fileName +
@@ -411,8 +423,10 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     auto &reaction = it.second;
     //    std::cout << "Searching for " << fragSet.size() << " ::: ";
     //    for (const auto &f : fragSet) {
-    //      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : "
-    //                << MolToSmarts(*f) << " :: ";
+    //          std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << "
+    //          : "
+    //                    << MolToSmarts(*f) << " :: ";
+    //      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : ";
     //    }
     //    std::cout << " in " << reaction->d_id << " : "
     //              << reaction->d_reagents.size() << std::endl;
@@ -444,8 +458,10 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
       continue;
     }
 
-    // Get all the possible combinations of connector numbers.  So if the
-    // fragmented molecule is C[1*].N[2*] we also try C[2*].N[1*] because
+    // Get all the possible permutations of connector numbers compatible with
+    // the number of reagent sets in this reaction.  So if the
+    // fragmented molecule is C[1*].N[2*] and there are 3 reagent sets
+    // we also try C[2*].N[1*]  and C[3*].N[2*] because
     // that might be how they're labelled in the reaction database.
     auto connCombs =
         getConnectorPermutations(fragSet, conns, reaction->d_connectors);
@@ -531,6 +547,10 @@ void Hyperspace::buildHits(
     //    std::cout << std::endl;
     std::unique_ptr<ROMol> combMol(
         new ROMol(*reags[0][stepper.d_currState[0]]));
+    std::string combName =
+        "_RXN_" + reaction_id + "_RXN_::" +
+        reags[0][stepper.d_currState[0]]->getProp<std::string>(
+            common_properties::_Name);
     //    for (int i = 0; i < numReactions; ++i) {
     //      std::cout << MolToSmiles(*reags[i][stepper.d_currState[i]]) << "
     //      ";
@@ -538,9 +558,13 @@ void Hyperspace::buildHits(
     //    std::cout << std::endl;
     for (int i = 1; i < numReactions; ++i) {
       combMol.reset(combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
+      combName +=
+          ":_R_:" + reags[i][stepper.d_currState[i]]->getProp<std::string>(
+                        common_properties::_Name);
     }
     //    std::cout << "Comb mol : " << MolToSmiles(*combMol) << std::endl;
     auto prod = molzip(*combMol, params);
+    prod->setProp<std::string>(common_properties::_Name, combName);
     //    std::cout << "Zipped : " << MolToSmiles(*prod) << std::endl;
     MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
     results.push_back(std::move(prod));

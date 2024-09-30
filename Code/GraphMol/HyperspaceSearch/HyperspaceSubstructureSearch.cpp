@@ -245,6 +245,10 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
     }
     std::cout << "Number of possible splits : " << combs.size() << std::endl;
     for (auto &c : combs) {
+      //      for (auto &i : c) {
+      //        std::cout << i << " ";
+      //      }
+      //      std::cout << std::endl;
       // don't break just 1 ring bond, as it can't create 2 fragments.  It
       // could be better than this, by checking that any number of ring
       // bonds are all in the same ring system.  Maybe look at that
@@ -266,6 +270,7 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
       }
       std::unique_ptr<ROMol> fragMol(
           MolFragmenter::fragmentOnBonds(query, c, true, &dummyLabels));
+      //      std::cout << MolToSmiles(*fragMol) << std::endl;
       std::vector<std::unique_ptr<ROMol>> molFrags;
       auto numFrags = MolOps::getMolFrags(*fragMol, molFrags, false);
       // Must have been a ring-opening.

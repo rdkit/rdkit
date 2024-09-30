@@ -59,8 +59,8 @@ TEST_CASE("Test splits 1", "[Test splits 1]") {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles[i]);
     REQUIRE(mol);
     auto fragments = splitMolecule(*mol, 3);
-    REQUIRE(fragments.size() ==
-            std::reduce(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
+    CHECK(fragments.size() ==
+          std::reduce(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.
     for (size_t j = 0; j < 4; ++j) {
       auto numFragSets = std::reduce(
@@ -235,6 +235,40 @@ TEST_CASE("Triazole", "[Triazole]") {
     CHECK(resSmi == enumSmi);
   }
 #endif
+}
+
+TEST_CASE("Quinoline", "[Quinoline]") {
+  std::string libName =
+      fName + "/Code/GraphMol/HyperspaceSearch/data/doebner_miller_space.txt";
+  std::string enumLibName =
+      fName +
+      "/Code/GraphMol/HyperspaceSearch/data/doebner_miller_space_enum.smi";
+
+  Hyperspace hyperspace(libName);
+  {
+    auto queryMol = "c1ccccn1"_smiles;
+    auto results = SSSearch(*queryMol, 3, hyperspace);
+    CHECK(results.size() == 12);
+    std::set<std::string> resSmi;
+    for (const auto &r : results) {
+      std::cout << "Result : "
+                << r->getProp<std::string>(common_properties::_Name) << " : "
+                << MolToSmiles(*r) << std::endl;
+      resSmi.insert(MolToSmiles(*r));
+    }
+    auto subsLib = loadSubstructLibrary(enumLibName);
+    auto enumRes = subsLib->getMatches(*queryMol);
+    std::cout << "Number of enum results : " << enumRes.size() << " from "
+              << subsLib->size() << " mols" << std::endl;
+    std::set<std::string> enumSmi;
+    for (auto i : enumRes) {
+      std::cout << i << " : " << MolToSmiles(*subsLib->getMol(i)) << " : "
+                << subsLib->getMol(i)->getProp<std::string>("_Name")
+                << std::endl;
+      enumSmi.insert(MolToSmiles(*subsLib->getMol(i)));
+    }
+    CHECK(resSmi == enumSmi);
+  }
 }
 
 TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {

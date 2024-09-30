@@ -22,6 +22,7 @@ namespace RDKit::HyperspaceSSSearch {
 const std::unique_ptr<ROMol> &Reagent::mol() const {
   if (!d_mol) {
     d_mol = v2::SmilesParse::MolFromSmiles(d_smiles);
+    d_mol->setProp<std::string>(common_properties::_Name, d_id);
   }
   return d_mol;
 }
