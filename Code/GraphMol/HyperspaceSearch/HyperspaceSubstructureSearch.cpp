@@ -22,14 +22,20 @@
 // fingerprint for the initial synthon screening.
 
 #include <algorithm>
+#include <list>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/ROMol.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include "Hyperspace.h"
 
@@ -70,13 +76,141 @@ std::vector<std::vector<unsigned int>> permMFromN(unsigned int m,
   return perms;
 }
 
+// The fragmentation is valid if the 2 ends of each bond are in different
+// fragments.  This assumes there are no ring-closing reactions in the
+// library, which is probably ok.
+bool checkConnectorsInDifferentFrags(
+    const std::vector<std::unique_ptr<ROMol>> &molFrags, int numSplits) {
+  // Loop over the isotope numbers of the ends of the splits
+  for (const auto &frag : molFrags) {
+    for (int j = 1; j <= numSplits; ++j) {
+      int dummyCount = 0;
+      for (const auto &atom : frag->atoms()) {
+        if (!atom->getAtomicNum() &&
+            atom->getIsotope() == static_cast<unsigned int>(j)) {
+          if (dummyCount) {
+            return false;
+          }
+          ++dummyCount;
+        }
+      }
+    }
+  }
+  return true;
+}
+
+// Traverse the bonds from aromBond and return all the ones that are aromatic.
+std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
+                                                     const Bond *aromBond) {
+  //  std::cout << MolToSmiles(mol) << " : " << aromBond->getIdx() << " : "
+  //            << aromBond->getBeginAtomIdx() << " ("
+  //            << aromBond->getBeginAtom()->getAtomicNum()
+  //            << ") : " << aromBond->getEndAtomIdx() << " ("
+  //            << aromBond->getEndAtom()->getAtomicNum() << ")" << std::endl;
+  std::vector<const Bond *> aromBonds(1, aromBond);
+  std::list<const Bond *> toDo(1, aromBond);
+  boost::dynamic_bitset<> done(mol.getNumBonds());
+  done[aromBond->getIdx()] = true;
+  while (!toDo.empty()) {
+    auto nextBond = toDo.front();
+    //    std::cout << "  next bond : " << " : " << nextBond->getIdx() << " : "
+    //              << nextBond->getBeginAtomIdx() << " ("
+    //              << nextBond->getBeginAtom()->getAtomicNum()
+    //              << ") : " << nextBond->getEndAtomIdx() << " ("
+    //              << nextBond->getEndAtom()->getAtomicNum() << ")" <<
+    //              std::endl;
+    toDo.pop_front();
+    for (auto nbr :
+         make_iterator_range(mol.getAtomNeighbors(nextBond->getBeginAtom()))) {
+      auto bond = mol.getBondBetweenAtoms(nextBond->getBeginAtomIdx(), nbr);
+      if (!done[bond->getIdx()] && bond->getIsAromatic()) {
+        aromBonds.push_back(bond);
+        done[bond->getIdx()] = true;
+        toDo.push_back(bond);
+      }
+    }
+    for (auto nbr :
+         make_iterator_range(mol.getAtomNeighbors(nextBond->getEndAtom()))) {
+      auto bond = mol.getBondBetweenAtoms(nextBond->getEndAtomIdx(), nbr);
+      if (!done[bond->getIdx()] && bond->getIsAromatic()) {
+        aromBonds.push_back(bond);
+        done[bond->getIdx()] = true;
+        toDo.push_back(bond);
+      }
+    }
+  }
+  return aromBonds;
+}
+
+// If a bond has been split in an aromatic ring, the bonds to dummy atoms
+// will be aromatic.  However, the synthons that produce them must have
+// non-aromatic bonds to the dummies, by definition.  An example is in
+// triazole formation, where the synthons can be [2*]=N-N=C-[1*],
+// [1*]N[3*] and [2*]=C[3*] which come together to give C1=NN=CN1 so long
+// as there are appropriate substituents on the synthons.  Splitting triazole,
+// however, gives [1*]cnn[3*], [2*]n[3*] and [1*]c[2*] (no explicit H on the
+// nitrogen if the molecule is specified as a SMARTS originally).  These won't
+// match the synthons, so no hit is found.  This function detects such
+// situations and changes the bond types accordingly.  All aromatic bonds are
+// set to single|double|aromatic because we can't know which kekule form would
+// be appropriate for the synthons, and aromatic atoms are set to atomic number
+// queries with the aromatic flag cleared.
+void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
+  ROMol::OEDGE_ITER beg;
+  for (auto &frag : molFrags) {
+    auto buildQueryAtom = [](const Atom *atom) -> QueryAtom * {
+      QueryAtom *nqa = new QueryAtom(atom->getAtomicNum());
+      if (!nqa->getAtomicNum()) {
+        nqa->setIsotope(atom->getIsotope());
+        nqa->expandQuery(makeAtomIsotopeQuery(atom->getIsotope()));
+      }
+      return nqa;
+    };
+    std::unique_ptr<RWMol> qmol;
+    for (auto atom : frag->atoms()) {
+      // Allow for general dummy atoms in the query by only looking at atoms
+      // where the isotope numbers have been set to the ones we're using.  For
+      // these atoms, there should only be 1 bond.
+      if (!atom->getAtomicNum() && atom->getIsotope() > 0 &&
+          atom->getIsotope() < 5) {
+        beg = frag->getAtomBonds(atom).first;
+        auto fbond = (*frag)[*beg];
+        if (fbond->getIsAromatic()) {
+          if (!qmol) {
+            qmol.reset(new RWMol(*frag));
+          }
+          auto aromBonds = getContiguousAromaticBonds(*frag, fbond);
+          for (const auto &ab : aromBonds) {
+            auto qab = qmol->getBondWithIdx(ab->getIdx());
+            QueryBond *qbond = new QueryBond(*qab);
+            qbond->setQuery(makeSingleOrDoubleOrAromaticBondQuery());
+            qmol->replaceBond(qab->getIdx(), qbond);
+
+            auto qba = qmol->getAtomWithIdx(ab->getBeginAtomIdx());
+            QueryAtom *nqba = buildQueryAtom(qba);
+            qmol->replaceAtom(ab->getBeginAtomIdx(), nqba);
+
+            auto qea = qmol->getAtomWithIdx(ab->getEndAtomIdx());
+            QueryAtom *nqea = buildQueryAtom(qea);
+            qmol->replaceAtom(ab->getEndAtomIdx(), nqea);
+          }
+          break;
+        }
+      }
+    }
+
+    if (qmol) {
+      frag.reset(qmol.release());
+    }
+  }
+}
+
 // Split the molecule into fragments.  maxBondSplits gives the maximum number
-// of bonds to be used in each split.  There will 1 vector of molecules
-// for each split i.e. maxBondSplits in total, the first with 1 split, the 2nd
-// with 2 etc.  Each ROMol contains a split molecule containing the fragments
-// after the split (the SMILES will be dot-connected with isotope-labelled
-// dummies showing the split bonds).
-std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
+// of bonds to be used in each split.  There will a vector of vectors of
+// molecules, 1 inner vector for each split i.e. maxBondSplits in total, the
+// first with 1 split, the 2nd with 2 etc.  Each inner vector contains the
+// fragments from a split molecule.
+std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits) {
   std::cout << "Splitting " << MolToSmiles(query) << " with " << maxBondSplits
             << " bonds." << std::endl;
@@ -87,7 +221,6 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   if (maxBondSplits > 3) {
     maxBondSplits = 3;
   }
-  std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
   auto ringInfo = query.getRingInfo();
   boost::dynamic_bitset<> ringBonds(query.getNumBonds());
   for (const auto &r : ringInfo->bondRings()) {
@@ -95,66 +228,66 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
       ringBonds.set(b);
     }
   }
-  std::vector<int> fragAtoms;
 
+  std::vector<std::vector<std::shared_ptr<ROMol>>> fragments;
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
   // lots of hits but one can imagine a use for it.
-  fragments.push_back(std::vector<std::unique_ptr<ROMol>>());
-  fragments.back().emplace_back(new ROMol(query));
+  // TODO - doesn't work at the moment (no connector regions so it fails that
+  // test).
+  fragments.push_back(std::vector<std::shared_ptr<ROMol>>(
+      1, std::shared_ptr<ROMol>(new ROMol(query))));
 
   // Now do the splits.
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
     std::cout << "Splitting with up to " << i << " bonds" << std::endl;
     auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
-    fragments.push_back(std::vector<std::unique_ptr<ROMol>>());
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
     for (unsigned int j = 1; j <= i; ++j) {
       dummyLabels.push_back(std::make_pair(j, j));
     }
     std::cout << "Number of possible splits : " << combs.size() << std::endl;
     for (auto &c : combs) {
+      // don't break just 1 ring bond, as it can't create 2 fragments.  It
+      // could be better than this, by checking that any number of ring
+      // bonds are all in the same ring system.  Maybe look at that
+      // if necessary for performance.  Triazoles can be created from 3
+      // synthons, so breaking 3 ring bonds is ok.  This will still pass
+      // through cases that break 2 ring bonds in separate ring systems,
+      // such as a bond in each of the 2 phenyl rings in c1ccccc1c2ccccc2,
+      // but they will be caught below.
+      auto numRingBonds =
+          std::reduce(c.begin(), c.end(), 0, [&](int prevRes, int bondNum) {
+            if (ringBonds[bondNum]) {
+              return prevRes + 1;
+            } else {
+              return prevRes;
+            }
+          });
+      if (numRingBonds == 1) {
+        continue;
+      }
       std::unique_ptr<ROMol> fragMol(
           MolFragmenter::fragmentOnBonds(query, c, true, &dummyLabels));
-      auto numFrags = MolOps::getMolFrags(*fragMol, fragAtoms);
+      std::vector<std::unique_ptr<ROMol>> molFrags;
+      auto numFrags = MolOps::getMolFrags(*fragMol, molFrags, false);
+      // Must have been a ring-opening.
       if (numFrags == 1) {
         continue;
       }
-      // the fragmentation is valid if the 2 ends of each bond are in different
-      // fragments.
-      bool fragsOk = true;
-      // Loop over the isotope numbers of the ends of the splits
-      for (unsigned int j = 1; j <= i; ++j) {
-        // Loop over the different fragments
-        for (unsigned int k = 0; k < j; ++k) {
-          // Count the number of dummy atoms of the correct isotope
-          // number in this fragment.
-          int dummyCount = 0;
-          for (unsigned int l = 0; l < fragMol->getNumAtoms(); ++l) {
-            if (static_cast<unsigned int>(fragAtoms[l]) == k) {
-              auto atom = fragMol->getAtomWithIdx(l);
-              if (!atom->getAtomicNum() && atom->getIsotope() == j) {
-                ++dummyCount;
-              }
-            }
-          }
-          // If it's more than 1 dummy of this isotope number in this fragment
-          // it's a bad fragmentation, probably because a single bond in a
-          // ring has been cut.
-          if (dummyCount > 1) {
-            fragsOk = false;
-          }
-        }
-        if (!fragsOk) {
-          break;
-        }
-      }
-      if (fragsOk) {
-        fragments.back().push_back(std::move(fragMol));
+      if (checkConnectorsInDifferentFrags(molFrags, i)) {
+        fixAromaticRingSplits(molFrags);
+        std::vector<std::shared_ptr<ROMol>> tmp;
+        std::transform(
+            molFrags.begin(), molFrags.end(), std::back_inserter(tmp),
+            [&](std::unique_ptr<ROMol> &m) -> std::shared_ptr<ROMol> {
+              return std::shared_ptr<ROMol>(m.release());
+            });
+        fragments.push_back(tmp);
       }
     }
-    std::cout << "Number of valid splits : " << fragments.back().size()
-              << std::endl;
+    std::cout << "Number of valid splits : " << fragments.size() << std::endl;
   }
+  std::cout << "Fragments size : " << fragments.size() << std::endl;
   return fragments;
 }
 

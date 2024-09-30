@@ -10,6 +10,8 @@
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/HyperspaceSearch/Reagent.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -71,6 +73,9 @@ std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
     } else {
       if (!aCp->getAtomicNum()) {
         aCp->setIsotope(1);
+        if (aCp->hasQuery()) {
+          aCp->expandQuery(makeAtomIsotopeQuery(1), Queries::COMPOSITE_OR);
+        }
       }
     }
   }

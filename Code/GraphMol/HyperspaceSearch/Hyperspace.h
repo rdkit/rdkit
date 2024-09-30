@@ -108,7 +108,8 @@ class Hyperspace {
 
   // Search this particular fragmented molecule against the reactions.  The
   // fragments should be from 1 splitting, so between 2 and 4 members.
-  std::vector<std::unique_ptr<ROMol>> searchFragSet(const ROMol &fraggedMol);
+  std::vector<std::unique_ptr<ROMol>> searchFragSet(
+      const std::vector<std::shared_ptr<ROMol>> &fragSet);
 
  private:
   std::string d_fileName;
