@@ -363,9 +363,12 @@ bool checkConnectorRegions(const std::vector<std::shared_ptr<ROMol>> &molFrags,
   const auto &rxnConnRegs = reaction->connectorRegions();
   const auto &rxnConnRegsFP = reaction->connRegFP();
   RDKit::MatchVectType dontCare;
-
   for (const auto &frag : molFrags) {
     auto connRegs = getConnRegion(*frag);
+    if (!connRegs) {
+      // There were no connector atoms.
+      continue;
+    }
     std::vector<std::unique_ptr<ROMol>> splitConnRegs;
     MolOps::getMolFrags(*connRegs, splitConnRegs, false);
     bool connRegFound = false;

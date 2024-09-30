@@ -237,6 +237,32 @@ TEST_CASE("Triazole", "[Triazole]") {
 #endif
 }
 
+TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {
+  // Making sure it works when the query is a complete substructure of 1
+  // of the reagents in the library, so the whole library is a hit.
+  {
+    auto queryMol = "N1CCCC1"_smiles;
+    std::string libName =
+        fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
+    auto results = SSSearch(*queryMol, 3, libName);
+    CHECK(results.size() == 8);
+  }
+  {
+    auto queryMol = "N1CCC(C(F)(F)F)C1"_smiles;
+    std::string libName =
+        fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
+    auto results = SSSearch(*queryMol, 3, libName);
+    CHECK(results.size() == 4);
+  }
+  {
+    auto queryMol = "C1CCCCC1"_smiles;
+    std::string libName =
+        fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
+    auto results = SSSearch(*queryMol, 3, libName);
+    CHECK(results.size() == 0);
+  }
+}
+
 TEST_CASE("Connector Regions", "[Connector Regions]") {
   SECTION("Single tests") {
     auto m1 = "[1*]CN(C[2*])Cc1ccccc1"_smiles;

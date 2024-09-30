@@ -45,10 +45,16 @@ const std::vector<std::shared_ptr<ROMol>> &Reagent::connRegions() const {
   return d_connRegions;
 }
 
+// Get the connector regions for this molecule, which are parts of the
+// molecule within 3 bonds of an isotopically labelled dummy atom.  It's
+// possible the molecule has ordinary wildcard dummy atoms that shouldn't
+// have an isotopic label.  Returns an empty unique_ptr if there isn't a
+// labelled dummy atom, which happens when the molecule is the whole original
+// query before any splits were done.
 std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
   boost::dynamic_bitset<> inFrag(mol.getNumAtoms());
   for (const auto a : mol.atoms()) {
-    if (!a->getAtomicNum()) {
+    if (!a->getAtomicNum() && a->getIsotope()) {
       inFrag[a->getIdx()] = true;
       for (const auto &n1 : mol.atomNeighbors(a)) {
         if (!inFrag[n1->getIdx()]) {
@@ -65,6 +71,10 @@ std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
       }
     }
   }
+  if (!inFrag.count()) {
+    return std::unique_ptr<RWMol>();
+  }
+
   std::unique_ptr<RWMol> molCp(new RWMol(mol));
   molCp->beginBatchEdit();
   for (auto &aCp : molCp->atoms()) {

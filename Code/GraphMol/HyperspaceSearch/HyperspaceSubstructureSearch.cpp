@@ -232,8 +232,6 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
   std::vector<std::vector<std::shared_ptr<ROMol>>> fragments;
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
   // lots of hits but one can imagine a use for it.
-  // TODO - doesn't work at the moment (no connector regions so it fails that
-  // test).
   fragments.push_back(std::vector<std::shared_ptr<ROMol>>(
       1, std::shared_ptr<ROMol>(new ROMol(query))));
 
