@@ -721,7 +721,7 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
       // make sure we are idempotent in pickling      
-      CHECK(SubstructMatch(*target, mol2, ps).size() == 1);
+      CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
     }
     {
       std::string pkl;
