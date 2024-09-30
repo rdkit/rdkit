@@ -866,6 +866,8 @@ class HasPropWithValueQueryBase {
  public:
   HasPropWithValueQueryBase() = default;
   virtual ~HasPropWithValueQueryBase() = default;
+  // Note:  caller is responsible for calling Dict::Pair::cleanup
+  //  to release NonPOD memory after calling getPair
   virtual Dict::Pair getPair() const = 0;
   virtual double getTolerance() const = 0;
 };

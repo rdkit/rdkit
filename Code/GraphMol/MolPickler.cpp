@@ -387,8 +387,8 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
     return QueryDetails(
         std::make_tuple(MolPickler::QUERY_SET, std::move(tset)));
   } else if (auto q = dynamic_cast<const HasPropWithValueQueryBase *>(query)) {
-    return std::make_tuple(MolPickler::QUERY_PROPERTY_WITH_VALUE, q->getPair(),
-                           q->getTolerance());
+    return QueryDetails(std::make_tuple(MolPickler::QUERY_PROPERTY_WITH_VALUE,
+                                        q->getPair(), q->getTolerance()));
   } else {
     throw MolPicklerException("do not know how to pickle part of the query.");
   }
@@ -473,6 +473,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<2>(v));
         streamWriteProp(ss, std::get<1>(v),
                         MolPickler::getCustomPropHandlers());
+        std::get<1>(v).cleanup();
       } break;
       default:
         throw MolPicklerException(
