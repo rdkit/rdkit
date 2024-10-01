@@ -92,9 +92,7 @@ M  END)CTAB"_ctab;
 
     auto m1_cp = ROMol(*m1);
     auto m2_cp = ROMol(*m2);
-    std::cerr << " 1 " << std::endl;
     MolTransforms::canonicalizeConformer(m1_cp.getConformer());
-    std::cerr << " 2 " << std::endl;
     MolTransforms::canonicalizeConformer(m2_cp.getConformer());
 
     MolOps::assignChiralTypesFrom3D(m1_cp);

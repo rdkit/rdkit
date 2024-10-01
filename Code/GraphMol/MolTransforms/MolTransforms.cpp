@@ -283,7 +283,6 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
       auto eigVecCoeffSums = eigVecs.colwise().sum();
       eigValsSorted.reserve(DIM);
       for (unsigned int i = 0; i < DIM; ++i) {
-        std::cerr << "  ev: " << i << ": " << eigVals(i) << std::endl;
         eigValsSorted.emplace_back(i, eigVals(i));
       }
       std::sort(eigValsSorted.begin(), eigValsSorted.end(),
@@ -294,9 +293,6 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
       for (unsigned int col = 0; col < DIM; ++col) {
         unsigned int colSorted = eigValsSorted.at(col).first;
         double sign = (eigVecCoeffSums(colSorted) > 0.0) ? 1.0 : -1.0;
-        std::cerr << "  col: " << col << " colSorted: " << colSorted
-                  << " evcs: " << eigVecCoeffSums(colSorted)
-                  << " sign: " << sign << std::endl;
         for (unsigned int row = 0; row < DIM; ++row) {
           trans->setVal(col, row, sign * eigVecs(row, colSorted));
         }
@@ -304,6 +300,13 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
     }
   }
   origin *= -1.0;
+
+  if (trans->getVal(0, 0) * trans->getVal(1, 1) * trans->getVal(2, 2) < 0) {
+    for (auto i = 0; i < 3; ++i) {
+      trans->setVal(2, i, trans->getVal(2, i) * -1);
+    }
+  }
+
   trans->TransformPoint(origin);
   trans->SetTranslation(origin);
 
@@ -342,7 +345,6 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
     // deal with zero eigen value systems
     unsigned int i, j, dim = 3;
     for (i = 0; i < 3; ++i) {
-      std::cerr << "  ev: " << i << ": " << eigVals.getVal(i) << std::endl;
       if (fabs(eigVals.getVal(i)) < EIGEN_TOLERANCE) {
         dim--;
       }
@@ -383,7 +385,14 @@ RDGeom::Transform3D *computeCanonicalTransform(const Conformer &conf,
       }
     }
   }  // end of multiple atom system
+
+  if (trans->getVal(0, 0) * trans->getVal(1, 1) * trans->getVal(2, 2) < 0) {
+    for (auto i = 0; i < 3; ++i) {
+      trans->setVal(2, i, trans->getVal(2, i) * -1);
+    }
+  }
   trans->TransformPoint(origin);
+
   trans->SetTranslation(origin);
   delete covMat;
 
