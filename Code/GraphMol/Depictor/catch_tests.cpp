@@ -120,7 +120,8 @@ TEST_CASE("trigonal bipyramidal", "[nontetrahedral]") {
     CHECK(v2.length() > v4.length());
   }
   SECTION("TB1 missing ax") {
-    auto m = "S[As@TB1](F)(Cl)Br"_smiles;
+    // // S[As@TB1](F)(Cl)(Br)* => S[As@TB7](*)(F)(Cl)Br
+    auto m = "S[As@TB7](F)(Cl)Br"_smiles;
     REQUIRE(m);
 
     CHECK_THAT(
@@ -193,7 +194,8 @@ TEST_CASE("octahedral", "[nontetrahedral]") {
     CHECK(v5.length() > v6.length());
   }
   SECTION("OH1 missing one ligand") {
-    auto m = "O[Co@OH1](Cl)(C)(N)F"_smiles;
+    // O[Co@OH1](Cl)(C)(N)(F)* => O[Co@OH25](*)(Cl)(C)(N)F
+    auto m = "O[Co@OH25](Cl)(C)(N)F"_smiles;
     REQUIRE(m);
     CHECK(RDDepict::compute2DCoords(*m) == 0);
     // std::cerr << MolToV3KMolBlock(*m) << std::endl;

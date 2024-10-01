@@ -2339,7 +2339,8 @@ TEST_CASE("getIdealAngle", "[nontetrahedral]") {
         Catch::Matchers::WithinAbs(90, 0.001));
   }
   SECTION("TB1 missing 1") {
-    auto m = "S[As@TB1](F)(Cl)Br"_smiles;
+    // S[As@TB1](F)(Cl)(Br)* => S[As@TB7](*)(F)(Cl)Br
+    auto m = "S[As@TB7](F)(Cl)Br"_smiles;
     REQUIRE(m);
 
     CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
@@ -2582,7 +2583,8 @@ TEST_CASE("nontetrahedral StereoInfo", "[nontetrahedral]") {
           std::vector<unsigned int>{0, 2, 3, 4, 5, 6});
   }
   SECTION("OH missing ligand") {
-    auto m = "C[Fe@OH9](F)(Cl)(O)N"_smiles;
+    // C[Fe@OH9](F)(Cl)(O)(N)* => C[Fe@OH4](*)(F)(Cl)(O)N
+    auto m = "C[Fe@OH4](F)(Cl)(O)N"_smiles;
     REQUIRE(m);
     auto sinfo = Chirality::findPotentialStereo(*m);
     REQUIRE(sinfo.size() == 1);
