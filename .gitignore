@@ -69,6 +69,7 @@ __pycache__/
 /External/FreeSASA/freesasa*/
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/
+/External/pubchem_shape/pubchem-align3d/
 /External/RingFamilies/RingDecomposerLib/
 /External/YAeHMOP/yaehmop/
 /External/catch/catch/
@@ -129,15 +130,18 @@ __pycache__/
 
 /Projects/DbCLI/testData/bzr/
 
-/rdkit/Chem/Draw/similarityMap1_out.svg
-/rdkit/Chem/Draw/similarityMap1_out2.svg
-/rdkit/Chem/Draw/similarityMap1_out3.svg
-
 /rdkit/sping/tests/testallps.ps
 
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store
+
+/rdkit/fragmentshetero_atom_mutations_fuzzing.csv
+/rdkit/fragmentsnot_changed_during_fuzzing.csv
+/rdkit/hetero_atom_mutations.csv
+/rdkit/not_changed.csv
+/rdkit/similarityMap1_out.svg
+/rdkit/similarityMap1_out2.svg
 
 # JS distribution or temp files
 Code/MinimalLib/dist
