@@ -8222,7 +8222,18 @@ M  END
                      "[NH2:1]c1ccccc1")
     self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False),
                      "c1ccc([NH2:1])cc1")
-    
+
+  def testSplitMolByPDB(self):
+    mol = Chem.MolFromSmiles("C")
+    res2mol = Chem.SplitMolByPDBResidues(mol)
+    self.assertEqual(len(res2mol), 1)
+    self.assertIn("", res2mol)
+    assert len(res2mol) == 1
+    chain2mol = Chem.SplitMolByPDBChainId(mol)
+    self.assertEqual(len(chain2mol), 1)
+    self.assertIn("", chain2mol)
+    assert len(res2mol) == 1
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
