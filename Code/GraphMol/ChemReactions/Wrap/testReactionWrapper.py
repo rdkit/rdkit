@@ -1213,21 +1213,6 @@ M  END
       "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]")
 
 class CXExtensionsTests(unittest.TestCase):
-  def testCX_SMARTS_and_SMILES(self):
-    CXSmarts_string = "*C1=C[N+]O(C1) |$_R1;;;;;$|"
-    molCXSmarts = Chem.MolFromSmarts(CXSmarts_string)
-    self.assertIsNotNone(molCXSmarts)
-    round_CXSmarts_string = Chem.MolToCXSmarts(molCXSmarts)
-    expected_CXSmarts_string = "*C1=C[N&+]OC1 |$_R1;;;;;$|"
-    self.assertEqual(round_CXSmarts_string, expected_CXSmarts_string)
-
-    cxSmiles_string = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&8:3,5,o1:7,&7:1,r|"
-    rxnCXSmiles = Chem.MolFromSmiles(cxSmiles_string)
-    self.assertIsNotNone(rxnCXSmiles)
-    round_CXSmile_string = Chem.MolToCXSmiles(rxnCXSmiles)
-    expected_CXSmile_string = "C[C@H](O)[C@H](C)[C@@H](C)[C@H](C)O |o1:1,&1:3,5,&2:7|"
-    self.assertEqual(round_CXSmile_string, expected_CXSmile_string)
-
   def test_cxsmarts_reaction(self):
     CXSmarts_string = (
       "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"

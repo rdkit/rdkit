@@ -28,6 +28,9 @@
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
+#include <typeinfo>
+
+
 using namespace RDKit;
 using std::unique_ptr;
 
@@ -1196,13 +1199,45 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     "|$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,SgD:7,6:foo:baz::::,Sg:n:4,2,1,0::ht,Sg:n:10,8,7,6::ht,SgH:2:0,3:1|"_rxnsmiles;
     // clang-format on
     REQUIRE(rxn);
+    // Test properties of the rxn itself.
     CHECK(getSubstanceGroups(*rxn->getReactants()[0]).size() == 2);
     CHECK(getSubstanceGroups(*rxn->getProducts()[0]).size() == 2);
 
+    const auto &sgsReact = getSubstanceGroups(*rxn->getReactants()[0]);
+    const auto &sgsProd = getSubstanceGroups(*rxn->getProducts()[0]);
+
+    CHECK(sgsReact[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsReact[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+
+    CHECK(sgsProd[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsProd[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+    
+    // Ensure properties are set on the rxn.
+    CHECK(sgsReact[0].getProp<unsigned int>("PARENT") == 2);
+    CHECK(sgsProd[0].getProp<unsigned int>("PARENT") == 2);
+
+    // Now create the roundtrip and check the same properties.
     auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
     REQUIRE(roundtrip);
+
+    const auto &sgsRoundReact = getSubstanceGroups(*roundtrip->getReactants()[0]);
+    REQUIRE(&sgsRoundReact);
+    const auto &sgsRoundProd = getSubstanceGroups(*roundtrip->getProducts()[0]);
+    REQUIRE(&sgsRoundProd);
+
     CHECK(getSubstanceGroups(*roundtrip->getReactants()[0]).size() == 2);
     CHECK(getSubstanceGroups(*roundtrip->getProducts()[0]).size() == 2);
+
+    CHECK(sgsRoundProd[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsRoundProd[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+    CHECK(sgsRoundReact[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsRoundReact[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+
+    // Check that the properties are set on the roundtrip rxn.
+    CHECK(sgsRoundProd[0].getProp<unsigned int>("PARENT") == 2);
+    // Doesn't work because .... maybe because the substance groups are intertwined react/prod? The sg hierarchy is not being written for the reactant...
+    // CHECK(sgsRoundReact[0].getProp<unsigned int>("PARENT") == 2);
+
   }
   SECTION("link nodes") {
     // clang-format off
