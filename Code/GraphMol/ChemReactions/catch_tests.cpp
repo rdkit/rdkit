@@ -28,9 +28,6 @@
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
-#include <typeinfo>
-
-
 using namespace RDKit;
 using std::unique_ptr;
 
