@@ -8222,6 +8222,10 @@ M  END
                      "[NH2:1]c1ccccc1")
     self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False),
                      "c1ccc([NH2:1])cc1")
+
+  def github7873(self):
+    # this segfaults
+    Chem.MolFromSmiles("C").GetAtomWithIdx(0).SetPDBResidueInfo(None)
     
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
