@@ -248,6 +248,15 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     pattFPs.emplace_back(
         std::unique_ptr<ExplicitBitVect>(PatternFingerprintMol(*frag, 2048)));
   }
+  // Sort by descending number of bits set.  This is the "largest fragment
+  // heuristic" from the paper.  The FP with the largest number of bits
+  // is the most likely to screen out a matching reagent set since smaller,
+  // less complex fragments are more likely to match something.
+  std::sort(pattFPs.begin(), pattFPs.end(),
+            [&](const std::unique_ptr<ExplicitBitVect> &fp1,
+                const std::unique_ptr<ExplicitBitVect> &fp2) -> bool {
+              return fp1->getNumOnBits() > fp2->getNumOnBits();
+            });
 
   std::vector<boost::dynamic_bitset<>> passedFPs;
   for (const auto &reagSet : reaction->d_reagents) {
@@ -281,6 +290,12 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
           thisPass[ro[i]][j] = true;
           fragsMatched[i] = true;
         }
+      }
+      // If nothing matched this fragment, the whole thing's a bust.
+      if (!fragsMatched[i]) {
+        //        std::cout << "Nothing matches frag " << i << " : "
+        //                  << pattFPs[i]->getNumOnBits() << std::endl;
+        break;
       }
     }
     // If all the fragments had a match, these results are valid.
@@ -423,9 +438,9 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     auto &reaction = it.second;
     //    std::cout << "Searching for " << fragSet.size() << " ::: ";
     //    for (const auto &f : fragSet) {
-    //          std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << "
-    //          : "
-    //                    << MolToSmarts(*f) << " :: ";
+    //              std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f)
+    //              << " : "
+    //                        << MolToSmarts(*f) << " :: ";
     //      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : ";
     //    }
     //    std::cout << " in " << reaction->d_id << " : "
@@ -444,6 +459,9 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     if (!checkConnectorRegions(fragSet, reaction)) {
       continue;
     }
+
+    // Select only the reagents that have fingerprints that are a superset
+    // of the fragment fingerprints.
     auto passedScreens = screenReagentsWithFPs(fragSet, reaction);
 
     // If none of the reagents passed the screens, move right along, nothing
@@ -452,6 +470,7 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     for (const auto &ps : passedScreens) {
       if (ps.count()) {
         skip = false;
+        break;
       }
     }
     if (skip) {
