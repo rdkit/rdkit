@@ -1225,8 +1225,8 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
       // to our cipEntry in reverse rank order, where N is the weight.
       if (numNeighbors > 1) {  // compare vs 1 for performance.
         std::sort(sortBegin, sortEnd,
-                  [&ranks](const std::pair<int, int>& countAndIdx1,
-                           const std::pair<int, int>& countAndIdx2) {
+                  [&ranks](const std::pair<std::uint8_t, int>& countAndIdx1,
+                           const std::pair<std::uint8_t, int>& countAndIdx2) {
                     return ranks[countAndIdx1.second] > ranks[countAndIdx2.second];
                   });
       }
