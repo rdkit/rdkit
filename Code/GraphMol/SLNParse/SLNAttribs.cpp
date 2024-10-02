@@ -340,7 +340,7 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
         }
       }
     }  // end of query processing
-  }    // end of loop over attribs
+  }  // end of loop over attribs
   if (atomQuery) {
     atom->expandQuery(atomQuery, Queries::COMPOSITE_AND);
   }

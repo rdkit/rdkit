@@ -99,14 +99,14 @@ double Data3Ddescriptors::rcov[110] = {
 
 Data3Ddescriptors::Data3Ddescriptors() {}
 
-double* Data3Ddescriptors::getMW() { return mw; }
+double *Data3Ddescriptors::getMW() { return mw; }
 
-double* Data3Ddescriptors::getVDW() { return vdW; }
+double *Data3Ddescriptors::getVDW() { return vdW; }
 
-double* Data3Ddescriptors::getNEG() { return neg; }
+double *Data3Ddescriptors::getNEG() { return neg; }
 
-double* Data3Ddescriptors::getPOL() { return pol; }
+double *Data3Ddescriptors::getPOL() { return pol; }
 
-double* Data3Ddescriptors::getIonPOL() { return ionpol; }
+double *Data3Ddescriptors::getIonPOL() { return ionpol; }
 
-double* Data3Ddescriptors::getRCOV() { return rcov; }
+double *Data3Ddescriptors::getRCOV() { return rcov; }

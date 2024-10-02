@@ -61,7 +61,7 @@ enum IsSgroupInAtomSetResult {
 class MarvinWriterException : public std::runtime_error {
  public:
   explicit MarvinWriterException(std::string message)
-      : std::runtime_error(message){};
+      : std::runtime_error(message) {};
 };
 
 class MarvinArrow {

@@ -38,7 +38,7 @@
 namespace {
 class ss_matcher {
  public:
-  ss_matcher(){};
+  ss_matcher() {};
   ss_matcher(const std::string &pattern) {
     RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
     TEST_ASSERT(p);

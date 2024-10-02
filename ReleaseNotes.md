@@ -1,4 +1,27 @@
-# Release_2024.09.1b1
+# Release_2025.03.1
+(Changes relative to Release_2024.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+
+## Highlights
+
+## Backwards incompatible changes
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+## Cleanup work:
+
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+# Release_2024.09.1
 (Changes relative to Release_2024.03.1)
 
 ## Acknowledgements
@@ -19,6 +42,9 @@ Zonta, kekulai-fredchang, AaronsonJames, Xavier M, xiaohongniua2, jakirkham,
 spparel, Amanda P, esiaero, hxu105
 
 ## Highlights
+- A full molecular validation and standardization pipeline has been added to the rdMolStandardize library. This is extensible and suitable for incorporation in a broader compound registration pipeline.
+- It's now possible to do shape-based alignment in the RDKit via integration with the newly open-sourced pubchem-align3d library 
+- The new rdMolProcessing module introduces easy-to-use convenience functions for reading molecules from input files and carrying out standard calculations. Multiple threads can be used for both file parsing and the calculations, so this can be quite efficient. In this release we've included support for generating fingerprints, but additional functionality will be added in the future.
 
 ## Backwards incompatible changes
 - The SMARTS for the unbranched alkanes in the fragment descriptors has been corrected. This descriptor will now frequently return different results.
@@ -68,6 +94,8 @@ spparel, Amanda P, esiaero, hxu105
  (github pull #7456 from greglandrum)
   - Optionally limit the MolStandardize::Uncharger to only alter the protonation state
  (github pull #7458 from rvianello)
+  - Allow subsets of ring systems to match templates
+ (github pull #7468 from ZontaNicola)
   - Support NumPy 2.0
  (github issue #7477 from jakirkham)
   - Switch to isoelectronic valence model
@@ -376,6 +404,8 @@ spparel, Amanda P, esiaero, hxu105
  (github pull #7742 from ptosco)
   - Update SA score to use FingerprintGenerators
  (github pull #7795 from UnixJunkie)
+  - massive simplification of README.md
+ (github pull #7831 from greglandrum)
 
 ## Code removed in this release:
 - The legacy Python code for drawing molecules was removed in this release. This includes the following modules in rdkit.Chem.Draw: aggCanvas, cairoCanvas, canvasbase, MolDrawing, mplCanvas, qtCanvas, spingCanvas; the functions Draw.MolToImageFile(), Draw.MolToMPL(), and Draw.MolToQPixmap(); the "canvas" argument to the function Draw.MolToImage(); and calling Draw.MolToFile() with imageTypes other than PNG or SVG, 

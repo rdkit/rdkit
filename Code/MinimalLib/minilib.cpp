@@ -116,7 +116,8 @@ std::string JSMolBase::get_cxsmarts(const std::string &details) const {
 std::string JSMolBase::get_svg(int w, int h) const {
   return MinimalLib::mol_to_svg(get(), w, h);
 }
-std::string JSMolBase::get_svg_with_highlights(const std::string &details) const {
+std::string JSMolBase::get_svg_with_highlights(
+    const std::string &details) const {
   int w = d_defaultWidth;
   int h = d_defaultHeight;
   return MinimalLib::mol_to_svg(get(), w, h, details);
@@ -398,12 +399,12 @@ bool JSMolBase::has_prop(const std::string &key) const {
 }
 
 std::vector<std::string> JSMolBase::get_prop_list(bool includePrivate,
-                                              bool includeComputed) const {
+                                                  bool includeComputed) const {
   return get().getPropList(includePrivate, includeComputed);
 }
 
 bool JSMolBase::set_prop(const std::string &key, const std::string &val,
-                     bool computed) {
+                         bool computed) {
   get().setProp(key, val, computed);
   return true;
 }
@@ -458,7 +459,8 @@ bool JSMolBase::add_hs_in_place() {
   return true;
 }
 
-std::string JSMolBase::condense_abbreviations(double maxCoverage, bool useLinkers) {
+std::string JSMolBase::condense_abbreviations(double maxCoverage,
+                                              bool useLinkers) {
   if (!useLinkers) {
     Abbreviations::condenseMolAbbreviations(
         get(), Abbreviations::Utils::getDefaultAbbreviations(), maxCoverage);
@@ -491,7 +493,7 @@ std::string JSMolBase::condense_abbreviations_from_defs(
 }
 
 std::string JSMolBase::generate_aligned_coords(const JSMolBase &templateMol,
-                                           const std::string &details) {
+                                               const std::string &details) {
   if (!templateMol.get().getNumConformers()) {
     return "";
   }
@@ -748,8 +750,8 @@ JSMolBase *JSSubstructLibrary::get_mol(unsigned int i) {
   return new JSMolShared(d_sslib->getMol(i));
 }
 
-std::string JSSubstructLibrary::get_matches(const JSMolBase &q, bool useChirality,
-                                            int numThreads,
+std::string JSSubstructLibrary::get_matches(const JSMolBase &q,
+                                            bool useChirality, int numThreads,
                                             int maxResults) const {
   if (!d_sslib->size()) {
     return "[]";
@@ -892,7 +894,7 @@ std::string get_mcs_as_smarts(const JSMolList &molList,
 }
 
 JSMolBase *get_mcs_as_mol(const JSMolList &molList,
-                      const std::string &details_json) {
+                          const std::string &details_json) {
   auto res = getMcsResult(molList, details_json);
   return new JSMolShared(res.QueryMol);
 }
@@ -970,16 +972,16 @@ JSRGroupDecomposition::getRGroupsAsRows() const {
       rows.begin(), rows.end(), std::back_inserter(res),
       [](const auto &originalMap) {
         std::map<std::string, std::unique_ptr<JSMolBase>> transformedMap;
-        std::transform(
-            originalMap.begin(), originalMap.end(),
-            std::inserter(transformedMap, transformedMap.begin()),
-            [](const auto &keyValuePair) {
-              CHECK_INVARIANT(keyValuePair.second,
-                              "ROMOL_SPTR must not be null");
-              return std::make_pair(
-                  std::move(keyValuePair.first),
-                  std::unique_ptr<JSMolBase>(new JSMolShared(keyValuePair.second)));
-            });
+        std::transform(originalMap.begin(), originalMap.end(),
+                       std::inserter(transformedMap, transformedMap.begin()),
+                       [](const auto &keyValuePair) {
+                         CHECK_INVARIANT(keyValuePair.second,
+                                         "ROMOL_SPTR must not be null");
+                         return std::make_pair(
+                             std::move(keyValuePair.first),
+                             std::unique_ptr<JSMolBase>(
+                                 new JSMolShared(keyValuePair.second)));
+                       });
         return transformedMap;
       });
   return res;

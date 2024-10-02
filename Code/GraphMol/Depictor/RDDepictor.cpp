@@ -280,7 +280,6 @@ void embedFusedSystems(const RDKit::ROMol &mol,
       }
       allowRingTemplates = (coordMapAtoms.count() < 2);
     }
-
     EmbeddedFrag efrag(&mol, frings, allowRingTemplates);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);

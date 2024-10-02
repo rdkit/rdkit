@@ -42,7 +42,7 @@ struct RDKIT_GRAPHMOL_EXPORT bondholder {
       nullptr};  // if provided, this is used to order bonds
   unsigned int bondIdx{0};
 
-  bondholder(){};
+  bondholder() {};
   bondholder(Bond::BondType bt, Bond::BondStereo bs, unsigned int ni,
              unsigned int nsc, unsigned int bidx)
       : bondType(bt),

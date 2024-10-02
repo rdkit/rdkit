@@ -136,10 +136,10 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2024")
-set(RDKit_Month "09")
+set(RDKit_Year "2025")
+set(RDKit_Month "03")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "b1")
+set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -552,7 +552,7 @@ if(NOT RDK_INSTALL_INTREE)
 
 
   endif(RDK_BUILD_PYTHON_WRAPPERS)
-  install(FILES README license.txt
+  install(FILES README.md license.txt
           DESTINATION ${RDKit_ShareDir}
           COMPONENT base
           )
@@ -641,7 +641,7 @@ endif()
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "RDKit")
 SET(CPACK_PACKAGE_VENDOR "rdkit.org")
 SET(CPACK_PACKAGE_CONTACT "greg.landrum@gmail.com")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/license.txt")
 SET(CPACK_PACKAGE_VERSION_MAJOR ${RDKit_Year})
 SET(CPACK_PACKAGE_VERSION_MINOR ${RDKit_Month})

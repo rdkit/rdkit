@@ -65,7 +65,7 @@ MHFPEncoder::MHFPEncoder(unsigned int n_permutations, unsigned int seed)
 }
 
 std::vector<uint32_t> MHFPEncoder::FromStringArray(
-    const std::vector<std::string>& vec) {
+    const std::vector<std::string> &vec) {
   std::vector<uint32_t> mh(n_permutations_, max_hash_);
 
   for (uint32_t i = 0; i < vec.size(); i++) {
@@ -80,7 +80,7 @@ std::vector<uint32_t> MHFPEncoder::FromStringArray(
   return mh;
 }
 
-std::vector<uint32_t> MHFPEncoder::FromArray(const std::vector<uint32_t>& vec) {
+std::vector<uint32_t> MHFPEncoder::FromArray(const std::vector<uint32_t> &vec) {
   std::vector<uint32_t> mh(n_permutations_, max_hash_);
 
   for (uint32_t i = 0; i < vec.size(); i++) {
@@ -95,7 +95,7 @@ std::vector<uint32_t> MHFPEncoder::FromArray(const std::vector<uint32_t>& vec) {
 }
 
 std::vector<std::string> MHFPEncoder::CreateShingling(
-    const ROMol& mol, unsigned char radius, bool rings, bool isomeric,
+    const ROMol &mol, unsigned char radius, bool rings, bool isomeric,
     bool kekulize, unsigned char min_radius) {
   RWMol tmol(mol);
   if (kekulize) {
@@ -118,7 +118,7 @@ std::vector<std::string> MHFPEncoder::CreateShingling(
   if (!min_radius) {
     for (auto atom : tmol.atoms()) {
       bool do_kekule = false;
-      const RDKit::Bond* bond_in = nullptr;
+      const RDKit::Bond *bond_in = nullptr;
       bool all_hs_explicit = false;
       bool isomeric_smiles = true;
 
@@ -154,14 +154,14 @@ std::vector<std::string> MHFPEncoder::CreateShingling(
 }
 
 std::vector<std::string> MHFPEncoder::CreateShingling(
-    const std::string& smiles, unsigned char radius, bool rings, bool isomeric,
+    const std::string &smiles, unsigned char radius, bool rings, bool isomeric,
     bool kekulize, unsigned char min_radius) {
   std::unique_ptr<RWMol> m(SmilesToMol(smiles));
   PRECONDITION(m, "could not parse smiles");
   return CreateShingling(*m, radius, rings, isomeric, kekulize, min_radius);
 }
 
-std::vector<uint32_t> MHFPEncoder::Encode(ROMol& mol, unsigned char radius,
+std::vector<uint32_t> MHFPEncoder::Encode(ROMol &mol, unsigned char radius,
                                           bool rings, bool isomeric,
                                           bool kekulize,
                                           unsigned char min_radius) {
@@ -170,7 +170,7 @@ std::vector<uint32_t> MHFPEncoder::Encode(ROMol& mol, unsigned char radius,
 }
 
 std::vector<std::vector<uint32_t>> MHFPEncoder::Encode(
-    std::vector<ROMol>& mols, unsigned char radius, bool rings, bool isomeric,
+    std::vector<ROMol> &mols, unsigned char radius, bool rings, bool isomeric,
     bool kekulize, unsigned char min_radius) {
   size_t n = mols.size();
   std::vector<std::vector<uint32_t>> results(n);
@@ -183,7 +183,7 @@ std::vector<std::vector<uint32_t>> MHFPEncoder::Encode(
   return results;
 }
 
-std::vector<uint32_t> MHFPEncoder::Encode(std::string& smiles,
+std::vector<uint32_t> MHFPEncoder::Encode(std::string &smiles,
                                           unsigned char radius, bool rings,
                                           bool isomeric, bool kekulize,
                                           unsigned char min_radius) {
@@ -193,7 +193,7 @@ std::vector<uint32_t> MHFPEncoder::Encode(std::string& smiles,
 
 // Someone has to come up with a plural for smiles... smiless, smileses?
 std::vector<std::vector<uint32_t>> MHFPEncoder::Encode(
-    std::vector<std::string>& smileses, unsigned char radius, bool rings,
+    std::vector<std::string> &smileses, unsigned char radius, bool rings,
     bool isomeric, bool kekulize, unsigned char min_radius) {
   size_t n = smileses.size();
   std::vector<std::vector<uint32_t>> results(n);
@@ -206,7 +206,7 @@ std::vector<std::vector<uint32_t>> MHFPEncoder::Encode(
   return results;
 }
 
-ExplicitBitVect MHFPEncoder::EncodeSECFP(ROMol& mol, unsigned char radius,
+ExplicitBitVect MHFPEncoder::EncodeSECFP(ROMol &mol, unsigned char radius,
                                          bool rings, bool isomeric,
                                          bool kekulize,
                                          unsigned char min_radius,
@@ -217,7 +217,7 @@ ExplicitBitVect MHFPEncoder::EncodeSECFP(ROMol& mol, unsigned char radius,
 }
 
 std::vector<ExplicitBitVect> MHFPEncoder::EncodeSECFP(
-    std::vector<ROMol>& mols, unsigned char radius, bool rings, bool isomeric,
+    std::vector<ROMol> &mols, unsigned char radius, bool rings, bool isomeric,
     bool kekulize, unsigned char min_radius, size_t length) {
   size_t n = mols.size();
   std::vector<ExplicitBitVect> results(n);
@@ -232,7 +232,7 @@ std::vector<ExplicitBitVect> MHFPEncoder::EncodeSECFP(
   return results;
 }
 
-ExplicitBitVect MHFPEncoder::EncodeSECFP(std::string& smiles,
+ExplicitBitVect MHFPEncoder::EncodeSECFP(std::string &smiles,
                                          unsigned char radius, bool rings,
                                          bool isomeric, bool kekulize,
                                          unsigned char min_radius,
@@ -243,7 +243,7 @@ ExplicitBitVect MHFPEncoder::EncodeSECFP(std::string& smiles,
 }
 
 std::vector<ExplicitBitVect> MHFPEncoder::EncodeSECFP(
-    std::vector<std::string>& smileses, unsigned char radius, bool rings,
+    std::vector<std::string> &smileses, unsigned char radius, bool rings,
     bool isomeric, bool kekulize, unsigned char min_radius, size_t length) {
   size_t n = smileses.size();
   std::vector<ExplicitBitVect> results(n);

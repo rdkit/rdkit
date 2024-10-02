@@ -58,7 +58,7 @@ namespace MolInterchange {
 
 namespace {
 struct DefaultValueCache {
-  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs){};
+  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs) {};
   const rj::Value &rjDefaults;
   mutable std::map<const char *, int> intMap;
   mutable std::map<const char *, bool> boolMap;

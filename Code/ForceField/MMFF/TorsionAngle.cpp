@@ -28,7 +28,7 @@ double calcTorsionCosPhi(const RDGeom::Point3D &iPoint,
   RDGeom::Point3D t2 = r3.crossProduct(r4);
   auto t1_len = t1.length();
   auto t2_len = t2.length();
-  if (isDoubleZero(t1_len)|| isDoubleZero(t2_len)) {
+  if (isDoubleZero(t1_len) || isDoubleZero(t2_len)) {
     return 0.0;
   }
   double cosPhi = t1.dotProduct(t2) / (t1_len * t2_len);

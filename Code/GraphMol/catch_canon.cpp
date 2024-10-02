@@ -191,7 +191,7 @@ TEST_CASE("enhanced stereo canonicalization") {
         {"C[C@H](F)Cl |&1:1|", "C[C@@H](F)Cl |&1:1|"},
         {"C[C@H](F)Cl |o1:1|", "C[C@@H](F)Cl |o1:1|"},
     };
-    for (const auto& [smi1, smi2] : tests) {
+    for (const auto &[smi1, smi2] : tests) {
       INFO(smi1 + " : " + smi2);
       std::unique_ptr<RWMol> mol1{SmilesToMol(smi1)};
       REQUIRE(mol1);
@@ -209,7 +209,7 @@ TEST_CASE("enhanced stereo canonicalization") {
     std::vector<std::pair<std::string, std::string>> tests = {
         {"C[C@H](F)Cl |a:1|", "C[C@@H](F)Cl |a:1|"},
     };
-    for (const auto& [smi1, smi2] : tests) {
+    for (const auto &[smi1, smi2] : tests) {
       INFO(smi1 + " : " + smi2);
       std::unique_ptr<RWMol> mol1{SmilesToMol(smi1)};
       REQUIRE(mol1);
@@ -230,7 +230,7 @@ TEST_CASE("enhanced stereo canonicalization") {
         {"O[C@H](Br)[C@H](F)C |&1:1,3|", "O[C@@H](Br)[C@@H](F)C |&1:1,3|"},
         {"O[C@H](Br)[C@@H](F)C |&1:1,3|", "O[C@@H](Br)[C@H](F)C |&1:1,3|"},
     };
-    for (const auto& [smi1, smi2] : tests) {
+    for (const auto &[smi1, smi2] : tests) {
       INFO(smi1 + " : " + smi2);
       std::unique_ptr<RWMol> mol1{SmilesToMol(smi1)};
       REQUIRE(mol1);
@@ -253,7 +253,7 @@ TEST_CASE("enhanced stereo canonicalization") {
         {"C[C@H](F)[C@H](Br)O |&1:1,o2:3|",
          "C[C@@H](F)[C@@H](Br)O |o1:3,&1:1|"},
     };
-    for (const auto& [smi1, smi2] : tests) {
+    for (const auto &[smi1, smi2] : tests) {
       INFO(smi1 + " : " + smi2);
       std::unique_ptr<RWMol> mol1{SmilesToMol(smi1)};
       REQUIRE(mol1);
@@ -281,7 +281,7 @@ TEST_CASE("using enhanced stereo in rankMolAtoms") {
         "C[C@H](F)[C@@H](F)C |o1:1,&:3|",
         "C[C@H](F)[C@@H](F)C |a:1,&2:3|",
     };
-    for (auto& smi : smis) {
+    for (auto &smi : smis) {
       INFO(smi);
       std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
       REQUIRE(mol);
@@ -297,7 +297,7 @@ TEST_CASE("using enhanced stereo in rankMolAtoms") {
         "C[C@H](F)[C@@H](F)C |&1:1,&2:3|",
         "C[C@H](F)[C@@H](F)C |a:1,a:3|",
     };
-    for (auto& smi : smis) {
+    for (auto &smi : smis) {
       INFO(smi);
       std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
       REQUIRE(mol);
@@ -517,7 +517,7 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB";
 
-  auto countStereoBonds = [](const auto& mol) {
+  auto countStereoBonds = [](const auto &mol) {
     unsigned num_stereo_bonds = 0;
     for (const auto bond : mol.bonds()) {
       if (bond->getBondType() == Bond::BondType::DOUBLE &&

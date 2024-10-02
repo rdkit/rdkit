@@ -14,7 +14,7 @@ namespace GapeGa {
 
 using namespace GarethUtil;
 
-IntegerStringChromosomePolicy::IntegerStringChromosomePolicy(RandomUtil& rng_,
+IntegerStringChromosomePolicy::IntegerStringChromosomePolicy(RandomUtil &rng_,
                                                              int size_)
     : rng(rng_), size{size_}, maxs{new int[size]}, allowNulls{new bool[size]} {
   setMax(10);

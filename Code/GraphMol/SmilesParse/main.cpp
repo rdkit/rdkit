@@ -12,7 +12,7 @@
 
 #include <iostream>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+// #include <boost/log/functions.hpp>
 
 #include "SmilesParse.h"
 #include "SmilesWrite.h"

@@ -23,7 +23,7 @@ TopologicalTorsionArguments::TopologicalTorsionArguments(
     const std::uint32_t fpSize)
     : FingerprintArguments(countSimulation, countBounds, fpSize, 1,
                            includeChirality),
-      d_torsionAtomCount(torsionAtomCount){};
+      d_torsionAtomCount(torsionAtomCount) {};
 
 template <typename OutputType>
 OutputType TopologicalTorsionEnvGenerator<OutputType>::getResultSize() const {
