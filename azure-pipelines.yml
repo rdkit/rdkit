@@ -37,7 +37,7 @@ jobs:
   pool:
     vmImage: macos-12
   variables:
-    compiler: clangxx_osx-64
+    compiler: clangxx_osx-64=18.1
     compiler_version: 12.0
     boost_version: 1.82.0
     number_of_cores: sysctl -n hw.ncpu
