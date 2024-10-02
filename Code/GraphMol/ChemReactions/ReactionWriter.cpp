@@ -115,8 +115,6 @@ std::string chemicalReactionToRxnToString(
       }
     }
 
-    // Get CX extensions using the new getCXExtensions function
-    // auto flags = RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS ^ RDKit::SmilesWrite::CXSmilesFields::CX_ALL;
     auto ext = RDKit::SmilesWrite::getCXExtensions(mols, flags); 
     if (!ext.empty()) {
       res += " ";
