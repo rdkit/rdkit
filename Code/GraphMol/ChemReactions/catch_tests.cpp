@@ -1102,6 +1102,10 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
 
+    auto expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>>[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;$,atomProp:0.molAtomMapNumber.1:1.molAtomMapNumber.2:2.molAtomMapNumber.3:3.molAtomMapNumber.4:4.molAtomMapNumber.5:5.molAtomMapNumber.6:6.molAtomMapNumber.7:7.molAtomMapNumber.1:8.molAtomMapNumber.2:9.molAtomMapNumber.3:10.molAtomMapNumber.6:11.molAtomMapNumber.5|";
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
+    CHECK(output_cxsmarts == expected_cxsmarts);
+
     auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
     REQUIRE(roundtrip);
 
@@ -1162,6 +1166,12 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(roundtrip->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
+
+    std::string expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>> |$;;;_AP1;;;_AP1$,atomProp:0.molAtomMapNumber.1:1.molAtomMapNumber.2:2.molAtomMapNumber.3:3.molAtomMapNumber.4:4.molAtomMapNumber.5:5.molAtomMapNumber.6:6.molAtomMapNumber.7|";
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
+    CHECK(output_cxsmarts == expected_cxsmarts);
+
+    std::cout << "missing products CX:\n" << ChemicalReactionToRxnCXSmarts(*rxn) << std::endl;
   }
   SECTION("coordinate bonds and sgroups") {
     // when initially writing this, coordinate bonds were not properly parsed
@@ -1196,6 +1206,11 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     "|$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,SgD:7,6:foo:baz::::,Sg:n:4,2,1,0::ht,Sg:n:10,8,7,6::ht,SgH:2:0,3:1|"_rxnsmiles;
     // clang-format on
     REQUIRE(rxn);
+
+    std::string expected_cxsmarts = "[#6H3:6]-[#8:5]-[#6H:3](-*)-[#8:2]-*>>[#6H3:6]-[#7H:5]-[#6H:3](-*)-[#8:2]-* |$;;;star_e;;star_e;;;;star_e;;star_e$,atomProp:0.molAtomMapNumber.6:1.molAtomMapNumber.5:2.molAtomMapNumber.3:4.molAtomMapNumber.2:6.molAtomMapNumber.6:7.molAtomMapNumber.5:8.molAtomMapNumber.3:10.molAtomMapNumber.2,SgD:1,0:foo:bar::::,,SgD:7,6:foo:baz::::,,,Sg:n:4,2,1,0::ht:::,,Sg:n:10,8,7,6::ht:::,SgH:3:1.1|";
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
+    CHECK(output_cxsmarts == expected_cxsmarts);
+
     // Test properties of the rxn itself.
     CHECK(getSubstanceGroups(*rxn->getReactants()[0]).size() == 2);
     CHECK(getSubstanceGroups(*rxn->getProducts()[0]).size() == 2);
@@ -1234,7 +1249,6 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(sgsRoundProd[0].getProp<unsigned int>("PARENT") == 2);
     // Doesn't work because .... maybe because the substance groups are intertwined react/prod? The sg hierarchy is not being written for the reactant...
     // CHECK(sgsRoundReact[0].getProp<unsigned int>("PARENT") == 2);
-
   }
   SECTION("link nodes") {
     // clang-format off
