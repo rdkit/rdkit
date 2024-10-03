@@ -635,7 +635,7 @@ M  V30 END CTAB
 M  END
 )CTAB";
 
-    auto m = MolBlockToMol(molblock, true, false, false);
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock, true, false, false));
 
     REQUIRE(m);
     CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
