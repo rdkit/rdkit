@@ -1110,11 +1110,11 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
 
   auto combinedMol = decomposition[0];
   if (!mols.empty()) {
-    combinedMol.reset(
-        std::accumulate(mols.begin(), mols.end(), decomposition[0].get(),
-                        [](const auto *combined, const auto &mol) {
-                          return combineMols(*combined, *mol);
-                        }));
+    combinedMol = std::accumulate(
+        mols.begin(), mols.end(), decomposition[0],
+        [](const auto &combined, const auto &mol) {
+          return boost::shared_ptr<ROMol>(combineMols(*combined, *mol));
+        });
   }
   const static ROMol b;
   std::optional attachmentMappingOption = std::map<int, int>();
