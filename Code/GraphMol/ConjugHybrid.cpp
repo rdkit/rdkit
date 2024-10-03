@@ -139,43 +139,11 @@ void setConjugation(ROMol &mol) {
   }
 }
 
-void setHybridization(ROMol &mol) {
+void setHybridizationForce(ROMol &mol) {
   for (auto atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
       atom->setHybridization(Atom::UNSPECIFIED);
     } else {
-      // if the stereo spec matches the coordination number, this is easy
-      switch (atom->getChiralTag()) {
-        case Atom::ChiralType::CHI_TETRAHEDRAL:
-        case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
-        case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
-          if (atom->getTotalDegree() == 4) {
-            atom->setHybridization(Atom::HybridizationType::SP3);
-            continue;
-          }
-          break;
-        case Atom::ChiralType::CHI_SQUAREPLANAR:
-          if (atom->getTotalDegree() <= 4 && atom->getTotalDegree() >= 2) {
-            atom->setHybridization(Atom::HybridizationType::SP2D);
-            continue;
-          }
-          break;
-        case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
-          if (atom->getTotalDegree() <= 5 && atom->getTotalDegree() >= 2) {
-            atom->setHybridization(Atom::HybridizationType::SP3D);
-            continue;
-          }
-          break;
-        case Atom::ChiralType::CHI_OCTAHEDRAL:
-          if (atom->getTotalDegree() <= 6 && atom->getTotalDegree() >= 2) {
-            atom->setHybridization(Atom::HybridizationType::SP3D2);
-            continue;
-          }
-          break;
-        default:
-          break;
-      }
-      // otherwise we have to do some work
       int norbs;
       // try to be smart for early elements, but for later
       // ones just use the degree
@@ -225,6 +193,48 @@ void setHybridization(ROMol &mol) {
         default:
           atom->setHybridization(Atom::UNSPECIFIED);
       }
+    }
+  }
+}
+void setHybridization(ROMol &mol) {
+  for (auto atom : mol.atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      atom->setHybridization(Atom::UNSPECIFIED);
+    } else {
+      // if the stereo spec matches the coordination number, this is easy
+      switch (atom->getChiralTag()) {
+        case Atom::ChiralType::CHI_TETRAHEDRAL:
+        case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
+        case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
+          if (atom->getTotalDegree() == 4) {
+            atom->setHybridization(Atom::HybridizationType::SP3);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_SQUAREPLANAR:
+          if (atom->getTotalDegree() <= 4 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP2D);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+          if (atom->getTotalDegree() <= 5 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP3D);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_OCTAHEDRAL:
+          if (atom->getTotalDegree() <= 6 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP3D2);
+            continue;
+          }
+          break;
+        default:
+          break;
+      }
+      // otherwise we have to do some work
+
+      setHybridizationForce(mol);
     }
   }
 }
