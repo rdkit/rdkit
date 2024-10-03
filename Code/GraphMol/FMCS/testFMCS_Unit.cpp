@@ -3129,9 +3129,7 @@ void testAtomRingQueries() {
 //====================================================================================================
 //====================================================================================================
 
-int main(int argc, const char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   // p.Verbose = true;
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)

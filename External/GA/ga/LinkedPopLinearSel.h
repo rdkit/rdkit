@@ -147,9 +147,8 @@ LinkedPopLinearSel<Chromosome, PopulationPolicy>::LinkedPopLinearSel(
 #pragma GCC diagnostic pop
 #endif
 
-  double predictEndFitness = SELECT_START + (popsize - 1.0) * scaledFitnessStep;
-  (void)predictEndFitness;  // suppress warnings when building with
-                            // assertions disabled
+  [[maybe_unused]] double predictEndFitness =
+      SELECT_START + (popsize - 1.0) * scaledFitnessStep;
 #ifdef INCLUDE_REPORTER
   REPORT(Reporter::TRACE) << "endFitness " << endFitness
                           << " predictEndFitness " << predictEndFitness;
