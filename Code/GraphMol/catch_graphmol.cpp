@@ -3519,7 +3519,8 @@ $$$$
   bool strict_valences = false;
 
   SECTION("replace with a double bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::DOUBLE));
+    auto b = Bond(Bond::BondType::DOUBLE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 0);
     CHECK(begin_atom->getTotalValence() == 4);
@@ -3527,7 +3528,8 @@ $$$$
     CHECK(end_atom->getTotalValence() == 4);
   }
   SECTION("replace with a triple bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::TRIPLE));
+    auto b = Bond(Bond::BondType::TRIPLE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 0);
     CHECK(begin_atom->getTotalValence() == 5);  // Yeah, this is expected
@@ -3535,7 +3537,8 @@ $$$$
     CHECK(end_atom->getTotalValence() == 4);
   }
   SECTION("replace with a dative bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::DATIVE));
+    auto b = Bond(Bond::BondType::DATIVE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 1);
     CHECK(begin_atom->getTotalValence() == 4);
