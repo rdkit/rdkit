@@ -9,12 +9,14 @@
 
 #include <algorithm>
 #include <chrono>
+#include <fstream>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/HyperspaceSearch/Hyperspace.h>
 #include <GraphMol/HyperspaceSearch/HyperspaceSubstructureSearch.h>
+#include <GraphMol/HyperspaceSearch/ReactionSet.h>
 #include <GraphMol/HyperspaceSearch/Reagent.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -32,8 +34,10 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
 using namespace RDKit::HyperspaceSSSearch::details;
 
 std::string fName = getenv("RDBASE");
-const std::string LIB_NAME =
+const std::string TXT_LIB_NAME =
     fName + "/Code/GraphMol/HyperspaceSearch/data/idorsia_toy_space_a.txt";
+const std::string BIN_LIB_NAME =
+    fName + "/Code/GraphMol/HyperspaceSearch/data/idorsia_toy_space.spc";
 const std::string ENUM_LIB_NAME =
     fName + "/Code/GraphMol/HyperspaceSearch/data/idorsia_toy_space_enum.smi";
 
@@ -132,13 +136,25 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 TEST_CASE("Simple query 1", "[Simple query 1]") {
   //  std::string libName =
   //      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
-  Hyperspace hyperspace(LIB_NAME);
+  Hyperspace hyperspace(TXT_LIB_NAME);
   SECTION("Single fragged molecule") {
     std::vector<std::shared_ptr<ROMol>> fragSet{
         std::shared_ptr<ROMol>("c1ccccc1[1*]"_smiles),
         std::shared_ptr<ROMol>("C1CCCN1C(=O)[1*]"_smiles),
     };
     auto results = hyperspace.searchFragSet(fragSet);
+    CHECK(results.size() == 220);
+  }
+  SECTION("Binary File") {
+    Hyperspace hyperspace;
+    hyperspace.readFromDBStream(BIN_LIB_NAME);
+    // should give 220 hits for urea-3
+    const auto start{std::chrono::steady_clock::now()};
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    auto results = SSSearch(*queryMol, 3, hyperspace);
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{end - start};
+    std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
     CHECK(results.size() == 220);
   }
 #if 1
@@ -320,13 +336,34 @@ TEST_CASE("Connector Regions", "[Connector Regions]") {
     std::string libName =
         fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
     Hyperspace hyperspace(libName);
-    for (const auto &rs : hyperspace.reactions()) {
-      std::cout << rs.first << " :";
-      for (const auto &cr : rs.second->connectorRegions()) {
-        std::cout << " " << MolToSmiles(*cr);
-      }
-      std::cout << std::endl;
-      CHECK(rs.second->connectorRegions().size() == 30);
+    const auto &rs = hyperspace.reactions().begin();
+    CHECK(rs->second->connectorRegions().size() == 30);
+  }
+}
+
+TEST_CASE("DB Writer", "[DB Writer]") {
+  std::string libName =
+      fName + "/Code/GraphMol/HyperspaceSearch/data/doebner_miller_space.txt";
+  Hyperspace hyperspace(libName);
+  CHECK(hyperspace.numReactions() == 1);
+  hyperspace.writeToDBStream("doebner_miller_space.spc");
+
+  Hyperspace newHyperspace;
+  newHyperspace.readFromDBStream("doebner_miller_space.spc");
+  auto it = newHyperspace.reactions().find("doebner-miller-quinoline");
+  CHECK(it != newHyperspace.reactions().end());
+  const auto &irxn = it->second;
+  const auto &orxn =
+      hyperspace.reactions().find("doebner-miller-quinoline")->second;
+  CHECK(irxn->id() == orxn->id());
+  CHECK(irxn->connectorRegions().size() == orxn->connectorRegions().size());
+  CHECK(*irxn->connRegFP() == *orxn->connRegFP());
+  CHECK(irxn->connectors() == orxn->connectors());
+  CHECK(irxn->reagents().size() == orxn->reagents().size());
+  for (size_t i = 0; i < irxn->reagents().size(); ++i) {
+    CHECK(irxn->reagents()[i].size() == orxn->reagents()[i].size());
+    for (size_t j = 0; j < irxn->reagents().size(); ++j) {
+      CHECK(irxn->reagents()[i][j]->id() == orxn->reagents()[i][j]->id());
     }
   }
 }

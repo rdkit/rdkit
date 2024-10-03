@@ -33,6 +33,7 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include <GraphMol/HyperspaceSearch/ReactionSet.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -303,7 +304,7 @@ std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
   auto &reactions = hyperspace.reactions();
   for (const auto &r : reactions) {
     std::cout << "reaction " << r.first
-              << "  number of synthons : " << r.second->d_reagents.size()
+              << "  number of synthons : " << r.second->reagents().size()
               << std::endl;
   }
   auto results = hyperspace.search(query, maxBondSplits);
@@ -322,7 +323,7 @@ std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
   auto &reactions = hyperspace.reactions();
   for (const auto &r : reactions) {
     std::cout << "reaction " << r.first
-              << "  number of synthons : " << r.second->d_reagents.size()
+              << "  number of synthons : " << r.second->reagents().size()
               << std::endl;
   }
   auto results = hyperspace.search(query, maxBondSplits);

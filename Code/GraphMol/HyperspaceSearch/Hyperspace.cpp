@@ -22,18 +22,17 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/HyperspaceSearch/Hyperspace.h>
+#include <GraphMol/HyperspaceSearch/HyperspaceSubstructureSearch.h>
+#include <GraphMol/HyperspaceSearch/ReactionSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-#include "Hyperspace.h"
-#include "HyperspaceSubstructureSearch.h"
-
 namespace RDKit::HyperspaceSSSearch {
 Hyperspace::Hyperspace(const std::string &fileName) : d_fileName(fileName) {
   readFile();
-  assignConnectorsUsed();
 }
 
 std::vector<std::unique_ptr<ROMol>> Hyperspace::search(
@@ -78,6 +77,19 @@ inline std::vector<std::string> splitLine(const std::string &str,
           std::sregex_token_iterator()};
 }
 
+// The Enamine/Chemspace files come with the connection points on the
+// synthons marked with [U], [Np], [Pu], [Am].  These need to be converted
+// to dummy atoms with isotope labels (1, 2, 3, 4 respectively) which can
+// be done safely on the SMILES string.
+void fixConnectors(std::string &smiles) {
+  const static std::vector<std::regex> connRegexs{
+      std::regex(R"(\[U\])"), std::regex(R"(\[Np\])"), std::regex(R"(\[Pu\])"),
+      std::regex(R"(\[Am\])")};
+  const static std::vector<std::string> repls{"[1*]", "[2*]", "[3*]", "[4*]"};
+  for (size_t i = 0; i < connRegexs.size(); ++i) {
+    smiles = std::regex_replace(smiles, connRegexs[i], repls[i]);
+  }
+}
 }  // namespace
 
 void Hyperspace::readFile() {
@@ -85,18 +97,34 @@ void Hyperspace::readFile() {
   // the first line is headers, check they're in the right format,
   // which is tab-separated:
   // SMILES	synton_id	synton#	reaction_id
+  // or tab-separated:
+  // SMILES	synton_id	synton#	reaction_id release
+  // or
+  // SMILES,synton_id,synton_role,reaction_id
   // Note that we keep the spelling "synton" from the original paper
   // and example input file, and allow any whitespace rather than just tab.
   std::string firstLine;
   getline(ifs, firstLine);
   //  std::cout << "parsing : " << firstLine << std::endl;
-  std::regex regexz("\\s+");
+  std::regex regexz("[\\s,]+");
 
   auto lineParts = splitLine(firstLine, regexz);
-  if (lineParts != std::vector<std::string>{"SMILES", "synton_id", "synton#",
-                                            "reaction_id"}) {
+  std::vector<std::vector<std::string>> firstLineOpts{
+      std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id"},
+      std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id",
+                               "release"},
+      std::vector<std::string>{"SMILES", "synton_id", "synton_role",
+                               "reaction_id"}};
+  int format = -1;
+  for (size_t i = 0; i < firstLineOpts.size(); ++i) {
+    if (lineParts == firstLineOpts[i]) {
+      format = i;
+    }
+  }
+  if (format == -1) {
     throw std::runtime_error("Bad format for hyperspace file " + d_fileName);
   }
+  std::cout << "Format = " << format << std::endl;
   std::string nextLine;
   int lineNum = 1;
 
@@ -106,46 +134,29 @@ void Hyperspace::readFile() {
       continue;
     }
     auto nextReag = splitLine(nextLine, regexz);
-    if (nextReag.size() != 4) {
+    if (nextReag.size() < 4) {
       throw std::runtime_error("Bad format for hyperspace file " + d_fileName +
                                " on line " + std::to_string(lineNum));
     }
     //    std::cout << nextReag[0] << " : " << nextReag[1] << std::endl;
     if (auto it = d_reactions.find(nextReag[3]); it == d_reactions.end()) {
       d_reactions.insert(std::make_pair(
-          nextReag[3], std::make_unique<ReagentSet>(nextReag[3])));
+          nextReag[3], std::make_unique<ReactionSet>(nextReag[3])));
     }
+    fixConnectors(nextReag[0]);
     auto &currReaction = d_reactions[nextReag[3]];
-    size_t synthonId = std::stoi(nextReag[2]);
-    if (synthonId >= currReaction->d_reagents.size()) {
-      for (size_t i = currReaction->d_reagents.size(); i < synthonId + 1; ++i) {
-        currReaction->d_reagents.push_back(
-            std::vector<std::unique_ptr<Reagent>>());
-      }
+    size_t synthonNum;
+    if (format == 0 || format == 1) {
+      synthonNum = std::stoi(nextReag[2]);
+    } else if (format == 2) {
+      // in this case it's a string "synton_2" etc.
+      synthonNum = std::stoi(nextReag[2].substr(7));
     }
-    currReaction->d_reagents[synthonId].emplace_back(
-        new Reagent(nextReag[0], nextReag[1]));
+    currReaction->addReagent(synthonNum, nextReag[0], nextReag[1]);
   }
-}
-
-void Hyperspace::assignConnectorsUsed() {
-  const static std::vector<std::regex> connRegexs{
-      std::regex(R"(\[1\*\])"), std::regex(R"(\[2\*\])"),
-      std::regex(R"(\[3\*\])"), std::regex(R"(\[4\*\])")};
   for (auto &it : d_reactions) {
     auto &reaction = it.second;
-    reaction->d_connectors.resize(4, false);
-    for (auto &reagSet : reaction->d_reagents) {
-      for (auto &reag : reagSet) {
-        for (size_t i = 0; i < 4; ++i) {
-          if (std::regex_search(reag->d_smiles, connRegexs[i])) {
-            reaction->d_connectors.set(i);
-          }
-        }
-      }
-    }
-    //    std::cout << "Connectors : " << reaction->d_id << " : "
-    //              << reaction->d_connectors << std::endl;
+    reaction->assignConnectorsUsed();
   }
 }
 
@@ -241,7 +252,7 @@ std::vector<std::vector<std::shared_ptr<RWMol>>> getConnectorPermutations(
 // fragmentation, without generating the combinations of connector numbers.
 std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     const std::vector<std::shared_ptr<ROMol>> &molFrags,
-    std::unique_ptr<ReagentSet> &reaction) {
+    std::unique_ptr<ReactionSet> &reaction) {
   std::vector<boost::dynamic_bitset<>> reagsToUse;
   std::vector<std::unique_ptr<ExplicitBitVect>> pattFPs;
   for (const auto &frag : molFrags) {
@@ -259,13 +270,13 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
             });
 
   std::vector<boost::dynamic_bitset<>> passedFPs;
-  for (const auto &reagSet : reaction->d_reagents) {
+  for (const auto &reagSet : reaction->reagents()) {
     passedFPs.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
 
   // Still need to try all combinations of reagent orders.
   auto reagentOrders =
-      details::permMFromN(molFrags.size(), reaction->d_reagents.size());
+      details::permMFromN(molFrags.size(), reaction->reagents().size());
   for (const auto &ro : reagentOrders) {
     //    std::cout << "Reagent orders : ";
     //    for (auto &i : ro) {
@@ -273,12 +284,12 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     //    }
     //    std::cout << std::endl;
     std::vector<boost::dynamic_bitset<>> thisPass;
-    for (const auto &reagSet : reaction->d_reagents) {
+    for (const auto &reagSet : reaction->reagents()) {
       thisPass.push_back(boost::dynamic_bitset<>(reagSet.size()));
     }
     boost::dynamic_bitset<> fragsMatched(ro.size());
     for (size_t i = 0; i < ro.size(); ++i) {
-      const auto &reagSet = reaction->d_reagents[ro[i]];
+      const auto &reagSet = reaction->reagents()[ro[i]];
       for (size_t j = 0; j < reagSet.size(); ++j) {
         auto &reag = reagSet[j];
         if (AllProbeBitsMatch(*pattFPs[i], *reag->pattFP())) {
@@ -318,17 +329,17 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
 std::vector<boost::dynamic_bitset<>> getHitReagents(
     std::vector<std::shared_ptr<RWMol>> &molFrags,
     const std::vector<boost::dynamic_bitset<>> &passedScreens,
-    std::unique_ptr<ReagentSet> &reaction) {
+    std::unique_ptr<ReactionSet> &reaction) {
   RDKit::MatchVectType dontCare;
   std::vector<boost::dynamic_bitset<>> reagsToUse;
-  for (const auto &reagSet : reaction->d_reagents) {
+  for (const auto &reagSet : reaction->reagents()) {
     reagsToUse.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
 
   // The tests must be applied for all permutations of reagent list against
   // fragment.
   auto reagentOrders =
-      details::permMFromN(molFrags.size(), reaction->d_reagents.size());
+      details::permMFromN(molFrags.size(), reaction->reagents().size());
 
   for (const auto &ro : reagentOrders) {
     //    std::cout << "Reagent orders : ";
@@ -338,12 +349,12 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
     //    std::cout << std::endl;
     // Match the fragment to the reagent set in this order.
     std::vector<boost::dynamic_bitset<>> thisPass;
-    for (const auto &reagSet : reaction->d_reagents) {
+    for (const auto &reagSet : reaction->reagents()) {
       thisPass.push_back(boost::dynamic_bitset<>(reagSet.size()));
     }
     boost::dynamic_bitset<> fragsMatched(ro.size());
     for (size_t i = 0; i < ro.size(); ++i) {
-      const auto &reagSet = reaction->d_reagents[ro[i]];
+      const auto &reagSet = reaction->reagents()[ro[i]];
       const auto &passedScreensSet = passedScreens[ro[i]];
       for (size_t j = 0; j < reagSet.size(); ++j) {
         if (passedScreensSet[j]) {
@@ -386,7 +397,7 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
 // Return true if all the fragments have a connector region that matches
 // something in the reaction, false otherwise.
 bool checkConnectorRegions(const std::vector<std::shared_ptr<ROMol>> &molFrags,
-                           std::unique_ptr<ReagentSet> &reaction) {
+                           std::unique_ptr<ReactionSet> &reaction) {
   const auto &rxnConnRegs = reaction->connectorRegions();
   const auto &rxnConnRegsFP = reaction->connRegFP();
   RDKit::MatchVectType dontCare;
@@ -450,7 +461,7 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     // of the potential products.  It can be less, in which case the unused
     // reagent set will be used completely, possibly resulting in a large
     // number of hits.
-    if (fragSet.size() > reaction->d_reagents.size()) {
+    if (fragSet.size() > reaction->reagents().size()) {
       continue;
     }
 
@@ -483,7 +494,7 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     // we also try C[2*].N[1*]  and C[3*].N[2*] because
     // that might be how they're labelled in the reaction database.
     auto connCombs =
-        getConnectorPermutations(fragSet, conns, reaction->d_connectors);
+        getConnectorPermutations(fragSet, conns, reaction->connectors());
 
     // Find all reagents that match the fragments
     for (auto &connComb : connCombs) {
@@ -505,6 +516,26 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     }
   }
   return results;
+}
+
+void Hyperspace::writeToDBStream(const std::string &outFile) const {
+  std::ofstream os(outFile, std::fstream::binary | std::fstream::trunc);
+  streamWrite(os, d_reactions.size());
+  for (const auto &rs : d_reactions) {
+    rs.second->writeToDBStream(os);
+  }
+  os.close();
+}
+
+void Hyperspace::readFromDBStream(const std::string &inFile) {
+  std::ifstream is(inFile, std::fstream::binary);
+  size_t numRS;
+  streamRead(is, numRS);
+  for (size_t i = 0; i < numRS; ++i) {
+    ReactionSet *r = new ReactionSet;
+    r->readFromDBStream(is);
+    d_reactions.insert(make_pair(r->id(), r));
+  }
 }
 
 namespace {
@@ -536,6 +567,7 @@ struct Stepper {
   std::vector<int> d_sizes;
 };
 }  // namespace
+
 void Hyperspace::buildHits(
     const std::vector<boost::dynamic_bitset<>> &reagentsToUse,
     const std::string &reaction_id,
@@ -600,12 +632,12 @@ std::vector<std::vector<ROMol *>> Hyperspace::getReagentsToUse(
   }
   const auto &reaction = d_reactions.find(reaction_id)->second;
 
-  std::vector<std::vector<ROMol *>> reags(reaction->d_reagents.size(),
+  std::vector<std::vector<ROMol *>> reags(reaction->reagents().size(),
                                           std::vector<ROMol *>());
   for (size_t i = 0; i < reagentsToUse.size(); ++i) {
     for (size_t j = 0; j < reagentsToUse[i].size(); ++j) {
       if (reagentsToUse[i][j]) {
-        reags[i].push_back(reaction->d_reagents[i][j]->mol().get());
+        reags[i].push_back(reaction->reagents()[i][j]->mol().get());
       }
     }
   }

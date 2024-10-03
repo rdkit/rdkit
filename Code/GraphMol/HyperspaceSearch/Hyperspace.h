@@ -18,53 +18,12 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/HyperspaceSearch/Reagent.h>
+#include <GraphMol/HyperspaceSearch/ReactionSet.h>
 
 namespace RDKit {
 class ROMol;
 
 namespace HyperspaceSSSearch {
-
-// All the reagents for a particular reaction, plus some extra info.
-struct ReagentSet {
-  ReagentSet(const std::string &id) : d_id(id) {}
-  std::string d_id;
-  std::vector<std::vector<std::unique_ptr<Reagent>>> d_reagents;
-  boost::dynamic_bitset<> d_connectors;
-
-  const std::vector<std::shared_ptr<ROMol>> &connectorRegions() const {
-    if (d_connectorRegions.empty()) {
-      std::set<std::string> smis;
-      for (const auto &rset : d_reagents) {
-        for (const auto &r : rset) {
-          for (const auto &cr : r->connRegions()) {
-            auto smi = MolToSmiles(*cr);
-            if (smis.insert(smi).second) {
-              d_connectorRegions.push_back(cr);
-            }
-          }
-        }
-      }
-    }
-    return d_connectorRegions;
-  }
-
-  const std::unique_ptr<ExplicitBitVect> &connRegFP() const {
-    if (!d_connRegFP && !connectorRegions().empty()) {
-      d_connRegFP.reset(PatternFingerprintMol(*connectorRegions().front()));
-      for (size_t i = 1; i < connectorRegions().size(); ++i) {
-        std::unique_ptr<ExplicitBitVect> fp(
-            PatternFingerprintMol(*connectorRegions()[i]));
-        *d_connRegFP |= *fp;
-      }
-    }
-    return d_connRegFP;
-  }
-
- private:
-  mutable std::vector<std::shared_ptr<ROMol>> d_connectorRegions;
-  mutable std::unique_ptr<ExplicitBitVect> d_connRegFP;
-};
 
 class Hyperspace {
  public:
@@ -97,7 +56,7 @@ class Hyperspace {
   explicit Hyperspace(const std::string &fileName);
 
   int numReactions() const { return d_reactions.size(); }
-  const std::map<std::string, std::unique_ptr<ReagentSet>> &reactions() const {
+  const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
     return d_reactions;
   }
 
@@ -111,14 +70,15 @@ class Hyperspace {
   std::vector<std::unique_ptr<ROMol>> searchFragSet(
       const std::vector<std::shared_ptr<ROMol>> &fragSet);
 
+  // Writes to/reads from a binary stream.
+  void writeToDBStream(const std::string &outFile) const;
+  void readFromDBStream(const std::string &inFile);
+
  private:
   std::string d_fileName;
-  std::map<std::string, std::unique_ptr<ReagentSet>> d_reactions;
+  std::map<std::string, std::unique_ptr<ReactionSet>> d_reactions;
 
   void readFile();
-  // scan through the connectors ([1*], [2*] etc.) in the reagents in each
-  // ReagentSet and set bits in d_connectors accordingly.
-  void assignConnectorsUsed();
 
   // Build the molecules from the reagents identified in reagentsToUse.
   // There should be bitset in reagentsToUse for each reagent set.
