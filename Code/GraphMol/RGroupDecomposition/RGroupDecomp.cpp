@@ -552,11 +552,18 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     return -2;
   }
 
-  // in case the value ends up being changed in a future version of the code:
-  if (data->prunePermutations) {
-    data->permutationProduct = 1;
+  if (data->params.matchingStrategy != GA) {
+    size_t N = 1;
+    for (auto matche = data->matches.begin() + data->previousMatchSize;
+         matche != data->matches.end(); ++matche) {
+      size_t sz = matche->size();
+      N *= sz;
+    }
+    // oops, exponential is a pain
+    if (N * potentialMatches.size() > 100000) {
+      data->process(data->prunePermutations);
+    }
   }
-
   data->matches.push_back(std::move(potentialMatches));
 
   if (!data->matches.empty()) {
