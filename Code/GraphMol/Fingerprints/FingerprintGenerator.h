@@ -288,7 +288,7 @@ struct FingerprintFuncArguments {
         confId(confId_arg),
         additionalOutput(additionalOutput_arg),
         customAtomInvariants(customAtomInvariants_arg),
-        customBondInvariants(customBondInvariants_arg){};
+        customBondInvariants(customBondInvariants_arg) {};
 };
 
 /*!

@@ -861,8 +861,8 @@ std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
         // the substructure cleanup
         chargeStart = inStream.tellg();
       }  // end if seenMolBefore
-    }    // end if @
-  }      // end while
+    }  // end if @
+  }  // end while
 
   // we should reach this point with at least the molStart and atomStart set
   if (!molStart) {

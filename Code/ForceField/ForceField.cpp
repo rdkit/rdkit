@@ -96,7 +96,7 @@ void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
 namespace ForceFieldsHelper {
 class calcEnergy {
  public:
-  calcEnergy(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder){};
+  calcEnergy(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder) {};
   double operator()(double *pos) const { return mp_ffHolder->calcEnergy(pos); }
 
  private:
@@ -105,7 +105,7 @@ class calcEnergy {
 
 class calcGradient {
  public:
-  calcGradient(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder){};
+  calcGradient(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder) {};
   double operator()(double *pos, double *grad) const {
     double res = 1.0;
     // the contribs to the gradient function use +=, so we need

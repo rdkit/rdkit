@@ -19,6 +19,7 @@
 #include <GraphMol/MolStandardize/Fragment.h>
 #include <GraphMol/MolStandardize/Charge.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
+#include <GraphMol/MolStandardize/Validate.h>
 
 #include <iostream>
 #include <fstream>
@@ -1706,4 +1707,27 @@ TEST_CASE(
                   ValueErrorException);
   CHECK_THROWS_AS(MolStandardize::superParentInPlace(mols, numThreads),
                   ValueErrorException);
+}
+
+TEST_CASE("github #7689 RDKitValidation does not catch some valence issues") {
+  SECTION("basics") {
+    std::string mb = R"CTAB(foo
+  MJ240300                      
+
+  2  1  0  0  0  0  0  0  0  0999 V2000
+   -4.8993    1.8410    0.0000 Br  0  5  0  0  0  0  0  0  0  0  0  0
+   -5.6138    1.4285    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  2  1  1  0  0  0  0
+M  END)CTAB";
+    v2::FileParsers::MolFileParserParams ps;
+    ps.sanitize = false;
+    auto mol = v2::FileParsers::MolFromMolBlock(mb, ps);
+    REQUIRE(mol);
+    MolStandardize::RDKitValidation validator;
+    auto res = validator.validate(*mol, true);
+    REQUIRE(res.size() == 1);
+    CHECK(res[0].find(
+              "INFO: [ValenceValidation] Explicit valence for atom # 0 Br") ==
+          0);
+  }
 }

@@ -562,8 +562,8 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
         }  // while loop over second bond
         ++beg1;
       }  // while loop over first bond
-    }    // done with non-ring atoms
-  }      // done with all atoms
+    }  // done with non-ring atoms
+  }  // done with all atoms
 }  // done with 13 distance setting
 
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
@@ -1617,7 +1617,7 @@ void set14Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 
       bid1 = bid2;
     }  // loop over bonds in the ring
-  }    // end of all rings
+  }  // end of all rings
   for (bi = mol.beginBonds(); bi != mol.endBonds(); bi++) {
     bid2 = (*bi)->getIdx();
     aid2 = (*bi)->getBeginAtomIdx();

@@ -19,14 +19,14 @@ typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 namespace RDKit {
 namespace {
 
-std::pair<ROMol*, ROMol*>* getPair(const std::string& name,
-                                   const std::string& acid_smarts,
-                                   const std::string& base_smarts) {
-  ROMol* acid(SmartsToMol(acid_smarts));
+std::pair<ROMol *, ROMol *> *getPair(const std::string &name,
+                                     const std::string &acid_smarts,
+                                     const std::string &base_smarts) {
+  ROMol *acid(SmartsToMol(acid_smarts));
   if (!acid) {
     throw ValueErrorException("Failed parsing acid SMARTS: " + acid_smarts);
   }
-  ROMol* base(SmartsToMol(base_smarts));
+  ROMol *base(SmartsToMol(base_smarts));
   if (!base) {
     delete acid;
     throw ValueErrorException("Failed parsing base SMARTS: " + base_smarts);
@@ -35,9 +35,9 @@ std::pair<ROMol*, ROMol*>* getPair(const std::string& name,
   acid->setProp(common_properties::_Name, name);
   base->setProp(common_properties::_Name, name);
 
-  return new std::pair<ROMol*, ROMol*>(acid, base);
+  return new std::pair<ROMol *, ROMol *>(acid, base);
 }
-std::pair<ROMol*, ROMol*>* getPair(std::string tmpStr) {
+std::pair<ROMol *, ROMol *> *getPair(std::string tmpStr) {
   // Remove whitespace
   boost::trim(tmpStr);
 
@@ -83,7 +83,7 @@ std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::string fileName) {
   return mol_pairs;
 }
 
-std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::istream& inStream,
+std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::istream &inStream,
                                                          int nToRead) {
   std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> pairs;
   pairs.clear();
@@ -99,7 +99,7 @@ std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::istream& inStream,
     inStream.getline(inLine, MAX_LINE_LEN, '\n');
     tmpstr = inLine;
     // parse the molpair on this line (if there is one)
-    std::shared_ptr<std::pair<ROMol*, ROMol*>> mol_pair(getPair(tmpstr));
+    std::shared_ptr<std::pair<ROMol *, ROMol *>> mol_pair(getPair(tmpstr));
     if (mol_pair != nullptr) {
       pairs.emplace_back(ROMOL_SPTR(mol_pair->first),
                          ROMOL_SPTR(mol_pair->second));
@@ -110,11 +110,11 @@ std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(std::istream& inStream,
 }
 
 std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> readPairs(
-    const std::vector<std::tuple<std::string, std::string, std::string>>&
-        data) {
+    const std::vector<std::tuple<std::string, std::string, std::string>>
+        &data) {
   std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> pairs;
-  for (const auto& tpl : data) {
-    std::shared_ptr<std::pair<ROMol*, ROMol*>> mol_pair(
+  for (const auto &tpl : data) {
+    std::shared_ptr<std::pair<ROMol *, ROMol *>> mol_pair(
         getPair(std::get<0>(tpl), std::get<1>(tpl), std::get<2>(tpl)));
     pairs.emplace_back(ROMOL_SPTR(mol_pair->first),
                        ROMOL_SPTR(mol_pair->second));

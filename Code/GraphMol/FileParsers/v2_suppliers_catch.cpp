@@ -115,7 +115,7 @@ TEST_CASE("MaeMolSupplier") {
     fName += "/Code/GraphMol/FileParsers/test_data/props_test.mae";
 
     MaeMolSupplier maesup(fName);
-    auto nmol = maesup.next();
+    std::unique_ptr<ROMol> nmol(maesup.next());
     TEST_ASSERT(nmol);
   }
 }

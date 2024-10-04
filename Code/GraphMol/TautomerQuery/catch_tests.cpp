@@ -336,34 +336,36 @@ TEST_CASE("github #3821 check TAUTOMERQUERY_OPERATOR= does a deep copy") {
         &tautomerQueryAssigned.getTemplateMolecule());
 }
 
-TEST_CASE("Serialization"){
+TEST_CASE("Serialization") {
 #ifdef RDK_USE_BOOST_SERIALIZATION
-    SECTION("basics"){auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
-REQUIRE(mol);
-auto tautomerQuery =
-    std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
-CHECK(15 == tautomerQuery->getTautomers().size());
+  SECTION("basics") {
+    auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
+    REQUIRE(mol);
+    auto tautomerQuery =
+        std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+    CHECK(15 == tautomerQuery->getTautomers().size());
 
-std::string pickle = tautomerQuery->serialize();
-TautomerQuery serialized(pickle);
-CHECK(serialized.getTautomers().size() == tautomerQuery->getTautomers().size());
+    std::string pickle = tautomerQuery->serialize();
+    TautomerQuery serialized(pickle);
+    CHECK(serialized.getTautomers().size() ==
+          tautomerQuery->getTautomers().size());
 
-auto queryFingerprint = serialized.patternFingerprintTemplate();
-REQUIRE(queryFingerprint);
-std::vector<std::string> targetSmis{"CCc1nc2[nH]c(=N)nc(O)c2[nH]1",
-                                    "CN1C2=NC=NC2=C(O)N=C1N"};
-for (auto targetSmiles : targetSmis) {
-  auto target = SmilesToMol(targetSmiles);
-  REQUIRE(target);
-  CHECK(serialized.isSubstructOf(*target));
-  auto targetFingerprint = TautomerQuery::patternFingerprintTarget(*target);
-  REQUIRE(targetFingerprint);
-  CHECK(AllProbeBitsMatch(*queryFingerprint, *targetFingerprint));
-  delete targetFingerprint;
-  delete target;
-}
-delete queryFingerprint;
-}
+    auto queryFingerprint = serialized.patternFingerprintTemplate();
+    REQUIRE(queryFingerprint);
+    std::vector<std::string> targetSmis{"CCc1nc2[nH]c(=N)nc(O)c2[nH]1",
+                                        "CN1C2=NC=NC2=C(O)N=C1N"};
+    for (auto targetSmiles : targetSmis) {
+      auto target = SmilesToMol(targetSmiles);
+      REQUIRE(target);
+      CHECK(serialized.isSubstructOf(*target));
+      auto targetFingerprint = TautomerQuery::patternFingerprintTarget(*target);
+      REQUIRE(targetFingerprint);
+      CHECK(AllProbeBitsMatch(*queryFingerprint, *targetFingerprint));
+      delete targetFingerprint;
+      delete target;
+    }
+    delete queryFingerprint;
+  }
 #endif
 }
 

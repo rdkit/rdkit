@@ -158,25 +158,25 @@ class RDKIT_CHEMREACTIONS_EXPORT EvenSamplePairsStrategy
   void serialize(Archive &ar, const unsigned int /*version*/) {
     // invoke serialization of the base class
     ar &boost::serialization::base_object<EnumerationStrategyBase>(*this);
-    ar &m_numPermutationsProcessed;
-    ar &used_count;
-    ar &var_used;
-    ar &pair_used;
-    ar &pair_counts;
-    ar &selected;
+    ar & m_numPermutationsProcessed;
+    ar & used_count;
+    ar & var_used;
+    ar & pair_used;
+    ar & pair_counts;
+    ar & selected;
 
-    ar &seed;
+    ar & seed;
 
-    ar &M;
-    ar &a;
-    ar &b;
+    ar & M;
+    ar & a;
+    ar & b;
 
-    ar &nslack;
-    ar &min_nslack;
-    ar &rejected_period;
-    ar &rejected_unique;
-    ar &rejected_slack_condition;
-    ar &rejected_bb_sampling_condition;
+    ar & nslack;
+    ar & min_nslack;
+    ar & rejected_period;
+    ar & rejected_unique;
+    ar & rejected_slack_condition;
+    ar & rejected_bb_sampling_condition;
   }
 #endif
 };

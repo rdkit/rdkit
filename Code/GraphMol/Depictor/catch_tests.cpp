@@ -227,6 +227,39 @@ TEST_CASE("use ring system templates") {
   TEST_ASSERT(RDKit::feq(diff.length(), 1.0, .1))
 }
 
+TEST_CASE("find core rings") {
+  // perhydroanthracene and perhydrophenalene, and their
+  // expected number of core rings
+  std::map<std::string, unsigned int> examples = {
+      {"C1CCC2CC3CCCCC3CC2C1", 1u}, {"C1CC2CCCC3C2C(C1)CCC3", 3u}};
+  for (auto example : examples) {
+    auto mol = v2::SmilesParse::MolFromSmiles(example.first);
+    RDKit::VECT_INT_VECT arings;
+    bool includeDativeBonds = true;
+    RDKit::MolOps::symmetrizeSSSR(*mol, arings, includeDativeBonds);
+    CHECK(arings.size() == 3);
+    RDKit::INT_VECT coreRingsIds;
+    auto coreRings = RDDepict::findCoreRings(arings, coreRingsIds, *mol);
+    CHECK(coreRings.size() == example.second);
+  }
+}
+
+TEST_CASE("match template with added rings") {
+  // this is a molecule we have a template for
+  auto mol1 = "C1C2CC3CC1CC3C2"_smiles;
+  // and this is the same molecule with an extra ring added
+  auto mol2 = "C1C2CC3C1CC1(C2)NC31"_smiles;
+  // generate coordinates
+  RDDepict::Compute2DCoordParameters params;
+  params.useRingTemplates = true;
+  RDDepict::compute2DCoords(*mol1, params);
+  RDDepict::compute2DCoords(*mol2, params);
+
+  // align the two molecules
+  auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
+  CHECK(rmsd < 0.2);
+}
+
 TEST_CASE("templates are aware of E/Z stereochemistry") {
   // this is a molecule we have a template for
   auto mol1 =
@@ -242,7 +275,6 @@ TEST_CASE("templates are aware of E/Z stereochemistry") {
   params.useRingTemplates = true;
   RDDepict::compute2DCoords(*mol1, params);
   RDDepict::compute2DCoords(*mol2, params);
-
   auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
   CHECK(rmsd > 1.);
 }

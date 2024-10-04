@@ -91,9 +91,9 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT NetworkEdge {
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
-    ar &beginIdx;
-    ar &endIdx;
-    ar &type;
+    ar & beginIdx;
+    ar & endIdx;
+    ar & type;
   }
 #endif
 };
@@ -118,12 +118,12 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetwork {
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
-    ar &nodes;
-    ar &counts;
+    ar & nodes;
+    ar & counts;
     if (version > 0) {
-      ar &molCounts;
+      ar & molCounts;
     }
-    ar &edges;
+    ar & edges;
   }
 #endif
 };

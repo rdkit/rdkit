@@ -13,7 +13,7 @@
 namespace RDKit {
 namespace StructureCheck {
 
-static const char* flags[] = {
+static const char *flags[] = {
     "BAD_MOLECULE",
     "ALIAS_CONVERSION_FAILED",
     "STEREO_ERROR",
@@ -53,10 +53,10 @@ class FMap : public std::map<std::string, unsigned> {
   }
 };
 
-unsigned StructChecker::StringToStructureFlags(const std::string& str) {
+unsigned StructChecker::StringToStructureFlags(const std::string &str) {
   static const FMap fmap;  // map name string to StructureFlags enum value
   unsigned int f = 0;
-  const char* token = str.c_str();
+  const char *token = str.c_str();
   while (*token) {
     while (*token && *token <= ' ')  // skip whitespaces (<tab>|<space>...)
       token++;

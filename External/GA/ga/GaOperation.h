@@ -20,16 +20,16 @@ class GaOperation {
  private:
   const size_t nParents, nChildren;
   const double weight;
-  void (*opfunction)(const std::vector<std::shared_ptr<Chromosome>>& parents,
-                     std::vector<std::shared_ptr<Chromosome>>& children);
-  GaOperation(const GaOperation&) = delete;
-  GaOperation& operator=(const GaOperation& other) = delete;
+  void (*opfunction)(const std::vector<std::shared_ptr<Chromosome>> &parents,
+                     std::vector<std::shared_ptr<Chromosome>> &children);
+  GaOperation(const GaOperation &) = delete;
+  GaOperation &operator=(const GaOperation &other) = delete;
 
  public:
   GaOperation(int nParents_, int nChildren_, double weight_,
               void (*opfunction_)(
-                  const std::vector<std::shared_ptr<Chromosome>>& parents,
-                  std::vector<std::shared_ptr<Chromosome>>& children))
+                  const std::vector<std::shared_ptr<Chromosome>> &parents,
+                  std::vector<std::shared_ptr<Chromosome>> &children))
       : nParents(nParents_),
         nChildren(nChildren_),
         weight(weight_),
@@ -43,8 +43,8 @@ class GaOperation {
   double getWeight() const { return weight; }
 
   void (*getOpfunction())(
-      const std::vector<std::shared_ptr<Chromosome>>& parents,
-      std::vector<std::shared_ptr<Chromosome>>& children) {
+      const std::vector<std::shared_ptr<Chromosome>> &parents,
+      std::vector<std::shared_ptr<Chromosome>> &children) {
     return opfunction;
   }
 };
@@ -52,8 +52,8 @@ class GaOperation {
 // Templates for string based chromosomes
 
 template <typename T>
-void mutateOperation(const std::vector<std::shared_ptr<T>>& parents,
-                     std::vector<std::shared_ptr<T>>& children) {
+void mutateOperation(const std::vector<std::shared_ptr<T>> &parents,
+                     std::vector<std::shared_ptr<T>> &children) {
   auto parent = parents[0];
   auto child = children[0];
   child->copyGene(*parent);
@@ -61,8 +61,8 @@ void mutateOperation(const std::vector<std::shared_ptr<T>>& parents,
 }
 
 template <typename T>
-void onePointCrossoverOperation(const std::vector<std::shared_ptr<T>>& parents,
-                                std::vector<std::shared_ptr<T>>& children) {
+void onePointCrossoverOperation(const std::vector<std::shared_ptr<T>> &parents,
+                                std::vector<std::shared_ptr<T>> &children) {
   auto parent1 = parents[0];
   auto child1 = children[0];
   auto parent2 = parents[1];
@@ -72,8 +72,8 @@ void onePointCrossoverOperation(const std::vector<std::shared_ptr<T>>& parents,
 }
 
 template <typename T>
-void twoPointCrossoverOperation(const std::vector<std::shared_ptr<T>>& parents,
-                                std::vector<std::shared_ptr<T>>& children) {
+void twoPointCrossoverOperation(const std::vector<std::shared_ptr<T>> &parents,
+                                std::vector<std::shared_ptr<T>> &children) {
   auto parent1 = parents[0];
   auto child1 = children[0];
   auto parent2 = parents[1];
@@ -83,8 +83,8 @@ void twoPointCrossoverOperation(const std::vector<std::shared_ptr<T>>& parents,
 }
 
 template <typename T>
-void fullMixingOperation(const std::vector<std::shared_ptr<T>>& parents,
-                         std::vector<std::shared_ptr<T>>& children) {
+void fullMixingOperation(const std::vector<std::shared_ptr<T>> &parents,
+                         std::vector<std::shared_ptr<T>> &children) {
   auto parent1 = parents[0];
   auto child1 = children[0];
   auto parent2 = parents[1];
@@ -95,8 +95,8 @@ void fullMixingOperation(const std::vector<std::shared_ptr<T>>& parents,
 
 template <typename T>
 void fullMixingAndCrossoverOperation(
-    const std::vector<std::shared_ptr<T>>& parents,
-    std::vector<std::shared_ptr<T>>& children) {
+    const std::vector<std::shared_ptr<T>> &parents,
+    std::vector<std::shared_ptr<T>> &children) {
   auto parent1 = parents[0];
   auto child1 = children[0];
   auto parent2 = parents[1];

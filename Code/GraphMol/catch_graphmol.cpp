@@ -3519,7 +3519,8 @@ $$$$
   bool strict_valences = false;
 
   SECTION("replace with a double bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::DOUBLE));
+    auto b = Bond(Bond::BondType::DOUBLE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 0);
     CHECK(begin_atom->getTotalValence() == 4);
@@ -3527,7 +3528,8 @@ $$$$
     CHECK(end_atom->getTotalValence() == 4);
   }
   SECTION("replace with a triple bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::TRIPLE));
+    auto b = Bond(Bond::BondType::TRIPLE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 0);
     CHECK(begin_atom->getTotalValence() == 5);  // Yeah, this is expected
@@ -3535,7 +3537,8 @@ $$$$
     CHECK(end_atom->getTotalValence() == 4);
   }
   SECTION("replace with a dative bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::DATIVE));
+    auto b = Bond(Bond::BondType::DATIVE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 1);
     CHECK(begin_atom->getTotalValence() == 4);
@@ -4087,6 +4090,40 @@ M  END
   }
 }
 
+TEST_CASE("Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group", "[RWMol]") {
+  {
+    auto mol = "C1CC1"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getStereoGroups().empty());
+    auto other = "C1CNC1"_smiles;
+    CHECK(other->getStereoGroups().empty());
+    REQUIRE(other);
+    mol->insertMol(*other);
+    CHECK(mol->getStereoGroups().empty());
+    auto molblock = MolToMolBlock(*mol);
+    auto molblockV3k = MolToV3KMolBlock(*mol);
+    CHECK(molblock.find("V2000") != std::string::npos);
+    CHECK(molblockV3k.find("V3000") != std::string::npos);
+    CHECK(molblockV3k.find("STEABS ATOMS=(0)") == std::string::npos);
+  }
+  {
+    auto mol = "CC[C@H](C)N |&1:2,r,lp:4:1|"_smiles;
+    REQUIRE(mol);
+    CHECK(!mol->getStereoGroups().empty());
+    auto other = "CC[C@H](C)O |o1:2,r,lp:4:2|"_smiles;
+    CHECK(!other->getStereoGroups().empty());
+    REQUIRE(other);
+    mol->insertMol(*other);
+    CHECK(!mol->getStereoGroups().empty());
+    auto molblock = MolToMolBlock(*mol);
+    CHECK(molblock.find("V2000") == std::string::npos);
+    CHECK(molblock.find("V3000") != std::string::npos);
+    CHECK(molblock.find("STERAC1 ATOMS=(1 3)") != std::string::npos);
+    CHECK(molblock.find("STEREL1 ATOMS=(1 8)") != std::string::npos);
+    CHECK(molblock.find("STEABS ATOMS=(0)") == std::string::npos);
+  }
+}
+
 TEST_CASE("Hybridization of dative bonded atoms") {
   const std::vector<Atom::HybridizationType> ref_hybridizations = {
       Atom::HybridizationType::SP3, Atom::HybridizationType::SP3,
@@ -4386,67 +4423,67 @@ M  END
 
     std::vector<std::pair<std::string, int>> prs = {
 #if 1
-      {"BMS-986142_atrop8.sdf", 8},
-      {"Mrtx1719_atrop3.sdf", 21},
-      {"AtropManyChiralsEnhanced2.sdf", 7},
-      {"JDQ443_atrop2.sdf", 26},
-      {"BMS-986142_atrop2.sdf", 8},
-      {"macrocycle-6-meta-broken-hash.sdf", 14},
-      {"BMS-986142_3d.sdf", 8},
-      {"Mrtx1719_atrop2.sdf", 21},
-      {"Sotorasib_atrop3.sdf", 12},
-      {"macrocycle-5-meta-Cl-ortho-wedge.sdf", 15},
-      {"ZM374979_atrop2.sdf", 33},
-      {"RP-6306_3d.sdf", 3},
-      {"macrocycle-5-meta-Cl-ortho-hash.sdf", 15},
-      {"macrocycle-6-meta-hash.sdf", 15},
-      {"macrocycle-8-ortho-broken-wedge.sdf", 14},
-      {"RP-6306_atrop2.sdf", 3},
-      {"Sotorasib_3d.sdf", 12},
-      {"RP-6306_atrop5.sdf", 3},
-      {"AtropManyChiralsEnhanced.sdf", 7},
-      {"RP-6306_atrop4.sdf", 3},
-      {"BMS-986142_atrop3.sdf", 8},
-      {"BMS-986142_atrop7.sdf", 8},
-      {"Sotorasib_atrop1.sdf", 12},
-      {"Mrtx1719_3d.sdf", 21},
-      {"Sotorasib_atrop2.sdf", 12},
-      {"Sotorasib_atrop5.sdf", 12},
-      {"AtropManyChirals.sdf", 7},
-      {"BMS-986142_atrop5.sdf", 8},
-      {"macrocycle-7-meta-Cl-ortho-hash.sdf", 15},
-      {"RP-6306_atrop1.sdf", 3},
-      {"BMS-986142_3d_chiral.sdf", 8},
-      {"Mrtx1719_atrop1.sdf", 21},
-      {"macrocycle-9-meta-Cl-ortho-wedge.sdf", 15},
-      {"macrocycle-8-ortho-wedge.sdf", 15},
-      {"TestMultInSDF.sdf_1.sdf", 33},
-      {"macrocycle-9-ortho-broken-wedge.sdf", 14},
-      {"Sotorasib_atrop4.sdf", 12},
-      {"macrocycle-8-meta-Cl-ortho-hash.sdf", 15},
-      {"macrocycle-6-meta-Cl-ortho-wedge.sdf", 15},
-      {"macrocycle-9-ortho-wedge.sdf", 15},
-      {"BMS-986142_atrop6.sdf", 8},
-      {"ZM374979_atrop1.sdf", 33},
-      {"macrocycle-6-meta-Cl-ortho-hash.sdf", 15},
-      {"macrocycle-6-meta-wedge.sdf", 15},
-      {"macrocycle-9-meta-Cl-ortho-hash.sdf", 15},
-      {"BMS-986142_atrop4.sdf", 8},
-      {"macrocycle-8-meta-Cl-ortho-wedge.sdf", 15},
-      {"macrocycle-9-ortho-broken-hash.sdf", 14},
-      {"JDQ443_atrop1.sdf", 26},
-      {"macrocycle-9-ortho-hash.sdf", 15},
-      {"macrocycle-7-meta-Cl-ortho-wedge.sdf", 15},
-      {"ZM374979_atrop3.sdf", 33},
-      {"BMS-986142_atrop1.sdf", 8},
-      {"macrocycle-6-meta-broken-wedge.sdf", 14},
-      {"macrocycle-8-ortho-hash.sdf", 15},
-      {"RP-6306_atrop3.sdf", 3},
-      {"macrocycle-8-ortho-broken-hash.sdf", 14},
-      {"JDQ443_atrop3.sdf", 26},
+        {"BMS-986142_atrop8.sdf", 8},
+        {"Mrtx1719_atrop3.sdf", 21},
+        {"AtropManyChiralsEnhanced2.sdf", 7},
+        {"JDQ443_atrop2.sdf", 26},
+        {"BMS-986142_atrop2.sdf", 8},
+        {"macrocycle-6-meta-broken-hash.sdf", 14},
+        {"BMS-986142_3d.sdf", 8},
+        {"Mrtx1719_atrop2.sdf", 21},
+        {"Sotorasib_atrop3.sdf", 12},
+        {"macrocycle-5-meta-Cl-ortho-wedge.sdf", 15},
+        {"ZM374979_atrop2.sdf", 33},
+        {"RP-6306_3d.sdf", 3},
+        {"macrocycle-5-meta-Cl-ortho-hash.sdf", 15},
+        {"macrocycle-6-meta-hash.sdf", 15},
+        {"macrocycle-8-ortho-broken-wedge.sdf", 14},
+        {"RP-6306_atrop2.sdf", 3},
+        {"Sotorasib_3d.sdf", 12},
+        {"RP-6306_atrop5.sdf", 3},
+        {"AtropManyChiralsEnhanced.sdf", 7},
+        {"RP-6306_atrop4.sdf", 3},
+        {"BMS-986142_atrop3.sdf", 8},
+        {"BMS-986142_atrop7.sdf", 8},
+        {"Sotorasib_atrop1.sdf", 12},
+        {"Mrtx1719_3d.sdf", 21},
+        {"Sotorasib_atrop2.sdf", 12},
+        {"Sotorasib_atrop5.sdf", 12},
+        {"AtropManyChirals.sdf", 7},
+        {"BMS-986142_atrop5.sdf", 8},
+        {"macrocycle-7-meta-Cl-ortho-hash.sdf", 15},
+        {"RP-6306_atrop1.sdf", 3},
+        {"BMS-986142_3d_chiral.sdf", 8},
+        {"Mrtx1719_atrop1.sdf", 21},
+        {"macrocycle-9-meta-Cl-ortho-wedge.sdf", 15},
+        {"macrocycle-8-ortho-wedge.sdf", 15},
+        {"TestMultInSDF.sdf_1.sdf", 33},
+        {"macrocycle-9-ortho-broken-wedge.sdf", 14},
+        {"Sotorasib_atrop4.sdf", 12},
+        {"macrocycle-8-meta-Cl-ortho-hash.sdf", 15},
+        {"macrocycle-6-meta-Cl-ortho-wedge.sdf", 15},
+        {"macrocycle-9-ortho-wedge.sdf", 15},
+        {"BMS-986142_atrop6.sdf", 8},
+        {"ZM374979_atrop1.sdf", 33},
+        {"macrocycle-6-meta-Cl-ortho-hash.sdf", 15},
+        {"macrocycle-6-meta-wedge.sdf", 15},
+        {"macrocycle-9-meta-Cl-ortho-hash.sdf", 15},
+        {"BMS-986142_atrop4.sdf", 8},
+        {"macrocycle-8-meta-Cl-ortho-wedge.sdf", 15},
+        {"macrocycle-9-ortho-broken-hash.sdf", 14},
+        {"JDQ443_atrop1.sdf", 26},
+        {"macrocycle-9-ortho-hash.sdf", 15},
+        {"macrocycle-7-meta-Cl-ortho-wedge.sdf", 15},
+        {"ZM374979_atrop3.sdf", 33},
+        {"BMS-986142_atrop1.sdf", 8},
+        {"macrocycle-6-meta-broken-wedge.sdf", 14},
+        {"macrocycle-8-ortho-hash.sdf", 15},
+        {"RP-6306_atrop3.sdf", 3},
+        {"macrocycle-8-ortho-broken-hash.sdf", 14},
+        {"JDQ443_atrop3.sdf", 26},
 #endif
-      {"JDQ443_3d.sdf", 26},
-      // keep
+        {"JDQ443_3d.sdf", 26},
+        // keep
     };
     for (const auto &[nm, idx] : prs) {
       INFO(nm);

@@ -23,7 +23,7 @@
 #include <boost/ref.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
-//#define VERBOSE_FINGERPRINTING 1
+// #define VERBOSE_FINGERPRINTING 1
 
 namespace RDKit {
 
@@ -31,7 +31,7 @@ namespace {
 // FIX: this is duplicated here and in the MorganFingerprints code
 class ss_matcher {
  public:
-  ss_matcher(){};
+  ss_matcher() {};
   ss_matcher(const std::string &pattern) {
     RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
     TEST_ASSERT(p);

@@ -40,8 +40,8 @@
 namespace RDKit {
 
 // Get the next atom number of an element, formatted as a 2-letter string.
-std::string GetDefaultAtomNumber(const Atom* atom,
-        std::map<unsigned int, unsigned int> &elem);
+std::string GetDefaultAtomNumber(const Atom *atom,
+                                 std::map<unsigned int, unsigned int> &elem);
 
 std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
                            std::map<unsigned int, unsigned int> &elem) {
@@ -73,7 +73,7 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
     ss << (info->getIsHeteroAtom() ? "HETATM" : "ATOM  ");
     ss << std::setw(5) << atom->getIdx() + 1;
     ss << ' ';
-    const std::string& name = info->getName();
+    const std::string &name = info->getName();
     if (name.empty()) {
       std::string atnum = GetDefaultAtomNumber(atom, elem);
       ss << at1 << at2 << atnum;
@@ -139,7 +139,8 @@ std::string GetPDBAtomLine(const Atom *atom, const Conformer *conf,
   return ss.str();
 }
 
-std::string GetDefaultAtomNumber(const Atom* atom, std::map<unsigned int, unsigned int> &elem) {
+std::string GetDefaultAtomNumber(const Atom *atom,
+                                 std::map<unsigned int, unsigned int> &elem) {
   std::string ret = "  ";
   unsigned int atno = atom->getAtomicNum();
   if (elem.find(atno) == elem.end()) {

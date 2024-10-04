@@ -303,13 +303,12 @@ inline void streamRead(std::istream &ss, std::string &what, int version) {
   if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
-  char *buff = new char[l];
-  ss.read(buff, sizeof(char) * l);
+  auto buff = std::make_unique<char[]>(l);
+  ss.read(buff.get(), sizeof(char) * l);
   if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
-  what = std::string(buff, l);
-  delete[] buff;
+  what = std::string(buff.get(), l);
 };
 
 template <class T>

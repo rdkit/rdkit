@@ -135,7 +135,7 @@ class streambuf : public std::basic_streambuf<char> {
   /// Construct from a Python file object
   /** if buffer_size is 0 the current default_buffer_size is used.
    */
-  streambuf(bp::object& python_file_obj, std::size_t buffer_size_ = 0)
+  streambuf(bp::object &python_file_obj, std::size_t buffer_size_ = 0)
       : py_read(getattr(python_file_obj, "read", bp::object())),
         py_write(getattr(python_file_obj, "write", bp::object())),
         py_seek(getattr(python_file_obj, "seek", bp::object())),
@@ -160,7 +160,7 @@ class streambuf : public std::basic_streambuf<char> {
            */
           py_seek(py_pos);
         }
-      } catch (bp::error_already_set&) {
+      } catch (bp::error_already_set &) {
         py_tell = bp::object();
         py_seek = bp::object();
         /* Boost.Python does not do any Python exception handling whatsoever
@@ -189,7 +189,7 @@ class streambuf : public std::basic_streambuf<char> {
   }
 
   /// constructor to enforce a mode (binary or text)
-  streambuf(bp::object& python_file_obj, char mode,
+  streambuf(bp::object &python_file_obj, char mode,
             std::size_t buffer_size_ = 0)
       : streambuf(python_file_obj, buffer_size_) {
 #if 1
@@ -260,7 +260,7 @@ class streambuf : public std::basic_streambuf<char> {
           "That Python file object has no 'read' attribute");
     }
     read_buffer = py_read(buffer_size);
-    char* read_buffer_data;
+    char *read_buffer_data;
     bp::ssize_t py_n_read;
     if (PyBytes_AsStringAndSize(read_buffer.ptr(), &read_buffer_data,
                                 &py_n_read) == -1) {
@@ -447,14 +447,14 @@ class streambuf : public std::basic_streambuf<char> {
   /* A mere array of char's allocated on the heap at construction time and
      de-allocated only at destruction time.
   */
-  char* write_buffer;
+  char *write_buffer;
   bool df_isTextMode;
 
   off_type pos_of_read_buffer_end_in_py_file,
       pos_of_write_buffer_end_in_py_file;
 
   // the farthest place the buffer has been written into
-  char* farthest_pptr;
+  char *farthest_pptr;
 
   boost::optional<off_type> seekoff_without_calling_python(
       off_type off, std::ios_base::seekdir way, std::ios_base::openmode which) {
@@ -509,7 +509,7 @@ class streambuf : public std::basic_streambuf<char> {
  public:
   class istream : public std::istream {
    public:
-    istream(streambuf& buf) : std::istream(&buf) {
+    istream(streambuf &buf) : std::istream(&buf) {
       exceptions(std::ios_base::badbit);
     }
 
@@ -525,7 +525,7 @@ class streambuf : public std::basic_streambuf<char> {
 
   class ostream : public std::ostream {
    public:
-    ostream(streambuf& buf) : std::ostream(&buf) {
+    ostream(streambuf &buf) : std::ostream(&buf) {
       exceptions(std::ios_base::badbit);
     }
 
@@ -542,12 +542,12 @@ class streambuf : public std::basic_streambuf<char> {
 struct streambuf_capsule {
   streambuf python_streambuf;
 
-  streambuf_capsule(bp::object& python_file_obj, std::size_t buffer_size = 0)
+  streambuf_capsule(bp::object &python_file_obj, std::size_t buffer_size = 0)
       : python_streambuf(python_file_obj, buffer_size) {}
 };
 
 struct ostream : private streambuf_capsule, streambuf::ostream {
-  ostream(bp::object& python_file_obj, std::size_t buffer_size = 0)
+  ostream(bp::object &python_file_obj, std::size_t buffer_size = 0)
       : streambuf_capsule(python_file_obj, buffer_size),
         streambuf::ostream(python_streambuf) {}
 
