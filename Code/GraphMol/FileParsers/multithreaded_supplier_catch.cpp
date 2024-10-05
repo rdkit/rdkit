@@ -62,6 +62,26 @@ TEST_CASE("callbacks SDF") {
     }
     CHECK(nMols == callbackNats.size());
   }
+  SECTION("nextCallbackException") {
+    std::map<unsigned int, unsigned int> callbackNats;
+    auto callback =
+        [&](RWMol &,
+            const v2::FileParsers::MultithreadedMolSupplier &) {
+          throw std::runtime_error(
+              "This is not the callback you are looking for");
+        };
+    auto &suppl = sdsuppl;
+    suppl.setNextCallback(callback);
+    while (!suppl.atEnd()) {
+      auto mol = suppl.next();
+      if (!mol) {
+        continue;
+      }
+      // Check some arbitrary property present in all molecules in test file
+      // just to make sure we got *something*.
+      CHECK(mol->hasProp("AMW"));
+    }
+  }
   SECTION("writeCallback") {
     auto callback = [](RWMol &mol, const std::string &, unsigned int recordId) {
       MolOps::addHs(mol);
@@ -78,6 +98,20 @@ TEST_CASE("callbacks SDF") {
       CHECK(!MolOps::needsHs(*mol));
       CHECK(mol->hasProp("recordId"));
       CHECK(mol->getProp<unsigned int>("recordId") == suppl.getLastRecordId());
+    }
+  }
+  SECTION("writeCallbackException") {
+    auto callback = [](RWMol &, const std::string &, unsigned int) {
+      throw std::runtime_error("You cannot pass!");
+    };
+    auto &suppl = sdsuppl;
+    suppl.setWriteCallback(callback);
+    while (!suppl.atEnd()) {
+      auto mol = suppl.next();
+      if (!mol) {
+        continue;
+      }
+      CHECK(mol->hasProp("AMW"));
     }
   }
   SECTION("readCallback") {
@@ -102,6 +136,21 @@ TEST_CASE("callbacks SDF") {
       }
       CHECK(mol->hasProp("recordId"));
       CHECK(mol->getProp<unsigned int>("recordId") == suppl.getLastRecordId());
+    }
+  }
+  SECTION("readCallbackException") {
+    auto callback = [](const std::string &, unsigned int) -> std::string {
+      throw std::runtime_error("I'm Sorry Dave. I'm afraid I can't do that.");
+    };
+    auto &suppl = sdsuppl;
+
+    suppl.setReadCallback(callback);
+    while (!suppl.atEnd()) {
+      auto mol = suppl.next();
+      if (!mol) {
+        continue;
+      }
+      CHECK(mol->hasProp("AMW"));
     }
   }
 }
