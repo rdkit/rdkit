@@ -3779,8 +3779,10 @@ void simplifyEnhancedStereo(ROMol &mol, bool removeAffectedStereoGroups) {
   }
 }
 
-std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
-    const ROMol &mol, bool includeIsotopes, bool includeAtomMaps) {
+namespace {
+std::vector<std::pair<unsigned int, unsigned int>> findMesoCentersHelper(
+    const ROMol &mol, bool includeIsotopes, bool includeAtomMaps,
+    bool canRecurse) {
   std::vector<std::pair<unsigned int, unsigned int>> res;
   boost::dynamic_bitset<> specifiedChiralAts(mol.getNumAtoms());
   std::vector<unsigned int> ringStereoAts(mol.getNumAtoms(), mol.getNumAtoms());
@@ -3845,7 +3847,46 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
       }
     }
   }
+  // if we found more than one pair of meso centers, we need to make sure that
+  // they each stand on their own.
+  if (canRecurse && res.size() > 1) {
+    auto i = 0u;
+    while (i < res.size()) {
+      bool quickCopy = true;
+      ROMol molCopy(mol, quickCopy);
+      // set all other "meso pairs" to unspecified:
+      for (auto j = 0u; j < res.size(); ++j) {
+        if (i == j) {
+          continue;
+        }
+        auto [bi, bj] = res[j];
+        molCopy.getAtomWithIdx(bi)->setChiralTag(
+            Atom::ChiralType::CHI_UNSPECIFIED);
+        molCopy.getAtomWithIdx(bj)->setChiralTag(
+            Atom::ChiralType::CHI_UNSPECIFIED);
+      }
+      Chirality::stereoPerception(molCopy, true, true);
+      // see if we're still meso:
+      auto lres = findMesoCentersHelper(molCopy, includeIsotopes,
+                                        includeAtomMaps, false);
+      if (lres.size() == 0) {
+        // we're not meso:
+        res.clear();
+        break;
+      } else {
+        ++i;
+      }
+    }
+  }
 
+  return res;
+}
+
+}  // namespace
+
+std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
+    const ROMol &mol, bool includeIsotopes, bool includeAtomMaps) {
+  auto res = findMesoCentersHelper(mol, includeIsotopes, includeAtomMaps, true);
   for (const auto &[i, j] : res) {
     mol.getAtomWithIdx(i)->setProp<unsigned int>(
         common_properties::_mesoOtherAtom, j);
