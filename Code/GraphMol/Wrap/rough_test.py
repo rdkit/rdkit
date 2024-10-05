@@ -8228,11 +8228,9 @@ M  END
     res2mol = Chem.SplitMolByPDBResidues(mol)
     self.assertEqual(len(res2mol), 1)
     self.assertIn("", res2mol)
-    assert len(res2mol) == 1
     chain2mol = Chem.SplitMolByPDBChainId(mol)
     self.assertEqual(len(chain2mol), 1)
     self.assertIn("", chain2mol)
-    assert len(res2mol) == 1
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
