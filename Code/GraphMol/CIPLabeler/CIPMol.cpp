@@ -61,20 +61,24 @@ bool CIPMol::isInRing(Bond *bond) const {
 
 int CIPMol::getBondOrder(Bond *bond) const {
   PRECONDITION(bond, "bad bond")
-  if (dp_kekulized_mol == nullptr) {
-    auto tmp = new RWMol(d_mol);
+  if (d_kekulized_bonds.empty()) {
+    RWMol tmp{d_mol};
     try {
-      MolOps::Kekulize(*tmp);
+      MolOps::Kekulize(tmp);
     } catch (const MolSanitizeException &) {
     }
-    const_cast<CIPMol *>(this)->dp_kekulized_mol.reset(tmp);
+    auto& bonds = const_cast<std::vector<RDKit::Bond::BondType>&>(d_kekulized_bonds);
+    bonds.reserve(d_mol.getNumBonds());
+    for (const auto &b : tmp.bonds()) {
+      bonds.push_back(b->getBondType());
+    }
   }
 
-  const auto kekulized_bond = dp_kekulized_mol->getBondWithIdx(bond->getIdx());
+  const auto bond_type = d_kekulized_bonds.at(bond->getIdx());
 
   // Dative bonds might need to be considered with a different bond order
   // for the end atom at the end of the bond.
-  switch (kekulized_bond->getBondType()) {
+  switch (bond_type) {
     case Bond::ZERO:
     case Bond::HYDROGEN:
     case Bond::DATIVE:

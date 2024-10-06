@@ -825,12 +825,12 @@ TEST_CASE("AssignMandP", "[accurateCIP]") {
 
 TEST_CASE("upsertTest", "[basic]") {
   SECTION("upsertTest1") {
-    auto ps = SmilesParserParams();
+    auto ps = v2::SmilesParse::SmilesParserParams();
     ps.allowCXSMILES = true;
     ps.sanitize = true;
     ps.removeHs = false;
 
-    auto m = SmilesToMol(
+    auto m = v2::SmilesParse::MolFromSmiles(
         "CC1=C(C2=C(F)C=C(C(N)=O)C3=C2C2=C(C[C@@H](C(C)(C)O)CC2)N3)C=CC=C1N1C(=O)C2=C(C(F)=CC=C2)N(C)C1=O |(-0.0582,-1.2887,-0.4699;-0.138,-0.6553,-1.1342;-0.9031,-0.4893,-1.4844;-1.6332,-0.9186,-1.2186;-1.8741,-1.6494,-1.6034;-1.4248,-1.9619,-2.2208;-2.581,-2.0639,-1.3539;-3.069,-1.7619,-0.7143;-3.8054,-2.1982,-0.4602;-4.0043,-2.9212,-0.8738;-4.2532,-1.9338,0.1012;-2.8218,-1.0304,-0.3345;-2.1142,-0.6018,-0.5711;-2.0583,0.1027,-0.0552;-2.7239,0.0857,0.4696;-2.9136,0.6925,1.1267;-2.4007,1.4836,0.9934;-2.4335,2.0277,1.7578;-1.9128,2.8014,1.6418;-3.3209,2.2556,1.9643;-2.112,1.5747,2.4382;-1.4992,1.2797,0.7621;-1.4396,0.7778,-0.0395;-3.1799,-0.5981,0.3004;-0.9727,0.1003,-2.1031;-0.2773,0.5242,-2.3716;0.4878,0.3584,-2.0214;0.5573,-0.2316,-1.4028;1.3588,-0.3932,-1.0482;1.5905,0.0773,-0.3585;1.2002,0.6554,-0.0665;2.3933,-0.1194,0.0095;2.9068,-0.6967,-0.3594;3.6768,-0.8489,0.0041;4.2097,-1.3952,-0.3066;3.9217,-0.4363,0.7167;3.4017,0.1354,1.0788;2.6386,0.2956,0.7262;2.6425,-1.1179,-1.0794;3.1982,-1.7169,-1.457;1.8575,-1.0047,-1.4246;1.6168,-1.4364,-2.0026),wU:27.30|",
         ps);
 
@@ -867,7 +867,7 @@ TEST_CASE("atropisomers", "[basic]") {
       auto fName =
           rdbase + "/Code/GraphMol/FileParsers/test_data/atropisomers/" + file;
 
-      auto molsdf = MolFileToMol(fName, true, true, true);
+      std::unique_ptr<RWMol> molsdf(MolFileToMol(fName, true, true, true));
       REQUIRE(molsdf);
       CIPLabeler::assignCIPLabels(*molsdf, 100000);
 
@@ -897,12 +897,12 @@ TEST_CASE("atropisomers", "[basic]") {
           RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
           RDKit::SmilesWrite::CXSmilesFields::CX_BOND_CFG |
           RDKit::SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER;
-      SmilesParserParams pp;
+      v2::SmilesParse::SmilesParserParams pp;
       pp.allowCXSMILES = true;
       pp.sanitize = true;
 
       auto smi = MolToCXSmiles(*molsdf, wp, flags);
-      auto newMol = SmilesToMol(smi, pp);
+      auto newMol = v2::SmilesParse::MolFromSmiles(smi, pp);
       CIPLabeler::assignCIPLabels(*newMol, 100000);
 
       std::map<std::pair<unsigned int, unsigned int>, std::string> newCIPVals;

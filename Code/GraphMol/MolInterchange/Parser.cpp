@@ -969,11 +969,11 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
       throw FileParseException("Bad Format: molecules is not an array");
     }
     for (const auto &molval : doc["molecules"].GetArray()) {
-      auto *mol = new RWMol();
-      processMol(mol, molval, atomDefaults, bondDefaults, params);
+      std::unique_ptr<RWMol> mol(new RWMol());
+      processMol(mol.get(), molval, atomDefaults, bondDefaults, params);
       mol->updatePropertyCache(params.strictValenceCheck);
       mol->setProp(common_properties::_StereochemDone, 1);
-      res.emplace_back(static_cast<ROMol *>(mol));
+      res.emplace_back(static_cast<ROMol *>(mol.release()));
     }
   }
 
