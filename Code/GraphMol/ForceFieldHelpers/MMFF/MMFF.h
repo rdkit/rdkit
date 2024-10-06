@@ -49,10 +49,9 @@ inline std::pair<int, double> MMFFOptimizeMolecule(
   std::pair<int, double> res = std::make_pair(-1, -1);
   MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
   if (mmffMolProperties.isValid()) {
-    ForceFields::ForceField *ff = MMFF::constructForceField(
-        mol, nonBondedThresh, confId, ignoreInterfragInteractions);
+    std::unique_ptr<ForceFields::ForceField> ff(MMFF::constructForceField(
+        mol, nonBondedThresh, confId, ignoreInterfragInteractions));
     res = ForceFieldsHelper::OptimizeMolecule(*ff, maxIters);
-    delete ff;
   }
   return res;
 }
@@ -87,12 +86,11 @@ inline void MMFFOptimizeMoleculeConfs(ROMol &mol,
                                       bool ignoreInterfragInteractions = true) {
   MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
   if (mmffMolProperties.isValid()) {
-    ForceFields::ForceField *ff =
+    std::unique_ptr<ForceFields::ForceField> ff(
         MMFF::constructForceField(mol, &mmffMolProperties, nonBondedThresh, -1,
-                                  ignoreInterfragInteractions);
+                                  ignoreInterfragInteractions));
     ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads,
                                              maxIters);
-    delete ff;
   } else {
     res.resize(mol.getNumConformers());
     for (unsigned int i = 0; i < mol.getNumConformers(); ++i) {

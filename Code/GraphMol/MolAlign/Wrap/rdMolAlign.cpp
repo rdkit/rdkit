@@ -406,8 +406,11 @@ python::tuple getMMFFO3AForConfs(
   }
 
   python::list pyres;
+  boost::python::manage_new_object::apply<PyO3A *>::type converter;
   for (auto &i : res) {
-    pyres.append(new PyO3A(i));
+    // transfer ownership to python
+    python::handle<> handle(converter(new PyO3A(i)));
+    pyres.append(handle);
   }
 
   return python::tuple(pyres);
@@ -562,9 +565,13 @@ python::tuple getCrippenO3AForConfs(
                         numThreads, MolAlign::O3A::CRIPPEN, refCid, reflect,
                         maxIters, options, cMap.get(), cWts.get());
   }
+
   python::list pyres;
-  for (auto &re : res) {
-    pyres.append(new PyO3A(re));
+  boost::python::manage_new_object::apply<PyO3A *>::type converter;
+  for (auto &i : res) {
+    // transfer ownership to python
+    python::handle<> handle(converter(new PyO3A(i)));
+    pyres.append(handle);
   }
 
   return python::tuple(pyres);
