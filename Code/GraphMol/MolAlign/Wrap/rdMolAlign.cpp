@@ -73,7 +73,7 @@ PyObject *generateRmsdTransMatchPyTuple(double rmsd,
   PyTuple_SetItem(resTup, 1, PyArray_Return(res));
   if (match) {
     PyObject *listTup = PyTuple_New(match->size());
-    for (int i = 0; i < match->size(); ++i) {
+    for (unsigned int i = 0; i < match->size(); ++i) {
       auto *pairTup = PyTuple_New(2);
       PyTuple_SetItem(pairTup, 0, PyLong_FromLong((*match)[i].first));
       PyTuple_SetItem(pairTup, 1, PyLong_FromLong((*match)[i].second));
