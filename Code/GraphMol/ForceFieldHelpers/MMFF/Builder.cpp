@@ -976,7 +976,7 @@ ForceFields::ForceField *constructForceField(
   PRECONDITION(mmffMolProperties->isValid(),
                "missing atom types - invalid force-field");
 
-  auto *res = new ForceFields::ForceField();
+  std::unique_ptr<ForceFields::ForceField> res(new ForceFields::ForceField());
   // add the atomic positions:
   Conformer &conf = mol.getConformer(confId);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -985,35 +985,35 @@ ForceFields::ForceField *constructForceField(
 
   res->initialize();
   if (mmffMolProperties->getMMFFBondTerm()) {
-    Tools::addBonds(mol, mmffMolProperties, res);
+    Tools::addBonds(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFAngleTerm()) {
-    Tools::addAngles(mol, mmffMolProperties, res);
+    Tools::addAngles(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFStretchBendTerm()) {
-    Tools::addStretchBend(mol, mmffMolProperties, res);
+    Tools::addStretchBend(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFOopTerm()) {
-    Tools::addOop(mol, mmffMolProperties, res);
+    Tools::addOop(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFTorsionTerm()) {
-    Tools::addTorsions(mol, mmffMolProperties, res);
+    Tools::addTorsions(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFVdWTerm() ||
       mmffMolProperties->getMMFFEleTerm()) {
     boost::shared_array<std::uint8_t> neighborMat =
         Tools::buildNeighborMatrix(mol);
     if (mmffMolProperties->getMMFFVdWTerm()) {
-      Tools::addVdW(mol, confId, mmffMolProperties, res, neighborMat,
+      Tools::addVdW(mol, confId, mmffMolProperties, res.get(), neighborMat,
                     nonBondedThresh, ignoreInterfragInteractions);
     }
     if (mmffMolProperties->getMMFFEleTerm()) {
-      Tools::addEle(mol, confId, mmffMolProperties, res, neighborMat,
+      Tools::addEle(mol, confId, mmffMolProperties, res.get(), neighborMat,
                     nonBondedThresh, ignoreInterfragInteractions);
     }
   }
 
-  return res;
+  return res.release();
 }
 }  // namespace MMFF
 }  // namespace RDKit
