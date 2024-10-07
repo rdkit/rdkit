@@ -72,12 +72,15 @@ PyObject *generateRmsdTransMatchPyTuple(double rmsd,
   PyTuple_SetItem(resTup, 0, rmsdItem);
   PyTuple_SetItem(resTup, 1, PyArray_Return(res));
   if (match) {
-    python::list pairList;
-    for (const auto &pair : *match) {
-      pairList.append(python::make_tuple(pair.first, pair.second));
+    PyObject *listTup = PyTuple_New(match->size());
+    for (int i = 0; i < match->size(); ++i) {
+      auto *pairTup = PyTuple_New(2);
+      PyTuple_SetItem(pairTup, 0, PyLong_FromLong((*match)[i].first));
+      PyTuple_SetItem(pairTup, 1, PyLong_FromLong((*match)[i].second));
+      PyTuple_SetItem(listTup, i, pairTup);
     }
-    auto pairTup = new python::tuple(pairList);
-    PyTuple_SetItem(resTup, 2, pairTup->ptr());
+
+    PyTuple_SetItem(resTup, 2, listTup);
   }
   return resTup;
 }
