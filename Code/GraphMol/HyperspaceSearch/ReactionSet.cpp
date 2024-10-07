@@ -79,7 +79,6 @@ void ReactionSet::writeToDBStream(std::ostream &os) const {
 
 void ReactionSet::readFromDBStream(std::istream &is) {
   streamRead(is, d_id, 0);
-  std::cout << d_id << std::endl;
   size_t numConnRegs = 3;
   streamRead(is, numConnRegs);
   d_connectorRegions.resize(numConnRegs);
@@ -128,6 +127,15 @@ void ReactionSet::assignConnectorsUsed() {
       std::regex(R"(\[1\*\])"), std::regex(R"(\[2\*\])"),
       std::regex(R"(\[3\*\])"), std::regex(R"(\[4\*\])")};
   d_connectors.resize(4, false);
+  // Remove any empty reagent sets.  This most often happens if the
+  // synthon number in the reaction starts from 1, not 0.  Idorsia
+  // use 0, the stuff from ChemSpace use 1.
+  d_reagents.erase(
+      remove_if(d_reagents.begin(), d_reagents.end(),
+                [&](const std::vector<std::unique_ptr<Reagent>> &r) -> bool {
+                  return r.empty();
+                }),
+      d_reagents.end());
   for (auto &reagSet : d_reagents) {
     for (auto &reag : reagSet) {
       for (size_t i = 0; i < 4; ++i) {
