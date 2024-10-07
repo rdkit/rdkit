@@ -390,7 +390,7 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // Greedy - matches to *FIRST* available match
   // GreedyChunks - default - process every N chunks, unless
   // MAX_PERMUTATIONS is exceeded, in which case it falls back to
-  // Greedy
+  // Greedy for the current chunk
 
   //  Should probably scan all mols first to find match with
   //  smallest number of matches...
@@ -563,8 +563,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
       N *= sz;
     }
     // Highly symmetric cores can lead to a very large number of
-    // permutations to test. Fall back to Greedy when the number
-    // is too high.
+    // permutations to test. Fall back to Greedy for the current chunk
+    // when the number is too high.
     if (N * potentialMatches.size() > MAX_PERMUTATIONS) {
       data->process(data->prunePermutations);
     }
