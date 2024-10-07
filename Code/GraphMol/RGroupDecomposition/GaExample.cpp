@@ -130,7 +130,7 @@ int main(int argc, char *argv[]) {
   }
 
   RGroupDecompositionParameters parameters;
-  parameters.scoreMethod = FingerprintVariance;
+  parameters.scoreMethod = RGroupScore::FingerprintVariance;
   parameters.gaMaximumOperations = vm["maximumOperations"].as<int>();
   parameters.gaNumberOperationsWithoutImprovement =
       vm["numberOperationsWithoutImprovement"].as<int>();
@@ -139,9 +139,9 @@ int main(int argc, char *argv[]) {
   parameters.gaNumberRuns = vm["numberRuns"].as<int>();
   auto strategyString = vm["matchingStrategy"].as<string>();
   if (strategyString == "GA") {
-    parameters.matchingStrategy = GA;
+    parameters.matchingStrategy = RGroupMatching::GA;
   } else if (strategyString == "GreedyChunks") {
-    parameters.matchingStrategy = GreedyChunks;
+    parameters.matchingStrategy = RGroupMatching::GreedyChunks;
   } else {
     cerr << "Unknown matching strategy " << strategyString << endl;
     return 0;

@@ -361,12 +361,12 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   }
 
   if (tmatches.size() > 1) {
-    if (data->params.matchingStrategy == NoSymmetrization) {
+    if (data->params.matchingStrategy == RGroupMatching::NoSymmetrization) {
       tmatches.resize(1);
     } else if (data->matches.size() == 0) {
       // Greedy strategy just grabs the first match and
       //  takes the best matches from the rest
-      if (data->params.matchingStrategy == Greedy) {
+      if (data->params.matchingStrategy == RGroupMatching::Greedy) {
         tmatches.resize(1);
       }
     }
@@ -572,8 +572,8 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   data->matches.push_back(std::move(potentialMatches));
 
   if (!data->matches.empty()) {
-    if (data->params.matchingStrategy & Greedy ||
-        (data->params.matchingStrategy & GreedyChunks &&
+    if (data->params.matchingStrategy & RGroupMatching::Greedy ||
+        (data->params.matchingStrategy & RGroupMatching::GreedyChunks &&
          data->matches.size() % data->params.chunkSize == 0)) {
       data->process(data->prunePermutations);
     }

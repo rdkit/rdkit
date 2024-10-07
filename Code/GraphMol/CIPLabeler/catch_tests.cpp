@@ -843,7 +843,8 @@ TEST_CASE("upsertTest", "[basic]") {
     auto smilesWriteParams = SmilesWriteParams();
     smilesWriteParams.canonical = true;
     auto smilesOut =
-        MolToCXSmiles(*m, smilesWriteParams, flags, RestoreBondDirOptionClear);
+        MolToCXSmiles(*m, smilesWriteParams, flags,
+                      RestoreBondDirOption::RestoreBondDirOptionClear);
     CHECK(smilesOut != "");
   }
 }

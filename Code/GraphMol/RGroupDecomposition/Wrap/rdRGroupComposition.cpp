@@ -187,12 +187,6 @@ python::object RGroupDecomp(python::object cores, python::object mols,
   }
 }
 
-void relabelMappedDummiesHelper(ROMol &mol, unsigned int inputLabels,
-                                unsigned int outputLabels) {
-  relabelMappedDummies(mol, static_cast<RGroupLabelling>(inputLabels),
-                       static_cast<RGroupLabelling>(outputLabels));
-}
-
 struct rgroupdecomp_wrapper {
   static void wrap() {
     bool noproxy = true;
@@ -200,39 +194,38 @@ struct rgroupdecomp_wrapper {
 
     std::string docString = "";
     python::enum_<RDKit::RGroupLabels>("RGroupLabels")
-        .value("IsotopeLabels", RDKit::IsotopeLabels)
-        .value("AtomMapLabels", RDKit::AtomMapLabels)
-        .value("AtomIndexLabels", RDKit::AtomIndexLabels)
-        .value("RelabelDuplicateLabels", RDKit::RelabelDuplicateLabels)
-        .value("MDLRGroupLabels", RDKit::MDLRGroupLabels)
-        .value("DummyAtomLabels", RDKit::DummyAtomLabels)
-        .value("AutoDetect", RDKit::AutoDetect)
+        .value("IsotopeLabels", RGroupLabels::IsotopeLabels)
+        .value("AtomMapLabels", RGroupLabels::AtomMapLabels)
+        .value("AtomIndexLabels", RGroupLabels::AtomIndexLabels)
+        .value("RelabelDuplicateLabels", RGroupLabels::RelabelDuplicateLabels)
+        .value("MDLRGroupLabels", RGroupLabels::MDLRGroupLabels)
+        .value("DummyAtomLabels", RGroupLabels::DummyAtomLabels)
+        .value("AutoDetect", RGroupLabels::AutoDetect)
         .export_values();
 
     python::enum_<RDKit::RGroupMatching>("RGroupMatching")
-        .value("Greedy", RDKit::Greedy)
-        .value("GreedyChunks", RDKit::GreedyChunks)
-        .value("Exhaustive", RDKit::Exhaustive)
-        .value("NoSymmetrization", RDKit::NoSymmetrization)
-        .value("GA", RDKit::GA)
+        .value("Greedy", RGroupMatching::Greedy)
+        .value("GreedyChunks", RGroupMatching::GreedyChunks)
+        .value("Exhaustive", RGroupMatching::Exhaustive)
+        .value("NoSymmetrization", RGroupMatching::NoSymmetrization)
+        .value("GA", RGroupMatching::GA)
         .export_values();
 
     python::enum_<RDKit::RGroupLabelling>("RGroupLabelling")
-        .value("AtomMap", RDKit::AtomMap)
-        .value("Isotope", RDKit::Isotope)
-        .value("MDLRGroup", RDKit::MDLRGroup)
+        .value("AtomMap", RGroupLabelling::AtomMap)
+        .value("Isotope", RGroupLabelling::Isotope)
+        .value("MDLRGroup", RGroupLabelling::MDLRGroup)
         .export_values();
 
     python::enum_<RDKit::RGroupCoreAlignment>("RGroupCoreAlignment")
-        // DEPRECATED, remove the folowing line in release 2021.03
-        .value("None", RDKit::NoAlignment)
-        .value("NoAlignment", RDKit::NoAlignment)
-        .value("MCS", RDKit::MCS)
+        .value("None", RGroupCoreAlignment::NoAlignment)
+        .value("NoAlignment", RGroupCoreAlignment::NoAlignment)
+        .value("MCS", RGroupCoreAlignment::MCS)
         .export_values();
 
     python::enum_<RDKit::RGroupScore>("RGroupScore")
-        .value("Match", RDKit::Match)
-        .value("FingerprintVariance", RDKit::FingerprintVariance)
+        .value("Match", RGroupScore::Match)
+        .value("FingerprintVariance", RGroupScore::FingerprintVariance)
         .export_values();
 
     docString =
@@ -435,11 +428,12 @@ struct rgroupdecomp_wrapper {
         "the priority on input is Atom map number > Isotope > MDLRGroup.\n"
         "The inputLabels parameter allows to configure which mappings\n"
         "are taken into consideration.\n";
-    python::def("RelabelMappedDummies", relabelMappedDummiesHelper,
+    python::def("RelabelMappedDummies", relabelMappedDummies,
                 (python::arg("mol"),
-                 python::arg("inputLabels") = static_cast<RGroupLabelling>(
-                     AtomMap | Isotope | MDLRGroup),
-                 python::arg("outputLabels") = MDLRGroup),
+                 python::arg("inputLabels") = RGroupLabelling::AtomMap |
+                                              RGroupLabelling::Isotope |
+                                              RGroupLabelling::MDLRGroup,
+                 python::arg("outputLabels") = RGroupLabelling::MDLRGroup),
                 docString.c_str());
   };
 };

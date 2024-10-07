@@ -674,7 +674,7 @@ class SmilesTest {
       : fileName(fileNameInit),
         expectedResult(expectedResultInit),
         atomCount(atomCountInit),
-        bondCount(bondCountInit) {};
+        bondCount(bondCountInit){};
 
   bool isRxnTest() const { return false; }
 };
@@ -738,7 +738,8 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
           ;
 
       std::string smilesOut =
-          MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionTrue);
+          MolToCXSmiles(*smilesMol, ps, flags,
+                        RestoreBondDirOption::RestoreBondDirOptionTrue);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW.cxsmi", smilesOut);
       CHECK(getExpectedValue(expectedFileName) == smilesOut);
@@ -764,7 +765,8 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
                            SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
 
       std::string smilesOut =
-          MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionClear);
+          MolToCXSmiles(*smilesMol, ps, flags,
+                        RestoreBondDirOption::RestoreBondDirOptionClear);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW2.cxsmi", smilesOut);
       CHECK(getExpectedValue(expectedFileName) == smilesOut);
@@ -790,7 +792,8 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
                            SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
 
       std::string smilesOut =
-          MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionClear);
+          MolToCXSmiles(*smilesMol, ps, flags,
+                        RestoreBondDirOption::RestoreBondDirOptionClear);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW3.cxsmi", smilesOut);
       auto expected = getExpectedValue(expectedFileName);
@@ -892,7 +895,8 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
           ;
 
       std::string smilesOut =
-          MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionTrue);
+          MolToCXSmiles(*smilesMol, ps, flags,
+                        RestoreBondDirOption::RestoreBondDirOptionTrue);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".kekule_NEW.cxsmi",
                                             smilesOut);
@@ -920,7 +924,8 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
                            SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
 
       std::string smilesOut =
-          MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionClear);
+          MolToCXSmiles(*smilesMol, ps, flags,
+                        RestoreBondDirOption::RestoreBondDirOptionClear);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".arom_NEW.cxsmi",
                                             smilesOut);
@@ -978,7 +983,8 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
           ;
 
       std::string smilesOut =
-          MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionTrue);
+          MolToCXSmiles(*smilesMol, ps, flags,
+                        RestoreBondDirOption::RestoreBondDirOptionTrue);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW3D.cxsmi", smilesOut);
       CHECK(getExpectedValue(expectedFileName) == smilesOut);
@@ -1006,7 +1012,8 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
                            SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
 
       std::string smilesOut =
-          MolToCXSmiles(*smilesMol, ps, flags, RestoreBondDirOptionClear);
+          MolToCXSmiles(*smilesMol, ps, flags,
+                        RestoreBondDirOption::RestoreBondDirOptionClear);
 
       generateNewExpectedFilesIfSoSpecified(fName + ".NEW3D2.cxsmi", smilesOut);
       CHECK(getExpectedValue(expectedFileName) == smilesOut);
@@ -1266,10 +1273,10 @@ void testMolCanonicalizationAtrop(std::string fileName1,
 
     // mol1->clearConformers();
 
-    std::string smilesOut1 =
-        MolToCXSmiles(*mol1, ps, flags, RestoreBondDirOptionClear);
-    std::string smilesOut2 =
-        MolToCXSmiles(*mol2, ps, flags, RestoreBondDirOptionClear);
+    std::string smilesOut1 = MolToCXSmiles(
+        *mol1, ps, flags, RestoreBondDirOption::RestoreBondDirOptionClear);
+    std::string smilesOut2 = MolToCXSmiles(
+        *mol2, ps, flags, RestoreBondDirOption::RestoreBondDirOptionClear);
 
     std::vector<std::string> parts = splitOnString(smilesOut1, " |");
     CHECK(parts.size() == 2);

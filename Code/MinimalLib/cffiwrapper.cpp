@@ -132,7 +132,8 @@ std::string cxsmiles_helper(const char *pkl, size_t pkl_sz,
   auto mol = mol_from_pkl(pkl, pkl_sz);
   SmilesWrite::CXSmilesFields cxSmilesFields =
       SmilesWrite::CXSmilesFields::CX_ALL;
-  RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear;
+  RestoreBondDirOption restoreBondDirs =
+      RestoreBondDirOption::RestoreBondDirOptionClear;
   updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, details_json);
   return MolToCXSmiles(mol, params, cxSmilesFields, restoreBondDirs);
 }

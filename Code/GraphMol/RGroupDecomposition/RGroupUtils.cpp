@@ -215,30 +215,30 @@ void relabelMappedDummies(ROMol &mol, unsigned int inputLabels,
       continue;
     }
     unsigned int atomMapNum = 0;
-    if (inputLabels & AtomMap) {
+    if (inputLabels & RGroupLabelling::AtomMap) {
       atomMapNum = static_cast<unsigned int>(abs(atom->getAtomMapNum()));
     }
-    if (!atomMapNum && (inputLabels & Isotope)) {
+    if (!atomMapNum && (inputLabels & RGroupLabelling::Isotope)) {
       atomMapNum = atom->getIsotope();
     }
-    if (!atomMapNum && (inputLabels & MDLRGroup)) {
+    if (!atomMapNum && (inputLabels & RGroupLabelling::MDLRGroup)) {
       atom->getPropIfPresent(common_properties::_MolFileRLabel, atomMapNum);
     }
     if (!atomMapNum) {
       continue;
     }
     auto rLabel = "R" + std::to_string(atomMapNum);
-    if (outputLabels & AtomMap) {
+    if (outputLabels & RGroupLabelling::AtomMap) {
       atom->setAtomMapNum(atomMapNum);
     } else {
       atom->setAtomMapNum(0);
     }
-    if (outputLabels & Isotope) {
+    if (outputLabels & RGroupLabelling::Isotope) {
       atom->setIsotope(atomMapNum);
     } else {
       atom->setIsotope(0);
     }
-    if (outputLabels & MDLRGroup) {
+    if (outputLabels & RGroupLabelling::MDLRGroup) {
       atom->setProp(common_properties::_MolFileRLabel, atomMapNum);
       atom->setProp(common_properties::dummyLabel, rLabel);
     } else {
