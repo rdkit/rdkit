@@ -394,9 +394,9 @@ TEST_CASE("Biggy", "[Biggy]") {
     const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
 
     for (size_t i = 0; i < smis.size(); ++i) {
-      if (i != 5) {
-        continue;
-      }
+      //      if (i != 5) {
+      //        continue;
+      //      }
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};

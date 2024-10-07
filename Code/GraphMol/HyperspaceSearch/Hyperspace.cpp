@@ -272,11 +272,6 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
         }
       }
     }
-    std::cout << "Connector permutations" << std::endl;
-    for (const auto &f : connPerms.back()) {
-      std::cout << MolToSmiles(*f) << " " << MolToSmarts(*f) << " :: ";
-    }
-    std::cout << std::endl;
   }
 
   return connPerms;
@@ -365,7 +360,6 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
       if (passedScreensSet[j]) {
         auto &reag = reagSet[j];
         if (SubstructMatch(*reag->mol(), *molFrags[i], dontCare)) {
-          std::cout << reag->id() << " hits " << reagentOrder[i] << std::endl;
           thisPass[reagentOrder[i]][j] = true;
           fragsMatched[i] = true;
         }
@@ -476,8 +470,9 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
 
     // Check that all the frags have a connector region that matches something
     // in this reaction set.  Skip if not.
-    // TODO: this builds the connector regions for the fragSet for each
-    // reaction which is clearly inefficient.
+    // This builds the connector regions for the fragSet for each
+    // reaction which is clearly inefficient but probably not a problem very
+    // often.
     if (!checkConnectorRegions(fragSet, reaction)) {
       continue;
     }
@@ -553,6 +548,19 @@ void Hyperspace::readFromDBStream(const std::string &inFile) {
     ReactionSet *rs = new ReactionSet;
     rs->readFromDBStream(is);
     d_reactions.insert(make_pair(rs->id(), rs));
+  }
+}
+
+void Hyperspace::summarise(std::ostream &os) const {
+  os << "Read from file " << d_fileName << "\n"
+     << "Number of reactions : " << d_reactions.size() << "\n";
+  for (const auto &reaction : d_reactions) {
+    const auto &rxn = reaction.second;
+    os << "Reaction name " << rxn->id() << "\n";
+    for (size_t i = 0; i < rxn->reagents().size(); ++i) {
+      os << "  Synthon set " << i << " has " << rxn->reagents()[i].size()
+         << " reagents" << "\n";
+    }
   }
 }
 

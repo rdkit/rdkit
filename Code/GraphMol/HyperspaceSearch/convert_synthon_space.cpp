@@ -43,7 +43,6 @@ int main(int argc, char **argv) {
   std::string outFile(argv[2]);
   std::cout << "Converting " << inFile << " to " << outFile << std::endl;
   RDKit::HyperspaceSSSearch::Hyperspace hyperspace(inFile);
-  std::cout << "Number of reactions : " << hyperspace.numReactions()
-            << std::endl;
+  hyperspace.summarise(std::cout);
   hyperspace.writeToDBStream(outFile);
 }

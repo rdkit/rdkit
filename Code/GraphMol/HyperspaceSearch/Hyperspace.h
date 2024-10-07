@@ -76,6 +76,8 @@ class Hyperspace {
   void writeToDBStream(const std::string &outFile) const;
   void readFromDBStream(const std::string &inFile);
 
+  void summarise(std::ostream &os) const;
+
  private:
   std::string d_fileName;
   std::map<std::string, std::unique_ptr<ReactionSet>> d_reactions;
