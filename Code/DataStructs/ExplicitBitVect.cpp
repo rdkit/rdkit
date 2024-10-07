@@ -47,26 +47,41 @@ ExplicitBitVect::ExplicitBitVect(const char *data, const unsigned int dataLen) {
 ExplicitBitVect::ExplicitBitVect(const ExplicitBitVect &other)
     : BitVect(other) {
   d_size = other.d_size;
-  dp_bits = new boost::dynamic_bitset<>(*(other.dp_bits));
+  dp_bits.reset(new boost::dynamic_bitset<>(*(other.dp_bits)));
   d_numOnBits = other.d_numOnBits;
-};
+}
+
+ExplicitBitVect::ExplicitBitVect(ExplicitBitVect &&other) noexcept
+    : dp_bits(std::move(other.dp_bits)),
+      d_size(other.d_size),
+      d_numOnBits(other.d_numOnBits) {}
 
 ExplicitBitVect &ExplicitBitVect::operator=(const ExplicitBitVect &other) {
   if (this == &other) {
     return *this;
   }
   d_size = other.d_size;
-  delete dp_bits;
-  dp_bits = new boost::dynamic_bitset<>(*(other.dp_bits));
+  dp_bits.reset(new boost::dynamic_bitset<>(*(other.dp_bits)));
   d_numOnBits = other.d_numOnBits;
   return *this;
-};
+}
+
+ExplicitBitVect &ExplicitBitVect::operator=(ExplicitBitVect &&other) noexcept {
+  if (this == &other) {
+    return *this;
+  }
+  d_size = other.d_size;
+  dp_bits = std::move(other.dp_bits);
+  d_numOnBits = other.d_numOnBits;
+  return *this;
+}
+
 bool ExplicitBitVect::operator[](const unsigned int which) const {
   if (which >= d_size) {
     throw IndexErrorException(which);
   }
   return (bool)(*dp_bits)[which];
-};
+}
 bool ExplicitBitVect::setBit(const unsigned int which) {
   if (which >= d_size) {
     throw IndexErrorException(which);
@@ -78,7 +93,7 @@ bool ExplicitBitVect::setBit(const unsigned int which) {
     ++d_numOnBits;
     return false;
   }
-};
+}
 bool ExplicitBitVect::unsetBit(const unsigned int which) {
   if (which >= d_size) {
     throw IndexErrorException(which);
@@ -90,52 +105,52 @@ bool ExplicitBitVect::unsetBit(const unsigned int which) {
   } else {
     return false;
   }
-};
+}
 bool ExplicitBitVect::getBit(const unsigned int which) const {
   if (which >= d_size) {
     throw IndexErrorException(which);
   }
   return ((bool)(*dp_bits)[which]);
-};
+}
 
 ExplicitBitVect ExplicitBitVect::operator^(const ExplicitBitVect &other) const {
   ExplicitBitVect ans(d_size);
   *(ans.dp_bits) = (*dp_bits) ^ *(other.dp_bits);
   ans.d_numOnBits = ans.dp_bits->count();
   return (ans);
-};
+}
 
 ExplicitBitVect ExplicitBitVect::operator&(const ExplicitBitVect &other) const {
   ExplicitBitVect ans(d_size);
   *(ans.dp_bits) = (*dp_bits) & *(other.dp_bits);
   ans.d_numOnBits = ans.dp_bits->count();
   return (ans);
-};
+}
 
 ExplicitBitVect ExplicitBitVect::operator|(const ExplicitBitVect &other) const {
   ExplicitBitVect ans(d_size);
   *(ans.dp_bits) = (*dp_bits) | *(other.dp_bits);
   ans.d_numOnBits = ans.dp_bits->count();
   return (ans);
-};
+}
 
 ExplicitBitVect &ExplicitBitVect::operator^=(const ExplicitBitVect &other) {
   *(dp_bits) ^= *(other.dp_bits);
   d_numOnBits = dp_bits->count();
   return *this;
-};
+}
 
 ExplicitBitVect &ExplicitBitVect::operator&=(const ExplicitBitVect &other) {
   *(dp_bits) &= *(other.dp_bits);
   d_numOnBits = dp_bits->count();
   return *this;
-};
+}
 
 ExplicitBitVect &ExplicitBitVect::operator|=(const ExplicitBitVect &other) {
   *(dp_bits) |= *(other.dp_bits);
   d_numOnBits = dp_bits->count();
   return *this;
-};
+}
 
 ExplicitBitVect ExplicitBitVect::operator~() const {
   ExplicitBitVect ans(d_size);
@@ -155,18 +170,18 @@ ExplicitBitVect &ExplicitBitVect::operator+=(const ExplicitBitVect &other) {
   }
   d_numOnBits = dp_bits->count();
   return *this;
-};
+}
 
 ExplicitBitVect ExplicitBitVect::operator+(const ExplicitBitVect &other) const {
   ExplicitBitVect ans(*this);
   return ans += other;
-};
+}
 
 unsigned int ExplicitBitVect::getNumBits() const { return d_size; };
 unsigned int ExplicitBitVect::getNumOnBits() const { return d_numOnBits; };
 unsigned int ExplicitBitVect::getNumOffBits() const {
   return d_size - d_numOnBits;
-};
+}
 
 // the contents of v are blown out
 void ExplicitBitVect::getOnBits(IntVect &v) const {
@@ -180,36 +195,26 @@ void ExplicitBitVect::getOnBits(IntVect &v) const {
       v.push_back(i);
     }
   }
-};
+}
 
 void ExplicitBitVect::_initForSize(unsigned int size) {
   d_size = size;
-  delete dp_bits;
-  dp_bits = new boost::dynamic_bitset<>(size);
+  dp_bits.reset(new boost::dynamic_bitset<>(size));
   d_numOnBits = 0;
-};
+}
 
-ExplicitBitVect::~ExplicitBitVect() {
-  delete dp_bits;
-  dp_bits = nullptr;
-};
+ExplicitBitVect::~ExplicitBitVect() {}
 
 std::string ExplicitBitVect::toString() const {
   // This Function replaces the older version (version 16) of writing the onbits
-  // to
-  // a string
-  // the old version does not perform any run length encoding, it only checks to
-  // see if
-  // the length of the bitvect can be short ints and writes the on bits as
-  // shorts
-  // other wise the onbits are all written as ints
+  // to a string.  The old version does not perform any run length encoding, it
+  // only checks to see if the length of the bitvect can be short ints and
+  // writes the on bits as shorts otherwise the onbits are all written as ints.
 
-  // here we do run length encoding and the version number has been bumped to 32
-  // as well.
-  // only the reader needs to take care of readinf all legacy versions
-  // also in this scheme each bit number written to the string is checked to see
-  // how many
-  // bytes it needs
+  // Here we do run length encoding and the version number has been bumped to 32
+  // as well. Only the reader needs to take care of reading all legacy versions.
+  // Also in this scheme each bit number written to the string is checked to see
+  // how many bytes it needs
   std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                        std::ios_base::in);
 
