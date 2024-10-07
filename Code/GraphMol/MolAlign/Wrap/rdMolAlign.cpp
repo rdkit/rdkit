@@ -224,12 +224,13 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec,
-                             maxMatches, symmetrizeTerminalGroups, wtsVec);
+    rmsd =
+        MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec, maxMatches,
+                          symmetrizeTerminalGroups, wtsVec.get());
   }
   return rmsd;
 }
