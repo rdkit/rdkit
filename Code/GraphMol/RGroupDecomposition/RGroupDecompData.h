@@ -26,9 +26,6 @@ struct RGroupDecompData {
   std::map<int, RCore> cores;
   std::map<std::string, int> newCores;  // new "cores" found along the way
   int newCoreLabel = EMPTY_CORE_LABEL;
-  // this caches the running product of permutations
-  // across calls to process()
-  size_t permutationProduct = 1;
   // this caches the size of the previous matches vector
   // such that the size of the current chunk can be inferred
   size_t previousMatchSize = 0;
