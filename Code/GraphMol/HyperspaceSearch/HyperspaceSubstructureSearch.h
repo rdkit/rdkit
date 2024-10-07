@@ -27,6 +27,7 @@ class Hyperspace;
  * @param query : query molecule
  * @param maxBondSplits : the maximum number of bonds to be used in each split.
  * @param hyperspace : the hyperspace library
+ * @param maxHits: maximum number of hits to return. -1 means no maximum.
  * If maxBondSplits is 1, all molecules are returned
  * where 1 bond is removed from the molecule resulting in 2 fragments (single
  * ring bonds will not be removed, as that will only give 1 fragment).  If
@@ -38,7 +39,8 @@ class Hyperspace;
  */
 std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
                                              unsigned int maxBondSplits,
-                                             Hyperspace &hyperspace);
+                                             Hyperspace &hyperspace,
+                                             int maxHits = 1000);
 
 // Perform a substructure search with the given query molecule across
 // the hyperspace library defined in lib_name.
@@ -47,6 +49,7 @@ std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
  * @param query : query molecule
  * @param maxBondSplits : the maximum number of bonds to be used in each split.
  * @param libName : name of library containing synthon-based molecule library
+ * @param maxHits: maximum number of hits to return. -1 means no maximum.
  * If maxBondSplits is 1, all molecules are returned
  * where 1 bond is removed from the molecule resulting in 2 fragments (single
  * ring bonds will not be removed, as that will only give 1 fragment).  If
@@ -58,7 +61,8 @@ std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
  */
 std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
                                              unsigned int maxBondSplits,
-                                             const std::string &libName);
+                                             const std::string &libName,
+                                             int maxHits = 1000);
 
 namespace details {
 // Find all combinations of M things selected from N.

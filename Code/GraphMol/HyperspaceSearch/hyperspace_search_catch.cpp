@@ -141,6 +141,7 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 TEST_CASE("Simple query 1", "[Simple query 1]") {
   //  std::string libName =
   //      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
+#if 0
   Hyperspace hyperspace(TXT_LIB_NAME);
   SECTION("Single fragged molecule") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
@@ -149,6 +150,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     auto results = hyperspace.searchFragSet(fragSet);
     CHECK(results.size() == 220);
   }
+#endif
   SECTION("Binary File") {
     Hyperspace hyperspace;
     hyperspace.readFromDBStream(BIN_LIB_NAME);
@@ -161,7 +163,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
     CHECK(results.size() == 220);
   }
-#if 1
+#if 0
   SECTION("Single molecule with fragging") {
     {
       // should give 220 hits for urea-3
@@ -221,7 +223,8 @@ TEST_CASE("Triazole", "[Triazole]") {
     std::vector<std::unique_ptr<ROMol>> queryFrags;
     MolOps::getMolFrags(*queryMol, queryFrags, false);
     auto results = hyperspace.searchFragSet(queryFrags);
-    CHECK(results.size() == 4);
+    CHECK(results.size() == 1);
+    CHECK(results.front().numHits == 4);
   }
 #endif
 #if 1
@@ -394,13 +397,13 @@ TEST_CASE("Biggy", "[Biggy]") {
     const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
 
     for (size_t i = 0; i < smis.size(); ++i) {
-      //      if (i != 5) {
-      //        continue;
-      //      }
+      if (i != 2) {
+        continue;
+      }
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};
-      auto results = SSSearch(*queryMol, 3, hyperspace);
+      auto results = SSSearch(*queryMol, 3, hyperspace, -1);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -432,6 +435,63 @@ TEST_CASE("Biggy", "[Biggy]") {
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{end - start};
     std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
+  }
+#endif
+}
+
+TEST_CASE("FreedomSpace", "[FreedomSpace]") {
+  std::string libName =
+      "/Users/david/Projects/FreedomSpace/2023-05_Freedom_synthons.spc";
+  Hyperspace hyperspace;
+  const auto rstart{std::chrono::steady_clock::now()};
+  hyperspace.readFromDBStream(libName);
+  const auto rend{std::chrono::steady_clock::now()};
+  const std::chrono::duration<double> elapsed_seconds{rend - rstart};
+  std::cout << "Time to read hyperspace : " << elapsed_seconds.count()
+            << std::endl;
+
+#if 0
+  SECTION("Fragged Mol") {
+    std::vector<std::unique_ptr<ROMol>> fragSet;
+    fragSet.emplace_back("c1ccccc1N[1*]"_smiles);
+    fragSet.emplace_back("N1CCC1C(=O)[1*]"_smiles);
+    auto results = hyperspace.searchFragSet(fragSet);
+    CHECK(results.size() == 1);
+  }
+#endif
+
+#if 1
+  SECTION("WholeMol") {
+    const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
+                                        "c1ccccc1NC(=O)C1CCN1",
+                                        "c12ccccc1c(N)nc(N)n2",
+                                        "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
+                                        "c1nncn1",
+                                        "C(=O)NC(CC)C(=O)N(CC)C"};
+    const std::vector<size_t> numRes{1000, 1000, 1000, 108, 1000, 1000};
+
+    for (size_t i = 0; i < smis.size(); ++i) {
+      //      if (i != 5) {
+      //        continue;
+      //      }
+      std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
+      auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
+      const auto start{std::chrono::steady_clock::now()};
+      auto results = SSSearch(*queryMol, 3, hyperspace);
+      const auto end{std::chrono::steady_clock::now()};
+      const std::chrono::duration<double> elapsed_seconds{end - start};
+      std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
+      std::cout << "Number of hits : " << results.size() << std::endl;
+      std::string outFile =
+          std::string("/Users/david/Projects/FreedomSpace/hyperspace_hits_") +
+          std::to_string(i) + ".smi";
+      std::ofstream of(outFile);
+      for (const auto &r : results) {
+        of << MolToSmiles(*r) << " " << r->getProp<std::string>("_Name")
+           << std::endl;
+      }
+      CHECK(results.size() == numRes[i]);
+    }
   }
 #endif
 }

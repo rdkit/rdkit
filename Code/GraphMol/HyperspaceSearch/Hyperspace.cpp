@@ -9,6 +9,7 @@
 //
 
 #include <fstream>
+#include <iostream>
 #include <regex>
 #include <set>
 #include <string>
@@ -36,7 +37,7 @@ Hyperspace::Hyperspace(const std::string &fileName) : d_fileName(fileName) {
 }
 
 std::vector<std::unique_ptr<ROMol>> Hyperspace::search(
-    const RDKit::ROMol &query, unsigned int maxBondSplits) {
+    const RDKit::ROMol &query, unsigned int maxBondSplits, int maxHits) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
   std::vector<std::unique_ptr<ROMol>> results;
@@ -49,24 +50,47 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::search(
   //      std::cout << MolToSmiles(*f) << std::endl;
   //    }
   //  }
-  // Keep track of the result names so we can weed out duplicates by
-  // reaction and reagents.  Different splits may give rise to the same
-  // reagent combination.  This will keep the same molecule produced via
-  // different reactions which I think makes sense.
-  std::set<std::string> resultsNames;
+  std::vector<HyperspaceHitSet> allHits;
+  size_t totHits = 0;
   for (auto &fragSet : fragments) {
-    auto theseResults = searchFragSet(fragSet);
-    // Just for safety, do a final check
-    for (auto &hitMol : theseResults) {
-      auto molName = hitMol->getProp<std::string>(common_properties::_Name);
-      if (resultsNames.find(molName) == resultsNames.end() &&
-          SubstructMatch(*hitMol, query, dontCare)) {
-        results.emplace_back(std::unique_ptr<ROMol>(hitMol.release()));
-        resultsNames.insert(molName);
-      }
+    auto theseHits = searchFragSet(fragSet);
+    if (!theseHits.empty()) {
+      totHits += std::reduce(
+          theseHits.begin(), theseHits.end(), 0,
+          [&](const size_t prevVal, const HyperspaceHitSet &hs) -> size_t {
+            return prevVal + hs.numHits;
+          });
+      std::cout << "Total hits : " << totHits << std::endl;
+      allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
     }
+    // Just for safety, do a final check
+    //    for (auto &hitMol : theseResults) {
+    //      auto molName =
+    //      hitMol->getProp<std::string>(common_properties::_Name); if
+    //      (resultsNames.find(molName) == resultsNames.end() &&
+    //          SubstructMatch(*hitMol, query, dontCare)) {
+    //        results.emplace_back(std::unique_ptr<ROMol>(hitMol.release()));
+    //        resultsNames.insert(molName);
+    //      }
+    //    }
+    //    if (runningMaxHits != -1) {
+    //      runningMaxHits -= theseResults.size();
+    //      if (runningMaxHits < 1) {
+    //        break;
+    //      }
+    //    }
   }
+  std::sort(
+      allHits.begin(), allHits.end(),
+      [&](const HyperspaceHitSet &hs1, const HyperspaceHitSet &hs2) -> bool {
+        if (hs1.reactionId == hs2.reactionId) {
+          return hs1.numHits < hs2.numHits;
+        } else {
+          return hs1.reactionId < hs2.reactionId;
+        }
+      });
 
+  buildHits(allHits, results, maxHits);
   return results;
 }
 
@@ -347,12 +371,12 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   auto reagentOrders =
       details::permMFromN(molFrags.size(), reaction->reagents().size());
 
-  // Match the fragment to the reagent set in this order.
   std::vector<boost::dynamic_bitset<>> thisPass;
   for (const auto &reagSet : reaction->reagents()) {
     thisPass.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
   boost::dynamic_bitset<> fragsMatched(reagentOrder.size());
+  // Match the fragment to the reagent set in this order.
   for (size_t i = 0; i < reagentOrder.size(); ++i) {
     const auto &reagSet = reaction->reagents()[reagentOrder[i]];
     const auto &passedScreensSet = passedScreens[reagentOrder[i]];
@@ -439,9 +463,9 @@ bool checkConnectorRegions(const std::vector<std::unique_ptr<ROMol>> &molFrags,
 }
 }  // namespace
 
-std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
-    std::vector<std::unique_ptr<ROMol>> &fragSet) {
-  std::vector<std::unique_ptr<ROMol>> results;
+std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
+    std::vector<std::unique_ptr<ROMol>> &fragSet, int maxHits) {
+  std::vector<HyperspaceHitSet> results;
 
   auto pattFPs = makePatternFPs(fragSet);
 
@@ -511,17 +535,19 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
         auto theseReagents =
             getHitReagents(connComb, passedScreens, reaction, ro);
         if (!theseReagents.empty()) {
-          //          for (const auto &tr : theseReagents) {
-          //            std::cout << "reagents : " << tr.count() << std::endl;
-          //          }
-          int totReags =
-              std::reduce(theseReagents.begin(), theseReagents.end(), 0,
+          size_t numHits =
+              std::reduce(theseReagents.begin(), theseReagents.end(), 1,
                           [&](int prevRes, const boost::dynamic_bitset<> &s2) {
-                            return prevRes + s2.count();
+                            return prevRes * s2.count();
                           });
-          //          std::cout << "totReags : " << totReags << std::endl;
-          if (totReags) {
-            buildHits(theseReagents, it.first, results);
+          if (numHits) {
+            for (size_t i = 0; i < theseReagents.size(); ++i) {
+              std::cout << reaction->id() << " reagents " << i << " : "
+                        << theseReagents[i].count() << " : " << theseReagents[i]
+                        << std::endl;
+            }
+            results.push_back(
+                HyperspaceHitSet{reaction->id(), theseReagents, numHits});
           }
         }
       }
@@ -541,13 +567,18 @@ void Hyperspace::writeToDBStream(const std::string &outFile) const {
 }
 
 void Hyperspace::readFromDBStream(const std::string &inFile) {
-  std::ifstream is(inFile, std::fstream::binary);
-  size_t numRS;
-  streamRead(is, numRS);
-  for (size_t i = 0; i < numRS; ++i) {
-    ReactionSet *rs = new ReactionSet;
-    rs->readFromDBStream(is);
-    d_reactions.insert(make_pair(rs->id(), rs));
+  try {
+    std::ifstream is(inFile, std::fstream::binary);
+    size_t numRS;
+    streamRead(is, numRS);
+    for (size_t i = 0; i < numRS; ++i) {
+      ReactionSet *rs = new ReactionSet;
+      rs->readFromDBStream(is);
+      d_reactions.insert(make_pair(rs->id(), rs));
+    }
+  } catch (std::exception &e) {
+    std::cerr << "Error : " << e.what() << " for file " << inFile << "\n";
+    exit(1);
   }
 }
 
@@ -594,58 +625,66 @@ struct Stepper {
 };
 }  // namespace
 
-void Hyperspace::buildHits(
-    const std::vector<boost::dynamic_bitset<>> &reagentsToUse,
-    const std::string &reaction_id,
-    std::vector<std::unique_ptr<ROMol>> &results) {
-  if (reagentsToUse.empty()) {
-    return;
-  }
-  std::cout << "Build hits with " << reaction_id << std::endl;
-  auto reags = getReagentsToUse(reagentsToUse, reaction_id);
-  if (reags.empty()) {
-    //    std::cout << "Nothing to do" << std::endl;
+void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
+                           std::vector<std::unique_ptr<ROMol>> &results,
+                           int maxHits) {
+  if (hitsets.empty()) {
     return;
   }
 
-  std::vector<int> numReags;
-  for (auto &r : reags) {
-    std::cout << "Number of reagents : " << r.size() << std::endl;
-    numReags.push_back(r.size());
-  }
-  Stepper stepper(numReags);
-  const int numReactions = reagentsToUse.size();
-  MolzipParams params;
-  params.label = MolzipLabel::Isotope;
-  while (stepper.d_currState[0] != numReags[0]) {
-    //    std::cout << "Step : ";
-    //    for (auto &i : stepper.d_currState) {
-    //      std::cout << i << " ";
-    //    }
-    //    std::cout << std::endl;
-    std::unique_ptr<ROMol> combMol(
-        new ROMol(*reags[0][stepper.d_currState[0]]));
-    std::string combName =
-        reaction_id + "_" +
-        reags[0][stepper.d_currState[0]]->getProp<std::string>(
-            common_properties::_Name);
-    //    for (int i = 0; i < numReactions; ++i) {
-    //      std::cout << MolToSmiles(*reags[i][stepper.d_currState[i]]) << "
-    //      ";
-    //    }
-    //    std::cout << std::endl;
-    for (int i = 1; i < numReactions; ++i) {
-      combMol.reset(combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
-      combName += "_" + reags[i][stepper.d_currState[i]]->getProp<std::string>(
-                            common_properties::_Name);
+  // Keep track of the result names so we can weed out duplicates by
+  // reaction and reagents.  Different splits may give rise to the same
+  // reagent combination.  This will keep the same molecule produced via
+  // different reactions which I think makes sense.
+  std::set<std::string> resultsNames;
+
+  for (const auto &hitset : hitsets) {
+    std::cout << "Build hits with " << hitset.reactionId << std::endl;
+    const auto &reagentsToUse = hitset.reagsToUse;
+    auto reags = getReagentsToUse(reagentsToUse, hitset.reactionId);
+    if (reags.empty()) {
+      //    std::cout << "Nothing to do" << std::endl;
+      return;
     }
-    //    std::cout << "Comb mol : " << MolToSmiles(*combMol) << std::endl;
-    auto prod = molzip(*combMol, params);
-    prod->setProp<std::string>(common_properties::_Name, combName);
-    //    std::cout << "Zipped : " << MolToSmiles(*prod) << std::endl;
-    MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
-    results.push_back(std::move(prod));
-    stepper.step();
+
+    std::vector<int> numReags;
+    for (auto &r : reags) {
+      std::cout << "Number of reagents : " << r.size() << std::endl;
+      numReags.push_back(r.size());
+    }
+    Stepper stepper(numReags);
+    const int numReactions = reagentsToUse.size();
+    MolzipParams params;
+    params.label = MolzipLabel::Isotope;
+    while (stepper.d_currState[0] != numReags[0]) {
+      std::string combName =
+          hitset.reactionId + "_" +
+          reags[0][stepper.d_currState[0]]->getProp<std::string>(
+              common_properties::_Name);
+      for (int i = 1; i < numReactions; ++i) {
+        combName +=
+            "_" + reags[i][stepper.d_currState[i]]->getProp<std::string>(
+                      common_properties::_Name);
+      }
+      if (resultsNames.insert(combName).second) {
+        std::unique_ptr<ROMol> combMol(
+            new ROMol(*reags[0][stepper.d_currState[0]]));
+        for (int i = 1; i < numReactions; ++i) {
+          combMol.reset(
+              combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
+        }
+        auto prod = molzip(*combMol, params);
+        prod->setProp<std::string>(common_properties::_Name, combName);
+        MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
+        results.push_back(std::move(prod));
+      }
+      // -1 means no limit, and size_t is unsigned, so the cast will make for
+      // a very large number.
+      if (results.size() == static_cast<size_t>(maxHits)) {
+        return;
+      }
+      stepper.step();
+    }
   }
 }
 

@@ -25,6 +25,14 @@ class ROMol;
 
 namespace HyperspaceSSSearch {
 
+// Holds the information about a set of hits.  The molecules can be built
+// by making all combinations of reagents, one taken from each reagent set.
+struct HyperspaceHitSet {
+  std::string reactionId;
+  std::vector<boost::dynamic_bitset<>> reagsToUse;
+  size_t numHits{0};
+};
+
 class Hyperspace {
  public:
   // Create the hyperspace from a file in the correct format.
@@ -61,16 +69,19 @@ class Hyperspace {
   }
 
   // Do a substructure search for query in the hyperspace.  Return vector of
-  // molecules that match.
+  // molecules that match.  If maxHits is -1, there's no limit on the
+  // number of hits returned.
   std::vector<std::unique_ptr<ROMol>> search(const ROMol &query,
-                                             unsigned int maxBondSplits);
+                                             unsigned int maxBondSplits,
+                                             int maxHits = 1000);
 
   // Search this particular fragmented molecule against the reactions.  The
   // fragments should be from 1 splitting, so between 1 and 4 members.
   // The fragments may be re-ordered in the process (largest fragment
-  // heuristic).
-  std::vector<std::unique_ptr<ROMol>> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet);
+  // heuristic).  If maxHits is -1, there's no limit on the
+  // number of hits returned.
+  std::vector<HyperspaceHitSet> searchFragSet(
+      std::vector<std::unique_ptr<ROMol>> &fragSet, int maxHits = 1000);
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(const std::string &outFile) const;
@@ -86,10 +97,10 @@ class Hyperspace {
 
   // Build the molecules from the reagents identified in reagentsToUse.
   // There should be bitset in reagentsToUse for each reagent set.
-  // If not, it will fail.
-  void buildHits(const std::vector<boost::dynamic_bitset<>> &reagentsToUse,
-                 const std::string &reaction_id,
-                 std::vector<std::unique_ptr<ROMol>> &results);
+  // If not, it will fail.  If maxHits is -1, there's no limit on the
+  // number of hits returned.
+  void buildHits(const std::vector<HyperspaceHitSet> &hitsets,
+                 std::vector<std::unique_ptr<ROMol>> &results, int maxHits);
   // get the subset of reagents for the given reaction to use for this
   // enumeration.
   std::vector<std::vector<ROMol *>> getReagentsToUse(
