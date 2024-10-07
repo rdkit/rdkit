@@ -55,6 +55,10 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::search(
   // different reactions which I think makes sense.
   std::set<std::string> resultsNames;
   for (auto &fragSet : fragments) {
+    // DEBUGGING
+    if (fragSet.size() != 1) {
+      continue;
+    }
     auto theseResults = searchFragSet(fragSet);
     // Just for safety, do a final check
     for (auto &hitMol : theseResults) {
@@ -145,7 +149,7 @@ void Hyperspace::readFile() {
     }
     fixConnectors(nextReag[0]);
     auto &currReaction = d_reactions[nextReag[3]];
-    size_t synthonNum;
+    size_t synthonNum{std::numeric_limits<size_t>::max()};
     if (format == 0 || format == 1) {
       synthonNum = std::stoi(nextReag[2]);
     } else if (format == 2) {
@@ -274,6 +278,12 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     passedFPs.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
 
+  //  for (const auto &reagSet : reaction->reagents()) {
+  //    std::cout << "NEXT REAG SET" << std::endl;
+  //    for (const auto &r : reagSet) {
+  //      std::cout << r->id() << std::endl;
+  //    }
+  //  }
   // Still need to try all combinations of reagent orders.
   auto reagentOrders =
       details::permMFromN(molFrags.size(), reaction->reagents().size());
@@ -293,11 +303,6 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
       for (size_t j = 0; j < reagSet.size(); ++j) {
         auto &reag = reagSet[j];
         if (AllProbeBitsMatch(*pattFPs[i], *reag->pattFP())) {
-          //          std::cout << i << " vs " << j << " :: " <<
-          //          MolToSmiles(*molFrags[i])
-          //                    << " IS fp match to " <<
-          //                    MolToSmiles(*reag->mol())
-          //                    << std::endl;
           thisPass[ro[i]][j] = true;
           fragsMatched[i] = true;
         }
@@ -305,7 +310,8 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
       // If nothing matched this fragment, the whole thing's a bust.
       if (!fragsMatched[i]) {
         //        std::cout << "Nothing matches frag " << i << " : "
-        //                  << pattFPs[i]->getNumOnBits() << std::endl;
+        //                  << pattFPs[i]->getNumOnBits() << " : "
+        //                  << MolToSmiles(*molFrags[i]) << std::endl;
         break;
       }
     }
@@ -341,12 +347,17 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   auto reagentOrders =
       details::permMFromN(molFrags.size(), reaction->reagents().size());
 
+  // TODO: each of the hits from these orders need to be dealt with
+  // separately, so that if, for example, there's only 1 fragment and 2
+  // reagent sets and the fragment matches some a, b and c in reagent set 1 and
+  // x, y and z in reagent set 2, the results are a with all reagents of set
+  // 2, b and c likewise and also x, y and z with all reagents of set 1.
   for (const auto &ro : reagentOrders) {
-    //    std::cout << "Reagent orders : ";
-    //    for (auto &i : ro) {
-    //      std::cout << i << " ";
-    //    }
-    //    std::cout << std::endl;
+    std::cout << "Reagent orders : ";
+    for (auto &i : ro) {
+      std::cout << i << " ";
+    }
+    std::cout << std::endl;
     // Match the fragment to the reagent set in this order.
     std::vector<boost::dynamic_bitset<>> thisPass;
     for (const auto &reagSet : reaction->reagents()) {
@@ -366,6 +377,9 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
         }
       }
     }
+    for (const auto &tp : thisPass) {
+      std::cout << "this pass : " << tp.count() << std::endl;
+    }
     // If all the fragments had a match, these results are valid.
     if (fragsMatched.count() == fragsMatched.size()) {
       for (size_t i = 0; i < reagsToUse.size(); ++i) {
@@ -375,7 +389,7 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   }
   // If all bits in one of the bitsets is unset, it means that nothing matched
   // that reagent.  If at least one of the bitsets has a set bit, all products
-  // incorporating the reagent with no bits sets must match the query so
+  // incorporating the reagent with no bits set must match the query so
   // should be used.
   bool someSet = false;
   for (auto &rtu : reagsToUse) {
@@ -447,15 +461,17 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
   auto conns = getConnectorPattern(fragSet);
   for (auto &it : d_reactions) {
     auto &reaction = it.second;
-    //    std::cout << "Searching for " << fragSet.size() << " ::: ";
-    //    for (const auto &f : fragSet) {
-    //              std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f)
-    //              << " : "
-    //                        << MolToSmarts(*f) << " :: ";
-    //      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : ";
-    //    }
-    //    std::cout << " in " << reaction->d_id << " : "
-    //              << reaction->d_reagents.size() << std::endl;
+    if (reaction->id() != "a80") {
+      continue;
+    }
+    std::cout << "Searching for " << fragSet.size() << " ::: ";
+    for (const auto &f : fragSet) {
+      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : "
+                << MolToSmarts(*f) << " :: ";
+      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : ";
+    }
+    std::cout << " in " << reaction->id() << " : "
+              << reaction->reagents().size() << std::endl;
     // It can't be a hit if the number of fragments is more than the number
     // of reagent sets because some of the molecule won't be matched in any
     // of the potential products.  It can be less, in which case the unused
@@ -500,15 +516,15 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::searchFragSet(
     for (auto &connComb : connCombs) {
       auto theseReagents = getHitReagents(connComb, passedScreens, reaction);
       if (!theseReagents.empty()) {
-        //        for (const auto &tr : theseReagents) {
-        //          std::cout << "reagents : " << tr << std::endl;
-        //        }
+        for (const auto &tr : theseReagents) {
+          std::cout << "reagents : " << tr.count() << std::endl;
+        }
         int totReags =
             std::reduce(theseReagents.begin(), theseReagents.end(), 0,
                         [&](int prevRes, const boost::dynamic_bitset<> &s2) {
                           return prevRes + s2.count();
                         });
-        //        std::cout << "totReags : " << totReags << std::endl;
+        std::cout << "totReags : " << totReags << std::endl;
         if (totReags) {
           buildHits(theseReagents, it.first, results);
         }
@@ -532,9 +548,9 @@ void Hyperspace::readFromDBStream(const std::string &inFile) {
   size_t numRS;
   streamRead(is, numRS);
   for (size_t i = 0; i < numRS; ++i) {
-    ReactionSet *r = new ReactionSet;
-    r->readFromDBStream(is);
-    d_reactions.insert(make_pair(r->id(), r));
+    ReactionSet *rs = new ReactionSet;
+    rs->readFromDBStream(is);
+    d_reactions.insert(make_pair(rs->id(), rs));
   }
 }
 
@@ -575,7 +591,7 @@ void Hyperspace::buildHits(
   if (reagentsToUse.empty()) {
     return;
   }
-  //  std::cout << "Build hits with " << reaction_id << std::endl;
+  std::cout << "Build hits with " << reaction_id << std::endl;
   auto reags = getReagentsToUse(reagentsToUse, reaction_id);
   if (reags.empty()) {
     //    std::cout << "Nothing to do" << std::endl;
@@ -584,6 +600,7 @@ void Hyperspace::buildHits(
 
   std::vector<int> numReags;
   for (auto &r : reags) {
+    std::cout << "Number of reagents : " << r.size() << std::endl;
     numReags.push_back(r.size());
   }
   Stepper stepper(numReags);
@@ -599,7 +616,7 @@ void Hyperspace::buildHits(
     std::unique_ptr<ROMol> combMol(
         new ROMol(*reags[0][stepper.d_currState[0]]));
     std::string combName =
-        "_RXN_" + reaction_id + "_RXN_::" +
+        reaction_id + "_" +
         reags[0][stepper.d_currState[0]]->getProp<std::string>(
             common_properties::_Name);
     //    for (int i = 0; i < numReactions; ++i) {
@@ -609,9 +626,8 @@ void Hyperspace::buildHits(
     //    std::cout << std::endl;
     for (int i = 1; i < numReactions; ++i) {
       combMol.reset(combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
-      combName +=
-          ":_R_:" + reags[i][stepper.d_currState[i]]->getProp<std::string>(
-                        common_properties::_Name);
+      combName += "_" + reags[i][stepper.d_currState[i]]->getProp<std::string>(
+                            common_properties::_Name);
     }
     //    std::cout << "Comb mol : " << MolToSmiles(*combMol) << std::endl;
     auto prod = molzip(*combMol, params);
