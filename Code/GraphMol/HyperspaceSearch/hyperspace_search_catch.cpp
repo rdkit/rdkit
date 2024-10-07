@@ -141,8 +141,8 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 TEST_CASE("Simple query 1", "[Simple query 1]") {
   //  std::string libName =
   //      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
-#if 0
   Hyperspace hyperspace(TXT_LIB_NAME);
+#if 0
   SECTION("Single fragged molecule") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
     fragSet.emplace_back("c1ccccc1[1*]"_smiles);
@@ -163,7 +163,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
     CHECK(results.size() == 220);
   }
-#if 0
+#if 1
   SECTION("Single molecule with fragging") {
     {
       // should give 220 hits for urea-3
@@ -397,9 +397,9 @@ TEST_CASE("Biggy", "[Biggy]") {
     const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
 
     for (size_t i = 0; i < smis.size(); ++i) {
-      if (i != 2) {
-        continue;
-      }
+      //      if (i != 2) {
+      //        continue;
+      //      }
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};

@@ -371,10 +371,6 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   auto reagentOrders =
       details::permMFromN(molFrags.size(), reaction->reagents().size());
 
-  std::vector<boost::dynamic_bitset<>> thisPass;
-  for (const auto &reagSet : reaction->reagents()) {
-    thisPass.push_back(boost::dynamic_bitset<>(reagSet.size()));
-  }
   boost::dynamic_bitset<> fragsMatched(reagentOrder.size());
   // Match the fragment to the reagent set in this order.
   for (size_t i = 0; i < reagentOrder.size(); ++i) {
@@ -384,16 +380,15 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
       if (passedScreensSet[j]) {
         auto &reag = reagSet[j];
         if (SubstructMatch(*reag->mol(), *molFrags[i], dontCare)) {
-          thisPass[reagentOrder[i]][j] = true;
+          reagsToUse[reagentOrder[i]][j] = true;
           fragsMatched[i] = true;
         }
       }
     }
-    // If all the fragments had a match, these results are valid.
-    if (fragsMatched.count() == fragsMatched.size()) {
-      for (size_t i = 0; i < reagsToUse.size(); ++i) {
-        reagsToUse[i] |= thisPass[i];
-      }
+    // if the fragment didn't match anything, the whole thing's a bust.
+    if (!fragsMatched[i]) {
+      reagsToUse.clear();
+      return reagsToUse;
     }
   }
   // If all bits in one of the bitsets is unset, it means that nothing matched
