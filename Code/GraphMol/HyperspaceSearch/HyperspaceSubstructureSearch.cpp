@@ -301,10 +301,12 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
 std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
                                              unsigned int maxBondSplits,
                                              Hyperspace &hyperspace) {
+  std::cout << "Number of reactions : " << hyperspace.numReactions()
+            << std::endl;
   auto &reactions = hyperspace.reactions();
   for (const auto &r : reactions) {
     std::cout << "reaction " << r.first
-              << "  number of synthons : " << r.second->reagents().size()
+              << " number of synthons : " << r.second->reagents().size()
               << std::endl;
   }
   auto results = hyperspace.search(query, maxBondSplits);
@@ -318,16 +320,7 @@ std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
   std::cout << "Searching library " << libName << " for structures containing "
             << MolToSmiles(query) << std::endl;
   Hyperspace hyperspace(libName);
-  std::cout << "Number of reactions : " << hyperspace.numReactions()
-            << std::endl;
-  auto &reactions = hyperspace.reactions();
-  for (const auto &r : reactions) {
-    std::cout << "reaction " << r.first
-              << "  number of synthons : " << r.second->reagents().size()
-              << std::endl;
-  }
-  auto results = hyperspace.search(query, maxBondSplits);
-  return results;
+  return SSSearch(query, maxBondSplits, hyperspace);
 }
 
 }  // namespace HyperspaceSSSearch
