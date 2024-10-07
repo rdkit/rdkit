@@ -66,9 +66,11 @@ class Hyperspace {
                                              unsigned int maxBondSplits);
 
   // Search this particular fragmented molecule against the reactions.  The
-  // fragments should be from 1 splitting, so between 2 and 4 members.
+  // fragments should be from 1 splitting, so between 1 and 4 members.
+  // The fragments may be re-ordered in the process (largest fragment
+  // heuristic).
   std::vector<std::unique_ptr<ROMol>> searchFragSet(
-      const std::vector<std::shared_ptr<ROMol>> &fragSet);
+      std::vector<std::unique_ptr<ROMol>> &fragSet);
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(const std::string &outFile) const;

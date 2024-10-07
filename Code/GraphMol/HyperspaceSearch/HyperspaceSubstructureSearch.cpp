@@ -211,7 +211,7 @@ void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
 // molecules, 1 inner vector for each split i.e. maxBondSplits in total, the
 // first with 1 split, the 2nd with 2 etc.  Each inner vector contains the
 // fragments from a split molecule.
-std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
+std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits) {
   std::cout << "Splitting " << MolToSmiles(query) << " with " << maxBondSplits
             << " bonds." << std::endl;
@@ -230,11 +230,11 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
     }
   }
 
-  std::vector<std::vector<std::shared_ptr<ROMol>>> fragments;
+  std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
   // lots of hits but one can imagine a use for it.
-  fragments.push_back(std::vector<std::shared_ptr<ROMol>>(
-      1, std::shared_ptr<ROMol>(new ROMol(query))));
+  fragments.push_back(std::vector<std::unique_ptr<ROMol>>());
+  fragments.back().emplace_back(new ROMol(query));
 
   // Now do the splits.
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
@@ -280,13 +280,7 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
       }
       if (checkConnectorsInDifferentFrags(molFrags, i)) {
         fixAromaticRingSplits(molFrags);
-        std::vector<std::shared_ptr<ROMol>> tmp;
-        std::transform(
-            molFrags.begin(), molFrags.end(), std::back_inserter(tmp),
-            [&](std::unique_ptr<ROMol> &m) -> std::shared_ptr<ROMol> {
-              return std::shared_ptr<ROMol>(m.release());
-            });
-        fragments.push_back(tmp);
+        fragments.emplace_back(std::move(molFrags));
       }
     }
     std::cout << "Number of valid splits : " << fragments.size() << std::endl;

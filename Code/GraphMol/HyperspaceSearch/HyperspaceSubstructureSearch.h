@@ -67,7 +67,7 @@ std::vector<std::vector<unsigned int>> combMFromN(unsigned int m,
 // Find all permutations of M things selected from N.
 std::vector<std::vector<unsigned int>> permMFromN(unsigned int m,
                                                   unsigned int n);
-std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
+std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits);
 }  // namespace details
 }  // namespace HyperspaceSSSearch

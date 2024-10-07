@@ -27,7 +27,7 @@ using namespace RDKit;
 using namespace RDKit::HyperspaceSSSearch;
 
 namespace RDKit::HyperspaceSSSearch::details {
-std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
+std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits);
 }  // namespace RDKit::HyperspaceSSSearch::details
 
@@ -47,9 +47,15 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
   v2::FileParsers::SmilesMolSupplierParams params;
   params.titleLine = false;
   v2::FileParsers::SmilesMolSupplier suppl(smiFile, params);
+  std::cout << "Reading " << smiFile << std::endl;
+  int mol_num = 0;
   while (!suppl.atEnd()) {
-    auto mol = suppl.next();
-    subsLib->addMol(*mol.release());
+    //    auto mol = suppl.next();
+    subsLib->addMol(*suppl.next());
+    ++mol_num;
+    if (mol_num && !(mol_num % 50000)) {
+      std::cout << "Read " << mol_num << " molecules." << std::endl;
+    }
   }
   return subsLib;
 }
@@ -69,7 +75,7 @@ TEST_CASE("Test splits 1", "[Test splits 1]") {
     for (size_t j = 0; j < 4; ++j) {
       auto numFragSets = std::reduce(
           fragments.begin(), fragments.end(), size_t(0),
-          [&](size_t prevRes, std::vector<std::shared_ptr<ROMol>> &frags) {
+          [&](size_t prevRes, std::vector<std::unique_ptr<ROMol>> &frags) {
             if (frags.size() == j + 1) {
               return prevRes + 1;
             } else {
@@ -115,11 +121,10 @@ TEST_CASE("Urea 1", "[Urea 1]") {
   Hyperspace hyperspace(libName);
 #if 1
   SECTION("Single fragged molecule") {
-    std::vector<std::shared_ptr<ROMol>> fragSet{
-        std::shared_ptr<ROMol>("O=C(NC1COC1)[1*]"_smiles),
-        std::shared_ptr<ROMol>("O=C(Nc1c(CN[1*])cc[s]1)[2*]"_smiles),
-        std::shared_ptr<ROMol>("Fc1nccnc1[2*]"_smiles),
-    };
+    std::vector<std::unique_ptr<ROMol>> fragSet;
+    fragSet.emplace_back("O=C(NC1COC1)[1*]"_smiles);
+    fragSet.emplace_back("O=C(Nc1c(CN[1*])cc[s]1)[2*]"_smiles);
+    fragSet.emplace_back("Fc1nccnc1[2*]"_smiles);
     auto results = hyperspace.searchFragSet(fragSet);
     CHECK(results.size() == 1);
   }
@@ -138,10 +143,9 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
   //      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
   Hyperspace hyperspace(TXT_LIB_NAME);
   SECTION("Single fragged molecule") {
-    std::vector<std::shared_ptr<ROMol>> fragSet{
-        std::shared_ptr<ROMol>("c1ccccc1[1*]"_smiles),
-        std::shared_ptr<ROMol>("C1CCCN1C(=O)[1*]"_smiles),
-    };
+    std::vector<std::unique_ptr<ROMol>> fragSet;
+    fragSet.emplace_back("c1ccccc1[1*]"_smiles);
+    fragSet.emplace_back("C1CCCN1C(=O)[1*]"_smiles);
     auto results = hyperspace.searchFragSet(fragSet);
     CHECK(results.size() == 220);
   }
@@ -214,14 +218,8 @@ TEST_CASE("Triazole", "[Triazole]") {
     auto queryMol =
         "OCC([1*])=NN=[2*].C1CCCC1N([3*])[1*].CC1CCN(C1)C(=[2*])[3*]"_smiles;
     REQUIRE(queryMol);
-    std::vector<std::unique_ptr<ROMol>> tmpFrags;
-    MolOps::getMolFrags(*queryMol, tmpFrags, false);
-    std::vector<std::shared_ptr<ROMol>> queryFrags;
-    std::transform(tmpFrags.begin(), tmpFrags.end(),
-                   std::back_inserter(queryFrags),
-                   [&](std::unique_ptr<ROMol> &m) -> std::shared_ptr<ROMol> {
-                     return std::shared_ptr<ROMol>(m.release());
-                   });
+    std::vector<std::unique_ptr<ROMol>> queryFrags;
+    MolOps::getMolFrags(*queryMol, queryFrags, false);
     auto results = hyperspace.searchFragSet(queryFrags);
     CHECK(results.size() == 4);
   }
@@ -366,4 +364,74 @@ TEST_CASE("DB Writer", "[DB Writer]") {
       CHECK(irxn->reagents()[i][j]->id() == orxn->reagents()[i][j]->id());
     }
   }
+}
+
+TEST_CASE("Biggy", "[Biggy]") {
+  std::string libName = "/Users/david/Projects/FreedomSpace/Syntons_5567.spc";
+  std::string enumLibName =
+      "/Users/david/Projects/FreedomSpace/Syntons_5567_space_a_enum.smi";
+  Hyperspace hyperspace;
+  hyperspace.readFromDBStream(libName);
+
+#if 0
+  SECTION("Fragged Mol") {
+    std::vector<std::unique_ptr<ROMol>> fragSet;
+    fragSet.emplace_back("c1ccccc1N[1*]"_smiles);
+    fragSet.emplace_back("N1CCC1C(=O)[1*]"_smiles);
+    auto results = hyperspace.searchFragSet(fragSet);
+    CHECK(results.size() == 1);
+  }
+#endif
+
+#if 1
+  SECTION("WholeMol") {
+    const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
+                                        "c1ccccc1NC(=O)C1CCN1",
+                                        "c12ccccc1c(N)nc(N)n2",
+                                        "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
+                                        "c1nncn1",
+                                        "C(=O)NC(CC)C(=O)N(CC)C"};
+    const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
+
+    for (size_t i = 0; i < smis.size(); ++i) {
+      if (i != 5) {
+        continue;
+      }
+      std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
+      auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
+      const auto start{std::chrono::steady_clock::now()};
+      auto results = SSSearch(*queryMol, 3, hyperspace);
+      const auto end{std::chrono::steady_clock::now()};
+      const std::chrono::duration<double> elapsed_seconds{end - start};
+      std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
+      std::cout << "Number of hits : " << results.size() << std::endl;
+      std::string outFile =
+          std::string("/Users/david/Projects/FreedomSpace/hyperspace_hits_") +
+          std::to_string(i) + ".smi";
+      std::ofstream of(outFile);
+      for (const auto &r : results) {
+        of << MolToSmiles(*r) << " " << r->getProp<std::string>("_Name")
+           << std::endl;
+      }
+      CHECK(results.size() == numRes[i]);
+    }
+  }
+#endif
+#if 0
+  SECTION("Brute Force") {
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    const auto start{std::chrono::steady_clock::now()};
+    auto subsLib = loadSubstructLibrary(enumLibName);
+    std::cout << "Loaded SubstructLibrary" << std::endl;
+    const auto iend{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> ielapsed_seconds{iend - start};
+    std::cout << "Elapsed time : " << ielapsed_seconds.count() << std::endl;
+    auto enumRes = subsLib->getMatches(*queryMol);
+    std::cout << "Number of enum results : " << enumRes.size() << " from "
+              << subsLib->size() << " mols" << std::endl;
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{end - start};
+    std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
+  }
+#endif
 }
