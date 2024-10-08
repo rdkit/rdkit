@@ -412,48 +412,54 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   return reagsToUse;
 }
 
-// Return true if all the fragments have a connector region that matches
-// something in the reaction, false otherwise.
-bool checkConnectorRegions(const std::vector<std::unique_ptr<ROMol>> &molFrags,
-                           std::unique_ptr<ReactionSet> &reaction) {
-  const auto &rxnConnRegs = reaction->connectorRegions();
-  const auto &rxnConnRegsFP = reaction->connRegFP();
-  RDKit::MatchVectType dontCare;
+void buildConnectorRegions(
+    const std::vector<std::unique_ptr<ROMol>> &molFrags,
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
+    std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &connRegFPs) {
   for (const auto &frag : molFrags) {
-    auto connRegs = getConnRegion(*frag);
-    if (!connRegs) {
+    auto fragConnRegs = getConnRegion(*frag);
+    if (!fragConnRegs) {
       // There were no connector atoms.
       continue;
     }
     std::vector<std::unique_ptr<ROMol>> splitConnRegs;
-    MolOps::getMolFrags(*connRegs, splitConnRegs, false);
+    MolOps::getMolFrags(*fragConnRegs, splitConnRegs, false);
+    connRegFPs.push_back(std::vector<std::unique_ptr<ExplicitBitVect>>());
+    for (auto &cr : splitConnRegs) {
+      connRegFPs.back().emplace_back(PatternFingerprintMol(*cr));
+    }
+    connRegs.push_back(std::move(splitConnRegs));
+  }
+}
+
+// Return true if all the fragments have a connector region that matches
+// something in the reaction, false otherwise.
+bool checkConnectorRegions(
+    std::unique_ptr<ReactionSet> &reaction,
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
+    std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &connRegFPs) {
+  const auto &rxnConnRegs = reaction->connectorRegions();
+  const auto &rxnConnRegsFP = reaction->connRegFP();
+  RDKit::MatchVectType dontCare;
+  for (size_t i = 0; i < connRegFPs.size(); ++i) {
     bool connRegFound = false;
-    for (const auto &cr : splitConnRegs) {
-      std::unique_ptr<ExplicitBitVect> crfp(PatternFingerprintMol(*cr));
-      //      std::cout << "Conn region : " << MolToSmiles(*cr) << std::endl;
-      if (AllProbeBitsMatch(*crfp, *rxnConnRegsFP)) {
-        //        std::cout << MolToSmiles(*cr) << " might be in " <<
-        //        reaction->d_id
-        //                  << std::endl;
+    for (size_t j = 0; j < connRegFPs[i].size(); ++j) {
+      if (AllProbeBitsMatch(*connRegFPs[i][j], *rxnConnRegsFP)) {
         for (const auto &rxncr : rxnConnRegs) {
-          if (SubstructMatch(*rxncr, *cr, dontCare)) {
+          if (SubstructMatch(*rxncr, *connRegs[i][j], dontCare)) {
             connRegFound = true;
             break;
           }
         }
       }
       if (connRegFound) {
-        //        std::cout << "   It was" << std::endl;
         break;
-      } else {
-        //        std::cout << "   It wasn't" << std::endl;
       }
     }
     if (!connRegFound) {
       return false;
     }
   }
-  //  std::cout << "CONN Reg OK" << std::endl;
   return true;
 }
 }  // namespace
@@ -463,6 +469,8 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
   std::vector<HyperspaceHitSet> results;
 
   auto pattFPs = makePatternFPs(fragSet);
+  std::vector<std::vector<std::unique_ptr<ROMol>>> connRegs;
+  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> connRegFPs;
 
   //  std::cout << "searchFragSet" << std::endl;
   auto conns = getConnectorPattern(fragSet);
@@ -489,10 +497,10 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
 
     // Check that all the frags have a connector region that matches something
     // in this reaction set.  Skip if not.
-    // This builds the connector regions for the fragSet for each
-    // reaction which is clearly inefficient but probably not a problem very
-    // often.
-    if (!checkConnectorRegions(fragSet, reaction)) {
+    if (connRegs.empty()) {
+      buildConnectorRegions(fragSet, connRegs, connRegFPs);
+    }
+    if (!checkConnectorRegions(reaction, connRegs, connRegFPs)) {
       continue;
     }
 
