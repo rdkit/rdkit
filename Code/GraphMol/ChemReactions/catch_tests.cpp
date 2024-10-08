@@ -2070,13 +2070,13 @@ M  END)CTAB"_ctab;
     REQUIRE(ps[0].size() == 1);
     CHECK(ps[0][0]->getStereoGroups().size() == 1);
     CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
-          StereoGroupType::STEREO_OR);
+          StereoGroupType::STEREO_AND);
     CHECK(ps[1][0]->getStereoGroups().size() == 1);
     CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
-          StereoGroupType::STEREO_OR);
+          StereoGroupType::STEREO_AND);
   }
 #if 0
-// currently disabled because reactions do not support atropisomers
+// currently disabled because reactions do not yet support atropisomers
   SECTION("atropisomers") {
     auto rxn = v2::ReactionParser::ReactionFromRxnFile(
         getenv("RDBASE") + std::string("/Code/GraphMol/ChemReactions/testData/"

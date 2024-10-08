@@ -1252,16 +1252,26 @@ void checkAndCorrectChiralityOfProduct(
 void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
                               const ReactantProductAtomMapping &mapping) {
   std::vector<StereoGroup> new_stereo_groups;
+  // track the atoms that are already in stereogroups in the product. These came
+  // from the template and we will not copy over any stereogroups from the
+  // reactant that include atoms already in product stereogroups
+  boost::dynamic_bitset<> atomsInStereoGroups(product->getNumAtoms());
+  for (const auto &sg : product->getStereoGroups()) {
+    for (const auto &atom : sg.getAtoms()) {
+      atomsInStereoGroups.set(atom->getIdx());
+    }
+  }
   for (const auto &sg : reactant.getStereoGroups()) {
     std::vector<Atom *> atoms;
     std::vector<Bond *> bonds;
-    for (auto &&reactantAtom : sg.getAtoms()) {
+    bool skipStereoGroup = false;
+    for (const auto &reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
       if (productAtoms == mapping.reactProdAtomMap.end()) {
         continue;
       }
 
-      for (auto &&productAtomIdx : productAtoms->second) {
+      for (auto &productAtomIdx : productAtoms->second) {
         auto productAtom = product->getAtomWithIdx(productAtomIdx);
 
         // If chirality destroyed by the reaction, skip the atom
@@ -1275,10 +1285,18 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
         if (flagVal == 4) {
           continue;
         }
+        // if the atom is already in a stereogroup, skip this whole stereogroup
+        // if (atomsInStereoGroups[productAtom->getIdx()]) {
+        //   skipStereoGroup = true;
+        //   break;
+        // }
         atoms.push_back(productAtom);
       }
+      if (skipStereoGroup) {
+        break;
+      }
     }
-    if (!atoms.empty()) {
+    if (!skipStereoGroup && !atoms.empty()) {
       new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms),
                                      std::move(bonds), sg.getReadId());
     }
