@@ -41,6 +41,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
                bonds will be written as single bonds*/
   bool ignoreAtomMapNumbers = false; /**< If true, ignores any atom map numbers
                                         when canonicalizing the molecule */
+  bool includeCX = false; /**< include CXSMILES extensions in reactions */
 };
 
 namespace SmilesWrite {
