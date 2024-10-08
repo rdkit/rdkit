@@ -1274,6 +1274,11 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
       for (auto &productAtomIdx : productAtoms->second) {
         auto productAtom = product->getAtomWithIdx(productAtomIdx);
 
+        // if the atom is already in a stereogroup, skip this whole stereogroup
+        if (atomsInStereoGroups[productAtom->getIdx()]) {
+          skipStereoGroup = true;
+          continue;
+        }
         // If chirality destroyed by the reaction, skip the atom
         if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
           continue;
@@ -1285,11 +1290,6 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
         if (flagVal == 4) {
           continue;
         }
-        // if the atom is already in a stereogroup, skip this whole stereogroup
-        // if (atomsInStereoGroups[productAtom->getIdx()]) {
-        //   skipStereoGroup = true;
-        //   break;
-        // }
         atoms.push_back(productAtom);
       }
       if (skipStereoGroup) {
