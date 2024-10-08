@@ -1985,8 +1985,7 @@ M  END)RXN";
 }
 
 TEST_CASE("Github #7669: propate stereo groups from product templates") {
-  SECTION("as reported") {
-    auto rxnBlock = R"RXN($RXN V3000
+  auto rxnBlock = R"RXN($RXN V3000
 
       Mrv2401  072420241107
 
@@ -2031,10 +2030,11 @@ M  V30 END COLLECTION
 M  V30 END CTAB
 M  V30 END PRODUCT
 M  END)RXN";
-    auto rxn = v2::ReactionParser::ReactionFromRxnBlock(rxnBlock);
-    REQUIRE(rxn);
-    CHECK(rxn->getProducts()[0]->getStereoGroups().size() == 1);
-    rxn->initReactantMatchers();
+  auto rxn = v2::ReactionParser::ReactionFromRxnBlock(rxnBlock);
+  REQUIRE(rxn);
+  CHECK(rxn->getProducts()[0]->getStereoGroups().size() == 1);
+  rxn->initReactantMatchers();
+  SECTION("as reported") {
     auto mol = R"CTAB(
   MJ231601                      
 
@@ -2075,9 +2075,24 @@ M  END)CTAB"_ctab;
     CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
           StereoGroupType::STEREO_AND);
   }
+
+  SECTION("stereogroups in product template remove stereogroups in reactant") {
+    auto mol = "CC(F)(Cl)CC(C)(O)Br |o1:1,5|"_smiles;
+    ROMOL_SPTR reactant(std::move(mol));
+    auto ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 2);
+    REQUIRE(ps[0].size() == 1);
+    std::cerr << MolToCXSmiles(*ps[0][0]) << std::endl;
+    CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(ps[1][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+  }
 #if 0
-// currently disabled because reactions do not yet support atropisomers
-  SECTION("atropisomers") {
+      // currently disabled because reactions do not yet support atropisomers
+      SECTION("atropisomers") {
     auto rxn = v2::ReactionParser::ReactionFromRxnFile(
         getenv("RDBASE") + std::string("/Code/GraphMol/ChemReactions/testData/"
                                        "github7669_1.rxn"));
