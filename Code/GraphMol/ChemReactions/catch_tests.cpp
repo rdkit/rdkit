@@ -2076,18 +2076,17 @@ M  END)CTAB"_ctab;
           StereoGroupType::STEREO_AND);
   }
 
-  SECTION("stereogroups in product template remove stereogroups in reactant") {
+  SECTION(
+      "stereogroups in product template remove atoms from stereogroups in reactant") {
     auto mol = "C[C@](F)(Cl)C[C@](C)(O)Br |o1:1,5|"_smiles;
     ROMOL_SPTR reactant(std::move(mol));
     auto ps = rxn->runReactant(reactant, 0);
     REQUIRE(ps.size() == 2);
     REQUIRE(ps[0].size() == 1);
-    std::cerr << MolToCXSmiles(*ps[0][0]) << std::endl;
-    std::cerr << MolToCXSmiles(*ps[1][0]) << std::endl;
     CHECK(ps[0][0]->getStereoGroups().size() == 1);
     CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
           StereoGroupType::STEREO_AND);
-    CHECK(ps[1][0]->getStereoGroups().size() == 1);
+    CHECK(ps[1][0]->getStereoGroups().size() == 2);
     CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
           StereoGroupType::STEREO_AND);
   }

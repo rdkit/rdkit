@@ -1252,19 +1252,9 @@ void checkAndCorrectChiralityOfProduct(
 void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
                               const ReactantProductAtomMapping &mapping) {
   std::vector<StereoGroup> new_stereo_groups;
-  // track the atoms that are already in stereogroups in the product. These came
-  // from the template and we will not copy over any stereogroups from the
-  // reactant that include atoms already in product stereogroups
-  boost::dynamic_bitset<> atomsInStereoGroups(product->getNumAtoms());
-  for (const auto &sg : product->getStereoGroups()) {
-    for (const auto &atom : sg.getAtoms()) {
-      atomsInStereoGroups.set(atom->getIdx());
-    }
-  }
   for (const auto &sg : reactant.getStereoGroups()) {
     std::vector<Atom *> atoms;
     std::vector<Bond *> bonds;
-    bool skipStereoGroup = false;
     for (const auto &reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
       if (productAtoms == mapping.reactProdAtomMap.end()) {
@@ -1273,12 +1263,6 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
 
       for (auto &productAtomIdx : productAtoms->second) {
         auto productAtom = product->getAtomWithIdx(productAtomIdx);
-
-        // if the atom is already in a stereogroup, skip this whole stereogroup
-        if (atomsInStereoGroups[productAtom->getIdx()]) {
-          skipStereoGroup = true;
-          continue;
-        }
         // If chirality destroyed by the reaction, skip the atom
         if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
           continue;
@@ -1292,11 +1276,8 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
         }
         atoms.push_back(productAtom);
       }
-      if (skipStereoGroup) {
-        break;
-      }
     }
-    if (!skipStereoGroup && !atoms.empty()) {
+    if (!atoms.empty()) {
       new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms),
                                      std::move(bonds), sg.getReadId());
     }
@@ -1435,6 +1416,7 @@ void copyTemplateStereoGroupsToMol(const ROMol &templateMol,
     return;
   }
 
+  boost::dynamic_bitset<> atomsInTemplateStereoGroups(product->getNumAtoms());
   std::vector<StereoGroup> newStereoGroups;
   for (const auto &sg : stereoGroups) {
     bool keepIt = true;
@@ -1447,6 +1429,7 @@ void copyTemplateStereoGroupsToMol(const ROMol &templateMol,
                                             oldMapNum) &&
               oldMapNum == mapNum) {
             atoms.push_back(productAtom);
+            atomsInTemplateStereoGroups.set(productAtom->getIdx());
           }
         }
       } else {
@@ -1460,13 +1443,36 @@ void copyTemplateStereoGroupsToMol(const ROMol &templateMol,
                                    std::move(bonds), sg.getReadId());
     }
   }
-
   if (!newStereoGroups.empty()) {
-    // FIX: remove any stereo groups that are already present in the product and
+    // remove any stereo groups that are already present in the product (these
+    // were copied over from the reactant in copyEnhancedStereoGroups()) and
     // that overlap with the added ones
-    auto &existingStereoGroups = product->getStereoGroups();
-    newStereoGroups.insert(newStereoGroups.end(), existingStereoGroups.begin(),
-                           existingStereoGroups.end());
+    for (const auto &productSG : product->getStereoGroups()) {
+      unsigned int nOverlappingAtoms = 0;
+      for (const auto atom : productSG.getAtoms()) {
+        if (atomsInTemplateStereoGroups[atom->getIdx()]) {
+          ++nOverlappingAtoms;
+        }
+      }
+      if (!nOverlappingAtoms) {
+        // no overlapping atoms, we can just keep the stereogroup.
+        newStereoGroups.push_back(productSG);
+      } else if (nOverlappingAtoms < productSG.getAtoms().size()) {
+        // some of the atoms in the stereo group are not already there
+        // in the product, we need to split the stereo group
+        std::vector<Atom *> newAtoms;
+        for (const auto atom : productSG.getAtoms()) {
+          if (!atomsInTemplateStereoGroups[atom->getIdx()]) {
+            newAtoms.push_back(atom);
+          }
+        }
+        std::vector<Bond *> newBonds;
+        newStereoGroups.emplace_back(productSG.getGroupType(),
+                                     std::move(newAtoms), std::move(newBonds),
+                                     productSG.getReadId());
+      }
+      // else: all atoms in the stereo group are already there, we can skip it
+    }
     product->setStereoGroups(std::move(newStereoGroups));
   }
 }
