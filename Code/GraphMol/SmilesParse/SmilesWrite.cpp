@@ -767,7 +767,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
 
 std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
                           std::uint32_t flags,
-                          RestoreBondDirOption restoreBondDirs) {
+                          unsigned int restoreBondDirs) {
   RWMol trwmol(romol);
 
   bool doingCXSmiles = true;

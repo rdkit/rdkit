@@ -260,7 +260,7 @@ BETTER_ENUM(RestoreBondDirOption, unsigned int,
 RDKIT_SMILESPARSE_EXPORT std::string MolToCXSmiles(
     const ROMol &mol, const SmilesWriteParams &ps,
     std::uint32_t flags = SmilesWrite::CXSmilesFields::CX_ALL,
-    RDKit::RestoreBondDirOption restoreBondDirs =
+    unsigned int restoreBondDirs =
         RestoreBondDirOption::RestoreBondDirOptionClear);
 
 //! \brief returns canonical CXSMILES for a molecule
