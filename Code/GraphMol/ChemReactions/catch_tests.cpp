@@ -2056,6 +2056,52 @@ M  END)CTAB"_ctab;
     REQUIRE(ps[0].size() == 1);
 
     CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
     CHECK(ps[1][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+
+    auto sg = StereoGroup(StereoGroupType::STEREO_OR,
+                          {reactant->getAtomWithIdx(0)}, {});
+    reactant->setStereoGroups({sg});
+    ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 2);
+    REQUIRE(ps[0].size() == 1);
+    CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_OR);
+    CHECK(ps[1][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_OR);
   }
+#if 0
+// currently disabled because reactions do not support atropisomers
+  SECTION("atropisomers") {
+    auto rxn = v2::ReactionParser::ReactionFromRxnFile(
+        getenv("RDBASE") + std::string("/Code/GraphMol/ChemReactions/testData/"
+                                       "github7669_1.rxn"));
+    REQUIRE(rxn);
+    REQUIRE(rxn->getProducts()[0]->getBondWithIdx(0)->getStereo() ==
+            Bond::BondStereo::STEREOATROPCCW);
+    CHECK(rxn->getProducts()[0]->getStereoGroups().empty());
+    auto sg = StereoGroup(StereoGroupType::STEREO_OR, {},
+                          {rxn->getProducts()[0]->getBondWithIdx(16)});
+    rxn->getProducts()[0]->setStereoGroups({sg});
+
+    rxn->initReactantMatchers();
+
+    auto mol = "Fc1cccc(C)c1c2cc(O)ccc2F"_smiles;
+    REQUIRE(mol);
+    ROMOL_SPTR reactant(std::move(mol));
+    auto ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 1);
+    REQUIRE(ps[0].size() == 1);
+    CHECK(ps[0][0]->getBondWithIdx(0)->getStereo() ==
+          Bond::BondStereo::STEREOATROPCCW);
+    REQUIRE(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_OR);
+  }
+#endif
 }
