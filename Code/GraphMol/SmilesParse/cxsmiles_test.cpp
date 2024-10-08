@@ -1337,7 +1337,6 @@ TEST_CASE("SMILES CANONICALIZATION") {
         rdbase + "/Code/GraphMol/SmilesParse/test_data/TestSmilesUniq.sdf";
 
     std::ifstream in;
-    int molCount = 0;
     in.open(fName);
     while (!in.eof()) {
       std::string molBlock = "";
@@ -1346,7 +1345,6 @@ TEST_CASE("SMILES CANONICALIZATION") {
         std::getline(in, line);
         molBlock += line + "\n";
       }
-      molCount++;
 
       if (molBlock.length() > 25) {
         std::unique_ptr<RWMol> mol(MolBlockToMol(molBlock));
