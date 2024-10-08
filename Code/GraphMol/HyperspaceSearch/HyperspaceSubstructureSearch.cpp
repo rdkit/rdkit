@@ -291,33 +291,5 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
 
 }  // namespace details
 
-// Do a substructure search for query in the hyperspace.
-std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
-                                             unsigned int maxBondSplits,
-                                             Hyperspace &hyperspace,
-                                             int maxHits) {
-  std::cout << "Number of reactions : " << hyperspace.numReactions()
-            << std::endl;
-  auto &reactions = hyperspace.reactions();
-  for (const auto &r : reactions) {
-    std::cout << "reaction " << r.first
-              << " number of synthons : " << r.second->reagents().size()
-              << std::endl;
-  }
-  auto results = hyperspace.search(query, maxBondSplits, maxHits);
-  return results;
-}
-
-// overload taking the name of the hyperspace file.
-std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
-                                             unsigned int maxBondSplits,
-                                             const std::string &libName,
-                                             int maxHits) {
-  std::cout << "Searching library " << libName << " for structures containing "
-            << MolToSmiles(query) << std::endl;
-  Hyperspace hyperspace(libName);
-  return SSSearch(query, maxBondSplits, hyperspace, maxHits);
-}
-
 }  // namespace HyperspaceSSSearch
 }  // namespace RDKit

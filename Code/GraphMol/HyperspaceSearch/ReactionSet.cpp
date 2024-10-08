@@ -129,7 +129,7 @@ void ReactionSet::assignConnectorsUsed() {
   d_connectors.resize(4, false);
   // Remove any empty reagent sets.  This most often happens if the
   // synthon number in the reaction starts from 1, not 0.  Idorsia
-  // use 0, the stuff from ChemSpace use 1.
+  // use 0, the stuff from ChemSpace uses 1.
   d_reagents.erase(
       remove_if(d_reagents.begin(), d_reagents.end(),
                 [&](const std::vector<std::unique_ptr<Reagent>> &r) -> bool {

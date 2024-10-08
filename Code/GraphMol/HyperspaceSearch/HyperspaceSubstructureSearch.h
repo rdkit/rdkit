@@ -20,6 +20,7 @@ namespace HyperspaceSSSearch {
 
 class Hyperspace;
 
+#if 0
 // Perform a substructure search with the given query molecule across
 // the hyperspace library.
 /*!
@@ -63,7 +64,7 @@ std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
                                              unsigned int maxBondSplits,
                                              const std::string &libName,
                                              int maxHits = 1000);
-
+#endif
 namespace details {
 // Find all combinations of M things selected from N.
 std::vector<std::vector<unsigned int>> combMFromN(unsigned int m,

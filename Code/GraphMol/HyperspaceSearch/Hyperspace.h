@@ -61,7 +61,6 @@ class Hyperspace {
    * the field separator.
    */
   explicit Hyperspace() = default;
-  explicit Hyperspace(const std::string &fileName);
 
   int numReactions() const { return d_reactions.size(); }
   const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
@@ -71,9 +70,8 @@ class Hyperspace {
   // Do a substructure search for query in the hyperspace.  Return vector of
   // molecules that match.  If maxHits is -1, there's no limit on the
   // number of hits returned.
-  std::vector<std::unique_ptr<ROMol>> search(const ROMol &query,
-                                             unsigned int maxBondSplits,
-                                             int maxHits = 1000);
+  std::vector<std::unique_ptr<ROMol>> substructureSearch(
+      const ROMol &query, unsigned int maxBondSplits, int maxHits = 1000);
 
   // Search this particular fragmented molecule against the reactions.  The
   // fragments should be from 1 splitting, so between 1 and 4 members.
@@ -81,11 +79,24 @@ class Hyperspace {
   // heuristic).  If maxHits is -1, there's no limit on the
   // number of hits returned.
   std::vector<HyperspaceHitSet> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet, int maxHits = 1000);
+      std::vector<std::unique_ptr<ROMol>> &fragSet);
 
-  // Writes to/reads from a binary stream.
-  void writeToDBStream(const std::string &outFile) const;
-  void readFromDBStream(const std::string &inFile);
+  // Reads a text file of the sort used by Chemspace/Enamine.  They're one
+  // of 3 different formats, as shown by their first line.
+  // tab-separated
+  // SMILES	synton_id	synton#	reaction_id
+  // or tab-separated:
+  // SMILES	synton_id	synton#	reaction_id release
+  // or comma-separated
+  // SMILES,synton_id,synton_role,reaction_id
+  // Note the spelling "synton" which is how Ukrainians spell Synthon,
+  // apparently.
+  // It allows any whitespace rather than just tab.
+  void readTextFile(const std::string &inFile);
+
+  // Writes to/reads from a binary DB File in our format.
+  void writeToDBFile(const std::string &outFile) const;
+  void readFromDBFile(const std::string &inFile);
 
   void summarise(std::ostream &os) const;
 
@@ -93,13 +104,13 @@ class Hyperspace {
   std::string d_fileName;
   std::map<std::string, std::unique_ptr<ReactionSet>> d_reactions;
 
-  void readFile();
-
   // Build the molecules from the reagents identified in reagentsToUse.
   // There should be bitset in reagentsToUse for each reagent set.
-  // If not, it will fail.  If maxHits is -1, there's no limit on the
-  // number of hits returned.
+  // If not, it will fail.  Checks that all the results produced match the
+  // query - it shouts if any don't, and doesn't include them.
+  // If maxHits is -1, there's no limit on the number of hits returned.
   void buildHits(const std::vector<HyperspaceHitSet> &hitsets,
+                 const ROMol &query,
                  std::vector<std::unique_ptr<ROMol>> &results, int maxHits);
   // get the subset of reagents for the given reaction to use for this
   // enumeration.

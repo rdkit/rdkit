@@ -42,7 +42,8 @@ int main(int argc, char **argv) {
   std::string inFile(argv[1]);
   std::string outFile(argv[2]);
   std::cout << "Converting " << inFile << " to " << outFile << std::endl;
-  RDKit::HyperspaceSSSearch::Hyperspace hyperspace(inFile);
+  RDKit::HyperspaceSSSearch::Hyperspace hyperspace;
+  hyperspace.readTextFile(inFile);
   hyperspace.summarise(std::cout);
-  hyperspace.writeToDBStream(outFile);
+  hyperspace.writeToDBFile(outFile);
 }

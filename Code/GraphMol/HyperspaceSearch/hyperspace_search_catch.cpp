@@ -94,7 +94,9 @@ TEST_CASE("Amide 1", "[Amide 1]") {
       fName + "/Code/GraphMol/HyperspaceSearch/data/amide_space_enum.smi";
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-  auto results = SSSearch(*queryMol, 2, libName);
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
+  auto results = hyperspace.substructureSearch(*queryMol, 2, -1);
   CHECK(results.size() == 2);
   std::set<std::string> resSmi;
   for (const auto &r : results) {
@@ -118,7 +120,8 @@ TEST_CASE("Amide 1", "[Amide 1]") {
 TEST_CASE("Urea 1", "[Urea 1]") {
   std::string libName =
       fName + "/Code/GraphMol/HyperspaceSearch/data/urea_space.txt";
-  Hyperspace hyperspace(libName);
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
 #if 1
   SECTION("Single fragged molecule") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
@@ -132,7 +135,7 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 #if 1
   SECTION("Single molecule with fragging") {
     auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-    auto results = SSSearch(*queryMol, 3, hyperspace);
+    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
     CHECK(results.size() == 2);
   }
 #endif
@@ -141,7 +144,8 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 TEST_CASE("Simple query 1", "[Simple query 1]") {
   //  std::string libName =
   //      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
-  Hyperspace hyperspace(TXT_LIB_NAME);
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(TXT_LIB_NAME);
 #if 0
   SECTION("Single fragged molecule") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
@@ -153,11 +157,11 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
 #endif
   SECTION("Binary File") {
     Hyperspace hyperspace;
-    hyperspace.readFromDBStream(BIN_LIB_NAME);
+    hyperspace.readFromDBFile(BIN_LIB_NAME);
     // should give 220 hits for urea-3
     const auto start{std::chrono::steady_clock::now()};
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-    auto results = SSSearch(*queryMol, 3, hyperspace);
+    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{end - start};
     std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -169,7 +173,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
       // should give 220 hits for urea-3
       const auto start{std::chrono::steady_clock::now()};
       auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-      auto results = SSSearch(*queryMol, 3, hyperspace);
+      auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -178,30 +182,11 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     {
       const auto start{std::chrono::steady_clock::now()};
       auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-      auto results = SSSearch(*queryMol, 3, hyperspace);
+      auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "2 Elapsed time : " << elapsed_seconds.count() << std::endl;
       CHECK(results.size() == 20);
-    }
-  }
-#endif
-#if 0
-  SECTION("Brute Force") {
-    const auto start{std::chrono::steady_clock::now()};
-    auto subsLib = loadSubstructLibrary();
-    auto query = "c1ccccc1C(=O)N1CCCC1"_smarts;
-    auto enumRes = subsLib->getMatches(*query);
-    const auto end{std::chrono::steady_clock::now()};
-    const std::chrono::duration<double> elapsed_seconds{end - start};
-    CHECK(enumRes.size() == 220);
-    std::cout << "3 Elapsed time : " << elapsed_seconds.count() << std::endl;
-    std::cout << "Number of enum results : " << enumRes.size() << " from "
-              << subsLib->size() << " mols" << std::endl;
-    for (auto i : enumRes) {
-      std::cout << i << " : " << MolToSmiles(*subsLib->getMol(i)) << " : "
-                << subsLib->getMol(i)->getProp<std::string>("_Name")
-                << std::endl;
     }
   }
 #endif
@@ -213,7 +198,8 @@ TEST_CASE("Triazole", "[Triazole]") {
   std::string enumLibName =
       fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space_enum.smi";
 
-  Hyperspace hyperspace(libName);
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
 
 #if 1
   SECTION("Fragged Mol") {
@@ -231,7 +217,7 @@ TEST_CASE("Triazole", "[Triazole]") {
   SECTION("Full Molecule") {
     auto queryMol = "OCc1ncnn1"_smarts;
     REQUIRE(queryMol);
-    auto results = SSSearch(*queryMol, 3, hyperspace);
+    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
     CHECK(results.size() == 8);
     std::set<std::string> resSmi;
     for (const auto &r : results) {
@@ -261,10 +247,11 @@ TEST_CASE("Quinoline", "[Quinoline]") {
       fName +
       "/Code/GraphMol/HyperspaceSearch/data/doebner_miller_space_enum.smi";
 
-  Hyperspace hyperspace(libName);
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
   {
     auto queryMol = "c1ccccn1"_smiles;
-    auto results = SSSearch(*queryMol, 3, hyperspace);
+    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
     CHECK(results.size() == 12);
     std::set<std::string> resSmi;
     for (const auto &r : results) {
@@ -291,25 +278,23 @@ TEST_CASE("Quinoline", "[Quinoline]") {
 TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {
   // Making sure it works when the query is a complete substructure of 1
   // of the reagents in the library, so the whole library is a hit.
+  std::string libName =
+      fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
   {
     auto queryMol = "N1CCCC1"_smiles;
-    std::string libName =
-        fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
-    auto results = SSSearch(*queryMol, 3, libName);
+    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
     CHECK(results.size() == 8);
   }
   {
     auto queryMol = "N1CCC(C(F)(F)F)C1"_smiles;
-    std::string libName =
-        fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
-    auto results = SSSearch(*queryMol, 3, libName);
+    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
     CHECK(results.size() == 4);
   }
   {
     auto queryMol = "C1CCCCC1"_smiles;
-    std::string libName =
-        fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
-    auto results = SSSearch(*queryMol, 3, libName);
+    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
     CHECK(results.size() == 0);
   }
 }
@@ -336,7 +321,8 @@ TEST_CASE("Connector Regions", "[Connector Regions]") {
   SECTION("Built from file") {
     std::string libName =
         fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
-    Hyperspace hyperspace(libName);
+    Hyperspace hyperspace;
+    hyperspace.readTextFile(libName);
     const auto &rs = hyperspace.reactions().begin();
     CHECK(rs->second->connectorRegions().size() == 30);
   }
@@ -345,12 +331,13 @@ TEST_CASE("Connector Regions", "[Connector Regions]") {
 TEST_CASE("DB Writer", "[DB Writer]") {
   std::string libName =
       fName + "/Code/GraphMol/HyperspaceSearch/data/doebner_miller_space.txt";
-  Hyperspace hyperspace(libName);
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
   CHECK(hyperspace.numReactions() == 1);
-  hyperspace.writeToDBStream("doebner_miller_space.spc");
+  hyperspace.writeToDBFile("doebner_miller_space.spc");
 
   Hyperspace newHyperspace;
-  newHyperspace.readFromDBStream("doebner_miller_space.spc");
+  newHyperspace.readFromDBFile("doebner_miller_space.spc");
   auto it = newHyperspace.reactions().find("doebner-miller-quinoline");
   CHECK(it != newHyperspace.reactions().end());
   const auto &irxn = it->second;
@@ -374,7 +361,7 @@ TEST_CASE("Biggy", "[Biggy]") {
   std::string enumLibName =
       "/Users/david/Projects/FreedomSpace/Syntons_5567_space_a_enum.smi";
   Hyperspace hyperspace;
-  hyperspace.readFromDBStream(libName);
+  hyperspace.readFromDBFile(libName);
 
 #if 0
   SECTION("Fragged Mol") {
@@ -403,7 +390,7 @@ TEST_CASE("Biggy", "[Biggy]") {
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};
-      auto results = SSSearch(*queryMol, 3, hyperspace, -1);
+      auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -444,7 +431,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
       "/Users/david/Projects/FreedomSpace/2023-05_Freedom_synthons.spc";
   Hyperspace hyperspace;
   const auto rstart{std::chrono::steady_clock::now()};
-  hyperspace.readFromDBStream(libName);
+  hyperspace.readFromDBFile(libName);
   const auto rend{std::chrono::steady_clock::now()};
   const std::chrono::duration<double> elapsed_seconds{rend - rstart};
   std::cout << "Time to read hyperspace : " << elapsed_seconds.count()
@@ -477,7 +464,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};
-      auto results = SSSearch(*queryMol, 3, hyperspace);
+      auto results = hyperspace.substructureSearch(*queryMol, 3, 1000);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;

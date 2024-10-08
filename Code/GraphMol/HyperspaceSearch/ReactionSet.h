@@ -51,7 +51,9 @@ class ReactionSet {
                   const std::string &reagentId);
 
   // Scan through the connectors ([1*], [2*] etc.) in the reagents
-  // and set bits in d_connectors accordingly.
+  // and set bits in d_connectors accordingly.  Also removes any empty
+  // reagent sets, which might be because the synthon numbers start from
+  // 1 rather than 0.
   void assignConnectorsUsed();
 
  private:

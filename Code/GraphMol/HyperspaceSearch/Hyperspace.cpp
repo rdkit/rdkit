@@ -32,12 +32,9 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 namespace RDKit::HyperspaceSSSearch {
-Hyperspace::Hyperspace(const std::string &fileName) : d_fileName(fileName) {
-  readFile();
-}
 
-std::vector<std::unique_ptr<ROMol>> Hyperspace::search(
-    const RDKit::ROMol &query, unsigned int maxBondSplits, int maxHits) {
+std::vector<std::unique_ptr<ROMol>> Hyperspace::substructureSearch(
+    const ROMol &query, unsigned int maxBondSplits, int maxHits) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
   std::vector<std::unique_ptr<ROMol>> results;
@@ -90,7 +87,7 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::search(
         }
       });
 
-  buildHits(allHits, results, maxHits);
+  buildHits(allHits, query, results, maxHits);
   return results;
 }
 
@@ -115,74 +112,6 @@ void fixConnectors(std::string &smiles) {
   }
 }
 }  // namespace
-
-void Hyperspace::readFile() {
-  std::ifstream ifs(d_fileName);
-  // the first line is headers, check they're in the right format,
-  // which is tab-separated:
-  // SMILES	synton_id	synton#	reaction_id
-  // or tab-separated:
-  // SMILES	synton_id	synton#	reaction_id release
-  // or
-  // SMILES,synton_id,synton_role,reaction_id
-  // Note that we keep the spelling "synton" from the original paper
-  // and example input file, and allow any whitespace rather than just tab.
-  std::string firstLine;
-  getline(ifs, firstLine);
-  //  std::cout << "parsing : " << firstLine << std::endl;
-  std::regex regexz("[\\s,]+");
-
-  auto lineParts = splitLine(firstLine, regexz);
-  std::vector<std::vector<std::string>> firstLineOpts{
-      std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id"},
-      std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id",
-                               "release"},
-      std::vector<std::string>{"SMILES", "synton_id", "synton_role",
-                               "reaction_id"}};
-  int format = -1;
-  for (size_t i = 0; i < firstLineOpts.size(); ++i) {
-    if (lineParts == firstLineOpts[i]) {
-      format = i;
-    }
-  }
-  if (format == -1) {
-    throw std::runtime_error("Bad format for hyperspace file " + d_fileName);
-  }
-  std::cout << "Format = " << format << std::endl;
-  std::string nextLine;
-  int lineNum = 1;
-
-  while (getline(ifs, nextLine)) {
-    ++lineNum;
-    if (nextLine.empty() || nextLine[0] == '#') {
-      continue;
-    }
-    auto nextReag = splitLine(nextLine, regexz);
-    if (nextReag.size() < 4) {
-      throw std::runtime_error("Bad format for hyperspace file " + d_fileName +
-                               " on line " + std::to_string(lineNum));
-    }
-    //    std::cout << nextReag[0] << " : " << nextReag[1] << std::endl;
-    if (auto it = d_reactions.find(nextReag[3]); it == d_reactions.end()) {
-      d_reactions.insert(std::make_pair(
-          nextReag[3], std::make_unique<ReactionSet>(nextReag[3])));
-    }
-    fixConnectors(nextReag[0]);
-    auto &currReaction = d_reactions[nextReag[3]];
-    size_t synthonNum{std::numeric_limits<size_t>::max()};
-    if (format == 0 || format == 1) {
-      synthonNum = std::stoi(nextReag[2]);
-    } else if (format == 2) {
-      // in this case it's a string "synton_2" etc.
-      synthonNum = std::stoi(nextReag[2].substr(7));
-    }
-    currReaction->addReagent(synthonNum, nextReag[0], nextReag[1]);
-  }
-  for (auto &it : d_reactions) {
-    auto &reaction = it.second;
-    reaction->assignConnectorsUsed();
-  }
-}
 
 namespace {
 // Return a bitset giving the different connector types in this
@@ -465,7 +394,7 @@ bool checkConnectorRegions(
 }  // namespace
 
 std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
-    std::vector<std::unique_ptr<ROMol>> &fragSet, int maxHits) {
+    std::vector<std::unique_ptr<ROMol>> &fragSet) {
   std::vector<HyperspaceHitSet> results;
 
   auto pattFPs = makePatternFPs(fragSet);
@@ -560,7 +489,77 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
   return results;
 }
 
-void Hyperspace::writeToDBStream(const std::string &outFile) const {
+void Hyperspace::readTextFile(const std::string &inFile) {
+  d_fileName = inFile;
+  std::ifstream ifs(d_fileName);
+  // the first line is headers, check they're in the right format,
+  // which is tab-separated:
+  // SMILES	synton_id	synton#	reaction_id
+  // or tab-separated:
+  // SMILES	synton_id	synton#	reaction_id release
+  // or
+  // SMILES,synton_id,synton_role,reaction_id
+  // Note that we keep the spelling "synton" from the original paper
+  // and example input file, and allow any whitespace rather than just tab.
+  std::string firstLine;
+  getline(ifs, firstLine);
+  //  std::cout << "parsing : " << firstLine << std::endl;
+  std::regex regexz("[\\s,]+");
+
+  auto lineParts = splitLine(firstLine, regexz);
+  std::vector<std::vector<std::string>> firstLineOpts{
+      std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id"},
+      std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id",
+                               "release"},
+      std::vector<std::string>{"SMILES", "synton_id", "synton_role",
+                               "reaction_id"}};
+  int format = -1;
+  for (size_t i = 0; i < firstLineOpts.size(); ++i) {
+    if (lineParts == firstLineOpts[i]) {
+      format = i;
+    }
+  }
+  if (format == -1) {
+    throw std::runtime_error("Bad format for hyperspace file " + d_fileName);
+  }
+  std::string nextLine;
+  int lineNum = 1;
+
+  while (getline(ifs, nextLine)) {
+    ++lineNum;
+    if (nextLine.empty() || nextLine[0] == '#') {
+      continue;
+    }
+    auto nextReag = splitLine(nextLine, regexz);
+    if (nextReag.size() < 4) {
+      throw std::runtime_error("Bad format for hyperspace file " + d_fileName +
+                               " on line " + std::to_string(lineNum));
+    }
+    //    std::cout << nextReag[0] << " : " << nextReag[1] << std::endl;
+    if (auto it = d_reactions.find(nextReag[3]); it == d_reactions.end()) {
+      d_reactions.insert(std::make_pair(
+          nextReag[3], std::make_unique<ReactionSet>(nextReag[3])));
+    }
+    fixConnectors(nextReag[0]);
+    auto &currReaction = d_reactions[nextReag[3]];
+    size_t synthonNum{std::numeric_limits<size_t>::max()};
+    if (format == 0 || format == 1) {
+      synthonNum = std::stoi(nextReag[2]);
+    } else if (format == 2) {
+      // in this case it's a string "synton_2" etc.
+      synthonNum = std::stoi(nextReag[2].substr(7));
+    }
+    currReaction->addReagent(synthonNum, nextReag[0], nextReag[1]);
+  }
+
+  // Do some final processing.
+  for (auto &it : d_reactions) {
+    auto &reaction = it.second;
+    reaction->assignConnectorsUsed();
+  }
+}
+
+void Hyperspace::writeToDBFile(const std::string &outFile) const {
   std::ofstream os(outFile, std::fstream::binary | std::fstream::trunc);
   streamWrite(os, d_reactions.size());
   for (const auto &rs : d_reactions) {
@@ -569,7 +568,8 @@ void Hyperspace::writeToDBStream(const std::string &outFile) const {
   os.close();
 }
 
-void Hyperspace::readFromDBStream(const std::string &inFile) {
+void Hyperspace::readFromDBFile(const std::string &inFile) {
+  d_fileName = inFile;
   try {
     std::ifstream is(inFile, std::fstream::binary);
     size_t numRS;
@@ -629,6 +629,7 @@ struct Stepper {
 }  // namespace
 
 void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
+                           const ROMol &query,
                            std::vector<std::unique_ptr<ROMol>> &results,
                            int maxHits) {
   if (hitsets.empty()) {
@@ -640,6 +641,7 @@ void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
   // reagent combination.  This will keep the same molecule produced via
   // different reactions which I think makes sense.
   std::set<std::string> resultsNames;
+  RDKit::MatchVectType dontCare;
 
   for (const auto &hitset : hitsets) {
     std::cout << "Build hits with " << hitset.reactionId << std::endl;
@@ -677,8 +679,15 @@ void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
               combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
         }
         auto prod = molzip(*combMol, params);
-        prod->setProp<std::string>(common_properties::_Name, combName);
         MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
+        if (!SubstructMatch(*prod, query, dontCare)) {
+          std::cout << "WARNING : molecule " << combName << " : "
+                    << MolToSmiles(*prod)
+                    << " passed all the tests but didn't match the query."
+                    << "  This may be a bug, please report it." << std::endl;
+          continue;
+        }
+        prod->setProp<std::string>(common_properties::_Name, combName);
         results.push_back(std::move(prod));
       }
       // -1 means no limit, and size_t is unsigned, so the cast will make for
