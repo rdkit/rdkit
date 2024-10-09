@@ -72,8 +72,12 @@ RDKIT_HYPERSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>> combMFromN(
 // Find all permutations of M things selected from N.
 RDKIT_HYPERSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>> permMFromN(
     unsigned int m, unsigned int n);
+// Split the molecule into pieces breaking up to maxBondSplits bonds at a
+// time.
 RDKIT_HYPERSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxBondSplits);
+// Counts the number of [1*], [2*]...[4*] in the string.
+RDKIT_HYPERSPACESEARCH_EXPORT int countConnections(const std::string &smiles);
 }  // namespace details
 }  // namespace HyperspaceSearch
 }  // namespace RDKit

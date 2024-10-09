@@ -12,6 +12,7 @@
 
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ROMol.h>
+#include <GraphMol/HyperspaceSearch/HyperspaceSubstructureSearch.h>
 #include <GraphMol/HyperspaceSearch/ReactionSet.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/StreamOps.h>
@@ -145,6 +146,19 @@ void ReactionSet::assignConnectorsUsed() {
       }
     }
   }
+}
+
+const std::vector<int> &ReactionSet::numConnectors() const {
+  if (d_numConnectors.empty()) {
+    // It should be the case that all synthons in a synthon set
+    // have the same number of connections, so just do the 1st
+    // one of each.
+    for (const auto &reagSet : d_reagents) {
+      d_numConnectors.push_back(
+          details::countConnections(reagSet.front()->smiles()));
+    }
+  }
+  return d_numConnectors;
 }
 
 }  // namespace RDKit::HyperspaceSearch

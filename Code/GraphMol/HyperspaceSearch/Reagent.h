@@ -38,6 +38,7 @@ class Reagent {
   const std::unique_ptr<ROMol> &mol() const;
   const std::unique_ptr<ExplicitBitVect> &pattFP() const;
   const std::vector<std::shared_ptr<ROMol>> &connRegions() const;
+  int numConnections() const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -53,6 +54,7 @@ class Reagent {
   // SMILES strings of any connector regions.  Normally there will only
   // be 1 or 2.
   mutable std::vector<std::shared_ptr<ROMol>> d_connRegions;
+  mutable int numConns{-1};
 };
 
 // Return a molecule containing the portions of the molecule starting at

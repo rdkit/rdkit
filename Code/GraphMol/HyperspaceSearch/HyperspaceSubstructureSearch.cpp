@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <list>
+#include <regex>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
@@ -213,14 +214,18 @@ void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
 // fragments from a split molecule.
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits) {
-  std::cout << "Splitting " << MolToSmiles(query) << " with " << maxBondSplits
-            << " bonds." << std::endl;
+  //  std::cout << "Splitting " << MolToSmiles(query) << " with " <<
+  //  maxBondSplits
+  //            << " bonds." << std::endl;
 
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
   }
   if (maxBondSplits > 3) {
     maxBondSplits = 3;
+  }
+  if (maxBondSplits > query.getNumBonds()) {
+    maxBondSplits = query.getNumBonds();
   }
   auto ringInfo = query.getRingInfo();
   boost::dynamic_bitset<> ringBonds(query.getNumBonds());
@@ -238,13 +243,14 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
 
   // Now do the splits.
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
-    std::cout << "Splitting with up to " << i << " bonds" << std::endl;
+    //    std::cout << "Splitting with up to " << i << " bonds" << std::endl;
     auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
     for (unsigned int j = 1; j <= i; ++j) {
       dummyLabels.push_back(std::make_pair(j, j));
     }
-    std::cout << "Number of possible splits : " << combs.size() << std::endl;
+    //    std::cout << "Number of possible splits : " << combs.size() <<
+    //    std::endl;
     for (auto &c : combs) {
       //      for (auto &i : c) {
       //        std::cout << i << " ";
@@ -283,12 +289,19 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
         fragments.emplace_back(std::move(molFrags));
       }
     }
-    std::cout << "Number of valid splits : " << fragments.size() << std::endl;
+    //    std::cout << "Number of valid splits : " << fragments.size() <<
+    //    std::endl;
   }
-  std::cout << "Fragments size : " << fragments.size() << std::endl;
+  //  std::cout << "Fragments size : " << fragments.size() << std::endl;
   return fragments;
 }
 
+int countConnections(const std::string &smiles) {
+  static const std::regex conns(R"(\[[1-4]\*\])");
+  return static_cast<int>(std::distance(
+      std::sregex_token_iterator(smiles.begin(), smiles.end(), conns),
+      std::sregex_token_iterator()));
+}
 }  // namespace details
 
 }  // namespace HyperspaceSearch

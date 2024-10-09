@@ -15,6 +15,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/HyperspaceSearch/HyperspaceSubstructureSearch.h>
 #include <GraphMol/HyperspaceSearch/Reagent.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -100,6 +101,13 @@ const std::vector<std::shared_ptr<ROMol>> &Reagent::connRegions() const {
     }
   }
   return d_connRegions;
+}
+
+int Reagent::numConnections() const {
+  if (numConns == -1) {
+    numConns = details::countConnections(d_smiles);
+  }
+  return numConns;
 }
 
 void Reagent::writeToDBStream(std::ostream &os) const {

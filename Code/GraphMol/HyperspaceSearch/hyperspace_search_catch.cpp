@@ -484,3 +484,81 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
   }
 #endif
 }
+
+TEST_CASE("Small query", "[Small query]") {
+  // Making sure it works when the query has fewer bonds than maxBondSplits.
+  std::string libName =
+      fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
+  auto queryMol = "C=CC"_smiles;
+  auto results = hyperspace.substructureSearch(*queryMol);
+  // The number of results is immaterial, it just matters that the search
+  // finished.
+  CHECK(results.size() == 0);
+}
+
+TEST_CASE("Hydroxyquinazoline", "[Hydroxyquinazoline]") {
+  // There was a time when these gave a hit because the number of connectors
+  // on the fragments weren't being checked against the number of connectors
+  // on the synthons.
+  std::string libName =
+      fName +
+      "/Code/GraphMol/HyperspaceSearch/data/hydroxyquinazoline_space.txt";
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
+  hyperspace.summarise(std::cout);
+
+#if 1
+  SECTION("Fragged Mol") {
+    std::vector<std::unique_ptr<ROMol>> fragSet;
+    fragSet.emplace_back("[1*]Cc1ccco1"_smiles);
+    fragSet.emplace_back("[1*]N"_smiles);
+    auto results = hyperspace.searchFragSet(fragSet);
+    CHECK(results.size() == 0);
+  }
+#endif
+
+#if 1
+  SECTION("Whole Molecule") {
+    auto qmol = "c1ccc(CN)o1"_smiles;
+    auto results = hyperspace.substructureSearch(*qmol);
+    CHECK(results.size() == 0);
+  }
+#endif
+}
+
+TEST_CASE("Added H", "[Added H]") {
+  // These queries produced hits that didn't match the final product.
+  std::string libName = "/Users/david/Projects/FreedomSpace/added_h_space.csv";
+  Hyperspace hyperspace;
+  hyperspace.readTextFile(libName);
+  hyperspace.summarise(std::cout);
+  std::vector<std::string> smiles{
+      "[H]C(CO)CC(C)C",
+  };
+  HyperspaceSearchParams params;
+  params.maxHits = -1;
+
+  for (size_t i = 0; i < smiles.size(); ++i) {
+    //    if (i != 2) {
+    //      continue;
+    //    }
+    std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smiles[i] << std::endl;
+    auto queryMol = v2::SmilesParse::MolFromSmiles(smiles[i]);
+    const auto start{std::chrono::steady_clock::now()};
+    auto results = hyperspace.substructureSearch(*queryMol, params);
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{end - start};
+    std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
+    std::cout << "Number of hits : " << results.size() << std::endl;
+    std::string outFile =
+        std::string("/Users/david/Projects/FreedomSpace/hyperspace_hits_") +
+        std::to_string(i) + ".smi";
+    std::ofstream of(outFile);
+    for (const auto &r : results) {
+      of << MolToSmiles(*r) << " " << r->getProp<std::string>("_Name")
+         << std::endl;
+    }
+  }
+}

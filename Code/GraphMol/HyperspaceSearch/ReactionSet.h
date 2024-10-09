@@ -42,6 +42,7 @@ class ReactionSet {
   const std::vector<std::shared_ptr<ROMol>> &connectorRegions() const;
 
   const std::unique_ptr<ExplicitBitVect> &connRegFP() const;
+  const std::vector<int> &numConnectors() const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -70,6 +71,8 @@ class ReactionSet {
   // the fragment won't have a match in this ReagentSet.
   mutable std::vector<std::shared_ptr<ROMol>> d_connectorRegions;
   mutable std::unique_ptr<ExplicitBitVect> d_connRegFP;
+  // The number of connectors in the synthons in each reagent set.
+  mutable std::vector<int> d_numConnectors;
 };
 
 }  // namespace HyperspaceSearch
