@@ -57,8 +57,8 @@ void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
   updateSmilesWriteParamsFromJSON(params, details_json.c_str());
 }
 
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
+void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
+                                  unsigned int &restoreBondDirs,
                                   const char *details_json) {
   if (details_json && strlen(details_json)) {
     boost::property_tree::ptree pt;
@@ -86,8 +86,8 @@ void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
   }
 }
 
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
+void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
+                                  unsigned int &restoreBondDirs,
                                   const std::string &details_json) {
   updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
                                details_json.c_str());

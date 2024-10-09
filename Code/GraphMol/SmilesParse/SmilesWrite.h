@@ -351,11 +351,11 @@ void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
                                      const std::string &details_json);
 void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
                                      const char *details_json);
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RDKit::RestoreBondDirOption &restoreBondDirs,
+void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
+                                  unsigned int &restoreBondDirs,
                                   const std::string &details_json);
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RDKit::RestoreBondDirOption &restoreBondDirs,
+void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
+                                  unsigned int &restoreBondDirs,
                                   const char *details_json);
 
 }  // namespace RDKit
