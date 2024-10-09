@@ -2372,9 +2372,27 @@ void appendToCXExtension(const std::string &addition, std::string &base) {
 
 }  // namespace
 
+void logLNandSgH(const ROMol &mol) {
+  std::string lns;
+  if (mol.getPropIfPresent(common_properties::molFileLinkNodes, lns)) {
+    BOOST_LOG(rdWarningLog) << "mol has link nodes which are not currently supported" << std::endl;
+  }
+  const auto &sgs = getSubstanceGroups(mol);
+  auto parent_check = std::any_of(sgs.cbegin(), sgs.cend(), [&](const SubstanceGroup &sg ) {
+    if (sg.hasProp("PARENT")) {
+      return true;
+    }
+    return false;
+  });
+  if (parent_check) {
+    BOOST_LOG(rdWarningLog) << "Substance group hierarchy is not always preserved." << std::endl;
+  }
+}
+
 std::string getCXExtensions(const MOL_SPTR_VECT &mols, std::uint32_t flags) {
     for (const auto& mol : mols) {
-      if (!mol->hasProp(RDKit::common_properties::_smilesAtomOutputOrder) ||
+        logLNandSgH(*mol);
+        if (!mol->hasProp(RDKit::common_properties::_smilesAtomOutputOrder) ||
           !mol->hasProp(RDKit::common_properties::_smilesBondOutputOrder)) {
         throw ValueErrorException("Input molecule does not have the required "
                                   "smiles ordering properties set");

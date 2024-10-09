@@ -1170,9 +1170,8 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     std::string expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>> |$;;;_AP1;;;_AP1$,atomProp:0.molAtomMapNumber.1:1.molAtomMapNumber.2:2.molAtomMapNumber.3:3.molAtomMapNumber.4:4.molAtomMapNumber.5:5.molAtomMapNumber.6:6.molAtomMapNumber.7|";
     std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
     CHECK(output_cxsmarts == expected_cxsmarts);
-
-    std::cout << "missing products CX:\n" << ChemicalReactionToRxnCXSmarts(*rxn) << std::endl;
   }
+  
   SECTION("coordinate bonds and sgroups") {
     // when initially writing this, coordinate bonds were not properly parsed
     // from SMARTS, so we use SMILES
@@ -1198,6 +1197,13 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
                                                   alabel));
     CHECK(alabel == "_AP1");
     CHECK(getSubstanceGroups(*p0).size() == 1);
+    
+    // Test that coordinate bonds are preserved.
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS;
+    auto rxn_string = ChemicalReactionToRxnCXSmarts(*rxn, params, flags);
+    auto expected_string = "[#6H3:1]-[#6H:2](-[#6H3:3])-[#0:4].[Fe:8]<-[#8H:5]-[#6H2:6]-[#0:7]>>[Fe:8]<-[#8H:5]-[#6H2:6]-[#6H2:1]-[#6H:2](-[#6H3:3])-[#0:4] |$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|";
+    CHECK(rxn_string == expected_string);
   }
 
   SECTION("sgroup hierarchy") {
