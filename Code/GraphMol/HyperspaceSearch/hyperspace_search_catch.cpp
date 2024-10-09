@@ -96,7 +96,9 @@ TEST_CASE("Amide 1", "[Amide 1]") {
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
   Hyperspace hyperspace;
   hyperspace.readTextFile(libName);
-  auto results = hyperspace.substructureSearch(*queryMol, 2, -1);
+  HyperspaceSearchParams params;
+  params.maxBondSplits = 2;
+  auto results = hyperspace.substructureSearch(*queryMol, params);
   CHECK(results.size() == 2);
   std::set<std::string> resSmi;
   for (const auto &r : results) {
@@ -135,7 +137,7 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 #if 1
   SECTION("Single molecule with fragging") {
     auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+    auto results = hyperspace.substructureSearch(*queryMol);
     CHECK(results.size() == 2);
   }
 #endif
@@ -161,7 +163,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     // should give 220 hits for urea-3
     const auto start{std::chrono::steady_clock::now()};
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+    auto results = hyperspace.substructureSearch(*queryMol);
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{end - start};
     std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -173,7 +175,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
       // should give 220 hits for urea-3
       const auto start{std::chrono::steady_clock::now()};
       auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-      auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+      auto results = hyperspace.substructureSearch(*queryMol);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -182,7 +184,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     {
       const auto start{std::chrono::steady_clock::now()};
       auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-      auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+      auto results = hyperspace.substructureSearch(*queryMol);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "2 Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -217,7 +219,7 @@ TEST_CASE("Triazole", "[Triazole]") {
   SECTION("Full Molecule") {
     auto queryMol = "OCc1ncnn1"_smarts;
     REQUIRE(queryMol);
-    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+    auto results = hyperspace.substructureSearch(*queryMol);
     CHECK(results.size() == 8);
     std::set<std::string> resSmi;
     for (const auto &r : results) {
@@ -251,7 +253,7 @@ TEST_CASE("Quinoline", "[Quinoline]") {
   hyperspace.readTextFile(libName);
   {
     auto queryMol = "c1ccccn1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+    auto results = hyperspace.substructureSearch(*queryMol);
     CHECK(results.size() == 12);
     std::set<std::string> resSmi;
     for (const auto &r : results) {
@@ -284,17 +286,17 @@ TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {
   hyperspace.readTextFile(libName);
   {
     auto queryMol = "N1CCCC1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+    auto results = hyperspace.substructureSearch(*queryMol);
     CHECK(results.size() == 8);
   }
   {
     auto queryMol = "N1CCC(C(F)(F)F)C1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+    auto results = hyperspace.substructureSearch(*queryMol);
     CHECK(results.size() == 4);
   }
   {
     auto queryMol = "C1CCCCC1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+    auto results = hyperspace.substructureSearch(*queryMol);
     CHECK(results.size() == 0);
   }
 }
@@ -382,7 +384,8 @@ TEST_CASE("Biggy", "[Biggy]") {
                                         "c1nncn1",
                                         "C(=O)NC(CC)C(=O)N(CC)C"};
     const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
-
+    HyperspaceSearchParams params;
+    params.maxHits = -1;
     for (size_t i = 0; i < smis.size(); ++i) {
       //      if (i != 2) {
       //        continue;
@@ -390,7 +393,7 @@ TEST_CASE("Biggy", "[Biggy]") {
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};
-      auto results = hyperspace.substructureSearch(*queryMol, 3, -1);
+      auto results = hyperspace.substructureSearch(*queryMol, params);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -456,7 +459,6 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
                                         "c1nncn1",
                                         "C(=O)NC(CC)C(=O)N(CC)C"};
     const std::vector<size_t> numRes{1000, 1000, 1000, 108, 1000, 1000};
-
     for (size_t i = 0; i < smis.size(); ++i) {
       //      if (i != 5) {
       //        continue;
@@ -464,7 +466,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};
-      auto results = hyperspace.substructureSearch(*queryMol, 3, 1000);
+      auto results = hyperspace.substructureSearch(*queryMol);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;

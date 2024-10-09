@@ -34,13 +34,13 @@
 namespace RDKit::HyperspaceSearch {
 
 std::vector<std::unique_ptr<ROMol>> Hyperspace::substructureSearch(
-    const ROMol &query, unsigned int maxBondSplits, int maxHits) {
+    const ROMol &query, HyperspaceSearchParams params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
   std::vector<std::unique_ptr<ROMol>> results;
   RDKit::MatchVectType dontCare;
 
-  auto fragments = details::splitMolecule(query, maxBondSplits);
+  auto fragments = details::splitMolecule(query, params.maxBondSplits);
   //  for (const auto &frags : fragments) {
   //    std::cout << "****************************" << std::endl;
   //    for (const auto &f : frags) {
@@ -57,25 +57,10 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::substructureSearch(
           [&](const size_t prevVal, const HyperspaceHitSet &hs) -> size_t {
             return prevVal + hs.numHits;
           });
-      std::cout << "Total hits : " << totHits << std::endl;
+      std::cout << "Total number of hits no more than " << totHits << "."
+                << std::endl;
       allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
     }
-    // Just for safety, do a final check
-    //    for (auto &hitMol : theseResults) {
-    //      auto molName =
-    //      hitMol->getProp<std::string>(common_properties::_Name); if
-    //      (resultsNames.find(molName) == resultsNames.end() &&
-    //          SubstructMatch(*hitMol, query, dontCare)) {
-    //        results.emplace_back(std::unique_ptr<ROMol>(hitMol.release()));
-    //        resultsNames.insert(molName);
-    //      }
-    //    }
-    //    if (runningMaxHits != -1) {
-    //      runningMaxHits -= theseResults.size();
-    //      if (runningMaxHits < 1) {
-    //        break;
-    //      }
-    //    }
   }
   std::sort(
       allHits.begin(), allHits.end(),
@@ -87,7 +72,9 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::substructureSearch(
         }
       });
 
-  buildHits(allHits, query, results, maxHits);
+  if (params.buildHits) {
+    buildHits(allHits, query, results, params.maxHits);
+  }
   return results;
 }
 
@@ -473,11 +460,13 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
                             return prevRes * s2.count();
                           });
           if (numHits) {
-            for (size_t i = 0; i < theseReagents.size(); ++i) {
-              std::cout << reaction->id() << " reagents " << i << " : "
-                        << theseReagents[i].count() << " : " << theseReagents[i]
-                        << std::endl;
-            }
+            //            for (size_t i = 0; i < theseReagents.size(); ++i) {
+            //              std::cout << reaction->id() << " reagents " << i <<
+            //              " : "
+            //                        << theseReagents[i].count() << " : " <<
+            //                        theseReagents[i]
+            //                        << std::endl;
+            //            }
             results.push_back(
                 HyperspaceHitSet{reaction->id(), theseReagents, numHits});
           }

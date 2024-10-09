@@ -25,6 +25,18 @@ class ROMol;
 
 namespace HyperspaceSearch {
 
+struct HyperspaceSearchParams {
+  int maxBondSplits{3};  // The maximum number of bonds to break in the query.
+                         // It should be no more than 1 less than the maximum
+                         // number of Synthon sets in Hyperspace.  More than
+                         // that doesn't matter, but will slow the search down
+                         // to no good effect.
+  int maxHits{1000};     // The maximum number of hits to return.  Use -1 for
+                         // no maximum.
+  bool buildHits{true};  // If false, reports the maximum number of hits that
+                         // the search could produce, but doesn't return them.
+};
+
 // Holds the information about a set of hits.  The molecules can be built
 // by making all combinations of reagents, one taken from each reagent set.
 struct HyperspaceHitSet {
@@ -36,9 +48,30 @@ struct HyperspaceHitSet {
 class Hyperspace {
  public:
   // Create the hyperspace from a file in the correct format.
+  explicit Hyperspace() = default;
+
+  int numReactions() const { return d_reactions.size(); }
+  const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
+    return d_reactions;
+  }
+
+  // Do a substructure search for query in the hyperspace.  Return vector of
+  // molecules that match.
+  std::vector<std::unique_ptr<ROMol>> substructureSearch(
+      const ROMol &query,
+      HyperspaceSearchParams params = HyperspaceSearchParams());
+
+  // Search this particular fragmented molecule against the reactions.  The
+  // fragments should be from 1 splitting, so between 1 and 4 members.
+  // The fragments may be re-ordered in the process (largest fragment
+  // heuristic).  This is in the public interface primarily for testing/
+  // debugging purposes.
+  std::vector<HyperspaceHitSet> searchFragSet(
+      std::vector<std::unique_ptr<ROMol>> &fragSet);
+
   /*!
    *
-   * @param fileName: name of the file containing the synthon-based library.
+   * @param inFile: name of the file containing the synthon-based library.
    *
    * The original format is:
    * all lines are tab-separated
@@ -53,45 +86,14 @@ class Hyperspace {
    * A product is created by taking a synthon from each synton# value and
    * combining by replacing matching trans-uranic elements and replacing them
    * with a direct bond of the appropriate type.
-   *
+   * A more (for RDKit) conventional connection flag of isotope labelled
+   * dummy atoms is also accepted ([1*] etc.).
    * Throws a std::runtime_error if it doesn't think the format is correct,
    * which it does by checking that the first line is as above and subsequent
    * lines have 4 fields.
    * The formatting has been relaxed such that any whitespace may be used as
    * the field separator.
    */
-  explicit Hyperspace() = default;
-
-  int numReactions() const { return d_reactions.size(); }
-  const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
-    return d_reactions;
-  }
-
-  // Do a substructure search for query in the hyperspace.  Return vector of
-  // molecules that match.  If maxHits is -1, there's no limit on the
-  // number of hits returned.
-  std::vector<std::unique_ptr<ROMol>> substructureSearch(
-      const ROMol &query, unsigned int maxBondSplits, int maxHits = 1000);
-
-  // Search this particular fragmented molecule against the reactions.  The
-  // fragments should be from 1 splitting, so between 1 and 4 members.
-  // The fragments may be re-ordered in the process (largest fragment
-  // heuristic).  If maxHits is -1, there's no limit on the
-  // number of hits returned.
-  std::vector<HyperspaceHitSet> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet);
-
-  // Reads a text file of the sort used by Chemspace/Enamine.  They're one
-  // of 3 different formats, as shown by their first line.
-  // tab-separated
-  // SMILES	synton_id	synton#	reaction_id
-  // or tab-separated:
-  // SMILES	synton_id	synton#	reaction_id release
-  // or comma-separated
-  // SMILES,synton_id,synton_role,reaction_id
-  // Note the spelling "synton" which is how Ukrainians spell Synthon,
-  // apparently.
-  // It allows any whitespace rather than just tab.
   void readTextFile(const std::string &inFile);
 
   // Writes to/reads from a binary DB File in our format.
