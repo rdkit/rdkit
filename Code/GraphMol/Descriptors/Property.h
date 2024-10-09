@@ -37,7 +37,7 @@
 #include <string>
 #include <utility>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <RDGeneral/BoostEndInclude.h>
 #include <Query/Query.h>
 #include <RDGeneral/Exceptions.h>
@@ -70,7 +70,7 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
 //! Holds a collection of properties for computation purposes
 class RDKIT_DESCRIPTORS_EXPORT Properties {
  protected:
-  std::vector<boost::shared_ptr<PropertyFunctor>> m_properties;
+  std::vector<std::shared_ptr<PropertyFunctor>> m_properties;
 
  public:
   Properties();
@@ -83,10 +83,9 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
 
   //! Register a property function - takes ownership
   static int registerProperty(PropertyFunctor *ptr);
-  static boost::shared_ptr<PropertyFunctor> getProperty(
-      const std::string &name);
+  static std::shared_ptr<PropertyFunctor> getProperty(const std::string &name);
   static std::vector<std::string> getAvailableProperties();
-  static std::vector<boost::shared_ptr<PropertyFunctor>> registry;
+  static std::vector<std::shared_ptr<PropertyFunctor>> registry;
 };
 
 typedef Queries::Query<bool, const ROMol &, true> PROP_BOOL_QUERY;

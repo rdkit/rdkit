@@ -27,7 +27,7 @@ https://github.com/mcs07/CommonChem
 #include <iostream>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace RDKit {
 
@@ -56,7 +56,7 @@ static JSONParseParameters defaultJSONParseParameters;
  *   \param inStream - stream containing the data
  *   \param params   - parsing options
  */
-RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>>
+RDKIT_MOLINTERCHANGE_EXPORT std::vector<std::shared_ptr<ROMol>>
 JSONDataStreamToMols(std::istream *inStream, const JSONParseParameters &params =
                                                  defaultJSONParseParameters);
 
@@ -65,9 +65,9 @@ JSONDataStreamToMols(std::istream *inStream, const JSONParseParameters &params =
  *   \param jsonBlock - string containing the mol block
  *   \param params   - parsing options
  */
-RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>>
-JSONDataToMols(const std::string &jsonBlock,
-               const JSONParseParameters &params = defaultJSONParseParameters);
+RDKIT_MOLINTERCHANGE_EXPORT std::vector<std::shared_ptr<ROMol>> JSONDataToMols(
+    const std::string &jsonBlock,
+    const JSONParseParameters &params = defaultJSONParseParameters);
 
 // \brief parameters controlling generating of MolJSON
 struct RDKIT_MOLINTERCHANGE_EXPORT JSONWriteParameters {
