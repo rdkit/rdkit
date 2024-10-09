@@ -41,7 +41,7 @@
 #include "Hyperspace.h"
 
 namespace RDKit {
-namespace HyperspaceSSSearch {
+namespace HyperspaceSearch {
 namespace details {
 
 // get a vector of vectors of unsigned ints that are all combinations of
@@ -291,5 +291,5 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
 
 }  // namespace details
 
-}  // namespace HyperspaceSSSearch
+}  // namespace HyperspaceSearch
 }  // namespace RDKit

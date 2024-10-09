@@ -24,14 +24,14 @@
 #include <catch2/catch_all.hpp>
 
 using namespace RDKit;
-using namespace RDKit::HyperspaceSSSearch;
+using namespace RDKit::HyperspaceSearch;
 
-namespace RDKit::HyperspaceSSSearch::details {
+namespace RDKit::HyperspaceSearch::details {
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits);
-}  // namespace RDKit::HyperspaceSSSearch::details
+}  // namespace RDKit::HyperspaceSearch::details
 
-using namespace RDKit::HyperspaceSSSearch::details;
+using namespace RDKit::HyperspaceSearch::details;
 
 std::string fName = getenv("RDBASE");
 const std::string TXT_LIB_NAME =

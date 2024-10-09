@@ -24,7 +24,7 @@
 namespace RDKit {
 class ROMol;
 
-namespace HyperspaceSSSearch {
+namespace HyperspaceSearch {
 class Reagent;
 
 class ReactionSet {
@@ -72,7 +72,7 @@ class ReactionSet {
   mutable std::unique_ptr<ExplicitBitVect> d_connRegFP;
 };
 
-}  // namespace HyperspaceSSSearch
+}  // namespace HyperspaceSearch
 
 }  // namespace RDKit
 

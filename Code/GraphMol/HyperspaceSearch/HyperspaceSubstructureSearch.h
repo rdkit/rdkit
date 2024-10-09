@@ -16,7 +16,7 @@
 
 namespace RDKit {
 class ROMol;
-namespace HyperspaceSSSearch {
+namespace HyperspaceSearch {
 
 class Hyperspace;
 
@@ -75,7 +75,7 @@ std::vector<std::vector<unsigned int>> permMFromN(unsigned int m,
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits);
 }  // namespace details
-}  // namespace HyperspaceSSSearch
+}  // namespace HyperspaceSearch
 }  // namespace RDKit
 
 #endif  // RDKIT_HYPERSPACESUBSTRUCTURESEARCH_H

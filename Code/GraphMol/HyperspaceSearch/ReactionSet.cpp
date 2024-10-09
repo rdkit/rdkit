@@ -16,7 +16,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/StreamOps.h>
 
-namespace RDKit::HyperspaceSSSearch {
+namespace RDKit::HyperspaceSearch {
 
 const std::vector<std::shared_ptr<ROMol>> &ReactionSet::connectorRegions()
     const {
@@ -147,4 +147,4 @@ void ReactionSet::assignConnectorsUsed() {
   }
 }
 
-}  // namespace RDKit::HyperspaceSSSearch
+}  // namespace RDKit::HyperspaceSearch

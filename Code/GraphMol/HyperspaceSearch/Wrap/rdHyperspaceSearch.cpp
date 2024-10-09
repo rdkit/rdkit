@@ -18,7 +18,7 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-python::list substructureSearch_helper(HyperspaceSSSearch::Hyperspace &self,
+python::list substructureSearch_helper(HyperspaceSearch::Hyperspace &self,
                                        const ROMol &query) {
   auto results = self.substructureSearch(query, 3, -1);
   python::list pyres;
@@ -28,7 +28,7 @@ python::list substructureSearch_helper(HyperspaceSSSearch::Hyperspace &self,
   return pyres;
 }
 
-void summariseHelper(HyperspaceSSSearch::Hyperspace &self) {
+void summariseHelper(HyperspaceSearch::Hyperspace &self) {
   self.summarise(std::cout);
 }
 
@@ -38,15 +38,15 @@ BOOST_PYTHON_MODULE(rdHyperspaceSearch) {
       " Synthon-based chemical libraries such as Enamine REAL.";
 
   std::string docString = "HyperspaceSearch object.";
-  python::class_<RDKit::HyperspaceSSSearch::Hyperspace, boost::noncopyable>(
+  python::class_<RDKit::HyperspaceSearch::Hyperspace, boost::noncopyable>(
       "Hyperspace", docString.c_str(), python::init<>())
-      .def("ReadTextFile", &RDKit::HyperspaceSSSearch::Hyperspace::readTextFile,
+      .def("ReadTextFile", &RDKit::HyperspaceSearch::Hyperspace::readTextFile,
            (python::arg("self"), python::arg("inFile")),
            "Reads text file of the sort used by ChemSpace/Enamine.")
-      .def("ReadDBFile", &RDKit::HyperspaceSSSearch::Hyperspace::readDBFile,
+      .def("ReadDBFile", &RDKit::HyperspaceSearch::Hyperspace::readDBFile,
            (python::arg("self"), python::arg("inFile")),
            "Reads binary database file.")
-      .def("WriteDBFile", &RDKit::HyperspaceSSSearch::Hyperspace::writeDBFile,
+      .def("WriteDBFile", &RDKit::HyperspaceSearch::Hyperspace::writeDBFile,
            (python::arg("self"), python::arg("outFile")),
            "Writes binary database file.")
       .def("Summarise", &RDKit::summariseHelper, (python::arg("self")),

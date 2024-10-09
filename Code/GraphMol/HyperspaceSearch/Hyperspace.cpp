@@ -31,7 +31,7 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-namespace RDKit::HyperspaceSSSearch {
+namespace RDKit::HyperspaceSearch {
 
 std::vector<std::unique_ptr<ROMol>> Hyperspace::substructureSearch(
     const ROMol &query, unsigned int maxBondSplits, int maxHits) {
@@ -725,4 +725,4 @@ std::vector<std::vector<ROMol *>> Hyperspace::getReagentsToUse(
   }
   return reags;
 }
-}  // namespace RDKit::HyperspaceSSSearch
+}  // namespace RDKit::HyperspaceSearch

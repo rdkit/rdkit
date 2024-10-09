@@ -23,7 +23,7 @@
 namespace RDKit {
 class ROMol;
 
-namespace HyperspaceSSSearch {
+namespace HyperspaceSearch {
 
 // Holds the information about a set of hits.  The molecules can be built
 // by making all combinations of reagents, one taken from each reagent set.
@@ -120,7 +120,7 @@ class Hyperspace {
       const std::string &reaction_id) const;
 };
 
-}  // namespace HyperspaceSSSearch
+}  // namespace HyperspaceSearch
 }  // namespace RDKit
 
 #endif  // RDKIT_HYPERSPACE_H
