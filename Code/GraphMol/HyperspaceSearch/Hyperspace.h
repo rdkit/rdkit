@@ -25,7 +25,7 @@ class ROMol;
 
 namespace HyperspaceSearch {
 
-struct HyperspaceSearchParams {
+struct RDKIT_HYPERSPACESEARCH_EXPORT HyperspaceSearchParams {
   int maxBondSplits{3};  // The maximum number of bonds to break in the query.
                          // It should be no more than 1 less than the maximum
                          // number of Synthon sets in Hyperspace.  More than
@@ -39,13 +39,13 @@ struct HyperspaceSearchParams {
 
 // Holds the information about a set of hits.  The molecules can be built
 // by making all combinations of reagents, one taken from each reagent set.
-struct HyperspaceHitSet {
+struct RDKIT_HYPERSPACESEARCH_EXPORT HyperspaceHitSet {
   std::string reactionId;
   std::vector<boost::dynamic_bitset<>> reagsToUse;
   size_t numHits{0};
 };
 
-class Hyperspace {
+class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
  public:
   // Create the hyperspace from a file in the correct format.
   explicit Hyperspace() = default;

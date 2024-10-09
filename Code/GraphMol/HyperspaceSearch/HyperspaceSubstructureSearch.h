@@ -67,13 +67,13 @@ std::vector<std::unique_ptr<ROMol>> SSSearch(const ROMol &query,
 #endif
 namespace details {
 // Find all combinations of M things selected from N.
-std::vector<std::vector<unsigned int>> combMFromN(unsigned int m,
-                                                  unsigned int n);
+RDKIT_HYPERSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>> combMFromN(
+    unsigned int m, unsigned int n);
 // Find all permutations of M things selected from N.
-std::vector<std::vector<unsigned int>> permMFromN(unsigned int m,
-                                                  unsigned int n);
-std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
-    const ROMol &query, unsigned int maxBondSplits);
+RDKIT_HYPERSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>> permMFromN(
+    unsigned int m, unsigned int n);
+RDKIT_HYPERSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
+splitMolecule(const ROMol &query, unsigned int maxBondSplits);
 }  // namespace details
 }  // namespace HyperspaceSearch
 }  // namespace RDKit
