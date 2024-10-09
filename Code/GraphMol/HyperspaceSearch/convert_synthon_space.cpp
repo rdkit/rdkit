@@ -45,5 +45,5 @@ int main(int argc, char **argv) {
   RDKit::HyperspaceSSSearch::Hyperspace hyperspace;
   hyperspace.readTextFile(inFile);
   hyperspace.summarise(std::cout);
-  hyperspace.writeToDBFile(outFile);
+  hyperspace.writeDBFile(outFile);
 }

@@ -95,9 +95,10 @@ class Hyperspace {
   void readTextFile(const std::string &inFile);
 
   // Writes to/reads from a binary DB File in our format.
-  void writeToDBFile(const std::string &outFile) const;
-  void readFromDBFile(const std::string &inFile);
+  void writeDBFile(const std::string &outFile) const;
+  void readDBFile(const std::string &inFile);
 
+  // Write a summary of the Hyperspace to given stream.
   void summarise(std::ostream &os) const;
 
  private:

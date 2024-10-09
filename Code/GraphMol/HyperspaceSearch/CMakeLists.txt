@@ -13,6 +13,6 @@ rdkit_catch_test(testHyperspaceSearch hyperspace_search_catch.cpp
 add_executable(convertSynthonSpace convert_synthon_space.cpp)
 target_link_libraries(convertSynthonSpace SubstructMatch SubstructLibrary HyperspaceSearch)
 
-#if (RDK_BUILD_PYTHON_WRAPPERS)
-#    add_subdirectory(Wrap)
-#endif ()
+if (RDK_BUILD_PYTHON_WRAPPERS)
+    add_subdirectory(Wrap)
+endif ()

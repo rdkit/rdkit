@@ -157,7 +157,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
 #endif
   SECTION("Binary File") {
     Hyperspace hyperspace;
-    hyperspace.readFromDBFile(BIN_LIB_NAME);
+    hyperspace.readDBFile(BIN_LIB_NAME);
     // should give 220 hits for urea-3
     const auto start{std::chrono::steady_clock::now()};
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
@@ -334,10 +334,10 @@ TEST_CASE("DB Writer", "[DB Writer]") {
   Hyperspace hyperspace;
   hyperspace.readTextFile(libName);
   CHECK(hyperspace.numReactions() == 1);
-  hyperspace.writeToDBFile("doebner_miller_space.spc");
+  hyperspace.writeDBFile("doebner_miller_space.spc");
 
   Hyperspace newHyperspace;
-  newHyperspace.readFromDBFile("doebner_miller_space.spc");
+  newHyperspace.readDBFile("doebner_miller_space.spc");
   auto it = newHyperspace.reactions().find("doebner-miller-quinoline");
   CHECK(it != newHyperspace.reactions().end());
   const auto &irxn = it->second;
@@ -361,7 +361,7 @@ TEST_CASE("Biggy", "[Biggy]") {
   std::string enumLibName =
       "/Users/david/Projects/FreedomSpace/Syntons_5567_space_a_enum.smi";
   Hyperspace hyperspace;
-  hyperspace.readFromDBFile(libName);
+  hyperspace.readDBFile(libName);
 
 #if 0
   SECTION("Fragged Mol") {
@@ -431,7 +431,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
       "/Users/david/Projects/FreedomSpace/2023-05_Freedom_synthons.spc";
   Hyperspace hyperspace;
   const auto rstart{std::chrono::steady_clock::now()};
-  hyperspace.readFromDBFile(libName);
+  hyperspace.readDBFile(libName);
   const auto rend{std::chrono::steady_clock::now()};
   const std::chrono::duration<double> elapsed_seconds{rend - rstart};
   std::cout << "Time to read hyperspace : " << elapsed_seconds.count()

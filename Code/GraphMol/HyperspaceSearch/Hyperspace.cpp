@@ -559,7 +559,7 @@ void Hyperspace::readTextFile(const std::string &inFile) {
   }
 }
 
-void Hyperspace::writeToDBFile(const std::string &outFile) const {
+void Hyperspace::writeDBFile(const std::string &outFile) const {
   std::ofstream os(outFile, std::fstream::binary | std::fstream::trunc);
   streamWrite(os, d_reactions.size());
   for (const auto &rs : d_reactions) {
@@ -568,7 +568,7 @@ void Hyperspace::writeToDBFile(const std::string &outFile) const {
   os.close();
 }
 
-void Hyperspace::readFromDBFile(const std::string &inFile) {
+void Hyperspace::readDBFile(const std::string &inFile) {
   d_fileName = inFile;
   try {
     std::ifstream is(inFile, std::fstream::binary);
@@ -588,14 +588,19 @@ void Hyperspace::readFromDBFile(const std::string &inFile) {
 void Hyperspace::summarise(std::ostream &os) const {
   os << "Read from file " << d_fileName << "\n"
      << "Number of reactions : " << d_reactions.size() << "\n";
+  size_t totSize = 0;
   for (const auto &reaction : d_reactions) {
     const auto &rxn = reaction.second;
     os << "Reaction name " << rxn->id() << "\n";
+    size_t thisSize = 1;
     for (size_t i = 0; i < rxn->reagents().size(); ++i) {
       os << "  Synthon set " << i << " has " << rxn->reagents()[i].size()
          << " reagents" << "\n";
+      thisSize *= rxn->reagents()[i].size();
     }
+    totSize += thisSize;
   }
+  os << "Approximate number of molecules : " << totSize << std::endl;
 }
 
 namespace {
