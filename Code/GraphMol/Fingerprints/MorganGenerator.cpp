@@ -172,7 +172,7 @@ MorganEnvGenerator<OutputType>::getEnvironments(
   unsigned int nAtoms = mol.getNumAtoms();
 
   auto *morganArguments = dynamic_cast<MorganArguments *>(arguments);
-  const unsigned int        maxNumResults = (morganArguments->d_radius + 1) * nAtoms;
+  const unsigned int maxNumResults = (morganArguments->d_radius + 1) * nAtoms;
 
   std::vector<AtomEnvironment<OutputType> *> result =
       std::vector<AtomEnvironment<OutputType> *>();
@@ -267,7 +267,8 @@ MorganEnvGenerator<OutputType>::getEnvironments(
         boost::tie(beg, end) = mol.getAtomBonds(tAtom);
 
         // add up to date invariants of neighbors
-        // This should keep capacity, so reallocation only triggers if we haven't seen a molecule of this size.
+        // This should keep capacity, so reallocation only triggers if we
+        // haven't seen a molecule of this size.
         neighborhoodInvariants.clear();
 
         while (beg != end) {
@@ -384,8 +385,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator, std::uint32_t fpSize,
     std::vector<std::uint32_t> countBounds, bool ownsAtomInvGen,
-    bool  // ownsBondInvGen
-) {
+    bool ownsBondInvGen) {
   AtomEnvironmentGenerator<OutputType> *morganEnvGenerator =
       new MorganEnvGenerator<OutputType>();
   FingerprintArguments *morganArguments = new MorganArguments(
@@ -398,7 +398,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     ownsAtomInvGenerator = true;
   }
 
-  bool ownsBondInvGenerator = false;
+  bool ownsBondInvGenerator = ownsBondInvGen;
   if (!bondInvariantsGenerator) {
     bondInvariantsGenerator =
         new MorganBondInvGenerator(useBondTypes, includeChirality);

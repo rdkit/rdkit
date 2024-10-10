@@ -100,7 +100,7 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
   DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
   DistGeom::BoundsMatrix bm(nrows, sdata);
 
-  auto *positions = new RDGeom::Point3D[nrows];
+  std::unique_ptr<RDGeom::Point3D[]> positions(new RDGeom::Point3D[nrows]);
   std::vector<RDGeom::Point *> posPtrs;
   for (unsigned int i = 0; i < nrows; i++) {
     posPtrs.push_back(&positions[i]);
@@ -167,7 +167,6 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
       resData[iTab + j] = positions[i][j];  //.x;
     }
   }
-  delete[] positions;
 
   return PyArray_Return(res);
 }
