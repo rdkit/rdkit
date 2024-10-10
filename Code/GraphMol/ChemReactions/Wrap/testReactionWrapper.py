@@ -792,6 +792,7 @@ def _getProductCXSMILES(product):
   for a in product.GetAtoms():
     for k in a.GetPropsAsDict():
       a.ClearProp(k)
+
   return Chem.MolToCXSmiles(product)
 
 
@@ -867,6 +868,7 @@ class StereoGroupTests(unittest.TestCase):
 
     reaction = '[C@:1]F>>[C:1]F'
     # Reaction destroys stereo (but preserves unaffected group
+
     products = _reactAndSummarize(reaction, 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
     self.assertEqual(products, 'FC(Cl)[C@H](Cl)Br |&1:3|')
     # Reaction destroys stereo (but preserves the rest of the group

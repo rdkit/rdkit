@@ -1482,7 +1482,7 @@ void findChiralAtomSpecialCases(ROMol &mol,
   PRECONDITION(possibleSpecialCases.size() >= mol.getNumAtoms(),
                "bit vector too small");
   possibleSpecialCases.reset();
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     VECT_INT_VECT sssrs;
     MolOps::symmetrizeSSSR(mol, sssrs);
   }
@@ -2136,7 +2136,6 @@ INT_VECT findStereoAtoms(const Bond *bond) {
     return {};
   }
 }
-
 void cleanupStereoGroups(ROMol &mol) {
   std::vector<StereoGroup> newsgs;
   for (auto sg : mol.getStereoGroups()) {
@@ -2229,7 +2228,9 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
 
   // later we're going to need ring information, get it now if we don't
   // have it already:
-  if (!mol.getRingInfo()->isInitialized()) {
+  // NOTE, if called from the SMART code, the ring info will be DUMMY, and
+  // contains no information
+  if (!mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
 
@@ -2386,7 +2387,19 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
            bond->getBondDir() == Bond::BEGINDASH) &&
           bond->getBeginAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED &&
           bond->getEndAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED) {
-        bond->setBondDir(Bond::NONE);
+        // see if there is an atropisomer bond connected to this bond
+
+        bool hasAtropisomer = false;
+        for (auto nbond : mol.atomBonds(bond->getBeginAtom())) {
+          if (nbond->getStereo() == Bond::STEREOATROPCCW ||
+              nbond->getStereo() == Bond::STEREOATROPCW) {
+            hasAtropisomer = true;
+            break;
+          }
+        }
+        if (!hasAtropisomer) {
+          bond->setBondDir(Bond::NONE);
+        }
       }
 
       // check for directionality on single bonds around
@@ -3333,8 +3346,6 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
   }
 
   for (auto atom : mol.atoms()) {
-    // see if only the explicitly wedged atoms are to be used
-
     // if we aren't replacing existing tags and the atom is already tagged,
     // punt:
     if (!replaceExistingTags && atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
@@ -3838,16 +3849,17 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
   const bool breakTies = false;
   const bool includeChiralPresence = true;
   const bool includeStereoGroups = false;
+  const bool useNonStereoRanks = false;
   bool includeChirality = true;
   std::vector<unsigned int> chiralRanks;
   Canon::rankMolAtoms(mol, chiralRanks, breakTies, includeChirality,
                       includeIsotopes, includeAtomMaps, includeChiralPresence,
-                      includeStereoGroups);
+                      includeStereoGroups, useNonStereoRanks);
   includeChirality = false;
   std::vector<unsigned int> presenceRanks;
   Canon::rankMolAtoms(mol, presenceRanks, breakTies, includeChirality,
                       includeIsotopes, includeAtomMaps, includeChiralPresence,
-                      includeStereoGroups);
+                      includeStereoGroups, useNonStereoRanks);
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     if (!specifiedChiralAts[i]) {
       continue;

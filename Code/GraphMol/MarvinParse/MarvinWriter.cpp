@@ -40,6 +40,10 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 using namespace RDKit::SGroupWriting;
 
 #define ARROW_MIN_LENGTH 1.0

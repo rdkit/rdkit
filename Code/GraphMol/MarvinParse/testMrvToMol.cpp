@@ -719,6 +719,7 @@ class MrvTests {
             ".expected.cxsmi";
 
         SmilesWriteParams ps;
+        ps.cleanStereo = molFileTest->sanitizeFlag;
         ps.canonical = true;
         unsigned int flags = SmilesWrite::CXSmilesFields::CX_COORDS |
                              SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |

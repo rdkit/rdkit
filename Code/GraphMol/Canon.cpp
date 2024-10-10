@@ -1028,7 +1028,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   // we need ring information; make sure findSSSR has been called before
   // if not call now
-  if (!mol.getRingInfo()->isInitialized()) {
+  // NOTE: if called from the SMARTS code, the ring info will be set to SSSR,
+  // but no ring infor in actually set
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::findSSSR(mol);
   }
   mol.getAtomWithIdx(atomIdx)->setProp(common_properties::_TraversalStartPoint,
@@ -1250,6 +1252,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     std::cerr<<"----------------------------------------->"<<std::endl;
 #endif
 }
+
 void canonicalizeEnhancedStereo(ROMol &mol,
                                 const std::vector<unsigned int> *atomRanks) {
   const auto &sgs = mol.getStereoGroups();
@@ -1312,8 +1315,8 @@ void canonicalizeEnhancedStereo(ROMol &mol,
                                                     // to atom CCW
       } else {
         foundRefState =
-            Atom::ChiralType::CHI_TETRAHEDRAL_CW;  // convert atropisomer CW to
-                                                   // atom CW
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW;  // convert atropisomer CW
+                                                   // to atom CW
       }
     }
     // we will use CCW as the "canonical" state for chirality, so if the
@@ -1337,8 +1340,8 @@ void canonicalizeEnhancedStereo(ROMol &mol,
     }
 #endif
     if (foundRefState != refState) {
-      // we need to flip everyone... so loop over the other atoms and bonds and
-      // flip them all:
+      // we need to flip everyone... so loop over the other atoms and bonds
+      // and flip them all:
 
       for (auto atom : sgAtoms) {
         atom->invertChirality();
@@ -1358,5 +1361,41 @@ void canonicalizeEnhancedStereo(ROMol &mol,
   }
   mol.setStereoGroups(newSgs);
 }
-}  // namespace Canon
+
+void addSingleAbsGroup(ROMol &mol) {
+  // all chiral centers are added to an abs group
+  // if there are not chiral centers, no group is added
+
+  std::vector<StereoGroup> sgs;
+  std::vector<Atom *> chiralAtoms;
+  std::vector<Bond *> chiralBonds;
+  for (auto &atom : mol.atoms()) {
+    if (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+        atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
+      chiralAtoms.push_back(atom);
+    }
+  }
+  for (auto &bond : mol.bonds()) {
+    if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+        bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+      chiralBonds.push_back(bond);
+    }
+  }
+
+  if (!chiralAtoms.empty() || !chiralBonds.empty()) {
+    sgs.emplace_back(StereoGroupType::STEREO_ABSOLUTE, chiralAtoms,
+                     chiralBonds);
+  }
+  mol.setStereoGroups(sgs);  // could be empty, or have one abs group
+}
+
+void clearStereoGroups(ROMol &mol) {
+  // all chiral centers are added to an abs group
+  // if there are not chiral centers, no group is added
+  std::vector<StereoGroup> sgs;
+  mol.setStereoGroups(sgs);
+}
+
+};  // namespace Canon
+
 }  // namespace RDKit

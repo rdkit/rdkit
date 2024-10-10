@@ -15,6 +15,7 @@
 
 namespace RDKit {
 namespace MolOps {
+
 ROMol *renumberAtoms(const ROMol &mol,
                      const std::vector<unsigned int> &newOrder) {
   unsigned int nAts = mol.getNumAtoms();
@@ -53,6 +54,13 @@ ROMol *renumberAtoms(const ROMol &mol,
         }
       }
       nAtom->setProp(common_properties::_ringStereoAtoms, nAtoms, true);
+    }
+
+    unsigned int otherAtom;
+    if (nAtom->getPropIfPresent(common_properties::_ringStereoOtherAtom,
+                                otherAtom)) {
+      otherAtom = revOrder[otherAtom];
+      nAtom->setProp(common_properties::_ringStereoOtherAtom, otherAtom, true);
     }
   }
 
@@ -120,7 +128,7 @@ ROMol *renumberAtoms(const ROMol &mol,
   }
 
   return dynamic_cast<ROMol *>(res);
-}
+}  // namespace
 
 };  // end of namespace MolOps
 };  // end of namespace RDKit

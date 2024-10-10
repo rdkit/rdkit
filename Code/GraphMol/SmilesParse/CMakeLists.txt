@@ -59,6 +59,7 @@ endif(BISON_EXECUTABLE)
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
               SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
+              CanonicalizeStereoGroups.cpp
               ${BISON_OUTPUT_FILES}
               ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol RDGeneral)

@@ -136,7 +136,15 @@ TEST_CASE("Determine Connectivity") {
       std::string smiles = mol->getProp<std::string>("_FileComments");
       std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
       REQUIRE(orig);
-      SmilesWriteParams params = {false, false, true, false, false, false, -1};
+      SmilesWriteParams params;
+      params.doIsomericSmiles = false;
+      params.doKekule = false;
+      params.canonical = true;
+      params.allBondsExplicit = false;
+      params.allHsExplicit = false;
+      params.doRandom = false;
+      params.rootedAtAtom = -1;
+
       std::string canonSmiles = MolToSmiles(*orig, params);
       int charge = MolOps::getFormalCharge(*orig);
 
@@ -180,7 +188,14 @@ TEST_CASE("Determine Connectivity") {
       std::string smiles = mol->getProp<std::string>("_FileComments");
       std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
       REQUIRE(orig);
-      SmilesWriteParams params = {false, false, true, false, false, false, -1};
+      SmilesWriteParams params;
+      params.doIsomericSmiles = false;
+      params.doKekule = false;
+      params.canonical = true;
+      params.allBondsExplicit = false;
+      params.allHsExplicit = false;
+      params.doRandom = false;
+      params.rootedAtAtom = -1;
       std::string canonSmiles = MolToSmiles(*orig, params);
       int charge = MolOps::getFormalCharge(*orig);
 
