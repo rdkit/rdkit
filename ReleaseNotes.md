@@ -18,6 +18,10 @@ GitHub)
 ## Cleanup work:
 
 ## Code removed in this release:
+- AtomPairs.Utils.NumPiElectrons was removed, please use Chem.GetNumPiElectrons instead.
+- The classes DistViolationContrib, ChiralViolationContrib, and FourthDimContrib were removed, please use DistViolationContribs, ChiralViolationContribs, and FourthDimContribs instead.
+- The function `MMFF::setMMFFAromaticity()` was removed, please use `MolOps::setMMFFAromaticity()` instead.
+
 
 ## Deprecated code (to be removed in a future release):
 
