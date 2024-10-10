@@ -3376,6 +3376,32 @@ function test_multi_highlights() {
     mol.delete();
 }
 
+function test_bw_palette() {
+    const mol = RDKitModule.get_mol('N');
+    assert(mol);
+    const details = '{"atomColourPalette":"bw"}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('#000000'));
+    assert(!svgWithDetails.includes('#0000FF'));
+    const svgWithoutDetails = mol.get_svg();
+    assert(!svgWithoutDetails.includes('#000000'));
+    assert(svgWithoutDetails.includes('#0000FF'));
+    mol.delete();
+}
+
+function test_custom_palette() {
+    const mol = RDKitModule.get_mol('N');
+    assert(mol);
+    const details = '{"atomColourPalette\":{"7":[1.0,0.0,0.0]}}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('#FF0000'));
+    assert(!svgWithDetails.includes('#0000FF'));
+    const svgWithoutDetails = mol.get_svg();
+    assert(!svgWithoutDetails.includes('#FF0000'));
+    assert(svgWithoutDetails.includes('#0000FF'));
+    mol.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3462,6 +3488,9 @@ initRDKitModule().then(function(instance) {
         test_singlecore_rgd();
         test_multicore_rgd();
     }
+    test_bw_palette();
+    test_custom_palette();
+
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
