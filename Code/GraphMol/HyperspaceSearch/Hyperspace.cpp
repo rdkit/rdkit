@@ -217,20 +217,6 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
   return connPerms;
 }
 
-// Make sure that the number of connections in the fragments matches
-// the number of connections for the synthons in the reaction in the
-// given order
-bool checkNumberOfConnections(const std::vector<int> &fragNumConns,
-                              std::unique_ptr<ReactionSet> &reaction,
-                              std::vector<unsigned int> reagentOrder) {
-  for (size_t i = 0; i < reagentOrder.size(); ++i) {
-    if (fragNumConns[i] != reaction->numConnectors()[reagentOrder[i]]) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // Take the molFrags and flag those reagents that have pattern fingerprints
 // where all the bits match with the fragment.  The pattern fingerprints are
 // insensitive to isotope numbers, so this can be done on the initial
@@ -311,7 +297,9 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
         auto &reag = reagSet[j];
         if (SubstructMatch(*reag->mol(), *molFrags[i], dontCare)) {
           //          std::cout << reag->smiles() << " matched to "
-          //                    << MolToSmiles(*molFrags[i]) << std::endl;
+          //                    << MolToSmiles(*molFrags[i], true, false, -1,
+          //                    false)
+          //                    << std::endl;
           reagsToUse[reagentOrder[i]][j] = true;
           fragsMatched[i] = true;
         }
@@ -412,16 +400,16 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
   auto conns = getConnectorPattern(fragSet);
   for (auto &it : d_reactions) {
     auto &reaction = it.second;
-    std::cout << "Searching for " << fragSet.size() << " ::: ";
-    for (size_t i = 0; i < fragSet.size(); ++i) {
-      const auto &f = fragSet[i];
-      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : "
-                << MolToSmarts(*f) << " :: ";
-      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : "
-                << pattFPs[i]->getNumOnBits() << " :: ";
-    }
-    std::cout << " in " << reaction->id() << " : "
-              << reaction->reagents().size() << std::endl;
+    //    std::cout << "Searching for " << fragSet.size() << " ::: ";
+    //    for (size_t i = 0; i < fragSet.size(); ++i) {
+    //      const auto &f = fragSet[i];
+    //      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : "
+    //                << MolToSmarts(*f) << " :: ";
+    //      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : "
+    //                << pattFPs[i]->getNumOnBits() << " :: ";
+    //    }
+    //    std::cout << " in " << reaction->id() << " : "
+    //              << reaction->reagents().size() << std::endl;
     // It can't be a hit if the number of fragments is more than the number
     // of reagent sets because some of the molecule won't be matched in any
     // of the potential products.  It can be less, in which case the unused
@@ -446,9 +434,9 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
     auto reagentOrders =
         details::permMFromN(pattFPs.size(), reaction->reagents().size());
     for (const auto &ro : reagentOrders) {
-      if (!checkNumberOfConnections(numFragConns, reaction, ro)) {
-        continue;
-      }
+      //      if (!checkNumberOfConnections(numFragConns, reaction, ro)) {
+      //        continue;
+      //      }
       auto passedScreens = screenReagentsWithFPs(pattFPs, reaction, ro);
       // If none of the reagents passed the screens, move right along, nothing
       // to see.
@@ -704,14 +692,12 @@ void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
         // a key example is when the 2 synthons come together to form an
         // aromatic ring.  An aliphatic query can match the aliphatic synthon
         // so they are selected as a hit, but the final aromatic ring isn't
-        // a match.  E.g. Cc1cccc(C(=O)N[U])c1N=[Np] and c1ccoc1C(=[Np])[U]
+        // a match.  E.g. Cc1cccc(C(=O)N[1*])c1N=[2*] and c1ccoc1C(=[2*])[1*]
         // making Cc1cccc2c(=O)[nH]c(-c3ccco3)nc12.  The query c1ccc(CN)o1
-        // when split is a match to the reagents (c1ccc(C[1*])o1 and
+        // when split is a match to the reagents (c1ccc(C[1*])o1 and [1*]N)
+        // but the product the hydroxyquinazoline is aromatic, at least in
+        // the RDKit model so the N in the query doesn't match.
         if (!SubstructMatch(*prod, query, dontCare)) {
-          std::cout << "WARNING : molecule " << combName << " : "
-                    << MolToSmiles(*prod)
-                    << " passed all the tests but didn't match the query."
-                    << "  This may be a bug, please report it." << std::endl;
           continue;
         }
         prod->setProp<std::string>(common_properties::_Name, combName);

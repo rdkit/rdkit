@@ -144,19 +144,22 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 }
 
 TEST_CASE("Simple query 1", "[Simple query 1]") {
-  //  std::string libName =
-  //      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
+  std::string libName =
+      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
   Hyperspace hyperspace;
-  hyperspace.readTextFile(TXT_LIB_NAME);
-#if 0
+  hyperspace.readTextFile(libName);
+//  hyperspace.readTextFile(TXT_LIB_NAME);
+#if 1
   SECTION("Single fragged molecule") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
     fragSet.emplace_back("c1ccccc1[1*]"_smiles);
     fragSet.emplace_back("C1CCCN1C(=O)[1*]"_smiles);
     auto results = hyperspace.searchFragSet(fragSet);
-    CHECK(results.size() == 220);
+    CHECK(results.size() == 1);
+    CHECK(results.front().numHits == 220);
   }
 #endif
+#if 1
   SECTION("Binary File") {
     Hyperspace hyperspace;
     hyperspace.readDBFile(BIN_LIB_NAME);
@@ -169,6 +172,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
     CHECK(results.size() == 220);
   }
+#endif
 #if 1
   SECTION("Single molecule with fragging") {
     {
@@ -496,69 +500,4 @@ TEST_CASE("Small query", "[Small query]") {
   // The number of results is immaterial, it just matters that the search
   // finished.
   CHECK(results.size() == 0);
-}
-
-TEST_CASE("Hydroxyquinazoline", "[Hydroxyquinazoline]") {
-  // There was a time when these gave a hit because the number of connectors
-  // on the fragments weren't being checked against the number of connectors
-  // on the synthons.
-  std::string libName =
-      fName +
-      "/Code/GraphMol/HyperspaceSearch/data/hydroxyquinazoline_space.txt";
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
-  hyperspace.summarise(std::cout);
-
-#if 1
-  SECTION("Fragged Mol") {
-    std::vector<std::unique_ptr<ROMol>> fragSet;
-    fragSet.emplace_back("[1*]Cc1ccco1"_smiles);
-    fragSet.emplace_back("[1*]N"_smiles);
-    auto results = hyperspace.searchFragSet(fragSet);
-    CHECK(results.size() == 0);
-  }
-#endif
-
-#if 1
-  SECTION("Whole Molecule") {
-    auto qmol = "c1ccc(CN)o1"_smiles;
-    auto results = hyperspace.substructureSearch(*qmol);
-    CHECK(results.size() == 0);
-  }
-#endif
-}
-
-TEST_CASE("Added H", "[Added H]") {
-  // These queries produced hits that didn't match the final product.
-  std::string libName = "/Users/david/Projects/FreedomSpace/added_h_space.csv";
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
-  hyperspace.summarise(std::cout);
-  std::vector<std::string> smiles{
-      "[H]C(CO)CC(C)C",
-  };
-  HyperspaceSearchParams params;
-  params.maxHits = -1;
-
-  for (size_t i = 0; i < smiles.size(); ++i) {
-    //    if (i != 2) {
-    //      continue;
-    //    }
-    std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smiles[i] << std::endl;
-    auto queryMol = v2::SmilesParse::MolFromSmiles(smiles[i]);
-    const auto start{std::chrono::steady_clock::now()};
-    auto results = hyperspace.substructureSearch(*queryMol, params);
-    const auto end{std::chrono::steady_clock::now()};
-    const std::chrono::duration<double> elapsed_seconds{end - start};
-    std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
-    std::cout << "Number of hits : " << results.size() << std::endl;
-    std::string outFile =
-        std::string("/Users/david/Projects/FreedomSpace/hyperspace_hits_") +
-        std::to_string(i) + ".smi";
-    std::ofstream of(outFile);
-    for (const auto &r : results) {
-      of << MolToSmiles(*r) << " " << r->getProp<std::string>("_Name")
-         << std::endl;
-    }
-  }
 }
