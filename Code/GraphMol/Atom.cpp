@@ -624,6 +624,11 @@ int Atom::calcImplicitValence(bool strict) {
   return d_implicitValence;
 }
 
+void Atom::setMonomerInfo(AtomMonomerInfo *info) {
+  delete dp_monomerInfo;
+  dp_monomerInfo = info;
+}
+  
 void Atom::setIsotope(unsigned int what) { d_isotope = what; }
 
 double Atom::getMass() const {

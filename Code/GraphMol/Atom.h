@@ -385,7 +385,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo; }
   const AtomMonomerInfo *getMonomerInfo() const { return dp_monomerInfo; }
   //! takes ownership of the pointer
-  void setMonomerInfo(AtomMonomerInfo *info) { dp_monomerInfo = info; }
+  void setMonomerInfo(AtomMonomerInfo *info);
 
   //! Set the atom map Number of the atom
   void setAtomMapNum(int mapno, bool strict = true) {
