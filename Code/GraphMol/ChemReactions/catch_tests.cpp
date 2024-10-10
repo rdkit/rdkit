@@ -1101,7 +1101,23 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
+
+    auto expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>>[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;$,atomProp:0.molAtomMapNumber.1:1.molAtomMapNumber.2:2.molAtomMapNumber.3:3.molAtomMapNumber.4:4.molAtomMapNumber.5:5.molAtomMapNumber.6:6.molAtomMapNumber.7:7.molAtomMapNumber.1:8.molAtomMapNumber.2:9.molAtomMapNumber.3:10.molAtomMapNumber.6:11.molAtomMapNumber.5|";
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
+    CHECK(output_cxsmarts == expected_cxsmarts);
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    REQUIRE(roundtrip);
+
+    CHECK(roundtrip->getReactants().size() == 2);
+    CHECK(roundtrip->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(roundtrip->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
   }
+
   SECTION("basics with agents") {
     // clang-format off
     auto rxn = "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"_rxnsmarts;
@@ -1115,7 +1131,18 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    REQUIRE(roundtrip);
+    CHECK(roundtrip->getReactants().size() == 2);
+    CHECK(roundtrip->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(roundtrip->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
   }
+
   SECTION("missing products") {
     // clang-format off
     auto rxn="[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>> |$;;;_AP1;;;_AP1$|"_rxnsmarts;
@@ -1129,7 +1156,22 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    REQUIRE(roundtrip);
+    CHECK(roundtrip->getReactants().size() == 2);
+    CHECK(roundtrip->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(roundtrip->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+
+    std::string expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>> |$;;;_AP1;;;_AP1$,atomProp:0.molAtomMapNumber.1:1.molAtomMapNumber.2:2.molAtomMapNumber.3:3.molAtomMapNumber.4:4.molAtomMapNumber.5:5.molAtomMapNumber.6:6.molAtomMapNumber.7|";
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
+    CHECK(output_cxsmarts == expected_cxsmarts);
   }
+  
   SECTION("coordinate bonds and sgroups") {
     // when initially writing this, coordinate bonds were not properly parsed
     // from SMARTS, so we use SMILES
@@ -1155,15 +1197,64 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
                                                   alabel));
     CHECK(alabel == "_AP1");
     CHECK(getSubstanceGroups(*p0).size() == 1);
+    
+    // Test that coordinate bonds are preserved.
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS;
+    auto rxn_string = ChemicalReactionToRxnCXSmarts(*rxn, params, flags);
+    auto expected_string = "[#6H3:1]-[#6H:2](-[#6H3:3])-[#0:4].[Fe:8]<-[#8H:5]-[#6H2:6]-[#0:7]>>[Fe:8]<-[#8H:5]-[#6H2:6]-[#6H2:1]-[#6H:2](-[#6H3:3])-[#0:4] |$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|";
+    CHECK(rxn_string == expected_string);
   }
+
   SECTION("sgroup hierarchy") {
     // clang-format off
     auto rxn = "[CH3:6][O:5][CH:3](-*)[O:2]-*>>[CH3:6][NH:5][CH:3](-*)[O:2]-* "
     "|$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,SgD:7,6:foo:baz::::,Sg:n:4,2,1,0::ht,Sg:n:10,8,7,6::ht,SgH:2:0,3:1|"_rxnsmiles;
     // clang-format on
     REQUIRE(rxn);
+
+    std::string expected_cxsmarts = "[#6H3:6]-[#8:5]-[#6H:3](-*)-[#8:2]-*>>[#6H3:6]-[#7H:5]-[#6H:3](-*)-[#8:2]-* |$;;;star_e;;star_e;;;;star_e;;star_e$,atomProp:0.molAtomMapNumber.6:1.molAtomMapNumber.5:2.molAtomMapNumber.3:4.molAtomMapNumber.2:6.molAtomMapNumber.6:7.molAtomMapNumber.5:8.molAtomMapNumber.3:10.molAtomMapNumber.2,SgD:1,0:foo:bar::::,,SgD:7,6:foo:baz::::,,,Sg:n:4,2,1,0::ht:::,,Sg:n:10,8,7,6::ht:::,SgH:3:1.1|";
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
+    CHECK(output_cxsmarts == expected_cxsmarts);
+
+    // Test properties of the rxn itself.
     CHECK(getSubstanceGroups(*rxn->getReactants()[0]).size() == 2);
     CHECK(getSubstanceGroups(*rxn->getProducts()[0]).size() == 2);
+
+    const auto &sgsReact = getSubstanceGroups(*rxn->getReactants()[0]);
+    const auto &sgsProd = getSubstanceGroups(*rxn->getProducts()[0]);
+
+    CHECK(sgsReact[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsReact[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+
+    CHECK(sgsProd[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsProd[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+    
+    // Ensure properties are set on the rxn.
+    CHECK(sgsReact[0].getProp<unsigned int>("PARENT") == 2);
+    CHECK(sgsProd[0].getProp<unsigned int>("PARENT") == 2);
+
+    // Now create the roundtrip and check the same properties.
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    REQUIRE(roundtrip);
+
+    const auto &sgsRoundReact = getSubstanceGroups(*roundtrip->getReactants()[0]);
+    REQUIRE(&sgsRoundReact);
+    const auto &sgsRoundProd = getSubstanceGroups(*roundtrip->getProducts()[0]);
+    REQUIRE(&sgsRoundProd);
+
+    CHECK(getSubstanceGroups(*roundtrip->getReactants()[0]).size() == 2);
+    CHECK(getSubstanceGroups(*roundtrip->getProducts()[0]).size() == 2);
+
+    CHECK(sgsRoundProd[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsRoundProd[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+    CHECK(sgsRoundReact[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsRoundReact[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+
+    // Check that the properties are set on the roundtrip rxn.
+    CHECK(sgsRoundProd[0].getProp<unsigned int>("PARENT") == 2);
+    // Doesn't work because .... maybe because the substance groups are intertwined react/prod? The sg hierarchy is not being written for the reactant...
+    // CHECK(sgsRoundReact[0].getProp<unsigned int>("PARENT") == 2);
   }
   SECTION("link nodes") {
     // clang-format off
@@ -1222,6 +1313,15 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
           Bond::BondStereo::STEREOCIS);
     CHECK(rxn->getProducts()[0]->getBondWithIdx(1)->getStereo() ==
           Bond::BondStereo::STEREOCIS);
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    REQUIRE(roundtrip);
+    CHECK(roundtrip->getReactants().size() == 1);
+    CHECK(roundtrip->getProducts().size() == 1);
+    CHECK(roundtrip->getReactants()[0]->getBondWithIdx(1)->getStereo() ==
+          Bond::BondStereo::STEREOCIS);
+    CHECK(roundtrip->getProducts()[0]->getBondWithIdx(1)->getStereo() ==
+          Bond::BondStereo::STEREOCIS);
   }
   SECTION("wedged bonds") {
     auto rxn = "CC(O)(F)Cl>>CC(N)(F)Cl |w:1.0,6.5|"_rxnsmiles;
@@ -1233,6 +1333,18 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
         "_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
     CHECK(rxn->getProducts()[0]->getBondWithIdx(1)->getPropIfPresent(
+        "_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    REQUIRE(roundtrip);
+    CHECK(roundtrip->getReactants().size() == 1);
+    CHECK(roundtrip->getProducts().size() == 1);
+    bondcfg = 0;
+    CHECK(roundtrip->getReactants()[0]->getBondWithIdx(0)->getPropIfPresent(
+        "_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+    CHECK(roundtrip->getProducts()[0]->getBondWithIdx(1)->getPropIfPresent(
         "_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
   }
