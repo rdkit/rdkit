@@ -1,5 +1,3 @@
-# $Id$
-#
 # Copyright (C) 2007-2024 Greg Landrum and other RDKit contributors
 #  All Rights Reserved
 #
@@ -194,7 +192,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(str(cm.exception), "Mismatched input data dimension and nPts")
     
     # " error case: invalid input data type "
-    with self.assertRaises(ValueError) as cm:
+    with self.assertRaises(TypeError) as cm:
       _ = Butina.ClusterData(0, 1, 2, isDistData=1, reordering=True)
     self.assertEqual(str(cm.exception), f"Unsupported type for data, {type(0)}")
 
