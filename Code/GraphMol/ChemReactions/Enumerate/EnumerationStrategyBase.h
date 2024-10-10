@@ -210,9 +210,9 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerationStrategyBase {
   friend class boost::serialization::access;
   template <class Archive>
   void serialize(Archive &ar, const unsigned int /*version*/) {
-    ar &m_permutation;
-    ar &m_permutationSizes;
-    ar &m_numPermutations;
+    ar & m_permutation;
+    ar & m_permutationSizes;
+    ar & m_numPermutations;
   }
 };
 #ifdef RDK_USE_BOOST_SERIALIZATION

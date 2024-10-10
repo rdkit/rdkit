@@ -19,7 +19,7 @@ class Composition2N {  // generator of 2^N-1 possible bit combinations
   Composition2N(BitSet maxValue, BitSet valueMask)
       : Bits(0), InverseBits(0), MaxValue(maxValue), ValueMask(valueMask) {}
 
-  static void compute2N(unsigned int power, BitSet& value) {
+  static void compute2N(unsigned int power, BitSet &value) {
     value = 1uLL << power;
   }
 

@@ -50,16 +50,16 @@ namespace Invar {
 
 class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
  public:
-  Invariant(const char* prefix, const char* mess, const char* expr,
-            const char* const file, int line)
+  Invariant(const char *prefix, const char *mess, const char *expr,
+            const char *const file, int line)
       : std::runtime_error(prefix),
         mess_d(mess),
         expr_d(expr),
         prefix_d(prefix),
         file_dp(file),
         line_d(line) {}
-  Invariant(const char* prefix, const std::string& mess, const char* expr,
-            const char* const file, int line)
+  Invariant(const char *prefix, const std::string &mess, const char *expr,
+            const char *const file, int line)
       : std::runtime_error(prefix),
         mess_d(mess.c_str()),
         expr_d(expr),
@@ -68,9 +68,9 @@ class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
         line_d(line) {}
   ~Invariant() noexcept override = default;
 
-  const char* what() const noexcept override { return mess_d.c_str(); }
+  const char *what() const noexcept override { return mess_d.c_str(); }
 
-  const char* getFile() const { return file_dp; }
+  const char *getFile() const { return file_dp; }
 
   std::string getExpression() const { return expr_d; }
 
@@ -82,12 +82,12 @@ class RDKIT_RDGENERAL_EXPORT Invariant : public std::runtime_error {
  private:
   std::string mess_d, expr_d, prefix_d;
 
-  const char* const file_dp;
+  const char *const file_dp;
 
   int line_d;
 };
-RDKIT_RDGENERAL_EXPORT std::ostream& operator<<(std::ostream& s,
-                                                const Invariant& inv);
+RDKIT_RDGENERAL_EXPORT std::ostream &operator<<(std::ostream &s,
+                                                const Invariant &inv);
 }  // end of namespace Invar
 
 #define ASSERT_INVARIANT(expr, mess) assert(expr)

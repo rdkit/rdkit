@@ -18,7 +18,7 @@
 using namespace RDKit;
 
 struct dvv_pickle_suite : rdkit_pickle_suite {
-  static python::tuple getinitargs(const DiscreteValueVect& self) {
+  static python::tuple getinitargs(const DiscreteValueVect &self) {
     std::string res = self.toString();
     python::object retval = python::object(
         python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));

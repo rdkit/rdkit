@@ -9,11 +9,11 @@
 //  of the RDKit source tree.
 //
 #include "point.h"
-//#include <Numerics/Vector.h>
+// #include <Numerics/Vector.h>
 
 namespace RDGeom {
-double computeSignedDihedralAngle(const Point3D& pt1, const Point3D& pt2,
-                                  const Point3D& pt3, const Point3D& pt4) {
+double computeSignedDihedralAngle(const Point3D &pt1, const Point3D &pt2,
+                                  const Point3D &pt3, const Point3D &pt4) {
   Point3D begEndVec = pt3 - pt2;
   Point3D begNbrVec = pt1 - pt2;
   Point3D crs1 = begNbrVec.crossProduct(begEndVec);
@@ -32,8 +32,8 @@ double computeSignedDihedralAngle(const Point3D& pt1, const Point3D& pt2,
 
   return ang;
 }
-double computeDihedralAngle(const Point3D& pt1, const Point3D& pt2,
-                            const Point3D& pt3, const Point3D& pt4) {
+double computeDihedralAngle(const Point3D &pt1, const Point3D &pt2,
+                            const Point3D &pt3, const Point3D &pt4) {
   Point3D begEndVec = pt3 - pt2;
   Point3D begNbrVec = pt1 - pt2;
   Point3D crs1 = begNbrVec.crossProduct(begEndVec);
@@ -45,7 +45,7 @@ double computeDihedralAngle(const Point3D& pt1, const Point3D& pt2,
   return ang;
 }
 
-std::ostream& operator<<(std::ostream& target, const Point& pt) {
+std::ostream &operator<<(std::ostream &target, const Point &pt) {
   for (unsigned int di = 0; di < pt.dimension(); ++di) {
     target << pt[di] << " ";
   }
@@ -53,7 +53,7 @@ std::ostream& operator<<(std::ostream& target, const Point& pt) {
   return target;
 }
 
-Point3D operator+(const Point3D& p1, const Point3D& p2) {
+Point3D operator+(const Point3D &p1, const Point3D &p2) {
   Point3D res;
   res.x = p1.x + p2.x;
   res.y = p1.y + p2.y;
@@ -61,7 +61,7 @@ Point3D operator+(const Point3D& p1, const Point3D& p2) {
   return res;
 }
 
-Point3D operator-(const Point3D& p1, const Point3D& p2) {
+Point3D operator-(const Point3D &p1, const Point3D &p2) {
   Point3D res;
   res.x = p1.x - p2.x;
   res.y = p1.y - p2.y;
@@ -69,7 +69,7 @@ Point3D operator-(const Point3D& p1, const Point3D& p2) {
   return res;
 }
 
-Point3D operator*(const Point3D& p1, double v) {
+Point3D operator*(const Point3D &p1, double v) {
   Point3D res;
   res.x = p1.x * v;
   res.y = p1.y * v;
@@ -77,7 +77,7 @@ Point3D operator*(const Point3D& p1, double v) {
   return res;
 }
 
-Point3D operator/(const Point3D& p1, double v) {
+Point3D operator/(const Point3D &p1, double v) {
   Point3D res;
   res.x = p1.x / v;
   res.y = p1.y / v;
@@ -85,35 +85,35 @@ Point3D operator/(const Point3D& p1, double v) {
   return res;
 }
 
-Point2D operator+(const Point2D& p1, const Point2D& p2) {
+Point2D operator+(const Point2D &p1, const Point2D &p2) {
   Point2D res;
   res.x = p1.x + p2.x;
   res.y = p1.y + p2.y;
   return res;
 }
 
-Point2D operator-(const Point2D& p1, const Point2D& p2) {
+Point2D operator-(const Point2D &p1, const Point2D &p2) {
   Point2D res;
   res.x = p1.x - p2.x;
   res.y = p1.y - p2.y;
   return res;
 }
 
-Point2D operator*(const Point2D& p1, double v) {
+Point2D operator*(const Point2D &p1, double v) {
   Point2D res;
   res.x = p1.x * v;
   res.y = p1.y * v;
   return res;
 }
 
-Point2D operator/(const Point2D& p1, double v) {
+Point2D operator/(const Point2D &p1, double v) {
   Point2D res;
   res.x = p1.x / v;
   res.y = p1.y / v;
   return res;
 }
 
-PointND operator+(const PointND& p1, const PointND& p2) {
+PointND operator+(const PointND &p1, const PointND &p2) {
   unsigned int dim;
   if (p1.dimension() < p2.dimension()) {
     dim = p1.dimension();
@@ -126,7 +126,7 @@ PointND operator+(const PointND& p1, const PointND& p2) {
   }
   return res;
 }
-PointND operator-(const PointND& p1, const PointND& p2) {
+PointND operator-(const PointND &p1, const PointND &p2) {
   unsigned int dim;
   if (p1.dimension() < p2.dimension()) {
     dim = p1.dimension();
@@ -140,7 +140,7 @@ PointND operator-(const PointND& p1, const PointND& p2) {
   return res;
 }
 
-PointND operator*(const PointND& p1, double v) {
+PointND operator*(const PointND &p1, double v) {
   PointND res(p1.dimension());
   for (unsigned int i = 0; i < p1.dimension(); ++i) {
     res[i] = p1[i] * v;
@@ -148,7 +148,7 @@ PointND operator*(const PointND& p1, double v) {
   return res;
 }
 
-PointND operator/(const PointND& p1, double v) {
+PointND operator/(const PointND &p1, double v) {
   PointND res(p1.dimension());
   for (unsigned int i = 0; i < p1.dimension(); ++i) {
     res[i] = p1[i] / v;

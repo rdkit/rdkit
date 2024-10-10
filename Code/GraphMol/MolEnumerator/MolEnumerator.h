@@ -170,7 +170,7 @@ class RDKIT_MOLENUMERATOR_EXPORT LinkNodeOp : public MolEnumeratorOp {
  */
 class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
  public:
-  RepeatUnitOp(){};
+  RepeatUnitOp() {};
   RepeatUnitOp(const std::shared_ptr<ROMol> mol) : dp_mol(mol) {
     PRECONDITION(mol, "bad molecule");
     initFromMol();
@@ -186,7 +186,7 @@ class RDKIT_MOLENUMERATOR_EXPORT RepeatUnitOp : public MolEnumeratorOp {
         d_pointRanges(other.d_pointRanges),
         d_isotopeMap(other.d_isotopeMap),
         d_atomMap(other.d_atomMap),
-        d_minRepeatCounts(other.d_minRepeatCounts){};
+        d_minRepeatCounts(other.d_minRepeatCounts) {};
   RepeatUnitOp &operator=(const RepeatUnitOp &other) {
     if (&other == this) {
       return *this;

@@ -1086,8 +1086,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {

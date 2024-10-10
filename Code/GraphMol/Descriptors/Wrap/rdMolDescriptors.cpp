@@ -357,13 +357,13 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
-[[deprecated("please use MorganGenerator")]] RDKit::SparseIntVect<std::uint32_t>
-    *MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius,
-                             int nBits, python::object invariants,
-                             python::object fromAtoms, bool useChirality,
-                             bool useBondTypes, bool useFeatures,
-                             bool useCounts, python::object bitInfo,
-                             bool includeRedundantEnvironments) {
+[[deprecated(
+    "please use MorganGenerator")]] RDKit::SparseIntVect<std::uint32_t> *
+MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
+                        python::object invariants, python::object fromAtoms,
+                        bool useChirality, bool useBondTypes, bool useFeatures,
+                        bool useCounts, python::object bitInfo,
+                        bool includeRedundantEnvironments) {
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {

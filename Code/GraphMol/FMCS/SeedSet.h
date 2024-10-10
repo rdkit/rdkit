@@ -35,16 +35,16 @@ class RDKIT_FMCS_EXPORT SeedSet {  // sorted by amount of bonds
   bool empty() { return Seeds.empty(); }
   iterator begin() { return Seeds.begin(); }
   iterator end() { return Seeds.end(); }
-  Value& front() { return Seeds.front(); }
+  Value &front() { return Seeds.front(); }
   const_iterator begin() const { return Seeds.begin(); }
   const_iterator end() const { return Seeds.end(); }
-  const Value& front() const { return Seeds.front(); }
+  const Value &front() const { return Seeds.front(); }
 
-  Value& push_back(const Value& seed) {
+  Value &push_back(const Value &seed) {
     Seeds.push_back(seed);
     return Seeds.back();
   }
-  Value& add(const Value& seed) {
+  Value &add(const Value &seed) {
     iterator where;
     for (where = Seeds.begin(); where != Seeds.end();
          where++) {  // find position in sorted list
@@ -53,7 +53,7 @@ class RDKIT_FMCS_EXPORT SeedSet {  // sorted by amount of bonds
       }
     }
     iterator it = Seeds.insert(where, EmptySeed);
-    Value& val = *it;
+    Value &val = *it;
     val.setMoleculeFragment(seed);
 
     return val;

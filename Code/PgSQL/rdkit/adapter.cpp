@@ -123,9 +123,9 @@ constexpr unsigned int pickleDefault =
 
 class ByteA : public std::string {
  public:
-  ByteA() : string(){};
-  ByteA(bytea *b) : string(VARDATA(b), VARSIZE(b) - VARHDRSZ){};
-  ByteA(string &s) : string(s){};
+  ByteA() : string() {};
+  ByteA(bytea *b) : string(VARDATA(b), VARSIZE(b) - VARHDRSZ) {};
+  ByteA(string &s) : string(s) {};
 
   /*
    * Convert string to bytea. Convertaion is in pgsql's memory

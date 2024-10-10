@@ -4663,7 +4663,7 @@ void testParseCHG() {
                          22, -1, 26, -1, 27, -1, 28, 4,  29, -1, 31, 1,  32,
                          -1, 34, -1, 35, 1,  36, -1, 38, -1, 0,  0};
   // Shouldn't seg fault, throw exception or have a null mol
-  bool sanitize=false;
+  bool sanitize = false;
   std::unique_ptr<RWMol> m(MolBlockToMol(molblock_chg, sanitize));
   size_t i = 0;
   while (1) {
