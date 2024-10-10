@@ -35,4 +35,5 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 %}
 
+%include <RDGeneral/ConditionallyUseBetterEnums.h>
 %include <GraphMol/SmilesParse/SmilesWrite.h>

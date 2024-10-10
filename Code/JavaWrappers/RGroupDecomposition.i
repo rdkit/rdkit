@@ -48,5 +48,6 @@ typedef std::vector<std::string> STR_VECT;
   }
 }
 
+%include <RDGeneral/ConditionallyUseBetterEnums.h>
 %include <GraphMol/RGroupDecomposition/RGroupDecompParams.h>
 %include <GraphMol/RGroupDecomposition/RGroupDecomp.h>

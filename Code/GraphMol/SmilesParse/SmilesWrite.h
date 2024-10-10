@@ -16,7 +16,7 @@
 #include <memory>
 #include <cstdint>
 #include <limits>
-#include <RDGeneral/WrapBetterEnums.h>
+#include <RDGeneral/ConditionallyUseBetterEnums.h>
 
 namespace RDKit {
 class Atom;

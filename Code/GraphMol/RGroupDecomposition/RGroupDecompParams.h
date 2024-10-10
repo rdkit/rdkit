@@ -14,7 +14,7 @@
 
 #include "../RDKitBase.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <RDGeneral/WrapBetterEnums.h>
+#include <RDGeneral/ConditionallyUseBetterEnums.h>
 
 namespace RDKit {
 
