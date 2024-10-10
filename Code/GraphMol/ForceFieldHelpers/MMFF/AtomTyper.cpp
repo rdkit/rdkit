@@ -500,12 +500,6 @@ bool areAtomsInSameAromaticRing(const ROMol &mol, const unsigned int idx1,
   return areInSameAromatic;
 }
 
-// sets the aromaticity flags according to MMFF
-void setMMFFAromaticity(RWMol &mol) {
-  // Deprecated, moved to MolOps
-  MolOps::setMMFFAromaticity(mol);
-}
-
 // sets the MMFF atomType for a heavy atom
 void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
                                              const Atom *atom) {

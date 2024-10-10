@@ -35,7 +35,28 @@ double calcChiralVolume(const unsigned int idx1, const unsigned int idx2,
   double vol = v1.dotProduct(v2xv3);
   return vol;
 }
+double calcChiralVolume(const unsigned int idx1, const unsigned int idx2,
+                        const unsigned int idx3, const unsigned int idx4,
+                        const RDGeom::PointPtrVect &pts) {
+  // even if we are minimizing in higher dimension the chiral volume is
+  // calculated using only the first 3 dimensions
+  RDGeom::Point3D v1((*pts[idx1])[0] - (*pts[idx4])[0],
+                     (*pts[idx1])[1] - (*pts[idx4])[1],
+                     (*pts[idx1])[2] - (*pts[idx4])[2]);
 
+  RDGeom::Point3D v2((*pts[idx2])[0] - (*pts[idx4])[0],
+                     (*pts[idx2])[1] - (*pts[idx4])[1],
+                     (*pts[idx2])[2] - (*pts[idx4])[2]);
+
+  RDGeom::Point3D v3((*pts[idx3])[0] - (*pts[idx4])[0],
+                     (*pts[idx3])[1] - (*pts[idx4])[1],
+                     (*pts[idx3])[2] - (*pts[idx4])[2]);
+
+  RDGeom::Point3D v2xv3 = v2.crossProduct(v3);
+
+  double vol = v1.dotProduct(v2xv3);
+  return vol;
+}
 ChiralViolationContribs::ChiralViolationContribs(
     ForceFields::ForceField *owner) {
   PRECONDITION(owner, "bad owner");

@@ -106,27 +106,6 @@ def ExplainAtomCode(code, branchSubtract=0, includeChirality=False):
 GetAtomCode = rdMolDescriptors.GetAtomPairAtomCode
 
 
-def NumPiElectrons(atom):
-  """ DEPRECATED: please use rdMolDescriptors.GetNumPiElectrons instead.
-  """
-
-  warnings.warn(
-    "The Chem.AtomPairs.Utils.NumPiElectrons is deprecated; please use rdMolDescriptors.GetNumPiElectrons instead.",
-    DeprecationWarning, stacklevel=2)
-
-  res = 0
-  if atom.GetIsAromatic():
-    res = 1
-  elif atom.GetHybridization() != Chem.HybridizationType.SP3:
-    # the number of pi electrons is just the number of
-    # unsaturations (valence - degree):
-    res = atom.GetExplicitValence() - atom.GetNumExplicitHs()
-    if res < atom.GetDegree():
-      raise ValueError("explicit valence exceeds atom degree")
-    res -= atom.GetDegree()
-  return res
-
-
 def BitsInCommon(v1, v2):
   """ Returns the number of bits in common between two vectors
 
