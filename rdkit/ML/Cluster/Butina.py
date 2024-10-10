@@ -1,5 +1,3 @@
-# $Id$
-#
 # Copyright (C) 2007-2024 Greg Landrum and other RDKit contributors
 #   All Rights Reserved
 #
@@ -8,7 +6,6 @@
 
 """
 import numpy as np
-from typing import Union, List
 
 def EuclideanDist(pi, pj):
   """Calculate the Euclidean distance between two points."""
@@ -23,12 +20,12 @@ def compute_distance_matrix(data, n_pts, dist_func):
       dist_matrix[i, j] = dist_matrix[j, i] = dist_func(data[i], data[j])
   return dist_matrix
 
-def ClusterData(data: Union[List, np.ndarray], nPts, distThresh, isDistData=False, distFunc=EuclideanDist, reordering=False):
+def ClusterData(data, nPts, distThresh, isDistData=False, distFunc=EuclideanDist, reordering=False):
   """  clusters the data points passed in and returns the list of clusters
 
     **Arguments**
 
-      - data: a list or numpy array of items with the input data
+      - data: a list, tuple, or numpy array of items with the input data
         (see discussion of _isDistData_ argument for the exception)
 
       - nPts: the number of points to be used
@@ -67,11 +64,11 @@ def ClusterData(data: Union[List, np.ndarray], nPts, distThresh, isDistData=Fals
   """
   if isDistData:
     # Check if data is a supported type
-    if not isinstance(data, (list, np.ndarray)):
-      raise ValueError(f"Unsupported type for data, {type(data)}")
+    if not isinstance(data, (list, tuple, np.ndarray)):
+      raise TypeError(f"Unsupported type for data, {type(data)}")
     
     # Check if data is a 1D array or list
-    if isinstance(data, list) or isinstance(data, np.ndarray) and data.ndim == 1:
+    if isinstance(data, (list, tuple)) or (isinstance(data, np.ndarray) and data.ndim == 1):
       # Check if data length matches the required number of points
       if len(data) != (nPts * (nPts - 1)) // 2:
         raise ValueError("Mismatched input data dimension and nPts")
