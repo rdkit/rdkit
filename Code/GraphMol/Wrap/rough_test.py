@@ -8224,9 +8224,18 @@ M  END
                      "c1ccc([NH2:1])cc1")
 
   def github7873(self):
-    # this segfaults
+    # this used to segfault
     Chem.MolFromSmiles("C").GetAtomWithIdx(0).SetPDBResidueInfo(None)
     
+  def testSplitMolByPDB(self):
+    mol = Chem.MolFromSmiles("C")
+    res2mol = Chem.SplitMolByPDBResidues(mol)
+    self.assertEqual(len(res2mol), 1)
+    self.assertIn("", res2mol)
+    chain2mol = Chem.SplitMolByPDBChainId(mol)
+    self.assertEqual(len(chain2mol), 1)
+    self.assertIn("", chain2mol)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

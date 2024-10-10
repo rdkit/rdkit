@@ -2721,6 +2721,50 @@ void test_multi_highlights() {
   free(mpkl);
 }
 
+void test_bw_palette() {
+  printf("--------------------------\n");
+  printf("  bw palette\n");
+  const char *smi = "N";
+  const char *details = "{\"atomColourPalette\":\"bw\"}";
+  char *mpkl;
+  char *svg_with_details;
+  char *svg_without_details;
+  size_t mpkl_size;
+  mpkl = get_mol(smi, &mpkl_size, "");
+  assert(mpkl && mpkl_size);
+  svg_with_details = get_svg(mpkl, mpkl_size, details);
+  assert(strstr(svg_with_details, "#000000"));
+  assert(!strstr(svg_with_details, "#0000FF"));
+  svg_without_details = get_svg(mpkl, mpkl_size, "");
+  assert(!strstr(svg_without_details, "#000000"));
+  assert(strstr(svg_without_details, "#0000FF"));
+  free(svg_with_details);
+  free(svg_without_details);
+  free(mpkl);
+}
+
+void test_custom_palette() {
+  printf("--------------------------\n");
+  printf("  custom palette\n");
+  const char *smi = "N";
+  const char *details = "{\"atomColourPalette\":{\"7\":[1.0,0.0,0.0]}}";
+  char *mpkl;
+  char *svg_with_details;
+  char *svg_without_details;
+  size_t mpkl_size;
+  mpkl = get_mol(smi, &mpkl_size, "");
+  assert(mpkl && mpkl_size);
+  svg_with_details = get_svg(mpkl, mpkl_size, details);
+  assert(strstr(svg_with_details, "#FF0000"));
+  assert(!strstr(svg_with_details, "#0000FF"));
+  svg_without_details = get_svg(mpkl, mpkl_size, "");
+  assert(!strstr(svg_without_details, "#FF0000"));
+  assert(strstr(svg_without_details, "#0000FF"));
+  free(svg_with_details);
+  free(svg_without_details);
+  free(mpkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2756,5 +2800,7 @@ int main() {
   test_wedged_bond_atropisomer();
   test_get_molblock_use_molblock_wedging();
   test_multi_highlights();
+  test_bw_palette();
+  test_custom_palette();
   return 0;
 }
