@@ -10,6 +10,22 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes
+The following enums:
+* RGroupLabels
+* RGroupMatching
+* RGroupLabelling
+* RGroupCoreAlignment
+* RGroupScore
+* RestoreBondDirOption
+* SmilesWrite::CXSmilesFields
+are now Better Enums (https://aantron.github.io/better-enums/index.html)
+as this makes JSON parsing much more elegant and smoother through reflection.
+This may impact you if you are using them from C++, as now your code need
+to refer to enum values with full namespace scoping. i.e.
+RGroupLabels::MDLRGroupLabels as opposed to just MDLRGroupLabels,
+SmilesWrite::CXSmilesFields::CX_ALL as opposed to just SmilesWrite::CX_ALL,
+RestoreBondDirOption::RestoreBondDirOptionTrue as opposed to just
+RestoreBondDirOptionTrue.
 
 ## New Features and Enhancements:
 

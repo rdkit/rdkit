@@ -29,9 +29,10 @@ namespace {
 
 void addCXExtensions(RDKit::RWMol *mol, std::string &result,
                      unsigned additionalSkips = 0) {
-  unsigned int cxflagsToSkip = additionalSkips | RDKit::SmilesWrite::CX_COORDS;
+  unsigned int cxflagsToSkip =
+      additionalSkips | RDKit::SmilesWrite::CXSmilesFields::CX_COORDS;
   auto cxext = RDKit::SmilesWrite::getCXExtensions(
-      *mol, RDKit::SmilesWrite::CX_ALL ^ cxflagsToSkip);
+      *mol, RDKit::SmilesWrite::CXSmilesFields::CX_ALL ^ cxflagsToSkip);
   if (!cxext.empty()) {
     result += " " + cxext;
   }
@@ -336,7 +337,8 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
   result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
 
   if (useCXSmiles) {
-    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result,
+                    cxFlagsToSkip | SmilesWrite::CXSmilesFields::CX_RADICALS);
   }
 
   return result;
@@ -373,7 +375,8 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
     result += buffer;
   }
   if (useCXSmiles) {
-    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result,
+                    cxFlagsToSkip | SmilesWrite::CXSmilesFields::CX_RADICALS);
   }
   return result;
 }
@@ -674,7 +677,8 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   }
   result += buffer;
   if (useCXSmiles) {
-    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result,
+                    cxFlagsToSkip | SmilesWrite::CXSmilesFields::CX_RADICALS);
   }
 
   return result;
@@ -723,7 +727,8 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles,
   }
   result += buffer;
   if (useCXSmiles) {
-    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result,
+                    cxFlagsToSkip | SmilesWrite::CXSmilesFields::CX_RADICALS);
   }
 
   return result;
@@ -836,7 +841,8 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
   std::string result;
   result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (useCXSmiles) {
-    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result,
+                    cxFlagsToSkip | SmilesWrite::CXSmilesFields::CX_RADICALS);
   }
   return result;
 }
@@ -880,7 +886,8 @@ std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles,
   std::string result;
   result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (useCXSmiles) {
-    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result,
+                    cxFlagsToSkip | SmilesWrite::CXSmilesFields::CX_RADICALS);
   }
   return result;
 }

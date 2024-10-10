@@ -38,12 +38,11 @@ std::string RGroupDecompositionChromosome::info() const {
 
 double RGroupDecompositionChromosome::score() {
   auto &rGroupData = rGroupGa.getRGroupData();
-  RGroupScore scoreMethod =
-      static_cast<RGroupScore>(rGroupData.params.scoreMethod);
+  auto scoreMethod = rGroupData.params.scoreMethod;
   if (operationName != RgroupMutate) {
     decode();
   }
-  if (scoreMethod == FingerprintVariance &&
+  if (scoreMethod == RGroupScore::FingerprintVariance &&
       fingerprintVarianceScoreData.labelsToVarianceData.size() > 0 &&
       operationName == RgroupMutate) {
     fitness = fingerprintVarianceScoreData.fingerprintVarianceGroupScore();

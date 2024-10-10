@@ -2069,12 +2069,13 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     // make sure we end up with the wiggly bond in the output CXSMILES:
     auto cxsmi = MolToCXSmiles(*m, SmilesWriteParams(),
                                SmilesWrite::CXSmilesFields::CX_ALL,
-                               RestoreBondDirOptionTrue);
+                               RestoreBondDirOption::RestoreBondDirOptionTrue);
     CHECK(cxsmi == "CC(O)F |w:1.2|");
     // but we can turn that off
     SmilesWriteParams ps;
-    cxsmi =
-        MolToCXSmiles(*m, ps, SmilesWrite::CX_ALL ^ SmilesWrite::CX_BOND_CFG);
+    cxsmi = MolToCXSmiles(*m, ps,
+                          SmilesWrite::CXSmilesFields::CX_ALL ^
+                              SmilesWrite::CXSmilesFields::CX_BOND_CFG);
     CHECK(cxsmi == "CC(O)F");
   }
 
@@ -2094,7 +2095,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     // make sure we end up with the wiggly bond in the output CXSMILES:
     auto cxsmi = MolToCXSmiles(*m, SmilesWriteParams(),
                                SmilesWrite::CXSmilesFields::CX_ALL,
-                               RestoreBondDirOptionTrue);
+                               RestoreBondDirOption::RestoreBondDirOptionTrue);
     CHECK(cxsmi == "CC(O)F |w:1.2|");
   }
   SECTION("make sure order gets reversed when needed") {
@@ -2150,17 +2151,17 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
     {
       ROMol nm(*m);
       nm.getBondWithIdx(1)->setBondDir(Bond::BondDir::UNKNOWN);
-      auto cxsmi = MolToCXSmiles(nm, SmilesWriteParams(),
-                                 SmilesWrite::CXSmilesFields::CX_ALL,
-                                 RestoreBondDirOptionTrue);
+      auto cxsmi = MolToCXSmiles(
+          nm, SmilesWriteParams(), SmilesWrite::CXSmilesFields::CX_ALL,
+          RestoreBondDirOption::RestoreBondDirOptionTrue);
       CHECK(cxsmi == "CC(O)Cl |w:1.0|");
     }
     {
       ROMol nm(*m);
       nm.getBondWithIdx(1)->setProp(common_properties::_MolFileBondCfg, 2);
-      auto cxsmi = MolToCXSmiles(nm, SmilesWriteParams(),
-                                 SmilesWrite::CXSmilesFields::CX_ALL,
-                                 RestoreBondDirOptionClear);
+      auto cxsmi = MolToCXSmiles(
+          nm, SmilesWriteParams(), SmilesWrite::CXSmilesFields::CX_ALL,
+          RestoreBondDirOption::RestoreBondDirOptionClear);
       CHECK(cxsmi == "CC(O)Cl");
     }
   }
@@ -2198,7 +2199,7 @@ M  END
     m->getBondWithIdx(2)->setBondDir(Bond::BondDir::BEGINDASH);
     cxsmi = MolToCXSmiles(*m, SmilesWriteParams(),
                           SmilesWrite::CXSmilesFields::CX_ALL,
-                          RestoreBondDirOptionTrue);
+                          RestoreBondDirOption::RestoreBondDirOptionTrue);
     CHECK(cxsmi.find("wU:1.0") != std::string::npos);
     cxsmi =
         MolToCXSmiles(*m, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
@@ -2206,12 +2207,12 @@ M  END
     m->getBondWithIdx(2)->setBondDir(Bond::BondDir::UNKNOWN);
     cxsmi = MolToCXSmiles(*m, SmilesWriteParams(),
                           SmilesWrite::CXSmilesFields::CX_ALL,
-                          RestoreBondDirOptionTrue);
+                          RestoreBondDirOption::RestoreBondDirOptionTrue);
     CHECK(cxsmi.find("wU:1.0") != std::string::npos);
     // wiggly bonds get written even if we don't output coords:
     cxsmi =
         MolToCXSmiles(*m, ps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS,
-                      RestoreBondDirOptionClear);
+                      RestoreBondDirOption::RestoreBondDirOptionClear);
     CHECK(cxsmi.find("w:1.0") == std::string::npos);
   }
 

@@ -73,11 +73,11 @@ void RGroupDecompData::prepareCores() {
 
 void RGroupDecompData::setRlabel(Atom *atom, int rlabel) {
   PRECONDITION(rlabel > 0, "RLabels must be >0");
-  if (params.rgroupLabelling & AtomMap) {
+  if (params.rgroupLabelling & RGroupLabelling::AtomMap) {
     atom->setAtomMapNum(rlabel);
   }
 
-  if (params.rgroupLabelling & MDLRGroup) {
+  if (params.rgroupLabelling & RGroupLabelling::MDLRGroup) {
     std::string dLabel = "R" + std::to_string(rlabel);
     atom->setProp(common_properties::dummyLabel, dLabel);
     setAtomRLabel(atom, rlabel);
@@ -85,20 +85,20 @@ void RGroupDecompData::setRlabel(Atom *atom, int rlabel) {
     atom->clearProp(common_properties::dummyLabel);
   }
 
-  if (params.rgroupLabelling & Isotope) {
+  if (params.rgroupLabelling & RGroupLabelling::Isotope) {
     atom->setIsotope(rlabel);
   }
 }
 
 int RGroupDecompData::getRlabel(Atom *atom) const {
-  if (params.rgroupLabelling & AtomMap) {
+  if (params.rgroupLabelling & RGroupLabelling::AtomMap) {
     return atom->getAtomMapNum();
   }
-  if (params.rgroupLabelling & Isotope) {
+  if (params.rgroupLabelling & RGroupLabelling::Isotope) {
     return atom->getIsotope();
   }
 
-  if (params.rgroupLabelling & MDLRGroup) {
+  if (params.rgroupLabelling & RGroupLabelling::MDLRGroup) {
     unsigned int label = 0;
     if (atom->getPropIfPresent(common_properties::_MolFileRLabel, label)) {
       return label;
@@ -110,9 +110,8 @@ int RGroupDecompData::getRlabel(Atom *atom) const {
 
 double RGroupDecompData::scoreFromPrunedData(
     const std::vector<size_t> &permutation, bool reset) {
-  PRECONDITION(
-      static_cast<RGroupScore>(params.scoreMethod) == FingerprintVariance,
-      "Scoring method is not fingerprint variance!");
+  PRECONDITION(params.scoreMethod == RGroupScore::FingerprintVariance,
+               "Scoring method is not fingerprint variance!");
 
   PRECONDITION(permutation.size() >= pruneLength,
                "Illegal permutation prune length");
@@ -157,8 +156,8 @@ void RGroupDecompData::prune() {  // prune all but the current "best"
   }
 
   permutation = std::vector<size_t>(permutation.size(), 0);
-  if (params.scoreMethod == FingerprintVariance &&
-      params.matchingStrategy != GA) {
+  if (params.scoreMethod == RGroupScore::FingerprintVariance &&
+      params.matchingStrategy != RGroupMatching::GA) {
     scoreFromPrunedData(permutation, false);
   }
 }
@@ -616,12 +615,11 @@ void RGroupDecompData::relabel() {
 double RGroupDecompData::score(
     const std::vector<size_t> &permutation,
     FingerprintVarianceScoreData *fingerprintVarianceScoreData) const {
-  RGroupScore scoreMethod = static_cast<RGroupScore>(params.scoreMethod);
-  switch (scoreMethod) {
-    case Match:
+  switch (params.scoreMethod) {
+    case RGroupScore::Match:
       return rGroupScorer.matchScore(permutation, matches, labels);
       break;
-    case FingerprintVariance:
+    case RGroupScore::FingerprintVariance:
       return fingerprintVarianceScore(permutation, matches, labels,
                                       fingerprintVarianceScoreData);
       break;
@@ -639,10 +637,10 @@ RGroupDecompositionProcessResult RGroupDecompData::process(bool pruneMatches,
   std::unique_ptr<CartesianProduct> iterator;
   rGroupScorer.startProcessing();
 
-  if (params.matchingStrategy == GA) {
+  if (params.matchingStrategy == RGroupMatching::GA) {
     RGroupGa ga(*this, params.timeout >= 0 ? &t0 : nullptr);
     if (ga.numberPermutations() < 100 * ga.getPopsize()) {
-      params.matchingStrategy = Exhaustive;
+      params.matchingStrategy = RGroupMatching::Exhaustive;
     } else {
       if (params.gaNumberRuns > 1) {
         auto results = ga.runBatch();
@@ -659,13 +657,14 @@ RGroupDecompositionProcessResult RGroupDecompData::process(bool pruneMatches,
     }
   }
   size_t offset = 0;
-  if (params.matchingStrategy != GA) {
+  if (params.matchingStrategy != RGroupMatching::GA) {
     // Exhaustive search, get the MxN matrix
     // (M = matches.size(): number of molecules
     //  N = iterator.maxPermutations)
     std::vector<size_t> permutations;
 
-    if (pruneMatches && params.scoreMethod != FingerprintVariance) {
+    if (pruneMatches &&
+        params.scoreMethod != RGroupScore::FingerprintVariance) {
       offset = previousMatchSize;
     }
     previousMatchSize = matches.size();
@@ -692,7 +691,7 @@ RGroupDecompositionProcessResult RGroupDecompData::process(bool pruneMatches,
       std::cerr << "**************************************************"
                 << std::endl;
 #endif
-      double newscore = params.scoreMethod == FingerprintVariance
+      double newscore = params.scoreMethod == RGroupScore::FingerprintVariance
                             ? scoreFromPrunedData(iterator->permutation)
                             : score(iterator->permutation);
 

@@ -137,8 +137,8 @@ class MolAtropTest {
             //| SmilesWrite::CXSmilesFields::CX_ALL
             ;
 
-        std::string smilesOut =
-            MolToCXSmiles(*mol, ps, flags, RestoreBondDirOptionTrue);
+        std::string smilesOut = MolToCXSmiles(
+            *mol, ps, flags, RestoreBondDirOption::RestoreBondDirOptionTrue);
 
         generateNewExpectedFilesIfSoSpecified(fName + ".NEW.cxsmi", smilesOut);
 

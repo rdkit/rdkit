@@ -904,7 +904,7 @@ M  END
     CHECK(
         MolToCXSmiles(*core, p) ==
         "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
-    relabelMappedDummies(*core, Isotope);
+    relabelMappedDummies(*core, RGroupLabelling::Isotope);
     CHECK(MolToCXSmiles(*core, p) ==
           "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R4:5.dummyLabel.R3|");
   }
@@ -918,21 +918,24 @@ M  END
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, MDLRGroup out - force Isotope priority") {
     ROMol core(*allDifferentCore);
-    relabelMappedDummies(core, Isotope);
+    relabelMappedDummies(core, RGroupLabelling::Isotope);
     CHECK(MolToCXSmiles(core, p) ==
           "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R6:5.dummyLabel.R5|");
   }
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, MDLRGroup out - force MDLRGroup priority") {
     ROMol core(*allDifferentCore);
-    relabelMappedDummies(core, MDLRGroup);
+    relabelMappedDummies(core, RGroupLabelling::MDLRGroup);
     CHECK(MolToCXSmiles(core, p) ==
           "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
   }
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, AtomMap out - AtomMap has priority") {
     ROMol core(*allDifferentCore);
-    relabelMappedDummies(core, AtomMap | Isotope | MDLRGroup, AtomMap);
+    relabelMappedDummies(core,
+                         RGroupLabelling::AtomMap | RGroupLabelling::Isotope |
+                             RGroupLabelling::MDLRGroup,
+                         RGroupLabelling::AtomMap);
     CHECK(
         MolToCXSmiles(core, p) ==
         "c1cc([*:4])c([*:3])cn1 |atomProp:3.molAtomMapNumber.4:5.molAtomMapNumber.3|");
@@ -940,13 +943,18 @@ M  END
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, Isotope out - AtomMap has priority") {
     ROMol core(*allDifferentCore);
-    relabelMappedDummies(core, AtomMap | Isotope | MDLRGroup, Isotope);
+    relabelMappedDummies(core,
+                         RGroupLabelling::AtomMap | RGroupLabelling::Isotope |
+                             RGroupLabelling::MDLRGroup,
+                         RGroupLabelling::Isotope);
     CHECK(MolToCXSmiles(core, p) == "c1cc([4*])c([3*])cn1");
   }
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, AtomMap out - Isotope has priority") {
     ROMol core(*allDifferentCore);
-    relabelMappedDummies(core, Isotope | MDLRGroup, AtomMap);
+    relabelMappedDummies(core,
+                         RGroupLabelling::Isotope | RGroupLabelling::MDLRGroup,
+                         RGroupLabelling::AtomMap);
     CHECK(
         MolToCXSmiles(core, p) ==
         "c1cc([*:6])c([*:5])cn1 |atomProp:3.molAtomMapNumber.6:5.molAtomMapNumber.5|");
@@ -954,13 +962,16 @@ M  END
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, Isotope out - Isotope has priority") {
     ROMol core(*allDifferentCore);
-    relabelMappedDummies(core, Isotope | MDLRGroup, Isotope);
+    relabelMappedDummies(core,
+                         RGroupLabelling::Isotope | RGroupLabelling::MDLRGroup,
+                         RGroupLabelling::Isotope);
     CHECK(MolToCXSmiles(core, p) == "c1cc([6*])c([5*])cn1");
   }
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, AtomMap out - MDLRGroup has priority") {
     ROMol core(*allDifferentCore);
-    relabelMappedDummies(core, MDLRGroup, AtomMap);
+    relabelMappedDummies(core, RGroupLabelling::MDLRGroup,
+                         RGroupLabelling::AtomMap);
     CHECK(
         MolToCXSmiles(core, p) ==
         "c1cc([*:2])c([*:1])cn1 |atomProp:3.molAtomMapNumber.2:5.molAtomMapNumber.1|");
@@ -968,7 +979,8 @@ M  END
   SECTION(
       "AtomMap, Isotope and MDLRGroup in, Isotope out - MDLRGroup has priority") {
     ROMol core(*allDifferentCore);
-    relabelMappedDummies(core, MDLRGroup, Isotope);
+    relabelMappedDummies(core, RGroupLabelling::MDLRGroup,
+                         RGroupLabelling::Isotope);
     CHECK(MolToCXSmiles(core, p) == "c1cc([2*])c([1*])cn1");
   }
 }

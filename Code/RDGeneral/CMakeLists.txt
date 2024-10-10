@@ -5,6 +5,11 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
               ${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h )
 
+FetchContent_MakeAvailable(better_enums)
+if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/BetterEnums.h)
+  file(COPY ${better_enums_SOURCE_DIR}/enum.h DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
+  file(RENAME ${CMAKE_CURRENT_SOURCE_DIR}/enum.h ${CMAKE_CURRENT_SOURCE_DIR}/BetterEnums.h)
+endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/BetterEnums.h)
 
 rdkit_library(RDGeneral
               Invariant.cpp types.cpp utils.cpp RDGeneralExceptions.cpp RDLog.cpp
@@ -45,6 +50,8 @@ rdkit_headers(Exceptions.h
               export.h
               test.h
               ConcurrentQueue.h
+              ConditionallyUseBetterEnums.h
+              BetterEnums.h
               DEST RDGeneral)
 
 if (NOT RDK_INSTALL_INTREE)

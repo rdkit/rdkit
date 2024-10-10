@@ -110,7 +110,7 @@ void DUMP_RGROUP(RGroupRows::const_iterator &it, std::string &result) {
 const char *symdata[5] = {"c1(Cl)ccccc1", "c1c(Cl)cccc1", "c1cccc(Cl)c1",
                           "c1cc(Cl)ccc1", "c1ccc(Cl)cc1"};
 
-void testSymmetryMatching(RGroupScore scoreMethod = Match) {
+void testSymmetryMatching(RGroupScore scoreMethod = RGroupScore::Match) {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog)
@@ -151,7 +151,7 @@ void testGaSymmetryMatching(RGroupScore scoreMethod) {
   UMOLS mols;
   RWMol *core = SmilesToMol("c1ccccc1");
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GA;
+  params.matchingStrategy = RGroupMatching::GA;
   params.scoreMethod = scoreMethod;
   RGroupDecomposition decomp(*core, params);
   for (int i = 0; i < 5; ++i) {
@@ -183,8 +183,8 @@ void testGaBatch() {
   UMOLS mols;
   RWMol *core = SmilesToMol("c1ccccc1");
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GA;
-  params.scoreMethod = FingerprintVariance;
+  params.matchingStrategy = RGroupMatching::GA;
+  params.scoreMethod = RGroupScore::FingerprintVariance;
   params.gaNumberRuns = 3;
   params.gaParallelRuns = true;
 
@@ -232,7 +232,7 @@ void testRGroupOnlyMatching() {
   UMOLS mols;
   RWMol *core = SmilesToMol("c1ccccc1[1*]");
   RGroupDecompositionParameters params;
-  params.labels = IsotopeLabels;
+  params.labels = RGroupLabels::IsotopeLabels;
   params.onlyMatchAtRGroups = true;
 
   RGroupDecomposition decomp(*core, params);
@@ -272,7 +272,7 @@ void testRingMatching() {
   UMOLS mols;
   RWMol *core = SmilesToMol("c1ccc[1*]1");
   RGroupDecompositionParameters params;
-  params.labels = IsotopeLabels;
+  params.labels = RGroupLabels::IsotopeLabels;
 
   auto exceptionThrown = false;
   try {
@@ -354,7 +354,8 @@ void testRingMatching3() {
   RWMol *core = SmartsToMol("*1***[*:1]1");
   // RWMol *core = SmartsToMol("*1****1");
 
-  std::vector<RGroupScore> matchtypes{Match, FingerprintVariance};
+  std::vector<RGroupScore> matchtypes{RGroupScore::Match,
+                                      RGroupScore::FingerprintVariance};
   for (auto match : matchtypes) {
     RGroupDecompositionParameters params;
     // This test is currently failing using the default scoring method (the
@@ -1130,7 +1131,7 @@ Br[*:3]
     // Still three groups added, but bromine and fluorine
     // are not aligned between R1 and R3
     RGroupDecompositionParameters ps;
-    ps.matchingStrategy = RDKit::NoSymmetrization;
+    ps.matchingStrategy = RGroupMatching::NoSymmetrization;
     RGroupDecomposition decomp(*core, ps);
     decomp.add(*m1);
     decomp.add(*m2);
@@ -1334,7 +1335,7 @@ Cn1cnc2cc(Oc3cc(N4CCN(Cc5ccccc5-c5ccc(Cl)cc5)CC4)ccc3C(=O)NS(=O)(=O)c3ccc(NCCCN4
 #else
     ps.timeout = 25.0;
 #endif
-    ps.matchingStrategy = RDKit::NoSymmetrization;
+    ps.matchingStrategy = RGroupMatching::NoSymmetrization;
     std::cerr << "bulk, no symmetry" << std::endl;
     std::vector<ROMOL_SPTR> cores;
     cores.push_back(ROMOL_SPTR(new ROMol(*core)));
@@ -1683,18 +1684,19 @@ $$$$
   RGroupDecompositionParameters params;
 
   // test pre-labelled with MDL R-group labels, autodetect
-  params.labels = AutoDetect;
-  params.alignment = MCS;
+  params.labels = RGroupLabels::AutoDetect;
+  params.alignment = RGroupCoreAlignment::MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
   // test pre-labelled with MDL R-group labels, no autodetect
-  params.labels = MDLRGroupLabels | RelabelDuplicateLabels;
-  params.alignment = MCS;
+  params.labels =
+      RGroupLabels::MDLRGroupLabels | RGroupLabels::RelabelDuplicateLabels;
+  params.alignment = RGroupCoreAlignment::MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
   // test pre-labelled with MDL R-group labels, autodetect, no MCS alignment
-  params.labels = AutoDetect;
-  params.alignment = NoAlignment;
+  params.labels = RGroupLabels::AutoDetect;
+  params.alignment = RGroupCoreAlignment::NoAlignment;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
 
@@ -1708,18 +1710,19 @@ $$$$
     }
   }
   // test pre-labelled with isotopic labels, autodetect
-  params.labels = AutoDetect;
-  params.alignment = MCS;
+  params.labels = RGroupLabels::AutoDetect;
+  params.alignment = RGroupCoreAlignment::MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
   // test pre-labelled with isotopic labels, no autodetect
-  params.labels = IsotopeLabels | RelabelDuplicateLabels;
-  params.alignment = MCS;
+  params.labels =
+      RGroupLabels::IsotopeLabels | RGroupLabels::RelabelDuplicateLabels;
+  params.alignment = RGroupCoreAlignment::MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
   // test pre-labelled with isotopic labels, autodetect, no MCS alignment
-  params.labels = AutoDetect;
-  params.alignment = NoAlignment;
+  params.labels = RGroupLabels::AutoDetect;
+  params.alignment = RGroupCoreAlignment::NoAlignment;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
 
@@ -1733,18 +1736,19 @@ $$$$
     }
   }
   // test pre-labelled with atom map labels, autodetect
-  params.labels = AutoDetect;
-  params.alignment = MCS;
+  params.labels = RGroupLabels::AutoDetect;
+  params.alignment = RGroupCoreAlignment::MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
   // test pre-labelled with atom map labels, no autodetect
-  params.labels = AtomMapLabels | RelabelDuplicateLabels;
-  params.alignment = MCS;
+  params.labels =
+      RGroupLabels::AtomMapLabels | RGroupLabels::RelabelDuplicateLabels;
+  params.alignment = RGroupCoreAlignment::MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
   // test pre-labelled with atom map labels, autodetect, no MCS alignment
-  params.labels = AutoDetect;
-  params.alignment = NoAlignment;
+  params.labels = RGroupLabels::AutoDetect;
+  params.alignment = RGroupCoreAlignment::NoAlignment;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
 
@@ -1764,15 +1768,16 @@ $$$$
                    {"CN[*:1]", "Br[*:1]"},
                    {"CC[*:2]", "F[*:2]"}};
 
-  params.labels = AutoDetect;
-  params.alignment = MCS;
+  params.labels = RGroupLabels::AutoDetect;
+  params.alignment = RGroupCoreAlignment::MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
   // test pre-labelled with dummy atom labels, no autodetect
-  params.labels = DummyAtomLabels | RelabelDuplicateLabels;
-  params.alignment = MCS;
+  params.labels =
+      RGroupLabels::DummyAtomLabels | RGroupLabels::RelabelDuplicateLabels;
+  params.alignment = RGroupCoreAlignment::MCS;
   MultiCoreRGD::test(cores, params, expectedLabels, expectedRows,
                      expectedItems);
 }
@@ -1883,7 +1888,8 @@ void testMultipleCoreRelabellingIssues() {
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])S2",
       "O=C1C([*:2])([*:1])[C@@H]2N1C(C(O)=O)C([*:3])([*:4])O2",
       "O=C1C([*:2])([*:1])C([*:6])([*:5])N1"};
-  std::vector<RGroupScore> matchtypes{Match, FingerprintVariance};
+  std::vector<RGroupScore> matchtypes{RGroupScore::Match,
+                                      RGroupScore::FingerprintVariance};
   for (auto match : matchtypes) {
     std::vector<ROMOL_SPTR> cores;
     for (const auto &s : smi) {
@@ -1928,7 +1934,8 @@ void testUnprocessedMapping() {
                                       "C1(O[*:1])CCC(O[*:2])CC1",
                                       "C1([*:1])CCC([*:2])CC1"};
 
-  std::vector<RGroupScore> matchtypes{Match, FingerprintVariance};
+  std::vector<RGroupScore> matchtypes{RGroupScore::Match,
+                                      RGroupScore::FingerprintVariance};
   for (auto match : matchtypes) {
     std::vector<ROMOL_SPTR> cores;
     for (const auto &s : coreSmi) {
@@ -1987,10 +1994,10 @@ M  END
     for (auto mdlRGroupLabels = 0; mdlRGroupLabels < 2; ++mdlRGroupLabels) {
       RGroupDecompositionParameters params;
       if (matchAtRGroup) {
-        params.labels = MDLRGroupLabels;
+        params.labels = RGroupLabels::MDLRGroupLabels;
       }
       if (mdlRGroupLabels) {
-        params.labels = MDLRGroupLabels;
+        params.labels = RGroupLabels::MDLRGroupLabels;
       }
       RGroupDecomposition decomp(*core, params);
       for (const auto &smi : smilesData) {
@@ -2092,7 +2099,7 @@ void testNoAlignmentAndSymmetry() {
   RGroupDecompositionParameters params;
   params.onlyMatchAtRGroups = true;
   params.removeHydrogensPostMatch = true;
-  params.alignment = NoAlignment;
+  params.alignment = RGroupCoreAlignment::NoAlignment;
   RGroupDecomposition decomp(cores, params);
   size_t i = 0;
   for (const auto &smi : smilesData) {
@@ -2269,7 +2276,8 @@ void testUserMatchTypes() {
     }
   };
 
-  std::vector<RGroupScore> matchtype{Match, FingerprintVariance};
+  std::vector<RGroupScore> matchtype{RGroupScore::Match,
+                                     RGroupScore::FingerprintVariance};
   for (auto match : matchtype) {
     auto mol = "C1CCCCC1(N)(O)"_smiles;
     auto core = "C1CCCCC1[*:1]"_smiles;
@@ -2379,7 +2387,7 @@ void testDoNotAddUnnecessaryRLabels() {
     for (unsigned int i = 0; i < 2; ++i) {
       RGroupDecompositionParameters ps;
       if (i) {
-        ps.matchingStrategy = RDKit::NoSymmetrization;
+        ps.matchingStrategy = RGroupMatching::NoSymmetrization;
       }
       RGroupDecomposition decomp(*core, ps);
       TEST_ASSERT(decomp.add(*m1) == 0);
@@ -2877,7 +2885,7 @@ M  END
   std::vector<std::string> smiArray(10, "COc1ccccc1");
   smiArray.push_back("COc1ccncn1");
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   RGroupDecomposition decomp(*core, params);
   for (const auto &smiles : smiArray) {
     ROMol *mol = SmilesToMol(smiles);
@@ -2972,7 +2980,7 @@ M  END
 )CTAB"_ctab;
 
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   RGroupDecomposition decomp(*core, params);
   decomp.add(*test);
 
@@ -3046,7 +3054,7 @@ M  END
 )CTAB"_ctab;
 
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   RGroupDecomposition decomp(*core, params);
   auto result = decomp.add(*test);
@@ -3149,8 +3157,8 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
         "COC1CCC(C)(OC)CN1", "COC1CCC(CCC)(C)CN1"};
     RGroupDecompositionParameters params;
     params.allowMultipleRGroupsOnUnlabelled = true;
-    params.matchingStrategy = Exhaustive;
-    params.scoreMethod = FingerprintVariance;
+    params.matchingStrategy = RGroupMatching::Exhaustive;
+    params.scoreMethod = RGroupScore::FingerprintVariance;
     RGroupDecomposition decomp(*core, params);
     for (auto smiles : smilesVec) {
       auto mol = SmilesToMol(smiles);
@@ -3178,7 +3186,7 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
     auto mol = "COC1CCC(C)(C)CN1"_smiles;
     RGroupDecompositionParameters params;
     params.allowMultipleRGroupsOnUnlabelled = true;
-    params.labels = DummyAtomLabels;
+    params.labels = RGroupLabels::DummyAtomLabels;
     RGroupDecomposition decomp(*core, params);
     auto result = decomp.add(*mol);
     TEST_ASSERT(result == 0)
@@ -3191,7 +3199,7 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
     RGroupRows::const_iterator it = rows.begin();
     CHECK_RGROUP(it, expected);
     // Check core with terminal wildcard - dummy atom labels not allowed
-    params.labels = IsotopeLabels;
+    params.labels = RGroupLabels::IsotopeLabels;
     RGroupDecomposition decomp2(*core, params);
     result = decomp2.add(*mol);
     TEST_ASSERT(result == 0)
@@ -3210,8 +3218,8 @@ void testMultipleGroupsToUnlabelledCoreAtom() {
                                        "COC1NCC(C)(C)CN1"};
     RGroupDecompositionParameters params;
     params.allowMultipleRGroupsOnUnlabelled = true;
-    params.matchingStrategy = Exhaustive;
-    params.scoreMethod = FingerprintVariance;
+    params.matchingStrategy = RGroupMatching::Exhaustive;
+    params.scoreMethod = RGroupScore::FingerprintVariance;
     RGroupDecomposition decomp(*core, params);
     for (auto smiles : smilesVec) {
       auto mol = SmilesToMol(smiles);
@@ -3499,7 +3507,7 @@ M  END
 )CTAB"_ctab;
 
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = false;
   params.onlyMatchAtRGroups = true;
   RGroupDecomposition decomp(*core, params);
@@ -3594,7 +3602,7 @@ M  END
   auto mol =
       "Brc1cc(Br)c(Oc2ccc(cc2C#N)S(=O)(=O)Nc3ncc(Br)s3)c(c1)c4ccccc4"_smiles;
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = false;
   params.onlyMatchAtRGroups = false;
   RGroupDecomposition decomp(*core, params);
@@ -3771,7 +3779,7 @@ M  END
 )CTAB"_ctab;
 
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   params.onlyMatchAtRGroups = false;
   RGroupDecomposition decomp(*core, params);
@@ -3849,7 +3857,7 @@ M  END
   auto mol2 = "CCC1=C(F)C=CC(Cl)=C1"_smiles;
 
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   params.onlyMatchAtRGroups = false;
   params.doEnumeration = true;
@@ -3884,7 +3892,7 @@ void testTautomerCore() {
   const auto mol2 = "CC1=CNC(=O)C=C1F"_smiles;
 
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   params.onlyMatchAtRGroups = false;
   params.doTautomers = true;
@@ -3992,7 +4000,7 @@ M  END
 )CTAB"_ctab;
   const auto mol = "C/C=C/C1=CC=CC=C1"_smiles;
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   params.onlyMatchAtRGroups = false;
   params.doEnumeration = false;
@@ -4098,7 +4106,7 @@ void testNotEnumeratedCore() {
   const auto mol = "C1CCCCC1C"_smiles;
 
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   params.onlyMatchAtRGroups = false;
   params.doEnumeration = true;
@@ -4125,7 +4133,7 @@ void testRgroupDecompZipping() {
   const auto core = "N1OCC1"_smiles;
   const auto mol = "C1CC2ONC12"_smiles;
   RGroupDecompositionParameters params;
-  params.matchingStrategy = GreedyChunks;
+  params.matchingStrategy = RGroupMatching::GreedyChunks;
   params.allowMultipleRGroupsOnUnlabelled = true;
   params.onlyMatchAtRGroups = false;
   params.doEnumeration = true;
@@ -4158,7 +4166,7 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
 #if 1
-  testSymmetryMatching(FingerprintVariance);
+  testSymmetryMatching(RGroupScore::FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
   testRingMatching();
@@ -4176,8 +4184,8 @@ int main() {
   testSymmetryIssues();
   testMultipleCoreRelabellingIssues();
 
-  testGaSymmetryMatching(FingerprintVariance);
-  testGaSymmetryMatching(Match);
+  testGaSymmetryMatching(RGroupScore::FingerprintVariance);
+  testGaSymmetryMatching(RGroupScore::Match);
   testGaBatch();
 
   testUnprocessedMapping();

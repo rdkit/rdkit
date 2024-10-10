@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#define USE_BETTER_ENUMS
 #include "RGroupDecompParams.h"
 #include "RGroupUtils.h"
 #include <GraphMol/RDKitBase.h>
@@ -27,16 +28,16 @@ namespace {
 
 bool hasLabel(const Atom *atom, unsigned int autoLabels) {
   bool atomHasLabel = false;
-  if (autoLabels & MDLRGroupLabels) {
+  if (autoLabels & RGroupLabels::MDLRGroupLabels) {
     atomHasLabel |= atom->hasProp(common_properties::_MolFileRLabel);
   }
-  if (autoLabels & IsotopeLabels) {
+  if (autoLabels & RGroupLabels::IsotopeLabels) {
     atomHasLabel |= (atom->getIsotope() > 0);
   }
-  if (autoLabels & AtomMapLabels) {
+  if (autoLabels & RGroupLabels::AtomMapLabels) {
     atomHasLabel |= (atom->getAtomMapNum() > 0);
   }
-  if (autoLabels & DummyAtomLabels) {
+  if (autoLabels & RGroupLabels::DummyAtomLabels) {
     atomHasLabel |= (atom->getAtomicNum() == 0 && atom->getDegree() == 1);
   }
   // don't match negative rgroups as these are used by AtomIndexRLabels which
@@ -80,16 +81,6 @@ void updateRGroupDecompositionParametersFromJSON(
 
 void updateRGroupDecompositionParametersFromJSON(
     RGroupDecompositionParameters &params, const char *details_json) {
-  static const std::map<std::string, RGroupLabels> rGroupLabelsMap{
-      RGROUPLABELS_ENUM_ITEMS};
-  static const std::map<std::string, RGroupMatching> rGroupMatchingMap{
-      RGROUPMATCHING_ENUM_ITEMS};
-  static const std::map<std::string, RGroupLabelling> rGroupLabellingMap{
-      RGROUPLABELLING_ENUM_ITEMS};
-  static const std::map<std::string, RGroupCoreAlignment>
-      rGroupCoreAlignmentMap{RGROUPCOREALIGNMENT_ENUM_ITEMS};
-  static const std::map<std::string, RGroupScore> rGroupScoreMap{
-      RGROUPSCORE_ENUM_ITEMS};
   if (details_json && strlen(details_json)) {
     std::istringstream ss;
     boost::property_tree::ptree pt;
@@ -98,38 +89,35 @@ void updateRGroupDecompositionParametersFromJSON(
 
     std::string labels;
     labels = pt.get<std::string>("labels", labels);
-    auto rGroupLabelsMapIt = rGroupLabelsMap.find(labels);
-    if (rGroupLabelsMapIt != rGroupLabelsMap.end()) {
-      params.labels = rGroupLabelsMapIt->second;
+    if (RGroupLabels::_is_valid(labels.c_str())) {
+      params.labels = RGroupLabels::_from_string(labels.c_str());
     }
 
     std::string matchingStrategy;
     matchingStrategy =
         pt.get<std::string>("matchingStrategy", matchingStrategy);
-    auto rGroupMatchingMapIt = rGroupMatchingMap.find(matchingStrategy);
-    if (rGroupMatchingMapIt != rGroupMatchingMap.end()) {
-      params.matchingStrategy = rGroupMatchingMapIt->second;
+    if (RGroupMatching::_is_valid(matchingStrategy.c_str())) {
+      params.matchingStrategy =
+          RGroupMatching::_from_string(matchingStrategy.c_str());
     }
 
     std::string scoreMethod;
     scoreMethod = pt.get<std::string>("scoreMethod", scoreMethod);
-    auto rGroupScoreMapIt = rGroupScoreMap.find(scoreMethod);
-    if (rGroupScoreMapIt != rGroupScoreMap.end()) {
-      params.scoreMethod = rGroupScoreMapIt->second;
+    if (RGroupScore::_is_valid(scoreMethod.c_str())) {
+      params.scoreMethod = RGroupScore::_from_string(scoreMethod.c_str());
     }
 
     std::string rgroupLabelling;
     rgroupLabelling = pt.get<std::string>("rgroupLabelling", rgroupLabelling);
-    auto rGroupLabellingMapIt = rGroupLabellingMap.find(rgroupLabelling);
-    if (rGroupLabellingMapIt != rGroupLabellingMap.end()) {
-      params.rgroupLabelling = rGroupLabellingMapIt->second;
+    if (RGroupLabelling::_is_valid(rgroupLabelling.c_str())) {
+      params.rgroupLabelling =
+          RGroupLabelling::_from_string(rgroupLabelling.c_str());
     }
 
     std::string alignment;
     alignment = pt.get<std::string>("alignment", alignment);
-    auto rGroupCoreAlignmentMapIt = rGroupCoreAlignmentMap.find(alignment);
-    if (rGroupCoreAlignmentMapIt != rGroupCoreAlignmentMap.end()) {
-      params.alignment = rGroupCoreAlignmentMapIt->second;
+    if (RGroupCoreAlignment::_is_valid(alignment.c_str())) {
+      params.alignment = RGroupCoreAlignment::_from_string(alignment.c_str());
     }
 
     params.chunkSize = pt.get<unsigned int>("chunkSize", params.chunkSize);
@@ -158,7 +146,7 @@ void updateRGroupDecompositionParametersFromJSON(
 unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
   unsigned int autoLabels = 0;
   if (!onlyMatchAtRGroups) {
-    autoLabels = AtomIndexLabels;
+    autoLabels = RGroupLabels::AtomIndexLabels;
   }
   bool hasMDLRGroup = false;
   bool hasAtomMapNum = false;
@@ -180,13 +168,13 @@ unsigned int RGroupDecompositionParameters::autoGetLabels(const RWMol &core) {
   }
 
   if (hasMDLRGroup) {
-    return autoLabels | MDLRGroupLabels;
+    return autoLabels | RGroupLabels::MDLRGroupLabels;
   } else if (hasAtomMapNum) {
-    return autoLabels | AtomMapLabels;
+    return autoLabels | RGroupLabels::AtomMapLabels;
   } else if (hasIsotopes) {
-    return autoLabels | IsotopeLabels;
+    return autoLabels | RGroupLabels::IsotopeLabels;
   } else if (hasDummies) {
-    return autoLabels | DummyAtomLabels;
+    return autoLabels | RGroupLabels::DummyAtomLabels;
   }
 
   return autoLabels;
@@ -211,9 +199,9 @@ bool rgdAtomCompare(const MCSAtomCompareParameters &p, const ROMol &mol1,
 
 bool RGroupDecompositionParameters::prepareCore(RWMol &core,
                                                 const RWMol *alignCore) {
-  const bool relabel = labels & RelabelDuplicateLabels;
+  const bool relabel = labels & RGroupLabels::RelabelDuplicateLabels;
   unsigned int autoLabels = labels;
-  if (labels == AutoDetect) {
+  if (labels == RGroupLabels::AutoDetect) {
     autoLabels = autoGetLabels(core);
     if (!autoLabels) {
       BOOST_LOG(rdWarningLog) << "RGroupDecomposition auto detect found no "
@@ -222,7 +210,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
       return false;
     }
   } else if (!onlyMatchAtRGroups) {
-    autoLabels |= AtomIndexLabels;
+    autoLabels |= RGroupLabels::AtomIndexLabels;
   }
 
   // if we aren't doing stereochem matches, remove that info from the core
@@ -244,12 +232,13 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   int maxLabel = 1;
   // makes no sense to do MCS alignment if we are only matching at user defined
   // R-Groups
-  if (alignCore && !onlyMatchAtRGroups && (alignment & MCS)) {
+  if (alignCore && !onlyMatchAtRGroups &&
+      (alignment & RGroupCoreAlignment::MCS)) {
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
     MCSParameters mcsParams;
-    if (autoLabels != AutoDetect) {
+    if (autoLabels != RGroupLabels::AutoDetect) {
       mcsParams.AtomTyper = rgdAtomCompare;
       mcsParams.CompareFunctionsUserData = &autoLabels;
     }
@@ -309,7 +298,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     }
 
     if (atom->getAtomicNum() == 0) {
-      if (!found && (autoLabels & MDLRGroupLabels)) {
+      if (!found && (autoLabels & RGroupLabels::MDLRGroupLabels)) {
         unsigned int rgroup;
         if (atom->getPropIfPresent<unsigned int>(
                 common_properties::_MolFileRLabel, rgroup)) {
@@ -321,7 +310,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
         }
       }
 
-      if (!found && (autoLabels & IsotopeLabels) && atom->getIsotope() > 0) {
+      if (!found && (autoLabels & RGroupLabels::IsotopeLabels) &&
+          atom->getIsotope() > 0) {
         if (setLabel(atom, rdcast<int>(atom->getIsotope()), foundLabels,
                      maxLabel, relabel, Labelling::ISOTOPE_LABELS)) {
           checkNonTerminal(*atom);
@@ -329,7 +319,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
         }
       }
 
-      if (!found && (autoLabels & AtomMapLabels) && atom->getAtomMapNum() > 0) {
+      if (!found && (autoLabels & RGroupLabels::AtomMapLabels) &&
+          atom->getAtomMapNum() > 0) {
         if (setLabel(atom, rdcast<int>(atom->getAtomMapNum()), foundLabels,
                      maxLabel, relabel, Labelling::ATOMMAP_LABELS)) {
           checkNonTerminal(*atom);
@@ -337,8 +328,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
         }
       }
 
-      if (!found && (autoLabels & DummyAtomLabels) && atom->getDegree() == 1 &&
-          !atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
+      if (!found && (autoLabels & RGroupLabels::DummyAtomLabels) &&
+          atom->getDegree() == 1 && !atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
         const bool forceRelabellingWithDummies = true;
         int defaultDummyStartLabel = maxLabel;
         if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
@@ -352,7 +343,7 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     //  RLABELS to each core so keep track of which labels
     //  we have used (note that these are negative since they are
     //  potential rgroups and haven't been assigned yet)
-    if (!found && (autoLabels & AtomIndexLabels)) {
+    if (!found && (autoLabels & RGroupLabels::AtomIndexLabels)) {
       // we should not need these on (non r group) core atoms when
       // allowMultipleRGroupsOnUnlabelled is set, but it is useful in case
       // insufficient dummy groups are added to the core

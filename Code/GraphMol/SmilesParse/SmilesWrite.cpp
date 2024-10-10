@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#define USE_BETTER_ENUMS 1
 #include "SmilesWrite.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/RDKitBase.h>
@@ -56,40 +57,37 @@ void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
   updateSmilesWriteParamsFromJSON(params, details_json.c_str());
 }
 
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
+void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
+                                  unsigned int &restoreBondDirs,
                                   const char *details_json) {
-  static const auto cxSmilesFieldsKeyValuePairs = CXSMILESFIELDS_ITEMS_MAP;
-  static const auto restoreBondDirOptionKeyValuePairs =
-      RESTOREBONDDIROPTION_ITEMS_MAP;
   if (details_json && strlen(details_json)) {
     boost::property_tree::ptree pt;
     std::istringstream ss;
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
     auto cxSmilesFieldsFromJson =
-        static_cast<std::underlying_type<SmilesWrite::CXSmilesFields>::type>(
-            SmilesWrite::CXSmilesFields::CX_NONE);
-    for (const auto &keyValuePair : cxSmilesFieldsKeyValuePairs) {
-      cxSmilesFieldsFromJson |= (pt.get(keyValuePair.first, false)
-                                     ? keyValuePair.second
-                                     : SmilesWrite::CXSmilesFields::CX_NONE);
+        (+SmilesWrite::CXSmilesFields::CX_NONE)._to_integral();
+    for (const auto *key : SmilesWrite::CXSmilesFields::_names()) {
+      cxSmilesFieldsFromJson |=
+          (pt.get(key, false) ? SmilesWrite::CXSmilesFields::_from_string(key)
+                              : +SmilesWrite::CXSmilesFields::CX_NONE)
+              ._to_integral();
     }
     if (cxSmilesFieldsFromJson) {
       cxSmilesFields =
-          static_cast<SmilesWrite::CXSmilesFields>(cxSmilesFieldsFromJson);
+          SmilesWrite::CXSmilesFields::_from_integral(cxSmilesFieldsFromJson);
     }
     std::string restoreBondDirOption;
     restoreBondDirOption = pt.get("restoreBondDirOption", restoreBondDirOption);
-    auto it = restoreBondDirOptionKeyValuePairs.find(restoreBondDirOption);
-    if (it != restoreBondDirOptionKeyValuePairs.end()) {
-      restoreBondDirs = it->second;
+    if (RestoreBondDirOption::_is_valid(restoreBondDirOption.c_str())) {
+      restoreBondDirs =
+          RestoreBondDirOption::_from_string(restoreBondDirOption.c_str());
     }
   }
 }
 
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
+void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
+                                  unsigned int &restoreBondDirs,
                                   const std::string &details_json) {
   updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
                                details_json.c_str());
@@ -769,7 +767,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
 
 std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
                           std::uint32_t flags,
-                          RestoreBondDirOption restoreBondDirs) {
+                          unsigned int restoreBondDirs) {
   RWMol trwmol(romol);
 
   bool doingCXSmiles = true;
@@ -778,9 +776,10 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
   if (res.empty()) {
     return res;
   }
-  if (restoreBondDirs == RestoreBondDirOptionTrue) {
+  if (restoreBondDirs == +RestoreBondDirOption::RestoreBondDirOptionTrue) {
     RDKit::Chirality::reapplyMolBlockWedging(trwmol);
-  } else if (restoreBondDirs == RestoreBondDirOptionClear) {
+  } else if (restoreBondDirs ==
+             +RestoreBondDirOption::RestoreBondDirOptionClear) {
     for (auto bond : trwmol.bonds()) {
       if (!canHaveDirection(*bond)) {
         continue;

@@ -1728,7 +1728,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
   python::def(
       "MolToCXSmiles",
       (std::string(*)(const ROMol &, const SmilesWriteParams &, std::uint32_t,
-                      RestoreBondDirOption))RDKit::MolToCXSmiles,
+                      unsigned int))RDKit::MolToCXSmiles,
       (python::arg("mol"), python::arg("params"),
        python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
        python::arg("restoreBondDirs") =

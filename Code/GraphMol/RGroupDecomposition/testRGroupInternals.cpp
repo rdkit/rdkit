@@ -66,7 +66,7 @@ void testCoresLabelledProperly() {
 
   RGroupDecompositionParameters params;
   params.alignment = RGroupCoreAlignment::NoAlignment;
-  params.scoreMethod = FingerprintVariance;
+  params.scoreMethod = RGroupScore::FingerprintVariance;
   RGroupDecomposition decomposition(cores, params);
 
   auto data = decomposition.data;
@@ -172,7 +172,7 @@ void testGithub3746() {
   RGroupDecompositionParameters params;
   params.onlyMatchAtRGroups = true;
   params.removeHydrogensPostMatch = true;
-  params.matchingStrategy = GA;
+  params.matchingStrategy = RGroupMatching::GA;
   params.removeHydrogensPostMatch = true;
 
   RGroupDecomposition decomposition(cores, params);

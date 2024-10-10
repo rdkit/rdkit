@@ -728,9 +728,9 @@ class MrvTests {
                              SmilesWrite::CXSmilesFields::CX_SGROUPS |
                              SmilesWrite::CXSmilesFields::CX_POLYMER;
 
-        auto restoreDir = RestoreBondDirOptionTrue;
+        auto restoreDir = RestoreBondDirOption::RestoreBondDirOptionTrue;
         if (!molFileTest->reapplyMolBlockWedging) {
-          restoreDir = RestoreBondDirOptionClear;
+          restoreDir = RestoreBondDirOption::RestoreBondDirOptionClear;
         }
 
         std::string smilesOut = MolToCXSmiles(*mol, ps, flags, restoreDir);
