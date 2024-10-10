@@ -189,17 +189,19 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 
 namespace {
 std::string getResidue(const ROMol &, const Atom *at) {
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+  auto monomerInfo = at->getMonomerInfo();
+  if (!monomerInfo || monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)
       ->getResidueName();
 }
 std::string getChainId(const ROMol &, const Atom *at) {
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+auto monomerInfo = at->getMonomerInfo();
+  if (!monomerInfo || monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)
       ->getChainId();
 }
 }  // namespace
