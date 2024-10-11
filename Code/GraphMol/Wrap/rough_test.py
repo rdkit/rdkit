@@ -8223,6 +8223,10 @@ M  END
     self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False),
                      "c1ccc([NH2:1])cc1")
 
+  def github7873(self):
+    # this used to segfault
+    Chem.MolFromSmiles("C").GetAtomWithIdx(0).SetPDBResidueInfo(None)
+    
   def testSplitMolByPDB(self):
     mol = Chem.MolFromSmiles("C")
     res2mol = Chem.SplitMolByPDBResidues(mol)
