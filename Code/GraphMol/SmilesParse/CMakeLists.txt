@@ -58,8 +58,8 @@ endif(BISON_EXECUTABLE)
 
 rdkit_library(SmilesParse
               SmilesParse.cpp SmilesParseOps.cpp
-              SmilesWrite.cpp SmartsWrite.cpp
-              SmilesJSONParsers.cpp CXSmilesOps.cpp
+              SmilesWrite.cpp SmartsWrite.cpp CXSmilesOps.cpp
+              CanonicalizeStereoGroups.cpp SmilesJSONParsers.cpp
               ${BISON_OUTPUT_FILES}
               ${FLEX_OUTPUT_FILES}
               LINK_LIBRARIES GraphMol RDGeneral)
@@ -69,9 +69,10 @@ rdkit_headers(primes.h
               SmartsWrite.h
               SmilesParse.h
               SmilesParseOps.h
-              SmilesWrite.h
+              SmilesWrite.h 
+              CanonicalizeStereoGroups.h
               SmilesJSONParsers.h DEST GraphMol/SmilesParse)
-
+            
 rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse )
 rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse )
 rdkit_catch_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse MarvinParser )

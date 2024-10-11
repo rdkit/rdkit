@@ -11,11 +11,6 @@
 #ifndef RD_CANON_H
 #define RD_CANON_H
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <tuple>
-#include <boost/dynamic_bitset.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-
 namespace RDKit {
 class ROMol;
 class Atom;
