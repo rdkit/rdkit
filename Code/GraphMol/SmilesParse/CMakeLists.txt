@@ -69,8 +69,9 @@ rdkit_headers(primes.h
               SmartsWrite.h
               SmilesParse.h
               SmilesParseOps.h
-              SmilesWrite.h DEST GraphMol/SmilesParse)
-
+              SmilesWrite.h 
+              CanonicalizeStereoGroups.h DEST GraphMol/SmilesParse)
+            
 rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse )
 rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse )
 rdkit_catch_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse MarvinParser )
