@@ -151,6 +151,21 @@ Descriptor Tetrahedral::label(Node *node, const Rules &comp) const {
     throw std::runtime_error("Could not calculate parity! Carrier mismatch");
   }
 
+  {
+    // At this point, the edges are sorted by priority starting from
+    // this node. Record that now! - they may be resorted after processing
+    // other nodes.
+    auto a = node->getAtom();
+    std::vector<int> ranks;
+    ranks.reserve(4);
+    for (auto e: edges) {
+      if (e && e->getBond()) {
+        ranks.push_back(e->getBond()->getOtherAtom(a)->getIdx());
+      }
+    }
+    a->setProp("_CIPNeighborRanks", ranks, true);
+  }
+
   auto config = focus->getChiralTag();
   if (parity == 1) {
     if (config == Atom::CHI_TETRAHEDRAL_CCW) {
