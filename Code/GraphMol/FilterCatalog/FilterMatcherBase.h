@@ -137,7 +137,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterMatcherBase
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
-    ar &d_filterName;
+    ar & d_filterName;
   }
 #endif
 };

@@ -35,7 +35,7 @@ class DuplicatedSeedCache {
       BondIdx.insert(it, i);
     }
 
-    bool operator==(const TKey& right) const {  // opt.
+    bool operator==(const TKey &right) const {  // opt.
       return AtomIdx.size() == right.AtomIdx.size() &&
              BondIdx.size() == right.BondIdx.size() &&
              0 == std::memcmp(&AtomIdx[0], &right.AtomIdx[0],
@@ -44,7 +44,7 @@ class DuplicatedSeedCache {
                               BondIdx.size() * sizeof(unsigned int));
     }
 
-    bool operator<(const TKey& right) const {
+    bool operator<(const TKey &right) const {
       if (AtomIdx.size() < right.AtomIdx.size()) {
         return true;
       }
@@ -84,7 +84,7 @@ class DuplicatedSeedCache {
     MaxAtoms = 0;
   }
 
-  bool find(const TKey& key, TValue& value) const {
+  bool find(const TKey &key, TValue &value) const {
     value = false;
     if (key.getNumAtoms() > MaxAtoms) {
       return false;  // fast check if key greater then max key in the cache
@@ -97,7 +97,7 @@ class DuplicatedSeedCache {
     return Index.end() != entryit;
   }
 
-  void add(const TKey& key, TValue found = true) {
+  void add(const TKey &key, TValue found = true) {
     if (key.getNumAtoms() > MaxAtoms) {
       MaxAtoms = key.getNumAtoms();
     }

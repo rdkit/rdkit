@@ -68,10 +68,10 @@ inline std::pair<int, double> UFFOptimizeMolecule(
 
 */
 inline void UFFOptimizeMoleculeConfs(ROMol &mol,
-                              std::vector<std::pair<int, double>> &res,
-                              int numThreads = 1, int maxIters = 1000,
-                              double vdwThresh = 10.0,
-                              bool ignoreInterfragInteractions = true) {
+                                     std::vector<std::pair<int, double>> &res,
+                                     int numThreads = 1, int maxIters = 1000,
+                                     double vdwThresh = 10.0,
+                                     bool ignoreInterfragInteractions = true) {
   ForceFields::ForceField *ff =
       UFF::constructForceField(mol, vdwThresh, -1, ignoreInterfragInteractions);
   ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads, maxIters);

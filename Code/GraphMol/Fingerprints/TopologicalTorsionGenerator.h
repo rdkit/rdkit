@@ -116,13 +116,13 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionEnvGenerator
 
  */
 template <typename OutputType>
-RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType>
-    *getTopologicalTorsionGenerator(
-        bool includeChirality = false, uint32_t torsionAtomCount = 4,
-        AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-        bool countSimulation = true, std::uint32_t fpSize = 2048,
-        std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-        bool ownsAtomInvGen = false);
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *
+getTopologicalTorsionGenerator(
+    bool includeChirality = false, uint32_t torsionAtomCount = 4,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    bool countSimulation = true, std::uint32_t fpSize = 2048,
+    std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    bool ownsAtomInvGen = false);
 }  // namespace TopologicalTorsion
 }  // namespace RDKit
 

@@ -19,12 +19,12 @@ namespace RDKit {
 namespace Descriptors {
 namespace {
 
-bool getMoments(const ROMol& mol, int confId, bool useAtomicMasses, double& pm1,
-                double& pm2, double& pm3, bool force) {
+bool getMoments(const ROMol &mol, int confId, bool useAtomicMasses, double &pm1,
+                double &pm2, double &pm3, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
-  const char* pn1 = useAtomicMasses ? "_PMI1_mass" : "_PMI1";
-  const char* pn2 = useAtomicMasses ? "_PMI2_mass" : "_PMI2";
-  const char* pn3 = useAtomicMasses ? "_PMI3_mass" : "_PMI3";
+  const char *pn1 = useAtomicMasses ? "_PMI1_mass" : "_PMI1";
+  const char *pn2 = useAtomicMasses ? "_PMI2_mass" : "_PMI2";
+  const char *pn3 = useAtomicMasses ? "_PMI3_mass" : "_PMI3";
 
   if (!force && mol.hasProp(pn1) && mol.hasProp(pn2) && mol.hasProp(pn3)) {
     mol.getProp(pn1, pm1);
@@ -33,7 +33,7 @@ bool getMoments(const ROMol& mol, int confId, bool useAtomicMasses, double& pm1,
     return true;
   }
 
-  const Conformer& conf = mol.getConformer(confId);
+  const Conformer &conf = mol.getConformer(confId);
 
   Eigen::Matrix3d axes;
   Eigen::Vector3d moments;
@@ -62,12 +62,12 @@ bool getMoments(const ROMol& mol, int confId, bool useAtomicMasses, double& pm1,
   }
   return res;
 }
-bool getMomentsFromGyration(const ROMol& mol, int confId, bool useAtomicMasses,
-                            double& pm1, double& pm2, double& pm3, bool force) {
+bool getMomentsFromGyration(const ROMol &mol, int confId, bool useAtomicMasses,
+                            double &pm1, double &pm2, double &pm3, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
-  const char* pn1 = useAtomicMasses ? "_PMI1_mass_cov" : "_PMI1_cov";
-  const char* pn2 = useAtomicMasses ? "_PMI2_mass_cov" : "_PMI2_cov";
-  const char* pn3 = useAtomicMasses ? "_PMI3_mass_cov" : "_PMI3_cov";
+  const char *pn1 = useAtomicMasses ? "_PMI1_mass_cov" : "_PMI1_cov";
+  const char *pn2 = useAtomicMasses ? "_PMI2_mass_cov" : "_PMI2_cov";
+  const char *pn3 = useAtomicMasses ? "_PMI3_mass_cov" : "_PMI3_cov";
 
   if (!force && mol.hasProp(pn1) && mol.hasProp(pn2) && mol.hasProp(pn3)) {
     mol.getProp(pn1, pm1);
@@ -76,7 +76,7 @@ bool getMomentsFromGyration(const ROMol& mol, int confId, bool useAtomicMasses,
     return true;
   }
 
-  const Conformer& conf = mol.getConformer(confId);
+  const Conformer &conf = mol.getConformer(confId);
 
   Eigen::Matrix3d axes;
   Eigen::Vector3d moments;
@@ -108,7 +108,7 @@ bool getMomentsFromGyration(const ROMol& mol, int confId, bool useAtomicMasses,
 
 }  // end of anonymous namespace
 
-double NPR1(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
+double NPR1(const ROMol &mol, int confId, bool useAtomicMasses, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
   if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3, force)) {
@@ -120,7 +120,7 @@ double NPR1(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
   }
   return pm1 / pm3;
 }
-double NPR2(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
+double NPR2(const ROMol &mol, int confId, bool useAtomicMasses, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
   if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3, force)) {
@@ -132,7 +132,7 @@ double NPR2(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
   }
   return pm2 / pm3;
 }
-double PMI1(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
+double PMI1(const ROMol &mol, int confId, bool useAtomicMasses, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
   if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3, force)) {
@@ -141,7 +141,7 @@ double PMI1(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
   }
   return pm1;
 }
-double PMI2(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
+double PMI2(const ROMol &mol, int confId, bool useAtomicMasses, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
   if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3, force)) {
@@ -150,7 +150,7 @@ double PMI2(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
   }
   return pm2;
 }
-double PMI3(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
+double PMI3(const ROMol &mol, int confId, bool useAtomicMasses, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
   if (!getMoments(mol, confId, useAtomicMasses, pm1, pm2, pm3, force)) {
@@ -160,7 +160,7 @@ double PMI3(const ROMol& mol, int confId, bool useAtomicMasses, bool force) {
   return pm3;
 }
 
-double radiusOfGyration(const ROMol& mol, int confId, bool useAtomicMasses,
+double radiusOfGyration(const ROMol &mol, int confId, bool useAtomicMasses,
                         bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
@@ -172,7 +172,7 @@ double radiusOfGyration(const ROMol& mol, int confId, bool useAtomicMasses,
   return sqrt(pm1 + pm2 + pm3);
 }
 
-double inertialShapeFactor(const ROMol& mol, int confId, bool useAtomicMasses,
+double inertialShapeFactor(const ROMol &mol, int confId, bool useAtomicMasses,
                            bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
@@ -187,7 +187,7 @@ double inertialShapeFactor(const ROMol& mol, int confId, bool useAtomicMasses,
     return pm2 / (pm1 * pm3);
   }
 }
-double eccentricity(const ROMol& mol, int confId, bool useAtomicMasses,
+double eccentricity(const ROMol &mol, int confId, bool useAtomicMasses,
                     bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
@@ -203,7 +203,7 @@ double eccentricity(const ROMol& mol, int confId, bool useAtomicMasses,
   }
 }
 
-double asphericity(const ROMol& mol, int confId, bool useAtomicMasses,
+double asphericity(const ROMol &mol, int confId, bool useAtomicMasses,
                    bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   double pm1, pm2, pm3;
@@ -222,7 +222,7 @@ double asphericity(const ROMol& mol, int confId, bool useAtomicMasses,
            (denom * denom);
   }
 }
-double spherocityIndex(const ROMol& mol, int confId, bool force) {
+double spherocityIndex(const ROMol &mol, int confId, bool force) {
   PRECONDITION(mol.getNumConformers() >= 1, "molecule has no conformers");
   bool useAtomicMasses = false;
   double pm1, pm2, pm3;

@@ -26,8 +26,8 @@ class ConcurrentQueue {
   std::condition_variable d_notEmpty, d_notFull;
 
  private:
-  ConcurrentQueue(const ConcurrentQueue<E>&);
-  ConcurrentQueue& operator=(const ConcurrentQueue<E>&);
+  ConcurrentQueue(const ConcurrentQueue<E> &);
+  ConcurrentQueue &operator=(const ConcurrentQueue<E> &);
 
  public:
   ConcurrentQueue(unsigned int capacity)
@@ -39,13 +39,13 @@ class ConcurrentQueue {
   //! tries to push an element into the queue if it is not full without
   //! modifying the variable element, if the queue is full then pushing an
   //! element will result in blocking
-  void push(const E& element);
+  void push(const E &element);
 
   //! tries to pop an element from the queue if it is not empty and not done
   //! the boolean value indicates the whether popping is successful, if the
   //! queue is empty and not done then popping an element will result in
   //! blocking
-  bool pop(E& element);
+  bool pop(E &element);
 
   //! checks whether the ConcurrentQueue is empty
   bool isEmpty() const;
@@ -61,7 +61,7 @@ class ConcurrentQueue {
 };
 
 template <typename E>
-void ConcurrentQueue<E>::push(const E& element) {
+void ConcurrentQueue<E>::push(const E &element) {
   std::unique_lock<std::mutex> lk(d_lock);
   //! concurrent queue is full so we wait until
   //! it is not full
@@ -80,7 +80,7 @@ void ConcurrentQueue<E>::push(const E& element) {
 }
 
 template <typename E>
-bool ConcurrentQueue<E>::pop(E& element) {
+bool ConcurrentQueue<E>::pop(E &element) {
   std::unique_lock<std::mutex> lk(d_lock);
   //! concurrent queue is empty so we wait until
   //! it is not empty

@@ -19,7 +19,7 @@
 namespace RDKit {
 namespace FMCS {
 struct Target {
-  const ROMol* Molecule;
+  const ROMol *Molecule;
   Graph Topology;
   MatchTable AtomMatchTable;
   MatchTable BondMatchTable;

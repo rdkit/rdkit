@@ -503,7 +503,7 @@ unsigned int GetNumEntries(FilterCatalogParams::FilterCatalogs catalog) {
   }
 }
 
-const FilterData_t* GetFilterData(FilterCatalogParams::FilterCatalogs catalog) {
+const FilterData_t *GetFilterData(FilterCatalogParams::FilterCatalogs catalog) {
   switch (catalog) {
     case FilterCatalogParams::BRENK:
       return BRENK;
@@ -569,7 +569,7 @@ unsigned GetNumPropertyEntries(FilterCatalogParams::FilterCatalogs catalog) {
   }
 }
 
-const FilterProperty_t* GetFilterProperties(
+const FilterProperty_t *GetFilterProperties(
     FilterCatalogParams::FilterCatalogs catalog) {
   switch (catalog) {
     case FilterCatalogParams::BRENK:
