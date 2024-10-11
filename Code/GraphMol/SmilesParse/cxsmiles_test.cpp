@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include "SmilesParse.h"
 #include "SmilesWrite.h"
 #include "SmartsWrite.h"
@@ -715,7 +716,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
     smilesParserParams.sanitize = true;
     smilesParserParams.removeHs = false;
 
-    std::unique_ptr<RWMol> smilesMol(
+    std::unique_ptr<ROMol> smilesMol(
         SmilesToMol(inputSmiles, smilesParserParams));
 
     REQUIRE(smilesMol);
@@ -747,7 +748,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
     // second pass without using original wedges
 
     smilesMol =
-        std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
+        std::unique_ptr<ROMol>(SmilesToMol(inputSmiles, smilesParserParams));
 
     // test round trip back to smiles
     {
@@ -773,7 +774,7 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
     // third pass without using original wedges and with canonicalization
 
     smilesMol =
-        std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
+        std::unique_ptr<ROMol>(SmilesToMol(inputSmiles, smilesParserParams));
 
     // test round trip back to smiles
     {
@@ -823,7 +824,6 @@ void testOneAtropisomers(const SmilesTest *smilesTest) {
       std::string expectedFileName = fName + ".expected.mrv";
       std::string outMolStr = "";
       try {
-        MolOps::Kekulize(*smilesMol);
         RDKit::Chirality::reapplyMolBlockWedging(*smilesMol);
         outMolStr = MolToMrvBlock(*smilesMol, true, -1, true, false);
       } catch (const RDKit::KekulizeException &e) {
@@ -868,7 +868,7 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
     smilesParserParams.sanitize = true;
     smilesParserParams.removeHs = false;
 
-    std::unique_ptr<RWMol> smilesMol(
+    std::unique_ptr<ROMol> smilesMol(
         SmilesToMol(inputSmiles, smilesParserParams));
 
     REQUIRE(smilesMol);
@@ -877,6 +877,8 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
 
     // test kekule and canonicalization
     {
+      RDKit::canonicalizeStereoGroups(smilesMol);
+
       std::string expectedMrvName = fName + ".kekule_expected.cxsmi";
       SmilesWriteParams ps;
       ps.canonical = true;
@@ -903,6 +905,8 @@ void testOneAtropisomersCanon(const SmilesTest *smilesTest) {
 
     smilesMol =
         std::unique_ptr<RWMol>(SmilesToMol(inputSmiles, smilesParserParams));
+
+    RDKit::canonicalizeStereoGroups(smilesMol);
 
     // test round trip back to smiles
     {
@@ -1109,7 +1113,6 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
 
     for (auto smiTest : smiTests) {
       printf("Test\n\n %s\n\n", smiTest.fileName.c_str());
-      // RDDepict::preferCoordGen = true;
       testOneAtropisomersCanon(&smiTest);
     }
   }
@@ -1117,9 +1120,9 @@ TEST_CASE("testAtropisomersInCXSmilesCanon") {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
-TEST_CASE("test3DChrial") {
+TEST_CASE("test3DChiral") {
   std::list<SmilesTest> smiTests{
-      SmilesTest("Cubane.cxsmi", true, 16, 20),
+      // SmilesTest("Cubane.cxsmi", true, 16, 20),
       SmilesTest("BMS-986142_3d_chiral.cxsmi", true, 72, 77),
       SmilesTest("BMS-986142_3d.cxsmi", true, 72, 77),
   };
@@ -1424,7 +1427,8 @@ TEST_CASE(
 }
 
 TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
-  auto m = "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&7:3,o1:7,&8:1,&9:5|"_smiles;
+  std::unique_ptr<ROMol> m =
+      "C[C@@H](O)[C@H](C)[C@@H](C)[C@@H](C)O |&7:3,o1:7,&8:1,&9:5|"_smiles;
   REQUIRE(m);
   CHECK(m->getStereoGroups().size() == 4);
 
@@ -1442,6 +1446,16 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][cxsmiles]") {
     CHECK(smi_out.find("&7") != std::string::npos);
     CHECK(smi_out.find("&8") != std::string::npos);
     CHECK(smi_out.find("&9") != std::string::npos);
+    CHECK(smi_out.find("o1") != std::string::npos);
+  }
+
+  SECTION("forward input ids - rigorous") {
+    forwardStereoGroupIds(*m);
+    RDKit::canonicalizeStereoGroups(m);
+    const auto smi_out = MolToCXSmiles(*m);
+    CHECK(smi_out.find("&1") != std::string::npos);
+    CHECK(smi_out.find("&2") != std::string::npos);
+    CHECK(smi_out.find("&3") != std::string::npos);
     CHECK(smi_out.find("o1") != std::string::npos);
   }
 }

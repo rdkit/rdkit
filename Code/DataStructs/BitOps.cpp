@@ -238,7 +238,7 @@ bool EBVToBitmap(const ExplicitBitVect &bv, const unsigned char *&fp,
   if (!canUseBitmapHack) {
     return false;
   }
-  const auto *p1 = (const bitset_impl *)(const void *)bv.dp_bits;
+  const auto *p1 = (const bitset_impl *)(const void *)bv.dp_bits.get();
   // Run-time sanity check (just in case)
   if (p1->m_num_bits != bv.dp_bits->size()) {
     return false;

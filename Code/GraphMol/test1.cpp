@@ -1581,7 +1581,8 @@ void testHasValenceViolation() {
   auto to_mol = [](const auto &smiles) {
     int debugParse = 0;
     bool sanitize = false;
-    auto mol = RDKit::SmilesToMol(smiles, debugParse, sanitize);
+    std::unique_ptr<RWMol> mol(
+        RDKit::SmilesToMol(smiles, debugParse, sanitize));
     TEST_ASSERT(mol != nullptr);
     mol->updatePropertyCache(false);
     return mol;
@@ -1659,7 +1660,7 @@ void testHasValenceViolation() {
            "[!#6&!#7&!#8](-[#6])=[#6]",  // disallowed list
            "[#6&R](-[#6])=[#6]",         // advanced query features
        }) {
-    auto mol = RDKit::SmartsToMol(smarts);
+    auto mol = v2::SmilesParse::MolFromSmarts(smarts);
     for (auto atom : mol->atoms()) {
       TEST_ASSERT(!atom->hasValenceViolation());
     }
@@ -1684,7 +1685,7 @@ void testGithub6370() {
                  radicalType)
                     .str();
         }
-        RWMol *m = SmilesToMol(smi);
+        auto m = v2::SmilesParse::MolFromSmiles(smi);
         TEST_ASSERT(
             static_cast<int>(m->getAtomWithIdx(0)->getNumRadicalElectrons()) ==
             valence - explicitHCount);
@@ -1713,7 +1714,7 @@ void testGithub6370() {
   // where m = 1, ..., 7 denotes the radical type
   for (int radicalType = 1; radicalType <= 7; radicalType++) {
     std::string smi = (boost::format("[NH4+] |^%d:0|") % radicalType).str();
-    RWMol *m = SmilesToMol(smi);
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
     TEST_ASSERT(
         static_cast<int>(m->getAtomWithIdx(0)->getNumRadicalElectrons()) == 0);
   }

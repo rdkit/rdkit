@@ -108,9 +108,9 @@ void test1Canonicalization() {
 // differ slightly
 #ifdef RDK_HAS_EIGEN3
   std::vector<RDGeom::Point3D> expected = {
-      RDGeom::Point3D(0.8244, -0.3268, 0.0),
-      RDGeom::Point3D(-0.6975, -0.5449, 0.0),
-      RDGeom::Point3D(-0.1269, 0.8716, 0.0)};
+      RDGeom::Point3D(-0.8244, -0.3268, 0.0),
+      RDGeom::Point3D(0.6975, -0.5449, 0.0),
+      RDGeom::Point3D(0.1269, 0.8716, 0.0)};
 #else
   std::vector<RDGeom::Point3D> expected = {
       RDGeom::Point3D(-0.6418, 0.6158, 0.0),

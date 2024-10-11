@@ -261,8 +261,6 @@ else()
 endif()
 
 if (${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 17.0)
-  set(RDKIT_PG_ATEQ_COMMUTATOR "'@='")
-  set(RDKIT_PG_ATEQ_NEGATOR "'@<>'")
   set(RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL "ALTER OPERATOR @= (mol, mol) SET (
     COMMUTATOR = '@=',
     NEGATOR = '@<>'
@@ -271,9 +269,6 @@ if (${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 17.0)
     COMMUTATOR = '@=',
     NEGATOR = '@<>'
 );")
-else()
-  set(RDKIT_PG_ATEQ_COMMUTATOR "'='")
-  set(RDKIT_PG_ATEQ_NEGATOR "'<>'")
 endif()
 
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"

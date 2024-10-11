@@ -7691,7 +7691,6 @@ CAS<~>
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
-    print('smi: ', smi)
     print('inWedges: ', inNoWedges)
 
     self.assertTrue(smi == inNoWedges)
@@ -7769,11 +7768,9 @@ M  END
 
     ps = Chem.SmilesWriteParams()
     ps.canonical = True
+
     smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
-    self.assertTrue(
-      smi ==
-      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|'
-    )
+    self.assertTrue(smi == 'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|')
 
     flags = Chem.CXSmilesFields.CX_COORDS | \
                         Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
@@ -7785,9 +7782,7 @@ M  END
 
     self.assertTrue(
       smi ==
-      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,&1:8|'
-    )
-
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,&1:8|')
     flags = Chem.CXSmilesFields.CX_COORDS | \
                         Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
                         Chem.CXSmilesFields.CX_ATOM_PROPS | \
@@ -7798,6 +7793,28 @@ M  END
       smi ==
       'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),&1:8|'
     )
+
+  def testAtropisomerWedgingRigorousEnhancedStereo(self):
+    m = Chem.MolFromSmiles(
+      'CC1=C(N2C=CC=C2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 16)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    m = Chem.CanonicalizeStereoGroups(m)
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    print('smi: ', smi)
+    self.assertTrue(smi == 'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|')
 
   def test_picklingWithAddedAttribs(self):
     m = Chem.MolFromSmiles("C")
@@ -8222,7 +8239,20 @@ M  END
                      "[NH2:1]c1ccccc1")
     self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False),
                      "c1ccc([NH2:1])cc1")
+
+  def github7873(self):
+    # this used to segfault
+    Chem.MolFromSmiles("C").GetAtomWithIdx(0).SetPDBResidueInfo(None)
     
+  def testSplitMolByPDB(self):
+    mol = Chem.MolFromSmiles("C")
+    res2mol = Chem.SplitMolByPDBResidues(mol)
+    self.assertEqual(len(res2mol), 1)
+    self.assertIn("", res2mol)
+    chain2mol = Chem.SplitMolByPDBChainId(mol)
+    self.assertEqual(len(chain2mol), 1)
+    self.assertIn("", chain2mol)
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

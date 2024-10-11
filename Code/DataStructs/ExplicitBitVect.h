@@ -37,6 +37,7 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
   //! initialize with a particular size and all bits set
   ExplicitBitVect(unsigned int size, bool bitsSet);
   ExplicitBitVect(const ExplicitBitVect &other);
+  ExplicitBitVect(ExplicitBitVect &&other) noexcept;
   //! construct from a string pickle
   ExplicitBitVect(const std::string &pkl);
   //! construct from a text pickle
@@ -51,6 +52,7 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
   ~ExplicitBitVect() override;
 
   ExplicitBitVect &operator=(const ExplicitBitVect &other);
+  ExplicitBitVect &operator=(ExplicitBitVect &&other) noexcept;
   bool operator[](const unsigned int which) const override;
   bool setBit(const unsigned int which) override;
   bool unsetBit(const unsigned int which) override;
@@ -78,7 +80,8 @@ class RDKIT_DATASTRUCTS_EXPORT ExplicitBitVect : public BitVect {
   void clearBits() override { dp_bits->reset(); }
   std::string toString() const override;
 
-  boost::dynamic_bitset<> *dp_bits{nullptr};  //!< our raw storage
+  std::unique_ptr<boost::dynamic_bitset<>> dp_bits{
+      nullptr};  //!< our raw storage
 
   bool operator==(const ExplicitBitVect &o) const {
     return *dp_bits == *o.dp_bits;

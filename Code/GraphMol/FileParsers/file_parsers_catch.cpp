@@ -11,7 +11,6 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-// #include <string_view>
 #include <streambuf>
 
 #include "RDGeneral/test.h"
@@ -6270,7 +6269,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto bondBlockStart = mae.find("m_bond[7]");
     REQUIRE(bondBlockStart != std::string::npos);
 
-    std::string ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
+    std::string_view ctBlock(&mae[ctBlockStart], atomBlockStart - ctBlockStart);
     std::string atomBlock(&mae[atomBlockStart],
                           bondBlockStart - atomBlockStart);
     std::string bondBlock(&mae[bondBlockStart]);
@@ -6445,9 +6444,9 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
     auto ctBlockStart = mae.find("f_m_ct");
     REQUIRE(ctBlockStart != std::string::npos);
 
-    std::string ctBlock(&mae[ctBlockStart]);
+    std::string_view ctBlock(&mae[ctBlockStart]);
 
-    CHECK(ctBlock == MaeWriter::getText(*mol));
+    CHECK((ctBlock == MaeWriter::getText(*mol)));
   }
 }
 
@@ -7156,7 +7155,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit) {};
+        newSgroupCount(newSgroupCountInit){};
 };
 
 void testFragmentation(const FragTest &fragTest) {
@@ -7394,7 +7393,7 @@ TEST_CASE("MolToV2KMolBlock") {
     };
     for (const auto &smi : smileses) {
       INFO(smi);
-      auto m = SmilesToMol(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
       REQUIRE(m);
       CHECK_THROWS_AS(MolToV2KMolBlock(*m), ValueErrorException);
     }
