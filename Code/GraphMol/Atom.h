@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -199,6 +199,9 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
       - requires an owning molecule
   */
   unsigned int getNumImplicitHs() const;
+
+  //! returns the valence (explicit or implicit) of this atom
+  int getValence(bool getExplicit = true) const;
 
   //! returns the explicit valence (including Hs) of this atom
   int getExplicitValence() const;

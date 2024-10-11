@@ -305,24 +305,25 @@ unsigned int Atom::getNumImplicitHs() const {
   return getImplicitValence();
 }
 
-int Atom::getExplicitValence() const {
-  PRECONDITION(
-      d_explicitValence > -1,
-      "getExplicitValence() called without call to calcExplicitValence()");
-  return d_explicitValence;
-}
+int Atom::getExplicitValence() const { return getValence(true); }
 
-int Atom::getImplicitValence() const {
-  PRECONDITION(dp_mol,
-               "valence not defined for atoms not associated with molecules");
-  if (df_noImplicit) {
+int Atom::getImplicitValence() const { return getValence(false); }
+
+int Atom::getValence(bool getExplicit) const {
+  if (!dp_mol) {
     return 0;
   }
-  return d_implicitValence;
+  PRECONDITION((!getExplicit || d_explicitValence > -1),
+               "getValence() called without call to calcExplicitValence()");
+  if (getExplicit) {
+    return d_explicitValence;
+  } else {
+    return df_noImplicit ? 0 : d_implicitValence;
+  }
 }
 
 unsigned int Atom::getTotalValence() const {
-  return getExplicitValence() + getImplicitValence();
+  return static_cast<unsigned int>(getValence(true) + getValence(false));
 }
 
 namespace {
@@ -628,7 +629,7 @@ void Atom::setMonomerInfo(AtomMonomerInfo *info) {
   delete dp_monomerInfo;
   dp_monomerInfo = info;
 }
-  
+
 void Atom::setIsotope(unsigned int what) { d_isotope = what; }
 
 double Atom::getMass() const {
