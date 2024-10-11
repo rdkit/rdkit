@@ -24,6 +24,7 @@ else()
 endif()
 set(RDKit_BUILDNAME "${CMAKE_SYSTEM_NAME}|${CMAKE_SYSTEM_VERSION}|${systemAttribute}|${compilerID}|${bit3264}")
 set(RDKit_EXPORTED_TARGETS rdkit-targets)
+set(RDKitPython_EXPORTED_TARGETS rdkitpython-targets)
 
 
 macro(rdkit_library)
@@ -33,11 +34,19 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
+  # select the export name for the installed library
+  set(exportName ${RDKit_EXPORTED_TARGETS})
+  foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
+    if("${linkLib}" STREQUAL "rdkit_py_base")
+      set(exportName ${RDKitPython_EXPORTED_TARGETS})
+      break()
+    endif()
+  endforeach()
   if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS))
     add_library(${RDKLIB_NAME} ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     if(RDK_INSTALL_DEV_COMPONENT)
-      INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
+      INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${exportName}
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
               COMPONENT dev )
     endif(RDK_INSTALL_DEV_COMPONENT)
@@ -48,7 +57,7 @@ macro(rdkit_library)
     # with g++ unless libraries are shared.
     add_library(${RDKLIB_NAME} SHARED ${RDKLIB_SOURCES})
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
-    INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${RDKit_EXPORTED_TARGETS}
+    INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${exportName}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
             COMPONENT runtime )
     if(RDK_INSTALL_STATIC_LIBS)
@@ -60,7 +69,11 @@ macro(rdkit_library)
           set(skipNext FALSE)
           continue()
         endif()
-        if(TARGET "${linkLib}")
+        if("${linkLib}" STREQUAL "rdkit_py_base")
+          # rdkit_py_base is an interface target, keep it as-is
+          target_link_libraries(${RDKLIB_NAME}_static PUBLIC "${linkLib}")
+          continue()
+        elseif(TARGET "${linkLib}")
           get_target_property(linkLib_IMPORTED "${linkLib}" IMPORTED)
           if (linkLib_IMPORTED)
             # linkLib is an imported target: use it as-is
@@ -97,7 +110,7 @@ macro(rdkit_library)
       endforeach()
       target_link_libraries(${RDKLIB_NAME}_static PUBLIC rdkit_base)
       if(RDK_INSTALL_DEV_COMPONENT)
-        INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${RDKit_EXPORTED_TARGETS}
+        INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${exportName}
                 DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
                 COMPONENT dev )
       endif(RDK_INSTALL_DEV_COMPONENT)
