@@ -645,8 +645,9 @@ std::string FragmentSmartsConstruct(
   // thinks we already called findSSSR - to do some atom ranking
   // but for smarts we are going to ignore that part. We will artificially
   // set the "SSSR" property to an empty property
+
   mol.getRingInfo()->reset();
-  mol.getRingInfo()->initialize();
+  mol.getRingInfo()->initialize(FIND_RING_TYPE_SYMM_SSSR);
   for (auto &atom : mol.atoms()) {
     atom->updatePropertyCache(false);
   }
