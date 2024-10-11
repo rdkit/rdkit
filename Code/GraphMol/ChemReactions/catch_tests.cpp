@@ -1106,7 +1106,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
     CHECK(output_cxsmarts == expected_cxsmarts);
 
-    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(output_cxsmarts);
     REQUIRE(roundtrip);
 
     CHECK(roundtrip->getReactants().size() == 2);
@@ -1235,7 +1235,7 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(sgsProd[0].getProp<unsigned int>("PARENT") == 2);
 
     // Now create the roundtrip and check the same properties.
-    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(output_cxsmarts);
     REQUIRE(roundtrip);
 
     const auto &sgsRoundReact = getSubstanceGroups(*roundtrip->getReactants()[0]);
