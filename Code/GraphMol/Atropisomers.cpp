@@ -320,6 +320,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
     }
   }
 
+
   // the convention is that in the absence of coords, the coordiates are choosen
   // with the lowest numbered atom of the atrop bond down, and the other atom
   // straight up.
@@ -355,6 +356,7 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
           << std::endl;
       return false;
     }
+
     if (bond1DirResult.second == Bond::BEGINWEDGE ||
         bond2DirResult.second == Bond::BEGINDASH) {
       bond->setStereo(Bond::BondStereo::STEREOATROPCCW);
