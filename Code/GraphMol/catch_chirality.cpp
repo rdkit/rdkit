@@ -5966,3 +5966,47 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("findMesoCenters bug") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+
+  SECTION("as reported") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        cases{
+            {"Cl[CH](C)[C@H](C)C[C@H](C)[CH](C)Cl", {{3, 6}}},
+            {"Cl[CH](C)[C@H](C)C[C@@H](C)[CH](C)Cl", {}},
+            {"Cl[C@H](C)[CH](C)C[CH](C)[C@H](C)Cl", {{1, 8}}},
+            {"Cl[C@H](C)[CH](C)C[CH](C)[C@@H](C)Cl", {}},
+            {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@@H](C)Cl", {}},
+            {"Cl[C@H](C)[C@H](C)C[C@@H](C)[C@@H](C)Cl", {}},
+            {"Cl[C@H](C)[C@H](C)C[C@H](C)[C@H](C)Cl", {{1, 8}, {3, 6}}},
+            {"Cl[C@H](C)CC[C@H](C)CC[C@H](C)CC[C@@H](C)Cl",
+             {}},  //< as reported
+            {"Cl[C@H](C)CC[C@H](C)CC[C@H](C)CC[C@H](C)Cl", {{1, 13}, {5, 9}}},
+            // larger examples, propagating outwards
+            {"Cl[C@H](C)[C@@H](Cl)[C@H](C)C[C@H](C)[C@H](Cl)[C@H](Cl)C", {}},
+            {"Cl[C@H](C)[C@@H](Cl)[C@H](C)C[C@H](C)[C@@H](Cl)[C@H](Cl)C", {}},
+            {"Cl[C@H](C)[C@@H](Cl)[C@H](C)C[C@H](C)[C@@H](Cl)[C@@H](Cl)C",
+             {{1, 12}, {3, 10}, {5, 8}}},
+
+        };
+    for (auto &[smi, expected] : cases) {
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      auto res = Chirality::findMesoCenters(*m);
+      CHECK(res.size() == expected.size());
+      CHECK(res == expected);
+      for (auto [a1, a2] : res) {
+        unsigned int oa = m->getNumAtoms() + 1;
+        CHECK(m->getAtomWithIdx(a1)->getPropIfPresent(
+            common_properties::_mesoOtherAtom, oa));
+        CHECK(oa == a2);
+        CHECK(m->getAtomWithIdx(a2)->getPropIfPresent(
+            common_properties::_mesoOtherAtom, oa));
+        CHECK(oa == a1);
+      }
+    }
+  }
+}
