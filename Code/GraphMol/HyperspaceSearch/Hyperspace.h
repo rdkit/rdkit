@@ -19,6 +19,7 @@
 
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/HyperspaceSearch/ReactionSet.h>
+#include <GraphMol/HyperspaceSearch/SubstructureResults.h>
 
 namespace RDKit {
 class ROMol;
@@ -57,7 +58,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
 
   // Do a substructure search for query in the hyperspace.  Return vector of
   // molecules that match.
-  std::vector<std::unique_ptr<ROMol>> substructureSearch(
+  SubstructureResults substructureSearch(
       const ROMol &query,
       HyperspaceSearchParams params = HyperspaceSearchParams());
 

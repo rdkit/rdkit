@@ -18,20 +18,42 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-python::list substructureSearch_helper(HyperspaceSearch::Hyperspace &self,
-                                       const ROMol &query,
-                                       const python::object &py_params) {
+python::list hitMolecules_helper(
+    const HyperspaceSearch::SubstructureResults &res) {
+  python::list pyres;
+  for (auto &r : res.hitMolecules()) {
+    pyres.append(boost::shared_ptr<ROMol>(new ROMol(*r)));
+  }
+  return pyres;
+}
+
+struct HyperspaceResults_wrapper {
+  static void wrap() {
+    std::string docString = "Used to return results of Hyperspace searches.";
+    python::class_<RDKit::HyperspaceSearch::SubstructureResults>(
+        "HyperspaceResult", docString.c_str(), python::no_init)
+        .def("hitMolecules", hitMolecules_helper, python::args("self"),
+             "A function returning hits from the search")
+        .def_readonly("maxNumResults",
+                      &HyperspaceSearch::SubstructureResults::maxNumResults,
+                      "The upper bound on number of results possible.  There"
+                      " may be fewer than this in practice for several reasons"
+                      " such as duplicate reagent sets being removed or the"
+                      " final product not matching the query even though the"
+                      " synthons suggested they would.");
+  }
+};
+
+HyperspaceSearch::SubstructureResults substructureSearch_helper(
+    HyperspaceSearch::Hyperspace &self, const ROMol &query,
+    const python::object &py_params) {
   HyperspaceSearch::HyperspaceSearchParams params;
   if (!py_params.is_none()) {
     params =
         python::extract<HyperspaceSearch::HyperspaceSearchParams>(py_params);
   }
   auto results = self.substructureSearch(query, params);
-  python::list pyres;
-  for (auto &r : results) {
-    pyres.append(boost::shared_ptr<ROMol>(r.release()));
-  }
-  return pyres;
+  return results;
 }
 
 void summariseHelper(HyperspaceSearch::Hyperspace &self) {
@@ -42,6 +64,9 @@ BOOST_PYTHON_MODULE(rdHyperspaceSearch) {
   python::scope().attr("__doc__") =
       "Module containing implementation of Hyperspace search of"
       " Synthon-based chemical libraries such as Enamine REAL.";
+
+  HyperspaceResults_wrapper::wrap();
+
   std::string docString = "HyperspaceSearch parameters.";
   python::class_<RDKit::HyperspaceSearch::HyperspaceSearchParams,
                  boost::noncopyable>("HyperspaceSearchParams",

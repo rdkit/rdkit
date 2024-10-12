@@ -4,7 +4,7 @@ rdkit_library(HyperspaceSearch
         LINK_LIBRARIES SmilesParse FileParsers ChemTransforms Fingerprints SubstructMatch GraphMol)
 target_compile_definitions(HyperspaceSearch PRIVATE RDKIT_HYPERSPACE_SEARCH_BUILD)
 
-rdkit_headers(HyperspaceSubstructureSearch.h Hyperspace.h ReactionSet.h Reagent.h
+rdkit_headers(HyperspaceSubstructureSearch.h Hyperspace.h ReactionSet.h Reagent.h SubstructureResults.h
         DEST GraphMol/HyperspaceSearch)
 
 rdkit_catch_test(testHyperspaceSearch hyperspace_search_catch.cpp

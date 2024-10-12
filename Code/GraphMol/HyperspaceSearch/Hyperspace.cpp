@@ -33,7 +33,7 @@
 
 namespace RDKit::HyperspaceSearch {
 
-std::vector<std::unique_ptr<ROMol>> Hyperspace::substructureSearch(
+SubstructureResults Hyperspace::substructureSearch(
     const ROMol &query, HyperspaceSearchParams params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
@@ -48,7 +48,7 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::substructureSearch(
   //    }
   //  }
   std::vector<HyperspaceHitSet> allHits;
-  size_t totHits = 0;
+  int totHits = 0;
   for (auto &fragSet : fragments) {
     auto theseHits = searchFragSet(fragSet);
     if (!theseHits.empty()) {
@@ -75,7 +75,7 @@ std::vector<std::unique_ptr<ROMol>> Hyperspace::substructureSearch(
   if (params.buildHits) {
     buildHits(allHits, query, results, params.maxHits);
   }
-  return results;
+  return SubstructureResults{std::move(results), totHits};
 }
 
 namespace {
