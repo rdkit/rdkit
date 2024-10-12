@@ -57,8 +57,6 @@ SubstructureResults Hyperspace::substructureSearch(
           [&](const size_t prevVal, const HyperspaceHitSet &hs) -> size_t {
             return prevVal + hs.numHits;
           });
-      std::cout << "Total number of hits no more than " << totHits << "."
-                << std::endl;
       allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
     }
   }
