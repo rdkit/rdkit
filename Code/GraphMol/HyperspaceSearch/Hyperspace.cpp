@@ -52,7 +52,7 @@ SubstructureResults Hyperspace::substructureSearch(
   for (auto &fragSet : fragments) {
     auto theseHits = searchFragSet(fragSet);
     if (!theseHits.empty()) {
-      totHits += std::reduce(
+      totHits += std::accumulate(
           theseHits.begin(), theseHits.end(), 0,
           [&](const size_t prevVal, const HyperspaceHitSet &hs) -> size_t {
             return prevVal + hs.numHits;
@@ -465,11 +465,11 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
         auto theseReagents =
             getHitReagents(connComb, passedScreens, reaction, ro);
         if (!theseReagents.empty()) {
-          size_t numHits =
-              std::reduce(theseReagents.begin(), theseReagents.end(), 1,
-                          [&](int prevRes, const boost::dynamic_bitset<> &s2) {
-                            return prevRes * s2.count();
-                          });
+          size_t numHits = std::accumulate(
+              theseReagents.begin(), theseReagents.end(), 1,
+              [&](int prevRes, const boost::dynamic_bitset<> &s2) {
+                return prevRes * s2.count();
+              });
           if (numHits) {
             //            for (size_t i = 0; i < theseReagents.size(); ++i) {
             //              std::cout << reaction->id() << " reagents " << i <<

@@ -68,10 +68,10 @@ TEST_CASE("Test splits 1", "[Test splits 1]") {
     REQUIRE(mol);
     auto fragments = splitMolecule(*mol, 3);
     CHECK(fragments.size() ==
-          std::reduce(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
+          std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.
     for (size_t j = 0; j < 4; ++j) {
-      auto numFragSets = std::reduce(
+      auto numFragSets = std::accumulate(
           fragments.begin(), fragments.end(), size_t(0),
           [&](size_t prevRes, std::vector<std::unique_ptr<ROMol>> &frags) {
             if (frags.size() == j + 1) {
@@ -388,6 +388,7 @@ TEST_CASE("Biggy", "[Biggy]") {
                                         "c1nncn1",
                                         "C(=O)NC(CC)C(=O)N(CC)C"};
     const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
+    const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
     HyperspaceSearchParams params;
     params.maxHits = -1;
     for (size_t i = 0; i < smis.size(); ++i) {
@@ -412,7 +413,7 @@ TEST_CASE("Biggy", "[Biggy]") {
            << std::endl;
       }
       CHECK(results.hitMolecules().size() == numRes[i]);
-      CHECK(results.maxNumResults() == static_cast<int>(numRes[i]));
+      CHECK(results.maxNumResults() == static_cast<int>(maxRes[i]));
     }
   }
 #endif
