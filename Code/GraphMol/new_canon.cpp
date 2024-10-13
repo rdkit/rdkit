@@ -268,8 +268,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 #ifdef VERBOSE_CANON
   std::cerr << "1--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    std::cerr << order[i] + 1 << " "
-              << " index: " << atoms[order[i]].index
+    std::cerr << order[i] + 1 << " " << " index: " << atoms[order[i]].index
               << " count: " << count[order[i]] << std::endl;
   }
 #endif
@@ -279,8 +278,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 #ifdef VERBOSE_CANON
   std::cerr << "1a--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    std::cerr << order[i] + 1 << " "
-              << " index: " << atoms[order[i]].index
+    std::cerr << order[i] + 1 << " " << " index: " << atoms[order[i]].index
               << " count: " << count[order[i]] << std::endl;
   }
 #endif
@@ -289,8 +287,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 #ifdef VERBOSE_CANON
   std::cerr << "2--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    std::cerr << order[i] + 1 << " "
-              << " index: " << atoms[order[i]].index
+    std::cerr << order[i] + 1 << " " << " index: " << atoms[order[i]].index
               << " count: " << count[order[i]] << std::endl;
   }
 #endif
@@ -310,8 +307,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 #ifdef VERBOSE_CANON
     std::cerr << "2a--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-      std::cerr << order[i] + 1 << " "
-                << " index: " << atoms[order[i]].index
+      std::cerr << order[i] + 1 << " " << " index: " << atoms[order[i]].index
                 << " count: " << count[order[i]] << std::endl;
     }
 #endif
@@ -349,8 +345,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 #ifdef VERBOSE_CANON
     std::cerr << "2b--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-      std::cerr << order[i] + 1 << " "
-                << " index: " << atoms[order[i]].index
+      std::cerr << order[i] + 1 << " " << " index: " << atoms[order[i]].index
                 << " count: " << count[order[i]] << std::endl;
     }
 #endif
@@ -361,8 +356,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 #ifdef VERBOSE_CANON
     std::cerr << "3--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-      std::cerr << order[i] + 1 << " "
-                << " index: " << atoms[order[i]].index
+      std::cerr << order[i] + 1 << " " << " index: " << atoms[order[i]].index
                 << " count: " << count[order[i]] << std::endl;
     }
 #endif
@@ -766,7 +760,7 @@ void updateAtomNeighborNumSwaps(
 void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
                   bool breakTies, bool includeChirality, bool includeIsotopes,
                   bool includeAtomMaps, bool includeChiralPresence,
-                  bool includeStereoGroups) {
+                  bool includeStereoGroups, bool useNonStereoRanks) {
   if (!mol.getNumAtoms()) {
     return;
   }
@@ -785,6 +779,7 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useChirality = includeChirality;
   ftor.df_useChiralityRings = includeChirality;
   ftor.df_useAtomMaps = includeAtomMaps;
+  ftor.df_useNonStereoRanks = useNonStereoRanks;
   ftor.df_useChiralPresence = includeChiralPresence;
 
   auto order = std::make_unique<int[]>(mol.getNumAtoms());
