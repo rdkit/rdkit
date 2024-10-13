@@ -10,6 +10,8 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes
+- The functions getImplicitValence() and getNumImplicitHs() now return 0 for atoms that are not associated with molecules (previously they threw exceptions)
+
 
 ## New Features and Enhancements:
 

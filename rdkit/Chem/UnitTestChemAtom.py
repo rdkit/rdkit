@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2003-2006  Rationa Discovery LLC
+#  Copyright (C) 2003-2024 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -62,13 +61,7 @@ class TestCase(unittest.TestCase):
     assert a.GetAtomicNum() == 6
     a.SetFormalCharge(1)
     assert a.GetFormalCharge() == 1
-    try:
-      a.GetImplicitValence()
-    except RuntimeError:
-      ok = 1
-    else:
-      ok = 0
-    assert ok
+    assert a.GetImplicitValence() == 0
 
 
 if __name__ == '__main__':
