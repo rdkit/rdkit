@@ -1102,11 +1102,13 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
 
-    auto expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>>[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;$,atomProp:0.molAtomMapNumber.1:1.molAtomMapNumber.2:2.molAtomMapNumber.3:3.molAtomMapNumber.4:4.molAtomMapNumber.5:5.molAtomMapNumber.6:6.molAtomMapNumber.7:7.molAtomMapNumber.1:8.molAtomMapNumber.2:9.molAtomMapNumber.3:10.molAtomMapNumber.6:11.molAtomMapNumber.5|";
-    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
-    CHECK(output_cxsmarts == expected_cxsmarts);
+    auto expected_cxsmiles = "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;$|";
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    std::string output_cxsmiles = ChemicalReactionToRxnCXSmiles(*rxn, params, flags);
+    CHECK(output_cxsmiles == expected_cxsmiles);
 
-    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(output_cxsmarts);
+    auto roundtrip = v2::ReactionParser::ReactionFromSmiles(output_cxsmiles);
     REQUIRE(roundtrip);
 
     CHECK(roundtrip->getReactants().size() == 2);
@@ -1132,7 +1134,13 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
 
-    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToRxnCXSmarts(*rxn));
+    std::string expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>O=C=O>[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|";
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn, params, flags);
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(output_cxsmarts);
+
+
     REQUIRE(roundtrip);
     CHECK(roundtrip->getReactants().size() == 2);
     CHECK(roundtrip->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
@@ -1141,6 +1149,9 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(roundtrip->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
+
+    CHECK(output_cxsmarts == expected_cxsmarts);
+
   }
 
   SECTION("missing products") {
@@ -1167,8 +1178,10 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
 
-    std::string expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>> |$;;;_AP1;;;_AP1$,atomProp:0.molAtomMapNumber.1:1.molAtomMapNumber.2:2.molAtomMapNumber.3:3.molAtomMapNumber.4:4.molAtomMapNumber.5:5.molAtomMapNumber.6:6.molAtomMapNumber.7|";
-    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
+    std::string expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>> |$;;;_AP1;;;_AP1$|";
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn, params, flags);
     CHECK(output_cxsmarts == expected_cxsmarts);
   }
   
@@ -1200,10 +1213,10 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     
     // Test that coordinate bonds are preserved.
     SmilesWriteParams params;
-    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS;
-    auto rxn_string = ChemicalReactionToRxnCXSmarts(*rxn, params, flags);
-    auto expected_string = "[#6H3:1]-[#6H:2](-[#6H3:3])-[#0:4].[Fe:8]<-[#8H:5]-[#6H2:6]-[#0:7]>>[Fe:8]<-[#8H:5]-[#6H2:6]-[#6H2:1]-[#6H:2](-[#6H3:3])-[#0:4] |$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|";
-    CHECK(rxn_string == expected_string);
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    auto output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn, params, flags);
+    auto expected_cxsmarts = "[#6H3:1]-[#6H:2](-[#6H3:3])-[#0:4].[Fe:8]<-[#8H:5]-[#6H2:6]-[#0:7]>>[Fe:8]<-[#8H:5]-[#6H2:6]-[#6H2:1]-[#6H:2](-[#6H3:3])-[#0:4] |$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|";
+    CHECK(output_cxsmarts == expected_cxsmarts);
   }
 
   SECTION("sgroup hierarchy") {
@@ -1212,9 +1225,11 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     "|$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,SgD:7,6:foo:baz::::,Sg:n:4,2,1,0::ht,Sg:n:10,8,7,6::ht,SgH:2:0,3:1|"_rxnsmiles;
     // clang-format on
     REQUIRE(rxn);
-
-    std::string expected_cxsmarts = "[#6H3:6]-[#8:5]-[#6H:3](-*)-[#8:2]-*>>[#6H3:6]-[#7H:5]-[#6H:3](-*)-[#8:2]-* |$;;;star_e;;star_e;;;;star_e;;star_e$,atomProp:0.molAtomMapNumber.6:1.molAtomMapNumber.5:2.molAtomMapNumber.3:4.molAtomMapNumber.2:6.molAtomMapNumber.6:7.molAtomMapNumber.5:8.molAtomMapNumber.3:10.molAtomMapNumber.2,SgD:1,0:foo:bar::::,,SgD:7,6:foo:baz::::,,,Sg:n:4,2,1,0::ht:::,,Sg:n:10,8,7,6::ht:::,SgH:3:1.1|";
-    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn);
+    
+    std::string expected_cxsmarts = "[#6H3:6]-[#8:5]-[#6H:3](-*)-[#8:2]-*>>[#6H3:6]-[#7H:5]-[#6H:3](-*)-[#8:2]-* |$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,,SgD:7,6:foo:baz::::,,,Sg:n:4,2,1,0::ht:::,,Sg:n:10,8,7,6::ht:::,SgH:3:1.1|"; 
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS;
+    std::string output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn, params, flags);
     CHECK(output_cxsmarts == expected_cxsmarts);
 
     // Test properties of the rxn itself.
@@ -1347,6 +1362,12 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(roundtrip->getProducts()[0]->getBondWithIdx(1)->getPropIfPresent(
         "_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
+
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    auto output_cxsmarts = ChemicalReactionToRxnCXSmarts(*rxn, params, flags);
+    auto expected_cxsmarts = "[#6]-[#6](-[#8])(-[#9])-[#17]>>[#6]-[#6](-[#7])(-[#9])-[#17] |w:1.0,6.5|";
+    CHECK(output_cxsmarts == expected_cxsmarts);
   }
 }
 
