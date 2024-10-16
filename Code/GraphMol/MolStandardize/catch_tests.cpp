@@ -481,7 +481,9 @@ M  END
     m->updatePropertyCache();
     MolOps::fastFindRings(*m);
     MolOps::setBondStereoFromDirections(*m);
-    MolOps::removeHs(*m, false, false, false);
+    MolOps::RemoveHsParameters rhp;
+    bool sanitize = false;
+    MolOps::removeHs(*m, rhp, sanitize);
     std::unique_ptr<RWMol> res((RWMol *)nrml.normalize(*m));
     REQUIRE(res);
     MolOps::sanitizeMol(*res);

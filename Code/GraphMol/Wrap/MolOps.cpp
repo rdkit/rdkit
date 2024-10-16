@@ -191,19 +191,19 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 namespace {
 std::string getResidue(const ROMol &, const Atom *at) {
   auto monomerInfo = at->getMonomerInfo();
-  if (!monomerInfo || monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+  if (!monomerInfo ||
+      monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)
-      ->getResidueName();
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getResidueName();
 }
 std::string getChainId(const ROMol &, const Atom *at) {
-auto monomerInfo = at->getMonomerInfo();
-  if (!monomerInfo || monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+  auto monomerInfo = at->getMonomerInfo();
+  if (!monomerInfo ||
+      monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)
-      ->getChainId();
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getChainId();
 }
 }  // namespace
 python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
@@ -1327,6 +1327,10 @@ struct molops_wrapper {
       will not be removed\n\
     - Hs that are not connected to anything else will not be removed\n\
 \n ";
+#if defined(__GNUC__) or defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     python::def("RemoveHs",
                 (ROMol * (*)(const ROMol &, bool, bool, bool)) MolOps::removeHs,
                 (python::arg("mol"), python::arg("implicitOnly") = false,
@@ -1334,6 +1338,9 @@ struct molops_wrapper {
                  python::arg("sanitize") = true),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
+#if defined(__GNUC__) or defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
     // ------------------------------------------------------------------------
     docString = R"DOC(Parameters controlling which Hs are removed.)DOC";

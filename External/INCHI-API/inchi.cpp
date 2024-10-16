@@ -1652,7 +1652,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
     try {
       if (sanitize) {
         if (removeHs) {
-          MolOps::removeHs(*m, false, false);
+          MolOps::removeHs(*m);
         } else {
           MolOps::sanitizeMol(*m);
         }
