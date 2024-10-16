@@ -1091,7 +1091,9 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
 //! Lightweight sortable wrapper that references a CIP entry and keeps track of
 //! the current rank.
 struct SortableCIPReference {
-  SortableCIPReference(CIP_ENTRY* cipRef, const int atomIdx): cip(cipRef), atomIdx(atomIdx) {}
+  SortableCIPReference(CIP_ENTRY* cipRef, const int atomIdx): cip(cipRef), atomIdx(atomIdx) {
+    CHECK_INVARIANT(cip != nullptr, "null CIP entry");
+  }
   SortableCIPReference(SortableCIPReference && other) noexcept {
     cip = other.cip;
     atomIdx = other.atomIdx;
@@ -1099,6 +1101,9 @@ struct SortableCIPReference {
     currRank = other.currRank;
   }
   SortableCIPReference & operator=(SortableCIPReference && other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
     cip = other.cip;
     atomIdx = other.atomIdx;
     other.cip = nullptr;
@@ -1107,16 +1112,20 @@ struct SortableCIPReference {
   }
 
   bool operator==( const SortableCIPReference & rhs ) const {
+    PRECONDITION(cip != nullptr, "null CIP entry");
+    PRECONDITION(rhs.cip != nullptr, "null CIP entry");
     return *cip == *rhs.cip;
   }
 
   bool operator<( const SortableCIPReference & rhs ) const {
+    PRECONDITION(cip != nullptr, "null CIP entry");
+    PRECONDITION(rhs.cip != nullptr, "null CIP entry");
     return *cip < *rhs.cip;
   }
 
 
 
-  CIP_ENTRY* cip;
+  CIP_ENTRY* cip = nullptr;
   int atomIdx = -1;
   int currRank = -1;
 };
