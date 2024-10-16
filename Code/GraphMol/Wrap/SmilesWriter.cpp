@@ -29,7 +29,6 @@ SmilesWriter *getSmilesWriter(python::object &fileobj,
                               bool includeHeader = true,
                               bool isomericSmiles = true,
                               bool kekuleSmiles = false) {
-  // FIX: minor leak here
   auto *sb = new streambuf(fileobj, 't');
   auto *ost = new streambuf::ostream(sb);
   return new SmilesWriter(ost, delimiter, nameHeader, includeHeader, true,
