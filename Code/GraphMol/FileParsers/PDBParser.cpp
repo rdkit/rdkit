@@ -656,7 +656,7 @@ std::unique_ptr<RWMol> parsePdbBlock(const char *str, bool sanitize,
 
   if (sanitize) {
     if (removeHs) {
-      MolOps::removeHs(*mol, false, false);
+      MolOps::removeHs(*mol);
     } else {
       MolOps::sanitizeMol(*mol);
     }
