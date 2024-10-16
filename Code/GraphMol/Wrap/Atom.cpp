@@ -104,7 +104,7 @@ std::string AtomGetSmarts(const Atom *atom, bool doKekule, bool allHsExplicit,
 }
 
 void SetAtomMonomerInfo(Atom *atom, const AtomMonomerInfo *info) {
-  if(!info) {
+  if (!info) {
     atom->setMonomerInfo(nullptr);
   } else {
     atom->setMonomerInfo(info->copy());
@@ -116,12 +116,12 @@ AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
 }
 
 void AtomSetPDBResidueInfo(Atom *atom, const AtomMonomerInfo *info) {
-  if(!info) {
+  if (!info) {
     // This clears out the monomer info
     atom->setMonomerInfo(nullptr);
     return;
   }
-  
+
   if (info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     throw_value_error("MonomerInfo is not a PDB Residue");
   }
@@ -150,6 +150,10 @@ Note that, though it is possible to create one, having an Atom on its own\n\
 (i.e not associated with a molecule) is not particularly useful.\n";
 struct atom_wrapper {
   static void wrap() {
+#if defined(__GNUC__) or defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     python::class_<Atom>(
         "Atom", atomClassDoc.c_str(),
         python::init<std::string>(python::args("self", "what")))
@@ -199,7 +203,6 @@ struct atom_wrapper {
              "      Defaults to 0.\n")
         .def("GetNumImplicitHs", &Atom::getNumImplicitHs, python::args("self"),
              "Returns the total number of implicit Hs on the atom.\n")
-
         .def("GetExplicitValence", &Atom::getExplicitValence,
              python::args("self"),
              "Returns the explicit valence of the atom.\n")
@@ -455,6 +458,9 @@ struct atom_wrapper {
              (python::arg("self"), python::arg("mapno"),
               python::arg("strict") = false),
              "Sets the atoms map number, a value of 0 clears the atom map");
+#if defined(__GNUC__) or defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
     python::enum_<Atom::HybridizationType>("HybridizationType")
         .value("UNSPECIFIED", Atom::UNSPECIFIED)

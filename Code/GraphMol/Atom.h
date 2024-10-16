@@ -163,68 +163,41 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   }
   //! returns the explicit degree of the Atom (number of bonded
   //!   neighbors in the graph)
-  /*!
-    <b>Notes:</b>
-      - requires an owning molecule
-  */
   unsigned int getDegree() const;
 
   //! returns the total degree of the Atom (number of bonded
   //!   neighbors + number of Hs)
-  /*!
-    <b>Notes:</b>
-      - requires an owning molecule
-  */
   unsigned int getTotalDegree() const;
 
   //! \brief returns the total number of Hs (implicit and explicit) that
   //! this Atom is bound to
-  /*!
-    <b>Notes:</b>
-      - requires an owning molecule
-  */
   unsigned int getTotalNumHs(bool includeNeighbors = false) const;
+
+  //! returns the number of Hs (explicit or implicit) of this atom
+  int getNumHs(bool getExplicit = true) const;
 
   //! \brief returns the total valence (implicit and explicit)
   //! for an atom
-  /*!
-    <b>Notes:</b>
-      - requires an owning molecule
-  */
   unsigned int getTotalValence() const;
 
   //! returns the number of implicit Hs this Atom is bound to
-  /*!
-    <b>Notes:</b>
-      - requires an owning molecule
-  */
   unsigned int getNumImplicitHs() const;
 
   //! returns the valence (explicit or implicit) of this atom
   int getValence(bool getExplicit = true) const;
 
   //! returns the explicit valence (including Hs) of this atom
+  [[deprecated("please use getValence(true)")]]
   int getExplicitValence() const;
 
   //! returns the implicit valence for this Atom
-  /*!
-    <b>Notes:</b>
-      - requires an owning molecule
-  */
+  [[deprecated("please use getValence(false)")]]
   int getImplicitValence() const;
 
   //! returns whether the atom has a valency violation or not
-  /*!
-    <b>Notes:</b>
-      - requires an owning molecule
-  */
   bool hasValenceViolation() const;
 
   //! returns the number of radical electrons for this Atom
-  /*!
-    <b>Notes:</b>
-      - requires an owning molecule
-  */
   unsigned int getNumRadicalElectrons() const { return d_numRadicalElectrons; }
   void setNumRadicalElectrons(unsigned int num) { d_numRadicalElectrons = num; }
 

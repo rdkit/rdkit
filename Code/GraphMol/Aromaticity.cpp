@@ -283,7 +283,7 @@ bool incidentMultipleBond(const Atom *at) {
       --deg;
     }
   }
-  return at->getExplicitValence() != deg;
+  return at->getValence(true) != deg;
 }
 
 bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
@@ -489,7 +489,7 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   // than one double or triple bond. This is to handle
   // the situation:
   //   C1=C=NC=N1 (sf.net bug 1934360)
-  int nUnsaturations = at->getExplicitValence() - at->getDegree();
+  int nUnsaturations = at->getValence(true) - at->getDegree();
   if (nUnsaturations > 1) {
     unsigned int nMult = 0;
     const auto &mol = at->getOwningMol();
@@ -667,7 +667,7 @@ int countAtomElec(const Atom *at) {
     // we detect this using the total unsaturation, because we
     // know that there aren't multiple unsaturations (detected
     // above in isAtomCandForArom())
-    int nUnsaturations = at->getExplicitValence() - at->getDegree();
+    int nUnsaturations = at->getValence(true) - at->getDegree();
     if (nUnsaturations > 1) {
       res = 1;
     }
@@ -988,8 +988,7 @@ void setMMFFAromaticity(RWMol &mol) {
           // if not, move on
           if ((atom->getAtomicNum() != 6) &&
               (!((atom->getAtomicNum() == 7) &&
-                 ((atom->getExplicitValence() + atom->getNumImplicitHs()) ==
-                  4)))) {
+                 ((atom->getValence(true) + atom->getNumImplicitHs()) == 4)))) {
             continue;
           }
           // loop over neighbors

@@ -1646,7 +1646,7 @@ M  END)CTAB";
     REQUIRE(mol);
     mol->updatePropertyCache();
     CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
-    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 0);
+    CHECK(mol->getAtomWithIdx(0)->getValence(true) == 0);
     CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 0);
     auto outBlock = MolToMolBlock(*mol);
     REQUIRE(outBlock.find("0  0 15") != std::string::npos);
@@ -1668,7 +1668,7 @@ M  END)CTAB";
     REQUIRE(mol);
     mol->updatePropertyCache();
     CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
-    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 5);
+    CHECK(mol->getAtomWithIdx(0)->getValence(true) == 5);
     CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 5);
     auto outBlock = MolToMolBlock(*mol);
     REQUIRE(outBlock.find("0  0  5") != std::string::npos);
@@ -7155,7 +7155,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit){};
+        newSgroupCount(newSgroupCountInit) {};
 };
 
 void testFragmentation(const FragTest &fragTest) {

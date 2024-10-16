@@ -10,7 +10,7 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes
-- The functions getImplicitValence() and getNumImplicitHs() now return 0 for atoms that are not associated with molecules (previously they threw exceptions)
+- The functions getImplicitValence(), getNumImplicitHs(), getDegree(), and getTotalDegree(), now return 0 for atoms that are not associated with molecules (previously they threw exceptions)
 
 
 ## New Features and Enhancements:
@@ -26,6 +26,8 @@ GitHub)
 
 
 ## Deprecated code (to be removed in a future release):
+- The functions Atom::getImplicitValence() and Atom::getExplicitValence() are deprecated, please use Atom::getValence() instead
+- The functions Atom::getNumImplicitHs() is deprecated, please use Atom::getNumHs() instead
 
 # Release_2024.09.1
 (Changes relative to Release_2024.03.1)

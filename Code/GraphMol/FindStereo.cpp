@@ -89,9 +89,8 @@ bool isAtomPotentialTetrahedralCenter(const Atom *atom) {
         // sulfur or selenium with either a positive charge or a double
         // bond:
         if ((atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) &&
-            (atom->getExplicitValence() == 4 ||
-             (atom->getExplicitValence() == 3 &&
-              atom->getFormalCharge() == 1))) {
+            (atom->getValence(true) == 4 ||
+             (atom->getValence(true) == 3 && atom->getFormalCharge() == 1))) {
           legalCenter = true;
         } else if (atom->getAtomicNum() == 7) {
           // three-coordinate N additional requirements:

@@ -1091,16 +1091,15 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
 
 struct PrecomputedBondFeatures {
   //! Pairs of {atom index, counts}, strided by 8 for each atom.
-  std::vector<std::pair<std::uint8_t,int>> countsAndNeighborIndices;
+  std::vector<std::pair<std::uint8_t, int>> countsAndNeighborIndices;
   //! Number of neighbors per atom.
   std::vector<std::uint8_t> numNeighbors;
-
 };
 
 constexpr int kMaxBonds = 8;
 
 //! Lookup neighbor indices and compute counts for each atom.
-PrecomputedBondFeatures computeBondFeatures(const ROMol& mol) {
+PrecomputedBondFeatures computeBondFeatures(const ROMol &mol) {
   PrecomputedBondFeatures features;
   const unsigned int numAtoms = mol.getNumAtoms();
   features.countsAndNeighborIndices.resize(numAtoms * kMaxBonds);
@@ -1111,7 +1110,8 @@ PrecomputedBondFeatures computeBondFeatures(const ROMol& mol) {
     for (const auto bond : mol.atomBonds(mol[atomIdx])) {
       const unsigned int nbrIdx = bond->getOtherAtomIdx(atomIdx);
       features.numNeighbors[nbrIdx]++;
-      auto& [count, neighborIndex] = features.countsAndNeighborIndices[indexOffset];
+      auto &[count, neighborIndex] =
+          features.countsAndNeighborIndices[indexOffset];
       neighborIndex = nbrIdx;
 
       // put the neighbor in 2N times where N is the bond order as a double.
@@ -1145,8 +1145,6 @@ PrecomputedBondFeatures computeBondFeatures(const ROMol& mol) {
 
       ++indexOffset;
     }
-
-
   }
   return features;
 }
@@ -1214,25 +1212,25 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     // for each atom, get a sorted list of its neighbors' ranks:
     //
     for (unsigned int index = 0; index < numAtoms; ++index) {
-
       const unsigned int indexOffset = kMaxBonds * index;
       const int numNeighbors = bondFeatures.numNeighbors[index];
 
-      auto* sortBegin = &bondFeatures.countsAndNeighborIndices[indexOffset];
-      auto* sortEnd = sortBegin + numNeighbors + 1;
+      auto *sortBegin = &bondFeatures.countsAndNeighborIndices[indexOffset];
+      auto *sortEnd = sortBegin + numNeighbors + 1;
 
       // For each of our neighbors' ranks weighted by bond type, copy it N times
       // to our cipEntry in reverse rank order, where N is the weight.
       if (numNeighbors > 1) {  // compare vs 1 for performance.
         std::sort(sortBegin, sortEnd,
-                  [&ranks](const std::pair<std::uint8_t, int>& countAndIdx1,
-                           const std::pair<std::uint8_t, int>& countAndIdx2) {
-                    return ranks[countAndIdx1.second] > ranks[countAndIdx2.second];
+                  [&ranks](const std::pair<std::uint8_t, int> &countAndIdx1,
+                           const std::pair<std::uint8_t, int> &countAndIdx2) {
+                    return ranks[countAndIdx1.second] >
+                           ranks[countAndIdx2.second];
                   });
       }
       auto &cipEntry = cipEntries[index];
-      for (auto* iter = sortBegin; iter != sortEnd; ++iter) {
-        const auto& [count, idx] = *iter;
+      for (auto *iter = sortBegin; iter != sortEnd; ++iter) {
+        const auto &[count, idx] = *iter;
         cipEntry.insert(cipEntry.end(), count, ranks[idx] + 1);
       }
       // add a zero for each coordinated H as long as we're not a query atom
@@ -1658,9 +1656,8 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
           // (this is from InChI)
           legalCenter = true;
         } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
-          if (atom->getExplicitValence() == 4 ||
-              (atom->getExplicitValence() == 3 &&
-               atom->getFormalCharge() == 1)) {
+          if (atom->getValence(true) == 4 ||
+              (atom->getValence(true) == 3 && atom->getFormalCharge() == 1)) {
             // we also accept sulfur or selenium with either a positive charge
             // or a double bond:
             legalCenter = true;
@@ -3488,7 +3485,7 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
       parity = 1 - parity;
     }
     atom->setChiralTag(chiralTypeVect[parity]);
-    if (atom->getImplicitValence() == -1) {
+    if (atom->getValence(false) == -1) {
       atom->calcExplicitValence(false);
       atom->calcImplicitValence(false);
     }
@@ -3729,7 +3726,7 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
              atom->getChiralTag() != Atom::CHI_UNSPECIFIED)) {
           continue;
         }
-        if (atom->getImplicitValence() == -1) {
+        if (atom->getValence(false) == -1) {
           atom->calcExplicitValence(false);
           atom->calcImplicitValence(false);
         }

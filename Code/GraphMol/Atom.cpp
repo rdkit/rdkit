@@ -270,6 +270,9 @@ std::string Atom::getSymbol() const {
 }
 
 unsigned int Atom::getDegree() const {
+  if (!dp_mol) {
+    return 0;
+  }
   return getOwningMol().getAtomDegree(this);
 }
 
@@ -284,7 +287,7 @@ unsigned int Atom::getTotalDegree() const {
 //
 unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
   int res = getNumExplicitHs() + getNumImplicitHs();
-  if (includeNeighbors) {
+  if (includeNeighbors && dp_mol) {
     for (auto nbr : getOwningMol().atomNeighbors(this)) {
       if (nbr->getAtomicNum() == 1) {
         ++res;
@@ -302,7 +305,7 @@ unsigned int Atom::getNumImplicitHs() const {
   PRECONDITION(d_implicitValence > -1,
                "getNumImplicitHs() called without preceding call to "
                "calcImplicitValence()");
-  return getImplicitValence();
+  return getValence(false);
 }
 
 int Atom::getExplicitValence() const { return getValence(true); }
@@ -449,7 +452,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   if (atom.getNoImplicit()) {
     return 0;
   }
-  auto explicitValence = atom.getExplicitValence();
+  auto explicitValence = atom.getValence(true);
   if (explicitValence == -1) {
     explicitValence = calculateExplicitValence(atom, strict, checkIt);
   }
@@ -487,8 +490,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
     }
   }
 
-  int explicitPlusRadV =
-      atom.getExplicitValence() + atom.getNumRadicalElectrons();
+  int explicitPlusRadV = atom.getValence(true) + atom.getNumRadicalElectrons();
 
   const auto &ovalens =
       PeriodicTable::getTable()->getValenceList(atom.getAtomicNum());
@@ -925,7 +927,7 @@ unsigned int numPiElectrons(const Atom &atom) {
   if (atom.getIsAromatic()) {
     res = 1;
   } else if (atom.getHybridization() != Atom::SP3) {
-    auto val = static_cast<unsigned int>(atom.getExplicitValence());
+    auto val = static_cast<unsigned int>(atom.getValence(true));
     unsigned int physical_bonds = atom.getNumExplicitHs();
     const auto &mol = atom.getOwningMol();
     for (const auto bond : mol.atomBonds(&atom)) {

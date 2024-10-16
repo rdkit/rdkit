@@ -165,18 +165,18 @@ void testDetails() {
   CHECK_INVARIANT(mol, smi);
   CHECK_INVARIANT(mol->getNumAtoms() == 5, "");
   a = mol->getAtomWithIdx(0);
-  CHECK_INVARIANT(a->getImplicitValence() == 1, "");
-  CHECK_INVARIANT(a->getExplicitValence() == 1, "");
+  CHECK_INVARIANT(a->getValence(false) == 1, "");
+  CHECK_INVARIANT(a->getValence(true) == 1, "");
   CHECK_INVARIANT(a->getNoImplicit() == 0, "");
   CHECK_INVARIANT(a->getFormalCharge() == 0, "");
   a = mol->getAtomWithIdx(2);
-  CHECK_INVARIANT(a->getImplicitValence() == 0, "");
-  CHECK_INVARIANT(a->getExplicitValence() == 2, "");
+  CHECK_INVARIANT(a->getValence(false) == 0, "");
+  CHECK_INVARIANT(a->getValence(true) == 2, "");
   CHECK_INVARIANT(a->getNoImplicit() == 1, "");
   CHECK_INVARIANT(a->getFormalCharge() == 0, "");
   a = mol->getAtomWithIdx(4);
-  CHECK_INVARIANT(a->getImplicitValence() == 0, "");
-  CHECK_INVARIANT(a->getExplicitValence() == 1, "");
+  CHECK_INVARIANT(a->getValence(false) == 0, "");
+  CHECK_INVARIANT(a->getValence(true) == 1, "");
   CHECK_INVARIANT(a->getNoImplicit() == 1, "");
   CHECK_INVARIANT(a->getFormalCharge() == -1, "");
 

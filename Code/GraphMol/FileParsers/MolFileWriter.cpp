@@ -547,7 +547,7 @@ bool hasNonDefaultValence(const Atom *atom) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
     return atom->getNoImplicit() &&
-           (atom->getExplicitValence() !=
+           (atom->getValence(true) !=
             PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
   }
   return true;

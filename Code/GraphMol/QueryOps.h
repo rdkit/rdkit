@@ -118,10 +118,10 @@ static inline int queryAtomHasImplicitH(Atom const *at) {
   return int(at->getTotalNumHs(false) > 0);
 };
 static inline int queryAtomImplicitValence(Atom const *at) {
-  return at->getImplicitValence();
+  return at->getValence(false);
 };
 static inline int queryAtomExplicitValence(Atom const *at) {
-  return at->getExplicitValence() - at->getNumExplicitHs();
+  return at->getValence(true) - at->getNumExplicitHs();
 };
 static inline int queryAtomTotalValence(Atom const *at) {
   return at->getTotalValence();

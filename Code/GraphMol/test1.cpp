@@ -634,7 +634,7 @@ void testIssue2381580() {
     m->addBond(0, 3, Bond::SINGLE);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(true) == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 0);
     delete m;
   }
@@ -653,7 +653,7 @@ void testIssue2381580() {
     m->getAtomWithIdx(0)->setFormalCharge(-1);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == -1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(true) == 4);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 0);
     delete m;
   }
@@ -711,7 +711,7 @@ void testIssue2381580() {
     m->getAtomWithIdx(0)->setFormalCharge(+1);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(true) == 2);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 0);
     delete m;
   }
@@ -728,19 +728,19 @@ void testIssue2381580() {
     m->getAtomWithIdx(0)->setFormalCharge(-1);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == -1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(true) == 3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() +
-                    m->getAtomWithIdx(0)->getImplicitValence() ==
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(true) +
+                    m->getAtomWithIdx(0)->getValence(false) ==
                 rdcast<int>(m->getAtomWithIdx(0)->getTotalValence()));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getExplicitValence() +
-                    m->getAtomWithIdx(1)->getImplicitValence() ==
+    TEST_ASSERT(m->getAtomWithIdx(1)->getValence(true) +
+                    m->getAtomWithIdx(1)->getValence(false) ==
                 rdcast<int>(m->getAtomWithIdx(1)->getTotalValence()));
-    TEST_ASSERT(m->getAtomWithIdx(2)->getExplicitValence() +
-                    m->getAtomWithIdx(2)->getImplicitValence() ==
+    TEST_ASSERT(m->getAtomWithIdx(2)->getValence(true) +
+                    m->getAtomWithIdx(2)->getValence(false) ==
                 rdcast<int>(m->getAtomWithIdx(2)->getTotalValence()));
-    TEST_ASSERT(m->getAtomWithIdx(3)->getExplicitValence() +
-                    m->getAtomWithIdx(3)->getImplicitValence() ==
+    TEST_ASSERT(m->getAtomWithIdx(3)->getValence(true) +
+                    m->getAtomWithIdx(3)->getValence(false) ==
                 rdcast<int>(m->getAtomWithIdx(3)->getTotalValence()));
     delete m;
   }
@@ -1025,7 +1025,7 @@ void testIssue267() {
     m.addAtom(new Atom(0), true, true);
     m.updatePropertyCache();
 
-    TEST_ASSERT(m.getAtomWithIdx(0)->getImplicitValence() == 0);
+    TEST_ASSERT(m.getAtomWithIdx(0)->getValence(false) == 0);
   }
   {
     RWMol m;
@@ -1122,7 +1122,7 @@ void testNeedsUpdatePropertyCache() {
     TEST_ASSERT(m.needsUpdatePropertyCache() == true);
     m.updatePropertyCache();
 
-    TEST_ASSERT(m.getAtomWithIdx(0)->getImplicitValence() == 0);
+    TEST_ASSERT(m.getAtomWithIdx(0)->getValence(false) == 0);
     TEST_ASSERT(m.needsUpdatePropertyCache() == false);
   }
   {
