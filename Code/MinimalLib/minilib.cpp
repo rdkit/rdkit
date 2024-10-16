@@ -904,10 +904,10 @@ JSMolBase *get_mcs_as_mol(const JSMolList &molList,
 }
 #endif
 
-RDKit::MinimalLib::LogHandle::LoggingFlag
-    RDKit::MinimalLib::LogHandle::d_loggingNeedsInit = true;
+std::unique_ptr<MinimalLib::LoggerStateSingletons>
+    MinimalLib::LoggerStateSingletons::d_instance;
 
-JSLog::JSLog(RDKit::MinimalLib::LogHandle *logHandle) : d_logHandle(logHandle) {
+JSLog::JSLog(MinimalLib::LogHandle *logHandle) : d_logHandle(logHandle) {
   assert(d_logHandle);
 }
 
@@ -918,17 +918,22 @@ std::string JSLog::get_buffer() const { return d_logHandle->getBuffer(); }
 void JSLog::clear_buffer() const { d_logHandle->clearBuffer(); }
 
 JSLog *set_log_tee(const std::string &log_name) {
-  auto logHandle = RDKit::MinimalLib::LogHandle::setLogTee(log_name.c_str());
+  auto logHandle = MinimalLib::LogHandle::setLogTee(log_name.c_str());
   return logHandle ? new JSLog(logHandle) : nullptr;
 }
 
 JSLog *set_log_capture(const std::string &log_name) {
-  auto logHandle =
-      RDKit::MinimalLib::LogHandle::setLogCapture(log_name.c_str());
+  auto logHandle = MinimalLib::LogHandle::setLogCapture(log_name.c_str());
   return logHandle ? new JSLog(logHandle) : nullptr;
 }
 
-void enable_logging() { RDKit::MinimalLib::LogHandle::enableLogging(); }
+bool enable_logging(const std::string &logName) {
+  return MinimalLib::LogHandle::enableLogging(logName.c_str());
+}
+
+bool disable_logging(const std::string &logName) {
+  return MinimalLib::LogHandle::disableLogging(logName.c_str());
+}
 
 void disable_logging() { RDKit::MinimalLib::LogHandle::disableLogging(); }
 
