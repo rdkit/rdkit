@@ -139,6 +139,19 @@ double AngleBendContrib::getEnergy(double *pos) const {
   double angleTerm = getEnergyTerm(cosTheta, sinThetaSq);
   double res = d_forceConstant * angleTerm;
 
+  // empirical term to prevent angles close to 0
+  if (d_order && d_order < 5) {
+    res += d_forceConstant * 10 * exp(-(1 - cosTheta + .1) * 10);
+    // std::cerr << "    corr: " << d_forceConstant * exp(-(1 - cosTheta) * 100)
+    //           << std::endl;
+  }
+
+  // if (d_at1Idx == 7 || d_at1Idx == 8 || d_at3Idx == 7 || d_at3Idx == 8) {
+  //   std::cerr << "ANGLE2: " << d_at1Idx << "-" << d_at2Idx << "-" << d_at3Idx
+  //             << " : " << cosTheta << " " << sinThetaSq << " | " << angleTerm
+  //             << " " << res << std::endl;
+  // }
+
   return res;
 }
 
@@ -173,6 +186,25 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
   // dE/dTheta is independent of cartesians:
   double dE_dTheta = getThetaDeriv(cosTheta, sinTheta);
 
+  if (d_order && d_order < 5) {
+    auto corr = 10 * exp(-(1 - cosTheta + .1) * 10);
+    if (d_at1Idx == 7 || d_at1Idx == 8 || d_at3Idx == 7 || d_at3Idx == 8) {
+      std::cerr << "   GRAD: " << d_at1Idx << "-" << d_at2Idx << "-" << d_at3Idx
+                << " cosTheta " << cosTheta << " dE_dTheta: " << dE_dTheta
+                << " " << corr << std::endl;
+    }
+    dE_dTheta -= corr;
+    // std::cerr << "   grad corr: " << d_forceConstant * exp(-(1 - cosTheta) *
+    // 10)
+    //           << std::endl;
+  }
+
+  // if (d_at1Idx == 7 || d_at1Idx == 8 || d_at3Idx == 7 || d_at3Idx == 8) {
+  //   std::cerr << "   GRAD: " << d_at1Idx << "-" << d_at2Idx << "-" <<
+  //   d_at3Idx
+  //             << " : " << cosTheta << " " << sinTheta << " " << dE_dTheta
+  //             << std::endl;
+  // }
   Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
 }
 

@@ -13,6 +13,8 @@
 #include <catch2/catch_all.hpp>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <ForceField/MMFF/Params.h>
 #include <ForceField/MMFF/BondStretch.h>
 
@@ -51,4 +53,76 @@ TEST_CASE("Test empty force field") {
     auto dist = (pos2 - pos1).length();
     CHECK(std::round(dist) == 100);
   }
+}
+
+TEST_CASE("github #7901") {
+#if 0
+  auto mb = R"CTAB(Acetone, enolate form
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+   -1.2143   -0.3494    0.0962 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1072    0.3398    0.0041 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1682    1.7287    0.0554 O   0  0  0  0  0  1  0  0  0  0  0  0
+    1.2210   -0.3737   -0.1263 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2311   -1.0203    0.9811 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3951   -0.9468   -0.8225 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0281    0.3987    0.2006 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1862    0.1115   -0.1943 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8861    0.1115   -0.1943 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  2  4  2  0
+  1  5  1  0
+  1  6  1  0
+  1  7  1  0
+  4  8  1  0
+  4  9  1  0
+M  CHG  1   3  -1
+M  END)CTAB";
+#else
+  auto mb = R"CTAB(Acetone, enolate form
+     RDKit          3D
+
+  9  8  0  0  0  0  0  0  0  0999 V2000
+   -1.2143   -0.3494    0.0962 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1072    0.3398    0.0041 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.1682    1.7287    0.0554 O   0  0  0  0  0  1  0  0  0  0  0  0
+    1.2210   -0.3737   -0.1263 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2311   -1.0203    0.9811 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3951   -0.9468   -0.8225 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.0281    0.3987    0.2006 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1862    0.1115   -0.1943 H   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8861   -1.3115   -0.1943 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+  2  4  2  0
+  1  5  1  0
+  1  6  1  0
+  1  7  1  0
+  4  8  1  0
+  4  9  1  0
+M  CHG  1   3  -1
+M  END)CTAB";
+#endif
+  v2::FileParsers::MolFileParserParams params;
+  params.removeHs = false;
+  auto mol = v2::FileParsers::MolFromMolBlock(mb, params);
+  REQUIRE(mol);
+  auto &conf = mol->getConformer();
+  std::cerr << "START: " << (conf.getAtomPos(7) - conf.getAtomPos(8)).length()
+            << std::endl;
+  // UFF minimize
+  // auto [done, energy] = UFF::UFFOptimizeMolecule(*mol);
+  // std::cerr << "WOT: " << done << " " << energy << std::endl;
+  auto ff = UFF::constructForceField(*mol);
+  ff->initialize();
+  std::cerr << "WOT:\n" << ff->calcEnergy() << std::endl;
+  auto needsMore = ff->minimize(200);
+  std::cerr << "needsMore: " << needsMore << std::endl;
+  std::cerr << "WOT2:\n" << ff->calcEnergy() << std::endl;
+  delete ff;
+  std::cerr << "END: " << (conf.getAtomPos(7) - conf.getAtomPos(8)).length()
+            << std::endl;
+  std::cerr << MolToV3KMolBlock(*mol) << std::endl;
 }
