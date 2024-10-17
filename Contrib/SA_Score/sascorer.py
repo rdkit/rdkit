@@ -139,7 +139,10 @@ if __name__ == '__main__':
   import time
 
   t1 = time.time()
-  readFragmentScores()
+  if len(sys.argv) == 2:
+    readFragmentScores()
+  else:
+    readFragmentScores(sys.argv[2])
   t2 = time.time()
 
   molFile = sys.argv[1]
