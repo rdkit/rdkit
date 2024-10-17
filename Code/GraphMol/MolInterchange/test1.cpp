@@ -541,10 +541,7 @@ void testMultiThreadedSwitcher() {
 #endif
 #endif
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-
+int main() {
   RDLog::InitLogs();
   RunTests();  // run with C locale
 
