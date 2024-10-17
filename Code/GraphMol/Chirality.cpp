@@ -2376,10 +2376,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
   bool hasStereoBonds = false;
   for (auto bond : mol.bonds()) {
     if (cleanIt) {
-      if (bond->hasProp(common_properties::_CIPCode)) {
-        bond->clearProp(common_properties::_CIPCode);
-      }
-
+      bond->clearProp(common_properties::_CIPCode);
       // enforce no stereo on small rings
       if ((bond->getBondType() == Bond::DOUBLE ||
            bond->getBondType() == Bond::AROMATIC) &&
