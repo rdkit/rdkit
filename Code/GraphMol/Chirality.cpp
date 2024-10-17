@@ -1770,9 +1770,8 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
           // (this is from InChI)
           legalCenter = true;
         } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
-          if (atom->getExplicitValence() == 4 ||
-              (atom->getExplicitValence() == 3 &&
-               atom->getFormalCharge() == 1)) {
+          if (atom->getValence(true) == 4 ||
+              (atom->getValence(true) == 3 && atom->getFormalCharge() == 1)) {
             // we also accept sulfur or selenium with either a positive charge
             // or a double bond:
             legalCenter = true;
@@ -3600,7 +3599,7 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
       parity = 1 - parity;
     }
     atom->setChiralTag(chiralTypeVect[parity]);
-    if (atom->getImplicitValence() == -1) {
+    if (atom->getValence(false) == -1) {
       atom->calcExplicitValence(false);
       atom->calcImplicitValence(false);
     }
@@ -3841,7 +3840,7 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
              atom->getChiralTag() != Atom::CHI_UNSPECIFIED)) {
           continue;
         }
-        if (atom->getImplicitValence() == -1) {
+        if (atom->getValence(false) == -1) {
           atom->calcExplicitValence(false);
           atom->calcImplicitValence(false);
         }

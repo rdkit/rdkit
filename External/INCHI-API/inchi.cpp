@@ -1652,7 +1652,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
     try {
       if (sanitize) {
         if (removeHs) {
-          MolOps::removeHs(*m, false, false);
+          MolOps::removeHs(*m);
         } else {
           MolOps::sanitizeMol(*m);
         }
@@ -1917,7 +1917,7 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
           // For want of a better idea, detect this pattern
           // and flip the stereochem:
           // if(atom->getAtomicNum()==16 &&
-          //    atom->getDegree()==3 && atom->getExplicitValence()==4){
+          //    atom->getDegree()==3 && atom->getValence(true)==4){
           //   if(stereo0D.parity==INCHI_PARITY_EVEN){
           //     stereo0D.parity=INCHI_PARITY_ODD;
           //   } else if(stereo0D.parity==INCHI_PARITY_ODD){

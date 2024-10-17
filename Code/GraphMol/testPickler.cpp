@@ -826,10 +826,10 @@ void testIssue3316407() {
     MolPickler::molFromPickle(pickle, *m2);
     TEST_ASSERT(m2->getNumAtoms() == 5);
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
-      TEST_ASSERT(m->getAtomWithIdx(i)->getExplicitValence() ==
-                  m2->getAtomWithIdx(i)->getExplicitValence());
-      TEST_ASSERT(m->getAtomWithIdx(i)->getImplicitValence() ==
-                  m2->getAtomWithIdx(i)->getImplicitValence());
+      TEST_ASSERT(m->getAtomWithIdx(i)->getValence(true) ==
+                  m2->getAtomWithIdx(i)->getValence(true));
+      TEST_ASSERT(m->getAtomWithIdx(i)->getValence(false) ==
+                  m2->getAtomWithIdx(i)->getValence(false));
     }
     // part of sf.net issue 285:
     TEST_ASSERT(m2->getAtomWithIdx(3)->hasProp(common_properties::dummyLabel));
