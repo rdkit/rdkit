@@ -33,6 +33,9 @@
 
 %{
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesJSONParsers.h>
 %}
 
+%include <RDGeneral/BetterEnums.h>
 %include <GraphMol/SmilesParse/SmilesWrite.h>
+%include <GraphMol/SmilesParse/SmilesJSONParsers.h>
