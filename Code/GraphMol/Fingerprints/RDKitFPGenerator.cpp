@@ -241,13 +241,9 @@ getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
                     bool ownsAtomInvGen);
 
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
-getRDKitFPGenerator(const RDKitFPArguments &args,
-                    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-                    bool ownsAtomInvGen = false);
+getRDKitFPGenerator(const RDKitFPArguments &, AtomInvariantsGenerator *, bool);
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
-getRDKitFPGenerator(const RDKitFPArguments &args,
-                    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-                    bool ownsAtomInvGen = false);
+getRDKitFPGenerator(const RDKitFPArguments &, AtomInvariantsGenerator *, bool);
 
 }  // namespace RDKitFP
 
