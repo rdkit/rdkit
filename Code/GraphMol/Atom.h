@@ -173,9 +173,6 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! this Atom is bound to
   unsigned int getTotalNumHs(bool includeNeighbors = false) const;
 
-  //! returns the number of Hs (explicit or implicit) of this atom
-  int getNumHs(bool getExplicit = true) const;
-
   //! \brief returns the total valence (implicit and explicit)
   //! for an atom
   unsigned int getTotalValence() const;
