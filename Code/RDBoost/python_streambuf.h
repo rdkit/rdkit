@@ -529,11 +529,20 @@ class streambuf : public std::basic_streambuf<char> {
       exceptions(std::ios_base::badbit);
     }
 
+    // overload that takes ownership of the streambuf ptr
+    ostream(streambuf *buf) : std::ostream(buf), m_buf(buf) {
+      exceptions(std::ios_base::badbit);
+    }
+
     ~ostream() override {
       if (this->good()) {
         this->flush();
       }
+      delete m_buf;
     }
+
+   private:
+    streambuf *m_buf = nullptr;
   };
 };
 
