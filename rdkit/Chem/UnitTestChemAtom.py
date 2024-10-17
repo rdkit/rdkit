@@ -24,11 +24,11 @@ class TestCase(unittest.TestCase):
   def test1Implicit(self):
     " testing ImplicitValence "
     a = self.m.GetAtoms()[0]
-    iV = a.GetImplicitValence()
+    iV = a.GetValence(getExplicit=False)
     assert iV == 3
-    assert self.m.GetAtomWithIdx(1).GetImplicitValence() == 0
-    assert self.m.GetAtomWithIdx(2).GetImplicitValence() == 0
-    assert self.m.GetAtomWithIdx(3).GetImplicitValence() == 2
+    assert self.m.GetAtomWithIdx(1).GetValence(getExplicit=False) == 0
+    assert self.m.GetAtomWithIdx(2).GetValence(getExplicit=False) == 0
+    assert self.m.GetAtomWithIdx(3).GetValence(getExplicit=False) == 2
 
   def test2BondIter(self):
     " testing bond iteration "
@@ -51,8 +51,8 @@ class TestCase(unittest.TestCase):
     assert a.GetAtomicNum() == 6
     assert a.GetFormalCharge() == 0
     assert a.GetDegree() == 3
-    assert a.GetImplicitValence() == 0
-    assert a.GetExplicitValence() == 4
+    assert a.GetValence(getExplicit=False) == 0
+    assert a.GetValence(getExplicit=True) == 4
 
   def test5Setters(self):
     " testing setting atomic props "
@@ -61,7 +61,7 @@ class TestCase(unittest.TestCase):
     assert a.GetAtomicNum() == 6
     a.SetFormalCharge(1)
     assert a.GetFormalCharge() == 1
-    assert a.GetImplicitValence() == 0
+    assert a.GetValence(getExplicit=False) == 0
 
 
 if __name__ == '__main__':

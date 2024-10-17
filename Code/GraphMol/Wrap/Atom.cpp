@@ -139,6 +139,17 @@ AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
   return (AtomPDBResidueInfo *)res;
 }
 
+namespace {
+int getExplicitValenceHelper(const Atom *atom) {
+  RDLog::deprecationWarning("please use GetValence()");
+  return atom->getValence(true);
+};
+int getImplicitValenceHelper(const Atom *atom) {
+  RDLog::deprecationWarning("please use GetValence(getExplicit=False)");
+  return atom->getValence(false);
+};
+}  // namespace
+
 struct MDLDummy {};
 struct DaylightDummy {};
 
@@ -203,12 +214,17 @@ struct atom_wrapper {
              "      Defaults to 0.\n")
         .def("GetNumImplicitHs", &Atom::getNumImplicitHs, python::args("self"),
              "Returns the total number of implicit Hs on the atom.\n")
-        .def("GetExplicitValence", &Atom::getExplicitValence,
-             python::args("self"),
-             "Returns the explicit valence of the atom.\n")
-        .def("GetImplicitValence", &Atom::getImplicitValence,
-             python::args("self"),
-             "Returns the number of implicit Hs on the atom.\n")
+        .def(
+            "GetExplicitValence", &getExplicitValenceHelper,
+            python::args("self"),
+            "DEPRECATED, please use GetValence(True) instead.\nReturns the explicit valence of the atom.\n")
+        .def(
+            "GetImplicitValence", &getImplicitValenceHelper,
+            python::args("self"),
+            "DEPRECATED, please use GetValence(False) instead.\nReturns the number of implicit Hs on the atom.\n")
+        .def("GetValence", &Atom::getValence,
+             (python::args("self"), python::args("getExplicit") = true),
+             "Returns the valence (explicit or implicit) of the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
         .def("HasValenceViolation", &Atom::hasValenceViolation,
