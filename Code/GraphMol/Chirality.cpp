@@ -17,7 +17,6 @@
 #include <GraphMol/Atropisomers.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
-#include <RDGeneral/Ranking.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/utils.h>
 
@@ -1089,18 +1088,106 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
   }
 }
 
+//! Lightweight sortable wrapper that references a CIP entry and keeps track of
+//! the current rank.
+struct SortableCIPReference {
+  SortableCIPReference(CIP_ENTRY *cipRef, const int atomIdx)
+      : cip(cipRef), atomIdx(atomIdx) {
+    CHECK_INVARIANT(cip != nullptr, "null CIP entry");
+  }
+  SortableCIPReference(SortableCIPReference &&other) noexcept {
+    cip = other.cip;
+    atomIdx = other.atomIdx;
+    other.cip = nullptr;
+    currRank = other.currRank;
+  }
+  SortableCIPReference &operator=(SortableCIPReference &&other) noexcept {
+    if (this == &other) {
+      return *this;
+    }
+    cip = other.cip;
+    atomIdx = other.atomIdx;
+    other.cip = nullptr;
+    currRank = other.currRank;
+    return *this;
+  }
+
+  bool operator==(const SortableCIPReference &rhs) const {
+    PRECONDITION(cip != nullptr, "null CIP entry");
+    PRECONDITION(rhs.cip != nullptr, "null CIP entry");
+    return *cip == *rhs.cip;
+  }
+
+  bool operator<(const SortableCIPReference &rhs) const {
+    PRECONDITION(cip != nullptr, "null CIP entry");
+    PRECONDITION(rhs.cip != nullptr, "null CIP entry");
+    return *cip < *rhs.cip;
+  }
+
+  CIP_ENTRY *cip = nullptr;
+  int atomIdx = -1;
+  int currRank = -1;
+};
+
+//! Iterate over sorted entries, track tied regions and assign ranks.
+//! \param sortedEntries CIP entries
+//! \param res Pairs of start, end index of tied atoms
+//! \param numIndependentEntries The number of unique ranks.
+void findSegmentsToResort(std::vector<SortableCIPReference> &sortedEntries,
+                          std::vector<std::pair<int, int>> &res,
+                          unsigned int &numIndependentEntries) {
+  res.clear();
+  numIndependentEntries = rdcast<unsigned int>(sortedEntries.size());
+  SortableCIPReference *current = &sortedEntries.front();
+  int runningRank = 0;
+  current->currRank = runningRank;
+  bool inEqualSection = false;
+
+  for (size_t i = 1; i < sortedEntries.size(); i++) {
+    SortableCIPReference &entry = sortedEntries[i];
+    if (*current == entry) {
+      entry.currRank = runningRank;
+      numIndependentEntries--;
+      // Case where we need to open a section
+      if (!inEqualSection) {
+        inEqualSection = true;
+        auto &[firstIndex, _] = res.emplace_back();
+        // Go back to the first in this section, we only catch at first + 1
+        firstIndex = i - 1;
+      } else {
+        // Case where we are already in a section, nullop
+      }
+    } else {
+      // Case where we're closing an open section.
+      runningRank++;
+      entry.currRank = runningRank;
+      current = &entry;
+
+      if (inEqualSection) {
+        auto &[_, finalIndex] = res.back();
+        finalIndex = i;
+        inEqualSection = false;
+      }
+    }
+  }
+  // Handle currently open.
+  if (inEqualSection) {
+    auto &[_, finalIndex] = res.back();
+    finalIndex = sortedEntries.size() - 1;
+  }
+}
+
 struct PrecomputedBondFeatures {
   //! Pairs of {atom index, counts}, strided by 8 for each atom.
-  std::vector<std::pair<std::uint8_t,int>> countsAndNeighborIndices;
+  std::vector<std::pair<std::uint8_t, int>> countsAndNeighborIndices;
   //! Number of neighbors per atom.
   std::vector<std::uint8_t> numNeighbors;
-
 };
 
 constexpr int kMaxBonds = 8;
 
 //! Lookup neighbor indices and compute counts for each atom.
-PrecomputedBondFeatures computeBondFeatures(const ROMol& mol) {
+PrecomputedBondFeatures computeBondFeatures(const ROMol &mol) {
   PrecomputedBondFeatures features;
   const unsigned int numAtoms = mol.getNumAtoms();
   features.countsAndNeighborIndices.resize(numAtoms * kMaxBonds);
@@ -1111,7 +1198,8 @@ PrecomputedBondFeatures computeBondFeatures(const ROMol& mol) {
     for (const auto bond : mol.atomBonds(mol[atomIdx])) {
       const unsigned int nbrIdx = bond->getOtherAtomIdx(atomIdx);
       features.numNeighbors[nbrIdx]++;
-      auto& [count, neighborIndex] = features.countsAndNeighborIndices[indexOffset];
+      auto &[count, neighborIndex] =
+          features.countsAndNeighborIndices[indexOffset];
       neighborIndex = nbrIdx;
 
       // put the neighbor in 2N times where N is the bond order as a double.
@@ -1145,10 +1233,16 @@ PrecomputedBondFeatures computeBondFeatures(const ROMol& mol) {
 
       ++indexOffset;
     }
-
-
   }
   return features;
+}
+
+void recomputeRanks(const std::vector<SortableCIPReference> &sortedEntries,
+                    std::vector<unsigned int> &ranks) {
+  for (size_t rank = 0; rank < ranks.size(); ++rank) {
+    const auto &cipEntry = sortedEntries[rank];
+    ranks[cipEntry.atomIdx] = cipEntry.currRank;
+  }
 }
 
 void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
@@ -1161,6 +1255,12 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
   for (auto &vec : cipEntries) {
     vec.reserve(16);
   }
+
+  std::vector<SortableCIPReference> sortableEntries;
+  sortableEntries.reserve(numAtoms);
+  for (size_t i = 0; i < cipEntries.size(); i++) {
+    sortableEntries.emplace_back(&cipEntries[i], i);
+  }
 #ifdef VERBOSE_CANON
   BOOST_LOG(rdDebugLog) << "invariants:" << std::endl;
   for (unsigned int i = 0; i < numAtoms; i++) {
@@ -1168,8 +1268,15 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
   }
 #endif
 
-  // rank those:
-  Rankers::rankVect(invars, ranks);
+  for (unsigned int i = 0; i < numAtoms; i++) {
+    cipEntries[i].push_back(static_cast<int>(invars[i]));
+  }
+  unsigned int numRanks;
+  std::sort(sortableEntries.begin(), sortableEntries.end());
+  std::vector<std::pair<int, int>> needsSorting;
+  findSegmentsToResort(sortableEntries, needsSorting, numRanks);
+  recomputeRanks(sortableEntries, ranks);
+
 #ifdef VERBOSE_CANON
   BOOST_LOG(rdDebugLog) << "initial ranks:" << std::endl;
   for (unsigned int i = 0; i < numAtoms; ++i) {
@@ -1181,9 +1288,9 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
   //  use invariants here, those lead to incorrect answers
   for (unsigned int i = 0; i < numAtoms; i++) {
     if (seedWithInvars) {
-      cipEntries[i].push_back(static_cast<int>(invars[i]));
+      cipEntries[i][0] = static_cast<int>(invars[i]);
     } else {
-      cipEntries[i].push_back(mol[i]->getAtomicNum());
+      cipEntries[i][0] = mol[i]->getAtomicNum();
       cipEntries[i].push_back(static_cast<int>(ranks[i]));
     }
   }
@@ -1201,11 +1308,10 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
   unsigned int maxIts = numAtoms / 2 + 1;
   unsigned int numIts = 0;
   int lastNumRanks = -1;
-  unsigned int numRanks = *std::max_element(ranks.begin(), ranks.end()) + 1;
 
   PrecomputedBondFeatures bondFeatures = computeBondFeatures(mol);
 
-  while (numRanks < numAtoms && numIts < maxIts &&
+  while (!needsSorting.empty() && numIts < maxIts &&
          (lastNumRanks < 0 ||
           static_cast<unsigned int>(lastNumRanks) < numRanks)) {
     unsigned int longestEntry = 0;
@@ -1214,25 +1320,25 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     // for each atom, get a sorted list of its neighbors' ranks:
     //
     for (unsigned int index = 0; index < numAtoms; ++index) {
-
       const unsigned int indexOffset = kMaxBonds * index;
       const int numNeighbors = bondFeatures.numNeighbors[index];
 
-      auto* sortBegin = &bondFeatures.countsAndNeighborIndices[indexOffset];
-      auto* sortEnd = sortBegin + numNeighbors + 1;
+      auto *sortBegin = &bondFeatures.countsAndNeighborIndices[indexOffset];
+      auto *sortEnd = sortBegin + numNeighbors + 1;
 
       // For each of our neighbors' ranks weighted by bond type, copy it N times
       // to our cipEntry in reverse rank order, where N is the weight.
       if (numNeighbors > 1) {  // compare vs 1 for performance.
         std::sort(sortBegin, sortEnd,
-                  [&ranks](const std::pair<std::uint8_t, int>& countAndIdx1,
-                           const std::pair<std::uint8_t, int>& countAndIdx2) {
-                    return ranks[countAndIdx1.second] > ranks[countAndIdx2.second];
+                  [&ranks](const std::pair<std::uint8_t, int> &countAndIdx1,
+                           const std::pair<std::uint8_t, int> &countAndIdx2) {
+                    return ranks[countAndIdx1.second] >
+                           ranks[countAndIdx2.second];
                   });
       }
       auto &cipEntry = cipEntries[index];
-      for (auto* iter = sortBegin; iter != sortEnd; ++iter) {
-        const auto& [count, idx] = *iter;
+      for (auto *iter = sortBegin; iter != sortEnd; ++iter) {
+        const auto &[count, idx] = *iter;
         cipEntry.insert(cipEntry.end(), count, ranks[idx] + 1);
       }
       // add a zero for each coordinated H as long as we're not a query atom
@@ -1261,8 +1367,14 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     //
     lastNumRanks = numRanks;
 
-    Rankers::rankVect(cipEntries, ranks);
-    numRanks = *std::max_element(ranks.begin(), ranks.end()) + 1;
+    // Loop through previously tied atom sections and re-sort.
+    for (const auto &[firstIdx, lastIdx] : needsSorting) {
+      std::sort(sortableEntries.begin() + firstIdx,
+                sortableEntries.begin() + lastIdx + 1);
+    }
+    findSegmentsToResort(sortableEntries, needsSorting, numRanks);
+    // Map out of order rankings back to the absolute rankings vector.
+    recomputeRanks(sortableEntries, ranks);
 
     // now truncate each vector and stick the rank at the end
     if (static_cast<unsigned int>(lastNumRanks) != numRanks) {
@@ -2959,10 +3071,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }  // end of 2 and 3 coordinated atoms only
-        }  // end of we want it or CIP code is not set
-      }  // end of double bond
-    }  // end of for loop over all bonds
+          }    // end of 2 and 3 coordinated atoms only
+        }      // end of we want it or CIP code is not set
+      }        // end of double bond
+    }          // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
