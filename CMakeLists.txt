@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 
 project (RDKit)
 
@@ -291,7 +291,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python3 COMPONENTS Interpreter Development NumPy)
+  find_package(Python3 COMPONENTS Interpreter Development.Module NumPy)
   target_include_directories(rdkit_base INTERFACE ${Python3_INCLUDE_DIRS})
   target_include_directories(rdkit_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
 
