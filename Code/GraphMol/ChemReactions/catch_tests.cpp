@@ -1983,3 +1983,111 @@ M  END)RXN";
     CHECK(rxn2.getReactants()[0]->getAtomWithIdx(0)->hasProp("molFileValue"));
   }
 }
+
+TEST_CASE("Github #7669: propate stereo groups from product templates") {
+  auto rxnBlock = R"RXN($RXN V3000
+
+      Mrv2401  072420241107
+
+M  V30 COUNTS 1 1
+M  V30 BEGIN REACTANT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -1.5417 2.7917 0 1
+M  V30 2 F -1.5417 1.2517 0 4
+M  V30 3 C -3.0817 2.7917 0 3
+M  V30 4 Cl -1.5417 4.3317 0 2
+M  V30 5 C -0.0017 2.7917 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 4
+M  V30 3 1 1 3
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 END REACTANT
+M  V30 BEGIN PRODUCT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 9.2083 2.9167 0 1
+M  V30 2 C 7.6683 2.9167 0 3
+M  V30 3 F 9.2083 1.3767 0 4
+M  V30 4 Cl 9.2083 4.4567 0 2
+M  V30 5 I 10.7483 2.9167 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STERAC1 ATOMS=(1 1)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  V30 END PRODUCT
+M  END)RXN";
+  auto rxn = v2::ReactionParser::ReactionFromRxnBlock(rxnBlock);
+  REQUIRE(rxn);
+  CHECK(rxn->getProducts()[0]->getStereoGroups().size() == 1);
+  rxn->initReactantMatchers();
+  SECTION("as reported") {
+    auto mol = R"CTAB(
+  MJ231601                      
+
+  5  4  0  0  1  0  0  0  0  0999 V2000
+   -0.8258    1.4955    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8258    0.6705    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6508    1.4955    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8258    2.3205    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0008    1.4955    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  5  1  0  0  0  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+    ROMOL_SPTR reactant(std::move(mol));
+    auto ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 2);
+    REQUIRE(ps[0].size() == 1);
+
+    CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(ps[1][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+
+    auto sg = StereoGroup(StereoGroupType::STEREO_OR,
+                          {reactant->getAtomWithIdx(0)}, {});
+    reactant->setStereoGroups({sg});
+    ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 2);
+    REQUIRE(ps[0].size() == 1);
+    CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(ps[1][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+  }
+
+  SECTION(
+      "stereogroups in product template remove atoms from stereogroups in reactant") {
+    auto mol = "C[C@](F)(Cl)C[C@](C)(O)Br |o1:1,5|"_smiles;
+    ROMOL_SPTR reactant(std::move(mol));
+    auto ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 2);
+    REQUIRE(ps[0].size() == 1);
+    CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(ps[1][0]->getStereoGroups().size() == 2);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+  }
+}
