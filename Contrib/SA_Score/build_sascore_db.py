@@ -25,9 +25,7 @@ from collections import defaultdict
 from pathlib import Path
 
 from rdkit import Chem
-from rdkit.Chem import AllChem
 from rdkit.Chem import rdFingerprintGenerator
-from rdkit.Chem.MolStandardize import rdMolStandardize
 
 
 def parse_args(cli_args):
