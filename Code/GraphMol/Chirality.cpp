@@ -1295,6 +1295,9 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     }
   }
 
+  // Based on above seeding, the rank will be set at index 1 or 2.
+  const int cipRankIndex = seedWithInvars ? 1 : 2;
+
   // Loop until either:
   //   1) all classes are uniquified
   //   2) the number of ranks doesn't change from one iteration to
@@ -1379,9 +1382,8 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     // now truncate each vector and stick the rank at the end
     if (static_cast<unsigned int>(lastNumRanks) != numRanks) {
       for (unsigned int i = 0; i < numAtoms; ++i) {
-        cipEntries[i][numIts + 1] = ranks[i];
-        cipEntries[i].erase(cipEntries[i].begin() + numIts + 2,
-                            cipEntries[i].end());
+        cipEntries[i][cipRankIndex] = ranks[i];
+        cipEntries[i].resize(cipRankIndex + 1);
       }
     }
 
