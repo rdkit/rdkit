@@ -1,0 +1,7 @@
+# Find the RDKitPython dependencies
+include(CMakeFindDependencyMacro)
+
+find_dependency(RDKit @RDKit_RELEASENAME@ REQUIRED)
+
+# Import the targets
+include("${CMAKE_CURRENT_LIST_DIR}/@RDKitPython_EXPORTED_TARGETS@.cmake")
