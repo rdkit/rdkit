@@ -534,11 +534,11 @@ BOOST_PYTHON_MODULE(rdChemReactions) {
       &rdChemicalReactionExceptionTranslator);
 
   python::enum_<RDKit::FingerprintType>("FingerprintType")
-      .value("AtomPairFP", RDKit::AtomPairFP)
-      .value("TopologicalTorsion", RDKit::TopologicalTorsion)
-      .value("MorganFP", RDKit::MorganFP)
-      .value("RDKitFP", RDKit::RDKitFP)
-      .value("PatternFP", RDKit::PatternFP);
+      .value("AtomPairFP", RDKit::FingerprintType::AtomPairFP)
+      .value("TopologicalTorsion", RDKit::FingerprintType::TopologicalTorsionFP)
+      .value("MorganFP", RDKit::FingerprintType::MorganFP)
+      .value("RDKitFP", RDKit::FingerprintType::RDKitFP)
+      .value("PatternFP", RDKit::FingerprintType::PatternFP);
   std::string docStringReactionFPParams =
       "A class for storing parameters to manipulate the calculation of "
       "fingerprints of chemical reactions.";
