@@ -82,9 +82,10 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
-optParam : float, optional 
+optParam : float, optional
 max_preiters : int, optional
 max_postiters : int, optional
+
 
 Returns
 -------
@@ -110,21 +111,21 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
-optParam : float, optional 
+optParam : float, optional
 max_preiters : int, optional
 max_postiters : int, optional
+
 
 Returns
 -------
  2-tuple of doubles
     The results are (shape_score, color_score)
-    The color_score is zero if useColors is False)DOC"););
+    The color_score is zero if useColors is False)DOC");
 
-  python::def(
-      "PrepareConformer", &helpers::prepConf,
-      (python::arg("mol"), python::arg("confId") = -1,
-       python::arg("useColors") = true),
-      R"DOC(Generates a ShapeInput object for a molecule
+  python::def("PrepareConformer", &helpers::prepConf,
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("useColors") = true),
+              R"DOC(Generates a ShapeInput object for a molecule
 
 Parameters
 ----------
@@ -137,7 +138,7 @@ useColors : bool, optional
 
 Returns
 -------
- a ShapeInput for the molecule)DOC"),
+ a ShapeInput for the molecule)DOC",
               python::return_value_policy<python::manage_new_object>());
   python::class_<ShapeInput, boost::noncopyable>("ShapeInput", python::no_init)
       .def_readwrite("coord", &ShapeInput::coord)
