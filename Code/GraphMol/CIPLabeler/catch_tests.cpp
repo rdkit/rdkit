@@ -944,22 +944,20 @@ TEST_CASE("atropisomers", "[basic]") {
   }
 }
 
-std::string cipLabels(std::string molBlock) {
-  RDKit::ROMol *mol = nullptr;
+std::string cipLabels(const std::string &molBlock) {
+  std::unique_ptr<RDKit::ROMol> mol;
   std::string result = "";
   try {
     // try parsing the mol block with sanitize ob
     try {
-      mol = MolBlockToMol(molBlock, true, false);
+      mol.reset(MolBlockToMol(molBlock, true, false));
     } catch (...) {
-      delete mol;
-      mol = nullptr;
     }
 
     // if parsing with Sanitize on did NOT work, try it without
 
-    if (mol == NULL) {
-      mol = MolBlockToMol(molBlock, false, false);
+    if (mol == nullptr) {
+      mol.reset(MolBlockToMol(molBlock, false, false));
       mol->updatePropertyCache(false);
     }
 
@@ -991,12 +989,8 @@ std::string cipLabels(std::string molBlock) {
              boost::algorithm::join(bondsArray, ", ");
     return result;
   } catch (const CIPLabeler::MaxIterationsExceeded &e) {
-    delete mol;
-    mol = nullptr;
     return "";
   } catch (const std::exception &e) {
-    delete mol;
-    mol = nullptr;
     return e.what();
   }
 }
