@@ -19,11 +19,11 @@ namespace RDKitFP {
 
 class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments : public FingerprintArguments {
  public:
-  unsigned int d_minPath;
-  unsigned int d_maxPath;
-  bool df_useHs;
-  bool df_branchedPaths;
-  bool df_useBondOrder;
+  unsigned int d_minPath = 1;
+  unsigned int d_maxPath = 7;
+  bool df_useHs = true;
+  bool df_branchedPaths = true;
+  bool df_useBondOrder = true;
 
   std::string infoString() const override;
 
