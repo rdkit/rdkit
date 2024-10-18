@@ -16,7 +16,7 @@
 #define _DEFINED_USE_MATH_DEFINES
 #include <fcntl.h>
 #include <io.h>
-#include <winndows.h>
+#include <windows.h>
 #endif
 #else
 #include <unistd.h>
