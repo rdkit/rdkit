@@ -109,6 +109,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
   bool df_onlyNonzeroInvariants = false;
   unsigned int d_radius = 3;
   bool df_includeRedundantEnvironments = false;
+  bool df_useBondTypes = true;
 
   std::string infoString() const override;
 
@@ -128,18 +129,21 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
    versions
    \param includeRedundantEnvironments if set redundant environments will be
    included in the fingerprint
+   \param useBondTypes if set bond types will be included in the fingerprint
   */
-  MorganArguments(unsigned int radius, bool countSimulation = false,
+  MorganArguments(unsigned int radius = 3, bool countSimulation = false,
                   bool includeChirality = false,
                   bool onlyNonzeroInvariants = false,
                   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
                   std::uint32_t fpSize = 2048,
-                  bool includeRedundantEnvironments = false)
+                  bool includeRedundantEnvironments = false,
+                  bool useBondTypes = true)
       : FingerprintArguments(countSimulation, countBounds, fpSize, 1,
                              includeChirality),
         df_onlyNonzeroInvariants(onlyNonzeroInvariants),
         d_radius(radius),
-        df_includeRedundantEnvironments(includeRedundantEnvironments) {};
+        df_includeRedundantEnvironments(includeRedundantEnvironments),
+        df_useBondTypes(useBondTypes) {};
 };
 
 /**
@@ -254,6 +258,13 @@ RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getMorganGenerator(
     BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
     std::uint32_t fpSize = 2048,
     std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    bool ownsAtomInvGen = false, bool ownsBondInvGen = false);
+//! \overload
+template <typename OutputType>
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *getMorganGenerator(
+    const MorganArguments &args,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    BondInvariantsGenerator *bondInvariantsGenerator = nullptr,
     bool ownsAtomInvGen = false, bool ownsBondInvGen = false);
 
 /**
