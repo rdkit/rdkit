@@ -14,59 +14,52 @@
 
 #include "../RDKitBase.h"
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <RDGeneral/BetterEnums.h>
 
 namespace RDKit {
 
-#define RGROUPLABELS_ENUM_ITEMS                                         \
-  RGD_ENUM_ITEM(IsotopeLabels, 1 << 0)                                  \
-  RGD_ENUM_ITEM(AtomMapLabels, 1 << 1)                                  \
-  RGD_ENUM_ITEM(AtomIndexLabels, 1 << 2)                                \
-  RGD_ENUM_ITEM(RelabelDuplicateLabels, 1 << 3)                         \
-  RGD_ENUM_ITEM(MDLRGroupLabels, 1 << 4)                                \
-  RGD_ENUM_ITEM(DummyAtomLabels,                                        \
-                1 << 5) /* These are rgroups but will get relabelled */ \
-  RGD_ENUM_ITEM(AutoDetect, 0xFF)
+BETTER_ENUM(RGroupLabels, unsigned int,
+  IsotopeLabels = 0x01,
+  AtomMapLabels = 0x02,
+  AtomIndexLabels = 0x04,
+  RelabelDuplicateLabels = 0x08,
+  MDLRGroupLabels = 0x10,
+  DummyAtomLabels = 0x20,  // These are rgroups but will get relabelled
+  AutoDetect = 0xFF
+);
 
-#define RGROUPMATCHING_ENUM_ITEMS                                          \
-  RGD_ENUM_ITEM(Greedy, 1 << 0)                                            \
-  RGD_ENUM_ITEM(GreedyChunks, 1 << 1)                                      \
-  RGD_ENUM_ITEM(Exhaustive, 1 << 2) /* not really useful for large sets */ \
-  RGD_ENUM_ITEM(NoSymmetrization, 1 << 3)                                  \
-  RGD_ENUM_ITEM(GA, 1 << 4)
+BETTER_ENUM(RGroupMatching, unsigned int,
+  Greedy = 0x01,
+  GreedyChunks = 0x02,
+  Exhaustive = 0x04,  // not really useful for large sets
+  NoSymmetrization = 0x08,
+  GA = 0x10
+);
 
-#define RGROUPLABELLING_ENUM_ITEMS \
-  RGD_ENUM_ITEM(AtomMap, 1 << 0)   \
-  RGD_ENUM_ITEM(Isotope, 1 << 1)   \
-  RGD_ENUM_ITEM(MDLRGroup, 1 << 2)
+BETTER_ENUM(
+  RGroupLabelling, unsigned int,
+  AtomMap = 0x01,
+  Isotope = 0x02,
+  MDLRGroup = 0x04
+);
 
-#define RGROUPCOREALIGNMENT_ENUM_ITEMS \
-  RGD_ENUM_ITEM(NoAlignment, 0)        \
-  RGD_ENUM_ITEM(MCS, 1 << 0)
+BETTER_ENUM(RGroupCoreAlignment, unsigned int,
+  NoAlignment = 0x0,
+  MCS = 0x01
+);
 
-#define RGROUPSCORE_ENUM_ITEMS \
-  RGD_ENUM_ITEM(Match, 1 << 0) \
-  RGD_ENUM_ITEM(FingerprintVariance, 1 << 2)
-
-#define RGD_ENUM_ITEM(k, v) k = v,
-typedef enum { RGROUPLABELS_ENUM_ITEMS } RGroupLabels;
-
-typedef enum { RGROUPMATCHING_ENUM_ITEMS } RGroupMatching;
-
-typedef enum { RGROUPLABELLING_ENUM_ITEMS } RGroupLabelling;
-
-typedef enum { RGROUPCOREALIGNMENT_ENUM_ITEMS } RGroupCoreAlignment;
-
-typedef enum { RGROUPSCORE_ENUM_ITEMS } RGroupScore;
-#undef RGD_ENUM_ITEM
-#define RGD_STD_MAP_ITEM(k) {#k, k},
-#define RGD_ENUM_ITEM(k, v) RGD_STD_MAP_ITEM(k)
+BETTER_ENUM(RGroupScore, unsigned int,
+  Match = 0x1,
+  FingerprintVariance = 0x4
+);
 
 struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
-  unsigned int labels = AutoDetect;
-  unsigned int matchingStrategy = GreedyChunks;
-  unsigned int scoreMethod = Match;
-  unsigned int rgroupLabelling = AtomMap | MDLRGroup;
-  unsigned int alignment = MCS;
+  unsigned int labels = RGroupLabels::AutoDetect;
+  unsigned int matchingStrategy = RGroupMatching::GreedyChunks;
+  unsigned int scoreMethod = RGroupScore::Match;
+  unsigned int rgroupLabelling =
+      RGroupLabelling::AtomMap | RGroupLabelling::MDLRGroup;
+  unsigned int alignment = RGroupCoreAlignment::MCS;
 
   unsigned int chunkSize = 5;
   //! only allow rgroup decomposition at the specified rgroups
@@ -132,11 +125,6 @@ struct RDKIT_RGROUPDECOMPOSITION_EXPORT RGroupDecompositionParameters {
   int indexOffset{-1};
   void checkNonTerminal(const Atom &atom) const;
 };
-
-void updateRGroupDecompositionParametersFromJSON(
-    RGroupDecompositionParameters &params, const std::string &details_json);
-void updateRGroupDecompositionParametersFromJSON(
-    RGroupDecompositionParameters &params, const char *details_json);
 
 }  // namespace RDKit
 
