@@ -29,14 +29,14 @@ RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput PrepareConformer(const RDKit::ROMol &mol,
 
 //! Align a molecule to a reference shape
 /*!
-  \param refShape     the reference shape
-  \param fit          the molecule to align
-  \param matrix       the transformation matrix (populated on return)
-  \param fitConfId    (optional) the conformer to use for the fit molecule
-  \param useColors    (optional) whether or not to use colors in the scoring
-  \param opt_param    (optional) the optimization parameter
-  \param max_preiters (optional) the max number of pre-optimization iterations
-  \param max_postiters(optional) the max number of post-optimization iterations
+  \param refShape      the reference shape
+  \param fit           the molecule to align
+  \param matrix        the transformation matrix (populated on return)
+  \param fitConfId     (optional) the conformer to use for the fit molecule
+  \param useColors     (optional) whether or not to use colors in the scoring
+  \param opt_param     (optional) the optimization parameter
+  \param max_preiters  (optional) the max number of pre-optimization iterations
+  \param max_postiters (optional) the max number of post-optimization iterations
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
   if useColors is false)
@@ -48,15 +48,15 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
 
 //! Align a molecule to a reference molecule
 /*!
-  \param ref          the reference molecule
-  \param fit          the molecule to align
-  \param matrix       the transformation matrix (populated on return)
-  \param refConfId    (optional) the conformer to use for the reference molecule
-  \param fitConfId    (optional) the conformer to use for the fit molecule
-  \param useColors    (optional) whether or not to use colors in the scoring
-  \param opt_param    (optional) the optimization parameter
-  \param max_preiters (optional) the max number of pre-optimization iterations
-  \param max_postiters(optional) the max number of post-optimization iterations
+  \param ref           the reference molecule
+  \param fit           the molecule to align
+  \param matrix        the transformation matrix (populated on return)
+  \param refConfId     (optional) the conformer to use for the reference molecule
+  \param fitConfId     (optional) the conformer to use for the fit molecule
+  \param useColors     (optional) whether or not to use colors in the scoring
+  \param opt_param     (optional) the optimization parameter
+  \param max_preiters  (optional) the max number of pre-optimization iterations
+  \param max_postiters (optional) the max number of post-optimization iterationsa
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
   if useColors is false)
