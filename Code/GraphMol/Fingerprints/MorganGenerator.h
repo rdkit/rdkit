@@ -131,7 +131,7 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
    included in the fingerprint
    \param useBondTypes if set bond types will be included in the fingerprint
   */
-  MorganArguments(unsigned int radius, bool countSimulation = false,
+  MorganArguments(unsigned int radius = 3, bool countSimulation = false,
                   bool includeChirality = false,
                   bool onlyNonzeroInvariants = false,
                   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
@@ -144,7 +144,6 @@ class RDKIT_FINGERPRINTS_EXPORT MorganArguments : public FingerprintArguments {
         d_radius(radius),
         df_includeRedundantEnvironments(includeRedundantEnvironments),
         df_useBondTypes(useBondTypes) {};
-  MorganArguments() = default;
 };
 
 /**

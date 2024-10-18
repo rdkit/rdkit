@@ -47,11 +47,12 @@ class RDKIT_FINGERPRINTS_EXPORT RDKitFPArguments : public FingerprintArguments {
    path/subgraph found
 
    */
-  RDKitFPArguments(unsigned int minPath, unsigned int maxPath, bool useHs,
-                   bool branchedPaths, bool useBondOrder, bool countSimulation,
-                   const std::vector<std::uint32_t> countBounds,
-                   std::uint32_t fpSize, std::uint32_t numBitsPerFeature);
-  RDKitFPArguments() = default;
+  RDKitFPArguments(unsigned int minPath = 1, unsigned int maxPath = 7,
+                   bool useHs = true, bool branchedPaths = true,
+                   bool useBondOrder = true, bool countSimulation = false,
+                   const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+                   std::uint32_t fpSize = 2048,
+                   std::uint32_t numBitsPerFeature = 2);
 };
 
 class RDKIT_FINGERPRINTS_EXPORT RDKitFPAtomInvGenerator
