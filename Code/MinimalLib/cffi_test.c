@@ -2245,11 +2245,13 @@ CapturedStreams *capture_streams(unsigned int buf_size) {
     release_streams(&res);
     return NULL;
   }
-  if (PIPE_FUNC(res->stdout_pipes, buf_size) == -1 || PIPE_FUNC(res->stderr_pipes, buf_size) == -1) {
+  if (PIPE_FUNC(res->stdout_pipes, buf_size) == -1 ||
+      PIPE_FUNC(res->stderr_pipes, buf_size) == -1) {
     release_streams(&res);
     return NULL;
   }
-  if (DUP2_FUNC(res->stdout_pipes[1], FILENO_FUNC(stdout)) == -1 || DUP2_FUNC(res->stderr_pipes[1], FILENO_FUNC(stderr)) == -1) {
+  if (DUP2_FUNC(res->stdout_pipes[1], FILENO_FUNC(stdout)) == -1 ||
+      DUP2_FUNC(res->stderr_pipes[1], FILENO_FUNC(stderr)) == -1) {
     release_streams(&res);
     return NULL;
   }
@@ -2284,7 +2286,8 @@ int can_read(int fd) {
 }
 
 int non_blocking_read(int fd, void *buf, unsigned int buf_size) {
-  // do not attempt to read if the pipe is empty as the read operation will block
+  // do not attempt to read if the pipe is empty as the read operation will
+  // block
   int has_data = can_read(fd);
   if (has_data == -1) {
     return -1;
@@ -2310,7 +2313,8 @@ char *_get_capture_buf(int *pipes, unsigned int buf_size) {
     return NULL;
   }
   memset(buf, 0, buf_size);
-  // do not attempt to read if the pipe is empty as the read operation will block
+  // do not attempt to read if the pipe is empty as the read operation will
+  // block
   if (non_blocking_read(pipes[0], buf, buf_size) == -1) {
     free(buf);
     return NULL;
@@ -2336,9 +2340,11 @@ void test_capture_logs() {
   void *log_handle;
   void *log_handle2;
   const char *PENTAVALENT_CARBON = "CC(C)(C)(C)C";
-  const char *PENTAVALENT_CARBON_VALENCE_ERROR = "Explicit valence for atom # 1 C, 5, is greater than permitted";
+  const char *PENTAVALENT_CARBON_VALENCE_ERROR =
+      "Explicit valence for atom # 1 C, 5, is greater than permitted";
   const char *TETRAVALENT_NITROGEN = "CN(C)(C)C";
-  const char *TETRAVALENT_NITROGEN_VALENCE_ERROR = "Explicit valence for atom # 1 N, 4, is greater than permitted";
+  const char *TETRAVALENT_NITROGEN_VALENCE_ERROR =
+      "Explicit valence for atom # 1 N, 4, is greater than permitted";
   const size_t BUF_SIZE = PIPE_BUF_SIZE;
   CapturedStreams *captured_streams;
   typedef struct {
@@ -2394,7 +2400,9 @@ void test_capture_logs() {
     assert(!mpkl);
     log_buffer = get_stderr_buf(captured_streams, BUF_SIZE);
     assert(log_buffer);
-    assert(tests[i].func == set_log_tee ? !!strstr(log_buffer, TETRAVALENT_NITROGEN_VALENCE_ERROR) : !log_buffer[0]);
+    assert(tests[i].func == set_log_tee
+               ? !!strstr(log_buffer, TETRAVALENT_NITROGEN_VALENCE_ERROR)
+               : !log_buffer[0]);
     free(log_buffer);
     release_streams(&captured_streams);
     log_buffer = get_log_buffer(log_handle);
@@ -2414,7 +2422,9 @@ void test_capture_logs() {
     assert(!mpkl);
     log_buffer = get_stderr_buf(captured_streams, BUF_SIZE);
     assert(log_buffer);
-    assert(tests[i].func == set_log_tee ? !!strstr(log_buffer, PENTAVALENT_CARBON_VALENCE_ERROR) : !log_buffer[0]);
+    assert(tests[i].func == set_log_tee
+               ? !!strstr(log_buffer, PENTAVALENT_CARBON_VALENCE_ERROR)
+               : !log_buffer[0]);
     free(log_buffer);
     release_streams(&captured_streams);
     log_buffer = get_log_buffer(log_handle);
