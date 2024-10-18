@@ -583,6 +583,7 @@ Book)
 - \c AROMATICITY_SIMPLE only considers 5- and 6-membered simple rings (it
 does not consider the outer envelope of fused rings)
 - \c AROMATICITY_MDL
+- \c AROMATICIT_MMFF94 the aromaticity model used by the MMFF94 force field
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
 typedef enum {
@@ -594,6 +595,7 @@ typedef enum {
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
 } AromaticityModel;
 
+//! sets the aromaticity model for a molecule to MMFF94
 RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 
 //! Sets up the aromaticity for a molecule
@@ -702,7 +704,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
    <b>Notes:</b>
      - this does not modify query bonds which have bond type queries (like
-   those which come from SMARTS) or rings containing them.
+       those which come from SMARTS) or rings containing them.
      - even if \c markAtomsBonds is \c false the \c BondType for all modified
        aromatic bonds will be changed from \c RDKit::Bond::AROMATIC to \c
        RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
@@ -857,6 +859,7 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
   \param force           forces calculation of the matrix, even if already
   computed
   \param propNamePrefix  used to set the cached property name
+  \param bondsToUse      used to limit which bonds are considered
 
   \return the adjacency matrix.
 
@@ -949,6 +952,7 @@ RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(
 RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(
     const ROMol &mol, int confId = -1, bool useAtomWts = false,
     bool force = false, const char *propNamePrefix = nullptr);
+
 //! Find the shortest path between two atoms
 /*!
   Uses the Bellman-Ford algorithm
@@ -1006,12 +1010,12 @@ class Hybridizations {
 //! removes bogus chirality markers (e.g. tetrahedral flags on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
-//! \overload
-RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
 //! removes bogus atropisomeric markers (e.g. those without sp2 begin and end
 //! atoms):
 RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol,
                                                Hybridizations &hybridizations);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
 
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
@@ -1064,14 +1068,16 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 //! Sets bond directions based on double bond stereochemistry
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
-//! removes directions from single bonds. Wiggly bonds will have the property
-//! _UnknownStereo set on them
+//! removes directions from single bonds. The property _UnknownStereo will be
+//! set on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol,
                                                    bool onlyWedgeFlags = false);
 
-//! removes directions from all bonds. Wiggly bonds and cross bonds will have
-//! the property _UnknownStereo set on them
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearAllBondDirFlags(ROMol &mol);
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
                                          bool onlyWedgeFlags = false);
 

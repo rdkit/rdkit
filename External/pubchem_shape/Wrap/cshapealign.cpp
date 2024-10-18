@@ -68,17 +68,77 @@ void wrap_pubchemshape() {
        python::arg("probeConfId") = -1, python::arg("useColors") = true,
        python::arg("opt_param") = 0.5, python::arg("max_preiters") = 3,
        python::arg("max_postiters") = 16),
-      "aligns probe to ref, probe is modified");
-  python::def("AlignMol", &helpers::alignMol2,
-              (python::arg("refShape"), python::arg("probe"),
-               python::arg("probeConfId") = -1, python::arg("useColors") = true,
-               python::arg("opt_param") = 0.5, python::arg("max_preiters") = 3,
-               python::arg("max_postiters") = 16),
-              "aligns probe to reference shape, probe is modified");
+      R"DOC(Aligns a probe molecule to a reference molecule. The probe is modified.
+
+Parameters
+----------
+ref : RDKit.ROMol
+    Reference molecule
+probe : RDKit.ROMol
+    Probe molecule
+refConfId : int, optional
+    Reference conformer ID (default is -1)
+probeConfId : int, optional
+    Probe conformer ID (default is -1)
+useColors : bool, optional
+    Whether or not to use colors in the scoring (default is True)
+optParam : float, optional
+max_preiters : int, optional
+max_postiters : int, optional
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if useColors is False)DOC");
+
+  python::def(
+      "AlignMol", &helpers::alignMol2,
+      (python::arg("refShape"), python::arg("probe"),
+       python::arg("probeConfId") = -1, python::arg("useColors") = true,
+       python::arg("opt_param") = 0.5, python::arg("max_preiters") = 3,
+       python::arg("max_postiters") = 16),
+      R"DOC(Aligns a probe molecule to a reference shape. The probe is modified.
+
+Parameters
+----------
+refShape : ShapeInput
+    Reference molecule
+probe : RDKit.ROMol
+    Probe molecule
+probeConfId : int, optional
+    Probe conformer ID (default is -1)
+useColors : bool, optional
+    Whether or not to use colors in the scoring (default is True)
+optParam : float, optional
+max_preiters : int, optional
+max_postiters : int, optional
+
+
+Returns
+-------
+ 2-tuple of doubles
+    The results are (shape_score, color_score)
+    The color_score is zero if useColors is False)DOC");
+
   python::def("PrepareConformer", &helpers::prepConf,
               (python::arg("mol"), python::arg("confId") = -1,
                python::arg("useColors") = true),
-              "returns a shape object for a molecule",
+              R"DOC(Generates a ShapeInput object for a molecule
+
+Parameters
+----------
+mol : RDKit.ROMol
+    Reference molecule
+confId : int, optional
+    Conformer ID to use (default is -1)
+useColors : bool, optional
+    Whether or not to assign chemical features (colors) (default is True)
+
+Returns
+-------
+ a ShapeInput for the molecule)DOC",
               python::return_value_policy<python::manage_new_object>());
   python::class_<ShapeInput, boost::noncopyable>("ShapeInput", python::no_init)
       .def_readwrite("coord", &ShapeInput::coord)
