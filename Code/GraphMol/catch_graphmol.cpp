@@ -3477,6 +3477,19 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "github #7044: canonicalization error when allenes have specified stereo") {
+  SECTION("basics") {
+    auto m = "CC=C=CC"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(2)->setStereoAtoms(1, 4);
+    m->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "CC=C=CC");
+  }
+}
+
+TEST_CASE(
     "Github Issue #7128: ReplaceBond may cause valence issues in specific edge cases",
     "[bug][RWMol]") {
   auto m = R"CTAB(
