@@ -1317,7 +1317,6 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
   while (!needsSorting.empty() && numIts < maxIts &&
          (lastNumRanks < 0 ||
           static_cast<unsigned int>(lastNumRanks) < numRanks)) {
-    unsigned int longestEntry = 0;
     // ----------------------------------------------------
     //
     // for each atom, get a sorted list of its neighbors' ranks:
@@ -1347,21 +1346,6 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
       // add a zero for each coordinated H as long as we're not a query atom
       if (!mol[index]->hasQuery()) {
         cipEntry.insert(cipEntry.end(), mol[index]->getTotalNumHs(), 0);
-      }
-
-      if (cipEntry.size() > longestEntry) {
-        longestEntry = rdcast<unsigned int>(cipEntry.size());
-      }
-    }
-    // ----------------------------------------------------
-    //
-    // pad the entries so that we compare rounds to themselves:
-    //
-    for (unsigned int index = 0; index < numAtoms; ++index) {
-      auto sz = rdcast<unsigned int>(cipEntries[index].size());
-      if (sz < longestEntry) {
-        cipEntries[index].insert(cipEntries[index].end(), longestEntry - sz,
-                                 -1);
       }
     }
     // ----------------------------------------------------
