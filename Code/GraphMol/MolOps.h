@@ -1063,7 +1063,6 @@ RDKIT_GRAPHMOL_EXPORT void assignChiralTypesFromBondDirs(
 
 //! \deprecated: this function will be removed in a future release. Use
 //! setDoubleBondNeighborDirections() instead
-[[deprecated("please use setDoubleBondNeighborDirections() instead")]]
 RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
                                                      int confId = -1);
 //! Sets bond directions based on double bond stereochemistry
