@@ -50,7 +50,6 @@ Submodules
    rdkit.Chem.Graphs
    rdkit.Chem.Lipinski
    rdkit.Chem.MACCSkeys
-   rdkit.Chem.MCS
    rdkit.Chem.MolCatalog
    rdkit.Chem.MolStandardize
    rdkit.Chem.MolSurf
