@@ -66,6 +66,7 @@ Submodules
    rdkit.Chem.SATIS
    rdkit.Chem.SaltRemover
    rdkit.Chem.ShowMols
+   rdkit.Chem.SpacialScore
    rdkit.Chem.TemplateAlign
    rdkit.Chem.TorsionFingerprints
    rdkit.Chem.inchi
