@@ -579,6 +579,8 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
     }
     {
       std::string pkl;
@@ -587,14 +589,18 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
     }
     {
       std::string pkl;
-      MolPickler::pickleMol(mol2, pkl);
+      MolPickler::pickleMol(mol3, pkl);
       RWMol pklmol(pkl);
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
     }
   }
   SECTION("basics string") {
@@ -636,6 +642,8 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
     }
     {
       std::string pkl;
@@ -644,6 +652,8 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
     }
     {
       std::string pkl;
@@ -652,6 +662,8 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling
+      CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
     }
   }
   SECTION("basics EBV") {
@@ -698,6 +710,8 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
+      // make sure we are idempotent in pickling      
+      CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
     }
     {
       std::string pkl;
@@ -706,6 +720,8 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling      
+      CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
     }
     {
       std::string pkl;
@@ -714,6 +730,8 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
+      // make sure we are idempotent in pickling      
+      CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
     }
   }
 }
