@@ -361,13 +361,6 @@ typedef int yy_state_fast_t;
 #endif
 #endif
 
-/* Suppress unused-variable warnings by "using" E.  */
-#if !defined lint || defined __GNUC__
-#define YYUSE(E) ((void)(E))
-#else
-#define YYUSE(E) /* empty */
-#endif
-
 #if defined __GNUC__ && !defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 #define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN                 \
@@ -781,27 +774,21 @@ static const yytype_int8 yyr2[] = {
 `-----------------------------------*/
 
 static void yy_symbol_value_print(
-    FILE *yyo, int yytype, YYSTYPE const *const yyvaluep, const char *input,
-    std::vector<RDKit::RWMol *> *molList, RDKit::Atom *&lastAtom,
-    RDKit::Bond *&lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed,
-    std::list<unsigned int> *branchPoints, void *scanner, int &start_token) {
-  FILE *yyoutput = yyo;
-  YYUSE(yyoutput);
-  YYUSE(input);
-  YYUSE(molList);
-  YYUSE(lastAtom);
-  YYUSE(lastBond);
-  YYUSE(numAtomsParsed);
-  YYUSE(numBondsParsed);
-  YYUSE(branchPoints);
-  YYUSE(scanner);
-  YYUSE(start_token);
+    FILE *yyo, [[maybe_unused]] int yytype, YYSTYPE const *const yyvaluep,
+    [[maybe_unused]] const char *input,
+    [[maybe_unused]] std::vector<RDKit::RWMol *> *molList,
+    [[maybe_unused]] RDKit::Atom *&lastAtom,
+    [[maybe_unused]] RDKit::Bond *&lastBond,
+    [[maybe_unused]] unsigned &numAtomsParsed,
+    [[maybe_unused]] unsigned &numBondsParsed,
+    [[maybe_unused]] std::list<unsigned int> *branchPoints,
+    [[maybe_unused]] void *scanner, [[maybe_unused]] int &start_token) {
+  [[maybe_unused]] FILE *yyoutput = yyo;
   if (!yyvaluep) return;
 #ifdef YYPRINT
   if (yytype < YYNTOKENS) YYPRINT(yyo, yytoknum[yytype], *yyvaluep);
 #endif
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE(yytype);
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -1117,22 +1104,17 @@ static int yysyntax_error(YYPTRDIFF_T *yymsg_alloc, char **yymsg,
 | Release the memory associated to this symbol.  |
 `-----------------------------------------------*/
 
-static void yydestruct(const char *yymsg, int yytype, YYSTYPE *yyvaluep,
-                       const char *input, std::vector<RDKit::RWMol *> *molList,
-                       RDKit::Atom *&lastAtom, RDKit::Bond *&lastBond,
-                       unsigned &numAtomsParsed, unsigned &numBondsParsed,
-                       std::list<unsigned int> *branchPoints, void *scanner,
-                       int &start_token) {
-  YYUSE(yyvaluep);
-  YYUSE(input);
-  YYUSE(molList);
-  YYUSE(lastAtom);
-  YYUSE(lastBond);
-  YYUSE(numAtomsParsed);
-  YYUSE(numBondsParsed);
-  YYUSE(branchPoints);
-  YYUSE(scanner);
-  YYUSE(start_token);
+static void yydestruct(const char *yymsg, int yytype,
+                       [[maybe_unused]] YYSTYPE *yyvaluep,
+                       [[maybe_unused]] const char *input,
+                       [[maybe_unused]] std::vector<RDKit::RWMol *> *molList,
+                       [[maybe_unused]] RDKit::Atom *&lastAtom,
+                       [[maybe_unused]] RDKit::Bond *&lastBond,
+                       [[maybe_unused]] unsigned &numAtomsParsed,
+                       [[maybe_unused]] unsigned &numBondsParsed,
+                       [[maybe_unused]] std::list<unsigned int> *branchPoints,
+                       [[maybe_unused]] void *scanner,
+                       [[maybe_unused]] int &start_token) {
   if (!yymsg) yymsg = "Deleting";
   YY_SYMBOL_PRINT(yymsg, yytype, yyvaluep, yylocationp);
 
