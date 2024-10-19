@@ -158,6 +158,11 @@ Include a Bond Index
    # Create a molecule from SMILES
    mol = Chem.MolFromSmiles('c1ccccc1C')
    svg = label_bonds(mol, size=(400,300), offset_y=0.2)
+   display(SVG(svg))
+
+.. testoutput::
+
+   <IPython.core.display.SVG object>
 
 .. image:: images/RDKitCB_40_im0.png
    :scale: 75%
