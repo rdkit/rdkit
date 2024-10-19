@@ -1003,15 +1003,14 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
 
 // insert (-1) for hydrogens or missing ligands, where these are placed
 // depends on if it is the first atom or not
-static void insertImplicitNbors(INT_LIST &bonds, 
-                                const Atom::ChiralType tag,
+static void insertImplicitNbors(INT_LIST &bonds, const Atom::ChiralType tag,
                                 const bool firstAtom) {
   unsigned int ref_max = Chirality::getMaxNbors(tag);
   if (bonds.size() < ref_max) {
     if (firstAtom) {
-      bonds.insert(bonds.begin(), ref_max-bonds.size(), -1); 
+      bonds.insert(bonds.begin(), ref_max - bonds.size(), -1);
     } else {
-      bonds.insert(++bonds.begin(), ref_max-bonds.size(), -1); 
+      bonds.insert(++bonds.begin(), ref_max - bonds.size(), -1);
     }
   }
 }
@@ -1085,7 +1084,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
         // Check if the atom can be chiral, and if chirality needs inversion
         const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
-        
+
         // Extra check needed if/when @AL1/@AL2 supported
         if (trueOrder.size() >= 3 || Chirality::hasNonTetrahedralStereo(atom)) {
           int nSwaps = 0;
@@ -1129,8 +1128,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
           // be an option to not do chiral inversions
           if (doChiralInversions &&
               chiralAtomNeedsTagInversion(
-                  mol, atom,
-                  firstInPart,
+                  mol, atom, firstInPart,
                   atomRingClosures[atom->getIdx()].size())) {
             // This is a special case. Here's an example:
             //   Our internal representation of a chiral center is equivalent

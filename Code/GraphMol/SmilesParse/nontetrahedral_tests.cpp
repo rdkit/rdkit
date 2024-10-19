@@ -203,13 +203,12 @@ TEST_CASE("SP getChiralAcrossBond et al.") {
       REQUIRE(m);
       CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
                                            m->getBondWithIdx(0))
-              ->getIdx() == 1);
+                ->getIdx() == 1);
       CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
                                            m->getBondWithIdx(1))
-              ->getIdx() == 0);
+                ->getIdx() == 0);
       CHECK(Chirality::getChiralAcrossBond(m->getAtomWithIdx(1),
-                                           m->getBondWithIdx(2))
-              == nullptr);
+                                           m->getBondWithIdx(2)) == nullptr);
     }
   }
 }

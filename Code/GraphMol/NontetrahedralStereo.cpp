@@ -287,10 +287,10 @@ unsigned int getMaxNbors(const Atom::ChiralType tag) {
   switch (tag) {
     case Atom::CHI_TETRAHEDRAL_CW:
     case Atom::CHI_TETRAHEDRAL_CCW:
-    case Atom::CHI_TETRAHEDRAL: // fall through
+    case Atom::CHI_TETRAHEDRAL:  // fall through
       return 4;
     case Atom::CHI_ALLENE:
-      return 2; // n.b. doesn't seem to actually other than SMI/SMA parsers
+      return 2;  // n.b. doesn't seem to actually other than SMI/SMA parsers
     case Atom::CHI_SQUAREPLANAR:
       return 4;
     case Atom::CHI_TRIGONALBIPYRAMIDAL:
@@ -298,10 +298,10 @@ unsigned int getMaxNbors(const Atom::ChiralType tag) {
     case Atom::CHI_OCTAHEDRAL:
       return 6;
     default:
-      BOOST_LOG(rdWarningLog) << 
-        "Warning: unexpected chiral tag getMaxNbors(): " << 
-        tag << std::endl;
-      return 0;  
+      BOOST_LOG(rdWarningLog)
+          << "Warning: unexpected chiral tag getMaxNbors(): " << tag
+          << std::endl;
+      return 0;
   }
 }
 
@@ -473,8 +473,7 @@ bool hasNonTetrahedralStereo(const Atom *cen) {
          tag == Atom::ChiralType::CHI_OCTAHEDRAL;
 }
 
-unsigned int getChiralPermutation(const Atom *cen, 
-                                  const INT_LIST &probe,
+unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe,
                                   bool inverse) {
   PRECONDITION(cen, "bad center pointer");
   PRECONDITION(cen->hasOwningMol(), "no owning mol");
@@ -522,13 +521,12 @@ unsigned int getChiralPermutation(const Atom *cen,
 
   // Missing (implicit) neighbors are at the end when in storage order
   if (nbrPerm.size() < nbrIdx)
-    nbrPerm.insert(nbrPerm.end(), nbrIdx-nbrPerm.size(), -1);
-  
+    nbrPerm.insert(nbrPerm.end(), nbrIdx - nbrPerm.size(), -1);
+
   CHECK_INVARIANT(nbrPerm.size() == probePerm.size(),
                   "probe vector size does not match");
 
-  if (inverse)
-    std::swap(nbrPerm, probePerm);
+  if (inverse) std::swap(nbrPerm, probePerm);
 
   boost::dynamic_bitset<> swapped(probe.size());
   for (unsigned int i = 0; i < probePerm.size() - 1; ++i) {

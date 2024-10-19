@@ -211,10 +211,8 @@ bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
 // may not match how it is SMILES due to ring closures and implicit/missing
 // ligands.
 //
-unsigned int GetBondOrdering(INT_LIST &bondOrdering,
-                             const RDKit::RWMol *mol,
-                             const RDKit::Atom *atom)
-{
+unsigned int GetBondOrdering(INT_LIST &bondOrdering, const RDKit::RWMol *mol,
+                             const RDKit::Atom *atom) {
   //
   // The atom is marked as chiral, set the SMILES-order of the
   // atom's bonds.  This is easy for non-ring-closure bonds,
@@ -236,12 +234,10 @@ unsigned int GetBondOrdering(INT_LIST &bondOrdering,
   // to find our place later):
   neighbors.emplace_back(atom->getIdx(), -1);
   std::list<size_t> bondOrder;
-  for (auto nbrIdx :
-        boost::make_iterator_range(mol->getAtomNeighbors(atom))) {
+  for (auto nbrIdx : boost::make_iterator_range(mol->getAtomNeighbors(atom))) {
     const Bond *nbrBond = mol->getBondBetweenAtoms(atom->getIdx(), nbrIdx);
     if (std::find(ringClosures.begin(), ringClosures.end(),
-                  static_cast<int>(nbrBond->getIdx())) ==
-        ringClosures.end()) {
+                  static_cast<int>(nbrBond->getIdx())) == ringClosures.end()) {
       neighbors.emplace_back(nbrIdx, nbrBond->getIdx());
     }
   }
@@ -259,7 +255,7 @@ unsigned int GetBondOrdering(INT_LIST &bondOrdering,
 
   // copy over the bond ids:
   for (auto neighborIt = neighbors.begin(); neighborIt != neighbors.end();
-        ++neighborIt) {
+       ++neighborIt) {
     if (neighborIt != selfPos) {
       bondOrdering.push_back(rdcast<int>(neighborIt->second));
     } else {
@@ -279,7 +275,6 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
     Atom::ChiralType chiralType = atom->getChiralTag();
     if (chiralType == Atom::CHI_TETRAHEDRAL_CW ||
         chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
-      
       INT_LIST bondOrdering;
       unsigned int numClosures = GetBondOrdering(bondOrdering, mol, atom);
 
@@ -324,28 +319,26 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       if (nSwaps % 2) {
         atom->invertChirality();
       }
-    } 
-    else if (chiralType == Atom::CHI_SQUAREPLANAR ||
-             chiralType == Atom::CHI_TRIGONALBIPYRAMIDAL ||
-             chiralType == Atom::CHI_OCTAHEDRAL) {
-
+    } else if (chiralType == Atom::CHI_SQUAREPLANAR ||
+               chiralType == Atom::CHI_TRIGONALBIPYRAMIDAL ||
+               chiralType == Atom::CHI_OCTAHEDRAL) {
       INT_LIST bonds;
       GetBondOrdering(bonds, mol, atom);
 
       unsigned int ref_max = Chirality::getMaxNbors(chiralType);
- 
+
       // insert (-1) for hydrogens or missing ligands, where these are placed
       // depends on if it is the first atom or not
       if (bonds.size() < ref_max) {
         if (atom->hasProp(common_properties::_SmilesStart)) {
-          bonds.insert(bonds.begin(), ref_max-bonds.size(), -1); 
+          bonds.insert(bonds.begin(), ref_max - bonds.size(), -1);
         } else {
-          bonds.insert(++bonds.begin(), ref_max-bonds.size(), -1); 
+          bonds.insert(++bonds.begin(), ref_max - bonds.size(), -1);
         }
       }
 
       atom->setProp(common_properties::_chiralPermutation,
-                    Chirality::getChiralPermutation(atom, bonds, true));  
+                    Chirality::getChiralPermutation(atom, bonds, true));
     }
   }
 }  // namespace SmilesParseOps

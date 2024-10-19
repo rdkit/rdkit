@@ -211,7 +211,7 @@ RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
 
 RDKIT_GRAPHMOL_EXPORT unsigned int getMaxNbors(const Atom::ChiralType tag);
 
-// 
+//
 // Get the chiral permutation from the storage order of bonds on an atom
 // to the desired output order (probe). Missing/implicit neihgbors can be
 // represented with (-1). To get the inverse order, i.e. from the probe to the
@@ -219,7 +219,7 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMaxNbors(const Atom::ChiralType tag);
 //
 RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
                                                         const INT_LIST &probe,
-                                                        bool inverse=false);
+                                                        bool inverse = false);
 //! @}
 
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
