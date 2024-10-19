@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_40**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_41**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -103,6 +103,64 @@ indices are now near the atom, rather than at the atom position.
 
 .. image:: images/RDKitCB_0_im2.png
 
+
+Include a Bond Index
+======================
+
+| **Author:** Jeremy Monat
+| **Original Source:** `<https://bertiewooster.github.io/2024/10/15/Color-from-Conjugation.html>`_
+| **Index ID#:** RDKitCB_40
+| **Summary:** Draw a molecule with bond index numbers.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import Draw
+   from rdkit.Geometry import Point2D
+   from IPython.display import display, SVG
+
+   def label_bonds(mol, size=(300, 150), offset_x = 0, offset_y = 0):
+       # Generate 2D coordinates for visualization
+       Chem.rdDepictor.Compute2DCoords(mol)
+   
+       # Define image size and initialize an SVG drawer
+       drawer = Draw.MolDraw2DSVG(*size)
+   
+       # Draw the molecule first
+       drawer.DrawMolecule(mol)
+   
+       # Add bond numbers
+       for bond in mol.GetBonds():
+           idx = bond.GetIdx()
+   
+           # Get the positions of the atoms of the bond
+           begin_atom_pos = mol.GetConformer().GetAtomPosition(bond.GetBeginAtomIdx())
+           end_atom_pos = mol.GetConformer().GetAtomPosition(bond.GetEndAtomIdx())
+   
+           # Calculate midpoint of bond as midpoint between the two atoms
+           mid_x = (begin_atom_pos.x + end_atom_pos.x) / 2
+           mid_y = (begin_atom_pos.y + end_atom_pos.y) / 2
+   
+           # Optionally, offset the
+           #   x coordinate to move the label to the right (positive offset) or left (negative offset) of the bond
+           #   y coordinate to move the label above (positive offset) or below (negative offset) the bond
+           mid_point = Point2D(mid_x + offset_x, mid_y + offset_y)
+   
+           # Add bond index at the offset midpoint
+           drawer.DrawString(str(idx), mid_point)
+   
+       drawer.FinishDrawing()
+   
+       svg = drawer.GetDrawingText()
+   
+       return svg
+   
+   # Create a molecule from SMILES
+   mol = Chem.MolFromSmiles('c1ccccc1C')
+   svg = label_bonds(mol, size=(400,300), offset_y=0.2)
+
+.. image:: images/RDKitCB_40_im0.png
+   :scale: 75%
 
 Include a Calculation
 ======================
