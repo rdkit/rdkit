@@ -1124,7 +1124,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
             }
           }
 
-          // in future this show be moved up and simplified, there should not
+          // in future this should be moved up and simplified, there should not
           // be an option to not do chiral inversions
           if (doChiralInversions &&
               chiralAtomNeedsTagInversion(

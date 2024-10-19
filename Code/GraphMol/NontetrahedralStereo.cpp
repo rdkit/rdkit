@@ -290,7 +290,7 @@ unsigned int getMaxNbors(const Atom::ChiralType tag) {
     case Atom::CHI_TETRAHEDRAL:  // fall through
       return 4;
     case Atom::CHI_ALLENE:
-      return 2;  // n.b. doesn't seem to actually other than SMI/SMA parsers
+      return 2;  // not used other than SMI/SMA parsers?
     case Atom::CHI_SQUAREPLANAR:
       return 4;
     case Atom::CHI_TRIGONALBIPYRAMIDAL:
@@ -487,15 +487,21 @@ unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe,
   decltype(&swap_octahedral) swap_func = nullptr;
   switch (cen->getChiralTag()) {
     case Atom::ChiralType::CHI_OCTAHEDRAL:
-      if (probe.size() > 6) return 0;
+      if (probe.size() > 6) {
+        return 0;
+      }
       swap_func = swap_octahedral;
       break;
     case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
-      if (probe.size() > 5) return 0;
+      if (probe.size() > 5) {
+        return 0;
+      }
       swap_func = swap_trigonalbipyramidal;
       break;
     case Atom::ChiralType::CHI_SQUAREPLANAR:
-      if (probe.size() > 4) return 0;
+      if (probe.size() > 4) {
+        return 0;
+      }
       swap_func = swap_squareplanar;
       break;
     default:
@@ -526,7 +532,9 @@ unsigned int getChiralPermutation(const Atom *cen, const INT_LIST &probe,
   CHECK_INVARIANT(nbrPerm.size() == probePerm.size(),
                   "probe vector size does not match");
 
-  if (inverse) std::swap(nbrPerm, probePerm);
+  if (inverse) {
+    std::swap(nbrPerm, probePerm);
+  }
 
   boost::dynamic_bitset<> swapped(probe.size());
   for (unsigned int i = 0; i < probePerm.size() - 1; ++i) {

@@ -213,6 +213,9 @@ bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
 //
 unsigned int GetBondOrdering(INT_LIST &bondOrdering, const RDKit::RWMol *mol,
                              const RDKit::Atom *atom) {
+  PRECONDITION(mol, "no mol");
+  PRECONDITION(atom, "no atom");
+
   //
   // The atom is marked as chiral, set the SMILES-order of the
   // atom's bonds.  This is easy for non-ring-closure bonds,
