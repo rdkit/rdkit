@@ -1068,15 +1068,16 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 //! Sets bond directions based on double bond stereochemistry
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
-//! removes directions from single bonds. Wiggly bonds will have the property
-//! _UnknownStereo set on them
+//! removes directions from single bonds. The property _UnknownStereo will be
+//! set on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol,
                                                    bool onlyWedgeFlags = false);
 
-//! removes directions from all bonds. Wiggly bonds and cross bonds will have
-//! the property _UnknownStereo set on them
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearAllBondDirFlags(ROMol &mol);
-//! removes directions from all bonds. Wiggly bonds and cross bonds will have
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
                                          bool onlyWedgeFlags = false);
 
