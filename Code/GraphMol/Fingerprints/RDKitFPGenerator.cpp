@@ -194,25 +194,32 @@ RDKitFPEnvGenerator<OutputType>::getEnvironments(
 
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getRDKitFPGenerator(
-    unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
-    bool useBondOrder, AtomInvariantsGenerator *atomInvariantsGenerator,
-    bool countSimulation, const std::vector<std::uint32_t> countBounds,
-    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-    bool ownsAtomInvGen) {
+    const RDKitFPArguments &args,
+    AtomInvariantsGenerator *atomInvariantsGenerator, bool ownsAtomInvGen) {
   auto *envGenerator = new RDKitFPEnvGenerator<OutputType>();
-  auto *arguments = new RDKitFPArguments(
-      minPath, maxPath, useHs, branchedPaths, useBondOrder, countSimulation,
-      countBounds, fpSize, numBitsPerFeature);
-
   bool ownsAtomInvGenerator = ownsAtomInvGen;
   if (!atomInvariantsGenerator) {
     atomInvariantsGenerator = new RDKitFPAtomInvGenerator();
     ownsAtomInvGenerator = true;
   }
 
-  return new FingerprintGenerator<OutputType>(envGenerator, arguments,
-                                              atomInvariantsGenerator, nullptr,
-                                              ownsAtomInvGenerator, false);
+  return new FingerprintGenerator<OutputType>(
+      envGenerator, new RDKitFPArguments(args), atomInvariantsGenerator,
+      nullptr, ownsAtomInvGenerator, false);
+}
+
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getRDKitFPGenerator(
+    unsigned int minPath, unsigned int maxPath, bool useHs, bool branchedPaths,
+    bool useBondOrder, AtomInvariantsGenerator *atomInvariantsGenerator,
+    bool countSimulation, const std::vector<std::uint32_t> countBounds,
+    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+    bool ownsAtomInvGen) {
+  RDKitFPArguments arguments(minPath, maxPath, useHs, branchedPaths,
+                             useBondOrder, countSimulation, countBounds, fpSize,
+                             numBitsPerFeature);
+  return getRDKitFPGenerator<OutputType>(arguments, atomInvariantsGenerator,
+                                         ownsAtomInvGen);
 }
 
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
@@ -232,6 +239,11 @@ getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
                     const std::vector<std::uint32_t> countBounds,
                     std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
                     bool ownsAtomInvGen);
+
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
+getRDKitFPGenerator(const RDKitFPArguments &, AtomInvariantsGenerator *, bool);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
+getRDKitFPGenerator(const RDKitFPArguments &, AtomInvariantsGenerator *, bool);
 
 }  // namespace RDKitFP
 

@@ -38,11 +38,11 @@ class RDKIT_FINGERPRINTS_EXPORT TopologicalTorsionArguments
    \param fpSize size of the generated fingerprint, does not affect the sparse
    versions
    */
-  TopologicalTorsionArguments(const bool includeChirality,
-                              const uint32_t torsionAtomCount,
-                              const bool countSimulation,
-                              const std::vector<std::uint32_t> countBounds,
-                              const std::uint32_t fpSize);
+  TopologicalTorsionArguments(
+      const bool includeChirality = false, const uint32_t torsionAtomCount = 4,
+      const bool countSimulation = true,
+      const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+      const std::uint32_t fpSize = 2048);
 };
 
 template <typename OutputType>
@@ -123,6 +123,12 @@ getTopologicalTorsionGenerator(
     bool countSimulation = true, std::uint32_t fpSize = 2048,
     std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
     bool ownsAtomInvGen = false);
+//! overload
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getTopologicalTorsionGenerator(
+    const TopologicalTorsionArguments &args,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    const bool ownsAtomInvGen = false);
 }  // namespace TopologicalTorsion
 }  // namespace RDKit
 
