@@ -117,7 +117,7 @@ int Properties::registerProperty(PropertyFunctor *prop) {
   }
   // XXX Add mutex?
   Properties::registry.emplace_back(prop);
-  return Properties::registry.size();
+  return Properties::registry.size() - 1;
 }
 
 std::vector<std::string> Properties::getAvailableProperties() {

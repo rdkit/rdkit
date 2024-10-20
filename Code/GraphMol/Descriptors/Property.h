@@ -59,7 +59,9 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   virtual ~PropertyFunctor() {}
 
   //! Compute the value of the property
-  virtual double operator()(const RDKit::ROMol &) const = 0;
+  virtual double operator()(const RDKit::ROMol &mol) const {
+    return (*d_dataFunc)(mol);
+  }
 
   //! Return the name of the property
   const std::string getName() const { return propName; }

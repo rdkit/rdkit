@@ -898,16 +898,26 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
   //  we can't use python props in functions.
   PythonPropertyFunctor(PyObject *self, const std::string &name,
                         const std::string &version)
-      : PropertyFunctor(name, version), self(self) {
-    python::incref(self);
-  }
-
-  ~PythonPropertyFunctor() override { python::decref(self); }
+      : PropertyFunctor(name, version), self(self) {}
 
   double operator()(const RDKit::ROMol &mol) const override {
     return python::call_method<double>(self, "__call__", boost::ref(mol));
   }
 };
+
+int registerPropertyHelper(PythonPropertyFunctor *ptr) {
+  // We increase the refcount and register a copy of the functorto deal with
+  // life time issues: the original functor is owned by Python, which will
+  // delete if it goes out of scope (we don't want that to happen one it's
+  // registered, so we incref; note there's no matching decref), but also
+  // at Python shutdown. But the registry also owns it via shared_ptr,
+  // so, we make a copy to avoid double deletion when the shared_ptr is
+  // destroyed.
+  python::incref(ptr->self);
+  return RDKit::Descriptors::Properties::registerProperty(
+      new PythonPropertyFunctor(ptr->self, ptr->getName(), ptr->getVersion()));
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -1583,7 +1593,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "";
 
   python::class_<RDKit::Descriptors::Properties,
-                 RDKit::Descriptors::Properties *>(
+                 boost::shared_ptr<RDKit::Descriptors::Properties>>(
       "Properties", docString.c_str(), python::init<>(python::args("self")))
       .def(python::init<const std::vector<std::string> &>(
           python::args("self", "propNames")))
@@ -1611,8 +1621,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .def("GetProperty", &RDKit::Descriptors::Properties::getProperty,
            python::arg("propName"), "Return the named property if it exists")
       .staticmethod("GetProperty")
-      .def("RegisterProperty",
-           &RDKit::Descriptors::Properties::registerProperty,
+      .def("RegisterProperty", &registerPropertyHelper,
            python::arg("propertyFunctor"),
            "Register a new property object (not thread safe)")
       .staticmethod("RegisterProperty");
