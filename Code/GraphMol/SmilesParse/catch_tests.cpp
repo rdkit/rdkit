@@ -2607,7 +2607,17 @@ TEST_CASE("ensure unused features are not used") {
     CHECK(smiles == "FC(Cl)NCOC(F)Cl");
   }
 
-  SECTION("enhanced stereo canonicalized") {
+  SECTION("problematic cases") {
+    auto mol1 =
+        "[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|"_smiles;
+    REQUIRE(mol1);
+    Canon::canonicalizeEnhancedStereo(*mol1);
+    auto smiles = MolToSmiles(*mol1);
+    CHECK(smiles == "C[C@H]1C[CH]CC(C[C@@H](C)[C@@H](C)O)C1");
+  }
+}
+TEST_CASE("enhanced stereo canonicalized") {
+  SECTION("basic") {
     std::unique_ptr<ROMol> mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol1);
     std::unique_ptr<ROMol> mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
@@ -2625,13 +2635,41 @@ TEST_CASE("ensure unused features are not used") {
     CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |a:1,&1:6|");
   }
 
-  SECTION("problematic cases") {
-    auto mol1 =
-        "[C@H]1CC(C[C@@H](C)[C@@H](C)O)C[C@@H](C)C1 |o1:1,11,o2:5,7|"_smiles;
+  SECTION("trimethylcyclohexane") {
+    std::unique_ptr<ROMol> mol1 =
+        "C[C@H]1C[C@@H](C)C[C@@H](C)C1 |o1:1,o2:6,o3:3|"_smiles;
+    std::unique_ptr<ROMol> mol2 = "C[C@H]1C[C@@H](C)C[C@@H](C)C1 |o1:1|"_smiles;
+    std::unique_ptr<ROMol> mol3 =
+        "C[C@@H]1C[C@H](C)C[C@H](C)C1 |o1:1,o2:6,o3:3|"_smiles;
     REQUIRE(mol1);
-    Canon::canonicalizeEnhancedStereo(*mol1);
-    auto smiles = MolToSmiles(*mol1);
-    CHECK(smiles == "C[C@H]1C[CH]CC(C[C@@H](C)[C@@H](C)O)C1");
+    REQUIRE(mol2);
+    REQUIRE(mol3);
+
+    SmilesWriteParams ps;
+    RDKit::canonicalizeStereoGroups(mol1);
+    auto smiles = MolToCXSmiles(*mol1, ps);
+    CHECK(smiles == "C[C@H]1C[C@H](C)C[C@H](C)C1 |a:1,o1:3,6|");
+
+    RDKit::canonicalizeStereoGroups(mol2);
+    smiles = MolToCXSmiles(*mol2, ps);
+    CHECK(smiles == "C[C@H]1C[C@H](C)C[C@H](C)C1 |a:1,o1:3,6|");
+
+    RDKit::canonicalizeStereoGroups(mol3);
+    smiles = MolToCXSmiles(*mol3, ps);
+    CHECK(smiles == "C[C@H]1C[C@H](C)C[C@H](C)C1 |a:1,o1:3,6|");
+  }
+
+  SECTION("multiFrag test") {
+    std::unique_ptr<ROMol> mol1 =
+        "C[C@H]1C[C@@H](C)C[C@@H](C)C1.F[C@H](Cl)NCO[C@H](F)Cl |o1:6,o2:3,o3:1,o4:15|"_smiles;
+    REQUIRE(mol1);
+
+    SmilesWriteParams ps;
+    RDKit::canonicalizeStereoGroups(mol1);
+    auto smiles = MolToCXSmiles(*mol1, ps);
+    CHECK(
+        smiles ==
+        "C[C@H]1C[C@H](C)C[C@H](C)C1.F[C@H](Cl)NCO[C@H](F)Cl |a:1,10,o1:3,6,o2:15|");
   }
 }
 
