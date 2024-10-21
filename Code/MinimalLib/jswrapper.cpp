@@ -354,10 +354,6 @@ JSRGroupDecomposition *get_rgd_helper(
   return res;
 }
 
-void enable_logging_all() { enable_logging("rdApp.*"); }
-
-void disable_logging_all() { disable_logging("rdApp.*"); }
-
 JSRGroupDecomposition *get_rgd_no_details_helper(
     const emscripten::val &singleOrMultipleCores) {
   return get_rgd_helper(singleOrMultipleCores, "");
@@ -391,6 +387,11 @@ emscripten::val get_rgroups_as_rows_helper(const JSRGroupDecomposition &self) {
   return arr;
 }
 #endif
+
+void enable_logging_all() { enable_logging("rdApp.*"); }
+
+void disable_logging_all() { disable_logging("rdApp.*"); }
+
 }  // namespace
 
 using namespace emscripten;
