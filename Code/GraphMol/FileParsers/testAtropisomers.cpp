@@ -200,6 +200,9 @@ class MolAtropTest {
 
     std::unique_ptr<RWMol> mol =
         std::unique_ptr<RWMol>(SmilesToMol(smiTest->smiles, params));
+    TEST_ASSERT(mol->getNumAtoms() == smiTest->atomCount)
+    TEST_ASSERT(mol->getNumBonds() == smiTest->bondCount)
+
     testAromAtropMol(mol.get(), smiTest->expectedResult, fBase);
   }
 
@@ -216,6 +219,9 @@ class MolAtropTest {
 
     std::unique_ptr<RWMol> mol =
         std::unique_ptr<RWMol>(MolFileToMol(fName, false, false, false));
+
+    TEST_ASSERT(mol->getNumAtoms() == molFileTest->atomCount)
+    TEST_ASSERT(mol->getNumBonds() == molFileTest->bondCount)
 
     testAromAtropMol(mol.get(), molFileTest->expectedResult, fName);
   }
