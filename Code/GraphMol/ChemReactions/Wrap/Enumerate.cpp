@@ -12,7 +12,7 @@
 //       copyright notice, this list of conditions and the following
 //       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutues for BioMedical Research Inc.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
 //       products derived from this software without specific prior written
 //       permission.
@@ -144,7 +144,8 @@ struct enumeration_wrapper {
 
     RegisterVectorConverter<MOL_SPTR_VECT>("VectMolVect");
 
-    python::class_<RDKit::EnumerateLibraryBase, RDKit::EnumerateLibraryBase *,
+    python::class_<RDKit::EnumerateLibraryBase,
+                   boost::shared_ptr<RDKit::EnumerateLibraryBase>,
                    RDKit::EnumerateLibraryBase &, boost::noncopyable>(
         "EnumerateLibraryBase", python::no_init)
         .def("__nonzero__", &EnumerateLibraryBase__nonzero__,
@@ -210,7 +211,8 @@ Options:\n\
      does not pass sanitization, then none of the products will.\n\
 ";
 
-    python::class_<RDKit::EnumerationParams, RDKit::EnumerationParams *,
+    python::class_<RDKit::EnumerationParams,
+                   boost::shared_ptr<RDKit::EnumerationParams>,
                    RDKit::EnumerationParams &>(
         "EnumerationParams", docString.c_str(),
         python::init<>(python::args("self")))
@@ -315,7 +317,7 @@ for result in itertools.islice(libary2, 1000):\n\
     // iterator_wrappers<EnumerateLibrary>().wrap("EnumerateLibraryIterator");
 
     python::class_<RDKit::EnumerationStrategyBase,
-                   RDKit::EnumerationStrategyBase *,
+                   boost::shared_ptr<RDKit::EnumerationStrategyBase>,
                    RDKit::EnumerationStrategyBase &, boost::noncopyable>(
         "EnumerationStrategyBase", python::no_init)
         .def("__nonzero__", &EnumerationStrategyBase__nonzero__,
@@ -364,7 +366,7 @@ for result in itertools.islice(libary2, 1000):\n\
         "(0,0,0), (1,0,0), (2,0,0) ...\n";
 
     python::class_<RDKit::CartesianProductStrategy,
-                   RDKit::CartesianProductStrategy *,
+                   boost::shared_ptr<RDKit::CartesianProductStrategy>,
                    RDKit::CartesianProductStrategy &,
                    python::bases<EnumerationStrategyBase>>(
         "CartesianProductStrategy", docString.c_str(),
@@ -376,7 +378,8 @@ for result in itertools.islice(libary2, 1000):\n\
     docString =
         "RandomSampleStrategy simply randomly samples from the reagent sets.\n"
         "Note that this strategy never halts and can produce duplicates.";
-    python::class_<RDKit::RandomSampleStrategy, RDKit::RandomSampleStrategy *,
+    python::class_<RDKit::RandomSampleStrategy,
+                   boost::shared_ptr<RDKit::RandomSampleStrategy>,
                    RDKit::RandomSampleStrategy &,
                    python::bases<EnumerationStrategyBase>>(
         "RandomSampleStrategy", docString.c_str(),
@@ -391,7 +394,7 @@ for result in itertools.islice(libary2, 1000):\n\
         "possible.\n"
         "Note that this strategy never halts and can produce duplicates.";
     python::class_<RDKit::RandomSampleAllBBsStrategy,
-                   RDKit::RandomSampleAllBBsStrategy *,
+                   boost::shared_ptr<RDKit::RandomSampleAllBBsStrategy>,
                    RDKit::RandomSampleAllBBsStrategy &,
                    python::bases<EnumerationStrategyBase>>(
         "RandomSampleAllBBsStrategy", docString.c_str(),
@@ -410,7 +413,7 @@ for result in itertools.islice(libary2, 1000):\n\
         "See EnumerationStrategyBase for more details.\n";
 
     python::class_<RDKit::EvenSamplePairsStrategy,
-                   RDKit::EvenSamplePairsStrategy *,
+                   boost::shared_ptr<RDKit::EvenSamplePairsStrategy>,
                    RDKit::EvenSamplePairsStrategy &,
                    python::bases<EnumerationStrategyBase>>(
         "EvenSamplePairsStrategy", docString.c_str(),
