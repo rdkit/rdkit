@@ -357,7 +357,8 @@ molecule before generating the conformer. This is essential to get good structur
     4 11  1  0
     4 12  1  0
   M  END
-<BLANKLINE>
+  <BLANKLINE>
+
 
 If we don't want the Hs in our later analysis, they are easy to remove:
 

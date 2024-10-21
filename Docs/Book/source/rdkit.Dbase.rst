@@ -9,7 +9,6 @@ Submodules
    rdkit.Dbase.DbConnection
    rdkit.Dbase.DbInfo
    rdkit.Dbase.DbModule
-   rdkit.Dbase.DbReport
    rdkit.Dbase.DbResultSet
    rdkit.Dbase.DbUtils
    rdkit.Dbase.StorageUtils

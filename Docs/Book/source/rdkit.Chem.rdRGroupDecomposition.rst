@@ -1,5 +1,5 @@
 rdkit.Chem.rdRGroupDecomposition module
-=================================
+=======================================
 
 .. automodule:: rdkit.Chem.rdRGroupDecomposition
     :members:

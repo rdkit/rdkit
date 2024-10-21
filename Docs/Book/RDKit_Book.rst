@@ -1662,9 +1662,9 @@ Here are the steps involved, in order.
       example is the nitrogen atom in pyrrole.
 
   13. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
-     all atoms. This generates exceptions for atoms in higher-than-allowed
-     valence states. This step is required to catch some edge cases where input 
-     atoms with non-physical valences are accepted if they are flagged as aromatic.
+      all atoms. This generates exceptions for atoms in higher-than-allowed
+      valence states. This step is required to catch some edge cases where input 
+      atoms with non-physical valences are accepted if they are flagged as aromatic.
 
 
 The individual steps can be toggled on or off when calling
@@ -2117,6 +2117,7 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   Stereo Groups can be canonicalized.
 
 .. doctest ::
+  
   >>> m = Chem.MolFromSmiles('CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,o1:11,o2:14|')
   >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.NeverInclude)
   >>> Chem.MolToCXSmiles(mOut)
