@@ -2389,7 +2389,7 @@ void checkCXFeatures(const ROMol &mol) {
   }
 }
 
-std::string getCXExtensions(const MOL_SPTR_VECT &mols, std::uint32_t flags) {
+std::string getCXExtensions(const std::vector<ROMol *> &mols, std::uint32_t flags) {
     for (const auto& mol : mols) {
       checkCXFeatures(*mol);
       if (!mol->hasProp(RDKit::common_properties::_smilesAtomOutputOrder) ||

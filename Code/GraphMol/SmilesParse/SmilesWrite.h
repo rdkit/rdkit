@@ -82,7 +82,7 @@ RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
 
 //! \brief returns the cxsmiles data for a vector of molecules
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
-  const MOL_SPTR_VECT &mols, std::uint32_t flags);
+  const std::vector<ROMol *> &mols, std::uint32_t flags);
   
 //! \brief returns true if the atom number is in the SMILES organic subset
 RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);

@@ -105,13 +105,13 @@ std::string chemicalReactionToRxnToString(
 
 
   if (includeCX) {
-    RDKit::MOL_SPTR_VECT mols;
+    std::vector<RDKit::ROMol *> mols;
 
     // Collect reactants, agents, and products into mols vector
     for (auto type : {RDKit::Reactant, RDKit::Agent, RDKit::Product}) {
       for (auto begin = getStartIterator(rxn, type);
            begin != getEndIterator(rxn, type); ++begin) {
-        mols.push_back(*begin);
+        mols.push_back((*begin).get());
       }
     }
 
@@ -154,14 +154,14 @@ std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
 
 
 //! returns the reaction SMARTS for a reaction with CX extension
-std::string ChemicalReactionToRxnCXSmarts(const ChemicalReaction &rxn,
+std::string ChemicalReactionToCXRxnSmarts(const ChemicalReaction &rxn,
                                         const SmilesWriteParams &params,
                                         std::uint32_t flags) {
   return chemicalReactionToRxnToString(rxn, false, params, true, flags);
 };
 
 //! returns the reaction SMILES for a reaction with CX extension
-std::string ChemicalReactionToRxnCXSmiles(const ChemicalReaction &rxn,
+std::string ChemicalReactionToCXRxnSmiles(const ChemicalReaction &rxn,
                                         const SmilesWriteParams &params,
                                         std::uint32_t flags) {
   return chemicalReactionToRxnToString(rxn, true, params, true, flags);
