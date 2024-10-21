@@ -42,6 +42,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     Pair() : key(), val() {}
     explicit Pair(std::string s) : key(std::move(s)), val() {}
     Pair(std::string s, const RDValue &v) : key(std::move(s)), val(v) {}
+    // In the case you are holding onto an rdvalue outside of a dictionary
+    //  or other container, you kust call cleanup to release non POD memory.
+    void cleanup() { RDValue::cleanup_rdvalue(val); }
   };
 
   typedef std::vector<Pair> DataType;
@@ -349,5 +352,31 @@ inline std::string Dict::getVal<std::string>(const std::string &what) const {
   return res;
 }
 
+// Utility class for holding a Dict::Pair
+//  Dict::Pairs require containers for memory management
+//  This utility class covers cleanup and copying
+class PairHolder : public Dict::Pair {
+public:
+ PairHolder() : Pair() {}
+  
+  explicit PairHolder(const PairHolder &p) : Pair(p.key) {
+    copy_rdvalue(this->val, p.val);
+  }
+
+  explicit PairHolder(PairHolder&&p) : Pair(p.key) {
+    this->val = p.val;
+    p.val.type = RDTypeTag::EmptyTag;
+  }
+
+  explicit PairHolder(Dict::Pair&&p) : Pair(p.key) {
+    this->val = p.val;
+    p.val.type = RDTypeTag::EmptyTag;
+  }
+
+  ~PairHolder() {
+    RDValue::cleanup_rdvalue(this->val);
+  }
+
+};
 }  // namespace RDKit
 #endif
