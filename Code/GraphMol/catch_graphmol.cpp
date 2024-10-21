@@ -3905,13 +3905,16 @@ TEST_CASE("atom output") {
     ss.str("");
   }
   SECTION("chirality 2") {
+    // same as 
+    // C[Pt@SP2]([H])(F)Cl which is stored internally as 
+    // C[Pt@SP3](F)(Cl)[H]
     auto m = "C[Pt@SP2H](F)Cl"_smiles;
     REQUIRE(m);
     std::stringstream ss;
     ss << *m->getAtomWithIdx(1);
     CHECK(
         ss.str() ==
-        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(2) nbrs:[0 2 3]");
+        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(3) nbrs:[0 2 3]");
     ss.str("");
   }
 }
