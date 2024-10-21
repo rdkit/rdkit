@@ -905,17 +905,16 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
   }
 };
 
-int registerPropertyHelper(PythonPropertyFunctor *ptr) {
-  // We increase the refcount and register a copy of the functorto deal with
-  // life time issues: the original functor is owned by Python, which will
-  // delete if it goes out of scope (we don't want that to happen one it's
-  // registered, so we incref; note there's no matching decref), but also
-  // at Python shutdown. But the registry also owns it via shared_ptr,
-  // so, we make a copy to avoid double deletion when the shared_ptr is
-  // destroyed.
-  python::incref(ptr->self);
-  return RDKit::Descriptors::Properties::registerProperty(
-      new PythonPropertyFunctor(ptr->self, ptr->getName(), ptr->getVersion()));
+int registerPropertyHelper(python::object o) {
+  // We increase the refcount to make sure the original Python object
+  // does not get cleaned up (we don't want that to happen once it's
+  // registered, we may need to use its __call__() method; note there's
+  // no matching decref). We register the shared_ptr so that Python
+  // and the (static) registry can share ownership.
+
+  python::incref(o.ptr());
+  python::extract<boost::shared_ptr<PythonPropertyFunctor>> ptr(o);
+  return RDKit::Descriptors::Properties::registerProperty(ptr());
 }
 
 }  // namespace

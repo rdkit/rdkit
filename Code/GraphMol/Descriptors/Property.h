@@ -84,6 +84,7 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
   void annotateProperties(RDKit::ROMol &mol) const;
 
   //! Register a property function - takes ownership
+  static int registerProperty(boost::shared_ptr<PropertyFunctor> prop);
   static int registerProperty(PropertyFunctor *ptr);
   static boost::shared_ptr<PropertyFunctor> getProperty(
       const std::string &name);
