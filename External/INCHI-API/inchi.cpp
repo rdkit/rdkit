@@ -1253,11 +1253,14 @@ void cleanUp(RWMol &mol) {
 RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
                   bool sanitize, bool removeHs) {
   // input
-  char *_inchi = new char[inchi.size() + 1];
+  std::vector<char> _inchi;
+  _inchi.reserve(inchi.size() + 1);
+  std::copy(inchi.begin(), inchi.end(), std::back_inserter(_inchi));
+  _inchi.push_back('\0');
+
   char options[1] = "";
-  strcpy(_inchi, inchi.c_str());
   inchi_InputINCHI inchiInput;
-  inchiInput.szInChI = _inchi;
+  inchiInput.szInChI = _inchi.data();
   inchiInput.szOptions = options;
 
   // creating RWMol for return
@@ -1640,7 +1643,6 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
     }  // end if (if return code is success)
 
     // clean up
-    delete[] _inchi;
     FreeStructFromINCHI(&inchiOutput);
   }
 

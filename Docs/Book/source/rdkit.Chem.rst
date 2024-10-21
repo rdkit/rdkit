@@ -108,6 +108,7 @@ Submodules
    rdkit.Chem.rdTautomerQuery
    rdkit.Chem.rdEHTTools
    rdkit.Chem.rdDetermineBonds
+   rdkit.Chem.rdShapeAlign
 
 Module contents
 ---------------

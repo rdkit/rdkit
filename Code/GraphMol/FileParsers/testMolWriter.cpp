@@ -1096,13 +1096,13 @@ void testV3000DoublePrecision() {
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
     std::string fName = rdbase + "precision.v3k.mol";
-    RWMol *mol = MolFileToMol(fName);
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
     TEST_ASSERT(mol);
     size_t numAtoms = mol->getNumAtoms();
     TEST_ASSERT(numAtoms == 7);
     MolWriterParams params{true, true, true, 15};
     std::string molBlock = MolToMolBlock(*mol, params, -1);
-    RWMol *readMol = MolBlockToMol(molBlock);
+    std::unique_ptr<RWMol> readMol(MolBlockToMol(molBlock));
     TEST_ASSERT(numAtoms == readMol->getNumAtoms());
     const Conformer &conformer = mol->getConformer();
     const Conformer &readConformer = readMol->getConformer();

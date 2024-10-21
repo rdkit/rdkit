@@ -3477,6 +3477,19 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "github #7044: canonicalization error when allenes have specified stereo") {
+  SECTION("basics") {
+    auto m = "CC=C=CC"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(2)->setStereoAtoms(1, 4);
+    m->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "CC=C=CC");
+  }
+}
+
+TEST_CASE(
     "Github Issue #7128: ReplaceBond may cause valence issues in specific edge cases",
     "[bug][RWMol]") {
   auto m = R"CTAB(
@@ -3519,7 +3532,8 @@ $$$$
   bool strict_valences = false;
 
   SECTION("replace with a double bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::DOUBLE));
+    auto b = Bond(Bond::BondType::DOUBLE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 0);
     CHECK(begin_atom->getTotalValence() == 4);
@@ -3527,7 +3541,8 @@ $$$$
     CHECK(end_atom->getTotalValence() == 4);
   }
   SECTION("replace with a triple bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::TRIPLE));
+    auto b = Bond(Bond::BondType::TRIPLE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 0);
     CHECK(begin_atom->getTotalValence() == 5);  // Yeah, this is expected
@@ -3535,7 +3550,8 @@ $$$$
     CHECK(end_atom->getTotalValence() == 4);
   }
   SECTION("replace with a dative bond") {
-    m->replaceBond(1, new Bond(Bond::BondType::DATIVE));
+    auto b = Bond(Bond::BondType::DATIVE);
+    m->replaceBond(1, &b);
     m->updatePropertyCache(strict_valences);
     CHECK(begin_atom->getNumExplicitHs() == 1);
     CHECK(begin_atom->getTotalValence() == 4);
@@ -3889,13 +3905,16 @@ TEST_CASE("atom output") {
     ss.str("");
   }
   SECTION("chirality 2") {
+    // same as 
+    // C[Pt@SP2]([H])(F)Cl which is stored internally as 
+    // C[Pt@SP3](F)(Cl)[H]
     auto m = "C[Pt@SP2H](F)Cl"_smiles;
     REQUIRE(m);
     std::stringstream ss;
     ss << *m->getAtomWithIdx(1);
     CHECK(
         ss.str() ==
-        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(2) nbrs:[0 2 3]");
+        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(3) nbrs:[0 2 3]");
     ss.str("");
   }
 }
@@ -4084,6 +4103,40 @@ M  END
     checkSubstanceGroup(sgs2, 0, {7, 8, 9, 10, 11, 12, 13}, {8}, 8, {12, 5});
     checkSubstanceGroup(sgs2, 1, {41, 42, 43, 44, 45, 46, 47}, {43}, 43,
                         {46, 39});
+  }
+}
+
+TEST_CASE("Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group", "[RWMol]") {
+  {
+    auto mol = "C1CC1"_smiles;
+    REQUIRE(mol);
+    CHECK(mol->getStereoGroups().empty());
+    auto other = "C1CNC1"_smiles;
+    CHECK(other->getStereoGroups().empty());
+    REQUIRE(other);
+    mol->insertMol(*other);
+    CHECK(mol->getStereoGroups().empty());
+    auto molblock = MolToMolBlock(*mol);
+    auto molblockV3k = MolToV3KMolBlock(*mol);
+    CHECK(molblock.find("V2000") != std::string::npos);
+    CHECK(molblockV3k.find("V3000") != std::string::npos);
+    CHECK(molblockV3k.find("STEABS ATOMS=(0)") == std::string::npos);
+  }
+  {
+    auto mol = "CC[C@H](C)N |&1:2,r,lp:4:1|"_smiles;
+    REQUIRE(mol);
+    CHECK(!mol->getStereoGroups().empty());
+    auto other = "CC[C@H](C)O |o1:2,r,lp:4:2|"_smiles;
+    CHECK(!other->getStereoGroups().empty());
+    REQUIRE(other);
+    mol->insertMol(*other);
+    CHECK(!mol->getStereoGroups().empty());
+    auto molblock = MolToMolBlock(*mol);
+    CHECK(molblock.find("V2000") == std::string::npos);
+    CHECK(molblock.find("V3000") != std::string::npos);
+    CHECK(molblock.find("STERAC1 ATOMS=(1 3)") != std::string::npos);
+    CHECK(molblock.find("STEREL1 ATOMS=(1 8)") != std::string::npos);
+    CHECK(molblock.find("STEABS ATOMS=(0)") == std::string::npos);
   }
 }
 
@@ -4650,3 +4703,34 @@ TEST_CASE("Valences on Al, Si, P, As, Sb, Bi") {
     }
   }
 }
+
+TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
+  SECTION("basics") {
+    class FakeAtomMonomerInfo : public AtomMonomerInfo {
+    public:
+      bool *deleted;
+      FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {
+      }
+      virtual ~FakeAtomMonomerInfo() {
+	*deleted = true;
+      }
+    };
+    
+    bool sanitize = true;
+    int flavor = 0;
+    std::unique_ptr<RWMol> mol(SequenceToMol("KY", sanitize, flavor));
+    REQUIRE(mol);
+    REQUIRE(mol->getAtomWithIdx(0)->getMonomerInfo());
+    mol->getAtomWithIdx(0)->setMonomerInfo(nullptr);
+    CHECK(mol->getAtomWithIdx(0)->getMonomerInfo() == nullptr);
+
+    // make sure that the Monomer is delated when setting to nullptr
+    bool was_deleted = false;
+    auto res = new FakeAtomMonomerInfo(&was_deleted);
+    mol->getAtomWithIdx(0)->setMonomerInfo(res);
+    mol->getAtomWithIdx(0)->setMonomerInfo(nullptr);
+    CHECK(was_deleted == true);
+    
+  }    
+}
+
