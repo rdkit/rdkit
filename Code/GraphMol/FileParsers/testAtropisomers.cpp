@@ -256,7 +256,7 @@ class MolAtropTest {
                          MolOps::SANITIZE_SETHYBRIDIZATIONFORCE +
                          MolOps::SANITIZE_SETCONJUGATION;
 
-      uint operationThatFailed = 0;
+      unsigned int operationThatFailed = 0;
       RDKit::MolOps::sanitizeMol(*mol, operationThatFailed, sanitizeOps);
       for (const auto &atom : mol->atoms()) {
         if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
