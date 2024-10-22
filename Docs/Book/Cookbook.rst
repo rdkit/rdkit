@@ -1768,7 +1768,7 @@ Molecule Hash Strings
 .. image:: images/RDKitCB_21_im5.png
 
 Contiguous Rotatable Bonds
-=========================
+==========================
 
 | **Author:** Paulo Tosco
 | **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36405144/>`_
