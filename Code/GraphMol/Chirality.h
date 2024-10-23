@@ -14,7 +14,8 @@
 #ifndef RD_CHIRALITY_20AUG2008_H
 #define RD_CHIRALITY_20AUG2008_H
 #include <RDGeneral/types.h>
-#include <GraphMol/Bond.h>
+#include <GraphMol/Atom.h> /* for Atom:ChiralType enum */
+#include <GraphMol/Bond.h> /* for Bond::BondDir enum */
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
 
@@ -208,8 +209,17 @@ RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
                                                          const Atom *lig1,
                                                          const Atom *lig2);
 
+RDKIT_GRAPHMOL_EXPORT unsigned int getMaxNbors(const Atom::ChiralType tag);
+
+//
+// Get the chiral permutation from the storage order of bonds on an atom
+// to the desired output order (probe). Missing/implicit neihgbors can be
+// represented with (-1). To get the inverse order, i.e. from the probe to the
+// current storage order set (inverse=true)
+//
 RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
-                                                        const INT_LIST &probe);
+                                                        const INT_LIST &probe,
+                                                        bool inverse = false);
 //! @}
 
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
