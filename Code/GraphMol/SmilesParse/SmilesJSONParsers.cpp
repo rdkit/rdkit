@@ -41,15 +41,19 @@ void updateCXSmilesFieldsFromJSON(std::uint32_t &cxSmilesFields,
     boost::property_tree::read_json(ss, pt);
     auto cxSmilesFieldsFromJson =
         (+SmilesWrite::CXSmilesFields::CX_NONE)._to_integral();
+    bool haveCXSmilesFields = false;
     for (const auto *key : SmilesWrite::CXSmilesFields::_names()) {
-      cxSmilesFieldsFromJson |=
-          (pt.get(key, false) ? SmilesWrite::CXSmilesFields::_from_string(key)
-                              : +SmilesWrite::CXSmilesFields::CX_NONE)
-              ._to_integral();
+      const auto it = pt.find(key);
+      if (it != pt.not_found()) {
+        haveCXSmilesFields = true;
+        if (it->second.get_value<bool>()) {
+          cxSmilesFieldsFromJson |=
+              SmilesWrite::CXSmilesFields::_from_string(key)._to_integral();
+        }
+      }
     }
-    if (cxSmilesFieldsFromJson) {
-      cxSmilesFields =
-          SmilesWrite::CXSmilesFields::_from_integral(cxSmilesFieldsFromJson);
+    if (haveCXSmilesFields) {
+      cxSmilesFields = cxSmilesFieldsFromJson;
     }
     std::string restoreBondDirOption;
     restoreBondDirOption = pt.get("restoreBondDirOption", restoreBondDirOption);
