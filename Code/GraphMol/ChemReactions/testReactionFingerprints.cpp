@@ -61,7 +61,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxn);
     TEST_ASSERT(rxnq);
     ReactionFingerprintParams params;
-    params.fpType = PatternFP;
+    params.fpType = FingerprintType::PatternFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -102,7 +102,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq);
 
     ReactionFingerprintParams params;
-    params.fpType = PatternFP;
+    params.fpType = FingerprintType::PatternFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -147,7 +147,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq2);
 
     ReactionFingerprintParams params;
-    params.fpType = PatternFP;
+    params.fpType = FingerprintType::PatternFP;
     params.fpSize = 4096;
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
     ExplicitBitVect *rxnqFP = StructuralFingerprintChemReaction(*rxnq, params);
@@ -199,7 +199,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq2);
 
     ReactionFingerprintParams params;
-    params.fpType = PatternFP;
+    params.fpType = FingerprintType::PatternFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -249,7 +249,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq2);
 
     ReactionFingerprintParams params;
-    params.fpType = PatternFP;
+    params.fpType = FingerprintType::PatternFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -307,7 +307,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq2);
 
     ReactionFingerprintParams params;
-    params.fpType = PatternFP;
+    params.fpType = FingerprintType::PatternFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -344,7 +344,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq2);
 
     ReactionFingerprintParams params;
-    params.fpType = MorganFP;
+    params.fpType = FingerprintType::MorganFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -411,7 +411,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq2);
 
     ReactionFingerprintParams params;
-    params.fpType = TopologicalTorsion;
+    params.fpType = FingerprintType::TopologicalTorsionFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -445,7 +445,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq2);
 
     ReactionFingerprintParams params;
-    params.fpType = RDKitFP;
+    params.fpType = FingerprintType::RDKitFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -479,7 +479,7 @@ void testStructuralFingerprintsReaction() {
     TEST_ASSERT(rxnq2);
 
     ReactionFingerprintParams params;
-    params.fpType = RDKitFP;
+    params.fpType = FingerprintType::RDKitFP;
     params.fpSize = 4096;
 
     ExplicitBitVect *rxnFP = StructuralFingerprintChemReaction(*rxn, params);
@@ -653,7 +653,7 @@ void testDifferenceFingerprintsReaction() {
     TEST_ASSERT(rxn2);
 
     ReactionFingerprintParams params;
-    params.fpType = MorganFP;
+    params.fpType = FingerprintType::MorganFP;
 
     SparseIntVect<std::uint32_t> *rxn1FP =
         DifferenceFingerprintChemReaction(*rxn1, params);
@@ -680,7 +680,7 @@ void testDifferenceFingerprintsReaction() {
     TEST_ASSERT(rxn2);
 
     ReactionFingerprintParams params;
-    params.fpType = TopologicalTorsion;
+    params.fpType = FingerprintType::TopologicalTorsionFP;
 
     SparseIntVect<std::uint32_t> *rxn1FP =
         DifferenceFingerprintChemReaction(*rxn1, params);
