@@ -44,6 +44,8 @@ struct RDKIT_SCAFFOLDNETWORK_EXPORT ScaffoldNetworkParams {
       true;  ///< remove attachment points from scaffolds and include the result
   bool includeScaffoldsWithAttachments =
       true;  ///< Include the version of the scaffold with attachment points
+  bool includeNames =
+      false;  ///< Include molecules names of the input molecules
   bool keepOnlyFirstFragment =
       true;  ///<  keep only the first fragment from the bond breaking rule
   bool pruneBeforeFragmenting =
