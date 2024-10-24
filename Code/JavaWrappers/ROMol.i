@@ -438,6 +438,18 @@ unsigned int getDefaultPickleProperties();
     RDKit::ClearSingleBondDirFlags(*($self));
   };
 
+  void reapplyMolBlockWedging() {
+    RDKit::Chirality::reapplyMolBlockWedging(*($self));
+  }
+
+  void clearMolBlockWedgingInfo() {
+    RDKit::Chirality::clearMolBlockWedgingInfo(*($self));
+  }
+
+  void invertMolBlockWedgingInfo() {
+    RDKit::Chirality::invertMolBlockWedgingInfo(*($self));
+  }
+
   /* Methods from ConjugHybrid.cpp */
   void setConjugation() {
     RDKit::MolOps::setConjugation(*($self));

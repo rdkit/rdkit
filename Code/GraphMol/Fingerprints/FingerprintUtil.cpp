@@ -184,7 +184,7 @@ $([N;H0&+0]([C;!$(C(=O))])([C;!$(C(=O))])[C;!$(C(=O))])]",  // Basic
 
 const RDKit::ROMol *ss_matcher::getMatcher() const { return m_matcher.get(); }
 
-ss_matcher::ss_matcher(){};
+ss_matcher::ss_matcher() {};
 ss_matcher::ss_matcher(const std::string &pattern) {
   RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
   TEST_ASSERT(p);

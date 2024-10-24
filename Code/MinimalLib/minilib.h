@@ -17,6 +17,9 @@
 #ifdef RDK_BUILD_MINIMAL_LIB_MMPA
 #include <GraphMol/MMPA/MMPA.h>
 #endif
+#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
+#include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
+#endif
 
 class JSMolList;
 
@@ -24,7 +27,7 @@ class JSMolBase {
  public:
   JSMolBase(const JSMolBase &) = delete;
   JSMolBase &operator=(const JSMolBase &) = delete;
-  virtual ~JSMolBase(){};
+  virtual ~JSMolBase() {};
   virtual const RDKit::RWMol &get() const = 0;
   virtual RDKit::RWMol &get() = 0;
   std::string get_smiles() const;
@@ -221,8 +224,8 @@ class JSMolShared : public JSMolBase {
 class JSMolList {
  public:
   JSMolList(const std::vector<RDKit::ROMOL_SPTR> &mols)
-      : d_mols(mols), d_idx(0){};
-  JSMolList() : d_idx(0){};
+      : d_mols(mols), d_idx(0) {};
+  JSMolList() : d_idx(0) {};
   JSMolBase *next();
   size_t append(const JSMolBase &mol);
   size_t insert(size_t idx, const JSMolBase &mol);
@@ -352,4 +355,26 @@ std::string get_mcs_as_smarts(const JSMolList &mols,
                               const std::string &details_json);
 JSMolBase *get_mcs_as_mol(const JSMolList &mols,
                           const std::string &details_json);
+#endif
+
+#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
+class JSRGroupDecomposition {
+ public:
+  JSRGroupDecomposition(const JSMolBase &core, const std::string &details_json);
+  JSRGroupDecomposition(const JSMolBase &core)
+      : JSRGroupDecomposition(core, "") {};
+  JSRGroupDecomposition(const JSMolList &cores,
+                        const std::string &details_json);
+  JSRGroupDecomposition(const JSMolList &cores)
+      : JSRGroupDecomposition(cores, "") {};
+  int add(const JSMolBase &mol);
+  bool process();
+  std::map<std::string, std::unique_ptr<JSMolList>> getRGroupsAsColumns() const;
+  std::vector<std::map<std::string, std::unique_ptr<JSMolBase>>>
+  getRGroupsAsRows() const;
+
+ private:
+  std::unique_ptr<RDKit::RGroupDecomposition> d_decomp;
+  std::vector<unsigned int> d_unmatched;
+};
 #endif

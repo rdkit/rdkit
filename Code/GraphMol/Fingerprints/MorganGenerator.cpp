@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2024 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -33,7 +33,8 @@ MorganAtomInvGenerator::MorganAtomInvGenerator(const bool includeRingMembership)
 std::vector<std::uint32_t> *MorganAtomInvGenerator::getAtomInvariants(
     const ROMol &mol) const {
   unsigned int nAtoms = mol.getNumAtoms();
-  std::unique_ptr<std::vector<std::uint32_t>> atomInvariants(new std::vector<std::uint32_t>(nAtoms));
+  std::unique_ptr<std::vector<std::uint32_t>> atomInvariants(
+      new std::vector<std::uint32_t>(nAtoms));
   getConnectivityInvariants(mol, *atomInvariants, df_includeRingMembership);
   return atomInvariants.release();
 }
@@ -169,13 +170,27 @@ MorganEnvGenerator<OutputType>::getEnvironments(
   PRECONDITION(bondInvariants && (bondInvariants->size() >= mol.getNumBonds()),
                "bad bond invariants size");
   unsigned int nAtoms = mol.getNumAtoms();
+
+  auto *morganArguments = dynamic_cast<MorganArguments *>(arguments);
+  const unsigned int maxNumResults = (morganArguments->d_radius + 1) * nAtoms;
+
   std::vector<AtomEnvironment<OutputType> *> result =
       std::vector<AtomEnvironment<OutputType> *>();
-  auto *morganArguments = dynamic_cast<MorganArguments *>(arguments);
+  result.reserve(maxNumResults);
 
   std::vector<OutputType> currentInvariants(atomInvariants->size());
   std::copy(atomInvariants->begin(), atomInvariants->end(),
             currentInvariants.begin());
+  // will hold bit ids calculated this round to be used as invariants next
+  // round
+  std::vector<OutputType> nextLayerInvariants(nAtoms);
+
+  // will hold up to date invariants of neighboring atoms with bond
+  // types, these invariants hold information from atoms around radius
+  // as big as current layer around the current atom
+  std::vector<std::pair<int32_t, uint32_t>> neighborhoodInvariants;
+  // Max number of neighbors expected.
+  neighborhoodInvariants.reserve(8);
 
   boost::dynamic_bitset<> includeAtoms(nAtoms);
   if (fromAtoms) {
@@ -190,10 +205,16 @@ MorganEnvGenerator<OutputType>::getEnvironments(
 
   // these are the neighborhoods that have already been added
   // to the fingerprint
-  std::vector<boost::dynamic_bitset<>> neighborhoods;
+  std::unordered_set<boost::dynamic_bitset<>> neighborhoods;
+  neighborhoods.reserve(maxNumResults);
   // these are the environments around each atom:
   std::vector<boost::dynamic_bitset<>> atomNeighborhoods(
       nAtoms, boost::dynamic_bitset<>(mol.getNumBonds()));
+  // holds atoms in the environment (neighborhood) for the current layer for
+  // each atom, starts with the immediate neighbors of atoms and expands
+  // with every iteration
+  std::vector<boost::dynamic_bitset<>> roundAtomNeighborhoods =
+      atomNeighborhoods;
   boost::dynamic_bitset<> deadAtoms(nAtoms);
 
   // if df_onlyNonzeroInvariants is set order the atoms to make sure atoms
@@ -231,15 +252,6 @@ MorganEnvGenerator<OutputType>::getEnvironments(
 
   // now do our subsequent rounds:
   for (unsigned int layer = 0; layer < morganArguments->d_radius; ++layer) {
-    // will hold bit ids calculated this round to be used as invariants next
-    // round
-    std::vector<OutputType> nextLayerInvariants(nAtoms);
-
-    // holds atoms in the environment (neighborhood) for the current layer for
-    // each atom, starts with the immediate neighbors of atoms and expands
-    // with every iteration
-    std::vector<boost::dynamic_bitset<>> roundAtomNeighborhoods =
-        atomNeighborhoods;
     std::vector<AccumTuple> allNeighborhoodsThisRound;
     for (auto atomIdx : atomOrder) {
       // skip atoms which will not generate unique environments
@@ -254,11 +266,11 @@ MorganEnvGenerator<OutputType>::getEnvironments(
         ROMol::OEDGE_ITER beg, end;
         boost::tie(beg, end) = mol.getAtomBonds(tAtom);
 
-        // will hold up to date invariants of neighboring atoms with bond
-        // types, these invariants hold information from atoms around radius
-        // as big as current layer around the current atom
-        std::vector<std::pair<int32_t, uint32_t>> neighborhoodInvariants;
         // add up to date invariants of neighbors
+        // This should keep capacity, so reallocation only triggers if we
+        // haven't seen a molecule of this size.
+        neighborhoodInvariants.clear();
+
         while (beg != end) {
           const Bond *bond = mol[*beg];
           roundAtomNeighborhoods[atomIdx][bond->getIdx()] = 1;
@@ -321,12 +333,6 @@ MorganEnvGenerator<OutputType>::getEnvironments(
         allNeighborhoodsThisRound.push_back(
             std::make_tuple(roundAtomNeighborhoods[atomIdx],
                             static_cast<OutputType>(invar), atomIdx));
-        if (std::find(neighborhoods.begin(), neighborhoods.end(),
-                      roundAtomNeighborhoods[atomIdx]) != neighborhoods.end()) {
-          // we have seen this exact environment before, this atom
-          // is now out of consideration:
-          deadAtoms[atomIdx] = 1;
-        }
       }
     }
 
@@ -338,14 +344,13 @@ MorganEnvGenerator<OutputType>::getEnvironments(
       // if we haven't seen this exact environment before, add it to the
       // result
       if (morganArguments->df_includeRedundantEnvironments ||
-          std::find(neighborhoods.begin(), neighborhoods.end(),
-                    std::get<0>(*iter)) == neighborhoods.end()) {
+          neighborhoods.count(std::get<0>(*iter)) == 0) {
         if (!morganArguments->df_onlyNonzeroInvariants ||
             (*atomInvariants)[std::get<2>(*iter)]) {
           if (includeAtoms[std::get<2>(*iter)]) {
             result.push_back(new MorganAtomEnv<OutputType>(
                 std::get<1>(*iter), std::get<2>(*iter), layer + 1));
-            neighborhoods.push_back(std::get<0>(*iter));
+            neighborhoods.insert(std::get<0>(*iter));
           }
         }
       } else {
@@ -356,8 +361,8 @@ MorganEnvGenerator<OutputType>::getEnvironments(
     }
 
     // the invariants from this round become the next round invariants:
-    std::copy(nextLayerInvariants.begin(), nextLayerInvariants.end(),
-              currentInvariants.begin());
+    currentInvariants.swap(nextLayerInvariants);
+    std::fill(nextLayerInvariants.begin(), nextLayerInvariants.end(), 0);
 
     // this rounds calculated neighbors will be next rounds initial neighbors,
     // so the radius can grow every iteration
@@ -380,8 +385,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     AtomInvariantsGenerator *atomInvariantsGenerator,
     BondInvariantsGenerator *bondInvariantsGenerator, std::uint32_t fpSize,
     std::vector<std::uint32_t> countBounds, bool ownsAtomInvGen,
-    bool  // ownsBondInvGen
-) {
+    bool ownsBondInvGen) {
   AtomEnvironmentGenerator<OutputType> *morganEnvGenerator =
       new MorganEnvGenerator<OutputType>();
   FingerprintArguments *morganArguments = new MorganArguments(
@@ -394,7 +398,7 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     ownsAtomInvGenerator = true;
   }
 
-  bool ownsBondInvGenerator = false;
+  bool ownsBondInvGenerator = ownsBondInvGen;
   if (!bondInvariantsGenerator) {
     bondInvariantsGenerator =
         new MorganBondInvGenerator(useBondTypes, includeChirality);

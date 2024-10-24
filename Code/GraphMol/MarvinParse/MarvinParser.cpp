@@ -40,6 +40,10 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 namespace RDKit {
 
 namespace v2 {
@@ -52,12 +56,13 @@ namespace MarvinParser {
 */
 class MarvinCMLReader {
  public:
-  MarvinCMLReader(){};
+  MarvinCMLReader() {};
 
-  ~MarvinCMLReader(){};
+  ~MarvinCMLReader() {};
 
   std::unique_ptr<RWMol> parseMolecule(boost::property_tree::ptree molTree,
-                       bool sanitize = false, bool removeHs = false) {
+                                       bool sanitize = false,
+                                       bool removeHs = false) {
     boost::property_tree::ptree molSection;
 
     try {
@@ -1053,7 +1058,7 @@ std::unique_ptr<ChemicalReaction> ReactionFromMrvDataStream(
 //  Read a ChemicalReaction from a string
 //
 //------------------------------------------------
-std::unique_ptr<ChemicalReaction> ReactionFromMrvString(
+std::unique_ptr<ChemicalReaction> ReactionFromMrvBlock(
     const std::string &molmrvText, const MrvParserParams &params) {
   std::istringstream inStream(molmrvText);
   return ReactionFromMrvDataStream(inStream, params);

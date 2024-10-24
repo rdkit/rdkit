@@ -215,23 +215,23 @@ FingerprintGenerator<OutputType> *getRDKitFPGenerator(
                                               ownsAtomInvGenerator, false);
 }
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t>
-    *getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
-                         bool branchedPaths, bool useBondOrder,
-                         AtomInvariantsGenerator *atomInvariantsGenerator,
-                         bool countSimulation,
-                         const std::vector<std::uint32_t> countBounds,
-                         std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-                         bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
+getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
+                    bool branchedPaths, bool useBondOrder,
+                    AtomInvariantsGenerator *atomInvariantsGenerator,
+                    bool countSimulation,
+                    const std::vector<std::uint32_t> countBounds,
+                    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+                    bool ownsAtomInvGen);
 
-template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t>
-    *getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
-                         bool branchedPaths, bool useBondOrder,
-                         AtomInvariantsGenerator *atomInvariantsGenerator,
-                         bool countSimulation,
-                         const std::vector<std::uint32_t> countBounds,
-                         std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
-                         bool ownsAtomInvGen);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
+getRDKitFPGenerator(unsigned int minPath, unsigned int maxPath, bool useHs,
+                    bool branchedPaths, bool useBondOrder,
+                    AtomInvariantsGenerator *atomInvariantsGenerator,
+                    bool countSimulation,
+                    const std::vector<std::uint32_t> countBounds,
+                    std::uint32_t fpSize, std::uint32_t numBitsPerFeature,
+                    bool ownsAtomInvGen);
 
 }  // namespace RDKitFP
 

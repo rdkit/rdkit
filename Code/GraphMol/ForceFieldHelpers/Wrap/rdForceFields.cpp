@@ -120,12 +120,11 @@ int MMFFOptimizeMolecule(ROMol &mol, std::string mmffVariant = "MMFF94",
   MMFF::MMFFMolProperties mmffMolProperties(mol, mmffVariant);
   if (mmffMolProperties.isValid()) {
     NOGIL gil;
-    ForceFields::ForceField *ff =
+    std::unique_ptr<ForceFields::ForceField> ff(
         MMFF::constructForceField(mol, &mmffMolProperties, nonBondedThresh,
-                                  confId, ignoreInterfragInteractions);
+                                  confId, ignoreInterfragInteractions));
     ff->initialize();
     res = ff->minimize(maxIters);
-    delete ff;
   }
 
   return res;

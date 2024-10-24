@@ -861,18 +861,19 @@ Queries::EqualityQuery<int, const Target *, true> *makeHasPropQuery(
   return new HasPropQuery<const Target *>(property);
 }
 
-
 // ! Query whether an atom has a property with a value
 class HasPropWithValueQueryBase {
-  public:
+ public:
+  HasPropWithValueQueryBase() = default;
+  virtual ~HasPropWithValueQueryBase() = default;
   virtual Dict::Pair getPair() const = 0;
   virtual double getTolerance() const = 0;
 };
 
-
 template <class TargetPtr, class T>
 class HasPropWithValueQuery
-    : public HasPropWithValueQueryBase, public Queries::EqualityQuery<int, TargetPtr, true> {
+    : public HasPropWithValueQueryBase,
+      public Queries::EqualityQuery<int, TargetPtr, true> {
   std::string propname;
   T val;
   double tolerance{0.0};
@@ -885,14 +886,10 @@ class HasPropWithValueQuery
     this->setDataFunc(0);
   }
 
-  Dict::Pair getPair() const override {
-    return Dict::Pair(propname, val);
-  }
-  
-  double getTolerance() const override {
-    return tolerance;
-  }
-  
+  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+
+  double getTolerance() const override { return tolerance; }
+
   explicit HasPropWithValueQuery(std::string prop, const T &v,
                                  const T &tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
@@ -909,7 +906,8 @@ class HasPropWithValueQuery
     if (res) {
       try {
         T atom_val = what->template getProp<T>(propname);
-        res = Queries::queryCmp(atom_val, this->val, static_cast<T>(this->tolerance)) == 0;
+        res = Queries::queryCmp(atom_val, this->val,
+                                static_cast<T>(this->tolerance)) == 0;
       } catch (KeyErrorException &) {
         res = false;
       } catch (std::bad_any_cast &) {
@@ -946,10 +944,10 @@ class HasPropWithValueQuery
   }
 };
 
-
 template <class TargetPtr>
 class HasPropWithValueQuery<TargetPtr, std::string>
-    : public HasPropWithValueQueryBase, public Queries::EqualityQuery<int, TargetPtr, true> {
+    : public HasPropWithValueQueryBase,
+      public Queries::EqualityQuery<int, TargetPtr, true> {
   std::string propname;
   std::string val;
 
@@ -970,14 +968,10 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     this->setDataFunc(nullptr);
   }
 
-  Dict::Pair getPair() const override {
-    return Dict::Pair(propname, val);
-  }
-  
-  double getTolerance() const override {
-    return 0.0;
-  }
-      
+  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+
+  double getTolerance() const override { return 0.0; }
+
   bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {
@@ -1021,10 +1015,10 @@ class HasPropWithValueQuery<TargetPtr, std::string>
   }
 };
 
-
 template <class TargetPtr>
 class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
-    : public HasPropWithValueQueryBase, public Queries::EqualityQuery<int, TargetPtr, true> {
+    : public HasPropWithValueQueryBase,
+      public Queries::EqualityQuery<int, TargetPtr, true> {
   std::string propname;
   ExplicitBitVect val;
   double tol{0.0};
@@ -1046,14 +1040,10 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     this->setDataFunc(nullptr);
   }
 
-  Dict::Pair getPair() const override {
-    return Dict::Pair(propname, val);
-  }
-  
-  double getTolerance() const override {
-    return tol;
-  }
-      
+  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+
+  double getTolerance() const override { return tol; }
+
   bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
     if (res) {

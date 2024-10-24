@@ -28,6 +28,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 using namespace RDKit;
 
@@ -2583,11 +2584,10 @@ TEST_CASE("ensure unused features are not used") {
   SECTION("enhanced stereo") {
     // if we aren't doing CXSMILES then the enhanced stereo shouldn't enter into
     // consideration in canonicalization
-    auto mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
+    std::unique_ptr<ROMol> mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol1);
-    auto mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
+    std::unique_ptr<ROMol> mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol2);
-    std::vector<unsigned int> ranks;
     SmilesWriteParams ps;
     ps.doIsomericSmiles = true;
     auto smiles = MolToSmiles(*mol1, ps);
@@ -2605,6 +2605,24 @@ TEST_CASE("ensure unused features are not used") {
     CHECK(smiles == "FC(Cl)NCOC(F)Cl");
     smiles = MolToSmiles(*mol2, ps);
     CHECK(smiles == "FC(Cl)NCOC(F)Cl");
+  }
+
+  SECTION("enhanced stereo canonicalized") {
+    std::unique_ptr<ROMol> mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
+    REQUIRE(mol1);
+    std::unique_ptr<ROMol> mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
+    REQUIRE(mol2);
+
+    SmilesWriteParams ps;
+    ps.doIsomericSmiles = true;
+
+    RDKit::canonicalizeStereoGroups(mol1);
+    RDKit::canonicalizeStereoGroups(mol2);
+
+    auto smiles = MolToCXSmiles(*mol1, ps);
+    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |a:1,&1:6|");
+    smiles = MolToCXSmiles(*mol2, ps);
+    CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |a:1,&1:6|");
   }
 
   SECTION("problematic cases") {
@@ -2808,6 +2826,15 @@ TEST_CASE("Github #7295") {
   }
 }
 
+TEST_CASE("simpleSmiles") {
+  SECTION("basics") {
+    auto m = "CCN(CCO)CCCCC[C@H]1CC[C@H](N(C)C(=O)Oc2ccc(Cl)cc2)CC1.Cl"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) ==
+          "CCN(CCO)CCCCC[C@H]1CC[C@H](N(C)C(=O)Oc2ccc(Cl)cc2)CC1.Cl");
+  }
+}
+
 TEST_CASE("CX_BOND_ATROPISOMER option requires ring info", "[bug][cxsmiles]") {
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -2857,6 +2884,30 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     ps.includeDativeBonds = false;
     auto newSmi = MolToSmarts(*m, ps);
     CHECK(newSmi == "[#7H3]-[Fe]-[#7H2]");
+  }
+}
+
+void strip_atom_properties(RWMol *molecule) {
+  for (auto atom : molecule->atoms()) {
+    for (auto property : atom->getPropList(false, false)) {
+      atom->clearProp(property);
+    }
+  }
+
+  // return molecule;
+}
+
+TEST_CASE("Remove CX extension from SMILES", "[cxsmiles]") {
+  SECTION("basics") {
+    std::unique_ptr<RWMol> molecule(RDKit::SmilesToMol(
+        "N[C@@H]([O-])C1=[CH:1]C(=[13CH]C(=C1)N(=O)=O)C(N)[O-] |$_AV:;bar;;foo;;;;;;;;;;;$,c:5,7,t:3|",
+        0, false));
+    REQUIRE(molecule);
+    strip_atom_properties(molecule.get());
+    std::string stripped_smiles = RDKit::MolToCXSmiles(*molecule);
+
+    CHECK(stripped_smiles ==
+          "NC([O-])C1=[13CH]C(N(=O)=O)=CC([C@@H](N)[O-])=C1");
   }
 }
 

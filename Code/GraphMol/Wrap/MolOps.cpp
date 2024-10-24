@@ -35,6 +35,7 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 #include <sstream>
 namespace python = boost::python;
@@ -189,17 +190,19 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 
 namespace {
 std::string getResidue(const ROMol &, const Atom *at) {
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+  auto monomerInfo = at->getMonomerInfo();
+  if (!monomerInfo || monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)
       ->getResidueName();
 }
 std::string getChainId(const ROMol &, const Atom *at) {
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+auto monomerInfo = at->getMonomerInfo();
+  if (!monomerInfo || monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)
       ->getChainId();
 }
 }  // namespace
@@ -896,6 +899,15 @@ python::tuple detectChemistryProblemsHelper(const ROMol &mol,
     res.append(boost::shared_ptr<MolSanitizeException>(exc_ptr->copy()));
   }
   return python::tuple(res);
+}
+
+ROMol *canonicalizeStereoGroupsHelper(
+    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions) {
+  auto mol_uptr = std::unique_ptr<ROMol>(new ROMol(mol));
+
+  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions);
+  return mol_uptr.release();
+  ;
 }
 
 ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
@@ -1772,6 +1784,7 @@ to the terminal dummy atoms.\n\
         .value("AROMATICITY_RDKIT", MolOps::AROMATICITY_RDKIT)
         .value("AROMATICITY_SIMPLE", MolOps::AROMATICITY_SIMPLE)
         .value("AROMATICITY_MDL", MolOps::AROMATICITY_MDL)
+        .value("AROMATICITY_MMFF94", MolOps::AROMATICITY_MMFF94)
         .value("AROMATICITY_CUSTOM", MolOps::AROMATICITY_CUSTOM)
         .export_values();
 
@@ -2554,6 +2567,30 @@ ARGUMENTS:\n\
     python::def("RemoveNonExplicit3DChirality",
                 Chirality::removeNonExplicit3DChirality, (python::arg("mol")),
                 docString.c_str());
+
+    python::enum_<RDKit::StereoGroupAbsOptions>("StereoGroupAbsOptions")
+        .value("OnlyIncludeWhenOtherGroupsExist",
+               RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist)
+        .value("NeverInclude", RDKit::StereoGroupAbsOptions::NeverInclude)
+        .value("AlwaysInclude", RDKit::StereoGroupAbsOptions::AlwaysInclude);
+
+    docString =
+        "Rationalize Enhanced Stereo indications to a canonical form \n\
+        \n\
+          ARGUMENTS:\n\
+        \n\
+            - molecule: the molecule to update\n\
+            -StereoGroupAbsOptions outputAbsoluteGroups: controls output of abs groups: \n\
+              one of: OnlyIncludeWhenOtherGroupsExist, NeverInclude, AlwaysInclude \n\
+        \n\
+        \n ";
+    python::def(
+        "CanonicalizeStereoGroups", canonicalizeStereoGroupsHelper,
+        (python::arg("mol"),
+         python::arg("outputAbsoluteGroups") =
+             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist),
+        docString.c_str(),
+        python::return_value_policy<python::manage_new_object>());
 
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";

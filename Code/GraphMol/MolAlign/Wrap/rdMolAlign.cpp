@@ -72,12 +72,15 @@ PyObject *generateRmsdTransMatchPyTuple(double rmsd,
   PyTuple_SetItem(resTup, 0, rmsdItem);
   PyTuple_SetItem(resTup, 1, PyArray_Return(res));
   if (match) {
-    python::list pairList;
-    for (const auto &pair : *match) {
-      pairList.append(python::make_tuple(pair.first, pair.second));
+    PyObject *listTup = PyTuple_New(match->size());
+    for (unsigned int i = 0; i < match->size(); ++i) {
+      auto *pairTup = PyTuple_New(2);
+      PyTuple_SetItem(pairTup, 0, PyLong_FromLong((*match)[i].first));
+      PyTuple_SetItem(pairTup, 1, PyLong_FromLong((*match)[i].second));
+      PyTuple_SetItem(listTup, i, pairTup);
     }
-    auto pairTup = new python::tuple(pairList);
-    PyTuple_SetItem(resTup, 2, pairTup->ptr());
+
+    PyTuple_SetItem(resTup, 2, listTup);
   }
   return resTup;
 }
@@ -224,12 +227,13 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec,
-                             maxMatches, symmetrizeTerminalGroups, wtsVec);
+    rmsd =
+        MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec, maxMatches,
+                          symmetrizeTerminalGroups, wtsVec.get());
   }
   return rmsd;
 }
@@ -237,8 +241,8 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
 namespace MolAlign {
 class PyO3A {
  public:
-  PyO3A(O3A *o) : o3a(o){};
-  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)){};
+  PyO3A(O3A *o) : o3a(o) {};
+  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)) {};
   ~PyO3A() = default;
   double align() { return o3a.get()->align(); };
   PyObject *trans() {
@@ -406,8 +410,11 @@ python::tuple getMMFFO3AForConfs(
   }
 
   python::list pyres;
+  boost::python::manage_new_object::apply<PyO3A *>::type converter;
   for (auto &i : res) {
-    pyres.append(new PyO3A(i));
+    // transfer ownership to python
+    python::handle<> handle(converter(new PyO3A(i)));
+    pyres.append(handle);
   }
 
   return python::tuple(pyres);
@@ -562,9 +569,13 @@ python::tuple getCrippenO3AForConfs(
                         numThreads, MolAlign::O3A::CRIPPEN, refCid, reflect,
                         maxIters, options, cMap.get(), cWts.get());
   }
+
   python::list pyres;
-  for (auto &re : res) {
-    pyres.append(new PyO3A(re));
+  boost::python::manage_new_object::apply<PyO3A *>::type converter;
+  for (auto &i : res) {
+    // transfer ownership to python
+    python::handle<> handle(converter(new PyO3A(i)));
+    pyres.append(handle);
   }
 
   return python::tuple(pyres);

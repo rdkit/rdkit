@@ -38,7 +38,7 @@ struct fragparams_wrapper {
         .def("GetNumFuncGroups", &FragCatParams::getNumFuncGroups,
              python::args("self"))
         .def("GetFuncGroup",
-             (const ROMol* (FragCatParams::*)(int) const) &
+             (const ROMol *(FragCatParams::*)(int) const) &
                  FragCatParams::getFuncGroup,
              python::return_value_policy<python::reference_existing_object>(),
              python::args("self", "fid"))

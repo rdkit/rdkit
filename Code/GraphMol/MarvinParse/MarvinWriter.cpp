@@ -40,6 +40,10 @@
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+
 using namespace RDKit::SGroupWriting;
 
 #define ARROW_MIN_LENGTH 1.0
@@ -1147,7 +1151,8 @@ class MarvinCMLWriter {
   }
 };
 
-std::string MolToMrvBlock(const ROMol &mol, const MrvWriterParams& params, int confId) {
+std::string MolToMrvBlock(const ROMol &mol, const MrvWriterParams &params,
+                          int confId) {
   Utils::LocaleSwitcher ls;
 
   RWMol trwmol(mol);
@@ -1199,8 +1204,7 @@ void MolToMrvFile(const ROMol &mol, const std::string &fName,
     errout << "Bad output file " << fName;
     throw BadFileException(errout.str());
   }
-  std::string outString =
-      MolToMrvBlock(mol, params, confId);
+  std::string outString = MolToMrvBlock(mol, params, confId);
   *outStream << outString;
   delete outStream;
 }

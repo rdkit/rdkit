@@ -230,7 +230,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
     RDUNUSED_PARAM(version);
     registerFilterMatcherTypes(ar);
 
-    ar &d_matcher;
+    ar & d_matcher;
     // we only save string based props here...
     STR_VECT keys = d_props.keys();
     std::vector<std::string> string_props;
@@ -246,7 +246,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
         // warning, this changes properties types, see Dict.cpp
       }
     }
-    ar &string_props;
+    ar & string_props;
   }
 
   template <class Archive>
@@ -254,9 +254,9 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
     RDUNUSED_PARAM(version);
     registerFilterMatcherTypes(ar);
 
-    ar &d_matcher;
+    ar & d_matcher;
     std::vector<std::string> string_props;
-    ar &string_props;
+    ar & string_props;
     d_props.reset();
 
     for (size_t i = 0; i < string_props.size() / 2; ++i) {

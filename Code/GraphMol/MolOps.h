@@ -88,6 +88,32 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
 /*!
 
   \param mol     the molecule of interest
+  \param molFrags used to return the disconnected fragments as molecules.
+                  Any contents on input will be cleared.
+  \param sanitizeFrags  toggles sanitization of the fragments after
+                        they are built
+  \param frags used to return the mapping of Atoms->fragments.
+     if provided, \c frags will be <tt>mol->getNumAtoms()</tt> long
+         on return and will contain the fragment assignment for each Atom.
+  \param fragsMolAtomMapping  used to return the Atoms in each fragment
+     On return \c mapping will be \c numFrags long, and each entry
+     will contain the indices of the Atoms in that fragment.
+   \param copyConformers  toggles copying conformers of the fragments after
+                        they are built
+  \return the number of fragments found.
+
+*/
+RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
+    const ROMol &mol, std::vector<std::unique_ptr<ROMol>> &molFrags,
+    bool sanitizeFrags = true, std::vector<int> *frags = nullptr,
+    std::vector<std::vector<int>> *fragsMolAtomMapping = nullptr,
+    bool copyConformers = true);
+
+//! splits a molecule into its component fragments
+/// (disconnected components of the molecular graph)
+/*!
+
+  \param mol     the molecule of interest
   \param sanitizeFrags  toggles sanitization of the fragments after
                         they are built
   \param frags used to return the mapping of Atoms->fragments.
@@ -121,12 +147,35 @@ RDKIT_GRAPHMOL_EXPORT std::vector<boost::shared_ptr<ROMol>> getMolFrags(
   \return a map of the fragments and their labels
 
 */
+
 template <typename T>
 RDKIT_GRAPHMOL_EXPORT std::map<T, boost::shared_ptr<ROMol>>
 getMolFragsWithQuery(const ROMol &mol, T (*query)(const ROMol &, const Atom *),
                      bool sanitizeFrags = true,
                      const std::vector<T> *whiteList = nullptr,
                      bool negateList = false);
+//! splits a molecule into pieces based on labels assigned using a query,
+//! putting them into a map of std::unique_ptr<ROMol>.
+/*!
+
+  \param mol     the molecule of interest
+  \param query   the query used to "label" the molecule for fragmentation
+  \param molFrags used to return the disconnected fragments as molecules.
+                 Any contents on input will be cleared.
+  \param sanitizeFrags  toggles sanitization of the fragments after
+                        they are built
+  \param whiteList  if provided, only labels in the list will be kept
+  \param negateList if true, the white list logic will be inverted: only labels
+                    not in the list will be kept
+
+  \return the number of fragments
+
+*/
+template <typename T>
+RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
+    const ROMol &mol, T (*query)(const ROMol &, const Atom *),
+    std::map<T, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags = true,
+    const std::vector<T> *whiteList = nullptr, bool negateList = false);
 
 #if 0
     //! finds a molecule's minimum spanning tree (MST)
@@ -534,6 +583,7 @@ Book)
 - \c AROMATICITY_SIMPLE only considers 5- and 6-membered simple rings (it
 does not consider the outer envelope of fused rings)
 - \c AROMATICITY_MDL
+- \c AROMATICIT_MMFF94 the aromaticity model used by the MMFF94 force field
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
 typedef enum {
@@ -541,8 +591,12 @@ typedef enum {
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
   AROMATICITY_MDL = 0x4,
+  AROMATICITY_MMFF94 = 0x8,
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
 } AromaticityModel;
+
+//! sets the aromaticity model for a molecule to MMFF94
+RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 
 //! Sets up the aromaticity for a molecule
 /*!
@@ -650,7 +704,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
    <b>Notes:</b>
      - this does not modify query bonds which have bond type queries (like
-   those which come from SMARTS) or rings containing them.
+       those which come from SMARTS) or rings containing them.
      - even if \c markAtomsBonds is \c false the \c BondType for all modified
        aromatic bonds will be changed from \c RDKit::Bond::AROMATIC to \c
        RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
@@ -805,6 +859,7 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
   \param force           forces calculation of the matrix, even if already
   computed
   \param propNamePrefix  used to set the cached property name
+  \param bondsToUse      used to limit which bonds are considered
 
   \return the adjacency matrix.
 
@@ -897,6 +952,7 @@ RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(
 RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(
     const ROMol &mol, int confId = -1, bool useAtomWts = false,
     bool force = false, const char *propNamePrefix = nullptr);
+
 //! Find the shortest path between two atoms
 /*!
   Uses the Bellman-Ford algorithm
@@ -954,12 +1010,12 @@ class Hybridizations {
 //! removes bogus chirality markers (e.g. tetrahedral flags on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
-//! \overload
-RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
 //! removes bogus atropisomeric markers (e.g. those without sp2 begin and end
 //! atoms):
 RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol,
                                                Hybridizations &hybridizations);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
 
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
@@ -1012,14 +1068,16 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 //! Sets bond directions based on double bond stereochemistry
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
-//! removes directions from single bonds. Wiggly bonds will have the property
-//! _UnknownStereo set on them
+//! removes directions from single bonds. The property _UnknownStereo will be
+//! set on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol,
                                                    bool onlyWedgeFlags = false);
 
-//! removes directions from all bonds. Wiggly bonds and cross bonds will have
-//! the property _UnknownStereo set on them
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearAllBondDirFlags(ROMol &mol);
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
                                          bool onlyWedgeFlags = false);
 

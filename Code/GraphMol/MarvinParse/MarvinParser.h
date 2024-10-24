@@ -132,8 +132,9 @@ inline ChemicalReaction *MrvFileToChemicalReaction(const std::string &fName,
 }  // namespace v1
 
 struct RDKIT_MARVINPARSER_EXPORT MrvWriterParams {
-  bool includeStereo = true;  /**< toggles inclusion of stereochemical */
-  bool kekulize = true;       /**< triggers kekulization of the molecule before it's written */
+  bool includeStereo = true; /**< toggles inclusion of stereochemical */
+  bool kekulize =
+      true; /**< triggers kekulization of the molecule before it's written */
   bool prettyPrint = false;   /**< makes the output more human readable */
   unsigned int precision = 6; /**< precision of the coordinates */
 };
@@ -145,21 +146,23 @@ struct RDKIT_MARVINPARSER_EXPORT MrvWriterParams {
  *     \param params        - marvin write params
  *     \param confId        - selects which conformation to output
  */
-RDKIT_MARVINPARSER_EXPORT void MolToMrvFile(
-    const ROMol &mol, const std::string &fName, const MrvWriterParams &params, int confId = -1);
+RDKIT_MARVINPARSER_EXPORT void MolToMrvFile(const ROMol &mol,
+                                            const std::string &fName,
+                                            const MrvWriterParams &params,
+                                            int confId = -1);
 
 // \brief Writes a Marvin (MRV) file for a molecule
 /*!
  *     \param mol           - the molecule
  *     \param fName         - the file to write to
- *     \param includeStereo - toggles inclusion of stereochemical information in the output
- *     \param confId        - selects which conformation to output
- *     \param kekulize      - triggers kekulization of the molecule before it's written
+ *     \param includeStereo - toggles inclusion of stereochemical information in
+ * the output \param confId        - selects which conformation to output \param
+ * kekulize      - triggers kekulization of the molecule before it's written
  *     \param prettyPrint   - makes the output more human readable
  */
-inline void MolToMrvFile(
-    const ROMol &mol, const std::string &fName, bool includeStereo = true,
-    int confId = -1, bool kekulize = true, bool prettyPrint = false) {
+inline void MolToMrvFile(const ROMol &mol, const std::string &fName,
+                         bool includeStereo = true, int confId = -1,
+                         bool kekulize = true, bool prettyPrint = false) {
   MrvWriterParams params{includeStereo, kekulize, prettyPrint};
   MolToMrvFile(mol, fName, params, confId);
 }
@@ -170,22 +173,19 @@ inline void MolToMrvFile(
  *     \param params        - marvin write params
  *     \param confId        - selects which conformation to output
  */
-RDKIT_MARVINPARSER_EXPORT std::string MolToMrvBlock(const ROMol &mol,
-                                                    const MrvWriterParams &params,
-                                                    int confId = -1);
+RDKIT_MARVINPARSER_EXPORT std::string MolToMrvBlock(
+    const ROMol &mol, const MrvWriterParams &params, int confId = -1);
 
 // \brief Returns a Marvin (Mrv) Mol block for a molecule
 /*!
  *     \param mol           - the molecule
- *     \param includeStereo - toggles inclusion of stereochemical information in the output
- *     \param confId        - selects which conformation to output
- *     \param kekulize      - triggers kekulization of the molecule before it's written
+ *     \param includeStereo - toggles inclusion of stereochemical information in
+ * the output \param confId        - selects which conformation to output \param
+ * kekulize      - triggers kekulization of the molecule before it's written
  *     \param prettyPrint   - makes the output more human readable
  */
-inline std::string MolToMrvBlock(const ROMol &mol,
-                                 bool includeStereo = true,
-                                 int confId = -1,
-                                 bool kekulize = true,
+inline std::string MolToMrvBlock(const ROMol &mol, bool includeStereo = true,
+                                 int confId = -1, bool kekulize = true,
                                  bool prettyPrint = false) {
   MrvWriterParams params{includeStereo, kekulize, prettyPrint};
   return MolToMrvBlock(mol, params, confId);

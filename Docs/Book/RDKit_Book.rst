@@ -1662,9 +1662,9 @@ Here are the steps involved, in order.
       example is the nitrogen atom in pyrrole.
 
   13. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
-     all atoms. This generates exceptions for atoms in higher-than-allowed
-     valence states. This step is required to catch some edge cases where input 
-     atoms with non-physical valences are accepted if they are flagged as aromatic.
+      all atoms. This generates exceptions for atoms in higher-than-allowed
+      valence states. This step is required to catch some edge cases where input 
+      atoms with non-physical valences are accepted if they are flagged as aromatic.
 
 
 The individual steps can be toggled on or off when calling
@@ -2085,10 +2085,14 @@ correspond to specific molecules:
 
 .. doctest ::
 
-  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |&1:1|')
+  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |a:4,&1:1|')
   >>> m.GetStereoGroups()[0].GetGroupType()
-  rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
+  rdkit.Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE
   >>> [x.GetIdx() for x in m.GetStereoGroups()[0].GetAtoms()]
+  [4]
+  >>> m.GetStereoGroups()[1].GetGroupType()
+  rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
+  >>> [x.GetIdx() for x in m.GetStereoGroups()[1].GetAtoms()]
   [1]
   >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
   >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
@@ -2108,7 +2112,26 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   >>> ps=rxn.RunReactants([m])
   >>> clearAllAtomProps(ps[0][0])
   >>> Chem.MolToCXSmiles(ps[0][0])
-  'C[C@H](Br)C[C@H](O)Cl |&1:1|'
+  'C[C@H](Br)C[C@H](O)Cl |a:4,&1:1|'
+
+  Stereo Groups can be canonicalized.
+
+.. doctest ::
+  
+  >>> m = Chem.MolFromSmiles('CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,o1:11,o2:14|')
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.NeverInclude)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |o1:14|'
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.AlwaysInclude)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |a:3,11,o1:14|'
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |a:3,11,o1:14|'
+  >>> m = Chem.MolFromSmiles('CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3|')
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1'
 
 .. |EnhancedSSS_A|  image:: ./images/EnhancedStereoSSS_molA.png
    :scale: 75%

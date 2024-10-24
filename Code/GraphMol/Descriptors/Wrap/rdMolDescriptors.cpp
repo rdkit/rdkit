@@ -357,13 +357,13 @@ double hkAlphaHelper(const RDKit::ROMol &mol, python::object atomContribs) {
   return kappaHelper(RDKit::Descriptors::calcHallKierAlpha, mol, atomContribs);
 }
 
-[[deprecated("please use MorganGenerator")]] RDKit::SparseIntVect<std::uint32_t>
-    *MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius,
-                             int nBits, python::object invariants,
-                             python::object fromAtoms, bool useChirality,
-                             bool useBondTypes, bool useFeatures,
-                             bool useCounts, python::object bitInfo,
-                             bool includeRedundantEnvironments) {
+[[deprecated(
+    "please use MorganGenerator")]] RDKit::SparseIntVect<std::uint32_t> *
+MorganFingerprintHelper(const RDKit::ROMol &mol, unsigned int radius, int nBits,
+                        python::object invariants, python::object fromAtoms,
+                        bool useChirality, bool useBondTypes, bool useFeatures,
+                        bool useCounts, python::object bitInfo,
+                        bool includeRedundantEnvironments) {
   RDLog::deprecationWarning("please use MorganGenerator");
   std::vector<boost::uint32_t> *invars = nullptr;
   if (invariants) {
@@ -652,9 +652,7 @@ python::list GetUSRDistributionsFromPoints(python::object coords,
   }
   RDGeom::Point3DConstPtrVect c(numCoords);
   for (unsigned int i = 0; i < numCoords; ++i) {
-    auto *pt = new RDGeom::Point3D;
-    *pt = python::extract<RDGeom::Point3D>(coords[i]);
-    c[i] = pt;
+    c[i] = python::extract<RDGeom::Point3D *>(coords[i]);
   }
   std::vector<RDGeom::Point3D> p(numPts);
   if (numPts == 0) {
@@ -673,9 +671,7 @@ python::list GetUSRDistributionsFromPoints(python::object coords,
     }
     pyDist.append(pytmp);
   }
-  for (const auto *pt : c) {
-    delete pt;
-  }
+
   return pyDist;
 }
 

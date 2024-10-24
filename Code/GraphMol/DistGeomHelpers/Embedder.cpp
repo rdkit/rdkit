@@ -12,7 +12,7 @@
 #include <DistGeom/BoundsMatrix.h>
 #include <DistGeom/DistGeomUtils.h>
 #include <DistGeom/TriangleSmooth.h>
-#include <DistGeom/ChiralViolationContrib.h>
+#include <DistGeom/ChiralViolationContribs.h>
 #include "BoundsMatrixBuilder.h"
 #include <ForceField/ForceField.h>
 #include <GraphMol/ROMol.h>
@@ -545,7 +545,7 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
                         const EmbedParameters &) {
   // check the chiral volume:
   for (const auto &chiralSet : *eargs.chiralCenters) {
-    double vol = DistGeom::ChiralViolationContrib::calcChiralVolume(
+    double vol = DistGeom::calcChiralVolume(
         chiralSet->d_idx1, chiralSet->d_idx2, chiralSet->d_idx3,
         chiralSet->d_idx4, *positions);
     double lb = chiralSet->getLowerVolumeBound();
@@ -1086,8 +1086,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {

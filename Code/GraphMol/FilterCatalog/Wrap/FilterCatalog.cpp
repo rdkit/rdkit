@@ -143,10 +143,10 @@ class PythonFilterMatch : public FilterMatcherBase {
   bool incref;
 
  public:
-  PythonFilterMatch(PyObject *self)
+  PythonFilterMatch(PyObject *callback)
       : FilterMatcherBase("Python Filter Matcher"),
-        functor(self),
-        incref(false){};
+        functor(callback),
+        incref(false) {};
 
   // ONLY CALLED FROM C++ from the copy operation
   PythonFilterMatch(const PythonFilterMatch &rhs)
@@ -322,8 +322,6 @@ struct filtercat_wrapper {
         .def_readwrite("target", &std::pair<int, int>::second)
         .def("__getitem__", &GetMatchVectItem, python::args("self", "idx"));
 
-    RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
-
     python::class_<FilterMatch, boost::shared_ptr<FilterMatch>>(
         "FilterMatch", FilterMatchDoc,
         python::init<boost::shared_ptr<FilterMatcherBase>, MatchVectType>(
@@ -333,9 +331,9 @@ struct filtercat_wrapper {
 
     RegisterVectorConverter<FilterMatch>("VectFilterMatch");
 
-    python::class_<FilterMatcherBase,
-                   boost::shared_ptr<FilterMatcherBase>, boost::noncopyable>(
-        "FilterMatcherBase", FilterMatcherBaseDoc, python::no_init)
+    python::class_<FilterMatcherBase, boost::shared_ptr<FilterMatcherBase>,
+                   boost::noncopyable>("FilterMatcherBase",
+                                       FilterMatcherBaseDoc, python::no_init)
         .def("IsValid", &FilterMatcherBase::isValid, python::args("self"),
              "Return True if the filter matcher is valid, False otherwise")
         .def("HasMatch", &FilterMatcherBase::hasMatch,
@@ -348,8 +346,7 @@ struct filtercat_wrapper {
         .def("GetName", &FilterMatcherBase::getName, python::args("self"))
         .def("__str__", &FilterMatcherBase::getName, python::args("self"));
 
-    python::class_<SmartsMatcher,
-                   python::bases<FilterMatcherBase>>(
+    python::class_<SmartsMatcher, python::bases<FilterMatcherBase>>(
         "SmartsMatcher", SmartsMatcherDoc,
         python::init<const std::string &>(python::args("self", "name")))
         .def(python::init<const ROMol &>(python::args("self", "rhs"),
@@ -398,8 +395,7 @@ struct filtercat_wrapper {
             ((python::arg("self"), python::arg("count"))),
             "Set the maximum times pattern can appear for the filter to match");
 
-    python::class_<ExclusionList,
-                   python::bases<FilterMatcherBase>>(
+    python::class_<ExclusionList, python::bases<FilterMatcherBase>>(
         "ExclusionList", python::init<>(python::args("self")))
         .def("SetExclusionPatterns", &SetOffPatterns,
              python::args("self", "list"),
@@ -565,7 +561,8 @@ struct filtercat_wrapper {
         .def_pickle(filtercatalog_pickle_suite());
 
     python::class_<PythonFilterMatch, python::bases<FilterMatcherBase>>(
-        "PythonFilterMatcher", python::init<PyObject *>(python::args("self")));
+        "PythonFilterMatcher",
+        python::init<PyObject *>(python::args("self", "callback")));
 
     python::def("FilterCatalogCanSerialize", FilterCatalogCanSerialize,
                 "Returns True if the FilterCatalog is serializable "
@@ -590,18 +587,15 @@ struct filtercat_wrapper {
     python::scope().attr("FilterMatchOps") = nested_module;
     python::scope parent = nested_module;
 
-    python::class_<FilterMatchOps::And,
-                   python::bases<FilterMatcherBase>>(
+    python::class_<FilterMatchOps::And, python::bases<FilterMatcherBase>>(
         "And", python::init<FilterMatcherBase &, FilterMatcherBase &>(
                    python::args("self", "arg1", "arg2")));
 
-    python::class_<FilterMatchOps::Or,
-                   python::bases<FilterMatcherBase>>(
+    python::class_<FilterMatchOps::Or, python::bases<FilterMatcherBase>>(
         "Or", python::init<FilterMatcherBase &, FilterMatcherBase &>(
                   python::args("self", "arg1", "arg2")));
 
-    python::class_<FilterMatchOps::Not,
-                   python::bases<FilterMatcherBase>>(
+    python::class_<FilterMatchOps::Not, python::bases<FilterMatcherBase>>(
         "Not", python::init<FilterMatcherBase &>(python::args("self", "arg1")));
   };
 };
