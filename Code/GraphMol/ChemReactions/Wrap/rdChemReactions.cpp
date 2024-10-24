@@ -907,6 +907,31 @@ of the replacements argument.",
               (python::arg("reaction"), python::arg("params")),
               "construct a reaction SMILES string for a ChemicalReaction");
 
+  python::def("ReactionToCXSmarts",
+              (std::string(*)(const RDKit::ChemicalReaction &))
+                  RDKit::ChemicalReactionToCXRxnSmarts,
+              (python::arg("reaction")),
+              "construct a reaction SMARTS string for a ChemicalReaction");
+  python::def("ReactionToCXSmiles",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              bool))RDKit::ChemicalReactionToCXRxnSmiles,
+              (python::arg("reaction"), python::arg("canonical") = true),
+              "construct a reaction SMILES string for a ChemicalReaction");
+  python::def("ReactionToCXSmarts",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              const RDKit::SmilesWriteParams &,
+                              std::uint32_t))
+                  RDKit::ChemicalReactionToCXRxnSmarts,
+              (python::arg("reaction"), python::arg("params"), python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+              "construct a reaction CXSMARTS string for a ChemicalReaction");
+  python::def("ReactionToCXSmiles",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              const RDKit::SmilesWriteParams &,
+                              std::uint32_t))
+                  RDKit::ChemicalReactionToCXRxnSmiles,
+              (python::arg("reaction"), python::arg("params"), python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+              "construct a reaction CXSMILES string for a ChemicalReaction");
+
   python::def(
       "ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction,
       (python::arg("filename"), python::arg("sanitize") = false,

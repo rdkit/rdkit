@@ -17,10 +17,14 @@
 #include <cstdint>
 #include <limits>
 
+#include <boost/shared_ptr.hpp>
+
 namespace RDKit {
 class Atom;
 class Bond;
 class ROMol;
+
+typedef std::vector<boost::shared_ptr<ROMol>> MOL_SPTR_VECT;
 
 struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool doIsomericSmiles =
@@ -77,6 +81,10 @@ enum CXSmilesFields : uint32_t { CXSMILESFIELDS_ENUM_ITEMS };
 RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
     const ROMol &mol, std::uint32_t flags = CXSmilesFields::CX_ALL);
 
+//! \brief returns the cxsmiles data for a vector of molecules
+RDKIT_SMILESPARSE_EXPORT std::string getCXExtensions(
+  const std::vector<ROMol *> &mols, std::uint32_t flags);
+  
 //! \brief returns true if the atom number is in the SMILES organic subset
 RDKIT_SMILESPARSE_EXPORT bool inOrganicSubset(int atomicNumber);
 
