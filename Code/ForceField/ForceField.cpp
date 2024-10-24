@@ -283,18 +283,17 @@ int ForceField::minimize(unsigned int snapshotFreq,
   unsigned int numIters = 0;
   unsigned int dim = this->d_numPoints * d_dimension;
   double finalForce = 0.0;
-  auto *points = new double[dim];
+  std::vector<double> points(dim);
 
-  this->scatter(points);
+  this->scatter(points.data());
   ForceFieldsHelper::calcEnergy eCalc(this);
   ForceFieldsHelper::calcGradient gCalc(this);
 
   int res =
-      BFGSOpt::minimize(dim, points, forceTol, numIters, finalForce, eCalc,
+      BFGSOpt::minimize(dim, points.data(), forceTol, numIters, finalForce, eCalc,
                         gCalc, snapshotFreq, snapshotVect, energyTol, maxIts);
-  this->gather(points);
+  this->gather(points.data());
 
-  delete[] points;
   return res;
 }
 

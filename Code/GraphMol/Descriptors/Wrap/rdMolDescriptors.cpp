@@ -898,16 +898,25 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
   //  we can't use python props in functions.
   PythonPropertyFunctor(PyObject *self, const std::string &name,
                         const std::string &version)
-      : PropertyFunctor(name, version), self(self) {
-    python::incref(self);
-  }
-
-  ~PythonPropertyFunctor() override { python::decref(self); }
+      : PropertyFunctor(name, version), self(self) {}
 
   double operator()(const RDKit::ROMol &mol) const override {
     return python::call_method<double>(self, "__call__", boost::ref(mol));
   }
 };
+
+int registerPropertyHelper(python::object o) {
+  // We increase the refcount to make sure the original Python object
+  // does not get cleaned up (we don't want that to happen once it's
+  // registered, we may need to use its __call__() method; note there's
+  // no matching decref). We register the shared_ptr so that Python
+  // and the (static) registry can share ownership.
+
+  python::incref(o.ptr());
+  python::extract<boost::shared_ptr<PythonPropertyFunctor>> ptr(o);
+  return RDKit::Descriptors::Properties::registerProperty(ptr());
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -1583,7 +1592,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "";
 
   python::class_<RDKit::Descriptors::Properties,
-                 RDKit::Descriptors::Properties *>(
+                 boost::shared_ptr<RDKit::Descriptors::Properties>>(
       "Properties", docString.c_str(), python::init<>(python::args("self")))
       .def(python::init<const std::vector<std::string> &>(
           python::args("self", "propNames")))
@@ -1611,8 +1620,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       .def("GetProperty", &RDKit::Descriptors::Properties::getProperty,
            python::arg("propName"), "Return the named property if it exists")
       .staticmethod("GetProperty")
-      .def("RegisterProperty",
-           &RDKit::Descriptors::Properties::registerProperty,
+      .def("RegisterProperty", &registerPropertyHelper,
            python::arg("propertyFunctor"),
            "Register a new property object (not thread safe)")
       .staticmethod("RegisterProperty");

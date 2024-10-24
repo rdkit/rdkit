@@ -29,14 +29,9 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-
-#include <RDGeneral/export.h>
 #ifndef RDKIT_REGISTER_DESCRIPTOR_H
 #define RDKIT_REGISTER_DESCRIPTOR_H
 
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/shared_ptr.hpp>
-#include <RDGeneral/BoostEndInclude.h>
 #include "Property.h"
 
 namespace RDKit {
@@ -65,19 +60,11 @@ NAME##PropertyFunctor(false)); \
 static NAME##PropertyFunctor NAME##PropertyFunctor__;
 */
 
-#define REGISTER_DESCRIPTOR(NAME, FUNC)                                     \
-  struct NAME##PropertyFunctor : public PropertyFunctor {                   \
-    static double _func(const ROMol &m) {                                   \
-      return static_cast<double>(FUNC(m));                                  \
-    }                                                                       \
-    NAME##PropertyFunctor(bool registerProp = true)                         \
-        : PropertyFunctor(#NAME, NAME##Version, _func) {                    \
-      if (registerProp)                                                     \
-        Properties::registerProperty(new NAME##PropertyFunctor(false));     \
-    }                                                                       \
-    double operator()(const RDKit::ROMol &mol) const { return _func(mol); } \
-  };                                                                        \
-  static NAME##PropertyFunctor NAME##PropertyFunctor__;
+#define REGISTER_DESCRIPTOR(NAME, FUNC)             \
+  Properties::registerProperty(new PropertyFunctor( \
+      #NAME, NAME##Version,                         \
+      [](const ROMol &m) { return static_cast<double>(FUNC(m)); }));
+
 }  // namespace Descriptors
 }  // namespace RDKit
 
