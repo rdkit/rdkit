@@ -18,6 +18,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesJSONParsers.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
@@ -39,6 +40,9 @@
 #include <Geometry/Transform3D.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/ExplicitBitVect.h>
+#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
+#include <GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h>
+#endif
 
 #ifdef RDK_BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
@@ -95,11 +99,11 @@ std::string JSMolBase::get_cxsmiles() const { return MolToCXSmiles(get()); }
 std::string JSMolBase::get_cxsmiles(const std::string &details) const {
   SmilesWriteParams params;
   updateSmilesWriteParamsFromJSON(params, details);
-  SmilesWrite::CXSmilesFields cxSmilesFields =
-      SmilesWrite::CXSmilesFields::CX_ALL;
-  RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear;
+  std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+  unsigned int restoreBondDirs = RestoreBondDirOptionClear;
   updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, details);
-  return MolToCXSmiles(get(), params, cxSmilesFields, restoreBondDirs);
+  return MolToCXSmiles(get(), params, cxSmilesFields,
+                       static_cast<RestoreBondDirOption>(restoreBondDirs));
 }
 std::string JSMolBase::get_smarts() const { return MolToSmarts(get()); }
 std::string JSMolBase::get_smarts(const std::string &details) const {
