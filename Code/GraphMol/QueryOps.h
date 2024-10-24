@@ -866,7 +866,7 @@ class HasPropWithValueQueryBase {
  public:
   HasPropWithValueQueryBase() = default;
   virtual ~HasPropWithValueQueryBase() = default;
-  virtual Dict::Pair getPair() const = 0;
+  virtual PairHolder getPair() const = 0;
   virtual double getTolerance() const = 0;
 };
 
@@ -886,7 +886,7 @@ class HasPropWithValueQuery
     this->setDataFunc(0);
   }
 
-  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+  PairHolder getPair() const override { return PairHolder(Dict::Pair(propname, val)); }
 
   double getTolerance() const override { return tolerance; }
 
@@ -968,7 +968,7 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     this->setDataFunc(nullptr);
   }
 
-  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+  PairHolder getPair() const override { return PairHolder(Dict::Pair(propname, val)); }
 
   double getTolerance() const override { return 0.0; }
 
@@ -1040,7 +1040,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     this->setDataFunc(nullptr);
   }
 
-  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+  PairHolder getPair() const override { return PairHolder(Dict::Pair(propname, val)); }
 
   double getTolerance() const override { return tol; }
 

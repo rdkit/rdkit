@@ -314,7 +314,7 @@ using QueryDetails = boost::variant<
     std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,
     std::tuple<MolPickler::Tags, std::set<int32_t>>,
     std::tuple<MolPickler::Tags, std::string>,
-    std::tuple<MolPickler::Tags, Dict::Pair, double>>;
+    std::tuple<MolPickler::Tags, PairHolder, double>>;
 // clang-format on
 template <class T>
 QueryDetails getQueryDetails(const Queries::Query<int, T const *, true> *query);
