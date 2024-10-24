@@ -97,6 +97,9 @@ Descriptor AtropisomerBond::label(Node *root1, Digraph &digraph,
   removeInternalEdges(edges1, focus1, focus2);
   removeInternalEdges(edges2, focus1, focus2);
 
+  removeDuplicatesAndHs(edges1);
+  removeDuplicatesAndHs(edges2);
+
   auto carriers = std::vector<Atom *>(getCarriers());
   auto config = d_cfg;
 
