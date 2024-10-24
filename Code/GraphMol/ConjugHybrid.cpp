@@ -139,11 +139,13 @@ void setConjugation(ROMol &mol) {
   }
 }
 
-void setHybridization(ROMol &mol) {
+void setHybridization(ROMol &mol, bool forceFlag) {
   for (auto atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
       atom->setHybridization(Atom::UNSPECIFIED);
-    } else {
+      continue;
+    }
+    if (!forceFlag) {
       // if the stereo spec matches the coordination number, this is easy
       switch (atom->getChiralTag()) {
         case Atom::ChiralType::CHI_TETRAHEDRAL:
@@ -175,56 +177,57 @@ void setHybridization(ROMol &mol) {
         default:
           break;
       }
-      // otherwise we have to do some work
-      int norbs;
-      // try to be smart for early elements, but for later
-      // ones just use the degree
-      // FIX: we should probably also be using the degree for metals
-      if (atom->getAtomicNum() < 89) {
-        norbs = numBondsPlusLonePairs(atom);
-      } else {
-        norbs = atom->getTotalDegree();
-      }
-      switch (norbs) {
-        case 0:
-          // This occurs for things like Na+
-          atom->setHybridization(Atom::S);
-          break;
-        case 1:
-          atom->setHybridization(Atom::S);
-          break;
-        case 2:
-          atom->setHybridization(Atom::SP);
-          break;
-        case 3:
+    }
+
+    // otherwise we have to do some work
+    int norbs;
+    // try to be smart for early elements, but for later
+    // ones just use the degree
+    // FIX: we should probably also be using the degree for metals
+    if (atom->getAtomicNum() < 89) {
+      norbs = numBondsPlusLonePairs(atom);
+    } else {
+      norbs = atom->getTotalDegree();
+    }
+    switch (norbs) {
+      case 0:
+        // This occurs for things like Na+
+        atom->setHybridization(Atom::S);
+        break;
+      case 1:
+        atom->setHybridization(Atom::S);
+        break;
+      case 2:
+        atom->setHybridization(Atom::SP);
+        break;
+      case 3:
+        atom->setHybridization(Atom::SP2);
+        break;
+      case 4:
+        // potentially SP3, but we'll set it down to SP2
+        // if we have a conjugated bond (like the second O
+        // in O=CO)
+        // we'll also avoid setting the hybridization down to
+        // SP2 in the case of an atom with degree higher than 3
+        // (e.g. things like CP1(C)=CC=CN=C1C, where the P
+        //   has norbs = 4, and a conjugated bond, but clearly should
+        //   not be SP2)
+        // This is Issue276
+        if (atom->getTotalDegree() > 3 ||
+            !MolOps::atomHasConjugatedBond(atom)) {
+          atom->setHybridization(Atom::SP3);
+        } else {
           atom->setHybridization(Atom::SP2);
-          break;
-        case 4:
-          // potentially SP3, but we'll set it down to SP2
-          // if we have a conjugated bond (like the second O
-          // in O=CO)
-          // we'll also avoid setting the hybridization down to
-          // SP2 in the case of an atom with degree higher than 3
-          // (e.g. things like CP1(C)=CC=CN=C1C, where the P
-          //   has norbs = 4, and a conjugated bond, but clearly should
-          //   not be SP2)
-          // This is Issue276
-          if (atom->getTotalDegree() > 3 ||
-              !MolOps::atomHasConjugatedBond(atom)) {
-            atom->setHybridization(Atom::SP3);
-          } else {
-            atom->setHybridization(Atom::SP2);
-          }
-          break;
-        case 5:
-          atom->setHybridization(Atom::SP3D);
-          break;
-        case 6:
-          atom->setHybridization(Atom::SP3D2);
-          break;
-        default:
-          atom->setHybridization(Atom::UNSPECIFIED);
-      }
+        }
+        break;
+      case 5:
+        atom->setHybridization(Atom::SP3D);
+        break;
+      case 6:
+        atom->setHybridization(Atom::SP3D2);
+        break;
+      default:
+        atom->setHybridization(Atom::UNSPECIFIED);
     }
   }
 }

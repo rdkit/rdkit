@@ -587,9 +587,14 @@ void sanitizeMol(RWMol &mol, unsigned int &operationThatFailed,
   }
 
   // set hybridization
-  operationThatFailed = SANITIZE_SETHYBRIDIZATION;
+  operationThatFailed = SANITIZE_SETHYBRIDIZATIONFORCE;
   if (sanitizeOps & operationThatFailed) {
-    setHybridization(mol);
+    setHybridization(mol, true);
+  } else {
+    operationThatFailed = SANITIZE_SETHYBRIDIZATION;
+    if (sanitizeOps & operationThatFailed) {
+      setHybridization(mol);
+    }
   }
 
   // remove bogus chirality specs:
