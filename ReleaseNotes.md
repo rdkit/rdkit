@@ -1,3 +1,84 @@
+# Release_2024.09.2
+(Changes relative to Release_2024.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Kevin Boyd, David Cosgrove, Tad Hurst, Brian Kelley, Zhen(Jack) Liu, Jeremy
+Monat, Dan Nealschneider, Timothy Palpant, Yakov Pechersky, Julianus Pfeuffer,
+Ricardo Rodriguez, Fio Ruggiu, Eva Snow, Paolo Tosco, Kollin Trujillo,
+UENO, M., bzoracler, esiaero
+
+## New Features and Enhancements:
+  - Fix canonicalization of stereogroups
+ (github pull #7041 from tadhurst-cdd)
+  - Carry over enhanced stereochemistry groups from reaction product templates to products
+ (github issue #7669 from jpfeuffer)
+  - Simple speed up for CIPLabeler
+ (github pull #7826 from d-b-w)
+  - Additional compatibility updates for commutator/negator settings for …
+ (github pull #7834 from esiaero)
+  - Support Writing CX Extensions for Reactions
+ (github pull #7838 from KollinRT)
+  - Expose preset color palettes to MinimalLib through JSON
+ (github pull #7853 from ptosco)
+  - Another 2x performance improvement in CIP labelling
+ (github pull #7854 from d-b-w)
+  - Improve Morgan Fingerprint Performance
+ (github pull #7862 from scal444)
+  - [IterateCIPRanks] Precompute neighbor indices and counts, sort them together for each atom
+ (github pull #7889 from scal444)
+  - Optimize Butina Clustering for Performance and Expand API
+ (github pull #7892 from evasnow1992)
+  - Expose three ROMol methods which were not previously exposed to SWIG wrappers
+ (github pull #7895 from ptosco)
+  - Sort CIP entries in place using a lightweight wrapper, only sort tied entries
+ (github pull #7911 from scal444)
+  - Only save the most recent CIP rank for sorting
+ (github pull #7932 from scal444)
+  - Add to Cookbook "Include a Bond Index" recipe and image
+ (github pull #7939 from bertiewooster)
+  - Updates to the Docs/Book directory
+ (github pull #7942 from greglandrum)
+
+## Bug Fixes:
+  - Python SIGSEGV when calling `rdkit.Chem.rdmolops.SplitMolByPDBResidues` on some molecules
+ (github issue #5599 from bzoracler)
+  - Tautomer canonicalizer invariant violation
+ (github issue #7044 from fioruggiu)
+  - rdMolAlign.GetBestRMS gets stuck 
+ (github issue #7685 from LiuCMU)
+  - Fix 4.3.0--4.4.0 sql upgrade script
+ (github pull #7774 from esiaero)
+  - RWMol::insertMol should not add an empty ABSOLUTE_STEREO group unnecessarily
+ (github issue #7782 from ptosco)
+  - Setting an atom's pdb residue number with None segfaults
+ (github issue #7873 from bp-kelley)
+   - Fix inversion of stereo with canonicalizeConformer
+ (github pull #7878 from greglandrum)
+  - Restore "oops, exponential is a pain" code snippet in the RGD algorithm
+ (github pull #7898 from ptosco)
+  - Fix some more mem errors in 2024.09.1
+ (github pull #7899 from ricrogz)
+  - AssignStereochemistry(cleanIt=True) does not clean _CIPCode property on bonds
+ (github issue #7929 from ricrogz)
+
+## Cleanup work:
+  - Fix some mem errors in 2024.09.1
+ (github pull #7867 from ricrogz)
+  - FindPython Development.Module instead of Development
+ (github pull #7881 from pechersky)
+  - Use smart pointer for buffer.
+ (github pull #7883 from DavidACosgrove)
+  - Modernise ExplicitBitVect.
+ (github pull #7884 from DavidACosgrove)
+  - Update `PUBCHEMSHAPE_URL` and remove patch code
+ (github pull #7900 from eunos-1128)
+  - Fix misnamed test
+ (github pull #7952 from ricrogz)
+
 # Release_2024.09.1
 (Changes relative to Release_2024.03.1)
 
