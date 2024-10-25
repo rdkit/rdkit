@@ -191,19 +191,19 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 namespace {
 std::string getResidue(const ROMol &, const Atom *at) {
   auto monomerInfo = at->getMonomerInfo();
-  if (!monomerInfo || monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+  if (!monomerInfo ||
+      monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)
-      ->getResidueName();
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getResidueName();
 }
 std::string getChainId(const ROMol &, const Atom *at) {
-auto monomerInfo = at->getMonomerInfo();
-  if (!monomerInfo || monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+  auto monomerInfo = at->getMonomerInfo();
+  if (!monomerInfo ||
+      monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)
-      ->getChainId();
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getChainId();
 }
 }  // namespace
 python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
@@ -266,12 +266,10 @@ python::dict parseQueryDefFileHelper(python::object &input, bool standardize,
     parseQueryDefFile(get_filename(), queryDefs, standardize, delimiter,
                       comment, nameColumn, smartsColumn);
   } else {
-    auto *sb = new streambuf(input);
-    std::istream *istr = new streambuf::istream(*sb);
-    parseQueryDefFile(istr, queryDefs, standardize, delimiter, comment,
+    std::unique_ptr<streambuf> sb(new streambuf(input));
+    std::unique_ptr<std::istream> istr(new streambuf::istream(*sb));
+    parseQueryDefFile(istr.get(), queryDefs, standardize, delimiter, comment,
                       nameColumn, smartsColumn);
-    delete istr;
-    delete sb;
   }
 
   python::dict res;
@@ -621,9 +619,9 @@ ExplicitBitVect *wrapLayeredFingerprint(
     python::object fromAtoms) {
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<unsigned int> *atomCountsV = nullptr;
+  std::unique_ptr<std::vector<unsigned int>> atomCountsV;
   if (atomCounts) {
-    atomCountsV = new std::vector<unsigned int>;
+    atomCountsV.reset(new std::vector<unsigned int>);
     unsigned int nAts =
         python::extract<unsigned int>(atomCounts.attr("__len__")());
     if (nAts < mol.getNumAtoms()) {
@@ -637,14 +635,13 @@ ExplicitBitVect *wrapLayeredFingerprint(
 
   ExplicitBitVect *res;
   res = RDKit::LayeredFingerprintMol(mol, layerFlags, minPath, maxPath, fpSize,
-                                     atomCountsV, includeOnlyBits,
+                                     atomCountsV.get(), includeOnlyBits,
                                      branchedPaths, lFromAtoms.get());
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
       atomCounts[i] = (*atomCountsV)[i];
     }
-    delete atomCountsV;
   }
 
   return res;
