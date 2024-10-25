@@ -1965,6 +1965,88 @@ function test_get_mmpa_frags() {
     }
 }
 
+function test_molzip() {
+    {
+        var mol1 = RDKitModule.get_mol("F/C=C/[*:1]");
+        assert(mol1);
+        var mol2 = RDKitModule.get_mol("[*:1]F");
+        assert(mol2);
+        var expectedLinkage = "F/C=C/F";
+        var mol = RDKitModule.molzip(mol1, mol2);
+        assert(mol);
+        assert(mol.get_smiles() === expectedLinkage);
+        mol1.delete();
+        mol2.delete();
+        mol.delete();
+    }
+    {
+        var mol1 = RDKitModule.get_mol("[C@H]([Xe])(F)([V])");
+        assert(mol1);
+        var mol2 = RDKitModule.get_mol("[Xe]N.[V]I");
+        assert(mol2);
+        var expectedLinkage = "N[C@@H](F)I";
+        var details = JSON.stringify({ Label: 'AtomType', AtomSymbols: ['Xe', 'V'] });
+        var mol = RDKitModule.molzip(mol1, mol2, details);
+        assert(mol);
+        assert(mol.get_smiles() === expectedLinkage);
+        mol1.delete();
+        mol2.delete();
+        mol.delete();
+    }
+    if (RDKitModule.RGroupDecomposition) {
+        const smis = ['C1CN[C@H]1F', 'C1CN[C@]1(O)F', 'C1CN[C@@H]1F', 'C1CN[CH]1F'];
+        const core = RDKitModule.get_qmol('C1CNC1[*:1]');
+        const params = {
+            rgroupLabelling: 'Isotope',
+            allowMultipleRGroupsOnUnlabelled: true,
+        };
+        const rgd = RDKitModule.get_rgd(core, JSON.stringify(params));
+        const smisCanon = smis.map((smi, i) => {
+            const mol = RDKitModule.get_mol(smi);
+            assert(mol);
+            try {
+                const res = rgd.add(mol);
+                assert(res === i);
+                return mol.get_smiles();
+            } finally {
+                mol.delete();
+            }
+        });
+        rgd.process();
+        const rows = rgd.get_rgroups_as_rows();
+        const expectedRowMapping = [
+            { Core: '[1*][C@@]1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+            { Core: '[1*][C@]1([2*])CCN1', R1: '[1*]F', R2: '[2*]O' },
+            { Core: '[1*][C@]1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+            { Core: '[1*]C1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+        ];
+        const details = JSON.stringify({ Label: 'Isotope' });
+        rows.forEach((row, i) => {
+            const foundMapping = getFoundRgdRowAsMap(row, true);
+            assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping[i]).length);
+            Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                assert(expectedRowMapping[i][rlabel] && expectedRowMapping[i][rlabel] === smi);
+            });
+            let mol;
+            try {
+                mol = RDKitModule.molzip(row, details);
+                assert(mol);
+                mol.remove_hs_in_place();
+                assert(mol.get_smiles() === smisCanon[i]);
+            } finally {
+                if (mol) {
+                    mol.delete();
+                }
+                Object.values(row).forEach((rgroup) => {
+                    if (rgroup) {
+                        rgroup.delete();
+                    }
+                });
+            }
+    });
+    }
+}
+
 function test_hs_in_place() {
     {
         var mol = RDKitModule.get_mol("CC");
@@ -3189,14 +3271,14 @@ function test_multi_highlights() {
     mol.delete();
 }
 
-const getFoundRgdRowAsMap = (row) => Object.fromEntries(Object.entries(row).map(([rlabel, mol]) => {
+const getFoundRgdRowAsMap = (row, keep) => Object.fromEntries(Object.entries(row).map(([rlabel, mol]) => {
     try {
         assert(mol);
         assert(mol instanceof RDKitModule.Mol);
         const smi = mol.get_smiles();
         return [rlabel, smi];
     } finally {
-        if (mol) {
+        if (!keep && mol) {
             mol.delete();
         }
     }
@@ -3490,6 +3572,9 @@ initRDKitModule().then(function(instance) {
     }
     test_bw_palette();
     test_custom_palette();
+    if (RDKitModule.molzip)  {
+        test_molzip();
+    }
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
