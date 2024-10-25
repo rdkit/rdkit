@@ -25,9 +25,8 @@ namespace RDKit {
 using boost_adaptbx::python::streambuf;
 namespace {
 PDBWriter *getPDBWriter(python::object &fileobj, unsigned int flavor = 0) {
-  // FIX: minor leak here
   auto *sb = new streambuf(fileobj, 't');
-  auto *ost = new streambuf::ostream(*sb);
+  auto *ost = new streambuf::ostream(sb);
   return new PDBWriter(ost, true, flavor);
 }
 }  // namespace
