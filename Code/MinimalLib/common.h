@@ -49,7 +49,7 @@
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
 #include <RDGeneral/RDLog.h>
 #include "common_defs.h"
-
+#include "JSONParsers.h"
 #include <sstream>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
