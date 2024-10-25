@@ -10,12 +10,20 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes
+- SMILES and RGroupDecomp JSON parsers were moved to their own translation units.
+This will require C++ code using those JSON parsers to be added #include directives
+for GraphMol/SmilesParse/SmilesJSONParsers.h and
+GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h, respectively.
+- Replaced enums in the signatures of MolToCXSmiles and updateCXSmilesFieldsFromJSON
+with the underlying types. This may require existing C++ code using those
+functions to be updated accordingly.
 
 ## New Features and Enhancements:
 
 ## Bug Fixes:
 
 ## Cleanup work:
+- Awful enum reflection macros were replaced with Better Enums
 
 ## Code removed in this release:
 - AtomPairs.Utils.NumPiElectrons was removed, please use Chem.GetNumPiElectrons instead.
