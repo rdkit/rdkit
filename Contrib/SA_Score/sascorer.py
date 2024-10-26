@@ -16,8 +16,6 @@
 # peter ertl & greg landrum, september 2013
 #
 
-from pathlib import Path
-
 from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator, rdMolDescriptors
 
@@ -63,9 +61,10 @@ def calculateScore(m):
 
   score1 = 0.
   nf = 0
-  for bitId in sfp.GetNonzeroElements():
-    nf += sfp[bitId]
-    score1 += _fscores.get(bitId, -4) * sfp[bitId]
+  nze = sfp.GetNonzeroElements()
+  for id, count in nze.items():
+    nf += count
+    score1 += _fscores.get(id, -4) * count
 
   score1 /= nf
 
@@ -97,7 +96,7 @@ def calculateScore(m):
   # not in the original publication, added in version 1.1
   # to make highly symmetrical molecules easier to synthetise
   score3 = 0.
-  numBits = len(sfp.GetNonzeroElements())
+  numBits = len(nze)
   if nAtoms > numBits:
     score3 = math.log(float(nAtoms) / numBits) * .5
 
