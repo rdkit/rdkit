@@ -468,7 +468,7 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         auto v = boost::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
-        // The tolerance is pickled first as we can't pickle the PairHolder with
+        // The tolerance is pickled first as we can't pickle a PairHolder with
         // the QUERY_VALUE tag
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<2>(v));
         streamWriteProp(ss, std::get<1>(v),
