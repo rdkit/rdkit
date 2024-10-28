@@ -1,0 +1,44 @@
+# This pyproject.toml file is used to build the conda package only.
+
+[build-system]
+requires = ["setuptools", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rdkit"
+description = "A collection of cheminformatics and machine-learning software written in C++ and Python"
+authors = [{ name = "Greg Landrum", email = "greg.landrum@gmail.com" }]
+readme = "README.md"
+dynamic = ["version"]
+requires-python = ">=3.8"
+license = { text = "BSD-3-Clause" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Healthcare Industry",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+"RDKit" = "https://rdkit.org/"
+"RDKit on Github" = "https://github.com/rdkit/rdkit"
+
+[tool.setuptools]
+include-package-data = true
+
+# NOTE(hadim): require to make dynamic version works
+[tool.setuptools_scm]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["rdkit", "rdkit.*", "rdkit-stubs", "rdkit-stubs.*"]
+exclude = []
+namespaces = false
