@@ -84,6 +84,23 @@ BOOST_PYTHON_MODULE(rdHyperspaceSearch) {
                      "The maximum number of hits to return.  Default=1000."
                      "Use -1 for no maximum.")
       .def_readwrite(
+          "hitStart",
+          &RDKit::HyperspaceSearch::HyperspaceSearchParams::hitStart,
+          "The sequence number of the hit to start from.  So that you"
+          " can return the next N hits of a search having already"
+          " obtained N-1.  Default=0")
+      .def_readwrite(
+          "randomSample",
+          &RDKit::HyperspaceSearch::HyperspaceSearchParams::randomSample,
+          "If True, returns a random sample of the hits, up to maxHits"
+          " in number.  Default=False.")
+      .def_readwrite(
+          "randomSeed",
+          &RDKit::HyperspaceSearch::HyperspaceSearchParams::randomSeed,
+          "If using randomSample, this seeds the random number"
+          " generator so as to give reproducible results.  Default=-1"
+          " means use a random seed.")
+      .def_readwrite(
           "buildHits",
           &RDKit::HyperspaceSearch::HyperspaceSearchParams::buildHits,
           "If false, reports the maximum number of hits that"
@@ -101,6 +118,13 @@ BOOST_PYTHON_MODULE(rdHyperspaceSearch) {
       .def("WriteDBFile", &RDKit::HyperspaceSearch::Hyperspace::writeDBFile,
            (python::arg("self"), python::arg("outFile")),
            "Writes binary database file.")
+      .def("NumReactions", &RDKit::HyperspaceSearch::Hyperspace::numReactions,
+           (python::arg("self")),
+           "Returns number of reactions in the Hyperspace.")
+      .def("NumProducts", &RDKit::HyperspaceSearch::Hyperspace::numProducts,
+           (python::arg("self")),
+           "Returns number of products in the Hyperspace, with multiple"
+           " counting of any duplicates.")
       .def("Summarise", &RDKit::summariseHelper, (python::arg("self")),
            "Writes a summary of the Hyperspace to stdout.")
       .def("SubstructureSearch", &RDKit::substructureSearch_helper,

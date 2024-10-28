@@ -521,7 +521,6 @@ TEST_CASE("Random Hits", "[Random Hits]") {
   auto results = hyperspace.substructureSearch(*queryMol, params);
   std::map<std::string, int> libCounts;
   for (const auto &m : results.hitMolecules()) {
-    //    std::cout << m->getProp<std::string>("_Name") << std::endl;
     std::string lib(m->getProp<std::string>("_Name").substr(0, 2));
     if (const auto &c = libCounts.find(lib); c == libCounts.end()) {
       libCounts.insert(std::make_pair(lib, 1));
@@ -532,4 +531,61 @@ TEST_CASE("Random Hits", "[Random Hits]") {
   CHECK(results.hitMolecules().size() == 100);
   std::map<std::string, int> expCounts{{"a1", 73}, {"a6", 6}, {"a7", 21}};
   CHECK(expCounts == libCounts);
+}
+
+TEST_CASE("Later hits", "[Later Hits]") {
+  // Test use of params.hitStart
+  std::string libName = "/Users/david/Projects/FreedomSpace/Syntons_5567.spc";
+  Hyperspace hyperspace;
+  hyperspace.readDBFile(libName);
+
+  auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+  HyperspaceSearchParams params;
+  params.maxBondSplits = 2;
+  params.maxHits = 200;
+  auto results = hyperspace.substructureSearch(*queryMol, params);
+  std::vector<std::string> hitNames1;
+  for (const auto &m : results.hitMolecules()) {
+    hitNames1.push_back(m->getProp<std::string>("_Name"));
+  }
+
+  params.maxHits = 100;
+  params.hitStart = 101;
+  results = hyperspace.substructureSearch(*queryMol, params);
+  std::vector<std::string> hitNames2;
+  for (const auto &m : results.hitMolecules()) {
+    hitNames2.push_back(m->getProp<std::string>("_Name"));
+  }
+  CHECK(hitNames1.size() == 200);
+  CHECK(hitNames2.size() == 100);
+  for (int i = 0; i < 100; ++i) {
+    CHECK(hitNames1[100 + i] == hitNames2[i]);
+  }
+
+  params.hitStart = 6780;
+  results = hyperspace.substructureSearch(*queryMol, params);
+  CHECK(results.hitMolecules().size() == 6);
+
+  params.hitStart = 7000;
+  results = hyperspace.substructureSearch(*queryMol, params);
+  CHECK(results.hitMolecules().empty());
+}
+
+TEST_CASE("Complex query", "[Complex query]") {
+  std::string libName =
+      "/Users/david/Projects/FreedomSpace/2023-05_Freedom_synthons.spc";
+  Hyperspace hyperspace;
+  hyperspace.readDBFile(libName);
+
+  auto queryMol = v2::SmilesParse::MolFromSmarts(
+      "[$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
+  REQUIRE(queryMol);
+  HyperspaceSearchParams params;
+  params.maxBondSplits = 2;
+  params.maxHits = 1000;
+  auto results = hyperspace.substructureSearch(*queryMol, params);
+  std::cout << "Number of hits : " << results.hitMolecules().size()
+            << std::endl;
+  std::cout << "Poss num hits : " << results.maxNumResults() << std::endl;
+  CHECK(results.hitMolecules().size() == 1000);
 }

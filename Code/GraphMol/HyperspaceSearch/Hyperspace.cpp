@@ -34,10 +34,32 @@
 
 namespace RDKit::HyperspaceSearch {
 
+long Hyperspace::numProducts() const {
+  long totSize = 0;
+  for (const auto &reaction : d_reactions) {
+    const auto &rxn = reaction.second;
+    size_t thisSize = 1;
+    for (size_t i = 0; i < rxn->reagents().size(); ++i) {
+      thisSize *= rxn->reagents()[i].size();
+    }
+    totSize += thisSize;
+  }
+  return totSize;
+}
+
 SubstructureResults Hyperspace::substructureSearch(
     const ROMol &query, HyperspaceSearchParams params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
+  if (params.randomSample) {
+    if (!d_randGen) {
+      std::random_device rd;
+      d_randGen.reset(new std::mt19937(rd()));
+    }
+    if (params.randomSeed != -1) {
+      d_randGen->seed(params.randomSeed);
+    }
+  }
   std::vector<std::unique_ptr<ROMol>> results;
   RDKit::MatchVectType dontCare;
 
@@ -72,19 +94,28 @@ SubstructureResults Hyperspace::substructureSearch(
       });
 
   if (params.buildHits) {
+    // Keep track of the result names so we can weed out duplicates by
+    // reaction and reagents.  Different splits may give rise to the same
+    // reagent combination.  This will keep the same molecule produced via
+    // different reactions which I think makes sense.  The resultsNames will
+    // be accumulated even if the molecule itself doesn't make it into the
+    // results set, for example if it isn't a random selection or it's
+    // outside maxHits or hitStart.
+    std::set<std::string> resultsNames;
     // The random sampling, if requested, doesn't always produce the required
-    // number of hits in 1 sweep.  params.maxHits is unsigned, so -1 wraps
-    // round to a very large integer.
+    // number of hits in 1 sweep.
+    size_t tmpMaxHits(params.maxHits);
     int numSweeps = 0;
-    while (results.size() < std::min(params.maxHits, totHits) &&
-           numSweeps < 10) {
-      std::cout << "Sweep " << numSweeps << " : " << params.maxHits << " : "
-                << totHits << std::endl;
-      buildHits(allHits, query, params, totHits, results);
+    while (results.size() < std::min(tmpMaxHits, totHits) && numSweeps < 10) {
+      buildHits(allHits, query, params, totHits, resultsNames, results);
       // totHits is an upper bound, so may not be reached.
-      if (params.maxHits == static_cast<size_t>(-1) || !params.randomSample) {
+      if (params.maxHits == -1 || !params.randomSample) {
         break;
       }
+      //      std::cout << "Sweep " << numSweeps << " : " << params.maxHits << "
+      //      : "
+      //                << totHits << " : " << resultsNames.size() << " : "
+      //                << results.size() << std::endl;
       numSweeps++;
     }
   }
@@ -121,7 +152,7 @@ boost::dynamic_bitset<> getConnectorPattern(
   boost::dynamic_bitset<> conns(4);
   for (const auto &frag : fragSet) {
     for (const auto &a : frag->atoms()) {
-      if (!a->getAtomicNum()) {
+      if (!a->getAtomicNum() && a->getIsotope()) {
         conns.set(a->getIsotope() - 1);
       }
     }
@@ -641,23 +672,14 @@ struct Stepper {
 void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
                            const ROMol &query,
                            const HyperspaceSearchParams &params, size_t totHits,
+                           std::set<std::string> &resultsNames,
                            std::vector<std::unique_ptr<ROMol>> &results) {
   if (hitsets.empty()) {
     return;
   }
 
-  std::random_device rd;
-  std::mt19937 randgen(rd());
-  if (params.randomSeed != -1) {
-    randgen.seed(params.randomSeed);
-  }
   std::uniform_real_distribution<double> dist(0.0, 1.0);
   double randDiscrim = double(params.maxHits) / double(totHits);
-  // Keep track of the result names so we can weed out duplicates by
-  // reaction and reagents.  Different splits may give rise to the same
-  // reagent combination.  This will keep the same molecule produced via
-  // different reactions which I think makes sense.
-  std::set<std::string> resultsNames;
   RDKit::MatchVectType dontCare;
 
   for (const auto &hitset : hitsets) {
@@ -688,9 +710,12 @@ void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
             "_" + reags[i][stepper.d_currState[i]]->getProp<std::string>(
                       common_properties::_Name);
       }
-      if (!params.randomSample || params.maxHits == static_cast<size_t>(-1) ||
-          (params.randomSample && dist(randgen) < randDiscrim)) {
+      if (!params.randomSample || params.maxHits == -1 ||
+          (params.randomSample && dist(*d_randGen) < randDiscrim)) {
         if (resultsNames.insert(combName).second) {
+          if (resultsNames.size() < static_cast<size_t>(params.hitStart)) {
+            continue;
+          }
           std::unique_ptr<ROMol> combMol(
               new ROMol(*reags[0][stepper.d_currState[0]]));
           for (int i = 1; i < numReactions; ++i) {
@@ -718,9 +743,7 @@ void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
           results.push_back(std::move(prod));
         }
       }
-      // -1 means no limit, and size_t is unsigned, so the cast will make for
-      // a very large number.
-      if (results.size() == params.maxHits) {
+      if (results.size() == static_cast<size_t>(params.maxHits)) {
         return;
       }
       stepper.step();

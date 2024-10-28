@@ -30,7 +30,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT SubstructureResults {
    * Returns the upper bound on the number of results the search might return.
    * There may be fewer than this in practice for several reasons such as
    * duplicate reagent sets being removed or the final product not matching the
-   * query even though the synthons suggested they would.
+   * query even though the synthons suggested it would.
    *
    * @return int
    */

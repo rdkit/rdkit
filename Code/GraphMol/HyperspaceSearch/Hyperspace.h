@@ -12,6 +12,7 @@
 #define RDKIT_HYPERSPACE_H
 
 #include <map>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -32,10 +33,13 @@ struct RDKIT_HYPERSPACESEARCH_EXPORT HyperspaceSearchParams {
                          // number of Synthon sets in Hyperspace.  More than
                          // that doesn't matter, but will slow the search down
                          // to no good effect.
-  size_t maxHits{1000};  // The maximum number of hits to return.  Use -1 for
+  long maxHits{1000};    // The maximum number of hits to return.  Use -1 for
                          // no maximum.
+  long hitStart{0};  // Sequence number of hit to start from.  So that you can
+                     // return the next N hits of a search having already
+                     // obtained N-1.
   bool randomSample{false};  // If true, returns a random sample of the hit
-                             // list, up to maxHits in number.
+                             // hits, up to maxHits in number.
   int randomSeed{-1};        // Seed for random-number generator.  -1 means use
                              // a random seed (std::random_device).
   bool buildHits{true};  // If false, reports the maximum number of hits that
@@ -59,6 +63,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
     return d_reactions;
   }
+  long numProducts() const;
 
   // Perform a substructure search with the given query molecule across
   // the hyperspace library.  Duplicate SMILES strings produced by different
@@ -131,6 +136,8 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   std::string d_fileName;
   std::map<std::string, std::unique_ptr<ReactionSet>> d_reactions;
 
+  std::unique_ptr<std::mt19937> d_randGen;
+
   // Build the molecules from the reagents identified in reagentsToUse.
   // There should be bitset in reagentsToUse for each reagent set.
   // If not, it will fail.  Checks that all the results produced match the
@@ -139,7 +146,8 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   // but duplicate SMILES from different reactions will be.
   void buildHits(const std::vector<HyperspaceHitSet> &hitsets,
                  const ROMol &query, const HyperspaceSearchParams &params,
-                 size_t totHits, std::vector<std::unique_ptr<ROMol>> &results);
+                 size_t totHits, std::set<std::string> &resultsNames,
+                 std::vector<std::unique_ptr<ROMol>> &results);
   // get the subset of reagents for the given reaction to use for this
   // enumeration.
   std::vector<std::vector<ROMol *>> getReagentsToUse(
