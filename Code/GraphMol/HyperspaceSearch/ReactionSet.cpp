@@ -12,7 +12,7 @@
 
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/HyperspaceSearch/HyperspaceSubstructureSearch.h>
+#include <GraphMol/HyperspaceSearch/HyperspaceSubstructure_details.h>
 #include <GraphMol/HyperspaceSearch/ReactionSet.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/StreamOps.h>

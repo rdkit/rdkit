@@ -24,7 +24,7 @@
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/HyperspaceSearch/Hyperspace.h>
-#include <GraphMol/HyperspaceSearch/HyperspaceSubstructureSearch.h>
+#include <GraphMol/HyperspaceSearch/HyperspaceSubstructure_details.h>
 #include <GraphMol/HyperspaceSearch/ReactionSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>

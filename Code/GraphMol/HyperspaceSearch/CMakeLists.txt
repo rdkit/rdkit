@@ -1,10 +1,10 @@
 
 rdkit_library(HyperspaceSearch
-        HyperspaceSubstructureSearch.cpp Hyperspace.cpp ReactionSet.cpp Reagent.cpp
+        HyperspaceSubstructure_details.cpp Hyperspace.cpp ReactionSet.cpp Reagent.cpp
         LINK_LIBRARIES SmilesParse FileParsers ChemTransforms Fingerprints SubstructMatch GraphMol)
 target_compile_definitions(HyperspaceSearch PRIVATE RDKIT_HYPERSPACE_SEARCH_BUILD)
 
-rdkit_headers(HyperspaceSubstructureSearch.h Hyperspace.h ReactionSet.h Reagent.h SubstructureResults.h
+rdkit_headers(HyperspaceSubstructure_details.h Hyperspace.h ReactionSet.h Reagent.h SubstructureResults.h
         DEST GraphMol/HyperspaceSearch)
 
 rdkit_catch_test(testHyperspaceSearch hyperspace_search_catch.cpp

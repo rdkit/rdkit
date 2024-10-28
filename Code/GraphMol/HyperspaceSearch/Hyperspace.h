@@ -56,8 +56,14 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
     return d_reactions;
   }
 
-  // Do a substructure search for query in the hyperspace.  Return vector of
-  // molecules that match.
+  // Perform a substructure search with the given query molecule across
+  // the hyperspace library.
+  /*!
+   *
+   * @param query : query molecule
+   * @param params : (optional) settings for the search
+   * @return : the hits as a SubstructureResults object.
+   */
   SubstructureResults substructureSearch(
       const ROMol &query,
       HyperspaceSearchParams params = HyperspaceSearchParams());
@@ -66,7 +72,12 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   // fragments should be from 1 splitting, so between 1 and 4 members.
   // The fragments may be re-ordered in the process (largest fragment
   // heuristic).  This is in the public interface primarily for testing/
-  // debugging purposes.
+  // debugging purposes.  It is not recommended for general use.
+  /*!
+   *
+   * @param fragSet : molecule fragments for the search
+   * @return : vector of HyperspaceHitSet objects.
+   */
   std::vector<HyperspaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet);
 

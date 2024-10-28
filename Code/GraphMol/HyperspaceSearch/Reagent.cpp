@@ -15,7 +15,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/HyperspaceSearch/HyperspaceSubstructureSearch.h>
+#include <GraphMol/HyperspaceSearch/HyperspaceSubstructure_details.h>
 #include <GraphMol/HyperspaceSearch/Reagent.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
