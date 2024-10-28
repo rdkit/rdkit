@@ -123,6 +123,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _CIPCode;  // std::string COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string _CIPRank;  // int COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _CanonicalRankingNumber;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _ChiralityPossible;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _UnknownStereo;  // int (bool) AddHs/Chirality

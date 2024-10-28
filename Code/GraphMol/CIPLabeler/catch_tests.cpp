@@ -816,7 +816,7 @@ TEST_CASE("AssignMandP", "[accurateCIP]") {
         "C1(N2C(C)=CC=C2Br)=C(C)C(C)=C(N2C(C)=CC=C2Br)C(C)=C1C |(-0.0002,1.5403,;-0.0002,3.0805,;-1.334,3.8508,;-2.6678,3.0807,;-1.334,5.391,;1.3338,5.391,;1.3338,3.8508,;2.6676,3.0807,;-1.3338,0.7702,;-2.6678,1.5403,;-1.3338,-0.7702,;-2.6678,-1.5401,;-0.0002,-1.5403,;-0.0002,-3.0805,;1.3338,-3.8508,;2.6676,-3.0805,;1.3338,-5.391,;-1.334,-5.391,;-1.334,-3.8508,;-2.6678,-3.0805,;1.3338,-0.7702,;2.6678,-1.5403,;1.3338,0.7702,;2.6678,1.5404,),wU:1.6,13.14|",
         "0-1=m:12-13=m:");
   }
-  SECTION("psuedo") {
+  SECTION("pseudo") {
     testOneAtropIomerMandP(
         "N1(n2c(C)ccc2Br)C(=O)[C@H](C)[C@H](C)C1=O |(-11.1517,1.8306,;-11.1517,3.3708,;-12.4855,4.1411,;-13.8193,3.371,;-12.4855,5.6813,;-9.8177,5.6813,;-9.8177,4.1411,;-8.4839,3.371,;-12.3975,0.9252,;-13.8622,1.4011,;-11.9217,-0.5394,;-12.8269,-1.7852,;-10.3817,-0.5394,;-9.4765,-1.7852,;-9.9059,0.9252,;-8.4413,1.4011,),wU:0.8,10.11,12.13|",
         "0-1=p:");
@@ -825,12 +825,12 @@ TEST_CASE("AssignMandP", "[accurateCIP]") {
 
 TEST_CASE("upsertTest", "[basic]") {
   SECTION("upsertTest1") {
-    auto ps = SmilesParserParams();
+    auto ps = v2::SmilesParse::SmilesParserParams();
     ps.allowCXSMILES = true;
     ps.sanitize = true;
     ps.removeHs = false;
 
-    auto m = SmilesToMol(
+    auto m = v2::SmilesParse::MolFromSmiles(
         "CC1=C(C2=C(F)C=C(C(N)=O)C3=C2C2=C(C[C@@H](C(C)(C)O)CC2)N3)C=CC=C1N1C(=O)C2=C(C(F)=CC=C2)N(C)C1=O |(-0.0582,-1.2887,-0.4699;-0.138,-0.6553,-1.1342;-0.9031,-0.4893,-1.4844;-1.6332,-0.9186,-1.2186;-1.8741,-1.6494,-1.6034;-1.4248,-1.9619,-2.2208;-2.581,-2.0639,-1.3539;-3.069,-1.7619,-0.7143;-3.8054,-2.1982,-0.4602;-4.0043,-2.9212,-0.8738;-4.2532,-1.9338,0.1012;-2.8218,-1.0304,-0.3345;-2.1142,-0.6018,-0.5711;-2.0583,0.1027,-0.0552;-2.7239,0.0857,0.4696;-2.9136,0.6925,1.1267;-2.4007,1.4836,0.9934;-2.4335,2.0277,1.7578;-1.9128,2.8014,1.6418;-3.3209,2.2556,1.9643;-2.112,1.5747,2.4382;-1.4992,1.2797,0.7621;-1.4396,0.7778,-0.0395;-3.1799,-0.5981,0.3004;-0.9727,0.1003,-2.1031;-0.2773,0.5242,-2.3716;0.4878,0.3584,-2.0214;0.5573,-0.2316,-1.4028;1.3588,-0.3932,-1.0482;1.5905,0.0773,-0.3585;1.2002,0.6554,-0.0665;2.3933,-0.1194,0.0095;2.9068,-0.6967,-0.3594;3.6768,-0.8489,0.0041;4.2097,-1.3952,-0.3066;3.9217,-0.4363,0.7167;3.4017,0.1354,1.0788;2.6386,0.2956,0.7262;2.6425,-1.1179,-1.0794;3.1982,-1.7169,-1.457;1.8575,-1.0047,-1.4246;1.6168,-1.4364,-2.0026),wU:27.30|",
         ps);
 
@@ -867,7 +867,7 @@ TEST_CASE("atropisomers", "[basic]") {
       auto fName =
           rdbase + "/Code/GraphMol/FileParsers/test_data/atropisomers/" + file;
 
-      auto molsdf = MolFileToMol(fName, true, true, true);
+      std::unique_ptr<RWMol> molsdf(MolFileToMol(fName, true, true, true));
       REQUIRE(molsdf);
       CIPLabeler::assignCIPLabels(*molsdf, 100000);
 
@@ -897,12 +897,12 @@ TEST_CASE("atropisomers", "[basic]") {
           RDKit::SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
           RDKit::SmilesWrite::CXSmilesFields::CX_BOND_CFG |
           RDKit::SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER;
-      SmilesParserParams pp;
+      v2::SmilesParse::SmilesParserParams pp;
       pp.allowCXSMILES = true;
       pp.sanitize = true;
 
       auto smi = MolToCXSmiles(*molsdf, wp, flags);
-      auto newMol = SmilesToMol(smi, pp);
+      auto newMol = v2::SmilesParse::MolFromSmiles(smi, pp);
       CIPLabeler::assignCIPLabels(*newMol, 100000);
 
       std::map<std::pair<unsigned int, unsigned int>, std::string> newCIPVals;
@@ -941,5 +941,131 @@ TEST_CASE("atropisomers", "[basic]") {
               newCIPVals[std::make_pair(a1, a2)]);
       }
     }
+  }
+}
+
+std::string cipLabels(const std::string &molBlock) {
+  std::unique_ptr<RDKit::ROMol> mol;
+  std::string result = "";
+  try {
+    // try parsing the mol block with sanitize ob
+    try {
+      mol.reset(MolBlockToMol(molBlock, true, false));
+    } catch (...) {
+    }
+
+    // if parsing with Sanitize on did NOT work, try it without
+
+    if (mol == nullptr) {
+      mol.reset(MolBlockToMol(molBlock, false, false));
+      mol->updatePropertyCache(false);
+    }
+
+    std::vector<std::string> atomsArray;
+    std::vector<std::string> bondsArray;
+
+    RDKit::CIPLabeler::assignCIPLabels(*mol);
+    for (auto atom : mol->atoms()) {
+      if (atom->hasProp(common_properties::_CIPCode)) {
+        std::string thisVal =
+            atom->getProp<std::string>(common_properties::_CIPCode);
+        atomsArray.push_back(thisVal.c_str());
+      } else {
+        atomsArray.push_back("");  // push null value
+      }
+    }
+
+    for (auto bond : mol->bonds()) {
+      if (bond->hasProp(common_properties::_CIPCode)) {
+        std::string thisVal =
+            bond->getProp<std::string>(common_properties::_CIPCode);
+        bondsArray.push_back(thisVal.c_str());
+      } else {
+        bondsArray.push_back("");
+      }
+    }
+
+    result = boost::algorithm::join(atomsArray, ", ") + ":" +
+             boost::algorithm::join(bondsArray, ", ");
+    return result;
+  } catch (const CIPLabeler::MaxIterationsExceeded &e) {
+    return "";
+  } catch (const std::exception &e) {
+    return e.what();
+  }
+}
+
+TEST_CASE("CipLabelAtropsOnRing", "[basic]") {
+  SECTION("atropisomers1") {
+    std::string molBlock = R"(
+  Mrv2304 04172300142D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 24 26 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -0.0002 1.5403 0 0
+M  V30 2 N -0.0002 3.0805 0 0 CFG=1
+M  V30 3 C -1.334 3.8508 0 0
+M  V30 4 C -2.6678 3.0807 0 0
+M  V30 5 C -1.334 5.391 0 0
+M  V30 6 C 1.3338 5.391 0 0
+M  V30 7 C 1.3338 3.8508 0 0
+M  V30 8 Br 2.6676 3.0807 0 0
+M  V30 9 C -1.3338 0.7702 0 0
+M  V30 10 C -2.6678 1.5403 0 0
+M  V30 11 C -1.3338 -0.7702 0 0
+M  V30 12 C -2.6678 -1.5401 0 0
+M  V30 13 C -0.0002 -1.5403 0 0
+M  V30 14 N -0.0002 -3.0805 0 0 CFG=1
+M  V30 15 C 1.3338 -3.8508 0 0
+M  V30 16 C 2.6676 -3.0805 0 0
+M  V30 17 C 1.3338 -5.391 0 0
+M  V30 18 C -1.334 -5.391 0 0
+M  V30 19 C -1.334 -3.8508 0 0
+M  V30 20 Br -2.6678 -3.0805 0 0
+M  V30 21 C 1.3338 -0.7702 0 0
+M  V30 22 C 2.6678 -1.5403 0 0
+M  V30 23 C 1.3338 0.7702 0 0
+M  V30 24 C 2.6678 1.5404 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 2 3 5
+M  V30 5 1 5 6
+M  V30 6 2 6 7
+M  V30 7 1 2 7 CFG=1
+M  V30 8 1 7 8
+M  V30 9 2 1 9
+M  V30 10 1 9 10
+M  V30 11 1 9 11
+M  V30 12 1 11 12
+M  V30 13 2 11 13
+M  V30 14 1 13 14
+M  V30 15 1 14 15 CFG=1
+M  V30 16 1 15 16
+M  V30 17 2 15 17
+M  V30 18 1 17 18
+M  V30 19 2 18 19
+M  V30 20 1 14 19
+M  V30 21 1 19 20
+M  V30 22 1 13 21
+M  V30 23 1 21 22
+M  V30 24 2 21 23
+M  V30 25 1 1 23
+M  V30 26 1 23 24
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+ )";
+
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+    auto found = cipLabels(molBlock);
+
+    CHECK(
+        found ==
+        ", , , , , , , , , , , , , , , , , , , , , , , :m, , , , , , , , , , , , , m, , , , , , , , , , , , ");
   }
 }

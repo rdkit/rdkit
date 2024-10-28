@@ -1255,15 +1255,14 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
   for (const auto &sg : reactant.getStereoGroups()) {
     std::vector<Atom *> atoms;
     std::vector<Bond *> bonds;
-    for (auto &&reactantAtom : sg.getAtoms()) {
+    for (const auto &reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
       if (productAtoms == mapping.reactProdAtomMap.end()) {
         continue;
       }
 
-      for (auto &&productAtomIdx : productAtoms->second) {
+      for (auto &productAtomIdx : productAtoms->second) {
         auto productAtom = product->getAtomWithIdx(productAtomIdx);
-
         // If chirality destroyed by the reaction, skip the atom
         if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
           continue;
@@ -1409,6 +1408,76 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   delete (mapping);
 }  // end of addReactantAtomsAndBonds
 
+namespace {
+void copyTemplateStereoGroupsToMol(const ROMol &templateMol,
+                                   RWMOL_SPTR product) {
+  const auto &stereoGroups = templateMol.getStereoGroups();
+  if (stereoGroups.empty()) {
+    return;
+  }
+
+  boost::dynamic_bitset<> atomsInTemplateStereoGroups(product->getNumAtoms());
+  std::vector<StereoGroup> newStereoGroups;
+  for (const auto &sg : stereoGroups) {
+    bool keepIt = true;
+    std::vector<Atom *> atoms;
+    for (const auto &atom : sg.getAtoms()) {
+      if (auto mapNum = atom->getAtomMapNum()) {
+        for (auto productAtom : product->atoms()) {
+          int oldMapNum = 0;
+          if (productAtom->getPropIfPresent(common_properties::reactionMapNum,
+                                            oldMapNum) &&
+              oldMapNum == mapNum) {
+            atoms.push_back(productAtom);
+            atomsInTemplateStereoGroups.set(productAtom->getIdx());
+          }
+        }
+      } else {
+        keepIt = false;
+        break;
+      }
+    }
+    if (keepIt && !atoms.empty()) {
+      std::vector<Bond *> bonds;
+      newStereoGroups.emplace_back(sg.getGroupType(), std::move(atoms),
+                                   std::move(bonds), sg.getReadId());
+    }
+  }
+  if (!newStereoGroups.empty()) {
+    // remove any stereo groups that are already present in the product (these
+    // were copied over from the reactant in copyEnhancedStereoGroups()) and
+    // that overlap with the added ones
+    for (const auto &productSG : product->getStereoGroups()) {
+      unsigned int nOverlappingAtoms = 0;
+      for (const auto atom : productSG.getAtoms()) {
+        if (atomsInTemplateStereoGroups[atom->getIdx()]) {
+          ++nOverlappingAtoms;
+        }
+      }
+      if (!nOverlappingAtoms) {
+        // no overlapping atoms, we can just keep the stereogroup.
+        newStereoGroups.push_back(productSG);
+      } else if (nOverlappingAtoms < productSG.getAtoms().size()) {
+        // some of the atoms in the stereo group are not already there
+        // in the product, we need to split the stereo group
+        std::vector<Atom *> newAtoms;
+        for (const auto atom : productSG.getAtoms()) {
+          if (!atomsInTemplateStereoGroups[atom->getIdx()]) {
+            newAtoms.push_back(atom);
+          }
+        }
+        std::vector<Bond *> newBonds;
+        newStereoGroups.emplace_back(productSG.getGroupType(),
+                                     std::move(newAtoms), std::move(newBonds),
+                                     productSG.getReadId());
+      }
+      // else: all atoms in the stereo group are already there, we can skip it
+    }
+    product->setStereoGroups(std::move(newStereoGroups));
+  }
+}
+}  // namespace
+
 MOL_SPTR_VECT
 generateOneProductSet(const ChemicalReaction &rxn,
                       const MOL_SPTR_VECT &reactants,
@@ -1467,6 +1536,11 @@ generateOneProductSet(const ChemicalReaction &rxn,
     // lost, add it back.
     if (doBondDirs) {
       MolOps::setDoubleBondNeighborDirections(*product);
+    }
+
+    // if the product template has stereo groups, copy them over now
+    if (!(*pTemplIt)->getStereoGroups().empty()) {
+      copyTemplateStereoGroupsToMol(**pTemplIt, product);
     }
 
     res[prodId] = product;

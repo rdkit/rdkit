@@ -28,6 +28,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 using namespace RDKit;
 
@@ -2583,11 +2584,10 @@ TEST_CASE("ensure unused features are not used") {
   SECTION("enhanced stereo") {
     // if we aren't doing CXSMILES then the enhanced stereo shouldn't enter into
     // consideration in canonicalization
-    auto mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
+    std::unique_ptr<ROMol> mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol1);
-    auto mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
+    std::unique_ptr<ROMol> mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol2);
-    std::vector<unsigned int> ranks;
     SmilesWriteParams ps;
     ps.doIsomericSmiles = true;
     auto smiles = MolToSmiles(*mol1, ps);
@@ -2605,6 +2605,24 @@ TEST_CASE("ensure unused features are not used") {
     CHECK(smiles == "FC(Cl)NCOC(F)Cl");
     smiles = MolToSmiles(*mol2, ps);
     CHECK(smiles == "FC(Cl)NCOC(F)Cl");
+  }
+
+  SECTION("enhanced stereo canonicalized") {
+    std::unique_ptr<ROMol> mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
+    REQUIRE(mol1);
+    std::unique_ptr<ROMol> mol2 = "F[C@H](Cl)OCN[C@H](F)Cl |&1:6|"_smiles;
+    REQUIRE(mol2);
+
+    SmilesWriteParams ps;
+    ps.doIsomericSmiles = true;
+
+    RDKit::canonicalizeStereoGroups(mol1);
+    RDKit::canonicalizeStereoGroups(mol2);
+
+    auto smiles = MolToCXSmiles(*mol1, ps);
+    CHECK(smiles == "F[C@H](Cl)NCO[C@H](F)Cl |a:1,&1:6|");
+    smiles = MolToCXSmiles(*mol2, ps);
+    CHECK(smiles == "F[C@H](Cl)OCN[C@H](F)Cl |a:1,&1:6|");
   }
 
   SECTION("problematic cases") {
@@ -2808,6 +2826,15 @@ TEST_CASE("Github #7295") {
   }
 }
 
+TEST_CASE("simpleSmiles") {
+  SECTION("basics") {
+    auto m = "CCN(CCO)CCCCC[C@H]1CC[C@H](N(C)C(=O)Oc2ccc(Cl)cc2)CC1.Cl"_smiles;
+    REQUIRE(m);
+    CHECK(MolToSmiles(*m) ==
+          "CCN(CCO)CCCCC[C@H]1CC[C@H](N(C)C(=O)Oc2ccc(Cl)cc2)CC1.Cl");
+  }
+}
+
 TEST_CASE("CX_BOND_ATROPISOMER option requires ring info", "[bug][cxsmiles]") {
   std::string rdbase = getenv("RDBASE");
   std::string fName =
@@ -2860,6 +2887,30 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
   }
 }
 
+void strip_atom_properties(RWMol *molecule) {
+  for (auto atom : molecule->atoms()) {
+    for (auto property : atom->getPropList(false, false)) {
+      atom->clearProp(property);
+    }
+  }
+
+  // return molecule;
+}
+
+TEST_CASE("Remove CX extension from SMILES", "[cxsmiles]") {
+  SECTION("basics") {
+    std::unique_ptr<RWMol> molecule(RDKit::SmilesToMol(
+        "N[C@@H]([O-])C1=[CH:1]C(=[13CH]C(=C1)N(=O)=O)C(N)[O-] |$_AV:;bar;;foo;;;;;;;;;;;$,c:5,7,t:3|",
+        0, false));
+    REQUIRE(molecule);
+    strip_atom_properties(molecule.get());
+    std::string stripped_smiles = RDKit::MolToCXSmiles(*molecule);
+
+    CHECK(stripped_smiles ==
+          "NC([O-])C1=[13CH]C(N(=O)=O)=CC([C@@H](N)[O-])=C1");
+  }
+}
+
 TEST_CASE("Canonicalization of meso structures") {
   SECTION("basics") {
     std::vector<std::pair<std::vector<std::string>, std::string>> data = {
@@ -2892,4 +2943,48 @@ TEST_CASE("Ignore atom map numbers") {
   CHECK(MolToSmiles(*m1, params) == MolToSmiles(*m2, params));
   CHECK(MolToSmiles(*m1, true, false, -1, true, false, false, false, true) ==
         MolToSmiles(*m2, true, false, -1, true, false, false, false, true));
+}
+
+TEST_CASE("Github #7340", "[Reaction][CX][CXSmiles]") {
+  SECTION("Test getCXExtensions with a Vector"){
+    // Create the MOL_SPTR_VECT to hold the molecular pointers
+    const auto mols = {  
+      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles, 
+      "C1CCCCC1 |$;label2;$|"_smiles, 
+      "CC(=O)O |$;label1;$|"_smiles, 
+      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles, 
+    }; 
+    
+    std::vector<ROMol *> mol_vect;
+    mol_vect.reserve(mols.size());
+    for (const auto& mol : mols) {
+        mol_vect.push_back(mol.get());
+    }
+
+    // Write to smiles to populate atom and bond output order properties
+    for (const auto& entry : mol_vect) {
+      MolToSmiles(*entry);
+    }
+
+    std::string cxExt = SmilesWrite::getCXExtensions(mol_vect, RDKit::SmilesWrite::CXSmilesFields::CX_ALL);
+
+    CHECK(cxExt == "|(0,1.5,;1.5,1.5,;1.5,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,),$_R1;;;;;label2;;;;;;label1;;;star_e;;star_e$,Sg:n:15::ht:::|");
+  }
+
+  SECTION("Expects an error"){
+    const auto mols = {  
+      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles, 
+      "C1CCCCC1 |$;label2;$|"_smiles, 
+      "CC(=O)O |$;label1;$|"_smiles,
+      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles, 
+    };  
+
+    std::vector<ROMol *> mol_vect;
+    mol_vect.reserve(mols.size());
+    for (const auto& mol : mols) {
+        mol_vect.push_back(mol.get());
+    }
+
+    CHECK_THROWS_AS(SmilesWrite::getCXExtensions(mol_vect, RDKit::SmilesWrite::CXSmilesFields::CX_ALL), ValueErrorException);
+  }
 }

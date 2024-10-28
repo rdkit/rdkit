@@ -218,9 +218,13 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
   firstVisitOrder = mol.getNumBonds() + 1;
   findNeighborBonds(atom2, firstFromAtom2, secondFromAtom2, dir2Set);
 
-  // make sure we found everything we need to find:
-  CHECK_INVARIANT(firstFromAtom1, "could not find atom1");
-  CHECK_INVARIANT(firstFromAtom2, "could not find atom2");
+  // Make sure we found everything we need to find.
+  //   This really shouldn't be a problem, but molecules can end up in odd
+  //   states; for example, allenes can end up here. Instead of checking for them
+  //   explicitly, exit early in any such possible state.
+  if (!firstFromAtom1 || !firstFromAtom2) {
+    return;
+  }
 
   bool setFromBond1 = true;
   Bond::BondDir atom1Dir = Bond::NONE;
@@ -997,6 +1001,20 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
   }
 }
 
+// insert (-1) for hydrogens or missing ligands, where these are placed
+// depends on if it is the first atom or not
+static void insertImplicitNbors(INT_LIST &bonds, const Atom::ChiralType tag,
+                                const bool firstAtom) {
+  unsigned int ref_max = Chirality::getMaxNbors(tag);
+  if (bonds.size() < ref_max) {
+    if (firstAtom) {
+      bonds.insert(bonds.begin(), ref_max - bonds.size(), -1);
+    } else {
+      bonds.insert(++bonds.begin(), ref_max - bonds.size(), -1);
+    }
+  }
+}
+
 void canonicalizeFragment(ROMol &mol, int atomIdx,
                           std::vector<AtomColors> &colors,
                           const UINT_VECT &ranks, MolStack &molStack,
@@ -1028,7 +1046,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
   // we need ring information; make sure findSSSR has been called before
   // if not call now
-  if (!mol.getRingInfo()->isInitialized()) {
+  // NOTE: if called from the SMARTS code, the ring info will be set to SSSR,
+  // but no ring infor in actually set
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::findSSSR(mol);
   }
   mol.getAtomWithIdx(atomIdx)->setProp(common_properties::_TraversalStartPoint,
@@ -1064,12 +1084,17 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
 
         // Check if the atom can be chiral, and if chirality needs inversion
         const INT_LIST &trueOrder = atomTraversalBondOrder[atom->getIdx()];
-        if (trueOrder.size() >= 3) {
+
+        // Extra check needed if/when @AL1/@AL2 supported
+        if (trueOrder.size() >= 3 || Chirality::hasNonTetrahedralStereo(atom)) {
           int nSwaps = 0;
           int perm = 0;
           if (Chirality::hasNonTetrahedralStereo(atom)) {
             atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
           }
+
+          const unsigned int firstIdx = molStack.begin()->obj.atom->getIdx();
+          const bool firstInPart = atom->getIdx() == firstIdx;
 
           // We have to make sure that trueOrder contains all the
           // bonds, even if they won't be written to the SMILES
@@ -1086,20 +1111,24 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
             if (!perm) {
               nSwaps = atom->getPerturbationOrder(tOrder);
             } else {
+              insertImplicitNbors(tOrder, atom->getChiralTag(), firstInPart);
               perm = Chirality::getChiralPermutation(atom, tOrder);
             }
           } else {
             if (!perm) {
               nSwaps = atom->getPerturbationOrder(trueOrder);
             } else {
-              perm = Chirality::getChiralPermutation(atom, trueOrder);
+              INT_LIST tOrder = trueOrder;
+              insertImplicitNbors(tOrder, atom->getChiralTag(), firstInPart);
+              perm = Chirality::getChiralPermutation(atom, tOrder);
             }
           }
-          // FIX: handle this case for non-tet stereo too
+
+          // in future this should be moved up and simplified, there should not
+          // be an option to not do chiral inversions
           if (doChiralInversions &&
               chiralAtomNeedsTagInversion(
-                  mol, atom,
-                  molStack.begin()->obj.atom->getIdx() == atom->getIdx(),
+                  mol, atom, firstInPart,
                   atomRingClosures[atom->getIdx()].size())) {
             // This is a special case. Here's an example:
             //   Our internal representation of a chiral center is equivalent
@@ -1250,6 +1279,7 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     std::cerr<<"----------------------------------------->"<<std::endl;
 #endif
 }
+
 void canonicalizeEnhancedStereo(ROMol &mol,
                                 const std::vector<unsigned int> *atomRanks) {
   const auto &sgs = mol.getStereoGroups();
@@ -1312,8 +1342,8 @@ void canonicalizeEnhancedStereo(ROMol &mol,
                                                     // to atom CCW
       } else {
         foundRefState =
-            Atom::ChiralType::CHI_TETRAHEDRAL_CW;  // convert atropisomer CW to
-                                                   // atom CW
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW;  // convert atropisomer CW
+                                                   // to atom CW
       }
     }
     // we will use CCW as the "canonical" state for chirality, so if the
@@ -1337,8 +1367,8 @@ void canonicalizeEnhancedStereo(ROMol &mol,
     }
 #endif
     if (foundRefState != refState) {
-      // we need to flip everyone... so loop over the other atoms and bonds and
-      // flip them all:
+      // we need to flip everyone... so loop over the other atoms and bonds
+      // and flip them all:
 
       for (auto atom : sgAtoms) {
         atom->invertChirality();
@@ -1358,5 +1388,41 @@ void canonicalizeEnhancedStereo(ROMol &mol,
   }
   mol.setStereoGroups(newSgs);
 }
-}  // namespace Canon
+
+void addSingleAbsGroup(ROMol &mol) {
+  // all chiral centers are added to an abs group
+  // if there are not chiral centers, no group is added
+
+  std::vector<StereoGroup> sgs;
+  std::vector<Atom *> chiralAtoms;
+  std::vector<Bond *> chiralBonds;
+  for (auto &atom : mol.atoms()) {
+    if (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+        atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
+      chiralAtoms.push_back(atom);
+    }
+  }
+  for (auto &bond : mol.bonds()) {
+    if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+        bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+      chiralBonds.push_back(bond);
+    }
+  }
+
+  if (!chiralAtoms.empty() || !chiralBonds.empty()) {
+    sgs.emplace_back(StereoGroupType::STEREO_ABSOLUTE, chiralAtoms,
+                     chiralBonds);
+  }
+  mol.setStereoGroups(sgs);  // could be empty, or have one abs group
+}
+
+void clearStereoGroups(ROMol &mol) {
+  // all chiral centers are added to an abs group
+  // if there are not chiral centers, no group is added
+  std::vector<StereoGroup> sgs;
+  mol.setStereoGroups(sgs);
+}
+
+};  // namespace Canon
+
 }  // namespace RDKit

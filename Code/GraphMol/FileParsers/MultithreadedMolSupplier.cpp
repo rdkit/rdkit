@@ -46,12 +46,13 @@ void MultithreadedMolSupplier::writer() {
   std::tuple<std::string, unsigned int, unsigned int> r;
   while (d_inputQueue->pop(r)) {
     try {
-      auto mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
+      std::unique_ptr<RWMol> mol(
+          processMoleculeRecord(std::get<0>(r), std::get<1>(r)));
       if (mol && writeCallback) {
         writeCallback(*mol, std::get<0>(r), std::get<2>(r));
       }
       auto temp = std::tuple<RWMol *, std::string, unsigned int>{
-          mol, std::get<0>(r), std::get<2>(r)};
+          mol.release(), std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(temp);
     } catch (...) {
       // fill the queue wih a null value

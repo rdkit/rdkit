@@ -58,7 +58,7 @@ class RDKIT_GRAPHMOL_EXPORT StereoGroup {
   StereoGroup(StereoGroupType grouptype, std::vector<Atom *> &&atoms,
               std::vector<Bond *> &&bonds, unsigned readId = 0);
   StereoGroup(StereoGroupType grouptype, const std::vector<Atom *> &atoms,
-              std::vector<Bond *> &bonds, unsigned readId = 0);
+              const std::vector<Bond *> &bonds, unsigned readId = 0);
 
   StereoGroup(const StereoGroup &other) = default;
   StereoGroup &operator=(const StereoGroup &other) = default;
