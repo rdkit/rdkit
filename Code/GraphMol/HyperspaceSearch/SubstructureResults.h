@@ -18,7 +18,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT SubstructureResults {
  public:
   explicit SubstructureResults() : d_maxNumResults(0) {}
   SubstructureResults(std::vector<std::unique_ptr<ROMol>> &&mols,
-                      int maxNumRes);
+                      size_t maxNumRes);
   SubstructureResults(const SubstructureResults &other);
   SubstructureResults(SubstructureResults &&other) = default;
   ~SubstructureResults() = default;
@@ -34,7 +34,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT SubstructureResults {
    *
    * @return int
    */
-  int maxNumResults() const { return d_maxNumResults; }
+  size_t maxNumResults() const { return d_maxNumResults; }
   /*!
    * Returns the hits from the search. Not necessarily all those possible,
    * just the maximum number requested.
@@ -47,11 +47,11 @@ class RDKIT_HYPERSPACESEARCH_EXPORT SubstructureResults {
 
  private:
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
-  int d_maxNumResults;
+  size_t d_maxNumResults;
 };
 
 inline SubstructureResults::SubstructureResults(
-    std::vector<std::unique_ptr<ROMol>> &&mols, int maxNumRes)
+    std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes)
     : d_maxNumResults(maxNumRes) {
   d_hitMolecules = std::move(mols);
   mols.clear();

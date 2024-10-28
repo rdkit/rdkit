@@ -10,6 +10,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <random>
 #include <regex>
 #include <set>
 #include <string>
@@ -48,7 +49,7 @@ SubstructureResults Hyperspace::substructureSearch(
   //    }
   //  }
   std::vector<HyperspaceHitSet> allHits;
-  int totHits = 0;
+  size_t totHits = 0;
   for (auto &fragSet : fragments) {
     auto theseHits = searchFragSet(fragSet);
     if (!theseHits.empty()) {
@@ -71,7 +72,21 @@ SubstructureResults Hyperspace::substructureSearch(
       });
 
   if (params.buildHits) {
-    buildHits(allHits, query, results, params.maxHits);
+    // The random sampling, if requested, doesn't always produce the required
+    // number of hits in 1 sweep.  params.maxHits is unsigned, so -1 wraps
+    // round to a very large integer.
+    int numSweeps = 0;
+    while (results.size() < std::min(params.maxHits, totHits) &&
+           numSweeps < 10) {
+      std::cout << "Sweep " << numSweeps << " : " << params.maxHits << " : "
+                << totHits << std::endl;
+      buildHits(allHits, query, params, totHits, results);
+      // totHits is an upper bound, so may not be reached.
+      if (params.maxHits == static_cast<size_t>(-1) || !params.randomSample) {
+        break;
+      }
+      numSweeps++;
+    }
   }
   return SubstructureResults{std::move(results), totHits};
 }
@@ -625,12 +640,19 @@ struct Stepper {
 
 void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
                            const ROMol &query,
-                           std::vector<std::unique_ptr<ROMol>> &results,
-                           int maxHits) {
+                           const HyperspaceSearchParams &params, size_t totHits,
+                           std::vector<std::unique_ptr<ROMol>> &results) {
   if (hitsets.empty()) {
     return;
   }
 
+  std::random_device rd;
+  std::mt19937 randgen(rd());
+  if (params.randomSeed != -1) {
+    randgen.seed(params.randomSeed);
+  }
+  std::uniform_real_distribution<double> dist(0.0, 1.0);
+  double randDiscrim = double(params.maxHits) / double(totHits);
   // Keep track of the result names so we can weed out duplicates by
   // reaction and reagents.  Different splits may give rise to the same
   // reagent combination.  This will keep the same molecule produced via
@@ -654,8 +676,8 @@ void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
     }
     Stepper stepper(numReags);
     const int numReactions = reagentsToUse.size();
-    MolzipParams params;
-    params.label = MolzipLabel::Isotope;
+    MolzipParams mzparams;
+    mzparams.label = MolzipLabel::Isotope;
     while (stepper.d_currState[0] != numReags[0]) {
       std::string combName =
           hitset.reactionId + "_" +
@@ -666,35 +688,39 @@ void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
             "_" + reags[i][stepper.d_currState[i]]->getProp<std::string>(
                       common_properties::_Name);
       }
-      if (resultsNames.insert(combName).second) {
-        std::unique_ptr<ROMol> combMol(
-            new ROMol(*reags[0][stepper.d_currState[0]]));
-        for (int i = 1; i < numReactions; ++i) {
-          combMol.reset(
-              combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
+      if (!params.randomSample || params.maxHits == static_cast<size_t>(-1) ||
+          (params.randomSample && dist(randgen) < randDiscrim)) {
+        if (resultsNames.insert(combName).second) {
+          std::unique_ptr<ROMol> combMol(
+              new ROMol(*reags[0][stepper.d_currState[0]]));
+          for (int i = 1; i < numReactions; ++i) {
+            combMol.reset(
+                combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
+          }
+          //        std::cout << "Zipping " << MolToSmiles(*combMol) <<
+          //        std::endl;
+          auto prod = molzip(*combMol, mzparams);
+          MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
+          // Do a final check of the whole thing.  It can happen that the
+          // fragments match synthons but the final product doesn't match, and
+          // a key example is when the 2 synthons come together to form an
+          // aromatic ring.  An aliphatic query can match the aliphatic synthon
+          // so they are selected as a hit, but the final aromatic ring isn't
+          // a match.  E.g. Cc1cccc(C(=O)N[1*])c1N=[2*] and c1ccoc1C(=[2*])[1*]
+          // making Cc1cccc2c(=O)[nH]c(-c3ccco3)nc12.  The query c1ccc(CN)o1
+          // when split is a match to the reagents (c1ccc(C[1*])o1 and [1*]N)
+          // but the product the hydroxyquinazoline is aromatic, at least in
+          // the RDKit model so the N in the query doesn't match.
+          if (!SubstructMatch(*prod, query, dontCare)) {
+            continue;
+          }
+          prod->setProp<std::string>(common_properties::_Name, combName);
+          results.push_back(std::move(prod));
         }
-        //        std::cout << "Zipping " << MolToSmiles(*combMol) << std::endl;
-        auto prod = molzip(*combMol, params);
-        MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
-        // Do a final check of the whole thing.  It can happen that the
-        // fragments match synthons but the final product doesn't match, and
-        // a key example is when the 2 synthons come together to form an
-        // aromatic ring.  An aliphatic query can match the aliphatic synthon
-        // so they are selected as a hit, but the final aromatic ring isn't
-        // a match.  E.g. Cc1cccc(C(=O)N[1*])c1N=[2*] and c1ccoc1C(=[2*])[1*]
-        // making Cc1cccc2c(=O)[nH]c(-c3ccco3)nc12.  The query c1ccc(CN)o1
-        // when split is a match to the reagents (c1ccc(C[1*])o1 and [1*]N)
-        // but the product the hydroxyquinazoline is aromatic, at least in
-        // the RDKit model so the N in the query doesn't match.
-        if (!SubstructMatch(*prod, query, dontCare)) {
-          continue;
-        }
-        prod->setProp<std::string>(common_properties::_Name, combName);
-        results.push_back(std::move(prod));
       }
       // -1 means no limit, and size_t is unsigned, so the cast will make for
       // a very large number.
-      if (results.size() == static_cast<size_t>(maxHits)) {
+      if (results.size() == params.maxHits) {
         return;
       }
       stepper.step();

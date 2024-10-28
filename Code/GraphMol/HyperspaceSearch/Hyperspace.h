@@ -32,8 +32,12 @@ struct RDKIT_HYPERSPACESEARCH_EXPORT HyperspaceSearchParams {
                          // number of Synthon sets in Hyperspace.  More than
                          // that doesn't matter, but will slow the search down
                          // to no good effect.
-  int maxHits{1000};     // The maximum number of hits to return.  Use -1 for
+  size_t maxHits{1000};  // The maximum number of hits to return.  Use -1 for
                          // no maximum.
+  bool randomSample{false};  // If true, returns a random sample of the hit
+                             // list, up to maxHits in number.
+  int randomSeed{-1};        // Seed for random-number generator.  -1 means use
+                             // a random seed (std::random_device).
   bool buildHits{true};  // If false, reports the maximum number of hits that
                          // the search could produce, but doesn't return them.
 };
@@ -57,7 +61,8 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   }
 
   // Perform a substructure search with the given query molecule across
-  // the hyperspace library.
+  // the hyperspace library.  Duplicate SMILES strings produced by different
+  // reactions will be returned.
   /*!
    *
    * @param query : query molecule
@@ -129,11 +134,12 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   // Build the molecules from the reagents identified in reagentsToUse.
   // There should be bitset in reagentsToUse for each reagent set.
   // If not, it will fail.  Checks that all the results produced match the
-  // query - it shouts if any don't, and doesn't include them.
-  // If maxHits is -1, there's no limit on the number of hits returned.
+  // query.  totHits is the maximum number of hits that ar possible from
+  // the hitsets, including duplicates.  Duplicates by name are not returned,
+  // but duplicate SMILES from different reactions will be.
   void buildHits(const std::vector<HyperspaceHitSet> &hitsets,
-                 const ROMol &query,
-                 std::vector<std::unique_ptr<ROMol>> &results, int maxHits);
+                 const ROMol &query, const HyperspaceSearchParams &params,
+                 size_t totHits, std::vector<std::unique_ptr<ROMol>> &results);
   // get the subset of reagents for the given reaction to use for this
   // enumeration.
   std::vector<std::vector<ROMol *>> getReagentsToUse(

@@ -413,7 +413,7 @@ TEST_CASE("Biggy", "[Biggy]") {
            << std::endl;
       }
       CHECK(results.hitMolecules().size() == numRes[i]);
-      CHECK(results.maxNumResults() == static_cast<int>(maxRes[i]));
+      CHECK(results.maxNumResults() == maxRes[i]);
     }
   }
 #endif
@@ -505,4 +505,31 @@ TEST_CASE("Small query", "[Small query]") {
   // The number of results is immaterial, it just matters that the search
   // finished.
   CHECK(results.hitMolecules().size() == 0);
+}
+
+TEST_CASE("Random Hits", "[Random Hits]") {
+  std::string libName = "/Users/david/Projects/FreedomSpace/Syntons_5567.spc";
+  Hyperspace hyperspace;
+  hyperspace.readDBFile(libName);
+
+  auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+  HyperspaceSearchParams params;
+  params.maxBondSplits = 2;
+  params.maxHits = 100;
+  params.randomSample = true;
+  params.randomSeed = 1;
+  auto results = hyperspace.substructureSearch(*queryMol, params);
+  std::map<std::string, int> libCounts;
+  for (const auto &m : results.hitMolecules()) {
+    //    std::cout << m->getProp<std::string>("_Name") << std::endl;
+    std::string lib(m->getProp<std::string>("_Name").substr(0, 2));
+    if (const auto &c = libCounts.find(lib); c == libCounts.end()) {
+      libCounts.insert(std::make_pair(lib, 1));
+    } else {
+      c->second++;
+    }
+  }
+  CHECK(results.hitMolecules().size() == 100);
+  std::map<std::string, int> expCounts{{"a1", 73}, {"a6", 6}, {"a7", 21}};
+  CHECK(expCounts == libCounts);
 }
