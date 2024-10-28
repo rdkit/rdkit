@@ -490,15 +490,6 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
 void Hyperspace::readTextFile(const std::string &inFile) {
   d_fileName = inFile;
   std::ifstream ifs(d_fileName);
-  // the first line is headers, check they're in the right format,
-  // which is tab-separated:
-  // SMILES	synton_id	synton#	reaction_id
-  // or tab-separated:
-  // SMILES	synton_id	synton#	reaction_id release
-  // or
-  // SMILES,synton_id,synton_role,reaction_id
-  // Note that we keep the spelling "synton" from the original paper
-  // and example input file, and allow any whitespace rather than just tab.
   std::string firstLine;
   getline(ifs, firstLine);
   //  std::cout << "parsing : " << firstLine << std::endl;

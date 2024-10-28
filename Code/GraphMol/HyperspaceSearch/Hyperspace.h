@@ -93,7 +93,16 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
    * OCC([U])=NN=[Np]		1-1	0	triazole-1
    * C1CCCC1N([Pu])[U]		2-1	1	triazole-1
    * CC1CCN(C1)C(=[Np])[Pu]		3-1	2	triazole-1
-
+   *
+   * Other acceptable formats are as above, but with a 5th column "release":
+   * SMILES	synton_id	synton#	reaction_id release
+   *
+   * or a comma-separated equivalent of the first format:
+   * SMILES,synton_id,synton_role,reaction_id
+   * but with the 3rd column named differently but with the same meaning.
+   * The formatting of the first 2 formats has been relaxed such that any
+   * whitespace may be used as the field separator.
+   *
    * Attachment points are U, Np, Pu and Am for up to 4 synthons per reaction.
    * A product is created by taking a synthon from each synton# value and
    * combining by replacing matching trans-uranic elements and replacing them
@@ -102,9 +111,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
    * dummy atoms is also accepted ([1*] etc.).
    * Throws a std::runtime_error if it doesn't think the format is correct,
    * which it does by checking that the first line is as above and subsequent
-   * lines have 4 fields.
-   * The formatting has been relaxed such that any whitespace may be used as
-   * the field separator.
+   * lines have appropriate number of fields.
    */
   void readTextFile(const std::string &inFile);
 
