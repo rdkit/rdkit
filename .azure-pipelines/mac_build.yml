@@ -1,5 +1,5 @@
 steps:
-- bash | 
+- bash: | 
     export CONDA=$(pwd)/miniforge
     wget https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/Miniforge3-24.9.0-0-MacOSX-x86_64.sh
     bash Miniforge3-24.9.0-0-Linux-x86_64.sh -b -p ${CONDA}
