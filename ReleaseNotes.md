@@ -11,6 +11,10 @@ GitHub)
 
 ## Backwards incompatible changes
 
+HasPropWithValueQueryBase used RDKit::Dict::Pair to return
+data used for serializing object in a molecule  pickle.  This has been changed
+to RDKit::PairHolder which automatically manages memory.
+
 ## New Features and Enhancements:
 
 ## Bug Fixes:
