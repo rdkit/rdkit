@@ -93,7 +93,7 @@ ExplicitBitVect *generateFingerprintAsBitVect(RDKit::ROMol &mol,
                                               unsigned int fpSize,
                                               RDKit::FingerprintType t) {
   mol.updatePropertyCache(false);
-  ExplicitBitVect *res;
+  ExplicitBitVect *res = nullptr;
   switch (t) {
     case RDKit::FingerprintType::AtomPairFP: {
       RDKit::AtomPair::AtomPairArguments args;
