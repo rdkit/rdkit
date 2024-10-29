@@ -201,7 +201,7 @@ size_t addEntryIfMissing(T &vect, const V &e,
 void addMolToNetwork(const ROMol &mol, ScaffoldNetwork &network,
                      const ScaffoldNetworkParams &params) {
   auto ismi = MolToSmiles(mol);
-  if (params.includeNames & mol.hasProp("_Name")) {
+  if (params.includeNames && mol.hasProp("_Name")) {
     ismi += ' ' + mol.getProp<std::string>("_Name");
   }
   boost::shared_ptr<ROMol> fmol(flattenMol(mol, params));

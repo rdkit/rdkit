@@ -273,6 +273,8 @@ TEST_CASE("addMolToNetwork", "[unittest][scaffolds]") {
   SECTION("includes names") {
     auto m = "CC(=O)Oc1ccccc1C(=O)O aspirin"_smiles;
     REQUIRE(m);
+    // check that the name was parsed into "_Name"
+    CHECK(m->getProp<std::string>("_Name") == "aspirin");
     ScaffoldNetwork::ScaffoldNetworkParams ps;
     ScaffoldNetwork::ScaffoldNetwork net;
     ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
