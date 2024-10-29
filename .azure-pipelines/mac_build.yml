@@ -1,8 +1,4 @@
 steps:
-- bash: |
-    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX$(target_platform).sdk.tar.xz
-    tar Jxvf MacOSX$(target_platform).sdk.tar.xz
-  displayName: Install MacOSX $(target_platform) SDK
 - script: |
     echo "Removing homebrew from Azure to avoid conflicts."
     curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
@@ -30,7 +26,7 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     export CXXFLAGS="${CXXFLAGS} -Wall -Wextra -Werror"
     mkdir build && cd build && \
@@ -62,7 +58,7 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     cd build
     make -j $( $(number_of_cores) ) install
@@ -73,7 +69,7 @@ steps:
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib:${RDBASE}/rdkit:${CONDA_PREFIX}/lib:${DYLD_FALLBACK_LIBRARY_PATH}
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     export QT_QPA_PLATFORM='offscreen'
     cd build
