@@ -1366,8 +1366,8 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     // now truncate each vector and stick the rank at the end
     if (static_cast<unsigned int>(lastNumRanks) != numRanks) {
       for (unsigned int i = 0; i < numAtoms; ++i) {
-        cipEntries[i][cipRankIndex] = ranks[i];
         cipEntries[i].resize(cipRankIndex + 1);
+        cipEntries[i][cipRankIndex] = ranks[i];
       }
     }
 
