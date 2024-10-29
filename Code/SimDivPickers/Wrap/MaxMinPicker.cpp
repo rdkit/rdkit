@@ -51,8 +51,13 @@ RDKit::INT_VECT MaxMinPicks(MaxMinPicker *picker, python::object distMat,
        i < python::extract<unsigned int>(firstPicks.attr("__len__")()); ++i) {
     firstPickVect.push_back(python::extract<int>(firstPicks[i]));
   }
-  RDKit::INT_VECT res =
-      picker->pick(dMat, poolSize, pickSize, firstPickVect, seed);
+  RDKit::INT_VECT res;
+  try {
+    res = picker->pick(dMat, poolSize, pickSize, firstPickVect, seed);
+  } catch (...) {
+    Py_DECREF(copy);
+    throw;
+  }
   Py_DECREF(copy);
   return res;
 }
