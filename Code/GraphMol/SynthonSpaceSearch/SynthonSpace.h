@@ -28,11 +28,12 @@ class ROMol;
 namespace SynthonSpaceSearch {
 
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
-  int maxBondSplits{3};  // The maximum number of bonds to break in the query.
-                         // It should be no more than 1 less than the maximum
-                         // number of Synthon sets in SynthonSpace.  More than
-                         // that doesn't matter, but will slow the search down
-                         // to no good effect.
+  int maxBondSplits{4};  // The maximum number of bonds to break in the query.
+                         // It should be no more than the maximum
+                         // number of connector types in the SynthonSpace.  At
+                         // present this is 4.  Specifying more than that will
+                         // not matter as it will be reduced to 4.  Likewise,
+                         // values lower than 1 will be increased to 1.
   long maxHits{1000};    // The maximum number of hits to return.  Use -1 for
                          // no maximum.
   long hitStart{0};  // Sequence number of hit to start from.  So that you can
@@ -47,7 +48,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
 };
 
 // Holds the information about a set of hits.  The molecules can be built
-// by making all combinations of reagents, one taken from each reagent set.
+// by making all combinations of synthons, one taken from each reagent set.
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   std::string reactionId;
   std::vector<boost::dynamic_bitset<>> reagsToUse;
@@ -59,11 +60,21 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // Create the synthonspace from a file in the correct format.
   explicit SynthonSpace() = default;
 
+  // Get the number of different reactions in the SynthonSpace.
+  /*!
+   *
+   * @return int
+   */
   int numReactions() const { return d_reactions.size(); }
-  const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
+  const std::map<std::string, std::unique_ptr<SynthonSet>> &reactions() const {
     return d_reactions;
   }
-  long numProducts() const;
+  // Get the total number of products that the SynthonSpace could produce.
+  /*!
+   *
+   * @return long int
+   */
+  long int numProducts() const;
 
   // Perform a substructure search with the given query molecule across
   // the synthonspace library.  Duplicate SMILES strings produced by different
@@ -126,19 +137,31 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   void readTextFile(const std::string &inFile);
 
   // Writes to/reads from a binary DB File in our format.
+  /*!
+   *
+   * @param outFile: the name of the file to write.
+   */
   void writeDBFile(const std::string &outFile) const;
+  /*!
+   *
+   * @param inFile: the name of the file to read.
+   */
   void readDBFile(const std::string &inFile);
 
   // Write a summary of the SynthonSpace to given stream.
+  /*!
+   *
+   * @param os: stream
+   */
   void summarise(std::ostream &os) const;
 
  private:
   std::string d_fileName;
-  std::map<std::string, std::unique_ptr<ReactionSet>> d_reactions;
+  std::map<std::string, std::unique_ptr<SynthonSet>> d_reactions;
 
   std::unique_ptr<std::mt19937> d_randGen;
 
-  // Build the molecules from the reagents identified in reagentsToUse.
+  // Build the molecules from the synthons identified in reagentsToUse.
   // There should be bitset in reagentsToUse for each reagent set.
   // If not, it will fail.  Checks that all the results produced match the
   // query.  totHits is the maximum number of hits that ar possible from
@@ -148,7 +171,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
                  const ROMol &query, const SynthonSpaceSearchParams &params,
                  size_t totHits, std::set<std::string> &resultsNames,
                  std::vector<std::unique_ptr<ROMol>> &results);
-  // get the subset of reagents for the given reaction to use for this
+  // get the subset of synthons for the given reaction to use for this
   // enumeration.
   std::vector<std::vector<ROMol *>> getReagentsToUse(
       const std::vector<boost::dynamic_bitset<>> &reagentsToUse,

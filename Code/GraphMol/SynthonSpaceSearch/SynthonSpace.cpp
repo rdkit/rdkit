@@ -29,18 +29,17 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
-long SynthonSpace::numProducts() const {
+long int SynthonSpace::numProducts() const {
   long totSize = 0;
   for (const auto &reaction : d_reactions) {
     const auto &rxn = reaction.second;
     size_t thisSize = 1;
-    for (size_t i = 0; i < rxn->reagents().size(); ++i) {
-      thisSize *= rxn->reagents()[i].size();
+    for (size_t i = 0; i < rxn->synthons().size(); ++i) {
+      thisSize *= rxn->synthons()[i].size();
     }
     totSize += thisSize;
   }
@@ -64,12 +63,6 @@ SubstructureResults SynthonSpace::substructureSearch(
   RDKit::MatchVectType dontCare;
 
   auto fragments = details::splitMolecule(query, params.maxBondSplits);
-  //  for (const auto &frags : fragments) {
-  //    std::cout << "****************************" << std::endl;
-  //    for (const auto &f : frags) {
-  //      std::cout << MolToSmiles(*f) << std::endl;
-  //    }
-  //  }
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   for (auto &fragSet : fragments) {
@@ -83,19 +76,19 @@ SubstructureResults SynthonSpace::substructureSearch(
       allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
     }
   }
-  std::sort(allHits.begin(), allHits.end(),
-            [&](const SynthonSpaceHitSet &hs1,
-                const SynthonSpaceHitSet &hs2) -> bool {
-              if (hs1.reactionId == hs2.reactionId) {
-                return hs1.numHits < hs2.numHits;
-              } else {
-                return hs1.reactionId < hs2.reactionId;
-              }
-            });
 
   if (params.buildHits) {
+    std::sort(allHits.begin(), allHits.end(),
+              [&](const SynthonSpaceHitSet &hs1,
+                  const SynthonSpaceHitSet &hs2) -> bool {
+                if (hs1.reactionId == hs2.reactionId) {
+                  return hs1.numHits < hs2.numHits;
+                } else {
+                  return hs1.reactionId < hs2.reactionId;
+                }
+              });
     // Keep track of the result names so we can weed out duplicates by
-    // reaction and reagents.  Different splits may give rise to the same
+    // reaction and synthons.  Different splits may give rise to the same
     // reagent combination.  This will keep the same molecule produced via
     // different reactions which I think makes sense.  The resultsNames will
     // be accumulated even if the molecule itself doesn't make it into the
@@ -103,7 +96,8 @@ SubstructureResults SynthonSpace::substructureSearch(
     // outside maxHits or hitStart.
     std::set<std::string> resultsNames;
     // The random sampling, if requested, doesn't always produce the required
-    // number of hits in 1 sweep.
+    // number of hits in 1 sweep.  Also, totHits, being an upper bound, may
+    // not be achievable.
     size_t tmpMaxHits(params.maxHits);
     int numSweeps = 0;
     while (results.size() < std::min(tmpMaxHits, totHits) && numSweeps < 10) {
@@ -112,10 +106,6 @@ SubstructureResults SynthonSpace::substructureSearch(
       if (params.maxHits == -1 || !params.randomSample) {
         break;
       }
-      //      std::cout << "Sweep " << numSweeps << " : " << params.maxHits << "
-      //      : "
-      //                << totHits << " : " << resultsNames.size() << " : "
-      //                << results.size() << std::endl;
       numSweeps++;
     }
   }
@@ -142,9 +132,7 @@ void fixConnectors(std::string &smiles) {
     smiles = std::regex_replace(smiles, connRegexs[i], repls[i]);
   }
 }
-}  // namespace
 
-namespace {
 // Return a bitset giving the different connector types in this
 // molecule.
 boost::dynamic_bitset<> getConnectorPattern(
@@ -162,7 +150,10 @@ boost::dynamic_bitset<> getConnectorPattern(
 
 // Make pattern fps for the fragments and re-order fps and fragments into
 // descending order of number of bits set in the fp (the "largest fragment
-// heuristic").
+// heuristic").  The FP with the largest number of bits
+// is the most likely to screen out a matching reagent set since smaller,
+// less complex fragments are more likely to match something, so screen
+// with that first.
 std::vector<std::unique_ptr<ExplicitBitVect>> makePatternFPs(
     std::vector<std::unique_ptr<ROMol>> &molFrags) {
   std::vector<std::unique_ptr<ExplicitBitVect>> pattFPs;
@@ -170,11 +161,7 @@ std::vector<std::unique_ptr<ExplicitBitVect>> makePatternFPs(
     pattFPs.emplace_back(
         std::unique_ptr<ExplicitBitVect>(PatternFingerprintMol(*frag, 2048)));
   }
-  // Sort by descending number of bits set.  This is the "largest fragment
-  // heuristic" from the paper.  The FP with the largest number of bits
-  // is the most likely to screen out a matching reagent set since smaller,
-  // less complex fragments are more likely to match something, so screen
-  // with that first.
+  // Sort by descending number of bits set.
   std::vector<std::pair<size_t, ExplicitBitVect *>> fps(pattFPs.size());
   for (size_t i = 0; i < pattFPs.size(); ++i) {
     fps[i] = std::make_pair(i, pattFPs[i].get());
@@ -207,10 +194,6 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
     const boost::dynamic_bitset<> &fragConns,
     const boost::dynamic_bitset<> &reactionConns) {
   std::vector<std::vector<std::unique_ptr<RWMol>>> connPerms;
-  //  for (const auto &mf : molFrags) {
-  //    std::cout << MolToSmiles(*mf) << " ";
-  //  }
-  //  std::cout << " :: " << fragConns << " : " << reactionConns << std::endl;
   auto bitsToInts =
       [](const boost::dynamic_bitset<> &bits) -> std::vector<int> {
     std::vector<int> ints;
@@ -223,18 +206,9 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
   };
   auto numFragConns = fragConns.count();
   auto rConns = bitsToInts(reactionConns);
-  //  std::cout << "Num frag conns : " << numFragConns
-  //            << " num reaction conns : " << reactionConns.count() <<
-  //            std::endl;
   auto perms = details::permMFromN(numFragConns, reactionConns.count());
-  //  std::cout << "PERMS" << std::endl;
 
   for (const auto &perm : perms) {
-    //    std::cout << "Next perm : ";
-    //    for (auto &i : perm) {
-    //      std::cout << i << " ";
-    //    }
-    //    std::cout << std::endl;
     connPerms.push_back(std::vector<std::unique_ptr<RWMol>>());
     // Copy the fragments and set the isotope numbers according to this
     // permutation.
@@ -261,7 +235,7 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
   return connPerms;
 }
 
-// Take the molFrags and flag those reagents that have pattern fingerprints
+// Take the molFrags and flag those synthons that have pattern fingerprints
 // where all the bits match with the fragment.  The pattern fingerprints are
 // insensitive to isotope numbers, so this can be done on the initial
 // fragmentation, without generating the combinations of connector numbers.
@@ -269,22 +243,21 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
 // returns the bitsets in the original order.
 std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     const std::vector<std::unique_ptr<ExplicitBitVect>> &pattFPs,
-    std::unique_ptr<ReactionSet> &reaction,
+    std::unique_ptr<SynthonSet> &reaction,
     std::vector<unsigned int> reagentOrder) {
   std::vector<boost::dynamic_bitset<>> reagsToUse;
-  //  std::cout << "screenReagentsWithFPs" << std::endl;
   std::vector<boost::dynamic_bitset<>> passedFPs;
-  for (const auto &reagSet : reaction->reagents()) {
+  for (const auto &reagSet : reaction->synthons()) {
     passedFPs.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
 
   std::vector<boost::dynamic_bitset<>> thisPass;
-  for (const auto &reagSet : reaction->reagents()) {
+  for (const auto &reagSet : reaction->synthons()) {
     thisPass.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
   boost::dynamic_bitset<> fragsMatched(reagentOrder.size());
   for (size_t i = 0; i < reagentOrder.size(); ++i) {
-    const auto &reagSet = reaction->reagents()[reagentOrder[i]];
+    const auto &reagSet = reaction->synthons()[reagentOrder[i]];
     for (size_t j = 0; j < reagSet.size(); ++j) {
       auto &reag = reagSet[j];
       if (AllProbeBitsMatch(*pattFPs[i], *reag->pattFP())) {
@@ -294,8 +267,6 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     }
     // If nothing matched this fragment, the whole thing's a bust.
     if (!fragsMatched[i]) {
-      //      std::cout << "Nothing matches frag " << i << " : "
-      //                << pattFPs[i]->getNumOnBits() << std::endl;
       break;
     }
   }
@@ -306,44 +277,37 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     }
   }
 
-  //  for (const auto &pf : passedFPs) {
-  //    std::cout << "passFPs : " << pf << std::endl;
-  //  }
   return passedFPs;
 }
 
-// Take the fragged mol and flag all those reagents that have a fragment as
-// a substructure match.  Only do this for those reagents that have already
+// Take the fragged mol and flag all those synthons that have a fragment as
+// a substructure match.  Only do this for those synthons that have already
 // passed previous screening, and are flagged as such in passedScreens.
 std::vector<boost::dynamic_bitset<>> getHitReagents(
     std::vector<std::unique_ptr<RWMol>> &molFrags,
     const std::vector<boost::dynamic_bitset<>> &passedScreens,
-    std::unique_ptr<ReactionSet> &reaction,
+    std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &reagentOrder) {
   RDKit::MatchVectType dontCare;
   std::vector<boost::dynamic_bitset<>> reagsToUse;
-  for (const auto &reagSet : reaction->reagents()) {
+  for (const auto &reagSet : reaction->synthons()) {
     reagsToUse.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
 
   // The tests must be applied for all permutations of reagent list against
   // fragment.
   auto reagentOrders =
-      details::permMFromN(molFrags.size(), reaction->reagents().size());
+      details::permMFromN(molFrags.size(), reaction->synthons().size());
 
   boost::dynamic_bitset<> fragsMatched(reagentOrder.size());
   // Match the fragment to the reagent set in this order.
   for (size_t i = 0; i < reagentOrder.size(); ++i) {
-    const auto &reagSet = reaction->reagents()[reagentOrder[i]];
+    const auto &reagSet = reaction->synthons()[reagentOrder[i]];
     const auto &passedScreensSet = passedScreens[reagentOrder[i]];
     for (size_t j = 0; j < reagSet.size(); ++j) {
       if (passedScreensSet[j]) {
         auto &reag = reagSet[j];
         if (SubstructMatch(*reag->mol(), *molFrags[i], dontCare)) {
-          //          std::cout << reag->smiles() << " matched to "
-          //                    << MolToSmiles(*molFrags[i], true, false, -1,
-          //                    false)
-          //                    << std::endl;
           reagsToUse[reagentOrder[i]][j] = true;
           fragsMatched[i] = true;
         }
@@ -358,7 +322,9 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
   // If all bits in one of the bitsets is unset, it means that nothing matched
   // that reagent.  If at least one of the bitsets has a set bit, all products
   // incorporating the reagent with no bits set must match the query so
-  // should be used.
+  // should be used because the query matches products that don't incorporate
+  // anything from 1 of the synthon lists.  For example, if the synthons are
+  // [1*]Nc1c([2*])cccc1 and [1*]=CC=C[2*] and the query is c1ccccc1.
   bool someSet = false;
   for (auto &rtu : reagsToUse) {
     if (rtu.count()) {
@@ -399,7 +365,7 @@ void buildConnectorRegions(
 // Return true if all the fragments have a connector region that matches
 // something in the reaction, false otherwise.
 bool checkConnectorRegions(
-    std::unique_ptr<ReactionSet> &reaction,
+    std::unique_ptr<SynthonSet> &reaction,
     std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
     std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &connRegFPs) {
   const auto &rxnConnRegs = reaction->connectorRegions();
@@ -440,26 +406,15 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
     numFragConns.push_back(details::countConnections(MolToSmiles(*frag)));
   }
 
-  //  std::cout << "searchFragSet" << std::endl;
   auto conns = getConnectorPattern(fragSet);
   for (auto &it : d_reactions) {
     auto &reaction = it.second;
-    //    std::cout << "Searching for " << fragSet.size() << " ::: ";
-    //    for (size_t i = 0; i < fragSet.size(); ++i) {
-    //      const auto &f = fragSet[i];
-    //      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : "
-    //                << MolToSmarts(*f) << " :: ";
-    //      std::cout << f->getNumAtoms() << " : " << MolToSmiles(*f) << " : "
-    //                << pattFPs[i]->getNumOnBits() << " :: ";
-    //    }
-    //    std::cout << " in " << reaction->id() << " : "
-    //              << reaction->reagents().size() << std::endl;
     // It can't be a hit if the number of fragments is more than the number
     // of reagent sets because some of the molecule won't be matched in any
     // of the potential products.  It can be less, in which case the unused
     // reagent set will be used completely, possibly resulting in a large
     // number of hits.
-    if (fragSet.size() > reaction->reagents().size()) {
+    if (fragSet.size() > reaction->synthons().size()) {
       continue;
     }
 
@@ -472,17 +427,14 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
       continue;
     }
 
-    // Select only the reagents that have fingerprints that are a superset
+    // Select only the synthons that have fingerprints that are a superset
     // of the fragment fingerprints.
     // Need to try all combinations of reagent orders.
     auto reagentOrders =
-        details::permMFromN(pattFPs.size(), reaction->reagents().size());
+        details::permMFromN(pattFPs.size(), reaction->synthons().size());
     for (const auto &ro : reagentOrders) {
-      //      if (!checkNumberOfConnections(numFragConns, reaction, ro)) {
-      //        continue;
-      //      }
       auto passedScreens = screenReagentsWithFPs(pattFPs, reaction, ro);
-      // If none of the reagents passed the screens, move right along, nothing
+      // If none of the synthons passed the screens, move right along, nothing
       // to see.
       bool skip = true;
       for (const auto &ps : passedScreens) {
@@ -498,12 +450,12 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
       // Get all the possible permutations of connector numbers compatible with
       // the number of reagent sets in this reaction.  So if the
       // fragmented molecule is C[1*].N[2*] and there are 3 reagent sets
-      // we also try C[2*].N[1*]  and C[3*].N[2*] because
+      // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
       // that might be how they're labelled in the reaction database.
       auto connCombs =
           getConnectorPermutations(fragSet, conns, reaction->connectors());
 
-      // Find all reagents that match the fragments with each connector
+      // Find all synthons that match the fragments with each connector
       // combination.
       for (auto &connComb : connCombs) {
         auto theseReagents =
@@ -515,13 +467,6 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
                 return prevRes * s2.count();
               });
           if (numHits) {
-            //            for (size_t i = 0; i < theseReagents.size(); ++i) {
-            //              std::cout << reaction->id() << " reagents " << i <<
-            //              " : "
-            //                        << theseReagents[i].count() << " : " <<
-            //                        theseReagents[i]
-            //                        << std::endl;
-            //            }
             results.push_back(
                 SynthonSpaceHitSet{reaction->id(), theseReagents, numHits});
           }
@@ -529,19 +474,17 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
       }
     }
   }
-  //  std::cout << "Leaving searchFragSet" << std::endl;
   return results;
 }
 
 void SynthonSpace::readTextFile(const std::string &inFile) {
   d_fileName = inFile;
   std::ifstream ifs(d_fileName);
-  std::string firstLine;
-  getline(ifs, firstLine);
-  //  std::cout << "parsing : " << firstLine << std::endl;
+  if (!ifs.is_open() || ifs.bad()) {
+    throw std::runtime_error("Couldn't open file " + d_fileName);
+  }
   std::regex regexz("[\\s,]+");
 
-  auto lineParts = splitLine(firstLine, regexz);
   std::vector<std::vector<std::string>> firstLineOpts{
       std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id"},
       std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id",
@@ -549,14 +492,6 @@ void SynthonSpace::readTextFile(const std::string &inFile) {
       std::vector<std::string>{"SMILES", "synton_id", "synton_role",
                                "reaction_id"}};
   int format = -1;
-  for (size_t i = 0; i < firstLineOpts.size(); ++i) {
-    if (lineParts == firstLineOpts[i]) {
-      format = i;
-    }
-  }
-  if (format == -1) {
-    throw std::runtime_error("Bad format for SynthonSpace file " + d_fileName);
-  }
   std::string nextLine;
   int lineNum = 1;
 
@@ -565,16 +500,28 @@ void SynthonSpace::readTextFile(const std::string &inFile) {
     if (nextLine.empty() || nextLine[0] == '#') {
       continue;
     }
+    if (format == -1) {
+      auto lineParts = splitLine(nextLine, regexz);
+      for (size_t i = 0; i < firstLineOpts.size(); ++i) {
+        if (lineParts == firstLineOpts[i]) {
+          format = i;
+        }
+      }
+      if (format == -1) {
+        throw std::runtime_error("Bad format for SynthonSpace file " +
+                                 d_fileName);
+      }
+      continue;
+    }
     auto nextReag = splitLine(nextLine, regexz);
     if (nextReag.size() < 4) {
       throw std::runtime_error("Bad format for SynthonSpace file " +
                                d_fileName + " on line " +
                                std::to_string(lineNum));
     }
-    //    std::cout << nextReag[0] << " : " << nextReag[1] << std::endl;
     if (auto it = d_reactions.find(nextReag[3]); it == d_reactions.end()) {
       d_reactions.insert(std::make_pair(
-          nextReag[3], std::make_unique<ReactionSet>(nextReag[3])));
+          nextReag[3], std::make_unique<SynthonSet>(nextReag[3])));
     }
     fixConnectors(nextReag[0]);
     auto &currReaction = d_reactions[nextReag[3]];
@@ -585,7 +532,7 @@ void SynthonSpace::readTextFile(const std::string &inFile) {
       // in this case it's a string "synton_2" etc.
       synthonNum = std::stoi(nextReag[2].substr(7));
     }
-    currReaction->addReagent(synthonNum, nextReag[0], nextReag[1]);
+    currReaction->addSynthon(synthonNum, nextReag[0], nextReag[1]);
   }
 
   // Do some final processing.
@@ -611,7 +558,7 @@ void SynthonSpace::readDBFile(const std::string &inFile) {
     size_t numRS;
     streamRead(is, numRS);
     for (size_t i = 0; i < numRS; ++i) {
-      ReactionSet *rs = new ReactionSet;
+      SynthonSet *rs = new SynthonSet;
       rs->readFromDBStream(is);
       d_reactions.insert(make_pair(rs->id(), rs));
     }
@@ -629,10 +576,10 @@ void SynthonSpace::summarise(std::ostream &os) const {
     const auto &rxn = reaction.second;
     os << "Reaction name " << rxn->id() << "\n";
     size_t thisSize = 1;
-    for (size_t i = 0; i < rxn->reagents().size(); ++i) {
-      os << "  Synthon set " << i << " has " << rxn->reagents()[i].size()
-         << " reagents" << "\n";
-      thisSize *= rxn->reagents()[i].size();
+    for (size_t i = 0; i < rxn->synthons().size(); ++i) {
+      os << "  Synthon set " << i << " has " << rxn->synthons()[i].size()
+         << " synthons" << "\n";
+      thisSize *= rxn->synthons()[i].size();
     }
     totSize += thisSize;
   }
@@ -641,6 +588,8 @@ void SynthonSpace::summarise(std::ostream &os) const {
 }
 
 namespace {
+// class to step through all combinations of list of different sizes.
+// returns (0,0,0), (0,0,1), (0,1,0) etc.
 struct Stepper {
   Stepper(std::vector<int> &sizes) : d_sizes(sizes) {
     d_currState = std::vector<int>(sizes.size(), 0);
@@ -685,17 +634,14 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
   RDKit::MatchVectType dontCare;
 
   for (const auto &hitset : hitsets) {
-    //    std::cout << "Build hits with " << hitset.reactionId << std::endl;
     const auto &reagentsToUse = hitset.reagsToUse;
     auto reags = getReagentsToUse(reagentsToUse, hitset.reactionId);
     if (reags.empty()) {
-      //    std::cout << "Nothing to do" << std::endl;
       return;
     }
 
     std::vector<int> numReags;
     for (auto &r : reags) {
-      //      std::cout << "Number of reagents : " << r.size() << std::endl;
       numReags.push_back(r.size());
     }
     Stepper stepper(numReags);
@@ -724,8 +670,6 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
             combMol.reset(
                 combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
           }
-          //        std::cout << "Zipping " << MolToSmiles(*combMol) <<
-          //        std::endl;
           auto prod = molzip(*combMol, mzparams);
           MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
           // Do a final check of the whole thing.  It can happen that the
@@ -735,7 +679,7 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
           // so they are selected as a hit, but the final aromatic ring isn't
           // a match.  E.g. Cc1cccc(C(=O)N[1*])c1N=[2*] and c1ccoc1C(=[2*])[1*]
           // making Cc1cccc2c(=O)[nH]c(-c3ccco3)nc12.  The query c1ccc(CN)o1
-          // when split is a match to the reagents (c1ccc(C[1*])o1 and [1*]N)
+          // when split is a match to the synthons (c1ccc(C[1*])o1 and [1*]N)
           // but the product the hydroxyquinazoline is aromatic, at least in
           // the RDKit model so the N in the query doesn't match.
           if (!SubstructMatch(*prod, query, dontCare)) {
@@ -762,12 +706,12 @@ std::vector<std::vector<ROMol *>> SynthonSpace::getReagentsToUse(
   }
   const auto &reaction = d_reactions.find(reaction_id)->second;
 
-  std::vector<std::vector<ROMol *>> reags(reaction->reagents().size(),
+  std::vector<std::vector<ROMol *>> reags(reaction->synthons().size(),
                                           std::vector<ROMol *>());
   for (size_t i = 0; i < reagentsToUse.size(); ++i) {
     for (size_t j = 0; j < reagentsToUse[i].size(); ++j) {
       if (reagentsToUse[i][j]) {
-        reags[i].push_back(reaction->reagents()[i][j]->mol().get());
+        reags[i].push_back(reaction->synthons()[i][j]->mol().get());
       }
     }
   }

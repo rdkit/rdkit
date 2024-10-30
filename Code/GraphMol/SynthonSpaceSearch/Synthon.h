@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-// This class holds a Reagent that will be part of a ReactionSet.
-
 #ifndef RDKIT_REAGENT_H
 #define RDKIT_REAGENT_H
 
@@ -23,22 +21,22 @@ class Atom;
 
 namespace SynthonSpaceSearch {
 
-class Reagent {
+// This class holds a Synthon that will be part of a SynthonSet.
+class Synthon {
  public:
-  Reagent() {}
-  Reagent(const std::string &smi, const std::string &id)
+  Synthon() {}
+  Synthon(const std::string &smi, const std::string &id)
       : d_smiles(smi), d_id(id) {}
-  Reagent(const Reagent &other);
-  Reagent(Reagent &&other);
-  Reagent &operator=(const Reagent &other);
-  Reagent &operator=(Reagent &&other);
+  Synthon(const Synthon &other);
+  Synthon(Synthon &&other);
+  Synthon &operator=(const Synthon &other);
+  Synthon &operator=(Synthon &&other);
 
   const std::string &smiles() const { return d_smiles; }
   const std::string &id() const { return d_id; }
   const std::unique_ptr<ROMol> &mol() const;
   const std::unique_ptr<ExplicitBitVect> &pattFP() const;
   const std::vector<std::shared_ptr<ROMol>> &connRegions() const;
-  int numConnections() const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -54,7 +52,6 @@ class Reagent {
   // SMILES strings of any connector regions.  Normally there will only
   // be 1 or 2.
   mutable std::vector<std::shared_ptr<ROMol>> d_connRegions;
-  mutable int numConns{-1};
 };
 
 // Return a molecule containing the portions of the molecule starting at

@@ -9,7 +9,6 @@
 //
 
 #include <RDBoost/python.h>
-#include <RDBoost/Wrap.h>
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
@@ -27,11 +26,11 @@ python::list hitMolecules_helper(
   return pyres;
 }
 
-struct HyperspaceResults_wrapper {
+struct SubstructureResults_wrapper {
   static void wrap() {
     std::string docString = "Used to return results of SynthonSpace searches.";
     python::class_<RDKit::SynthonSpaceSearch::SubstructureResults>(
-        "HyperspaceResult", docString.c_str(), python::no_init)
+        "SubstructureResult", docString.c_str(), python::no_init)
         .def("hitMolecules", hitMolecules_helper, python::args("self"),
              "A function returning hits from the search")
         .def_readonly("maxNumResults",
@@ -65,7 +64,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       "Module containing implementation of SynthonSpace search of"
       " Synthon-based chemical libraries such as Enamine REAL.";
 
-  HyperspaceResults_wrapper::wrap();
+  SubstructureResults_wrapper::wrap();
 
   std::string docString = "SynthonSpaceSearch parameters.";
   python::class_<RDKit::SynthonSpaceSearch::SynthonSpaceSearchParams,
@@ -75,10 +74,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "maxBondSplits",
           &RDKit::SynthonSpaceSearch::SynthonSpaceSearchParams::maxBondSplits,
           "The maximum number of bonds to break in the query."
-          "  It should be no more than 1 less than the maximum"
-          " number of Synthon sets in SynthonSpace.  More than"
-          " that doesn't matter, but will slow the search down"
-          " to no good effect.  Default=3.")
+          "  It should be between 1 and 4 and will be constrained to be so."
+          "  Default=4.")
       .def_readwrite(
           "maxHits",
           &RDKit::SynthonSpaceSearch::SynthonSpaceSearchParams::maxHits,

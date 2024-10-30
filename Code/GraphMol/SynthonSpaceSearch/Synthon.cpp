@@ -11,24 +11,22 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolPickler.h>
-#include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
-Reagent::Reagent(const RDKit::SynthonSpaceSearch::Reagent &other)
+Synthon::Synthon(const RDKit::SynthonSpaceSearch::Synthon &other)
     : d_smiles(other.d_smiles), d_id(other.d_id) {}
 
-Reagent::Reagent(RDKit::SynthonSpaceSearch::Reagent &&other)
+Synthon::Synthon(RDKit::SynthonSpaceSearch::Synthon &&other)
     : d_smiles(std::move(other.d_smiles)), d_id(std::move(other.d_id)) {}
 
-Reagent &Reagent::operator=(const RDKit::SynthonSpaceSearch::Reagent &other) {
+Synthon &Synthon::operator=(const RDKit::SynthonSpaceSearch::Synthon &other) {
   if (this == &other) {
     return *this;
   }
@@ -58,7 +56,7 @@ Reagent &Reagent::operator=(const RDKit::SynthonSpaceSearch::Reagent &other) {
   return *this;
 }
 
-Reagent &Reagent::operator=(RDKit::SynthonSpaceSearch::Reagent &&other) {
+Synthon &Synthon::operator=(RDKit::SynthonSpaceSearch::Synthon &&other) {
   if (this == &other) {
     return *this;
   }
@@ -74,7 +72,7 @@ Reagent &Reagent::operator=(RDKit::SynthonSpaceSearch::Reagent &&other) {
   return *this;
 }
 
-const std::unique_ptr<ROMol> &Reagent::mol() const {
+const std::unique_ptr<ROMol> &Synthon::mol() const {
   if (!d_mol) {
     d_mol = v2::SmilesParse::MolFromSmiles(d_smiles);
     d_mol->setProp<std::string>(common_properties::_Name, d_id);
@@ -82,14 +80,14 @@ const std::unique_ptr<ROMol> &Reagent::mol() const {
   return d_mol;
 }
 
-const std::unique_ptr<ExplicitBitVect> &Reagent::pattFP() const {
+const std::unique_ptr<ExplicitBitVect> &Synthon::pattFP() const {
   if (!d_pattFP) {
     d_pattFP.reset(PatternFingerprintMol(*mol(), 2048));
   }
   return d_pattFP;
 }
 
-const std::vector<std::shared_ptr<ROMol>> &Reagent::connRegions() const {
+const std::vector<std::shared_ptr<ROMol>> &Synthon::connRegions() const {
   if (d_connRegions.empty()) {
     auto cr = getConnRegion(*mol());
     if (cr) {
@@ -103,14 +101,7 @@ const std::vector<std::shared_ptr<ROMol>> &Reagent::connRegions() const {
   return d_connRegions;
 }
 
-int Reagent::numConnections() const {
-  if (numConns == -1) {
-    numConns = details::countConnections(d_smiles);
-  }
-  return numConns;
-}
-
-void Reagent::writeToDBStream(std::ostream &os) const {
+void Synthon::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_smiles);
   streamWrite(os, d_id);
   MolPickler::pickleMol(*mol(), os, PicklerOps::AllProps);
@@ -122,7 +113,7 @@ void Reagent::writeToDBStream(std::ostream &os) const {
   }
 }
 
-void Reagent::readFromDBStream(std::istream &is) {
+void Synthon::readFromDBStream(std::istream &is) {
   streamRead(is, d_smiles, 0);
   streamRead(is, d_id, 0);
   d_mol.reset(new ROMol);
@@ -139,12 +130,6 @@ void Reagent::readFromDBStream(std::istream &is) {
   }
 }
 
-// Get the connector regions for this molecule, which are parts of the
-// molecule within 3 bonds of an isotopically labelled dummy atom.  It's
-// possible the molecule has ordinary wildcard dummy atoms that shouldn't
-// have an isotopic label.  Returns an empty unique_ptr if there isn't a
-// labelled dummy atom, which happens when the molecule is the whole original
-// query before any splits were done.
 std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
   boost::dynamic_bitset<> inFrag(mol.getNumAtoms());
   for (const auto a : mol.atoms()) {

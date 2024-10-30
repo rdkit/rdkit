@@ -7,19 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// This file contains an implementation of synthonspace substructure search
-// similar to that described in
-// 'Fast Substructure Search in Combinatorial Library Spaces',
-// Thomas Liphardt and Thomas Sander,
-// J. Chem. Inf. Model. 2023, 63, 16, 5133–5141
-// https://doi.org/10.1021/acs.jcim.3c00290
-//
-// The algorithm allows the substructure searching of a very large library
-// of structures that is described in synthon format (such as Enamine REAL)
-// without enumerating the individual structures during the search process.
-//
-// It is not a direct implementation, as, for example, it uses a different
-// fingerprint for the initial synthon screening.
 
 #include <algorithm>
 #include <list>
@@ -98,23 +85,12 @@ bool checkConnectorsInDifferentFrags(
 // Traverse the bonds from aromBond and return all the ones that are aromatic.
 std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
                                                      const Bond *aromBond) {
-  //  std::cout << MolToSmiles(mol) << " : " << aromBond->getIdx() << " : "
-  //            << aromBond->getBeginAtomIdx() << " ("
-  //            << aromBond->getBeginAtom()->getAtomicNum()
-  //            << ") : " << aromBond->getEndAtomIdx() << " ("
-  //            << aromBond->getEndAtom()->getAtomicNum() << ")" << std::endl;
   std::vector<const Bond *> aromBonds(1, aromBond);
   std::list<const Bond *> toDo(1, aromBond);
   boost::dynamic_bitset<> done(mol.getNumBonds());
   done[aromBond->getIdx()] = true;
   while (!toDo.empty()) {
     auto nextBond = toDo.front();
-    //    std::cout << "  next bond : " << " : " << nextBond->getIdx() << " : "
-    //              << nextBond->getBeginAtomIdx() << " ("
-    //              << nextBond->getBeginAtom()->getAtomicNum()
-    //              << ") : " << nextBond->getEndAtomIdx() << " ("
-    //              << nextBond->getEndAtom()->getAtomicNum() << ")" <<
-    //              std::endl;
     toDo.pop_front();
     for (auto nbr :
          make_iterator_range(mol.getAtomNeighbors(nextBond->getBeginAtom()))) {
@@ -201,22 +177,13 @@ void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
   }
 }
 
-// Split the molecule into fragments.  maxBondSplits gives the maximum number
-// of bonds to be used in each split.  There will a vector of vectors of
-// molecules, 1 inner vector for each split i.e. maxBondSplits in total, the
-// first with 1 split, the 2nd with 2 etc.  Each inner vector contains the
-// fragments from a split molecule.
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits) {
-  //  std::cout << "Splitting " << MolToSmiles(query) << " with " <<
-  //  maxBondSplits
-  //            << " bonds." << std::endl;
-
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
   }
-  if (maxBondSplits > 3) {
-    maxBondSplits = 3;
+  if (maxBondSplits > 4) {
+    maxBondSplits = 4;
   }
   if (maxBondSplits > query.getNumBonds()) {
     maxBondSplits = query.getNumBonds();
@@ -237,19 +204,12 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
 
   // Now do the splits.
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
-    //    std::cout << "Splitting with up to " << i << " bonds" << std::endl;
     auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
     for (unsigned int j = 1; j <= i; ++j) {
       dummyLabels.push_back(std::make_pair(j, j));
     }
-    //    std::cout << "Number of possible splits : " << combs.size() <<
-    //    std::endl;
     for (auto &c : combs) {
-      //      for (auto &i : c) {
-      //        std::cout << i << " ";
-      //      }
-      //      std::cout << std::endl;
       // don't break just 1 ring bond, as it can't create 2 fragments.  It
       // could be better than this, by checking that any number of ring
       // bonds are all in the same ring system.  Maybe look at that
@@ -271,7 +231,6 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
       }
       std::unique_ptr<ROMol> fragMol(
           MolFragmenter::fragmentOnBonds(query, c, true, &dummyLabels));
-      //      std::cout << MolToSmiles(*fragMol) << std::endl;
       std::vector<std::unique_ptr<ROMol>> molFrags;
       auto numFrags = MolOps::getMolFrags(*fragMol, molFrags, false);
       // Must have been a ring-opening.
@@ -283,10 +242,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
         fragments.emplace_back(std::move(molFrags));
       }
     }
-    //    std::cout << "Number of valid splits : " << fragments.size() <<
-    //    std::endl;
   }
-  //  std::cout << "Fragments size : " << fragments.size() << std::endl;
   return fragments;
 }
 

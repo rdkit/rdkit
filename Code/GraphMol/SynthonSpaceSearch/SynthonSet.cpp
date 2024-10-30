@@ -7,6 +7,20 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+// This file contains an implementation of synthonspace substructure search
+// similar to that described in
+// 'Fast Substructure Search in Combinatorial Library Spaces',
+// Thomas Liphardt and Thomas Sander,
+// J. Chem. Inf. Model. 2023, 63, 16, 5133–5141
+// https://doi.org/10.1021/acs.jcim.3c00290
+//
+// The algorithm allows the substructure searching of a very large library
+// of structures that is described in synthon format (such as Enamine REAL)
+// without enumerating the individual structures during the search process.
+//
+// It is not a direct implementation of the published algorithm, as,
+// for example, it uses a different fingerprint for the initial synthon
+// screening.
 
 #include <regex>
 
@@ -19,11 +33,11 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
-const std::vector<std::shared_ptr<ROMol>> &ReactionSet::connectorRegions()
+const std::vector<std::shared_ptr<ROMol>> &SynthonSet::connectorRegions()
     const {
   if (d_connectorRegions.empty()) {
     std::set<std::string> smis;
-    for (const auto &rset : d_reagents) {
+    for (const auto &rset : d_synthons) {
       for (const auto &r : rset) {
         for (const auto &cr : r->connRegions()) {
           auto smi = MolToSmiles(*cr);
@@ -37,7 +51,7 @@ const std::vector<std::shared_ptr<ROMol>> &ReactionSet::connectorRegions()
   return d_connectorRegions;
 }
 
-const std::unique_ptr<ExplicitBitVect> &ReactionSet::connRegFP() const {
+const std::unique_ptr<ExplicitBitVect> &SynthonSet::connRegFP() const {
   if (!d_connRegFP) {
     if (!connectorRegions().empty()) {
       d_connRegFP.reset(PatternFingerprintMol(*connectorRegions().front()));
@@ -53,7 +67,7 @@ const std::unique_ptr<ExplicitBitVect> &ReactionSet::connRegFP() const {
   return d_connRegFP;
 }
 
-void ReactionSet::writeToDBStream(std::ostream &os) const {
+void SynthonSet::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_id);
   streamWrite(os, connectorRegions().size());
   for (const auto &cr : connectorRegions()) {
@@ -69,8 +83,8 @@ void ReactionSet::writeToDBStream(std::ostream &os) const {
       streamWrite(os, false);
     }
   }
-  streamWrite(os, d_reagents.size());
-  for (const auto &rs : d_reagents) {
+  streamWrite(os, d_synthons.size());
+  for (const auto &rs : d_synthons) {
     streamWrite(os, rs.size());
     for (const auto &r : rs) {
       r->writeToDBStream(os);
@@ -78,7 +92,7 @@ void ReactionSet::writeToDBStream(std::ostream &os) const {
   }
 }
 
-void ReactionSet::readFromDBStream(std::istream &is) {
+void SynthonSet::readFromDBStream(std::istream &is) {
   streamRead(is, d_id, 0);
   size_t numConnRegs = 3;
   streamRead(is, numConnRegs);
@@ -100,30 +114,30 @@ void ReactionSet::readFromDBStream(std::istream &is) {
   }
   size_t numRS;
   streamRead(is, numRS);
-  d_reagents.clear();
+  d_synthons.clear();
   for (size_t i = 0; i < numRS; ++i) {
     size_t numR;
     streamRead(is, numR);
-    d_reagents.push_back(std::vector<std::unique_ptr<Reagent>>());
+    d_synthons.push_back(std::vector<std::unique_ptr<Synthon>>());
     for (size_t j = 0; j < numR; ++j) {
-      d_reagents[i].emplace_back(new Reagent);
-      d_reagents[i][j]->readFromDBStream(is);
+      d_synthons[i].emplace_back(new Synthon);
+      d_synthons[i][j]->readFromDBStream(is);
     }
   }
 }
 
-void ReactionSet::addReagent(int reagentSetNum, const std::string &smiles,
-                             const std::string &reagentId) {
-  if (static_cast<size_t>(reagentSetNum) >= d_reagents.size()) {
-    for (size_t i = d_reagents.size();
+void SynthonSet::addSynthon(int reagentSetNum, const std::string &smiles,
+                            const std::string &reagentId) {
+  if (static_cast<size_t>(reagentSetNum) >= d_synthons.size()) {
+    for (size_t i = d_synthons.size();
          i < static_cast<size_t>(reagentSetNum) + 1; ++i) {
-      d_reagents.push_back(std::vector<std::unique_ptr<Reagent>>());
+      d_synthons.push_back(std::vector<std::unique_ptr<Synthon>>());
     }
   }
-  d_reagents[reagentSetNum].emplace_back(new Reagent(smiles, reagentId));
+  d_synthons[reagentSetNum].emplace_back(new Synthon(smiles, reagentId));
 }
 
-void ReactionSet::assignConnectorsUsed() {
+void SynthonSet::assignConnectorsUsed() {
   const static std::vector<std::regex> connRegexs{
       std::regex(R"(\[1\*\])"), std::regex(R"(\[2\*\])"),
       std::regex(R"(\[3\*\])"), std::regex(R"(\[4\*\])")};
@@ -131,13 +145,13 @@ void ReactionSet::assignConnectorsUsed() {
   // Remove any empty reagent sets.  This most often happens if the
   // synthon number in the reaction starts from 1, not 0.  Idorsia
   // use 0, the stuff from ChemSpace uses 1.
-  d_reagents.erase(
-      remove_if(d_reagents.begin(), d_reagents.end(),
-                [&](const std::vector<std::unique_ptr<Reagent>> &r) -> bool {
+  d_synthons.erase(
+      remove_if(d_synthons.begin(), d_synthons.end(),
+                [&](const std::vector<std::unique_ptr<Synthon>> &r) -> bool {
                   return r.empty();
                 }),
-      d_reagents.end());
-  for (auto &reagSet : d_reagents) {
+      d_synthons.end());
+  for (auto &reagSet : d_synthons) {
     for (auto &reag : reagSet) {
       for (size_t i = 0; i < 4; ++i) {
         if (std::regex_search(reag->smiles(), connRegexs[i])) {
@@ -148,12 +162,12 @@ void ReactionSet::assignConnectorsUsed() {
   }
 }
 
-const std::vector<int> &ReactionSet::numConnectors() const {
+const std::vector<int> &SynthonSet::numConnectors() const {
   if (d_numConnectors.empty()) {
     // It should be the case that all synthons in a synthon set
     // have the same number of connections, so just do the 1st
     // one of each.
-    for (const auto &reagSet : d_reagents) {
+    for (const auto &reagSet : d_synthons) {
       d_numConnectors.push_back(
           details::countConnections(reagSet.front()->smiles()));
     }
