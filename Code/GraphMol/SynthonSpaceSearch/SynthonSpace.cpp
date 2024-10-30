@@ -24,17 +24,17 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/HyperspaceSearch/Hyperspace.h>
-#include <GraphMol/HyperspaceSearch/HyperspaceSubstructure_details.h>
-#include <GraphMol/HyperspaceSearch/ReactionSet.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
-namespace RDKit::HyperspaceSearch {
+namespace RDKit::SynthonSpaceSearch {
 
-long Hyperspace::numProducts() const {
+long SynthonSpace::numProducts() const {
   long totSize = 0;
   for (const auto &reaction : d_reactions) {
     const auto &rxn = reaction.second;
@@ -47,8 +47,8 @@ long Hyperspace::numProducts() const {
   return totSize;
 }
 
-SubstructureResults Hyperspace::substructureSearch(
-    const ROMol &query, HyperspaceSearchParams params) {
+SubstructureResults SynthonSpace::substructureSearch(
+    const ROMol &query, SynthonSpaceSearchParams params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
 
   if (params.randomSample) {
@@ -70,28 +70,28 @@ SubstructureResults Hyperspace::substructureSearch(
   //      std::cout << MolToSmiles(*f) << std::endl;
   //    }
   //  }
-  std::vector<HyperspaceHitSet> allHits;
+  std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   for (auto &fragSet : fragments) {
     auto theseHits = searchFragSet(fragSet);
     if (!theseHits.empty()) {
       totHits += std::accumulate(
           theseHits.begin(), theseHits.end(), 0,
-          [&](const size_t prevVal, const HyperspaceHitSet &hs) -> size_t {
+          [&](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
             return prevVal + hs.numHits;
           });
       allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
     }
   }
-  std::sort(
-      allHits.begin(), allHits.end(),
-      [&](const HyperspaceHitSet &hs1, const HyperspaceHitSet &hs2) -> bool {
-        if (hs1.reactionId == hs2.reactionId) {
-          return hs1.numHits < hs2.numHits;
-        } else {
-          return hs1.reactionId < hs2.reactionId;
-        }
-      });
+  std::sort(allHits.begin(), allHits.end(),
+            [&](const SynthonSpaceHitSet &hs1,
+                const SynthonSpaceHitSet &hs2) -> bool {
+              if (hs1.reactionId == hs2.reactionId) {
+                return hs1.numHits < hs2.numHits;
+              } else {
+                return hs1.reactionId < hs2.reactionId;
+              }
+            });
 
   if (params.buildHits) {
     // Keep track of the result names so we can weed out duplicates by
@@ -428,9 +428,9 @@ bool checkConnectorRegions(
 }
 }  // namespace
 
-std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
+std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet) {
-  std::vector<HyperspaceHitSet> results;
+  std::vector<SynthonSpaceHitSet> results;
 
   auto pattFPs = makePatternFPs(fragSet);
   std::vector<std::vector<std::unique_ptr<ROMol>>> connRegs;
@@ -523,7 +523,7 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
             //                        << std::endl;
             //            }
             results.push_back(
-                HyperspaceHitSet{reaction->id(), theseReagents, numHits});
+                SynthonSpaceHitSet{reaction->id(), theseReagents, numHits});
           }
         }
       }
@@ -533,7 +533,7 @@ std::vector<HyperspaceHitSet> Hyperspace::searchFragSet(
   return results;
 }
 
-void Hyperspace::readTextFile(const std::string &inFile) {
+void SynthonSpace::readTextFile(const std::string &inFile) {
   d_fileName = inFile;
   std::ifstream ifs(d_fileName);
   std::string firstLine;
@@ -555,7 +555,7 @@ void Hyperspace::readTextFile(const std::string &inFile) {
     }
   }
   if (format == -1) {
-    throw std::runtime_error("Bad format for hyperspace file " + d_fileName);
+    throw std::runtime_error("Bad format for SynthonSpace file " + d_fileName);
   }
   std::string nextLine;
   int lineNum = 1;
@@ -567,8 +567,9 @@ void Hyperspace::readTextFile(const std::string &inFile) {
     }
     auto nextReag = splitLine(nextLine, regexz);
     if (nextReag.size() < 4) {
-      throw std::runtime_error("Bad format for hyperspace file " + d_fileName +
-                               " on line " + std::to_string(lineNum));
+      throw std::runtime_error("Bad format for SynthonSpace file " +
+                               d_fileName + " on line " +
+                               std::to_string(lineNum));
     }
     //    std::cout << nextReag[0] << " : " << nextReag[1] << std::endl;
     if (auto it = d_reactions.find(nextReag[3]); it == d_reactions.end()) {
@@ -594,7 +595,7 @@ void Hyperspace::readTextFile(const std::string &inFile) {
   }
 }
 
-void Hyperspace::writeDBFile(const std::string &outFile) const {
+void SynthonSpace::writeDBFile(const std::string &outFile) const {
   std::ofstream os(outFile, std::fstream::binary | std::fstream::trunc);
   streamWrite(os, d_reactions.size());
   for (const auto &rs : d_reactions) {
@@ -603,7 +604,7 @@ void Hyperspace::writeDBFile(const std::string &outFile) const {
   os.close();
 }
 
-void Hyperspace::readDBFile(const std::string &inFile) {
+void SynthonSpace::readDBFile(const std::string &inFile) {
   d_fileName = inFile;
   try {
     std::ifstream is(inFile, std::fstream::binary);
@@ -620,7 +621,7 @@ void Hyperspace::readDBFile(const std::string &inFile) {
   }
 }
 
-void Hyperspace::summarise(std::ostream &os) const {
+void SynthonSpace::summarise(std::ostream &os) const {
   os << "Read from file " << d_fileName << "\n"
      << "Number of reactions : " << d_reactions.size() << "\n";
   size_t totSize = 0;
@@ -635,7 +636,7 @@ void Hyperspace::summarise(std::ostream &os) const {
     }
     totSize += thisSize;
   }
-  os << "Approximate number of molecules in hyperspace : " << totSize
+  os << "Approximate number of molecules in SynthonSpace : " << totSize
      << std::endl;
 }
 
@@ -669,11 +670,12 @@ struct Stepper {
 };
 }  // namespace
 
-void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
-                           const ROMol &query,
-                           const HyperspaceSearchParams &params, size_t totHits,
-                           std::set<std::string> &resultsNames,
-                           std::vector<std::unique_ptr<ROMol>> &results) {
+void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
+                             const ROMol &query,
+                             const SynthonSpaceSearchParams &params,
+                             size_t totHits,
+                             std::set<std::string> &resultsNames,
+                             std::vector<std::unique_ptr<ROMol>> &results) {
   if (hitsets.empty()) {
     return;
   }
@@ -751,7 +753,7 @@ void Hyperspace::buildHits(const std::vector<HyperspaceHitSet> &hitsets,
   }
 }
 
-std::vector<std::vector<ROMol *>> Hyperspace::getReagentsToUse(
+std::vector<std::vector<ROMol *>> SynthonSpace::getReagentsToUse(
     const std::vector<boost::dynamic_bitset<>> &reagentsToUse,
     const std::string &reaction_id) const {
   if (const auto &it = d_reactions.find(reaction_id); it == d_reactions.end()) {
@@ -771,4 +773,4 @@ std::vector<std::vector<ROMol *>> Hyperspace::getReagentsToUse(
   }
   return reags;
 }
-}  // namespace RDKit::HyperspaceSearch
+}  // namespace RDKit::SynthonSpaceSearch

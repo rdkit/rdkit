@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 
-#ifndef RDKIT_HYPERSPACE_H
-#define RDKIT_HYPERSPACE_H
+#ifndef RDKIT_SYNTHONSPACE_H
+#define RDKIT_SYNTHONSPACE_H
 
 #include <map>
 #include <random>
@@ -19,18 +19,18 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/HyperspaceSearch/ReactionSet.h>
-#include <GraphMol/HyperspaceSearch/SubstructureResults.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
+#include <GraphMol/SynthonSpaceSearch/SubstructureResults.h>
 
 namespace RDKit {
 class ROMol;
 
-namespace HyperspaceSearch {
+namespace SynthonSpaceSearch {
 
-struct RDKIT_HYPERSPACESEARCH_EXPORT HyperspaceSearchParams {
+struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
   int maxBondSplits{3};  // The maximum number of bonds to break in the query.
                          // It should be no more than 1 less than the maximum
-                         // number of Synthon sets in Hyperspace.  More than
+                         // number of Synthon sets in SynthonSpace.  More than
                          // that doesn't matter, but will slow the search down
                          // to no good effect.
   long maxHits{1000};    // The maximum number of hits to return.  Use -1 for
@@ -48,16 +48,16 @@ struct RDKIT_HYPERSPACESEARCH_EXPORT HyperspaceSearchParams {
 
 // Holds the information about a set of hits.  The molecules can be built
 // by making all combinations of reagents, one taken from each reagent set.
-struct RDKIT_HYPERSPACESEARCH_EXPORT HyperspaceHitSet {
+struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   std::string reactionId;
   std::vector<boost::dynamic_bitset<>> reagsToUse;
   size_t numHits{0};
 };
 
-class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
+class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  public:
-  // Create the hyperspace from a file in the correct format.
-  explicit Hyperspace() = default;
+  // Create the synthonspace from a file in the correct format.
+  explicit SynthonSpace() = default;
 
   int numReactions() const { return d_reactions.size(); }
   const std::map<std::string, std::unique_ptr<ReactionSet>> &reactions() const {
@@ -66,7 +66,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   long numProducts() const;
 
   // Perform a substructure search with the given query molecule across
-  // the hyperspace library.  Duplicate SMILES strings produced by different
+  // the synthonspace library.  Duplicate SMILES strings produced by different
   // reactions will be returned.
   /*!
    *
@@ -76,7 +76,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
    */
   SubstructureResults substructureSearch(
       const ROMol &query,
-      HyperspaceSearchParams params = HyperspaceSearchParams());
+      SynthonSpaceSearchParams params = SynthonSpaceSearchParams());
 
   // Search this particular fragmented molecule against the reactions.  The
   // fragments should be from 1 splitting, so between 1 and 4 members.
@@ -86,9 +86,9 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   /*!
    *
    * @param fragSet : molecule fragments for the search
-   * @return : vector of HyperspaceHitSet objects.
+   * @return : vector of SynthonSpaceHitSet objects.
    */
-  std::vector<HyperspaceHitSet> searchFragSet(
+  std::vector<SynthonSpaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet);
 
   /*!
@@ -129,7 +129,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   void writeDBFile(const std::string &outFile) const;
   void readDBFile(const std::string &inFile);
 
-  // Write a summary of the Hyperspace to given stream.
+  // Write a summary of the SynthonSpace to given stream.
   void summarise(std::ostream &os) const;
 
  private:
@@ -144,8 +144,8 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
   // query.  totHits is the maximum number of hits that ar possible from
   // the hitsets, including duplicates.  Duplicates by name are not returned,
   // but duplicate SMILES from different reactions will be.
-  void buildHits(const std::vector<HyperspaceHitSet> &hitsets,
-                 const ROMol &query, const HyperspaceSearchParams &params,
+  void buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
+                 const ROMol &query, const SynthonSpaceSearchParams &params,
                  size_t totHits, std::set<std::string> &resultsNames,
                  std::vector<std::unique_ptr<ROMol>> &results);
   // get the subset of reagents for the given reaction to use for this
@@ -155,7 +155,7 @@ class RDKIT_HYPERSPACESEARCH_EXPORT Hyperspace {
       const std::string &reaction_id) const;
 };
 
-}  // namespace HyperspaceSearch
+}  // namespace SynthonSpaceSearch
 }  // namespace RDKit
 
-#endif  // RDKIT_HYPERSPACE_H
+#endif  // RDKIT_SYNTHONSPACE_H

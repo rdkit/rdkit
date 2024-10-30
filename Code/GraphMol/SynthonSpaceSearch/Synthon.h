@@ -21,7 +21,7 @@
 namespace RDKit {
 class Atom;
 
-namespace HyperspaceSearch {
+namespace SynthonSpaceSearch {
 
 class Reagent {
  public:
@@ -66,7 +66,7 @@ class Reagent {
 // fragments overlap.  All dummy atoms given isotope 1 whatever they had before.
 std::unique_ptr<ROMol> getConnRegion(const ROMol &mol);
 
-}  // namespace HyperspaceSearch
+}  // namespace SynthonSpaceSearch
 }  // namespace RDKit
 
 #endif  // RDKIT_REAGENT_H

@@ -19,12 +19,12 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/HyperspaceSearch/Reagent.h>
+#include <GraphMol/SynthonSpaceSearch/Synthon.h>
 
 namespace RDKit {
 class ROMol;
 
-namespace HyperspaceSearch {
+namespace SynthonSpaceSearch {
 class Reagent;
 
 class ReactionSet {
@@ -75,7 +75,7 @@ class ReactionSet {
   mutable std::vector<int> d_numConnectors;
 };
 
-}  // namespace HyperspaceSearch
+}  // namespace SynthonSpaceSearch
 
 }  // namespace RDKit
 

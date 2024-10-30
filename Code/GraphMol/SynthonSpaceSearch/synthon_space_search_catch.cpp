@@ -14,30 +14,30 @@
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/HyperspaceSearch/Hyperspace.h>
-#include <GraphMol/HyperspaceSearch/Reagent.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/Synthon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <catch2/catch_all.hpp>
 
 using namespace RDKit;
-using namespace RDKit::HyperspaceSearch;
+using namespace RDKit::SynthonSpaceSearch;
 
-namespace RDKit::HyperspaceSearch::details {
+namespace RDKit::SynthonSpaceSearch::details {
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits);
-}  // namespace RDKit::HyperspaceSearch::details
+}  // namespace RDKit::SynthonSpaceSearch::details
 
-using namespace RDKit::HyperspaceSearch::details;
+using namespace RDKit::SynthonSpaceSearch::details;
 
 std::string fName = getenv("RDBASE");
 const std::string TXT_LIB_NAME =
-    fName + "/Code/GraphMol/HyperspaceSearch/data/idorsia_toy_space_a.txt";
+    fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.txt";
 const std::string BIN_LIB_NAME =
-    fName + "/Code/GraphMol/HyperspaceSearch/data/idorsia_toy_space.spc";
+    fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space.spc";
 const std::string ENUM_LIB_NAME =
-    fName + "/Code/GraphMol/HyperspaceSearch/data/idorsia_toy_space_enum.smi";
+    fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_enum.smi";
 
 std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
     const std::string &smiFile = ENUM_LIB_NAME) {
@@ -87,16 +87,16 @@ TEST_CASE("Test splits 1", "[Test splits 1]") {
 
 TEST_CASE("Amide 1", "[Amide 1]") {
   std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/amide_space.txt";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt";
   std::string enumLibName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/amide_space_enum.smi";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_enum.smi";
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
-  HyperspaceSearchParams params;
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  SynthonSpaceSearchParams params;
   params.maxBondSplits = 2;
-  auto results = hyperspace.substructureSearch(*queryMol, params);
+  auto results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.hitMolecules().size() == 2);
   std::set<std::string> resSmi;
   for (const auto &r : results.hitMolecules()) {
@@ -119,23 +119,23 @@ TEST_CASE("Amide 1", "[Amide 1]") {
 
 TEST_CASE("Urea 1", "[Urea 1]") {
   std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_space.txt";
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_space.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
 #if 1
   SECTION("Single fragged molecule") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
     fragSet.emplace_back("O=C(NC1COC1)[1*]"_smiles);
     fragSet.emplace_back("O=C(Nc1c(CN[1*])cc[s]1)[2*]"_smiles);
     fragSet.emplace_back("Fc1nccnc1[2*]"_smiles);
-    auto results = hyperspace.searchFragSet(fragSet);
+    auto results = synthonspace.searchFragSet(fragSet);
     CHECK(results.size() == 1);
   }
 #endif
 #if 1
   SECTION("Single molecule with fragging") {
     auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol);
+    auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.hitMolecules().size() == 2);
   }
 #endif
@@ -143,28 +143,28 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 
 TEST_CASE("Simple query 1", "[Simple query 1]") {
   std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
-//  hyperspace.readTextFile(TXT_LIB_NAME);
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+//  synthonspace.readTextFile(TXT_LIB_NAME);
 #if 1
   SECTION("Single fragged molecule") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
     fragSet.emplace_back("c1ccccc1[1*]"_smiles);
     fragSet.emplace_back("C1CCCN1C(=O)[1*]"_smiles);
-    auto results = hyperspace.searchFragSet(fragSet);
+    auto results = synthonspace.searchFragSet(fragSet);
     CHECK(results.size() == 1);
     CHECK(results.front().numHits == 220);
   }
 #endif
 #if 1
   SECTION("Binary File") {
-    Hyperspace hyperspace;
-    hyperspace.readDBFile(BIN_LIB_NAME);
+    SynthonSpace synthonspace;
+    synthonspace.readDBFile(BIN_LIB_NAME);
     // should give 220 hits for urea-3
     const auto start{std::chrono::steady_clock::now()};
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol);
+    auto results = synthonspace.substructureSearch(*queryMol);
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{end - start};
     std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -178,7 +178,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
       // should give 220 hits for urea-3
       const auto start{std::chrono::steady_clock::now()};
       auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-      auto results = hyperspace.substructureSearch(*queryMol);
+      auto results = synthonspace.substructureSearch(*queryMol);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "1 Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -188,7 +188,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     {
       const auto start{std::chrono::steady_clock::now()};
       auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-      auto results = hyperspace.substructureSearch(*queryMol);
+      auto results = synthonspace.substructureSearch(*queryMol);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "2 Elapsed time : " << elapsed_seconds.count() << std::endl;
@@ -200,12 +200,12 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
 
 TEST_CASE("Triazole", "[Triazole]") {
   std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   std::string enumLibName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space_enum.smi";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space_enum.smi";
 
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
 
 #if 1
   SECTION("Fragged Mol") {
@@ -214,7 +214,7 @@ TEST_CASE("Triazole", "[Triazole]") {
     REQUIRE(queryMol);
     std::vector<std::unique_ptr<ROMol>> queryFrags;
     MolOps::getMolFrags(*queryMol, queryFrags, false);
-    auto results = hyperspace.searchFragSet(queryFrags);
+    auto results = synthonspace.searchFragSet(queryFrags);
     CHECK(results.size() == 1);
     CHECK(results.front().numHits == 4);
   }
@@ -223,7 +223,7 @@ TEST_CASE("Triazole", "[Triazole]") {
   SECTION("Full Molecule") {
     auto queryMol = "OCc1ncnn1"_smarts;
     REQUIRE(queryMol);
-    auto results = hyperspace.substructureSearch(*queryMol);
+    auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.hitMolecules().size() == 8);
     std::set<std::string> resSmi;
     for (const auto &r : results.hitMolecules()) {
@@ -248,16 +248,16 @@ TEST_CASE("Triazole", "[Triazole]") {
 
 TEST_CASE("Quinoline", "[Quinoline]") {
   std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/doebner_miller_space.txt";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space.txt";
   std::string enumLibName =
       fName +
-      "/Code/GraphMol/HyperspaceSearch/data/doebner_miller_space_enum.smi";
+      "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space_enum.smi";
 
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
   {
     auto queryMol = "c1ccccn1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol);
+    auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.hitMolecules().size() == 12);
     std::set<std::string> resSmi;
     for (const auto &r : results.hitMolecules()) {
@@ -285,22 +285,22 @@ TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {
   // Making sure it works when the query is a complete substructure of 1
   // of the reagents in the library, so the whole library is a hit.
   std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
   {
     auto queryMol = "N1CCCC1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol);
+    auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.hitMolecules().size() == 8);
   }
   {
     auto queryMol = "N1CCC(C(F)(F)F)C1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol);
+    auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.hitMolecules().size() == 4);
   }
   {
     auto queryMol = "C1CCCCC1"_smiles;
-    auto results = hyperspace.substructureSearch(*queryMol);
+    auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.hitMolecules().size() == 0);
   }
 }
@@ -326,29 +326,29 @@ TEST_CASE("Connector Regions", "[Connector Regions]") {
 
   SECTION("Built from file") {
     std::string libName =
-        fName + "/Code/GraphMol/HyperspaceSearch/data/urea_3.txt";
-    Hyperspace hyperspace;
-    hyperspace.readTextFile(libName);
-    const auto &rs = hyperspace.reactions().begin();
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
+    SynthonSpace synthonspace;
+    synthonspace.readTextFile(libName);
+    const auto &rs = synthonspace.reactions().begin();
     CHECK(rs->second->connectorRegions().size() == 30);
   }
 }
 
 TEST_CASE("DB Writer", "[DB Writer]") {
   std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/doebner_miller_space.txt";
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
-  CHECK(hyperspace.numReactions() == 1);
-  hyperspace.writeDBFile("doebner_miller_space.spc");
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  CHECK(synthonspace.numReactions() == 1);
+  synthonspace.writeDBFile("doebner_miller_space.spc");
 
-  Hyperspace newHyperspace;
-  newHyperspace.readDBFile("doebner_miller_space.spc");
-  auto it = newHyperspace.reactions().find("doebner-miller-quinoline");
-  CHECK(it != newHyperspace.reactions().end());
+  SynthonSpace newsynthonspace;
+  newsynthonspace.readDBFile("doebner_miller_space.spc");
+  auto it = newsynthonspace.reactions().find("doebner-miller-quinoline");
+  CHECK(it != newsynthonspace.reactions().end());
   const auto &irxn = it->second;
   const auto &orxn =
-      hyperspace.reactions().find("doebner-miller-quinoline")->second;
+      synthonspace.reactions().find("doebner-miller-quinoline")->second;
   CHECK(irxn->id() == orxn->id());
   CHECK(irxn->connectorRegions().size() == orxn->connectorRegions().size());
   CHECK(*irxn->connRegFP() == *orxn->connRegFP());
@@ -366,15 +366,15 @@ TEST_CASE("Biggy", "[Biggy]") {
   std::string libName = "/Users/david/Projects/FreedomSpace/Syntons_5567.spc";
   std::string enumLibName =
       "/Users/david/Projects/FreedomSpace/Syntons_5567_space_a_enum.smi";
-  Hyperspace hyperspace;
-  hyperspace.readDBFile(libName);
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(libName);
 
 #if 0
   SECTION("Fragged Mol") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
     fragSet.emplace_back("c1ccccc1N[1*]"_smiles);
     fragSet.emplace_back("N1CCC1C(=O)[1*]"_smiles);
-    auto results = hyperspace.searchFragSet(fragSet);
+    auto results = synthonspace.searchFragSet(fragSet);
     CHECK(results.size() == 1);
   }
 #endif
@@ -389,7 +389,7 @@ TEST_CASE("Biggy", "[Biggy]") {
                                         "C(=O)NC(CC)C(=O)N(CC)C"};
     const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
     const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
-    HyperspaceSearchParams params;
+    SynthonSpaceSearchParams params;
     params.maxHits = -1;
     for (size_t i = 0; i < smis.size(); ++i) {
       //      if (i != 2) {
@@ -398,14 +398,14 @@ TEST_CASE("Biggy", "[Biggy]") {
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};
-      auto results = hyperspace.substructureSearch(*queryMol, params);
+      auto results = synthonspace.substructureSearch(*queryMol, params);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
       std::cout << "Number of hits : " << results.hitMolecules().size()
                 << std::endl;
       std::string outFile =
-          std::string("/Users/david/Projects/FreedomSpace/hyperspace_hits_") +
+          std::string("/Users/david/Projects/FreedomSpace/synthonspace_hits_") +
           std::to_string(i) + ".smi";
       std::ofstream of(outFile);
       for (const auto &r : results.hitMolecules()) {
@@ -439,12 +439,12 @@ TEST_CASE("Biggy", "[Biggy]") {
 TEST_CASE("FreedomSpace", "[FreedomSpace]") {
   std::string libName =
       "/Users/david/Projects/FreedomSpace/2023-05_Freedom_synthons.spc";
-  Hyperspace hyperspace;
+  SynthonSpace synthonspace;
   const auto rstart{std::chrono::steady_clock::now()};
-  hyperspace.readDBFile(libName);
+  synthonspace.readDBFile(libName);
   const auto rend{std::chrono::steady_clock::now()};
   const std::chrono::duration<double> elapsed_seconds{rend - rstart};
-  std::cout << "Time to read hyperspace : " << elapsed_seconds.count()
+  std::cout << "Time to read synthonspace : " << elapsed_seconds.count()
             << std::endl;
 
 #if 0
@@ -452,7 +452,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
     std::vector<std::unique_ptr<ROMol>> fragSet;
     fragSet.emplace_back("c1ccccc1N[1*]"_smiles);
     fragSet.emplace_back("N1CCC1C(=O)[1*]"_smiles);
-    auto results = hyperspace.searchFragSet(fragSet);
+    auto results = synthonspace.searchFragSet(fragSet);
     CHECK(results.size() == 1);
   }
 #endif
@@ -473,14 +473,14 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
       std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTT : " << smis[i] << std::endl;
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       const auto start{std::chrono::steady_clock::now()};
-      auto results = hyperspace.substructureSearch(*queryMol);
+      auto results = synthonspace.substructureSearch(*queryMol);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
       std::cout << "Number of hits : " << results.hitMolecules().size()
                 << std::endl;
       std::string outFile =
-          std::string("/Users/david/Projects/FreedomSpace/hyperspace_hits_") +
+          std::string("/Users/david/Projects/FreedomSpace/synthonspace_hits_") +
           std::to_string(i) + ".smi";
       std::ofstream of(outFile);
       for (const auto &r : results.hitMolecules()) {
@@ -497,11 +497,11 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
 TEST_CASE("Small query", "[Small query]") {
   // Making sure it works when the query has fewer bonds than maxBondSplits.
   std::string libName =
-      fName + "/Code/GraphMol/HyperspaceSearch/data/triazole_space.txt";
-  Hyperspace hyperspace;
-  hyperspace.readTextFile(libName);
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
   auto queryMol = "C=CC"_smiles;
-  auto results = hyperspace.substructureSearch(*queryMol);
+  auto results = synthonspace.substructureSearch(*queryMol);
   // The number of results is immaterial, it just matters that the search
   // finished.
   CHECK(results.hitMolecules().size() == 0);
@@ -509,16 +509,16 @@ TEST_CASE("Small query", "[Small query]") {
 
 TEST_CASE("Random Hits", "[Random Hits]") {
   std::string libName = "/Users/david/Projects/FreedomSpace/Syntons_5567.spc";
-  Hyperspace hyperspace;
-  hyperspace.readDBFile(libName);
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(libName);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-  HyperspaceSearchParams params;
+  SynthonSpaceSearchParams params;
   params.maxBondSplits = 2;
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
-  auto results = hyperspace.substructureSearch(*queryMol, params);
+  auto results = synthonspace.substructureSearch(*queryMol, params);
   std::map<std::string, int> libCounts;
   for (const auto &m : results.hitMolecules()) {
     std::string lib(m->getProp<std::string>("_Name").substr(0, 2));
@@ -536,14 +536,14 @@ TEST_CASE("Random Hits", "[Random Hits]") {
 TEST_CASE("Later hits", "[Later Hits]") {
   // Test use of params.hitStart
   std::string libName = "/Users/david/Projects/FreedomSpace/Syntons_5567.spc";
-  Hyperspace hyperspace;
-  hyperspace.readDBFile(libName);
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(libName);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-  HyperspaceSearchParams params;
+  SynthonSpaceSearchParams params;
   params.maxBondSplits = 2;
   params.maxHits = 200;
-  auto results = hyperspace.substructureSearch(*queryMol, params);
+  auto results = synthonspace.substructureSearch(*queryMol, params);
   std::vector<std::string> hitNames1;
   for (const auto &m : results.hitMolecules()) {
     hitNames1.push_back(m->getProp<std::string>("_Name"));
@@ -551,7 +551,7 @@ TEST_CASE("Later hits", "[Later Hits]") {
 
   params.maxHits = 100;
   params.hitStart = 101;
-  results = hyperspace.substructureSearch(*queryMol, params);
+  results = synthonspace.substructureSearch(*queryMol, params);
   std::vector<std::string> hitNames2;
   for (const auto &m : results.hitMolecules()) {
     hitNames2.push_back(m->getProp<std::string>("_Name"));
@@ -563,27 +563,27 @@ TEST_CASE("Later hits", "[Later Hits]") {
   }
 
   params.hitStart = 6780;
-  results = hyperspace.substructureSearch(*queryMol, params);
+  results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.hitMolecules().size() == 6);
 
   params.hitStart = 7000;
-  results = hyperspace.substructureSearch(*queryMol, params);
+  results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.hitMolecules().empty());
 }
 
 TEST_CASE("Complex query", "[Complex query]") {
   std::string libName =
       "/Users/david/Projects/FreedomSpace/2023-05_Freedom_synthons.spc";
-  Hyperspace hyperspace;
-  hyperspace.readDBFile(libName);
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(libName);
 
   auto queryMol = v2::SmilesParse::MolFromSmarts(
       "[$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
   REQUIRE(queryMol);
-  HyperspaceSearchParams params;
+  SynthonSpaceSearchParams params;
   params.maxBondSplits = 2;
   params.maxHits = 1000;
-  auto results = hyperspace.substructureSearch(*queryMol, params);
+  auto results = synthonspace.substructureSearch(*queryMol, params);
   std::cout << "Number of hits : " << results.hitMolecules().size()
             << std::endl;
   std::cout << "Poss num hits : " << results.maxNumResults() << std::endl;

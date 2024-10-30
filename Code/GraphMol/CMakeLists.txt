@@ -84,7 +84,7 @@ add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
 add_subdirectory(RascalMCES)
-add_subdirectory(HyperspaceSearch)
+add_subdirectory(SynthonSpaceSearch)
 
 add_subdirectory(CIPLabeler)
 add_subdirectory(Deprotect)

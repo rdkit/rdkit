@@ -31,7 +31,7 @@
 
 #include <iostream>
 
-#include <GraphMol/HyperspaceSearch/Hyperspace.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 
 int main(int argc, char **argv) {
   if (argc < 3) {
@@ -42,8 +42,8 @@ int main(int argc, char **argv) {
   std::string inFile(argv[1]);
   std::string outFile(argv[2]);
   std::cout << "Converting " << inFile << " to " << outFile << std::endl;
-  RDKit::HyperspaceSearch::Hyperspace hyperspace;
-  hyperspace.readTextFile(inFile);
-  hyperspace.summarise(std::cout);
-  hyperspace.writeDBFile(outFile);
+  RDKit::SynthonSpaceSearch::SynthonSpace synthonspace;
+  synthonspace.readTextFile(inFile);
+  synthonspace.summarise(std::cout);
+  synthonspace.writeDBFile(outFile);
 }

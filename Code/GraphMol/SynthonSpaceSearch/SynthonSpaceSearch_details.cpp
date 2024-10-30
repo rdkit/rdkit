@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// This file contains an implementation of hyperspace substructure search
+// This file contains an implementation of synthonspace substructure search
 // similar to that described in
 // 'Fast Substructure Search in Combinatorial Library Spaces',
 // Thomas Liphardt and Thomas Sander,
@@ -34,15 +34,9 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
-#include <GraphMol/HyperspaceSearch/ReactionSet.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmartsWrite.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
-
-#include "Hyperspace.h"
 
 namespace RDKit {
-namespace HyperspaceSearch {
+namespace SynthonSpaceSearch {
 namespace details {
 
 // get a vector of vectors of unsigned ints that are all combinations of
@@ -304,5 +298,5 @@ int countConnections(const std::string &smiles) {
 }
 }  // namespace details
 
-}  // namespace HyperspaceSearch
+}  // namespace SynthonSpaceSearch
 }  // namespace RDKit

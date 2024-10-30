@@ -15,20 +15,20 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/HyperspaceSearch/HyperspaceSubstructure_details.h>
-#include <GraphMol/HyperspaceSearch/Reagent.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <GraphMol/SynthonSpaceSearch/Synthon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
-namespace RDKit::HyperspaceSearch {
+namespace RDKit::SynthonSpaceSearch {
 
-Reagent::Reagent(const RDKit::HyperspaceSearch::Reagent &other)
+Reagent::Reagent(const RDKit::SynthonSpaceSearch::Reagent &other)
     : d_smiles(other.d_smiles), d_id(other.d_id) {}
 
-Reagent::Reagent(RDKit::HyperspaceSearch::Reagent &&other)
+Reagent::Reagent(RDKit::SynthonSpaceSearch::Reagent &&other)
     : d_smiles(std::move(other.d_smiles)), d_id(std::move(other.d_id)) {}
 
-Reagent &Reagent::operator=(const RDKit::HyperspaceSearch::Reagent &other) {
+Reagent &Reagent::operator=(const RDKit::SynthonSpaceSearch::Reagent &other) {
   if (this == &other) {
     return *this;
   }
@@ -58,7 +58,7 @@ Reagent &Reagent::operator=(const RDKit::HyperspaceSearch::Reagent &other) {
   return *this;
 }
 
-Reagent &Reagent::operator=(RDKit::HyperspaceSearch::Reagent &&other) {
+Reagent &Reagent::operator=(RDKit::SynthonSpaceSearch::Reagent &&other) {
   if (this == &other) {
     return *this;
   }
@@ -187,4 +187,4 @@ std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
   return molCp;
 }
 
-}  // namespace RDKit::HyperspaceSearch
+}  // namespace RDKit::SynthonSpaceSearch

@@ -12,12 +12,12 @@
 
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/HyperspaceSearch/HyperspaceSubstructure_details.h>
-#include <GraphMol/HyperspaceSearch/ReactionSet.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/StreamOps.h>
 
-namespace RDKit::HyperspaceSearch {
+namespace RDKit::SynthonSpaceSearch {
 
 const std::vector<std::shared_ptr<ROMol>> &ReactionSet::connectorRegions()
     const {
@@ -161,4 +161,4 @@ const std::vector<int> &ReactionSet::numConnectors() const {
   return d_numConnectors;
 }
 
-}  // namespace RDKit::HyperspaceSearch
+}  // namespace RDKit::SynthonSpaceSearch

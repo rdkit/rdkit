@@ -8,13 +8,13 @@
 //  of the RDKit source tree.
 //
 
-#ifndef RDKIT_HYPERSPACE_SUBSTRUCTURERESULTS_H
-#define RDKIT_HYPERSPACE_SUBSTRUCTURERESULTS_H
+#ifndef RDKIT_SYNTHONSPACE_SUBSTRUCTURERESULTS_H
+#define RDKIT_SYNTHONSPACE_SUBSTRUCTURERESULTS_H
 
 #include <GraphMol/ROMol.h>
 
-namespace RDKit::HyperspaceSearch {
-class RDKIT_HYPERSPACESEARCH_EXPORT SubstructureResults {
+namespace RDKit::SynthonSpaceSearch {
+class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
  public:
   explicit SubstructureResults() : d_maxNumResults(0) {}
   SubstructureResults(std::vector<std::unique_ptr<ROMol>> &&mols,
@@ -58,12 +58,12 @@ inline SubstructureResults::SubstructureResults(
 }
 
 inline SubstructureResults::SubstructureResults(
-    const RDKit::HyperspaceSearch::SubstructureResults &other)
+    const RDKit::SynthonSpaceSearch::SubstructureResults &other)
     : d_maxNumResults(other.d_maxNumResults) {
   for (const auto &hm : other.d_hitMolecules) {
     d_hitMolecules.emplace_back(new ROMol(*hm));
   }
 }
-}  // namespace RDKit::HyperspaceSearch
+}  // namespace RDKit::SynthonSpaceSearch
 
 #endif  // RDKIT_SUBSTRUCTURERESULTS_H
