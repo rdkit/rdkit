@@ -130,8 +130,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
   ROMol::OEDGE_ITER beg;
   for (auto &frag : molFrags) {
-    auto buildQueryAtom = [](const Atom *atom) -> QueryAtom * {
-      QueryAtom *nqa = new QueryAtom(atom->getAtomicNum());
+    auto buildQueryAtom = [](const Atom *atom) -> std::unique_ptr<QueryAtom> {
+      std::unique_ptr<QueryAtom> nqa(new QueryAtom(atom->getAtomicNum()));
       if (!nqa->getAtomicNum()) {
         nqa->setIsotope(atom->getIsotope());
         nqa->expandQuery(makeAtomIsotopeQuery(atom->getIsotope()));
@@ -154,17 +154,17 @@ void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
           auto aromBonds = getContiguousAromaticBonds(*frag, fbond);
           for (const auto &ab : aromBonds) {
             auto qab = qmol->getBondWithIdx(ab->getIdx());
-            QueryBond *qbond = new QueryBond(*qab);
+            std::unique_ptr<QueryBond> qbond(new QueryBond(*qab));
             qbond->setQuery(makeSingleOrDoubleOrAromaticBondQuery());
-            qmol->replaceBond(qab->getIdx(), qbond);
+            qmol->replaceBond(qab->getIdx(), qbond.get());
 
             auto qba = qmol->getAtomWithIdx(ab->getBeginAtomIdx());
-            QueryAtom *nqba = buildQueryAtom(qba);
-            qmol->replaceAtom(ab->getBeginAtomIdx(), nqba);
+            auto nqba = buildQueryAtom(qba);
+            qmol->replaceAtom(ab->getBeginAtomIdx(), nqba.get());
 
             auto qea = qmol->getAtomWithIdx(ab->getEndAtomIdx());
-            QueryAtom *nqea = buildQueryAtom(qea);
-            qmol->replaceAtom(ab->getEndAtomIdx(), nqea);
+            auto nqea = buildQueryAtom(qea);
+            qmol->replaceAtom(ab->getEndAtomIdx(), nqea.get());
           }
           break;
         }
