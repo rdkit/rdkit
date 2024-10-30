@@ -1,8 +1,9 @@
 steps:
-# - bash: |
-#     wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX$(target_platform).sdk.tar.xz
-#     tar Jxvf MacOSX$(target_platform).sdk.tar.xz
-#   displayName: Install MacOSX $(target_platform) SDK
+- bash: | 
+    export CONDA=/tmp/miniforge
+    wget https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/Miniforge3-24.9.0-0-MacOSX-x86_64.sh
+    bash Miniforge3-24.9.0-0-MacOSX-x86_64.sh -b -p ${CONDA}
+  displayName: install conda
 - script: |
     echo "Removing homebrew from Azure to avoid conflicts."
     curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
@@ -11,6 +12,7 @@ steps:
     rm ~/uninstall_homebrew
   displayName: Remove homebrew
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     mkdir -p $HOME/.matplotlib
@@ -25,6 +27,7 @@ steps:
     conda activate rdkit_build
   displayName: Setup build environment
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
@@ -51,6 +54,7 @@ steps:
     -DRDK_TEST_MULTITHREADED=ON
   displayName: Configure build (Run CMake)
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
@@ -59,6 +63,7 @@ steps:
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export RDBASE=`pwd`
