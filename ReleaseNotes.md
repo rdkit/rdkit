@@ -11,6 +11,8 @@ Monat, Dan Nealschneider, Timothy Palpant, Yakov Pechersky, Julianus Pfeuffer,
 Ricardo Rodriguez, Fio Ruggiu, Eva Snow, Paolo Tosco, Kollin Trujillo,
 UENO, M., bzoracler, esiaero
 
+- HasPropWithValueQueryBase used RDKit::Dict::Pair to return data used for serializing object in a molecule  pickle.  This has been changed to RDKit::PairHolder which automatically manages memory.
+
 ## New Features and Enhancements:
   - Fix canonicalization of stereogroups
  (github pull #7041 from tadhurst-cdd)
