@@ -1,6 +1,6 @@
 steps:
 - bash: | 
-    export CONDA=$(pwd)/miniforge
+    export CONDA=/tmp/miniforge
     wget https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/Miniforge3-24.9.0-0-MacOSX-x86_64.sh
     bash Miniforge3-24.9.0-0-MacOSX-x86_64.sh -b -p ${CONDA}
   displayName: install conda
@@ -12,7 +12,7 @@ steps:
     rm ~/uninstall_homebrew
   displayName: Remove homebrew
 - bash: |
-    export CONDA=$(pwd)/miniforge
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     mkdir -p $HOME/.matplotlib
@@ -30,7 +30,7 @@ steps:
         jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval
   displayName: Setup build environment
 - bash: |
-    export CONDA=$(pwd)/miniforge
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
@@ -63,7 +63,7 @@ steps:
     -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform)
   displayName: Configure build (Run CMake)
 - bash: |
-    export CONDA=$(pwd)/miniforge
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
@@ -72,7 +72,7 @@ steps:
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
-    export CONDA=$(pwd)/miniforge
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export RDBASE=`pwd`
