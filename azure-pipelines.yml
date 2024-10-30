@@ -39,7 +39,7 @@ jobs:
   variables:
     compiler: clangxx_osx-64=18.1
     compiler_version: 15.0
-    boost_version: 1.84.0
+    boost_version: 1.84
     number_of_cores: sysctl -n hw.ncpu
     target_platform: 14.5
     python: python=3.11
@@ -50,9 +50,9 @@ jobs:
   pool:
     vmImage: macos-14
   variables:
-    compiler: clangxx_osx-64
+    compiler: clangxx_osx-64=18.1
     compiler_version: 15.0
-    boost_version: 1.84.0
+    boost_version: 1.86
     number_of_cores: sysctl -n hw.ncpu
     target_platform: 14.5
   steps:
