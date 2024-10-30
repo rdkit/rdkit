@@ -526,21 +526,21 @@ class TestCase(unittest.TestCase):
     class NumAtoms(Descriptors.PropertyFunctor):
 
       def __init__(self):
-        Descriptors.PropertyFunctor.__init__(self, "NumAtoms", "1.0.0")
+        Descriptors.PropertyFunctor.__init__(self, "CustomNumAtoms", "1.0.0")
 
       def __call__(self, mol):
         return mol.GetNumAtoms()
 
     numAtoms = NumAtoms()
     rdMD.Properties.RegisterProperty(numAtoms)
-    props = rdMD.Properties(["NumAtoms"])
+    props = rdMD.Properties(["CustomNumAtoms"])
     self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
 
-    self.assertTrue("NumAtoms" in rdMD.Properties.GetAvailableProperties())
+    self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
     # check memory
     del numAtoms
     self.assertEqual(1, props.ComputeProperties(Chem.MolFromSmiles("C"))[0])
-    self.assertTrue("NumAtoms" in rdMD.Properties.GetAvailableProperties())
+    self.assertTrue("CustomNumAtoms" in rdMD.Properties.GetAvailableProperties())
 
     m = Chem.MolFromSmiles("c1ccccc1")
     properties = rdMD.Properties()
@@ -709,7 +709,7 @@ class TestCase(unittest.TestCase):
       bcut2 = rdMD.BCUT2D(m, "bad_prop")
       self.assertTrue(0, "Failed to handle bad prop (not a double)")
     except RuntimeError as e:
-      self.assertTrue(re.search(r"[B,b]ad any[\ ,_]cast",str(e)))
+      self.assertTrue(re.search(r"[B,b]ad any[\ ,_]cast", str(e)))
 
   def testOxidationNumbers(self):
     # majority of tests are in the C++ layer.  These are just to make
@@ -741,7 +741,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(abs(default.GetPackingDensity() - 0.48303) < 0.05)
 
     # test set depth and radius
-    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False, probeRadius=1.6, depth=6)
+    depthrad = rdMD.DoubleCubicLatticeVolume(mol1, isProtein=True, includeLigand=False,
+                                             probeRadius=1.6, depth=6)
 
     self.assertTrue(abs(depthrad.GetSurfaceArea() - 8186.06) < 0.05)
     self.assertTrue(abs(depthrad.GetVolume() - 33464.5) < 0.05)
@@ -757,11 +758,11 @@ class TestCase(unittest.TestCase):
     self.assertTrue(abs(withlig.GetVDWVolume() - 15155.7) < 0.05)
     self.assertTrue(abs(withlig.GetCompactness() - 1.67037) < 0.05)
     self.assertTrue(abs(withlig.GetPackingDensity() - 0.48532) < 0.05)
-    
+
     fname2 = str(Path(rdbase) / 'Code' / 'GraphMol' / 'Descriptors' / 'test_data' / 'TZL_model.sdf')
     suppl = Chem.SDMolSupplier(fname2)
     for mol in suppl:
-        mol2 = mol
+      mol2 = mol
 
     # test from SDF file with defaults
     sdf = rdMD.DoubleCubicLatticeVolume(mol2, isProtein=False)
@@ -769,6 +770,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(abs(sdf.GetSurfaceArea() - 296.466) < 0.05)
     self.assertTrue(abs(sdf.GetVolume() - 411.972) < 0.05)
     self.assertTrue(abs(sdf.GetVDWVolume() - 139.97) < 0.05)
+
 
 if __name__ == '__main__':
   unittest.main()
