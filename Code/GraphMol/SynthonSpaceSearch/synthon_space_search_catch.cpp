@@ -477,7 +477,6 @@ TEST_CASE("Complex query", "[Complex query]") {
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
-  synthonspace.summarise(std::cout);
 
   auto queryMol = v2::SmilesParse::MolFromSmarts(
       "[$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
