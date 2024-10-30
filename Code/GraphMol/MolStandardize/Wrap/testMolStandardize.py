@@ -1780,6 +1780,38 @@ M  END
     self.assertEqual(result.stage, rdMolStandardize.PipelineStage.COMPLETED)
     self.assertEqual(result.status, rdMolStandardize.PipelineStatus.NO_EVENT)
 
+  def testCustomScoreFuncs(self):
+    smi = "CC\\C=C(/O)[C@@H](C)C(C)=O"
+    m = Chem.MolFromSmiles(smi)
+    self.assertEqual(rdMolStandardize.ScoreRings(m), 0)
+    self.assertEqual(rdMolStandardize.ScoreHeteroHs(m), 0)
+    self.assertEqual(rdMolStandardize.ScoreSubstructs(m), 6)
 
+    # check the default terms
+    terms = rdMolStandardize.GetDefaultTautomerSubstructs()
+    for term, (name, smarts, score) in zip(terms, [["benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
+                                                    25],
+                                                   ["oxim", "[#6]=[N][OH]", 4],
+                                                   ["C=O", "[#6]=,:[#8]", 2],
+                                                   ["N=O", "[#7]=,:[#8]", 2],
+                                                   ["P=O", "[#15]=,:[#8]", 2],
+                                                   ["C=hetero", "[C]=[!#1;!#6]", 1],
+                                                   ["C(=hetero)-hetero", "[C](=[!#1;!#6])[!#1;!#6]", 2],
+                                                   ["aromatic C = exocyclic N", "[c]=!@[N]", -1],
+                                                   ["methyl", "[CX4H3]", 1],
+                                                   ["guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1],
+                                                   ["guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2],
+                                                   ["aci-nitro", "[#6]=[N+]([O-])[OH]", -4]]):
+      self.assertEqual((term.name, term.smarts, term.score), (name, smarts, score))
+
+      # make sure we can pass in our own terms
+      terms = rdMolStandardize.SubstructTermVector()
+      terms.append(rdMolStandardize.SubstructTerm("C=0", "[#6]=,:[#8]", 1000))
+      self.assertEqual(rdMolStandardize.ScoreSubstructs(m, terms), 1000)
+
+      self.assertEqual(rdMolStandardize.ScoreSubstructs(m, rdMolStandardize.GetDefaultTautomerSubstructs()), 6)
+                                          
+    
+    
 if __name__ == "__main__":
   unittest.main()

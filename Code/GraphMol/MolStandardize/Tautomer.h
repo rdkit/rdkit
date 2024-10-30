@@ -35,8 +35,25 @@ typedef RDCatalog::HierarchCatalog<TautomerCatalogEntry, TautomerCatalogParams,
 namespace TautomerScoringFunctions {
 const std::string tautomerScoringVersion = "1.0.0";
 
+struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
+  std::string name;
+  std::string smarts;
+  int score;
+  ROMOL_SPTR matcher;
+  
+  SubstructTerm(std::string aname, std::string asmarts, int ascore);
+  SubstructTerm(const SubstructTerm &rhs) :
+    name(rhs.name), smarts(rhs.smarts), score(rhs.score), matcher(rhs.matcher) {
+  }
+  bool operator==(const SubstructTerm &rhs) const {
+    return name == rhs.name && smarts == rhs.smarts && score == rhs.score;
+  }
+};
+
+RDKIT_MOLSTANDARDIZE_EXPORT const std::vector<SubstructTerm> &getDefaultTautomerSubstructs();
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
-RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(const ROMol &mol);
+RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(const ROMol &mol,
+						const std::vector<SubstructTerm> &terms=getDefaultTautomerSubstructs());
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreHeteroHs(const ROMol &mol);
 
 inline int scoreTautomer(const ROMol &mol) {
