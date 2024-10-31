@@ -277,7 +277,7 @@ bool incidentCyclicMultipleBond(const Atom *at) {
 bool incidentMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   const auto &mol = at->getOwningMol();
-  int deg = at->getDegree() + at->getNumExplicitHs();
+  auto deg = at->getDegree() + at->getNumExplicitHs();
   for (const auto bond : mol.atomBonds(at)) {
     if (!std::lround(bond->getValenceContrib(at))) {
       --deg;

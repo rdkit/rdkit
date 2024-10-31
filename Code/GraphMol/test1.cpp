@@ -732,16 +732,16 @@ void testIssue2381580() {
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 1);
     TEST_ASSERT(m->getAtomWithIdx(0)->getValence(true) +
                     m->getAtomWithIdx(0)->getValence(false) ==
-                rdcast<int>(m->getAtomWithIdx(0)->getTotalValence()));
+                m->getAtomWithIdx(0)->getTotalValence());
     TEST_ASSERT(m->getAtomWithIdx(1)->getValence(true) +
                     m->getAtomWithIdx(1)->getValence(false) ==
-                rdcast<int>(m->getAtomWithIdx(1)->getTotalValence()));
+                m->getAtomWithIdx(1)->getTotalValence());
     TEST_ASSERT(m->getAtomWithIdx(2)->getValence(true) +
                     m->getAtomWithIdx(2)->getValence(false) ==
-                rdcast<int>(m->getAtomWithIdx(2)->getTotalValence()));
+                m->getAtomWithIdx(2)->getTotalValence());
     TEST_ASSERT(m->getAtomWithIdx(3)->getValence(true) +
                     m->getAtomWithIdx(3)->getValence(false) ==
-                rdcast<int>(m->getAtomWithIdx(3)->getTotalValence()));
+                m->getAtomWithIdx(3)->getTotalValence());
     delete m;
   }
 

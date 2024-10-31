@@ -3905,8 +3905,8 @@ TEST_CASE("atom output") {
     ss.str("");
   }
   SECTION("chirality 2") {
-    // same as 
-    // C[Pt@SP2]([H])(F)Cl which is stored internally as 
+    // same as
+    // C[Pt@SP2]([H])(F)Cl which is stored internally as
     // C[Pt@SP3](F)(Cl)[H]
     auto m = "C[Pt@SP2H](F)Cl"_smiles;
     REQUIRE(m);
@@ -4596,7 +4596,7 @@ TEST_CASE("explicit valence handling of transition metals") {
 TEST_CASE("valence handling of atoms with multiple possible valence states") {
   SECTION("basics") {
     // some of these examples are quite silly
-    std::vector<std::pair<std::string, int>> smileses = {
+    std::vector<std::pair<std::string, unsigned int>> smileses = {
         {"C[S-](=O)=O", 5},
         {"C[P-2](C)C", 3},
         {"C[Se-](=O)=O", 5},

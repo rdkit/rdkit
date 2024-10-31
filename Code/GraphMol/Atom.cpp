@@ -312,12 +312,14 @@ int Atom::getExplicitValence() const { return getValence(true); }
 
 int Atom::getImplicitValence() const { return getValence(false); }
 
-int Atom::getValence(bool getExplicit) const {
+unsigned int Atom::getValence(bool getExplicit) const {
   if (!dp_mol) {
     return 0;
   }
   PRECONDITION((!getExplicit || d_explicitValence > -1),
                "getValence() called without call to calcExplicitValence()");
+  PRECONDITION((getExplicit || df_noImplicit || d_implicitValence > -1),
+               "getValence() called without call to calcImplicitValence()");
   if (getExplicit) {
     return d_explicitValence;
   } else {
@@ -326,7 +328,7 @@ int Atom::getValence(bool getExplicit) const {
 }
 
 unsigned int Atom::getTotalValence() const {
-  return static_cast<unsigned int>(getValence(true) + getValence(false));
+  return getValence(true) + getValence(false);
 }
 
 namespace {
@@ -445,19 +447,20 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   }
   return res;
 }
+}  // namespace
 
 // NOTE: this uses the explicitValence, so it will call
 // calculateExplicitValence if it is not set on the given atom
 int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
-  if (atom.getNoImplicit()) {
+  if (atom.df_noImplicit) {
     return 0;
   }
-  auto explicitValence = atom.getValence(true);
+  auto explicitValence = atom.d_explicitValence;
   if (explicitValence == -1) {
     explicitValence = calculateExplicitValence(atom, strict, checkIt);
   }
   // special cases
-  auto atomicNum = atom.getAtomicNum();
+  auto atomicNum = atom.d_atomicNum;
   if (atomicNum == 0) {
     return 0;
   }
@@ -467,8 +470,8 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
     }
   }
 
-  auto formalCharge = atom.getFormalCharge();
-  auto numRadicalElectrons = atom.getNumRadicalElectrons();
+  auto formalCharge = atom.d_formalCharge;
+  auto numRadicalElectrons = atom.d_numRadicalElectrons;
   if (explicitValence == 0 && numRadicalElectrons == 0 && atomicNum == 1) {
     if (formalCharge == 1 || formalCharge == -1) {
       return 0;
@@ -489,15 +492,14 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
       }
     }
   }
-
-  int explicitPlusRadV = atom.getValence(true) + atom.getNumRadicalElectrons();
+  int explicitPlusRadV = atom.d_explicitValence + atom.d_numRadicalElectrons;
 
   const auto &ovalens =
-      PeriodicTable::getTable()->getValenceList(atom.getAtomicNum());
+      PeriodicTable::getTable()->getValenceList(atom.d_atomicNum);
   // if we start with an atom that doesn't have specified valences, we stick
   // with that. otherwise we will use the effective valence for the rest of
   // this.
-  unsigned int effectiveAtomicNum = atom.getAtomicNum();
+  unsigned int effectiveAtomicNum = atom.d_atomicNum;
   if (ovalens.size() > 1 || ovalens[0] != -1) {
     effectiveAtomicNum = getEffectiveAtomicNum(atom, checkIt);
   }
@@ -534,7 +536,7 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   // isoelectronic to Cl/Ar or Br/Kr, which do not support hypervalent forms.
   if (canBeHypervalent(atom, effectiveAtomicNum)) {
     effectiveAtomicNum = atomicNum;
-    explicitPlusRadV -= atom.getFormalCharge();
+    explicitPlusRadV -= atom.d_formalCharge;
   }
   const auto &valens =
       PeriodicTable::getTable()->getValenceList(effectiveAtomicNum);
@@ -609,8 +611,6 @@ int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
   }
   return res;
 }
-
-}  // unnamed namespace
 
 int Atom::calcExplicitValence(bool strict) {
   bool checkIt = false;
@@ -941,7 +941,6 @@ unsigned int numPiElectrons(const Atom &atom) {
   }
   return res;
 }
-
 }  // namespace RDKit
 
 namespace {
@@ -993,7 +992,6 @@ constexpr const char *chiralityToString(RDKit::Atom::ChiralType type) {
   return "";
 }
 }  // namespace
-
 std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   target << at.getIdx() << " " << at.getAtomicNum() << " " << at.getSymbol();
   target << " chg: " << at.getFormalCharge();

@@ -77,6 +77,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   friend class ROMol;
   friend class RWMol;
   friend std::ostream &(::operator<<)(std::ostream &target, const Atom &at);
+  friend int calculateImplicitValence(const Atom &, bool, bool);
 
  public:
   // FIX: grn...
@@ -181,7 +182,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   unsigned int getNumImplicitHs() const;
 
   //! returns the valence (explicit or implicit) of this atom
-  int getValence(bool getExplicit = true) const;
+  unsigned int getValence(bool getExplicit = true) const;
 
   //! returns the explicit valence (including Hs) of this atom
   [[deprecated("please use getValence(true)")]]
