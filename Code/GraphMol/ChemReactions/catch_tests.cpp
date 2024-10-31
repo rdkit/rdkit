@@ -25,6 +25,7 @@
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
+#include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
@@ -2222,5 +2223,24 @@ M  END)CTAB"_ctab;
     CHECK(ps[1][0]->getStereoGroups().size() == 2);
     CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
           StereoGroupType::STEREO_AND);
+  }
+}
+
+TEST_CASE("Structural fingerprints values") {
+  SECTION("basics") {
+    auto rxn1 = "c1ccccc1>CC(=O)O.[Na+]>c1ccncc1"_rxnsmarts;
+    REQUIRE(rxn1);
+    auto rxn2 = "c1ncccc1>[Na+]>c1ncncc1"_rxnsmarts;
+    REQUIRE(rxn2);
+
+    ReactionFingerprintParams params;
+    params.fpType = FingerprintType::TopologicalTorsionFP;
+    params.fpSize = 4096;
+
+    std::unique_ptr<ExplicitBitVect> fp1{
+        StructuralFingerprintChemReaction(*rxn1, params)};
+    std::unique_ptr<ExplicitBitVect> fp2{
+        StructuralFingerprintChemReaction(*rxn2, params)};
+    CHECK(TanimotoSimilarity(*fp1, *fp2) == 0.4);
   }
 }
