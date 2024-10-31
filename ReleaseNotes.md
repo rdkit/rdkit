@@ -10,14 +10,27 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes
+<<<<<<< HEAD
 - The functions getImplicitValence(), getNumImplicitHs(), getDegree(), and getTotalDegree(), now return 0 for atoms that are not associated with molecules (previously they threw exceptions)
 
+=======
+- SMILES and RGroupDecomp JSON parsers were moved to their own translation units.
+This will require C++ code using those JSON parsers to be added #include directives
+for GraphMol/SmilesParse/SmilesJSONParsers.h and
+GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h, respectively.
+- Replaced enums in the signatures of MolToCXSmiles and updateCXSmilesFieldsFromJSON
+with the underlying types. This may require existing C++ code using those
+functions to be updated accordingly.
+
+- HasPropWithValueQueryBase used RDKit::Dict::Pair to return data used for serializing object in a molecule  pickle.  This has been changed to RDKit::PairHolder which automatically manages memory.
+>>>>>>> origin/master
 
 ## New Features and Enhancements:
 
 ## Bug Fixes:
 
 ## Cleanup work:
+- Awful enum reflection macros were replaced with Better Enums
 
 ## Code removed in this release:
 - AtomPairs.Utils.NumPiElectrons was removed, please use Chem.GetNumPiElectrons instead.

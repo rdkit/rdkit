@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 
 project (RDKit)
 
@@ -164,6 +164,18 @@ if(NOT Catch2_FOUND)
   FetchContent_MakeAvailable(Catch2)
 endif()
 
+#include better-enums
+find_package(better_enums 0 QUIET)
+if(NOT better_enums)
+  Include(FetchContent)
+
+  FetchContent_Declare(
+    better_enums
+    GIT_REPOSITORY https://github.com/aantron/better-enums.git
+    GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
+  )
+endif()
+
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
   set(RDKit_LibDir "${CMAKE_SOURCE_DIR}/lib")
@@ -291,7 +303,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python3 COMPONENTS Interpreter Development NumPy)
+  find_package(Python3 COMPONENTS Interpreter Development.Module NumPy)
   target_include_directories(rdkit_base INTERFACE ${Python3_INCLUDE_DIRS})
   target_include_directories(rdkit_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
 

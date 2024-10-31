@@ -1295,6 +1295,9 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     }
   }
 
+  // Based on above seeding, the rank will be set at index 1 or 2.
+  const int cipRankIndex = seedWithInvars ? 1 : 2;
+
   // Loop until either:
   //   1) all classes are uniquified
   //   2) the number of ranks doesn't change from one iteration to
@@ -1314,7 +1317,6 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
   while (!needsSorting.empty() && numIts < maxIts &&
          (lastNumRanks < 0 ||
           static_cast<unsigned int>(lastNumRanks) < numRanks)) {
-    unsigned int longestEntry = 0;
     // ----------------------------------------------------
     //
     // for each atom, get a sorted list of its neighbors' ranks:
@@ -1345,21 +1347,6 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
       if (!mol[index]->hasQuery()) {
         cipEntry.insert(cipEntry.end(), mol[index]->getTotalNumHs(), 0);
       }
-
-      if (cipEntry.size() > longestEntry) {
-        longestEntry = rdcast<unsigned int>(cipEntry.size());
-      }
-    }
-    // ----------------------------------------------------
-    //
-    // pad the entries so that we compare rounds to themselves:
-    //
-    for (unsigned int index = 0; index < numAtoms; ++index) {
-      auto sz = rdcast<unsigned int>(cipEntries[index].size());
-      if (sz < longestEntry) {
-        cipEntries[index].insert(cipEntries[index].end(), longestEntry - sz,
-                                 -1);
-      }
     }
     // ----------------------------------------------------
     //
@@ -1379,9 +1366,8 @@ void iterateCIPRanks(const ROMol &mol, const DOUBLE_VECT &invars,
     // now truncate each vector and stick the rank at the end
     if (static_cast<unsigned int>(lastNumRanks) != numRanks) {
       for (unsigned int i = 0; i < numAtoms; ++i) {
-        cipEntries[i][numIts + 1] = ranks[i];
-        cipEntries[i].erase(cipEntries[i].begin() + numIts + 2,
-                            cipEntries[i].end());
+        cipEntries[i].resize(cipRankIndex + 1);
+        cipEntries[i][cipRankIndex] = ranks[i];
       }
     }
 
@@ -2375,6 +2361,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
   bool hasStereoBonds = false;
   for (auto bond : mol.bonds()) {
     if (cleanIt) {
+      bond->clearProp(common_properties::_CIPCode);
       // enforce no stereo on small rings
       if ((bond->getBondType() == Bond::DOUBLE ||
            bond->getBondType() == Bond::AROMATIC) &&
@@ -2604,6 +2591,7 @@ void stereoPerception(ROMol &mol, bool cleanIt,
       atom->clearProp(common_properties::_ChiralityPossible);
     }
     for (auto bond : mol.bonds()) {
+      bond->clearProp(common_properties::_CIPCode);
       if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
         bond->setStereo(Bond::BondStereo::STEREOANY);
         bond->getStereoAtoms().clear();
