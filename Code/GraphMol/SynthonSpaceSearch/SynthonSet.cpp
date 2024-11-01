@@ -101,14 +101,15 @@ void SynthonSet::readFromDBStream(std::istream &is) {
   }
 }
 
-void SynthonSet::addSynthon(int synthonSetNum, Synthon *newSynthon) {
+void SynthonSet::addSynthon(int synthonSetNum,
+                            std::unique_ptr<Synthon> newSynthon) {
   if (static_cast<size_t>(synthonSetNum) >= d_synthons.size()) {
     for (size_t i = d_synthons.size();
          i < static_cast<size_t>(synthonSetNum) + 1; ++i) {
       d_synthons.push_back(std::vector<std::unique_ptr<Synthon>>());
     }
   }
-  d_synthons[synthonSetNum].emplace_back(std::unique_ptr<Synthon>(newSynthon));
+  d_synthons[synthonSetNum].emplace_back(std::move(newSynthon));
 }
 
 void SynthonSet::assignConnectorsUsed() {

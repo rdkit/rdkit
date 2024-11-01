@@ -529,8 +529,8 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
       // in this case it's a string "synton_2" etc.
       synthonNum = std::stoi(nextSynthon[2].substr(7));
     }
-    currReaction->addSynthon(synthonNum,
-                             new Synthon(nextSynthon[0], nextSynthon[1]));
+    currReaction->addSynthon(synthonNum, std::make_unique<Synthon>(Synthon(
+                                             nextSynthon[0], nextSynthon[1])));
   }
 
   // Do some final processing.
@@ -663,8 +663,8 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
           if (resultsNames.size() < static_cast<size_t>(params.hitStart)) {
             continue;
           }
-          std::unique_ptr<ROMol> combMol(
-              new ROMol(*synthons[0][stepper.d_currState[0]]));
+          std::unique_ptr<ROMol> combMol = std::make_unique<ROMol>(
+              ROMol(*synthons[0][stepper.d_currState[0]]));
           for (int i = 1; i < numReactions; ++i) {
             combMol.reset(
                 combineMols(*combMol, *synthons[i][stepper.d_currState[i]]));

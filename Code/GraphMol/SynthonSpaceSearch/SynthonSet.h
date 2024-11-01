@@ -51,7 +51,7 @@ class SynthonSet {
   void readFromDBStream(std::istream &is);
 
   // SynthonSet takes control of the newSynthon and manages it.
-  void addSynthon(int synthonSetNum, Synthon *newSynthon);
+  void addSynthon(int synthonSetNum, std::unique_ptr<Synthon> newSynthon);
 
   // Build the connector regions and their fingerprints.  Only used when
   // creating a SynthonSpace from a text file.

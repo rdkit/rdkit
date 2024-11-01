@@ -46,10 +46,18 @@ Synthon::Synthon(const std::string &smi, const std::string &id)
 }
 
 Synthon::Synthon(const RDKit::SynthonSpaceSearch::Synthon &other)
-    : d_smiles(other.d_smiles), d_id(other.d_id) {}
+    : d_smiles(other.d_smiles),
+      d_id(other.d_id),
+      dp_mol(std::make_unique<ROMol>(*other.dp_mol)),
+      dp_pattFP(std::make_unique<ExplicitBitVect>(*other.dp_pattFP)),
+      d_connRegions(other.d_connRegions) {}
 
 Synthon::Synthon(RDKit::SynthonSpaceSearch::Synthon &&other)
-    : d_smiles(std::move(other.d_smiles)), d_id(std::move(other.d_id)) {}
+    : d_smiles(std::move(other.d_smiles)),
+      d_id(std::move(other.d_id)),
+      dp_mol(std::move(other.dp_mol)),
+      dp_pattFP(std::move(other.dp_pattFP)),
+      d_connRegions(std::move(other.d_connRegions)) {}
 
 Synthon &Synthon::operator=(const RDKit::SynthonSpaceSearch::Synthon &other) {
   if (this == &other) {
