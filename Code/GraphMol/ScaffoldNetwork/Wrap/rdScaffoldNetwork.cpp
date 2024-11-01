@@ -103,6 +103,11 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
               includeScaffoldsWithAttachments,
           "Include the version of the scaffold with attachment points")
       .def_readwrite(
+          "includeNames",
+          &ScaffoldNetwork::ScaffoldNetworkParams::
+              includeNames,
+          "Include molecules names of the input molecules")
+      .def_readwrite(
           "keepOnlyFirstFragment",
           &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment,
           "keep only the first fragment from the bond breaking rule")

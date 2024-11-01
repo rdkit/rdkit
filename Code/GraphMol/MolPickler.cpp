@@ -387,8 +387,8 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
     return QueryDetails(
         std::make_tuple(MolPickler::QUERY_SET, std::move(tset)));
   } else if (auto q = dynamic_cast<const HasPropWithValueQueryBase *>(query)) {
-    return std::make_tuple(MolPickler::QUERY_PROPERTY_WITH_VALUE, q->getPair(),
-                           q->getTolerance());
+    return QueryDetails(std::make_tuple(MolPickler::QUERY_PROPERTY_WITH_VALUE,
+                                        q->getPair(), q->getTolerance()));
   } else {
     throw MolPicklerException("do not know how to pickle part of the query.");
   }
@@ -465,10 +465,10 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
         streamWrite(ss, MolPickler::QUERY_VALUE, pval);
       } break;
       case 6: {
-        auto v = boost::get<std::tuple<MolPickler::Tags, Dict::Pair, double>>(
+        auto &v = boost::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
             qdetails);
         streamWrite(ss, std::get<0>(v));
-        // The tolerance is pickled first as we can't pickle the Dict::Pair with
+        // The tolerance is pickled first as we can't pickle a PairHolder with
         // the QUERY_VALUE tag
         streamWrite(ss, MolPickler::QUERY_VALUE, std::get<2>(v));
         streamWriteProp(ss, std::get<1>(v),
@@ -630,7 +630,7 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
       }
       double tolerance{0.0};
       streamRead(ss, tolerance, version);
-      Dict::Pair pair;
+      PairHolder pair;
       bool hasNonPod = false;
       streamReadProp(ss, pair, hasNonPod, MolPickler::getCustomPropHandlers());
       switch (pair.val.getTag()) {
@@ -667,8 +667,6 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
           }
         } break;
       }
-      // hasNonPod should be false for now...
-
     } break;
     default:
       throw MolPicklerException("unknown query-type tag encountered");

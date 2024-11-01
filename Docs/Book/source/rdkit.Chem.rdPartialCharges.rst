@@ -1,5 +1,5 @@
 rdkit.Chem.rdPartialCharges module
-=================================
+==================================
 
 .. automodule:: rdkit.Chem.rdPartialCharges
     :members:
