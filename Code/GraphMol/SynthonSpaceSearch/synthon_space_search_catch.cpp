@@ -82,9 +82,9 @@ TEST_CASE("Amide 1", "[Amide 1]") {
   SynthonSpaceSearchParams params;
   params.maxBondSplits = 2;
   auto results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.hitMolecules().size() == 2);
+  CHECK(results.getHitMolecules().size() == 2);
   std::set<std::string> resSmi;
-  for (const auto &r : results.hitMolecules()) {
+  for (const auto &r : results.getHitMolecules()) {
     resSmi.insert(MolToSmiles(*r));
   }
 
@@ -114,7 +114,7 @@ TEST_CASE("Urea 1", "[Urea 1]") {
   SECTION("Single molecule with fragging") {
     auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.hitMolecules().size() == 2);
+    CHECK(results.getHitMolecules().size() == 2);
   }
 }
 
@@ -139,21 +139,21 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
     // should give 220 hits for urea-3
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.hitMolecules().size() == 220);
-    CHECK(results.maxNumResults() == 220);
+    CHECK(results.getHitMolecules().size() == 220);
+    CHECK(results.getMaxNumResults() == 220);
   }
   SECTION("Single molecule with fragging") {
     {
       // should give 220 hits for urea-3
       auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
       auto results = synthonspace.substructureSearch(*queryMol);
-      CHECK(results.hitMolecules().size() == 220);
-      CHECK(results.maxNumResults() == 220);
+      CHECK(results.getHitMolecules().size() == 220);
+      CHECK(results.getMaxNumResults() == 220);
     }
     {
       auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
       auto results = synthonspace.substructureSearch(*queryMol);
-      CHECK(results.hitMolecules().size() == 20);
+      CHECK(results.getHitMolecules().size() == 20);
     }
   }
 }
@@ -181,9 +181,9 @@ TEST_CASE("Triazole", "[Triazole]") {
     auto queryMol = "OCc1ncnn1"_smarts;
     REQUIRE(queryMol);
     auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.hitMolecules().size() == 8);
+    CHECK(results.getHitMolecules().size() == 8);
     std::set<std::string> resSmi;
-    for (const auto &r : results.hitMolecules()) {
+    for (const auto &r : results.getHitMolecules()) {
       resSmi.insert(MolToSmiles(*r));
     }
 
@@ -209,9 +209,9 @@ TEST_CASE("Quinoline", "[Quinoline]") {
   {
     auto queryMol = "c1ccccn1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.hitMolecules().size() == 12);
+    CHECK(results.getHitMolecules().size() == 12);
     std::set<std::string> resSmi;
-    for (const auto &r : results.hitMolecules()) {
+    for (const auto &r : results.getHitMolecules()) {
       resSmi.insert(MolToSmiles(*r));
     }
     auto subsLib = loadSubstructLibrary(enumLibName);
@@ -234,17 +234,17 @@ TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {
   {
     auto queryMol = "N1CCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.hitMolecules().size() == 8);
+    CHECK(results.getHitMolecules().size() == 8);
   }
   {
     auto queryMol = "N1CCC(C(F)(F)F)C1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.hitMolecules().size() == 4);
+    CHECK(results.getHitMolecules().size() == 4);
   }
   {
     auto queryMol = "C1CCCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.hitMolecules().size() == 0);
+    CHECK(results.getHitMolecules().size() == 0);
   }
 }
 
@@ -334,8 +334,8 @@ TEST_CASE("Biggy", "[Biggy]") {
     for (size_t i = 0; i < smis.size(); ++i) {
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
       auto results = synthonspace.substructureSearch(*queryMol, params);
-      CHECK(results.hitMolecules().size() == numRes[i]);
-      CHECK(results.maxNumResults() == maxRes[i]);
+      CHECK(results.getHitMolecules().size() == numRes[i]);
+      CHECK(results.getMaxNumResults() == maxRes[i]);
     }
   }
 }
@@ -376,18 +376,18 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
       std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
-      std::cout << "Number of hits : " << results.hitMolecules().size()
+      std::cout << "Number of hits : " << results.getHitMolecules().size()
                 << std::endl;
       std::string outFile =
           std::string("/Users/david/Projects/FreedomSpace/synthonspace_hits_") +
           std::to_string(i) + ".smi";
       std::ofstream of(outFile);
-      for (const auto &r : results.hitMolecules()) {
+      for (const auto &r : results.getHitMolecules()) {
         of << MolToSmiles(*r) << " " << r->getProp<std::string>("_Name")
            << std::endl;
       }
-      CHECK(results.hitMolecules().size() == numRes[i]);
-      std::cout << results.maxNumResults() << std::endl;
+      CHECK(results.getHitMolecules().size() == numRes[i]);
+      std::cout << results.getMaxNumResults() << std::endl;
     }
   }
 }
@@ -403,7 +403,7 @@ TEST_CASE("Small query", "[Small query]") {
   auto results = synthonspace.substructureSearch(*queryMol);
   // The number of results is immaterial, it just matters that the search
   // finished.
-  CHECK(results.hitMolecules().size() == 0);
+  CHECK(results.getHitMolecules().size() == 0);
 }
 
 TEST_CASE("Random Hits", "[Random Hits]") {
@@ -420,7 +420,7 @@ TEST_CASE("Random Hits", "[Random Hits]") {
   params.randomSeed = 1;
   auto results = synthonspace.substructureSearch(*queryMol, params);
   std::map<std::string, int> libCounts;
-  for (const auto &m : results.hitMolecules()) {
+  for (const auto &m : results.getHitMolecules()) {
     std::string lib(m->getProp<std::string>("_Name").substr(0, 2));
     if (const auto &c = libCounts.find(lib); c == libCounts.end()) {
       libCounts.insert(std::make_pair(lib, 1));
@@ -428,7 +428,7 @@ TEST_CASE("Random Hits", "[Random Hits]") {
       c->second++;
     }
   }
-  CHECK(results.hitMolecules().size() == 100);
+  CHECK(results.getHitMolecules().size() == 100);
   std::map<std::string, int> expCounts{{"a1", 73}, {"a6", 6}, {"a7", 21}};
   CHECK(expCounts == libCounts);
 }
@@ -446,7 +446,7 @@ TEST_CASE("Later hits", "[Later Hits]") {
   params.maxHits = 200;
   auto results = synthonspace.substructureSearch(*queryMol, params);
   std::vector<std::string> hitNames1;
-  for (const auto &m : results.hitMolecules()) {
+  for (const auto &m : results.getHitMolecules()) {
     hitNames1.push_back(m->getProp<std::string>("_Name"));
   }
 
@@ -454,7 +454,7 @@ TEST_CASE("Later hits", "[Later Hits]") {
   params.hitStart = 101;
   results = synthonspace.substructureSearch(*queryMol, params);
   std::vector<std::string> hitNames2;
-  for (const auto &m : results.hitMolecules()) {
+  for (const auto &m : results.getHitMolecules()) {
     hitNames2.push_back(m->getProp<std::string>("_Name"));
   }
   CHECK(hitNames1.size() == 200);
@@ -465,11 +465,11 @@ TEST_CASE("Later hits", "[Later Hits]") {
 
   params.hitStart = 6780;
   results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.hitMolecules().size() == 6);
+  CHECK(results.getHitMolecules().size() == 6);
 
   params.hitStart = 7000;
   results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.hitMolecules().empty());
+  CHECK(results.getHitMolecules().empty());
 }
 
 TEST_CASE("Complex query", "[Complex query]") {
@@ -486,6 +486,6 @@ TEST_CASE("Complex query", "[Complex query]") {
   params.maxBondSplits = 2;
   params.maxHits = 1000;
   auto results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.hitMolecules().size() == 1000);
-  CHECK(results.maxNumResults() == 3257);
+  CHECK(results.getHitMolecules().size() == 1000);
+  CHECK(results.getMaxNumResults() == 3257);
 }

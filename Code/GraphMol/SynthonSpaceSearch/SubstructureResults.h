@@ -34,14 +34,14 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
    *
    * @return int
    */
-  size_t maxNumResults() const { return d_maxNumResults; }
+  size_t getMaxNumResults() const { return d_maxNumResults; }
   /*!
    * Returns the hits from the search. Not necessarily all those possible,
    * just the maximum number requested.
    *
    * @return std::vector<std::unique_ptr<ROMol>>
    */
-  const std::vector<std::unique_ptr<ROMol>> &hitMolecules() const {
+  const std::vector<std::unique_ptr<ROMol>> &getHitMolecules() const {
     return d_hitMolecules;
   }
 

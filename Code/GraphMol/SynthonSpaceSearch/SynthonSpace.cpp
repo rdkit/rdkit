@@ -634,28 +634,28 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
   RDKit::MatchVectType dontCare;
 
   for (const auto &hitset : hitsets) {
-    const auto &reagentsToUse = hitset.reagsToUse;
-    auto reags = getReagentsToUse(reagentsToUse, hitset.reactionId);
-    if (reags.empty()) {
+    const auto &reagentsToUse = hitset.synthonsToUse;
+    auto synthons = getSynthonsToUse(reagentsToUse, hitset.reactionId);
+    if (synthons.empty()) {
       return;
     }
 
-    std::vector<int> numReags;
-    for (auto &r : reags) {
-      numReags.push_back(r.size());
+    std::vector<int> numSynthons;
+    for (auto &s : synthons) {
+      numSynthons.push_back(s.size());
     }
-    Stepper stepper(numReags);
+    Stepper stepper(numSynthons);
     const int numReactions = reagentsToUse.size();
     MolzipParams mzparams;
     mzparams.label = MolzipLabel::Isotope;
-    while (stepper.d_currState[0] != numReags[0]) {
+    while (stepper.d_currState[0] != numSynthons[0]) {
       std::string combName =
           hitset.reactionId + "_" +
-          reags[0][stepper.d_currState[0]]->getProp<std::string>(
+          synthons[0][stepper.d_currState[0]]->getProp<std::string>(
               common_properties::_Name);
       for (int i = 1; i < numReactions; ++i) {
         combName +=
-            "_" + reags[i][stepper.d_currState[i]]->getProp<std::string>(
+            "_" + synthons[i][stepper.d_currState[i]]->getProp<std::string>(
                       common_properties::_Name);
       }
       if (!params.randomSample || params.maxHits == -1 ||
@@ -665,10 +665,10 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
             continue;
           }
           std::unique_ptr<ROMol> combMol(
-              new ROMol(*reags[0][stepper.d_currState[0]]));
+              new ROMol(*synthons[0][stepper.d_currState[0]]));
           for (int i = 1; i < numReactions; ++i) {
             combMol.reset(
-                combineMols(*combMol, *reags[i][stepper.d_currState[i]]));
+                combineMols(*combMol, *synthons[i][stepper.d_currState[i]]));
           }
           auto prod = molzip(*combMol, mzparams);
           MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
@@ -697,8 +697,8 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
   }
 }
 
-std::vector<std::vector<ROMol *>> SynthonSpace::getReagentsToUse(
-    const std::vector<boost::dynamic_bitset<>> &reagentsToUse,
+std::vector<std::vector<ROMol *>> SynthonSpace::getSynthonsToUse(
+    const std::vector<boost::dynamic_bitset<>> &synthonsToUse,
     const std::string &reaction_id) const {
   if (const auto &it = d_reactions.find(reaction_id); it == d_reactions.end()) {
     throw std::runtime_error("Reaction " + reaction_id +
@@ -706,15 +706,15 @@ std::vector<std::vector<ROMol *>> SynthonSpace::getReagentsToUse(
   }
   const auto &reaction = d_reactions.find(reaction_id)->second;
 
-  std::vector<std::vector<ROMol *>> reags(reaction->getSynthons().size(),
-                                          std::vector<ROMol *>());
-  for (size_t i = 0; i < reagentsToUse.size(); ++i) {
-    for (size_t j = 0; j < reagentsToUse[i].size(); ++j) {
-      if (reagentsToUse[i][j]) {
-        reags[i].push_back(reaction->getSynthons()[i][j]->mol().get());
+  std::vector<std::vector<ROMol *>> synthons(reaction->getSynthons().size(),
+                                             std::vector<ROMol *>());
+  for (size_t i = 0; i < synthonsToUse.size(); ++i) {
+    for (size_t j = 0; j < synthonsToUse[i].size(); ++j) {
+      if (synthonsToUse[i][j]) {
+        synthons[i].push_back(reaction->getSynthons()[i][j]->mol().get());
       }
     }
   }
-  return reags;
+  return synthons;
 }
 }  // namespace RDKit::SynthonSpaceSearch

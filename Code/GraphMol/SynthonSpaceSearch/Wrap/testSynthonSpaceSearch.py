@@ -48,11 +48,11 @@ class TestCase(unittest.TestCase):
     fName = self.sssDir / "Syntons_5567.csv"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadTextFile(fName)
-    self.assertEqual(10, synthonspace.NumReactions())
+    self.assertEqual(10, synthonspace.GetNumReactions())
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.maxHits = 10
     results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"), params)
-    self.assertEqual(10, len(results.hitMolecules()))
+    self.assertEqual(10, len(results.GetHitMolecules()))
                      
     
 if __name__ == "__main__":

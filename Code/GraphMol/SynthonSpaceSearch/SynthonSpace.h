@@ -47,10 +47,10 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
 };
 
 // Holds the information about a set of hits.  The molecules can be built
-// by making all combinations of synthons, one taken from each reagent set.
+// by making all combinations of synthons, one taken from each synthon set.
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   std::string reactionId;
-  std::vector<boost::dynamic_bitset<>> reagsToUse;
+  std::vector<boost::dynamic_bitset<>> synthonsToUse;
   size_t numHits{0};
 };
 
@@ -173,8 +173,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
                  std::vector<std::unique_ptr<ROMol>> &results);
   // get the subset of synthons for the given reaction to use for this
   // enumeration.
-  std::vector<std::vector<ROMol *>> getReagentsToUse(
-      const std::vector<boost::dynamic_bitset<>> &reagentsToUse,
+  std::vector<std::vector<ROMol *>> getSynthonsToUse(
+      const std::vector<boost::dynamic_bitset<>> &synthonsToUse,
       const std::string &reaction_id) const;
 };
 

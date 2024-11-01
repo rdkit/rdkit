@@ -20,7 +20,7 @@ namespace RDKit {
 python::list hitMolecules_helper(
     const SynthonSpaceSearch::SubstructureResults &res) {
   python::list pyres;
-  for (auto &r : res.hitMolecules()) {
+  for (auto &r : res.getHitMolecules()) {
     pyres.append(boost::shared_ptr<ROMol>(new ROMol(*r)));
   }
   return pyres;
@@ -31,15 +31,16 @@ struct SubstructureResults_wrapper {
     std::string docString = "Used to return results of SynthonSpace searches.";
     python::class_<RDKit::SynthonSpaceSearch::SubstructureResults>(
         "SubstructureResult", docString.c_str(), python::no_init)
-        .def("hitMolecules", hitMolecules_helper, python::args("self"),
+        .def("GetHitMolecules", hitMolecules_helper, python::args("self"),
              "A function returning hits from the search")
-        .def_readonly("maxNumResults",
-                      &SynthonSpaceSearch::SubstructureResults::maxNumResults,
-                      "The upper bound on number of results possible.  There"
-                      " may be fewer than this in practice for several reasons"
-                      " such as duplicate reagent sets being removed or the"
-                      " final product not matching the query even though the"
-                      " synthons suggested they would.");
+        .def_readonly(
+            "GetMaxNumResults",
+            &SynthonSpaceSearch::SubstructureResults::getMaxNumResults,
+            "The upper bound on number of results possible.  There"
+            " may be fewer than this in practice for several reasons"
+            " such as duplicate reagent sets being removed or the"
+            " final product not matching the query even though the"
+            " synthons suggested they would.");
   }
 };
 
@@ -117,11 +118,12 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def("WriteDBFile", &RDKit::SynthonSpaceSearch::SynthonSpace::writeDBFile,
            (python::arg("self"), python::arg("outFile")),
            "Writes binary database file.")
-      .def("NumReactions",
-           &RDKit::SynthonSpaceSearch::SynthonSpace::numReactions,
+      .def("GetNumReactions",
+           &RDKit::SynthonSpaceSearch::SynthonSpace::getNumReactions,
            (python::arg("self")),
            "Returns number of reactions in the SynthonSpace.")
-      .def("NumProducts", &RDKit::SynthonSpaceSearch::SynthonSpace::numProducts,
+      .def("GetNumProducts",
+           &RDKit::SynthonSpaceSearch::SynthonSpace::getNumProducts,
            (python::arg("self")),
            "Returns number of products in the SynthonSpace, with multiple"
            " counting of any duplicates.")
