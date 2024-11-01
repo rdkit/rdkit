@@ -33,13 +33,13 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
-long int SynthonSpace::numProducts() const {
+std::int64_t SynthonSpace::getNumProducts() const {
   long totSize = 0;
   for (const auto &reaction : d_reactions) {
     const auto &rxn = reaction.second;
     size_t thisSize = 1;
-    for (size_t i = 0; i < rxn->synthons().size(); ++i) {
-      thisSize *= rxn->synthons()[i].size();
+    for (size_t i = 0; i < rxn->getSynthons().size(); ++i) {
+      thisSize *= rxn->getSynthons()[i].size();
     }
     totSize += thisSize;
   }
@@ -247,17 +247,17 @@ std::vector<boost::dynamic_bitset<>> screenReagentsWithFPs(
     std::vector<unsigned int> reagentOrder) {
   std::vector<boost::dynamic_bitset<>> reagsToUse;
   std::vector<boost::dynamic_bitset<>> passedFPs;
-  for (const auto &reagSet : reaction->synthons()) {
+  for (const auto &reagSet : reaction->getSynthons()) {
     passedFPs.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
 
   std::vector<boost::dynamic_bitset<>> thisPass;
-  for (const auto &reagSet : reaction->synthons()) {
+  for (const auto &reagSet : reaction->getSynthons()) {
     thisPass.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
   boost::dynamic_bitset<> fragsMatched(reagentOrder.size());
   for (size_t i = 0; i < reagentOrder.size(); ++i) {
-    const auto &reagSet = reaction->synthons()[reagentOrder[i]];
+    const auto &reagSet = reaction->getSynthons()[reagentOrder[i]];
     for (size_t j = 0; j < reagSet.size(); ++j) {
       auto &reag = reagSet[j];
       if (AllProbeBitsMatch(*pattFPs[i], *reag->pattFP())) {
@@ -290,19 +290,19 @@ std::vector<boost::dynamic_bitset<>> getHitReagents(
     const std::vector<unsigned int> &reagentOrder) {
   RDKit::MatchVectType dontCare;
   std::vector<boost::dynamic_bitset<>> reagsToUse;
-  for (const auto &reagSet : reaction->synthons()) {
+  for (const auto &reagSet : reaction->getSynthons()) {
     reagsToUse.push_back(boost::dynamic_bitset<>(reagSet.size()));
   }
 
   // The tests must be applied for all permutations of reagent list against
   // fragment.
   auto reagentOrders =
-      details::permMFromN(molFrags.size(), reaction->synthons().size());
+      details::permMFromN(molFrags.size(), reaction->getSynthons().size());
 
   boost::dynamic_bitset<> fragsMatched(reagentOrder.size());
   // Match the fragment to the reagent set in this order.
   for (size_t i = 0; i < reagentOrder.size(); ++i) {
-    const auto &reagSet = reaction->synthons()[reagentOrder[i]];
+    const auto &reagSet = reaction->getSynthons()[reagentOrder[i]];
     const auto &passedScreensSet = passedScreens[reagentOrder[i]];
     for (size_t j = 0; j < reagSet.size(); ++j) {
       if (passedScreensSet[j]) {
@@ -368,8 +368,8 @@ bool checkConnectorRegions(
     std::unique_ptr<SynthonSet> &reaction,
     std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
     std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &connRegFPs) {
-  const auto &rxnConnRegs = reaction->connectorRegions();
-  const auto &rxnConnRegsFP = reaction->connRegFP();
+  const auto &rxnConnRegs = reaction->getConnectorRegions();
+  const auto &rxnConnRegsFP = reaction->getConnRegFP();
   RDKit::MatchVectType dontCare;
   for (size_t i = 0; i < connRegFPs.size(); ++i) {
     bool connRegFound = false;
@@ -414,7 +414,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
     // of the potential products.  It can be less, in which case the unused
     // reagent set will be used completely, possibly resulting in a large
     // number of hits.
-    if (fragSet.size() > reaction->synthons().size()) {
+    if (fragSet.size() > reaction->getSynthons().size()) {
       continue;
     }
 
@@ -431,7 +431,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
     // of the fragment fingerprints.
     // Need to try all combinations of reagent orders.
     auto reagentOrders =
-        details::permMFromN(pattFPs.size(), reaction->synthons().size());
+        details::permMFromN(pattFPs.size(), reaction->getSynthons().size());
     for (const auto &ro : reagentOrders) {
       auto passedScreens = screenReagentsWithFPs(pattFPs, reaction, ro);
       // If none of the synthons passed the screens, move right along, nothing
@@ -453,7 +453,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
       // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
       // that might be how they're labelled in the reaction database.
       auto connCombs =
-          getConnectorPermutations(fragSet, conns, reaction->connectors());
+          getConnectorPermutations(fragSet, conns, reaction->getConnectors());
 
       // Find all synthons that match the fragments with each connector
       // combination.
@@ -477,8 +477,8 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
   return results;
 }
 
-void SynthonSpace::readTextFile(const std::string &inFile) {
-  d_fileName = inFile;
+void SynthonSpace::readTextFile(const std::string &inFilename) {
+  d_fileName = inFilename;
   std::ifstream ifs(d_fileName);
   if (!ifs.is_open() || ifs.bad()) {
     throw std::runtime_error("Couldn't open file " + d_fileName);
@@ -532,7 +532,7 @@ void SynthonSpace::readTextFile(const std::string &inFile) {
       // in this case it's a string "synton_2" etc.
       synthonNum = std::stoi(nextReag[2].substr(7));
     }
-    currReaction->addSynthon(synthonNum, nextReag[0], nextReag[1]);
+    currReaction->addSynthon(synthonNum, new Synthon(nextReag[0], nextReag[1]));
   }
 
   // Do some final processing.
@@ -542,8 +542,8 @@ void SynthonSpace::readTextFile(const std::string &inFile) {
   }
 }
 
-void SynthonSpace::writeDBFile(const std::string &outFile) const {
-  std::ofstream os(outFile, std::fstream::binary | std::fstream::trunc);
+void SynthonSpace::writeDBFile(const std::string &outFilename) const {
+  std::ofstream os(outFilename, std::fstream::binary | std::fstream::trunc);
   streamWrite(os, d_reactions.size());
   for (const auto &rs : d_reactions) {
     rs.second->writeToDBStream(os);
@@ -551,10 +551,10 @@ void SynthonSpace::writeDBFile(const std::string &outFile) const {
   os.close();
 }
 
-void SynthonSpace::readDBFile(const std::string &inFile) {
-  d_fileName = inFile;
+void SynthonSpace::readDBFile(const std::string &inFilename) {
+  d_fileName = inFilename;
   try {
-    std::ifstream is(inFile, std::fstream::binary);
+    std::ifstream is(d_fileName, std::fstream::binary);
     size_t numRS;
     streamRead(is, numRS);
     for (size_t i = 0; i < numRS; ++i) {
@@ -563,7 +563,7 @@ void SynthonSpace::readDBFile(const std::string &inFile) {
       d_reactions.insert(make_pair(rs->id(), rs));
     }
   } catch (std::exception &e) {
-    std::cerr << "Error : " << e.what() << " for file " << inFile << "\n";
+    std::cerr << "Error : " << e.what() << " for file " << d_fileName << "\n";
     exit(1);
   }
 }
@@ -576,10 +576,10 @@ void SynthonSpace::summarise(std::ostream &os) const {
     const auto &rxn = reaction.second;
     os << "Reaction name " << rxn->id() << "\n";
     size_t thisSize = 1;
-    for (size_t i = 0; i < rxn->synthons().size(); ++i) {
-      os << "  Synthon set " << i << " has " << rxn->synthons()[i].size()
+    for (size_t i = 0; i < rxn->getSynthons().size(); ++i) {
+      os << "  Synthon set " << i << " has " << rxn->getSynthons()[i].size()
          << " synthons" << "\n";
-      thisSize *= rxn->synthons()[i].size();
+      thisSize *= rxn->getSynthons()[i].size();
     }
     totSize += thisSize;
   }
@@ -706,12 +706,12 @@ std::vector<std::vector<ROMol *>> SynthonSpace::getReagentsToUse(
   }
   const auto &reaction = d_reactions.find(reaction_id)->second;
 
-  std::vector<std::vector<ROMol *>> reags(reaction->synthons().size(),
+  std::vector<std::vector<ROMol *>> reags(reaction->getSynthons().size(),
                                           std::vector<ROMol *>());
   for (size_t i = 0; i < reagentsToUse.size(); ++i) {
     for (size_t j = 0; j < reagentsToUse[i].size(); ++j) {
       if (reagentsToUse[i][j]) {
-        reags[i].push_back(reaction->synthons()[i][j]->mol().get());
+        reags[i].push_back(reaction->getSynthons()[i][j]->mol().get());
       }
     }
   }

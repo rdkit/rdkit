@@ -32,25 +32,26 @@ class SynthonSet {
  public:
   SynthonSet() = default;
   SynthonSet(const std::string &id) : d_id(id) {}
-  SynthonSet(const Synthon &rhs) = delete;
-  SynthonSet(Synthon &&rhs) = delete;
+  SynthonSet(const SynthonSet &rhs) = delete;
+  SynthonSet(SynthonSet &&rhs) = delete;
 
   const std::string &id() const { return d_id; }
-  const std::vector<std::vector<std::unique_ptr<Synthon>>> &synthons() const {
+  const std::vector<std::vector<std::unique_ptr<Synthon>>> &getSynthons()
+      const {
     return d_synthons;
   }
-  const boost::dynamic_bitset<> &connectors() const { return d_connectors; }
-  const std::vector<std::shared_ptr<ROMol>> &connectorRegions() const;
+  const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
+  const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions() const;
 
-  const std::unique_ptr<ExplicitBitVect> &connRegFP() const;
-  const std::vector<int> &numConnectors() const;
+  const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
+  const std::vector<int> &getNumConnectors() const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
   void readFromDBStream(std::istream &is);
 
-  void addSynthon(int reagentSetNum, const std::string &smiles,
-                  const std::string &reagentId);
+  // SynthonSet takes control of the newSynthon and manages it.
+  void addSynthon(int synthonSetNum, Synthon *newSynthon);
 
   // Scan through the connectors ([1*], [2*] etc.) in the synthons
   // and set bits in d_connectors accordingly.  Also removes any empty
@@ -71,11 +72,12 @@ class SynthonSet {
   // present in the synthons in the set, plus a fingerprint of all their
   // fingerprints folded into 1.  If a query fragment doesn't have a
   // connector region in common with any of the synthons it can be assumed that
-  // the fragment won't have a match in this ReagentSet.
+  // the fragment won't have a match in this SynthonSet.
   mutable std::vector<std::shared_ptr<ROMol>> d_connectorRegions;
-  // The fingerprints of the connector regions.
+  // The fingerprint of the connector regions.  Fingerprints for all
+  // connector regions are folded into the same fingerprint.
   mutable std::unique_ptr<ExplicitBitVect> d_connRegFP;
-  // The number of connectors in the synthons in each reagent set.
+  // The number of connectors in the synthons in each synthon set.
   mutable std::vector<int> d_numConnectors;
 };
 

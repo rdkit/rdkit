@@ -33,7 +33,7 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
-const std::vector<std::shared_ptr<ROMol>> &SynthonSet::connectorRegions()
+const std::vector<std::shared_ptr<ROMol>> &SynthonSet::getConnectorRegions()
     const {
   if (d_connectorRegions.empty()) {
     std::set<std::string> smis;
@@ -51,13 +51,13 @@ const std::vector<std::shared_ptr<ROMol>> &SynthonSet::connectorRegions()
   return d_connectorRegions;
 }
 
-const std::unique_ptr<ExplicitBitVect> &SynthonSet::connRegFP() const {
+const std::unique_ptr<ExplicitBitVect> &SynthonSet::getConnRegFP() const {
   if (!d_connRegFP) {
-    if (!connectorRegions().empty()) {
-      d_connRegFP.reset(PatternFingerprintMol(*connectorRegions().front()));
-      for (size_t i = 1; i < connectorRegions().size(); ++i) {
+    if (!getConnectorRegions().empty()) {
+      d_connRegFP.reset(PatternFingerprintMol(*getConnectorRegions().front()));
+      for (size_t i = 1; i < getConnectorRegions().size(); ++i) {
         std::unique_ptr<ExplicitBitVect> fp(
-            PatternFingerprintMol(*connectorRegions()[i]));
+            PatternFingerprintMol(*getConnectorRegions()[i]));
         *d_connRegFP |= *fp;
       }
     } else {
@@ -69,11 +69,11 @@ const std::unique_ptr<ExplicitBitVect> &SynthonSet::connRegFP() const {
 
 void SynthonSet::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_id);
-  streamWrite(os, connectorRegions().size());
-  for (const auto &cr : connectorRegions()) {
+  streamWrite(os, getConnectorRegions().size());
+  for (const auto &cr : getConnectorRegions()) {
     MolPickler::pickleMol(*cr, os, PicklerOps::AllProps);
   }
-  auto connRegFPstr = connRegFP()->toString();
+  auto connRegFPstr = getConnRegFP()->toString();
   streamWrite(os, connRegFPstr);
   streamWrite(os, d_connectors.size());
   for (size_t i = 0; i < d_connectors.size(); ++i) {
@@ -126,15 +126,14 @@ void SynthonSet::readFromDBStream(std::istream &is) {
   }
 }
 
-void SynthonSet::addSynthon(int reagentSetNum, const std::string &smiles,
-                            const std::string &reagentId) {
-  if (static_cast<size_t>(reagentSetNum) >= d_synthons.size()) {
+void SynthonSet::addSynthon(int synthonSetNum, Synthon *newSynthon) {
+  if (static_cast<size_t>(synthonSetNum) >= d_synthons.size()) {
     for (size_t i = d_synthons.size();
-         i < static_cast<size_t>(reagentSetNum) + 1; ++i) {
+         i < static_cast<size_t>(synthonSetNum) + 1; ++i) {
       d_synthons.push_back(std::vector<std::unique_ptr<Synthon>>());
     }
   }
-  d_synthons[reagentSetNum].emplace_back(new Synthon(smiles, reagentId));
+  d_synthons[synthonSetNum].emplace_back(std::unique_ptr<Synthon>(newSynthon));
 }
 
 void SynthonSet::assignConnectorsUsed() {
@@ -162,7 +161,7 @@ void SynthonSet::assignConnectorsUsed() {
   }
 }
 
-const std::vector<int> &SynthonSet::numConnectors() const {
+const std::vector<int> &SynthonSet::getNumConnectors() const {
   if (d_numConnectors.empty()) {
     // It should be the case that all synthons in a synthon set
     // have the same number of connections, so just do the 1st

@@ -18,7 +18,6 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SubstructureResults.h>
 
@@ -34,15 +33,15 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                          // present this is 4.  Specifying more than that will
                          // not matter as it will be reduced to 4.  Likewise,
                          // values lower than 1 will be increased to 1.
-  long maxHits{1000};    // The maximum number of hits to return.  Use -1 for
-                         // no maximum.
-  long hitStart{0};  // Sequence number of hit to start from.  So that you can
-                     // return the next N hits of a search having already
-                     // obtained N-1.
-  bool randomSample{false};  // If true, returns a random sample of the hit
-                             // hits, up to maxHits in number.
-  int randomSeed{-1};        // Seed for random-number generator.  -1 means use
-                             // a random seed (std::random_device).
+  std::int64_t maxHits{1000};  // The maximum number of hits to return.  Use -1
+                               // for no maximum.
+  std::int64_t hitStart{0};    // Sequence number of hit to start from.  So that
+                               // you can return the next N hits of a search
+                               // having already obtained N-1.
+  bool randomSample{false};    // If true, returns a random sample of the hit
+                               // hits, up to maxHits in number.
+  int randomSeed{-1};    // Seed for random-number generator.  -1 means use
+                         // a random seed (std::random_device).
   bool buildHits{true};  // If false, reports the maximum number of hits that
                          // the search could produce, but doesn't return them.
 };
@@ -65,16 +64,17 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    *
    * @return int
    */
-  int numReactions() const { return d_reactions.size(); }
-  const std::map<std::string, std::unique_ptr<SynthonSet>> &reactions() const {
+  size_t getNumReactions() const { return d_reactions.size(); }
+  const std::map<std::string, std::unique_ptr<SynthonSet>> &getReactions()
+      const {
     return d_reactions;
   }
   // Get the total number of products that the SynthonSpace could produce.
   /*!
    *
-   * @return long int
+   * @return std::int64_t
    */
-  long int numProducts() const;
+  std::int64_t getNumProducts() const;
 
   // Perform a substructure search with the given query molecule across
   // the synthonspace library.  Duplicate SMILES strings produced by different
@@ -134,19 +134,19 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * which it does by checking that the first line is as above and subsequent
    * lines have appropriate number of fields.
    */
-  void readTextFile(const std::string &inFile);
+  void readTextFile(const std::string &inFilename);
 
   // Writes to/reads from a binary DB File in our format.
   /*!
    *
    * @param outFile: the name of the file to write.
    */
-  void writeDBFile(const std::string &outFile) const;
+  void writeDBFile(const std::string &outFilename) const;
   /*!
    *
    * @param inFile: the name of the file to read.
    */
-  void readDBFile(const std::string &inFile);
+  void readDBFile(const std::string &inFilename);
 
   // Write a summary of the SynthonSpace to given stream.
   /*!

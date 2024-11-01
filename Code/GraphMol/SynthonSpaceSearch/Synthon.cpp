@@ -75,6 +75,14 @@ Synthon &Synthon::operator=(RDKit::SynthonSpaceSearch::Synthon &&other) {
 const std::unique_ptr<ROMol> &Synthon::mol() const {
   if (!d_mol) {
     d_mol = v2::SmilesParse::MolFromSmiles(d_smiles);
+    if (!d_mol) {
+      // This should be rare, as it should be possible to assume that
+      // the people who made the SynthonSpace know what they're doing.
+      // Therefore, it's probably a corrupted or incorrect file, so
+      // bring it all down.
+      throw std::runtime_error("Unparsable synthon SMILES " + d_smiles +
+                               " with ID " + d_id);
+    }
     d_mol->setProp<std::string>(common_properties::_Name, d_id);
   }
   return d_mol;

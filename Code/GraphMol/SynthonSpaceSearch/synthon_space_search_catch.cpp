@@ -272,8 +272,8 @@ TEST_CASE("Connector Regions", "[Connector Regions]") {
         fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
     SynthonSpace synthonspace;
     synthonspace.readTextFile(libName);
-    const auto &rs = synthonspace.reactions().begin();
-    CHECK(rs->second->connectorRegions().size() == 30);
+    const auto &rs = synthonspace.getReactions().begin();
+    CHECK(rs->second->getConnectorRegions().size() == 30);
   }
 }
 
@@ -282,25 +282,26 @@ TEST_CASE("DB Writer", "[DB Writer]") {
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space.txt";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
-  CHECK(synthonspace.numReactions() == 1);
+  CHECK(synthonspace.getNumReactions() == 1);
   synthonspace.writeDBFile("doebner_miller_space.spc");
 
   SynthonSpace newsynthonspace;
   newsynthonspace.readDBFile("doebner_miller_space.spc");
-  auto it = newsynthonspace.reactions().find("doebner-miller-quinoline");
-  CHECK(it != newsynthonspace.reactions().end());
+  auto it = newsynthonspace.getReactions().find("doebner-miller-quinoline");
+  CHECK(it != newsynthonspace.getReactions().end());
   const auto &irxn = it->second;
   const auto &orxn =
-      synthonspace.reactions().find("doebner-miller-quinoline")->second;
+      synthonspace.getReactions().find("doebner-miller-quinoline")->second;
   CHECK(irxn->id() == orxn->id());
-  CHECK(irxn->connectorRegions().size() == orxn->connectorRegions().size());
-  CHECK(*irxn->connRegFP() == *orxn->connRegFP());
-  CHECK(irxn->connectors() == orxn->connectors());
-  CHECK(irxn->synthons().size() == orxn->synthons().size());
-  for (size_t i = 0; i < irxn->synthons().size(); ++i) {
-    CHECK(irxn->synthons()[i].size() == orxn->synthons()[i].size());
-    for (size_t j = 0; j < irxn->synthons().size(); ++j) {
-      CHECK(irxn->synthons()[i][j]->id() == orxn->synthons()[i][j]->id());
+  CHECK(irxn->getConnectorRegions().size() ==
+        orxn->getConnectorRegions().size());
+  CHECK(*irxn->getConnRegFP() == *orxn->getConnRegFP());
+  CHECK(irxn->getConnectors() == orxn->getConnectors());
+  CHECK(irxn->getSynthons().size() == orxn->getSynthons().size());
+  for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
+    CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
+    for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
+      CHECK(irxn->getSynthons()[i][j]->id() == orxn->getSynthons()[i][j]->id());
     }
   }
 }
