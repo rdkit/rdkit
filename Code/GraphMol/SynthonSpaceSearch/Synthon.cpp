@@ -20,6 +20,31 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
+Synthon::Synthon(const std::string &smi, const std::string &id)
+    : d_smiles(smi), d_id(id) {
+  dp_mol = v2::SmilesParse::MolFromSmiles(d_smiles);
+  if (!dp_mol) {
+    // This should be rare, as it should be possible to assume that
+    // the people who made the SynthonSpace know what they're doing.
+    // Therefore, it's probably a corrupted or incorrect file, so
+    // bring it all down.
+    throw std::runtime_error("Unparsable synthon SMILES " + d_smiles +
+                             " with ID " + d_id);
+  }
+  dp_mol->setProp<std::string>(common_properties::_Name, d_id);
+
+  dp_pattFP.reset(PatternFingerprintMol(*getMol(), 2048));
+
+  auto cr = getConnRegion(*getMol());
+  if (cr) {
+    std::vector<std::unique_ptr<ROMol>> tmpFrags;
+    MolOps::getMolFrags(*cr, tmpFrags, false);
+    for (auto &f : tmpFrags) {
+      d_connRegions.push_back(std::shared_ptr<ROMol>(f.release()));
+    }
+  }
+}
+
 Synthon::Synthon(const RDKit::SynthonSpaceSearch::Synthon &other)
     : d_smiles(other.d_smiles), d_id(other.d_id) {}
 
@@ -32,15 +57,15 @@ Synthon &Synthon::operator=(const RDKit::SynthonSpaceSearch::Synthon &other) {
   }
   d_smiles = other.d_smiles;
   d_id = other.d_id;
-  if (other.d_mol) {
-    d_mol.reset(new ROMol(*other.d_mol));
+  if (other.dp_mol) {
+    dp_mol.reset(new ROMol(*other.dp_mol));
   } else {
-    d_mol.reset();
+    dp_mol.reset();
   }
-  if (other.d_pattFP) {
-    d_pattFP.reset(new ExplicitBitVect(*other.d_pattFP));
+  if (other.dp_pattFP) {
+    dp_pattFP.reset(new ExplicitBitVect(*other.dp_pattFP));
   } else {
-    d_pattFP.reset();
+    dp_pattFP.reset();
   }
   if (!other.d_connRegions.empty()) {
     d_connRegions.clear();
@@ -62,8 +87,8 @@ Synthon &Synthon::operator=(RDKit::SynthonSpaceSearch::Synthon &&other) {
   }
   d_smiles = std::move(other.d_smiles);
   d_id = std::move(other.d_id);
-  d_mol = std::exchange(other.d_mol, nullptr);
-  d_pattFP = std::exchange(other.d_pattFP, nullptr);
+  dp_mol = std::exchange(other.dp_mol, nullptr);
+  dp_pattFP = std::exchange(other.dp_pattFP, nullptr);
   d_connRegions =
       std::vector<std::shared_ptr<ROMol>>(other.d_connRegions.size());
   for (size_t i = 0; i < d_connRegions.size(); ++i) {
@@ -72,51 +97,24 @@ Synthon &Synthon::operator=(RDKit::SynthonSpaceSearch::Synthon &&other) {
   return *this;
 }
 
-const std::unique_ptr<ROMol> &Synthon::mol() const {
-  if (!d_mol) {
-    d_mol = v2::SmilesParse::MolFromSmiles(d_smiles);
-    if (!d_mol) {
-      // This should be rare, as it should be possible to assume that
-      // the people who made the SynthonSpace know what they're doing.
-      // Therefore, it's probably a corrupted or incorrect file, so
-      // bring it all down.
-      throw std::runtime_error("Unparsable synthon SMILES " + d_smiles +
-                               " with ID " + d_id);
-    }
-    d_mol->setProp<std::string>(common_properties::_Name, d_id);
-  }
-  return d_mol;
+const std::unique_ptr<ROMol> &Synthon::getMol() const { return dp_mol; }
+
+const std::unique_ptr<ExplicitBitVect> &Synthon::getPattFP() const {
+  return dp_pattFP;
 }
 
-const std::unique_ptr<ExplicitBitVect> &Synthon::pattFP() const {
-  if (!d_pattFP) {
-    d_pattFP.reset(PatternFingerprintMol(*mol(), 2048));
-  }
-  return d_pattFP;
-}
-
-const std::vector<std::shared_ptr<ROMol>> &Synthon::connRegions() const {
-  if (d_connRegions.empty()) {
-    auto cr = getConnRegion(*mol());
-    if (cr) {
-      std::vector<std::unique_ptr<ROMol>> tmpFrags;
-      MolOps::getMolFrags(*cr, tmpFrags, false);
-      for (auto &f : tmpFrags) {
-        d_connRegions.push_back(std::shared_ptr<ROMol>(f.release()));
-      }
-    }
-  }
+const std::vector<std::shared_ptr<ROMol>> &Synthon::getConnRegions() const {
   return d_connRegions;
 }
 
 void Synthon::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_smiles);
   streamWrite(os, d_id);
-  MolPickler::pickleMol(*mol(), os, PicklerOps::AllProps);
-  auto pattFPstr = pattFP()->toString();
+  MolPickler::pickleMol(*getMol(), os, PicklerOps::AllProps);
+  auto pattFPstr = getPattFP()->toString();
   streamWrite(os, pattFPstr);
-  streamWrite(os, connRegions().size());
-  for (const auto &cr : connRegions()) {
+  streamWrite(os, getConnRegions().size());
+  for (const auto &cr : getConnRegions()) {
     MolPickler::pickleMol(*cr, os, PicklerOps::AllProps);
   }
 }
@@ -124,11 +122,11 @@ void Synthon::writeToDBStream(std::ostream &os) const {
 void Synthon::readFromDBStream(std::istream &is) {
   streamRead(is, d_smiles, 0);
   streamRead(is, d_id, 0);
-  d_mol.reset(new ROMol);
-  MolPickler::molFromPickle(is, *d_mol);
+  dp_mol.reset(new ROMol);
+  MolPickler::molFromPickle(is, *dp_mol);
   std::string pickle;
   streamRead(is, pickle, 0);
-  d_pattFP.reset(new ExplicitBitVect(pickle));
+  dp_pattFP.reset(new ExplicitBitVect(pickle));
   size_t numConnRegs;
   streamRead(is, numConnRegs);
   d_connRegions.resize(numConnRegs);

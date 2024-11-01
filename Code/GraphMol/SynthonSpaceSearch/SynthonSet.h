@@ -53,10 +53,15 @@ class SynthonSet {
   // SynthonSet takes control of the newSynthon and manages it.
   void addSynthon(int synthonSetNum, Synthon *newSynthon);
 
+  // Build the connector regions and their fingerprints.  Only used when
+  // creating a SynthonSpace from a text file.
+  void buildConnectorRegions();
+
   // Scan through the connectors ([1*], [2*] etc.) in the synthons
   // and set bits in d_connectors accordingly.  Also removes any empty
   // reagent sets, which might be because the synthon numbers start from
-  // 1 rather than 0.
+  // 1 rather than 0.  Only used when creating a SynthonSpace from a text
+  // file.
   void assignConnectorsUsed();
 
  private:
@@ -73,12 +78,12 @@ class SynthonSet {
   // fingerprints folded into 1.  If a query fragment doesn't have a
   // connector region in common with any of the synthons it can be assumed that
   // the fragment won't have a match in this SynthonSet.
-  mutable std::vector<std::shared_ptr<ROMol>> d_connectorRegions;
+  std::vector<std::shared_ptr<ROMol>> d_connectorRegions;
   // The fingerprint of the connector regions.  Fingerprints for all
   // connector regions are folded into the same fingerprint.
-  mutable std::unique_ptr<ExplicitBitVect> d_connRegFP;
+  std::unique_ptr<ExplicitBitVect> d_connRegFP;
   // The number of connectors in the synthons in each synthon set.
-  mutable std::vector<int> d_numConnectors;
+  std::vector<int> d_numConnectors;
 };
 
 }  // namespace SynthonSpaceSearch

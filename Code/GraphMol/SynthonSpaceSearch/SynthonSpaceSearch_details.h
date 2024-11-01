@@ -18,8 +18,6 @@ namespace RDKit {
 class ROMol;
 namespace SynthonSpaceSearch {
 
-class SynthonSpace;
-
 namespace details {
 // Find all combinations of M things selected from N.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>>

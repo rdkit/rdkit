@@ -10,9 +10,6 @@ rdkit_headers(SynthonSpaceSearch_details.h SynthonSpace.h SynthonSet.h Synthon.h
 rdkit_catch_test(testSynthonSpaceSearch synthon_space_search_catch.cpp
         LINK_LIBRARIES SubstructMatch SubstructLibrary SynthonSpaceSearch)
 
-add_executable(convertSynthonSpace convert_synthon_space.cpp)
-target_link_libraries(convertSynthonSpace SubstructMatch SubstructLibrary SynthonSpaceSearch)
-
 if (RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
 endif ()

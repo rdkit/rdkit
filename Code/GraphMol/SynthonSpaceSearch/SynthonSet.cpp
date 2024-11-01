@@ -35,35 +35,10 @@ namespace RDKit::SynthonSpaceSearch {
 
 const std::vector<std::shared_ptr<ROMol>> &SynthonSet::getConnectorRegions()
     const {
-  if (d_connectorRegions.empty()) {
-    std::set<std::string> smis;
-    for (const auto &rset : d_synthons) {
-      for (const auto &r : rset) {
-        for (const auto &cr : r->connRegions()) {
-          auto smi = MolToSmiles(*cr);
-          if (smis.insert(smi).second) {
-            d_connectorRegions.push_back(cr);
-          }
-        }
-      }
-    }
-  }
   return d_connectorRegions;
 }
 
 const std::unique_ptr<ExplicitBitVect> &SynthonSet::getConnRegFP() const {
-  if (!d_connRegFP) {
-    if (!getConnectorRegions().empty()) {
-      d_connRegFP.reset(PatternFingerprintMol(*getConnectorRegions().front()));
-      for (size_t i = 1; i < getConnectorRegions().size(); ++i) {
-        std::unique_ptr<ExplicitBitVect> fp(
-            PatternFingerprintMol(*getConnectorRegions()[i]));
-        *d_connRegFP |= *fp;
-      }
-    } else {
-      d_connRegFP.reset(new ExplicitBitVect(2048));
-    }
-  }
   return d_connRegFP;
 }
 
@@ -141,15 +116,6 @@ void SynthonSet::assignConnectorsUsed() {
       std::regex(R"(\[1\*\])"), std::regex(R"(\[2\*\])"),
       std::regex(R"(\[3\*\])"), std::regex(R"(\[4\*\])")};
   d_connectors.resize(4, false);
-  // Remove any empty reagent sets.  This most often happens if the
-  // synthon number in the reaction starts from 1, not 0.  Idorsia
-  // use 0, the stuff from ChemSpace uses 1.
-  d_synthons.erase(
-      remove_if(d_synthons.begin(), d_synthons.end(),
-                [&](const std::vector<std::unique_ptr<Synthon>> &r) -> bool {
-                  return r.empty();
-                }),
-      d_synthons.end());
   for (auto &reagSet : d_synthons) {
     for (auto &reag : reagSet) {
       for (size_t i = 0; i < 4; ++i) {
@@ -162,16 +128,47 @@ void SynthonSet::assignConnectorsUsed() {
 }
 
 const std::vector<int> &SynthonSet::getNumConnectors() const {
-  if (d_numConnectors.empty()) {
-    // It should be the case that all synthons in a synthon set
-    // have the same number of connections, so just do the 1st
-    // one of each.
-    for (const auto &reagSet : d_synthons) {
-      d_numConnectors.push_back(
-          details::countConnections(reagSet.front()->smiles()));
-    }
-  }
   return d_numConnectors;
 }
 
+void SynthonSet::buildConnectorRegions() {
+  // Remove any empty reagent sets.  This most often happens if the
+  // synthon number in the reaction starts from 1, not 0.  Idorsia
+  // use 0, the stuff from ChemSpace uses 1.
+  d_synthons.erase(
+      remove_if(d_synthons.begin(), d_synthons.end(),
+                [&](const std::vector<std::unique_ptr<Synthon>> &r) -> bool {
+                  return r.empty();
+                }),
+      d_synthons.end());
+
+  std::set<std::string> smis;
+  for (const auto &rset : d_synthons) {
+    for (const auto &r : rset) {
+      for (const auto &cr : r->getConnRegions()) {
+        auto smi = MolToSmiles(*cr);
+        if (smis.insert(smi).second) {
+          d_connectorRegions.push_back(cr);
+        }
+      }
+    }
+  }
+  if (!getConnectorRegions().empty()) {
+    d_connRegFP.reset(PatternFingerprintMol(*getConnectorRegions().front()));
+    for (size_t i = 1; i < getConnectorRegions().size(); ++i) {
+      std::unique_ptr<ExplicitBitVect> fp(
+          PatternFingerprintMol(*getConnectorRegions()[i]));
+      *d_connRegFP |= *fp;
+    }
+  } else {
+    d_connRegFP.reset(new ExplicitBitVect(2048));
+  }
+  // It should be the case that all synthons in a synthon set
+  // have the same number of connections, so just do the 1st
+  // one of each.
+  for (const auto &synthonSet : d_synthons) {
+    d_numConnectors.push_back(
+        details::countConnections(synthonSet.front()->smiles()));
+  }
+}
 }  // namespace RDKit::SynthonSpaceSearch

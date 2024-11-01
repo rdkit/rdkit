@@ -25,8 +25,7 @@ namespace SynthonSpaceSearch {
 class Synthon {
  public:
   Synthon() {}
-  Synthon(const std::string &smi, const std::string &id)
-      : d_smiles(smi), d_id(id) {}
+  Synthon(const std::string &smi, const std::string &id);
   Synthon(const Synthon &other);
   Synthon(Synthon &&other);
   Synthon &operator=(const Synthon &other);
@@ -34,9 +33,9 @@ class Synthon {
 
   const std::string &smiles() const { return d_smiles; }
   const std::string &id() const { return d_id; }
-  const std::unique_ptr<ROMol> &mol() const;
-  const std::unique_ptr<ExplicitBitVect> &pattFP() const;
-  const std::vector<std::shared_ptr<ROMol>> &connRegions() const;
+  const std::unique_ptr<ROMol> &getMol() const;
+  const std::unique_ptr<ExplicitBitVect> &getPattFP() const;
+  const std::vector<std::shared_ptr<ROMol>> &getConnRegions() const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -46,12 +45,11 @@ class Synthon {
   std::string d_smiles;
   std::string d_id;
 
-  // All mutable because of lazy evaluation.
-  mutable std::unique_ptr<ROMol> d_mol{nullptr};
-  mutable std::unique_ptr<ExplicitBitVect> d_pattFP{nullptr};
+  std::unique_ptr<ROMol> dp_mol{nullptr};
+  std::unique_ptr<ExplicitBitVect> dp_pattFP{nullptr};
   // SMILES strings of any connector regions.  Normally there will only
   // be 1 or 2.
-  mutable std::vector<std::shared_ptr<ROMol>> d_connRegions;
+  std::vector<std::shared_ptr<ROMol>> d_connRegions;
 };
 
 // Return a molecule containing the portions of the molecule starting at
