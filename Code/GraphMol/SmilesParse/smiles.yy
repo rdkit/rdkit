@@ -9,6 +9,8 @@
 
 #include <cstring>
 #include <iostream>
+#include <string>
+#include <string_view>
 #include <vector>
 #include <list>
 #include <limits>
@@ -21,7 +23,7 @@
 #define YYDEBUG 1
 #include "smiles.tab.hpp"
 
-extern int yysmiles_lex(YYSTYPE *,void *,int &);
+extern int yysmiles_lex(YYSTYPE *,void *,int &, unsigned int&);
 
 using namespace RDKit;
 namespace {
@@ -35,6 +37,35 @@ namespace {
   molList->resize(0);
  }
 }
+
+void printSyntaxErrorMessage(std::string_view input,
+                             std::string_view err_message,
+                             unsigned int bad_token_position) {
+    // NOTE: If the input is very long, the pointer to the failed location
+    // becomes less useful. We should truncate the length of the error message
+    // to 101 chars.
+    constexpr unsigned int error_size{101};
+    constexpr unsigned int prefix_size{error_size / 2};
+    static auto truncate_input = [](const auto& input, const unsigned int pos) {
+        if ((pos >= prefix_size) && (pos + prefix_size) < input.size()) {
+            return input.substr(pos - prefix_size, error_size);
+        } else if (pos >= prefix_size) {
+            return input.substr(pos - prefix_size);
+        } else {
+            return input.substr(
+                0, std::min(input.size(), static_cast<size_t>(error_size)));
+        }
+    };
+
+    size_t num_dashes =
+        (bad_token_position >= prefix_size ? prefix_size : bad_token_position -1);
+
+    BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << err_message << " while parsing: " << input << std::endl;
+    BOOST_LOG(rdErrorLog) << "SMILES Parse Error: check for mistakes around position " << bad_token_position << ":" << std::endl;
+    BOOST_LOG(rdErrorLog) << truncate_input(input, bad_token_position) << std::endl;
+    BOOST_LOG(rdErrorLog) << std::string(num_dashes, '~') << "^\n" << std::endl;
+}
+
 void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
@@ -42,20 +73,20 @@ yysmiles_error( const char *input,
                 RDKit::Bond* &,
                 unsigned int &,unsigned int &,
                 std::list<unsigned int> *,
-		void *,int, const char * msg )
+		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing: " << input << std::endl;
+  printSyntaxErrorMessage(input, msg, bad_token_position);
 }
 
 void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
                 std::list<unsigned int> *,
-		void *,int, const char * msg )
+		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << msg << " while parsing: " << input << std::endl;
+  printSyntaxErrorMessage(input, msg, bad_token_position);
 }
 
 
@@ -64,6 +95,7 @@ yysmiles_error( const char *input,
 %define api.pure full
 %lex-param   {yyscan_t *scanner}
 %lex-param   {int& start_token}
+%lex-param   {unsigned int& current_token_position}
 %parse-param {const char *input}
 %parse-param {std::vector<RDKit::RWMol *> *molList}
 %parse-param {RDKit::Atom* &lastAtom}
@@ -73,10 +105,11 @@ yysmiles_error( const char *input,
 %parse-param {std::list<unsigned int> *branchPoints}
 %parse-param {void *scanner}
 %parse-param {int& start_token}
+%parse-param {unsigned int& current_token_position}
 
 %code provides {
 #define YY_DECL int yylex \
-               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+               (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token, unsigned int& current_token_position)
 }
 
 %union {
@@ -91,14 +124,14 @@ yysmiles_error( const char *input,
 %token <atom> AROMATIC_ATOM_TOKEN ATOM_TOKEN ORGANIC_ATOM_TOKEN
 %token <ival> NONZERO_DIGIT_TOKEN ZERO_TOKEN
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN LOOP_CONNECTOR_TOKEN
-%token MINUS_TOKEN PLUS_TOKEN  
+%token MINUS_TOKEN PLUS_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN COLON_TOKEN HASH_TOKEN
 %token <bond> BOND_TOKEN
-%token <chiraltype> CHI_CLASS_TOKEN 
+%token <chiraltype> CHI_CLASS_TOKEN
 %type <moli> mol
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
 %type <bond> bondd
-%type <ival> nonzero_number number ring_number digit 
+%type <ival> nonzero_number number ring_number digit
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token EOS_TOKEN
 
@@ -325,7 +358,7 @@ mol: atomd {
 }
 | mol GROUP_CLOSE_TOKEN {
   if(branchPoints->empty()){
-     yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
+     yyerror(input,molList,branchPoints,scanner,start_token,current_token_position,"extra close parentheses");
      yyErrorCleanup(molList);
      YYABORT;
   }
@@ -418,14 +451,14 @@ number:  ZERO_TOKEN
 
 /* --------------------------------------------------------------- */
 nonzero_number:  NONZERO_DIGIT_TOKEN
-| nonzero_number digit { 
-  if($1 >= std::numeric_limits<std::int32_t>::max()/10 || 
+| nonzero_number digit {
+  if($1 >= std::numeric_limits<std::int32_t>::max()/10 ||
      $1*10 >= std::numeric_limits<std::int32_t>::max()-$2 ){
-     yyerror(input,molList,branchPoints,scanner,start_token,"number too large");
+     yyerror(input,molList,branchPoints,scanner,start_token,current_token_position,"number too large");
      yyErrorCleanup(molList);
      YYABORT;
   }
-  $$ = $1*10 + $2; 
+  $$ = $1*10 + $2;
   }
 ;
 

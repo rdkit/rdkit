@@ -125,9 +125,12 @@ int smiles_parse_helper(const std::string &inp,
   TEST_ASSERT(!yysmiles_lex_init(&scanner));
   try {
     size_t ltrim = setup_smiles_string(inp, scanner);
+    // NOTE: This variable will be used to point to the location of the
+    // offending token if we encounter a syntax error
+    unsigned int current_token_position = 0;
     res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, bond,
                          numAtomsParsed, numBondsParsed, &branchPoints, scanner,
-                         start_tok);
+                         start_tok, current_token_position);
   } catch (...) {
     yysmiles_lex_destroy(scanner);
     throw;
