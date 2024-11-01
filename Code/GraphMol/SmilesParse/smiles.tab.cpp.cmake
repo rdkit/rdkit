@@ -118,9 +118,9 @@ void printSyntaxErrorMessage(std::string_view input,
     // NOTE: If the input is very long, the pointer to the failed location
     // becomes less useful. We should truncate the length of the error message
     // to 101 chars.
-    constexpr unsigned int error_size{101};
-    constexpr unsigned int prefix_size{error_size / 2};
-    static auto truncate_input = [](const auto& input, const unsigned int pos) {
+    static constexpr unsigned int error_size{101};
+    static constexpr unsigned int prefix_size{error_size / 2};
+    static auto truncate_input = [=](const auto& input, const unsigned int pos) {
         if ((pos >= prefix_size) && (pos + prefix_size) < input.size()) {
             return input.substr(pos - prefix_size, error_size);
         } else if (pos >= prefix_size) {
