@@ -58,11 +58,11 @@ void printSyntaxErrorMessage(std::string_view input,
     };
 
     size_t num_dashes =
-        (bad_token_position >= prefix_size ? prefix_size : bad_token_position -1);
+        (bad_token_position >= prefix_size ? prefix_size : bad_token_position - 1);
 
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << err_message << " while parsing: " << input << std::endl;
     BOOST_LOG(rdErrorLog) << "SMILES Parse Error: check for mistakes around position " << bad_token_position << ":" << std::endl;
-    BOOST_LOG(rdErrorLog) << truncate_input(input, bad_token_position) << std::endl;
+    BOOST_LOG(rdErrorLog) << truncate_input(input, bad_token_position - 1) << std::endl;
     BOOST_LOG(rdErrorLog) << std::string(num_dashes, '~') << "^\n" << std::endl;
 }
 
