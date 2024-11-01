@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2014-2024, Novartis Institutes for BioMedical Research Inc.
+//  and other RDKit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,11 +36,13 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/BitOps.h>
 #include <GraphMol/ChemReactions/Reaction.h>
-#include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/Fingerprints/AtomPairs.h>
 #include "GraphMol/ChemReactions/ReactionFingerprints.h"
 #include <GraphMol/Fingerprints/MACCS.h>
-#include <GraphMol/Fingerprints/MorganFingerprints.h>
+#include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/Fingerprints/AtomPairGenerator.h>
+#include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <DataStructs/SparseIntVect.h>
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 
@@ -48,32 +51,35 @@ namespace {
 RDKit::SparseIntVect<std::uint32_t> *generateFingerprint(
     RDKit::ROMol &mol, unsigned int fpSize, RDKit::FingerprintType t) {
   mol.updatePropertyCache(false);
-  RDKit::SparseIntVect<std::uint32_t> *res;
+  RDKit::SparseIntVect<std::uint32_t> *res = nullptr;
   switch (t) {
-    case RDKit::AtomPairFP: {
-      RDKit::SparseIntVect<std::int32_t> *tmp1 =
-          RDKit::AtomPairs::getHashedAtomPairFingerprint(mol, fpSize);
-      res = new RDKit::SparseIntVect<std::uint32_t>(fpSize);
-      for (auto val : tmp1->getNonzeroElements()) {
-        res->setVal(static_cast<std::uint32_t>(val.first), val.second);
-      }
-      delete tmp1;
+    case RDKit::FingerprintType::AtomPairFP: {
+      RDKit::AtomPair::AtomPairArguments args;
+      args.d_fpSize = fpSize;
+      std::unique_ptr<RDKit::FingerprintGenerator<std::uint32_t>> fpg{
+          RDKit::AtomPair::getAtomPairGenerator<std::uint32_t>(args)};
+      res = fpg->getCountFingerprint(mol);
     } break;
-    case RDKit::TopologicalTorsion: {
-      RDKit::SparseIntVect<boost::int64_t> *tmp2 =
-          RDKit::AtomPairs::getHashedTopologicalTorsionFingerprint(mol, fpSize);
-      res = new RDKit::SparseIntVect<std::uint32_t>(fpSize);
-      for (auto val : tmp2->getNonzeroElements()) {
-        res->setVal(static_cast<std::uint32_t>(val.first), val.second);
-      }
-      delete tmp2;
+    case RDKit::FingerprintType::TopologicalTorsionFP: {
+      RDKit::TopologicalTorsion::TopologicalTorsionArguments args;
+      args.d_fpSize = fpSize;
+      std::unique_ptr<RDKit::FingerprintGenerator<std::uint64_t>> fpg{
+          RDKit::TopologicalTorsion::getTopologicalTorsionGenerator<
+              std::uint64_t>(args)};
+
+      res = fpg->getCountFingerprint(mol);
     } break;
-    case RDKit::MorganFP: {
+    case RDKit::FingerprintType::MorganFP: {
       if (!mol.getRingInfo()->isInitialized()) {
         mol.updatePropertyCache();
         RDKit::MolOps::findSSSR(mol);
       }
-      res = RDKit::MorganFingerprints::getHashedFingerprint(mol, 2, fpSize);
+      RDKit::MorganFingerprint::MorganArguments args;
+      args.d_radius = 2;
+      args.d_fpSize = fpSize;
+      std::unique_ptr<RDKit::FingerprintGenerator<std::uint32_t>> fpg{
+          RDKit::MorganFingerprint::getMorganGenerator<std::uint32_t>(args)};
+      res = fpg->getCountFingerprint(mol);
     } break;
     default:
       std::stringstream err;
@@ -87,27 +93,45 @@ ExplicitBitVect *generateFingerprintAsBitVect(RDKit::ROMol &mol,
                                               unsigned int fpSize,
                                               RDKit::FingerprintType t) {
   mol.updatePropertyCache(false);
-  ExplicitBitVect *res;
+  ExplicitBitVect *res = nullptr;
   switch (t) {
-    case RDKit::AtomPairFP:
-      res =
-          RDKit::AtomPairs::getHashedAtomPairFingerprintAsBitVect(mol, fpSize);
-      break;
-    case RDKit::RDKitFP:
-      res = RDKit::RDKFingerprintMol(mol, 1, 7, fpSize);
-      break;
-    case RDKit::TopologicalTorsion:
-      res = RDKit::AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(
-          mol, fpSize);
-      break;
-    case RDKit::MorganFP: {
+    case RDKit::FingerprintType::AtomPairFP: {
+      RDKit::AtomPair::AtomPairArguments args;
+      args.d_fpSize = fpSize;
+      std::unique_ptr<RDKit::FingerprintGenerator<std::uint32_t>> fpg{
+          RDKit::AtomPair::getAtomPairGenerator<std::uint32_t>(args)};
+      res = fpg->getFingerprint(mol);
+    } break;
+    case RDKit::FingerprintType::RDKitFP: {
+      RDKit::RDKitFP::RDKitFPArguments args;
+      args.d_fpSize = fpSize;
+      args.d_minPath = 1;
+      args.d_maxPath = 7;
+      std::unique_ptr<RDKit::FingerprintGenerator<std::uint32_t>> fpg{
+          RDKit::RDKitFP::getRDKitFPGenerator<std::uint32_t>(args)};
+      res = fpg->getFingerprint(mol);
+    } break;
+    case RDKit::FingerprintType::TopologicalTorsionFP: {
+      RDKit::TopologicalTorsion::TopologicalTorsionArguments args;
+      args.d_fpSize = fpSize;
+      std::unique_ptr<RDKit::FingerprintGenerator<std::uint64_t>> fpg{
+          RDKit::TopologicalTorsion::getTopologicalTorsionGenerator<
+              std::uint64_t>(args)};
+      res = fpg->getFingerprint(mol);
+    } break;
+    case RDKit::FingerprintType::MorganFP: {
       if (!mol.getRingInfo()->isInitialized()) {
         mol.updatePropertyCache();
         RDKit::MolOps::findSSSR(mol);
       }
-      res = RDKit::MorganFingerprints::getFingerprintAsBitVect(mol, 2, fpSize);
+      RDKit::MorganFingerprint::MorganArguments args;
+      args.d_radius = 2;
+      args.d_fpSize = fpSize;
+      std::unique_ptr<RDKit::FingerprintGenerator<std::uint32_t>> fpg{
+          RDKit::MorganFingerprint::getMorganGenerator<std::uint32_t>(args)};
+      res = fpg->getFingerprint(mol);
     } break;
-    case RDKit::PatternFP:
+    case RDKit::FingerprintType::PatternFP:
       res = RDKit::PatternFingerprintMol(mol, fpSize);
       break;
     default:
@@ -121,10 +145,10 @@ ExplicitBitVect *generateFingerprintAsBitVect(RDKit::ROMol &mol,
 
 namespace RDKit {
 
-const ReactionFingerprintParams DefaultStructuralFPParams(true, 0.2, 1, 1, 4096,
-                                                          PatternFP);
-const ReactionFingerprintParams DefaultDifferenceFPParams(true, 0.0, 10, 1,
-                                                          2048, AtomPairFP);
+const ReactionFingerprintParams DefaultStructuralFPParams(
+    true, 0.2, 1, 1, 4096, FingerprintType::PatternFP);
+const ReactionFingerprintParams DefaultDifferenceFPParams(
+    true, 0.0, 10, 1, 2048, FingerprintType::AtomPairFP);
 
 SparseIntVect<std::uint32_t> *generateFingerprintChemReactionAsCountVect(
     const ChemicalReaction &rxn, unsigned int fpSize, FingerprintType t,
@@ -197,7 +221,8 @@ ExplicitBitVect *StructuralFingerprintChemReaction(
 SparseIntVect<std::uint32_t> *DifferenceFingerprintChemReaction(
     const ChemicalReaction &rxn, const ReactionFingerprintParams &params) {
   PRECONDITION(params.fpSize != 0, "fpSize==0");
-  PRECONDITION(params.fpType > 0 && params.fpType < 4,
+  PRECONDITION(static_cast<int>(params.fpType) > 0 &&
+                   static_cast<int>(params.fpType) < 4,
                "Fingerprinttype not supported");
 
   SparseIntVect<std::uint32_t> *reactantFP =
