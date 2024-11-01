@@ -46,7 +46,7 @@ void printSyntaxErrorMessage(std::string_view input,
     // to 101 chars.
     static constexpr unsigned int error_size{101};
     static constexpr unsigned int prefix_size{error_size / 2};
-    static auto truncate_input = [](const auto& input, const unsigned int pos) {
+    static auto truncate_input = [=](const auto& input, const unsigned int pos) {
         if ((pos >= prefix_size) && (pos + prefix_size) < input.size()) {
             return input.substr(pos - prefix_size, error_size);
         } else if (pos >= prefix_size) {
