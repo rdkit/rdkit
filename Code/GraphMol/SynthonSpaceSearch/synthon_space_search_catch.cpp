@@ -13,6 +13,7 @@
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -21,11 +22,6 @@
 
 using namespace RDKit;
 using namespace RDKit::SynthonSpaceSearch;
-
-namespace RDKit::SynthonSpaceSearch::details {
-std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
-    const ROMol &query, unsigned int maxBondSplits);
-}  // namespace RDKit::SynthonSpaceSearch::details
 
 using namespace RDKit::SynthonSpaceSearch::details;
 
@@ -42,7 +38,7 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
   }
   return subsLib;
 }
-
+#if 1
 TEST_CASE("Test splits 1", "[Test splits 1]") {
   std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
                                   "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1"};
@@ -69,7 +65,7 @@ TEST_CASE("Test splits 1", "[Test splits 1]") {
     }
   }
 }
-
+#endif
 TEST_CASE("Amide 1", "[Amide 1]") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt";

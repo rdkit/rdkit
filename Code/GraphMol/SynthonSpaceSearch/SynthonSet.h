@@ -28,7 +28,7 @@ namespace SynthonSpaceSearch {
 class Synthon;
 
 // This class holds all the synthons for a particular reaction.
-class SynthonSet {
+class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
  public:
   SynthonSet() = default;
   SynthonSet(const std::string &id) : d_id(id) {}

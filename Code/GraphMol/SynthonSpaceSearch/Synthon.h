@@ -22,7 +22,7 @@ class Atom;
 namespace SynthonSpaceSearch {
 
 // This class holds a Synthon that will be part of a SynthonSet.
-class Synthon {
+class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
  public:
   Synthon() {}
   Synthon(const std::string &smi, const std::string &id);
@@ -59,7 +59,8 @@ class Synthon {
 // within 3 bonds of each other.  E.g. the molecule [1*]CN(C[2*])Cc1ccccc1
 // will give [1*]CN(C)C[1*].  The 2 dummy atoms are 4 bonds apart, but the
 // fragments overlap.  All dummy atoms given isotope 1 whatever they had before.
-std::unique_ptr<ROMol> getConnRegion(const ROMol &mol);
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> getConnRegion(
+    const ROMol &mol);
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit

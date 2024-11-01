@@ -21,6 +21,7 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 
 namespace RDKit {
 namespace SynthonSpaceSearch {
