@@ -40,7 +40,7 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
 }
 
 #if 1
-TEST_CASE("Test splits 1", "[Test splits 1]") {
+TEST_CASE("Test splits 1") {
   std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
                                   "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1"};
   std::vector<std::vector<size_t>> expCounts{{1, 51, 345, 20},
@@ -68,7 +68,7 @@ TEST_CASE("Test splits 1", "[Test splits 1]") {
 }
 #endif
 
-TEST_CASE("Amide 1", "[Amide 1]") {
+TEST_CASE("Amide 1") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -98,7 +98,7 @@ TEST_CASE("Amide 1", "[Amide 1]") {
   CHECK(resSmi == enumSmi);
 }
 
-TEST_CASE("Urea 1", "[Urea 1]") {
+TEST_CASE("Urea 1") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -120,7 +120,7 @@ TEST_CASE("Urea 1", "[Urea 1]") {
   }
 }
 
-TEST_CASE("Simple query 1", "[Simple query 1]") {
+TEST_CASE("Simple query 1") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -162,7 +162,7 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
   }
 }
 
-TEST_CASE("Triazole", "[Triazole]") {
+TEST_CASE("Triazole") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -203,7 +203,7 @@ TEST_CASE("Triazole", "[Triazole]") {
   }
 }
 
-TEST_CASE("Quinoline", "[Quinoline]") {
+TEST_CASE("Quinoline") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -232,7 +232,7 @@ TEST_CASE("Quinoline", "[Quinoline]") {
   }
 }
 
-TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {
+TEST_CASE("Substructure in 1 reagent") {
   // Making sure it works when the query is a complete substructure of 1
   // of the synthons in the library, so the whole library is a hit.
   REQUIRE(rdbase);
@@ -258,7 +258,7 @@ TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {
   }
 }
 
-TEST_CASE("Connector Regions", "[Connector Regions]") {
+TEST_CASE("Connector Regions") {
   SECTION("Single tests") {
     auto m1 = "[1*]CN(C[2*])Cc1ccccc1"_smiles;
     REQUIRE(m1);
@@ -289,7 +289,7 @@ TEST_CASE("Connector Regions", "[Connector Regions]") {
   }
 }
 
-TEST_CASE("DB Writer", "[DB Writer]") {
+TEST_CASE("DB Writer") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -320,7 +320,7 @@ TEST_CASE("DB Writer", "[DB Writer]") {
   }
 }
 
-TEST_CASE("Biggy", "[Biggy]") {
+TEST_CASE("Biggy") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -409,7 +409,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
 }
 #endif
 
-TEST_CASE("Small query", "[Small query]") {
+TEST_CASE("Small query") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   // Making sure it works when the query has fewer bonds than maxBondSplits.
@@ -424,7 +424,7 @@ TEST_CASE("Small query", "[Small query]") {
   CHECK(results.getHitMolecules().size() == 0);
 }
 
-TEST_CASE("Random Hits", "[Random Hits]") {
+TEST_CASE("Random Hits") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -453,7 +453,7 @@ TEST_CASE("Random Hits", "[Random Hits]") {
   CHECK(expCounts == libCounts);
 }
 
-TEST_CASE("Later hits", "[Later Hits]") {
+TEST_CASE("Later hits") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   // Test use of params.hitStart
@@ -494,7 +494,7 @@ TEST_CASE("Later hits", "[Later Hits]") {
   CHECK(results.getHitMolecules().empty());
 }
 
-TEST_CASE("Complex query", "[Complex query]") {
+TEST_CASE("Complex query") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   // Just to demonstrate that a complex query works.
