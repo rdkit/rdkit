@@ -34,12 +34,12 @@
 namespace RDKit::SynthonSpaceSearch {
 
 std::int64_t SynthonSpace::getNumProducts() const {
-  long totSize = 0;
+  std::int64_t totSize = 0;
   for (const auto &reaction : d_reactions) {
     const auto &rxn = reaction.second;
     size_t thisSize = 1;
-    for (size_t i = 0; i < rxn->getSynthons().size(); ++i) {
-      thisSize *= rxn->getSynthons()[i].size();
+    for (const auto &r : rxn->getSynthons()) {
+      thisSize *= r.size();
     }
     totSize += thisSize;
   }
@@ -53,7 +53,7 @@ SubstructureResults SynthonSpace::substructureSearch(
   if (params.randomSample) {
     if (!d_randGen) {
       std::random_device rd;
-      d_randGen.reset(new std::mt19937(rd()));
+      d_randGen = std::make_unique<std::mt19937>(rd());
     }
     if (params.randomSeed != -1) {
       d_randGen->seed(params.randomSeed);
@@ -70,7 +70,7 @@ SubstructureResults SynthonSpace::substructureSearch(
     if (!theseHits.empty()) {
       totHits += std::accumulate(
           theseHits.begin(), theseHits.end(), 0,
-          [&](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
+          [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
             return prevVal + hs.numHits;
           });
       allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
@@ -79,8 +79,8 @@ SubstructureResults SynthonSpace::substructureSearch(
 
   if (params.buildHits) {
     std::sort(allHits.begin(), allHits.end(),
-              [&](const SynthonSpaceHitSet &hs1,
-                  const SynthonSpaceHitSet &hs2) -> bool {
+              [](const SynthonSpaceHitSet &hs1,
+                 const SynthonSpaceHitSet &hs2) -> bool {
                 if (hs1.reactionId == hs2.reactionId) {
                   return hs1.numHits < hs2.numHits;
                 } else {
@@ -100,7 +100,8 @@ SubstructureResults SynthonSpace::substructureSearch(
     // not be achievable.
     size_t tmpMaxHits(params.maxHits);
     int numSweeps = 0;
-    while (results.size() < std::min(tmpMaxHits, totHits) && numSweeps < 10) {
+    while (results.size() < std::min(tmpMaxHits, totHits) &&
+           numSweeps < params.numRandomSweeps) {
       buildHits(allHits, query, params, totHits, resultsNames, results);
       // totHits is an upper bound, so may not be reached.
       if (params.maxHits == -1 || !params.randomSample) {
@@ -124,12 +125,12 @@ inline std::vector<std::string> splitLine(const std::string &str,
 // to dummy atoms with isotope labels (1, 2, 3, 4 respectively) which can
 // be done safely on the SMILES string.
 void fixConnectors(std::string &smiles) {
-  const static std::vector<std::regex> connRegexs{
-      std::regex(R"(\[U\])"), std::regex(R"(\[Np\])"), std::regex(R"(\[Pu\])"),
-      std::regex(R"(\[Am\])")};
-  const static std::vector<std::string> repls{"[1*]", "[2*]", "[3*]", "[4*]"};
-  for (size_t i = 0; i < connRegexs.size(); ++i) {
-    smiles = std::regex_replace(smiles, connRegexs[i], repls[i]);
+  for (int i = 0; i < MAX_CONNECTOR_NUM; ++i) {
+    std::string regex =
+        std::regex_replace(CONNECTOR_SYMBOLS[i], std::regex(R"(\[)"), R"(\[)");
+    regex = std::regex_replace(regex, std::regex(R"(\])"), R"(\])");
+    std::string repl = "[" + std::to_string(i + 1) + "*]";
+    smiles = std::regex_replace(smiles, std::regex(regex), repl);
   }
 }
 
@@ -137,7 +138,7 @@ void fixConnectors(std::string &smiles) {
 // molecule.
 boost::dynamic_bitset<> getConnectorPattern(
     const std::vector<std::unique_ptr<ROMol>> &fragSet) {
-  boost::dynamic_bitset<> conns(4);
+  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM);
   for (const auto &frag : fragSet) {
     for (const auto &a : frag->atoms()) {
       if (!a->getAtomicNum() && a->getIsotope()) {
@@ -157,9 +158,9 @@ boost::dynamic_bitset<> getConnectorPattern(
 std::vector<std::unique_ptr<ExplicitBitVect>> makePatternFPs(
     std::vector<std::unique_ptr<ROMol>> &molFrags) {
   std::vector<std::unique_ptr<ExplicitBitVect>> pattFPs;
+  pattFPs.reserve(molFrags.size());
   for (const auto &frag : molFrags) {
-    pattFPs.emplace_back(
-        std::unique_ptr<ExplicitBitVect>(PatternFingerprintMol(*frag, 2048)));
+    pattFPs.emplace_back(PatternFingerprintMol(*frag, 2048));
   }
   // Sort by descending number of bits set.
   std::vector<std::pair<size_t, ExplicitBitVect *>> fps(pattFPs.size());
@@ -167,8 +168,8 @@ std::vector<std::unique_ptr<ExplicitBitVect>> makePatternFPs(
     fps[i] = std::make_pair(i, pattFPs[i].get());
   }
   std::sort(fps.begin(), fps.end(),
-            [&](const std::pair<size_t, ExplicitBitVect *> &fp1,
-                const std::pair<size_t, ExplicitBitVect *> &fp2) -> bool {
+            [](const std::pair<size_t, ExplicitBitVect *> &fp1,
+               const std::pair<size_t, ExplicitBitVect *> &fp2) -> bool {
               return fp1.second->getNumOnBits() > fp2.second->getNumOnBits();
             });
 
@@ -199,7 +200,7 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
     std::vector<int> ints;
     for (size_t i = 0; i < bits.size(); ++i) {
       if (bits[i]) {
-        ints.push_back(i);
+        ints.push_back(static_cast<int>(i));
       }
     }
     return ints;
@@ -209,7 +210,7 @@ std::vector<std::vector<std::unique_ptr<RWMol>>> getConnectorPermutations(
   auto perms = details::permMFromN(numFragConns, reactionConns.count());
 
   for (const auto &perm : perms) {
-    connPerms.push_back(std::vector<std::unique_ptr<RWMol>>());
+    connPerms.emplace_back();
     // Copy the fragments and set the isotope numbers according to this
     // permutation.
     for (const auto &f : molFrags) {
@@ -248,8 +249,8 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
   std::vector<boost::dynamic_bitset<>> passedFPs;
   std::vector<boost::dynamic_bitset<>> thisPass;
   for (const auto &synthonSet : reaction->getSynthons()) {
-    passedFPs.push_back(boost::dynamic_bitset<>(synthonSet.size()));
-    thisPass.push_back(boost::dynamic_bitset<>(synthonSet.size()));
+    passedFPs.emplace_back(synthonSet.size());
+    thisPass.emplace_back(synthonSet.size());
   }
 
   boost::dynamic_bitset<> fragsMatched(synthonOrder.size());
@@ -288,7 +289,7 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
   RDKit::MatchVectType dontCare;
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
   for (const auto &synthonSet : reaction->getSynthons()) {
-    synthonsToUse.push_back(boost::dynamic_bitset<>(synthonSet.size()));
+    synthonsToUse.emplace_back(synthonSet.size());
   }
 
   // The tests must be applied for all permutations of synthon list against
@@ -351,7 +352,7 @@ void buildConnectorRegions(
     }
     std::vector<std::unique_ptr<ROMol>> splitConnRegs;
     MolOps::getMolFrags(*fragConnRegs, splitConnRegs, false);
-    connRegFPs.push_back(std::vector<std::unique_ptr<ExplicitBitVect>>());
+    connRegFPs.emplace_back();
     for (auto &cr : splitConnRegs) {
       connRegFPs.back().emplace_back(PatternFingerprintMol(*cr));
     }
@@ -362,9 +363,10 @@ void buildConnectorRegions(
 // Return true if all the fragments have a connector region that matches
 // something in the reaction, false otherwise.
 bool checkConnectorRegions(
-    std::unique_ptr<SynthonSet> &reaction,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
-    std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &connRegFPs) {
+    const std::unique_ptr<SynthonSet> &reaction,
+    const std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
+    const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>>
+        &connRegFPs) {
   const auto &rxnConnRegs = reaction->getConnectorRegions();
   const auto &rxnConnRegsFP = reaction->getConnRegFP();
   RDKit::MatchVectType dontCare;
@@ -399,6 +401,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
   std::vector<std::vector<std::unique_ptr<ROMol>>> connRegs;
   std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> connRegFPs;
   std::vector<int> numFragConns;
+  numFragConns.reserve(fragSet.size());
   for (const auto &frag : fragSet) {
     numFragConns.push_back(details::countConnections(MolToSmiles(*frag)));
   }
@@ -460,7 +463,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
         if (!theseSynthons.empty()) {
           size_t numHits = std::accumulate(
               theseSynthons.begin(), theseSynthons.end(), 1,
-              [&](int prevRes, const boost::dynamic_bitset<> &s2) {
+              [](int prevRes, const boost::dynamic_bitset<> &s2) {
                 return prevRes * s2.count();
               });
           if (numHits) {
@@ -501,7 +504,7 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
       auto lineParts = splitLine(nextLine, regexz);
       for (size_t i = 0; i < firstLineOpts.size(); ++i) {
         if (lineParts == firstLineOpts[i]) {
-          format = i;
+          format = static_cast<int>(i);
         }
       }
       if (format == -1) {
@@ -522,7 +525,7 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
     }
     fixConnectors(nextSynthon[0]);
     auto &currReaction = d_reactions[nextSynthon[3]];
-    size_t synthonNum{std::numeric_limits<size_t>::max()};
+    int synthonNum{std::numeric_limits<int>::max()};
     if (format == 0 || format == 1) {
       synthonNum = std::stoi(nextSynthon[2]);
     } else if (format == 2) {
@@ -557,9 +560,9 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
     size_t numRS;
     streamRead(is, numRS);
     for (size_t i = 0; i < numRS; ++i) {
-      SynthonSet *rs = new SynthonSet;
+      std::unique_ptr<SynthonSet> rs = std::make_unique<SynthonSet>();
       rs->readFromDBStream(is);
-      d_reactions.insert(make_pair(rs->id(), rs));
+      d_reactions.insert(std::make_pair(rs->id(), std::move(rs)));
     }
   } catch (std::exception &e) {
     std::cerr << "Error : " << e.what() << " for file " << d_fileName << "\n";
@@ -590,8 +593,8 @@ namespace {
 // class to step through all combinations of list of different sizes.
 // returns (0,0,0), (0,0,1), (0,1,0) etc.
 struct Stepper {
-  Stepper(std::vector<int> &sizes) : d_sizes(sizes) {
-    d_currState = std::vector<int>(sizes.size(), 0);
+  explicit Stepper(std::vector<size_t> &sizes) : d_sizes(sizes) {
+    d_currState = std::vector<size_t>(sizes.size(), 0);
   }
   void step() {
     // Don't do anything if we're at the end, but expect an infinite
@@ -599,7 +602,7 @@ struct Stepper {
     if (d_currState[0] == d_sizes[0]) {
       return;
     }
-    int i = d_currState.size() - 1;
+    std::int64_t i = static_cast<std::int64_t>(d_currState.size()) - 1;
     while (i >= 0) {
       ++d_currState[i];
       if (d_currState[0] == d_sizes[0]) {
@@ -613,8 +616,8 @@ struct Stepper {
       --i;
     }
   }
-  std::vector<int> d_currState;
-  std::vector<int> d_sizes;
+  std::vector<size_t> d_currState;
+  std::vector<size_t> d_sizes;
 };
 }  // namespace
 
@@ -629,7 +632,7 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
   }
 
   std::uniform_real_distribution<double> dist(0.0, 1.0);
-  double randDiscrim = double(params.maxHits) / double(totHits);
+  const double randDiscrim = double(params.maxHits) / double(totHits);
   RDKit::MatchVectType dontCare;
 
   for (const auto &hitset : hitsets) {
@@ -639,12 +642,13 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
       return;
     }
 
-    std::vector<int> numSynthons;
+    std::vector<size_t> numSynthons;
+    numSynthons.reserve(synthons.size());
     for (auto &s : synthons) {
       numSynthons.push_back(s.size());
     }
     Stepper stepper(numSynthons);
-    const int numReactions = synthonsToUse.size();
+    const size_t numReactions = synthonsToUse.size();
     MolzipParams mzparams;
     mzparams.label = MolzipLabel::Isotope;
     while (stepper.d_currState[0] != numSynthons[0]) {
@@ -652,7 +656,7 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
           hitset.reactionId + "_" +
           synthons[0][stepper.d_currState[0]]->getProp<std::string>(
               common_properties::_Name);
-      for (int i = 1; i < numReactions; ++i) {
+      for (size_t i = 1; i < numReactions; ++i) {
         combName +=
             "_" + synthons[i][stepper.d_currState[i]]->getProp<std::string>(
                       common_properties::_Name);
@@ -665,12 +669,12 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
           }
           std::unique_ptr<ROMol> combMol = std::make_unique<ROMol>(
               ROMol(*synthons[0][stepper.d_currState[0]]));
-          for (int i = 1; i < numReactions; ++i) {
+          for (size_t i = 1; i < numReactions; ++i) {
             combMol.reset(
                 combineMols(*combMol, *synthons[i][stepper.d_currState[i]]));
           }
           auto prod = molzip(*combMol, mzparams);
-          MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
+          MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
           // Do a final check of the whole thing.  It can happen that the
           // fragments match synthons but the final product doesn't match, and
           // a key example is when the 2 synthons come together to form an

@@ -103,7 +103,14 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "buildHits",
           &RDKit::SynthonSpaceSearch::SynthonSpaceSearchParams::buildHits,
           "If false, reports the maximum number of hits that"
-          " the search could produce, but doesn't return them.");
+          " the search could produce, but doesn't return them.")
+      .def_readwrite(
+          "numRandomSweeps",
+          &RDKit::SynthonSpaceSearch::SynthonSpaceSearchParams::numRandomSweeps,
+          "The random sampling doesn't always produce the"
+          " required number of hits in 1 go.  This parameter"
+          " controls how many loops it makes to try and get"
+          " the hits before giving up.  Default=10.");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<RDKit::SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(

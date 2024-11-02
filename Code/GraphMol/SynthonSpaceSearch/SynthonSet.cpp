@@ -138,7 +138,7 @@ void SynthonSet::buildConnectorRegions() {
   // use 0, the stuff from ChemSpace uses 1.
   d_synthons.erase(
       remove_if(d_synthons.begin(), d_synthons.end(),
-                [&](const std::vector<std::unique_ptr<Synthon>> &r) -> bool {
+                [](const std::vector<std::unique_ptr<Synthon>> &r) -> bool {
                   return r.empty();
                 }),
       d_synthons.end());

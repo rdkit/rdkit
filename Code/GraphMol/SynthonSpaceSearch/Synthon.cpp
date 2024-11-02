@@ -80,8 +80,8 @@ Synthon &Synthon::operator=(const RDKit::SynthonSpaceSearch::Synthon &other) {
     std::transform(
         other.d_connRegions.begin(), other.d_connRegions.end(),
         std::back_inserter(d_connRegions),
-        [&](const std::shared_ptr<ROMol> &m) -> std::shared_ptr<ROMol> {
-          return std::shared_ptr<ROMol>(new ROMol(*m));
+        [](const std::shared_ptr<ROMol> &m) -> std::shared_ptr<ROMol> {
+          return std::make_shared<ROMol>(*m);
         });
   } else {
     d_connRegions.clear();

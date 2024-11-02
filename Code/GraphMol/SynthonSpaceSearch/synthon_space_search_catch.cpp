@@ -25,7 +25,7 @@ using namespace RDKit::SynthonSpaceSearch;
 
 using namespace RDKit::SynthonSpaceSearch::details;
 
-std::string fName = getenv("RDBASE");
+const char *rdbase = getenv("RDBASE");
 
 std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
     const std::string &smiFile) {
@@ -38,6 +38,7 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
   }
   return subsLib;
 }
+
 #if 1
 TEST_CASE("Test splits 1", "[Test splits 1]") {
   std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
@@ -66,7 +67,10 @@ TEST_CASE("Test splits 1", "[Test splits 1]") {
   }
 }
 #endif
+
 TEST_CASE("Amide 1", "[Amide 1]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt";
   std::string enumLibName =
@@ -95,6 +99,8 @@ TEST_CASE("Amide 1", "[Amide 1]") {
 }
 
 TEST_CASE("Urea 1", "[Urea 1]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_space.txt";
   SynthonSpace synthonspace;
@@ -115,6 +121,8 @@ TEST_CASE("Urea 1", "[Urea 1]") {
 }
 
 TEST_CASE("Simple query 1", "[Simple query 1]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
   SynthonSpace synthonspace;
@@ -155,6 +163,8 @@ TEST_CASE("Simple query 1", "[Simple query 1]") {
 }
 
 TEST_CASE("Triazole", "[Triazole]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   std::string enumLibName =
@@ -194,6 +204,8 @@ TEST_CASE("Triazole", "[Triazole]") {
 }
 
 TEST_CASE("Quinoline", "[Quinoline]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space.txt";
   std::string enumLibName =
@@ -223,6 +235,8 @@ TEST_CASE("Quinoline", "[Quinoline]") {
 TEST_CASE("Substructure in 1 reagent", "[Substructure in 1 reagent]") {
   // Making sure it works when the query is a complete substructure of 1
   // of the synthons in the library, so the whole library is a hit.
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   SynthonSpace synthonspace;
@@ -264,6 +278,8 @@ TEST_CASE("Connector Regions", "[Connector Regions]") {
   }
 
   SECTION("Built from file") {
+    REQUIRE(rdbase);
+    std::string fName(rdbase);
     std::string libName =
         fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
     SynthonSpace synthonspace;
@@ -274,6 +290,8 @@ TEST_CASE("Connector Regions", "[Connector Regions]") {
 }
 
 TEST_CASE("DB Writer", "[DB Writer]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space.txt";
   SynthonSpace synthonspace;
@@ -303,6 +321,8 @@ TEST_CASE("DB Writer", "[DB Writer]") {
 }
 
 TEST_CASE("Biggy", "[Biggy]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
@@ -390,6 +410,8 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
 #endif
 
 TEST_CASE("Small query", "[Small query]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   // Making sure it works when the query has fewer bonds than maxBondSplits.
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
@@ -403,6 +425,8 @@ TEST_CASE("Small query", "[Small query]") {
 }
 
 TEST_CASE("Random Hits", "[Random Hits]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
@@ -430,6 +454,8 @@ TEST_CASE("Random Hits", "[Random Hits]") {
 }
 
 TEST_CASE("Later hits", "[Later Hits]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   // Test use of params.hitStart
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
@@ -469,6 +495,8 @@ TEST_CASE("Later hits", "[Later Hits]") {
 }
 
 TEST_CASE("Complex query", "[Complex query]") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   // Just to demonstrate that a complex query works.
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";

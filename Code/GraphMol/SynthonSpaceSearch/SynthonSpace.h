@@ -26,13 +26,21 @@ class ROMol;
 
 namespace SynthonSpaceSearch {
 
+// This the maximum number of connectors that we can deal with at the moment.
+// In reality, there may be fewer than this.  However, the key limit is in
+// The symbols used for the connectors in Enamine REAL etc.
+const std::vector<std::string> CONNECTOR_SYMBOLS{"[U]", "[Np]", "[Pu]", "[Am]"};
+constexpr int MAX_CONNECTOR_NUM{4};
+
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
-  int maxBondSplits{4};  // The maximum number of bonds to break in the query.
-                         // It should be no more than the maximum
-                         // number of connector types in the SynthonSpace.  At
-                         // present this is 4.  Specifying more than that will
-                         // not matter as it will be reduced to 4.  Likewise,
-                         // values lower than 1 will be increased to 1.
+  int maxBondSplits{MAX_CONNECTOR_NUM};  // The maximum number of bonds to break
+                                         // in the query. It should be no more
+                                         // than the maximum number of connector
+                                         // types in the SynthonSpace.  At
+                                         // present this is 4.  Specifying more
+                                         // than that will not matter as it will
+                                         // be reduced to 4.  Likewise, values
+                                         // lower than 1 will be increased to 1.
   std::int64_t maxHits{1000};  // The maximum number of hits to return.  Use -1
                                // for no maximum.
   std::int64_t hitStart{0};    // Sequence number of hit to start from.  So that
@@ -44,6 +52,10 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                          // a random seed (std::random_device).
   bool buildHits{true};  // If false, reports the maximum number of hits that
                          // the search could produce, but doesn't return them.
+  int numRandomSweeps{10};  // The random sampling doesn't always produce the
+                            // required number of hits in 1 go.  This parameter
+                            // controls how many loops it makes to try and get
+                            // the hits before giving up.
 };
 
 // Holds the information about a set of hits.  The molecules can be built
