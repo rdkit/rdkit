@@ -19,8 +19,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
   explicit SubstructureResults() : d_maxNumResults(0) {}
   SubstructureResults(std::vector<std::unique_ptr<ROMol>> &&mols,
                       size_t maxNumRes);
-  SubstructureResults(const SubstructureResults &other);
-  SubstructureResults(SubstructureResults &&other) = default;
+  SubstructureResults(const SubstructureResults &other) = delete;
+  SubstructureResults(SubstructureResults &&other) = delete;
   ~SubstructureResults() = default;
 
   SubstructureResults &operator=(const SubstructureResults &other);
@@ -45,6 +45,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
     return d_hitMolecules;
   }
 
+  // Return a copy of this object.
+  std::unique_ptr<SubstructureResults> clone() const;
+
  private:
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
   size_t d_maxNumResults;
@@ -57,12 +60,16 @@ inline SubstructureResults::SubstructureResults(
   mols.clear();
 }
 
-inline SubstructureResults::SubstructureResults(
-    const RDKit::SynthonSpaceSearch::SubstructureResults &other)
-    : d_maxNumResults(other.d_maxNumResults) {
-  for (const auto &hm : other.d_hitMolecules) {
-    d_hitMolecules.emplace_back(new ROMol(*hm));
+std::unique_ptr<SubstructureResults> SubstructureResults::clone() const {
+  std::unique_ptr<SubstructureResults> retVal =
+      std::make_unique<SubstructureResults>();
+
+  retVal->d_maxNumResults = d_maxNumResults;
+  retVal->d_hitMolecules.resize(d_hitMolecules.size());
+  for (const auto &hm : d_hitMolecules) {
+    retVal->d_hitMolecules.emplace_back(new ROMol(*hm));
   }
+  return retVal;
 }
 }  // namespace RDKit::SynthonSpaceSearch
 
