@@ -12,7 +12,6 @@
 #define RDKIT_SYNTHONSET_H
 
 #include <iosfwd>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -31,20 +30,23 @@ class Synthon;
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
  public:
   SynthonSet() = default;
-  SynthonSet(const std::string &id) : d_id(id) {}
+  explicit SynthonSet(const std::string &id) : d_id(id) {}
   SynthonSet(const SynthonSet &rhs) = delete;
   SynthonSet(SynthonSet &&rhs) = delete;
 
-  const std::string &id() const { return d_id; }
-  const std::vector<std::vector<std::unique_ptr<Synthon>>> &getSynthons()
-      const {
+  [[nodiscard]] const std::string &getId() const { return d_id; }
+  [[nodiscard]] const std::vector<std::vector<std::unique_ptr<Synthon>>> &
+  getSynthons() const {
     return d_synthons;
   }
-  const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
-  const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions() const;
+  [[nodiscard]] const boost::dynamic_bitset<> &getConnectors() const {
+    return d_connectors;
+  }
+  [[nodiscard]] const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions()
+      const;
 
-  const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
-  const std::vector<int> &getNumConnectors() const;
+  [[nodiscard]] const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
+  [[nodiscard]] const std::vector<int> &getNumConnectors() const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;

@@ -182,7 +182,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   void buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
                  const ROMol &query, const SynthonSpaceSearchParams &params,
                  size_t totHits, std::set<std::string> &resultsNames,
-                 std::vector<std::unique_ptr<ROMol>> &results);
+                 std::vector<std::unique_ptr<ROMol>> &results) const;
   // get the subset of synthons for the given reaction to use for this
   // enumeration.
   std::vector<std::vector<ROMol *>> getSynthonsToUse(

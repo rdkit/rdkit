@@ -69,16 +69,16 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
 
 void SynthonSet::readFromDBStream(std::istream &is) {
   streamRead(is, d_id, 0);
-  size_t numConnRegs = 3;
+  size_t numConnRegs;
   streamRead(is, numConnRegs);
   d_connectorRegions.resize(numConnRegs);
   for (size_t i = 0; i < numConnRegs; ++i) {
-    d_connectorRegions[i] = std::unique_ptr<ROMol>(new ROMol);
+    d_connectorRegions[i] = std::make_unique<ROMol>();
     MolPickler::molFromPickle(is, *d_connectorRegions[i]);
   }
   std::string pickle;
   streamRead(is, pickle, 0);
-  d_connRegFP.reset(new ExplicitBitVect(pickle));
+  d_connRegFP = std::make_unique<ExplicitBitVect>(pickle);
   size_t connSize;
   streamRead(is, connSize);
   d_connectors.resize(connSize);
@@ -93,9 +93,10 @@ void SynthonSet::readFromDBStream(std::istream &is) {
   for (size_t i = 0; i < numRS; ++i) {
     size_t numR;
     streamRead(is, numR);
-    d_synthons.push_back(std::vector<std::unique_ptr<Synthon>>());
+    d_synthons.emplace_back();
+    d_synthons[i].resize(numR);
     for (size_t j = 0; j < numR; ++j) {
-      d_synthons[i].emplace_back(new Synthon);
+      d_synthons[i][j] = std::make_unique<Synthon>();
       d_synthons[i][j]->readFromDBStream(is);
     }
   }
@@ -106,7 +107,7 @@ void SynthonSet::addSynthon(int synthonSetNum,
   if (static_cast<size_t>(synthonSetNum) >= d_synthons.size()) {
     for (size_t i = d_synthons.size();
          i < static_cast<size_t>(synthonSetNum) + 1; ++i) {
-      d_synthons.push_back(std::vector<std::unique_ptr<Synthon>>());
+      d_synthons.emplace_back();
     }
   }
   d_synthons[synthonSetNum].emplace_back(std::move(newSynthon));
@@ -120,7 +121,7 @@ void SynthonSet::assignConnectorsUsed() {
   for (auto &reagSet : d_synthons) {
     for (auto &reag : reagSet) {
       for (size_t i = 0; i < 4; ++i) {
-        if (std::regex_search(reag->smiles(), connRegexs[i])) {
+        if (std::regex_search(reag->getSmiles(), connRegexs[i])) {
           d_connectors.set(i);
         }
       }
@@ -162,14 +163,14 @@ void SynthonSet::buildConnectorRegions() {
       *d_connRegFP |= *fp;
     }
   } else {
-    d_connRegFP.reset(new ExplicitBitVect(2048));
+    d_connRegFP = std::make_unique<ExplicitBitVect>(2048);
   }
   // It should be the case that all synthons in a synthon set
   // have the same number of connections, so just do the 1st
   // one of each.
   for (const auto &synthonSet : d_synthons) {
     d_numConnectors.push_back(
-        details::countConnections(synthonSet.front()->smiles()));
+        details::countConnections(synthonSet.front()->getSmiles()));
   }
 }
 }  // namespace RDKit::SynthonSpaceSearch

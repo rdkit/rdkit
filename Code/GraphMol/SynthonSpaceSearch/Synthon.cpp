@@ -11,10 +11,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolPickler.h>
-#include <GraphMol/QueryOps.h>
-#include <GraphMol/ROMol.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
@@ -35,8 +32,7 @@ Synthon::Synthon(const std::string &smi, const std::string &id)
 
   dp_pattFP.reset(PatternFingerprintMol(*getMol(), 2048));
 
-  auto cr = getConnRegion(*getMol());
-  if (cr) {
+  if (auto cr = getConnRegion(*getMol()); cr) {
     std::vector<std::unique_ptr<ROMol>> tmpFrags;
     MolOps::getMolFrags(*cr, tmpFrags, false);
     for (auto &f : tmpFrags) {
@@ -45,33 +41,33 @@ Synthon::Synthon(const std::string &smi, const std::string &id)
   }
 }
 
-Synthon::Synthon(const RDKit::SynthonSpaceSearch::Synthon &other)
+Synthon::Synthon(const Synthon &other)
     : d_smiles(other.d_smiles),
       d_id(other.d_id),
       dp_mol(std::make_unique<ROMol>(*other.dp_mol)),
       dp_pattFP(std::make_unique<ExplicitBitVect>(*other.dp_pattFP)),
       d_connRegions(other.d_connRegions) {}
 
-Synthon::Synthon(RDKit::SynthonSpaceSearch::Synthon &&other)
+Synthon::Synthon(Synthon &&other) noexcept
     : d_smiles(std::move(other.d_smiles)),
       d_id(std::move(other.d_id)),
       dp_mol(std::move(other.dp_mol)),
       dp_pattFP(std::move(other.dp_pattFP)),
       d_connRegions(std::move(other.d_connRegions)) {}
 
-Synthon &Synthon::operator=(const RDKit::SynthonSpaceSearch::Synthon &other) {
+Synthon &Synthon::operator=(const Synthon &other) {
   if (this == &other) {
     return *this;
   }
   d_smiles = other.d_smiles;
   d_id = other.d_id;
   if (other.dp_mol) {
-    dp_mol.reset(new ROMol(*other.dp_mol));
+    dp_mol = std::make_unique<ROMol>(*other.dp_mol);
   } else {
     dp_mol.reset();
   }
   if (other.dp_pattFP) {
-    dp_pattFP.reset(new ExplicitBitVect(*other.dp_pattFP));
+    dp_pattFP = std::make_unique<ExplicitBitVect>(*other.dp_pattFP);
   } else {
     dp_pattFP.reset();
   }
@@ -89,7 +85,7 @@ Synthon &Synthon::operator=(const RDKit::SynthonSpaceSearch::Synthon &other) {
   return *this;
 }
 
-Synthon &Synthon::operator=(RDKit::SynthonSpaceSearch::Synthon &&other) {
+Synthon &Synthon::operator=(Synthon &&other) noexcept {
   if (this == &other) {
     return *this;
   }
@@ -130,16 +126,16 @@ void Synthon::writeToDBStream(std::ostream &os) const {
 void Synthon::readFromDBStream(std::istream &is) {
   streamRead(is, d_smiles, 0);
   streamRead(is, d_id, 0);
-  dp_mol.reset(new ROMol);
+  dp_mol = std::make_unique<ROMol>();
   MolPickler::molFromPickle(is, *dp_mol);
   std::string pickle;
   streamRead(is, pickle, 0);
-  dp_pattFP.reset(new ExplicitBitVect(pickle));
+  dp_pattFP = std::make_unique<ExplicitBitVect>(pickle);
   size_t numConnRegs;
   streamRead(is, numConnRegs);
   d_connRegions.resize(numConnRegs);
   for (size_t i = 0; i < numConnRegs; ++i) {
-    d_connRegions[i].reset(new ROMol);
+    d_connRegions[i] = std::make_shared<ROMol>();
     MolPickler::molFromPickle(is, *d_connRegions[i]);
   }
 }

@@ -8,11 +8,12 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
 #ifndef RDKIT_SYNTHONSPACESEARCHDETAILS_H
 #define RDKIT_SYNTHONSPACESEARCHDETAILS_H
 
 #include <vector>
+
+#include <RDGeneral/export.h>
 
 namespace RDKit {
 class ROMol;

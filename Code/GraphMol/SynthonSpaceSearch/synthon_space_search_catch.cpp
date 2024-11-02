@@ -306,7 +306,7 @@ TEST_CASE("DB Writer") {
   const auto &irxn = it->second;
   const auto &orxn =
       synthonspace.getReactions().find("doebner-miller-quinoline")->second;
-  CHECK(irxn->id() == orxn->id());
+  CHECK(irxn->getId() == orxn->getId());
   CHECK(irxn->getConnectorRegions().size() ==
         orxn->getConnectorRegions().size());
   CHECK(*irxn->getConnRegFP() == *orxn->getConnRegFP());
@@ -315,7 +315,8 @@ TEST_CASE("DB Writer") {
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
-      CHECK(irxn->getSynthons()[i][j]->id() == orxn->getSynthons()[i][j]->id());
+      CHECK(irxn->getSynthons()[i][j]->getId() ==
+            orxn->getSynthons()[i][j]->getId());
     }
   }
 }

@@ -8,36 +8,35 @@
 //  of the RDKit source tree.
 //
 
+#include "SynthonSpace.h"
+
 #include <algorithm>
 #include <list>
 #include <regex>
+#include <utility>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
 
 #include <GraphMol/MolOps.h>
-#include <GraphMol/ROMol.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
-#include <GraphMol/QueryOps.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 
-namespace RDKit {
-namespace SynthonSpaceSearch {
-namespace details {
+namespace RDKit::SynthonSpaceSearch::details {
 
 // get a vector of vectors of unsigned ints that are all combinations of
 // M items chosen from N e.g. all combinations of 3 bonds from a
 // molecule. A modified form of the code in the first answer from
 // https://stackoverflow.com/questions/12991758/creating-all-possible-k-combinations-of-n-items-in-c
-std::vector<std::vector<unsigned int>> combMFromN(unsigned int m,
-                                                  unsigned int n) {
+std::vector<std::vector<unsigned int>> combMFromN(const unsigned int m,
+                                                  const unsigned int n) {
   std::string allN(m, 1);
   allN.resize(n, 0);
   std::vector<std::vector<unsigned int>> combs;
   do {
-    combs.push_back(std::vector<unsigned int>());
+    combs.emplace_back();
     for (unsigned int i = 0; i < n; ++i) {
       if (allN[i]) {
         combs.back().push_back(i);
@@ -91,9 +90,9 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
   boost::dynamic_bitset<> done(mol.getNumBonds());
   done[aromBond->getIdx()] = true;
   while (!toDo.empty()) {
-    auto nextBond = toDo.front();
+    const auto nextBond = toDo.front();
     toDo.pop_front();
-    for (auto nbr :
+    for (const auto nbr :
          make_iterator_range(mol.getAtomNeighbors(nextBond->getBeginAtom()))) {
       auto bond = mol.getBondBetweenAtoms(nextBond->getBeginAtomIdx(), nbr);
       if (!done[bond->getIdx()] && bond->getIsAromatic()) {
@@ -102,7 +101,7 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
         toDo.push_back(bond);
       }
     }
-    for (auto nbr :
+    for (const auto nbr :
          make_iterator_range(mol.getAtomNeighbors(nextBond->getEndAtom()))) {
       auto bond = mol.getBondBetweenAtoms(nextBond->getEndAtomIdx(), nbr);
       if (!done[bond->getIdx()] && bond->getIsAromatic()) {
@@ -129,7 +128,6 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 // be appropriate for the synthons, and aromatic atoms are set to atomic number
 // queries with the aromatic flag cleared.
 void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
-  ROMol::OEDGE_ITER beg;
   for (auto &frag : molFrags) {
     auto buildQueryAtom = [](const Atom *atom) -> std::unique_ptr<QueryAtom> {
       std::unique_ptr<QueryAtom> nqa(new QueryAtom(atom->getAtomicNum()));
@@ -140,31 +138,30 @@ void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
       return nqa;
     };
     std::unique_ptr<RWMol> qmol;
-    for (auto atom : frag->atoms()) {
+    for (const auto atom : frag->atoms()) {
       // Allow for general dummy atoms in the query by only looking at atoms
       // where the isotope numbers have been set to the ones we're using.  For
       // these atoms, there should only be 1 bond.
       if (!atom->getAtomicNum() && atom->getIsotope() > 0 &&
-          atom->getIsotope() < 5) {
-        beg = frag->getAtomBonds(atom).first;
-        auto fbond = (*frag)[*beg];
-        if (fbond->getIsAromatic()) {
+          atom->getIsotope() < MAX_CONNECTOR_NUM + 1) {
+        if (auto const fbond = (*frag)[*frag->getAtomBonds(atom).first];
+            fbond->getIsAromatic()) {
           if (!qmol) {
-            qmol.reset(new RWMol(*frag));
+            qmol = std::make_unique<RWMol>(*frag);
           }
           auto aromBonds = getContiguousAromaticBonds(*frag, fbond);
           for (const auto &ab : aromBonds) {
-            auto qab = qmol->getBondWithIdx(ab->getIdx());
+            const auto qab = qmol->getBondWithIdx(ab->getIdx());
             std::unique_ptr<QueryBond> qbond(new QueryBond(*qab));
             qbond->setQuery(makeSingleOrDoubleOrAromaticBondQuery());
             qmol->replaceBond(qab->getIdx(), qbond.get());
 
-            auto qba = qmol->getAtomWithIdx(ab->getBeginAtomIdx());
+            const auto qba = qmol->getAtomWithIdx(ab->getBeginAtomIdx());
             auto nqba = buildQueryAtom(qba);
             qmol->replaceAtom(ab->getBeginAtomIdx(), nqba.get());
 
-            auto qea = qmol->getAtomWithIdx(ab->getEndAtomIdx());
-            auto nqea = buildQueryAtom(qea);
+            const auto qea = qmol->getAtomWithIdx(ab->getEndAtomIdx());
+            const auto nqea = buildQueryAtom(qea);
             qmol->replaceAtom(ab->getEndAtomIdx(), nqea.get());
           }
           break;
@@ -173,7 +170,7 @@ void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
     }
 
     if (qmol) {
-      frag.reset(qmol.release());
+      frag = std::move(qmol);
     }
   }
 }
@@ -200,7 +197,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
   // lots of hits but one can imagine a use for it.
-  fragments.push_back(std::vector<std::unique_ptr<ROMol>>());
+  fragments.emplace_back();
   fragments.back().emplace_back(new ROMol(query));
 
   // Now do the splits.
@@ -208,7 +205,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
     for (unsigned int j = 1; j <= i; ++j) {
-      dummyLabels.push_back(std::make_pair(j, j));
+      dummyLabels.emplace_back(j, j);
     }
     for (auto &c : combs) {
       // don't break just 1 ring bond, as it can't create 2 fragments.  It
@@ -219,13 +216,12 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
       // through cases that break 2 ring bonds in separate ring systems,
       // such as a bond in each of the 2 phenyl rings in c1ccccc1c2ccccc2,
       // but they will be caught below.
-      auto numRingBonds =
-          std::reduce(c.begin(), c.end(), 0, [&](int prevRes, int bondNum) {
+      const auto numRingBonds = std::reduce(
+          c.begin(), c.end(), 0, [&](const int prevRes, const int bondNum) {
             if (ringBonds[bondNum]) {
               return prevRes + 1;
-            } else {
-              return prevRes;
             }
+            return prevRes;
           });
       if (numRingBonds == 1) {
         continue;
@@ -253,7 +249,4 @@ int countConnections(const std::string &smiles) {
       std::sregex_token_iterator(smiles.begin(), smiles.end(), conns),
       std::sregex_token_iterator()));
 }
-}  // namespace details
-
-}  // namespace SynthonSpaceSearch
-}  // namespace RDKit
+}  // namespace RDKit::SynthonSpaceSearch::details

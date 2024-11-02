@@ -24,18 +24,19 @@ namespace SynthonSpaceSearch {
 // This class holds a Synthon that will be part of a SynthonSet.
 class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
  public:
-  Synthon() {}
+  Synthon() = default;
   Synthon(const std::string &smi, const std::string &id);
   Synthon(const Synthon &other);
-  Synthon(Synthon &&other);
+  Synthon(Synthon &&other) noexcept;
   Synthon &operator=(const Synthon &other);
-  Synthon &operator=(Synthon &&other);
+  Synthon &operator=(Synthon &&other) noexcept;
 
-  const std::string &smiles() const { return d_smiles; }
-  const std::string &id() const { return d_id; }
-  const std::unique_ptr<ROMol> &getMol() const;
-  const std::unique_ptr<ExplicitBitVect> &getPattFP() const;
-  const std::vector<std::shared_ptr<ROMol>> &getConnRegions() const;
+  [[nodiscard]] const std::string &getSmiles() const { return d_smiles; }
+  [[nodiscard]] const std::string &getId() const { return d_id; }
+  [[nodiscard]] const std::unique_ptr<ROMol> &getMol() const;
+  [[nodiscard]] const std::unique_ptr<ExplicitBitVect> &getPattFP() const;
+  [[nodiscard]] const std::vector<std::shared_ptr<ROMol>> &getConnRegions()
+      const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;

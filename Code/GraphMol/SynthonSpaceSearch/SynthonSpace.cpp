@@ -369,7 +369,7 @@ bool checkConnectorRegions(
         &connRegFPs) {
   const auto &rxnConnRegs = reaction->getConnectorRegions();
   const auto &rxnConnRegsFP = reaction->getConnRegFP();
-  RDKit::MatchVectType dontCare;
+  MatchVectType dontCare;
   for (size_t i = 0; i < connRegFPs.size(); ++i) {
     bool connRegFound = false;
     for (size_t j = 0; j < connRegFPs[i].size(); ++j) {
@@ -468,7 +468,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
               });
           if (numHits) {
             results.push_back(
-                SynthonSpaceHitSet{reaction->id(), theseSynthons, numHits});
+                SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
           }
         }
       }
@@ -537,18 +537,17 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
   }
 
   // Do some final processing.
-  for (auto &it : d_reactions) {
-    auto &reaction = it.second;
-    reaction->buildConnectorRegions();
-    reaction->assignConnectorsUsed();
+  for (auto &[fst, snd] : d_reactions) {
+    snd->buildConnectorRegions();
+    snd->assignConnectorsUsed();
   }
 }
 
 void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   std::ofstream os(outFilename, std::fstream::binary | std::fstream::trunc);
   streamWrite(os, d_reactions.size());
-  for (const auto &rs : d_reactions) {
-    rs.second->writeToDBStream(os);
+  for (const auto &[fst, snd] : d_reactions) {
+    snd->writeToDBStream(os);
   }
   os.close();
 }
@@ -562,7 +561,7 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
     for (size_t i = 0; i < numRS; ++i) {
       std::unique_ptr<SynthonSet> rs = std::make_unique<SynthonSet>();
       rs->readFromDBStream(is);
-      d_reactions.insert(std::make_pair(rs->id(), std::move(rs)));
+      d_reactions.insert(std::make_pair(rs->getId(), std::move(rs)));
     }
   } catch (std::exception &e) {
     std::cerr << "Error : " << e.what() << " for file " << d_fileName << "\n";
@@ -576,11 +575,12 @@ void SynthonSpace::summarise(std::ostream &os) const {
   size_t totSize = 0;
   for (const auto &reaction : d_reactions) {
     const auto &rxn = reaction.second;
-    os << "Reaction name " << rxn->id() << "\n";
+    os << "Reaction name " << rxn->getId() << "\n";
     size_t thisSize = 1;
     for (size_t i = 0; i < rxn->getSynthons().size(); ++i) {
       os << "  Synthon set " << i << " has " << rxn->getSynthons()[i].size()
-         << " synthons" << "\n";
+         << " synthons"
+         << "\n";
       thisSize *= rxn->getSynthons()[i].size();
     }
     totSize += thisSize;
@@ -621,19 +621,19 @@ struct Stepper {
 };
 }  // namespace
 
-void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
-                             const ROMol &query,
-                             const SynthonSpaceSearchParams &params,
-                             size_t totHits,
-                             std::set<std::string> &resultsNames,
-                             std::vector<std::unique_ptr<ROMol>> &results) {
+void SynthonSpace::buildHits(
+    const std::vector<SynthonSpaceHitSet> &hitsets, const ROMol &query,
+    const SynthonSpaceSearchParams &params, const size_t totHits,
+    std::set<std::string> &resultsNames,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
 
   std::uniform_real_distribution<double> dist(0.0, 1.0);
-  const double randDiscrim = double(params.maxHits) / double(totHits);
-  RDKit::MatchVectType dontCare;
+  const double randDiscrim =
+      static_cast<double>(params.maxHits) / static_cast<double>(totHits);
+  MatchVectType dontCare;
 
   for (const auto &hitset : hitsets) {
     const auto &synthonsToUse = hitset.synthonsToUse;
@@ -667,7 +667,7 @@ void SynthonSpace::buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
           if (resultsNames.size() < static_cast<size_t>(params.hitStart)) {
             continue;
           }
-          std::unique_ptr<ROMol> combMol = std::make_unique<ROMol>(
+          auto combMol = std::make_unique<ROMol>(
               ROMol(*synthons[0][stepper.d_currState[0]]));
           for (size_t i = 1; i < numReactions; ++i) {
             combMol.reset(
