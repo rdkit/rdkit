@@ -505,8 +505,7 @@ typedef enum {
   SANITIZE_ADJUSTHS = 0x200,
   SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
   SANITIZE_CLEANUPATROPISOMERS = 0x800,
-  SANITIZE_SETHYBRIDIZATIONFORCE = 0x1000,
-  SANITIZE_ALL = 0xFFFFFFF ^ SANITIZE_SETHYBRIDIZATIONFORCE
+  SANITIZE_ALL = 0xFFFFFFF
 } SanitizeFlags;
 
 //! \brief carries out a collection of tasks for cleaning up a molecule and
@@ -743,12 +742,7 @@ RDKIT_GRAPHMOL_EXPORT bool KekulizeIfPossible(RWMol &mol,
 RDKIT_GRAPHMOL_EXPORT void setConjugation(ROMol &mol);
 
 //! calculates and sets the hybridization of all a molecule's Stoms
-// if the forceFlag is false, and an  atom is already chiral, it just sets the
-// hybridization to agree with the chirality flag
-//
-// if the forceFlag is true or an atom is NOT marked chiral, it will set the
-// hybridization based on the atoms neighbors
-RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol, bool forceFlag = false);
+RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
 
 //!  @}
 

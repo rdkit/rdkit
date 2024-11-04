@@ -273,6 +273,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
     }
   } else {
     sinfo.type = StereoType::Unspecified;
+    // UNDER_CONSTRUCTION("unsupported bond type in getStereoInfo()");
   }
 
   return sinfo;
