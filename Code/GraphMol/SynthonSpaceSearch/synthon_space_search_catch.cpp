@@ -514,3 +514,42 @@ TEST_CASE("Complex query") {
   CHECK(results.getHitMolecules().size() == 1000);
   CHECK(results.getMaxNumResults() == 3257);
 }
+
+TEST_CASE("Map numbers in connectors") {
+  // Map numbers might occur in the connectors, e.g. [1*:1] as well
+  // as [1*].  This checks that that is the case.
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/map_numbers.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+
+  SECTION("Fragged Mol") {
+    std::vector<std::unique_ptr<ROMol>> fragSet;
+    fragSet.emplace_back("c1ccccc1C(=O)[1*]"_smiles);
+    fragSet.emplace_back("[1*]N1CCCC1"_smiles);
+    auto results = synthonspace.searchFragSet(fragSet);
+    CHECK(results.size() == 1);
+  }
+
+  SECTION("Whole Mol") {
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smarts;
+    REQUIRE(queryMol);
+    auto results = synthonspace.substructureSearch(*queryMol);
+    // These were missing before map numbers were accommodated.
+    std::set<std::string> missNames{
+        "a7_67468_30577_29389",  "a7_67468_249279_29389",
+        "a7_67468_24773_29389",  "a7_67468_29593_29389",
+        "a7_67468_308698_29389", "a7_67468_56491_29389",
+        "a7_67468_265474_29389", "a7_67468_15535_29389",
+        "a7_67468_44908_29389",  "a7_67468_59597_29389",
+        "a7_67468_45686_29389"};
+    std::set<std::string> hitNames;
+    for (const auto &hm : results.getHitMolecules()) {
+      hitNames.insert(hm->getProp<std::string>("_Name"));
+    }
+    CHECK(results.getHitMolecules().size() == 11);
+    CHECK(hitNames == missNames);
+  }
+}

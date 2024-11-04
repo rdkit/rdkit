@@ -25,11 +25,10 @@
 #include <regex>
 
 #include <GraphMol/MolPickler.h>
-#include <GraphMol/ROMol.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <RDGeneral/StreamOps.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -114,14 +113,22 @@ void SynthonSet::addSynthon(int synthonSetNum,
 }
 
 void SynthonSet::assignConnectorsUsed() {
-  const static std::vector<std::regex> connRegexs{
-      std::regex(R"(\[1\*\])"), std::regex(R"(\[2\*\])"),
-      std::regex(R"(\[3\*\])"), std::regex(R"(\[4\*\])")};
-  d_connectors.resize(4, false);
+  // Find instances of "[1*]", "[1*:1]", "[2*]", "[2*:2]" etc.
+  // and set d_connectors accordingly.
+  static std::vector<std::regex> connRegexs;
+  if (connRegexs.empty()) {
+    for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
+      connRegexs.emplace_back(R"(\[)" + std::to_string(i + 1) + R"(\*\])");
+      connRegexs.emplace_back(R"(\[)" + std::to_string(i + 1) + R"(\*\:)" +
+                              std::to_string(i + 1) + R"(\])");
+    }
+  }
+  d_connectors.resize(MAX_CONNECTOR_NUM, false);
   for (auto &reagSet : d_synthons) {
     for (auto &reag : reagSet) {
-      for (size_t i = 0; i < 4; ++i) {
-        if (std::regex_search(reag->getSmiles(), connRegexs[i])) {
+      for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
+        if (std::regex_search(reag->getSmiles(), connRegexs[2 * i]) ||
+            std::regex_search(reag->getSmiles(), connRegexs[2 * i + 1])) {
           d_connectors.set(i);
         }
       }

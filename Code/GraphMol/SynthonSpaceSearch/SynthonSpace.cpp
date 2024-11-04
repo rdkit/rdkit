@@ -432,8 +432,8 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
     // Need to try all combinations of synthon orders.
     auto synthonOrders =
         details::permMFromN(pattFPs.size(), reaction->getSynthons().size());
-    for (const auto &ro : synthonOrders) {
-      auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, ro);
+    for (const auto &so : synthonOrders) {
+      auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
       // If none of the synthons passed the screens, move right along, nothing
       // to see.
       bool skip = true;
@@ -459,7 +459,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
       // combination.
       for (auto &connComb : connCombs) {
         auto theseSynthons =
-            getHitSynthons(connComb, passedScreens, reaction, ro);
+            getHitSynthons(connComb, passedScreens, reaction, so);
         if (!theseSynthons.empty()) {
           size_t numHits = std::accumulate(
               theseSynthons.begin(), theseSynthons.end(), 1,
