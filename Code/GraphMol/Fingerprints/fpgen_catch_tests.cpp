@@ -436,7 +436,7 @@ TEST_CASE("Github #7986: Morgan fingerprints, chirality, and radius") {
     // neighboring atoms, these are always the same
     CHECK(ao.atomToBits->at(4) == ao.atomToBits->at(10));
 
-    fp.swap(fpGenerator->getSparseCountFingerprint(*mol2, fargs));
+    fp = std::move(fpGenerator->getSparseCountFingerprint(*mol2, fargs));
     REQUIRE(fp);
     // no chirality here, so we should see the same bits:
     CHECK(ao.atomToBits->at(2) == ao.atomToBits->at(8));
