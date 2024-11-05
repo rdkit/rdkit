@@ -104,8 +104,15 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
 
 // n.b. AtomProperty must resolve to an unsigned integer value on an atom
 // property
-BETTER_ENUM_CLASS(MolzipLabel, unsigned int, AtomMapNumber, Isotope,
-                  FragmentOnBonds, AtomType, AtomProperty);
+// clang-format off
+BETTER_ENUM_CLASS(MolzipLabel, unsigned int,
+    AtomMapNumber,
+    Isotope,
+    FragmentOnBonds,
+    AtomType,
+    AtomProperty
+);
+// clang-format on
 
 struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   MolzipLabel label = MolzipLabel::AtomMapNumber;
