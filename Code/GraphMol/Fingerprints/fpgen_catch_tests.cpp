@@ -398,8 +398,8 @@ TEST_CASE("Github #7986: Morgan fingerprints, chirality, and radius") {
 
   SECTION("radius=1") {
     args.d_radius = 1;
-    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
-        MorganFingerprint::getMorganGenerator<std::uint64_t>(args));
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(args));
     REQUIRE(fpGenerator);
     AdditionalOutput ao;
     ao.allocateBitInfoMap();
@@ -408,7 +408,7 @@ TEST_CASE("Github #7986: Morgan fingerprints, chirality, and radius") {
     FingerprintFuncArguments fargs;
     fargs.additionalOutput = &ao;
 
-    std::unique_ptr<SparseIntVect<std::uint64_t>> fp(
+    std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
         fpGenerator->getSparseCountFingerprint(*mol1, fargs));
     REQUIRE(fp);
     // the actual chiral centers... we don't see these with radius=1:
@@ -418,8 +418,8 @@ TEST_CASE("Github #7986: Morgan fingerprints, chirality, and radius") {
   }
   SECTION("radius=2") {
     args.d_radius = 2;
-    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
-        MorganFingerprint::getMorganGenerator<std::uint64_t>(args));
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(args));
     REQUIRE(fpGenerator);
     AdditionalOutput ao;
     ao.allocateBitInfoMap();
@@ -428,7 +428,7 @@ TEST_CASE("Github #7986: Morgan fingerprints, chirality, and radius") {
     FingerprintFuncArguments fargs;
     fargs.additionalOutput = &ao;
 
-    std::unique_ptr<SparseIntVect<std::uint64_t>> fp(
+    std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
         fpGenerator->getSparseCountFingerprint(*mol1, fargs));
     REQUIRE(fp);
     // the actual chiral centers... now we see them:
