@@ -38,7 +38,7 @@ if(RDK_BUILD_MINIMAL_LIB)
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
         endif()
     endif()
-    add_executable(RDKit_minimal jswrapper.cpp minilib.cpp)
+    add_executable(RDKit_minimal jswrapper.cpp minilib.cpp JSONParsers.cpp)
     target_link_libraries(RDKit_minimal ${MINIMAL_LIB_LIBRARIES})
 
     set_target_properties(RDKit_minimal PROPERTIES LINK_FLAGS "--bind")
@@ -71,7 +71,7 @@ if(RDK_BUILD_CFFI_LIB)
         set(LIBS_TO_USE ${tmpLibs})
     endif()
     
-    add_library(rdkitcffi SHARED cffiwrapper.cpp)
+    add_library(rdkitcffi SHARED cffiwrapper.cpp JSONParsers.cpp)
     target_link_libraries(rdkitcffi PUBLIC rdkit_base)
     target_link_libraries(rdkitcffi PUBLIC ${LIBS_TO_USE})
     INSTALL(TARGETS rdkitcffi EXPORT rdkit-targets

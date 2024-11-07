@@ -164,6 +164,23 @@ RDKIT_RDKITCFFI_EXPORT short destroy_log_handle(void **log_handle);
 RDKIT_RDKITCFFI_EXPORT char *get_log_buffer(void *log_handle);
 RDKIT_RDKITCFFI_EXPORT short clear_log_buffer(void *log_handle);
 
+// props
+RDKIT_RDKITCFFI_EXPORT short has_prop(const char *mol_pkl, size_t mol_pkl_sz,
+                                      const char *key);
+RDKIT_RDKITCFFI_EXPORT char **get_prop_list(const char *mol_pkl,
+                                            size_t mol_pkl_sz,
+                                            short includePrivate,
+                                            short includeComputed);
+RDKIT_RDKITCFFI_EXPORT void set_prop(char **mol_pkl, size_t *mol_pkl_sz,
+                                     const char *key, const char *val,
+                                     short computed);
+RDKIT_RDKITCFFI_EXPORT char *get_prop(const char *mol_pkl, size_t mol_pkl_sz,
+                                      const char *key);
+RDKIT_RDKITCFFI_EXPORT short clear_prop(char **mol_pkl, size_t *mol_pkl_sz,
+                                        const char *key);
+RDKIT_RDKITCFFI_EXPORT void keep_props(char **mol_pkl, size_t *mol_pkl_sz,
+                                       const char *details_json);
+
 #ifdef __cplusplus
 }
 #endif
