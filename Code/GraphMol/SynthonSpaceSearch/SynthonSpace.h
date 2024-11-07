@@ -30,7 +30,7 @@ namespace SynthonSpaceSearch {
 // In reality, there may be fewer than this.  However, the key limit is in
 // The symbols used for the connectors in Enamine REAL etc.
 const std::vector<std::string> CONNECTOR_SYMBOLS{"[U]", "[Np]", "[Pu]", "[Am]"};
-constexpr int MAX_CONNECTOR_NUM{4};
+constexpr unsigned int MAX_CONNECTOR_NUM{4};
 
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
   int maxBondSplits{MAX_CONNECTOR_NUM};  // The maximum number of bonds to break

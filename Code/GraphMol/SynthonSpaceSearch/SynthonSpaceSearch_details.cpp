@@ -180,13 +180,8 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
   }
-  if (maxBondSplits > 4) {
-    maxBondSplits = 4;
-  }
-  if (maxBondSplits > query.getNumBonds()) {
-    maxBondSplits = query.getNumBonds();
-  }
-  auto ringInfo = query.getRingInfo();
+  maxBondSplits = std::min({maxBondSplits, MAX_CONNECTOR_NUM, query.getNumBonds()});
+  const auto ringInfo = query.getRingInfo();
   boost::dynamic_bitset<> ringBonds(query.getNumBonds());
   for (const auto &r : ringInfo->bondRings()) {
     for (const auto b : r) {
