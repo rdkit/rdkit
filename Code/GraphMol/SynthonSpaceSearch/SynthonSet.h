@@ -50,7 +50,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
-  void readFromDBStream(std::istream &is);
+  void readFromDBStream(std::istream &is, std::uint32_t version);
 
   // SynthonSet takes control of the newSynthon and manages it.
   void addSynthon(int synthonSetNum, std::unique_ptr<Synthon> newSynthon);

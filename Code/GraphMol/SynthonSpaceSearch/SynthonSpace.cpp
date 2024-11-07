@@ -33,6 +33,11 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
+// used for serialization
+constexpr int32_t versionMajor = 1;
+constexpr int32_t versionMinor = 0;
+constexpr int32_t endianId = 0xa100f;
+
 std::int64_t SynthonSpace::getNumProducts() const {
   std::int64_t totSize = 0;
   for (const auto &reaction : d_reactions) {
@@ -321,9 +326,9 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
   // should be used because the query matches products that don't incorporate
   // anything from 1 of the synthon lists.  For example, if the synthons are
   // [1*]Nc1c([2*])cccc1 and [1*]=CC=C[2*] and the query is c1ccccc1.
-  bool someSet =
-    std::any_of(synthonsToUse.begin(), synthonsToUse.end(),
-		[](const boost::dynamic_bitset<> &bs) -> bool { return bs.any(); });
+  bool someSet = std::any_of(
+      synthonsToUse.begin(), synthonsToUse.end(),
+      [](const boost::dynamic_bitset<> &bs) -> bool { return bs.any(); });
   if (someSet) {
     for (auto &rtu : synthonsToUse) {
       if (!rtu.count()) {
@@ -535,6 +540,11 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
 
 void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   std::ofstream os(outFilename, std::fstream::binary | std::fstream::trunc);
+
+  streamWrite(os, endianId);
+  streamWrite(os, versionMajor);
+  streamWrite(os, versionMinor);
+
   streamWrite(os, d_reactions.size());
   for (const auto &[fst, snd] : d_reactions) {
     snd->writeToDBStream(os);
@@ -546,11 +556,36 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
   d_fileName = inFilename;
   try {
     std::ifstream is(d_fileName, std::fstream::binary);
+
+    int32_t endianTest;
+    streamRead(is, endianTest);
+    if (endianTest != endianId) {
+      throw std::runtime_error("Endianness mismatch in SynthonSpace file " +
+                               d_fileName);
+    }
+    int32_t majorVersion;
+    streamRead(is, majorVersion);
+    int32_t minorVersion;
+    streamRead(is, minorVersion);
+    if (majorVersion > versionMajor ||
+        (majorVersion == versionMajor && minorVersion > versionMinor)) {
+      BOOST_LOG(rdWarningLog)
+          << "Deserializing from a version number (" << majorVersion << "."
+          << minorVersion << ")"
+          << "that is higher than our version (" << versionMajor << "."
+          << versionMinor << ").\nThis probably won't work." << std::endl;
+    }
+    // version sanity checking
+    if (majorVersion > 1000 || minorVersion > 100) {
+      throw std::runtime_error("unreasonable version numbers");
+    }
+    majorVersion = 1000 * majorVersion + minorVersion * 10;
+
     size_t numRS;
     streamRead(is, numRS);
     for (size_t i = 0; i < numRS; ++i) {
       std::unique_ptr<SynthonSet> rs = std::make_unique<SynthonSet>();
-      rs->readFromDBStream(is);
+      rs->readFromDBStream(is, majorVersion);
       d_reactions.insert(std::make_pair(rs->getId(), std::move(rs)));
     }
   } catch (std::exception &e) {
