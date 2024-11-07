@@ -66,7 +66,7 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   }
 }
 
-void SynthonSet::readFromDBStream(std::istream &is) {
+void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
   streamRead(is, d_id, 0);
   size_t numConnRegs;
   streamRead(is, numConnRegs);
