@@ -140,6 +140,20 @@ void Synthon::readFromDBStream(std::istream &is) {
   }
 }
 
+void Synthon::tagAtomsAndBonds(int molNum) {
+  if (!dp_mol) {
+    return;
+  }
+  for (auto &atom : dp_mol->atoms()) {
+    atom->setProp<int>("molNum", molNum);
+    atom->setProp<int>("idx", atom->getIdx());
+  }
+  for (auto &bond : dp_mol->bonds()) {
+    bond->setProp<int>("molNum", molNum);
+    bond->setProp<int>("idx", bond->getIdx());
+  }
+}
+
 std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
   boost::dynamic_bitset<> inFrag(mol.getNumAtoms());
   for (const auto a : mol.atoms()) {

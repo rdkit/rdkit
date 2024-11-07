@@ -26,6 +26,9 @@ combMFromN(unsigned int m, unsigned int n);
 // Find all permutations of M things selected from N.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>>
 permMFromN(unsigned int m, unsigned int n);
+RDKIT_SYNTHONSPACESEARCH_EXPORT void fixAromaticRingSplits(
+    std::vector<std::unique_ptr<ROMol>> &molFrags);
+
 // Split the molecule into fragments.  maxBondSplits gives the maximum number
 // of bonds to be used in each split.  There will a vector of vectors of
 // molecules, 1 inner vector for each split i.e. maxBondSplits in total, the

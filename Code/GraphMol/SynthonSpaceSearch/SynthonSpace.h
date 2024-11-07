@@ -12,12 +12,12 @@
 #define RDKIT_SYNTHONSPACE_H
 
 #include <map>
-#include <random>
 #include <string>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
 
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SubstructureResults.h>
 
@@ -56,6 +56,9 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                             // required number of hits in 1 go.  This parameter
                             // controls how many loops it makes to try and get
                             // the hits before giving up.
+  double similarityCutoff{0.5};  // Similarity cutoff for returning hits by
+                                 // fingerprint similarity.  At present the fp
+                                 // is hard-coded to be Morgan, bits, radius=2.
 };
 
 // Holds the information about a set of hits.  The molecules can be built
@@ -100,6 +103,18 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   SubstructureResults substructureSearch(
       const ROMol &query,
       SynthonSpaceSearchParams params = SynthonSpaceSearchParams());
+  // Perform a fingerprint similarity search with the given query molecule
+  // across the synthonspace library.  Duplicate SMILES strings produced by
+  // different reactions will be returned.
+  /*!
+   *
+   * @param query : query molecule
+   * @param params : (optional) settings for the search
+   * @return : the hits as a SubstructureResults object.
+   */
+  SubstructureResults similaritySearch(
+      const ROMol &query,
+      SynthonSpaceSearchParams params = SynthonSpaceSearchParams());
 
   // Search this particular fragmented molecule against the reactions.  The
   // fragments should be from 1 splitting, so between 1 and 4 members.
@@ -116,7 +131,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   /*!
    *
-   * @param inFile: name of the file containing the synthon-based library.
+   * @param inFilename: name of the file containing the synthon-based library.
    *
    * The original format is:
    * all lines are tab-separated
@@ -151,12 +166,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // Writes to/reads from a binary DB File in our format.
   /*!
    *
-   * @param outFile: the name of the file to write.
+   * @param outFilename: the name of the file to write.
    */
   void writeDBFile(const std::string &outFilename) const;
   /*!
    *
-   * @param inFile: the name of the file to read.
+   * @param inFilename: the name of the file to read.
    */
   void readDBFile(const std::string &inFilename);
 
@@ -171,23 +186,11 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   std::string d_fileName;
   std::map<std::string, std::unique_ptr<SynthonSet>> d_reactions;
 
-  std::unique_ptr<std::mt19937> d_randGen;
+  // For the similarity search.
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> dp_fpGenerator;
 
-  // Build the molecules from the synthons identified in reagentsToUse.
-  // There should be bitset in reagentsToUse for each reagent set.
-  // If not, it will fail.  Checks that all the results produced match the
-  // query.  totHits is the maximum number of hits that ar possible from
-  // the hitsets, including duplicates.  Duplicates by name are not returned,
-  // but duplicate SMILES from different reactions will be.
-  void buildHits(const std::vector<SynthonSpaceHitSet> &hitsets,
-                 const ROMol &query, const SynthonSpaceSearchParams &params,
-                 size_t totHits, std::set<std::string> &resultsNames,
-                 std::vector<std::unique_ptr<ROMol>> &results) const;
-  // get the subset of synthons for the given reaction to use for this
-  // enumeration.
-  std::vector<std::vector<ROMol *>> getSynthonsToUse(
-      const std::vector<boost::dynamic_bitset<>> &synthonsToUse,
-      const std::string &reaction_id) const;
+  // Create the fingerprints for the synthons ready for fingerprint searches.
+  void buildSynthonFingerprints();
 };
 
 }  // namespace SynthonSpaceSearch

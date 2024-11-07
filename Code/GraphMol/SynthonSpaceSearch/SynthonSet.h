@@ -17,6 +17,8 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include <DataStructs/ExplicitBitVect.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
 
@@ -66,6 +68,15 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // file.
   void assignConnectorsUsed();
 
+  void buildSynthonFingerprints(
+      const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGenerator);
+
+  // Return the molecules for synthons for which the bits are true.
+  // Obviously requires that reqSynths is the same dimensions as
+  // d_synthons.
+  std::vector<std::vector<ROMol *>> getSynthons(
+      const std::vector<boost::dynamic_bitset<>> &reqSynths) const;
+
  private:
   std::string d_id;
   // The lists of synthons.  A product of the reaction is created by
@@ -86,6 +97,18 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::unique_ptr<ExplicitBitVect> d_connRegFP;
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
+
+  // The fingerprints for the synthons for use with a fingerprint similarity
+  // search.  Currently hard-coded to Morgan fingerprint of radius 2.
+  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_synthonFPs;
+
+  void tagSynthonAtomsAndBonds();
+
+  // Take the sampleMols, which are for the synthons in synthSetNum and make
+  // the corresponding entries in d_synthonFPs.
+  void makeSynthonFPs(
+      size_t synthSetNum, const std::vector<std::unique_ptr<ROMol>> &sampleMols,
+      const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGenerator);
 };
 
 }  // namespace SynthonSpaceSearch

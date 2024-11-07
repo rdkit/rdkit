@@ -1,0 +1,81 @@
+//
+// Copyright (C) David Cosgrove 2024.
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
+// This file declares an abstract base class for searching a synthon
+// space.  Concrete base classes include SynthonSpaceSubstructureSearcher
+// and SynthonSpaceFingerprintSearcher.
+
+#ifndef SYNTHONSPACESEARCHER_H
+#define SYNTHONSPACESEARCHER_H
+
+#include <random>
+
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+
+namespace RDKit {
+class ROMol;
+
+namespace SynthonSpaceSearch {
+
+class SynthonSpaceSearcher {
+ public:
+  SynthonSpaceSearcher() = delete;
+  SynthonSpaceSearcher(const ROMol &query,
+                       const SynthonSpaceSearchParams &params,
+                       SynthonSpace &space)
+      : d_query(query), d_params(params), d_space(space) {}
+  SynthonSpaceSearcher(const SynthonSpaceSearcher &other) = delete;
+  SynthonSpaceSearcher(SynthonSpaceSearcher &&other) = delete;
+  SynthonSpaceSearcher &operator=(const SynthonSpaceSearcher &other) = delete;
+  SynthonSpaceSearcher &operator=(SynthonSpaceSearcher &&other) = delete;
+
+  virtual ~SynthonSpaceSearcher() = default;
+
+  SubstructureResults search();
+
+  SynthonSpace &getSpace() const { return d_space; }
+  const ROMol &getQuery() const { return d_query; };
+
+ private:
+  std::unique_ptr<std::mt19937> d_randGen;
+
+  const ROMol &d_query;
+  const SynthonSpaceSearchParams &d_params;
+  SynthonSpace &d_space;
+
+  // Do the search of this fragSet against the SynthonSpace in the
+  // appropriate way, for example by substructure or fingerprint
+  // similarity.
+  virtual std::vector<SynthonSpaceHitSet> searchFragSet(
+      std::vector<std::unique_ptr<ROMol>> &fragSet) const = 0;
+  // Verify that the hit, constructed from a specific combination of
+  // of synthons in the SynthonSpaceHitSet, matches the query in the
+  // appropriate way.
+  virtual bool verifyHit(const ROMol &hit) const = 0;
+
+  // Build the molecules from the synthons identified in reagentsToUse.
+  // There should be bitset in reagentsToUse for each reagent set.
+  // If not, it will fail.  Checks that all the results produced match the
+  // query.  totHits is the maximum number of hits that ar possible from
+  // the hitsets, including duplicates.  Duplicates by name are not returned,
+  // but duplicate SMILES from different reactions will be.
+  void buildHits(const std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
+                 std::set<std::string> &resultsNames,
+                 std::vector<std::unique_ptr<ROMol>> &results) const;
+  // get the subset of synthons for the given reaction to use for this
+  // enumeration.
+  std::vector<std::vector<ROMol *>> getSynthonsToUse(
+      const std::vector<boost::dynamic_bitset<>> &synthonsToUse,
+      const std::string &reaction_id) const;
+};
+
+}  // namespace SynthonSpaceSearch
+}  // namespace RDKit
+#endif  // SYNTHONSPACESEARCHER_H

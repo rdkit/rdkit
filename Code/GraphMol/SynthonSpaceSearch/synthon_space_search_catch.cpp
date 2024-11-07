@@ -105,19 +105,9 @@ TEST_CASE("Urea 1") {
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_space.txt";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
-  SECTION("Single fragged molecule") {
-    std::vector<std::unique_ptr<ROMol>> fragSet;
-    fragSet.emplace_back("O=C(NC1COC1)[1*]"_smiles);
-    fragSet.emplace_back("O=C(Nc1c(CN[1*])cc[s]1)[2*]"_smiles);
-    fragSet.emplace_back("Fc1nccnc1[2*]"_smiles);
-    auto results = synthonspace.searchFragSet(fragSet);
-    CHECK(results.size() == 1);
-  }
-  SECTION("Single molecule with fragging") {
-    auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-    auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.getHitMolecules().size() == 2);
-  }
+  auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+  auto results = synthonspace.substructureSearch(*queryMol);
+  CHECK(results.getHitMolecules().size() == 2);
 }
 
 TEST_CASE("Simple query 1") {
@@ -127,14 +117,6 @@ TEST_CASE("Simple query 1") {
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
-  SECTION("Single fragged molecule") {
-    std::vector<std::unique_ptr<ROMol>> fragSet;
-    fragSet.emplace_back("c1ccccc1[1*]"_smiles);
-    fragSet.emplace_back("C1CCCN1C(=O)[1*]"_smiles);
-    auto results = synthonspace.searchFragSet(fragSet);
-    CHECK(results.size() == 1);
-    CHECK(results.front().numHits == 220);
-  }
   SECTION("Binary File") {
     SynthonSpace synthonspace;
     std::string libName =
@@ -173,34 +155,22 @@ TEST_CASE("Triazole") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
 
-  SECTION("Fragged Mol") {
-    auto queryMol =
-        "OCC([1*])=NN=[2*].C1CCCC1N([3*])[1*].CC1CCN(C1)C(=[2*])[3*]"_smiles;
-    REQUIRE(queryMol);
-    std::vector<std::unique_ptr<ROMol>> queryFrags;
-    MolOps::getMolFrags(*queryMol, queryFrags, false);
-    auto results = synthonspace.searchFragSet(queryFrags);
-    CHECK(results.size() == 1);
-    CHECK(results.front().numHits == 4);
+  auto queryMol = "OCc1ncnn1"_smarts;
+  REQUIRE(queryMol);
+  auto results = synthonspace.substructureSearch(*queryMol);
+  CHECK(results.getHitMolecules().size() == 8);
+  std::set<std::string> resSmi;
+  for (const auto &r : results.getHitMolecules()) {
+    resSmi.insert(MolToSmiles(*r));
   }
-  SECTION("Full Molecule") {
-    auto queryMol = "OCc1ncnn1"_smarts;
-    REQUIRE(queryMol);
-    auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.getHitMolecules().size() == 8);
-    std::set<std::string> resSmi;
-    for (const auto &r : results.getHitMolecules()) {
-      resSmi.insert(MolToSmiles(*r));
-    }
 
-    auto subsLib = loadSubstructLibrary(enumLibName);
-    auto enumRes = subsLib->getMatches(*queryMol);
-    std::set<std::string> enumSmi;
-    for (auto i : enumRes) {
-      enumSmi.insert(MolToSmiles(*subsLib->getMol(i)));
-    }
-    CHECK(resSmi == enumSmi);
+  auto subsLib = loadSubstructLibrary(enumLibName);
+  auto enumRes = subsLib->getMatches(*queryMol);
+  std::set<std::string> enumSmi;
+  for (auto i : enumRes) {
+    enumSmi.insert(MolToSmiles(*subsLib->getMol(i)));
   }
+  CHECK(resSmi == enumSmi);
 }
 
 TEST_CASE("Quinoline") {
@@ -329,31 +299,21 @@ TEST_CASE("Biggy") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
 
-  SECTION("Fragged Mol") {
-    std::vector<std::unique_ptr<ROMol>> fragSet;
-    fragSet.emplace_back("c1ccccc1N[1*]"_smiles);
-    fragSet.emplace_back("N1CCC1C(=O)[1*]"_smiles);
-    auto results = synthonspace.searchFragSet(fragSet);
-    CHECK(results.size() == 2);
-  }
-
-  SECTION("WholeMol") {
-    const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
-                                        "c1ccccc1NC(=O)C1CCN1",
-                                        "c12ccccc1c(N)nc(N)n2",
-                                        "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
-                                        "c1nncn1",
-                                        "C(=O)NC(CC)C(=O)N(CC)C"};
-    const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
-    const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
-    SynthonSpaceSearchParams params;
-    params.maxHits = -1;
-    for (size_t i = 0; i < smis.size(); ++i) {
-      auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
-      auto results = synthonspace.substructureSearch(*queryMol, params);
-      CHECK(results.getHitMolecules().size() == numRes[i]);
-      CHECK(results.getMaxNumResults() == maxRes[i]);
-    }
+  const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
+                                      "c1ccccc1NC(=O)C1CCN1",
+                                      "c12ccccc1c(N)nc(N)n2",
+                                      "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
+                                      "c1nncn1",
+                                      "C(=O)NC(CC)C(=O)N(CC)C"};
+  const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
+  const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
+  SynthonSpaceSearchParams params;
+  params.maxHits = -1;
+  for (size_t i = 0; i < smis.size(); ++i) {
+    auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
+    auto results = synthonspace.substructureSearch(*queryMol, params);
+    CHECK(results.getHitMolecules().size() == numRes[i]);
+    CHECK(results.getMaxNumResults() == maxRes[i]);
   }
 }
 
@@ -371,13 +331,6 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
   std::cout << "Time to read synthonspace : " << elapsed_seconds.count()
             << std::endl;
 
-  SECTION("Fragged Mol") {
-    std::vector<std::unique_ptr<ROMol>> fragSet;
-    fragSet.emplace_back("c1ccccc1N[1*]"_smiles);
-    fragSet.emplace_back("N1CCC1C(=O)[1*]"_smiles);
-    auto results = synthonspace.searchFragSet(fragSet);
-    CHECK(results.size() == 1);
-  }
   SECTION("WholeMol") {
     const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
                                         "c1ccccc1NC(=O)C1CCN1",
@@ -525,31 +478,19 @@ TEST_CASE("Map numbers in connectors") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
 
-  SECTION("Fragged Mol") {
-    std::vector<std::unique_ptr<ROMol>> fragSet;
-    fragSet.emplace_back("c1ccccc1C(=O)[1*]"_smiles);
-    fragSet.emplace_back("[1*]N1CCCC1"_smiles);
-    auto results = synthonspace.searchFragSet(fragSet);
-    CHECK(results.size() == 1);
+  auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smarts;
+  REQUIRE(queryMol);
+  auto results = synthonspace.substructureSearch(*queryMol);
+  // These were missing before map numbers were accommodated.
+  std::set<std::string> missNames{
+      "a7_67468_30577_29389",  "a7_67468_249279_29389", "a7_67468_24773_29389",
+      "a7_67468_29593_29389",  "a7_67468_308698_29389", "a7_67468_56491_29389",
+      "a7_67468_265474_29389", "a7_67468_15535_29389",  "a7_67468_44908_29389",
+      "a7_67468_59597_29389",  "a7_67468_45686_29389"};
+  std::set<std::string> hitNames;
+  for (const auto &hm : results.getHitMolecules()) {
+    hitNames.insert(hm->getProp<std::string>("_Name"));
   }
-
-  SECTION("Whole Mol") {
-    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smarts;
-    REQUIRE(queryMol);
-    auto results = synthonspace.substructureSearch(*queryMol);
-    // These were missing before map numbers were accommodated.
-    std::set<std::string> missNames{
-        "a7_67468_30577_29389",  "a7_67468_249279_29389",
-        "a7_67468_24773_29389",  "a7_67468_29593_29389",
-        "a7_67468_308698_29389", "a7_67468_56491_29389",
-        "a7_67468_265474_29389", "a7_67468_15535_29389",
-        "a7_67468_44908_29389",  "a7_67468_59597_29389",
-        "a7_67468_45686_29389"};
-    std::set<std::string> hitNames;
-    for (const auto &hm : results.getHitMolecules()) {
-      hitNames.insert(hm->getProp<std::string>("_Name"));
-    }
-    CHECK(results.getHitMolecules().size() == 11);
-    CHECK(hitNames == missNames);
-  }
+  CHECK(results.getHitMolecules().size() == 11);
+  CHECK(hitNames == missNames);
 }

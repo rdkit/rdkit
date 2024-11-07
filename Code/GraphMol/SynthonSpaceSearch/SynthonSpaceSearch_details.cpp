@@ -235,7 +235,6 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
         continue;
       }
       if (checkConnectorsInDifferentFrags(molFrags, i)) {
-        fixAromaticRingSplits(molFrags);
         fragments.emplace_back(std::move(molFrags));
       }
     }

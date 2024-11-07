@@ -42,6 +42,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   void writeToDBStream(std::ostream &os) const;
   void readFromDBStream(std::istream &is);
 
+  // Tag each atom and bond with the given molecule number and its index,
+  // so we can find them again in a product if necessary.
+  void tagAtomsAndBonds(int molNum);
+
  private:
   std::string d_smiles;
   std::string d_id;
