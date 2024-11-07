@@ -25,8 +25,8 @@ Synthon::Synthon(const std::string &smi, const std::string &id)
     // the people who made the SynthonSpace know what they're doing.
     // Therefore, it's probably a corrupted or incorrect file, so
     // bring it all down.
-    throw std::runtime_error("Unparsable synthon SMILES " + d_smiles +
-                             " with ID " + d_id);
+    throw ValueErrorException("Unparsable synthon SMILES " + d_smiles +
+                              " with ID " + d_id);
   }
   dp_mol->setProp<std::string>(common_properties::_Name, d_id);
 

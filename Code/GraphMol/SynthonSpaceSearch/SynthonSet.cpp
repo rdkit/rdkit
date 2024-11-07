@@ -106,10 +106,7 @@ void SynthonSet::readFromDBStream(std::istream &is) {
 void SynthonSet::addSynthon(int synthonSetNum,
                             std::unique_ptr<Synthon> newSynthon) {
   if (static_cast<size_t>(synthonSetNum) >= d_synthons.size()) {
-    for (size_t i = d_synthons.size();
-         i < static_cast<size_t>(synthonSetNum) + 1; ++i) {
-      d_synthons.emplace_back();
-    }
+    d_synthons.resize(synthonSetNum + 1);
   }
   d_synthons[synthonSetNum].emplace_back(std::move(newSynthon));
 }
@@ -147,10 +144,9 @@ void SynthonSet::buildConnectorRegions() {
   // synthon number in the reaction starts from 1, not 0.  Idorsia
   // use 0, the stuff from ChemSpace uses 1.
   d_synthons.erase(
-      remove_if(d_synthons.begin(), d_synthons.end(),
-                [](const std::vector<std::unique_ptr<Synthon>> &r) -> bool {
-                  return r.empty();
-                }),
+      std::remove_if(d_synthons.begin(), d_synthons.end(),
+                     [](const std::vector<std::unique_ptr<Synthon>> &r)
+                         -> bool { return r.empty(); }),
       d_synthons.end());
 
   std::set<std::string> smis;

@@ -183,10 +183,8 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
     const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> passedFPs;
-  std::vector<boost::dynamic_bitset<>> thisPass;
   for (const auto &synthonSet : reaction->getSynthons()) {
     passedFPs.emplace_back(synthonSet.size());
-    thisPass.emplace_back(synthonSet.size());
   }
 
   boost::dynamic_bitset<> fragsMatched(synthonOrder.size());
@@ -195,7 +193,7 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
     for (size_t j = 0; j < synthonSet.size(); ++j) {
       auto &synthon = synthonSet[j];
       if (AllProbeBitsMatch(*pattFPs[i], *synthon->getPattFP())) {
-        thisPass[synthonOrder[i]][j] = true;
+        passedFPs[synthonOrder[i]][j] = true;
         fragsMatched[i] = true;
       }
     }
@@ -205,9 +203,9 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
     }
   }
   // If all the fragments had a match, these results are valid.
-  if (fragsMatched.count() == fragsMatched.size()) {
+  if (fragsMatched.count() != fragsMatched.size()) {
     for (size_t i = 0; i < passedFPs.size(); ++i) {
-      passedFPs[i] |= thisPass[i];
+      passedFPs[i].reset();
     }
   }
 
@@ -259,13 +257,9 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
   // should be used because the query matches products that don't incorporate
   // anything from 1 of the synthon lists.  For example, if the synthons are
   // [1*]Nc1c([2*])cccc1 and [1*]=CC=C[2*] and the query is c1ccccc1.
-  bool someSet = false;
-  for (auto &rtu : synthonsToUse) {
-    if (rtu.count()) {
-      someSet = true;
-      break;
-    }
-  }
+  bool someSet = std::any_of(
+      synthonsToUse.begin(), synthonsToUse.end(),
+      [](const boost::dynamic_bitset<> &bs) -> bool { return bs.any(); });
   if (someSet) {
     for (auto &rtu : synthonsToUse) {
       if (!rtu.count()) {
@@ -322,13 +316,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
       auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
       // If none of the synthons passed the screens, move right along, nothing
       // to see.
-      bool skip = true;
-      for (const auto &ps : passedScreens) {
-        if (ps.count()) {
-          skip = false;
-          break;
-        }
-      }
+      bool skip = std::all_of(
+          passedScreens.begin(), passedScreens.end(),
+          [](const boost::dynamic_bitset<> &s) -> bool { return s.none(); });
       if (skip) {
         continue;
       }

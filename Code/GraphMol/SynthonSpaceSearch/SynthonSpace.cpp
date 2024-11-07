@@ -61,7 +61,7 @@ inline std::vector<std::string> splitLine(const std::string &str,
 // to dummy atoms with isotope labels (1, 2, 3, 4 respectively) which can
 // be done safely on the SMILES string.
 void fixConnectors(std::string &smiles) {
-  for (int i = 0; i < MAX_CONNECTOR_NUM; ++i) {
+  for (unsigned int i = 0; i < MAX_CONNECTOR_NUM; ++i) {
     std::string regex =
         std::regex_replace(CONNECTOR_SYMBOLS[i], std::regex(R"(\[)"), R"(\[)");
     regex = std::regex_replace(regex, std::regex(R"(\])"), R"(\])");
