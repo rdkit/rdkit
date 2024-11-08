@@ -13,7 +13,7 @@
 #include <RDBoost/PySequenceHolder.h>
 #include <boost/python.hpp>
 #include <ForceField/MMFF/Nonbonded.h>
-#include <GraphMol/MIF/MIFDescriptors.h>
+#include <GraphMol/MolInteractionFields/MIFDescriptors.h>
 #include <Geometry/UniformRealValueGrid3D.h>
 #include <Geometry/point.h>
 

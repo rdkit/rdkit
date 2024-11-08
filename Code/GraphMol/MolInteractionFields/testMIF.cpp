@@ -13,7 +13,7 @@
 #include <Geometry/point.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/RDLog.h>
-#include <GraphMol/MIF/MIFDescriptors.h>
+#include <GraphMol/MolInteractionFields/MIFDescriptors.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -43,7 +43,7 @@ class testfunctor {
 
 void test1ConstructGrid() {
   std::string path = getenv("RDBASE");
-  path += "/Code/GraphMol/MIF/test_data/";
+  path += "/Code/GraphMol/MolInteractionFields/test_data/";
   //	//Generate Molecule with 3D Coordinates and Partial Charges
   //	RWMol mol=*SmilesToMol("Cl");
   //	MolOps::addHs(mol);
@@ -83,7 +83,7 @@ void test2CalculateDescriptors() {
 
 void test3CubeFiles() {
   std::string path = getenv("RDBASE");
-  path += "/Code/GraphMol/MIF/test_data/";
+  path += "/Code/GraphMol/MolInteractionFields/test_data/";
 
   auto fopts = v2::FileParsers::MolFileParserParams();
   fopts.removeHs = false;
@@ -138,7 +138,7 @@ void test3CubeFiles() {
 
 void test4Coulomb() {
   std::string path = getenv("RDBASE");
-  path += "/Code/GraphMol/MIF/test_data/";
+  path += "/Code/GraphMol/MolInteractionFields/test_data/";
 
   auto fopts = v2::FileParsers::MolFileParserParams();
   fopts.removeHs = false;
@@ -207,7 +207,7 @@ void test4Coulomb() {
 
 void test5CoulombDielectric() {
   std::string path = getenv("RDBASE");
-  path += "/Code/GraphMol/MIF/test_data/";
+  path += "/Code/GraphMol/MolInteractionFields/test_data/";
 
   auto fopts = v2::FileParsers::MolFileParserParams();
   fopts.removeHs = false;
@@ -316,7 +316,7 @@ void test5CoulombDielectric() {
 
 void test6VdWaals() {
   std::string path = getenv("RDBASE");
-  path += "/Code/GraphMol/MIF/test_data/";
+  path += "/Code/GraphMol/MolInteractionFields/test_data/";
 
   auto fopts = v2::FileParsers::MolFileParserParams();
   fopts.removeHs = false;
@@ -375,7 +375,7 @@ void test6VdWaals() {
 
 void test7HBond() {
   std::string path = getenv("RDBASE");
-  path += "/Code/GraphMol/MIF/test_data/";
+  path += "/Code/GraphMol/MolInteractionFields/test_data/";
 
   // Generate Molecule with 3D Coordinates and Partial Charges
   auto fopts = v2::FileParsers::MolFileParserParams();
@@ -564,7 +564,7 @@ void test7HBond() {
 
 void test8Hydrophilic() {
   std::string path = getenv("RDBASE");
-  path += "/Code/GraphMol/MIF/test_data/";
+  path += "/Code/GraphMol/MolInteractionFields/test_data/";
 
   auto fopts = v2::FileParsers::MolFileParserParams();
   fopts.removeHs = false;

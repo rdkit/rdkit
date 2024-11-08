@@ -124,8 +124,7 @@ add_subdirectory(MolEnumerator)
 add_subdirectory(Abbreviations)
 add_subdirectory(GeneralizedSubstruct)
 add_subdirectory(MolProcessing)
-
-add_subdirectory(MIF)
+add_subdirectory(MolInteractionFields)
 
 
 rdkit_test(graphmolTest1 test1.cpp LINK_LIBRARIES FileParsers SmilesParse GraphMol
