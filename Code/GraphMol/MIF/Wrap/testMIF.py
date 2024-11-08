@@ -39,10 +39,10 @@ class TestCase(unittest.TestCase):
         for i in range(grd.GetSize()):
             grd.SetVal (i, float(i / 10.0))
 
-        rdMIF.WriteToCubeFile(grd, mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/testCube.cube'))
+        rdMIF.WriteToCubeFile(grd, mol, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/test3.cube'))
 
         grd2 = geom.UniformRealValueGrid3D(1.0,1.0,1.0,1.0)
-        mol2 = rdMIF.ReadFromCubeFile (grd2, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/testCube.cube'))
+        mol2 = rdMIF.ReadFromCubeFile (grd2, os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/test3.cube'))
 
         self.failUnless(grd.GetSize() == grd2.GetSize())
 
@@ -161,7 +161,7 @@ class TestCase(unittest.TestCase):
         self.failUnless(couldiele6(geom.Point3D(-1.0, 0.0, 0.0)) < couldiele4(geom.Point3D(-1.0, 0.0, 0.0)))
 
     def test5VdWaals(self):
-        mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/HCl.mol'), removeHs=False)
+        mol = AllChem.MolFromMolFile(os.path.join(RDConfig.RDBaseDir, 'Code/GraphMol/MIF/Wrap/testData/HCN.mol'), removeHs=False)
         vdw = rdMIF.ConstructVdWaalsMMFF(mol, confId=0, probeType=6, scaling=False, cutoffDist=1.0)
         
         self.failUnless(vdw(geom.Point3D(-5.0, 0, 0)) < 0)

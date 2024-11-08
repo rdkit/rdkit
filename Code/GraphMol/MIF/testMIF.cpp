@@ -112,9 +112,9 @@ void test3CubeFiles () {
   for (unsigned int i = 0; i < grd.getSize (); i++) {
     grd.setVal (i, double (i / 10.0));
   }
-  writeToCubeFile (grd, mol, path + "testCube.cube");
+  writeToCubeFile (grd, mol, path + "test3.cube");
   UniformRealValueGrid3D grd2;
-  RWMol mol2 = *readFromCubeFile (grd2, path + "testCube.cube");
+  RWMol mol2 = *readFromCubeFile (grd2, path + "test3.cube");
 
   CHECK_INVARIANT(grd.getSize () == grd2.getSize (),
                   "I/O: grid sizes are not the same.");
@@ -269,7 +269,13 @@ void test6VdWaals () {
   path += "/Code/GraphMol/MIF/test_data/";
 
   RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
+  try {
+    VdWaals vdw = constructVdWaalsMMFF(mol, 0, 6, false, 1.0);
+  } catch (ValueErrorException &dexp) {
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+  }
 
+  mol = *MolFileToMol(path + "HCN.mol", true, false);
   VdWaals vdw = constructVdWaalsMMFF(mol, 0, 6, false, 1.0);
 
   CHECK_INVARIANT(vdw(Point3D(-5.0, 0, 0)) < 0, "VdWMMFF: Potential not negative in favorable region.");
