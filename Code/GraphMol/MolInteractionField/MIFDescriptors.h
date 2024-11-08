@@ -10,6 +10,13 @@
 //
 #ifndef RDMIF_DESCRIPTORS_H
 #define RDMIF_DESCRIPTORS_H
+/*! \file MIFDescriptors.h
+
+  \brief code for generating molecular interaction field (MIF) descriptors
+
+  \b Note that this functionality is experimental and the API and/or results
+  amay change in future releases.
+*/
 
 #include <vector>
 #include <Geometry/point.h>
@@ -43,11 +50,13 @@ std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
 //! \brief calculates a descriptor at every grid point of MIF
 /*!
  any unary function/functor can be used taking a grid point of type
- RDKit::Point3D as parameter \param grd			a UniformRealValueGrid3D
- \param functor		any unary function/functor which takes four doubles as
- parameters (3 coordinates, 1 threshold) \param thres	                cuts of
- atom contributions if distance of interaction higher than threshold, negative
- threshold: no threshold, defaults to -1.0
+ RDKit::Point3D as parameter
+
+ \param grd			a UniformRealValueGrid3D
+ \param functor	any unary function/functor which takes four doubles as
+ parameters (3 coordinates, 1 threshold)
+ \param thres	  cuts off atom contributions if distance of interaction higher
+ than threshold, negative threshold: no threshold, defaults to -1.0
  */
 template <typename T>
 void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
@@ -156,8 +165,8 @@ class Coulomb {
   /*!
    \param x, y, z     coordinates at which the interaction is calculated
    \param thres       squared max distance until interactions are calc.
-   <b>Returns</b>
-   electrostatic interaction energy in [kJ mol^-1]
+
+   \return electrostatic interaction energy in [kJ mol^-1]
    */
   double operator()(double x, double y, double z, double thres);
 
@@ -217,11 +226,12 @@ class CoulombDielectric {
    \param pos         vector of postions [A]
    \param probecharge charge of probe [e] (default: 1.0)
    \param absVal      if true, negative (favored) values of interactions are
-   calculated (default: false) \param alpha       softcore interaction parameter
-   [A^2], if zero, a minimum cutoff distance is used (default=0.0) \param cutoff
-   minimum cutoff distance [A] (default:1.0) \param epsilon     relative
-   permittivity of solvent (default=80.0) \param xi          relative
-   permittivity of solute (default=4.0)
+   calculated (default: false)
+   \param alpha     softcore interaction parameter
+   [A^2], if zero, a minimum cutoff distance is used (default=0.0)
+   \param cutoff    minimum cutoff distance [A] (default:1.0)
+   \param epsilon   relative permittivity of solvent (default=80.0)
+   \param xi        relative  permittivity of solute (default=4.0)
 
    */
   CoulombDielectric(const std::vector<double> &charges,
@@ -236,12 +246,15 @@ class CoulombDielectric {
 
    \param mol         molecule object
    \param confId      conformation id which is used to get positions of atoms
-   (default=-1) \param probecharge charge of probe [e] (default: 1.0) \param
-   absVal      if true, negative (favored) values of interactions are calculated
-   (default: false) \param prop	       property key for retrieving partial
-   charges of atoms (default="_GasteigerCharge") \param alpha       softcore
-   interaction parameter [A^2], if zero, a minimum cutoff distance is used
-   (default=0.0) \param cutoff      minimum cutoff distance [A] (default:1.0)
+   (default=-1)
+   \param probecharge charge of probe [e] (default: 1.0)
+   \param absVal      if true, negative (favored) values of interactions are
+   calculated (default: false)
+   \param prop	       property key for retrieving partial charges of atoms
+   (default="_GasteigerCharge")
+   \param alpha       softcore interaction parameter [A^2], if zero, a minimum
+   cutoff distance is used (default=0.0)
+   \param cutoff      minimum cutoff distance [A] (default:1.0)
    \param epsilon     relative permittivity of solvent (default=80.0)
    \param xi          relative permittivity of solute (default=4.0)
    */
@@ -256,8 +269,8 @@ class CoulombDielectric {
   /*!
    \param x, y, z     coordinates at which the interaction is calculated
    \param thres       squared threshold distance
-   <b>Returns</b>
-   electrostatic interaction energy in [kJ mol^-1]
+
+   \return electrostatic interaction energy in [kJ mol^-1]
    */
   double operator()(double x, double y, double z, double thres);
 
@@ -295,8 +308,8 @@ class VdWaals {
   /*!
    \param x, y, z     coordinates at which the interaction is calculated
    \param thres       squared max distance until interactions are calc.
-   <b>Returns</b>
-   vdW interaction energy in [kJ mol^-1]
+
+   \return vdW interaction energy in [kJ mol^-1]
    */
   double operator()(double x, double y, double z, double thres);
 
@@ -320,10 +333,12 @@ class VdWaals {
  The molecule \c mol needs to have partial charges set as property of atoms.
  \param mol           molecule object
  \param confId        conformation id which is used to get positions of atoms
- (default=-1) \param probeAtomType MMFF94 atom type for the probe atom
- (default=6, sp3 oxygen) \param scaling       scaling of VdW parameters to take
- hydrogen bonds into account (default=false) \param cutoff        minimum cutoff
- distance [A] (default:1.0)
+ (default=-1)
+ \param probeAtomType MMFF94 atom type for the probe atom
+ (default=6, sp3 oxygen)
+ \param scaling       scaling of VdW parameters to take hydrogen bonds into
+ account (default=false)
+ \param cutoff        minimum cutoff distance [A] (default:1.0)
  */
 VdWaals constructVdWaalsMMFF(RDKit::ROMol &mol, int confId = -1,
                              unsigned int probeAtomType = 6,
@@ -334,9 +349,10 @@ VdWaals constructVdWaalsMMFF(RDKit::ROMol &mol, int confId = -1,
  The molecule \c mol needs to have partial charges set as property of atoms.
  \param mol           molecule object
  \param confId        conformation id which is used to get positions of atoms
- (default=-1) \param probeAtomType UFF atom type for the probe atom (eg. "O_3",
- i.e. a tetrahedral oxygen) \param cutoff        minimum cutoff distance [A]
- (default:1.0)
+ (default=-1)
+ \param probeAtomType UFF atom type for the probe atom (eg. "O_3", i.e. a
+ tetrahedral oxygen)
+ \param cutoff        minimum cutoff distance [A] (default:1.0)
  */
 VdWaals constructVdWaalsUFF(
     RDKit::ROMol &mol, int confId = -1,
@@ -372,12 +388,15 @@ class HBond {
    The molecule \c mol needs to have partial charges set as property of atoms.
    \param mol           molecule object
    \param confId        conformation id which is used to get positions of atoms
-   (default=-1) \param probeType     atom type for the probe atom (either, "OH",
-   "O", "NH" or "N") \param fixed         for some groups, two different angle
+   (default=-1)
+   \param probeType     atom type for the probe atom (either, "OH",
+   "O", "NH" or "N")
+   \param fixed         for some groups, two different angle
    dependencies are defined in GRID: one which takes some flexibility of groups
    (rotation/swapping of lone pairs and hydrogen) into account and one for
    strictly fixed conformations if true, strictly fixed conformations
-   (default=fixed) \param cutoff        minimum cutoff distance [A]
+   (default=fixed)
+   \param cutoff        minimum cutoff distance [A]
    (default:1.0)
    */
   HBond(const RDKit::ROMol &mol, int confId = -1,
@@ -390,8 +409,8 @@ class HBond {
   /*!
    \param x, y, z     coordinates at which the interaction is calculated
    \param thres       squared max distance until interactions are calc.
-   <b>Returns</b>
-   hydrogen bonding interaction energy in [kJ mol^-1]
+
+   \return hydrogen bonding interaction energy in [kJ mol^-1]
    */
   double operator()(double x, double y, double z, double thres);
 
@@ -452,12 +471,13 @@ class Hydrophilic {
    params:
    \param mol           		 molecule object
    \param confId        		 conformation id which is used to get
-   positions of atoms (default=-1) \param fixed         		 for
-   some groups, two different angle dependencies are defined in GRID: one which
-   takes some flexibility of groups (rotation/swapping of lone pairs and
-   hydrogen) into account and one for strictly fixed conformations if true,
-   strictly fixed conformations (default=fixed) \param cutoff
-   minimum cutoff distance [A] (default:1.0)
+   positions of atoms (default=-1)
+   \param fixed         		 for some groups, two different angle
+   dependencies are defined in GRID: one which takes some flexibility of groups
+   (rotation/swapping of lone pairs and hydrogen) into account and one for
+   strictly fixed conformations if true, strictly fixed conformations
+   (default=fixed)
+   \param cutoff  minimum cutoff distance [A] (default:1.0)
    */
   Hydrophilic(const RDKit::ROMol &mol, int confId = -1, bool fixed = true,
               double cutoff = 1.0);
