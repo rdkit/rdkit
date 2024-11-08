@@ -862,7 +862,7 @@ unsigned int HBond::findAcceptors(const RDKit::ROMol &mol, int confId,
 
         switch (nbrs) {  // no of neighbors
           case 1:        // carbonyl, carboxyl C=O, X=O (X=S,P,...), anions
-                   // (alcoholates, carboxylates)
+                         // (alcoholates, carboxylates)
             --nbrIdx;
             boost::tie(secnbrIdx, secendNbrs) = mol.getAtomNeighbors(
                 mol.getAtomWithIdx(*nbrIdx));  // get neighbors of neighbor atom
@@ -1104,7 +1104,7 @@ unsigned int HBond::findAcceptors_unfixed(
 
         switch (nbrs) {  // no of neighbors
           case 1:        // carbonyl, carboxyl C=O, X=O (X=S,P,...), anions
-                   // (alcoholates, carboxylates)
+                         // (alcoholates, carboxylates)
             --nbrIdx;
             boost::tie(secnbrIdx, secendNbrs) = mol.getAtomNeighbors(
                 mol.getAtomWithIdx(*nbrIdx));  // get neighbors of neighbor atom
@@ -1446,8 +1446,8 @@ unsigned int HBond::findDonors_unfixed(
 
         if (nonhnbrs != nbrs) {  // otherwise no hydrogen, no hydrogen bond
                                  // donation possible
-          switch (nbrs) {  // no of neighbors
-            case 1:        // hydroxyl
+          switch (nbrs) {        // no of neighbors
+            case 1:              // hydroxyl
               addVectElements(O, &no_dep, pos, RDGeom::Point3D(0.0, 0.0, 0.0));
               interact++;
               break;
