@@ -61,6 +61,12 @@ BOOST_PYTHON_MODULE(rdMIF) {
 
 namespace RDMIF {
 
+RDGeom::UniformRealValueGrid3D *constructGridHelper(const RDKit::ROMol &mol,
+                                                    int confId, double margin,
+                                                    double spacing) {
+  return constructGrid(mol, confId, margin, spacing).release();
+}
+
 Coulomb *make_coulomb(const python::object &charges,
                       const python::object &positions, double probecharge,
                       bool absVal, double alpha, double cutoff) {
@@ -155,9 +161,8 @@ VdWaals *constructVdWUFF(RDKit::ROMol &mol, int confId,
 
 RDKit::ROMol *readCubeFile(RDGeom::UniformRealValueGrid3D &grd,
                            const std::string &filename) {
-  RDKit::RWMol *mol = readFromCubeFile(grd, filename);
-  RDKit::ROMol *res = new RDKit::ROMol(*mol);
-  return res;
+  auto res = readFromCubeFile(grd, filename);
+  return res.release();
 }
 
 struct mif_wrapper {
@@ -421,7 +426,7 @@ struct mif_wrapper {
 				    - confId:  the ID of the conformer to be used (defaults to -1)\n\
 				    - margin:  minimum distance of molecule to surface of grid [A] (defaults to 5.0 A)\n\
 				    - spacing: grid spacing [A] (defaults to 0.5 A)\n";
-    python::def("ConstructGrid", constructGrid,
+    python::def("ConstructGrid", constructGridHelper,
                 (python::arg("mol"), python::arg("confId") = -1,
                  python::arg("margin") = 5.0, python::arg("spacing") = 0.5),
                 docString.c_str(),

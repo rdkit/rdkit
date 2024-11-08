@@ -71,9 +71,8 @@
 
 namespace RDMIF {
 
-RDGeom::UniformRealValueGrid3D *constructGrid(const RDKit::ROMol &mol,
-                                              int confId, double margin,
-                                              double spacing) {
+std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
+    const RDKit::ROMol &mol, int confId, double margin, double spacing) {
   PRECONDITION(mol.getNumConformers(), "No conformers available for molecule.");
 
   const std::vector<RDGeom::Point3D> &ptVect =
@@ -99,10 +98,10 @@ RDGeom::UniformRealValueGrid3D *constructGrid(const RDKit::ROMol &mol,
   minZ -= margin;
   maxZ += margin;
 
-  RDGeom::Point3D *offset = new RDGeom::Point3D(minX, minY, minZ);
+  RDGeom::Point3D offset(minX, minY, minZ);
 
-  RDGeom::UniformRealValueGrid3D *res = new RDGeom::UniformRealValueGrid3D(
-      maxX - minX, maxY - minY, maxZ - minZ, spacing, offset);
+  auto res = std::make_unique<RDGeom::UniformRealValueGrid3D>(
+      maxX - minX, maxY - minY, maxZ - minZ, spacing, &offset);
 
   return res;
 }
@@ -784,11 +783,12 @@ unsigned int HBond::findSpecials(const RDKit::ROMol &mol, int confId,
   const RDKit::Conformer conf = mol.getConformer(confId);
   // RDKit::RWMol thr = *RDKit::SmilesToMol("C[C@H]([C@@H](C(=O))N)O");
   // //threonine, serine itself is a substructure of this
-  RDKit::RWMol ser = *RDKit::SmilesToMol("[CH2]([C@@H](C(=O))N)O");  // serine
+  static const auto ser = RDKit::v2::SmilesParse::MolFromSmiles(
+      "[CH2]([C@@H](C(=O))N)O");  // serine
   // RDKit::RWMol his = *RDKit::SmilesToMol("Cc1cnc[nH]1"); //imidazole residue,
   // is correctly taken into account in 'normal' treatment
 
-  match = RDKit::SubstructMatch(mol, ser, matches);
+  match = RDKit::SubstructMatch(mol, *ser, matches);
   nMatches += match;
 
   for (unsigned int i = 0; i < matches.size(); i++) {
@@ -1993,12 +1993,12 @@ void writeToCubeFile(const RDGeom::UniformRealValueGrid3D &grd,
   delete ofStrm;
 }
 
-RDKit::RWMol *readFromCubeStream(RDGeom::UniformRealValueGrid3D &grd,
-                                 std::istream &inStrm) {
+std::unique_ptr<RDKit::RWMol> readFromCubeStream(
+    RDGeom::UniformRealValueGrid3D &grd, std::istream &inStrm) {
   PRECONDITION(inStrm, "no stream");
-  const double bohr = 0.529177249;
+  constexpr double bohr = 0.529177249;
   if (inStrm.eof()) {
-    return NULL;
+    return nullptr;
   }
   std::string string;
   int nAtoms;
@@ -2020,13 +2020,12 @@ RDKit::RWMol *readFromCubeStream(RDGeom::UniformRealValueGrid3D &grd,
     std::ostringstream errout;
     errout << "Same spacing in all directions needed";
     throw RDKit::FileParseException(errout.str());
-    return NULL;
   } else {
     spacingx *= bohr;
-    grd = *(new RDGeom::UniformRealValueGrid3D(
-        spacingx * dimX, spacingx * dimY, spacingx * dimZ, spacingx, &offSet));
+    grd = RDGeom::UniformRealValueGrid3D(spacingx * dimX, spacingx * dimY,
+                                         spacingx * dimZ, spacingx, &offSet);
   }
-  RDKit::RWMol *molecule = new RDKit::RWMol();
+  auto molecule = std::make_unique<RDKit::RWMol>();
   RDKit::Conformer *conf = new RDKit::Conformer(nAtoms);
 
   int atomNum;
@@ -2050,8 +2049,8 @@ RDKit::RWMol *readFromCubeStream(RDGeom::UniformRealValueGrid3D &grd,
   return molecule;
 }
 
-RDKit::RWMol *readFromCubeFile(RDGeom::UniformRealValueGrid3D &grd,
-                               const std::string &filename) {
+std::unique_ptr<RDKit::RWMol> readFromCubeFile(
+    RDGeom::UniformRealValueGrid3D &grd, const std::string &filename) {
   std::ifstream *ifStrm = new std::ifstream(filename.c_str());
   if (!ifStrm || (ifStrm->bad())) {
     std::ostringstream errout;
@@ -2060,7 +2059,7 @@ RDKit::RWMol *readFromCubeFile(RDGeom::UniformRealValueGrid3D &grd,
   };
 
   std::istream *iStrm = static_cast<std::istream *>(ifStrm);
-  RDKit::RWMol *mol = nullptr;
+  std::unique_ptr<RDKit::RWMol> mol;
   if (!iStrm->eof()) {
     mol = readFromCubeStream(grd, *iStrm);
   }

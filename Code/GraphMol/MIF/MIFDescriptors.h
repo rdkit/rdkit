@@ -61,10 +61,9 @@ namespace RDMIF {
  <b>Returns</b>
  pointer to a grid
  */
-RDGeom::UniformRealValueGrid3D *constructGrid(const RDKit::ROMol &mol,
-                                              int confId = -1,
-                                              double margin = 5.0,
-                                              double spacing = 0.5);
+std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
+    const RDKit::ROMol &mol, int confId = -1, double margin = 5.0,
+    double spacing = 0.5);
 
 //! \brief calculates a descriptor at every grid point of MIF
 /*!
@@ -519,8 +518,8 @@ void writeToCubeFile(const RDGeom::UniformRealValueGrid3D &grd,
  A pointer to a molecule is returned with all atoms and its positions but NO
  bond information!
  */
-RDKit::RWMol *readFromCubeStream(RDGeom::UniformRealValueGrid3D &grd,
-                                 std::istream &inStrm);
+std::unique_ptr<RDKit::RWMol> readFromCubeStream(
+    RDGeom::UniformRealValueGrid3D &grd, std::istream &inStrm);
 
 //! \brief reads the contents of the MIF from a file in Gaussian cube format
 /*
@@ -528,8 +527,8 @@ RDKit::RWMol *readFromCubeStream(RDGeom::UniformRealValueGrid3D &grd,
  A pointer to a molecule is returned with all atoms and its positions but NO
  bond information!
  */
-RDKit::RWMol *readFromCubeFile(RDGeom::UniformRealValueGrid3D &grd,
-                               const std::string &filename);
+std::unique_ptr<RDKit::RWMol> readFromCubeFile(
+    RDGeom::UniformRealValueGrid3D &grd, const std::string &filename);
 
 }  // end of namespace RDMIF
 

@@ -55,6 +55,7 @@ using namespace RDKit;
 using namespace RDMIF;
 
 namespace RDMIF {
+
 class testfunctor {
  public:
   testfunctor() {}
@@ -74,8 +75,10 @@ void test1ConstructGrid() {
 
   //	MolToMolFile(mol, path + "HCl.mol");
 
-  RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
-  UniformRealValueGrid3D grd = *constructGrid(mol, 0, 5.0, 0.5);
+  auto fopts = v2::FileParsers::MolFileParserParams();
+  fopts.removeHs = false;
+  auto mol = *v2::FileParsers::MolFromMolFile(path + "HCl.mol", fopts);
+  auto grd = *constructGrid(mol, 0, 5.0, 0.5);
 
   Point3D bond =
       mol.getConformer().getAtomPos(1) - mol.getConformer().getAtomPos(0);
@@ -94,8 +97,8 @@ void test1ConstructGrid() {
 
 void test2CalculateDescriptors() {
   RealValueVect *data = new RealValueVect(0.0, 125);
-  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, new Point3D(0.0, 0.0, 0.0),
-                             data);
+  Point3D o(0.0, 0.0, 0.0);
+  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, data);
 
   calculateDescriptors(grd, testfunctor());
   CHECK_INVARIANT(feq(data->getTotalVal(), grd.getSize()),
@@ -106,16 +109,18 @@ void test3CubeFiles() {
   std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
-  RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
+  auto fopts = v2::FileParsers::MolFileParserParams();
+  fopts.removeHs = false;
+  RWMol mol = *v2::FileParsers::MolFromMolFile(path + "HCl.mol", fopts);
   RealValueVect *data = new RealValueVect(0.0, 125);
-  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, new Point3D(0.0, 0.0, 0.0),
-                             data);
+  Point3D o(0.0, 0.0, 0.0);
+  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, data);
   for (unsigned int i = 0; i < grd.getSize(); i++) {
     grd.setVal(i, double(i / 10.0));
   }
   writeToCubeFile(grd, mol, path + "test3.cube");
   UniformRealValueGrid3D grd2;
-  RWMol mol2 = *readFromCubeFile(grd2, path + "test3.cube");
+  auto mol2 = *readFromCubeFile(grd2, path + "test3.cube");
 
   CHECK_INVARIANT(grd.getSize() == grd2.getSize(),
                   "I/O: grid sizes are not the same.");
@@ -159,7 +164,9 @@ void test4Coulomb() {
   std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
-  RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
+  auto fopts = v2::FileParsers::MolFileParserParams();
+  fopts.removeHs = false;
+  auto mol = *v2::FileParsers::MolFromMolFile(path + "HCl.mol", fopts);
 
   computeGasteigerCharges(mol);
 
@@ -172,8 +179,8 @@ void test4Coulomb() {
     pos.push_back(conf.getAtomPos(i));
   }
 
-  UniformRealValueGrid3D grd = *constructGrid(mol);
-  UniformRealValueGrid3D grd2 = *constructGrid(mol);
+  auto grd = *constructGrid(mol);
+  auto grd2 = *constructGrid(mol);
 
   Coulomb coul(mol);
 
@@ -226,7 +233,9 @@ void test5CoulombDielectric() {
   std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
-  RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
+  auto fopts = v2::FileParsers::MolFileParserParams();
+  fopts.removeHs = false;
+  RWMol mol = *v2::FileParsers::MolFromMolFile(path + "HCl.mol", fopts);
 
   computeGasteigerCharges(mol);
 
@@ -239,8 +248,8 @@ void test5CoulombDielectric() {
     pos.push_back(conf.getAtomPos(i));
   }
 
-  UniformRealValueGrid3D grd = *constructGrid(mol);
-  UniformRealValueGrid3D grd2 = *constructGrid(mol);
+  auto grd = *constructGrid(mol);
+  auto grd2 = *constructGrid(mol);
 
   CoulombDielectric couldiele(mol);
 
@@ -311,7 +320,7 @@ void test5CoulombDielectric() {
       couldiele3(0.70, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000),
       "CoulombDielectric: Softcore interaction wrong.");
 
-  mol = *MolFileToMol(path + "glucose.mol", true, false);
+  mol = *v2::FileParsers::MolFromMolFile(path + "glucose.mol", fopts);
   computeGasteigerCharges(mol);
 
   CoulombDielectric couldiele4(mol, 0, 1.0, false, "_GasteigerCharge", 0.01,
@@ -333,14 +342,16 @@ void test6VdWaals() {
   std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
-  RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
+  auto fopts = v2::FileParsers::MolFileParserParams();
+  fopts.removeHs = false;
+  auto mol = *v2::FileParsers::MolFromMolFile(path + "HCl.mol", fopts);
   try {
     VdWaals vdw = constructVdWaalsMMFF(mol, 0, 6, false, 1.0);
   } catch (ValueErrorException &dexp) {
     BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.what() << "\n";
   }
 
-  mol = *MolFileToMol(path + "HCN.mol", true, false);
+  mol = *v2::FileParsers::MolFromMolFile(path + "HCN.mol", fopts);
   VdWaals vdw = constructVdWaalsMMFF(mol, 0, 6, false, 1.0);
 
   CHECK_INVARIANT(vdw(-5.0, 0, 0, 1000) < 0,
@@ -352,7 +363,7 @@ void test6VdWaals() {
       vdw(-5.0, 0, 0, 1000) < vdw(-10.0, 0, 0, 1000),
       "VdWMMFF: Potential very far apart not higher than in favorable distance to core.");
 
-  RWMol mol2 = *MolFileToMol(path + "h2o.mol", true, false);
+  auto mol2 = *v2::FileParsers::MolFromMolFile(path + "h2o.mol", fopts);
   vdw = constructVdWaalsMMFF(mol2, 0, 6, false, 1.0);
   VdWaals vdw2 = constructVdWaalsMMFF(mol2, 0, 6, true, 1.0);
   CHECK_INVARIANT(fabs(vdw2(-3.0, 0, 0, 1000) - vdw(-3.0, 0, 0, 1000)) > 0.0001,
@@ -376,7 +387,7 @@ void test6VdWaals() {
       "fluoromethane", "chloromethane", "bromomethane", "glycine",
       "glyphe",        "glysergly",     "glythrgly",    "glucose"};
   for (unsigned int i = 0; i < 24; i++) {
-    mol = *MolFileToMol(path + names[i] + ".mol", true, false);
+    mol = *v2::FileParsers::MolFromMolFile(path + names[i] + ".mol", fopts);
     vdw = constructVdWaalsMMFF(mol);
     CHECK_INVARIANT(vdw(0.0, 0.0, 0.0, 1000),
                     "VdWMMFF: crashed with " + names[i]);
@@ -390,12 +401,12 @@ void test7HBond() {
   std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
-  UniformRealValueGrid3D grd;
-  RWMol mol;
-
   // Generate Molecule with 3D Coordinates and Partial Charges
-  mol = *MolFileToMol(path + "ethane.mol", true, false);  // Ethane
-  grd = *constructGrid(mol, 0, 5.0, 1);
+  auto fopts = v2::FileParsers::MolFileParserParams();
+  fopts.removeHs = false;
+  auto mol =
+      *v2::FileParsers::MolFromMolFile(path + "ethane.mol", fopts);  // Ethane
+  auto grd = *constructGrid(mol, 0, 5.0, 1);
   for (unsigned int i = 0; i < grd.getSize(); i++) {
     grd.setVal(i, 1.0);
   }
@@ -423,7 +434,8 @@ void test7HBond() {
   TEST_ASSERT(!grd.compareGrids(grd1));
   CHECK_INVARIANT((unsigned int)fabs(((*vect1 - *vect).getTotalVal())), "");
 
-  mol = *MolFileToMol(path + "aceticacid.mol", true, false);  // Acetic Acid
+  mol = *v2::FileParsers::MolFromMolFile(path + "aceticacid.mol",
+                                         fopts);  // Acetic Acid
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 2, "");
@@ -446,7 +458,8 @@ void test7HBond() {
       hbonddes1(3.0, 0.0, 0.0, 1000) < hbonddes4(3.0, 0.0, 0.0, 1000),
       "HBond: N probe stronger interaction than O probe");
 
-  mol = *MolFileToMol(path + "acetone.mol", true, false);  // Acetone
+  mol =
+      *v2::FileParsers::MolFromMolFile(path + "acetone.mol", fopts);  // Acetone
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -455,7 +468,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "diethylether.mol", true, false);  // Et2O
+  mol = *v2::FileParsers::MolFromMolFile(path + "diethylether.mol",
+                                         fopts);  // Et2O
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -464,7 +478,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "h2o.mol", true, false);  // H2O
+  mol = *v2::FileParsers::MolFromMolFile(path + "h2o.mol", fopts);  // H2O
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -473,36 +487,17 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 2, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "ammonia.mol", true, false);  // ammonia
-  grd = *constructGrid(mol, 0, 5.0, 1);
-  hbonddes = HBond(mol, 0, "OH", true, 0.001);
-  CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
-  calculateDescriptors<HBond>(grd, hbonddes);
-  hbonddes = HBond(mol, 0, "O", true, 0.001);
-  CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
-  calculateDescriptors<HBond>(grd, hbonddes);
-
-  mol = *MolFileToMol(path + "imine.mol", true, false);  // imine
-  grd = *constructGrid(mol, 0, 5.0, 1);
-  hbonddes = HBond(mol, 0, "OH", true, 0.001);
-  CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
-  calculateDescriptors<HBond>(grd, hbonddes);
-  hbonddes = HBond(mol, 0, "O", true, 0.001);
-  CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
-  calculateDescriptors<HBond>(grd, hbonddes);
-
-  mol = *MolFileToMol(path + "methylammonium.mol", true,
-                      false);  // methylammonium
-  grd = *constructGrid(mol, 0, 5.0, 1);
-  hbonddes = HBond(mol, 0, "OH", true, 0.001);
-  CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
-  calculateDescriptors<HBond>(grd, hbonddes);
-  hbonddes = HBond(mol, 0, "O", true, 0.001);
-  CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
-  calculateDescriptors<HBond>(grd, hbonddes);
-
   mol =
-      *MolFileToMol(path + "chloromethane.mol", true, false);  // Chloromethane
+      *v2::FileParsers::MolFromMolFile(path + "ammonia.mol", fopts);  // ammonia
+  grd = *constructGrid(mol, 0, 5.0, 1);
+  hbonddes = HBond(mol, 0, "OH", true, 0.001);
+  CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
+  calculateDescriptors<HBond>(grd, hbonddes);
+  hbonddes = HBond(mol, 0, "O", true, 0.001);
+  CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
+  calculateDescriptors<HBond>(grd, hbonddes);
+
+  mol = *v2::FileParsers::MolFromMolFile(path + "imine.mol", fopts);  // imine
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -511,7 +506,28 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "phosphonate.mol", true, false);  // Phosphonate
+  mol = *v2::FileParsers::MolFromMolFile(path + "methylammonium.mol",
+                                         fopts);  // methylammonium
+  grd = *constructGrid(mol, 0, 5.0, 1);
+  hbonddes = HBond(mol, 0, "OH", true, 0.001);
+  CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
+  calculateDescriptors<HBond>(grd, hbonddes);
+  hbonddes = HBond(mol, 0, "O", true, 0.001);
+  CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
+  calculateDescriptors<HBond>(grd, hbonddes);
+
+  mol = *v2::FileParsers::MolFromMolFile(path + "chloromethane.mol",
+                                         fopts);  // Chloromethane
+  grd = *constructGrid(mol, 0, 5.0, 1);
+  hbonddes = HBond(mol, 0, "OH", true, 0.001);
+  CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
+  calculateDescriptors<HBond>(grd, hbonddes);
+  hbonddes = HBond(mol, 0, "O", true, 0.001);
+  CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
+  calculateDescriptors<HBond>(grd, hbonddes);
+
+  mol = *v2::FileParsers::MolFromMolFile(path + "phosphonate.mol",
+                                         fopts);  // Phosphonate
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
@@ -520,8 +536,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "phosphatediester.mol", true,
-                      false);  // Phosphatediester
+  mol = *v2::FileParsers::MolFromMolFile(path + "phosphatediester.mol",
+                                         fopts);  // Phosphatediester
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 4, "");
@@ -530,8 +546,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "hydrogenphosphatediester.mol", true,
-                      false);  // Hydrogenphosphatediester
+  mol = *v2::FileParsers::MolFromMolFile(path + "hydrogenphosphatediester.mol",
+                                         fopts);  // Hydrogenphosphatediester
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 4, "");
@@ -540,7 +556,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "mustardgas.mol", true, false);  // mustard gas
+  mol = *v2::FileParsers::MolFromMolFile(path + "mustardgas.mol",
+                                         fopts);  // mustard gas
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 2, "");
@@ -549,7 +566,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "alicin.mol", true, false);  // Alicin
+  mol = *v2::FileParsers::MolFromMolFile(path + "alicin.mol", fopts);  // Alicin
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -558,8 +575,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol =
-      *MolFileToMol(path + "sulfanilamide.mol", true, false);  // Sulfanilamide
+  mol = *v2::FileParsers::MolFromMolFile(path + "sulfanilamide.mol",
+                                         fopts);  // Sulfanilamide
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
@@ -573,7 +590,9 @@ void test8Hydrophilic() {
   std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
-  RWMol mol = *MolFileToMol(path + "h2o.mol", true, false);
+  auto fopts = v2::FileParsers::MolFileParserParams();
+  fopts.removeHs = false;
+  auto mol = *v2::FileParsers::MolFromMolFile(path + "h2o.mol", fopts);
 
   Hydrophilic hydro(mol);
   HBond hbondOH(mol, 0, "OH");
