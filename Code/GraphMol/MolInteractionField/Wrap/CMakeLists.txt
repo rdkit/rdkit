@@ -1,7 +1,7 @@
 rdkit_python_extension(rdMIF 
                        rdMIF.cpp
                        DEST Chem
-                       LINK_LIBRARIES RDMIFLib ForceFieldHelpers
+                       LINK_LIBRARIES MolInteractionFields ForceFieldHelpers
                        ForceField PartialCharges SubstructMatch SmilesParse GraphMol RDGeometryLib
                        RDGeneral DataStructs RDBoost)
 

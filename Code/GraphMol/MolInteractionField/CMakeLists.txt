@@ -1,8 +1,8 @@
-rdkit_library(RDMIFLib MIFDescriptors.cpp LINK_LIBRARIES ForceFieldHelpers ForceField DataStructs RDGeneral GraphMol SmilesParse)
+rdkit_library(MolInteractionFields MIFDescriptors.cpp LINK_LIBRARIES ForceFieldHelpers ForceField DataStructs RDGeneral GraphMol SmilesParse)
 
 rdkit_headers(MIFDescriptors.h DEST GraphMol/MIF)
 
-rdkit_test(testMIF testMIF.cpp LINK_LIBRARIES RDMIFLib DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
+rdkit_test(testMIF testMIF.cpp LINK_LIBRARIES MolInteractionFields DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
  PartialCharges SubstructMatch FileParsers SmilesParse
 MolAlign MolTransforms
 GraphMol
