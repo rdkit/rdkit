@@ -53,12 +53,7 @@ void Configuration::removeInternalEdges(std::vector<Edge *> &edges, Atom *f1,
 }
 
 bool Configuration::isDuplicateOrHydrogenEdge(const Edge *edge) {
-  const auto &beg = edge->getBeg();
-  const auto &end = edge->getEnd();
-  if (beg->isDuplicateOrH() || end->isDuplicateOrH()) {
-    return true;
-  }
-  return false;
+  return edge->getBeg()->isDuplicateOrH() || edge->getEnd()->isDuplicateOrH();
 }
 
 void Configuration::removeDuplicatesAndHs(std::vector<Edge *> &edges) {
