@@ -68,7 +68,7 @@ void Configuration::removeDuplicatesAndHs(std::vector<Edge *> &edges) {
       new_edges.push_back(std::move(e));
     }
   }
-  std::swap(edges, new_edges);
+  edges = std::move(new_edges);
 }
 
 void Configuration::setCarriers(std::vector<Atom *> &&carriers) {
