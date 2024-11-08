@@ -108,16 +108,20 @@ void registerDescriptors() {
 }
 
 std::vector<boost::shared_ptr<PropertyFunctor>> Properties::registry;
-int Properties::registerProperty(PropertyFunctor *prop) {
+int Properties::registerProperty(boost::shared_ptr<PropertyFunctor> prop) {
   for (size_t i = 0; i < Properties::registry.size(); ++i) {
     if (registry[i]->getName() == prop->getName()) {
-      Properties::registry[i] = boost::shared_ptr<PropertyFunctor>(prop);
+      Properties::registry[i] = std::move(prop);
       return i;
     }
   }
   // XXX Add mutex?
-  Properties::registry.emplace_back(prop);
-  return Properties::registry.size();
+  Properties::registry.push_back(std::move(prop));
+  return Properties::registry.size() - 1;
+}
+
+int Properties::registerProperty(PropertyFunctor *prop) {
+  return Properties::registerProperty(boost::shared_ptr<PropertyFunctor>(prop));
 }
 
 std::vector<std::string> Properties::getAvailableProperties() {

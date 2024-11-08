@@ -25,9 +25,8 @@ using boost_adaptbx::python::streambuf;
 
 namespace RDKit {
 SDWriter *getSDWriter(python::object &fileobj) {
-  // FIX: minor leak here
   auto *sb = new streambuf(fileobj, 't');
-  auto *ost = new streambuf::ostream(*sb);
+  auto *ost = new streambuf::ostream(sb);
   return new SDWriter(ost, true);
 }
 

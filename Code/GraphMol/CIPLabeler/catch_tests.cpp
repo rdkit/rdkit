@@ -944,6 +944,7 @@ TEST_CASE("atropisomers", "[basic]") {
   }
 }
 
+
 TEST_CASE("CipLabelAtropsOnRing", "[basic]") {
   SECTION("atropisomers1") {
     std::string molBlock = R"(

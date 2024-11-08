@@ -25,9 +25,8 @@ namespace python = boost::python;
 namespace RDKit {
 using boost_adaptbx::python::streambuf;
 TDTWriter *getTDTWriter(python::object &fileobj) {
-  // FIX: minor leak here
   auto *sb = new streambuf(fileobj, 't');
-  auto *ost = new streambuf::ostream(*sb);
+  auto *ost = new streambuf::ostream(sb);
   return new TDTWriter(ost, true);
 }
 
