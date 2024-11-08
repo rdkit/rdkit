@@ -90,8 +90,6 @@ void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
   unsigned int id = 0;
   const boost::shared_array<double> &data = grd.getDataPtr();
 
-  double res;
-
   for (unsigned int idZ = 0; idZ < grd.getNumZ(); idZ++) {
     for (unsigned int idY = 0; idY < grd.getNumY(); idY++) {
       for (unsigned int idX = 0; idX < grd.getNumX(); idX++) {
@@ -136,14 +134,8 @@ class DistanceToClosestAtom {
  */
 class Coulomb {
  public:
-  Coulomb()
-      : d_nAtoms(0),
-        d_probe(1),
-        d_alpha(0.0),
-        d_cutoff(0.00001),
-        d_softcore(false),
-        d_absVal(false) {};
-  ~Coulomb() {};
+  Coulomb() = default;
+  ~Coulomb() = default;
 
   //! \brief constructs Coulomb object from vectors of charges and positions
   /*!
@@ -151,8 +143,10 @@ class Coulomb {
    \param pos         vector of postions [A]
    \param probecharge charge of probe [e] (default: 1.0)
    \param absVal      if true, negative (favored) values of interactions are
-   calculated (default: false) \param alpha       softcore interaction parameter
-   [A^2], if zero, a minimum cutoff distance is used (default=0.0) \param cutoff
+   calculated (default: false)
+   \param alpha       softcore interaction parameter
+   [A^2], if zero, a minimum cutoff distance is used (default=0.0)
+   \param cutoff
    minimum cutoff distance [A] (default:1.0)
 
    */
@@ -167,11 +161,15 @@ class Coulomb {
 
    \param mol         molecule object
    \param confId      conformation id which is used to get positions of atoms
-   (default=-1) \param absVal      if true, absolute values of interactions are
-   calculated (default: false) \param probecharge charge of probe [e]
-   (default: 1.0) \param prop	     property key for retrieving partial charges
-   of atoms (default="_GasteigerCharge") \param alpha       softcore interaction
-   parameter [A^2], if zero, a minimum cutoff distance is used (default=0.0)
+   (default=-1)
+   \param absVal      if true, absolute values of interactions are
+   calculated (default: false)
+   \param probecharge charge of probe [e]
+   (default: 1.0)
+   \param prop	     property key for retrieving partial charges
+   of atoms (default="_GasteigerCharge")
+   \param alpha       softcore interaction parameter [A^2], if zero, a minimum
+   cutoff distance is used (default=0.0)
    \param cutoff      minimum cutoff distance [A] (default:1.0)
 
    */
@@ -190,10 +188,12 @@ class Coulomb {
   double operator()(double x, double y, double z, double thres);
 
  private:
-  unsigned int d_nAtoms;
-  bool d_softcore, d_absVal;
-  double d_cutoff, d_probe;
-  const double d_alpha;
+  unsigned int d_nAtoms = 0;
+  bool d_softcore = false;
+  bool d_absVal = false;
+  double d_cutoff = 0.00001;
+  double d_probe = 1.0;
+  double d_alpha = 0.0;
   std::vector<double> d_charges;
   std::vector<double> d_pos;
 };
@@ -226,15 +226,15 @@ class CoulombDielectric {
  public:
   CoulombDielectric()
       : d_nAtoms(0),
-        d_probe(1),
-        d_alpha(0.0),
-        d_cutoff(0.001),
         d_softcore(false),
         d_absVal(false),
+        d_cutoff(0.001),
+        d_probe(1),
         d_epsilon(1.0),
-        d_xi(1.0) {
+        d_xi(1.0),
+        d_alpha(0.0) {
     d_dielectric = (d_xi - d_epsilon) / (d_xi + d_epsilon);
-  };
+  }
 
   //! \brief constructs CoulombDielectric object from vectors of charges and
   //! positions
@@ -290,8 +290,9 @@ class CoulombDielectric {
  private:
   unsigned int d_nAtoms;
   bool d_softcore, d_absVal;
-  double d_dielectric, d_cutoff, d_probe;
-  const double d_epsilon, d_xi, d_alpha;
+  double d_cutoff, d_probe;
+  double d_epsilon, d_xi, d_alpha;
+  double d_dielectric;
   std::vector<double> d_charges, d_sp;
   std::vector<double> d_pos;
   std::vector<double> d_dists;
@@ -426,8 +427,8 @@ class HBond {
   boost::uint8_t d_DAprop;
 
   enum atomtype { N, O };
+  double d_cutoff;
   atomtype d_probetype;
-
   unsigned int d_nInteract;  // number of HBond interactions
 
   std::vector<atomtype> d_targettypes;
@@ -456,12 +457,10 @@ class HBond {
                                                                       0.0));
 
   void normalize(double &x, double &y, double &z) const;
-  const double angle(double x1, double y1, double z1, double x2, double y2,
-                     double z2) const;
+  double angle(double x1, double y1, double z1, double x2, double y2,
+               double z2) const;
 
   std::vector<double (*)(double, double, double)> d_function;
-
-  double d_cutoff;
 };
 
 //! \brief class for calculation of hydrophilic field of molecule

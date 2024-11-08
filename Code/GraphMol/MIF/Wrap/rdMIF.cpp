@@ -41,8 +41,7 @@
 #include <Geometry/UniformRealValueGrid3D.h>
 #include <Geometry/point.h>
 
-#include <boost/python/numeric.hpp>
-#include "numpy/arrayobject.h"
+#include <RDBoost/boost_numpy.h>
 
 namespace python = boost::python;
 using namespace RDMIF;
@@ -182,8 +181,7 @@ struct mif_wrapper {
             (python::arg("mol"), python::arg("confId") = -1),
             docStringConst.c_str()))
         .def("__call__", &DistanceToClosestAtom::operator(),
-             (python::arg("x"), python::arg("y"), python::arg("z"),
-              python::arg("threshold")),
+             (python::arg("x"), python::arg("y"), python::arg("z")),
              docString.c_str());
 
     docStringClass =

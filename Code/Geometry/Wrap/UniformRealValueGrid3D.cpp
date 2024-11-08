@@ -17,7 +17,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -44,71 +45,73 @@ namespace python = boost::python;
 using namespace RDKit;
 
 namespace RDGeom {
-  struct urvg3d_pickle_suite : python::pickle_suite
-  {
-    static python::tuple
-    getinitargs(const UniformRealValueGrid3D& self)
-    {
-      return python::make_tuple(self.toString());
-    };
-  };
-
-
-
-  UniformRealValueGrid3D *makeUniformRealValueGrid3D(double dimX, double dimY, double dimZ, double spacing=0.5,
-                                                     const Point3D *offSet=0) {
-    UniformRealValueGrid3D *grd = new UniformRealValueGrid3D(dimX, dimY, dimZ, spacing, offSet);
-    return grd;
+struct urvg3d_pickle_suite : rdkit_pickle_suite {
+  static python::tuple getinitargs(const UniformRealValueGrid3D &self) {
+    std::string res = self.toString();
+    python::object retval = python::object(
+        python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
+    return python::make_tuple(retval);
   }
+};
 
-  double getValPoint(const UniformRealValueGrid3D &grid, const Point3D &pt) {
-    return grid.getVal(pt);
-  }
+UniformRealValueGrid3D *makeUniformRealValueGrid3D(double dimX, double dimY,
+                                                   double dimZ,
+                                                   double spacing = 0.5,
+                                                   const Point3D *offSet = 0) {
+  UniformRealValueGrid3D *grd =
+      new UniformRealValueGrid3D(dimX, dimY, dimZ, spacing, offSet);
+  return grd;
+}
 
-  double getValIndex(const UniformRealValueGrid3D &grid, unsigned int id) {
-    return grid.getVal(id);
-  }
+double getValPoint(const UniformRealValueGrid3D &grid, const Point3D &pt) {
+  return grid.getVal(pt);
+}
 
-  void setValIndex(UniformRealValueGrid3D &grid, unsigned int id, double val) {
-    grid.setVal(id, val);
-  }
+double getValIndex(const UniformRealValueGrid3D &grid, unsigned int id) {
+  return grid.getVal(id);
+}
 
-  void setValPoint(UniformRealValueGrid3D &grid, const Point3D &pt, double val) {
-    grid.setVal(pt, val);
-  }
+void setValIndex(UniformRealValueGrid3D &grid, unsigned int id, double val) {
+  grid.setVal(id, val);
+}
 
-  python::tuple getGridIndicesWrap(const UniformRealValueGrid3D &grid, unsigned int idx){
-    unsigned int xi,yi,zi;
-    grid.getGridIndices(idx,xi,yi,zi);
-    python::list pyRes;
-    pyRes.append(xi);
-    pyRes.append(yi);
-    pyRes.append(zi);
-    return python::tuple(pyRes);
-  }
+void setValPoint(UniformRealValueGrid3D &grid, const Point3D &pt, double val) {
+  grid.setVal(pt, val);
+}
 
-  std::string urvGridClassDoc = "Class to represent a uniform three-dimensional\n\
+python::tuple getGridIndicesWrap(const UniformRealValueGrid3D &grid,
+                                 unsigned int idx) {
+  unsigned int xi, yi, zi;
+  grid.getGridIndices(idx, xi, yi, zi);
+  python::list pyRes;
+  pyRes.append(xi);
+  pyRes.append(yi);
+  pyRes.append(zi);
+  return python::tuple(pyRes);
+}
+
+std::string urvGridClassDoc =
+    "Class to represent a uniform three-dimensional\n\
     cubic grid. Each grid point can store a floating point value. \n";
 
-  struct urvGrid3D_wrapper {
-    static void wrap() {
-
-      python::class_<UniformRealValueGrid3D>("UniformRealValueGrid3D_", urvGridClassDoc.c_str(),
-                                             python::init<std::string>("pickle constructor"))
+struct urvGrid3D_wrapper {
+  static void wrap() {
+    python::class_<UniformRealValueGrid3D>(
+        "UniformRealValueGrid3D_", urvGridClassDoc.c_str(),
+        python::init<std::string>("pickle constructor"))
         .def(python::init<>("Default Constructor"))
         .def(python::init<RDGeom::UniformRealValueGrid3D>("Copy constructor"))
         .def("GetGridPointIndex", &UniformRealValueGrid3D::getGridPointIndex,
              "Get the index to the grid point closest to the specified point")
-        .def("GetGridIndex", &UniformRealValueGrid3D::getGridIndex,
-             "Get the index to the grid point with the three integer indices provided")
+        .def(
+            "GetGridIndex", &UniformRealValueGrid3D::getGridIndex,
+            "Get the index to the grid point with the three integer indices provided")
         .def("GetGridIndices", &getGridIndicesWrap,
              "Returns the integer indices of the grid index provided.")
         .def("GetValPoint", getValPoint,
              "Get the value at the closest grid point")
-        .def("GetVal", getValIndex,
-             "Get the value at the specified grid point")
-        .def("SetVal", setValIndex,
-             "Set the value at the specified grid point")
+        .def("GetVal", getValIndex, "Get the value at the specified grid point")
+        .def("SetVal", setValIndex, "Set the value at the specified grid point")
         .def("SetValPoint", setValPoint,
              "Set the value at grid point closest to the specified point")
         .def("GetGridPointLoc", &UniformRealValueGrid3D::getGridPointLoc,
@@ -139,24 +142,16 @@ namespace RDGeom {
         .def(python::self |= python::self)
         .def(python::self += python::self)
         .def(python::self -= python::self)
-        .def_pickle(RDGeom::urvg3d_pickle_suite())
-        ;
+        .def_pickle(RDGeom::urvg3d_pickle_suite());
 
-      python::def("UniformRealValueGrid3D", makeUniformRealValueGrid3D,
-                  (python::arg("dimX"), python::arg("dimY"), python::arg("dimZ"),
-                      python::arg("spacing")=0.5,
-                      python::arg("offSet")=(const Point3D *)(0)),
-                      "Faking the constructor",
-                      python::return_value_policy<python::manage_new_object>());
+    python::def("UniformRealValueGrid3D", makeUniformRealValueGrid3D,
+                (python::arg("dimX"), python::arg("dimY"), python::arg("dimZ"),
+                 python::arg("spacing") = 0.5,
+                 python::arg("offSet") = (const Point3D *)(0)),
+                "Faking the constructor",
+                python::return_value_policy<python::manage_new_object>());
+  }
+};
+}  // namespace RDGeom
 
-    }
-  };
-}
-
-void wrap_uniformrealvalueGrid() {
-  RDGeom::urvGrid3D_wrapper::wrap();
-}
-
-
-
-
+void wrap_uniformrealvalueGrid() { RDGeom::urvGrid3D_wrapper::wrap(); }

@@ -289,7 +289,6 @@ std::string UniformRealValueGrid3D::toString() const {
   streamWrite(ss, d_offSet.x);
   streamWrite(ss, d_offSet.y);
   streamWrite(ss, d_offSet.z);
-
   std::string storePkl = dp_storage->toString();
   boost::uint32_t pklSz = storePkl.size();
   streamWrite(ss, pklSz);

@@ -41,6 +41,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/ForceFieldHelpers/MMFF/AtomTyper.h>
 #include <ForceField/MMFF/Nonbonded.h>
 #include <ForceField/UFF/Nonbonded.h>
 #include <ForceField/UFF/Params.h>
@@ -73,11 +74,10 @@ namespace RDMIF {
 RDGeom::UniformRealValueGrid3D *constructGrid(const RDKit::ROMol &mol,
                                               int confId, double margin,
                                               double spacing) {
-  PRECONDITION(mol.getNumConformers() > 0,
-               "No conformers available for molecule.");
+  PRECONDITION(mol.getNumConformers(), "No conformers available for molecule.");
 
   const std::vector<RDGeom::Point3D> &ptVect =
-      mol.getConformer(0).getPositions();
+      mol.getConformer(confId).getPositions();
   double minX = ptVect[0].x, maxX = minX, minY = ptVect[0].y, maxY = minY,
          minZ = ptVect[0].z, maxZ = minZ;
   for (std::vector<RDGeom::Point3D>::const_iterator it = ptVect.begin() + 1;
@@ -123,8 +123,7 @@ DistanceToClosestAtom::DistanceToClosestAtom(const RDKit::ROMol &mol,
   }
 }
 
-double DistanceToClosestAtom::operator()(double x, double y, double z,
-                                         double thres) {
+double DistanceToClosestAtom::operator()(double x, double y, double z, double) {
   unsigned int j = 0;
   double temp = x - d_pos[j];
   double dist2 = temp * temp;
@@ -165,8 +164,7 @@ VdWaals::VdWaals(RDKit::ROMol &mol, int confId, unsigned int probeAtomTypeMMFF,
           "No MMFF atom types available for at least one atom in molecule.");
     }
 
-    ForceFields::MMFF::MMFFVdWCollection *mmffVdW =
-        ForceFields::MMFF::MMFFVdWCollection::getMMFFVdW();
+    const auto *mmffVdW = RDKit::MMFF::DefaultParameters::getMMFFVdW();
     probeparams = (*mmffVdW)(probeAtomTypeMMFF);
 
     for (unsigned int i = 0; i < d_nAtoms; i++) {
@@ -188,10 +186,8 @@ VdWaals::VdWaals(RDKit::ROMol &mol, int confId, unsigned int probeAtomTypeMMFF,
       d_getEnergy = d_calcMMFFEnergy;
     }
   } else if (FF == "UFF") {
-    const ForceFields::UFF::AtomicParams *probeparams;
-    ForceFields::UFF::ParamCollection *paramcoll =
-        ForceFields::UFF::ParamCollection::getParams();
-    probeparams = (*paramcoll)(probeAtomTypeUFF);
+    const auto *paramcoll = ForceFields::UFF::ParamCollection::getParams();
+    const auto probeparams = (*paramcoll)(probeAtomTypeUFF);
 
     std::pair<RDKit::UFF::AtomicParamVect, bool> params =
         RDKit::UFF::getAtomTypes(mol);
@@ -280,11 +276,11 @@ Coulomb::Coulomb(const std::vector<double> &charges,
                  const std::vector<RDGeom::Point3D> &positions,
                  double probecharge, bool absVal, double alpha, double cutoff)
     : d_nAtoms(charges.size()),
-      d_probe(probecharge),
       d_absVal(absVal),
-      d_charges(charges),
+      d_cutoff(cutoff * cutoff),
+      d_probe(probecharge),
       d_alpha(alpha),
-      d_cutoff(cutoff * cutoff) {
+      d_charges(charges) {
   PRECONDITION(d_charges.size() == positions.size(),
                "Lengths of positions and charges vectors do not match.");
   d_pos.reserve(3 * d_nAtoms);
@@ -307,10 +303,10 @@ Coulomb::Coulomb(const RDKit::ROMol &mol, int confId, double probecharge,
                  bool absVal, const std::string &prop, double alpha,
                  double cutoff)
     : d_nAtoms(mol.getNumAtoms()),
-      d_probe(probecharge),
       d_absVal(absVal),
-      d_alpha(alpha),
-      d_cutoff(cutoff * cutoff) {
+      d_cutoff(cutoff * cutoff),
+      d_probe(probecharge),
+      d_alpha(alpha) {
   d_charges.reserve(d_nAtoms);
   d_pos.reserve(3 * d_nAtoms);
   RDKit::Conformer conf = mol.getConformer(confId);
@@ -371,14 +367,14 @@ CoulombDielectric::CoulombDielectric(
     const std::vector<double> &charges,
     const std::vector<RDGeom::Point3D> &positions, double probecharge,
     bool absVal, double alpha, double cutoff, double epsilon, double xi)
-    : d_probe(probecharge),
+    : d_nAtoms(charges.size()),
       d_absVal(absVal),
-      d_charges(charges),
-      d_nAtoms(charges.size()),
-      d_alpha(alpha),
       d_cutoff(cutoff * cutoff),
+      d_probe(probecharge),
       d_epsilon(epsilon),
-      d_xi(xi) {
+      d_xi(xi),
+      d_alpha(alpha),
+      d_charges(charges) {
   PRECONDITION(d_charges.size() == positions.size(),
                "Lengths of positions and charges vectors do not match.");
   d_dielectric = (d_xi - d_epsilon) / (d_xi + d_epsilon);
@@ -443,13 +439,13 @@ CoulombDielectric::CoulombDielectric(const RDKit::ROMol &mol, int confId,
                                      double probecharge, bool absVal,
                                      const std::string &prop, double alpha,
                                      double cutoff, double epsilon, double xi)
-    : d_probe(probecharge),
+    : d_nAtoms(mol.getNumAtoms()),
       d_absVal(absVal),
-      d_nAtoms(mol.getNumAtoms()),
-      d_alpha(alpha),
       d_cutoff(cutoff * cutoff),
+      d_probe(probecharge),
       d_epsilon(epsilon),
-      d_xi(xi) {
+      d_xi(xi),
+      d_alpha(alpha) {
   PRECONDITION(mol.getNumConformers() > 0, "No Conformers for Molecule");
 
   d_charges.reserve(d_nAtoms);
@@ -603,7 +599,7 @@ const double K1 = 562.25380293;
 const double K2 = 0.11697778;
 const double bondlength[2] = {-0.972, -1.019};
 
-double cos_2(double t, double t_0 = 0.0, double t_i = 1.0) {
+double cos_2(double t, double, double) {
   if (t < M_PI_2) {
     double temp = cos(t);
     temp *= temp;
@@ -628,7 +624,7 @@ double cos_2_0(double t, double t_0 = 0.0, double t_i = 1.0) {
   }
 };
 
-double cos_2_rot(double t, double t_0 = 0.0, double t_i = 1.0) {
+double cos_2_rot(double t, double, double) {
   t -= M_70_5D;
   if (t < M_PI_2) {
     double temp = cos(t);
@@ -639,7 +635,7 @@ double cos_2_rot(double t, double t_0 = 0.0, double t_i = 1.0) {
   }
 };
 
-double cos_4(double t, double t_0 = 0.0, double t_i = 1.0) {
+double cos_4(double t, double, double) {
   if (t < M_PI_2) {
     double temp = cos(t);
     temp *= temp;
@@ -650,7 +646,7 @@ double cos_4(double t, double t_0 = 0.0, double t_i = 1.0) {
   }
 };
 
-double cos_4_rot(double t, double t_0 = 0.0, double t_i = 1.0) {
+double cos_4_rot(double t, double, double) {
   t -= M_70_5D;
   if (t < M_PI_2) {
     double temp = cos(t);
@@ -662,7 +658,7 @@ double cos_4_rot(double t, double t_0 = 0.0, double t_i = 1.0) {
   }
 };
 
-double cos_6(double t, double t_0 = 0.0, double t_i = 1.0) {
+double cos_6(double t, double, double) {
   if (t < M_PI_2) {
     double temp = cos(t);
     temp *= temp;
@@ -673,7 +669,7 @@ double cos_6(double t, double t_0 = 0.0, double t_i = 1.0) {
   }
 };
 
-double cos_6_rot(double t, double t_0 = 0.0, double t_i = 1.0) {
+double cos_6_rot(double t, double, double) {
   t -= M_70_5D;
   if (t < M_PI_2) {
     double temp = cos(t);
@@ -685,7 +681,7 @@ double cos_6_rot(double t, double t_0 = 0.0, double t_i = 1.0) {
   }
 };
 
-double cos_acc(double t, double t_0, double t_i) {
+double cos_acc(double, double t_0, double t_i) {
   double temp;
   if (t_i < M_PI_2) {
     temp = cos(t_0) * (0.9 + 0.1 * sin(2 * t_i));
@@ -702,7 +698,7 @@ double cos_acc(double t, double t_0, double t_i) {
   }
 };
 
-double no_dep(double t, double t_0 = 0.0, double t_i = 1.0) { return 1.0; };
+double no_dep(double, double, double) { return 1.0; };
 }  // namespace HBondDetail
 
 HBond::HBond(const RDKit::ROMol &mol, int confId, const std::string &probeType,
@@ -1660,7 +1656,7 @@ double HBond::operator()(double x, double y, double z, double thres) {
   double res = 0.0;
 
   if (d_DAprop == 'A') {
-    unsigned int minId;
+    unsigned int minId = 0;
     double minEne = std::numeric_limits<double>::max();  // minimal energy
     double probeDirection[3];                            // direction of probe
 
@@ -1782,7 +1778,7 @@ double HBond::operator()(double x, double y, double z, double thres) {
           cos_2(p, 0.0, 1.0);  // scaling of energy contribution and adding up
     }
   } else {  // d_DAprop='D'
-    unsigned int minId;
+    unsigned int minId = 0;
     double minEne = std::numeric_limits<double>::max();  // minimal energy
     double probeDirection[3];                            // direction of prope
 
@@ -1902,8 +1898,8 @@ void HBond::normalize(double &x, double &y, double &z) const {
   z /= temp;
 }
 
-const double HBond::angle(double x1, double y1, double z1, double x2, double y2,
-                          double z2) const {
+double HBond::angle(double x1, double y1, double z1, double x2, double y2,
+                    double z2) const {
   double dotProd = x1 * x2 + y1 * y2 + z1 * z2;
   if (dotProd < -1.0)
     dotProd = -1.0;
@@ -1971,12 +1967,11 @@ void writeToCubeStream(const RDGeom::UniformRealValueGrid3D &grd,
     i++;
   }
 
-  unsigned int xi, yi, zi, id;
   const unsigned int numX = grd.getNumX(), numY = grd.getNumY(),
                      numZ = grd.getNumZ();
-  for (xi = 0; xi < numX; xi++) {
-    for (yi = 0; yi < numY; yi++) {
-      for (zi = 0; zi < numZ; zi++) {
+  for (auto xi = 0u; xi < numX; xi++) {
+    for (auto yi = 0u; yi < numY; yi++) {
+      for (auto zi = 0u; zi < numZ; zi++) {
         outStrm << std::setw(20) << std::setprecision(6) << std::left
                 << static_cast<double>(
                        grd.getVal(grd.getGridIndex(xi, yi, zi)));
@@ -2035,19 +2030,17 @@ RDKit::RWMol *readFromCubeStream(RDGeom::UniformRealValueGrid3D &grd,
   RDKit::Conformer *conf = new RDKit::Conformer(nAtoms);
 
   int atomNum;
-  for (unsigned int i = 0; i < nAtoms; i++) {
+  for (auto i = 0; i < nAtoms; i++) {
     inStrm >> atomNum >> temp1 >> x >> y >> z;
     RDKit::Atom atom(atomNum);
     molecule->addAtom(&atom, true, false);
     RDGeom::Point3D pos(x * bohr, y * bohr, z * bohr);
     conf->setAtomPos(i, pos);
   }
-
-  double tempVal;
-  unsigned int xi, yi, zi, id;
-  for (xi = 0; xi < dimX; xi++) {
-    for (yi = 0; yi < dimY; yi++) {
-      for (zi = 0; zi < dimZ; zi++) {
+  for (auto xi = 0; xi < dimX; xi++) {
+    for (auto yi = 0; yi < dimY; yi++) {
+      for (auto zi = 0; zi < dimZ; zi++) {
+        double tempVal;
         inStrm >> tempVal;
         grd.setVal(grd.getGridIndex(xi, yi, zi), tempVal);
       }
@@ -2067,7 +2060,7 @@ RDKit::RWMol *readFromCubeFile(RDGeom::UniformRealValueGrid3D &grd,
   };
 
   std::istream *iStrm = static_cast<std::istream *>(ifStrm);
-  RDKit::RWMol *mol;
+  RDKit::RWMol *mol = nullptr;
   if (!iStrm->eof()) {
     mol = readFromCubeStream(grd, *iStrm);
   }

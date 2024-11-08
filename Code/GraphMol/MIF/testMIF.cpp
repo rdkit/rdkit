@@ -17,7 +17,8 @@
 //       with the distribution.
 //     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
-//       products derived from this software without specific prior written permission.
+//       products derived from this software without specific prior written
+//       permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 // "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -54,15 +55,14 @@ using namespace RDKit;
 using namespace RDMIF;
 
 namespace RDMIF {
-  class testfunctor {
-  public:
-    testfunctor() {
-    }
-    double operator()(const double &x, const double &y, const double &z, double thres) {
-      return 1.0;
-    }
-  };
-}
+class testfunctor {
+ public:
+  testfunctor() {}
+  double operator()(const double &, const double &, const double &, double) {
+    return 1.0;
+  }
+};
+}  // namespace RDMIF
 
 void test1ConstructGrid() {
   std::string path = getenv("RDBASE");
@@ -77,76 +77,85 @@ void test1ConstructGrid() {
   RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
   UniformRealValueGrid3D grd = *constructGrid(mol, 0, 5.0, 0.5);
 
-  Point3D bond = mol.getConformer().getAtomPos(1) - mol.getConformer().getAtomPos(0);
-  CHECK_INVARIANT(feq(grd.getSpacing (), 0.5),
+  Point3D bond =
+      mol.getConformer().getAtomPos(1) - mol.getConformer().getAtomPos(0);
+  CHECK_INVARIANT(feq(grd.getSpacing(), 0.5),
                   "Spacing of grid is not correct.");
-  CHECK_INVARIANT(feq(grd.getNumX (), std::floor ((fabs (bond.x) + 10.0) / 0.5 + 0.5)),
-                  "X length of grid is incorrect.");
-  CHECK_INVARIANT(feq(grd.getNumY (), std::floor ((fabs (bond.y) + 10.0) / 0.5 + 0.5)),
-                  "Y length of grid is incorrect.");
-  CHECK_INVARIANT(feq(grd.getNumZ (), std::floor ((fabs (bond.z) + 10.0) / 0.5 + 0.5)),
-                  "Z length of grid is incorrect.");
+  CHECK_INVARIANT(
+      feq(grd.getNumX(), std::floor((fabs(bond.x) + 10.0) / 0.5 + 0.5)),
+      "X length of grid is incorrect.");
+  CHECK_INVARIANT(
+      feq(grd.getNumY(), std::floor((fabs(bond.y) + 10.0) / 0.5 + 0.5)),
+      "Y length of grid is incorrect.");
+  CHECK_INVARIANT(
+      feq(grd.getNumZ(), std::floor((fabs(bond.z) + 10.0) / 0.5 + 0.5)),
+      "Z length of grid is incorrect.");
 }
 
-void test2CalculateDescriptors () {
-  RealValueVect *data = new RealValueVect (0.0, 125);
-  UniformRealValueGrid3D grd (5.0, 5.0, 5.0, 1.0, new Point3D (0.0, 0.0, 0.0),
-                              data);
+void test2CalculateDescriptors() {
+  RealValueVect *data = new RealValueVect(0.0, 125);
+  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, new Point3D(0.0, 0.0, 0.0),
+                             data);
 
   calculateDescriptors(grd, testfunctor());
-  CHECK_INVARIANT(feq (data->getTotalVal (), grd.getSize ()),
+  CHECK_INVARIANT(feq(data->getTotalVal(), grd.getSize()),
                   "Descriptor Calculation does not work correctly.");
 }
 
-void test3CubeFiles () {
-  std::string path = getenv ("RDBASE");
+void test3CubeFiles() {
+  std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
   RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
-  RealValueVect *data = new RealValueVect (0.0, 125);
-  UniformRealValueGrid3D grd (5.0, 5.0, 5.0, 1.0, new Point3D (0.0, 0.0, 0.0),
-                              data);
-  for (unsigned int i = 0; i < grd.getSize (); i++) {
-    grd.setVal (i, double (i / 10.0));
+  RealValueVect *data = new RealValueVect(0.0, 125);
+  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, new Point3D(0.0, 0.0, 0.0),
+                             data);
+  for (unsigned int i = 0; i < grd.getSize(); i++) {
+    grd.setVal(i, double(i / 10.0));
   }
-  writeToCubeFile (grd, mol, path + "test3.cube");
+  writeToCubeFile(grd, mol, path + "test3.cube");
   UniformRealValueGrid3D grd2;
-  RWMol mol2 = *readFromCubeFile (grd2, path + "test3.cube");
+  RWMol mol2 = *readFromCubeFile(grd2, path + "test3.cube");
 
   CHECK_INVARIANT(grd.getSize() == grd2.getSize(),
                   "I/O: grid sizes are not the same.");
-  for (unsigned int i = 0; i < grd2.getSize (); i++) {
+  for (unsigned int i = 0; i < grd2.getSize(); i++) {
     CHECK_INVARIANT(feq(grd2.getVal(i), double(i / 10.0)),
                     "I/O: values in grid are not correct.");
   }
-  CHECK_INVARIANT(grd.getNumX() == grd2.getNumX(), "I/O: grids are not the same.");
-  CHECK_INVARIANT(grd.getNumY() == grd2.getNumY(), "I/O: grids are not the same.");
-  CHECK_INVARIANT(grd.getNumZ() == grd2.getNumZ(), "I/O: grids are not the same.");
-  CHECK_INVARIANT(feq(grd.getOffset().x, grd2.getOffset().x), "I/O: grids are not the same.");
-  CHECK_INVARIANT(feq(grd.getSpacing(), grd2.getSpacing()), "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.getNumX() == grd2.getNumX(),
+                  "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.getNumY() == grd2.getNumY(),
+                  "I/O: grids are not the same.");
+  CHECK_INVARIANT(grd.getNumZ() == grd2.getNumZ(),
+                  "I/O: grids are not the same.");
+  CHECK_INVARIANT(feq(grd.getOffset().x, grd2.getOffset().x),
+                  "I/O: grids are not the same.");
+  CHECK_INVARIANT(feq(grd.getSpacing(), grd2.getSpacing()),
+                  "I/O: grids are not the same.");
   CHECK_INVARIANT(grd.compareVectors(grd2), "I/O: grids are not the same.");
   CHECK_INVARIANT(grd.compareParams(grd2), "I/O: grids are not the same.");
   CHECK_INVARIANT(grd.compareGrids(grd2), "I/O: grids are not the same.");
 
   CHECK_INVARIANT(mol.getNumAtoms() == mol2.getNumAtoms(),
                   "I/O: number of atoms are not the same.");
-  for (unsigned int i = 0; i < mol.getNumAtoms (); i++) {
-    CHECK_INVARIANT(mol.getAtomWithIdx (i)->getAtomicNum ()
-                    == mol2.getAtomWithIdx (i)->getAtomicNum (),
+  for (unsigned int i = 0; i < mol.getNumAtoms(); i++) {
+    CHECK_INVARIANT(mol.getAtomWithIdx(i)->getAtomicNum() ==
+                        mol2.getAtomWithIdx(i)->getAtomicNum(),
                     "I/O: atoms are not the same");
-    CHECK_INVARIANT(feq (mol.getConformer ().getAtomPos (i).x,
-                         mol2.getConformer ().getAtomPos (i).x),
+    CHECK_INVARIANT(feq(mol.getConformer().getAtomPos(i).x,
+                        mol2.getConformer().getAtomPos(i).x),
                     "I/O: atom positions are not the same");
-    CHECK_INVARIANT(feq (mol.getConformer ().getAtomPos (i).y,
-                         mol2.getConformer ().getAtomPos (i).y),
+    CHECK_INVARIANT(feq(mol.getConformer().getAtomPos(i).y,
+                        mol2.getConformer().getAtomPos(i).y),
                     "I/O: atom positions are not the same");
-    CHECK_INVARIANT(feq (mol.getConformer ().getAtomPos (i).z,
-                         mol2.getConformer ().getAtomPos (i).z),
+    CHECK_INVARIANT(feq(mol.getConformer().getAtomPos(i).z,
+                        mol2.getConformer().getAtomPos(i).z),
                     "I/O: atom positions are not the same");
   }
 }
 
-void test4Coulomb () {
+void test4Coulomb() {
   std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
@@ -157,8 +166,9 @@ void test4Coulomb () {
   std::vector<double> charges;
   std::vector<Point3D> pos;
   Conformer conf = mol.getConformer(0);
-  for (int i = 0; i < mol.getNumAtoms(); ++i) {
-    charges.push_back(mol.getAtomWithIdx (i)->getProp<double> ("_GasteigerCharge"));
+  for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
+    charges.push_back(
+        mol.getAtomWithIdx(i)->getProp<double>("_GasteigerCharge"));
     pos.push_back(conf.getAtomPos(i));
   }
 
@@ -168,31 +178,38 @@ void test4Coulomb () {
   Coulomb coul(mol);
 
   calculateDescriptors<Coulomb>(grd, coul);
-  calculateDescriptors<Coulomb>(grd2, Coulomb (charges, pos));
+  calculateDescriptors<Coulomb>(grd2, Coulomb(charges, pos));
 
-  CHECK_INVARIANT(grd.compareGrids(grd2),
-                  "Coulomb: Different constructors do not yield the same descriptor.");
-  CHECK_INVARIANT(feq (coul(0.0,0.0,0.0, 1000), 0.0),
+  CHECK_INVARIANT(
+      grd.compareGrids(grd2),
+      "Coulomb: Different constructors do not yield the same descriptor.");
+  CHECK_INVARIANT(feq(coul(0.0, 0.0, 0.0, 1000), 0.0),
                   "Coulomb: Potential between atoms wrong.(should be 0)");
-  CHECK_INVARIANT(coul(2.0,0.0,0.0, 1000) < 0,
+  CHECK_INVARIANT(coul(2.0, 0.0, 0.0, 1000) < 0,
                   "Coulomb: Potential between positive charges not positive.");
-  CHECK_INVARIANT(coul(-2.0,0.0,0.0, 1000) > 0,
-                  "Coulomb: Potential between positive and negative charges not negative.");
-  CHECK_INVARIANT(feq(coul(0.0,0.0,0.0, 0.1), 0.0),
+  CHECK_INVARIANT(
+      coul(-2.0, 0.0, 0.0, 1000) > 0,
+      "Coulomb: Potential between positive and negative charges not negative.");
+  CHECK_INVARIANT(feq(coul(0.0, 0.0, 0.0, 0.1), 0.0),
                   "Coulomb: Small threshold dist does not give 0.");
-                  
+
   calculateDescriptors<Coulomb>(grd, Coulomb(mol, 0, 1.0, true));
   for (unsigned int i = 0; i < grd.getSize(); i++) {
-    CHECK_INVARIANT(grd.getVal (i) <= 0.0, "Coulomb: Absolute value field not negative");
+    CHECK_INVARIANT(grd.getVal(i) <= 0.0,
+                    "Coulomb: Absolute value field not negative");
   }
 
-Coulomb coul1(mol, 0, -1.0, false, "_GasteigerCharge", 0.0, 0.01);
-  CHECK_INVARIANT(coul1(-2.0, 0.0, 0.0, 1000) < 0, "Coulomb: Potential between negative charges not positive.");
-  CHECK_INVARIANT(coul1(2.0, 0.0, 0.0, 1000) > 0, "Coulomb: Potential between positive and negative charges not negative.");
+  Coulomb coul1(mol, 0, -1.0, false, "_GasteigerCharge", 0.0, 0.01);
+  CHECK_INVARIANT(coul1(-2.0, 0.0, 0.0, 1000) < 0,
+                  "Coulomb: Potential between negative charges not positive.");
+  CHECK_INVARIANT(
+      coul1(2.0, 0.0, 0.0, 1000) > 0,
+      "Coulomb: Potential between positive and negative charges not negative.");
 
   Coulomb coul2 = Coulomb(mol, 0, -.5, false, "_GasteigerCharge", 0.0, 0.01);
-  CHECK_INVARIANT(coul1(-2.0, 0.0, 0.0, 1000) < coul2 (-2.0, 0.0, 0.0, 1000),
-                  "Coulomb: Higher probecharge does not result in stronger forces.");
+  CHECK_INVARIANT(
+      coul1(-2.0, 0.0, 0.0, 1000) < coul2(-2.0, 0.0, 0.0, 1000),
+      "Coulomb: Higher probecharge does not result in stronger forces.");
 
   Coulomb coul3(mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0);
   CHECK_INVARIANT(coul3(0.0, 0.0, 0.0, 1000) > coul3(0.1, 0.0, 0.0, 1000),
@@ -201,13 +218,12 @@ Coulomb coul1(mol, 0, -1.0, false, "_GasteigerCharge", 0.0, 0.01);
                   "Coulomb: Softcore interaction wrong.");
   CHECK_INVARIANT(coul3(0.70, 0.0, 0.0, 1000) > coul3(0.68, 0.0, 0.0, 1000),
                   "Coulomb: Softcore interaction wrong.");
-  CHECK_INVARIANT(feq(coul3(0.0,0.0,0.0, 0.1), 0.0),
+  CHECK_INVARIANT(feq(coul3(0.0, 0.0, 0.0, 0.1), 0.0),
                   "Coulomb: Small threshold dist does not give 0.");
-
 }
 
-void test5CoulombDielectric () {
-  std::string path = getenv ("RDBASE");
+void test5CoulombDielectric() {
+  std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
   RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
@@ -217,8 +233,9 @@ void test5CoulombDielectric () {
   std::vector<double> charges;
   std::vector<Point3D> pos;
   Conformer conf = mol.getConformer(0);
-  for (int i = 0; i < mol.getNumAtoms(); ++i) {
-    charges.push_back(mol.getAtomWithIdx(i)->getProp<double>("_GasteigerCharge"));
+  for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
+    charges.push_back(
+        mol.getAtomWithIdx(i)->getProp<double>("_GasteigerCharge"));
     pos.push_back(conf.getAtomPos(i));
   }
 
@@ -228,115 +245,156 @@ void test5CoulombDielectric () {
   CoulombDielectric couldiele(mol);
 
   calculateDescriptors<CoulombDielectric>(grd, couldiele);
-  calculateDescriptors<CoulombDielectric>(grd2, CoulombDielectric (charges, pos));
+  calculateDescriptors<CoulombDielectric>(grd2,
+                                          CoulombDielectric(charges, pos));
 
-  CHECK_INVARIANT(grd.compareGrids(grd2), "CoulombDielectric: Different constructors do not yield the same descriptor.");
-  CHECK_INVARIANT(feq (couldiele(0.0, 0.0, 0.0, 1000), 0.0), "CoulombDielectric: Potential between atoms wrong.(should be 0)");
-  CHECK_INVARIANT(couldiele(2.0, 0.0, 0.0, 1000) < 0, "CoulombDielectric: Potential between positive charges not positive.");
-  CHECK_INVARIANT(couldiele(-2.0, 0.0, 0.0, 1000) > 0, "CoulombDielectric: Potential between positive and negative charges not negative.");
+  CHECK_INVARIANT(
+      grd.compareGrids(grd2),
+      "CoulombDielectric: Different constructors do not yield the same descriptor.");
+  CHECK_INVARIANT(
+      feq(couldiele(0.0, 0.0, 0.0, 1000), 0.0),
+      "CoulombDielectric: Potential between atoms wrong.(should be 0)");
+  CHECK_INVARIANT(
+      couldiele(2.0, 0.0, 0.0, 1000) < 0,
+      "CoulombDielectric: Potential between positive charges not positive.");
+  CHECK_INVARIANT(
+      couldiele(-2.0, 0.0, 0.0, 1000) > 0,
+      "CoulombDielectric: Potential between positive and negative charges not negative.");
 
-  calculateDescriptors<CoulombDielectric>(grd, CoulombDielectric (mol, 0, 1.0, true));
+  calculateDescriptors<CoulombDielectric>(grd,
+                                          CoulombDielectric(mol, 0, 1.0, true));
   for (unsigned int i = 0; i < grd.getSize(); i++) {
-    CHECK_INVARIANT(grd.getVal (i) <= 0.0, "CoulombDielectric: Absolute value field not negative");
+    CHECK_INVARIANT(grd.getVal(i) <= 0.0,
+                    "CoulombDielectric: Absolute value field not negative");
   }
 
-  CHECK_INVARIANT(feq (couldiele(0.0, 0.0, 0.0, 1000), 0.0), "CoulombDielectric: Potential between atoms wrong.(should be 0)");
-  CHECK_INVARIANT(couldiele(2.0, 0.0, 0.0, 1000) < 0, "CoulombDielectric: Potential between positive charges not positive.");
-  CHECK_INVARIANT(couldiele(-2.0, 0.0, 0.0, 1000) > 0, "CoulombDielectric: Potential between positive and negative charges not negative.");
+  CHECK_INVARIANT(
+      feq(couldiele(0.0, 0.0, 0.0, 1000), 0.0),
+      "CoulombDielectric: Potential between atoms wrong.(should be 0)");
+  CHECK_INVARIANT(
+      couldiele(2.0, 0.0, 0.0, 1000) < 0,
+      "CoulombDielectric: Potential between positive charges not positive.");
+  CHECK_INVARIANT(
+      couldiele(-2.0, 0.0, 0.0, 1000) > 0,
+      "CoulombDielectric: Potential between positive and negative charges not negative.");
 
-  calculateDescriptors<CoulombDielectric>(grd, CoulombDielectric (mol, 0, 1.0, true));
+  calculateDescriptors<CoulombDielectric>(grd,
+                                          CoulombDielectric(mol, 0, 1.0, true));
   for (unsigned int i = 0; i < grd.getSize(); i++) {
-    CHECK_INVARIANT(grd.getVal (i) <= 0.0, "CoulombDielectric: Absolute value field not negative");
+    CHECK_INVARIANT(grd.getVal(i) <= 0.0,
+                    "CoulombDielectric: Absolute value field not negative");
   }
 
   CoulombDielectric couldiele1(mol, 0, -1.0);
-  CHECK_INVARIANT(couldiele1(-2.0, 0.0, 0.0, 1000) < 0, "CoulombDielectric: Potential between negative charges not positive.");
-  CHECK_INVARIANT(couldiele1(2.0, 0.0, 0.0, 1000) > 0, "CoulombDielectric: Potential between positive and negative charges not negative.");
+  CHECK_INVARIANT(
+      couldiele1(-2.0, 0.0, 0.0, 1000) < 0,
+      "CoulombDielectric: Potential between negative charges not positive.");
+  CHECK_INVARIANT(
+      couldiele1(2.0, 0.0, 0.0, 1000) > 0,
+      "CoulombDielectric: Potential between positive and negative charges not negative.");
 
-  CoulombDielectric couldiele2 (mol, 0, -.5);
+  CoulombDielectric couldiele2(mol, 0, -.5);
 
-  CHECK_INVARIANT(couldiele1(-2.0, 0.0, 0.0, 1000) < couldiele2(-2.0, 0.0, 0.0, 1000),
-                  "CoulombDielectric: Higher probecharge does not result in stronger forces.");
+  CHECK_INVARIANT(
+      couldiele1(-2.0, 0.0, 0.0, 1000) < couldiele2(-2.0, 0.0, 0.0, 1000),
+      "CoulombDielectric: Higher probecharge does not result in stronger forces.");
 
-  CoulombDielectric couldiele3(mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0);
-  CHECK_INVARIANT(couldiele3(0.0, 0.0, 0.0, 1000) > couldiele3(0.1, 0.0, 0.0, 1000),
-                  "CoulombDielectric: Softcore interaction wrong.");
-  CHECK_INVARIANT(couldiele3(0.66, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000),
-                  "CoulombDielectric: Softcore interaction wrong.");
-  CHECK_INVARIANT(couldiele3(0.70, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000),
-                  "CoulombDielectric: Softcore interaction wrong.");
-
-
+  CoulombDielectric couldiele3(mol, 0, 1.0, false, "_GasteigerCharge", 0.01,
+                               1.0);
+  CHECK_INVARIANT(
+      couldiele3(0.0, 0.0, 0.0, 1000) > couldiele3(0.1, 0.0, 0.0, 1000),
+      "CoulombDielectric: Softcore interaction wrong.");
+  CHECK_INVARIANT(
+      couldiele3(0.66, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000),
+      "CoulombDielectric: Softcore interaction wrong.");
+  CHECK_INVARIANT(
+      couldiele3(0.70, 0.0, 0.0, 1000) > couldiele3(0.68, 0.0, 0.0, 1000),
+      "CoulombDielectric: Softcore interaction wrong.");
 
   mol = *MolFileToMol(path + "glucose.mol", true, false);
   computeGasteigerCharges(mol);
 
-  CoulombDielectric couldiele4 (mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0,  80.0,  4.0);
-  CoulombDielectric couldiele5 (mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0, 200.0,  4.0);
-  CoulombDielectric couldiele6 (mol, 0, 1.0, false, "_GasteigerCharge", 0.01, 1.0,  80.0, 10.0);
-  CHECK_INVARIANT(couldiele5(-1.0, 0.0, 0.0, 1000) < couldiele4(-1.0, 0.0, 0.0, 1000),
-                  "CoulombDielectric: solvent permittivity scaling wrong.");
+  CoulombDielectric couldiele4(mol, 0, 1.0, false, "_GasteigerCharge", 0.01,
+                               1.0, 80.0, 4.0);
+  CoulombDielectric couldiele5(mol, 0, 1.0, false, "_GasteigerCharge", 0.01,
+                               1.0, 200.0, 4.0);
+  CoulombDielectric couldiele6(mol, 0, 1.0, false, "_GasteigerCharge", 0.01,
+                               1.0, 80.0, 10.0);
+  CHECK_INVARIANT(
+      couldiele5(-1.0, 0.0, 0.0, 1000) < couldiele4(-1.0, 0.0, 0.0, 1000),
+      "CoulombDielectric: solvent permittivity scaling wrong.");
 
-
-  CHECK_INVARIANT(couldiele6(-1.0, 0.0, 0.0, 1000) < couldiele4 (-1.0, 0.0, 0.0, 1000),
-                  "CoulombDielectric: solute permittivity scaling wrong.");
+  CHECK_INVARIANT(
+      couldiele6(-1.0, 0.0, 0.0, 1000) < couldiele4(-1.0, 0.0, 0.0, 1000),
+      "CoulombDielectric: solute permittivity scaling wrong.");
 }
 
-void test6VdWaals () {
-  std::string path = getenv ("RDBASE");
+void test6VdWaals() {
+  std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
   RWMol mol = *MolFileToMol(path + "HCl.mol", true, false);
   try {
     VdWaals vdw = constructVdWaalsMMFF(mol, 0, 6, false, 1.0);
   } catch (ValueErrorException &dexp) {
-    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.message() << "\n";
+    BOOST_LOG(rdInfoLog) << "Expected failure: " << dexp.what() << "\n";
   }
 
   mol = *MolFileToMol(path + "HCN.mol", true, false);
   VdWaals vdw = constructVdWaalsMMFF(mol, 0, 6, false, 1.0);
 
-  CHECK_INVARIANT(vdw(-5.0, 0, 0, 1000) < 0, "VdWMMFF: Potential not negative in favorable region.");
-  CHECK_INVARIANT(vdw(-1.68, 0, 0, 1000) > vdw(-5.0, 0, 0, 1000), "VdWMMFF: Potential next to core not higher than further apart.");
-  CHECK_INVARIANT(vdw(-5.0, 0, 0, 1000) < vdw(-10.0, 0, 0, 1000), "VdWMMFF: Potential very far apart not higher than in favorable distance to core.");
+  CHECK_INVARIANT(vdw(-5.0, 0, 0, 1000) < 0,
+                  "VdWMMFF: Potential not negative in favorable region.");
+  CHECK_INVARIANT(
+      vdw(-1.68, 0, 0, 1000) > vdw(-5.0, 0, 0, 1000),
+      "VdWMMFF: Potential next to core not higher than further apart.");
+  CHECK_INVARIANT(
+      vdw(-5.0, 0, 0, 1000) < vdw(-10.0, 0, 0, 1000),
+      "VdWMMFF: Potential very far apart not higher than in favorable distance to core.");
 
   RWMol mol2 = *MolFileToMol(path + "h2o.mol", true, false);
-  vdw  = constructVdWaalsMMFF(mol2, 0, 6, false, 1.0);
+  vdw = constructVdWaalsMMFF(mol2, 0, 6, false, 1.0);
   VdWaals vdw2 = constructVdWaalsMMFF(mol2, 0, 6, true, 1.0);
   CHECK_INVARIANT(fabs(vdw2(-3.0, 0, 0, 1000) - vdw(-3.0, 0, 0, 1000)) > 0.0001,
                   "VdWMMFF: No scaling of interactions.");
 
-
   VdWaals vdw3 = constructVdWaalsUFF(mol, 0, "O_3", 1.0);
-  CHECK_INVARIANT(vdw3(-5.0, 0, 0, 1000) < 0, "VdWMMFF: Potential not negative in favorable region.");
-  CHECK_INVARIANT(vdw3(-1.68, 0, 0, 1000) > vdw3(-5.0, 0, 0, 1000),
-                  "VdWUFF: Potential next to core not higher than further apart.");
-  CHECK_INVARIANT(vdw3(-5.0, 0, 0, 1000) < vdw3(-10.0, 0, 0, 1000),
-                  "VdWUFF: Potential very far apart not higher than in favorable distance to core.");
+  CHECK_INVARIANT(vdw3(-5.0, 0, 0, 1000) < 0,
+                  "VdWMMFF: Potential not negative in favorable region.");
+  CHECK_INVARIANT(
+      vdw3(-1.68, 0, 0, 1000) > vdw3(-5.0, 0, 0, 1000),
+      "VdWUFF: Potential next to core not higher than further apart.");
+  CHECK_INVARIANT(
+      vdw3(-5.0, 0, 0, 1000) < vdw3(-10.0, 0, 0, 1000),
+      "VdWUFF: Potential very far apart not higher than in favorable distance to core.");
 
-  std::string names[] = { "acetone", "aceticacid", "phenol", "phenolate",
-      "serine", "threonine", "ethanol", "diethylether", "h2o", "ammonia",
-      "ethylamine", "imine", "acetonitrile", "histidine", "phenylamine",
-      "methylammonium", "fluoromethane", "chloromethane", "bromomethane",
-      "glycine", "glyphe", "glysergly", "glythrgly", "glucose" };
-  for ( unsigned int i = 0; i < 24; i++ ){
+  std::string names[] = {
+      "acetone",       "aceticacid",    "phenol",       "phenolate",
+      "serine",        "threonine",     "ethanol",      "diethylether",
+      "h2o",           "ammonia",       "ethylamine",   "imine",
+      "acetonitrile",  "histidine",     "phenylamine",  "methylammonium",
+      "fluoromethane", "chloromethane", "bromomethane", "glycine",
+      "glyphe",        "glysergly",     "glythrgly",    "glucose"};
+  for (unsigned int i = 0; i < 24; i++) {
     mol = *MolFileToMol(path + names[i] + ".mol", true, false);
     vdw = constructVdWaalsMMFF(mol);
-    CHECK_INVARIANT(vdw(0.0,0.0,0.0,1000), "VdWMMFF: crashed with " + names[i]);
+    CHECK_INVARIANT(vdw(0.0, 0.0, 0.0, 1000),
+                    "VdWMMFF: crashed with " + names[i]);
     vdw = constructVdWaalsUFF(mol);
-    CHECK_INVARIANT(vdw(0.0,0.0,0.0,1000), "VdWUFF: crashed with " + names[i]);
+    CHECK_INVARIANT(vdw(0.0, 0.0, 0.0, 1000),
+                    "VdWUFF: crashed with " + names[i]);
   }
 }
 
 void test7HBond() {
-  std::string path = getenv ("RDBASE");
+  std::string path = getenv("RDBASE");
   path += "/Code/GraphMol/MIF/test_data/";
 
   UniformRealValueGrid3D grd;
   RWMol mol;
 
-  //Generate Molecule with 3D Coordinates and Partial Charges
-  mol = *MolFileToMol(path + "ethane.mol", true, false);              //Ethane
+  // Generate Molecule with 3D Coordinates and Partial Charges
+  mol = *MolFileToMol(path + "ethane.mol", true, false);  // Ethane
   grd = *constructGrid(mol, 0, 5.0, 1);
   for (unsigned int i = 0; i < grd.getSize(); i++) {
     grd.setVal(i, 1.0);
@@ -351,7 +409,9 @@ void test7HBond() {
   TEST_ASSERT(!grd.compareGrids(grd1));
   const RealValueVect *vect = grd.getOccupancyVect();
   const RealValueVect *vect1 = grd1.getOccupancyVect();
-  CHECK_INVARIANT((unsigned int )fabs(((*vect1 - *vect).getTotalVal())) == grd.getSize(),"");
+  CHECK_INVARIANT(
+      (unsigned int)fabs(((*vect1 - *vect).getTotalVal())) == grd.getSize(),
+      "");
 
   hbonddes = HBond(mol, 0, "O", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
@@ -363,7 +423,7 @@ void test7HBond() {
   TEST_ASSERT(!grd.compareGrids(grd1));
   CHECK_INVARIANT((unsigned int)fabs(((*vect1 - *vect).getTotalVal())), "");
 
-  mol = *MolFileToMol(path + "aceticacid.mol", true, false);          //Acetic Acid
+  mol = *MolFileToMol(path + "aceticacid.mol", true, false);  // Acetic Acid
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 2, "");
@@ -372,16 +432,21 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes1.getNumInteractions() == 1, "");
   calculateDescriptors<HBond>(grd, hbonddes1);
   HBond hbonddes2(mol, 0, "O", false, 0.001);
-  CHECK_INVARIANT(hbonddes1(4.0, 0.0, 1.0, 1000) > hbonddes2(4.0, 0.0, 1.0, 1000),
-                  "HBond: Flexible bonds do not yield more negative potential.");
+  CHECK_INVARIANT(
+      hbonddes1(4.0, 0.0, 1.0, 1000) > hbonddes2(4.0, 0.0, 1.0, 1000),
+      "HBond: Flexible bonds do not yield more negative potential.");
   HBond hbonddes3(mol, 0, "NH", true, 0.001);
   CHECK_INVARIANT(hbonddes3.getNumInteractions() == 2, "");
-  CHECK_INVARIANT(hbonddes(2.0, 2.0, 2.0, 1000) < hbonddes3(2.0, 2.0, 2.0, 1000), "HBond: N probe stronger interaction than O probe");
+  CHECK_INVARIANT(
+      hbonddes(2.0, 2.0, 2.0, 1000) < hbonddes3(2.0, 2.0, 2.0, 1000),
+      "HBond: N probe stronger interaction than O probe");
   HBond hbonddes4(mol, 0, "N", true, 0.001);
   CHECK_INVARIANT(hbonddes4.getNumInteractions() == 1, "");
-  CHECK_INVARIANT(hbonddes1(3.0, 0.0,0.0, 1000) < hbonddes4(3.0,0.0,0.0, 1000), "HBond: N probe stronger interaction than O probe");
+  CHECK_INVARIANT(
+      hbonddes1(3.0, 0.0, 0.0, 1000) < hbonddes4(3.0, 0.0, 0.0, 1000),
+      "HBond: N probe stronger interaction than O probe");
 
-  mol = *MolFileToMol(path + "acetone.mol", true, false);     //Acetone
+  mol = *MolFileToMol(path + "acetone.mol", true, false);  // Acetone
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -390,7 +455,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "diethylether.mol", true, false);                //Et2O
+  mol = *MolFileToMol(path + "diethylether.mol", true, false);  // Et2O
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -399,7 +464,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "h2o.mol", true, false);         //H2O
+  mol = *MolFileToMol(path + "h2o.mol", true, false);  // H2O
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -408,7 +473,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 2, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "ammonia.mol", true, false);             //ammonia
+  mol = *MolFileToMol(path + "ammonia.mol", true, false);  // ammonia
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -417,8 +482,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-
-  mol = *MolFileToMol(path + "imine.mol", true, false);               //imine
+  mol = *MolFileToMol(path + "imine.mol", true, false);  // imine
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -427,7 +491,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "methylammonium.mol", true, false);//methylammonium
+  mol = *MolFileToMol(path + "methylammonium.mol", true,
+                      false);  // methylammonium
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
@@ -436,7 +501,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "chloromethane.mol", true, false);       //Chloromethane
+  mol =
+      *MolFileToMol(path + "chloromethane.mol", true, false);  // Chloromethane
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -445,7 +511,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "phosphonate.mol", true, false);         //Phosphonate
+  mol = *MolFileToMol(path + "phosphonate.mol", true, false);  // Phosphonate
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
@@ -454,7 +520,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "phosphatediester.mol", true, false);//Phosphatediester
+  mol = *MolFileToMol(path + "phosphatediester.mol", true,
+                      false);  // Phosphatediester
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 4, "");
@@ -463,7 +530,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "hydrogenphosphatediester.mol", true, false);//Hydrogenphosphatediester
+  mol = *MolFileToMol(path + "hydrogenphosphatediester.mol", true,
+                      false);  // Hydrogenphosphatediester
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 4, "");
@@ -472,7 +540,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "mustardgas.mol", true, false);          //mustard gas
+  mol = *MolFileToMol(path + "mustardgas.mol", true, false);  // mustard gas
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 2, "");
@@ -481,7 +549,7 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "alicin.mol", true, false);              //Alicin
+  mol = *MolFileToMol(path + "alicin.mol", true, false);  // Alicin
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 1, "");
@@ -490,7 +558,8 @@ void test7HBond() {
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 0, "");
   calculateDescriptors<HBond>(grd, hbonddes);
 
-  mol = *MolFileToMol(path + "sulfanilamide.mol", true, false);       //Sulfanilamide
+  mol =
+      *MolFileToMol(path + "sulfanilamide.mol", true, false);  // Sulfanilamide
   grd = *constructGrid(mol, 0, 5.0, 1);
   hbonddes = HBond(mol, 0, "OH", true, 0.001);
   CHECK_INVARIANT(hbonddes.getNumInteractions() == 3, "");
@@ -510,64 +579,73 @@ void test8Hydrophilic() {
   HBond hbondOH(mol, 0, "OH");
   HBond hbondO(mol, 0, "O");
 
-  double hyd = hydro(0.0,0.0,0.0, 1000),
-      hOH = hbondOH(0.0,0.0,0.0, 1000),
-      hO  = hbondO(0.0,0.0,0.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  double hyd = hydro(0.0, 0.0, 0.0, 1000), hOH = hbondOH(0.0, 0.0, 0.0, 1000),
+         hO = hbondO(0.0, 0.0, 0.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(1.0, 1.5, 2.0, 1000);
   hOH = hbondOH(1.0, 1.5, 2.0, 1000);
-  hO  = hbondO(1.0, 1.5, 2.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(1.0, 1.5, 2.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(2.0, 1.5, -3.0, 1000);
   hOH = hbondOH(2.0, 1.5, -3.0, 1000);
-  hO  = hbondO(2.0, 1.5, -3.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(2.0, 1.5, -3.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(-2.5, 0.5, 3.0, 1000);
   hOH = hbondOH(-2.5, 0.5, 3.0, 1000);
-  hO  = hbondO(-2.5, 0.5, 3.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(-2.5, 0.5, 3.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(10.0, 1.5, 1.0, 1000);
   hOH = hbondOH(10.0, 1.5, 1.0, 1000);
-  hO  = hbondO(10.0, 1.5, 1.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(10.0, 1.5, 1.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(6.0, -5.0, 0.0, 1000);
   hOH = hbondOH(6.0, -5.0, 0.0, 1000);
-  hO  = hbondO(6.0, -5.0, 0.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(6.0, -5.0, 0.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(-3.0, -3.0, 7.0, 1000);
   hOH = hbondOH(-3.0, -3.0, 7.0, 1000);
-  hO  = hbondO(-3.0, -3.0, 7.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(-3.0, -3.0, 7.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(1.0, 0.0, 0.0, 1000);
   hOH = hbondOH(1.0, 0.0, 0.0, 1000);
-  hO  = hbondO(1.0, 0.0, 0.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(1.0, 0.0, 0.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(0.0, 2.0, 2.0, 1000);
   hOH = hbondOH(0.0, 2.0, 2.0, 1000);
-  hO  = hbondO(0.0, 2.0, 2.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
-
+  hO = hbondO(0.0, 2.0, 2.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(2.0, -2.0, 0.0, 1000);
   hOH = hbondOH(2.0, -2.0, 0.0, 1000);
-  hO  = hbondO(2.0, -2.0, 0.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(2.0, -2.0, 0.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 
   hyd = hydro(2.0, -2.0, -3.0, 1000);
   hOH = hbondOH(2.0, -2.0, -3.0, 1000);
-  hO  = hbondO(2.0, -2.0, -3.0, 1000);
-  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd), "Hydrophilic: Not working correctly.");
+  hO = hbondO(2.0, -2.0, -3.0, 1000);
+  CHECK_INVARIANT(feq(std::min(hOH, hO), hyd),
+                  "Hydrophilic: Not working correctly.");
 }
 
-int main () {
+int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing MIF\n";
 

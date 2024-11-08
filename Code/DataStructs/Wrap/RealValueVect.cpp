@@ -42,7 +42,7 @@
 
 using namespace RDKit;
 
-struct rvv_pickle_suite : python::pickle_suite {
+struct rvv_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const RealValueVect &self) {
     std::string res = self.toString();
     python::object retval = python::object(
