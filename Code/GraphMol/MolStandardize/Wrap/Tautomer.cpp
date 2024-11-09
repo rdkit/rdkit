@@ -507,20 +507,23 @@ struct tautomer_wrapper {
                 python::return_value_policy<python::manage_new_object>());
 
     std::string docString =
-      "scores the ring system of the tautomer for canonicalization";
+      "scores the ring system of the tautomer for canonicalization\n"
+      "Aromatic rings score 100, all carbon aromatic rings score 250";
     python::def("ScoreRings", MolStandardize::TautomerScoringFunctions::scoreRings,
 		python::arg("mol"),
 		docString.c_str());
     
     docString =
-      "scores the number of heteroHs of the tautomer for canonicalization";
+      "scores the number of heteroHs of the tautomer for canonicalization\n"
+      "This gives a negative penalty to hydrogens attached to S,P, Se and Te";
     python::def("ScoreHeteroHs", MolStandardize::TautomerScoringFunctions::scoreHeteroHs,
 		python::arg("mol"),
 		docString.c_str());
     
     python::class_<MolStandardize::TautomerScoringFunctions::SubstructTerm> (
 		    "SubstructTerm",
-		    "Sets the score of this particular tautomer substructure, higher scores are more preferable",
+		    "Sets the score of this particular tautomer substructure, higher scores are more preferable\n"
+		    "Aromatic rings score 100, all carbon aromatic rings score 250",
 		    python::init<std::string, std::string, int>(
 								python::args("self", "name", "smarts", "score")))
 		    .def_readonly("name", &MolStandardize::TautomerScoringFunctions::SubstructTerm::name)
