@@ -52,13 +52,15 @@ Coulomb *make_coulomb(const python::object &charges,
   unsigned int nrows;
   if (PySequence_Check(pyObj)) {
     nrows = PySequence_Size(pyObj);
-    if (nrows <= 0) throw_value_error("Empty sequence passed in");
+    if (nrows <= 0) { throw_value_error("Empty sequence passed in");
+}
     python::extract<RDGeom::Point3D> ptOk(positions[0]);
     if (!ptOk.check()) {
       for (unsigned int i = 0; i < nrows; i++) {
         PySequenceHolder<double> row(positions[i]);
-        if (row.size() != 3)
+        if (row.size() != 3) {
           throw_value_error("Wrong number of entries in the list of lists");
+}
         RDGeom::Point3D pt(row[0], row[1], row[2]);
         pos.push_back(pt);
         ch.push_back(python::extract<double>(charges[i]));
@@ -76,7 +78,7 @@ Coulomb *make_coulomb(const python::object &charges,
     }
   }
 
-  Coulomb *coul = new Coulomb(ch, pos, probecharge, absVal, alpha, cutoff);
+  auto *coul = new Coulomb(ch, pos, probecharge, absVal, alpha, cutoff);
   return coul;
 }
 
@@ -91,13 +93,15 @@ CoulombDielectric *make_coulomb_dielectric(const python::object &charges,
   unsigned int nrows;
   if (PySequence_Check(pyObj)) {
     nrows = PySequence_Size(pyObj);
-    if (nrows <= 0) throw_value_error("Empty sequence passed in");
+    if (nrows <= 0) { throw_value_error("Empty sequence passed in");
+}
     python::extract<RDGeom::Point3D> ptOk(positions[0]);
     if (!ptOk.check()) {
       for (unsigned int i = 0; i < nrows; i++) {
         PySequenceHolder<double> row(positions[i]);
-        if (row.size() != 3)
+        if (row.size() != 3) {
           throw_value_error("Wrong number of entries in the list of lists");
+}
         RDGeom::Point3D pt(row[0], row[1], row[2]);
         pos.push_back(pt);
         ch.push_back(python::extract<double>(charges[i]));
@@ -115,7 +119,7 @@ CoulombDielectric *make_coulomb_dielectric(const python::object &charges,
     }
   }
 
-  CoulombDielectric *coul = new CoulombDielectric(ch, pos, probecharge, absVal,
+  auto *coul = new CoulombDielectric(ch, pos, probecharge, absVal,
                                                   alpha, cutoff, epsilon, xi);
   return coul;
 }
@@ -123,14 +127,14 @@ CoulombDielectric *make_coulomb_dielectric(const python::object &charges,
 VdWaals *constructVdWMMFF(RDKit::ROMol &mol, int confId,
                           unsigned int probeAtomType, bool scaling,
                           double cutoff) {
-  VdWaals *res =
+  auto *res =
       new VdWaals(mol, confId, probeAtomType, "", "MMFF94", scaling, cutoff);
   return res;
 }
 
 VdWaals *constructVdWUFF(RDKit::ROMol &mol, int confId,
                          const std::string &probeAtomType, double cutoff) {
-  VdWaals *res =
+  auto *res =
       new VdWaals(mol, confId, 0, probeAtomType, "UFF", false, cutoff);
   return res;
 }

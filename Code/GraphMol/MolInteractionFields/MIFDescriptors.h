@@ -297,7 +297,7 @@ class CoulombDielectric {
  */
 class VdWaals {
  public:
-  VdWaals() : d_cutoff(1), d_nAtoms(0), d_getEnergy(NULL) {};
+  VdWaals() : d_cutoff(1), d_nAtoms(0), d_getEnergy(nullptr) {};
   VdWaals(RDKit::ROMol &mol, int confId, unsigned int probeAtomTypeMMFF,
           const std::string &probeAtomTypeUFF, const std::string &FF,
           bool scaling, double cutoff);

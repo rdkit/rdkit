@@ -54,7 +54,7 @@ std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
       mol.getConformer(confId).getPositions();
   double minX = ptVect[0].x, maxX = minX, minY = ptVect[0].y, maxY = minY,
          minZ = ptVect[0].z, maxZ = minZ;
-  for (std::vector<RDGeom::Point3D>::const_iterator it = ptVect.begin() + 1;
+  for (auto it = ptVect.begin() + 1;
        it != ptVect.end(); ++it) {
     minX = std::min((*it).x, minX);
     maxX = std::max((*it).x, maxX);
@@ -258,10 +258,10 @@ Coulomb::Coulomb(const std::vector<double> &charges,
   PRECONDITION(d_charges.size() == positions.size(),
                "Lengths of positions and charges vectors do not match.");
   d_pos.reserve(3 * d_nAtoms);
-  for (unsigned int i = 0; i < positions.size(); ++i) {
-    d_pos.push_back(positions[i].x);
-    d_pos.push_back(positions[i].y);
-    d_pos.push_back(positions[i].z);
+  for (const auto & position : positions) {
+    d_pos.push_back(position.x);
+    d_pos.push_back(position.y);
+    d_pos.push_back(position.z);
   }
   if (fabs(d_alpha) < MIN_VAL) {
     d_softcore = false;
@@ -369,8 +369,8 @@ CoulombDielectric::CoulombDielectric(
       }
     }
   }
-  for (unsigned int i = 0; i < neighbors.size(); i++) {
-    switch (neighbors[i]) {
+  for (unsigned int neighbor : neighbors) {
+    switch (neighbor) {
       case 0:
       case 1:
       case 2:
@@ -453,8 +453,8 @@ CoulombDielectric::CoulombDielectric(const RDKit::ROMol &mol, int confId,
       }
     }
   }
-  for (unsigned int i = 0; i < neighbors.size(); i++) {
-    switch (neighbors[i]) {
+  for (unsigned int neighbor : neighbors) {
+    switch (neighbor) {
       case 0:
       case 1:
       case 2:
@@ -766,11 +766,11 @@ unsigned int HBond::findSpecials(const RDKit::ROMol &mol, int confId,
   match = RDKit::SubstructMatch(mol, *ser, matches);
   nMatches += match;
 
-  for (unsigned int i = 0; i < matches.size(); i++) {
-    const RDKit::Atom *atom = mol.getAtomWithIdx((matches[i]).second);
+  for (auto & matche : matches) {
+    const RDKit::Atom *atom = mol.getAtomWithIdx(matche.second);
     if (atom->getAtomicNum() == 8) {
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
-      pos = conf.getAtomPos(matches[i].second);
+      pos = conf.getAtomPos(matche.second);
       if (d_DAprop == 'A') {
         nbrs = 0;
         while (nbrIdx != endNbrs) {  // loop over atoms
@@ -794,7 +794,7 @@ unsigned int HBond::findSpecials(const RDKit::ROMol &mol, int confId,
           } else {
             addVectElements(O, &cos_4_rot, pos, bondDirection[0]);
           }
-          specials.push_back(matches[i].second);
+          specials.push_back(matche.second);
         }
       } else if (d_DAprop == 'D') {
         if (fixed) {
@@ -816,7 +816,7 @@ unsigned int HBond::findSpecials(const RDKit::ROMol &mol, int confId,
             ++nbrIdx;
           }
         }
-        specials.push_back(matches[i].second);
+        specials.push_back(matche.second);
       } else {  // this should never be the case
         BOOST_LOG(rdErrorLog)
             << "HBond::operator(): unknown target property d_DAprop: "
@@ -1876,10 +1876,11 @@ void HBond::normalize(double &x, double &y, double &z) const {
 double HBond::angle(double x1, double y1, double z1, double x2, double y2,
                     double z2) const {
   double dotProd = x1 * x2 + y1 * y2 + z1 * z2;
-  if (dotProd < -1.0)
+  if (dotProd < -1.0) {
     dotProd = -1.0;
-  else if (dotProd > 1.0)
+  } else if (dotProd > 1.0) {
     dotProd = 1.0;
+}
   return acos(dotProd);
 }
 
@@ -1951,7 +1952,8 @@ void writeToCubeStream(const RDGeom::UniformRealValueGrid3D &grd,
                 << static_cast<double>(
                        grd.getVal(grd.getGridIndex(xi, yi, zi)));
         // grd->d_numX-xi-1, grd->d_numY-yi-1, grd->d_numZ-zi-1
-        if ((zi + 1) % 8 == 0) outStrm << std::endl;
+        if ((zi + 1) % 8 == 0) { outStrm << std::endl;
+}
       }
       outStrm << std::endl;
     }
@@ -1962,8 +1964,8 @@ void writeToCubeStream(const RDGeom::UniformRealValueGrid3D &grd,
 void writeToCubeFile(const RDGeom::UniformRealValueGrid3D &grd,
                      const RDKit::ROMol &mol, const std::string &filename,
                      int confid) {
-  std::ofstream *ofStrm = new std::ofstream(filename.c_str());
-  std::ostream *oStrm = static_cast<std::ostream *>(ofStrm);
+  auto *ofStrm = new std::ofstream(filename.c_str());
+  auto *oStrm = static_cast<std::ostream *>(ofStrm);
   writeToCubeStream(grd, mol, *oStrm, confid);
   delete ofStrm;
 }
@@ -2001,7 +2003,7 @@ std::unique_ptr<RDKit::RWMol> readFromCubeStream(
                                          spacingx * dimZ, spacingx, &offSet);
   }
   auto molecule = std::make_unique<RDKit::RWMol>();
-  RDKit::Conformer *conf = new RDKit::Conformer(nAtoms);
+  auto *conf = new RDKit::Conformer(nAtoms);
 
   int atomNum;
   for (auto i = 0; i < nAtoms; i++) {
@@ -2026,14 +2028,14 @@ std::unique_ptr<RDKit::RWMol> readFromCubeStream(
 
 std::unique_ptr<RDKit::RWMol> readFromCubeFile(
     RDGeom::UniformRealValueGrid3D &grd, const std::string &filename) {
-  std::ifstream *ifStrm = new std::ifstream(filename.c_str());
+  auto *ifStrm = new std::ifstream(filename.c_str());
   if (!ifStrm || (ifStrm->bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << filename;
     throw RDKit::BadFileException(errout.str());
   };
 
-  std::istream *iStrm = static_cast<std::istream *>(ifStrm);
+  auto *iStrm = static_cast<std::istream *>(ifStrm);
   std::unique_ptr<RDKit::RWMol> mol;
   if (!iStrm->eof()) {
     mol = readFromCubeStream(grd, *iStrm);

@@ -72,7 +72,7 @@ void test1ConstructGrid() {
 }
 
 void test2CalculateDescriptors() {
-  RealValueVect *data = new RealValueVect(0.0, 125);
+  auto *data = new RealValueVect(0.0, 125);
   Point3D o(0.0, 0.0, 0.0);
   UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, data);
 
@@ -88,7 +88,7 @@ void test3CubeFiles() {
   auto fopts = v2::FileParsers::MolFileParserParams();
   fopts.removeHs = false;
   RWMol mol = *v2::FileParsers::MolFromMolFile(path + "HCl.mol", fopts);
-  RealValueVect *data = new RealValueVect(0.0, 125);
+  auto *data = new RealValueVect(0.0, 125);
   Point3D o(0.0, 0.0, 0.0);
   UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, data);
   for (unsigned int i = 0; i < grd.getSize(); i++) {
@@ -362,14 +362,14 @@ void test6VdWaals() {
       "acetonitrile",  "histidine",     "phenylamine",  "methylammonium",
       "fluoromethane", "chloromethane", "bromomethane", "glycine",
       "glyphe",        "glysergly",     "glythrgly",    "glucose"};
-  for (unsigned int i = 0; i < 24; i++) {
-    mol = *v2::FileParsers::MolFromMolFile(path + names[i] + ".mol", fopts);
+  for (const auto & name : names) {
+    mol = *v2::FileParsers::MolFromMolFile(path + name + ".mol", fopts);
     vdw = constructVdWaalsMMFF(mol);
     CHECK_INVARIANT(vdw(0.0, 0.0, 0.0, 1000),
-                    "VdWMMFF: crashed with " + names[i]);
+                    "VdWMMFF: crashed with " + name);
     vdw = constructVdWaalsUFF(mol);
     CHECK_INVARIANT(vdw(0.0, 0.0, 0.0, 1000),
-                    "VdWUFF: crashed with " + names[i]);
+                    "VdWUFF: crashed with " + name);
   }
 }
 
