@@ -42,6 +42,7 @@ class SynthonSpaceSearcher {
 
   SynthonSpace &getSpace() const { return d_space; }
   const ROMol &getQuery() const { return d_query; };
+  const SynthonSpaceSearchParams &getParams() const { return d_params; }
 
  private:
   std::unique_ptr<std::mt19937> d_randGen;

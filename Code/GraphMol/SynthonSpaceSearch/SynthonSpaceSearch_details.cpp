@@ -244,4 +244,88 @@ int countConnections(const std::string &smiles) {
       std::sregex_token_iterator(smiles.begin(), smiles.end(), conns),
       std::sregex_token_iterator()));
 }
+
+std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
+    const std::vector<std::unique_ptr<ROMol>> &mols) {
+  std::vector<boost::dynamic_bitset<>> connPatterns(
+      mols.size(), boost::dynamic_bitset<>(MAX_CONNECTOR_NUM + 1));
+  for (size_t i = 0; i < mols.size(); i++) {
+    for (const auto &a : mols[i]->atoms()) {
+      if (!a->getAtomicNum() && a->getIsotope() <= MAX_CONNECTOR_NUM) {
+        connPatterns[i].set(a->getIsotope());
+      }
+    }
+  }
+  return connPatterns;
+}
+
+boost::dynamic_bitset<> getConnectorPattern(
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
+  auto connPatterns = getConnectorPatterns(fragSet);
+  for (const auto &cp : connPatterns) {
+    conns |= cp;
+  }
+  return conns;
+}
+
+std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
+    const std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const boost::dynamic_bitset<> &fragConns,
+    const boost::dynamic_bitset<> &reactionConns) {
+  std::vector<std::vector<std::unique_ptr<ROMol>>> connPerms;
+  auto bitsToInts =
+      [](const boost::dynamic_bitset<> &bits) -> std::vector<int> {
+    std::vector<int> ints;
+    for (size_t i = 0; i < bits.size(); ++i) {
+      if (bits[i]) {
+        ints.push_back(static_cast<int>(i));
+      }
+    }
+    return ints;
+  };
+  auto numFragConns = fragConns.count();
+  auto rConns = bitsToInts(reactionConns);
+  auto perms = details::permMFromN(numFragConns, reactionConns.count());
+
+  for (const auto &perm : perms) {
+    connPerms.emplace_back();
+    // Copy the fragments and set the isotope numbers according to this
+    // permutation.
+    for (const auto &f : molFrags) {
+      connPerms.back().emplace_back(new RWMol(*f));
+      boost::dynamic_bitset<> atomDone(f->getNumAtoms());
+      for (auto atom : connPerms.back().back()->atoms()) {
+        if (!atom->getAtomicNum()) {
+          for (size_t i = 0; i < perm.size(); ++i) {
+            if (!atomDone[atom->getIdx()] && atom->getIsotope() == i + 1) {
+              atom->setIsotope(perm[i] + 1);
+              if (atom->hasQuery()) {
+                atom->setQuery(makeAtomTypeQuery(0, false));
+                atom->expandQuery(makeAtomIsotopeQuery(perm[i] + 1));
+              }
+              atomDone[atom->getIdx()] = true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return connPerms;
+}
+
+void expandBitSet(std::vector<boost::dynamic_bitset<>> &bitSets) {
+  bool someSet = std::any_of(
+      bitSets.begin(), bitSets.end(),
+      [](const boost::dynamic_bitset<> &bs) -> bool { return bs.any(); });
+  if (someSet) {
+    for (auto &bs : bitSets) {
+      if (!bs.count()) {
+        bs.set();
+      }
+    }
+  }
+}
+
 }  // namespace RDKit::SynthonSpaceSearch::details

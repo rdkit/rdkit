@@ -1,0 +1,180 @@
+//
+// Copyright (C) David Cosgrove 2024.
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
+#include <DataStructs/BitOps.h>
+#include <GraphMol/MolOps.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceFingerprintSearcher.h>
+
+namespace RDKit::SynthonSpaceSearch {
+
+SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
+    const ROMol &query, const SynthonSpaceSearchParams &params,
+    SynthonSpace &space)
+    : SynthonSpaceSearcher(query, params, space) {
+  if (!getSpace().hasFingerprints()) {
+    getSpace().buildSynthonFingerprints();
+  }
+  d_queryFP = std::make_unique<ExplicitBitVect>(
+      *getSpace().getFPGenerator()->getFingerprint(query));
+}
+
+namespace {
+// Take the fragged mol fps and flag all those synthons that have a fragment as
+// a similarity match.
+std::vector<boost::dynamic_bitset<>> getHitSynthons(
+    const std::vector<std::unique_ptr<ExplicitBitVect>> &fragFPs,
+    double similarityCutoff, const std::unique_ptr<SynthonSet> &reaction,
+    const std::vector<unsigned int> &synthonOrder) {
+  std::vector<boost::dynamic_bitset<>> synthonsToUse;
+  for (const auto &synthonSet : reaction->getSynthons()) {
+    synthonsToUse.emplace_back(synthonSet.size());
+  }
+  for (size_t i = 0; i < synthonOrder.size(); i++) {
+    const auto &synthonFPs = reaction->getSynthonFPs()[synthonOrder[i]];
+    const auto &synthonsSet = reaction->getSynthons()[synthonOrder[i]];
+    bool fragMatched = false;
+    for (size_t j = 0; j < synthonFPs.size(); j++) {
+      auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
+      if (sim >= similarityCutoff) {
+        std::cout << "SIM MATCH :: " << i << " : " << j
+                  << " :: " << synthonsSet[j]->getSmiles() << "  sim = " << sim
+                  << std::endl;
+        synthonsToUse[synthonOrder[i]][j] = true;
+        fragMatched = true;
+      }
+    }
+    if (!fragMatched) {
+      std::cout << "No fragMatched" << std::endl;
+      synthonsToUse.clear();
+      return synthonsToUse;
+    }
+  }
+
+  // Fill in any synthons where they all didn't match.
+  details::expandBitSet(synthonsToUse);
+  return synthonsToUse;
+}
+}  // namespace
+
+std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
+    std::vector<std::unique_ptr<ROMol>> &fragSet) const {
+  std::vector<SynthonSpaceHitSet> results;
+  if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
+    std::cout << "This one" << std::endl;
+  }
+
+  unsigned int otf;
+  std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs;
+  for (auto &frag : fragSet) {
+    // For the fingerprints, ring info is required.
+    sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
+                MolOps::SANITIZE_SYMMRINGS);
+    fragFPs.emplace_back(getSpace().getFPGenerator()->getFingerprint(*frag));
+  }
+
+  auto connPatterns = details::getConnectorPatterns(fragSet);
+  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
+  for (auto &connPattern : connPatterns) {
+    conns |= connPattern;
+  }
+
+  for (auto &it : getSpace().getReactions()) {
+    auto &reaction = it.second;
+    if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
+      std::cout << "reaction " << reaction->getId() << std::endl;
+    }
+
+    // It can't be a hit if the number of fragments is more than the number
+    // of synthon sets because some of the molecule won't be matched in any
+    // of the potential products.  It can be less, in which case the unused
+    // synthon set will be used completely, possibly resulting in a large
+    // number of hits.
+    if (fragSet.size() > reaction->getSynthons().size()) {
+      continue;
+    }
+    // Need to try all combinations of synthon orders.
+    auto synthonOrders =
+        details::permMFromN(fragSet.size(), reaction->getSynthons().size());
+    for (const auto &so : synthonOrders) {
+      if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
+        std::cout << "Synth orders ";
+        for (auto s : so) {
+          std::cout << s << " ";
+        }
+        std::cout << std::endl;
+      }
+
+      // Get all the possible permutations of connector numbers compatible with
+      // the number of synthon sets in this reaction.  So if the
+      // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
+      // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
+      // that might be how they're labelled in the reaction database.
+      auto connCombs = details::getConnectorPermutations(
+          fragSet, conns, reaction->getConnectors());
+
+      for (auto &connComb : connCombs) {
+        // All the fragment connectors must match something in the corresponding
+        // synthon.
+        auto connCombConnPatterns = details::getConnectorPatterns(connComb);
+        bool skip = false;
+        for (size_t i = 0; i < connCombConnPatterns.size(); ++i) {
+          if ((connCombConnPatterns[i] & connPatterns[i]).count() <
+              connPatterns[i].count()) {
+            skip = true;
+            break;
+          }
+        }
+        if (skip) {
+          continue;
+        }
+        // It appears that for Morgan fingerprints, the isotope numbers are
+        // ignored so there's no need to worry about the connector numbers
+        // in the fingerprints.
+        auto theseSynthons = getHitSynthons(
+            fragFPs,
+            getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
+            reaction, so);
+        if (!theseSynthons.empty()) {
+          if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
+            std::cout << "Got some results" << std::endl;
+            for (const auto &ts : theseSynthons) {
+              std::cout << ts << std::endl;
+            }
+          }
+
+          size_t numHits = std::accumulate(
+              theseSynthons.begin(), theseSynthons.end(), 1,
+              [](int prevRes, const boost::dynamic_bitset<> &s2) {
+                return prevRes * s2.count();
+              });
+          if (numHits) {
+            results.push_back(
+                SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
+          }
+        } else {
+          if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
+            std::cout << "Not results" << std::endl;
+          }
+        }
+      }
+    }
+  }
+  return results;
+}
+
+bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
+  auto fp = std::make_unique<ExplicitBitVect>(
+      *getSpace().getFPGenerator()->getFingerprint(hit));
+  return (TanimotoSimilarity(*fp, *d_queryFP) >= getParams().similarityCutoff);
+}
+
+}  // namespace RDKit::SynthonSpaceSearch

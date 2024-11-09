@@ -43,6 +43,11 @@ const std::unique_ptr<ExplicitBitVect> &SynthonSet::getConnRegFP() const {
   return d_connRegFP;
 }
 
+const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
+SynthonSet::getSynthonFPs() const {
+  return d_synthonFPs;
+}
+
 void SynthonSet::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_id);
   streamWrite(os, getConnectorRegions().size());
@@ -68,7 +73,7 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   }
 }
 
-void SynthonSet::readFromDBStream(std::istream &is) {
+void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
   streamRead(is, d_id, 0);
   size_t numConnRegs;
   streamRead(is, numConnRegs);
@@ -122,13 +127,13 @@ void SynthonSet::assignConnectorsUsed() {
                               std::to_string(i + 1) + R"(\])");
     }
   }
-  d_connectors.resize(MAX_CONNECTOR_NUM, false);
+  d_connectors.resize(MAX_CONNECTOR_NUM + 1, false);
   for (auto &reagSet : d_synthons) {
     for (auto &reag : reagSet) {
       for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
         if (std::regex_search(reag->getSmiles(), connRegexs[2 * i]) ||
             std::regex_search(reag->getSmiles(), connRegexs[2 * i + 1])) {
-          d_connectors.set(i);
+          d_connectors.set(i + 1);
         }
       }
     }
@@ -138,6 +143,8 @@ void SynthonSet::assignConnectorsUsed() {
 const std::vector<int> &SynthonSet::getNumConnectors() const {
   return d_numConnectors;
 }
+
+bool SynthonSet::hasFingerprints() const { return !d_synthonFPs.empty(); }
 
 void SynthonSet::buildConnectorRegions() {
   // Remove any empty reagent sets.  This most often happens if the
@@ -230,20 +237,35 @@ void SynthonSet::buildSynthonFingerprints(
 
   // Now build sets of sample molecules using each synthon set in turn.
   for (size_t i = 0; i < d_synthons.size(); ++i) {
+    std::cout << "SynthonSet " << i << "\n";
     d_synthonFPs.emplace_back();
     d_synthonFPs[i].reserve(d_synthons[i].size());
     std::vector<boost::dynamic_bitset<>> synthsToUse(d_synthons.size());
     for (size_t j = 0; j < d_synthons.size(); ++j) {
       if (j == i) {
-        synthsToUse[j] = boost::dynamic_bitset<>(d_synthons[j].size(), true);
+        synthsToUse[j] = boost::dynamic_bitset<>(d_synthons[j].size());
+        synthsToUse[j].set();
       } else {
-        synthsToUse[j] = boost::dynamic_bitset<>(d_synthons[j].size(), false);
+        synthsToUse[j] = boost::dynamic_bitset<>(d_synthons[j].size());
         synthsToUse[j][0] = true;
       }
+    }
+    std::cout << synthsToUse.size() << "\n";
+    for (const auto &stu : synthsToUse) {
+      std::cout << stu << std::endl;
     }
     auto synthons = getSynthons(synthsToUse);
     auto sampleMols = buildSampleMolecules(synthons, i);
     makeSynthonFPs(i, sampleMols, fpGenerator);
+  }
+  std::cout << "SythonSet : " << d_id << std::endl;
+  std::cout << "Synths : " << d_synthons.size() << std::endl;
+  for (const auto &s : d_synthons) {
+    std::cout << "   " << s.size() << std::endl;
+  }
+  std::cout << "FPs : " << d_synthonFPs.size() << std::endl;
+  for (const auto &fp : d_synthonFPs) {
+    std::cout << "   " << fp.size() << std::endl;
   }
 }
 
@@ -296,6 +318,13 @@ void SynthonSet::makeSynthonFPs(
     size_t synthSetNum, const std::vector<std::unique_ptr<ROMol>> &sampleMols,
     const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGenerator) {
   for (size_t i = 0; i < sampleMols.size(); ++i) {
+    std::cout << i << " : "
+              << MolToSmiles(*d_synthons[synthSetNum][i]->getMol())
+              << std::endl;
+    auto fp =
+        fpGenerator->getFingerprint(*d_synthons[synthSetNum][i]->getMol());
+    std::cout << "Num set bits : " << fp->getNumOnBits() << " vs "
+              << fp->getNumOffBits() << std::endl;
     RWMol synthCp(*d_synthons[synthSetNum][i]->getMol());
     // transfer the aromaticity of the atom in the sample molecule to the
     // corresponding atom in the synthon
@@ -326,6 +355,9 @@ void SynthonSet::makeSynthonFPs(
     }
     d_synthonFPs[synthSetNum].emplace_back(
         fpGenerator->getFingerprint(synthCp));
+    std::cout << "Making FP for " << MolToSmiles(synthCp) << " : "
+              << d_synthonFPs[synthSetNum].back()->getNumOnBits() << " vs "
+              << d_synthonFPs[synthSetNum].back()->getNumOffBits() << std::endl;
   }
 }
 

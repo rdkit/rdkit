@@ -41,6 +41,36 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxBondSplits);
 // Counts the number of [1*], [2*]...[4*] in the string.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const std::string &smiles);
+
+// Return a bitset for each fragment giving the connector patterns
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<boost::dynamic_bitset<>>
+getConnectorPatterns(const std::vector<std::unique_ptr<ROMol>> &fragSet);
+
+// Return a bitset giving the different connector types in this
+// molecule.
+RDKIT_SYNTHONSPACESEARCH_EXPORT boost::dynamic_bitset<> getConnectorPattern(
+    const std::vector<std::unique_ptr<ROMol>> &fragSet);
+
+// Return copies of the mol fragments will all permutations of the connectors
+// in the reaction onto the connectors in the fragments.
+// E.g. if the reaction has 3 connectors, 1, 2 and 3 and the fragged mol has
+// 2, return all permutations of 2 from 3.  It's ok if the fragged mol doesn't
+// have all the connections in the reaction, although this may well result in
+// a lot of hits.
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
+getConnectorPermutations(const std::vector<std::unique_ptr<ROMol>> &molFrags,
+                         const boost::dynamic_bitset<> &fragConns,
+                         const boost::dynamic_bitset<> &reactionConns);
+
+// If all bits in one of the bitsets is unset, it means that nothing matched
+// that synthon.  If at least one of the bitsets has a set bit, all products
+// incorporating the synthon with no bits set must match the query so
+// should be used because the query matches products that don't incorporate
+// anything from 1 of the synthon lists.  For example, if the synthons are
+// [1*]Nc1c([2*])cccc1 and [1*]=CC=C[2*] and the query is c1ccccc1.
+RDKIT_SYNTHONSPACESEARCH_EXPORT void expandBitSet(
+    std::vector<boost::dynamic_bitset<>> &bitSets);
+
 }  // namespace details
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit

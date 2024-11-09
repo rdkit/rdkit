@@ -22,12 +22,19 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceFingerprintSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
 namespace RDKit::SynthonSpaceSearch {
+
+// used for serialization
+constexpr int32_t versionMajor = 1;
+constexpr int32_t versionMinor = 0;
+constexpr int32_t endianId = 0xa100f;
 
 std::int64_t SynthonSpace::getNumProducts() const {
   std::int64_t totSize = 0;
@@ -42,10 +49,26 @@ std::int64_t SynthonSpace::getNumProducts() const {
   return totSize;
 }
 
+const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &
+SynthonSpace::getFPGenerator() {
+  if (!dp_fpGenerator) {
+    dp_fpGenerator.reset(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+  }
+  return dp_fpGenerator;
+}
+
 SubstructureResults SynthonSpace::substructureSearch(
     const ROMol &query, SynthonSpaceSearchParams params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceSubstructureSearcher ssss(query, params, *this);
+  return ssss.search();
+}
+
+SubstructureResults SynthonSpace::fingerprintSearch(
+    const ROMol &query, SynthonSpaceSearchParams params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  SynthonSpaceFingerprintSearcher ssss(query, params, *this);
   return ssss.search();
 }
 
@@ -140,6 +163,11 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
 
 void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   std::ofstream os(outFilename, std::fstream::binary | std::fstream::trunc);
+
+  streamWrite(os, endianId);
+  streamWrite(os, versionMajor);
+  streamWrite(os, versionMinor);
+
   streamWrite(os, d_reactions.size());
   for (const auto &[fst, snd] : d_reactions) {
     snd->writeToDBStream(os);
@@ -149,13 +177,38 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
 
 void SynthonSpace::readDBFile(const std::string &inFilename) {
   d_fileName = inFilename;
+
   try {
     std::ifstream is(d_fileName, std::fstream::binary);
+
+    int32_t endianTest;
+    streamRead(is, endianTest);
+    if (endianTest != endianId) {
+      throw std::runtime_error("Endianness mismatch in SynthonSpace file " +
+                               d_fileName);
+    }
+    int32_t majorVersion;
+    streamRead(is, majorVersion);
+    int32_t minorVersion;
+    streamRead(is, minorVersion);
+    if (majorVersion > versionMajor ||
+        (majorVersion == versionMajor && minorVersion > versionMinor)) {
+      BOOST_LOG(rdWarningLog)
+          << "Deserializing from a version number (" << majorVersion << "."
+          << minorVersion << ")"
+          << "that is higher than our version (" << versionMajor << "."
+          << versionMinor << ").\nThis probably won't work." << std::endl;
+    }
+    // version sanity checking
+    if (majorVersion > 1000 || minorVersion > 100) {
+      throw std::runtime_error("unreasonable version numbers");
+    }
+    majorVersion = 1000 * majorVersion + minorVersion * 10;
     size_t numRS;
     streamRead(is, numRS);
     for (size_t i = 0; i < numRS; ++i) {
       std::unique_ptr<SynthonSet> rs = std::make_unique<SynthonSet>();
-      rs->readFromDBStream(is);
+      rs->readFromDBStream(is, majorVersion);
       d_reactions.insert(std::make_pair(rs->getId(), std::move(rs)));
     }
   } catch (std::exception &e) {
@@ -184,8 +237,16 @@ void SynthonSpace::summarise(std::ostream &os) const {
      << std::endl;
 }
 
+bool SynthonSpace::hasFingerprints() const {
+  if (d_reactions.empty()) {
+    return false;
+  }
+  return d_reactions.begin()->second->hasFingerprints();
+}
+
 void SynthonSpace::buildSynthonFingerprints() {
   if (!dp_fpGenerator) {
+    dp_fpGenerator.reset(RDKitFP::getRDKitFPGenerator<std::uint64_t>());
     dp_fpGenerator.reset(
         MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   }

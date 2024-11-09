@@ -9,29 +9,29 @@
 //
 
 // This file declares a concrete class derived from SynthonSpaceSearcher
-// that does substructure searching of the SynthonSpace.
+// that does fingerprint similarity searching of the SynthonSpace.
 
-#ifndef SYNTHONSPACESUBSTRUCTURESEARCHER_H
-#define SYNTHONSPACESUBSTRUCTURESEARCHER_H
+#ifndef SYNTHONSPACEFINGERPRINTSEARCHER_H
+#define SYNTHONSPACEFINGERPRINTSEARCHER_H
 
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
-class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
+class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
  public:
-  SynthonSpaceSubstructureSearcher() = delete;
-  SynthonSpaceSubstructureSearcher(const ROMol &query,
-                                   const SynthonSpaceSearchParams &params,
-                                   SynthonSpace &space)
-      : SynthonSpaceSearcher(query, params, space) {}
+  SynthonSpaceFingerprintSearcher() = delete;
+  SynthonSpaceFingerprintSearcher(const ROMol &query,
+                                  const SynthonSpaceSearchParams &params,
+                                  SynthonSpace &space);
 
  private:
+  std::unique_ptr<ExplicitBitVect> d_queryFP;
+
   std::vector<SynthonSpaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet) const override;
   bool verifyHit(const ROMol &hit) const override;
 };
-
 }  // namespace RDKit::SynthonSpaceSearch
 
-#endif  // SYNTHONSPACESUBSTRUCTURESEARCHER_H
+#endif  // SYNTHONSPACEFINGERPRINTSEARCHER_H

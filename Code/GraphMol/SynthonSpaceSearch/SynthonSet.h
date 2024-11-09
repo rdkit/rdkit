@@ -49,10 +49,14 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   [[nodiscard]] const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
   [[nodiscard]] const std::vector<int> &getNumConnectors() const;
+  [[nodiscard]] bool hasFingerprints() const;
+  [[nodiscard]] const std::vector<
+      std::vector<std::unique_ptr<ExplicitBitVect>>> &
+  getSynthonFPs() const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
-  void readFromDBStream(std::istream &is);
+  void readFromDBStream(std::istream &is, std::uint32_t version);
 
   // SynthonSet takes control of the newSynthon and manages it.
   void addSynthon(int synthonSetNum, std::unique_ptr<Synthon> newSynthon);
@@ -99,7 +103,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::vector<int> d_numConnectors;
 
   // The fingerprints for the synthons for use with a fingerprint similarity
-  // search.  Currently hard-coded to Morgan fingerprint of radius 2.
+  // search.  Currently hard-coded to Morgan fingerprint of radius 2.  They
+  // are not properties of the Synthons because they are not generated
+  // directly from them, as explained in buildSynthonFingerprints.
   std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_synthonFPs;
 
   void tagSynthonAtomsAndBonds();
