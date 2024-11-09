@@ -21,7 +21,7 @@ const int ci_REALVALUEVECTPICKLE_VERSION = 0x1;
 RealValueVect::RealValueVect(const RealValueVect &other) {
   d_length = other.getLength();
   const double *odata = other.getData();
-  double *data = new double[d_length];
+  auto *data = new double[d_length];
   memcpy(static_cast<void *>(data), static_cast<const void *>(odata),
          d_length * sizeof(double));
   d_data.reset(data);
@@ -34,7 +34,7 @@ RealValueVect &RealValueVect::operator=(const RealValueVect &other) {
 
   d_length = other.getLength();
   const double *odata = other.getData();
-  double *data = new double[d_length];
+  auto *data = new double[d_length];
   memcpy(static_cast<void *>(data), static_cast<const void *>(odata),
          d_length * sizeof(double));
   d_data.reset(data);
@@ -146,7 +146,7 @@ void RealValueVect::initFromText(const char *pkl, const unsigned int len) {
   boost::uint32_t tInt;
   streamRead(ss, tInt);
   d_length = tInt;
-  double *data = new double[d_length];
+  auto *data = new double[d_length];
   ss.read((char *)data, d_length * sizeof(double));
 
 #if defined(BOOST_BIG_ENDIAN)

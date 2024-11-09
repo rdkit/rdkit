@@ -36,9 +36,9 @@ class UniformRealValueGrid3D
    */
   UniformRealValueGrid3D(double dimX, double dimY, double dimZ,
                          double spacing = 0.5,
-                         const RDGeom::Point3D *offset = 0,
-                         RDKit::RealValueVect *data = 0) {
-    if (offset == 0) {
+                         const RDGeom::Point3D *offset = nullptr,
+                         RDKit::RealValueVect *data = nullptr) {
+    if (offset == nullptr) {
       initGrid(dimX, dimY, dimZ, spacing,
                RDGeom::Point3D(-0.5 * dimX, -0.5 * dimY, -0.5 * dimZ), data);
     } else {
@@ -52,36 +52,36 @@ class UniformRealValueGrid3D
   //! construct from a text pickle
   UniformRealValueGrid3D(const char *pkl, unsigned int);
 
-  ~UniformRealValueGrid3D();
+  ~UniformRealValueGrid3D() override;
 
   //! \brief Get the index of the grid point closest to point
   //!
   //! \return the integer index, -1 if the specified point is outside the grid
-  int getGridPointIndex(const RDGeom::Point3D &point) const;
+  int getGridPointIndex(const RDGeom::Point3D &point) const override;
 
   //! \brief Get the value at the grid point closest to the specified point
   //!
   //! \return the double value, -1 if the specified index is outside the grid
-  double getVal(const RDGeom::Point3D &point) const;
+  double getVal(const RDGeom::Point3D &point) const override;
 
   //! \brief Get the value at a specified grid point
   //!
   //! \return the double value
-  double getVal(unsigned int pointId) const;
+  double getVal(unsigned int pointId) const override;
 
   //! \brief Set the value at the grid point closest to the specified point
   //!
   //! doesn't do anything if the point is outside the grid
-  void setVal(const RDGeom::Point3D &point, double val);
+  void setVal(const RDGeom::Point3D &point, double val) override;
 
   //! \brief get the location of the specified grid point
-  RDGeom::Point3D getGridPointLoc(unsigned int pointId) const;
+  RDGeom::Point3D getGridPointLoc(unsigned int pointId) const override;
 
   //! \brief Set the value at the specified grid point
-  void setVal(unsigned int pointId, double val);
+  void setVal(unsigned int pointId, double val) override;
 
   //! \brief get the size of the grid (number of grid points)
-  unsigned int getSize() const { return d_numX * d_numY * d_numZ; };
+  unsigned int getSize() const override { return d_numX * d_numY * d_numZ; };
 
   //! \brief get the index of the grid point given the x, y, z indices
   //!
@@ -109,7 +109,7 @@ class UniformRealValueGrid3D
   double getSpacing() const { return d_spacing; };
 
   //! \brief return a \b const pointer to our occupancy vector
-  const RDKit::RealValueVect *getOccupancyVect() const { return dp_storage; };
+  const RDKit::RealValueVect *getOccupancyVect() const override { return dp_storage; };
 
   //! brief returns shared pointer
   const boost::shared_array<double> &getDataPtr() {
@@ -175,7 +175,7 @@ class UniformRealValueGrid3D
                       ownership of the pointer.
    */
   void initGrid(double dimX, double dimY, double dimZ, double spacing,
-                const RDGeom::Point3D &offSet, RDKit::RealValueVect *data = 0);
+                const RDGeom::Point3D &offSet, RDKit::RealValueVect *data = nullptr);
 
   unsigned int d_numX, d_numY,
       d_numZ;        //! number of grid points along x, y, z axes

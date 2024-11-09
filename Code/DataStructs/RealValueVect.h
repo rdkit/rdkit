@@ -26,14 +26,14 @@ class RealValueVect {
 
   //! initialize with a particular size
   RealValueVect(unsigned int length) : d_length(length) {
-    double *data = new double[d_length];
+    auto *data = new double[d_length];
     memset(static_cast<void *>(data), 0, d_length * sizeof(double));
     d_data.reset(data);
   }
 
   //! initialize with a particular size and initial value
   RealValueVect(double val, unsigned int length) : d_length(length) {
-    double *data = new double[d_length];
+    auto *data = new double[d_length];
     memset(static_cast<void *>(data), 0, d_length * sizeof(double));
     d_data.reset(data);
     for (unsigned int i = 0; i < d_length; ++i) {
