@@ -8,6 +8,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 #ifndef RDMIF_DESCRIPTORS_H
 #define RDMIF_DESCRIPTORS_H
 /*! \file MIFDescriptors.h
@@ -43,9 +44,10 @@ namespace RDMIF {
  <b>Returns</b>
  pointer to a grid
  */
-std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
-    const RDKit::ROMol &mol, int confId = -1, double margin = 5.0,
-    double spacing = 0.5);
+RDKIT_MOLINTERACTIONFIELDS_EXPORT
+    std::unique_ptr<RDGeom::UniformRealValueGrid3D>
+    constructGrid(const RDKit::ROMol &mol, int confId = -1, double margin = 5.0,
+                  double spacing = 0.5);
 
 //! \brief calculates a descriptor at every grid point of MIF
 /*!
@@ -59,8 +61,8 @@ std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
  than threshold, negative threshold: no threshold, defaults to -1.0
  */
 template <typename T>
-void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
-                          double thres = -1.0) {
+void calculateDescriptors(
+    RDGeom::UniformRealValueGrid3D &grd, T functor, double thres = -1.0) {
   const RDGeom::Point3D &offSet = grd.getOffset();
   double oX = offSet.x, oY = offSet.y, z = offSet.z;
   double x = oX, y = oY;
@@ -89,7 +91,7 @@ void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
 
 //! \brief class for calculation of distance to closest atom of \c mol from grid
 //! point \c pt
-class DistanceToClosestAtom {
+class RDKIT_MOLINTERACTIONFIELDS_EXPORT DistanceToClosestAtom {
  public:
   //! construct a distanceToClosestAtom from a ROMol
   DistanceToClosestAtom(const RDKit::ROMol &mol, int confId = -1);
@@ -115,7 +117,7 @@ class DistanceToClosestAtom {
  prefactor taking into account the geometric factors,natural constants and
  conversion of units
  */
-class Coulomb {
+class RDKIT_MOLINTERACTIONFIELDS_EXPORT Coulomb {
  public:
   Coulomb() = default;
   ~Coulomb() = default;
@@ -205,7 +207,7 @@ class Coulomb {
  in a molecule [A] d_prefactor:  prefactor taking into account the geometric
  factors,natural constants and conversion of units
  */
-class CoulombDielectric {
+class RDKIT_MOLINTERACTIONFIELDS_EXPORT CoulombDielectric {
  public:
   CoulombDielectric()
       : d_nAtoms(0),
@@ -295,7 +297,7 @@ class CoulombDielectric {
  every interaction (well depths) d_pos	        vector of positions of atoms in
  molecule
  */
-class VdWaals {
+class RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals {
  public:
   VdWaals() : d_cutoff(1), d_nAtoms(0), d_getEnergy(nullptr) {};
   VdWaals(RDKit::ROMol &mol, int confId, unsigned int probeAtomTypeMMFF,
@@ -340,9 +342,9 @@ class VdWaals {
  account (default=false)
  \param cutoff        minimum cutoff distance [A] (default:1.0)
  */
-VdWaals constructVdWaalsMMFF(RDKit::ROMol &mol, int confId = -1,
-                             unsigned int probeAtomType = 6,
-                             bool scaling = false, double cutoff = 1.0);
+RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals constructVdWaalsMMFF(
+    RDKit::ROMol &mol, int confId = -1, unsigned int probeAtomType = 6,
+    bool scaling = false, double cutoff = 1.0);
 
 //! \brief constructs VdWaals object which uses UFF from a molecule object
 /*!
@@ -354,10 +356,10 @@ VdWaals constructVdWaalsMMFF(RDKit::ROMol &mol, int confId = -1,
  tetrahedral oxygen)
  \param cutoff        minimum cutoff distance [A] (default:1.0)
  */
-VdWaals constructVdWaalsUFF(
-    RDKit::ROMol &mol, int confId = -1,
-    const std::string &probeAtomType = "O_3",
-    double cutoff = 1.0);  // constructor for UFF LJ interaction
+RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals
+constructVdWaalsUFF(RDKit::ROMol &mol, int confId = -1,
+                    const std::string &probeAtomType = "O_3",
+                    double cutoff = 1.0);  // constructor for UFF LJ interaction
 
 //! \brief class for calculation of hydrogen bond potential between probe and
 //! molecule
@@ -379,7 +381,7 @@ VdWaals constructVdWaalsUFF(
  target donating, the X-H bond direction is saved d_plane:        vector of
  plane vectors in which the lone pairs are
  */
-class HBond {
+class RDKIT_MOLINTERACTIONFIELDS_EXPORT HBond {
  public:
   HBond() : d_cutoff(1.0), d_probetype(O), d_nInteract(0) {};
 
@@ -464,7 +466,7 @@ class HBond {
  HBond descriptor with "O" probe d_hbondOH				   HBond
  descriptor with "OH" probe
  */
-class Hydrophilic {
+class RDKIT_MOLINTERACTIONFIELDS_EXPORT Hydrophilic {
  public:
   //! \brief constructs Hydrophilic object from a molecule object
   /*!
@@ -494,18 +496,18 @@ class Hydrophilic {
  The Grid \c grd is written in Gaussian Cube format
  A molecule \c mol has to be specified
  */
-void writeToCubeStream(const RDGeom::UniformRealValueGrid3D &grd,
-                       const RDKit::ROMol &mol, std::ostream &outStrm,
-                       int confid = -1);
+RDKIT_MOLINTERACTIONFIELDS_EXPORT void writeToCubeStream(
+    const RDGeom::UniformRealValueGrid3D &grd, const RDKit::ROMol &mol,
+    std::ostream &outStrm, int confid = -1);
 
 //! \brief writes the contents of the MIF to a file
 /*
  The Grid \c grd is written in Gaussian Cube format
  A molecule \c mol has to be specified
  */
-void writeToCubeFile(const RDGeom::UniformRealValueGrid3D &grd,
-                     const RDKit::ROMol &mol, const std::string &filename,
-                     int confid = -1);
+RDKIT_MOLINTERACTIONFIELDS_EXPORT void writeToCubeFile(
+    const RDGeom::UniformRealValueGrid3D &grd, const RDKit::ROMol &mol,
+    const std::string &filename, int confid = -1);
 
 //! \brief reads the contents of the MIF from a stream in Gaussian cube format
 /*
@@ -513,8 +515,8 @@ void writeToCubeFile(const RDGeom::UniformRealValueGrid3D &grd,
  A pointer to a molecule is returned with all atoms and its positions but NO
  bond information!
  */
-std::unique_ptr<RDKit::RWMol> readFromCubeStream(
-    RDGeom::UniformRealValueGrid3D &grd, std::istream &inStrm);
+RDKIT_MOLINTERACTIONFIELDS_EXPORT std::unique_ptr<RDKit::RWMol>
+readFromCubeStream(RDGeom::UniformRealValueGrid3D &grd, std::istream &inStrm);
 
 //! \brief reads the contents of the MIF from a file in Gaussian cube format
 /*
@@ -522,8 +524,9 @@ std::unique_ptr<RDKit::RWMol> readFromCubeStream(
  A pointer to a molecule is returned with all atoms and its positions but NO
  bond information!
  */
-std::unique_ptr<RDKit::RWMol> readFromCubeFile(
-    RDGeom::UniformRealValueGrid3D &grd, const std::string &filename);
+RDKIT_MOLINTERACTIONFIELDS_EXPORT std::unique_ptr<RDKit::RWMol>
+readFromCubeFile(RDGeom::UniformRealValueGrid3D &grd,
+                 const std::string &filename);
 
 }  // end of namespace RDMIF
 

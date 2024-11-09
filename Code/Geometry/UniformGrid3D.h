@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _UNIFORMGRID3D_H_20050124_1703
-#define _UNIFORMGRID3D_H_20050124_1703
+#ifndef UNIFORMGRID3D_H_20050124_1703
+#define UNIFORMGRID3D_H_20050124_1703
 
 #include "point.h"
 #include <DataStructs/DiscreteValueVect.h>
@@ -17,7 +17,7 @@
 #include <iostream>
 
 namespace RDGeom {
-class UniformGrid3D
+class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D
     : public Grid3D<RDKit::DiscreteValueVect, int, unsigned int> {
  public:
   //! \brief ctor

@@ -8,8 +8,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef __RD_REAL_VALUE_VECT_20140407__
-#define __RD_REAL_VALUE_VECT_20140407__
+#include <RDGeneral/export.h>
+#ifndef RD_REAL_VALUE_VECT_20140407
+#define RD_REAL_VALUE_VECT_20140407
 
 #include <boost/smart_ptr.hpp>
 #include <string>
@@ -20,7 +21,7 @@ namespace RDKit {
 //! a class for efficiently storing vectors of float values
 //! Has additional features compared to std::vector<double>:
 //! construct from and write to pickle
-class RealValueVect {
+class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
  public:
   typedef boost::shared_array<double> DATA_SPTR;
 
@@ -117,13 +118,16 @@ class RealValueVect {
 };  // end of declaration of class RealValueVect
 
 //! returns L1 Norm of vectors
-double computeL1Norm(const RealValueVect &v1, const RealValueVect &v2);
+RDKIT_DATASTRUCTS_EXPORT double computeL1Norm(const RealValueVect &v1,
+                                       const RealValueVect &v2);
 
 //! returns the sum of vectors
-RealValueVect operator+(const RealValueVect &p1, const RealValueVect &p2);
+RDKIT_DATASTRUCTS_EXPORT RealValueVect operator+(const RealValueVect &p1,
+                                                 const RealValueVect &p2);
 
 //! returns the difference of vectors
-RealValueVect operator-(const RealValueVect &p1, const RealValueVect &p2);
+RDKIT_DATASTRUCTS_EXPORT RealValueVect operator-(const RealValueVect &p1,
+                                                 const RealValueVect &p2);
 
 }  // end of namespace RDKit
 

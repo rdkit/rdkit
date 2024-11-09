@@ -8,15 +8,16 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifndef _UNIFORMREALVALUEGRID3D_H_20140403
-#define _UNIFORMREALVALUEGRID3D_H_20140403
+#include <RDGeneral/export.h>
+#ifndef UNIFORMREALVALUEGRID3D_H_20140403
+#define UNIFORMREALVALUEGRID3D_H_20140403
 
 #include <DataStructs/RealValueVect.h>
 #include <Geometry/point.h>
 #include "Grid3D.h"
 
 namespace RDGeom {
-class UniformRealValueGrid3D
+class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
     : public Grid3D<RDKit::RealValueVect, double, double> {
  public:
   UniformRealValueGrid3D() { initGrid(1.0, 1.0, 1.0, 1.0, RDGeom::Point3D()); };
@@ -109,7 +110,9 @@ class UniformRealValueGrid3D
   double getSpacing() const { return d_spacing; };
 
   //! \brief return a \b const pointer to our occupancy vector
-  const RDKit::RealValueVect *getOccupancyVect() const override { return dp_storage; };
+  const RDKit::RealValueVect *getOccupancyVect() const override {
+    return dp_storage;
+  };
 
   //! brief returns shared pointer
   const boost::shared_array<double> &getDataPtr() {
@@ -175,7 +178,8 @@ class UniformRealValueGrid3D
                       ownership of the pointer.
    */
   void initGrid(double dimX, double dimY, double dimZ, double spacing,
-                const RDGeom::Point3D &offSet, RDKit::RealValueVect *data = nullptr);
+                const RDGeom::Point3D &offSet,
+                RDKit::RealValueVect *data = nullptr);
 
   unsigned int d_numX, d_numY,
       d_numZ;        //! number of grid points along x, y, z axes
@@ -188,14 +192,14 @@ class UniformRealValueGrid3D
   void initFromText(const char *pkl, const unsigned int length);
 };
 
-UniformRealValueGrid3D operator|(const UniformRealValueGrid3D &grd1,
-                                 const UniformRealValueGrid3D &grd2);
-UniformRealValueGrid3D operator&(const UniformRealValueGrid3D &grd1,
-                                 const UniformRealValueGrid3D &grd2);
-UniformRealValueGrid3D operator+(const UniformRealValueGrid3D &grd1,
-                                 const UniformRealValueGrid3D &grd2);
-UniformRealValueGrid3D operator-(const UniformRealValueGrid3D &grd1,
-                                 const UniformRealValueGrid3D &grd2);
+RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D operator|(
+    const UniformRealValueGrid3D &grd1, const UniformRealValueGrid3D &grd2);
+RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D operator&(
+    const UniformRealValueGrid3D &grd1, const UniformRealValueGrid3D &grd2);
+RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D operator+(
+    const UniformRealValueGrid3D &grd1, const UniformRealValueGrid3D &grd2);
+RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D operator-(
+    const UniformRealValueGrid3D &grd1, const UniformRealValueGrid3D &grd2);
 }  // namespace RDGeom
 
 #endif
