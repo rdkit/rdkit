@@ -3,7 +3,7 @@ target_compile_definitions(MolInteractionFields PRIVATE RDKIT_MOLINTERACTIONFIEL
 
 rdkit_headers(MIFDescriptors.h DEST GraphMol/MolInteractionFields)
 
-rdkit_test(testMIF testMIF.cpp LINK_LIBRARIES MolInteractionFields DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
+rdkit_catch_test(testMIF testMIF.cpp LINK_LIBRARIES MolInteractionFields DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
  PartialCharges SubstructMatch FileParsers SmilesParse
 MolAlign MolTransforms
 GraphMol
