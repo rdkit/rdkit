@@ -220,18 +220,6 @@ class TestCase(unittest.TestCase):
     self.assertTrue(vdw3(-1.68, 0, 0, 1000) > vdw3(-5.0, 0, 0, 1000))
     self.assertTrue(vdw3(-5.0, 0, 0, 1000) < vdw3(-10.0, 0, 0, 1000))
 
-#   std::string names[] = { "acetone", "aceticacid", "phenol", "phenolate",
-#       "serine", "threonine", "ethanol", "diethylether", "h2o", "ammonia",
-#       "ethylamine", "imine", "acetonitrile", "histidine", "phenylamine",
-#       "methylammonium", "fluoromethane", "chloromethane", "bromomethane",
-#       "glycine", "glyphe", "glysergly", "glythrgly", "glucose" };
-#   for ( unsigned int i = 0; i < 24; i++ ){
-#     mol = *MolFileToMol (path + names[i] + ".mol", true, false);
-#     vdw = constructVdWaalsMMFF(mol);
-#     self.assertTrue(vdw(0.0,0.0,0.0, 1000), "VdWMMFF: crashed with " + names[i]);
-#     vdw = constructVdWaalsUFF(mol);
-#     self.assertTrue(vdw(0.0,0.0,0.0, 1000), "VdWUFF: crashed with " + names[i]);
-
   def test6HBond(self):
     mol = AllChem.MolFromMolFile(
       os.path.join(RDConfig.RDBaseDir,
@@ -275,125 +263,6 @@ class TestCase(unittest.TestCase):
 
     hbonddes4 = rdMIF.HBond(mol, probeType="N")
     self.assertTrue(hbonddes1(3.0, 0.0, 0.0, 1000) < hbonddes4(3.0, 0.0, 0.0, 1000))
-
-
-#   mol = *MolFileToMol (path + "acetone.mol", true, false);     //Acetone
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 1, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "diethylether.mol", true, false);                //Et2O
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 1, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "h2o.mol", true, false);         //H2O
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 1, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 2, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "ammonia.mol", true, false);             //ammonia
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 1, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 3, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "imine.mol", true, false);               //imine
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 1, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "methylammonium.mol", true, false);//methylammonium
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 3, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "chloromethane.mol", true, false);       //Chloromethane
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 1, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "phosphonate.mol", true, false);         //Phosphonate
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 3, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "phosphatediester.mol", true, false);//Phosphatediester
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 4, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "hydrogenphosphatediester.mol", true, false);//Hydrogenphosphatediester
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 4, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 1, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "mustardgas.mol", true, false);          //mustard gas
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 2, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "alicin.mol", true, false);              //Alicin
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 1, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 0, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-
-#   mol = *MolFileToMol (path + "sulfanilamide.mol", true, false);       //Sulfanilamide
-#   grd = *constructGrid (mol, 0, 5.0, 1);
-#   hbonddes = HBond (mol, 0, "OH", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 3, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-#   hbonddes = HBond (mol, 0, "O", true, 0.001);
-#   self.assertTrue(hbonddes.getNumInteractions () == 4, "");
-#   calculateDescriptors<HBond> (grd, hbonddes);
-# }
 
   def test7Hydrophilic(self):
     mol = AllChem.MolFromMolFile(
@@ -468,6 +337,7 @@ class TestCase(unittest.TestCase):
     hOH = hbondOH(pt.x, pt.y, pt.z, 1000)
     hO = hbondO(pt.x, pt.y, pt.z, 1000)
     self.assertTrue(feq(min(hOH, hO), hyd))
+
 
 if __name__ == '__main__':
   print("Testing MIF wrapper")

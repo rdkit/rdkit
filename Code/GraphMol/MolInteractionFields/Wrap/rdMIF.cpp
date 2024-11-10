@@ -26,7 +26,8 @@ void wrap_mif();
 
 BOOST_PYTHON_MODULE(rdMIF) {
   python::scope().attr("__doc__") =
-      "Module containing functions for calculating molecular interaction fields (MIFs)";
+      "Module containing functions for calculating molecular interaction fields (MIFs)\n\
+  NOTE: This functionality is experimental and the API and/or results may change in future releases.";
   python::register_exception_translator<IndexErrorException>(
       &translate_index_error);
   python::register_exception_translator<ValueErrorException>(
@@ -52,15 +53,16 @@ Coulomb *make_coulomb(const python::object &charges,
   unsigned int nrows;
   if (PySequence_Check(pyObj)) {
     nrows = PySequence_Size(pyObj);
-    if (nrows <= 0) { throw_value_error("Empty sequence passed in");
-}
+    if (nrows <= 0) {
+      throw_value_error("Empty sequence passed in");
+    }
     python::extract<RDGeom::Point3D> ptOk(positions[0]);
     if (!ptOk.check()) {
       for (unsigned int i = 0; i < nrows; i++) {
         PySequenceHolder<double> row(positions[i]);
         if (row.size() != 3) {
           throw_value_error("Wrong number of entries in the list of lists");
-}
+        }
         RDGeom::Point3D pt(row[0], row[1], row[2]);
         pos.push_back(pt);
         ch.push_back(python::extract<double>(charges[i]));
@@ -93,15 +95,16 @@ CoulombDielectric *make_coulomb_dielectric(const python::object &charges,
   unsigned int nrows;
   if (PySequence_Check(pyObj)) {
     nrows = PySequence_Size(pyObj);
-    if (nrows <= 0) { throw_value_error("Empty sequence passed in");
-}
+    if (nrows <= 0) {
+      throw_value_error("Empty sequence passed in");
+    }
     python::extract<RDGeom::Point3D> ptOk(positions[0]);
     if (!ptOk.check()) {
       for (unsigned int i = 0; i < nrows; i++) {
         PySequenceHolder<double> row(positions[i]);
         if (row.size() != 3) {
           throw_value_error("Wrong number of entries in the list of lists");
-}
+        }
         RDGeom::Point3D pt(row[0], row[1], row[2]);
         pos.push_back(pt);
         ch.push_back(python::extract<double>(charges[i]));
@@ -119,8 +122,8 @@ CoulombDielectric *make_coulomb_dielectric(const python::object &charges,
     }
   }
 
-  auto *coul = new CoulombDielectric(ch, pos, probecharge, absVal,
-                                                  alpha, cutoff, epsilon, xi);
+  auto *coul = new CoulombDielectric(ch, pos, probecharge, absVal, alpha,
+                                     cutoff, epsilon, xi);
   return coul;
 }
 
@@ -134,8 +137,7 @@ VdWaals *constructVdWMMFF(RDKit::ROMol &mol, int confId,
 
 VdWaals *constructVdWUFF(RDKit::ROMol &mol, int confId,
                          const std::string &probeAtomType, double cutoff) {
-  auto *res =
-      new VdWaals(mol, confId, 0, probeAtomType, "UFF", false, cutoff);
+  auto *res = new VdWaals(mol, confId, 0, probeAtomType, "UFF", false, cutoff);
   return res;
 }
 
