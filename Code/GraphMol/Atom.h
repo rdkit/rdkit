@@ -182,7 +182,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   unsigned int getNumImplicitHs() const;
 
   //! returns the valence (explicit or implicit) of this atom
-  unsigned int getValence(bool getExplicit = true) const;
+  unsigned int getValence(bool getExplicit) const;
 
   //! returns the explicit valence (including Hs) of this atom
   [[deprecated("please use getValence(true)")]]

@@ -141,7 +141,7 @@ AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
 
 namespace {
 int getExplicitValenceHelper(const Atom *atom) {
-  RDLog::deprecationWarning("please use GetValence()");
+  RDLog::deprecationWarning("please use GetValence(getExplicit=True)");
   return atom->getValence(true);
 };
 int getImplicitValenceHelper(const Atom *atom) {
@@ -223,7 +223,7 @@ struct atom_wrapper {
             python::args("self"),
             "DEPRECATED, please use GetValence(False) instead.\nReturns the number of implicit Hs on the atom.\n")
         .def("GetValence", &Atom::getValence,
-             (python::args("self"), python::args("getExplicit") = true),
+             (python::args("self"), python::args("getExplicit")),
              "Returns the valence (explicit or implicit) of the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
