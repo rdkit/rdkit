@@ -175,27 +175,14 @@ class MolAtropTest {
     return;
   }
 
-  void testKekuleWedgeError(const KekuleTest *kekuleTest) {
+  void testKekuleWedgeError(RWMol *mol, std::string expectedSmi,
+                            bool expectedResult, unsigned int expectedAtomCount,
+                            unsigned int expectedBondCount) {
     BOOST_LOG(rdInfoLog) << "testing aromatic atropisomers" << std::endl;
 
-    UseLegacyStereoPerceptionFixture useLegacy(false);
-
-    RDKit::SmilesParserParams params;
-    params.allowCXSMILES = true;    // recognize and parse CXSMILES
-    params.debugParse = false;      // disable debugging in the SMILES parser
-    params.parseName = true;        // parse (and set) the molecule name as well
-    params.removeHs = false;        // do not remove Hs
-    params.replacements = nullptr;  // no SMILES "macros"
-    params.sanitize = true;         // do not sanitize the molecule
-    params.skipCleanup =
-        false;  // do not skip the final cleanup stage (for internal RDKit use)
-    params.strictCXSMILES =
-        false;  // do not throw an exception if the CXSMILES parsing fails
-
-    std::unique_ptr<RWMol> mol =
-        std::unique_ptr<RWMol>(SmilesToMol(kekuleTest->smiles, params));
-    TEST_ASSERT(mol->getNumAtoms() == kekuleTest->atomCount)
-    TEST_ASSERT(mol->getNumBonds() == kekuleTest->bondCount)
+    TEST_ASSERT(mol != nullptr);
+    TEST_ASSERT(mol->getNumAtoms() == expectedAtomCount)
+    TEST_ASSERT(mol->getNumBonds() == expectedBondCount)
 
     try {
       SmilesWriteParams ps;
@@ -214,17 +201,42 @@ class MolAtropTest {
 
       std::string smilesOut =
           MolToCXSmiles(*mol, ps, flags, RestoreBondDirOptionClear);
-      TEST_ASSERT(kekuleTest->expectedOutput == smilesOut);
+      TEST_ASSERT(expectedSmi == smilesOut);
 
     } catch (const std::exception &e) {
-      if (kekuleTest->expectedResult != false) {
+      if (expectedResult != false) {
         throw;
       }
       return;
     }
-    TEST_ASSERT(kekuleTest->expectedResult == true);
+    TEST_ASSERT(expectedResult == true);
 
     return;
+  }
+
+  void testKekuleWedgeErrorSmiles(const KekuleTest *kekuleTest) {
+    BOOST_LOG(rdInfoLog) << "testing aromatic atropisomers" << std::endl;
+
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+
+    RDKit::SmilesParserParams params;
+    params.allowCXSMILES = true;    // recognize and parse CXSMILES
+    params.debugParse = false;      // disable debugging in the SMILES parser
+    params.parseName = true;        // parse (and set) the molecule name as well
+    params.removeHs = false;        // do not remove Hs
+    params.replacements = nullptr;  // no SMILES "macros"
+    params.sanitize = true;         // do not sanitize the molecule
+    params.skipCleanup =
+        false;  // do not skip the final cleanup stage (for internal RDKit use)
+    params.strictCXSMILES =
+        false;  // do not throw an exception if the CXSMILES parsing fails
+
+    std::unique_ptr<RWMol> mol =
+        std::unique_ptr<RWMol>(SmilesToMol(kekuleTest->smiles, params));
+
+    testKekuleWedgeError(mol.get(), kekuleTest->expectedOutput,
+                         kekuleTest->expectedResult, kekuleTest->atomCount,
+                         kekuleTest->bondCount);
   }
 
   void testKekuleWedgeErrorMol(const MolTest *kekuleTest) {
@@ -236,44 +248,11 @@ class MolAtropTest {
                         "/Code/GraphMol/FileParsers/test_data/atropisomers/" +
                         kekuleTest->fileName;
 
-    try {
-      std::unique_ptr<RWMol> mol(MolFileToMol(fName, true, false, false));
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName, true, false, false));
 
-      TEST_ASSERT(mol != nullptr);
-      TEST_ASSERT(mol->getNumAtoms() == kekuleTest->atomCount)
-      TEST_ASSERT(mol->getNumBonds() == kekuleTest->bondCount)
-
-      {
-        SmilesWriteParams ps;
-        ps.canonical = true;
-        ps.doKekule = true;
-        ps.allBondsExplicit = false;
-        ps.allHsExplicit = false;
-        ps.doIsomericSmiles = true;
-        ps.doRandom = false;
-        ps.rootedAtAtom = -1;
-
-        unsigned int flags = SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
-                             SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
-                             SmilesWrite::CXSmilesFields::CX_BOND_CFG |
-                             SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
-
-        std::string smilesOut =
-            MolToCXSmiles(*mol, ps, flags, RestoreBondDirOptionClear);
-
-        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.cxsmi", smilesOut);
-
-        TEST_ASSERT(GetExpectedValue(fName + ".expected.cxsmi") == smilesOut);
-      }
-    } catch (const std::exception &e) {
-      if (kekuleTest->expectedResult != false) {
-        throw;
-      }
-      return;
-    }
-    TEST_ASSERT(kekuleTest->expectedResult == true);
-
-    return;
+    testKekuleWedgeError(mol.get(), GetExpectedValue(fName + ".expected.cxsmi"),
+                         kekuleTest->expectedResult, kekuleTest->atomCount,
+                         kekuleTest->bondCount);
   }
 
   void RunTests() {
@@ -419,7 +398,7 @@ class MolAtropTest {
       for (auto kekuleTest : kekuleTests) {
         BOOST_LOG(rdInfoLog) << "Test: " << kekuleTest.smiles << std::endl;
 
-        testKekuleWedgeError(&kekuleTest);
+        testKekuleWedgeErrorSmiles(&kekuleTest);
       }
     }
 
