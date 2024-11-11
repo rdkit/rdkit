@@ -67,8 +67,7 @@ rdkit_library(SmilesParse
               LINK_LIBRARIES GraphMol RDGeneral)
 target_compile_definitions(SmilesParse PRIVATE RDKIT_SMILESPARSE_BUILD)
 
-rdkit_headers(primes.h
-              SmartsWrite.h
+rdkit_headers(SmartsWrite.h
               SmilesParse.h
               SmilesParseOps.h
               SmilesWrite.h 

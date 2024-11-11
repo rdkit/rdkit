@@ -187,6 +187,10 @@ class Configuration {
 
   void removeInternalEdges(std::vector<Edge *> &edges, Atom *f1, Atom *f2);
 
+  bool isDuplicateOrHydrogenEdge(const Edge *edge);
+
+  void removeDuplicatesAndHs(std::vector<Edge *> &edges);
+
   void setCarriers(std::vector<Atom *> &&carriers);
 
  private:

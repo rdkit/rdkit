@@ -153,7 +153,12 @@ emscripten::val uint_vector_to_uint32array(
   return res;
 }
 
-emscripten::val get_as_uint8array(const JSMolBase &self) {
+emscripten::val get_as_uint8array(const JSMolBase &self,
+                                  const std::string &details) {
+  return binary_string_to_uint8array(self.get_pickle(details));
+}
+
+emscripten::val get_as_uint8array_no_details(const JSMolBase &self) {
   return binary_string_to_uint8array(self.get_pickle());
 }
 
@@ -428,6 +433,7 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                 select_overload<std::string(const std::string &) const>(
                     &JSMolBase::get_v3Kmolblock))
       .function("get_as_uint8array", &get_as_uint8array)
+      .function("get_as_uint8array", &get_as_uint8array_no_details)
 #ifdef RDK_BUILD_INCHI_SUPPORT
       .function("get_inchi",
                 select_overload<std::string(const std::string &) const>(
