@@ -83,11 +83,11 @@
 
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
-#include <list>
-#include <limits>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -112,33 +112,6 @@ namespace {
  }
 }
 
-void printSyntaxErrorMessage(std::string_view input,
-                             std::string_view err_message,
-                             unsigned int bad_token_position) {
-    // NOTE: If the input is very long, the pointer to the failed location
-    // becomes less useful. We should truncate the length of the error message
-    // to 101 chars.
-    static constexpr unsigned int error_size{41};
-    static constexpr unsigned int prefix_size{error_size / 2};
-    static auto truncate_input = [=](const auto& input, const unsigned int pos) {
-        if ((pos >= prefix_size) && (pos + prefix_size) < input.size()) {
-            return input.substr(pos - prefix_size, error_size);
-        } else if (pos >= prefix_size) {
-            return input.substr(pos - prefix_size);
-        } else {
-            return input.substr(
-                0, std::min(input.size(), static_cast<size_t>(error_size)));
-        }
-    };
-
-    size_t num_dashes =
-        (bad_token_position >= prefix_size ? prefix_size : bad_token_position - 1);
-
-    BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << err_message << " while parsing: " << input << std::endl;
-    BOOST_LOG(rdErrorLog) << "SMILES Parse Error: check for mistakes around position " << bad_token_position << ":" << std::endl;
-    BOOST_LOG(rdErrorLog) << truncate_input(input, bad_token_position - 1) << std::endl;
-    BOOST_LOG(rdErrorLog) << std::string(num_dashes, '~') << "^" << std::endl;
-}
 
 void
 yysmiles_error( const char *input,
@@ -146,21 +119,21 @@ yysmiles_error( const char *input,
                 RDKit::Atom* &,
                 RDKit::Bond* &,
                 unsigned int &,unsigned int &,
-                std::list<unsigned int> *,
+                std::vector<std::pair<unsigned int, unsigned int>>&,
 		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  printSyntaxErrorMessage(input, msg, bad_token_position);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input, msg, bad_token_position);
 }
 
 void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
-                std::list<unsigned int> *,
+                std::vector<std::pair<unsigned int, unsigned int>>&,
 		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  printSyntaxErrorMessage(input, msg, bad_token_position);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input, msg, bad_token_position);
 }
 
 
@@ -223,17 +196,18 @@ enum yysymbol_kind_t
   YYSYMBOL_meta_start = 28,                /* meta_start  */
   YYSYMBOL_bad_atom_def = 29,              /* bad_atom_def  */
   YYSYMBOL_mol = 30,                       /* mol  */
-  YYSYMBOL_bondd = 31,                     /* bondd  */
-  YYSYMBOL_atomd = 32,                     /* atomd  */
-  YYSYMBOL_charge_element = 33,            /* charge_element  */
-  YYSYMBOL_h_element = 34,                 /* h_element  */
-  YYSYMBOL_chiral_element = 35,            /* chiral_element  */
-  YYSYMBOL_element = 36,                   /* element  */
-  YYSYMBOL_simple_atom = 37,               /* simple_atom  */
-  YYSYMBOL_ring_number = 38,               /* ring_number  */
-  YYSYMBOL_number = 39,                    /* number  */
-  YYSYMBOL_nonzero_number = 40,            /* nonzero_number  */
-  YYSYMBOL_digit = 41                      /* digit  */
+  YYSYMBOL_branch_open_token = 31,         /* branch_open_token  */
+  YYSYMBOL_bondd = 32,                     /* bondd  */
+  YYSYMBOL_atomd = 33,                     /* atomd  */
+  YYSYMBOL_charge_element = 34,            /* charge_element  */
+  YYSYMBOL_h_element = 35,                 /* h_element  */
+  YYSYMBOL_chiral_element = 36,            /* chiral_element  */
+  YYSYMBOL_element = 37,                   /* element  */
+  YYSYMBOL_simple_atom = 38,               /* simple_atom  */
+  YYSYMBOL_ring_number = 39,               /* ring_number  */
+  YYSYMBOL_number = 40,                    /* number  */
+  YYSYMBOL_nonzero_number = 41,            /* nonzero_number  */
+  YYSYMBOL_digit = 42                      /* digit  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -561,16 +535,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  33
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   149
+#define YYLAST   151
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  27
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  15
+#define YYNNTS  16
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  73
+#define YYNRULES  74
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  107
+#define YYNSTATES  108
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   281
@@ -622,14 +596,14 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   147,   147,   150,   154,   157,   161,   165,   168,   173,
-     176,   184,   185,   186,   187,   195,   206,   217,   238,   247,
-     253,   274,   298,   317,   328,   350,   359,   372,   373,   379,
-     380,   386,   394,   395,   396,   397,   398,   399,   400,   404,
-     405,   406,   407,   408,   409,   410,   411,   412,   416,   417,
-     418,   419,   420,   424,   425,   426,   427,   428,   429,   433,
-     434,   438,   439,   440,   441,   442,   443,   444,   448,   449,
-     453,   454,   465,   466
+       0,   120,   120,   123,   127,   130,   134,   138,   141,   146,
+     149,   157,   158,   159,   160,   168,   179,   190,   211,   220,
+     226,   247,   271,   290,   300,   321,   329,   343,   346,   347,
+     353,   354,   360,   368,   369,   370,   371,   372,   373,   374,
+     378,   379,   380,   381,   382,   383,   384,   385,   386,   390,
+     391,   392,   393,   394,   398,   399,   400,   401,   402,   403,
+     407,   408,   412,   413,   414,   415,   416,   417,   418,   422,
+     423,   427,   428,   439,   440
 };
 #endif
 
@@ -652,9 +626,10 @@ static const char *const yytname[] =
   "LOOP_CONNECTOR_TOKEN", "MINUS_TOKEN", "PLUS_TOKEN", "H_TOKEN",
   "AT_TOKEN", "PERCENT_TOKEN", "COLON_TOKEN", "HASH_TOKEN", "BOND_TOKEN",
   "CHI_CLASS_TOKEN", "ATOM_OPEN_TOKEN", "ATOM_CLOSE_TOKEN", "EOS_TOKEN",
-  "$accept", "meta_start", "bad_atom_def", "mol", "bondd", "atomd",
-  "charge_element", "h_element", "chiral_element", "element",
-  "simple_atom", "ring_number", "number", "nonzero_number", "digit", YY_NULLPTR
+  "$accept", "meta_start", "bad_atom_def", "mol", "branch_open_token",
+  "bondd", "atomd", "charge_element", "h_element", "chiral_element",
+  "element", "simple_atom", "ring_number", "number", "nonzero_number",
+  "digit", YY_NULLPTR
 };
 
 static const char *
@@ -664,12 +639,12 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-30)
+#define YYPACT_NINF (-22)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
 
-#define YYTABLE_NINF (-30)
+#define YYTABLE_NINF (-31)
 
 #define yytable_value_is_error(Yyn) \
   0
@@ -678,17 +653,17 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     135,   -25,    33,    70,   -12,     5,   -30,   -30,   -30,    96,
-     110,   -30,   -30,   -30,   -30,   -30,   -10,    90,    13,    90,
-      90,   -30,   -13,   -30,    77,    21,    14,     4,   120,    99,
-     -30,   -30,    26,   -30,    47,   -30,    39,   -30,   -30,   -30,
-      18,   -30,    33,    10,   137,    10,   -30,   -30,   -30,    13,
-      90,   -30,   -30,   -30,    39,   -30,   -30,    52,    -1,    13,
-      63,    13,   -30,    48,    13,   -30,   -30,   -30,   -30,    13,
-     -30,    33,    33,   -30,   -30,   -30,   -30,    99,    99,   -30,
-     -30,   -30,   -30,   -30,   -30,   -30,   -30,   -30,   -30,    13,
-     -30,    64,   -30,   -30,   -30,    59,   -30,   -30,   -30,    76,
-     -30,   121,   -30,   133,   -30,    72,   -30
+     128,    -8,    51,     5,    45,     1,   -22,   -22,   -22,    84,
+      98,   -22,   -22,   -22,   -22,   -22,    19,    78,    14,    78,
+      78,   -22,    15,   -22,    81,    28,    -2,    30,   117,   109,
+     -22,   -22,    36,   -22,    39,   -22,    12,   -22,   -22,   -22,
+     -22,   -22,    51,    25,    63,    25,   106,   -22,   -22,   -22,
+      14,    78,   -22,   -22,   -22,    12,   -22,   -22,    -5,    54,
+      14,    50,    14,   -22,    72,    14,   -22,   -22,   -22,   -22,
+      14,   -22,   -22,   -22,   -22,   109,   109,   -22,   -22,    51,
+      51,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
+      14,   -22,    75,   -22,   127,   -22,   -22,   -22,   -22,   -22,
+     131,   -22,   135,   -22,   139,   -22,   103,   -22
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -696,31 +671,31 @@ static const yytype_int16 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     0,     0,     0,     7,     0,    10,    60,    59,     0,
-       2,    15,    29,    55,    70,    68,    39,     0,     0,     0,
-       0,     4,     0,    14,    32,    45,    48,    53,     0,    69,
-      28,    27,     6,     1,     0,     9,     0,    53,    72,    73,
-       0,    26,     0,     0,     0,     0,    16,    20,    61,    41,
-       0,    13,    57,    11,    14,    12,     3,    36,    33,    46,
-      49,    51,    56,    40,     0,    54,    71,     5,     8,     0,
-      31,     0,     0,    23,    19,    18,    22,     0,     0,    17,
-      21,    43,    37,    38,    34,    35,    47,    50,    52,    42,
-      58,     0,    25,    24,    62,     0,    44,    30,    63,     0,
-      64,     0,    65,     0,    66,     0,    67
+       0,     0,     0,     0,     7,     0,    10,    61,    60,     0,
+       2,    15,    30,    56,    71,    69,    40,     0,     0,     0,
+       0,     4,     0,    14,    33,    46,    49,    54,     0,    70,
+      29,    28,     6,     1,     0,     9,     0,    54,    73,    74,
+      27,    26,     0,     0,     0,     0,     0,    16,    20,    62,
+      42,     0,    13,    58,    11,    14,    12,     3,    37,    34,
+      47,    50,    52,    57,    41,     0,    55,    72,     5,     8,
+       0,    32,    19,    18,    22,     0,     0,    17,    21,     0,
+       0,    23,    44,    38,    39,    35,    36,    48,    51,    53,
+      43,    59,     0,    63,     0,    25,    24,    45,    31,    64,
+       0,    65,     0,    66,     0,    67,     0,    68
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -30,   -30,    43,   -30,   -30,    11,    -7,   -30,   -30,   -30,
-       8,   104,   -14,   -30,   -29
+     -22,   -22,    49,   -22,   -22,   -22,    -3,    52,   -22,   -22,
+     -22,     0,    37,   -12,   -22,   -21
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     5,    53,    10,    32,    11,    23,    24,    25,    26,
-      12,    47,    28,    29,    48
+       0,     5,    54,    10,    46,    32,    11,    23,    24,    25,
+      26,    12,    48,    28,    29,    49
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -728,40 +703,42 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      66,     6,    36,    30,    52,    33,    34,    49,    14,    15,
-      31,    27,    54,    56,    22,    84,     7,    37,     8,    38,
-      39,    46,    14,    15,     7,    37,     8,    37,    37,    44,
-     -29,    35,    60,    71,     9,    81,    65,    61,    59,     7,
-      72,     8,     9,    83,    85,    86,    21,    88,    94,    95,
-      90,    73,    67,    74,    75,    91,    79,     9,    37,    69,
-      51,    14,    15,    55,    70,    89,    99,    82,    38,    39,
-     101,    98,   103,    68,   105,    96,     7,    13,     8,    14,
-      15,    87,    92,    93,   106,    38,    39,    16,   100,    97,
-      17,    18,    57,    58,    19,    20,     7,    13,     8,    14,
-      15,     0,     7,    13,     8,    14,    15,    16,    38,    39,
-      17,    18,     0,    16,    50,    20,     7,    18,     8,    38,
-      39,    40,    41,    42,     0,    43,     7,    62,     8,    44,
-      38,    39,    45,   102,     9,     0,     1,    63,     2,     3,
-       4,    64,    38,    39,     0,   104,    77,    76,    78,    80
+      22,    33,    34,    27,    14,    15,    53,    47,    67,    37,
+      83,     7,    13,     8,    14,    15,    61,    37,     6,    37,
+      37,    62,    16,    14,    15,    17,    18,    35,    66,    19,
+      20,     7,    70,     8,    38,    39,    50,    71,    82,    72,
+      73,    57,    77,    81,    44,    60,    84,    86,    87,     9,
+      89,    37,    21,    91,    93,    94,   -30,     7,    92,     8,
+      30,    36,    68,    14,    15,    69,    52,    31,    88,    56,
+      85,    55,    75,   100,    76,     9,    95,    96,    97,   102,
+      74,   104,    78,   106,     7,    13,     8,    14,    15,    90,
+       7,    13,     8,    14,    15,    16,    58,    59,    17,    18,
+      98,    16,    51,    20,     7,    18,     8,    38,    39,    40,
+      41,    42,     7,    43,     8,   107,     0,    44,    38,    39,
+      45,    79,     9,     7,    63,     8,     0,     0,    80,     1,
+       9,     2,     3,     4,    64,     0,    38,    39,    65,    99,
+      38,    39,     0,   101,    38,    39,     0,   103,    38,    39,
+       0,   105
 };
 
 static const yytype_int8 yycheck[] =
 {
-      29,    26,     9,    15,    18,     0,     1,    17,     9,    10,
-      22,     3,    19,    26,     3,    16,     6,     9,     8,     9,
-      10,    10,     9,    10,     6,    17,     8,    19,    20,    19,
-      26,    26,    18,    15,    24,    49,    28,    23,    17,     6,
-      22,     8,    24,    57,    58,    59,     3,    61,    77,    78,
-      64,    40,    26,    42,    43,    69,    45,    24,    50,    20,
-      17,     9,    10,    20,    25,    17,    95,    15,     9,    10,
-      99,    12,   101,    26,   103,    89,     6,     7,     8,     9,
-      10,    18,    71,    72,    12,     9,    10,    17,    12,    25,
-      20,    21,    15,    16,    24,    25,     6,     7,     8,     9,
-      10,    -1,     6,     7,     8,     9,    10,    17,     9,    10,
-      20,    21,    -1,    17,    24,    25,     6,    21,     8,     9,
-      10,    11,    12,    13,    -1,    15,     6,     7,     8,    19,
-       9,    10,    22,    12,    24,    -1,     1,    17,     3,     4,
-       5,    21,     9,    10,    -1,    12,     9,    43,    11,    45
+       3,     0,     1,     3,     9,    10,    18,    10,    29,     9,
+      15,     6,     7,     8,     9,    10,    18,    17,    26,    19,
+      20,    23,    17,     9,    10,    20,    21,    26,    28,    24,
+      25,     6,    20,     8,     9,    10,    17,    25,    50,    42,
+      43,    26,    45,    46,    19,    17,    58,    59,    60,    24,
+      62,    51,     3,    65,    75,    76,    26,     6,    70,     8,
+      15,     9,    26,     9,    10,    26,    17,    22,    18,    20,
+      16,    19,     9,    94,    11,    24,    79,    80,    90,   100,
+      43,   102,    45,   104,     6,     7,     8,     9,    10,    17,
+       6,     7,     8,     9,    10,    17,    15,    16,    20,    21,
+      25,    17,    24,    25,     6,    21,     8,     9,    10,    11,
+      12,    13,     6,    15,     8,    12,    -1,    19,     9,    10,
+      22,    15,    24,     6,     7,     8,    -1,    -1,    22,     1,
+      24,     3,     4,     5,    17,    -1,     9,    10,    21,    12,
+       9,    10,    -1,    12,     9,    10,    -1,    12,     9,    10,
+      -1,    12
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
@@ -769,16 +746,16 @@ static const yytype_int8 yycheck[] =
 static const yytype_int8 yystos[] =
 {
        0,     1,     3,     4,     5,    28,    26,     6,     8,    24,
-      30,    32,    37,     7,     9,    10,    17,    20,    21,    24,
-      25,    29,    32,    33,    34,    35,    36,    37,    39,    40,
-      15,    22,    31,     0,     1,    26,    33,    37,     9,    10,
-      11,    12,    13,    15,    19,    22,    32,    38,    41,    17,
-      24,    29,    39,    29,    33,    29,    26,    15,    16,    17,
-      18,    23,     7,    17,    21,    37,    41,    26,    26,    20,
-      25,    15,    22,    32,    32,    32,    38,     9,    11,    32,
-      38,    39,    15,    39,    16,    39,    39,    18,    39,    17,
-      39,    39,    32,    32,    41,    41,    39,    25,    12,    41,
-      12,    41,    12,    41,    12,    41,    12
+      30,    33,    38,     7,     9,    10,    17,    20,    21,    24,
+      25,    29,    33,    34,    35,    36,    37,    38,    40,    41,
+      15,    22,    32,     0,     1,    26,    34,    38,     9,    10,
+      11,    12,    13,    15,    19,    22,    31,    33,    39,    42,
+      17,    24,    29,    40,    29,    34,    29,    26,    15,    16,
+      17,    18,    23,     7,    17,    21,    38,    42,    26,    26,
+      20,    25,    33,    33,    39,     9,    11,    33,    39,    15,
+      22,    33,    40,    15,    40,    16,    40,    40,    18,    40,
+      17,    40,    40,    42,    42,    33,    33,    40,    25,    12,
+      42,    12,    42,    12,    42,    12,    42,    12
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
@@ -786,12 +763,12 @@ static const yytype_int8 yyr1[] =
 {
        0,    27,    28,    28,    28,    28,    28,    28,    28,    28,
       28,    29,    29,    29,    29,    30,    30,    30,    30,    30,
-      30,    30,    30,    30,    30,    30,    30,    31,    31,    32,
-      32,    32,    33,    33,    33,    33,    33,    33,    33,    34,
-      34,    34,    34,    34,    34,    34,    34,    34,    35,    35,
-      35,    35,    35,    36,    36,    36,    36,    36,    36,    37,
-      37,    38,    38,    38,    38,    38,    38,    38,    39,    39,
-      40,    40,    41,    41
+      30,    30,    30,    30,    30,    30,    30,    31,    32,    32,
+      33,    33,    33,    34,    34,    34,    34,    34,    34,    34,
+      35,    35,    35,    35,    35,    35,    35,    35,    35,    36,
+      36,    36,    36,    36,    37,    37,    37,    37,    37,    37,
+      38,    38,    39,    39,    39,    39,    39,    39,    39,    40,
+      40,    41,    41,    42,    42
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -800,11 +777,11 @@ static const yytype_int8 yyr2[] =
        0,     2,     2,     3,     2,     3,     2,     1,     3,     2,
        2,     2,     2,     2,     1,     1,     2,     3,     3,     3,
        2,     3,     3,     3,     4,     4,     2,     1,     1,     1,
-       5,     3,     1,     2,     3,     3,     2,     3,     3,     1,
-       2,     2,     3,     3,     4,     1,     2,     3,     1,     2,
-       3,     2,     3,     1,     2,     1,     2,     2,     3,     1,
-       1,     1,     3,     4,     5,     6,     7,     8,     1,     1,
-       1,     2,     1,     1
+       1,     5,     3,     1,     2,     3,     3,     2,     3,     3,
+       1,     2,     2,     3,     3,     4,     1,     2,     3,     1,
+       2,     3,     2,     3,     1,     2,     1,     2,     2,     3,
+       1,     1,     1,     3,     4,     5,     6,     7,     8,     1,
+       1,     1,     2,     1,     1
 };
 
 
@@ -878,7 +855,7 @@ do {                                                                      \
 
 static void
 yy_symbol_value_print (FILE *yyo,
-                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
+                       yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
 {
   FILE *yyoutput = yyo;
   YY_USE (yyoutput);
@@ -906,7 +883,7 @@ yy_symbol_value_print (FILE *yyo,
 
 static void
 yy_symbol_print (FILE *yyo,
-                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
+                 yysymbol_kind_t yykind, YYSTYPE const * const yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
 {
   YYFPRINTF (yyo, "%s %s (",
              yykind < YYNTOKENS ? "token" : "nterm", yysymbol_name (yykind));
@@ -945,7 +922,7 @@ do {                                                            \
 
 static void
 yy_reduce_print (yy_state_t *yyssp, YYSTYPE *yyvsp,
-                 int yyrule, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
+                 int yyrule, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
 {
   int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -1007,7 +984,7 @@ int yydebug;
 
 static void
 yydestruct (const char *yymsg,
-            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
+            yysymbol_kind_t yykind, YYSTYPE *yyvaluep, const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
 {
   YY_USE (yyvaluep);
   YY_USE (input);
@@ -1087,7 +1064,7 @@ yydestruct (const char *yymsg,
 `----------*/
 
 int
-yyparse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::list<unsigned int> *branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
+yyparse (const char *input, std::vector<RDKit::RWMol *> *molList, RDKit::Atom* &lastAtom, RDKit::Bond* &lastBond, unsigned &numAtomsParsed, unsigned &numBondsParsed, std::vector<std::pair<unsigned int, unsigned int>>& branchPoints, void *scanner, int& start_token, unsigned int& current_token_position)
 {
 /* Lookahead token kind.  */
 int yychar;
@@ -1547,8 +1524,8 @@ yyreduce:
 }
     break;
 
-  case 23: /* mol: mol GROUP_OPEN_TOKEN atomd  */
-                             {
+  case 23: /* mol: mol branch_open_token atomd  */
+                              {
   RWMol *mp = (*molList)[(yyval.moli)];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
@@ -1556,13 +1533,12 @@ yyreduce:
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
   mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  //delete $3;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, (yyvsp[-1].ival)});
 }
     break;
 
-  case 24: /* mol: mol GROUP_OPEN_TOKEN BOND_TOKEN atomd  */
-                                         {
+  case 24: /* mol: mol branch_open_token BOND_TOKEN atomd  */
+                                          {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom((yyvsp[0].atom),true,true);
@@ -1581,43 +1557,46 @@ yyreduce:
   (yyvsp[-1].bond)->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond((yyvsp[-1].bond),true);
 
-  //delete $4;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, (yyvsp[-2].ival)});
 }
     break;
 
-  case 25: /* mol: mol GROUP_OPEN_TOKEN MINUS_TOKEN atomd  */
-                                         {
+  case 25: /* mol: mol branch_open_token MINUS_TOKEN atomd  */
+                                          {
   RWMol *mp = (*molList)[(yyval.moli)];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom((yyvsp[0].atom),true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
   mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  //delete $4;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, (yyvsp[-2].ival)});
 }
     break;
 
   case 26: /* mol: mol GROUP_CLOSE_TOKEN  */
                         {
-  if(branchPoints->empty()){
+  if(branchPoints.empty()){
      yyerror(input,molList,branchPoints,scanner,start_token,current_token_position,"extra close parentheses");
      yyErrorCleanup(molList);
      YYABORT;
   }
   RWMol *mp = (*molList)[(yyval.moli)];
-  mp->setActiveAtom(branchPoints->back());
-  branchPoints->pop_back();
+
+  mp->setActiveAtom(branchPoints.back().first);
+  branchPoints.pop_back();
 }
     break;
 
-  case 28: /* bondd: MINUS_TOKEN  */
+  case 27: /* branch_open_token: GROUP_OPEN_TOKEN  */
+                                    { (yyval.ival) = current_token_position; }
+    break;
+
+  case 29: /* bondd: MINUS_TOKEN  */
                         {
           (yyval.bond) = new Bond(Bond::SINGLE);
           }
     break;
 
-  case 30: /* atomd: ATOM_OPEN_TOKEN charge_element COLON_TOKEN number ATOM_CLOSE_TOKEN  */
+  case 31: /* atomd: ATOM_OPEN_TOKEN charge_element COLON_TOKEN number ATOM_CLOSE_TOKEN  */
 {
   (yyval.atom) = (yyvsp[-3].atom);
   (yyval.atom)->setNoImplicit(true);
@@ -1625,126 +1604,126 @@ yyreduce:
 }
     break;
 
-  case 31: /* atomd: ATOM_OPEN_TOKEN charge_element ATOM_CLOSE_TOKEN  */
+  case 32: /* atomd: ATOM_OPEN_TOKEN charge_element ATOM_CLOSE_TOKEN  */
 {
   (yyval.atom) = (yyvsp[-1].atom);
   (yyvsp[-1].atom)->setNoImplicit(true);
 }
     break;
 
-  case 33: /* charge_element: h_element PLUS_TOKEN  */
+  case 34: /* charge_element: h_element PLUS_TOKEN  */
                        { (yyvsp[-1].atom)->setFormalCharge(1); }
     break;
 
-  case 34: /* charge_element: h_element PLUS_TOKEN PLUS_TOKEN  */
+  case 35: /* charge_element: h_element PLUS_TOKEN PLUS_TOKEN  */
                                   { (yyvsp[-2].atom)->setFormalCharge(2); }
     break;
 
-  case 35: /* charge_element: h_element PLUS_TOKEN number  */
+  case 36: /* charge_element: h_element PLUS_TOKEN number  */
                               { (yyvsp[-2].atom)->setFormalCharge((yyvsp[0].ival)); }
     break;
 
-  case 36: /* charge_element: h_element MINUS_TOKEN  */
+  case 37: /* charge_element: h_element MINUS_TOKEN  */
                         { (yyvsp[-1].atom)->setFormalCharge(-1); }
     break;
 
-  case 37: /* charge_element: h_element MINUS_TOKEN MINUS_TOKEN  */
+  case 38: /* charge_element: h_element MINUS_TOKEN MINUS_TOKEN  */
                                     { (yyvsp[-2].atom)->setFormalCharge(-2); }
     break;
 
-  case 38: /* charge_element: h_element MINUS_TOKEN number  */
+  case 39: /* charge_element: h_element MINUS_TOKEN number  */
                                { (yyvsp[-2].atom)->setFormalCharge(-(yyvsp[0].ival)); }
     break;
 
-  case 39: /* h_element: H_TOKEN  */
+  case 40: /* h_element: H_TOKEN  */
                         { (yyval.atom) = new Atom(1); }
     break;
 
-  case 40: /* h_element: number H_TOKEN  */
+  case 41: /* h_element: number H_TOKEN  */
                                  { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-1].ival)); }
     break;
 
-  case 41: /* h_element: H_TOKEN H_TOKEN  */
+  case 42: /* h_element: H_TOKEN H_TOKEN  */
                                   { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs(1); }
     break;
 
-  case 42: /* h_element: number H_TOKEN H_TOKEN  */
+  case 43: /* h_element: number H_TOKEN H_TOKEN  */
                                          { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-2].ival)); (yyval.atom)->setNumExplicitHs(1);}
     break;
 
-  case 43: /* h_element: H_TOKEN H_TOKEN number  */
+  case 44: /* h_element: H_TOKEN H_TOKEN number  */
                                          { (yyval.atom) = new Atom(1); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival)); }
     break;
 
-  case 44: /* h_element: number H_TOKEN H_TOKEN number  */
+  case 45: /* h_element: number H_TOKEN H_TOKEN number  */
                                                 { (yyval.atom) = new Atom(1); (yyval.atom)->setIsotope((yyvsp[-3].ival)); (yyval.atom)->setNumExplicitHs((yyvsp[0].ival));}
     break;
 
-  case 46: /* h_element: chiral_element H_TOKEN  */
+  case 47: /* h_element: chiral_element H_TOKEN  */
                                                         { (yyval.atom) = (yyvsp[-1].atom); (yyvsp[-1].atom)->setNumExplicitHs(1);}
     break;
 
-  case 47: /* h_element: chiral_element H_TOKEN number  */
+  case 48: /* h_element: chiral_element H_TOKEN number  */
                                                 { (yyval.atom) = (yyvsp[-2].atom); (yyvsp[-2].atom)->setNumExplicitHs((yyvsp[0].ival));}
     break;
 
-  case 49: /* chiral_element: element AT_TOKEN  */
+  case 50: /* chiral_element: element AT_TOKEN  */
                    { (yyvsp[-1].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW); }
     break;
 
-  case 50: /* chiral_element: element AT_TOKEN AT_TOKEN  */
+  case 51: /* chiral_element: element AT_TOKEN AT_TOKEN  */
                             { (yyvsp[-2].atom)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW); }
     break;
 
-  case 51: /* chiral_element: element CHI_CLASS_TOKEN  */
+  case 52: /* chiral_element: element CHI_CLASS_TOKEN  */
                           { (yyvsp[-1].atom)->setChiralTag((yyvsp[0].chiraltype)); (yyvsp[-1].atom)->setProp(common_properties::_chiralPermutation,0); }
     break;
 
-  case 52: /* chiral_element: element CHI_CLASS_TOKEN number  */
+  case 53: /* chiral_element: element CHI_CLASS_TOKEN number  */
                                  { (yyvsp[-2].atom)->setChiralTag((yyvsp[-1].chiraltype)); (yyvsp[-2].atom)->setProp(common_properties::_chiralPermutation,(yyvsp[0].ival)); }
     break;
 
-  case 54: /* element: number simple_atom  */
+  case 55: /* element: number simple_atom  */
                                            { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
     break;
 
-  case 56: /* element: number ATOM_TOKEN  */
+  case 57: /* element: number ATOM_TOKEN  */
                                                    { (yyvsp[0].atom)->setIsotope( (yyvsp[-1].ival) ); (yyval.atom) = (yyvsp[0].atom); }
     break;
 
-  case 57: /* element: HASH_TOKEN number  */
+  case 58: /* element: HASH_TOKEN number  */
                                                  { (yyval.atom) = new Atom((yyvsp[0].ival)); }
     break;
 
-  case 58: /* element: number HASH_TOKEN number  */
+  case 59: /* element: number HASH_TOKEN number  */
                                                          { (yyval.atom) = new Atom((yyvsp[0].ival)); (yyval.atom)->setIsotope((yyvsp[-2].ival)); }
     break;
 
-  case 62: /* ring_number: PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit  */
+  case 63: /* ring_number: PERCENT_TOKEN NONZERO_DIGIT_TOKEN digit  */
                                           { (yyval.ival) = (yyvsp[-1].ival)*10+(yyvsp[0].ival); }
     break;
 
-  case 63: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit GROUP_CLOSE_TOKEN  */
+  case 64: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit GROUP_CLOSE_TOKEN  */
                                                          { (yyval.ival) = (yyvsp[-1].ival); }
     break;
 
-  case 64: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit GROUP_CLOSE_TOKEN  */
+  case 65: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit GROUP_CLOSE_TOKEN  */
                                                                { (yyval.ival) = (yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
     break;
 
-  case 65: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit GROUP_CLOSE_TOKEN  */
+  case 66: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit GROUP_CLOSE_TOKEN  */
                                                                      { (yyval.ival) = (yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
     break;
 
-  case 66: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit GROUP_CLOSE_TOKEN  */
+  case 67: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit GROUP_CLOSE_TOKEN  */
                                                                            { (yyval.ival) = (yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
     break;
 
-  case 67: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit digit GROUP_CLOSE_TOKEN  */
+  case 68: /* ring_number: PERCENT_TOKEN GROUP_OPEN_TOKEN digit digit digit digit digit GROUP_CLOSE_TOKEN  */
                                                                                  { (yyval.ival) = (yyvsp[-5].ival)*10000+(yyvsp[-4].ival)*1000+(yyvsp[-3].ival)*100+(yyvsp[-2].ival)*10+(yyvsp[-1].ival); }
     break;
 
-  case 71: /* nonzero_number: nonzero_number digit  */
+  case 72: /* nonzero_number: nonzero_number digit  */
                        {
   if((yyvsp[-1].ival) >= std::numeric_limits<std::int32_t>::max()/10 ||
      (yyvsp[-1].ival)*10 >= std::numeric_limits<std::int32_t>::max()-(yyvsp[0].ival) ){

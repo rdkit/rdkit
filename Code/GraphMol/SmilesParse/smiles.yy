@@ -9,11 +9,11 @@
 
 #include <cstring>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
-#include <list>
-#include <limits>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -38,33 +38,6 @@ namespace {
  }
 }
 
-void printSyntaxErrorMessage(std::string_view input,
-                             std::string_view err_message,
-                             unsigned int bad_token_position) {
-    // NOTE: If the input is very long, the pointer to the failed location
-    // becomes less useful. We should truncate the length of the error message
-    // to 101 chars.
-    static constexpr unsigned int error_size{41};
-    static constexpr unsigned int prefix_size{error_size / 2};
-    static auto truncate_input = [=](const auto& input, const unsigned int pos) {
-        if ((pos >= prefix_size) && (pos + prefix_size) < input.size()) {
-            return input.substr(pos - prefix_size, error_size);
-        } else if (pos >= prefix_size) {
-            return input.substr(pos - prefix_size);
-        } else {
-            return input.substr(
-                0, std::min(input.size(), static_cast<size_t>(error_size)));
-        }
-    };
-
-    size_t num_dashes =
-        (bad_token_position >= prefix_size ? prefix_size : bad_token_position - 1);
-
-    BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << err_message << " while parsing: " << input << std::endl;
-    BOOST_LOG(rdErrorLog) << "SMILES Parse Error: check for mistakes around position " << bad_token_position << ":" << std::endl;
-    BOOST_LOG(rdErrorLog) << truncate_input(input, bad_token_position - 1) << std::endl;
-    BOOST_LOG(rdErrorLog) << std::string(num_dashes, '~') << "^" << std::endl;
-}
 
 void
 yysmiles_error( const char *input,
@@ -72,21 +45,21 @@ yysmiles_error( const char *input,
                 RDKit::Atom* &,
                 RDKit::Bond* &,
                 unsigned int &,unsigned int &,
-                std::list<unsigned int> *,
+                std::vector<std::pair<unsigned int, unsigned int>>&,
 		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  printSyntaxErrorMessage(input, msg, bad_token_position);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input, msg, bad_token_position);
 }
 
 void
 yysmiles_error( const char *input,
                 std::vector<RDKit::RWMol *> *ms,
-                std::list<unsigned int> *,
+                std::vector<std::pair<unsigned int, unsigned int>>&,
 		void *,int, unsigned int bad_token_position, const char * msg )
 {
   yyErrorCleanup(ms);
-  printSyntaxErrorMessage(input, msg, bad_token_position);
+  SmilesParseOps::detail::printSyntaxErrorMessage(input, msg, bad_token_position);
 }
 
 
@@ -102,7 +75,7 @@ yysmiles_error( const char *input,
 %parse-param {RDKit::Bond* &lastBond}
 %parse-param {unsigned &numAtomsParsed}
 %parse-param {unsigned &numBondsParsed}
-%parse-param {std::list<unsigned int> *branchPoints}
+%parse-param {std::vector<std::pair<unsigned int, unsigned int>>& branchPoints}
 %parse-param {void *scanner}
 %parse-param {int& start_token}
 %parse-param {unsigned int& current_token_position}
@@ -131,7 +104,7 @@ yysmiles_error( const char *input,
 %type <moli> mol
 %type <atom> atomd element chiral_element h_element charge_element simple_atom
 %type <bond> bondd
-%type <ival> nonzero_number number ring_number digit
+%type <ival> nonzero_number number ring_number digit branch_open_token
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token EOS_TOKEN
 
@@ -314,7 +287,7 @@ mol: atomd {
   atom->setProp(RDKit::common_properties::_RingClosures,tmp);
 }
 
-| mol GROUP_OPEN_TOKEN atomd {
+| mol branch_open_token atomd {
   RWMol *mp = (*molList)[$$];
   Atom *a1 = mp->getActiveAtom();
   int atomIdx1=a1->getIdx();
@@ -322,10 +295,9 @@ mol: atomd {
   mp->addBond(atomIdx1,atomIdx2,
 	      SmilesParseOps::GetUnspecifiedBondType(mp,a1,mp->getAtomWithIdx(atomIdx2)));
   mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  //delete $3;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, $2});
 }
-| mol GROUP_OPEN_TOKEN BOND_TOKEN atomd  {
+| mol branch_open_token BOND_TOKEN atomd  {
   RWMol *mp = (*molList)[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($4,true,true);
@@ -344,29 +316,31 @@ mol: atomd {
   $3->setProp("_cxsmilesBondIdx",numBondsParsed++);
   mp->addBond($3,true);
 
-  //delete $4;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, $2});
 }
-| mol GROUP_OPEN_TOKEN MINUS_TOKEN atomd {
+| mol branch_open_token MINUS_TOKEN atomd {
   RWMol *mp = (*molList)[$$];
   int atomIdx1 = mp->getActiveAtom()->getIdx();
   int atomIdx2 = mp->addAtom($4,true,true);
   mp->addBond(atomIdx1,atomIdx2,Bond::SINGLE);
   mp->getBondBetweenAtoms(atomIdx1,atomIdx2)->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  //delete $4;
-  branchPoints->push_back(atomIdx1);
+  branchPoints.push_back({atomIdx1, $2});
 }
 | mol GROUP_CLOSE_TOKEN {
-  if(branchPoints->empty()){
+  if(branchPoints.empty()){
      yyerror(input,molList,branchPoints,scanner,start_token,current_token_position,"extra close parentheses");
      yyErrorCleanup(molList);
      YYABORT;
   }
   RWMol *mp = (*molList)[$$];
-  mp->setActiveAtom(branchPoints->back());
-  branchPoints->pop_back();
+
+  mp->setActiveAtom(branchPoints.back().first);
+  branchPoints.pop_back();
 }
 ;
+
+// We'll use the token position for unclosed branch syntax error messages
+branch_open_token: GROUP_OPEN_TOKEN { $$ = current_token_position; };
 
 /* --------------------------------------------------------------- */
 bondd:      BOND_TOKEN
