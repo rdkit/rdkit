@@ -73,15 +73,14 @@ int scoreRings(const ROMol &mol) {
 };
 
 SubstructTerm::SubstructTerm(std::string aname, std::string asmarts, int ascore)
-  : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore) {
+    : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore) {
   std::unique_ptr<ROMol> pattern(SmartsToMol(smarts));
-  if(pattern) {
+  if (pattern) {
     matcher = std::move(*pattern);
   }
 }
 
-const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs()
-{
+const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs() {
   static std::vector<SubstructTerm> substructureTerms{
       {"benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
        25},
@@ -98,8 +97,9 @@ const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs()
       {"aci-nitro", "[#6]=[N+]([O-])[OH]", -4}};
   return substructureTerms;
 }
-  
-int scoreSubstructs(const ROMol &mol,  const std::vector<SubstructTerm> &substructureTerms) {
+
+int scoreSubstructs(const ROMol &mol,
+                    const std::vector<SubstructTerm> &substructureTerms) {
   int score = 0;
   for (const auto &term : substructureTerms) {
     if (!term.matcher.getNumAtoms()) {

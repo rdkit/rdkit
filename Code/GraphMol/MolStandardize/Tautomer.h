@@ -46,13 +46,15 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
   std::string name;
   std::string smarts;
   int score;
-  RWMol matcher; // requires assignment
-  
+  RWMol matcher;  // requires assignment
+
   SubstructTerm(std::string aname, std::string asmarts, int ascore);
-  SubstructTerm(const SubstructTerm &rhs) :
-    name(rhs.name), smarts(rhs.smarts), score(rhs.score), matcher(rhs.matcher) {
-  }
-  
+  SubstructTerm(const SubstructTerm &rhs)
+      : name(rhs.name),
+        smarts(rhs.smarts),
+        score(rhs.score),
+        matcher(rhs.matcher) {}
+
   bool operator==(const SubstructTerm &rhs) const {
     return name == rhs.name && smarts == rhs.smarts && score == rhs.score;
   }
@@ -60,7 +62,8 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
 
 //! getDefaultTautomerSubstructs returns the SubstructTerms used in scoring
 /// tautomer forms.  See SubstructTerm for details.
-RDKIT_MOLSTANDARDIZE_EXPORT const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs();
+RDKIT_MOLSTANDARDIZE_EXPORT const std::vector<SubstructTerm>
+    &getDefaultTautomerScoreSubstructs();
 
 //! Score the rings of the current tautomer
 /// Aromatic rings score 100, all carbon aromatic rings score 250
@@ -76,8 +79,9 @@ RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
   \param terms Substruct Terms used for scoring this particular tautomer form
   \returns integer score for the molecule's substructure terms
 */
-RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(const ROMol &mol,
-						const std::vector<SubstructTerm> &terms=getDefaultTautomerScoreSubstructs());
+RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(
+    const ROMol &mol, const std::vector<SubstructTerm> &terms =
+                          getDefaultTautomerScoreSubstructs());
 //! scoreHeteroHs score the molecules hydrogens
 /// This gives a negative penalty to hydrogens attached to S,P, Se and Te
 /*!
