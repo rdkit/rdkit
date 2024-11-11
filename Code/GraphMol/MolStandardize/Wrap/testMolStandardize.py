@@ -1809,9 +1809,32 @@ M  END
       terms.append(rdMolStandardize.SubstructTerm("C=0", "[#6]=,:[#8]", 1000))
       self.assertEqual(rdMolStandardize.ScoreSubstructs(m, terms), 1000)
 
-      self.assertEqual(rdMolStandardize.ScoreSubstructs(m, rdMolStandardize.GetDefaultTautomerScoreSubstructs()), 6)
-                                          
-    
+      self.assertEqual(rdMolStandardize.ScoreSubstructs(
+        m, rdMolStandardize.GetDefaultTautomerScoreSubstructs()), 6)
+
+      enumerator = rdMolStandardize.TautomerEnumerator()
+      m2 = Chem.MolFromSmiles("C1(=CCCCC1)O")
+      
+      ctaut = enumerator.Canonicalize(m2)
+      self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+
+      # duplicate the normal scoring function
+      def score_func1(mol):
+        return (rdMolStandardize.ScoreRings(mol) + rdMolStandardize.ScoreHeteroHs(mol) +
+                rdMolStandardize.ScoreSubstructs(mol))
+
+      ctaut = enumerator.Canonicalize(m2, score_func1)
+      self.assertEqual(Chem.MolToSmiles(ctaut), "O=C1CCCCC1")
+
+      # pull a single tautomer out of the mix
+      def score_func2(mol):
+        if Chem.MolToSmiles(mol) == Chem.CanonSmiles("C1(=CCCCC1)O"):
+          return 100_000
+        return 0
+      
+      ctaut = enumerator.Canonicalize(m2, score_func2)
+      self.assertEqual(Chem.MolToSmiles(ctaut), Chem.CanonSmiles("C1(=CCCCC1)O"))
+      
     
 if __name__ == "__main__":
   unittest.main()
