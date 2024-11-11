@@ -46,12 +46,13 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
   std::string name;
   std::string smarts;
   int score;
-  ROMOL_SPTR matcher;
+  RWMol matcher; // requires assignment
   
   SubstructTerm(std::string aname, std::string asmarts, int ascore);
   SubstructTerm(const SubstructTerm &rhs) :
     name(rhs.name), smarts(rhs.smarts), score(rhs.score), matcher(rhs.matcher) {
   }
+  
   bool operator==(const SubstructTerm &rhs) const {
     return name == rhs.name && smarts == rhs.smarts && score == rhs.score;
   }

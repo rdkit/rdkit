@@ -73,7 +73,11 @@ int scoreRings(const ROMol &mol) {
 };
 
 SubstructTerm::SubstructTerm(std::string aname, std::string asmarts, int ascore)
-  : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore), matcher(SmartsToMol(smarts)) {
+  : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore) {
+  std::unique_ptr<ROMol> pattern(SmartsToMol(smarts));
+  if(pattern) {
+    matcher = std::move(*pattern);
+  }
 }
 
 const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs()
@@ -98,13 +102,13 @@ const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs()
 int scoreSubstructs(const ROMol &mol,  const std::vector<SubstructTerm> &substructureTerms) {
   int score = 0;
   for (const auto &term : substructureTerms) {
-    if (!term.matcher) {
+    if (!term.matcher.getNumAtoms()) {
       BOOST_LOG(rdErrorLog) << " matcher for term " << term.name
                             << " is invalid, ignoring it." << std::endl;
       continue;
     }
     SubstructMatchParameters params;
-    const auto matches = SubstructMatch(mol, *term.matcher, params);
+    const auto matches = SubstructMatch(mol, term.matcher, params);
     // if (!matches.empty()) {
     //   std::cerr << " " << matches.size() << " matches to " << term.name
     //             << std::endl;
