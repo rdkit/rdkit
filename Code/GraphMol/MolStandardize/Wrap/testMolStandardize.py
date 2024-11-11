@@ -1788,7 +1788,7 @@ M  END
     self.assertEqual(rdMolStandardize.ScoreSubstructs(m), 6)
 
     # check the default terms
-    terms = rdMolStandardize.GetDefaultTautomerSubstructs()
+    terms = rdMolStandardize.GetDefaultTautomerScoreSubstructs()
     for term, (name, smarts, score) in zip(terms, [["benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
                                                     25],
                                                    ["oxim", "[#6]=[N][OH]", 4],
@@ -1809,7 +1809,7 @@ M  END
       terms.append(rdMolStandardize.SubstructTerm("C=0", "[#6]=,:[#8]", 1000))
       self.assertEqual(rdMolStandardize.ScoreSubstructs(m, terms), 1000)
 
-      self.assertEqual(rdMolStandardize.ScoreSubstructs(m, rdMolStandardize.GetDefaultTautomerSubstructs()), 6)
+      self.assertEqual(rdMolStandardize.ScoreSubstructs(m, rdMolStandardize.GetDefaultTautomerScoreSubstructs()), 6)
                                           
     
     

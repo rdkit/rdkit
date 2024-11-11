@@ -76,7 +76,7 @@ SubstructTerm::SubstructTerm(std::string aname, std::string asmarts, int ascore)
   : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore), matcher(SmartsToMol(smarts)) {
 }
 
-const std::vector<SubstructTerm> &getDefaultTautomerSubstructs()
+const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs()
 {
   static std::vector<SubstructTerm> substructureTerms{
       {"benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",

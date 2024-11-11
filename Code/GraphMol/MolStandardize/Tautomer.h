@@ -41,7 +41,7 @@ const std::string tautomerScoringVersion = "1.0.0";
 ///    SubstructTerm("C=O", "[#6]=,:[#8]", 2)
 ///   This gets a score of +2 for each Carbon doubly or aromatically
 ///   Bonded to an Oxygen.
-///   For a list of current definitions, see getDefaultTautomerSubstructs
+///   For a list of current definitions, see getDefaultTautomerScoreSubstructs
 struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
   std::string name;
   std::string smarts;
@@ -59,7 +59,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
 
 //! getDefaultTautomerSubstructs returns the SubstructTerms used in scoring
 /// tautomer forms.  See SubstructTerm for details.
-RDKIT_MOLSTANDARDIZE_EXPORT const std::vector<SubstructTerm> &getDefaultTautomerSubstructs();
+RDKIT_MOLSTANDARDIZE_EXPORT const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs();
 
 //! Score the rings of the current tautomer
 /// Aromatic rings score 100, all carbon aromatic rings score 250
@@ -76,7 +76,7 @@ RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
   \returns integer score for the molecule's substructure terms
 */
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(const ROMol &mol,
-						const std::vector<SubstructTerm> &terms=getDefaultTautomerSubstructs());
+						const std::vector<SubstructTerm> &terms=getDefaultTautomerScoreSubstructs());
 //! scoreHeteroHs score the molecules hydrogens
 /// This gives a negative penalty to hydrogens attached to S,P, Se and Te
 /*!

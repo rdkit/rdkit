@@ -270,7 +270,7 @@ PyTautomerEnumeratorResult *enumerateHelper(
 
 std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm> GetDefaultTautomerSubstructsHelper() {
   std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm> terms;
-  for(auto term: MolStandardize::TautomerScoringFunctions::getDefaultTautomerSubstructs()) {
+  for(auto term: MolStandardize::TautomerScoringFunctions::getDefaultTautomerScoreSubstructs()) {
     terms.emplace_back(term);
   }
   return terms;
@@ -548,7 +548,7 @@ struct tautomer_wrapper {
 		docString.c_str());
 
     
-    python::def("GetDefaultTautomerSubstructs", GetDefaultTautomerSubstructsHelper,
+    python::def("GetDefaultTautomerScoreSubstructs", GetDefaultTautomerSubstructsHelper,
     		"Return the default tautomer substructure scoring terms");
   
 
