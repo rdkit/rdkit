@@ -30,6 +30,10 @@
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
 #include <GraphMol/FMCS/FMCS.h>
 #endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MOLZIP
+#include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
+#endif
+
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
@@ -986,5 +990,14 @@ JSRGroupDecomposition::getRGroupsAsRows() const {
         return transformedMap;
       });
   return res;
+}
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MOLZIP
+JSMolBase *molzip(const JSMolBase &a, const JSMolBase &b,
+                  const std::string &details_json) {
+  MolzipParams params;
+  parseMolzipParametersJSON(params, details_json.c_str());
+  auto out = molzip(a.get(), b.get(), params);
+  return new JSMol(new RDKit::RWMol(*out));
 }
 #endif
