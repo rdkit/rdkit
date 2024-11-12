@@ -11,12 +11,19 @@
 #pragma once
 
 #include <GraphMol/FileParsers/PNGParser.h>
+#include <GraphMol/MolOps.h>
 
 namespace RDKit {
 namespace MinimalLib {
 
 void updatePropertyPickleOptionsFromJSON(unsigned int &propFlags,
                                          const char *details_json);
+
+void updateSanitizeFlagsFromJSON(unsigned int &sanitizeFlags,
+                                 const char *details_json);
+
+void updateRemoveHsParametersFromJSON(MolOps::RemoveHsParameters &ps,
+                                      bool &sanitize, const char *details_json);
 
 }  // end namespace MinimalLib
 }  // end namespace RDKit
