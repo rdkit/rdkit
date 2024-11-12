@@ -14,6 +14,7 @@
 #include "../SmilesParse/SmilesWrite.h"
 #include "../FileParsers/MolFileStereochem.h"
 
+
 // define snprintf for msvc
 #if _MSC_VER
 #if _MSC_VER < 1900
@@ -84,7 +85,7 @@ bool StripSmallFragments(RWMol &mol, bool verbose) {
     RWMol copy(mol);
     try {
       MolOps::sanitizeMol(copy);
-      ClearSingleBondDirFlags(copy);
+      MolOps::clearSingleBondDirFlags(copy);
       MolOps::detectBondStereochemistry(copy);
       MolOps::assignStereochemistry(copy, true, true, true);
       for (ROMol::AtomIterator atIt = copy.beginAtoms();

@@ -18,6 +18,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+
 #include <RDGeneral/utils.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -31,69 +32,6 @@
 // #define VERBOSE_CANON 1
 
 namespace RDKit {
-
-void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
-                                     const char *details_json) {
-  if (details_json && strlen(details_json)) {
-    boost::property_tree::ptree pt;
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::read_json(ss, pt);
-    params.doIsomericSmiles =
-        pt.get("doIsomericSmiles", params.doIsomericSmiles);
-    params.doKekule = pt.get("doKekule", params.doKekule);
-    params.rootedAtAtom = pt.get("rootedAtAtom", params.rootedAtAtom);
-    params.canonical = pt.get("canonical", params.canonical);
-    params.allBondsExplicit =
-        pt.get("allBondsExplicit", params.allBondsExplicit);
-    params.allHsExplicit = pt.get("allHsExplicit", params.allHsExplicit);
-    params.doRandom = pt.get("doRandom", params.doRandom);
-  }
-}
-
-void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
-                                     const std::string &details_json) {
-  updateSmilesWriteParamsFromJSON(params, details_json.c_str());
-}
-
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
-                                  const char *details_json) {
-  static const auto cxSmilesFieldsKeyValuePairs = CXSMILESFIELDS_ITEMS_MAP;
-  static const auto restoreBondDirOptionKeyValuePairs =
-      RESTOREBONDDIROPTION_ITEMS_MAP;
-  if (details_json && strlen(details_json)) {
-    boost::property_tree::ptree pt;
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::read_json(ss, pt);
-    auto cxSmilesFieldsFromJson =
-        static_cast<std::underlying_type<SmilesWrite::CXSmilesFields>::type>(
-            SmilesWrite::CXSmilesFields::CX_NONE);
-    for (const auto &keyValuePair : cxSmilesFieldsKeyValuePairs) {
-      cxSmilesFieldsFromJson |= (pt.get(keyValuePair.first, false)
-                                     ? keyValuePair.second
-                                     : SmilesWrite::CXSmilesFields::CX_NONE);
-    }
-    if (cxSmilesFieldsFromJson) {
-      cxSmilesFields =
-          static_cast<SmilesWrite::CXSmilesFields>(cxSmilesFieldsFromJson);
-    }
-    std::string restoreBondDirOption;
-    restoreBondDirOption = pt.get("restoreBondDirOption", restoreBondDirOption);
-    auto it = restoreBondDirOptionKeyValuePairs.find(restoreBondDirOption);
-    if (it != restoreBondDirOptionKeyValuePairs.end()) {
-      restoreBondDirs = it->second;
-    }
-  }
-}
-
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
-                                  const std::string &details_json) {
-  updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
-                               details_json.c_str());
-}
 
 namespace SmilesWrite {
 const int atomicSmiles[] = {0, 5, 6, 7, 8, 9, 15, 16, 17, 35, 53, -1};
@@ -587,8 +525,9 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     // but that should not be:
     if (params.doIsomericSmiles) {
       tmol->setProp(common_properties::_doIsoSmiles, 1);
+
       if (!tmol->hasProp(common_properties::_StereochemDone)) {
-        MolOps::assignStereochemistry(*tmol, true);
+        MolOps::assignStereochemistry(*tmol, params.cleanStereo);
       }
     }
     if (!doingCXSmiles) {
@@ -646,17 +585,21 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     std::vector<unsigned int> bondOrdering;
 
     if (params.canonical) {
-      if (tmol->hasProp("_canonicalRankingNumbers")) {
-        for (const auto atom : tmol->atoms()) {
-          unsigned int rankNum = 0;
-          atom->getPropIfPresent("_canonicalRankingNumber", rankNum);
-          ranks[atom->getIdx()] = rankNum;
-        }
-      } else {
-        bool breakTies = true;
-        Canon::rankMolAtoms(*tmol, ranks, breakTies, params.doIsomericSmiles,
-                            params.doIsomericSmiles);
-      }
+      const bool breakTies = true;
+      const bool includeChiralPresence = false;
+      const bool includeIsotopes = params.doIsomericSmiles;
+      ;
+      const bool includeChirality = params.doIsomericSmiles;
+      ;
+      const bool includeStereoGroups = params.doIsomericSmiles;
+      ;
+      const bool useNonStereoRanks = false;
+      const bool includeAtomMaps = true;
+
+      Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
+                          includeIsotopes, includeAtomMaps,
+                          includeChiralPresence, includeStereoGroups,
+                          useNonStereoRanks);
       if (params.ignoreAtomMapNumbers) {
         for (auto atom : tmol->atoms()) {
           atom->setAtomMapNum(atomMapNums[atom->getIdx()]);
@@ -724,6 +667,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       tmp[ti] = std::make_tuple(vfragsmi[ti], allAtomOrdering[ti],
                                 allBondOrdering[ti]);
     }
+
     std::sort(tmp.begin(), tmp.end());
 
     for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
@@ -760,8 +704,10 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
               true);
   return result;
 }
+
 }  // namespace detail
 }  // namespace SmilesWrite
+
 std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   bool doingCXSmiles = false;
   return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
@@ -778,6 +724,7 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
   if (res.empty()) {
     return res;
   }
+
   if (restoreBondDirs == RestoreBondDirOptionTrue) {
     RDKit::Chirality::reapplyMolBlockWedging(trwmol);
   } else if (restoreBondDirs == RestoreBondDirOptionClear) {
@@ -799,6 +746,14 @@ std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
   if (!params.doIsomericSmiles) {
     flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
                SmilesWrite::CXSmilesFields::CX_BOND_CFG);
+  }
+
+  if (params.cleanStereo) {
+    if (trwmol.needsUpdatePropertyCache()) {
+      trwmol.updatePropertyCache(false);
+    }
+    MolOps::assignStereochemistry(trwmol, true);
+    Chirality::cleanupStereoGroups(trwmol);
   }
 
   auto cxext = SmilesWrite::getCXExtensions(trwmol, flags);
@@ -1013,4 +968,5 @@ std::string MolFragmentToCXSmiles(const ROMol &mol,
   }
   return res;
 }
+
 }  // namespace RDKit

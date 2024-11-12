@@ -34,8 +34,11 @@ python::tuple getFingerprintsHelper(
                                                       generator);
   }
   python::list pyFingerprints;
+  boost::python::manage_new_object::apply<ExplicitBitVect *>::type converter;
   for (auto &fp : fps) {
-    pyFingerprints.append(fp.release());
+    // transfer ownership to python
+    python::handle<> handle(converter(fp.release()));
+    pyFingerprints.append(handle);
   }
 
   return python::tuple(pyFingerprints);

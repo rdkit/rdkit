@@ -30,6 +30,7 @@
 #include <ios>
 #endif
 #include <cstdint>
+#include <RDGeneral/BetterEnums.h>
 
 namespace RDKit {
 class ROMol;
@@ -48,20 +49,19 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
 };
 
 namespace PicklerOps {
-typedef enum {
-  NoProps = 0,  // no data pickled (default pickling, single-precision coords)
-  MolProps = 0x1,  // only public non computed properties
-  AtomProps = 0x2,
-  BondProps = 0x4,
-  QueryAtomData =
-      0x2,  // n.b. DEPRECATED and set to AtomProps (does the same work)
-  PrivateProps = 0x10,
-  ComputedProps = 0x20,
-  AllProps = 0x0000FFFF,        // all data pickled
-  CoordsAsDouble = 0x00010000,  // save coordinates in double precision
-  NoConformers =
-      0x00020000  // do not include conformers or associated properties
-} PropertyPickleOptions;
+BETTER_ENUM(
+    PropertyPickleOptions, unsigned int,
+    NoProps = 0,  // no data pickled (default pickling, single-precision coords)
+    MolProps = 0x1,  // only public non computed properties
+    AtomProps = 0x2, BondProps = 0x4,
+    QueryAtomData =
+        0x2,  // n.b. DEPRECATED and set to AtomProps (does the same work)
+    PrivateProps = 0x10, ComputedProps = 0x20,
+    AllProps = 0x0000FFFF,        // all data pickled
+    CoordsAsDouble = 0x00010000,  // save coordinates in double precision
+    NoConformers =
+        0x00020000  // do not include conformers or associated properties
+);
 }  // namespace PicklerOps
 
 //! handles pickling (serializing) molecules
@@ -188,10 +188,12 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     MolPickler::molFromPickle(pickle, &mol, propertyFlags);
   }
   static void molFromPickle(const std::string &pickle, ROMol *mol) {
-    MolPickler::molFromPickle(pickle, mol, PicklerOps::AllProps);
+    MolPickler::molFromPickle(pickle, mol,
+                              PicklerOps::PropertyPickleOptions::AllProps);
   }
   static void molFromPickle(const std::string &pickle, ROMol &mol) {
-    MolPickler::molFromPickle(pickle, &mol, PicklerOps::AllProps);
+    MolPickler::molFromPickle(pickle, &mol,
+                              PicklerOps::PropertyPickleOptions::AllProps);
   }
 
   //! constructs a molecule from a pickle stored in a stream
@@ -202,10 +204,12 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     MolPickler::molFromPickle(ss, &mol, propertyFlags);
   }
   static void molFromPickle(std::istream &ss, ROMol *mol) {
-    MolPickler::molFromPickle(ss, mol, PicklerOps::AllProps);
+    MolPickler::molFromPickle(ss, mol,
+                              PicklerOps::PropertyPickleOptions::AllProps);
   }
   static void molFromPickle(std::istream &ss, ROMol &mol) {
-    MolPickler::molFromPickle(ss, &mol, PicklerOps::AllProps);
+    MolPickler::molFromPickle(ss, &mol,
+                              PicklerOps::PropertyPickleOptions::AllProps);
   }
 
  private:
@@ -314,7 +318,7 @@ using QueryDetails = boost::variant<
     std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,
     std::tuple<MolPickler::Tags, std::set<int32_t>>,
     std::tuple<MolPickler::Tags, std::string>,
-    std::tuple<MolPickler::Tags, Dict::Pair, double>>;
+    std::tuple<MolPickler::Tags, PairHolder, double>>;
 // clang-format on
 template <class T>
 QueryDetails getQueryDetails(const Queries::Query<int, T const *, true> *query);

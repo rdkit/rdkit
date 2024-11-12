@@ -17,16 +17,9 @@
 #define RD_MARVINDEFS_H
 
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/FileParsers/FileParsers.h>
-#include <RDGeneral/FileParseException.h>
-#include <RDGeneral/BadFileException.h>
-#include <RDGeneral/LocaleSwitcher.h>
 
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <float.h>  // Needed for DBL_MAX on Clang

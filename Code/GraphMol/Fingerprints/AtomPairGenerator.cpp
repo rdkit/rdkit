@@ -208,27 +208,44 @@ std::string AtomPairEnvGenerator<OutputType>::infoString() const {
 
 template <typename OutputType>
 FingerprintGenerator<OutputType> *getAtomPairGenerator(
+    const AtomPairArguments &args,
+    AtomInvariantsGenerator *atomInvariantsGenerator,
+    const bool ownsAtomInvGen) {
+  AtomEnvironmentGenerator<OutputType> *atomPairEnvGenerator =
+      new AtomPair::AtomPairEnvGenerator<OutputType>();
+  bool ownsAtomInvGenerator = ownsAtomInvGen;
+  if (!atomInvariantsGenerator) {
+    atomInvariantsGenerator =
+        new AtomPairAtomInvGenerator(args.df_includeChirality);
+    ownsAtomInvGenerator = true;
+  }
+
+  return new FingerprintGenerator<OutputType>(
+      atomPairEnvGenerator, new AtomPairArguments(args),
+      atomInvariantsGenerator, nullptr, ownsAtomInvGenerator, false);
+}
+
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getAtomPairGenerator(
     const unsigned int minDistance, const unsigned int maxDistance,
     const bool includeChirality, const bool use2D,
     AtomInvariantsGenerator *atomInvariantsGenerator,
     const bool useCountSimulation, const std::uint32_t fpSize,
     const std::vector<std::uint32_t> countBounds, const bool ownsAtomInvGen) {
-  AtomEnvironmentGenerator<OutputType> *atomPairEnvGenerator =
-      new AtomPair::AtomPairEnvGenerator<OutputType>();
-  FingerprintArguments *atomPairArguments = new AtomPair::AtomPairArguments(
-      useCountSimulation, includeChirality, use2D, minDistance, maxDistance,
-      countBounds, fpSize);
+  AtomPair::AtomPairArguments arguments(useCountSimulation, includeChirality,
+                                        use2D, minDistance, maxDistance,
+                                        countBounds, fpSize);
 
-  bool ownsAtomInvGenerator = ownsAtomInvGen;
-  if (!atomInvariantsGenerator) {
-    atomInvariantsGenerator = new AtomPairAtomInvGenerator(includeChirality);
-    ownsAtomInvGenerator = true;
-  }
-
-  return new FingerprintGenerator<OutputType>(
-      atomPairEnvGenerator, atomPairArguments, atomInvariantsGenerator, nullptr,
-      ownsAtomInvGenerator, false);
+  return getAtomPairGenerator<OutputType>(arguments, atomInvariantsGenerator,
+                                          ownsAtomInvGen);
 }
+
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
+getAtomPairGenerator(const AtomPairArguments &, AtomInvariantsGenerator *,
+                     const bool);
+template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint64_t> *
+getAtomPairGenerator(const AtomPairArguments &, AtomInvariantsGenerator *,
+                     const bool);
 
 template RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<std::uint32_t> *
 getAtomPairGenerator(const unsigned int minDistance,

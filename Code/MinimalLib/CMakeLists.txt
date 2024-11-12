@@ -6,7 +6,7 @@ if(RDK_BUILD_MINIMAL_LIB)
         "CIPLabeler_static;MolDraw2D_static;Depictor_static;"
         "Descriptors_static;SubstructMatch_static;FileParsers_static;"
         "SmilesParse_static;GraphMol_static;RDGeometryLib_static;"
-        "RDGeneral_static;RGroupDecomposition_static")
+        "RDGeneral_static;RGroupDecomposition_static;Fingerprints_static")
     if(RDK_BUILD_INCHI_SUPPORT)
         add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
         set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};RDInchiLib_static")
@@ -23,10 +23,6 @@ if(RDK_BUILD_MINIMAL_LIB)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_MCS)
         set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};FMCS_static")
     endif()
-    if(RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP)
-        add_definitions(-DRDK_BUILD_MINIMAL_LIB_RGROUPDECOMP)
-        set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};RGroupDecomposition")
-    endif()
     if(RDK_BUILD_MINIMAL_LIB_MMPA)
         add_definitions(-DRDK_BUILD_MINIMAL_LIB_MMPA)
         set(MINIMAL_LIB_LIBRARIES "${MINIMAL_LIB_LIBRARIES};MMPA_static")
@@ -38,7 +34,7 @@ if(RDK_BUILD_MINIMAL_LIB)
             set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${USE_FLAGS}")
         endif()
     endif()
-    add_executable(RDKit_minimal jswrapper.cpp minilib.cpp)
+    add_executable(RDKit_minimal jswrapper.cpp minilib.cpp JSONParsers.cpp)
     target_link_libraries(RDKit_minimal ${MINIMAL_LIB_LIBRARIES})
 
     set_target_properties(RDKit_minimal PROPERTIES LINK_FLAGS "--bind")
@@ -52,8 +48,8 @@ if(RDK_BUILD_CFFI_LIB)
         ForceField Alignment
         MolInterchange Abbreviations CIPLabeler 
         MolDraw2D Depictor Descriptors
-        SubstructMatch FileParsers 
-        SmilesParse GraphMol RDGeometryLib RDGeneral RGroupDecomposition)
+        SubstructMatch FileParsers SmilesParse GraphMol
+        RDGeometryLib RDGeneral RGroupDecomposition Fingerprints)
     if(RDK_BUILD_INCHI_SUPPORT)
         add_definitions(-DRDK_BUILD_INCHI_SUPPORT)
         list(APPEND LIBS_TO_USE RDInchiLib)
@@ -71,7 +67,7 @@ if(RDK_BUILD_CFFI_LIB)
         set(LIBS_TO_USE ${tmpLibs})
     endif()
     
-    add_library(rdkitcffi SHARED cffiwrapper.cpp)
+    add_library(rdkitcffi SHARED cffiwrapper.cpp JSONParsers.cpp)
     target_link_libraries(rdkitcffi PUBLIC rdkit_base)
     target_link_libraries(rdkitcffi PUBLIC ${LIBS_TO_USE})
     INSTALL(TARGETS rdkitcffi EXPORT rdkit-targets

@@ -3376,6 +3376,51 @@ function test_multi_highlights() {
     mol.delete();
 }
 
+function test_bw_palette() {
+    const mol = RDKitModule.get_mol('N');
+    assert(mol);
+    const details = '{"atomColourPalette":"bw"}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('#000000'));
+    assert(!svgWithDetails.includes('#0000FF'));
+    const svgWithoutDetails = mol.get_svg();
+    assert(!svgWithoutDetails.includes('#000000'));
+    assert(svgWithoutDetails.includes('#0000FF'));
+    mol.delete();
+}
+
+function test_custom_palette() {
+    const mol = RDKitModule.get_mol('N');
+    assert(mol);
+    const details = '{"atomColourPalette\":{"7":[1.0,0.0,0.0]}}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('#FF0000'));
+    assert(!svgWithDetails.includes('#0000FF'));
+    const svgWithoutDetails = mol.get_svg();
+    assert(!svgWithoutDetails.includes('#FF0000'));
+    assert(svgWithoutDetails.includes('#0000FF'));
+    mol.delete();
+}
+
+function test_pickle() {
+    const mol = RDKitModule.get_mol('c1ccccn1');
+    assert(mol);
+    mol.set_prop('a', '1');
+    assert(mol.get_prop('a') === '1');
+    const pklWithProps = mol.get_as_uint8array();
+    assert(pklWithProps);
+    let molFromPkl = RDKitModule.get_mol_from_uint8array(pklWithProps);
+    assert(molFromPkl);
+    assert(molFromPkl.has_prop('a'));
+    assert(molFromPkl.get_prop('a') === '1');
+    molFromPkl.delete();
+    const pklWithoutProps = mol.get_as_uint8array(JSON.stringify({propertyFlags: { NoProps: true } }));
+    molFromPkl = RDKitModule.get_mol_from_uint8array(pklWithoutProps);
+    assert(molFromPkl);
+    assert(!molFromPkl.has_prop('a'));
+    molFromPkl.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3462,6 +3507,10 @@ initRDKitModule().then(function(instance) {
         test_singlecore_rgd();
         test_multicore_rgd();
     }
+    test_bw_palette();
+    test_custom_palette();
+    test_pickle();
+
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );
