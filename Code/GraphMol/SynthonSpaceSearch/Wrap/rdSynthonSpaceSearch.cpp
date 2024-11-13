@@ -52,8 +52,18 @@ SynthonSpaceSearch::SubstructureResults substructureSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
-  auto results = self.substructureSearch(query, params);
-  return results;
+  return self.substructureSearch(query, params);
+}
+
+SynthonSpaceSearch::SubstructureResults fingerprintSearch_helper(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  return self.fingerprintSearch(query, params);
 }
 
 void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
@@ -107,7 +117,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "The random sampling doesn't always produce the"
           " required number of hits in 1 go.  This parameter"
           " controls how many loops it makes to try and get"
-          " the hits before giving up.  Default=10.");
+          " the hits before giving up.  Default=10.")
+      .def_readwrite(
+          "similarityCutoff",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::similarityCutoff,
+          "Similarity cutoff for returning hits by fingerprint similarity."
+          "  At present the fp is hard-coded to be Morgan, bits, radius=2."
+          "  Default=0.5.")
+      .def_readwrite(
+          "fragSimilarityAdjuster",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::fragSimilarityAdjuster,
+          "Similarities of fragments are generally low due to low bit"
+          " densities.  For the fragment matching, reduce the similarity cutoff"
+          " off by this amount.  Default=0.3.");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
@@ -134,7 +156,13 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def("SubstructureSearch", &substructureSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("params") = python::object()),
-           "Does a substructure search in the SynthonSpace.");
+           "Does a substructure search in the SynthonSpace.")
+      .def(
+          "FingerprintSearch", &fingerprintSearch_helper,
+          (python::arg("self"), python::arg("query"),
+           python::arg("params") = python::object()),
+          "Does a fingerprint search in the SynthonSpace.  Currently hard-coded"
+          " to use Morgan fingerprints, radius 2.");
 }
 
 }  // namespace RDKit

@@ -251,8 +251,11 @@ void SynthonSpace::buildSynthonFingerprints() {
         MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   }
   for (const auto &it : d_reactions) {
+    std::cout << "Making fps for " << it.first << std::endl;
     it.second->buildSynthonFingerprints(dp_fpGenerator);
+    std::cout << "Made fps for " << it.first << std::endl;
   }
+  std::cout << "done all" << std::endl;
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

@@ -250,23 +250,23 @@ void SynthonSet::buildSynthonFingerprints(
         synthsToUse[j][0] = true;
       }
     }
-    std::cout << synthsToUse.size() << "\n";
-    for (const auto &stu : synthsToUse) {
-      std::cout << stu << std::endl;
-    }
+    // std::cout << synthsToUse.size() << "\n";
+    // for (const auto &stu : synthsToUse) {
+    //   std::cout << stu << std::endl;
+    // }
     auto synthons = getSynthons(synthsToUse);
     auto sampleMols = buildSampleMolecules(synthons, i);
     makeSynthonFPs(i, sampleMols, fpGenerator);
   }
-  std::cout << "SythonSet : " << d_id << std::endl;
-  std::cout << "Synths : " << d_synthons.size() << std::endl;
-  for (const auto &s : d_synthons) {
-    std::cout << "   " << s.size() << std::endl;
-  }
-  std::cout << "FPs : " << d_synthonFPs.size() << std::endl;
-  for (const auto &fp : d_synthonFPs) {
-    std::cout << "   " << fp.size() << std::endl;
-  }
+  // std::cout << "SythonSet : " << d_id << std::endl;
+  // std::cout << "Synths : " << d_synthons.size() << std::endl;
+  // for (const auto &s : d_synthons) {
+  //   std::cout << "   " << s.size() << std::endl;
+  // }
+  // std::cout << "FPs : " << d_synthonFPs.size() << std::endl;
+  // for (const auto &fp : d_synthonFPs) {
+  //   std::cout << "   " << fp.size() << std::endl;
+  // }
 }
 
 std::vector<std::vector<ROMol *>> SynthonSet::getSynthons(
@@ -318,13 +318,13 @@ void SynthonSet::makeSynthonFPs(
     size_t synthSetNum, const std::vector<std::unique_ptr<ROMol>> &sampleMols,
     const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGenerator) {
   for (size_t i = 0; i < sampleMols.size(); ++i) {
-    std::cout << i << " : "
-              << MolToSmiles(*d_synthons[synthSetNum][i]->getMol())
-              << std::endl;
-    auto fp =
-        fpGenerator->getFingerprint(*d_synthons[synthSetNum][i]->getMol());
-    std::cout << "Num set bits : " << fp->getNumOnBits() << " vs "
-              << fp->getNumOffBits() << std::endl;
+    // std::cout << i << " : "
+    //           << MolToSmiles(*d_synthons[synthSetNum][i]->getMol())
+    //           << std::endl;
+    // auto fp =
+    //     fpGenerator->getFingerprint(*d_synthons[synthSetNum][i]->getMol());
+    // std::cout << "Num set bits : " << fp->getNumOnBits() << " vs "
+    //           << fp->getNumOffBits() << std::endl;
     RWMol synthCp(*d_synthons[synthSetNum][i]->getMol());
     // transfer the aromaticity of the atom in the sample molecule to the
     // corresponding atom in the synthon
@@ -355,9 +355,10 @@ void SynthonSet::makeSynthonFPs(
     }
     d_synthonFPs[synthSetNum].emplace_back(
         fpGenerator->getFingerprint(synthCp));
-    std::cout << "Making FP for " << MolToSmiles(synthCp) << " : "
-              << d_synthonFPs[synthSetNum].back()->getNumOnBits() << " vs "
-              << d_synthonFPs[synthSetNum].back()->getNumOffBits() << std::endl;
+    // std::cout << "Making FP for " << MolToSmiles(synthCp) << " : "
+    //           << d_synthonFPs[synthSetNum].back()->getNumOnBits() << " vs "
+    //           << d_synthonFPs[synthSetNum].back()->getNumOffBits() <<
+    //           std::endl;
   }
 }
 

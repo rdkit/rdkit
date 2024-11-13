@@ -33,11 +33,11 @@ SubstructureResults SynthonSpaceSearcher::search() {
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   for (auto &fragSet : fragments) {
-    std::cout << "Next frag set : ";
-    for (const auto &f : fragSet) {
-      std::cout << MolToSmiles(*f) << "  ";
-    }
-    std::cout << std::endl;
+    // std::cout << "Next frag set : ";
+    // for (const auto &f : fragSet) {
+    //   std::cout << MolToSmiles(*f) << "  ";
+    // }
+    // std::cout << std::endl;
     auto theseHits = searchFragSet(fragSet);
     if (!theseHits.empty()) {
       totHits += std::accumulate(

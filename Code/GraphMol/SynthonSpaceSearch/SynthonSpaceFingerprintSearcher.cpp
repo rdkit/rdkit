@@ -20,7 +20,9 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
     SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space) {
+  std::cout << "SynthSpaceFingerprintSearcher c'tor" << std::endl;
   if (!getSpace().hasFingerprints()) {
+    std::cout << "building fingerprints" << std::endl;
     getSpace().buildSynthonFingerprints();
   }
   d_queryFP = std::make_unique<ExplicitBitVect>(
@@ -40,20 +42,21 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
   }
   for (size_t i = 0; i < synthonOrder.size(); i++) {
     const auto &synthonFPs = reaction->getSynthonFPs()[synthonOrder[i]];
-    const auto &synthonsSet = reaction->getSynthons()[synthonOrder[i]];
+    // const auto &synthonsSet = reaction->getSynthons()[synthonOrder[i]];
     bool fragMatched = false;
     for (size_t j = 0; j < synthonFPs.size(); j++) {
       auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
       if (sim >= similarityCutoff) {
-        std::cout << "SIM MATCH :: " << i << " : " << j
-                  << " :: " << synthonsSet[j]->getSmiles() << "  sim = " << sim
-                  << std::endl;
+        // std::cout << "SIM MATCH :: " << i << " : " << j
+        //           << " :: " << synthonsSet[j]->getSmiles() << "  sim = " <<
+        //           sim
+        //           << std::endl;
         synthonsToUse[synthonOrder[i]][j] = true;
         fragMatched = true;
       }
     }
     if (!fragMatched) {
-      std::cout << "No fragMatched" << std::endl;
+      // std::cout << "No fragMatched" << std::endl;
       synthonsToUse.clear();
       return synthonsToUse;
     }
@@ -68,10 +71,10 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet) const {
   std::vector<SynthonSpaceHitSet> results;
-  if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
-    std::cout << "This one" << std::endl;
-  }
-
+  // std::cout << "searchFragSet" << std::endl;
+  // for (const auto &f : fragSet) {
+  //   std::cout << MolToSmiles(*f) << std::endl;
+  // }
   unsigned int otf;
   std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs;
   for (auto &frag : fragSet) {
@@ -144,13 +147,6 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
             getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
             reaction, so);
         if (!theseSynthons.empty()) {
-          if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
-            std::cout << "Got some results" << std::endl;
-            for (const auto &ts : theseSynthons) {
-              std::cout << ts << std::endl;
-            }
-          }
-
           size_t numHits = std::accumulate(
               theseSynthons.begin(), theseSynthons.end(), 1,
               [](int prevRes, const boost::dynamic_bitset<> &s2) {
@@ -159,10 +155,6 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
           if (numHits) {
             results.push_back(
                 SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
-          }
-        } else {
-          if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
-            std::cout << "Not results" << std::endl;
           }
         }
       }

@@ -60,10 +60,12 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                  // fingerprint similarity.  At present the fp
                                  // is hard-coded to be Morgan, bits, radius=2.
   double fragSimilarityAdjuster{
-      0.3};  // Similarities of fragments are generally low
+      0.3};  // Similarities values for fragments are generally low
              // due to low bit densities.  For the fragment
              // matching, reduce the similarity cutoff off
-             // by this amount.
+             // by this amount.  A higher number will give slower search
+             // times, a lower number will give faster searches at the
+             // risk of missing some hits.
 };
 
 // Holds the information about a set of hits.  The molecules can be built
