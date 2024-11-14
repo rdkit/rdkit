@@ -40,9 +40,9 @@ namespace RDKit {
 
 class ChemicalReaction;
 
-enum FingerprintType {
+enum class FingerprintType {
   AtomPairFP = 1,
-  TopologicalTorsion,
+  TopologicalTorsionFP,
   MorganFP,
   RDKitFP,
   PatternFP
@@ -90,7 +90,7 @@ struct RDKIT_CHEMREACTIONS_EXPORT ReactionFingerprintParams {
   unsigned int nonAgentWeight{10};
   int agentWeight{1};
   unsigned int fpSize{2048};
-  FingerprintType fpType{AtomPairFP};
+  FingerprintType fpType{FingerprintType::AtomPairFP};
 };
 
 RDKIT_CHEMREACTIONS_EXPORT extern const ReactionFingerprintParams

@@ -244,7 +244,8 @@ TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
     }
 
     {
-      auto m = "Cl[Pt@SP1]([35Cl])[36Cl]"_smiles;
+      // Cl[Pt@SP1]([35Cl])([36Cl])* => Cl[Pt@SP3](*)([35Cl])[36Cl]
+      auto m = "Cl[Pt@SP3]([35Cl])[36Cl]"_smiles;
       REQUIRE(m);
       CHECK(Chirality::getChiralAcrossAtom(m->getAtomWithIdx(1),
                                            m->getAtomWithIdx(0))
@@ -1018,4 +1019,18 @@ TEST_CASE("No overlapping atoms") {
       }
     }
   }
+}
+
+TEST_CASE("github #8001: RMS pruning misses conformers") {
+  auto mol = "OCCCCCCC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::KDG;
+  ps.randomSeed = 1;
+  ps.pruneRmsThresh = 0.5;
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
+  CHECK(cids.size() == 88);
+  ps.pruneRmsThresh = 1.0;
+  cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
+  CHECK(cids.size() == 4);
 }

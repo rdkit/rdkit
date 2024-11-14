@@ -2339,7 +2339,8 @@ TEST_CASE("getIdealAngle", "[nontetrahedral]") {
         Catch::Matchers::WithinAbs(90, 0.001));
   }
   SECTION("TB1 missing 1") {
-    auto m = "S[As@TB1](F)(Cl)Br"_smiles;
+    // S[As@TB1](F)(Cl)(Br)* => S[As@TB7](*)(F)(Cl)Br
+    auto m = "S[As@TB7](F)(Cl)Br"_smiles;
     REQUIRE(m);
 
     CHECK(Chirality::isTrigonalBipyramidalAxialAtom(m->getAtomWithIdx(1),
@@ -2582,7 +2583,8 @@ TEST_CASE("nontetrahedral StereoInfo", "[nontetrahedral]") {
           std::vector<unsigned int>{0, 2, 3, 4, 5, 6});
   }
   SECTION("OH missing ligand") {
-    auto m = "C[Fe@OH9](F)(Cl)(O)N"_smiles;
+    // C[Fe@OH9](F)(Cl)(O)(N)* => C[Fe@OH4](*)(F)(Cl)(O)N
+    auto m = "C[Fe@OH4](F)(Cl)(O)N"_smiles;
     REQUIRE(m);
     auto sinfo = Chirality::findPotentialStereo(*m);
     REQUIRE(sinfo.size() == 1);
@@ -5964,5 +5966,37 @@ TEST_CASE(
         CHECK(si.size() == 3);
       }
     }
+  }
+}
+
+TEST_CASE(
+    "GitHub Issue #7929: AssignStereochemistry(cleanIt=True) does not clean _CIPCode property on bonds") {
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(true);
+
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+
+  m->getAtomWithIdx(0)->setProp(common_properties::_CIPCode, "X");
+  m->getBondWithIdx(0)->setProp(common_properties::_CIPCode, "X");
+
+  bool clean = true;
+  bool flag = true;
+  bool force = true;
+
+  SECTION("legacy stereo perception") {
+    Chirality::setUseLegacyStereoPerception(true);
+
+    RDKit::MolOps::assignStereochemistry(*m, clean, force, flag);
+
+    CHECK(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
+    CHECK(m->getBondWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
+  }
+  SECTION("new stereo perception") {
+    Chirality::setUseLegacyStereoPerception(false);
+
+    RDKit::MolOps::assignStereochemistry(*m, clean, force, flag);
+
+    CHECK(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
+    CHECK(m->getBondWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
   }
 }

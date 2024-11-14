@@ -1,7 +1,8 @@
-rdkit.ML.KNN.CrossValidate module
+rdkit.Chem.rdShapeAlign module
 =================================
 
-.. automodule:: rdkit.ML.KNN.CrossValidate
+.. automodule:: rdkit.Chem.rdShapeAlign
     :members:
     :undoc-members:
     :show-inheritance:
+

@@ -21,7 +21,5 @@ namespace std {
 
 %include <GraphMol/MolStandardize/MolStandardize.h>
 
-#if defined SWIGJAVA
-%include "enumtypeunsafe.swg"
-#endif
+%include "enums.swg"
 %include <GraphMol/MolStandardize/Pipeline.h>

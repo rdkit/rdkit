@@ -3477,6 +3477,19 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "github #7044: canonicalization error when allenes have specified stereo") {
+  SECTION("basics") {
+    auto m = "CC=C=CC"_smiles;
+    REQUIRE(m);
+    m->getBondWithIdx(2)->setStereoAtoms(1, 4);
+    m->getBondWithIdx(2)->setStereo(Bond::STEREOCIS);
+
+    auto smi = MolToSmiles(*m);
+    CHECK(smi == "CC=C=CC");
+  }
+}
+
+TEST_CASE(
     "Github Issue #7128: ReplaceBond may cause valence issues in specific edge cases",
     "[bug][RWMol]") {
   auto m = R"CTAB(
@@ -3892,13 +3905,16 @@ TEST_CASE("atom output") {
     ss.str("");
   }
   SECTION("chirality 2") {
+    // same as 
+    // C[Pt@SP2]([H])(F)Cl which is stored internally as 
+    // C[Pt@SP3](F)(Cl)[H]
     auto m = "C[Pt@SP2H](F)Cl"_smiles;
     REQUIRE(m);
     std::stringstream ss;
     ss << *m->getAtomWithIdx(1);
     CHECK(
         ss.str() ==
-        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(2) nbrs:[0 2 3]");
+        "1 78 Pt chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2D chi: SqP(3) nbrs:[0 2 3]");
     ss.str("");
   }
 }

@@ -223,7 +223,7 @@ This means that the compilers used to build it cannot be completely ancient. Her
 > for building with XCode4 on OS X there seems to be a problem with the version of numpy that comes with XCode4. Please see below in the (see faq) section for a workaround.
 
 
-###### Installing Boost
+##### Installing Boost
 
 If your linux distribution has a boost-devel package with a version >= 1.58 including the python and serialization libraries, you can use that and save yourself the steps below.
 

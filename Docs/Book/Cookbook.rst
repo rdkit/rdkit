@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_40**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_41**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -103,6 +103,40 @@ indices are now near the atom, rather than at the atom position.
 
 .. image:: images/RDKitCB_0_im2.png
 
+
+Include a Bond Index
+======================
+
+| **Author:** Jeremy Monat
+| **Source:** Direct contribution to Cookbook
+| **Index ID#:** RDKitCB_40
+| **Summary:** Draw a molecule with bond index numbers.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import Draw
+   from rdkit.Chem.Draw import IPythonConsole
+   IPythonConsole.ipython_useSVG=True  #< set this to False if you want PNGs instead of SVGs
+
+.. testcode::
+
+   # Test in a kinase inhibitor
+   mol = Chem.MolFromSmiles("C1CC2=C3C(=CC=C2)C(=CN3C1)[C@H]4[C@@H](C(=O)NC4=O)C5=CNC6=CC=CC=C65")
+   # Default
+   mol
+
+.. image:: images/RDKitCB_40_im0.png
+
+.. testcode::
+
+   # Add bond indices
+   IPythonConsole.drawOptions.addBondIndices = True
+   IPythonConsole.molSize = 350,300
+   mol
+
+.. image:: images/RDKitCB_40_im1.png
+   :scale: 75%
 
 Include a Calculation
 ======================
@@ -1734,7 +1768,7 @@ Molecule Hash Strings
 .. image:: images/RDKitCB_21_im5.png
 
 Contiguous Rotatable Bonds
-=========================
+==========================
 
 | **Author:** Paulo Tosco
 | **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36405144/>`_
