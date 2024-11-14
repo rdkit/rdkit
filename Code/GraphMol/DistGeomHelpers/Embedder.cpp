@@ -1254,7 +1254,7 @@ bool _isConfFarFromRest(
   RDGeom::Point3DConstPtrVect prbPoints(selfMatches[0].size());
   _fillAtomPositions(refPoints, conf, mol, selfMatches[0]);
 
-  double ssrThres = conf.getNumAtoms() * threshold * threshold;
+  double ssrThres = selfMatches[0].size() * threshold * threshold;
   for (const auto &match : selfMatches) {
     for (auto confi = mol.beginConformers(); confi != mol.endConformers();
          ++confi) {
