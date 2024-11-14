@@ -1020,3 +1020,17 @@ TEST_CASE("No overlapping atoms") {
     }
   }
 }
+
+TEST_CASE("github #8001: RMS pruning misses conformers") {
+  auto mol = "OCCCCCCC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::KDG;
+  ps.randomSeed = 1;
+  ps.pruneRmsThresh = 0.5;
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
+  CHECK(cids.size() == 88);
+  ps.pruneRmsThresh = 1.0;
+  cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
+  CHECK(cids.size() == 4);
+}
