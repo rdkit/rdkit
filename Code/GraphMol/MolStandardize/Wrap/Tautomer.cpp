@@ -277,12 +277,14 @@ GetDefaultTautomerSubstructsHelper() {
   }
   return terms;
 }
-
-int ScoreSubstructsHelper(const ROMol &mol) {
-  return MolStandardize::TautomerScoringFunctions::scoreSubstructs(mol);
-}
+  
 
 }  // namespace
+
+// This indicates that the scoreSubstructs takes a minimum of 1 argument and a maximum of 2
+// so we can call it ScoreSubstructs(mol) or ScoreSubstructs(mol, terms)
+BOOST_PYTHON_FUNCTION_OVERLOADS(scoreSubstructs_overloads,
+				RDKit::MolStandardize::TautomerScoringFunctions::scoreSubstructs, 1, 2)
 
 struct tautomer_wrapper {
   static void wrap() {
@@ -543,15 +545,13 @@ struct tautomer_wrapper {
         "SubstructTermVector")
         .def(python::vector_indexing_suite<std::vector<
                  MolStandardize::TautomerScoringFunctions::SubstructTerm>>());
-
+    
     docString = "scores the tautomer substructures";
-    python::def("ScoreSubstructs", ScoreSubstructsHelper, python::arg("mol"),
-                docString.c_str());
+    python::def("ScoreSubstructs", &MolStandardize::TautomerScoringFunctions::scoreSubstructs,
+		scoreSubstructs_overloads((python::arg("mol"), python::arg("terms")),
+					  docString.c_str())
+		);
 
-    docString = "scores the tautomer substructures";
-    python::def("ScoreSubstructs",
-                MolStandardize::TautomerScoringFunctions::scoreSubstructs,
-                (python::arg("mol"), python::arg("terms")), docString.c_str());
 
     python::def("GetDefaultTautomerScoreSubstructs",
                 GetDefaultTautomerSubstructsHelper,
