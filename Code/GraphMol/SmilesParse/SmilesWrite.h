@@ -39,9 +39,12 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesWriteParams {
   bool allBondsExplicit = false; /**< include symbols for all bonds */
   bool allHsExplicit = false;    /**< provide hydrogen counts for every atom */
   bool doRandom = false; /**< randomize the output order. The resulting SMILES
-                            is not canonical */
+                              is not canonical and the value of the canonical
+                              parameter will be ignored. */
   int rootedAtAtom = -1; /**< make sure the SMILES starts at the specified
-                             atom. The resulting SMILES is not canonical */
+                             atom. The resulting SMILES is not canonical and
+                             the value of the canonical parameter will be
+                             ignored. */
   bool includeDativeBonds =
       true; /**< include the RDKit extension for dative bonds. Otherwise dative
                bonds will be written as single bonds*/
