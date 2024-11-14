@@ -9,6 +9,7 @@
 //
 
 #include <GraphMol/MolOps.h>
+#include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -17,6 +18,11 @@
 namespace RDKit::SynthonSpaceSearch {
 
 SubstructureResults SynthonSpaceSearcher::search() {
+  if (d_params.randomSample && d_params.maxHits == -1) {
+    throw std::runtime_error(
+        "Random sample is incompatible with maxHits of -1.");
+  }
+
   if (d_params.randomSample) {
     if (!d_randGen) {
       std::random_device rd;
@@ -125,11 +131,18 @@ void SynthonSpaceSearcher::buildHits(
   if (hitsets.empty()) {
     return;
   }
+  std::cout << "Upper bound on hits : " << totHits << std::endl;
+  if (d_params.randomSample) {
+    buildRandomHits(hitsets, totHits, resultsNames, results);
+  } else {
+    buildAllHits(hitsets, resultsNames, results);
+  }
+}
 
-  std::uniform_real_distribution<double> dist(0.0, 1.0);
-  const double randDiscrim =
-      static_cast<double>(d_params.maxHits) / static_cast<double>(totHits);
-
+void SynthonSpaceSearcher::buildAllHits(
+    const std::vector<SynthonSpaceHitSet> &hitsets,
+    std::set<std::string> &resultsNames,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
   for (const auto &hitset : hitsets) {
     const auto &synthonsToUse = hitset.synthonsToUse;
     auto synthons = getSynthonsToUse(synthonsToUse, hitset.reactionId);
@@ -156,37 +169,34 @@ void SynthonSpaceSearcher::buildHits(
             "_" + synthons[i][stepper.d_currState[i]]->getProp<std::string>(
                       common_properties::_Name);
       }
-      if (!d_params.randomSample || d_params.maxHits == -1 ||
-          (d_params.randomSample && dist(*d_randGen) < randDiscrim)) {
-        if (resultsNames.insert(combName).second) {
-          if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
-            continue;
-          }
-          auto combMol = std::make_unique<ROMol>(
-              ROMol(*synthons[0][stepper.d_currState[0]]));
-          for (size_t i = 1; i < numReactions; ++i) {
-            combMol.reset(
-                combineMols(*combMol, *synthons[i][stepper.d_currState[i]]));
-          }
-          auto prod = molzip(*combMol, mzparams);
-          MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
-          // Do a final check of the whole thing.  It can happen that the
-          // fragments match synthons but the final product doesn't match, and
-          // a key example is when the 2 synthons come together to form an
-          // aromatic ring.  For substructure searching, an aliphatic query
-          // can match the aliphatic synthon so they are selected as a hit,
-          // but the final aromatic ring isn't a match.
-          // E.g. Cc1cccc(C(=O)N[1*])c1N=[2*] and c1ccoc1C(=[2*])[1*]
-          // making Cc1cccc2c(=O)[nH]c(-c3ccco3)nc12.  The query c1ccc(CN)o1
-          // when split is a match to the synthons (c1ccc(C[1*])o1 and [1*]N)
-          // but the product the hydroxyquinazoline is aromatic, at least in
-          // the RDKit model so the N in the query doesn't match.
-          if (!verifyHit(*prod)) {
-            continue;
-          }
-          prod->setProp<std::string>(common_properties::_Name, combName);
-          results.push_back(std::move(prod));
+      if (resultsNames.insert(combName).second) {
+        if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
+          continue;
         }
+        auto combMol = std::make_unique<ROMol>(
+            ROMol(*synthons[0][stepper.d_currState[0]]));
+        for (size_t i = 1; i < numReactions; ++i) {
+          combMol.reset(
+              combineMols(*combMol, *synthons[i][stepper.d_currState[i]]));
+        }
+        auto prod = molzip(*combMol, mzparams);
+        MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
+        // Do a final check of the whole thing.  It can happen that the
+        // fragments match synthons but the final product doesn't match.
+        // A key example is when the 2 synthons come together to form an
+        // aromatic ring.  For substructure searching, an aliphatic query
+        // can match the aliphatic synthon so they are selected as a hit,
+        // but the final aromatic ring isn't a match.
+        // E.g. Cc1cccc(C(=O)N[1*])c1N=[2*] and c1ccoc1C(=[2*])[1*]
+        // making Cc1cccc2c(=O)[nH]c(-c3ccco3)nc12.  The query c1ccc(CN)o1
+        // when split is a match to the synthons (c1ccc(C[1*])o1 and [1*]N)
+        // but the product the hydroxyquinazoline is aromatic, at least in
+        // the RDKit model so the N in the query doesn't match.
+        if (!verifyHit(*prod)) {
+          continue;
+        }
+        prod->setProp<std::string>(common_properties::_Name, combName);
+        results.push_back(std::move(prod));
       }
       if (results.size() == static_cast<size_t>(d_params.maxHits)) {
         return;
@@ -194,6 +204,113 @@ void SynthonSpaceSearcher::buildHits(
       stepper.step();
     }
   }
+}
+
+namespace {
+struct RandomHitSelector {
+  RandomHitSelector(const std::vector<SynthonSpaceHitSet> &hitsets,
+                    const SynthonSpace &space)
+      : d_hitsets(hitsets), d_synthSpace(space) {
+    d_hitSetSel = std::uniform_int_distribution<size_t>(0, hitsets.size() - 1);
+    d_synthons.resize(hitsets.size());
+    d_synthSels.resize(hitsets.size());
+    for (size_t hi = 0; hi < hitsets.size(); ++hi) {
+      const SynthonSpaceHitSet &hs = hitsets[hi];
+      d_synthons[hi] =
+          std::vector<std::vector<size_t>>(hs.synthonsToUse.size());
+      d_synthSels[hi] = std::vector<std::uniform_int_distribution<size_t>>(
+          hs.synthonsToUse.size());
+      d_synthons[hi].resize(hs.synthonsToUse.size());
+      for (size_t i = 0; i < hs.synthonsToUse.size(); ++i) {
+        d_synthons[hi][i].reserve(hs.synthonsToUse[i].count());
+        d_synthSels[hi][i] = std::uniform_int_distribution<size_t>(
+            0, hs.synthonsToUse[i].count() - 1);
+        for (size_t j = 0; j < hs.synthonsToUse[i].size(); ++j) {
+          if (hs.synthonsToUse[i][j]) {
+            d_synthons[hi][i].push_back(j);
+          }
+        }
+      }
+    }
+  }
+
+  std::pair<std::string, std::vector<ROMol *>> selectSynthComb(
+      std::mt19937 &randGen) {
+    std::vector<ROMol *> combs;
+    size_t hitSetNum = d_hitSetSel(randGen);
+    const auto &reaction = d_synthSpace.getReactions()
+                               .find(d_hitsets[hitSetNum].reactionId)
+                               ->second;
+    for (size_t i = 0; i < d_hitsets[hitSetNum].synthonsToUse.size(); ++i) {
+      size_t synthNum = d_synthSels[hitSetNum][i](randGen);
+      combs.push_back(
+          reaction->getSynthon(i, d_synthons[hitSetNum][i][synthNum]));
+    }
+    return std::make_pair(d_hitsets[hitSetNum].reactionId, combs);
+  }
+
+  const std::vector<SynthonSpaceHitSet> &d_hitsets;
+  const SynthonSpace &d_synthSpace;
+
+  std::uniform_int_distribution<size_t> d_hitSetSel;
+  std::vector<std::vector<std::vector<size_t>>> d_synthons;
+  std::vector<std::vector<std::uniform_int_distribution<size_t>>> d_synthSels;
+};
+}  // namespace
+
+void SynthonSpaceSearcher::buildRandomHits(
+    const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
+    std::set<std::string> &resultsNames,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
+  if (hitsets.empty()) {
+    return;
+  }
+  // for (size_t j = 0; j < hitsets.size(); ++j) {
+  //   const auto &s = hitsets[j];
+  //   std::cout << "Hitset " << j << " :: " << s.reactionId << " : " <<
+  //   s.numHits
+  //             << std::endl;
+  //   for (size_t i = 0; i < s.synthonsToUse.size(); ++i) {
+  //     std::cout << s.synthonsToUse[i].size() << " : "
+  //               << s.synthonsToUse[i].count() << " : " << s.synthonsToUse[i]
+  //               << std::endl;
+  //   }
+  // }
+  auto rhs = RandomHitSelector(hitsets, d_space);
+  MolzipParams mzparams;
+  mzparams.label = MolzipLabel::Isotope;
+
+  uint64_t numFails = 0;
+  while (results.size() <
+             std::min(static_cast<const std::uint64_t>(d_params.maxHits),
+                      static_cast<std::uint64_t>(totHits)) &&
+         numFails < totHits) {
+    const auto &combMols = rhs.selectSynthComb(*d_randGen);
+    std::string combName = combMols.first;
+    for (const auto &mol : combMols.second) {
+      combName += "_" + mol->getProp<std::string>("_Name");
+    }
+    if (resultsNames.insert(combName).second) {
+      if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
+        numFails++;
+        continue;
+      }
+    }
+    auto combMol = std::make_unique<ROMol>();
+
+    for (const auto &mol : combMols.second) {
+      combMol.reset(combineMols(*combMol, *mol));
+    }
+    auto prod = molzip(*combMol, mzparams);
+    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
+    if (!verifyHit(*prod)) {
+      numFails++;
+      continue;
+    }
+    prod->setProp<std::string>(common_properties::_Name, combName);
+    results.push_back(std::move(prod));
+  }
+  std::cout << "numFails: " << numFails << std::endl;
 }
 
 std::vector<std::vector<ROMol *>> SynthonSpaceSearcher::getSynthonsToUse(

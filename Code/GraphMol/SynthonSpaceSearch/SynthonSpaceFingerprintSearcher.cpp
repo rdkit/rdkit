@@ -20,9 +20,7 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
     SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space) {
-  std::cout << "SynthSpaceFingerprintSearcher c'tor" << std::endl;
   if (!getSpace().hasFingerprints()) {
-    std::cout << "building fingerprints" << std::endl;
     getSpace().buildSynthonFingerprints();
   }
   d_queryFP = std::make_unique<ExplicitBitVect>(
@@ -92,9 +90,6 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
 
   for (auto &it : getSpace().getReactions()) {
     auto &reaction = it.second;
-    if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
-      std::cout << "reaction " << reaction->getId() << std::endl;
-    }
 
     // It can't be a hit if the number of fragments is more than the number
     // of synthon sets because some of the molecule won't be matched in any
@@ -108,14 +103,6 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     auto synthonOrders =
         details::permMFromN(fragSet.size(), reaction->getSynthons().size());
     for (const auto &so : synthonOrders) {
-      if (MolToSmiles(*fragSet[0]) == "[1*]C(=O)c1ccccc1") {
-        std::cout << "Synth orders ";
-        for (auto s : so) {
-          std::cout << s << " ";
-        }
-        std::cout << std::endl;
-      }
-
       // Get all the possible permutations of connector numbers compatible with
       // the number of synthon sets in this reaction.  So if the
       // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets

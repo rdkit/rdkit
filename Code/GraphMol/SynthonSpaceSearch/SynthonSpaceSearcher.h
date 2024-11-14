@@ -70,6 +70,12 @@ class SynthonSpaceSearcher {
   void buildHits(const std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
                  std::set<std::string> &resultsNames,
                  std::vector<std::unique_ptr<ROMol>> &results) const;
+  void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
+                    std::set<std::string> &resultsNames,
+                    std::vector<std::unique_ptr<ROMol>> &results) const;
+  void buildRandomHits(const std::vector<SynthonSpaceHitSet> &hitsets,
+                       size_t totHits, std::set<std::string> &resultsNames,
+                       std::vector<std::unique_ptr<ROMol>> &results) const;
 
   // get the subset of synthons for the given reaction to use for this
   // enumeration.

@@ -289,6 +289,13 @@ std::vector<std::vector<ROMol *>> SynthonSet::getSynthons(
   return synthons;
 }
 
+ROMol *SynthonSet::getSynthon(size_t synthSetNum, size_t synthNum) const {
+  PRECONDITION(synthSetNum < d_synthons.size(), "wrong synthset number");
+  PRECONDITION(synthNum < d_synthons[synthSetNum].size(),
+               "wrong synthon number");
+  return d_synthons[synthSetNum][synthNum]->getMol().get();
+}
+
 void SynthonSet::tagSynthonAtomsAndBonds() {
   for (size_t i = 0; i < d_synthons.size(); ++i) {
     for (auto &syn : d_synthons[i]) {
