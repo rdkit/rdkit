@@ -23,6 +23,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/test_fixtures.h>
 
 #include <string>
 #include <fstream>
@@ -54,6 +55,23 @@ class MolAtropTest {
         : atomCount(atomCountInit),
           bondCount(bondCountInit),
           fileName(fileNameInit),
+          expectedResult(expectedResultInit) {};
+  };
+
+  class KekuleTest {
+   public:
+    unsigned int atomCount;
+    unsigned int bondCount;
+    std::string smiles;
+    std::string expectedOutput;
+    bool expectedResult;
+
+    KekuleTest(std::string smilesInit, std::string nameInit,
+               bool expectedResultInit, int atomCountInit, int bondCountInit)
+        : atomCount(atomCountInit),
+          bondCount(bondCountInit),
+          smiles(smilesInit),
+          expectedOutput(nameInit),
           expectedResult(expectedResultInit) {};
   };
 
@@ -155,6 +173,86 @@ class MolAtropTest {
     TEST_ASSERT(molFileTest->expectedResult == true);
 
     return;
+  }
+
+  void testKekuleWedgeError(RWMol *mol, std::string expectedSmi,
+                            bool expectedResult, unsigned int expectedAtomCount,
+                            unsigned int expectedBondCount) {
+    BOOST_LOG(rdInfoLog) << "testing aromatic atropisomers" << std::endl;
+
+    TEST_ASSERT(mol != nullptr);
+    TEST_ASSERT(mol->getNumAtoms() == expectedAtomCount)
+    TEST_ASSERT(mol->getNumBonds() == expectedBondCount)
+
+    try {
+      SmilesWriteParams ps;
+      ps.canonical = true;
+      ps.doKekule = true;
+      ps.allBondsExplicit = false;
+      ps.allHsExplicit = false;
+      ps.doIsomericSmiles = true;
+      ps.doRandom = false;
+      ps.rootedAtAtom = -1;
+
+      unsigned int flags = SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                           SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
+                           SmilesWrite::CXSmilesFields::CX_BOND_CFG |
+                           SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
+
+      std::string smilesOut =
+          MolToCXSmiles(*mol, ps, flags, RestoreBondDirOptionClear);
+      TEST_ASSERT(expectedSmi == smilesOut);
+
+    } catch (const std::exception &e) {
+      if (expectedResult != false) {
+        throw;
+      }
+      return;
+    }
+    TEST_ASSERT(expectedResult == true);
+
+    return;
+  }
+
+  void testKekuleWedgeErrorSmiles(const KekuleTest *kekuleTest) {
+    BOOST_LOG(rdInfoLog) << "testing aromatic atropisomers" << std::endl;
+
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+
+    RDKit::SmilesParserParams params;
+    params.allowCXSMILES = true;    // recognize and parse CXSMILES
+    params.debugParse = false;      // disable debugging in the SMILES parser
+    params.parseName = true;        // parse (and set) the molecule name as well
+    params.removeHs = false;        // do not remove Hs
+    params.replacements = nullptr;  // no SMILES "macros"
+    params.sanitize = true;         // do not sanitize the molecule
+    params.skipCleanup =
+        false;  // do not skip the final cleanup stage (for internal RDKit use)
+    params.strictCXSMILES =
+        false;  // do not throw an exception if the CXSMILES parsing fails
+
+    std::unique_ptr<RWMol> mol =
+        std::unique_ptr<RWMol>(SmilesToMol(kekuleTest->smiles, params));
+
+    testKekuleWedgeError(mol.get(), kekuleTest->expectedOutput,
+                         kekuleTest->expectedResult, kekuleTest->atomCount,
+                         kekuleTest->bondCount);
+  }
+
+  void testKekuleWedgeErrorMol(const MolTest *kekuleTest) {
+    BOOST_LOG(rdInfoLog) << "testing aromatic atropisomers" << std::endl;
+
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase +
+                        "/Code/GraphMol/FileParsers/test_data/atropisomers/" +
+                        kekuleTest->fileName;
+
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName, true, false, false));
+
+    testKekuleWedgeError(mol.get(), GetExpectedValue(fName + ".expected.cxsmi"),
+                         kekuleTest->expectedResult, kekuleTest->atomCount,
+                         kekuleTest->bondCount);
   }
 
   void RunTests() {
@@ -280,6 +378,40 @@ class MolAtropTest {
         BOOST_LOG(rdInfoLog) << "Test: " << sdfTest.fileName << std::endl;
 
         testMolFiles(&sdfTest);
+      }
+    }
+
+    if (testToRun == "" || testToRun == "KekuleWedgeError") {
+      std::list<KekuleTest> kekuleTests{
+          KekuleTest(
+              "CC1C(C2C(Cl)=CC=CC=2C)=C(Cl)C=CC=1 |wU:3.3,(17.57,-4.18,;17.57,-5.18,;16.71,-5.67,;15.84,-5.18,;15.84,-4.18,;16.71,-3.67,;14.98,-3.67,;14.11,-4.18,;14.11,-5.18,;14.98,-5.67,;14.98,-6.67,;16.71,-6.67,;15.84,-7.18,;17.57,-7.18,;18.44,-6.67,;18.44,-5.67,)|",
+              "CC1=C(C2=C(C)C=CC=C2Cl)C(Cl)=CC=C1 |wU:2.11|", true, 16, 17),
+          KekuleTest("CC1C(C2C(Cl)=CC=CC=2C)=C(Cl)C=CC=1 |wD:3.3|",
+                     "CC1=C(C2=C(C)C=CC=C2Cl)C(Cl)=CC=C1 |wU:2.11|", true, 16,
+                     17),
+          KekuleTest(
+              "CC1C=CC(O)=C(C)C=1N1C2C(=NC=CC=2OC2C=NC=CC=2)C(C(=O)N)=C1N |wD:8.7|",
+              "CC1=C(O)C=CC(C)=C1N1C(N)=C(C(N)=O)C2=NC=CC(OC3=CN=CC=C3)=C21 |wD:9.10|",
+              true, 29, 32),
+      };
+
+      for (auto kekuleTest : kekuleTests) {
+        BOOST_LOG(rdInfoLog) << "Test: " << kekuleTest.smiles << std::endl;
+
+        testKekuleWedgeErrorSmiles(&kekuleTest);
+      }
+    }
+
+    if (testToRun == "" || testToRun == "KekuleWedgeErrorMol") {
+      std::list<MolTest> kekuleTests{
+          MolTest("atropWedgeError2.mol", true, 16, 17),
+          MolTest("atropWedgeError.mol", true, 29, 32),
+      };
+
+      for (auto kekuleTest : kekuleTests) {
+        BOOST_LOG(rdInfoLog) << "Test: " << kekuleTest.fileName << std::endl;
+
+        testKekuleWedgeErrorMol(&kekuleTest);
       }
     }
   }
