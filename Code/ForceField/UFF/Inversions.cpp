@@ -60,8 +60,11 @@ double InversionContribs::getEnergy(double *pos) const {
     try {
       cosY = Utils::calculateCosY(p1, p2, p3, p4);
     } catch (const std::runtime_error &) {
-      // There's at least one overlap, return a huge value
-      return std::numeric_limits<double>::max();
+      // There's at least one overlap, return the maximum energy
+      // value we can calculate so this conformation is disfavored
+      accum += contrib.forceConstant *
+               (contrib.C0 + std::fabs(contrib.C1) + std::fabs(contrib.C2));
+      continue;
     }
 
     const double sinYSq = 1.0 - cosY * cosY;
