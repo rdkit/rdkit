@@ -35,8 +35,55 @@ typedef RDCatalog::HierarchCatalog<TautomerCatalogEntry, TautomerCatalogParams,
 namespace TautomerScoringFunctions {
 const std::string tautomerScoringVersion = "1.0.0";
 
+//! The SubstructTerm controls how Tautomers are generated
+///   Each Term is defined by a name, smarts pattern and score
+///   For example, the C=O term is defined as
+///    SubstructTerm("C=O", "[#6]=,:[#8]", 2)
+///   This gets a score of +2 for each Carbon doubly or aromatically
+///   Bonded to an Oxygen.
+///   For a list of current definitions, see getDefaultTautomerScoreSubstructs
+struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
+  std::string name;
+  std::string smarts;
+  int score;
+  RWMol matcher;  // requires assignment
+
+  SubstructTerm(std::string aname, std::string asmarts, int ascore);
+  SubstructTerm(const SubstructTerm &rhs) = default;
+
+  bool operator==(const SubstructTerm &rhs) const {
+    return name == rhs.name && smarts == rhs.smarts && score == rhs.score;
+  }
+};
+
+//! getDefaultTautomerSubstructs returns the SubstructTerms used in scoring
+/// tautomer forms.  See SubstructTerm for details.
+RDKIT_MOLSTANDARDIZE_EXPORT const std::vector<SubstructTerm>
+    &getDefaultTautomerScoreSubstructs();
+
+//! Score the rings of the current tautomer
+/// Aromatic rings score 100, all carbon aromatic rings score 250
+/*!
+  \param mol Molcule to score
+  \returns integer score for the molecule's rings
+*/
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreRings(const ROMol &mol);
-RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(const ROMol &mol);
+
+//! scoreSubstructs scores the molecule based on the substructure definitions
+/*!
+  \param mol Molecule to score
+  \param terms Substruct Terms used for scoring this particular tautomer form
+  \returns integer score for the molecule's substructure terms
+*/
+RDKIT_MOLSTANDARDIZE_EXPORT int scoreSubstructs(
+    const ROMol &mol, const std::vector<SubstructTerm> &terms =
+                          getDefaultTautomerScoreSubstructs());
+//! scoreHeteroHs score the molecules hydrogens
+/// This gives a negative penalty to hydrogens attached to S,P, Se and Te
+/*!
+  \param mol Molecule to score
+  \returns integer score for the molecule hetero hydrogens
+*/
 RDKIT_MOLSTANDARDIZE_EXPORT int scoreHeteroHs(const ROMol &mol);
 
 inline int scoreTautomer(const ROMol &mol) {
