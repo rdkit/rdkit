@@ -58,7 +58,8 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
 
 bool atomHasFourthValence(const Atom *atom) {
   if (atom->getNumExplicitHs() == 1 ||
-      (!atom->needsUpdatePropertyCache() && atom->getValence(false) == 1)) {
+      (!atom->needsUpdatePropertyCache() &&
+       atom->getValence(Atom::ValenceType::IMPLICIT) == 1)) {
     return true;
   }
   if (atom->hasQuery()) {

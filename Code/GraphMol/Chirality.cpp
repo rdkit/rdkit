@@ -1756,8 +1756,9 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
           // (this is from InChI)
           legalCenter = true;
         } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
-          if (atom->getValence(true) == 4 ||
-              (atom->getValence(true) == 3 && atom->getFormalCharge() == 1)) {
+          if (atom->getValence(Atom::ValenceType::EXPLICIT) == 4 ||
+              (atom->getValence(Atom::ValenceType::EXPLICIT) == 3 &&
+               atom->getFormalCharge() == 1)) {
             // we also accept sulfur or selenium with either a positive charge
             // or a double bond:
             legalCenter = true;

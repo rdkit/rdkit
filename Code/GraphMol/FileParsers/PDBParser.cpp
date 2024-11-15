@@ -539,7 +539,7 @@ void BasicPDBCleanup(RWMol &mol) {
     // correct four-valent neutral N -> N+
     // This was github #1029
     if (atom->getAtomicNum() == 7 && atom->getFormalCharge() == 0 &&
-        atom->getValence(true) == 4) {
+        atom->getValence(Atom::ValenceType::EXPLICIT) == 4) {
       atom->setFormalCharge(1);
     }
     ++atBegin;

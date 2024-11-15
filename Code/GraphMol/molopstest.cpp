@@ -2544,7 +2544,8 @@ void testHsAndAromaticity() {
   TEST_ASSERT(mol);
   // std::cerr << mol->getAtomWithIdx(0)->getHybridization() << std::endl;
   TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization() == Atom::SP3);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getValence(false) == 0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) ==
+              0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs() == 0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
   TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
@@ -4087,8 +4088,10 @@ void testSFNetIssue3480481() {
     RWMol *m = MolFileToMol(pathName + "Issue3480481.mol");
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(true) == 4);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(false) == 0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) ==
+                4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) ==
+                0);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == -1);
     delete m;
   }

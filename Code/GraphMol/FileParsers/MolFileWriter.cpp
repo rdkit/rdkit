@@ -547,7 +547,7 @@ bool hasNonDefaultValence(const Atom *atom) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
     return atom->getNoImplicit() &&
-           (static_cast<int>(atom->getValence(true)) !=
+           (static_cast<int>(atom->getValence(Atom::ValenceType::EXPLICIT)) !=
             PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
   }
   return true;
@@ -1225,7 +1225,11 @@ std::string getV3000CTAB(const ROMol &tmol,
   return res;
 }
 }  // namespace FileParserUtils
-enum class MolFileFormat { V2000, V3000, unspecified };
+enum class MolFileFormat {
+  V2000,
+  V3000,
+  unspecified
+};
 
 //------------------------------------------------
 //

@@ -3094,14 +3094,17 @@ void ProcessMolProps(RWMol *mol) {
       ) {
         atom->setNumExplicitHs(0);
       } else {
-        if (static_cast<int>(atom->getValence(true)) > ival) {
+        if (static_cast<int>(atom->getValence(Atom::ValenceType::EXPLICIT)) >
+            ival) {
           BOOST_LOG(rdWarningLog)
               << "atom " << atom->getIdx() << " has specified valence (" << ival
-              << ") smaller than the drawn valence " << atom->getValence(true)
-              << "." << std::endl;
+              << ") smaller than the drawn valence "
+              << atom->getValence(Atom::ValenceType::EXPLICIT) << "."
+              << std::endl;
           atom->setNumExplicitHs(0);
         } else {
-          atom->setNumExplicitHs(ival - atom->getValence(true));
+          atom->setNumExplicitHs(ival -
+                                 atom->getValence(Atom::ValenceType::EXPLICIT));
         }
       }
     }

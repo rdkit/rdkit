@@ -110,6 +110,11 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     CHI_OCTAHEDRAL            //!< octahedral, use permutation flag
   } ChiralType;
 
+  enum class ValenceType : std::uint8_t {
+    IMPLICIT = 0,
+    EXPLICIT
+  };
+
   Atom();
   //! construct an Atom with a particular atomic number
   explicit Atom(unsigned int num);
@@ -182,7 +187,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   unsigned int getNumImplicitHs() const;
 
   //! returns the valence (explicit or implicit) of this atom
-  unsigned int getValence(bool getExplicit) const;
+  unsigned int getValence(ValenceType which) const;
 
   //! returns the explicit valence (including Hs) of this atom
   [[deprecated("please use getValence(true)")]]

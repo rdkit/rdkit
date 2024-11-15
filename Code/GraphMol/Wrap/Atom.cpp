@@ -141,12 +141,12 @@ AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
 
 namespace {
 int getExplicitValenceHelper(const Atom *atom) {
-  RDLog::deprecationWarning("please use GetValence(getExplicit=True)");
-  return atom->getValence(true);
+  RDLog::deprecationWarning("please use GetValence(which=)");
+  return atom->getValence(Atom::ValenceType::EXPLICIT);
 };
 int getImplicitValenceHelper(const Atom *atom) {
   RDLog::deprecationWarning("please use GetValence(getExplicit=False)");
-  return atom->getValence(false);
+  return atom->getValence(Atom::ValenceType::IMPLICIT);
 };
 }  // namespace
 
@@ -217,13 +217,13 @@ struct atom_wrapper {
         .def(
             "GetExplicitValence", &getExplicitValenceHelper,
             python::args("self"),
-            "DEPRECATED, please use GetValence(True) instead.\nReturns the explicit valence of the atom.\n")
+            "DEPRECATED, please use getValence(Atom::ValenceType::EXPLICIT) instead.\nReturns the explicit valence of the atom.\n")
         .def(
             "GetImplicitValence", &getImplicitValenceHelper,
             python::args("self"),
-            "DEPRECATED, please use GetValence(False) instead.\nReturns the number of implicit Hs on the atom.\n")
+            "DEPRECATED, please use getValence(Atom::ValenceType::IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
         .def("GetValence", &Atom::getValence,
-             (python::args("self"), python::args("getExplicit")),
+             (python::args("self"), python::args("which")),
              "Returns the valence (explicit or implicit) of the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
@@ -499,14 +499,17 @@ struct atom_wrapper {
         .value("CHI_TRIGONALBIPYRAMIDAL", Atom::CHI_TRIGONALBIPYRAMIDAL)
         .value("CHI_OCTAHEDRAL", Atom::CHI_OCTAHEDRAL)
         .export_values();
-    ;
+
+    python::enum_<Atom::ValenceType>("ValenceType")
+        .value("IMPLICIT", Atom::ValenceType::IMPLICIT)
+        .value("EXPLICIT", Atom::ValenceType::EXPLICIT)
+        .export_values();
 
     python::enum_<Queries::CompositeQueryType>("CompositeQueryType")
         .value("COMPOSITE_AND", Queries::COMPOSITE_AND)
         .value("COMPOSITE_OR", Queries::COMPOSITE_OR)
         .value("COMPOSITE_XOR", Queries::COMPOSITE_XOR)
         .export_values();
-    ;
 
     atomClassDoc =
         "The class to store QueryAtoms.\n\

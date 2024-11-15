@@ -270,10 +270,7 @@ std::string Atom::getSymbol() const {
 }
 
 unsigned int Atom::getDegree() const {
-  if (!dp_mol) {
-    return 0;
-  }
-  return dp_mol->getAtomDegree(this);
+  return dp_mol ? getOwningMol().getAtomDegree(this) : 0;
 }
 
 unsigned int Atom::getTotalDegree() const {
@@ -304,22 +301,29 @@ unsigned int Atom::getNumImplicitHs() const {
   PRECONDITION(d_implicitValence > -1,
                "getNumImplicitHs() called without preceding call to "
                "calcImplicitValence()");
-  return getValence(false);
+  return getValence(ValenceType::IMPLICIT);
 }
 
-int Atom::getExplicitValence() const { return getValence(true); }
+int Atom::getExplicitValence() const {
+  return getValence(ValenceType::EXPLICIT);
+}
 
-int Atom::getImplicitValence() const { return getValence(false); }
+int Atom::getImplicitValence() const {
+  return getValence(ValenceType::IMPLICIT);
+}
 
-unsigned int Atom::getValence(bool getExplicit) const {
+unsigned int Atom::getValence(ValenceType which) const {
   if (!dp_mol) {
     return 0;
   }
-  PRECONDITION((!getExplicit || d_explicitValence > -1),
-               "getValence(true) called without call to calcExplicitValence()");
-  PRECONDITION((getExplicit || df_noImplicit || d_implicitValence > -1),
-               "getValence(false) called without call to calcImplicitValence()");
-  if (getExplicit) {
+  PRECONDITION(
+      (which == ValenceType::IMPLICIT || d_explicitValence > -1),
+      "getValence(ValenceType::EXPLICIT) called without call to calcExplicitValence()");
+  PRECONDITION(
+      (which == ValenceType::EXPLICIT || df_noImplicit ||
+       d_implicitValence > -1),
+      "getValence(ValenceType::IMPLICIT) called without call to calcImplicitValence()");
+  if (which == ValenceType::EXPLICIT) {
     return d_explicitValence;
   } else {
     return df_noImplicit ? 0 : d_implicitValence;
@@ -327,7 +331,7 @@ unsigned int Atom::getValence(bool getExplicit) const {
 }
 
 unsigned int Atom::getTotalValence() const {
-  return getValence(true) + getValence(false);
+  return getValence(ValenceType::EXPLICIT) + getValence(ValenceType::IMPLICIT);
 }
 
 namespace {
@@ -926,7 +930,8 @@ unsigned int numPiElectrons(const Atom &atom) {
   if (atom.getIsAromatic()) {
     res = 1;
   } else if (atom.getHybridization() != Atom::SP3) {
-    auto val = static_cast<unsigned int>(atom.getValence(true));
+    auto val =
+        static_cast<unsigned int>(atom.getValence(Atom::ValenceType::EXPLICIT));
     unsigned int physical_bonds = atom.getNumExplicitHs();
     const auto &mol = atom.getOwningMol();
     for (const auto bond : mol.atomBonds(&atom)) {
