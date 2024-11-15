@@ -12,7 +12,6 @@
 #include "Utils.h"
 #include "Params.h"
 #include <cmath>
-#include <limits>
 #include <ForceField/ForceField.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/utils.h>
@@ -58,15 +57,7 @@ double InversionContrib::getEnergy(double *pos) const {
   RDGeom::Point3D p4(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
                      pos[3 * d_at4Idx + 2]);
 
-  double cosY = 0.;
-  try {
-    cosY = Utils::calculateCosY(p1, p2, p3, p4);
-  } catch (const std::runtime_error &) {
-    // There's at least one overlap, return the maximum energy
-    // value we can calculate so this conformation is disfavored
-    return d_forceConstant * (d_C0 + std::fabs(d_C1) + std::fabs(d_C2));
-  }
-
+  double cosY = Utils::calculateCosY(p1, p2, p3, p4);
   double sinYSq = 1.0 - cosY * cosY;
   double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
   // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1

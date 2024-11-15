@@ -55,18 +55,7 @@ double InversionContribs::getEnergy(double *pos) const {
                              pos[3 * contrib.idx3 + 2]);
     const RDGeom::Point3D p4(pos[3 * contrib.idx4], pos[3 * contrib.idx4 + 1],
                              pos[3 * contrib.idx4 + 2]);
-
-    double cosY = 0.;
-    try {
-      cosY = Utils::calculateCosY(p1, p2, p3, p4);
-    } catch (const std::runtime_error &) {
-      // There's at least one overlap, return the maximum energy
-      // value we can calculate so this conformation is disfavored
-      accum += contrib.forceConstant *
-               (contrib.C0 + std::fabs(contrib.C1) + std::fabs(contrib.C2));
-      continue;
-    }
-
+    const double cosY = Utils::calculateCosY(p1, p2, p3, p4);
     const double sinYSq = 1.0 - cosY * cosY;
     const double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
     // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
