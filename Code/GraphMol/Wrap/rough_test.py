@@ -272,6 +272,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue([x.GetNumImplicitHs() for x in aList] == [0, 1, 2, 0])
     self.assertTrue([x.GetValence(getExplicit=True) for x in aList] == [3, 3, 2, 3])
     self.assertTrue([x.GetValence(getExplicit=False) for x in aList] == [0, 1, 2, 0])
+    self.assertTrue([x.GetValence(True) for x in aList] == [3, 3, 2, 3])
+    self.assertTrue([x.GetValence(False) for x in aList] == [0, 1, 2, 0])
     self.assertTrue([x.GetFormalCharge() for x in aList] == [0, 0, 0, -1])
     self.assertTrue([x.GetNoImplicit() for x in aList] == [0, 0, 0, 1])
     self.assertTrue([x.GetNumExplicitHs() for x in aList] == [0, 0, 0, 2])

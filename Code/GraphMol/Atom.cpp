@@ -273,7 +273,7 @@ unsigned int Atom::getDegree() const {
   if (!dp_mol) {
     return 0;
   }
-  return getOwningMol().getAtomDegree(this);
+  return dp_mol->getAtomDegree(this);
 }
 
 unsigned int Atom::getTotalDegree() const {
@@ -288,11 +288,10 @@ unsigned int Atom::getTotalDegree() const {
 unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
   int res = getNumExplicitHs() + getNumImplicitHs();
   if (includeNeighbors && dp_mol) {
-    for (auto nbr : getOwningMol().atomNeighbors(this)) {
-      if (nbr->getAtomicNum() == 1) {
-        ++res;
-      }
-    }
+    auto nbrs = dp_mol->atomNeighbors(this);
+    res += std::count_if(nbrs.begin(), nbrs.end(), [](const auto nbr) {
+      return (nbr->getAtomicNum() == 1);
+    });
   }
   return res;
 }
@@ -317,9 +316,9 @@ unsigned int Atom::getValence(bool getExplicit) const {
     return 0;
   }
   PRECONDITION((!getExplicit || d_explicitValence > -1),
-               "getValence() called without call to calcExplicitValence()");
+               "getValence(true) called without call to calcExplicitValence()");
   PRECONDITION((getExplicit || df_noImplicit || d_implicitValence > -1),
-               "getValence() called without call to calcImplicitValence()");
+               "getValence(false) called without call to calcImplicitValence()");
   if (getExplicit) {
     return d_explicitValence;
   } else {
