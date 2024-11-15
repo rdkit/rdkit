@@ -55,7 +55,15 @@ double InversionContribs::getEnergy(double *pos) const {
                              pos[3 * contrib.idx3 + 2]);
     const RDGeom::Point3D p4(pos[3 * contrib.idx4], pos[3 * contrib.idx4 + 1],
                              pos[3 * contrib.idx4 + 2]);
-    const double cosY = Utils::calculateCosY(p1, p2, p3, p4);
+
+    double cosY = 0.;
+    try {
+      cosY = Utils::calculateCosY(p1, p2, p3, p4);
+    } catch (const std::runtime_error &) {
+      // There's at least one overlap, return a huge value
+      return std::numeric_limits<double>::max();
+    }
+
     const double sinYSq = 1.0 - cosY * cosY;
     const double sinY = ((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0);
     // cos(2 * W) = 2 * cos(W) * cos(W) - 1 = 2 * sin(W) * sin(W) - 1
