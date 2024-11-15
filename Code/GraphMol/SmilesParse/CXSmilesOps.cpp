@@ -2521,15 +2521,9 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   // do the CX_BOND_ATROPISOMER only if CX_BOND_CFG s not done.  CX_BOND_CFG
   // includes the atropisomer wedging
   else if (flags & SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER) {
-    bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
-                         mol.getNumConformers();
-    if (includeCoords) {
-      Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
-    } else {
-      Atropisomers::wedgeBondsFromAtropisomers(mol, nullptr, wedgeBonds);
-    }
+    Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
     const auto cfgblock = get_bond_config_block(
-        mol, atomOrder, bondOrder, includeCoords, wedgeBonds, true);
+        mol, atomOrder, bondOrder, conf != nullptr, wedgeBonds, true);
     appendToCXExtension(cfgblock, res);
   }
 
