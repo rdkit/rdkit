@@ -34,7 +34,7 @@ functions to be updated accordingly.
 
 
 ## Deprecated code (to be removed in a future release):
-- The functions Atom::getImplicitValence() and Atom::getExplicitValence() are deprecated, please use Atom::getValence() instead
+- The functions Atom::getImplicitValence() and Atom::getExplicitValence() are deprecated, please use Atom::getValence(Atom::ValenceType::IMPLICIT) or Atom::getValence(Atom::ValenceType::EXPLICIT) instead
 
 # Release_2024.09.1
 (Changes relative to Release_2024.03.1)

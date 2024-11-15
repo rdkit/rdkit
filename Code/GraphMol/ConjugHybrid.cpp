@@ -95,8 +95,7 @@ int numBondsPlusLonePairs(Atom *at) {
     return deg;
   }
   int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
-  int totalValence = at->getValence(Atom::ValenceType::EXPLICIT) +
-                     at->getValence(Atom::ValenceType::IMPLICIT);
+  int totalValence = at->getTotalValence();
   int chg = at->getFormalCharge();
 
   int numFreeElectrons = nouter - (totalValence + chg);
