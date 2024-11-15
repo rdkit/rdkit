@@ -429,6 +429,18 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               0.1) {
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
+
+            // There might be more than one terminal atom that needs coordinates,
+            // which means there might be an overlap (e.g. when adding Hs,
+            // if we add 2 to the same atom, they will overlap at (0,0,0)).
+            // Try to find a direction from atoms that do not overlap
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              dirVect = nbr1Vect.crossProduct(nbr3Vect);
+            }
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              dirVect = nbr2Vect.crossProduct(nbr3Vect);
+            }
+
             std::string cipCode;
             if (otherAtom->getPropIfPresent(common_properties::_CIPCode,
                                             cipCode)) {
