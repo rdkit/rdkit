@@ -388,11 +388,14 @@ int RGroupDecomposition::add(const ROMol &inmol) {
   // Exhaustive - saves all matches and optimizes later exhaustive
   //               May never finish due to combinatorial complexity
   // Greedy - matches to *FIRST* available match
-  // GreedyChunks - default - process every N chunks
+  // GreedyChunks - default - process every N chunks, unless
+  // MAX_PERMUTATIONS is exceeded, in which case it falls back to
+  // Greedy for the current chunk
 
   //  Should probably scan all mols first to find match with
   //  smallest number of matches...
   std::vector<RGroupMatch> potentialMatches;
+  constexpr size_t MAX_PERMUTATIONS = 100000;
 
   std::unique_ptr<ROMol> tMol;
   for (const auto &tmatche : tmatches) {
@@ -552,11 +555,20 @@ int RGroupDecomposition::add(const ROMol &inmol) {
     return -2;
   }
 
-  // in case the value ends up being changed in a future version of the code:
-  if (data->prunePermutations) {
-    data->permutationProduct = 1;
+  if (data->params.matchingStrategy != GA) {
+    size_t N = 1;
+    for (auto matche = data->matches.begin() + data->previousMatchSize;
+         matche != data->matches.end(); ++matche) {
+      size_t sz = matche->size();
+      N *= sz;
+    }
+    // Highly symmetric cores can lead to a very large number of
+    // permutations to test. Fall back to Greedy for the current chunk
+    // when the number is too high.
+    if (N * potentialMatches.size() > MAX_PERMUTATIONS) {
+      data->process(data->prunePermutations);
+    }
   }
-
   data->matches.push_back(std::move(potentialMatches));
 
   if (!data->matches.empty()) {

@@ -35,6 +35,7 @@
 #include <RDBoost/Wrap.h>
 #include <RDBoost/python_streambuf.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 #include <sstream>
 namespace python = boost::python;
@@ -189,18 +190,20 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 
 namespace {
 std::string getResidue(const ROMol &, const Atom *at) {
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+  auto monomerInfo = at->getMonomerInfo();
+  if (!monomerInfo ||
+      monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
-      ->getResidueName();
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getResidueName();
 }
 std::string getChainId(const ROMol &, const Atom *at) {
-  if (at->getMonomerInfo()->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
+  auto monomerInfo = at->getMonomerInfo();
+  if (!monomerInfo ||
+      monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     return "";
   }
-  return static_cast<const AtomPDBResidueInfo *>(at->getMonomerInfo())
-      ->getChainId();
+  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getChainId();
 }
 }  // namespace
 python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
@@ -263,12 +266,10 @@ python::dict parseQueryDefFileHelper(python::object &input, bool standardize,
     parseQueryDefFile(get_filename(), queryDefs, standardize, delimiter,
                       comment, nameColumn, smartsColumn);
   } else {
-    auto *sb = new streambuf(input);
-    std::istream *istr = new streambuf::istream(*sb);
-    parseQueryDefFile(istr, queryDefs, standardize, delimiter, comment,
+    std::unique_ptr<streambuf> sb(new streambuf(input));
+    std::unique_ptr<std::istream> istr(new streambuf::istream(*sb));
+    parseQueryDefFile(istr.get(), queryDefs, standardize, delimiter, comment,
                       nameColumn, smartsColumn);
-    delete istr;
-    delete sb;
   }
 
   python::dict res;
@@ -618,9 +619,9 @@ ExplicitBitVect *wrapLayeredFingerprint(
     python::object fromAtoms) {
   std::unique_ptr<std::vector<unsigned int>> lFromAtoms =
       pythonObjectToVect(fromAtoms, mol.getNumAtoms());
-  std::vector<unsigned int> *atomCountsV = nullptr;
+  std::unique_ptr<std::vector<unsigned int>> atomCountsV;
   if (atomCounts) {
-    atomCountsV = new std::vector<unsigned int>;
+    atomCountsV.reset(new std::vector<unsigned int>);
     unsigned int nAts =
         python::extract<unsigned int>(atomCounts.attr("__len__")());
     if (nAts < mol.getNumAtoms()) {
@@ -634,14 +635,13 @@ ExplicitBitVect *wrapLayeredFingerprint(
 
   ExplicitBitVect *res;
   res = RDKit::LayeredFingerprintMol(mol, layerFlags, minPath, maxPath, fpSize,
-                                     atomCountsV, includeOnlyBits,
+                                     atomCountsV.get(), includeOnlyBits,
                                      branchedPaths, lFromAtoms.get());
 
   if (atomCountsV) {
     for (unsigned int i = 0; i < atomCountsV->size(); ++i) {
       atomCounts[i] = (*atomCountsV)[i];
     }
-    delete atomCountsV;
   }
 
   return res;
@@ -896,6 +896,15 @@ python::tuple detectChemistryProblemsHelper(const ROMol &mol,
     res.append(boost::shared_ptr<MolSanitizeException>(exc_ptr->copy()));
   }
   return python::tuple(res);
+}
+
+ROMol *canonicalizeStereoGroupsHelper(
+    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions) {
+  auto mol_uptr = std::unique_ptr<ROMol>(new ROMol(mol));
+
+  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions);
+  return mol_uptr.release();
+  ;
 }
 
 ROMol *replaceCoreHelper(const ROMol &mol, const ROMol &core,
@@ -2555,6 +2564,30 @@ ARGUMENTS:\n\
     python::def("RemoveNonExplicit3DChirality",
                 Chirality::removeNonExplicit3DChirality, (python::arg("mol")),
                 docString.c_str());
+
+    python::enum_<RDKit::StereoGroupAbsOptions>("StereoGroupAbsOptions")
+        .value("OnlyIncludeWhenOtherGroupsExist",
+               RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist)
+        .value("NeverInclude", RDKit::StereoGroupAbsOptions::NeverInclude)
+        .value("AlwaysInclude", RDKit::StereoGroupAbsOptions::AlwaysInclude);
+
+    docString =
+        "Rationalize Enhanced Stereo indications to a canonical form \n\
+        \n\
+          ARGUMENTS:\n\
+        \n\
+            - molecule: the molecule to update\n\
+            -StereoGroupAbsOptions outputAbsoluteGroups: controls output of abs groups: \n\
+              one of: OnlyIncludeWhenOtherGroupsExist, NeverInclude, AlwaysInclude \n\
+        \n\
+        \n ";
+    python::def(
+        "CanonicalizeStereoGroups", canonicalizeStereoGroupsHelper,
+        (python::arg("mol"),
+         python::arg("outputAbsoluteGroups") =
+             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist),
+        docString.c_str(),
+        python::return_value_policy<python::manage_new_object>());
 
     docString =
         R"DOC(Constants used to set the thresholds for which single bonds can be made wavy.)DOC";

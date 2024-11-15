@@ -18,7 +18,7 @@ namespace GapeGa {
 
 class GA_EXPORT BinaryStringChromosomePolicy {
  public:
-  BinaryStringChromosomePolicy(GarethUtil::RandomUtil& rng_);
+  BinaryStringChromosomePolicy(GarethUtil::RandomUtil &rng_);
   virtual ~BinaryStringChromosomePolicy();
 
   bool mutate(int pos, bool currentValue) const;
@@ -26,10 +26,10 @@ class GA_EXPORT BinaryStringChromosomePolicy {
   bool isAllowSwitch() { return false; }
 
  private:
-  GarethUtil::RandomUtil& rng;
-  BinaryStringChromosomePolicy(const BinaryStringChromosomePolicy& orig);
-  BinaryStringChromosomePolicy& operator=(
-      const BinaryStringChromosomePolicy& other);
+  GarethUtil::RandomUtil &rng;
+  BinaryStringChromosomePolicy(const BinaryStringChromosomePolicy &orig);
+  BinaryStringChromosomePolicy &operator=(
+      const BinaryStringChromosomePolicy &other);
 };
 
 }  // namespace GapeGa

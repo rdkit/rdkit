@@ -136,7 +136,15 @@ TEST_CASE("Determine Connectivity") {
       std::string smiles = mol->getProp<std::string>("_FileComments");
       std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
       REQUIRE(orig);
-      SmilesWriteParams params = {false, false, true, false, false, false, -1};
+      SmilesWriteParams params;
+      params.doIsomericSmiles = false;
+      params.doKekule = false;
+      params.canonical = true;
+      params.allBondsExplicit = false;
+      params.allHsExplicit = false;
+      params.doRandom = false;
+      params.rootedAtAtom = -1;
+
       std::string canonSmiles = MolToSmiles(*orig, params);
       int charge = MolOps::getFormalCharge(*orig);
 
@@ -180,7 +188,14 @@ TEST_CASE("Determine Connectivity") {
       std::string smiles = mol->getProp<std::string>("_FileComments");
       std::unique_ptr<RWMol> orig(SmilesToMol(smiles));
       REQUIRE(orig);
-      SmilesWriteParams params = {false, false, true, false, false, false, -1};
+      SmilesWriteParams params;
+      params.doIsomericSmiles = false;
+      params.doKekule = false;
+      params.canonical = true;
+      params.allBondsExplicit = false;
+      params.allHsExplicit = false;
+      params.doRandom = false;
+      params.rootedAtAtom = -1;
       std::string canonSmiles = MolToSmiles(*orig, params);
       int charge = MolOps::getFormalCharge(*orig);
 
@@ -416,12 +431,14 @@ TEST_CASE(
     "github #7299: DetermineBondOrders() does not assign single bonds correctly") {
   SECTION("as reported") {
     RWMol m;
-    m.addAtom(new Atom(6));
-    m.addAtom(new Atom(8));
-    m.addAtom(new Atom(8));
-    m.addAtom(new Atom(8));
-    m.addAtom(new Atom(1));
-    m.addAtom(new Atom(1));
+    bool updateLabel = true;
+    bool takeOwnership = true;
+    m.addAtom(new Atom(6), updateLabel, takeOwnership);
+    m.addAtom(new Atom(8), updateLabel, takeOwnership);
+    m.addAtom(new Atom(8), updateLabel, takeOwnership);
+    m.addAtom(new Atom(8), updateLabel, takeOwnership);
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
+    m.addAtom(new Atom(1), updateLabel, takeOwnership);
     m.addBond(0, 1, Bond::UNSPECIFIED);
     m.addBond(0, 2, Bond::UNSPECIFIED);
     m.addBond(0, 3, Bond::UNSPECIFIED);

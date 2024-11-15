@@ -75,7 +75,7 @@ struct timezone {
   int tz_dsttime;      // type of dst correction
 };
 
-static inline int gettimeofday(struct timeval* tv, struct timezone* tz) {
+static inline int gettimeofday(struct timeval *tv, struct timezone *tz) {
   FILETIME ft;
   unsigned __int64 tmpres = 0;
   static int tzflag;
@@ -109,7 +109,7 @@ static inline int gettimeofday(struct timeval* tv, struct timezone* tz) {
 static inline unsigned long long nanoClock(
     void) {  // actually returns microseconds
   struct timeval t;
-  gettimeofday(&t, (struct timezone*)nullptr);
+  gettimeofday(&t, (struct timezone *)nullptr);
   return t.tv_usec + t.tv_sec * 1000000ULL;
 }
 
@@ -121,9 +121,9 @@ void printTime() {
 }
 
 std::string getSmilesOnly(
-    const char* smiles,
-    std::string* id = nullptr) {  // remove label, because RDKit parse FAILED
-  const char* sp = strchr(smiles, ' ');
+    const char *smiles,
+    std::string *id = nullptr) {  // remove label, because RDKit parse FAILED
+  const char *sp = strchr(smiles, ' ');
   unsigned n = (sp ? sp - smiles + 1 : strlen(smiles));
   if (id) {
     *id = std::string(smiles + (n--));
@@ -131,7 +131,7 @@ std::string getSmilesOnly(
   return std::string(smiles, n);
 }
 
-void debugTest1(const char* init_mol) {
+void debugTest1(const char *init_mol) {
   std::unique_ptr<RWMol> m(SmilesToMol(init_mol));
   std::cout << "INIT MOL: " << init_mol << "\n";
   std::cout << "CONV MOL: " << MolToSmiles(*m, true) << "\n";
@@ -139,7 +139,7 @@ void debugTest1(const char* init_mol) {
 /*
  * Work-around functions for RDKit canonical
  */
-std::string createCanonicalFromSmiles(const char* smiles) {
+std::string createCanonicalFromSmiles(const char *smiles) {
   std::unique_ptr<RWMol> m(SmilesToMol(smiles));
   std::string res = MolToSmiles(*m, true);
   //    replaceAllMap(res);
@@ -160,7 +160,7 @@ void test1() {
 
   //-----
 
-  const char* smi[] = {
+  const char *smi[] = {
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717",
   };
   /*
@@ -169,7 +169,7 @@ void test1() {
    *
   */
 
-  const char* fs_sm[] = {
+  const char *fs_sm[] = {
       // 15 reference result's SMILES.
       "",
       "C[*:1].O=C(NCCO)c1c(n([O-])c2ccccc2[n+]1=O)[*:1]",
@@ -208,7 +208,7 @@ void test1() {
       "[*:2]O.[*:1]CNC(=O)c1c(C)n([O-])c2ccccc2[n+]1=O",
   };
   char fs[15][256];  // 15 reference results with updated RDKit's SMARTS Writer
-  const char* fs1[] = {
+  const char *fs1[] = {
       // 15+1dup reordered reference results
       // Fix for updated RDKit. new SMILES for the same molecule:
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,,C[*:1].O=C(NCCO)c1c("
@@ -277,12 +277,12 @@ void test1() {
     // MolToSmiles() fails with new RDKit version in DEBUG Build
     char core[256] = "", side[256];
     if (fs_sm[2 * r][0]) {
-      RWMol* m = SmilesToMol(fs_sm[2 * r]);
+      RWMol *m = SmilesToMol(fs_sm[2 * r]);
       strcpy(core, MolToSmiles(*m, true).c_str());
       delete m;
     }
     if (fs_sm[2 * r + 1][0]) {
-      RWMol* m = SmilesToMol(fs_sm[2 * r + 1]);
+      RWMol *m = SmilesToMol(fs_sm[2 * r + 1]);
       strcpy(side, MolToSmiles(*m, true).c_str());
       delete m;
     }
@@ -297,7 +297,7 @@ void test1() {
     static const std::string es("NULL");
     std::string id;
     std::string smiles = getSmilesOnly(smi[i], &id);
-    ROMol* mol = SmilesToMol(smiles);
+    ROMol *mol = SmilesToMol(smiles);
     std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
     t0 = nanoClock();
     RDKit::MMPA::fragmentMol(*mol, res, 3);
@@ -366,11 +366,11 @@ void test2() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "MMPA test2()\n" << std::endl;
 
-  const char* smi[] = {
+  const char *smi[] = {
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717",
   };
 
-  const char* fs[] = {
+  const char *fs[] = {
       // 15 reordered reference results
       "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=[n+]1c([*:2])c([*:"
       "1])n([O-])c2ccccc21,C[*:1].O=C(NCCO)[*:2]",
@@ -501,7 +501,7 @@ void test2() {
 
 //====================================================================================================
 
-void doTest(const char* smi, const char* fs[], unsigned fs_size) {
+void doTest(const char *smi, const char *fs[], unsigned fs_size) {
   static const std::string es("NULL");
   std::string id;
   std::string smiles = getSmilesOnly(smi, &id);
@@ -598,7 +598,7 @@ void test3() {
   BOOST_LOG(rdInfoLog) << "MMPA test3()\n" << std::endl;
 
   {  // test2:
-    const char* smi = "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717";
+    const char *smi = "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-] ZINC21984717";
     // clang-format off
     const char* fs[] = {
         "Cc1c(C(=O)NCCO)[n+](=O)c2ccccc2n1[O-],ZINC21984717,O=[n+]1c([*:2])c([*:1])n([O-])c2ccccc21,C[*:1].O=C(NCCO)[*:2]",
@@ -621,7 +621,7 @@ void test3() {
   }
 
   {  // Case1 SIMPLE: (PASSED)
-    const char* smi = "CC(N1CC1)C(=O) Case1-SIMPLE";
+    const char *smi = "CC(N1CC1)C(=O) Case1-SIMPLE";
     // clang-format off
     const char* fs[] = {
         // from Greg's message
@@ -639,8 +639,8 @@ void test3() {
   }
 
   {  // Case1 (with additionally labeled central carbon [C:7]):
-    const char* smi = "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1 Case1";
-    const char* fs[] = {
+    const char *smi = "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1 Case1";
+    const char *fs[] = {
         "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1,Case1,[*:1][C:7]([*:2])[*:3],C1CC["
         "NH+]([*:3])C1.C[*:2].Cc1ccccc1NC(=O)[*:1]"
         //            "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1,Case1,[C:7]([*:1])([*:2])[*:3],C1CC[NH+]([*:1])C1.C[*:2].Cc1ccccc1NC(=O)[*:3]",
@@ -649,8 +649,8 @@ void test3() {
   }
 
   {  // Case2:
-    const char* smi = "O=C(OCc1ccccc1)C(O)c1ccccc1 Case2";
-    const char* fs[] = {
+    const char *smi = "O=C(OCc1ccccc1)C(O)c1ccccc1 Case2";
+    const char *fs[] = {
         "O=C(OCc1ccccc1)C(O)c1ccccc1,Case2,C([*:1])([*:2])[*:3],O=C(OCc1ccccc1)"
         "[*:1].O[*:2].c1ccc([*:3])cc1",
     };
@@ -661,8 +661,8 @@ void test3() {
 
 void testCase_1() {
   // Case1 (with additionally labeled central carbon [C:7]):
-  const char* smi = "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1 Case1";
-  const char* fs[] = {
+  const char *smi = "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1 Case1";
+  const char *fs[] = {
       "Cc1ccccc1NC(=O)[C:7](C)[NH+]1CCCC1,Case1,[*:1][C:7]([*:2])[*:3],C1CC[NH+"
       "]([*:3])C1.C[*:2].Cc1ccccc1NC(=O)[*:1]"};
   doTest(smi, fs, sizeof(fs) / sizeof(fs[0]));

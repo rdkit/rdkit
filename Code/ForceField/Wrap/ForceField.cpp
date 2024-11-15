@@ -194,8 +194,11 @@ python::tuple PyForceField::minimizeTrajectory(unsigned int snapshotFreq,
   int resInt = this->field->minimize(snapshotFreq, &snapshotVect, maxIts,
                                      forceTol, energyTol);
   python::list l;
+  boost::python::manage_new_object::apply<RDKit::Snapshot *>::type converter;
   for (const auto &it : snapshotVect) {
-    l.append(new RDKit::Snapshot(it));
+    // transfer ownership to python
+    python::handle<> handle(converter(new RDKit::Snapshot(it)));
+    l.append(handle);
   }
   return python::make_tuple(resInt, l);
 }

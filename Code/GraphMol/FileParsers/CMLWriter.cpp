@@ -30,7 +30,7 @@
 
 namespace RDKit {
 namespace {
-boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
+boost::property_tree::ptree molToPTree(const ROMol &mol, int confId,
                                        bool kekulize) {
   RWMol rwmol{mol};
   if (kekulize) {
@@ -39,12 +39,12 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
 
   boost::property_tree::ptree pt;
   // prefix namespaces
-  auto& root = pt.add("cml", "");
+  auto &root = pt.add("cml", "");
   root.put("<xmlattr>.xmlns", "http://www.xml-cml.org/schema");
   root.put("<xmlattr>.xmlns:convention", "http://www.xml-cml.org/convention/");
   root.put("<xmlattr>.convention", "convention:molecular");
 
-  auto& molecule = root.add("molecule", "");
+  auto &molecule = root.add("molecule", "");
 
   // molecule/@id MUST start with an alphabetical character
   // http://www.xml-cml.org/convention/molecular#molecule-id
@@ -65,16 +65,16 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
   // http://www.xml-cml.org/convention/molecular#atom-id
   const auto atom_id_prefix = "a";
 
-  const Conformer* conf = nullptr;
+  const Conformer *conf = nullptr;
   if (rwmol.getNumConformers()) {
     conf = &rwmol.getConformer(confId);
     // wedge bonds so that we can use that info:
     Chirality::wedgeMolBonds(rwmol, conf);
   }
-  auto& atomArray = molecule.put("atomArray", "");
+  auto &atomArray = molecule.put("atomArray", "");
   for (unsigned i = 0u, nAtoms = rwmol.getNumAtoms(); i < nAtoms; i++) {
-    auto& atom = atomArray.add("atom", "");
-    const auto& a = rwmol.getAtomWithIdx(i);
+    auto &atom = atomArray.add("atom", "");
+    const auto &a = rwmol.getAtomWithIdx(i);
 
     atom.put("<xmlattr>.id", boost::format{"%1%%2%"} % atom_id_prefix % i);
     if (a->getAtomicNum()) {
@@ -98,7 +98,7 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
     mol_num_radical_electrons += n_rad_es;
 
     if (conf != nullptr) {
-      const auto& pos = conf->getAtomPos(i);
+      const auto &pos = conf->getAtomPos(i);
       boost::format xyz_fmt{"%.6f"};
 
       if (!conf->is3D()) {
@@ -132,7 +132,7 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
         neighbors.push_back(at->getIdx());
       }
 
-      auto& atomParity = atom.add("atomParity", parity);
+      auto &atomParity = atom.add("atomParity", parity);
       atomParity.put("<xmlattr>.atomRefs4",
                      boost::format{"%1%%2% %1%%3% %1%%4% %1%%5%"} %
                          atom_id_prefix % neighbors[0u] % neighbors[1u] %
@@ -155,22 +155,22 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
   const auto bond_id_prefix = "b";
   unsigned bond_id = 0u;
 
-  auto& bondArray = molecule.add("bondArray", "");
+  auto &bondArray = molecule.add("bondArray", "");
   for (auto atom_itr = rwmol.beginAtoms(), atom_itr_end = rwmol.endAtoms();
        atom_itr != atom_itr_end; ++atom_itr) {
-    const auto& atom = *atom_itr;
+    const auto &atom = *atom_itr;
     PRECONDITION(atom, "bad atom");
     const auto src = atom->getIdx();
     for (auto bond_itrs = rwmol.getAtomBonds(atom);
          bond_itrs.first != bond_itrs.second; ++bond_itrs.first) {
-      auto* bptr = rwmol[*bond_itrs.first];
-      auto* nptr = bptr->getOtherAtom(atom);
+      auto *bptr = rwmol[*bond_itrs.first];
+      auto *nptr = bptr->getOtherAtom(atom);
       const auto dst = nptr->getIdx();
       if (dst < src) {
         continue;
       }
 
-      auto& bond = bondArray.add("bond", "");
+      auto &bond = bondArray.add("bond", "");
       bond.put("<xmlattr>.atomRefs2",
                boost::format{"%1%%2% %1%%3%"} % atom_id_prefix % src % dst);
 
@@ -254,7 +254,7 @@ boost::property_tree::ptree molToPTree(const ROMol& mol, int confId,
 }
 }  // namespace
 
-void MolToCMLBlock(std::ostream& os, const ROMol& mol, int confId,
+void MolToCMLBlock(std::ostream &os, const ROMol &mol, int confId,
                    bool kekulize) {
   auto pt = molToPTree(mol, confId, kekulize);
   if (pt.empty()) {
@@ -265,13 +265,13 @@ void MolToCMLBlock(std::ostream& os, const ROMol& mol, int confId,
       boost::property_tree::xml_writer_make_settings<std::string>(' ', 2));
 }
 
-std::string MolToCMLBlock(const ROMol& mol, int confId, bool kekulize) {
+std::string MolToCMLBlock(const ROMol &mol, int confId, bool kekulize) {
   std::ostringstream ss;
   MolToCMLBlock(ss, mol, confId, kekulize);
   return ss.str();
 }
 
-void MolToCMLFile(const ROMol& mol, const std::string& fName, int confId,
+void MolToCMLFile(const ROMol &mol, const std::string &fName, int confId,
                   bool kekulize) {
   std::ofstream ofs{fName};
   MolToCMLBlock(ofs, mol, confId, kekulize);

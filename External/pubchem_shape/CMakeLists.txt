@@ -2,8 +2,6 @@ if(NOT RDK_BUILD_PUBCHEMSHAPE_SUPPORT)
   return()
 endif()
 
-
-
 if(NOT DEFINED PUBCHEMSHAPE_DIR)
   set(PUBCHEMSHAPE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pubchem-align3d")
   set(fileToCheck "${PUBCHEMSHAPE_DIR}/shape_functions1.cpp")
@@ -16,34 +14,28 @@ else()
 endif()
 
 if(needDownload)
-  set(PUBCHEM_COMMIT_SHA 27f063f)
+  set(PUBCHEM_COMMIT_SHA daefab3)
   if(NOT DEFINED PUBCHEMSHAPE_URL)
     set(PUBCHEMSHAPE_URL "https://github.com/ncbi/pubchem-align3d/archive/${PUBCHEM_COMMIT_SHA}.tar.gz")
   endif()
   if(NOT DEFINED PUBCHEMSHAPE_MD5SUM)
-    set(PUBCHEMSHAPE_MD5SUM "4f763a1cdff13a1dd2bd4c4612e06462")
+    set(PUBCHEMSHAPE_MD5SUM "a78a6273851709083ac3803d62cb5ae6")
   endif()
   if(NOT DEFINED PUBCHEMSHAPE_BASE)
     string(REGEX REPLACE "^.*/" "" PUBCHEMSHAPE_BASE "${PUBCHEMSHAPE_URL}")
   endif()
   downloadAndCheckMD5(${PUBCHEMSHAPE_URL} "${CMAKE_CURRENT_SOURCE_DIR}/${PUBCHEMSHAPE_BASE}" ${PUBCHEMSHAPE_MD5SUM})
-  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf  
-    ${CMAKE_CURRENT_SOURCE_DIR}/${PUBCHEM_COMMIT_SHA}.tar.gz 
+  execute_process(COMMAND ${CMAKE_COMMAND} -E tar xzf
+    ${CMAKE_CURRENT_SOURCE_DIR}/${PUBCHEM_COMMIT_SHA}.tar.gz
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
   file(GLOB tar_dirname ${CMAKE_CURRENT_SOURCE_DIR}/pubchem-align3d-${PUBCHEM_COMMIT_SHA}*)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E rename ${tar_dirname} 
+  execute_process(COMMAND ${CMAKE_COMMAND} -E rename ${tar_dirname}
        ${PUBCHEMSHAPE_DIR}
        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-  set (types_hpp ${PUBCHEMSHAPE_DIR}/types.hpp)
-  file(READ ${types_hpp} types_hpp_data)
-  if (NOT "${types_hpp_data}" MATCHES "#include[ ]+<cstdint>")
-      string(REGEX REPLACE "(#define[ ]+ALIGN3D_+TYPES_+HPP)" "\\1\n\n#include <cstdint>\n" types_hpp_data "${types_hpp_data}")
-      file(WRITE ${types_hpp} "${types_hpp_data}")
-  endif()
 endif()
 
-rdkit_library(pubchem_align3d ./pubchem-align3d/shape_functions1.cpp 
+rdkit_library(pubchem_align3d ./pubchem-align3d/shape_functions1.cpp
             ./pubchem-align3d/shape_functions2.cpp ./pubchem-align3d/shape_neighbor.cpp SHARED)
 if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
   set_target_properties(pubchem_align3d PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)

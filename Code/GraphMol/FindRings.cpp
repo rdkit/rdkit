@@ -195,8 +195,8 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
           }
         }
       }  // end of loop over new rings found
-    }    // end if (dupCand.size() > 1)
-  }      // end of loop over all set of duplicate candidates
+    }  // end if (dupCand.size() > 1)
+  }  // end of loop over all set of duplicate candidates
 }
 
 auto compRingSize = [](const auto &v1, const auto &v2) {
@@ -564,7 +564,7 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
         }
       }
     }  // doing node of degree 3 - end of found only 1 smallest ring
-  }    // end of found less than 3 smallest ring for the degree 3 node
+  }  // end of found less than 3 smallest ring for the degree 3 node
 }
 
 int greatestComFac(long curfac, long nfac) {
@@ -744,7 +744,7 @@ int BFSWorkspace::smallestRingsBfs(const ROMol &mol, int root,
         }
       }
     }  // end of loop over neighbors of current atom
-  }    // moving to the next node
+  }  // moving to the next node
 
   // if we are here we should have found everything around the node
   return rdcast<unsigned int>(rings.size());
@@ -1018,7 +1018,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
         ++nAtomsDone;
         FindRings::trimBonds(cand, mol, changed, atomDegrees, activeBonds);
       }  // done with degree 3 node
-    }    // done finding rings in this fragment
+    }  // done finding rings in this fragment
 
 #if 0
         std::cerr<<"\n\nFOUND:\n";

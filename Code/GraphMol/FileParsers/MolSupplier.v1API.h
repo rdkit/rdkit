@@ -178,8 +178,7 @@ class RDKIT_FILEPARSERS_EXPORT SDMolSupplier : public ForwardSDMolSupplier {
   ROMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())
-        ->
-        operator[](idx)
+        ->operator[](idx)
         .release();
   }
   /*! \brief returns the text block for a particular item
@@ -309,8 +308,7 @@ class RDKIT_FILEPARSERS_EXPORT SmilesMolSupplier : public MolSupplier {
   ROMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())
-        ->
-        operator[](idx)
+        ->operator[](idx)
         .release();
   }
   /*! \brief returns the text block for a particular item
@@ -393,8 +391,7 @@ class RDKIT_FILEPARSERS_EXPORT TDTMolSupplier : public MolSupplier {
   ROMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())
-        ->
-        operator[](idx)
+        ->operator[](idx)
         .release();
   }
   /*! \brief returns the text block for a particular item
@@ -454,8 +451,7 @@ class RDKIT_FILEPARSERS_EXPORT MaeMolSupplier : public MolSupplier {
   RWMol *operator[](unsigned int idx) {
     PRECONDITION(dp_supplier, "no supplier");
     return static_cast<ContainedType *>(dp_supplier.get())
-        ->
-        operator[](idx)
+        ->operator[](idx)
         .release();
   }
   unsigned int length() {

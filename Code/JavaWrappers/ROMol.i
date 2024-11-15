@@ -192,6 +192,7 @@
 %include "enums.swg"
 %javaconst(1);
 #endif
+%include <RDGeneral/BetterEnums.h>
 %include <GraphMol/MolPickler.h>
 #ifdef SWIGJAVA
 %javaconst(0);
@@ -437,6 +438,18 @@ unsigned int getDefaultPickleProperties();
   void ClearSingleBondDirFlags() {
     RDKit::ClearSingleBondDirFlags(*($self));
   };
+
+  void reapplyMolBlockWedging() {
+    RDKit::Chirality::reapplyMolBlockWedging(*($self));
+  }
+
+  void clearMolBlockWedgingInfo() {
+    RDKit::Chirality::clearMolBlockWedgingInfo(*($self));
+  }
+
+  void invertMolBlockWedgingInfo() {
+    RDKit::Chirality::invertMolBlockWedgingInfo(*($self));
+  }
 
   /* Methods from ConjugHybrid.cpp */
   void setConjugation() {

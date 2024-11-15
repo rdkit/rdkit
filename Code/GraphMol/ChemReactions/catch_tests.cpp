@@ -25,6 +25,7 @@
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
+#include <GraphMol/ChemReactions/ReactionFingerprints.h>
 #include <GraphMol/FileParsers/PNGParser.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 
@@ -1101,7 +1102,25 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
+
+    auto expected_cxsmiles = "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;$|";
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    std::string output_cxsmiles = ChemicalReactionToCXRxnSmiles(*rxn, params, flags);
+    CHECK(output_cxsmiles == expected_cxsmiles);
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmiles(output_cxsmiles);
+    REQUIRE(roundtrip);
+
+    CHECK(roundtrip->getReactants().size() == 2);
+    CHECK(roundtrip->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(roundtrip->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
   }
+
   SECTION("basics with agents") {
     // clang-format off
     auto rxn = "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"_rxnsmarts;
@@ -1115,7 +1134,27 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
+
+    std::string expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>O=C=O>[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|";
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    std::string output_cxsmarts = ChemicalReactionToCXRxnSmarts(*rxn, params, flags);
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(output_cxsmarts);
+
+
+    REQUIRE(roundtrip);
+    CHECK(roundtrip->getReactants().size() == 2);
+    CHECK(roundtrip->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(roundtrip->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+
+    CHECK(output_cxsmarts == expected_cxsmarts);
+
   }
+
   SECTION("missing products") {
     // clang-format off
     auto rxn="[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>> |$;;;_AP1;;;_AP1$|"_rxnsmarts;
@@ -1129,7 +1168,24 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(rxn->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
         common_properties::atomLabel, alabel));
     CHECK(alabel == "_AP1");
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToCXRxnSmarts(*rxn));
+    REQUIRE(roundtrip);
+    CHECK(roundtrip->getReactants().size() == 2);
+    CHECK(roundtrip->getReactants()[0]->getAtomWithIdx(3)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+    CHECK(roundtrip->getReactants()[1]->getAtomWithIdx(2)->getPropIfPresent(
+        common_properties::atomLabel, alabel));
+    CHECK(alabel == "_AP1");
+
+    std::string expected_cxsmarts = "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>> |$;;;_AP1;;;_AP1$|";
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    std::string output_cxsmarts = ChemicalReactionToCXRxnSmarts(*rxn, params, flags);
+    CHECK(output_cxsmarts == expected_cxsmarts);
   }
+  
   SECTION("coordinate bonds and sgroups") {
     // when initially writing this, coordinate bonds were not properly parsed
     // from SMARTS, so we use SMILES
@@ -1155,15 +1211,66 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
                                                   alabel));
     CHECK(alabel == "_AP1");
     CHECK(getSubstanceGroups(*p0).size() == 1);
+    
+    // Test that coordinate bonds are preserved.
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    auto output_cxsmarts = ChemicalReactionToCXRxnSmarts(*rxn, params, flags);
+    auto expected_cxsmarts = "[#6H3:1]-[#6H:2](-[#6H3:3])-[#0:4].[Fe:8]<-[#8H:5]-[#6H2:6]-[#0:7]>>[Fe:8]<-[#8H:5]-[#6H2:6]-[#6H2:1]-[#6H:2](-[#6H3:3])-[#0:4] |$;;;_AP1;;;;_AP1;;;;;;;_AP1$,C:5.3,9.6,SgD:6:foo:bar::::,SgD:10:bar:baz::::|";
+    CHECK(output_cxsmarts == expected_cxsmarts);
   }
+
   SECTION("sgroup hierarchy") {
     // clang-format off
     auto rxn = "[CH3:6][O:5][CH:3](-*)[O:2]-*>>[CH3:6][NH:5][CH:3](-*)[O:2]-* "
     "|$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,SgD:7,6:foo:baz::::,Sg:n:4,2,1,0::ht,Sg:n:10,8,7,6::ht,SgH:2:0,3:1|"_rxnsmiles;
     // clang-format on
     REQUIRE(rxn);
+    
+    std::string expected_cxsmarts = "[#6H3:6]-[#8:5]-[#6H:3](-*)-[#8:2]-*>>[#6H3:6]-[#7H:5]-[#6H:3](-*)-[#8:2]-* |$;;;star_e;;star_e;;;;star_e;;star_e$,SgD:1,0:foo:bar::::,,SgD:7,6:foo:baz::::,,,Sg:n:4,2,1,0::ht:::,,Sg:n:10,8,7,6::ht:::,SgH:3:1.1|"; 
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS;
+    std::string output_cxsmarts = ChemicalReactionToCXRxnSmarts(*rxn, params, flags);
+    CHECK(output_cxsmarts == expected_cxsmarts);
+
+    // Test properties of the rxn itself.
     CHECK(getSubstanceGroups(*rxn->getReactants()[0]).size() == 2);
     CHECK(getSubstanceGroups(*rxn->getProducts()[0]).size() == 2);
+
+    const auto &sgsReact = getSubstanceGroups(*rxn->getReactants()[0]);
+    const auto &sgsProd = getSubstanceGroups(*rxn->getProducts()[0]);
+
+    CHECK(sgsReact[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsReact[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+
+    CHECK(sgsProd[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsProd[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+    
+    // Ensure properties are set on the rxn.
+    CHECK(sgsReact[0].getProp<unsigned int>("PARENT") == 2);
+    CHECK(sgsProd[0].getProp<unsigned int>("PARENT") == 2);
+
+    // Now create the roundtrip and check the same properties.
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(output_cxsmarts);
+    REQUIRE(roundtrip);
+
+    const auto &sgsRoundReact = getSubstanceGroups(*roundtrip->getReactants()[0]);
+    REQUIRE(&sgsRoundReact);
+    const auto &sgsRoundProd = getSubstanceGroups(*roundtrip->getProducts()[0]);
+    REQUIRE(&sgsRoundProd);
+
+    CHECK(getSubstanceGroups(*roundtrip->getReactants()[0]).size() == 2);
+    CHECK(getSubstanceGroups(*roundtrip->getProducts()[0]).size() == 2);
+
+    CHECK(sgsRoundProd[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsRoundProd[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+    CHECK(sgsRoundReact[0].getAtoms() == std::vector<unsigned int>{1, 0});
+    CHECK(sgsRoundReact[1].getAtoms() == std::vector<unsigned int>{4, 2, 1, 0});
+
+    // Check that the properties are set on the roundtrip rxn.
+    CHECK(sgsRoundProd[0].getProp<unsigned int>("PARENT") == 2);
+    // Doesn't work because .... maybe because the substance groups are intertwined react/prod? The sg hierarchy is not being written for the reactant...
+    // CHECK(sgsRoundReact[0].getProp<unsigned int>("PARENT") == 2);
   }
   SECTION("link nodes") {
     // clang-format off
@@ -1222,6 +1329,15 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
           Bond::BondStereo::STEREOCIS);
     CHECK(rxn->getProducts()[0]->getBondWithIdx(1)->getStereo() ==
           Bond::BondStereo::STEREOCIS);
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToCXRxnSmarts(*rxn));
+    REQUIRE(roundtrip);
+    CHECK(roundtrip->getReactants().size() == 1);
+    CHECK(roundtrip->getProducts().size() == 1);
+    CHECK(roundtrip->getReactants()[0]->getBondWithIdx(1)->getStereo() ==
+          Bond::BondStereo::STEREOCIS);
+    CHECK(roundtrip->getProducts()[0]->getBondWithIdx(1)->getStereo() ==
+          Bond::BondStereo::STEREOCIS);
   }
   SECTION("wedged bonds") {
     auto rxn = "CC(O)(F)Cl>>CC(N)(F)Cl |w:1.0,6.5|"_rxnsmiles;
@@ -1235,6 +1351,24 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
     CHECK(rxn->getProducts()[0]->getBondWithIdx(1)->getPropIfPresent(
         "_MolFileBondCfg", bondcfg));
     CHECK(bondcfg == 2);
+
+    auto roundtrip = v2::ReactionParser::ReactionFromSmarts(ChemicalReactionToCXRxnSmarts(*rxn));
+    REQUIRE(roundtrip);
+    CHECK(roundtrip->getReactants().size() == 1);
+    CHECK(roundtrip->getProducts().size() == 1);
+    bondcfg = 0;
+    CHECK(roundtrip->getReactants()[0]->getBondWithIdx(0)->getPropIfPresent(
+        "_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+    CHECK(roundtrip->getProducts()[0]->getBondWithIdx(1)->getPropIfPresent(
+        "_MolFileBondCfg", bondcfg));
+    CHECK(bondcfg == 2);
+
+    SmilesWriteParams params;
+    auto flags = RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_ATOM_PROPS; 
+    auto output_cxsmarts = ChemicalReactionToCXRxnSmarts(*rxn, params, flags);
+    auto expected_cxsmarts = "[#6]-[#6](-[#8])(-[#9])-[#17]>>[#6]-[#6](-[#7])(-[#9])-[#17] |w:1.0,6.5|";
+    CHECK(output_cxsmarts == expected_cxsmarts);
   }
 }
 
@@ -1981,5 +2115,132 @@ M  END)RXN";
     ChemicalReaction rxn2;
     ReactionPickler::reactionFromPickle(pkl, rxn2);
     CHECK(rxn2.getReactants()[0]->getAtomWithIdx(0)->hasProp("molFileValue"));
+  }
+}
+
+TEST_CASE("Github #7669: propate stereo groups from product templates") {
+  auto rxnBlock = R"RXN($RXN V3000
+
+      Mrv2401  072420241107
+
+M  V30 COUNTS 1 1
+M  V30 BEGIN REACTANT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -1.5417 2.7917 0 1
+M  V30 2 F -1.5417 1.2517 0 4
+M  V30 3 C -3.0817 2.7917 0 3
+M  V30 4 Cl -1.5417 4.3317 0 2
+M  V30 5 C -0.0017 2.7917 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 4
+M  V30 3 1 1 3
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  V30 END REACTANT
+M  V30 BEGIN PRODUCT
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 9.2083 2.9167 0 1
+M  V30 2 C 7.6683 2.9167 0 3
+M  V30 3 F 9.2083 1.3767 0 4
+M  V30 4 Cl 9.2083 4.4567 0 2
+M  V30 5 I 10.7483 2.9167 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STERAC1 ATOMS=(1 1)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  V30 END PRODUCT
+M  END)RXN";
+  auto rxn = v2::ReactionParser::ReactionFromRxnBlock(rxnBlock);
+  REQUIRE(rxn);
+  CHECK(rxn->getProducts()[0]->getStereoGroups().size() == 1);
+  rxn->initReactantMatchers();
+  SECTION("as reported") {
+    auto mol = R"CTAB(
+  MJ231601                      
+
+  5  4  0  0  1  0  0  0  0  0999 V2000
+   -0.8258    1.4955    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8258    0.6705    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6508    1.4955    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.8258    2.3205    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0008    1.4955    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  3  1  0  0  0  0
+  1  5  1  0  0  0  0
+M  END)CTAB"_ctab;
+    REQUIRE(mol);
+    ROMOL_SPTR reactant(std::move(mol));
+    auto ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 2);
+    REQUIRE(ps[0].size() == 1);
+
+    CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(ps[1][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+
+    auto sg = StereoGroup(StereoGroupType::STEREO_OR,
+                          {reactant->getAtomWithIdx(0)}, {});
+    reactant->setStereoGroups({sg});
+    ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 2);
+    REQUIRE(ps[0].size() == 1);
+    CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(ps[1][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+  }
+
+  SECTION(
+      "stereogroups in product template remove atoms from stereogroups in reactant") {
+    auto mol = "C[C@](F)(Cl)C[C@](C)(O)Br |o1:1,5|"_smiles;
+    ROMOL_SPTR reactant(std::move(mol));
+    auto ps = rxn->runReactant(reactant, 0);
+    REQUIRE(ps.size() == 2);
+    REQUIRE(ps[0].size() == 1);
+    CHECK(ps[0][0]->getStereoGroups().size() == 1);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+    CHECK(ps[1][0]->getStereoGroups().size() == 2);
+    CHECK(ps[0][0]->getStereoGroups()[0].getGroupType() ==
+          StereoGroupType::STEREO_AND);
+  }
+}
+
+TEST_CASE("Structural fingerprints values") {
+  SECTION("basics") {
+    auto rxn1 = "c1ccccc1>CC(=O)O.[Na+]>c1ccncc1"_rxnsmarts;
+    REQUIRE(rxn1);
+    auto rxn2 = "c1ncccc1>[Na+]>c1ncncc1"_rxnsmarts;
+    REQUIRE(rxn2);
+
+    ReactionFingerprintParams params;
+    params.fpType = FingerprintType::TopologicalTorsionFP;
+    params.fpSize = 4096;
+
+    std::unique_ptr<ExplicitBitVect> fp1{
+        StructuralFingerprintChemReaction(*rxn1, params)};
+    std::unique_ptr<ExplicitBitVect> fp2{
+        StructuralFingerprintChemReaction(*rxn2, params)};
+    CHECK(TanimotoSimilarity(*fp1, *fp2) == 0.4);
   }
 }

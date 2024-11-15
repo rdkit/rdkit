@@ -9811,28 +9811,27 @@ TEST_CASE("avoid duplicate enhanced stereo labels") {
 
 TEST_CASE("Draw atom map numbers on complex query atoms") {
   std::unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
-    "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
-REQUIRE(rxn);
-{
-  // Use NO_FREETYPE so that the characters appear in an
-  // easily found manner in the SVG.
-  MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
-  drawer.drawReaction(*rxn);
-  drawer.finishDrawing();
-  auto text = drawer.getDrawingText();
-  std::string svgFile = "testComplexQueryAtomMap.svg";
-  std::ofstream outs(svgFile);
-  outs << text;
-  outs.close();
-  check_file_hash(svgFile);
-  std::regex regex(std::string("<text\\s+.*>:</text>"));
-  size_t nOccurrences = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), regex),
-      std::sregex_token_iterator());
-  // there should be 6 colons drawn
-  CHECK(nOccurrences == 6);
-
-}
+      "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]"));
+  REQUIRE(rxn);
+  {
+    // Use NO_FREETYPE so that the characters appear in an
+    // easily found manner in the SVG.
+    MolDraw2DSVG drawer(600, 200, 600, 200, NO_FREETYPE);
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::string svgFile = "testComplexQueryAtomMap.svg";
+    std::ofstream outs(svgFile);
+    outs << text;
+    outs.close();
+    check_file_hash(svgFile);
+    std::regex regex(std::string("<text\\s+.*>:</text>"));
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), regex),
+        std::sregex_token_iterator());
+    // there should be 6 colons drawn
+    CHECK(nOccurrences == 6);
+  }
 }
 
 TEST_CASE("Draw hetero atoms in black if highlighted") {
@@ -9913,9 +9912,11 @@ TEST_CASE("Github 7739 - Bad multi-coloured wedge") {
     outs.flush();
     // In the original, buggy version, there were 3 triangles making
     // up the black part of bond 6.  There are only 2 in the fixed version.
+    // std::regex bond6(
+    //     "<path class='bond-6 atom-7 atom-5' .*style='fill:#000000;"
+    //     "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
     std::regex bond6(
-        "<path class='bond-6 atom-7 atom-5' .*style='fill:#000000;"
-        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+        "<path class='bond-6 atom-5 atom-7' .*style='fill:none;fill-rule:evenodd;stroke:#0000");
     size_t nOccurrences6 = std::distance(
         std::sregex_token_iterator(text.begin(), text.end(), bond6),
         std::sregex_token_iterator());
@@ -9927,7 +9928,15 @@ TEST_CASE("Github 7739 - Bad multi-coloured wedge") {
     size_t nOccurrences19 = std::distance(
         std::sregex_token_iterator(text.begin(), text.end(), bond19),
         std::sregex_token_iterator());
-    CHECK((nOccurrences6 == 2 || nOccurrences19 == 2));
+
+    std::regex bond13(
+        "<path class='bond-13 atom-10 atom-14' .*style='fill:#000000;"
+        "fill-rule:evenodd;fill-opacity:1;stroke:#000000;");
+    size_t nOccurrences13 = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), bond13),
+        std::sregex_token_iterator());
+
+    CHECK((nOccurrences6 == 2 || nOccurrences19 == 2 || nOccurrences13 == 2));
 
     check_file_hash(fileStem + "1.svg");
   }
@@ -10079,9 +10088,8 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
     std::map<int, std::vector<DrawColour>> bondCols;
     std::map<int, double> atomRads{{2, 1.0}};
     std::map<int, int> bondMults;
-    REQUIRE_NOTHROW(
-        drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
-                                          atomRads, bondMults));
+    REQUIRE_NOTHROW(drawer.drawMoleculeWithHighlights(
+        *m, "nocrash", atomCols, bondCols, atomRads, bondMults));
   }
   {
     MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);

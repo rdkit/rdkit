@@ -233,9 +233,9 @@ unsigned int jacobi(double quad[4][4], double eigenVals[4],
               s * s * eigenVals[i] + c * c * eigenVals[j] + 2.0 * c * s * b;
           eigenVals[i] = dtemp;
         } /* end if */
-      }   /* end for i */
-    }     /* end for j */
-  }       /* end for l */
+      } /* end for i */
+    } /* end for j */
+  } /* end for l */
 
 Exit_now:
 

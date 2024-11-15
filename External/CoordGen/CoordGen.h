@@ -28,7 +28,7 @@ struct CoordGenParams {
   const float sketcherQuickPrecision = SKETCHER_QUICK_PRECISION;
   RDGeom::INT_POINT2D_MAP
       coordMap;  // coordinates for fixing particular atoms of a template
-  const ROMol* templateMol = nullptr;  // a molecule to use as a template
+  const ROMol *templateMol = nullptr;  // a molecule to use as a template
   double coordgenScaling = 50.0;       // at the time this was written, coordgen
   // returned coordinates with a single bond
   // length of 50.
@@ -52,7 +52,7 @@ static CoordGenParams defaultParams;
 
 */
 template <typename T>
-unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
+unsigned int addCoords(T &mol, const CoordGenParams *params = nullptr) {
   if (!params) params = &defaultParams;
   // FIX: the default value of this should be handled once in a threadsafe way
   std::string templateFileDir;
@@ -90,7 +90,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
   // if we're doing coordinate minimization it makes our life easier to
   // start by translating to the origin
   RDGeom::Point3D centroid{0.0, 0.0, 0.0};
-  std::vector<sketcherMinimizerAtom*> ats(mol.getNumAtoms());
+  std::vector<sketcherMinimizerAtom *> ats(mol.getNumAtoms());
   for (auto atit = mol.beginAtoms(); atit != mol.endAtoms(); ++atit) {
     auto oatom = *atit;
     auto atom = min_mol->addNewAtom();
@@ -102,9 +102,9 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
       atom->constrained = params->dbg_useConstrained;
       atom->fixed = params->dbg_useFixed;
       if (hasTemplateMatch) {
-        for (auto& pr : mv) {
+        for (auto &pr : mv) {
           if (pr.second == static_cast<int>(oatom->getIdx())) {
-            const RDGeom::Point3D& coords =
+            const RDGeom::Point3D &coords =
                 params->templateMol->getConformer().getAtomPos(pr.first);
             atom->templateCoordinates = sketcherMinimizerPointF(
                 coords.x * scaleFactor, coords.y * scaleFactor);
@@ -112,7 +112,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
           }
         }
       } else {
-        const RDGeom::Point2D& coords =
+        const RDGeom::Point2D &coords =
             params->coordMap.find(oatom->getIdx())->second;
         atom->templateCoordinates = sketcherMinimizerPointF(
             coords.x * scaleFactor, coords.y * scaleFactor);
@@ -121,7 +121,7 @@ unsigned int addCoords(T& mol, const CoordGenParams* params = nullptr) {
     ats[oatom->getIdx()] = atom;
   }
 
-  std::vector<sketcherMinimizerBond*> bnds(mol.getNumBonds());
+  std::vector<sketcherMinimizerBond *> bnds(mol.getNumBonds());
   for (auto bndit = mol.beginBonds(); bndit != mol.endBonds(); ++bndit) {
     auto obnd = *bndit;
     auto bnd = min_mol->addNewBond(ats[obnd->getBeginAtomIdx()],
