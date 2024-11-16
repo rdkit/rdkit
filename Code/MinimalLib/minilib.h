@@ -142,8 +142,10 @@ class JSMolBase {
   }
   std::string get_prop(const std::string &key) const;
   bool clear_prop(const std::string &key);
-  std::string remove_hs() const;
-  bool remove_hs_in_place();
+  std::string remove_hs(const std::string &details_json) const;
+  std::string remove_hs() const { return remove_hs(""); }
+  bool remove_hs_in_place(const std::string &details_json);
+  bool remove_hs_in_place() { return remove_hs_in_place(""); }
   std::string add_hs() const;
   bool add_hs_in_place();
   double normalize_depiction(int canonicalize, double scaleFactor);

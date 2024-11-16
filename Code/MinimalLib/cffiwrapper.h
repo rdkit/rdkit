@@ -117,6 +117,8 @@ RDKIT_RDKITCFFI_EXPORT char *get_avalon_fp_as_bytes(const char *pkl,
 // modification
 RDKIT_RDKITCFFI_EXPORT short add_hs(char **pkl, size_t *pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short remove_all_hs(char **pkl, size_t *pkl_sz);
+RDKIT_RDKITCFFI_EXPORT short remove_hs(char **pkl, size_t *pkl_sz,
+                                       const char *details_json);
 
 // standardization
 RDKIT_RDKITCFFI_EXPORT short cleanup(char **pkl, size_t *pkl_sz,
