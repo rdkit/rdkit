@@ -10,6 +10,14 @@
 
 #ifndef RDKIT_SYNTHONSPACE_H
 #define RDKIT_SYNTHONSPACE_H
+/*! \file SynthonSpace.h
+
+  \brief contains a class for searching combinatorial libraries in
+         Synthon format such as Enamine REAL.
+
+  \b Note that this functionality is experimental and the API may change
+     in future releases.
+*/
 
 #include <map>
 #include <random>

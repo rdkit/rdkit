@@ -48,13 +48,6 @@ Synthon::Synthon(const Synthon &other)
       dp_pattFP(std::make_unique<ExplicitBitVect>(*other.dp_pattFP)),
       d_connRegions(other.d_connRegions) {}
 
-Synthon::Synthon(Synthon &&other) noexcept
-    : d_smiles(std::move(other.d_smiles)),
-      d_id(std::move(other.d_id)),
-      dp_mol(std::move(other.dp_mol)),
-      dp_pattFP(std::move(other.dp_pattFP)),
-      d_connRegions(std::move(other.d_connRegions)) {}
-
 Synthon &Synthon::operator=(const Synthon &other) {
   if (this == &other) {
     return *this;
@@ -81,22 +74,6 @@ Synthon &Synthon::operator=(const Synthon &other) {
         });
   } else {
     d_connRegions.clear();
-  }
-  return *this;
-}
-
-Synthon &Synthon::operator=(Synthon &&other) noexcept {
-  if (this == &other) {
-    return *this;
-  }
-  d_smiles = std::move(other.d_smiles);
-  d_id = std::move(other.d_id);
-  dp_mol = std::exchange(other.dp_mol, nullptr);
-  dp_pattFP = std::exchange(other.dp_pattFP, nullptr);
-  d_connRegions =
-      std::vector<std::shared_ptr<ROMol>>(other.d_connRegions.size());
-  for (size_t i = 0; i < d_connRegions.size(); ++i) {
-    d_connRegions[i] = std::exchange(other.d_connRegions[i], nullptr);
   }
   return *this;
 }

@@ -27,9 +27,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   Synthon() = default;
   Synthon(const std::string &smi, const std::string &id);
   Synthon(const Synthon &other);
-  Synthon(Synthon &&other) noexcept;
+  Synthon(Synthon &&other) = default;
   Synthon &operator=(const Synthon &other);
-  Synthon &operator=(Synthon &&other) noexcept;
+  Synthon &operator=(Synthon &&other) = default;
 
   [[nodiscard]] const std::string &getSmiles() const { return d_smiles; }
   [[nodiscard]] const std::string &getId() const { return d_id; }
