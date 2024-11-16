@@ -29,7 +29,6 @@ using namespace RDKit;
 void test1() {
   BOOST_LOG(rdErrorLog) << "test1: basics" << std::endl;
 
-#if 1
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
@@ -123,7 +122,6 @@ void test1() {
     TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
     TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::ZERO);
   }
-#endif
 
   {
     std::string json =
@@ -166,7 +164,6 @@ void roundtripSmi(const char *smi) {
 
 void test2() {
   BOOST_LOG(rdErrorLog) << "test2: basic writing" << std::endl;
-#if 1
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("CC"));
     TEST_ASSERT(mol);
@@ -174,29 +171,9 @@ void test2() {
     auto json = MolInterchange::MolToJSONData(*mol);
     std::cerr << json << std::endl;
   }
-#endif
   roundtripSmi("F[C@@](Cl)(O)C");
   roundtripSmi("c1ccccc1");
   roundtripSmi("CCC1=C(N)C=C(C)N=C1");
-#if 0
-  {
-    std::unique_ptr<RWMol> mol(SmilesToMol("F[C@](Cl)(O)/C=C/C"));
-    TEST_ASSERT(mol);
-    mol->setProp("_Name", "test mol");
-    mol->getBondBetweenAtoms(4, 5)->setStereo(Bond::STEREOTRANS);
-    auto json = MolInterchange::MolToJSONData(*mol, "test2 mol2");
-    std::cerr << json << std::endl;
-    std::string smi1 = MolToSmiles(*mol);
-    auto newMols = MolInterchange::JSONDataToMols(json);
-    TEST_ASSERT(newMols.size() == 1);
-    mol->debugMol(std::cerr);
-    newMols[0]->debugMol(std::cerr);
-    std::string smi2 = MolToSmiles(*newMols[0]);
-    std::cerr << "smi1: " << smi1 << std::endl;
-    std::cerr << "smi2: " << smi2 << std::endl;
-    TEST_ASSERT(smi1 == smi2);
-  }
-#endif
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
@@ -226,7 +203,6 @@ void test3() {
 
 void test4() {
   BOOST_LOG(rdErrorLog) << "test4: writing properties" << std::endl;
-#if 1
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("CC"));
     TEST_ASSERT(mol);
@@ -247,7 +223,6 @@ void test4() {
     TEST_ASSERT(newMols[0]->hasProp("foo_double"));
     TEST_ASSERT(newMols[0]->getProp<double>("foo_double") == 1.2);
   }
-#endif
   BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
@@ -276,70 +251,6 @@ void test5() {
                         common_properties::_GasteigerCharge),
                     -0.5));
   }
-}
-
-void benchmarking() {
-  BOOST_LOG(rdErrorLog) << "benchmarking performance" << std::endl;
-  std::string rdbase = getenv("RDBASE");
-  {
-    std::string fName =
-        rdbase + "/Code/GraphMol/MolInterchange/test_data/znp.50k.smi";
-    SmilesMolSupplier suppl(fName);
-    std::vector<RWMol *> mols;
-    auto smir_t1 = std::chrono::system_clock::now();
-    while (mols.size() < 20000) {
-      mols.push_back(static_cast<RWMol *>(suppl.next()));
-    }
-    auto smir_t2 = std::chrono::system_clock::now();
-    std::cerr << "construction of " << mols.size() << " took "
-              << std::chrono::duration<double>(smir_t2 - smir_t1).count()
-              << std::endl;
-    for (auto &m : mols) {
-      MolOps::Kekulize(*m);
-    }
-    auto jsonw_t1 = std::chrono::system_clock::now();
-    auto json = MolInterchange::MolsToJSONData(mols);
-    auto jsonw_t2 = std::chrono::system_clock::now();
-    std::cerr << "json generation took "
-              << std::chrono::duration<double>(jsonw_t2 - jsonw_t1).count()
-              << std::endl;
-
-    auto jsonr_t1 = std::chrono::system_clock::now();
-    auto newms = MolInterchange::JSONDataToMols(json);
-    auto jsonr_t2 = std::chrono::system_clock::now();
-    std::cerr << "json parsing took "
-              << std::chrono::duration<double>(jsonr_t2 - jsonr_t1).count()
-              << std::endl;
-    newms.clear();
-
-    auto pklw_t1 = std::chrono::system_clock::now();
-    std::vector<std::string> pkls;
-    pkls.reserve(mols.size());
-    for (const auto &mol : mols) {
-      std::string pkl;
-      MolPickler::pickleMol(*mol, pkl);
-      pkls.push_back(pkl);
-    }
-    auto pklw_t2 = std::chrono::system_clock::now();
-    std::cerr << "pickle generation took "
-              << std::chrono::duration<double>(pklw_t2 - pklw_t1).count()
-              << std::endl;
-
-    auto pklr_t1 = std::chrono::system_clock::now();
-    for (const auto &pkl : pkls) {
-      ROMol m;
-      MolPickler::molFromPickle(pkl, m);
-    }
-    auto pklr_t2 = std::chrono::system_clock::now();
-    std::cerr << "pickle parsing took "
-              << std::chrono::duration<double>(pklr_t2 - pklr_t1).count()
-              << std::endl;
-
-    for (auto &m : mols) {
-      delete m;
-    }
-  }
-  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void test6() {
@@ -460,86 +371,15 @@ void testEitherStereo() {
 }
 
 void RunTests() {
-#if 1
   test1();
   test2();
   test3();
   test4();
   test5();
   test6();
-#endif
   testGithub2046();
   testEitherStereo();
-
-  // benchmarking();
-  // test2();
 }
-
-#if 0
-// must be in German Locale for test...
-void testLocaleSwitcher() {
-  float d = -1.0;
-  char buffer[1024];
-  sprintf(buffer, "%0.2f", d);
-  if (std::string(buffer) != "-1,00") {
-    BOOST_LOG(rdErrorLog) << " ---- no German locale support (skipping) ---- "
-                         << std::endl;
-    return;
-  }
-
-  {
-    RDKit::Utils::LocaleSwitcher ls;
-    sprintf(buffer, "%0.2f", d);
-    CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
-    // test locale switcher recursion
-    {
-      RDKit::Utils::LocaleSwitcher ls;
-      sprintf(buffer, "%0.2f", d);
-      CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
-    }
-    // should still be in the "C" variant
-    sprintf(buffer, "%0.2f", d);
-    CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
-  }
-
-  // Should be back in German Locale
-  sprintf(buffer, "%0.2f", d);
-  CHECK_INVARIANT(std::string(buffer) == "-1,00", "Locale Switcher Fail");
-}
-
-#ifdef RDK_TEST_MULTITHREADED
-
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-
-namespace {
-void runblock() { testLocaleSwitcher(); }
-}
-void testMultiThreadedSwitcher() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading Locale Switching"
-                        << std::endl;
-
-  boost::thread_group tg;
-  unsigned int count = 100;
-  for (unsigned int i = 0; i < count; ++i) {
-    tg.add_thread(new boost::thread(runblock));
-  }
-  tg.join_all();
-  BOOST_LOG(rdErrorLog) << "    Test multithreading (Done)" << std::endl;
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-}
-
-#else
-
-void testMultiThreadedSwitcher() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << " ---- Multithreaded tests disabled ---- "
-                       << std::endl;
-}
-#endif
-#endif
 
 int main(int argc, char *argv[]) {
   (void)argc;

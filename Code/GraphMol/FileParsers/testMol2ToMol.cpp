@@ -239,16 +239,6 @@ void testGeneral(std::string rdbase) {
     delete m;
   }
 
-#if 0
-  {
-    std::string fName = rdbase + "/Code/GraphMol/FileParsers/test_data/Sulfonate.mol2";
-    RWMol *m = Mol2FileToMol(fName);
-    TEST_ASSERT(m);
-    BOOST_LOG(rdInfoLog) <<MolToSmiles(*m)<<std::endl;
-    delete m;
-  }
-#endif
-
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "-- DONE general mol2 file parsing --" << std::endl;
   BOOST_LOG(rdInfoLog) << "------------------------------------" << std::endl;

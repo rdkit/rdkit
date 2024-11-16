@@ -28,10 +28,6 @@ class RDKIT_MOLDRAW2DQT_EXPORT DrawTextQt : public DrawTextNotFT {
   DrawTextQt &operator=(const DrawTextQt &rhs) = delete;
   DrawTextQt &operator=(DrawTextQt &&rhs) = delete;
 
-#if 0
-  void getStringSize(const std::string &label, double &label_width,
-                     double &label_height) const override;
-#endif
   void drawChar(char c, const Point2D &cds) override;
 
  private:
