@@ -915,7 +915,6 @@ void testHasBondTypeQuery() {
 
 int main() {
   RDLog::InitLogs();
-#if 1
   test1();
   test2();
   test3();
@@ -929,7 +928,6 @@ int main() {
   testHasPropMatch();
   testHasPropWithValueMatch();
   testHasPropWithDoubleValueMatch();
-#endif
   testExtraAtomQueries();
   testExtraBondQueries();
   testNumHeteroatomNeighborQueries();
