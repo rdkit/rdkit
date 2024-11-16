@@ -56,10 +56,16 @@ class SynthonSpaceSearcher {
   // similarity.
   virtual std::vector<SynthonSpaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet) const = 0;
-  // Verify that the hit, constructed from a specific combination of
-  // of synthons in the SynthonSpaceHitSet, matches the query in the
-  // appropriate way.
-  virtual bool verifyHit(const ROMol &hit) const = 0;
+  // Make the hit, constructed from a specific combination of
+  // synthons in the SynthonSet, and verify that it matches the
+  // query in the appropriate way.  There'll be 1 entry in synthNums
+  // for each synthon list in the reaction.  Returns an empty pointer
+  // if the hit isn't accepted for whatever reason.
+  std::unique_ptr<ROMol> buildAndVerifyHit(
+      const std::unique_ptr<SynthonSet> &reaction,
+      const std::vector<size_t> &synthNums,
+      std::set<std::string> &resultsNames) const;
+  virtual bool verifyHit(const ROMol &mol) const = 0;
 
   // Build the molecules from the synthons identified in reagentsToUse.
   // There should be bitset in reagentsToUse for each reagent set.

@@ -10,6 +10,14 @@
 
 #ifndef RDKIT_SYNTHONSPACE_H
 #define RDKIT_SYNTHONSPACE_H
+/*! \file SynthonSpace.h
+
+  \brief contains a class for searching combinatorial libraries in
+         Synthon format such as Enamine REAL.
+
+  \b Note that this functionality is experimental and the API may change
+     in future releases.
+*/
 
 #include <map>
 #include <string>
@@ -60,12 +68,13 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                  // fingerprint similarity.  At present the fp
                                  // is hard-coded to be Morgan, bits, radius=2.
   double fragSimilarityAdjuster{
-      0.3};  // Similarities values for fragments are generally low
+      0.1};  // Similarity values for fragments are generally low
              // due to low bit densities.  For the fragment
-             // matching, reduce the similarity cutoff off
+             // matching, reduce the similarity cutoff
              // by this amount.  A higher number will give slower search
              // times, a lower number will give faster searches at the
-             // risk of missing some hits.
+             // risk of missing some hits.  The value you use should have
+             // a positive correlation with your FOMO.
 };
 
 // Holds the information about a set of hits.  The molecules can be built

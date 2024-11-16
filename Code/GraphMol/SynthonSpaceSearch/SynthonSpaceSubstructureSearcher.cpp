@@ -8,7 +8,10 @@
 //  of the RDKit source tree.
 //
 
+#include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>

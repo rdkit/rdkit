@@ -73,7 +73,9 @@ void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::scope().attr("__doc__") =
       "Module containing implementation of SynthonSpace search of"
-      " Synthon-based chemical libraries such as Enamine REAL.";
+      " Synthon-based chemical libraries such as Enamine REAL."
+      "  NOTE: This functionality is experimental and the API"
+      " and/or results may change in future releases.";
 
   SubstructureResults_wrapper::wrap();
 

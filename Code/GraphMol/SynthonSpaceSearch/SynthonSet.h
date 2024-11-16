@@ -80,8 +80,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // d_synthons.
   std::vector<std::vector<ROMol *>> getSynthons(
       const std::vector<boost::dynamic_bitset<>> &reqSynths) const;
-  // Return the molecule for the given synthon
-  ROMol *getSynthon(size_t synthSetNum, size_t synthNum) const;
+
+  std::string buildProductName(const std::vector<size_t> &synthNums) const;
+  std::unique_ptr<ROMol> buildProduct(
+      const std::vector<size_t> &synthNums) const;
 
  private:
   std::string d_id;

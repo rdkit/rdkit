@@ -212,7 +212,7 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
     }
     auto sampleMol = molzip(*combMol, mzparams);
     MolOps::sanitizeMol(*dynamic_cast<RWMol *>(sampleMol.get()));
-    sampleMolecules.push_back(std::move(combMol));
+    sampleMolecules.push_back(std::move(sampleMol));
   }
 
   return sampleMolecules;
@@ -237,7 +237,6 @@ void SynthonSet::buildSynthonFingerprints(
 
   // Now build sets of sample molecules using each synthon set in turn.
   for (size_t i = 0; i < d_synthons.size(); ++i) {
-    std::cout << "SynthonSet " << i << "\n";
     d_synthonFPs.emplace_back();
     d_synthonFPs[i].reserve(d_synthons[i].size());
     std::vector<boost::dynamic_bitset<>> synthsToUse(d_synthons.size());
@@ -250,23 +249,10 @@ void SynthonSet::buildSynthonFingerprints(
         synthsToUse[j][0] = true;
       }
     }
-    // std::cout << synthsToUse.size() << "\n";
-    // for (const auto &stu : synthsToUse) {
-    //   std::cout << stu << std::endl;
-    // }
     auto synthons = getSynthons(synthsToUse);
     auto sampleMols = buildSampleMolecules(synthons, i);
     makeSynthonFPs(i, sampleMols, fpGenerator);
   }
-  // std::cout << "SythonSet : " << d_id << std::endl;
-  // std::cout << "Synths : " << d_synthons.size() << std::endl;
-  // for (const auto &s : d_synthons) {
-  //   std::cout << "   " << s.size() << std::endl;
-  // }
-  // std::cout << "FPs : " << d_synthonFPs.size() << std::endl;
-  // for (const auto &fp : d_synthonFPs) {
-  //   std::cout << "   " << fp.size() << std::endl;
-  // }
 }
 
 std::vector<std::vector<ROMol *>> SynthonSet::getSynthons(
@@ -289,11 +275,30 @@ std::vector<std::vector<ROMol *>> SynthonSet::getSynthons(
   return synthons;
 }
 
-ROMol *SynthonSet::getSynthon(size_t synthSetNum, size_t synthNum) const {
-  PRECONDITION(synthSetNum < d_synthons.size(), "wrong synthset number");
-  PRECONDITION(synthNum < d_synthons[synthSetNum].size(),
-               "wrong synthon number");
-  return d_synthons[synthSetNum][synthNum]->getMol().get();
+std::string SynthonSet::buildProductName(
+    const std::vector<size_t> &synthNums) const {
+  std::string prodName = d_id;
+  for (size_t i = 0; i < synthNums.size(); ++i) {
+    prodName += "_" + d_synthons[i][synthNums[i]]->getId();
+  }
+  return prodName;
+}
+
+std::unique_ptr<ROMol> SynthonSet::buildProduct(
+    const std::vector<size_t> &synthNums) const {
+  MolzipParams mzparams;
+  mzparams.label = MolzipLabel::Isotope;
+
+  auto prodMol = std::make_unique<ROMol>(
+      *d_synthons.front()[synthNums.front()]->getMol().get());
+  for (size_t i = 1; i < synthNums.size(); ++i) {
+    prodMol.reset(
+        combineMols(*prodMol, *d_synthons[i][synthNums[i]]->getMol()));
+  }
+  prodMol = molzip(*prodMol, mzparams);
+  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+
+  return prodMol;
 }
 
 void SynthonSet::tagSynthonAtomsAndBonds() {
@@ -325,13 +330,6 @@ void SynthonSet::makeSynthonFPs(
     size_t synthSetNum, const std::vector<std::unique_ptr<ROMol>> &sampleMols,
     const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGenerator) {
   for (size_t i = 0; i < sampleMols.size(); ++i) {
-    // std::cout << i << " : "
-    //           << MolToSmiles(*d_synthons[synthSetNum][i]->getMol())
-    //           << std::endl;
-    // auto fp =
-    //     fpGenerator->getFingerprint(*d_synthons[synthSetNum][i]->getMol());
-    // std::cout << "Num set bits : " << fp->getNumOnBits() << " vs "
-    //           << fp->getNumOffBits() << std::endl;
     RWMol synthCp(*d_synthons[synthSetNum][i]->getMol());
     // transfer the aromaticity of the atom in the sample molecule to the
     // corresponding atom in the synthon
@@ -356,16 +354,17 @@ void SynthonSet::makeSynthonFPs(
       } else {
         // it came from molzip, so in the synth, one end atom corresponds to
         // an atom in sampleMol and the other end was a dummy.
-        fixSynthonAtomAndBond(bond->getBeginAtom(), bond, synthCp);
-        fixSynthonAtomAndBond(bond->getEndAtom(), bond, synthCp);
+        if (static_cast<size_t>(bond->getBeginAtom()->getProp<int>("molNum")) ==
+            synthSetNum) {
+          fixSynthonAtomAndBond(bond->getBeginAtom(), bond, synthCp);
+        } else if (static_cast<size_t>(bond->getEndAtom()->getProp<int>(
+                       "molNum")) == synthSetNum) {
+          fixSynthonAtomAndBond(bond->getEndAtom(), bond, synthCp);
+        }
       }
     }
     d_synthonFPs[synthSetNum].emplace_back(
         fpGenerator->getFingerprint(synthCp));
-    // std::cout << "Making FP for " << MolToSmiles(synthCp) << " : "
-    //           << d_synthonFPs[synthSetNum].back()->getNumOnBits() << " vs "
-    //           << d_synthonFPs[synthSetNum].back()->getNumOffBits() <<
-    //           std::endl;
   }
 }
 
