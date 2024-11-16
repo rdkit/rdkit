@@ -801,10 +801,6 @@ void testGitHubIssue910() {
     }
     MolOps::addHs(*m, false, false, &chiralAts);
     RDDepict::compute2DCoords(*m, nullptr, true);
-#if 0
-    m->setProp("_Name", "github910");
-    std::cerr << MolToMolBlock(*m);
-#endif
     // now look for close contacts.
     const Conformer &conf = m->getConformer();
     for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
@@ -971,7 +967,6 @@ void testGithub1691() {
       << "-----------------------\n Testing Github issue "
          "1691: Acetylenic hydrogens not given appropriate 2D coordinates"
       << std::endl;
-#if 1
   {
     SmilesParserParams ps;
     ps.removeHs = false;
@@ -994,7 +989,6 @@ void testGithub1691() {
     TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
     TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
   }
-#endif
   {
     SmilesParserParams ps;
     ps.removeHs = false;
@@ -1296,7 +1290,7 @@ M  END)RES"_ctab;
 
   // test that using a reference with query atoms including H works
   auto scaffold = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  12 13  0  0  0  0  0  0  0  0999 V2000
    -0.5398    0.0400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1324,13 +1318,13 @@ M  END)RES"_ctab;
   3 10  1  0  0  0  0
   9 11  1  0  0  0  0
   8 12  1  0  0  0  0
-M  ALS   7 10 F H   C   N   O   F   P   S   Cl  Br  I   
-M  ALS  11 10 F H   C   N   O   F   P   S   Cl  Br  I   
-M  ALS  12 10 F H   C   N   O   F   P   S   Cl  Br  I   
+M  ALS   7 10 F H   C   N   O   F   P   S   Cl  Br  I
+M  ALS  11 10 F H   C   N   O   F   P   S   Cl  Br  I
+M  ALS  12 10 F H   C   N   O   F   P   S   Cl  Br  I
 M  END
 )CTAB"_ctab;
   auto mol = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  13 14  0  0  0  0  0  0  0  0999 V2000
    -0.6112    0.3665    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1493,7 +1487,7 @@ M  END)RES"_ctab;
 
     // test that using a reference with query atoms including H works
     auto scaffold = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  12 13  0  0  0  0  0  0  0  0999 V2000
    -0.5398    0.0400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1521,14 +1515,14 @@ M  END)RES"_ctab;
   3 10  1  0  0  0  0
   9 11  1  0  0  0  0
   8 12  1  0  0  0  0
-M  ALS   7 10 F H   C   N   O   F   P   S   Cl  Br  I   
-M  ALS  11 10 F H   C   N   O   F   P   S   Cl  Br  I   
-M  ALS  12 10 F H   C   N   O   F   P   S   Cl  Br  I   
+M  ALS   7 10 F H   C   N   O   F   P   S   Cl  Br  I
+M  ALS  11 10 F H   C   N   O   F   P   S   Cl  Br  I
+M  ALS  12 10 F H   C   N   O   F   P   S   Cl  Br  I
 M  END
 )CTAB"_ctab;
     TEST_ASSERT(scaffold);
     auto mol = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  13 14  0  0  0  0  0  0  0  0999 V2000
    -0.6112    0.3665    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1576,7 +1570,7 @@ void testNormalizeStraighten() {
       << std::endl;
 
   auto noradrenalineMJ = R"RES(
-  MJ201100                      
+  MJ201100
 
  12 12  0  0  1  0  0  0  0  0999 V2000
     2.2687    1.0716    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1749,7 +1743,7 @@ M  END
     // towards a 30-degree angle rotate since it has no bonds
     // whose angle with the X axis is multiple of 60 degrees
     auto cpSittingOnHorizontalBondCTab = R"RES(
-  MJ201100                      
+  MJ201100
 
   5  5  0  0  0  0  0  0  0  0999 V2000
    -2.3660    0.3892    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1799,7 +1793,6 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-#if 1
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   test1 \n";
@@ -1991,7 +1984,6 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   testGithub1691();
-#endif
   testGithub2027();
   testGenerate2DDepictionRefPatternMatchVect();
   testGenerate2DDepictionAllowRGroupsOrig();

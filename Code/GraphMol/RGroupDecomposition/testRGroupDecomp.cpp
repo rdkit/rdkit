@@ -512,7 +512,6 @@ void testGitHubIssue1705() {
   BOOST_LOG(rdInfoLog)
       << "test grouping substituents in chunks as large as possible"
       << std::endl;
-#if 1
   {
     RWMol *core = SmilesToMol("Oc1ccccc1");
     RGroupDecompositionParameters params;
@@ -566,8 +565,6 @@ Cl[*:2]
     TEST_ASSERT(ss.str() == expected);
 #endif
   }
-#endif
-  // std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
   {
     RWMol *core = SmilesToMol("Cc1ccccc1");
     RGroupDecompositionParameters params;
@@ -663,7 +660,7 @@ void testGithub2332() {
   RGroupDecomposition decomp(*core, params);
   std::string chains[2] = {
       R"CTAB(
-  Mrv1810 03291913362D          
+  Mrv1810 03291913362D
 
   4  3  0  0  0  0            999 V2000
     2.0625   -0.7145    0.0000 Cl  0  0  0  0  0  0  0  0  0  0  0  0
@@ -676,7 +673,7 @@ void testGithub2332() {
 M  END
 )CTAB",
       R"CTAB(
-  Mrv1810 03291913362D          
+  Mrv1810 03291913362D
 
   3  2  0  0  0  0            999 V2000
     1.2375   -0.7145    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
@@ -709,7 +706,7 @@ void testSDFGRoupMultiCoreNoneShouldMatch() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "testSDFGRoupMultiCoreNoneShouldMatch" << std::endl;
   std::string sdcores = R"CTAB(
-  Mrv1813 05061918272D          
+  Mrv1813 05061918272D
 
  13 14  0  0  0  0            999 V2000
    -1.1505    0.0026    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -743,7 +740,7 @@ M  RGP  3  10   1  12   2  13   3
 M  END
 $$$$
 
-  Mrv1813 05061918272D          
+  Mrv1813 05061918272D
 
  13 14  0  0  0  0            999 V2000
     6.9524    0.1684    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -777,7 +774,7 @@ M  RGP  3  10   1  12   2  13   3
 M  END
 $$$$)CTAB";
   std::string sdmols = R"CTAB(
-  Mrv1813 05061918322D          
+  Mrv1813 05061918322D
 
  15 17  0  0  0  0            999 V2000
     0.1742    0.6899    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -815,7 +812,7 @@ $$$$)CTAB";
 M  END
 $$$$
 
-  Mrv1813 05061918322D          
+  Mrv1813 05061918322D
 
  14 15  0  0  0  0            999 V2000
     6.4368    0.3002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -850,7 +847,7 @@ $$$$
 M  END
 $$$$
 
-  Mrv1813 05061918322D          
+  Mrv1813 05061918322D
 
  14 15  0  0  0  0            999 V2000
     0.8289   -7.9643    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -885,7 +882,7 @@ $$$$
 M  END
 $$$$
 
-  Mrv1813 05061918322D          
+  Mrv1813 05061918322D
 
  12 13  0  0  0  0            999 V2000
     5.3295   -8.1871    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2502,12 +2499,12 @@ void testCoreWithAlsRecords() {
   4 F    2   6   7
   5 F    2   6   7
   6 F    2   6   7
-M  ALS   1  2 F C   N   
-M  ALS   2  2 F C   N   
-M  ALS   3  2 F C   N   
-M  ALS   4  2 F C   N   
-M  ALS   5  2 F C   N   
-M  ALS   6  2 F C   N   
+M  ALS   1  2 F C   N
+M  ALS   2  2 F C   N
+M  ALS   3  2 F C   N
+M  ALS   4  2 F C   N
+M  ALS   5  2 F C   N
+M  ALS   6  2 F C   N
 M  END
 )CTAB"_ctab;
   TEST_ASSERT(core);
@@ -2585,7 +2582,7 @@ M  END
       )CTAB"_ctab;
   auto mol = R"CTAB(
   -OEChem-03051316302D
-  
+
  19 21  0     0  0  0  0  0  0999 V2000
    -1.7593    5.0073    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
    -2.6211    4.4999    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2658,7 +2655,7 @@ void testWildcardInInput() {
       << std::endl;
 
   auto core = R"CTAB(
-Mrv2008 12012115162D          
+Mrv2008 12012115162D
 
   6  6  6  0  0  0            999 V2000
   -21.0938  -16.9652    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2679,12 +2676,12 @@ Mrv2008 12012115162D
   4 F    2   6   7
   5 F    2   6   7
   6 F    2   6   7
-M  ALS   1  2 F C   N   
-M  ALS   2  2 F C   N   
-M  ALS   3  2 F C   N   
-M  ALS   4  2 F C   N   
-M  ALS   5  2 F C   N   
-M  ALS   6  2 F C   N   
+M  ALS   1  2 F C   N
+M  ALS   2  2 F C   N
+M  ALS   3  2 F C   N
+M  ALS   4  2 F C   N
+M  ALS   5  2 F C   N
+M  ALS   6  2 F C   N
 M  END
 )CTAB"_ctab;
 
@@ -2869,9 +2866,9 @@ void testGithub5222() {
   2 F    2   6   7
   4 F    2   6   7
   6 F    2   6   7
-M  ALS   2  2 F C   N   
-M  ALS   4  2 F C   N   
-M  ALS   6  2 F C   N   
+M  ALS   2  2 F C   N
+M  ALS   4  2 F C   N
+M  ALS   6  2 F C   N
 M  END
 )CTAB"_ctab;
   std::vector<std::string> smiArray(10, "COc1ccccc1");
@@ -2914,12 +2911,12 @@ ChemDraw09152209202D
    -0.0001   -0.8250    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
     0.7144   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.7144    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  1  0      
-  2  3  1  0      
-  3  4  1  0      
-  4  5  1  0      
-  5  6  1  0      
-  6  1  1  0      
+  1  2  1  0
+  2  3  1  0
+  3  4  1  0
+  4  5  1  0
+  5  6  1  0
+  6  1  1  0
 M  END
 )CTAB"_ctab;
 
@@ -2996,7 +2993,7 @@ void testMultipleGroupsToUnlabelledCoreAtomGithub5573() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Test that Github5573 is fixed" << std::endl;
   auto core = R"CTAB(
-  Mrv2008 09172211422D          
+  Mrv2008 09172211422D
 
   8  8  0  0  0  0            999 V2000
    -7.2098   -3.1928    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3019,7 +3016,7 @@ M  END
 )CTAB"_ctab;
 
   auto test = R"CTAB(
-  Mrv2008 09172211422D          
+  Mrv2008 09172211422D
 
  10 10  0  0  0  0            999 V2000
    -2.6437    1.7625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3814,7 +3811,7 @@ void testEnumeratedCore() {
                        << std::endl;
 
   auto core = R"CTAB(
-  Mrv2008 08242317002D          
+  Mrv2008 08242317002D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3925,7 +3922,7 @@ void testTautomerCore() {
   }
 
   auto core3 = R"CTAB(
-  Mrv2008 08072313382D          
+  Mrv2008 08072313382D
 
   9  9  0  0  0  0            999 V2000
     5.9823    5.0875    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -3982,12 +3979,12 @@ void testStereoBondBug() {
     0.7145   -0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.7145    0.4125    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
     0.0000    0.8250    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-  1  2  2  0      
-  2  3  1  0      
-  3  4  2  0      
-  4  5  1  0      
-  5  6  2  0      
-  6  1  1  0      
+  1  2  2  0
+  2  3  1  0
+  3  4  2  0
+  4  5  1  0
+  5  6  2  0
+  6  1  1  0
 M  END
 )CTAB"_ctab;
   const auto mol = "C/C=C/C1=CC=CC=C1"_smiles;
@@ -4157,7 +4154,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-#if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
@@ -4182,7 +4178,6 @@ int main() {
 
   testUnprocessedMapping();
   testSingleAtomBridge();
-#endif
   testSymmetryPerformance();
   testScorePermutations();
   testMultiCorePreLabelled();
