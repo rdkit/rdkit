@@ -91,6 +91,18 @@ std::string mappingToJsonArray(const ROMol &mol) {
   std::string res = buffer.GetString();
   return res;
 }
+
+void remove_hs_common(RWMol &mol, const std::string &details_json) {
+  if (details_json.empty()) {
+    MolOps::removeAllHs(mol);
+  } else {
+    MolOps::RemoveHsParameters ps;
+    bool sanitize = true;
+    MinimalLib::updateRemoveHsParametersFromJSON(ps, sanitize,
+                                                 details_json.c_str());
+    MolOps::removeHs(mol, ps, sanitize);
+  }
+}
 }  // end of anonymous namespace
 
 std::string JSMolBase::get_smiles() const { return MolToSmiles(get()); }
@@ -435,9 +447,9 @@ bool JSMolBase::clear_prop(const std::string &key) {
   return res;
 }
 
-std::string JSMolBase::remove_hs() const {
+std::string JSMolBase::remove_hs(const std::string &details_json) const {
   RWMol molCopy(get());
-  MolOps::removeAllHs(molCopy);
+  remove_hs_common(molCopy, details_json);
 
   bool includeStereo = true;
   int confId = -1;
@@ -445,8 +457,8 @@ std::string JSMolBase::remove_hs() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
-bool JSMolBase::remove_hs_in_place() {
-  MolOps::removeAllHs(get());
+bool JSMolBase::remove_hs_in_place(const std::string &details_json) {
+  remove_hs_common(get(), details_json);
   MolOps::assignStereochemistry(get(), true, true);
   return true;
 }
