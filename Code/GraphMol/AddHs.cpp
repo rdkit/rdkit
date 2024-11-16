@@ -430,15 +430,20 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
 
-            // There might be more than one terminal atom that needs coordinates,
-            // which means there might be an overlap (e.g. when adding Hs,
-            // if we add 2 to the same atom, they will overlap at (0,0,0)).
-            // Try to find a direction from atoms that do not overlap
+            // Each of the nbr vectors is non-null, but there might be pairs
+            // that cancel each other out. Try to find a direction from atoms
+            // that do not overlap.
             if (dirVect.lengthSq() < sq_dist_zero_tol) {
-              dirVect = nbr1Vect.crossProduct(nbr3Vect);
+              // This definition of dirVect reverses the parity around otherIdx
+              // the change of sign restores it
+              dirVect = nbr1Vect.crossProduct(nbr3Vect) * -1;
             }
             if (dirVect.lengthSq() < sq_dist_zero_tol) {
               dirVect = nbr2Vect.crossProduct(nbr3Vect);
+            }
+            // We couldn't find a good direction
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              continue;
             }
 
             std::string cipCode;
