@@ -41,8 +41,8 @@
 using namespace RDKit;
 using namespace RDKit::CIPLabeler;
 
-std::string toBinaryString(int value) {
-  return std::bitset<32>(value).to_string();
+std::string toBinaryString(PairList::pairing_t value) {
+  return std::bitset<PairList::pairing_nbits>(value).to_string();
 }
 
 TEST_CASE("Descriptor lists", "[accurateCIP]") {
@@ -63,51 +63,51 @@ TEST_CASE("Descriptor lists", "[accurateCIP]") {
   SECTION("Pairing") {
     REQUIRE(descriptors.getPairing() == 0);
 
-    CHECK("00000000000000000000000000000000" ==
+    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     descriptors.add(Descriptor::R);
-    CHECK("00000000000000000000000000000000" ==
-          toBinaryString(descriptors.getPairing()));
-
-    // like
-    descriptors.add(Descriptor::R);
-    CHECK("01000000000000000000000000000000" ==
+    CHECK("0000000000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01100000000000000000000000000000" ==
+    CHECK("0100000000000000000000000000000000000000000000000000000000000000" ==
+          toBinaryString(descriptors.getPairing()));
+
+    // like
+    descriptors.add(Descriptor::R);
+    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // unlike
     descriptors.add(Descriptor::S);
-    CHECK("01100000000000000000000000000000" ==
+    CHECK("0110000000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01101000000000000000000000000000" ==
+    CHECK("0110100000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01101100000000000000000000000000" ==
+    CHECK("0110110000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01101110000000000000000000000000" ==
+    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // unlike
     descriptors.add(Descriptor::S);
-    CHECK("01101110000000000000000000000000" ==
+    CHECK("0110111000000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
 
     // like
     descriptors.add(Descriptor::R);
-    CHECK("01101110100000000000000000000000" ==
+    CHECK("0110111010000000000000000000000000000000000000000000000000000000" ==
           toBinaryString(descriptors.getPairing()));
   }
 
@@ -943,7 +943,6 @@ TEST_CASE("atropisomers", "[basic]") {
     }
   }
 }
-
 
 TEST_CASE("CipLabelAtropsOnRing", "[basic]") {
   SECTION("atropisomers1") {
