@@ -22,7 +22,7 @@
 #include <boost/random.hpp>
 #include <boost/smart_ptr.hpp>
 
-static constexpr double zero_tolerance = 1.e-6;
+static constexpr double zero_tolerance = 1.e-16;
 
 namespace RDNumeric {
 
