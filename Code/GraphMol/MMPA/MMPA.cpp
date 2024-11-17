@@ -42,7 +42,12 @@ static inline unsigned long long computeMorganCodeHash(const ROMol &mol) {
     const Atom &a = *mol.getAtomWithIdx(ai);
     unsigned atomCode = a.getAtomicNum();
     atomCode |= a.getIsotope() << 8;
-    atomCode |= a.getFormalCharge() << 16;
+
+    auto charge = a.getFormalCharge();
+    atomCode |= std::abs(charge) << 16;
+    if (charge < 0) {
+      atomCode |= 1 << 29;
+    }
     atomCode |= (a.getIsAromatic() ? 1 : 0) << 30;
     currCodes[ai] = atomCode;
   }
