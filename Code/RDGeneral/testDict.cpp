@@ -185,7 +185,10 @@ void testRDAny() {
       TEST_ASSERT(rdany_cast<std::vector<double>>(b)[i] == i);
     }
   }
-  const int loops = 10000000;
+
+  // growth in the loops below is loop * loops / 2, so going higher
+  // than this will cause and overflow of std::any_cast<int>(*v)
+  const int loops = sqrt(std::numeric_limits<int>::max());
   {
     std::clock_t clock1 = std::clock();
     std::any v;
@@ -202,7 +205,7 @@ void testRDAny() {
     std::clock_t clock1 = std::clock();
     std::any *v = nullptr, *vv;
     for (int i = 0; i < loops; ++i) {
-      vv = new std::any(v ? std::any_cast<long int>(*v) + i : i);
+      vv = new std::any(v ? std::any_cast<int>(*v) + i : i);
       delete v;
       v = vv;
     }
@@ -230,7 +233,7 @@ void testRDAny() {
     std::clock_t clock1 = std::clock();
     RDAny *v = nullptr, *vv;
     for (int i = 0; i < loops; ++i) {
-      vv = new RDAny(v ? rdany_cast<long int>(*v) + i : i);
+      vv = new RDAny(v ? rdany_cast<int>(*v) + i : i);
       delete v;
       v = vv;
     }
@@ -257,7 +260,7 @@ void testRDAny() {
     std::clock_t clock1 = std::clock();
     RDValue v(0);
     for (int i = 0; i < loops; ++i) {
-      v = RDValue(rdvalue_cast<long int>(v) + i);
+      v = RDValue(rdvalue_cast<int>(v) + i);
     }
 
     std::clock_t clock2 = std::clock();
