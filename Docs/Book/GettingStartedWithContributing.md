@@ -447,17 +447,184 @@ As discussed in the Python section above, there is no official formal style guid
     */
     ```
 
+We would also recommend checking your code for memory leaks with [Valgrind](https://valgrind.org/) before opening a pull request.
+
 ### Tests
+
+The RDKit C++ Tests use the [Catch2 framework](https://github.com/catchorg/Catch2). The tests generally are placed in a file named "catch_tests.cpp" in the same directory as the corresponding code. Small changes and bug fixes may only need the addition of a new TEST\_CASE to an existing test set rather than a new file.
+
+For example, to test the atom count function:
+
+```c++
+#include "RDGeneral/test.h"
+#include <catch2 /catch_all.hpp>
+#include <GraphMol /SmilesParse/SmilesParse.h>
+
+using namespace RDKit;
+
+TEST_CASE("test basic Mol features", "[ROMol]") {
+  SECTION("basics") {
+    {
+    // shortcut to create a molecule from SMILES
+    auto m = "CCO"_smiles;
+    // check that the molecule was created successfully
+    REQUIRE(m);
+    // test some functionality
+    int nAtoms = m->getNumAtoms();
+    CHECK(nAtoms == 3);
+    }
+  }
+}
+```
+
+When adding new tests the CMakeLists.txt file of the respective folder will also need updated to call the test and link the required libraries (e.g. the above example needs the FileParsers library):
+
+```
+rdkit_catch_test(dummyTest catch_dummy.cpp LINK_LIBRARIES FileParsers)
+```
 
 ### Documentation
 
+Documentation for the [C++ API](https://www.rdkit.org/docs/cppapi/) is generated from the docstrings, which should be placed above the corresponding function. We'd recommend these take the following format:
+
+```c++
+/*!
+    A brief description of what the function does
+
+    Reference / Source (if there is one)
+
+    \param name: what the parameter is
+    \param name2: what the parameter is
+    etc...
+  */
+```
+
+Where relevant, example useage can also be added to the [Getting Started with C++ Guide](https://www.rdkit.org/docs/GettingStartedInC%2B%2B.html) as part of the pull request.
+
 ### Wrapping the C++ Code for Python
+
+RDKit uses [Boost](https://www.boost.org/) to expose functions from the C++ API to Python. In each sub-directory of `rdkit/Code` is a further sub-directory named `Wrap` containing the files needed to construct the Python bindings. This generally includes:
+- C++ file defining the Python bindings. This will include the required libraries (usually `#include <RDBoost/Wrap.h>`)
+- Python file(s) containing the corresponding unit tests
+- CMakeLists.txt file containing build instructions (including the destination of the python code + linked libraries) and calls for the tests
+
+Taking the [Double Cubic Lattice Volume](https://www.rdkit.org/docs/source/rdkit.Chem.rdMolDescriptors.html#rdkit.Chem.rdMolDescriptors.DoubleCubicLatticeVolume) class as an example, in the raw C++ the class is defined as follows:
+
+```c++
+class RDKIT_DESCRIPTORS_EXPORT DoubleCubicLatticeVolume {
+ public:
+  /*!
+
+    \param mol: input molecule or protein
+    \param isProtein: flag to calculate burried surface area of a protein ligand
+    complex [default=false, free ligand]
+    \param includeLigand: flag to trigger
+    inclusion of bound ligand in surface area and volume calculations where
+    molecule is a protein [default=true]
+    \param probeRadius: radius of the
+    sphere representing the probe solvent atom
+    \param depth: controls the number
+    of dots per atom
+    \param dotDensity: controls density of dots per atom
+
+  */
+  DoubleCubicLatticeVolume(const ROMol &mol, bool isProtein = false,
+                           bool includeLigand = true, double probeRadius = 1.2,
+                           int depth = 4, int dotDensity = 0);
+  //! Class for calculation of the Shrake and Rupley surface area and volume
+  //! using the Double Cubic Lattice Method.
+  //!
+  //! Frank Eisenhaber, Philip Lijnzaad, Patrick Argos, Chris Sander and
+  //! Michael Scharf, "The Double Cubic Lattice Method: Efficient Approaches
+  //! to Numerical Integration of Surface Area and Volume and to Dot Surface
+  //! Contouring of Molecular Assemblies", Journal of Computational Chemistry,
+  //! Vol. 16, No. 3, pp. 273-284, 1995.
+
+  // value returns
+  double getSurfaceArea() {
+    /*! \return Solvent Accessible Surface Area */
+    return surfaceArea;
+  }
+
+  double getVolume() {
+    /*! \return Volume bound by probe sphere */
+    return totalVolume;
+  }
+
+  double getVDWVolume() { /*! \return van der Waals Volume */
+    return vdwVolume;
+  }
+
+  double getCompactness() {
+    /*! \return Compactness of the protein */
+    return compactness;
+  }
+
+  double getPackingDensity() {
+    /*! \return Packing Density of the protein */
+    return packingDensity;
+  }
+
+ private:
+  // outputs
+  double surfaceArea;
+  double totalVolume;
+  double vdwVolume;
+  double compactness;
+  double packingDensity;
+};
+```
+
+In this case as the submission is a descriptor, the Python bindings are added to the existing `rdMolDescriptors.cpp` file as follows:
+
+```c++
+docString =
+      R"DOC(ARGUMENTS:
+      "   - mol: molecule or protein under consideration
+      "   - isProtein: flag to indicate if the input is a protein (default=False, free ligand).
+      "   - includeLigand: flag to include or exclude a bound ligand when input is a protein (default=True)
+      "   - probeRadius: radius of the solvent probe (default=1.2)
+      "   - depth: control of number of dots per atom (default=4)
+      "   - dotDensity: control of accuracy (default=0)
+      ")DOC";
+  python::class_<RDKit::Descriptors::DoubleCubicLatticeVolume>(
+      "DoubleCubicLatticeVolume",
+      "Class for the Double Cubic Lattice Volume method",
+      python::init<const RDKit::ROMol &,
+                   python::optional<bool, bool, double, int, int>>(
+          (python::args("self", "mol"), python::args("isProtein") = false,
+           python::args("includeLigand") = true,
+           python::args("probeRadius") = 1.2, python::args("depth") = 4,
+           python::args("dotDensity") = 0),
+          docString.c_str()))
+      .def("GetSurfaceArea",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getSurfaceArea,
+           "Get the Surface Area of the Molecule or Protein")
+      .def("GetVolume",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVolume,
+           "Get the Total Volume of the Molecule or Protein")
+      .def("GetVDWVolume",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getVDWVolume,
+           "Get the van der Waals Volume of the Molecule or Protein")
+      .def("GetCompactness",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getCompactness,
+           "Get the Compactness of the Protein")
+      .def("GetPackingDensity",
+           &RDKit::Descriptors::DoubleCubicLatticeVolume::getPackingDensity,
+           "Get the PackingDensity of the Protein");
+```
+
+As for the pure Python contributions, the documentation is generated automatically from the docstrings. The tests are written using the `unittest framework` (see the above section for more detail).
 
 ## Contributing to the Code - Java
 
 Volunteers needed to complete this section :)
 
 ## Contributing to the Code - JavaScript
+
+Volunteers needed to complete this section :)
+
+## Contributing to the Code - RDKit PostgreSQL cartridge
 
 Volunteers needed to complete this section :)
 
