@@ -188,3 +188,25 @@ TEST_CASE("FP Random Hits") {
   CHECK(results.getHitMolecules().back()->getProp<double>("Similarity") ==
         Catch::Approx(0.5));
 }
+
+TEST_CASE("Other Fingerprints") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  SynthonSpaceSearchParams params;
+  params.maxBondSplits = 4;
+  params.maxHits = 100;
+  params.randomSample = true;
+  params.randomSeed = 1;
+  params.fingerprintType = "Morgan_3";
+
+  // This is Osimertinib (Tagrisso).
+  auto queryMol =
+      "C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C"_smiles;
+  auto results = synthonspace.fingerprintSearch(*queryMol, params);
+  std::cout << "Number of hits : " << results.getHitMolecules().size()
+            << std::endl;
+}

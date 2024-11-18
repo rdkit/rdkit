@@ -33,9 +33,9 @@ SubstructureResults SynthonSpaceSearcher::search() {
     }
   }
   std::vector<std::unique_ptr<ROMol>> results;
-  RDKit::MatchVectType dontCare;
 
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
+  std::cout << "Number of fragments: " << fragments.size() << std::endl;
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   for (auto &fragSet : fragments) {

@@ -21,7 +21,7 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space) {
   if (!getSpace().hasFingerprints()) {
-    getSpace().buildSynthonFingerprints();
+    getSpace().buildSynthonFingerprints(params.fingerprintType);
   }
   d_queryFP = std::make_unique<ExplicitBitVect>(
       *getSpace().getFPGenerator()->getFingerprint(query));

@@ -75,6 +75,11 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // times, a lower number will give faster searches at the
              // risk of missing some hits.  The value you use should have
              // a positive correlation with your FOMO.
+  std::string fingerprintType{"Morgan_2"};  // The type of fingerprint to use.
+                                            // Options are Morgan_2 (Morgan
+                                            // fingerprints, radius 2),
+                                            // Morgan_3, RDKit_7 (RDKit
+                                            // fingerprint, maxPath=7).
 };
 
 // Holds the information about a set of hits.  The molecules can be built
@@ -197,13 +202,15 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   bool hasFingerprints() const;
   // Create the fingerprints for the synthons ready for fingerprint searches.
-  void buildSynthonFingerprints();
+  // Valid values of fpType as described by SynthonSpaceSearchParams.
+  void buildSynthonFingerprints(const std::string &fpType);
 
  private:
   std::string d_fileName;
   std::map<std::string, std::unique_ptr<SynthonSet>> d_reactions;
 
   // For the similarity search.
+  std::string d_fpType;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> dp_fpGenerator;
 };
 

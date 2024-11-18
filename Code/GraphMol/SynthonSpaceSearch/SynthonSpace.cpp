@@ -244,11 +244,22 @@ bool SynthonSpace::hasFingerprints() const {
   return d_reactions.begin()->second->hasFingerprints();
 }
 
-void SynthonSpace::buildSynthonFingerprints() {
+void SynthonSpace::buildSynthonFingerprints(const std::string &fpType) {
+  if (fpType != d_fpType) {
+    dp_fpGenerator.reset();
+  }
   if (!dp_fpGenerator) {
-    dp_fpGenerator.reset(RDKitFP::getRDKitFPGenerator<std::uint64_t>());
-    dp_fpGenerator.reset(
-        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    if (fpType == "Morgan_2") {
+      dp_fpGenerator.reset(
+          MorganFingerprint::getMorganGenerator<std::uint64_t>(2u));
+    } else if (fpType == "Morgan_3") {
+      dp_fpGenerator.reset(
+          MorganFingerprint::getMorganGenerator<std::uint64_t>(3u));
+    } else if (fpType == "RDKit_7") {
+      dp_fpGenerator.reset(RDKitFP::getRDKitFPGenerator<std::uint64_t>(1u, 7u));
+    } else {
+      throw ValueErrorException("Unknown fingerprint type '" + fpType + "'.");
+    }
   }
   for (const auto &it : d_reactions) {
     it.second->buildSynthonFingerprints(dp_fpGenerator);
