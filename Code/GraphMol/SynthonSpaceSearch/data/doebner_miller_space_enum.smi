@@ -1,0 +1,12 @@
+C1=Cc2ccccc2N=C1 doebner-miller-quinoline_0_0
+O=C(O)CC1=Nc2ccccc2C=C1 doebner-miller-quinoline_0_1
+O=C(O)CC1=Nc2ccccc2C(c2ccccc2)=C1 doebner-miller-quinoline_0_2
+Cc1ccc2c(c1)N=CC=C2 doebner-miller-quinoline_1_0
+Cc1ccc2c(c1)N=C(CC(=O)O)C=C2 doebner-miller-quinoline_1_1
+Cc1ccc2c(c1)N=C(CC(=O)O)C=C2c1ccccc1 doebner-miller-quinoline_1_2
+ClC(Cl)(Cl)c1ccc2c(c1)C=CC=N2 doebner-miller-quinoline_2_0
+O=C(O)CC1=Nc2ccc(C(Cl)(Cl)Cl)cc2C=C1 doebner-miller-quinoline_2_1
+O=C(O)CC1=Nc2ccc(C(Cl)(Cl)Cl)cc2C(c2ccccc2)=C1 doebner-miller-quinoline_2_2
+Fc1cccc2c1N=CC=C2 doebner-miller-quinoline_3_0
+O=C(O)CC1=Nc2c(F)cccc2C=C1 doebner-miller-quinoline_3_1
+O=C(O)CC1=Nc2c(F)cccc2C(c2ccccc2)=C1 doebner-miller-quinoline_3_2
