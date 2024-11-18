@@ -7,6 +7,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <string_view>
+
 #include <RDGeneral/export.h>
 #ifndef RD_SMILESPARSEOPS_H
 #define RD_SMILESPARSEOPS_H
@@ -65,6 +67,10 @@ RDKIT_SMILESPARSE_EXPORT RDKit::QueryBond *getUnspecifiedQueryBond(
 namespace detail {
 constexpr auto _needsDetectBondStereo = "_needsDetectBondStereo";
 constexpr auto _needsDetectAtomStereo = "_needsDetectAtomStereo";
+
+void printSyntaxErrorMessage(std::string_view input,
+                             std::string_view err_message,
+                             unsigned int bad_token_position);
 }  // namespace detail
 }  // namespace SmilesParseOps
 

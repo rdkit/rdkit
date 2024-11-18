@@ -1965,6 +1965,88 @@ function test_get_mmpa_frags() {
     }
 }
 
+function test_molzip() {
+    {
+        var mol1 = RDKitModule.get_mol("F/C=C/[*:1]");
+        assert(mol1);
+        var mol2 = RDKitModule.get_mol("[*:1]F");
+        assert(mol2);
+        var expectedLinkage = "F/C=C/F";
+        var mol = RDKitModule.molzip(mol1, mol2);
+        assert(mol);
+        assert(mol.get_smiles() === expectedLinkage);
+        mol1.delete();
+        mol2.delete();
+        mol.delete();
+    }
+    {
+        var mol1 = RDKitModule.get_mol("[C@H]([Xe])(F)([V])");
+        assert(mol1);
+        var mol2 = RDKitModule.get_mol("[Xe]N.[V]I");
+        assert(mol2);
+        var expectedLinkage = "N[C@@H](F)I";
+        var details = JSON.stringify({ Label: 'AtomType', AtomSymbols: ['Xe', 'V'] });
+        var mol = RDKitModule.molzip(mol1, mol2, details);
+        assert(mol);
+        assert(mol.get_smiles() === expectedLinkage);
+        mol1.delete();
+        mol2.delete();
+        mol.delete();
+    }
+    if (RDKitModule.RGroupDecomposition) {
+        const smis = ['C1CN[C@H]1F', 'C1CN[C@]1(O)F', 'C1CN[C@@H]1F', 'C1CN[CH]1F'];
+        const core = RDKitModule.get_qmol('C1CNC1[*:1]');
+        const params = {
+            rgroupLabelling: 'Isotope',
+            allowMultipleRGroupsOnUnlabelled: true,
+        };
+        const rgd = RDKitModule.get_rgd(core, JSON.stringify(params));
+        const smisCanon = smis.map((smi, i) => {
+            const mol = RDKitModule.get_mol(smi);
+            assert(mol);
+            try {
+                const res = rgd.add(mol);
+                assert(res === i);
+                return mol.get_smiles();
+            } finally {
+                mol.delete();
+            }
+        });
+        rgd.process();
+        const rows = rgd.get_rgroups_as_rows();
+        const expectedRowMapping = [
+            { Core: '[1*][C@@]1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+            { Core: '[1*][C@]1([2*])CCN1', R1: '[1*]F', R2: '[2*]O' },
+            { Core: '[1*][C@]1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+            { Core: '[1*]C1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+        ];
+        const details = JSON.stringify({ Label: 'Isotope' });
+        rows.forEach((row, i) => {
+            const foundMapping = getFoundRgdRowAsMap(row, true);
+            assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping[i]).length);
+            Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                assert(expectedRowMapping[i][rlabel] && expectedRowMapping[i][rlabel] === smi);
+            });
+            let mol;
+            try {
+                mol = RDKitModule.molzip(row, details);
+                assert(mol);
+                mol.remove_hs_in_place();
+                assert(mol.get_smiles() === smisCanon[i]);
+            } finally {
+                if (mol) {
+                    mol.delete();
+                }
+                Object.values(row).forEach((rgroup) => {
+                    if (rgroup) {
+                        rgroup.delete();
+                    }
+                });
+            }
+    });
+    }
+}
+
 function test_hs_in_place() {
     {
         var mol = RDKitModule.get_mol("CC");
@@ -1982,16 +2064,22 @@ function test_hs_in_place() {
     }
     {
         var mol = RDKitModule.get_mol("C([H])([H])([H])C([H])([H])[H]", JSON.stringify({ removeHs: false }));
+        assert(mol.get_smiles() === '[H]C([H])([H])C([H])([H])[H]');
         assert(!mol.has_coords());
         var descH = JSON.parse(mol.get_descriptors());
         assert(`${descH.chi0v}` === '1');
         assert(`${descH.chi1v}` === '0.25');
-        mol.remove_hs_in_place();
-        assert(!mol.has_coords());
-        assert(mol.get_smiles() === 'CC');
-        var descNoH = JSON.parse(mol.get_descriptors());
-        assert(`${descNoH.chi0v}` === '2');
-        assert(`${descNoH.chi1v}` === '1');
+        // '' will use removeAllHs, while '{}' will use removeHs with default parameters
+        ['', '{}'].forEach((details) => {
+            var molCopy = mol.copy();
+            molCopy.remove_hs_in_place(details);
+            assert(!molCopy.has_coords());
+            assert(molCopy.get_smiles() === 'CC');
+            var descNoH = JSON.parse(molCopy.get_descriptors());
+            assert(`${descNoH.chi0v}` === '2');
+            assert(`${descNoH.chi1v}` === '1');
+            molCopy.delete();
+        });
         mol.delete();
     }
     {
@@ -2675,6 +2763,29 @@ function test_partial_sanitization() {
     }
     assert(exceptionThrown);
     mol2.delete();
+    let mb;
+    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: false}));
+    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
+    assert(mb.includes('  1  2  4  0'));
+    assert(mb.includes('  7  8  2  0') && mb.includes('  7  9  2  0'));
+    assert(!mb.includes('M  CHG'));
+    mol1.delete();
+    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: {SANITIZE_CLEANUP: true}}));
+    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
+    assert(mb.includes('  1  2  4  0'));
+    assert((mb.includes('  7  8  1  0') && mb.includes('  7  9  2  0'))
+        || (mb.includes('  7  8  2  0') && mb.includes('  7  9  1  0')));
+    assert(mb.includes('M  CHG  2'));
+    mol1.delete();
+    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: {
+        SANITIZE_CLEANUP: true, SANITIZE_KEKULIZE: true
+    }}));
+    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
+    assert(!mb.includes('  1  2  4  0'));
+    assert((mb.includes('  7  8  1  0') && mb.includes('  7  9  2  0'))
+        || (mb.includes('  7  8  2  0') && mb.includes('  7  9  1  0')));
+    assert(mb.includes('M  CHG  2'));
+    mol1.delete();
 }
 
 function test_capture_logs() {
@@ -3189,14 +3300,14 @@ function test_multi_highlights() {
     mol.delete();
 }
 
-const getFoundRgdRowAsMap = (row) => Object.fromEntries(Object.entries(row).map(([rlabel, mol]) => {
+const getFoundRgdRowAsMap = (row, keep) => Object.fromEntries(Object.entries(row).map(([rlabel, mol]) => {
     try {
         assert(mol);
         assert(mol instanceof RDKitModule.Mol);
         const smi = mol.get_smiles();
         return [rlabel, smi];
     } finally {
-        if (mol) {
+        if (!keep && mol) {
             mol.delete();
         }
     }
@@ -3402,6 +3513,40 @@ function test_custom_palette() {
     mol.delete();
 }
 
+function test_pickle() {
+    const mol = RDKitModule.get_mol('c1ccccn1');
+    assert(mol);
+    mol.set_prop('a', '1');
+    assert(mol.get_prop('a') === '1');
+    const pklWithProps = mol.get_as_uint8array();
+    assert(pklWithProps);
+    let molFromPkl = RDKitModule.get_mol_from_uint8array(pklWithProps);
+    assert(molFromPkl);
+    assert(molFromPkl.has_prop('a'));
+    assert(molFromPkl.get_prop('a') === '1');
+    molFromPkl.delete();
+    const pklWithoutProps = mol.get_as_uint8array(JSON.stringify({propertyFlags: { NoProps: true } }));
+    molFromPkl = RDKitModule.get_mol_from_uint8array(pklWithoutProps);
+    assert(molFromPkl);
+    assert(!molFromPkl.has_prop('a'));
+    molFromPkl.delete();
+}
+
+function test_remove_hs_details() {
+    let mol;
+    let smi;
+    mol = RDKitModule.get_mol('C([H])([H])([H])C([2H])([H])C([H])([H])[H]', JSON.stringify({removeHs: false}));
+    smi = mol.get_smiles();
+    assert(smi === '[H]C([H])([H])C([H])([2H])C([H])([H])[H]');
+    assert(mol.remove_hs_in_place(JSON.stringify({removeIsotopes: false})));
+    smi = mol.get_smiles();
+    assert(smi === '[2H]C(C)C');
+    assert(mol.remove_hs_in_place(JSON.stringify({removeIsotopes: true})));
+    smi = mol.get_smiles();
+    assert(smi === 'CCC');
+    mol.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3490,6 +3635,11 @@ initRDKitModule().then(function(instance) {
     }
     test_bw_palette();
     test_custom_palette();
+    if (RDKitModule.molzip)  {
+        test_molzip();
+    }
+    test_pickle();
+    test_remove_hs_details();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")

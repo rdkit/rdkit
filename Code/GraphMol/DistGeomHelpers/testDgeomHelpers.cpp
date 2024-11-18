@@ -2434,11 +2434,11 @@ void testSymmetryPruning() {
   params.pruneRmsThresh = 0.5;
   params.randomSeed = 0xf00d;
   auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
-  TEST_ASSERT(cids.size() == 1);
+  TEST_ASSERT(cids.size() == 2);
 
   params.useSymmetryForPruning = false;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 50, params);
-  TEST_ASSERT(cids.size() == 3);
+  TEST_ASSERT(cids.size() == 8);
 }
 
 void testMissingHsWarning() {

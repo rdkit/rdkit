@@ -23,7 +23,11 @@ double calculateCosTorsion(const RDGeom::Point3D &p1, const RDGeom::Point3D &p2,
   RDGeom::Point3D r1 = p1 - p2, r2 = p3 - p2, r3 = p2 - p3, r4 = p4 - p3;
   RDGeom::Point3D t1 = r1.crossProduct(r2);
   RDGeom::Point3D t2 = r3.crossProduct(r4);
-  double d1 = t1.length(), d2 = t2.length();
+  double d1 = t1.length();
+  double d2 = t2.length();
+  if (isDoubleZero(d1) || isDoubleZero(d2)) {
+    return 0.0;
+  }
   double cosPhi = t1.dotProduct(t2) / (d1 * d2);
   clipToOne(cosPhi);
   return cosPhi;

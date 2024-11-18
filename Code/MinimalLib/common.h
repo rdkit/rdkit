@@ -54,12 +54,15 @@
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
 #include <RDGeneral/RDLog.h>
 #include "common_defs.h"
-
+#include "JSONParsers.h"
 #include <sstream>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <atomic>
+#endif
 
 #ifndef _MSC_VER
 // shutoff some warnings from rapidjson
@@ -113,11 +116,22 @@ RWMol *mol_from_input(const std::string &input,
   bool makeDummiesQueries = false;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
+  unsigned int sanitizeOps = MolOps::SanitizeFlags::SANITIZE_ALL;
   if (!details_json.empty()) {
     std::istringstream ss;
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
-    LPT_OPT_GET(sanitize);
+    auto sanitizeIt = pt.find("sanitize");
+    if (sanitizeIt != pt.not_found()) {
+      // Does the "sanitize" key correspond to a terminal value?
+      if (sanitizeIt->second.empty()) {
+        sanitize = sanitizeIt->second.get_value<bool>();
+      } else {
+        std::stringstream ss;
+        boost::property_tree::json_parser::write_json(ss, sanitizeIt->second);
+        updateSanitizeFlagsFromJSON(sanitizeOps, ss.str().c_str());
+      }
+    }
     LPT_OPT_GET(kekulize);
     LPT_OPT_GET(removeHs);
     LPT_OPT_GET(mergeQueryHs);
@@ -161,7 +175,6 @@ RWMol *mol_from_input(const std::string &input,
     try {
       if (sanitize) {
         unsigned int failedOp;
-        unsigned int sanitizeOps = MolOps::SANITIZE_ALL;
         if (!kekulize) {
           sanitizeOps ^= MolOps::SANITIZE_KEKULIZE;
         }

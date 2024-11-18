@@ -31,6 +31,10 @@
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
 #include <GraphMol/FMCS/FMCS.h>
 #endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MOLZIP
+#include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
+#endif
+
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
@@ -86,6 +90,18 @@ std::string mappingToJsonArray(const ROMol &mol) {
   doc.Accept(writer);
   std::string res = buffer.GetString();
   return res;
+}
+
+void remove_hs_common(RWMol &mol, const std::string &details_json) {
+  if (details_json.empty()) {
+    MolOps::removeAllHs(mol);
+  } else {
+    MolOps::RemoveHsParameters ps;
+    bool sanitize = true;
+    MinimalLib::updateRemoveHsParametersFromJSON(ps, sanitize,
+                                                 details_json.c_str());
+    MolOps::removeHs(mol, ps, sanitize);
+  }
 }
 }  // end of anonymous namespace
 
@@ -143,10 +159,11 @@ std::string JSMolBase::get_json() const {
   return MolInterchange::MolToJSONData(get());
 }
 
-std::string JSMolBase::get_pickle() const {
+std::string JSMolBase::get_pickle(const std::string &details) const {
+  unsigned int propFlags = PicklerOps::AllProps ^ PicklerOps::ComputedProps;
+  MinimalLib::updatePropertyPickleOptionsFromJSON(propFlags, details.c_str());
   std::string pickle;
-  MolPickler::pickleMol(get(), pickle,
-                        PicklerOps::AllProps ^ PicklerOps::ComputedProps);
+  MolPickler::pickleMol(get(), pickle, propFlags);
   return pickle;
 }
 
@@ -430,9 +447,9 @@ bool JSMolBase::clear_prop(const std::string &key) {
   return res;
 }
 
-std::string JSMolBase::remove_hs() const {
+std::string JSMolBase::remove_hs(const std::string &details_json) const {
   RWMol molCopy(get());
-  MolOps::removeAllHs(molCopy);
+  remove_hs_common(molCopy, details_json);
 
   bool includeStereo = true;
   int confId = -1;
@@ -440,8 +457,8 @@ std::string JSMolBase::remove_hs() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
-bool JSMolBase::remove_hs_in_place() {
-  MolOps::removeAllHs(get());
+bool JSMolBase::remove_hs_in_place(const std::string &details_json) {
+  remove_hs_common(get(), details_json);
   MolOps::assignStereochemistry(get(), true, true);
   return true;
 }
@@ -989,5 +1006,14 @@ JSRGroupDecomposition::getRGroupsAsRows() const {
         return transformedMap;
       });
   return res;
+}
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MOLZIP
+JSMolBase *molzip(const JSMolBase &a, const JSMolBase &b,
+                  const std::string &details_json) {
+  MolzipParams params;
+  parseMolzipParametersJSON(params, details_json.c_str());
+  auto out = molzip(a.get(), b.get(), params);
+  return new JSMol(new RDKit::RWMol(*out));
 }
 #endif
