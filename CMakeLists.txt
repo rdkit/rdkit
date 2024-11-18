@@ -317,13 +317,14 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   )
 
   if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    target_link_libraries(rdkit_py_base INTERFACE Python3::Module)
+    target_link_libraries(rdkit_py_base INTERFACE ${Python3_LIBRARIES} )
   endif()
 
 
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" REQUIRED CONFIG)
 
-  target_link_libraries(rdkit_py_base INTERFACE Python3::Module )
+  target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
+
   if(RDK_INSTALL_INTREE)
     set(RDKit_PythonDir "${CMAKE_SOURCE_DIR}/rdkit")
   else(RDK_INSTALL_INTREE)
