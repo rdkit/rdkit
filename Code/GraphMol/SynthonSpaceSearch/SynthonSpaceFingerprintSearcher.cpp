@@ -143,7 +143,13 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
 bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
   std::unique_ptr<ExplicitBitVect> fp(
       getSpace().getFPGenerator()->getFingerprint(hit));
-  return (TanimotoSimilarity(*fp, *d_queryFP) >= getParams().similarityCutoff);
+  auto sim = TanimotoSimilarity(*fp, *d_queryFP);
+  if (sim >= getParams().similarityCutoff) {
+    hit.setProp<double>("Similarity", sim);
+    return true;
+  } else {
+    return false;
+  }
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

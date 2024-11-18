@@ -154,6 +154,20 @@ void SynthonSpaceSearcher::buildHits(
   }
 }
 
+namespace {
+void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
+  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
+    std::sort(hits.begin(), hits.end(),
+              [](const std::unique_ptr<ROMol> &lhs,
+                 const std::unique_ptr<ROMol> &rhs) {
+                double lsim = lhs->getProp<double>("Similarity");
+                double rsim = rhs->getProp<double>("Similarity");
+                return lsim > rsim;
+              });
+  }
+}
+}  // namespace
+
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
     std::set<std::string> &resultsNames,
@@ -192,6 +206,7 @@ void SynthonSpaceSearcher::buildAllHits(
       stepper.step();
     }
   }
+  sortHits(results);
 }
 
 namespace {
@@ -265,6 +280,7 @@ void SynthonSpaceSearcher::buildRandomHits(
       numFails++;
     }
   }
+  sortHits(results);
 }
 
 std::vector<std::vector<ROMol *>> SynthonSpaceSearcher::getSynthonsToUse(
