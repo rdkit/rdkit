@@ -70,11 +70,11 @@ class SynthonSpaceSearcher {
   // Build the molecules from the synthons identified in reagentsToUse.
   // There should be bitset in reagentsToUse for each reagent set.
   // If not, it will fail.  Checks that all the results produced match the
-  // query.  totHits is the maximum number of hits that ar possible from
+  // query.  totHits is the maximum number of hits that are possible from
   // the hitsets, including duplicates.  Duplicates by name are not returned,
-  // but duplicate SMILES from different reactions will be.
-  void buildHits(const std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
-                 std::set<std::string> &resultsNames,
+  // but duplicate SMILES from different reactions will be.  Hitsets will
+  // be re-ordered on exit.
+  void buildHits(std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
                  std::vector<std::unique_ptr<ROMol>> &results) const;
   void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
                     std::set<std::string> &resultsNames,

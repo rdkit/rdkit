@@ -68,7 +68,7 @@ TEST_CASE("Test splits 1") {
 }
 #endif
 
-TEST_CASE("Amide 1") {
+TEST_CASE("S Amide 1") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -98,7 +98,7 @@ TEST_CASE("Amide 1") {
   CHECK(resSmi == enumSmi);
 }
 
-TEST_CASE("Urea 1") {
+TEST_CASE("S Urea 1") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -110,7 +110,7 @@ TEST_CASE("Urea 1") {
   CHECK(results.getHitMolecules().size() == 2);
 }
 
-TEST_CASE("Simple query 1") {
+TEST_CASE("S Simple query 1") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -144,7 +144,7 @@ TEST_CASE("Simple query 1") {
   }
 }
 
-TEST_CASE("Triazole") {
+TEST_CASE("S Triazole") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -173,7 +173,7 @@ TEST_CASE("Triazole") {
   CHECK(resSmi == enumSmi);
 }
 
-TEST_CASE("Quinoline") {
+TEST_CASE("S Quinoline") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -202,7 +202,7 @@ TEST_CASE("Quinoline") {
   }
 }
 
-TEST_CASE("Substructure in 1 reagent") {
+TEST_CASE("S Substructure in 1 reagent") {
   // Making sure it works when the query is a complete substructure of 1
   // of the synthons in the library, so the whole library is a hit.
   REQUIRE(rdbase);
@@ -291,7 +291,7 @@ TEST_CASE("DB Writer") {
   }
 }
 
-TEST_CASE("Biggy") {
+TEST_CASE("S Biggy") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -363,7 +363,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
 }
 #endif
 
-TEST_CASE("Small query") {
+TEST_CASE("S Small query") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   // Making sure it works when the query has fewer bonds than maxBondSplits.
@@ -378,7 +378,7 @@ TEST_CASE("Small query") {
   CHECK(results.getHitMolecules().size() == 0);
 }
 
-TEST_CASE("Random Hits") {
+TEST_CASE("S Random Hits") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -404,14 +404,11 @@ TEST_CASE("Random Hits") {
     }
   }
   CHECK(results.getHitMolecules().size() == 100);
-  for (const auto &l : libCounts) {
-    std::cout << l.first << " " << l.second << std::endl;
-  }
   std::map<std::string, int> expCounts{{"a1", 60}, {"a6", 18}, {"a7", 22}};
   CHECK(expCounts == libCounts);
 }
 
-TEST_CASE("Later hits") {
+TEST_CASE("S Later hits") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   // Test use of params.hitStart
@@ -452,7 +449,7 @@ TEST_CASE("Later hits") {
   CHECK(results.getHitMolecules().empty());
 }
 
-TEST_CASE("Complex query") {
+TEST_CASE("S Complex query") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   // Just to demonstrate that a complex query works.
@@ -472,7 +469,7 @@ TEST_CASE("Complex query") {
   CHECK(results.getMaxNumResults() == 3257);
 }
 
-TEST_CASE("Map numbers in connectors") {
+TEST_CASE("S Map numbers in connectors") {
   // Map numbers might occur in the connectors, e.g. [1*:1] as well
   // as [1*].  This checks that that is the case.
   REQUIRE(rdbase);

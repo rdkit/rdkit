@@ -51,39 +51,7 @@ SubstructureResults SynthonSpaceSearcher::search() {
   }
 
   if (d_params.buildHits) {
-    std::sort(allHits.begin(), allHits.end(),
-              [](const SynthonSpaceHitSet &hs1,
-                 const SynthonSpaceHitSet &hs2) -> bool {
-                if (hs1.reactionId == hs2.reactionId) {
-                  return hs1.numHits < hs2.numHits;
-                } else {
-                  return hs1.reactionId < hs2.reactionId;
-                }
-              });
-    // Keep track of the result names so we can weed out duplicates by
-    // reaction and synthons.  Different splits may give rise to the same
-    // synthon combination.  This will keep the same molecule produced via
-    // different reactions which I think makes sense.  The resultsNames will
-    // be accumulated even if the molecule itself doesn't make it into the
-    // results set, for example if it isn't a random selection or it's
-    // outside maxHits or hitStart.
-    std::set<std::string> resultsNames;
-    // The random sampling, if requested, doesn't always produce the required
-    // number of hits in 1 sweep.  Also, totHits, being an upper bound, may
-    // not be achievable.
-    size_t tmpMaxHits(d_params.maxHits);
-    int numSweeps = 0;
-    while (results.size() < std::min(tmpMaxHits, totHits) &&
-           numSweeps < d_params.numRandomSweeps) {
-      std::cout << "Sweep " << numSweeps << std::endl;
-      buildHits(allHits, totHits, resultsNames, results);
-      // totHits is an upper bound, so may not be reached.
-      if (d_params.maxHits == -1 || !d_params.randomSample) {
-        break;
-      }
-      numSweeps++;
-      std::cout << "done sweep : " << results.size() << std::endl;
-    }
+    buildHits(allHits, totHits, results);
   }
   return SubstructureResults{std::move(results), totHits};
 }
@@ -155,12 +123,29 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 }
 
 void SynthonSpaceSearcher::buildHits(
-    const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    std::set<std::string> &resultsNames,
+    std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
+  std::sort(
+      hitsets.begin(), hitsets.end(),
+      [](const SynthonSpaceHitSet &hs1, const SynthonSpaceHitSet &hs2) -> bool {
+        if (hs1.reactionId == hs2.reactionId) {
+          return hs1.numHits < hs2.numHits;
+        } else {
+          return hs1.reactionId < hs2.reactionId;
+        }
+      });
+  // Keep track of the result names so we can weed out duplicates by
+  // reaction and synthons.  Different splits may give rise to the same
+  // synthon combination.  This will keep the same molecule produced via
+  // different reactions which I think makes sense.  The resultsNames will
+  // be accumulated even if the molecule itself doesn't make it into the
+  // results set, for example if it isn't a random selection or it's
+  // outside maxHits or hitStart.
+  std::set<std::string> resultsNames;
+
   std::cout << "Upper bound on hits : " << totHits << std::endl;
   if (d_params.randomSample) {
     buildRandomHits(hitsets, totHits, resultsNames, results);
@@ -270,7 +255,7 @@ void SynthonSpaceSearcher::buildRandomHits(
   while (results.size() <
              std::min(static_cast<const std::uint64_t>(d_params.maxHits),
                       static_cast<std::uint64_t>(totHits)) &&
-         numFails < totHits) {
+         numFails < totHits * d_params.numRandomSweeps) {
     const auto &[reactionId, synths] = rhs.selectSynthComb(*d_randGen);
     const auto &reaction = getSpace().getReactions().find(reactionId)->second;
     auto prod = buildAndVerifyHit(reaction, synths, resultsNames);
@@ -280,7 +265,6 @@ void SynthonSpaceSearcher::buildRandomHits(
       numFails++;
     }
   }
-  std::cout << "numFails: " << numFails << std::endl;
 }
 
 std::vector<std::vector<ROMol *>> SynthonSpaceSearcher::getSynthonsToUse(

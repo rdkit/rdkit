@@ -66,7 +66,7 @@ std::set<std::string> bruteForceSearch(
   return names;
 }
 
-TEST_CASE("Small tests") {
+TEST_CASE("FP Small tests") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
@@ -114,7 +114,7 @@ TEST_CASE("Small tests") {
   }
 }
 
-TEST_CASE("Biggy") {
+TEST_CASE("FP Biggy") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
@@ -155,7 +155,7 @@ TEST_CASE("Biggy") {
   }
 }
 
-TEST_CASE("Random Hits") {
+TEST_CASE("FP Random Hits") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
