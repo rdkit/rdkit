@@ -6,6 +6,9 @@
 #include <stdexcept>
 
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/FileParsers/MolWriters.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/RWMol.h>
 
 #include "PubChemShape.hpp"
@@ -117,5 +120,130 @@ TEST_CASE("handling molecules with Hs") {
       auto pos = cp.getConformer().getAtomPos(i);
       CHECK((pos.x > -10 && pos.x < 10));
     }
+  }
+}
+
+TEST_CASE("re-entrant") {
+  SECTION("basics") {
+    auto ref = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.333279 6.212121 0.00000 0
+M  V30 2 C -5.393939 5.151461 0.100000 0
+M  V30 3 C -6.454600 6.212121 0.000000 0
+M  V30 4 C -5.393939 7.272781 0.100000 0
+M  V30 5 C -2.833279 6.212121 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 1
+M  V30 5 1 5 1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+
+    auto probe = R"CTAB(
+     RDKit          3D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.333279 8.212121 0.000000 0
+M  V30 2 C -5.393939 7.151461 0.100000 0
+M  V30 3 C -6.454600 8.212121 0.000000 0
+M  V30 4 C -5.393939 9.272781 0.100000 0
+M  V30 5 C -2.833279 8.212121 0.000000 0
+M  V30 6 C -1.333279 8.212121 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 1
+M  V30 5 1 5 1
+M  V30 6 1 5 6
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+
+    MolOps::removeAllHs(*ref);
+    MolOps::removeAllHs(*probe);
+
+    RWMol cp(*probe);
+    std::vector<float> matrix(12, 0.0);
+    bool useColors = true;
+    int refConfId = -1;
+    int prbConfId = -1;
+    double opt_param = 1.0;
+    unsigned int preiters = 100u;
+    unsigned int postiters = 100u;
+    auto [nbr_st, nbr_ct] =
+        AlignMolecule(*ref, cp, matrix, refConfId, prbConfId, useColors,
+                      opt_param, preiters, postiters);
+    CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.923, 0.005));
+    CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.882, 0.005));
+
+    auto rmsd = MolAlign::CalcRMS(cp, *ref);
+    CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.0, 0.005));
+
+    RWMol cp2(cp);
+    auto [nbr_st2, nbr_ct2] =
+        AlignMolecule(*ref, cp2, matrix, refConfId, prbConfId, useColors,
+                      opt_param, preiters, postiters);
+    CHECK_THAT(nbr_st2, Catch::Matchers::WithinAbs(nbr_st2, 0.005));
+    CHECK_THAT(nbr_ct2, Catch::Matchers::WithinAbs(nbr_ct2, 0.005));
+
+    auto rmsd2 = MolAlign::CalcRMS(cp, cp2);
+    CHECK_THAT(rmsd2, Catch::Matchers::WithinAbs(0.0, 0.005));
+  }
+  SECTION("real example") {
+    std::string dirName = getenv("RDBASE");
+    dirName += "/External/pubchem_shape/test_data";
+
+    v2::FileParsers::MolFileParserParams params;
+    params.removeHs = false;
+    auto suppl =
+        v2::FileParsers::SDMolSupplier(dirName + "/P17612.sdf", params);
+    auto ref = suppl[0];
+    REQUIRE(ref);
+    auto probe = suppl[1];
+    REQUIRE(probe);
+
+    MolOps::removeAllHs(*ref);
+    MolOps::removeAllHs(*probe);
+
+    RWMol cp(*probe);
+    std::vector<float> matrix(12, 0.0);
+    bool useColors = true;
+    int refConfId = -1;
+    int prbConfId = -1;
+    double opt_param = 1.0;
+    unsigned int preiters = 100u;
+    unsigned int postiters = 100u;
+    auto [nbr_st, nbr_ct] =
+        AlignMolecule(*ref, cp, matrix, refConfId, prbConfId, useColors,
+                      opt_param, preiters, postiters);
+    CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.501, 0.005));
+    CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.107, 0.005));
+    RWMol cp2(cp);
+    auto [nbr_st2, nbr_ct2] =
+        AlignMolecule(*ref, cp2, matrix, refConfId, prbConfId, useColors,
+                      opt_param, preiters, postiters);
+    CHECK_THAT(nbr_st2, Catch::Matchers::WithinAbs(nbr_st2, 0.005));
+    CHECK_THAT(nbr_ct2, Catch::Matchers::WithinAbs(nbr_ct2, 0.005));
+
+    auto rmsd = MolAlign::CalcRMS(cp, cp2);
+    CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.017, 0.005));
   }
 }
