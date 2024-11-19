@@ -187,7 +187,7 @@ void testRDAny() {
   }
 
   // growth in the loops below is loop * loops / 2, so going higher
-  // than this will cause and overflow of std::any_cast<int>(*v)
+  // than this will cause an overflow of std::any_cast<int>(*v)
   const int loops = sqrt(std::numeric_limits<int>::max());
   {
     std::clock_t clock1 = std::clock();
