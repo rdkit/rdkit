@@ -200,5 +200,5 @@ rdkit_catch_test(tableTestsCatch catch_periodictable.cpp
         LINK_LIBRARIES GraphMol)
 
 rdkit_catch_test(molopsTestsCatch catch_molops.cpp
-        LINK_LIBRARIES SmilesParse GraphMol)
+        LINK_LIBRARIES FileParsers SmilesParse GraphMol)
 
