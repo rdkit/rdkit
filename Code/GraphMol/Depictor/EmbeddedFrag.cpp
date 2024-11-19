@@ -346,6 +346,66 @@ void EmbeddedFrag::setupAttachmentPoints() {
   }
 }
 
+// check if the stereochemistry of the template matches the stereochemistry of
+// the molecule
+static bool checkStereoChemistry(const RDKit::ROMol &mol,
+                                 const RDKit::ROMol &template_mol,
+                                 RDKit::MatchVectType match) {
+  for (auto bond : mol.bonds()) {
+    if (bond->getBondType() != RDKit::Bond::DOUBLE ||
+        bond->getStereo() == RDKit::Bond::STEREOANY ||
+        bond->getStereo() == RDKit::Bond::STEREONONE) {
+      continue;
+    }
+    // get the four atoms around the double bond
+    auto neighbors = bond->getStereoAtoms();
+    if (neighbors.size() != 2) {
+      continue;
+    }
+    int atom1_neighbor = neighbors[0];
+    int atom2_neighbor = neighbors[1];
+    int atom1 = bond->getBeginAtomIdx();
+    int atom2 = bond->getEndAtomIdx();
+    // find the template atoms that correspond to the four atoms
+    int template_atom1 = -1;
+    int template_atom2 = -1;
+    int template_atom1_neighbor = -1;
+    int template_atom2_neighbor = -1;
+    for (auto &[template_aidx, rs_aidx] : match) {
+      if (rs_aidx == atom1) {
+        template_atom1 = template_aidx;
+      } else if (rs_aidx == atom2) {
+        template_atom2 = template_aidx;
+      } else if (rs_aidx == atom1_neighbor) {
+        template_atom1_neighbor = template_aidx;
+      } else if (rs_aidx == atom2_neighbor) {
+        template_atom2_neighbor = template_aidx;
+      }
+    }
+    if (template_atom1 == -1 || template_atom2 == -1 ||
+        template_atom1_neighbor == -1 || template_atom2_neighbor == -1) {
+      return false;
+    }
+    const auto &conf = template_mol.getConformer();
+    const auto &atom1_loc = conf.getAtomPos(template_atom1);
+    const auto &atom2_loc = conf.getAtomPos(template_atom2);
+    const auto &atom1_neighbor_loc = conf.getAtomPos(template_atom1_neighbor);
+    const auto &atom2_neighbor_loc = conf.getAtomPos(template_atom2_neighbor);
+    // check if the two neighbors are on the same side of the bond
+    const auto v12 = atom1_neighbor_loc - atom1_loc;
+    const auto v42 = atom2_neighbor_loc - atom1_loc;
+    const auto v32 = atom2_loc - atom1_loc;
+    auto cross1 = v32.x * v12.y - v32.y * v12.x;
+    auto cross2 = v32.x * v42.y - v32.y * v42.x;
+    bool is_cis = cross1 * cross2 > 0;
+    if (is_cis != (bond->getStereo() == RDKit::Bond::STEREOZ ||
+                   bond->getStereo() == RDKit::Bond::STEREOCIS)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
                                    unsigned int ring_count) {
   CoordinateTemplates &coordinate_templates =
@@ -359,25 +419,26 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
   }
 
   // make a mol out of the induced subgraph using the ring system atoms
-  RDKit::RWMol rs_mol(*dp_mol);
-
-  // track original indices so that we can map template coordinates correctly
-  for (auto &at : rs_mol.atoms()) {
-    at->setProp(RDKit::common_properties::molAtomMapNumber, at->getIdx());
-  }
+  RDKit::RWMol rs_mol(*dp_mol, true);
 
   boost::dynamic_bitset<> rs_atoms(dp_mol->getNumAtoms());
   for (auto aidx : ringSystemAtoms) {
     rs_atoms.set(aidx);
   }
 
-  rs_mol.beginBatchEdit();
-  for (auto &at : dp_mol->atoms()) {
+  constexpr int DUMMY_ATOMIC_NUM = 200;
+  for (auto &at : rs_mol.atoms()) {
     if (!rs_atoms.test(at->getIdx())) {
-      rs_mol.removeAtom(at->getIdx());
+      at->setAtomicNum(DUMMY_ATOMIC_NUM);
     }
   }
-  rs_mol.commitBatchEdit();
+  auto numBonds = rs_mol.getNumBonds();
+  for (auto bnd : rs_mol.bonds()) {
+    if (!rs_atoms.test(bnd->getBeginAtomIdx()) ||
+        !rs_atoms.test(bnd->getEndAtomIdx())) {
+      --numBonds;
+    }
+  }
 
   // find template that this mol matches to, if any
   RDKit::MatchVectType match;
@@ -386,33 +447,62 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
        coordinate_templates.getMatchingTemplates(ringSystemAtoms.size())) {
     // To reduce how often we have to do substructure matches, check ring info
     // and bond count first
-    if (mol->getNumBonds() != rs_mol.getNumBonds()) {
+    if (mol->getNumBonds() != numBonds) {
       continue;
     } else if (mol->getRingInfo()->numRings() != ring_count) {
       continue;
     }
+    // also check if the mol atoms have the same connectivity as the template
+#ifdef _MSC_VER
+    // MSVC++ doesn't like implicitly capturing constexpr variables, this is a
+    // bug
+    auto degreeCounts = [DUMMY_ATOMIC_NUM](const RDKit::ROMol &mol) {
+#else
+    // clang generates warnings if you explicitly capture a constexpr variable
+    auto degreeCounts = [](const RDKit::ROMol &mol) {
+#endif
+      std::array<int, 5> degrees_count({0, 0, 0, 0, 0});
+      for (auto atom : mol.atoms()) {
+        if (atom->getAtomicNum() == DUMMY_ATOMIC_NUM) {
+          continue;
+        }
+        auto degree = 0u;
+        for (auto nbr : mol.atomNeighbors(atom)) {
+          if (nbr->getAtomicNum() != DUMMY_ATOMIC_NUM) {
+            ++degree;
+            if (degree == 4) {
+              break;
+            }
+          }
+        }
+        degrees_count[degree]++;
+      }
+      return degrees_count;
+    };
+    if (degreeCounts(rs_mol) != degreeCounts(*mol)) {
+      continue;
+    }
     RDKit::SubstructMatchParameters params;
     params.maxMatches = 1;
-    auto matches = RDKit::SubstructMatch(RDKit::ROMol(rs_mol), *mol, params);
+    auto matches = RDKit::SubstructMatch(rs_mol, *mol, params);
     if (!matches.empty()) {
-      match = matches[0];
-      template_mol = mol;
-      break;
+      if (checkStereoChemistry(rs_mol, *mol, matches[0])) {
+        match = matches[0];
+        template_mol = mol;
+        break;
+      }
     }
   }
-
   if (!template_mol) {
     return false;
   }
 
   // copy over new coordinates
-  auto conf = template_mol->getConformer();
+  const auto &conf = template_mol->getConformer();
   for (auto &[template_aidx, rs_aidx] : match) {
-    auto mol_aidx = rs_mol.getAtomWithIdx(rs_aidx)->getAtomMapNum();
-    RDGeom::Point2D loc(conf.getAtomPos(template_aidx));
-    EmbeddedAtom new_at(mol_aidx, loc);
+    EmbeddedAtom new_at(rs_aidx, conf.getAtomPos(template_aidx));
     new_at.df_fixed = true;
-    d_eatoms.emplace(mol_aidx, new_at);
+    d_eatoms.emplace(rs_aidx, new_at);
   }
   this->setupNewNeighs();
   this->setupAttachmentPoints();
@@ -421,11 +511,12 @@ bool EmbeddedFrag::matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
 
 // find any atoms in the ring that are in trans double bonds
 // and mirror them into the ring
-static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT& ring, RDGeom::INT_POINT2D_MAP& coords)
-{
+static void mirrorTransRingAtoms(const RDKit::ROMol &mol,
+                                 const RDKit::INT_VECT &ring,
+                                 RDGeom::INT_POINT2D_MAP &coords) {
   // a nice place for C++23 generator coroutines...
   RDKit::INT_VECT transRingAtoms;
-  for (size_t i=0; i<ring.size(); ++i) {
+  for (size_t i = 0; i < ring.size(); ++i) {
     const auto atom1 = ring[i];
     const auto atom2 = ring[(i + 1) % ring.size()];
     const auto bond = mol.getBondBetweenAtoms(atom1, atom2);
@@ -438,12 +529,14 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
     }
 
     // We care about bonds that are trans with respect to this ring
-    const auto& neighbors = bond->getStereoAtoms();
+    const auto &neighbors = bond->getStereoAtoms();
     if (neighbors.size() != 2) {
       continue;
     }
-    const auto leftIsIn = std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
-    const auto rightIsIn = std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
+    const auto leftIsIn =
+        std::find(ring.begin(), ring.end(), neighbors[0]) != ring.end();
+    const auto rightIsIn =
+        std::find(ring.begin(), ring.end(), neighbors[1]) != ring.end();
     bool isTrans = false;
     if (stype == RDKit::Bond::STEREOTRANS || stype == RDKit::Bond::STEREOE) {
       if (leftIsIn == rightIsIn) {
@@ -458,7 +551,6 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
       continue;
     }
 
-
     // Mirror one atom in each trans bond across the line defined by its two
     // neighbors. This bumps it into the ring
     const auto left = ring[(i + ring.size() - 1) % ring.size()];
@@ -470,8 +562,10 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
     const auto d = last - ref;
     const double a = (d.x * d.x - d.y * d.y) / d.dotProduct(d);
     const double b = 2 * d.x * d.y / d.dotProduct(d);
-    const double x = a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
-    const double y = b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
+    const double x =
+        a * (interest.x - ref.x) + b * (interest.y - ref.y) + ref.x;
+    const double y =
+        b * (interest.x - ref.x) - a * (interest.y - ref.y) + ref.y;
     coords[atom1] = RDGeom::Point2D(x, y);
   }
 }
@@ -483,42 +577,55 @@ static void mirrorTransRingAtoms(const RDKit::ROMol& mol, const RDKit::INT_VECT&
 void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
                                    bool useRingTemplates) {
   PRECONDITION(dp_mol, "");
-  // ok this is what we are going to do here
-  // embed each of the individual rings. Then
-  // find the largest ring , leave that at the origin
-  // and fuse each of remaining rings
+  // Look for a template for the whole system. Failing that simplify the system
+  // to a set of core atoms and  look for a template for those. If that fails,
+  // start from a single ring. Then add rings one by one
 
-  // get the union of the atoms in the rings
   RDKit::INT_VECT funion;
-  RDKit::Union(fusedRings, funion);
-
+  // look for a template that matches the entire fused ring system
   if (useRingTemplates && fusedRings.size() > 1) {
+    RDKit::Union(fusedRings, funion);
     bool found_template = matchToTemplate(funion, fusedRings.size());
     if (found_template) {
+      // we are done
       return;
     }
   }
-
-  // embed each of the rings independently and find the largest ring
   std::vector<RDGeom::INT_POINT2D_MAP> coords;
   coords.reserve(fusedRings.size());
-  // FIX for issue 197
-  // find the ring with the max substituents
-  // If there are multiple pick the largest
-  auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
 
   for (const auto &ring : fusedRings) {
     auto ring_coords = embedRing(ring);
     mirrorTransRingAtoms(*dp_mol, ring, ring_coords);
     coords.push_back(ring_coords);
   }
-
-  this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);
-
   RDKit::INT_VECT doneRings;
-  doneRings.push_back(firstRingId);
 
-  // now loop over the remaining rings and attach then one at a time
+  if (useRingTemplates) {
+    RDKit::INT_VECT coreRingsIds;
+    auto coreRings = findCoreRings(fusedRings, coreRingsIds, *dp_mol);
+    if (coreRings.size() > 1 && coreRings.size() < fusedRings.size()) {
+      // look for a template that matches the core ring system
+      RDKit::Union(coreRings, funion);
+      bool found_template = matchToTemplate(funion, coreRings.size());
+      if (found_template) {
+        doneRings = coreRingsIds;
+      }
+    }
+  }
+
+  // if not embed find a ring as a starting point
+  if (doneRings.empty()) {
+    // FIX for issue 197
+    // find the ring with the max substituents
+    // If there are multiple pick the largest
+    auto firstRingId = pickFirstRingToEmbed(*dp_mol, fusedRings);
+
+    this->initFromRingCoords(fusedRings[firstRingId], coords[firstRingId]);
+    doneRings.push_back(firstRingId);
+  }
+  RDKit::Union(fusedRings, funion);
+  // now loop over the remaining rings and attach them one at a time
   // the order is determined by how many atoms a ring has in common with
   // the atoms already embedded
   while (d_eatoms.size() < funion.size()) {  // ) {
@@ -550,7 +657,6 @@ void EmbeddedFrag::embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
       embRing.Transform(trans);
       reflectIfNecessaryDensity(embRing, aid1, aid2);
     }
-
     this->mergeRing(embRing, commonAtomIds.size(), pinAtoms);
     doneRings.push_back(nextId);
   }

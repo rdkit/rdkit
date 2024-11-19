@@ -1516,6 +1516,15 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
         for (const auto bond : mol.atomBonds(&atom)) {
           const Point2D &at2_cds = atCds_[bond->getOtherAtomIdx(atom.getIdx())];
           Point2D bond_vec = at2_cds - at1_cds;
+          if (std::fabs(bond_vec.x) < 1.e-16) {
+            if (bond_vec.y > 0.0) {
+              orient = OrientType::S;
+              break;
+            } else {
+              orient = OrientType::N;
+              break;
+            }
+          }
           double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
           if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
             orient = OrientType::S;
@@ -3516,11 +3525,11 @@ DrawColour DrawMol::getColour(int atom_idx) const {
   PRECONDITION(rdcast<int>(atomicNums_.size()) > atom_idx, "bad atom_idx");
 
   DrawColour retval = getColourByAtomicNum(atomicNums_[atom_idx], drawOptions_);
-  bool highlightedAtom = false;
+  bool highlightedAtom =
+      highlightAtoms_.end() !=
+      find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx);
   if (!drawOptions_.circleAtoms && !drawOptions_.continuousHighlight) {
-    if (highlightAtoms_.end() !=
-        find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx)) {
-      highlightedAtom = true;
+    if (highlightedAtom) {
       retval = drawOptions_.highlightColour;
     }
     // over-ride with explicit colour from highlightMap if there is one
@@ -3560,6 +3569,19 @@ DrawColour DrawMol::getColour(int atom_idx) const {
       }
       if (numBonds == numHighBonds && highCol) {
         retval = *highCol;
+      }
+    }
+  } else {
+    // There's going to be a colour behind the atom, so if the
+    // atom has a symbol, it should be the same colour as carbon.  This
+    // function should only be called if there is an atom symbol.
+    if (highlightedAtom) {
+      if (auto it = drawOptions_.atomColourPalette.find(6);
+          it != drawOptions_.atomColourPalette.end()) {
+        retval = it->second;
+      } else {
+        // Use the default if no carbon.
+        retval = drawOptions_.atomColourPalette.at(-1);
       }
     }
   }

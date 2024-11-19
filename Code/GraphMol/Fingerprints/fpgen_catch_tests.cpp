@@ -380,3 +380,66 @@ TEST_CASE("countBounds edge cases") {
     CHECK(fp->getNumBits() == 2048);
   }
 }
+
+TEST_CASE("Github #7986: Morgan fingerprints, chirality, and radius") {
+  // chiral, not obvious until radius 2:
+  auto mol1 = "FC[C@H](F)CCl.FC[C@@H](F)CCl"_smiles;
+  REQUIRE(mol1);
+  // not chiral, but flagged as being so:
+  auto mol2 = "FC[C@H](F)CF.FC[C@@H](F)CF"_smiles;
+  REQUIRE(mol2);
+  // set bogus chirality tags
+  mol2->getAtomWithIdx(2)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  mol2->getAtomWithIdx(8)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+
+  MorganFingerprint::MorganArguments args;
+  args.df_includeChirality = true;
+  args.df_includeRedundantEnvironments = true;
+
+  SECTION("radius=1") {
+    args.d_radius = 1;
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(args));
+    REQUIRE(fpGenerator);
+    AdditionalOutput ao;
+    ao.allocateBitInfoMap();
+    ao.allocateAtomToBits();
+
+    FingerprintFuncArguments fargs;
+    fargs.additionalOutput = &ao;
+
+    std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
+        fpGenerator->getSparseCountFingerprint(*mol1, fargs));
+    REQUIRE(fp);
+    // the actual chiral centers... we don't see these with radius=1:
+    CHECK(ao.atomToBits->at(2) == ao.atomToBits->at(8));
+    // neighboring atoms, these are always the same
+    CHECK(ao.atomToBits->at(4) == ao.atomToBits->at(10));
+  }
+  SECTION("radius=2") {
+    args.d_radius = 2;
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(args));
+    REQUIRE(fpGenerator);
+    AdditionalOutput ao;
+    ao.allocateBitInfoMap();
+    ao.allocateAtomToBits();
+
+    FingerprintFuncArguments fargs;
+    fargs.additionalOutput = &ao;
+
+    std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
+        fpGenerator->getSparseCountFingerprint(*mol1, fargs));
+    REQUIRE(fp);
+    // the actual chiral centers... now we see them:
+    CHECK(ao.atomToBits->at(2) != ao.atomToBits->at(8));
+    // neighboring atoms, these are always the same
+    CHECK(ao.atomToBits->at(4) == ao.atomToBits->at(10));
+
+    fp = fpGenerator->getSparseCountFingerprint(*mol2, fargs);
+    REQUIRE(fp);
+    // no chirality here, so we should see the same bits:
+    CHECK(ao.atomToBits->at(2) == ao.atomToBits->at(8));
+    CHECK(ao.atomToBits->at(4) == ao.atomToBits->at(10));
+  }
+}

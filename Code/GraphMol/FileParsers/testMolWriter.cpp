@@ -503,14 +503,9 @@ void testSDMemoryCorruption() {
   auto *writer = new SDWriter(os, false);
 
   STR_VECT names;
-#if 1
   ROMol *m1 = sdsup.next();
   MolOps::sanitizeMol(*(RWMol *)m1);
   delete m1;
-#else
-  ROMol *m1 = SmilesToMol("C1CC1");
-  TEST_ASSERT(m1);
-#endif
   sdsup.reset();
   int nDone = 0;
   while (!sdsup.atEnd()) {
@@ -536,7 +531,6 @@ void testSDMemoryCorruption() {
 
   delete writer;
   delete os;
-#if 1
   // now read in the file we just finished writing
   SDMolSupplier reader(ofile);
   int i = 0;
@@ -549,7 +543,6 @@ void testSDMemoryCorruption() {
     delete mol;
     i++;
   }
-#endif
 }
 
 void testIssue3525000() {
@@ -1089,29 +1082,39 @@ void testV3000WriterDetails() {
 }
 
 void testV3000DoublePrecision() {
-  BOOST_LOG(rdInfoLog) << "testing V3000 outputs coordinates at maximum robust double precision"
-                       << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing V3000 outputs coordinates at maximum robust double precision"
+      << std::endl;
   std::string rdbase = getenv("RDBASE");
   rdbase += "/Code/GraphMol/FileParsers/test_data/";
   {
     std::string fName = rdbase + "precision.v3k.mol";
-    RWMol *mol = MolFileToMol(fName);
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
     TEST_ASSERT(mol);
     size_t numAtoms = mol->getNumAtoms();
     TEST_ASSERT(numAtoms == 7);
     MolWriterParams params{true, true, true, 15};
     std::string molBlock = MolToMolBlock(*mol, params, -1);
-    RWMol *readMol = MolBlockToMol(molBlock);
+    std::unique_ptr<RWMol> readMol(MolBlockToMol(molBlock));
     TEST_ASSERT(numAtoms == readMol->getNumAtoms());
     const Conformer &conformer = mol->getConformer();
     const Conformer &readConformer = readMol->getConformer();
     for (size_t i = 0; i < numAtoms; i++) {
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).x << ' ' << readConformer.getAtomPos(i).x << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x - readConformer.getAtomPos(i).x) < 1e-15);
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).y << ' ' << readConformer.getAtomPos(i).y << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y - readConformer.getAtomPos(i).y) < 1e-15);
-      std::cout << std::setprecision(15) << conformer.getAtomPos(i).z << ' ' << readConformer.getAtomPos(i).z << std::setprecision(6) << std::endl;
-      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z - readConformer.getAtomPos(i).z) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).x << ' '
+                << readConformer.getAtomPos(i).x << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).x -
+                           readConformer.getAtomPos(i).x) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).y << ' '
+                << readConformer.getAtomPos(i).y << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).y -
+                           readConformer.getAtomPos(i).y) < 1e-15);
+      std::cout << std::setprecision(15) << conformer.getAtomPos(i).z << ' '
+                << readConformer.getAtomPos(i).z << std::setprecision(6)
+                << std::endl;
+      TEST_ASSERT(std::abs(conformer.getAtomPos(i).z -
+                           readConformer.getAtomPos(i).z) < 1e-15);
     }
   }
 }
@@ -1584,7 +1587,7 @@ M  END)CTAB"_ctab;
   }
   {
     auto m = R"CTAB(
-  MJ201100                      
+  MJ201100
 
   3  2  0  0  0  0  0  0  0  0999 V2000
    -1.5623    1.6625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1604,7 +1607,6 @@ M  END)CTAB"_ctab;
 int main() {
   RDLog::InitLogs();
 
-#if 1
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testSmilesWriter()\n";
   testSmilesWriter();
@@ -1730,8 +1732,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   testNeedsUpdatePropertyCacheSDWriter();
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
-
-#endif
 
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   BOOST_LOG(rdInfoLog) << "Running testIssue3525000()\n";

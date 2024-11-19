@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.18)
 
 project (RDKit)
 
@@ -59,6 +59,7 @@ option(RDK_BUILD_MOLINTERCHANGE_SUPPORT "build in support for CommonChem molecul
 option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
 option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementation of xyz2mol (in the DetermineBonds library)" OFF )
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
+option(RDK_BUILD_PUBCHEMSHAPE_SUPPORT "build the rdkit wrapper around pubchem-align3d" ON )
 option(RDK_USE_URF "Build support for Florian Flachsenberg's URF library" ON)
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
@@ -70,6 +71,7 @@ option(RDK_BUILD_FUZZ_TARGETS "build the fuzz targets" OFF)
 option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
+option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 
 set(RDK_BOOST_VERSION "1.70.0")
 
@@ -135,8 +137,8 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2024")
-set(RDKit_Month "09")
+set(RDKit_Year "2025")
+set(RDKit_Month "03")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
@@ -161,6 +163,18 @@ if(NOT Catch2_FOUND)
   )
 
   FetchContent_MakeAvailable(Catch2)
+endif()
+
+#include better-enums
+find_package(better_enums 0 QUIET)
+if(NOT better_enums)
+  Include(FetchContent)
+
+  FetchContent_Declare(
+    better_enums
+    GIT_REPOSITORY https://github.com/aantron/better-enums.git
+    GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
+  )
 endif()
 
 if(RDK_INSTALL_INTREE)
@@ -290,7 +304,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python3 COMPONENTS Interpreter Development NumPy)
+  find_package(Python3 COMPONENTS Interpreter Development.Module NumPy)
   target_include_directories(rdkit_base INTERFACE ${Python3_INCLUDE_DIRS})
   target_include_directories(rdkit_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
 
@@ -551,7 +565,7 @@ if(NOT RDK_INSTALL_INTREE)
 
 
   endif(RDK_BUILD_PYTHON_WRAPPERS)
-  install(FILES README license.txt
+  install(FILES README.md license.txt
           DESTINATION ${RDKit_ShareDir}
           COMPONENT base
           )
@@ -640,7 +654,7 @@ endif()
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "RDKit")
 SET(CPACK_PACKAGE_VENDOR "rdkit.org")
 SET(CPACK_PACKAGE_CONTACT "greg.landrum@gmail.com")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/license.txt")
 SET(CPACK_PACKAGE_VERSION_MAJOR ${RDKit_Year})
 SET(CPACK_PACKAGE_VERSION_MINOR ${RDKit_Month})

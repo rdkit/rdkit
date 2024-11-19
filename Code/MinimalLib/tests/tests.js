@@ -1965,6 +1965,88 @@ function test_get_mmpa_frags() {
     }
 }
 
+function test_molzip() {
+    {
+        var mol1 = RDKitModule.get_mol("F/C=C/[*:1]");
+        assert(mol1);
+        var mol2 = RDKitModule.get_mol("[*:1]F");
+        assert(mol2);
+        var expectedLinkage = "F/C=C/F";
+        var mol = RDKitModule.molzip(mol1, mol2);
+        assert(mol);
+        assert(mol.get_smiles() === expectedLinkage);
+        mol1.delete();
+        mol2.delete();
+        mol.delete();
+    }
+    {
+        var mol1 = RDKitModule.get_mol("[C@H]([Xe])(F)([V])");
+        assert(mol1);
+        var mol2 = RDKitModule.get_mol("[Xe]N.[V]I");
+        assert(mol2);
+        var expectedLinkage = "N[C@@H](F)I";
+        var details = JSON.stringify({ Label: 'AtomType', AtomSymbols: ['Xe', 'V'] });
+        var mol = RDKitModule.molzip(mol1, mol2, details);
+        assert(mol);
+        assert(mol.get_smiles() === expectedLinkage);
+        mol1.delete();
+        mol2.delete();
+        mol.delete();
+    }
+    if (RDKitModule.RGroupDecomposition) {
+        const smis = ['C1CN[C@H]1F', 'C1CN[C@]1(O)F', 'C1CN[C@@H]1F', 'C1CN[CH]1F'];
+        const core = RDKitModule.get_qmol('C1CNC1[*:1]');
+        const params = {
+            rgroupLabelling: 'Isotope',
+            allowMultipleRGroupsOnUnlabelled: true,
+        };
+        const rgd = RDKitModule.get_rgd(core, JSON.stringify(params));
+        const smisCanon = smis.map((smi, i) => {
+            const mol = RDKitModule.get_mol(smi);
+            assert(mol);
+            try {
+                const res = rgd.add(mol);
+                assert(res === i);
+                return mol.get_smiles();
+            } finally {
+                mol.delete();
+            }
+        });
+        rgd.process();
+        const rows = rgd.get_rgroups_as_rows();
+        const expectedRowMapping = [
+            { Core: '[1*][C@@]1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+            { Core: '[1*][C@]1([2*])CCN1', R1: '[1*]F', R2: '[2*]O' },
+            { Core: '[1*][C@]1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+            { Core: '[1*]C1([2*])CCN1', R1: '[1*]F', R2: '[2*][H]' },
+        ];
+        const details = JSON.stringify({ Label: 'Isotope' });
+        rows.forEach((row, i) => {
+            const foundMapping = getFoundRgdRowAsMap(row, true);
+            assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping[i]).length);
+            Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                assert(expectedRowMapping[i][rlabel] && expectedRowMapping[i][rlabel] === smi);
+            });
+            let mol;
+            try {
+                mol = RDKitModule.molzip(row, details);
+                assert(mol);
+                mol.remove_hs_in_place();
+                assert(mol.get_smiles() === smisCanon[i]);
+            } finally {
+                if (mol) {
+                    mol.delete();
+                }
+                Object.values(row).forEach((rgroup) => {
+                    if (rgroup) {
+                        rgroup.delete();
+                    }
+                });
+            }
+    });
+    }
+}
+
 function test_hs_in_place() {
     {
         var mol = RDKitModule.get_mol("CC");
@@ -1982,16 +2064,22 @@ function test_hs_in_place() {
     }
     {
         var mol = RDKitModule.get_mol("C([H])([H])([H])C([H])([H])[H]", JSON.stringify({ removeHs: false }));
+        assert(mol.get_smiles() === '[H]C([H])([H])C([H])([H])[H]');
         assert(!mol.has_coords());
         var descH = JSON.parse(mol.get_descriptors());
         assert(`${descH.chi0v}` === '1');
         assert(`${descH.chi1v}` === '0.25');
-        mol.remove_hs_in_place();
-        assert(!mol.has_coords());
-        assert(mol.get_smiles() === 'CC');
-        var descNoH = JSON.parse(mol.get_descriptors());
-        assert(`${descNoH.chi0v}` === '2');
-        assert(`${descNoH.chi1v}` === '1');
+        // '' will use removeAllHs, while '{}' will use removeHs with default parameters
+        ['', '{}'].forEach((details) => {
+            var molCopy = mol.copy();
+            molCopy.remove_hs_in_place(details);
+            assert(!molCopy.has_coords());
+            assert(molCopy.get_smiles() === 'CC');
+            var descNoH = JSON.parse(molCopy.get_descriptors());
+            assert(`${descNoH.chi0v}` === '2');
+            assert(`${descNoH.chi1v}` === '1');
+            molCopy.delete();
+        });
         mol.delete();
     }
     {
@@ -2675,6 +2763,29 @@ function test_partial_sanitization() {
     }
     assert(exceptionThrown);
     mol2.delete();
+    let mb;
+    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: false}));
+    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
+    assert(mb.includes('  1  2  4  0'));
+    assert(mb.includes('  7  8  2  0') && mb.includes('  7  9  2  0'));
+    assert(!mb.includes('M  CHG'));
+    mol1.delete();
+    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: {SANITIZE_CLEANUP: true}}));
+    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
+    assert(mb.includes('  1  2  4  0'));
+    assert((mb.includes('  7  8  1  0') && mb.includes('  7  9  2  0'))
+        || (mb.includes('  7  8  2  0') && mb.includes('  7  9  1  0')));
+    assert(mb.includes('M  CHG  2'));
+    mol1.delete();
+    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: {
+        SANITIZE_CLEANUP: true, SANITIZE_KEKULIZE: true
+    }}));
+    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
+    assert(!mb.includes('  1  2  4  0'));
+    assert((mb.includes('  7  8  1  0') && mb.includes('  7  9  2  0'))
+        || (mb.includes('  7  8  2  0') && mb.includes('  7  9  1  0')));
+    assert(mb.includes('M  CHG  2'));
+    mol1.delete();
 }
 
 function test_capture_logs() {
@@ -3189,6 +3300,253 @@ function test_multi_highlights() {
     mol.delete();
 }
 
+const getFoundRgdRowAsMap = (row, keep) => Object.fromEntries(Object.entries(row).map(([rlabel, mol]) => {
+    try {
+        assert(mol);
+        assert(mol instanceof RDKitModule.Mol);
+        const smi = mol.get_smiles();
+        return [rlabel, smi];
+    } finally {
+        if (!keep && mol) {
+            mol.delete();
+        }
+    }
+}));
+
+const getExpectedRgdRowAsMap = (row) => Object.fromEntries(row.split(' ').map((rgroup) => {
+    const match = rgroup.match(/^([^:]+):(.+)$/);
+    assert(match);
+    return match.slice(1);
+}));
+
+const getExpectedRgdAsCols = (rowArray) => {
+    const res = {};
+    rowArray.forEach((row, i) => {
+        const rgroupToSmiMap = getExpectedRgdRowAsMap(row);
+        Object.entries(rgroupToSmiMap).forEach(([rlabel, smi]) => {
+            if (!i) {
+                res[rlabel] = [];
+            }
+            const arr = res[rlabel];
+            assert(Array.isArray(arr));
+            arr.push(smi);
+        });
+    });
+    return res;
+};
+
+function test_singlecore_rgd() {
+    const ringData3 = ['c1cocc1CCl', 'c1c[nH]cc1CI', 'c1cscc1CF'];
+    const expectedRingData3Rgd = ['Core:c1cc([*:1])co1 R1:ClC[*:1]',
+                                  'Core:c1cc([*:1])c[nH]1 R1:IC[*:1]',
+                                  'Core:c1cc([*:1])cs1 R1:FC[*:1]'];
+    const expectedRingData3RgdAsCols = getExpectedRgdAsCols(expectedRingData3Rgd);
+    const core = RDKitModule.get_qmol('*1***[*:1]1');
+    assert(core);
+    try {
+        const scoreMethods = ['Match', 'FingerprintVariance'];
+        scoreMethods.forEach((scoreMethod) => {
+            const params = {
+                scoreMethod,
+                allowNonTerminalRGroups: true,
+            };
+            const rgd = RDKitModule.get_rgd(core, JSON.stringify(params));
+            ringData3.forEach((ringData, i) => {
+                const mol = RDKitModule.get_mol(ringData);
+                assert(mol);
+                try {
+                    const res = rgd.add(mol);
+                    assert(res === i);
+                } finally {
+                    mol.delete();
+                }
+            });
+            rgd.process();
+            const rows = rgd.get_rgroups_as_rows();
+            assert(Array.isArray(rows));
+            assert(rows.length === ringData3.length);
+            rows.forEach((row, i) => {
+                const expectedRowMapping = getExpectedRgdRowAsMap(expectedRingData3Rgd[i]);
+                const foundMapping = getFoundRgdRowAsMap(row);
+                assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping).length);
+                Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                    assert(expectedRowMapping[rlabel] && expectedRowMapping[rlabel] === smi);
+                });
+            })
+            const cols = rgd.get_rgroups_as_columns();
+            assert(typeof cols === 'object');
+            assert(Object.keys(cols).length === Object.keys(expectedRingData3RgdAsCols).length);
+            Object.keys(cols).forEach((rlabel) => {
+                const expectedRGroupsAsSmiles = expectedRingData3RgdAsCols[rlabel];
+                assert(Array.isArray(expectedRGroupsAsSmiles));
+                const rgroupsAsMolList = cols[rlabel];
+                assert(rgroupsAsMolList);
+                assert(rgroupsAsMolList instanceof RDKitModule.MolList);
+                try {
+                    assert(expectedRGroupsAsSmiles.length === rgroupsAsMolList.size());
+                    let i = 0;
+                    while (!rgroupsAsMolList.at_end()) {
+                        const mol = rgroupsAsMolList.next();
+                        assert(mol);
+                        try {
+                            assert(mol.get_smiles() === expectedRGroupsAsSmiles[i++]);
+                        } finally {
+                            mol.delete();
+                        }
+                    }
+                } finally {
+                    rgroupsAsMolList.delete();
+                }
+            });
+        });
+    } finally {
+        core.delete();
+    }
+}
+
+function test_multicore_rgd() {
+    const smiArray = [
+        'C1CCNC(Cl)CC1', 'C1CC(Cl)NCCC1', 'C1CCNC(I)CC1', 'C1CC(I)NCCC1',
+        'C1CCSC(Cl)CC1', 'C1CC(Cl)SCCC1', 'C1CCSC(I)CC1', 'C1CC(I)SCCC1',
+        'C1CCOC(Cl)CC1', 'C1CC(Cl)OCCC1', 'C1CCOC(I)CC1', 'C1CC(I)OCCC1'
+    ];
+    const expectedRgd = [
+        'Core:C1CCNC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCNC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCNC([*:1])CC1 R1:I[*:1]',  'Core:C1CCNC([*:1])CC1 R1:I[*:1]',
+        'Core:C1CCSC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCSC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCSC([*:1])CC1 R1:I[*:1]',  'Core:C1CCSC([*:1])CC1 R1:I[*:1]',
+        'Core:C1CCOC([*:1])CC1 R1:Cl[*:1]', 'Core:C1CCOC([*:1])CC1 R1:Cl[*:1]',
+        'Core:C1CCOC([*:1])CC1 R1:I[*:1]',  'Core:C1CCOC([*:1])CC1 R1:I[*:1]'
+    ];
+    const expectedRgdAsCols = getExpectedRgdAsCols(expectedRgd);
+
+    const cores = molListFromSmiArray(['C1CCNCCC1', 'C1CCOCCC1', 'C1CCSCCC1']);
+    try {
+        const rgd = RDKitModule.get_rgd(cores);
+        smiArray.forEach((smi, i) => {
+            const mol = RDKitModule.get_mol(smi);
+            assert(mol);
+            try {
+                assert(rgd.add(mol) === i);
+            } finally {
+                mol.delete();
+            }
+        });
+        assert(rgd.process());
+        const rows = rgd.get_rgroups_as_rows();
+        assert(Array.isArray(rows));
+        assert(rows.length === smiArray.length);
+        rows.forEach((row, i) => {
+            const expectedRowMapping = getExpectedRgdRowAsMap(expectedRgd[i]);
+            const foundMapping = getFoundRgdRowAsMap(row);
+            assert(Object.keys(foundMapping).length === Object.keys(expectedRowMapping).length);
+            Object.entries(foundMapping).forEach(([rlabel, smi]) => {
+                assert(expectedRowMapping[rlabel] && expectedRowMapping[rlabel] === smi);
+            });
+        })
+        const cols = rgd.get_rgroups_as_columns();
+        assert(typeof cols === 'object');
+        assert(Object.keys(cols).length === Object.keys(expectedRgdAsCols).length);
+        Object.keys(cols).forEach((rlabel) => {
+            const expectedRGroupsAsSmiles = expectedRgdAsCols[rlabel];
+            assert(Array.isArray(expectedRGroupsAsSmiles));
+            const rgroupsAsMolList = cols[rlabel];
+            assert(rgroupsAsMolList);
+            assert(rgroupsAsMolList instanceof RDKitModule.MolList);
+            try {
+                assert(expectedRGroupsAsSmiles.length === rgroupsAsMolList.size());
+                let i = 0;
+                while (!rgroupsAsMolList.at_end()) {
+                    const mol = rgroupsAsMolList.next();
+                    assert(mol);
+                    try {
+                        assert(mol.get_smiles() === expectedRGroupsAsSmiles[i++]);
+                    } finally {
+                        mol.delete();
+                    }
+                }
+            } finally {
+                rgroupsAsMolList.delete();
+            }
+        });
+    } finally {
+        cores.delete();
+    }
+}
+
+function test_multi_highlights() {
+    const mol = RDKitModule.get_mol('[H]c1cc2c(-c3ccnc(Nc4ccc(F)c(F)c4)n3)c(-c3cccc(C(F)(F)F)c3)nn2nc1C', JSON.stringify({removeHs: false}));
+    const details = '{"width":250,"height":200,"highlightAtomMultipleColors":{"15":[[0.941,0.894,0.259]],"17":[[0,0.62,0.451]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"30":[[0.902,0.624,0]],"35":[[0.337,0.706,0.914]]},"highlightBondMultipleColors":{"14":[[0.941,0.894,0.259]],"16":[[0,0.62,0.451]],"20":[[0.902,0.624,0]],"21":[[0.902,0.624,0]],"22":[[0.902,0.624,0]],"23":[[0.902,0.624,0]],"24":[[0.902,0.624,0]],"25":[[0.902,0.624,0]],"26":[[0.902,0.624,0]],"27":[[0.902,0.624,0]],"28":[[0.902,0.624,0]],"29":[[0.902,0.624,0]],"34":[[0.337,0.706,0.914]],"38":[[0.902,0.624,0]]},"highlightAtomRadii":{"15":0.4,"17":0.4,"21":0.4,"22":0.4,"23":0.4,"24":0.4,"25":0.4,"26":0.4,"27":0.4,"28":0.4,"29":0.4,"30":0.4,"35":0.4},"highlightLineWidthMultipliers":{"14":2,"16":2,"20":2,"21":2,"22":2,"23":2,"24":2,"25":2,"26":2,"27":2,"28":2,"29":2,"34":2,"38":2}}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('ellipse'));
+    const COLORS = ['#009E73', '#55B4E9', '#E69F00', '#EFE342'];
+    assert(COLORS.every((color) => svgWithDetails.includes(color)));
+    const svgWithOutDetails = mol.get_svg_with_highlights('');
+    assert(!svgWithOutDetails.includes('ellipse'));
+    assert(!COLORS.some((color) => svgWithOutDetails.includes(color)));
+    mol.delete();
+}
+
+function test_bw_palette() {
+    const mol = RDKitModule.get_mol('N');
+    assert(mol);
+    const details = '{"atomColourPalette":"bw"}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('#000000'));
+    assert(!svgWithDetails.includes('#0000FF'));
+    const svgWithoutDetails = mol.get_svg();
+    assert(!svgWithoutDetails.includes('#000000'));
+    assert(svgWithoutDetails.includes('#0000FF'));
+    mol.delete();
+}
+
+function test_custom_palette() {
+    const mol = RDKitModule.get_mol('N');
+    assert(mol);
+    const details = '{"atomColourPalette\":{"7":[1.0,0.0,0.0]}}';
+    const svgWithDetails = mol.get_svg_with_highlights(details);
+    assert(svgWithDetails.includes('#FF0000'));
+    assert(!svgWithDetails.includes('#0000FF'));
+    const svgWithoutDetails = mol.get_svg();
+    assert(!svgWithoutDetails.includes('#FF0000'));
+    assert(svgWithoutDetails.includes('#0000FF'));
+    mol.delete();
+}
+
+function test_pickle() {
+    const mol = RDKitModule.get_mol('c1ccccn1');
+    assert(mol);
+    mol.set_prop('a', '1');
+    assert(mol.get_prop('a') === '1');
+    const pklWithProps = mol.get_as_uint8array();
+    assert(pklWithProps);
+    let molFromPkl = RDKitModule.get_mol_from_uint8array(pklWithProps);
+    assert(molFromPkl);
+    assert(molFromPkl.has_prop('a'));
+    assert(molFromPkl.get_prop('a') === '1');
+    molFromPkl.delete();
+    const pklWithoutProps = mol.get_as_uint8array(JSON.stringify({propertyFlags: { NoProps: true } }));
+    molFromPkl = RDKitModule.get_mol_from_uint8array(pklWithoutProps);
+    assert(molFromPkl);
+    assert(!molFromPkl.has_prop('a'));
+    molFromPkl.delete();
+}
+
+function test_remove_hs_details() {
+    let mol;
+    let smi;
+    mol = RDKitModule.get_mol('C([H])([H])([H])C([2H])([H])C([H])([H])[H]', JSON.stringify({removeHs: false}));
+    smi = mol.get_smiles();
+    assert(smi === '[H]C([H])([H])C([H])([2H])C([H])([H])[H]');
+    assert(mol.remove_hs_in_place(JSON.stringify({removeIsotopes: false})));
+    smi = mol.get_smiles();
+    assert(smi === '[2H]C(C)C');
+    assert(mol.remove_hs_in_place(JSON.stringify({removeIsotopes: true})));
+    smi = mol.get_smiles();
+    assert(smi === 'CCC');
+    mol.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3271,6 +3629,18 @@ initRDKitModule().then(function(instance) {
     test_make_dummies_queries();
     test_get_mol_copy();
     test_multi_highlights();
+    if (RDKitModule.RGroupDecomposition)  {
+        test_singlecore_rgd();
+        test_multicore_rgd();
+    }
+    test_bw_palette();
+    test_custom_palette();
+    if (RDKitModule.molzip)  {
+        test_molzip();
+    }
+    test_pickle();
+    test_remove_hs_details();
+
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")
     );

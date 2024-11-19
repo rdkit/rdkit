@@ -43,7 +43,7 @@ class MolTest {
       : fileName(fileNameInit),
         expectedResult(expectedResultInit),
         atomCount(atomCountInit),
-        bondCount(bondCountInit){};
+        bondCount(bondCountInit) {};
 };
 
 void testMolFiles(const MolTest *molFileTest) {

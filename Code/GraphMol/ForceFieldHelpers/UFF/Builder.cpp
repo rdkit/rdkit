@@ -705,7 +705,7 @@ ForceFields::ForceField *constructForceField(ROMol &mol,
         << std::endl;
   }
 
-  auto *res = new ForceFields::ForceField();
+  std::unique_ptr<ForceFields::ForceField> res(new ForceFields::ForceField());
 
   // add the atomic positions:
   Conformer &conf = mol.getConformer(confId);
@@ -713,17 +713,17 @@ ForceFields::ForceField *constructForceField(ROMol &mol,
     res->positions().push_back(&conf.getAtomPos(i));
   }
 
-  Tools::addBonds(mol, params, res);
-  Tools::addAngles(mol, params, res);
-  Tools::addAngleSpecialCases(mol, confId, params, res);
+  Tools::addBonds(mol, params, res.get());
+  Tools::addAngles(mol, params, res.get());
+  Tools::addAngleSpecialCases(mol, confId, params, res.get());
   boost::shared_array<std::uint8_t> neighborMat =
       Tools::buildNeighborMatrix(mol);
-  Tools::addNonbonded(mol, confId, params, res, neighborMat, vdwThresh,
+  Tools::addNonbonded(mol, confId, params, res.get(), neighborMat, vdwThresh,
                       ignoreInterfragInteractions);
-  Tools::addTorsions(mol, params, res);
-  Tools::addInversions(mol, params, res);
+  Tools::addTorsions(mol, params, res.get());
+  Tools::addInversions(mol, params, res.get());
 
-  return res;
+  return res.release();
 }
 
 // ------------------------------------------------------------------------

@@ -415,8 +415,12 @@ std::vector<unsigned int> CanonicalRankAtoms(
     bool includeIsotopes = true, bool includeAtomMaps = true,
     bool includeChiralPresence = false) {
   std::vector<unsigned int> ranks(mol.getNumAtoms());
+  const bool includeStereoGroups = true;
+  const bool useNonStereoRanks = false;
+
   Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes,
-                      includeAtomMaps, includeChiralPresence);
+                      includeAtomMaps, includeChiralPresence,
+                      includeStereoGroups, useNonStereoRanks);
   return ranks;
 }
 
@@ -1569,6 +1573,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "this will thrown an exception if the molecule cannot be kekulized")
       .def_readwrite("canonical", &RDKit::SmilesWriteParams::canonical,
                      "generate canonical SMILES")
+      .def_readwrite(
+          "cleanStereo", &RDKit::SmilesWriteParams::cleanStereo,
+          "chiral centers are removed if they have duplicate sidechains")
       .def_readwrite("allBondsExplicit",
                      &RDKit::SmilesWriteParams::allBondsExplicit,
                      "include symbols for all bonds")
@@ -1604,7 +1611,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
-      to start at a particular atom. Defaults to -1.\n\
+      to start at a particular atom. Defaults to -1.  If not -1, overrides\n\
+      canonical setting.\n\
     - canonical: (optional) if false no attempt will be made to canonicalize\n\
       the molecule. Defaults to true.\n\
     - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
@@ -1612,7 +1620,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
     - doRandom: (optional) if true, randomize the traversal of the molecule graph,\n\
-      so we can generate random smiles. Defaults to false.\n\
+      so we can generate random smiles. Defaults to false.  If true, overrides\n\
+      canonical setting.\n\
     - ignoreAtomMapNumbers (optional) if true, ignores any atom map numbers when\n\
       canonicalizing the molecule \n\
 \n\
@@ -1674,7 +1683,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
-      to start at a particular atom. Defaults to -1.\n\
+      to start at a particular atom. Defaults to -1.  If not -1, over-rides\n\
+      setting for canonical.\n\
     - canonical: (optional) if false no attempt will be made to canonicalize\n\
       the molecule. Defaults to true.\n\
     - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
@@ -1752,8 +1762,9 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
-    - doRandom: (optional) if true, randomized the trasversal of the molecule graph,\n\
-      so we can generate random smiles. Defaults to false.\n\
+    - doRandom: (optional) if true, randomizes the traversal of the molecule graph,\n\
+      so we can generate random smiles. Defaults to false.  If true, overrides\n\
+      canonical setting.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1813,7 +1824,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
-      to start at a particular atom. Defaults to -1.\n\
+      to start at a particular atom. Defaults to -1.  If not -1, overrides\n\
+      canonical setting.\n\
     - canonical: (optional) if false no attempt will be made to canonicalize\n\
       the molecule. Defaults to true.\n\
     - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\

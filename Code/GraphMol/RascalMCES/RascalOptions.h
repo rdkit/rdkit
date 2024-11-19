@@ -55,6 +55,9 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
                                        more than 1 class of equivalent atoms.*/
   bool ignoreBondOrders = false; /* If true, will treat all bonds as the same,
                                     irrespective of order. */
+  bool ignoreAtomAromaticity = true; /* If true, atoms are matched just on
+                                        atomic number; if false, will treat
+                                        aromatic and aliphatic as different. */
 };
 }  // namespace RascalMCES
 }  // namespace RDKit

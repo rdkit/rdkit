@@ -8,7 +8,9 @@
 //  of the RDKit source tree.
 //
 #pragma once
+#ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 
 #include <string>
 #include <RDGeneral/versions.h>
@@ -26,7 +28,10 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
-#include <GraphMol/Fingerprints/AtomPairs.h>
+#include <GraphMol/Fingerprints/AtomPairGenerator.h>
+#include <GraphMol/Fingerprints/TopologicalTorsionGenerator.h>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/MACCS.h>
 #ifdef RDK_BUILD_AVALON_SUPPORT
 #include <External/AvalonTools/AvalonTools.h>
@@ -49,12 +54,15 @@
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
 #include <RDGeneral/RDLog.h>
 #include "common_defs.h"
-
+#include "JSONParsers.h"
 #include <sstream>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <atomic>
+#endif
 
 #ifndef _MSC_VER
 // shutoff some warnings from rapidjson
@@ -108,11 +116,22 @@ RWMol *mol_from_input(const std::string &input,
   bool makeDummiesQueries = false;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
+  unsigned int sanitizeOps = MolOps::SanitizeFlags::SANITIZE_ALL;
   if (!details_json.empty()) {
     std::istringstream ss;
     ss.str(details_json);
     boost::property_tree::read_json(ss, pt);
-    LPT_OPT_GET(sanitize);
+    auto sanitizeIt = pt.find("sanitize");
+    if (sanitizeIt != pt.not_found()) {
+      // Does the "sanitize" key correspond to a terminal value?
+      if (sanitizeIt->second.empty()) {
+        sanitize = sanitizeIt->second.get_value<bool>();
+      } else {
+        std::stringstream ss;
+        boost::property_tree::json_parser::write_json(ss, sanitizeIt->second);
+        updateSanitizeFlagsFromJSON(sanitizeOps, ss.str().c_str());
+      }
+    }
     LPT_OPT_GET(kekulize);
     LPT_OPT_GET(removeHs);
     LPT_OPT_GET(mergeQueryHs);
@@ -156,7 +175,6 @@ RWMol *mol_from_input(const std::string &input,
     try {
       if (sanitize) {
         unsigned int failedOp;
-        unsigned int sanitizeOps = MolOps::SANITIZE_ALL;
         if (!kekulize) {
           sanitizeOps ^= MolOps::SANITIZE_KEKULIZE;
         }
@@ -844,8 +862,9 @@ std::unique_ptr<RWMol> do_fragment_parent(RWMol &mol,
 
 std::unique_ptr<ExplicitBitVect> morgan_fp_as_bitvect(
     const RWMol &mol, const char *details_json) {
-  size_t radius = 2;
-  size_t nBits = 2048;
+  unsigned int radius = 2;
+  unsigned int nBits = 2048;
+  bool useCountSimulation = false;
   bool useChirality = false;
   bool useBondTypes = true;
   bool includeRedundantEnvironments = false;
@@ -858,19 +877,23 @@ std::unique_ptr<ExplicitBitVect> morgan_fp_as_bitvect(
     boost::property_tree::read_json(ss, pt);
     LPT_OPT_GET(radius);
     LPT_OPT_GET(nBits);
+    LPT_OPT_GET(useCountSimulation);
     LPT_OPT_GET(useChirality);
     LPT_OPT_GET(useBondTypes);
     LPT_OPT_GET(includeRedundantEnvironments);
     LPT_OPT_GET(onlyNonzeroInvariants);
   }
-  auto fp = MorganFingerprints::getFingerprintAsBitVect(
-      mol, radius, nBits, nullptr, nullptr, useChirality, useBondTypes,
-      onlyNonzeroInvariants, nullptr, includeRedundantEnvironments);
-  return std::unique_ptr<ExplicitBitVect>{fp};
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> morganFPGen{
+      RDKit::MorganFingerprint::getMorganGenerator<std::uint32_t>(
+          radius, useCountSimulation, useChirality, useBondTypes,
+          onlyNonzeroInvariants, includeRedundantEnvironments, nullptr, nullptr,
+          nBits)};
+  return std::unique_ptr<ExplicitBitVect>(morganFPGen->getFingerprint(mol));
 }
 
 std::unique_ptr<ExplicitBitVect> rdkit_fp_as_bitvect(const RWMol &mol,
                                                      const char *details_json) {
+  static const std::vector<std::uint32_t> countBounds{1, 2, 4, 8};
   unsigned int minPath = 1;
   unsigned int maxPath = 7;
   unsigned int nBits = 2048;
@@ -878,6 +901,7 @@ std::unique_ptr<ExplicitBitVect> rdkit_fp_as_bitvect(const RWMol &mol,
   bool useHs = true;
   bool branchedPaths = true;
   bool useBondOrder = true;
+  bool useCountSimulation = false;
   if (details_json && strlen(details_json)) {
     // FIX: this should eventually be moved somewhere else
     std::istringstream ss;
@@ -891,10 +915,13 @@ std::unique_ptr<ExplicitBitVect> rdkit_fp_as_bitvect(const RWMol &mol,
     LPT_OPT_GET(useHs);
     LPT_OPT_GET(branchedPaths);
     LPT_OPT_GET(useBondOrder);
+    LPT_OPT_GET(useCountSimulation);
   }
-  auto fp = RDKFingerprintMol(mol, minPath, maxPath, nBits, nBitsPerHash, useHs,
-                              0, 128, branchedPaths, useBondOrder);
-  return std::unique_ptr<ExplicitBitVect>{fp};
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> rdkFPGen{
+      RDKit::RDKitFP::getRDKitFPGenerator<std::uint32_t>(
+          minPath, maxPath, useHs, branchedPaths, useBondOrder, nullptr,
+          useCountSimulation, countBounds, nBits, nBitsPerHash)};
+  return std::unique_ptr<ExplicitBitVect>(rdkFPGen->getFingerprint(mol));
 }
 
 std::unique_ptr<ExplicitBitVect> pattern_fp_as_bitvect(
@@ -918,6 +945,9 @@ std::unique_ptr<ExplicitBitVect> pattern_fp_as_bitvect(
 std::unique_ptr<ExplicitBitVect> topological_torsion_fp_as_bitvect(
     const RWMol &mol, const char *details_json) {
   unsigned int nBits = 2048;
+  unsigned int torsionAtomCount = 4;
+  bool useChirality = false;
+  bool useCountSimulation = true;
   if (details_json && strlen(details_json)) {
     // FIX: this should eventually be moved somewhere else
     std::istringstream ss;
@@ -925,10 +955,14 @@ std::unique_ptr<ExplicitBitVect> topological_torsion_fp_as_bitvect(
     boost::property_tree::ptree pt;
     boost::property_tree::read_json(ss, pt);
     LPT_OPT_GET(nBits);
+    LPT_OPT_GET(torsionAtomCount);
+    LPT_OPT_GET(useChirality);
+    LPT_OPT_GET(useCountSimulation);
   }
-  auto fp =
-      AtomPairs::getHashedTopologicalTorsionFingerprintAsBitVect(mol, nBits);
-  return std::unique_ptr<ExplicitBitVect>{fp};
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> topoTorsFPGen{
+      RDKit::TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
+          useChirality, torsionAtomCount, nullptr, useCountSimulation, nBits)};
+  return std::unique_ptr<ExplicitBitVect>(topoTorsFPGen->getFingerprint(mol));
 }
 
 std::unique_ptr<ExplicitBitVect> atom_pair_fp_as_bitvect(
@@ -936,6 +970,9 @@ std::unique_ptr<ExplicitBitVect> atom_pair_fp_as_bitvect(
   unsigned int nBits = 2048;
   unsigned int minLength = 1;
   unsigned int maxLength = 30;
+  bool useChirality = false;
+  bool use2D = true;
+  bool useCountSimulation = true;
   if (details_json && strlen(details_json)) {
     // FIX: this should eventually be moved somewhere else
     std::istringstream ss;
@@ -945,10 +982,15 @@ std::unique_ptr<ExplicitBitVect> atom_pair_fp_as_bitvect(
     LPT_OPT_GET(nBits);
     LPT_OPT_GET(minLength);
     LPT_OPT_GET(maxLength);
+    LPT_OPT_GET(useChirality);
+    LPT_OPT_GET(use2D);
+    LPT_OPT_GET(useCountSimulation);
   }
-  auto fp = AtomPairs::getHashedAtomPairFingerprintAsBitVect(
-      mol, nBits, minLength, maxLength);
-  return std::unique_ptr<ExplicitBitVect>{fp};
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> atomPairFPGen{
+      RDKit::AtomPair::getAtomPairGenerator<std::uint32_t>(
+          minLength, maxLength, useChirality, use2D, nullptr,
+          useCountSimulation, nBits)};
+  return std::unique_ptr<ExplicitBitVect>(atomPairFPGen->getFingerprint(mol));
 }
 
 std::unique_ptr<ExplicitBitVect> maccs_fp_as_bitvect(const RWMol &mol) {

@@ -1,0 +1,207 @@
+<!--
+Visualize R group decomposition results similarly to
+https://greglandrum.github.io/rdkit-blog/posts/2021-08-07-rgd-and-highlighting.html
+Use
+rgd_demo.html?output=svg
+to switch from canvas to SVG output
+-->
+<!doctype html>
+<html>
+
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="Author" content="Paolo Tosco">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+
+  <style>
+    h1,
+    h2,
+    h3,
+    h4 {
+      color: #044484;
+    }
+  </style>
+</head>
+<script src="./RDKit_minimal.js"></script>
+<script>
+  const urlParams = new URLSearchParams(document.location.search);
+  const useSvg = (urlParams.get('output') || '').toLowerCase() === 'svg';
+  const NAME = '_Name';
+  const useCoordGen = true;
+  const generateStructureDiv = (row, core, {
+    width,
+    height,
+    labels
+  }) => {
+    const RGROUP_TARGET_ATOMS = '_rgroupTargetAtoms';
+    const RGROUP_TARGET_BONDS = '_rgroupTargetBonds';
+    const HIGHLIGHT_RADIUS = 0.4;
+    const HIGHLIGHT_LINEWIDTH_MULTIPLIER = 2;
+    // Okabe_Ito colormap from https://jfly.uni-koeln.de/color/
+    const COLORS = [[230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 114, 178], [213, 94, 0], [204, 121, 167]].map(
+      ((t) => t.map((v) => v / 255))
+    );
+    const div = document.createElement('div');
+    const mol = row['Mol'];
+    if (!mol) {
+      return div;
+    }
+    const highlightAtomMultipleColors = {};
+    const highlightBondMultipleColors = {};
+    const highlightAtomRadii = {};
+    const highlightLineWidthMultipliers = {};
+    labels.every((label, i) => {
+      const rgroup = row[label];
+      if (!rgroup) {
+        return true;
+      }
+      const targetAtoms = rgroup.has_prop(RGROUP_TARGET_ATOMS)
+        ? JSON.parse(rgroup.get_prop(RGROUP_TARGET_ATOMS)) : [];
+      const targetBonds = rgroup.has_prop(RGROUP_TARGET_BONDS)
+        ? JSON.parse(rgroup.get_prop(RGROUP_TARGET_BONDS)) : [];
+      const color = COLORS[i % COLORS.length];
+      targetAtoms.forEach((idx) => {
+        if (!highlightAtomMultipleColors[idx]) {
+          highlightAtomMultipleColors[idx] = [];
+        }
+        highlightAtomMultipleColors[idx].push(color);
+        highlightAtomRadii[idx] = HIGHLIGHT_RADIUS;
+      });
+      targetBonds.forEach((idx) => {
+        if (!highlightBondMultipleColors[idx]) {
+          highlightBondMultipleColors[idx] = [];
+        }
+        highlightBondMultipleColors[idx].push(color);
+        highlightLineWidthMultipliers[idx] = HIGHLIGHT_LINEWIDTH_MULTIPLIER;
+      });
+      return true;
+    });
+    mol.generate_aligned_coords(core, JSON.stringify({
+        useCoordGen,
+        allowRGroups: true,
+    }));
+    const details = {
+      width,
+      height,
+      highlightAtomMultipleColors,
+      highlightBondMultipleColors,
+      highlightAtomRadii,
+      highlightLineWidthMultipliers,
+    };
+    if (useSvg) {
+      const svg = mol.get_svg_with_highlights(JSON.stringify(details));
+      div.innerHTML = svg;
+    } else {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      mol.draw_to_canvas_with_highlights(canvas, JSON.stringify(details));
+      div.appendChild(canvas);
+    }
+    const legendtext = mol.has_prop(NAME) ? mol.get_prop(NAME) : '';
+    const legend = document.createTextNode(legendtext);
+    div.appendChild(legend);
+    return div;
+  };
+
+  const generateTable = (rows, core, {
+    nPerRow, ...opts
+  }) => {
+    const table = document.createElement('table');
+    const tbody = document.createElement('tbody');
+    table.appendChild(tbody);
+    let tr;
+    rows.forEach((row, i) => {
+      if (!(i % nPerRow)) {
+        tr = document.createElement('tr');
+        tbody.appendChild(tr);
+      }
+      const td = document.createElement('td');
+      td.style = 'text-align: center;';
+      tr.appendChild(td);
+      const div = generateStructureDiv(row, core, opts);
+      td.appendChild(div);
+    });
+    return table;
+  }
+
+  const displayRgdTable = (RDKitModule) => {
+    console.log('version: ' + RDKitModule.version());
+    const smiArray = [
+      ['Cc1ccc2c(c3ccnc(Nc4cccc(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5', 'CHEMBL182493'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccc(F)cc5', 'CHEMBL182326'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccc(F)cc6', 'CHEMBL183064'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5', 'CHEMBL361038'],
+      ['C1CC1c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4', 'CHEMBL362296'],
+      ['Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CC5)cc1F', 'CHEMBL185516'],
+      ['C1CCC(CC1)c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4', 'CHEMBL273870'],
+      ['Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CCCCC5)cc1F', 'CHEMBL185044'],
+      ['COCCOc1cnn2ncc(c3ccnc(Nc4cccc(OC)c4)n3)c2c1', 'CHEMBL180593'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccccc5', 'CHEMBL364197'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccccc5', 'CHEMBL186010'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccccc6', 'CHEMBL361723'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccccc4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F', 'CHEMBL364539'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F', 'CHEMBL186195'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5cccc(c5)C(F)(F)F', 'CHEMBL184657'],
+      ['Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6cccc(c6)C(F)(F)F', 'CHEMBL189617'],
+    ];
+    const LABELS = ['R1', 'R2', 'R3', 'R4'];
+    let core;
+    let mols;
+    let rgd;
+    try {
+      core = RDKitModule.get_mol(
+        'c1cc(-c2c([*:1])nn3nc([*:2])ccc23)nc(N(c2ccc([*:4])c([*:3])c2))n1',
+        JSON.stringify({
+          makeDummiesQueries: true,
+          mappedDummiesAreRGroups: true,
+        })
+      );
+      core.set_new_coords(useCoordGen);
+      mols = smiArray.map(([smi, chemblId]) => {
+        const mol = RDKitModule.get_mol(smi);
+        mol.set_prop(NAME, chemblId);
+        return mol;
+      });
+      rgd = RDKitModule.get_rgd(core, JSON.stringify({
+        includeTargetMolInResults: true,
+      }));
+      mols.forEach((mol) => rgd.add(mol));
+      rgd.process();
+      const rows = rgd.get_rgroups_as_rows();
+      const table = generateTable(rows, core, {
+        labels: LABELS,
+        nPerRow: 4,
+        width: 250,
+        height: 200,
+      });
+      const tableDiv = document.getElementById('tableDiv');
+      if (tableDiv) {
+        tableDiv.appendChild(table);
+      }
+    } finally {
+      if (core) {
+        core.delete();
+      }
+      mols.forEach((mol) => {
+        if (mol) {
+          mol.delete();
+        }
+      });
+      if (rgd) {
+        rgd.delete();
+      }
+    }
+  };
+
+  initRDKitModule().then(displayRgdTable);
+</script>
+
+<body>
+  <div class="container-fluid col-md-8">
+    <h1>RDKit-JS R Group Decomposition demo</h1>
+    <div id="tableDiv"></div>
+</body>
+
+</html>

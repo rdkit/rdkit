@@ -26,8 +26,8 @@ struct TargetMatch {
   boost::dynamic_bitset<> VisitedTargetAtoms;  // for checking rings
  public:
   TargetMatch() {}
-  TargetMatch(const TargetMatch& src) { *this = src; }
-  TargetMatch& operator=(const TargetMatch& src) {
+  TargetMatch(const TargetMatch &src) { *this = src; }
+  TargetMatch &operator=(const TargetMatch &src) {
     Empty = src.Empty;
     if (!Empty) {
       MatchedAtomSize = src.MatchedAtomSize;
@@ -48,8 +48,8 @@ struct TargetMatch {
     VisitedTargetBonds.clear();
     VisitedTargetAtoms.clear();
   }
-  void init(const Seed& seed, const match_V_t& match, const ROMol& query,
-            const Target& target) {
+  void init(const Seed &seed, const match_V_t &match, const ROMol &query,
+            const Target &target) {
     TargetAtomIdx.clear();
     TargetAtomIdx.resize(query.getNumAtoms(), NotSet);
     TargetBondIdx.clear();
@@ -60,7 +60,7 @@ struct TargetMatch {
     VisitedTargetAtoms.reset();
 
     MatchedAtomSize = match.size();
-    for (const auto& m : match) {
+    for (const auto &m : match) {
       TargetAtomIdx[seed.MoleculeFragment.Atoms.at(m.first)->getIdx()] =
           m.second;
       VisitedTargetAtoms.set(m.second);

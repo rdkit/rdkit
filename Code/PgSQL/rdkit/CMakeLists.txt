@@ -1,7 +1,14 @@
+find_package(PostgreSQL REQUIRED)
+
 if(APPLE)
   set (EXTENSION_PREFIX "")
-  set (EXTENSION_SUFFIX ".so")
-  set (EXTENSION_DEST_SUFFIX ".so")
+  if(${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 16.0)
+    set (EXTENSION_SUFFIX ".dylib")
+    set (EXTENSION_DEST_SUFFIX ".dylib")
+  else()
+    set (EXTENSION_SUFFIX ".so")
+    set (EXTENSION_DEST_SUFFIX ".so")
+  endif()
 elseif(WIN32)
   set(REGEX_SEPARATOR "\\\\")
   if(MSVC)
@@ -19,8 +26,6 @@ else()
   set (EXTENSION_SUFFIX "")
   set (EXTENSION_DEST_SUFFIX ".so")
 endif()
-
-find_package(PostgreSQL REQUIRED)
 
 if(RDK_OPTIMIZE_POPCNT)
   add_definitions(-DRDK_OPTIMIZE_POPCNT)
@@ -261,8 +266,6 @@ else()
 endif()
 
 if (${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 17.0)
-  set(RDKIT_PG_ATEQ_COMMUTATOR "'@='")
-  set(RDKIT_PG_ATEQ_NEGATOR "'@<>'")
   set(RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL "ALTER OPERATOR @= (mol, mol) SET (
     COMMUTATOR = '@=',
     NEGATOR = '@<>'
@@ -271,9 +274,6 @@ if (${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 17.0)
     COMMUTATOR = '@=',
     NEGATOR = '@<>'
 );")
-else()
-  set(RDKIT_PG_ATEQ_COMMUTATOR "'='")
-  set(RDKIT_PG_ATEQ_NEGATOR "'<>'")
 endif()
 
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"

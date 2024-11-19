@@ -1,0 +1,12 @@
+O=C(c1ccccc1)N1CCCC1 amide-1_0_0
+CCCCCNC(=O)c1ccccc1 amide-1_0_1
+O=C(NCC1CC1)c1ccccc1 amide-1_0_2
+O=C(C1CCCCC1)N1CCCC1 amide-1_1_0
+CCCCCNC(=O)C1CCCCC1 amide-1_1_1
+O=C(NCC1CC1)C1CCCCC1 amide-1_1_2
+O=C(c1ccccc1Cl)N1CCCC1 amide-1_2_0
+CCCCCNC(=O)c1ccccc1Cl amide-1_2_1
+O=C(NCC1CC1)c1ccccc1Cl amide-1_2_2
+CCCCC(=O)N1CCCC1 amide-1_3_0
+CCCCCNC(=O)CCCC amide-1_3_1
+CCCCC(=O)NCC1CC1 amide-1_3_2

@@ -43,7 +43,7 @@ extern "C" {
 #if PG_VERSION_NUM >= 160000
 #include <varatt.h>
 #ifndef Abs
-#define Abs(x)  ((x) >= 0 ? (x) : -(x))
+#define Abs(x) ((x) >= 0 ? (x) : -(x))
 #endif
 #endif
 #endif
@@ -127,7 +127,8 @@ CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery,
                     bool sanitize);
 CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
                     bool asQuery);
-char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles, bool isomeric);
+char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles,
+                  bool isomeric);
 char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing,
                    bool useV3000);
 const char *makeMolJSON(CROMol data);

@@ -35,16 +35,28 @@ jobs:
 - job: macOS_x64
   timeoutInMinutes: 120
   pool:
-    vmImage: macos-latest
+    vmImage: macos-14
   variables:
-    compiler: clangxx_osx-64
-    compiler_version: 12.0
-    boost_version: 1.82.0
+    compiler: clangxx_osx-64=18.1
+    compiler_version: 16
+    boost_version: 1.84
     number_of_cores: sysctl -n hw.ncpu
+    target_platform: 14.5
     python: python=3.11
-    target_platform: 10.13
   steps:
   - template: .azure-pipelines/mac_build.yml
+- job: macOS_x64_java
+  timeoutInMinutes: 90
+  pool:
+    vmImage: macos-14
+  variables:
+    compiler: clangxx_osx-64=18.1
+    compiler_version: 16
+    boost_version: 1.84
+    number_of_cores: sysctl -n hw.ncpu
+    target_platform: 14.5
+  steps:
+  - template: .azure-pipelines/mac_build_java.yml
 - job: Windows_VS2022_x64
   timeoutInMinutes: 90
   pool:
@@ -103,19 +115,6 @@ jobs:
     cxx: g++-10
   steps:
   - template: .azure-pipelines/linux_build_java.yml
-- job: macOS_x64_java
-  timeoutInMinutes: 90
-  pool:
-    vmImage: macos-latest
-  variables:
-    compiler: clangxx_osx-64
-    compiler_version: 15.0
-    boost_version: 1.84.0
-    number_of_cores: sysctl -n hw.ncpu
-    python_name: python38
-    target_platform: 10.13
-  steps:
-  - template: .azure-pipelines/mac_build_java.yml
 - job: Windows_VS2022_x64_swig
   timeoutInMinutes: 90
   pool:

@@ -18,6 +18,7 @@
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 using namespace RDKit;
 using namespace RDKit::v2::CDXMLParser;
@@ -480,14 +481,18 @@ TEST_CASE("CDXML") {
     std::vector<std::string> expected = {
         "CC1(C)[C@H](C=C(Cl)Cl)[C@H]1C(=O)O[C@@H](C#N)c1cccc(Oc2ccccc2)c1"};
     std::vector<std::string> expected_cx = {
-        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |o1:8,12|"};
+        "CC1(C)[C@H](C=C(Cl)Cl)[C@@H]1C(=O)O[C@H](C#N)c1cccc(Oc2ccccc2)c1 |a:3,o1:8,12|"};
     auto mols = MolsFromCDXMLFile(fname);
     CHECK(mols.size() == expected.size());
     int i = 0;
+    SmilesWriteParams wp;
     for (auto &mol : mols) {
-      mol.get()->clearConformers();
-      CHECK(MolToSmiles(*mol) == expected[i]);
-      CHECK(MolToCXSmiles(*mol) == expected_cx[i++]);
+      auto tomol = std::unique_ptr<ROMol>(mol.release());
+      tomol.get()->clearConformers();
+      RDKit::canonicalizeStereoGroups(tomol);
+
+      CHECK(MolToSmiles(*tomol) == expected[i]);
+      CHECK(MolToCXSmiles(*tomol, wp) == expected_cx[i++]);
     }
   }
   SECTION("Bad CDXML") {
@@ -1195,6 +1200,7 @@ TEST_CASE("Github #7501 - dative bonds") {
     auto fname = cdxmlbase + "github7501-dative.cdxml";
     CDXMLParserParams params;
     auto mols = MolsFromCDXMLFile(fname, params);
-    CHECK(MolToSmiles(*mols[0]) == "CC(C)->[Os]12<-CCCN->1CC=N->2"); // All datives to the Oxygen
+    CHECK(MolToSmiles(*mols[0]) ==
+          "CC(C)->[Os]12<-CCCN->1CC=N->2");  // All datives to the Oxygen
   }
 }
