@@ -42,7 +42,7 @@ using namespace RDKit;
 using namespace RDKit::CIPLabeler;
 
 std::string toBinaryString(PairList::pairing_t value) {
-  return std::bitset<PairList::pairing_nbits>(value).to_string();
+  return std::bitset<PairList::numPairingBits>(value).to_string();
 }
 
 TEST_CASE("Descriptor lists", "[accurateCIP]") {
