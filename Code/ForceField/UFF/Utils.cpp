@@ -19,17 +19,23 @@ double calculateCosY(const RDGeom::Point3D &iPoint,
                      const RDGeom::Point3D &jPoint,
                      const RDGeom::Point3D &kPoint,
                      const RDGeom::Point3D &lPoint) {
+  constexpr double zeroTol = 1.0e-16;
   RDGeom::Point3D rJI = iPoint - jPoint;
   RDGeom::Point3D rJK = kPoint - jPoint;
   RDGeom::Point3D rJL = lPoint - jPoint;
-  rJI.normalize();
-  rJK.normalize();
-  rJL.normalize();
-
+  auto l2JI = rJI.lengthSq();
+  auto l2JK = rJK.lengthSq();
+  auto l2JL = rJL.lengthSq();
+  if (l2JI < zeroTol || l2JK < zeroTol || l2JL < zeroTol) {
+    return 0.0;
+  }
   RDGeom::Point3D n = rJI.crossProduct(rJK);
-  n.normalize();
-
-  return n.dotProduct(rJL);
+  n /= (sqrt(l2JI) * sqrt(l2JK));
+  auto l2n = n.lengthSq();
+  if (l2n < zeroTol) {
+    return 0.0;
+  }
+  return n.dotProduct(rJL) / (sqrt(l2JL) * sqrt(l2n));
 }
 
 std::tuple<double, double, double, double>
