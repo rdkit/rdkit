@@ -680,10 +680,6 @@ void dfsBuildStack(ROMol &mol, int atomIdx, int inBondIdx,
                    std::vector<INT_LIST> &atomTraversalBondOrder,
                    const boost::dynamic_bitset<> *bondsInPlay,
                    const std::vector<std::string> *bondSymbols, bool doRandom) {
-#if 0
-    std::cerr<<"traverse from atom: "<<atomIdx<<" via bond "<<inBondIdx<<" num cycles available: "
-             <<std::count(cyclesAvailable.begin(),cyclesAvailable.end(),1)<<std::endl;
-#endif
 
   Atom *atom = mol.getAtomWithIdx(atomIdx);
   INT_LIST directTravList, cycleEndList;
@@ -892,21 +888,11 @@ void clearBondDirs(ROMol &mol, Bond *refBond, const Atom *fromAtom,
   PRECONDITION(fromAtom, "bad atom");
   PRECONDITION(&fromAtom->getOwningMol() == &mol, "bad bond");
 
-#if 0
-    std::copy(bondDirCounts.begin(),bondDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
-    std::cerr<<"\n";
-    std::copy(atomDirCounts.begin(),atomDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
-    std::cerr<<"\n";
-    std::cerr<<"cBD: bond: "<<refBond->getIdx()<<" atom: "<<fromAtom->getIdx()<<": ";
-#endif
   ROMol::OEDGE_ITER beg, end;
   boost::tie(beg, end) = mol.getAtomBonds(fromAtom);
   bool nbrPossible = false, adjusted = false;
   while (beg != end) {
     Bond *oBond = mol[*beg];
-    // std::cerr<<"  >>"<<oBond->getIdx()<<" "<<canHaveDirection(*oBond)<<"
-    // "<<bondDirCounts[oBond->getIdx()]<<"-"<<bondDirCounts[refBond->getIdx()]<<"
-    // "<<atomDirCounts[oBond->getBeginAtomIdx()]<<"-"<<atomDirCounts[oBond->getEndAtomIdx()]<<std::endl;
     if (oBond != refBond && canHaveDirection(*oBond)) {
       nbrPossible = true;
       if ((bondDirCounts[oBond->getIdx()] >=
@@ -948,12 +934,6 @@ void removeRedundantBondDirSpecs(ROMol &mol, MolStack &molStack,
                                  UINT_VECT &atomDirCounts,
                                  const UINT_VECT &bondVisitOrders) {
   PRECONDITION(bondDirCounts.size() >= mol.getNumBonds(), "bad dirCount size");
-#if 0
-    std::cerr<<"rRBDS: ";
-    mol.debugMol(std::cerr);
-    std::copy(bondDirCounts.begin(),bondDirCounts.end(),std::ostream_iterator<int>(std::cerr,", "));
-    std::cerr<<"\n";
-#endif
   // find bonds that have directions indicated that are redundant:
   for (auto &msI : molStack) {
     if (msI.type == MOL_STACK_BOND) {
@@ -1156,24 +1136,9 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
     }
   }
 
-#if 0
-    std::cerr<<"<11111111"<<std::endl;
-
-    std::cerr<<"----------------------------------------->"<<std::endl;
-    mol.debugMol(std::cerr);
-#endif
-
-  // std::cerr<<"----->\ntraversal stack:"<<std::endl;
   // traverse the stack and canonicalize double bonds and atoms with (ring)
   // stereochemistry
   for (auto &msI : molStack) {
-#if 0
-      if(msI->type == MOL_STACK_ATOM) std::cerr<<" atom: "<<msI->obj.atom->getIdx()<<std::endl;
-      else if(msI->type == MOL_STACK_BOND) std::cerr<<" bond: "<<msI->obj.bond->getIdx()<<" "<<msI->number<<" "<<msI->obj.bond->getBeginAtomIdx()<<"-"<<msI->obj.bond->getEndAtomIdx()<<" order: "<<msI->obj.bond->getBondType()<<std::endl;
-      else if(msI->type == MOL_STACK_RING) std::cerr<<" ring: "<<msI->number<<std::endl;
-      else if(msI->type == MOL_STACK_BRANCH_OPEN) std::cerr<<" branch open"<<std::endl;
-      else if(msI->type == MOL_STACK_BRANCH_CLOSE) std::cerr<<" branch close"<<std::endl;
-#endif
     if (msI.type == MOL_STACK_BOND &&
         msI.obj.bond->getBondType() == Bond::DOUBLE &&
         msI.obj.bond->getStereo() > Bond::STEREOANY) {
@@ -1265,19 +1230,8 @@ void canonicalizeFragment(ROMol &mol, int atomIdx,
       }
     }
   }
-#if 0
-    std::cerr<<"<-----"<<std::endl;
-
-    std::cerr<<"----------------------------------------->"<<std::endl;
-    mol.debugMol(std::cerr);
-#endif
   Canon::removeRedundantBondDirSpecs(mol, molStack, bondDirCounts,
                                      atomDirCounts, bondVisitOrders);
-#if 0
-    std::cerr<<"----------------------------------------->"<<std::endl;
-    mol.debugMol(std::cerr);
-    std::cerr<<"----------------------------------------->"<<std::endl;
-#endif
 }
 
 void canonicalizeEnhancedStereo(ROMol &mol,
@@ -1350,22 +1304,6 @@ void canonicalizeEnhancedStereo(ROMol &mol,
     // referenceAtom is already CCW then we don't need to do anything more
     // with this stereogroup
     auto refState = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
-#if 0
-    INT_LIST nbrs;
-    auto [beg, end] = mol.getAtomBonds(*refAtom);
-    while (beg != end) {
-      nbrs.push_back(mol[*beg++]->getIdx());
-    }
-    std::cerr << "!!!! " << (*refAtom)->getDegree() << " " << nbrs.size()
-              << std::endl;
-    // sort the neighbor indices by atom ranks
-    nbrs.sort([&atomRanks](auto i, auto j) {
-      return atomRanks->at(i) < atomRanks->at(j);
-    });
-    if ((*refAtom)->getPerturbationOrder(nbrs) % 1) {
-      refState = Atom::ChiralType::CHI_TETRAHEDRAL_CW;
-    }
-#endif
     if (foundRefState != refState) {
       // we need to flip everyone... so loop over the other atoms and bonds
       // and flip them all:
