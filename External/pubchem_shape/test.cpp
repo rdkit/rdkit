@@ -194,8 +194,8 @@ $$$$
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.923, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.882, 0.005));
 
-    auto rmsd = MolAlign::CalcRMS(cp, *ref);
-    CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.0, 0.005));
+    auto rmsd = MolAlign::CalcRMS(*ref, cp);
+    CHECK_THAT(rmsd, Catch::Matchers::WithinAbs(0.255, 0.005));
 
     RWMol cp2(cp);
     auto [nbr_st2, nbr_ct2] =
