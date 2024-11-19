@@ -172,7 +172,7 @@ class PairList {
     if (!d_descriptors.empty() && d_descriptors[0] == descriptor) {
       // set the bit to indicate a pair
       d_pairing |= static_cast<pairing_t>(1)
-                   << (pairing_nbits - 1 - d_descriptors.size());
+                   << (numPairingBits - 1 - d_descriptors.size());
     }
     d_descriptors.push_back(ref(descriptor));
   }
