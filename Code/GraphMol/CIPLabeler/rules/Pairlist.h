@@ -32,7 +32,7 @@ namespace CIPLabeler {
 class PairList {
  public:
   using pairing_t = std::uint64_t;
-  static constexpr int pairing_nbits = sizeof(pairing_t) * 8;
+  static constexpr int numPairingBits = sizeof(pairing_t) * 8;
 
   static Descriptor ref(Descriptor descriptor) {
     switch (descriptor) {
