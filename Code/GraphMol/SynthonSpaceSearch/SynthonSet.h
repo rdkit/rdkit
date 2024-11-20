@@ -107,9 +107,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::vector<int> d_numConnectors;
 
   // The fingerprints for the synthons for use with a fingerprint similarity
-  // search.  Currently hard-coded to Morgan fingerprint of radius 2.  They
-  // are not properties of the Synthons because they are not generated
-  // directly from them, as explained in buildSynthonFingerprints.
+  // search. They are not properties of the Synthons because they are not
+  // generated directly from them, as explained in buildSynthonFingerprints.
   std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_synthonFPs;
 
   void tagSynthonAtomsAndBonds();

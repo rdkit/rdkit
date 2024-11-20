@@ -113,8 +113,13 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   std::int64_t getNumProducts() const;
 
-  // Get the fingerprint generator.  Creates it if it doesn't already exist.
-  // Currently hard-coded to a Morgan fingerprint, radius 2.
+  [[nodiscard]] std::string getSynthonFingerprintType() const {
+    return d_fpType;
+  }
+
+  // Get the fingerprint generator used for fingerprint similarity searching.
+  // Creates it if it doesn't already exist, based on the value returned by
+  // GetSynthonFingerprintType.
   /*!
    *
    * @return std::unique_ptr<FingerprintGenerator<std::uint64_t>> &

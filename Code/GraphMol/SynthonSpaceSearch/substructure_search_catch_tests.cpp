@@ -267,6 +267,7 @@ TEST_CASE("DB Writer") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
   CHECK(synthonspace.getNumReactions() == 1);
+  synthonspace.buildSynthonFingerprints("Morgan_2");
   synthonspace.writeDBFile("doebner_miller_space.spc");
 
   SynthonSpace newsynthonspace;
@@ -282,11 +283,13 @@ TEST_CASE("DB Writer") {
   CHECK(*irxn->getConnRegFP() == *orxn->getConnRegFP());
   CHECK(irxn->getConnectors() == orxn->getConnectors());
   CHECK(irxn->getSynthons().size() == orxn->getSynthons().size());
+  CHECK(newsynthonspace.hasFingerprints());
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
       CHECK(irxn->getSynthons()[i][j]->getId() ==
             orxn->getSynthons()[i][j]->getId());
+      CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
     }
   }
 }

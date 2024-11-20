@@ -20,7 +20,8 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
     SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space) {
-  if (!getSpace().hasFingerprints()) {
+  if (!getSpace().hasFingerprints() ||
+      getSpace().getSynthonFingerprintType() != params.fingerprintType) {
     getSpace().buildSynthonFingerprints(params.fingerprintType);
   }
   d_queryFP = std::make_unique<ExplicitBitVect>(

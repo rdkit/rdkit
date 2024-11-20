@@ -32,7 +32,7 @@
 namespace RDKit::SynthonSpaceSearch {
 
 // used for serialization
-constexpr int32_t versionMajor = 1;
+constexpr int32_t versionMajor = 2;
 constexpr int32_t versionMinor = 0;
 constexpr int32_t endianId = 0xa100f;
 
@@ -167,7 +167,10 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   streamWrite(os, endianId);
   streamWrite(os, versionMajor);
   streamWrite(os, versionMinor);
-
+  streamWrite(os, hasFingerprints());
+  if (hasFingerprints()) {
+    streamWrite(os, d_fpType);
+  }
   streamWrite(os, d_reactions.size());
   for (const auto &[fst, snd] : d_reactions) {
     snd->writeToDBStream(os);
@@ -204,6 +207,11 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
       throw std::runtime_error("unreasonable version numbers");
     }
     majorVersion = 1000 * majorVersion + minorVersion * 10;
+    bool hasFPs;
+    streamRead(is, hasFPs);
+    if (hasFPs) {
+      streamRead(is, d_fpType, 0);
+    }
     size_t numRS;
     streamRead(is, numRS);
     for (size_t i = 0; i < numRS; ++i) {
@@ -246,7 +254,10 @@ bool SynthonSpace::hasFingerprints() const {
 
 void SynthonSpace::buildSynthonFingerprints(const std::string &fpType) {
   if (fpType != d_fpType) {
+    std::cout << "Old fingerprints : " << d_fpType << "  new : " << fpType
+              << std::endl;
     dp_fpGenerator.reset();
+    d_fpType = fpType;
   }
   if (!dp_fpGenerator) {
     if (fpType == "Morgan_2") {

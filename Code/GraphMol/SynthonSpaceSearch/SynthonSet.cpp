@@ -71,6 +71,13 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
       r->writeToDBStream(os);
     }
   }
+  streamWrite(os, d_synthonFPs.size());
+  for (const auto &fpv : d_synthonFPs) {
+    streamWrite(os, fpv.size());
+    for (const auto &fp : fpv) {
+      streamWrite(os, fp->toString());
+    }
+  }
 }
 
 void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
@@ -104,6 +111,20 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
     for (size_t j = 0; j < numR; ++j) {
       d_synthons[i][j] = std::make_unique<Synthon>();
       d_synthons[i][j]->readFromDBStream(is);
+    }
+  }
+  size_t numFS;
+  streamRead(is, numFS);
+  d_synthonFPs.clear();
+  for (size_t i = 0; i < numFS; ++i) {
+    size_t numF;
+    streamRead(is, numF);
+    d_synthonFPs.emplace_back();
+    d_synthonFPs[i].resize(numF);
+    for (size_t j = 0; j < numF; ++j) {
+      std::string fString;
+      streamRead(is, fString, 0);
+      d_synthonFPs[i][j] = std::make_unique<ExplicitBitVect>(fString);
     }
   }
 }

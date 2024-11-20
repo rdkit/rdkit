@@ -170,7 +170,15 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           (python::arg("self"), python::arg("query"),
            python::arg("params") = python::object()),
           "Does a fingerprint search in the SynthonSpace.  Currently hard-coded"
-          " to use Morgan fingerprints, radius 2.");
+          " to use Morgan fingerprints, radius 2.")
+      .def(
+          "BuildSynthonFingerprints",
+          &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,
+          (python::arg("self"), python::arg("fpType")),
+          "Build the synthon fingerprints ready for similarity searching.  This"
+          " is done automatically when the first similarity search is done, but if"
+          " converting a text file to binary format might need to be done"
+          " explicitly.");
 }
 
 }  // namespace RDKit
