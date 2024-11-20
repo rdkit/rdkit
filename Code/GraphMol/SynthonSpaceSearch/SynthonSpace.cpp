@@ -49,15 +49,6 @@ std::int64_t SynthonSpace::getNumProducts() const {
   return totSize;
 }
 
-const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &
-SynthonSpace::getFPGenerator() {
-  if (!dp_fpGenerator) {
-    dp_fpGenerator.reset(
-        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
-  }
-  return dp_fpGenerator;
-}
-
 SubstructureResults SynthonSpace::substructureSearch(
     const ROMol &query, SynthonSpaceSearchParams params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
@@ -66,9 +57,10 @@ SubstructureResults SynthonSpace::substructureSearch(
 }
 
 SubstructureResults SynthonSpace::fingerprintSearch(
-    const ROMol &query, SynthonSpaceSearchParams params) {
+    const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+    SynthonSpaceSearchParams params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
-  SynthonSpaceFingerprintSearcher ssss(query, params, *this);
+  SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
   return ssss.search();
 }
 
@@ -252,28 +244,14 @@ bool SynthonSpace::hasFingerprints() const {
   return d_reactions.begin()->second->hasFingerprints();
 }
 
-void SynthonSpace::buildSynthonFingerprints(const std::string &fpType) {
-  if (fpType != d_fpType) {
-    std::cout << "Old fingerprints : " << d_fpType << "  new : " << fpType
-              << std::endl;
-    dp_fpGenerator.reset();
+void SynthonSpace::buildSynthonFingerprints(
+    const FingerprintGenerator<std::uint64_t> &fpGen) {
+  auto fpType = fpGen.infoString();
+  if (fpType != d_fpType || !hasFingerprints()) {
     d_fpType = fpType;
-  }
-  if (!dp_fpGenerator) {
-    if (fpType == "Morgan_2") {
-      dp_fpGenerator.reset(
-          MorganFingerprint::getMorganGenerator<std::uint64_t>(2u));
-    } else if (fpType == "Morgan_3") {
-      dp_fpGenerator.reset(
-          MorganFingerprint::getMorganGenerator<std::uint64_t>(3u));
-    } else if (fpType == "RDKit_7") {
-      dp_fpGenerator.reset(RDKitFP::getRDKitFPGenerator<std::uint64_t>(1u, 7u));
-    } else {
-      throw ValueErrorException("Unknown fingerprint type '" + fpType + "'.");
+    for (const auto &it : d_reactions) {
+      it.second->buildSynthonFingerprints(fpGen);
     }
-  }
-  for (const auto &it : d_reactions) {
-    it.second->buildSynthonFingerprints(dp_fpGenerator);
   }
 }
 

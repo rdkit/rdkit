@@ -17,15 +17,14 @@
 namespace RDKit::SynthonSpaceSearch {
 
 SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
-    const ROMol &query, const SynthonSpaceSearchParams &params,
-    SynthonSpace &space)
-    : SynthonSpaceSearcher(query, params, space) {
+    const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+    const SynthonSpaceSearchParams &params, SynthonSpace &space)
+    : SynthonSpaceSearcher(query, params, space), d_fpGen(fpGen) {
   if (!getSpace().hasFingerprints() ||
-      getSpace().getSynthonFingerprintType() != params.fingerprintType) {
-    getSpace().buildSynthonFingerprints(params.fingerprintType);
+      getSpace().getSynthonFingerprintType() != fpGen.infoString()) {
+    getSpace().buildSynthonFingerprints(fpGen);
   }
-  d_queryFP = std::make_unique<ExplicitBitVect>(
-      *getSpace().getFPGenerator()->getFingerprint(query));
+  d_queryFP = std::make_unique<ExplicitBitVect>(*d_fpGen.getFingerprint(query));
 }
 
 namespace {
@@ -70,7 +69,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     // For the fingerprints, ring info is required.
     sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                 MolOps::SANITIZE_SYMMRINGS);
-    fragFPs.emplace_back(getSpace().getFPGenerator()->getFingerprint(*frag));
+    fragFPs.emplace_back(d_fpGen.getFingerprint(*frag));
   }
 
   auto connPatterns = details::getConnectorPatterns(fragSet);
@@ -142,8 +141,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
 }
 
 bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
-  std::unique_ptr<ExplicitBitVect> fp(
-      getSpace().getFPGenerator()->getFingerprint(hit));
+  std::unique_ptr<ExplicitBitVect> fp(d_fpGen.getFingerprint(hit));
   auto sim = TanimotoSimilarity(*fp, *d_queryFP);
   if (sim >= getParams().similarityCutoff) {
     hit.setProp<double>("Similarity", sim);

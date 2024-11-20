@@ -241,7 +241,7 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
 }  // namespace
 
 void SynthonSet::buildSynthonFingerprints(
-    const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGenerator) {
+    const FingerprintGenerator<std::uint64_t> &fpGen) {
   // It's not as straightforward as making a fingerprint for each of the
   // synthons in turn because sometimes 2 aliphatic synthons come together
   // to form an aromatic ring, for example.  Such as:
@@ -272,7 +272,7 @@ void SynthonSet::buildSynthonFingerprints(
     }
     auto synthons = getSynthons(synthsToUse);
     auto sampleMols = buildSampleMolecules(synthons, i);
-    makeSynthonFPs(i, sampleMols, fpGenerator);
+    makeSynthonFPs(i, sampleMols, fpGen);
   }
 }
 
@@ -349,7 +349,7 @@ void fixSynthonAtomAndBond(const Atom *sampleMolAtom, const Bond *bond,
 
 void SynthonSet::makeSynthonFPs(
     size_t synthSetNum, const std::vector<std::unique_ptr<ROMol>> &sampleMols,
-    const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGenerator) {
+    const FingerprintGenerator<std::uint64_t> &fpGen) {
   for (size_t i = 0; i < sampleMols.size(); ++i) {
     RWMol synthCp(*d_synthons[synthSetNum][i]->getMol());
     // transfer the aromaticity of the atom in the sample molecule to the
@@ -384,8 +384,7 @@ void SynthonSet::makeSynthonFPs(
         }
       }
     }
-    d_synthonFPs[synthSetNum].emplace_back(
-        fpGenerator->getFingerprint(synthCp));
+    d_synthonFPs[synthSetNum].emplace_back(fpGen.getFingerprint(synthCp));
   }
 }
 

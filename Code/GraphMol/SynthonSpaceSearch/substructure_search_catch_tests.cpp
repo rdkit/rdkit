@@ -10,8 +10,9 @@
 #include <algorithm>
 #include <fstream>
 
-#include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
@@ -267,7 +268,9 @@ TEST_CASE("DB Writer") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
   CHECK(synthonspace.getNumReactions() == 1);
-  synthonspace.buildSynthonFingerprints("Morgan_2");
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+  synthonspace.buildSynthonFingerprints(*fpGen);
   synthonspace.writeDBFile("doebner_miller_space.spc");
 
   SynthonSpace newsynthonspace;

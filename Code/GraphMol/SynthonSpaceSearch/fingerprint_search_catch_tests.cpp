@@ -29,12 +29,11 @@ const char *rdbase = getenv("RDBASE");
 
 std::map<std::string, std::unique_ptr<ExplicitBitVect>> getFingerprints(
     const std::string molFilename,
-    std::map<std::string, std::unique_ptr<RWMol>> &mols) {
+    std::map<std::string, std::unique_ptr<RWMol>> &mols,
+    const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGen) {
   v2::FileParsers::SmilesMolSupplierParams fileparams;
   fileparams.titleLine = false;
   v2::FileParsers::SmilesMolSupplier suppl(molFilename, fileparams);
-  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen;
-  fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   std::map<std::string, std::unique_ptr<ExplicitBitVect>> fps;
   while (!suppl.atEnd()) {
     auto mol = suppl.next();
@@ -95,7 +94,10 @@ TEST_CASE("FP Small tests") {
     SynthonSpaceSearchParams params;
     params.maxBondSplits = 3;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
-    auto results = synthonspace.fingerprintSearch(*queryMol, params);
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+
+    auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
     CHECK(results.getHitMolecules().size() == expNumHits[i]);
     std::set<std::string> resSmis;
     for (const auto &r : results.getHitMolecules()) {
@@ -104,7 +106,7 @@ TEST_CASE("FP Small tests") {
 
     // Do the enumerated library, just to check
     std::map<std::string, std::unique_ptr<RWMol>> mols;
-    auto fps = getFingerprints(enumLibNames[i], mols);
+    auto fps = getFingerprints(enumLibNames[i], mols, fpGen);
     auto names = bruteForceSearch(fps, *queryMol, params.similarityCutoff);
     std::set<std::string> fullSmis;
     for (const auto &r : names) {
@@ -124,8 +126,11 @@ TEST_CASE("FP Biggy") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
 
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+
   std::map<std::string, std::unique_ptr<RWMol>> mols;
-  auto fps = getFingerprints(enumLib, mols);
+  auto fps = getFingerprints(enumLib, mols, fpGen);
 
   const std::vector<std::string> smis{
       "c1ccccc1C(=O)N1CCCC1", "c1ccccc1NC(=O)C1CCN1",
@@ -137,7 +142,7 @@ TEST_CASE("FP Biggy") {
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
     auto queryMol = v2::SmilesParse::MolFromSmiles(smis[i]);
-    auto results = synthonspace.fingerprintSearch(*queryMol, params);
+    auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
     CHECK(results.getMaxNumResults() == maxRes[i]);
 #if 1
@@ -169,7 +174,9 @@ TEST_CASE("FP Random Hits") {
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
-  auto results = synthonspace.fingerprintSearch(*queryMol, params);
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   std::map<std::string, int> libCounts;
   for (const auto &m : results.getHitMolecules()) {
     std::string lib(
@@ -197,16 +204,17 @@ TEST_CASE("Other Fingerprints") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 4;
+  params.maxBondSplits = 3;
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
-  params.fingerprintType = "Morgan_3";
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
 
-  // This is Osimertinib (Tagrisso).
+  // This is Osimertinib (Tagrisso), which doesn't have any hits in this little
+  // database.
   auto queryMol =
       "C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C"_smiles;
-  auto results = synthonspace.fingerprintSearch(*queryMol, params);
-  std::cout << "Number of hits : " << results.getHitMolecules().size()
-            << std::endl;
+  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().empty());
 }

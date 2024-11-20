@@ -35,7 +35,6 @@ SubstructureResults SynthonSpaceSearcher::search() {
   std::vector<std::unique_ptr<ROMol>> results;
 
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
-  std::cout << "Number of fragments: " << fragments.size() << std::endl;
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   for (auto &fragSet : fragments) {
@@ -146,7 +145,6 @@ void SynthonSpaceSearcher::buildHits(
   // outside maxHits or hitStart.
   std::set<std::string> resultsNames;
 
-  std::cout << "Upper bound on hits : " << totHits << std::endl;
   if (d_params.randomSample) {
     buildRandomHits(hitsets, totHits, resultsNames, results);
   } else {

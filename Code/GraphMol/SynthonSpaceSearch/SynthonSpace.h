@@ -75,11 +75,6 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // times, a lower number will give faster searches at the
              // risk of missing some hits.  The value you use should have
              // a positive correlation with your FOMO.
-  std::string fingerprintType{"Morgan_2"};  // The type of fingerprint to use.
-                                            // Options are Morgan_2 (Morgan
-                                            // fingerprints, radius 2),
-                                            // Morgan_3, RDKit_7 (RDKit
-                                            // fingerprint, maxPath=7).
 };
 
 // Holds the information about a set of hits.  The molecules can be built
@@ -117,15 +112,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
     return d_fpType;
   }
 
-  // Get the fingerprint generator used for fingerprint similarity searching.
-  // Creates it if it doesn't already exist, based on the value returned by
-  // GetSynthonFingerprintType.
-  /*!
-   *
-   * @return std::unique_ptr<FingerprintGenerator<std::uint64_t>> &
-   */
-  const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &getFPGenerator();
-
   // Perform a substructure search with the given query molecule across
   // the synthonspace library.  Duplicate SMILES strings produced by different
   // reactions will be returned.
@@ -149,7 +135,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @return : the hits as a SubstructureResults object.
    */
   SubstructureResults fingerprintSearch(
-      const ROMol &query,
+      const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
       SynthonSpaceSearchParams params = SynthonSpaceSearchParams());
 
   /*!
@@ -208,15 +194,16 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   bool hasFingerprints() const;
   // Create the fingerprints for the synthons ready for fingerprint searches.
   // Valid values of fpType as described by SynthonSpaceSearchParams.
-  void buildSynthonFingerprints(const std::string &fpType);
+  void buildSynthonFingerprints(
+      const FingerprintGenerator<std::uint64_t> &fpGen);
 
  private:
   std::string d_fileName;
   std::map<std::string, std::unique_ptr<SynthonSet>> d_reactions;
 
-  // For the similarity search.
+  // For the similarity search, this records the generator used for
+  // creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
-  std::unique_ptr<FingerprintGenerator<std::uint64_t>> dp_fpGenerator;
 };
 
 }  // namespace SynthonSpaceSearch

@@ -21,12 +21,13 @@ namespace RDKit::SynthonSpaceSearch {
 class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
  public:
   SynthonSpaceFingerprintSearcher() = delete;
-  SynthonSpaceFingerprintSearcher(const ROMol &query,
-                                  const SynthonSpaceSearchParams &params,
-                                  SynthonSpace &space);
+  SynthonSpaceFingerprintSearcher(
+      const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+      const SynthonSpaceSearchParams &params, SynthonSpace &space);
 
  private:
   std::unique_ptr<ExplicitBitVect> d_queryFP;
+  const FingerprintGenerator<std::uint64_t> &d_fpGen;
 
   std::vector<SynthonSpaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet) const override;
