@@ -17,7 +17,7 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
-SubstructureResults SynthonSpaceSearcher::search() {
+SearchResults SynthonSpaceSearcher::search() {
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
         "Random sample is incompatible with maxHits of -1.");
@@ -38,8 +38,7 @@ SubstructureResults SynthonSpaceSearcher::search() {
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   for (auto &fragSet : fragments) {
-    auto theseHits = searchFragSet(fragSet);
-    if (!theseHits.empty()) {
+    if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
       totHits += std::accumulate(
           theseHits.begin(), theseHits.end(), 0,
           [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
@@ -52,14 +51,14 @@ SubstructureResults SynthonSpaceSearcher::search() {
   if (d_params.buildHits) {
     buildHits(allHits, totHits, results);
   }
-  return SubstructureResults{std::move(results), totHits};
+  return SearchResults{std::move(results), totHits};
 }
 
 namespace {
 // class to step through all combinations of list of different sizes.
 // returns (0,0,0), (0,0,1), (0,1,0) etc.
 struct Stepper {
-  explicit Stepper(std::vector<size_t> &sizes) : d_sizes(sizes) {
+  explicit Stepper(const std::vector<size_t> &sizes) : d_sizes(sizes) {
     d_currState = std::vector<size_t>(sizes.size(), 0);
   }
   void step() {
@@ -132,9 +131,8 @@ void SynthonSpaceSearcher::buildHits(
       [](const SynthonSpaceHitSet &hs1, const SynthonSpaceHitSet &hs2) -> bool {
         if (hs1.reactionId == hs2.reactionId) {
           return hs1.numHits < hs2.numHits;
-        } else {
-          return hs1.reactionId < hs2.reactionId;
         }
+        return hs1.reactionId < hs2.reactionId;
       });
   // Keep track of the result names so we can weed out duplicates by
   // reaction and synthons.  Different splits may give rise to the same
@@ -158,8 +156,8 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
     std::sort(hits.begin(), hits.end(),
               [](const std::unique_ptr<ROMol> &lhs,
                  const std::unique_ptr<ROMol> &rhs) {
-                double lsim = lhs->getProp<double>("Similarity");
-                double rsim = rhs->getProp<double>("Similarity");
+                const auto lsim = lhs->getProp<double>("Similarity");
+                const auto rsim = rhs->getProp<double>("Similarity");
                 return lsim > rsim;
               });
   }
@@ -170,15 +168,14 @@ void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
     std::set<std::string> &resultsNames,
     std::vector<std::unique_ptr<ROMol>> &results) const {
-  for (const auto &hitset : hitsets) {
-    const auto &synthonsToUse = hitset.synthonsToUse;
+  for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
     std::vector<std::vector<size_t>> synthonNums;
     synthonNums.reserve(synthonsToUse.size());
     std::vector<size_t> numSynthons;
     numSynthons.reserve(synthonsToUse.size());
     for (auto &stu : synthonsToUse) {
       numSynthons.push_back(stu.count());
-      synthonNums.push_back(std::vector<size_t>());
+      synthonNums.emplace_back();
       synthonNums.back().reserve(stu.count());
       for (size_t j = 0; j < stu.size(); ++j) {
         if (stu[j]) {
@@ -186,16 +183,15 @@ void SynthonSpaceSearcher::buildAllHits(
         }
       }
     }
-    const auto &reaction =
-        getSpace().getReactions().find(hitset.reactionId)->second;
+    const auto &reaction = getSpace().getReactions().find(reactionId)->second;
     Stepper stepper(numSynthons);
     std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
     while (stepper.d_currState[0] != numSynthons[0]) {
       for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
         theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
       }
-      auto prod = buildAndVerifyHit(reaction, theseSynthNums, resultsNames);
-      if (prod) {
+      if (auto prod =
+              buildAndVerifyHit(reaction, theseSynthNums, resultsNames)) {
         results.push_back(std::move(prod));
       }
       if (results.size() == static_cast<size_t>(d_params.maxHits)) {
@@ -246,9 +242,9 @@ struct RandomHitSelector {
   std::pair<std::string, std::vector<size_t>> selectSynthComb(
       std::mt19937 &randGen) {
     std::vector<size_t> synths;
-    size_t hitSetNum = d_hitSetSel(randGen);
+    const size_t hitSetNum = d_hitSetSel(randGen);
     for (size_t i = 0; i < d_hitsets[hitSetNum].synthonsToUse.size(); ++i) {
-      size_t synthNum = d_synthSels[hitSetNum][i](randGen);
+      const size_t synthNum = d_synthSels[hitSetNum][i](randGen);
       synths.push_back(d_synthons[hitSetNum][i][synthNum]);
     }
     return std::make_pair(d_hitsets[hitSetNum].reactionId, synths);
@@ -280,8 +276,7 @@ void SynthonSpaceSearcher::buildRandomHits(
          numFails < totHits * d_params.numRandomSweeps) {
     const auto &[reactionId, synths] = rhs.selectSynthComb(*d_randGen);
     const auto &reaction = getSpace().getReactions().find(reactionId)->second;
-    auto prod = buildAndVerifyHit(reaction, synths, resultsNames);
-    if (prod) {
+    if (auto prod = buildAndVerifyHit(reaction, synths, resultsNames)) {
       results.push_back(std::move(prod));
     } else {
       numFails++;

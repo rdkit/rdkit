@@ -42,8 +42,8 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
 
 #if 1
 TEST_CASE("Test splits 1") {
-  std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
-                                  "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1"};
+  const std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
+                                        "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1"};
   std::vector<std::vector<size_t>> expCounts{{1, 51, 345, 20},
                                              {1, 38, 298, 56}};
   for (size_t i = 0; i < smiles.size(); ++i) {
@@ -54,14 +54,14 @@ TEST_CASE("Test splits 1") {
           std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.
     for (size_t j = 0; j < 4; ++j) {
-      auto numFragSets = std::accumulate(
-          fragments.begin(), fragments.end(), size_t(0),
-          [&](size_t prevRes, std::vector<std::unique_ptr<ROMol>> &frags) {
+      const auto numFragSets = std::accumulate(
+          fragments.begin(), fragments.end(), static_cast<size_t>(0),
+          [&](size_t prevRes,
+              const std::vector<std::unique_ptr<ROMol>> &frags) {
             if (frags.size() == j + 1) {
               return prevRes + 1;
-            } else {
-              return prevRes;
             }
+            return prevRes;
           });
       CHECK(numFragSets == expCounts[i][j]);
     }
@@ -114,34 +114,21 @@ TEST_CASE("S Urea 1") {
 TEST_CASE("S Simple query 1") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
-  SECTION("Binary File") {
-    SynthonSpace synthonspace;
-    std::string libName =
-        fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space.spc";
-    synthonspace.readDBFile(libName);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space.spc";
+  synthonspace.readDBFile(libName);
+  {
     // should give 220 hits for urea-3
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.getHitMolecules().size() == 220);
     CHECK(results.getMaxNumResults() == 220);
   }
-  SECTION("Single molecule with fragging") {
-    {
-      // should give 220 hits for urea-3
-      auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-      auto results = synthonspace.substructureSearch(*queryMol);
-      CHECK(results.getHitMolecules().size() == 220);
-      CHECK(results.getMaxNumResults() == 220);
-    }
-    {
-      auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-      auto results = synthonspace.substructureSearch(*queryMol);
-      CHECK(results.getHitMolecules().size() == 20);
-    }
+  {
+    auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+    auto results = synthonspace.substructureSearch(*queryMol);
+    CHECK(results.getHitMolecules().size() == 20);
   }
 }
 
@@ -225,7 +212,7 @@ TEST_CASE("S Substructure in 1 reagent") {
   {
     auto queryMol = "C1CCCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.getHitMolecules().size() == 0);
+    CHECK(results.getHitMolecules().empty());
   }
 }
 
@@ -381,7 +368,7 @@ TEST_CASE("S Small query") {
   auto results = synthonspace.substructureSearch(*queryMol);
   // The number of results is immaterial, it just matters that the search
   // finished.
-  CHECK(results.getHitMolecules().size() == 0);
+  CHECK(results.getHitMolecules().empty());
 }
 
 TEST_CASE("S Random Hits") {

@@ -14,10 +14,10 @@
 #include <string>
 
 #include <DataStructs/ExplicitBitVect.h>
-#include <GraphMol/ROMol.h>
 
 namespace RDKit {
 class Atom;
+class ROMol;
 
 namespace SynthonSpaceSearch {
 
@@ -44,7 +44,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
 
   // Tag each atom and bond with the given molecule number and its index,
   // so we can find them again in a product if necessary.
-  void tagAtomsAndBonds(int molNum);
+  void tagAtomsAndBonds(int molNum) const;
 
  private:
   std::string d_smiles;

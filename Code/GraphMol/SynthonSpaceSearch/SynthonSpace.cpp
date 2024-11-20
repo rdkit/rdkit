@@ -21,8 +21,6 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
-#include <GraphMol/Fingerprints/MorganGenerator.h>
-#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceFingerprintSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
@@ -38,8 +36,7 @@ constexpr int32_t endianId = 0xa100f;
 
 std::int64_t SynthonSpace::getNumProducts() const {
   std::int64_t totSize = 0;
-  for (const auto &reaction : d_reactions) {
-    const auto &rxn = reaction.second;
+  for (const auto &[id, rxn] : d_reactions) {
     size_t thisSize = 1;
     for (const auto &r : rxn->getSynthons()) {
       thisSize *= r.size();
@@ -49,24 +46,24 @@ std::int64_t SynthonSpace::getNumProducts() const {
   return totSize;
 }
 
-SubstructureResults SynthonSpace::substructureSearch(
-    const ROMol &query, SynthonSpaceSearchParams params) {
+SearchResults SynthonSpace::substructureSearch(
+    const ROMol &query, const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceSubstructureSearcher ssss(query, params, *this);
   return ssss.search();
 }
 
-SubstructureResults SynthonSpace::fingerprintSearch(
+SearchResults SynthonSpace::fingerprintSearch(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
-    SynthonSpaceSearchParams params) {
+    const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
   return ssss.search();
 }
 
 namespace {
-inline std::vector<std::string> splitLine(const std::string &str,
-                                          const std::regex &regexz) {
+std::vector<std::string> splitLine(const std::string &str,
+                                   const std::regex &regexz) {
   return {std::sregex_token_iterator(str.begin(), str.end(), regexz, -1),
           std::sregex_token_iterator()};
 }
@@ -207,7 +204,7 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
     size_t numRS;
     streamRead(is, numRS);
     for (size_t i = 0; i < numRS; ++i) {
-      std::unique_ptr<SynthonSet> rs = std::make_unique<SynthonSet>();
+      auto rs = std::make_unique<SynthonSet>();
       rs->readFromDBStream(is, majorVersion);
       d_reactions.insert(std::make_pair(rs->getId(), std::move(rs)));
     }
@@ -221,9 +218,8 @@ void SynthonSpace::summarise(std::ostream &os) const {
   os << "Read from file " << d_fileName << "\n"
      << "Number of reactions : " << d_reactions.size() << "\n";
   size_t totSize = 0;
-  for (const auto &reaction : d_reactions) {
-    const auto &rxn = reaction.second;
-    os << "Reaction name " << rxn->getId() << "\n";
+  for (const auto &[id, rxn] : d_reactions) {
+    os << "Reaction name " << id << "\n";
     size_t thisSize = 1;
     for (size_t i = 0; i < rxn->getSynthons().size(); ++i) {
       os << "  Synthon set " << i << " has " << rxn->getSynthons()[i].size()
@@ -246,11 +242,11 @@ bool SynthonSpace::hasFingerprints() const {
 
 void SynthonSpace::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
-  auto fpType = fpGen.infoString();
-  if (fpType != d_fpType || !hasFingerprints()) {
+  if (const auto fpType = fpGen.infoString();
+      fpType != d_fpType || !hasFingerprints()) {
     d_fpType = fpType;
-    for (const auto &it : d_reactions) {
-      it.second->buildSynthonFingerprints(fpGen);
+    for (const auto &[id, synthSet] : d_reactions) {
+      synthSet->buildSynthonFingerprints(fpGen);
     }
   }
 }

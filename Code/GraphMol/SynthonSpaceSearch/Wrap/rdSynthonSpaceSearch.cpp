@@ -18,34 +18,33 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-python::list hitMolecules_helper(
-    const SynthonSpaceSearch::SubstructureResults &res) {
+python::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
   python::list pyres;
   for (auto &r : res.getHitMolecules()) {
-    pyres.append(boost::shared_ptr<ROMol>(new ROMol(*r)));
+    pyres.append(boost::make_shared<ROMol>(*r));
   }
   return pyres;
 }
 
-struct SubstructureResults_wrapper {
+struct SearchResults_wrapper {
   static void wrap() {
-    std::string docString = "Used to return results of SynthonSpace searches.";
-    python::class_<SynthonSpaceSearch::SubstructureResults>(
+    const std::string docString =
+        "Used to return results of SynthonSpace searches.";
+    python::class_<SynthonSpaceSearch::SearchResults>(
         "SubstructureResult", docString.c_str(), python::no_init)
         .def("GetHitMolecules", hitMolecules_helper, python::args("self"),
              "A function returning hits from the search")
-        .def_readonly(
-            "GetMaxNumResults",
-            &SynthonSpaceSearch::SubstructureResults::getMaxNumResults,
-            "The upper bound on number of results possible.  There"
-            " may be fewer than this in practice for several reasons"
-            " such as duplicate reagent sets being removed or the"
-            " final product not matching the query even though the"
-            " synthons suggested they would.");
+        .def_readonly("GetMaxNumResults",
+                      &SynthonSpaceSearch::SearchResults::getMaxNumResults,
+                      "The upper bound on number of results possible.  There"
+                      " may be fewer than this in practice for several reasons"
+                      " such as duplicate reagent sets being removed or the"
+                      " final product not matching the query even though the"
+                      " synthons suggested they would.");
   }
 };
 
-SynthonSpaceSearch::SubstructureResults substructureSearch_helper(
+SynthonSpaceSearch::SearchResults substructureSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &py_params) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
@@ -59,7 +58,7 @@ SynthonSpaceSearch::SubstructureResults substructureSearch_helper(
   }
 }
 
-SynthonSpaceSearch::SubstructureResults fingerprintSearch_helper(
+SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &fingerprintGenerator,
     const python::object &py_params) {
@@ -68,16 +67,16 @@ SynthonSpaceSearch::SubstructureResults fingerprintSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
-  FingerprintGenerator<std::uint64_t> *fpGen =
-      python::extract<FingerprintGenerator<std::uint64_t> *>(
-          fingerprintGenerator);
   {
     NOGIL gil;
+    const FingerprintGenerator<std::uint64_t> *fpGen =
+        python::extract<FingerprintGenerator<std::uint64_t> *>(
+            fingerprintGenerator);
     return self.fingerprintSearch(query, *fpGen, params);
   }
 }
 
-void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
+void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
@@ -88,7 +87,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       "  NOTE: This functionality is experimental and the API"
       " and/or results may change in future releases.";
 
-  SubstructureResults_wrapper::wrap();
+  SearchResults_wrapper::wrap();
 
   std::string docString = "SynthonSpaceSearch parameters.";
   python::class_<SynthonSpaceSearch::SynthonSpaceSearchParams,

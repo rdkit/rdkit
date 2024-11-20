@@ -129,7 +129,7 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
   }
 }
 
-void SynthonSet::addSynthon(int synthonSetNum,
+void SynthonSet::addSynthon(const int synthonSetNum,
                             std::unique_ptr<Synthon> newSynthon) {
   if (static_cast<size_t>(synthonSetNum) >= d_synthons.size()) {
     d_synthons.resize(synthonSetNum + 1);
@@ -149,8 +149,8 @@ void SynthonSet::assignConnectorsUsed() {
     }
   }
   d_connectors.resize(MAX_CONNECTOR_NUM + 1, false);
-  for (auto &reagSet : d_synthons) {
-    for (auto &reag : reagSet) {
+  for (const auto &reagSet : d_synthons) {
+    for (const auto &reag : reagSet) {
       for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
         if (std::regex_search(reag->getSmiles(), connRegexs[2 * i]) ||
             std::regex_search(reag->getSmiles(), connRegexs[2 * i + 1])) {
@@ -181,8 +181,7 @@ void SynthonSet::buildConnectorRegions() {
   for (const auto &rset : d_synthons) {
     for (const auto &r : rset) {
       for (const auto &cr : r->getConnRegions()) {
-        auto smi = MolToSmiles(*cr);
-        if (smis.insert(smi).second) {
+        if (auto smi = MolToSmiles(*cr); smis.insert(smi).second) {
           d_connectorRegions.push_back(cr);
         }
       }
@@ -215,7 +214,8 @@ namespace {
 // element of the other vectors.
 
 std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
-    const std::vector<std::vector<ROMol *>> &synthons, size_t longVecNum) {
+    const std::vector<std::vector<ROMol *>> &synthons,
+    const size_t longVecNum) {
   std::vector<std::unique_ptr<ROMol>> sampleMolecules;
   sampleMolecules.reserve(synthons[longVecNum].size());
 
@@ -322,7 +322,7 @@ std::unique_ptr<ROMol> SynthonSet::buildProduct(
   return prodMol;
 }
 
-void SynthonSet::tagSynthonAtomsAndBonds() {
+void SynthonSet::tagSynthonAtomsAndBonds() const {
   for (size_t i = 0; i < d_synthons.size(); ++i) {
     for (auto &syn : d_synthons[i]) {
       syn->tagAtomsAndBonds(static_cast<int>(i));
@@ -334,11 +334,12 @@ namespace {
 // transfer information for bonds created by molzip
 void fixSynthonAtomAndBond(const Atom *sampleMolAtom, const Bond *bond,
                            RWMol &synthCp) {
-  auto synthAt = synthCp.getAtomWithIdx(sampleMolAtom->getProp<int>("idx"));
-  for (auto nbor : synthCp.atomNeighbors(synthAt)) {
+  const auto synthAt =
+      synthCp.getAtomWithIdx(sampleMolAtom->getProp<int>("idx"));
+  for (const auto nbor : synthCp.atomNeighbors(synthAt)) {
     if (!nbor->getAtomicNum() && nbor->getIsotope() <= MAX_CONNECTOR_NUM) {
       nbor->setIsAromatic(sampleMolAtom->getIsAromatic());
-      auto synthBond =
+      const auto synthBond =
           synthCp.getBondBetweenAtoms(synthAt->getIdx(), nbor->getIdx());
       synthBond->setIsAromatic(bond->getIsAromatic());
       synthBond->setBondType(bond->getBondType());
@@ -348,16 +349,17 @@ void fixSynthonAtomAndBond(const Atom *sampleMolAtom, const Bond *bond,
 }  // namespace
 
 void SynthonSet::makeSynthonFPs(
-    size_t synthSetNum, const std::vector<std::unique_ptr<ROMol>> &sampleMols,
+    const size_t synthSetNum,
+    const std::vector<std::unique_ptr<ROMol>> &sampleMols,
     const FingerprintGenerator<std::uint64_t> &fpGen) {
   for (size_t i = 0; i < sampleMols.size(); ++i) {
     RWMol synthCp(*d_synthons[synthSetNum][i]->getMol());
     // transfer the aromaticity of the atom in the sample molecule to the
     // corresponding atom in the synthon
     for (const auto &atom : sampleMols[i]->atoms()) {
-      int molNum = atom->getProp<int>("molNum");
-      if (static_cast<size_t>(molNum) == synthSetNum) {
-        int atIdx = atom->getProp<int>("idx");
+      if (const int molNum = atom->getProp<int>("molNum");
+          static_cast<size_t>(molNum) == synthSetNum) {
+        const int atIdx = atom->getProp<int>("idx");
         synthCp.getAtomWithIdx(atIdx)->setIsAromatic(atom->getIsAromatic());
       }
     }
@@ -365,10 +367,10 @@ void SynthonSet::makeSynthonFPs(
     // because some are formed by molzip.
     for (const auto &bond : sampleMols[i]->bonds()) {
       if (bond->hasProp("molNum")) {
-        int molNum = bond->getProp<int>("molNum");
-        if (static_cast<size_t>(molNum) == synthSetNum) {
-          int bondIdx = bond->getProp<int>("idx");
-          auto sbond = synthCp.getBondWithIdx(bondIdx);
+        if (const int molNum = bond->getProp<int>("molNum");
+            static_cast<size_t>(molNum) == synthSetNum) {
+          const int bondIdx = bond->getProp<int>("idx");
+          const auto sbond = synthCp.getBondWithIdx(bondIdx);
           sbond->setIsAromatic(bond->getIsAromatic());
           sbond->setBondType(bond->getBondType());
         }

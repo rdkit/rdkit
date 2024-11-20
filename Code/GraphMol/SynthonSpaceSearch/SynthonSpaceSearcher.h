@@ -38,10 +38,10 @@ class SynthonSpaceSearcher {
 
   virtual ~SynthonSpaceSearcher() = default;
 
-  SubstructureResults search();
+  SearchResults search();
 
   SynthonSpace &getSpace() const { return d_space; }
-  const ROMol &getQuery() const { return d_query; };
+  const ROMol &getQuery() const { return d_query; }
   const SynthonSpaceSearchParams &getParams() const { return d_params; }
 
  private:

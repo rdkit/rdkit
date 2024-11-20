@@ -32,7 +32,7 @@ Synthon::Synthon(const std::string &smi, const std::string &id)
 
   dp_pattFP.reset(PatternFingerprintMol(*getMol(), 2048));
 
-  if (auto cr = getConnRegion(*getMol()); cr) {
+  if (const auto cr = getConnRegion(*getMol()); cr) {
     std::vector<std::unique_ptr<ROMol>> tmpFrags;
     MolOps::getMolFrags(*cr, tmpFrags, false);
     for (auto &f : tmpFrags) {
@@ -92,7 +92,7 @@ void Synthon::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_smiles);
   streamWrite(os, d_id);
   MolPickler::pickleMol(*getMol(), os, PicklerOps::AllProps);
-  auto pattFPstr = getPattFP()->toString();
+  const auto pattFPstr = getPattFP()->toString();
   streamWrite(os, pattFPstr);
   streamWrite(os, getConnRegions().size());
   for (const auto &cr : getConnRegions()) {
@@ -117,15 +117,15 @@ void Synthon::readFromDBStream(std::istream &is) {
   }
 }
 
-void Synthon::tagAtomsAndBonds(int molNum) {
+void Synthon::tagAtomsAndBonds(const int molNum) const {
   if (!dp_mol) {
     return;
   }
-  for (auto &atom : dp_mol->atoms()) {
+  for (const auto &atom : dp_mol->atoms()) {
     atom->setProp<int>("molNum", molNum);
     atom->setProp<int>("idx", atom->getIdx());
   }
-  for (auto &bond : dp_mol->bonds()) {
+  for (const auto &bond : dp_mol->bonds()) {
     bond->setProp<int>("molNum", molNum);
     bond->setProp<int>("idx", bond->getIdx());
   }
@@ -157,7 +157,7 @@ std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
 
   std::unique_ptr<RWMol> molCp(new RWMol(mol));
   molCp->beginBatchEdit();
-  for (auto &aCp : molCp->atoms()) {
+  for (const auto aCp : molCp->atoms()) {
     if (!inFrag[aCp->getIdx()]) {
       molCp->removeAtom(aCp);
     } else {

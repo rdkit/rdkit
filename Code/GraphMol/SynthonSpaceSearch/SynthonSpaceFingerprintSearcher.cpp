@@ -32,7 +32,7 @@ namespace {
 // a similarity match.
 std::vector<boost::dynamic_bitset<>> getHitSynthons(
     const std::vector<std::unique_ptr<ExplicitBitVect>> &fragFPs,
-    double similarityCutoff, const std::unique_ptr<SynthonSet> &reaction,
+    const double similarityCutoff, const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
   for (const auto &synthonSet : reaction->getSynthons()) {
@@ -42,8 +42,8 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
     const auto &synthonFPs = reaction->getSynthonFPs()[synthonOrder[i]];
     bool fragMatched = false;
     for (size_t j = 0; j < synthonFPs.size(); j++) {
-      auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
-      if (sim >= similarityCutoff) {
+      if (const auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
+          sim >= similarityCutoff) {
         synthonsToUse[synthonOrder[i]][j] = true;
         fragMatched = true;
       }
@@ -72,15 +72,13 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     fragFPs.emplace_back(d_fpGen.getFingerprint(*frag));
   }
 
-  auto connPatterns = details::getConnectorPatterns(fragSet);
+  const auto connPatterns = details::getConnectorPatterns(fragSet);
   boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
   for (auto &connPattern : connPatterns) {
     conns |= connPattern;
   }
 
-  for (auto &it : getSpace().getReactions()) {
-    auto &reaction = it.second;
-
+  for (const auto &[id, reaction] : getSpace().getReactions()) {
     // It can't be a hit if the number of fragments is more than the number
     // of synthon sets because some of the molecule won't be matched in any
     // of the potential products.  It can be less, in which case the unused
@@ -124,9 +122,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
             getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
             reaction, so);
         if (!theseSynthons.empty()) {
-          size_t numHits = std::accumulate(
+          const size_t numHits = std::accumulate(
               theseSynthons.begin(), theseSynthons.end(), 1,
-              [](int prevRes, const boost::dynamic_bitset<> &s2) {
+              [](const int prevRes, const boost::dynamic_bitset<> &s2) {
                 return prevRes * s2.count();
               });
           if (numHits) {
@@ -141,14 +139,13 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
 }
 
 bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
-  std::unique_ptr<ExplicitBitVect> fp(d_fpGen.getFingerprint(hit));
-  auto sim = TanimotoSimilarity(*fp, *d_queryFP);
-  if (sim >= getParams().similarityCutoff) {
+  const std::unique_ptr<ExplicitBitVect> fp(d_fpGen.getFingerprint(hit));
+  if (const auto sim = TanimotoSimilarity(*fp, *d_queryFP);
+      sim >= getParams().similarityCutoff) {
     hit.setProp<double>("Similarity", sim);
     return true;
-  } else {
-    return false;
   }
+  return false;
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

@@ -73,7 +73,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   void assignConnectorsUsed();
 
   void buildSynthonFingerprints(
-      const FingerprintGenerator<std::uint64_t> &fpGenerator);
+      const FingerprintGenerator<std::uint64_t> &fpGen);
 
   // Return the molecules for synthons for which the bits are true.
   // Obviously requires that reqSynths is the same dimensions as
@@ -111,7 +111,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // generated directly from them, as explained in buildSynthonFingerprints.
   std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_synthonFPs;
 
-  void tagSynthonAtomsAndBonds();
+  void tagSynthonAtomsAndBonds() const;
 
   // Take the sampleMols, which are for the synthons in synthSetNum and make
   // the corresponding entries in d_synthonFPs.

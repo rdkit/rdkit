@@ -5,7 +5,7 @@ rdkit_library(SynthonSpaceSearch
         LINK_LIBRARIES SmilesParse FileParsers ChemTransforms Fingerprints SubstructMatch GraphMol)
 target_compile_definitions(SynthonSpaceSearch PRIVATE RDKIT_SYNTHONSPACESEARCH_BUILD)
 
-rdkit_headers(SynthonSpace.h SynthonSet.h Synthon.h SubstructureResults.h
+rdkit_headers(SynthonSpace.h SynthonSet.h Synthon.h SearchResults.h
         SynthonSpaceSearcher.h SynthonSpaceSubstructureSearcher.h SynthonSpaceFingerprintSearcher.h
         DEST GraphMol/SynthonSpaceSearch)
 

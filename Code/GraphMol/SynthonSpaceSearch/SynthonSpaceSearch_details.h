@@ -17,9 +17,8 @@
 
 namespace RDKit {
 class ROMol;
-namespace SynthonSpaceSearch {
+namespace SynthonSpaceSearch::details {
 
-namespace details {
 // Find all combinations of M things selected from N.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>>
 combMFromN(unsigned int m, unsigned int n);
@@ -71,8 +70,7 @@ getConnectorPermutations(const std::vector<std::unique_ptr<ROMol>> &molFrags,
 RDKIT_SYNTHONSPACESEARCH_EXPORT void expandBitSet(
     std::vector<boost::dynamic_bitset<>> &bitSets);
 
-}  // namespace details
-}  // namespace SynthonSpaceSearch
+}  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 
-#endif  // RDKIT_SYNTHONSPACESUBSTRUCTURESEARCH_H
+#endif  // RDKIT_SYNTHONSPACESEARCHDETAILS_H

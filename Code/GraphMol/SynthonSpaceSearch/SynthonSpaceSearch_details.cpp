@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <list>
 #include <regex>
-#include <utility>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
@@ -46,8 +45,8 @@ std::vector<std::vector<unsigned int>> combMFromN(const unsigned int m,
   return combs;
 }
 
-std::vector<std::vector<unsigned int>> permMFromN(unsigned int m,
-                                                  unsigned int n) {
+std::vector<std::vector<unsigned int>> permMFromN(const unsigned int m,
+                                                  const unsigned int n) {
   std::vector<std::vector<unsigned int>> perms;
   auto combs = combMFromN(m, n);
   for (auto &c : combs) {
@@ -63,7 +62,7 @@ std::vector<std::vector<unsigned int>> permMFromN(unsigned int m,
 // fragments.  This assumes there are no ring-closing reactions in the
 // library, which is probably ok.
 bool checkConnectorsInDifferentFrags(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags, int numSplits) {
+    const std::vector<std::unique_ptr<ROMol>> &molFrags, const int numSplits) {
   // Loop over the isotope numbers of the ends of the splits
   for (const auto &frag : molFrags) {
     for (int j = 1; j <= numSplits; ++j) {
@@ -94,8 +93,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
     toDo.pop_front();
     for (const auto nbr :
          make_iterator_range(mol.getAtomNeighbors(nextBond->getBeginAtom()))) {
-      auto bond = mol.getBondBetweenAtoms(nextBond->getBeginAtomIdx(), nbr);
-      if (!done[bond->getIdx()] && bond->getIsAromatic()) {
+      if (auto bond = mol.getBondBetweenAtoms(nextBond->getBeginAtomIdx(), nbr);
+          !done[bond->getIdx()] && bond->getIsAromatic()) {
         aromBonds.push_back(bond);
         done[bond->getIdx()] = true;
         toDo.push_back(bond);
@@ -103,8 +102,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
     }
     for (const auto nbr :
          make_iterator_range(mol.getAtomNeighbors(nextBond->getEndAtom()))) {
-      auto bond = mol.getBondBetweenAtoms(nextBond->getEndAtomIdx(), nbr);
-      if (!done[bond->getIdx()] && bond->getIsAromatic()) {
+      if (auto bond = mol.getBondBetweenAtoms(nextBond->getEndAtomIdx(), nbr);
+          !done[bond->getIdx()] && bond->getIsAromatic()) {
         aromBonds.push_back(bond);
         done[bond->getIdx()] = true;
         toDo.push_back(bond);
@@ -225,9 +224,9 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
       std::unique_ptr<ROMol> fragMol(
           MolFragmenter::fragmentOnBonds(query, c, true, &dummyLabels));
       std::vector<std::unique_ptr<ROMol>> molFrags;
-      auto numFrags = MolOps::getMolFrags(*fragMol, molFrags, false);
       // Must have been a ring-opening.
-      if (numFrags == 1) {
+      if (const auto numFrags = MolOps::getMolFrags(*fragMol, molFrags, false);
+          numFrags == 1) {
         continue;
       }
       if (checkConnectorsInDifferentFrags(molFrags, i)) {
@@ -262,7 +261,7 @@ std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
 boost::dynamic_bitset<> getConnectorPattern(
     const std::vector<std::unique_ptr<ROMol>> &fragSet) {
   boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
-  auto connPatterns = getConnectorPatterns(fragSet);
+  const auto connPatterns = getConnectorPatterns(fragSet);
   for (const auto &cp : connPatterns) {
     conns |= cp;
   }
@@ -284,9 +283,9 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
     }
     return ints;
   };
-  auto numFragConns = fragConns.count();
+  const auto numFragConns = fragConns.count();
   auto rConns = bitsToInts(reactionConns);
-  auto perms = details::permMFromN(numFragConns, reactionConns.count());
+  const auto perms = permMFromN(numFragConns, reactionConns.count());
 
   for (const auto &perm : perms) {
     connPerms.emplace_back();
@@ -295,7 +294,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
     for (const auto &f : molFrags) {
       connPerms.back().emplace_back(new RWMol(*f));
       boost::dynamic_bitset<> atomDone(f->getNumAtoms());
-      for (auto atom : connPerms.back().back()->atoms()) {
+      for (const auto atom : connPerms.back().back()->atoms()) {
         if (!atom->getAtomicNum()) {
           for (size_t i = 0; i < perm.size(); ++i) {
             if (!atomDone[atom->getIdx()] && atom->getIsotope() == i + 1) {
@@ -316,7 +315,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
 }
 
 void expandBitSet(std::vector<boost::dynamic_bitset<>> &bitSets) {
-  bool someSet = std::any_of(
+  const bool someSet = std::any_of(
       bitSets.begin(), bitSets.end(),
       [](const boost::dynamic_bitset<> &bs) -> bool { return bs.any(); });
   if (someSet) {

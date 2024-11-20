@@ -31,7 +31,7 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
 
   std::vector<SynthonSpaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet) const override;
-  virtual bool verifyHit(const ROMol &hit) const override;
+  bool verifyHit(const ROMol &hit) const override;
 };
 }  // namespace RDKit::SynthonSpaceSearch
 

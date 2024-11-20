@@ -28,7 +28,7 @@ using namespace RDKit::SynthonSpaceSearch::details;
 const char *rdbase = getenv("RDBASE");
 
 std::map<std::string, std::unique_ptr<ExplicitBitVect>> getFingerprints(
-    const std::string molFilename,
+    const std::string &molFilename,
     std::map<std::string, std::unique_ptr<RWMol>> &mols,
     const std::unique_ptr<FingerprintGenerator<std::uint64_t>> &fpGen) {
   v2::FileParsers::SmilesMolSupplierParams fileparams;
@@ -49,17 +49,16 @@ std::map<std::string, std::unique_ptr<ExplicitBitVect>> getFingerprints(
 
 std::set<std::string> bruteForceSearch(
     std::map<std::string, std::unique_ptr<ExplicitBitVect>> &fps,
-    const ROMol &queryMol, double simCutoff) {
+    const ROMol &queryMol, const double simCutoff) {
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen;
   fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
-  auto queryFP =
+  const auto queryFP =
       std::make_unique<ExplicitBitVect>(*fpGen->getFingerprint(queryMol));
   std::set<std::string> fullSmi;
   std::set<std::string> names;
-  for (auto it = fps.begin(); it != fps.end(); ++it) {
-    auto sim = TanimotoSimilarity(*it->second, *queryFP);
-    if (sim >= simCutoff) {
-      names.insert(it->first);
+  for (auto &it : fps) {
+    if (auto sim = TanimotoSimilarity(*it.second, *queryFP); sim >= simCutoff) {
+      names.insert(it.first);
     }
   }
   return names;
@@ -145,7 +144,7 @@ TEST_CASE("FP Biggy") {
     auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
     CHECK(results.getMaxNumResults() == maxRes[i]);
-#if 1
+#if 0
     std::set<std::string> resSmis;
     for (const auto &r : results.getHitMolecules()) {
       resSmis.insert(MolToSmiles(*r));

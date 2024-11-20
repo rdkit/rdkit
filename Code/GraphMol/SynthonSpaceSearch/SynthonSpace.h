@@ -27,7 +27,7 @@
 
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
-#include <GraphMol/SynthonSpaceSearch/SubstructureResults.h>
+#include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 
 namespace RDKit {
 class ROMol;
@@ -121,9 +121,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param params : (optional) settings for the search
    * @return : the hits as a SubstructureResults object.
    */
-  SubstructureResults substructureSearch(
+  SearchResults substructureSearch(
       const ROMol &query,
-      SynthonSpaceSearchParams params = SynthonSpaceSearchParams());
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   // Perform a fingerprint similarity search with the given query molecule
   // across the synthonspace library.  Duplicate SMILES strings produced by
@@ -131,12 +131,14 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   /*!
    *
    * @param query : query molecule
+   * @param fpGen: a FingerprintGenerator object that will provide the
+   *               fingerprints for the similarity calculation
    * @param params : (optional) settings for the search
    * @return : the hits as a SubstructureResults object.
    */
-  SubstructureResults fingerprintSearch(
+  SearchResults fingerprintSearch(
       const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
-      SynthonSpaceSearchParams params = SynthonSpaceSearchParams());
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   /*!
    *

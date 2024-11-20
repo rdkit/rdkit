@@ -11,9 +11,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
-#include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 
@@ -127,8 +125,8 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
   for (size_t i = 0; i < synthonOrder.size(); ++i) {
     const auto &synthonSet = reaction->getSynthons()[synthonOrder[i]];
     for (size_t j = 0; j < synthonSet.size(); ++j) {
-      auto &synthon = synthonSet[j];
-      if (AllProbeBitsMatch(*pattFPs[i], *synthon->getPattFP())) {
+      if (auto &synthon = synthonSet[j];
+          AllProbeBitsMatch(*pattFPs[i], *synthon->getPattFP())) {
         passedFPs[synthonOrder[i]][j] = true;
         fragsMatched[i] = true;
       }
@@ -152,7 +150,7 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
 // a substructure match.  Only do this for those synthons that have already
 // passed previous screening, and are flagged as such in passedScreens.
 std::vector<boost::dynamic_bitset<>> getHitSynthons(
-    std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const std::vector<std::unique_ptr<ROMol>> &molFrags,
     const std::vector<boost::dynamic_bitset<>> &passedScreens,
     const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
@@ -174,8 +172,8 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
     bool fragMatched = false;
     for (size_t j = 0; j < synthonsSet.size(); ++j) {
       if (passedScreensSet[j]) {
-        auto &synthon = synthonsSet[j];
-        if (SubstructMatch(*synthon->getMol(), *molFrags[i], dontCare)) {
+        if (auto &synthon = synthonsSet[j];
+            SubstructMatch(*synthon->getMol(), *molFrags[i], dontCare)) {
           synthonsToUse[synthonOrder[i]][j] = true;
           fragMatched = true;
         }
@@ -200,7 +198,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
   std::vector<SynthonSpaceHitSet> results;
 
   details::fixAromaticRingSplits(fragSet);
-  auto pattFPs = makePatternFPs(fragSet);
+  const auto pattFPs = makePatternFPs(fragSet);
   std::vector<std::vector<std::unique_ptr<ROMol>>> connRegs;
   std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> connRegFPs;
   std::vector<int> numFragConns;
@@ -209,9 +207,8 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
     numFragConns.push_back(details::countConnections(MolToSmiles(*frag)));
   }
 
-  auto conns = details::getConnectorPattern(fragSet);
-  for (auto &it : getSpace().getReactions()) {
-    auto &reaction = it.second;
+  const auto conns = details::getConnectorPattern(fragSet);
+  for (const auto &[id, reaction] : getSpace().getReactions()) {
     // It can't be a hit if the number of fragments is more than the number
     // of synthon sets because some of the molecule won't be matched in any
     // of the potential products.  It can be less, in which case the unused
@@ -239,7 +236,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
       auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
       // If none of the synthons passed the screens, move right along, nothing
       // to see.
-      bool skip = std::all_of(
+      const bool skip = std::all_of(
           passedScreens.begin(), passedScreens.end(),
           [](const boost::dynamic_bitset<> &s) -> bool { return s.none(); });
       if (skip) {
@@ -260,9 +257,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
         auto theseSynthons =
             getHitSynthons(connComb, passedScreens, reaction, so);
         if (!theseSynthons.empty()) {
-          size_t numHits = std::accumulate(
+          const size_t numHits = std::accumulate(
               theseSynthons.begin(), theseSynthons.end(), 1,
-              [](int prevRes, const boost::dynamic_bitset<> &s2) {
+              [](const int prevRes, const boost::dynamic_bitset<> &s2) {
                 return prevRes * s2.count();
               });
           if (numHits) {

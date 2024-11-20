@@ -8,23 +8,22 @@
 //  of the RDKit source tree.
 //
 
-#ifndef RDKIT_SYNTHONSPACE_SUBSTRUCTURERESULTS_H
-#define RDKIT_SYNTHONSPACE_SUBSTRUCTURERESULTS_H
+#ifndef RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
+#define RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
 
 #include <GraphMol/ROMol.h>
 
 namespace RDKit::SynthonSpaceSearch {
-class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
+class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
  public:
-  explicit SubstructureResults() : d_maxNumResults(0) {}
-  SubstructureResults(std::vector<std::unique_ptr<ROMol>> &&mols,
-                      size_t maxNumRes);
-  SubstructureResults(const SubstructureResults &other);
-  SubstructureResults(SubstructureResults &&other) = default;
-  ~SubstructureResults() = default;
+  explicit SearchResults() : d_maxNumResults(0) {}
+  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes);
+  SearchResults(const SearchResults &other);
+  SearchResults(SearchResults &&other) = default;
+  ~SearchResults() = default;
 
-  SubstructureResults &operator=(const SubstructureResults &other);
-  SubstructureResults &operator=(SubstructureResults &&other) = default;
+  SearchResults &operator=(const SearchResults &other);
+  SearchResults &operator=(SearchResults &&other) = default;
 
   /*!
    * Returns the upper bound on the number of results the search might return.
@@ -34,14 +33,15 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
    *
    * @return int
    */
-  size_t getMaxNumResults() const { return d_maxNumResults; }
+  [[nodiscard]] size_t getMaxNumResults() const { return d_maxNumResults; }
   /*!
    * Returns the hits from the search. Not necessarily all those possible,
    * just the maximum number requested.
    *
    * @return std::vector<std::unique_ptr<ROMol>>
    */
-  const std::vector<std::unique_ptr<ROMol>> &getHitMolecules() const {
+  [[nodiscard]] const std::vector<std::unique_ptr<ROMol>> &getHitMolecules()
+      const {
     return d_hitMolecules;
   }
 
@@ -50,15 +50,14 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
   size_t d_maxNumResults;
 };
 
-inline SubstructureResults::SubstructureResults(
-    std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes)
+inline SearchResults::SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
+                                    const size_t maxNumRes)
     : d_maxNumResults(maxNumRes) {
   d_hitMolecules = std::move(mols);
   mols.clear();
 }
 
-inline SubstructureResults::SubstructureResults(
-    const RDKit::SynthonSpaceSearch::SubstructureResults &other)
+inline SearchResults::SearchResults(const SearchResults &other)
     : d_maxNumResults(other.d_maxNumResults) {
   for (const auto &hm : other.d_hitMolecules) {
     d_hitMolecules.emplace_back(new ROMol(*hm));
@@ -66,4 +65,4 @@ inline SubstructureResults::SubstructureResults(
 }
 }  // namespace RDKit::SynthonSpaceSearch
 
-#endif  // RDKIT_SUBSTRUCTURERESULTS_H
+#endif  // RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
