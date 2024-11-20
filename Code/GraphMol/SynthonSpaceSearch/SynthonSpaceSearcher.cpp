@@ -209,12 +209,20 @@ void SynthonSpaceSearcher::buildAllHits(
 
 namespace {
 struct RandomHitSelector {
+  // Uses a weighted random number selector to give a random representation
+  // of the hits from each reaction proportionate to the total number of hits
+  // expected from each reaction.
   RandomHitSelector(const std::vector<SynthonSpaceHitSet> &hitsets,
                     const SynthonSpace &space)
       : d_hitsets(hitsets), d_synthSpace(space) {
-    d_hitSetSel = std::uniform_int_distribution<size_t>(0, hitsets.size() - 1);
-    d_synthons.resize(hitsets.size());
+    d_hitSetWeights.reserve(hitsets.size());
+    std::transform(
+        hitsets.begin(), hitsets.end(), std::back_inserter(d_hitSetWeights),
+        [](const SynthonSpaceHitSet &hs) -> size_t { return hs.numHits; });
+    d_hitSetSel = std::discrete_distribution<size_t>(d_hitSetWeights.begin(),
+                                                     d_hitSetWeights.end());
     d_synthSels.resize(hitsets.size());
+    d_synthons.resize(hitsets.size());
     for (size_t hi = 0; hi < hitsets.size(); ++hi) {
       const SynthonSpaceHitSet &hs = hitsets[hi];
       d_synthons[hi] =
@@ -249,7 +257,8 @@ struct RandomHitSelector {
   const std::vector<SynthonSpaceHitSet> &d_hitsets;
   const SynthonSpace &d_synthSpace;
 
-  std::uniform_int_distribution<size_t> d_hitSetSel;
+  std::vector<size_t> d_hitSetWeights;
+  std::discrete_distribution<size_t> d_hitSetSel;
   std::vector<std::vector<std::vector<size_t>>> d_synthons;
   std::vector<std::vector<std::uniform_int_distribution<size_t>>> d_synthSels;
 };
