@@ -9,6 +9,7 @@
 //
 
 #include <RDBoost/python.h>
+#include <RDBoost/Wrap.h>
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
@@ -52,18 +53,28 @@ SynthonSpaceSearch::SubstructureResults substructureSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
-  return self.substructureSearch(query, params);
+  {
+    NOGIL gil;
+    return self.substructureSearch(query, params);
+  }
 }
 
 SynthonSpaceSearch::SubstructureResults fingerprintSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &fingerprintGenerator,
     const python::object &py_params) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
   if (!py_params.is_none()) {
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
-  return self.fingerprintSearch(query, params);
+  FingerprintGenerator<std::uint64_t> *fpGen =
+      python::extract<FingerprintGenerator<std::uint64_t> *>(
+          fingerprintGenerator);
+  {
+    NOGIL gil;
+    return self.fingerprintSearch(query, *fpGen, params);
+  }
 }
 
 void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
@@ -131,13 +142,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           &SynthonSpaceSearch::SynthonSpaceSearchParams::fragSimilarityAdjuster,
           "Similarities of fragments are generally low due to low bit"
           " densities.  For the fragment matching, reduce the similarity cutoff"
-          " off by this amount.  Default=0.3.")
-      .def_readwrite(
-          "fingerprintType",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::fingerprintType,
-          "The type of fingerprint to use.  Options are Morgan_2 (Morgan"
-          " fingerprints, radius 2), Morgan_3, RDKit_7 (RDKit fingerprint,"
-          " maxPath=7).");
+          " off by this amount.  Default=0.3.");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
@@ -165,19 +170,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            (python::arg("self"), python::arg("query"),
             python::arg("params") = python::object()),
            "Does a substructure search in the SynthonSpace.")
-      .def(
-          "FingerprintSearch", &fingerprintSearch_helper,
-          (python::arg("self"), python::arg("query"),
-           python::arg("params") = python::object()),
-          "Does a fingerprint search in the SynthonSpace.  Currently hard-coded"
-          " to use Morgan fingerprints, radius 2.")
+      .def("FingerprintSearch", &fingerprintSearch_helper,
+           (python::arg("self"), python::arg("query"),
+            python::arg("fingerprintGenerator"),
+            python::arg("params") = python::object()),
+           "Does a fingerprint search in the SynthonSpace using the"
+           " FingerprintGenerator passed in.")
       .def(
           "BuildSynthonFingerprints",
           &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,
-          (python::arg("self"), python::arg("fpType")),
+          (python::arg("self"), python::arg("fingerprintGenerator")),
           "Build the synthon fingerprints ready for similarity searching.  This"
           " is done automatically when the first similarity search is done, but if"
-          " converting a text file to binary format might need to be done"
+          " converting a text file to binary format it might need to be done"
           " explicitly.");
 }
 

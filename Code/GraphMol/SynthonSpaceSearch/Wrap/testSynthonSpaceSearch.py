@@ -37,7 +37,7 @@ import unittest
 from pathlib import Path
 
 from rdkit import Chem
-from rdkit.Chem import rdSynthonSpaceSearch
+from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator
 
 class TestCase(unittest.TestCase):
 
@@ -61,7 +61,9 @@ class TestCase(unittest.TestCase):
     self.assertEqual(10, synthonspace.GetNumReactions())
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.maxHits = 10
-    results = synthonspace.FingerprintSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), params)
+    fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
+    results = synthonspace.FingerprintSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
+                                             fpgen, params)
     self.assertEqual(10, len(results.GetHitMolecules()))
                      
     
