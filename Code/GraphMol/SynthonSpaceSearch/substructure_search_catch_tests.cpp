@@ -400,7 +400,7 @@ TEST_CASE("S Random Hits") {
   for (const auto &[name, count] : libCounts) {
     std::cout << name << "  " << count << std::endl;
   }
-  std::map<std::string, int> expCounts{{"a1", 64}, {"a6", 9}, {"a7", 27}};
+  std::map<std::string, int> expCounts{{"a1", 61}, {"a6", 10}, {"a7", 29}};
   CHECK(expCounts == libCounts);
 }
 

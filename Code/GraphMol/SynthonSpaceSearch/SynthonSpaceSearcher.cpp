@@ -29,11 +29,12 @@ SearchResults SynthonSpaceSearcher::search() {
 
   if (d_params.randomSample) {
     if (!d_randGen) {
-      std::random_device rd;
-      d_randGen = std::make_unique<boost::mt19937>(rd());
-    }
-    if (d_params.randomSeed != -1) {
-      d_randGen->seed(d_params.randomSeed);
+      if (d_params.randomSeed == -1) {
+        std::random_device rd;
+        d_randGen = std::make_unique<boost::mt19937>(rd());
+      } else {
+        d_randGen = std::make_unique<boost::mt19937>(d_params.randomSeed);
+      }
     }
   }
   std::vector<std::unique_ptr<ROMol>> results;
@@ -227,12 +228,13 @@ struct RandomHitSelector {
       const SynthonSpaceHitSet &hs = hitsets[hi];
       d_synthons[hi] =
           std::vector<std::vector<size_t>>(hs.synthonsToUse.size());
-      d_synthSels[hi] = std::vector<std::uniform_int_distribution<size_t>>(
-          hs.synthonsToUse.size());
+      d_synthSels[hi] =
+          std::vector<boost::random::uniform_int_distribution<size_t>>(
+              hs.synthonsToUse.size());
       d_synthons[hi].resize(hs.synthonsToUse.size());
       for (size_t i = 0; i < hs.synthonsToUse.size(); ++i) {
         d_synthons[hi][i].reserve(hs.synthonsToUse[i].count());
-        d_synthSels[hi][i] = std::uniform_int_distribution<size_t>(
+        d_synthSels[hi][i] = boost::random::uniform_int_distribution<size_t>(
             0, hs.synthonsToUse[i].count() - 1);
         for (size_t j = 0; j < hs.synthonsToUse[i].size(); ++j) {
           if (hs.synthonsToUse[i][j]) {
@@ -260,7 +262,8 @@ struct RandomHitSelector {
   std::vector<size_t> d_hitSetWeights;
   boost::random::discrete_distribution<size_t> d_hitSetSel;
   std::vector<std::vector<std::vector<size_t>>> d_synthons;
-  std::vector<std::vector<std::uniform_int_distribution<size_t>>> d_synthSels;
+  std::vector<std::vector<boost::random::uniform_int_distribution<size_t>>>
+      d_synthSels;
 };
 }  // namespace
 
