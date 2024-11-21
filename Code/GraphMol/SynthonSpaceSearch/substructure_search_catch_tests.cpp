@@ -397,6 +397,9 @@ TEST_CASE("S Random Hits") {
     }
   }
   CHECK(results.getHitMolecules().size() == 100);
+  for (const auto &[name, count] : libCounts) {
+    std::cout << name << "  " << count << std::endl;
+  }
   std::map<std::string, int> expCounts{{"a1", 64}, {"a6", 9}, {"a7", 27}};
   CHECK(expCounts == libCounts);
 }

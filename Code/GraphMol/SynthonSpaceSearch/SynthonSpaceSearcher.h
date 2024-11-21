@@ -15,7 +15,7 @@
 #ifndef SYNTHONSPACESEARCHER_H
 #define SYNTHONSPACESEARCHER_H
 
-#include <random>
+#include <boost/random.hpp>
 
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 
@@ -45,7 +45,7 @@ class SynthonSpaceSearcher {
   const SynthonSpaceSearchParams &getParams() const { return d_params; }
 
  private:
-  std::unique_ptr<std::mt19937> d_randGen;
+  std::unique_ptr<boost::mt19937> d_randGen;
 
   const ROMol &d_query;
   const SynthonSpaceSearchParams &d_params;

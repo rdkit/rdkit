@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <random>
+#include <boost/nondet_random.hpp>
 #include <boost/random/discrete_distribution.hpp>
 
 #include <GraphMol/MolOps.h>
@@ -28,7 +30,7 @@ SearchResults SynthonSpaceSearcher::search() {
   if (d_params.randomSample) {
     if (!d_randGen) {
       std::random_device rd;
-      d_randGen = std::make_unique<std::mt19937>(rd());
+      d_randGen = std::make_unique<boost::mt19937>(rd());
     }
     if (d_params.randomSeed != -1) {
       d_randGen->seed(d_params.randomSeed);
@@ -217,12 +219,8 @@ struct RandomHitSelector {
     std::transform(
         hitsets.begin(), hitsets.end(), std::back_inserter(d_hitSetWeights),
         [](const SynthonSpaceHitSet &hs) -> size_t { return hs.numHits; });
-    for (const auto &i: d_hitSetWeights) {
-      std::cout << i << " ";
-    }
-    std::cout << std::endl;
-    d_hitSetSel = boost::random::discrete_distribution<size_t>(d_hitSetWeights.begin(),
-                                                     d_hitSetWeights.end());
+    d_hitSetSel = boost::random::discrete_distribution<size_t>(
+        d_hitSetWeights.begin(), d_hitSetWeights.end());
     d_synthSels.resize(hitsets.size());
     d_synthons.resize(hitsets.size());
     for (size_t hi = 0; hi < hitsets.size(); ++hi) {
@@ -246,7 +244,7 @@ struct RandomHitSelector {
   }
 
   std::pair<std::string, std::vector<size_t>> selectSynthComb(
-      std::mt19937 &randGen) {
+      boost::random::mt19937 &randGen) {
     std::vector<size_t> synths;
     const size_t hitSetNum = d_hitSetSel(randGen);
     for (size_t i = 0; i < d_hitsets[hitSetNum].synthonsToUse.size(); ++i) {
@@ -276,9 +274,8 @@ void SynthonSpaceSearcher::buildRandomHits(
   auto rhs = RandomHitSelector(hitsets, d_space);
 
   uint64_t numFails = 0;
-  while (results.size() <
-             std::min(static_cast<std::uint64_t>(d_params.maxHits),
-                      static_cast<std::uint64_t>(totHits)) &&
+  while (results.size() < std::min(static_cast<std::uint64_t>(d_params.maxHits),
+                                   static_cast<std::uint64_t>(totHits)) &&
          numFails < totHits * d_params.numRandomSweeps) {
     const auto &[reactionId, synths] = rhs.selectSynthComb(*d_randGen);
     const auto &reaction = getSpace().getReactions().find(reactionId)->second;
