@@ -9,7 +9,6 @@
 //
 
 #include <random>
-#include <boost/nondet_random.hpp>
 #include <boost/random/discrete_distribution.hpp>
 
 #include <GraphMol/MolOps.h>
@@ -29,6 +28,9 @@ SearchResults SynthonSpaceSearcher::search() {
 
   if (d_params.randomSample) {
     if (!d_randGen) {
+      // Use boost random number code because it is the same across
+      // different platforms, which isn't crucial but makes the tests
+      // work on all platforms.
       if (d_params.randomSeed == -1) {
         std::random_device rd;
         d_randGen = std::make_unique<boost::mt19937>(rd());
