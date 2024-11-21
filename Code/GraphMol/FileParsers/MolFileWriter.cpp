@@ -546,9 +546,10 @@ bool hasNonDefaultValence(const Atom *atom) {
       SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
+    auto effAtomicNum = atom->getAtomicNum() - atom->getFormalCharge();
     return atom->getNoImplicit() &&
            (atom->getExplicitValence() !=
-            PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
+            PeriodicTable::getTable()->getDefaultValence(effAtomicNum));
   }
   return true;
 }
@@ -1225,7 +1226,11 @@ std::string getV3000CTAB(const ROMol &tmol,
   return res;
 }
 }  // namespace FileParserUtils
-enum class MolFileFormat { V2000, V3000, unspecified };
+enum class MolFileFormat {
+  V2000,
+  V3000,
+  unspecified
+};
 
 //------------------------------------------------
 //
