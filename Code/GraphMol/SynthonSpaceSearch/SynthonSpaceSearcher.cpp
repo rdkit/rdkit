@@ -61,39 +61,6 @@ SearchResults SynthonSpaceSearcher::search() {
   return SearchResults{std::move(results), totHits};
 }
 
-namespace {
-// class to step through all combinations of list of different sizes.
-// returns (0,0,0), (0,0,1), (0,1,0) etc.
-struct Stepper {
-  explicit Stepper(const std::vector<size_t> &sizes) : d_sizes(sizes) {
-    d_currState = std::vector<size_t>(sizes.size(), 0);
-  }
-  void step() {
-    // Don't do anything if we're at the end, but expect an infinite
-    // loop if the user isn't wise to this.
-    if (d_currState[0] == d_sizes[0]) {
-      return;
-    }
-    std::int64_t i = static_cast<std::int64_t>(d_currState.size()) - 1;
-    while (i >= 0) {
-      ++d_currState[i];
-      if (d_currState[0] == d_sizes[0]) {
-        return;
-      }
-      if (d_currState[i] == d_sizes[i]) {
-        d_currState[i] = 0;
-      } else {
-        break;
-      }
-      --i;
-    }
-  }
-  std::vector<size_t> d_currState;
-  std::vector<size_t> d_sizes;
-};
-
-}  // namespace
-
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<size_t> &synthNums,
@@ -191,7 +158,7 @@ void SynthonSpaceSearcher::buildAllHits(
       }
     }
     const auto &reaction = getSpace().getReactions().find(reactionId)->second;
-    Stepper stepper(numSynthons);
+    details::Stepper stepper(numSynthons);
     std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
     while (stepper.d_currState[0] != numSynthons[0]) {
       for (size_t i = 0; i < stepper.d_currState.size(); ++i) {

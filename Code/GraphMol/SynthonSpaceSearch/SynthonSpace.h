@@ -193,6 +193,13 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   void summarise(std::ostream &os) const;
 
+  // Writes the enumerated library to file in SMILES format (1 compound
+  // per line, SMILES name
+  /*!
+  @param outFileName: name of the file to write
+   */
+  void writeEnumeratedFile(const std::string &outFilename) const;
+
   bool hasFingerprints() const;
   // Create the fingerprints for the synthons ready for fingerprint searches.
   // Valid values of fpType as described by SynthonSpaceSearchParams.

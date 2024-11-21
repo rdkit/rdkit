@@ -233,6 +233,14 @@ void SynthonSpace::summarise(std::ostream &os) const {
      << std::endl;
 }
 
+void SynthonSpace::writeEnumeratedFile(const std::string &outFilename) const {
+  std::ofstream os(outFilename);
+  for (const auto &[fst, snd] : d_reactions) {
+    snd->enumerateToStream(os);
+  }
+  os.close();
+}
+
 bool SynthonSpace::hasFingerprints() const {
   if (d_reactions.empty()) {
     return false;

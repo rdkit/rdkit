@@ -155,6 +155,10 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def("WriteDBFile", &SynthonSpaceSearch::SynthonSpace::writeDBFile,
            (python::arg("self"), python::arg("outFile")),
            "Writes binary database file.")
+      .def("WriteEnumeratedFile",
+           &SynthonSpaceSearch::SynthonSpace::writeEnumeratedFile,
+           (python::arg("self"), python::arg("outFile")),
+           "Writes enumerated library to file.")
       .def("GetNumReactions",
            &SynthonSpaceSearch::SynthonSpace::getNumReactions,
            python::arg("self"),

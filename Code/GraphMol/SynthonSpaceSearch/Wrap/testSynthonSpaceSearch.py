@@ -32,6 +32,7 @@
 # These tests are just to check that the Python wrappers are working
 # ok.  The bulk of the tests are in the C++ code.
 import os
+import tempfile
 import unittest
 
 from pathlib import Path
@@ -66,6 +67,13 @@ class TestCase(unittest.TestCase):
                                              fpgen, params)
     self.assertEqual(10, len(results.GetHitMolecules()))
                      
+  def testEnumerate(self):
+    fName = self.sssDir / "amide_space.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    with tempfile.NamedTemporaryFile() as tmp:
+      synthonspace.WriteEnumeratedFile(tmp.name)
+    
     
 if __name__ == "__main__":
   unittest.main()

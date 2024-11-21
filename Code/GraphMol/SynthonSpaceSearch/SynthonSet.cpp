@@ -129,6 +129,21 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
   }
 }
 
+void SynthonSet::enumerateToStream(std::ostream &os) const {
+  std::vector<size_t> numSynthons;
+  for (const auto &synths : d_synthons) {
+    numSynthons.push_back(synths.size());
+  }
+  details::Stepper stepper(numSynthons);
+  std::vector<size_t> theseSynthNums(numSynthons.size(), 0);
+  while (stepper.d_currState[0] != numSynthons[0]) {
+    auto prod = buildProduct(stepper.d_currState);
+    auto prodName = buildProductName(stepper.d_currState);
+    os << MolToSmiles(*prod) << " " << prodName << std::endl;
+    stepper.step();
+  }
+}
+
 void SynthonSet::addSynthon(const int synthonSetNum,
                             std::unique_ptr<Synthon> newSynthon) {
   if (static_cast<size_t>(synthonSetNum) >= d_synthons.size()) {

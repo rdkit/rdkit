@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 
 #include <algorithm>
+#include <cstdio>
 #include <fstream>
 
 #include <GraphMol/Fingerprints/MorganGenerator.h>
@@ -68,6 +69,47 @@ TEST_CASE("Test splits 1") {
   }
 }
 #endif
+
+TEST_CASE("Enumerate") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  // Making sure it works when the query has fewer bonds than maxBondSplits.
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  auto testName = std::tmpnam(nullptr);
+  std::cout << "enumerating to " << testName << std::endl;
+  synthonspace.writeEnumeratedFile(testName);
+
+  std::string enumLibName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space_enum.smi";
+
+  auto loadLibrary =
+      [](const std::string inFilename) -> std::map<std::string, std::string> {
+    v2::FileParsers::SmilesMolSupplierParams params;
+    params.titleLine = false;
+    v2::FileParsers::SmilesMolSupplier suppl(inFilename, params);
+    std::map<std::string, std::string> smiles;
+    while (!suppl.atEnd()) {
+      auto mol = suppl.next();
+      if (mol) {
+        smiles.insert(
+            std::make_pair(mol->getProp<std::string>(common_properties::_Name),
+                           std::string(MolToSmiles(*mol))));
+      }
+    }
+    return smiles;
+  };
+  auto newSmiles = loadLibrary(testName);
+  auto oldSmiles = loadLibrary(enumLibName);
+  REQUIRE(newSmiles.size() == oldSmiles.size());
+  for (const auto &[name, smiles] : oldSmiles) {
+    REQUIRE(oldSmiles.find(name) != oldSmiles.end());
+    REQUIRE(newSmiles.at(name) == oldSmiles.at(name));
+  }
+  std::remove(testName);
+}
 
 TEST_CASE("S Amide 1") {
   REQUIRE(rdbase);
