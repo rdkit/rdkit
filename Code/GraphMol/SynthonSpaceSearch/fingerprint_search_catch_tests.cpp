@@ -40,8 +40,8 @@ std::map<std::string, std::unique_ptr<ExplicitBitVect>> getFingerprints(
     auto fp = fpGen->getFingerprint(*mol);
     fps.insert(std::make_pair(
         mol->getProp<std::string>(common_properties::_Name), fp));
-    mols.insert(std::make_pair(
-        mol->getProp<std::string>(common_properties::_Name), mol.release()));
+    auto molName = mol->getProp<std::string>(common_properties::_Name);
+    mols.insert(std::make_pair(molName, mol.release()));
   }
 
   return fps;
@@ -120,8 +120,6 @@ TEST_CASE("FP Biggy") {
   std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
-  std::string enumLib =
-      "/Users/david/Projects/FreedomSpace/Syntons_5567_space_a_enum.smi";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
 
@@ -129,7 +127,6 @@ TEST_CASE("FP Biggy") {
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
 
   std::map<std::string, std::unique_ptr<RWMol>> mols;
-  auto fps = getFingerprints(enumLib, mols, fpGen);
 
   const std::vector<std::string> smis{
       "c1ccccc1C(=O)N1CCCC1", "c1ccccc1NC(=O)C1CCN1",
@@ -144,18 +141,6 @@ TEST_CASE("FP Biggy") {
     auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
     CHECK(results.getMaxNumResults() == maxRes[i]);
-#if 0
-    std::set<std::string> resSmis;
-    for (const auto &r : results.getHitMolecules()) {
-      resSmis.insert(MolToSmiles(*r));
-    }
-    auto names = bruteForceSearch(fps, *queryMol, params.similarityCutoff);
-    std::set<std::string> fullSmis;
-    for (const auto &r : names) {
-      fullSmis.insert(MolToSmiles(*mols[r]));
-    }
-    CHECK(resSmis == fullSmis);
-#endif
   }
 }
 

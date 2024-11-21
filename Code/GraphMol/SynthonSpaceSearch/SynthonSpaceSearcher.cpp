@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <boost/random/discrete_distribution.hpp>
+
 #include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -215,7 +217,11 @@ struct RandomHitSelector {
     std::transform(
         hitsets.begin(), hitsets.end(), std::back_inserter(d_hitSetWeights),
         [](const SynthonSpaceHitSet &hs) -> size_t { return hs.numHits; });
-    d_hitSetSel = std::discrete_distribution<size_t>(d_hitSetWeights.begin(),
+    for (const auto &i: d_hitSetWeights) {
+      std::cout << i << " ";
+    }
+    std::cout << std::endl;
+    d_hitSetSel = boost::random::discrete_distribution<size_t>(d_hitSetWeights.begin(),
                                                      d_hitSetWeights.end());
     d_synthSels.resize(hitsets.size());
     d_synthons.resize(hitsets.size());
@@ -254,7 +260,7 @@ struct RandomHitSelector {
   const SynthonSpace &d_synthSpace;
 
   std::vector<size_t> d_hitSetWeights;
-  std::discrete_distribution<size_t> d_hitSetSel;
+  boost::random::discrete_distribution<size_t> d_hitSetSel;
   std::vector<std::vector<std::vector<size_t>>> d_synthons;
   std::vector<std::vector<std::uniform_int_distribution<size_t>>> d_synthSels;
 };
@@ -271,7 +277,7 @@ void SynthonSpaceSearcher::buildRandomHits(
 
   uint64_t numFails = 0;
   while (results.size() <
-             std::min(static_cast<const std::uint64_t>(d_params.maxHits),
+             std::min(static_cast<std::uint64_t>(d_params.maxHits),
                       static_cast<std::uint64_t>(totHits)) &&
          numFails < totHits * d_params.numRandomSweeps) {
     const auto &[reactionId, synths] = rhs.selectSynthComb(*d_randGen);
