@@ -298,9 +298,9 @@ MorganEnvGenerator<OutputType>::getEnvironments(
           // add the contribution to the new invariant:
           gboost::hash_combine(invar, *it);
 
-          // update our "chirality":
+          // check our "chirality":
           if (morganArguments->df_includeChirality && looksChiral &&
-              chiralAtoms[atomIdx]) {
+              !chiralAtoms[atomIdx]) {
             if (it->first != static_cast<int32_t>(Bond::SINGLE)) {
               looksChiral = false;
             } else if (it != neighborhoodInvariants.begin() &&

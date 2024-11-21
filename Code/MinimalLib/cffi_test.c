@@ -757,6 +757,7 @@ void test_modifications() {
   printf("--------------------------\n");
   printf("  test_modifications\n");
   char *mpkl;
+  char *smi;
   size_t mpkl_size;
   mpkl = get_mol("CCC", &mpkl_size, "");
 
@@ -769,9 +770,23 @@ void test_modifications() {
   ctab = get_molblock(mpkl, mpkl_size, NULL);
   assert(!strstr(ctab, " H "));
   free(ctab);
-
   free(mpkl);
-  mpkl = NULL;
+
+  mpkl = get_mol("C([H])([H])([H])C([2H])([H])C([H])([H])[H]", &mpkl_size, "{\"removeHs\":false}");
+  smi = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smi, "[H]C([H])([H])C([H])([2H])C([H])([H])[H]"));
+  free(smi);
+  assert(!remove_hs(NULL, NULL, NULL));
+  assert(remove_hs(&mpkl, &mpkl_size, "{\"removeIsotopes\":false}"));
+  smi = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smi, "[2H]C(C)C"));
+  free(smi);
+  assert(remove_hs(&mpkl, &mpkl_size, "{\"removeIsotopes\":true}"));
+  smi = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smi, "CCC"));
+  free(smi);
+  free(mpkl);
+
   printf("  done\n");
   printf("--------------------------\n");
 }
@@ -2130,6 +2145,7 @@ void test_partial_sanitization() {
   printf("--------------------------\n");
   printf("  test_partial_sanitization\n");
   char *mpkl;
+  char *mb;
   char *fp;
   size_t mpkl_size;
   const char *mfp_json = "{\"radius\":2,\"nBits\":32}";
@@ -2167,6 +2183,30 @@ void test_partial_sanitization() {
   assert(fp);
   free(fp);
 #endif
+  free(mpkl);
+
+  mpkl = get_mol("c1ccccc1N(=O)=O", &mpkl_size, "{\"sanitize\":false}");
+  mb = get_molblock(mpkl, mpkl_size, "{\"kekulize\":false}");
+  assert(strstr(mb, "  1  2  4  0"));
+  assert(strstr(mb, "  7  8  2  0") && strstr(mb, "  7  9  2  0"));
+  assert(!strstr(mb, "M  CHG"));
+  free(mb);
+  free(mpkl);
+  mpkl = get_mol("c1ccccc1N(=O)=O", &mpkl_size, "{\"sanitize\":{\"SANITIZE_CLEANUP\":true}}");
+  mb = get_molblock(mpkl, mpkl_size, "{\"kekulize\":false}");
+  assert(strstr(mb, "  1  2  4  0"));
+  assert((strstr(mb, "  7  8  1  0") && strstr(mb, "  7  9  2  0"))
+    || (strstr(mb, "  7  8  2  0") && strstr(mb, "  7  9  1  0")));
+  assert(strstr(mb, "M  CHG  2"));
+  free(mb);
+  free(mpkl);
+  mpkl = get_mol("c1ccccc1N(=O)=O", &mpkl_size, "{\"sanitize\":{\"SANITIZE_CLEANUP\":true,\"SANITIZE_KEKULIZE\":true}}");
+  mb = get_molblock(mpkl, mpkl_size, "{\"kekulize\":false}");
+  assert(!strstr(mb, "  1  2  4  0"));
+  assert((strstr(mb, "  7  8  1  0") && strstr(mb, "  7  9  2  0"))
+    || (strstr(mb, "  7  8  2  0") && strstr(mb, "  7  9  1  0")));
+  assert(strstr(mb, "M  CHG  2"));
+  free(mb);
   free(mpkl);
 }
 
@@ -2765,6 +2805,75 @@ void test_custom_palette() {
   free(mpkl);
 }
 
+void test_props() {
+  printf("--------------------------\n");
+  printf("  mol props\n");
+  const char *smi = "c1ccccn1";
+  const char *cxsmi_in = "c1ccccn1 |atomProp:0.a.1|";
+  const char *details = "{\"NoProps\":true}";
+  char *mpkl;
+  size_t mpkl_size;
+  char **prop_list;
+  char *prop;
+  char *cxsmi_out;
+  mpkl = get_mol(smi, &mpkl_size, "");
+  assert(mpkl && mpkl_size);
+  prop_list = get_prop_list(mpkl, mpkl_size, 0, 0);
+  assert(prop_list && !prop_list[0]);
+  free(prop_list);
+  set_prop(&mpkl, &mpkl_size, "a", "1", 0);
+  set_prop(&mpkl, &mpkl_size, "b", "2", 0);
+  prop_list = get_prop_list(mpkl, mpkl_size, 0, 0);
+  assert(prop_list && prop_list[0] && prop_list[1] && !prop_list[2]);
+  assert(!strcmp(prop_list[0], "a"));
+  free(prop_list[0]);
+  assert(!strcmp(prop_list[1], "b"));
+  free(prop_list[1]);
+  free(prop_list);
+  assert(has_prop(mpkl, mpkl_size, "a"));
+  assert(has_prop(mpkl, mpkl_size, "b"));
+  assert(!has_prop(mpkl, mpkl_size, "c"));
+  prop = get_prop(mpkl, mpkl_size, "a");
+  assert(prop);
+  assert(!strcmp(prop, "1"));
+  free(prop);
+  prop = get_prop(mpkl, mpkl_size, "b");
+  assert(prop);
+  assert(!strcmp(prop, "2"));
+  free(prop);
+  assert(clear_prop(&mpkl, &mpkl_size, "a"));
+  assert(!clear_prop(&mpkl, &mpkl_size, "c"));
+  prop_list = get_prop_list(mpkl, mpkl_size, 0, 0);
+  assert(prop_list && prop_list[0] && !prop_list[1]);
+  assert(!strcmp(prop_list[0], "b"));
+  free(prop_list[0]);
+  free(prop_list);
+  prop = get_prop(mpkl, mpkl_size, "a");
+  assert(!prop);
+  prop = get_prop(mpkl, mpkl_size, "b");
+  assert(prop);
+  assert(!strcmp(prop, "2"));
+  free(prop);
+  keep_props(&mpkl, &mpkl_size, "{\"propertyFlags\":{\"NoProps\":true}}");
+  prop_list = get_prop_list(mpkl, mpkl_size, 0, 0);
+  assert(prop_list && !prop_list[0]);
+  free(prop_list);
+  prop = get_prop(mpkl, mpkl_size, "b");
+  assert(!prop);
+  free(mpkl);
+  mpkl = get_mol(cxsmi_in, &mpkl_size, "");
+  cxsmi_out = get_cxsmiles(mpkl, mpkl_size, "");
+  assert(!strcmp(cxsmi_out, "c1ccncc1 |atomProp:2.a.1|"));
+  free(cxsmi_out);
+  free(mpkl);
+  mpkl =
+      get_mol(cxsmi_in, &mpkl_size, "{\"propertyFlags\":{\"NoProps\":true}}");
+  cxsmi_out = get_cxsmiles(mpkl, mpkl_size, "");
+  assert(!strcmp(cxsmi_out, "c1ccncc1"));
+  free(cxsmi_out);
+  free(mpkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2802,5 +2911,6 @@ int main() {
   test_multi_highlights();
   test_bw_palette();
   test_custom_palette();
+  test_props();
   return 0;
 }

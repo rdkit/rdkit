@@ -22,6 +22,8 @@
 #include <boost/random.hpp>
 #include <boost/smart_ptr.hpp>
 
+static constexpr double zero_tolerance = 1.e-16;
+
 namespace RDNumeric {
 
 //! A class to represent vectors of numbers.
@@ -260,6 +262,9 @@ class Vector {
   //! Normalize the vector using the L2 norm
   inline void normalize() {
     TYPE val = this->normL2();
+    if (val < zero_tolerance) {
+      throw std::runtime_error("Cannot normalize a zero length vector");
+    }
     (*this) /= val;
   }
 
