@@ -546,9 +546,10 @@ bool hasNonDefaultValence(const Atom *atom) {
       SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
+    auto effAtomicNum = atom->getAtomicNum() - atom->getFormalCharge();
     return atom->getNoImplicit() &&
            (static_cast<int>(atom->getValence(Atom::ValenceType::EXPLICIT)) !=
-            PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
+            PeriodicTable::getTable()->getDefaultValence(effAtomicNum));
   }
   return true;
 }

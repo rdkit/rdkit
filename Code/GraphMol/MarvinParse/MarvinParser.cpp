@@ -675,7 +675,7 @@ class MarvinCMLReader {
 
   MarvinMolBase *parseMarvinMolecule(
       boost::property_tree::ptree molTree,
-      MarvinMol *parentMol = nullptr)  // parent is for sub-mols
+      MarvinMolBase *parentMol = nullptr)  // parent is for sub-mols
   {
     MarvinMolBase *res = nullptr;
 
@@ -732,8 +732,7 @@ class MarvinCMLReader {
 
       for (auto &v : molTree) {
         if (v.first == "molecule") {
-          MarvinMolBase *subMol =
-              parseMarvinMolecule(v.second, (MarvinMol *)res);
+          auto *subMol = parseMarvinMolecule(v.second, res);
           res->sgroups.push_back(std::unique_ptr<MarvinMolBase>(subMol));
         }
       }

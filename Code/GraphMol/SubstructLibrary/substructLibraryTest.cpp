@@ -729,7 +729,6 @@ void github3881() {
 
 int main() {
   RDLog::InitLogs();
-#if 1
   test1();
   test2();
   test3();
@@ -747,6 +746,5 @@ int main() {
   testTautomerQueries();
 #endif
   github3881();
-#endif
   return 0;
 }

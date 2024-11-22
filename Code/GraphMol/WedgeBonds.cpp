@@ -145,7 +145,15 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
   auto tmpPt = conf->getAtomPos(bondAtom->getIdx());
   centerLoc.z = 0.0;
   tmpPt.z = 0.0;
-  RDGeom::Point3D refVect = centerLoc.directionVector(tmpPt);
+
+  RDGeom::Point3D refVect;
+  try {
+    refVect = centerLoc.directionVector(tmpPt);
+  } catch (const std::runtime_error &) {
+    // we have a problem with the reference bond;
+    // it's probably that the center and the tmp atom overlap
+    return res;
+  }
 
   neighborBondIndices.push_back(bond->getIdx());
   neighborBondAngles.push_back(0.0);
@@ -154,7 +162,14 @@ Bond::BondDir determineBondWedgeState(const Bond *bond,
     if (nbrBond != bond) {
       tmpPt = conf->getAtomPos(otherAtom->getIdx());
       tmpPt.z = 0.0;
-      auto tmpVect = centerLoc.directionVector(tmpPt);
+      RDGeom::Point3D tmpVect;
+      try {
+        tmpVect = centerLoc.directionVector(tmpPt);
+      } catch (const std::runtime_error &) {
+        // we have a problem with the tmp bond;
+        // it's probably that the atoms overlap
+        return res;
+      }
       auto angle = refVect.signedAngleTo(tmpVect);
       if (angle < 0.0) {
         angle += 2. * M_PI;
@@ -344,14 +359,12 @@ int pickBondToWedge(
 
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
     const ROMol &mol, const BondWedgingParameters *params) {
-
   const Conformer *conf = nullptr;
   if (mol.getNumConformers()) {
     conf = &mol.getConformer();
   }
 
   return pickBondsToWedge(mol, params, conf);
-
 }
 
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
