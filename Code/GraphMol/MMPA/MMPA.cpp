@@ -28,7 +28,8 @@ namespace MMPA {
 typedef std::vector<std::pair<unsigned, unsigned>>
     BondVector_t;  // pair of BeginAtomIdx, EndAtomIdx
 
-static inline unsigned long long computeMorganCodeHash(const ROMol &mol) {
+namespace detail {
+unsigned long long computeMorganCodeHash(const ROMol &mol) {
   size_t nv = mol.getNumAtoms();
   size_t ne = mol.getNumBonds();
   std::vector<unsigned long> currCodes(nv);
@@ -77,6 +78,7 @@ static inline unsigned long long computeMorganCodeHash(const ROMol &mol) {
   }
   return result;
 }
+}  // namespace detail
 
 static inline void convertMatchingToBondVect(
     std::vector<BondVector_t> &matching_bonds,
@@ -294,10 +296,10 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
           core->getNumBonds() == r.first->getNumBonds()))) {
       // ToDo accurate check:
       // 1. compare hash code
-      if (computeMorganCodeHash(*side_chains) ==
-              computeMorganCodeHash(*r.second) &&
-          (nullptr == core ||
-           computeMorganCodeHash(*core) == computeMorganCodeHash(*r.first))) {
+      if (detail::computeMorganCodeHash(*side_chains) ==
+              detail::computeMorganCodeHash(*r.second) &&
+          (nullptr == core || detail::computeMorganCodeHash(*core) ==
+                                  detail::computeMorganCodeHash(*r.first))) {
         // 2. final check to exclude hash collisions
         // We decided that it is not necessary to implement
         resFound = true;
