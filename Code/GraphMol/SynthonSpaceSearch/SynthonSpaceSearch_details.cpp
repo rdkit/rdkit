@@ -21,6 +21,7 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 
 namespace RDKit::SynthonSpaceSearch::details {
@@ -113,67 +114,6 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
   return aromBonds;
 }
 
-// If a bond has been split in an aromatic ring, the bonds to dummy atoms
-// will be aromatic.  However, the synthons that produce them must have
-// non-aromatic bonds to the dummies, by definition.  An example is in
-// triazole formation, where the synthons can be [2*]=N-N=C-[1*],
-// [1*]N[3*] and [2*]=C[3*] which come together to give C1=NN=CN1 so long
-// as there are appropriate substituents on the synthons.  Splitting triazole,
-// however, gives [1*]cnn[3*], [2*]n[3*] and [1*]c[2*] (no explicit H on the
-// nitrogen if the molecule is specified as a SMARTS originally).  These won't
-// match the synthons, so no hit is found.  This function detects such
-// situations and changes the bond types accordingly.  All aromatic bonds are
-// set to single|double|aromatic because we can't know which kekule form would
-// be appropriate for the synthons, and aromatic atoms are set to atomic number
-// queries with the aromatic flag cleared.
-void fixAromaticRingSplits(std::vector<std::unique_ptr<ROMol>> &molFrags) {
-  for (auto &frag : molFrags) {
-    auto buildQueryAtom = [](const Atom *atom) -> std::unique_ptr<QueryAtom> {
-      std::unique_ptr<QueryAtom> nqa(new QueryAtom(atom->getAtomicNum()));
-      if (!nqa->getAtomicNum()) {
-        nqa->setIsotope(atom->getIsotope());
-        nqa->expandQuery(makeAtomIsotopeQuery(atom->getIsotope()));
-      }
-      return nqa;
-    };
-    std::unique_ptr<RWMol> qmol;
-    for (const auto atom : frag->atoms()) {
-      // Allow for general dummy atoms in the query by only looking at atoms
-      // where the isotope numbers have been set to the ones we're using.  For
-      // these atoms, there should only be 1 bond.
-      if (!atom->getAtomicNum() && atom->getIsotope() > 0 &&
-          atom->getIsotope() < MAX_CONNECTOR_NUM + 1) {
-        if (auto const fbond = (*frag)[*frag->getAtomBonds(atom).first];
-            fbond->getIsAromatic()) {
-          if (!qmol) {
-            qmol = std::make_unique<RWMol>(*frag);
-          }
-          auto aromBonds = getContiguousAromaticBonds(*frag, fbond);
-          for (const auto &ab : aromBonds) {
-            const auto qab = qmol->getBondWithIdx(ab->getIdx());
-            std::unique_ptr<QueryBond> qbond(new QueryBond(*qab));
-            qbond->setQuery(makeSingleOrDoubleOrAromaticBondQuery());
-            qmol->replaceBond(qab->getIdx(), qbond.get());
-
-            const auto qba = qmol->getAtomWithIdx(ab->getBeginAtomIdx());
-            auto nqba = buildQueryAtom(qba);
-            qmol->replaceAtom(ab->getBeginAtomIdx(), nqba.get());
-
-            const auto qea = qmol->getAtomWithIdx(ab->getEndAtomIdx());
-            const auto nqea = buildQueryAtom(qea);
-            qmol->replaceAtom(ab->getEndAtomIdx(), nqea.get());
-          }
-          break;
-        }
-      }
-    }
-
-    if (qmol) {
-      frag = std::move(qmol);
-    }
-  }
-}
-
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits) {
   if (maxBondSplits < 1) {
@@ -191,7 +131,8 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
 
   std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
-  // lots of hits but one can imagine a use for it.
+  // lots of hits but it is necessary if, for example, the query is a match
+  // for a single synthon set.
   fragments.emplace_back();
   fragments.back().emplace_back(new ROMol(query));
 

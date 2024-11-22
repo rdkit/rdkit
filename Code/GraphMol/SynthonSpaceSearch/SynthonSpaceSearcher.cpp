@@ -73,6 +73,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
       return prod;
     }
     prod = reaction->buildProduct(synthNums);
+
     // Do a final check of the whole thing.  It can happen that the
     // fragments match synthons but the final product doesn't match.
     // A key example is when the 2 synthons come together to form an
@@ -258,18 +259,6 @@ void SynthonSpaceSearcher::buildRandomHits(
     }
   }
   sortHits(results);
-}
-
-std::vector<std::vector<ROMol *>> SynthonSpaceSearcher::getSynthonsToUse(
-    const std::vector<boost::dynamic_bitset<>> &synthonsToUse,
-    const std::string &reaction_id) const {
-  if (const auto &it = getSpace().getReactions().find(reaction_id);
-      it == getSpace().getReactions().end()) {
-    throw std::runtime_error("Reaction " + reaction_id +
-                             "not in the reaction set.");
-  }
-  const auto &reaction = getSpace().getReactions().find(reaction_id)->second;
-  return reaction->getSynthons(synthonsToUse);
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

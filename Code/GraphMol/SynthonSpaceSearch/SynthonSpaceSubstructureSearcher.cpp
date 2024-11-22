@@ -173,7 +173,7 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
     for (size_t j = 0; j < synthonsSet.size(); ++j) {
       if (passedScreensSet[j]) {
         if (auto &synthon = synthonsSet[j];
-            SubstructMatch(*synthon->getMol(), *molFrags[i], dontCare)) {
+            SubstructMatch(*synthon->getSearchMol(), *molFrags[i], dontCare)) {
           synthonsToUse[synthonOrder[i]][j] = true;
           fragMatched = true;
         }
@@ -197,7 +197,6 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet) const {
   std::vector<SynthonSpaceHitSet> results;
 
-  details::fixAromaticRingSplits(fragSet);
   const auto pattFPs = makePatternFPs(fragSet);
   std::vector<std::vector<std::unique_ptr<ROMol>>> connRegs;
   std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> connRegFPs;

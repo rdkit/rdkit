@@ -18,6 +18,7 @@
 namespace RDKit {
 class Atom;
 class ROMol;
+class RWMol;
 
 namespace SynthonSpaceSearch {
 
@@ -33,10 +34,14 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
 
   [[nodiscard]] const std::string &getSmiles() const { return d_smiles; }
   [[nodiscard]] const std::string &getId() const { return d_id; }
-  [[nodiscard]] const std::unique_ptr<ROMol> &getMol() const;
+  [[nodiscard]] const std::unique_ptr<ROMol> &getOrigMol() const;
+  [[nodiscard]] const std::unique_ptr<ROMol> &getSearchMol() const;
   [[nodiscard]] const std::unique_ptr<ExplicitBitVect> &getPattFP() const;
   [[nodiscard]] const std::vector<std::shared_ptr<ROMol>> &getConnRegions()
       const;
+  // This moves the molecule into dp_SearchMol, so mol will be empty at the
+  // end.
+  void setSearchMol(std::unique_ptr<RWMol> &mol);
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -50,11 +55,21 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   std::string d_smiles;
   std::string d_id;
 
-  std::unique_ptr<ROMol> dp_mol{nullptr};
+  // Keep 2 copies of the molecule.  The first is as passed in, which
+  // will be used for building products.  The second will have its
+  // atoms and bonds fiddled with to make them match the product (the
+  // aliphatic precursor to aromatic product issue).  The search mol
+  // doesn't always work with product building.
+  std::unique_ptr<ROMol> dp_origMol{nullptr};
+  std::unique_ptr<ROMol> dp_searchMol{nullptr};
   std::unique_ptr<ExplicitBitVect> dp_pattFP{nullptr};
   // SMILES strings of any connector regions.  Normally there will only
-  // be 1 or 2.
+  // be 1 or 2.  These are derived from the search mol.
   std::vector<std::shared_ptr<ROMol>> d_connRegions;
+
+  // One the search molecule has been added, get the connector regions,
+  // connector fingerprint etc.
+  void finishInitialization();
 };
 
 // Return a molecule containing the portions of the molecule starting at

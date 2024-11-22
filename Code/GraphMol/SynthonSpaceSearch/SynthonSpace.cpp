@@ -170,9 +170,11 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
   }
 
   // Do some final processing.
-  for (auto &[fst, snd] : d_reactions) {
-    snd->buildConnectorRegions();
-    snd->assignConnectorsUsed();
+  for (auto &[id, reaction] : d_reactions) {
+    reaction->removeEmptySynthonSets();
+    reaction->transferProductBondsToSynthons();
+    reaction->buildConnectorRegions();
+    reaction->assignConnectorsUsed();
   }
 }
 

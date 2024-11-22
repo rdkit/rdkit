@@ -63,6 +63,16 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // SynthonSet takes control of the newSynthon and manages it.
   void addSynthon(int synthonSetNum, std::unique_ptr<Synthon> newSynthon);
 
+  // Sometimes the synthon sets are numbered from 1 in the text file,
+  // in which case there'll be an empty set 0.
+  void removeEmptySynthonSets();
+
+  // The bonds in the synthons may not be the same as in the products, and
+  // this is a problem for aromatic ring creation in particular.  Such as:
+  // [1*]=CC=C[2*] and [1*]Nc1c([2*])cccc1 giving c1ccc2ncccc2c1.  So
+  // transfer the types of bonds from the products to the synthons.
+  void transferProductBondsToSynthons();
+
   // Build the connector regions and their fingerprints.  Only used when
   // creating a SynthonSpace from a text file.
   void buildConnectorRegions();
@@ -113,13 +123,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // generated directly from them, as explained in buildSynthonFingerprints.
   std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_synthonFPs;
 
+  // Tag each atom and bond in each synthon with its index and the synthon
+  // set number it came from.
   void tagSynthonAtomsAndBonds() const;
-
-  // Take the sampleMols, which are for the synthons in synthSetNum and make
-  // the corresponding entries in d_synthonFPs.
-  void makeSynthonFPs(size_t synthSetNum,
-                      const std::vector<std::unique_ptr<ROMol>> &sampleMols,
-                      const FingerprintGenerator<std::uint64_t> &fpGen);
 };
 
 }  // namespace SynthonSpaceSearch
