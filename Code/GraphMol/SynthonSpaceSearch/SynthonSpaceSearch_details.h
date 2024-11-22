@@ -72,7 +72,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void expandBitSet(
 
 // class to step through all combinations of lists of different sizes.
 // returns (0,0,0), (0,0,1), (0,1,0) etc.
-RDKIT_SYNTHONSPACESEARCH_EXPORT struct Stepper {
+struct RDKIT_SYNTHONSPACESEARCH_EXPORT Stepper {
   explicit Stepper(const std::vector<size_t> &sizes) : d_sizes(sizes) {
     d_currState = std::vector<size_t>(sizes.size(), 0);
   }
