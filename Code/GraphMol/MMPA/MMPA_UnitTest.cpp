@@ -711,8 +711,8 @@ void testMorganCodeHashChargeShift() {
     hashes.push_back(MMPA::detail::computeMorganCodeHash(*m));
   }
 
-  for (int i = 0; i < hashes.size() - 1; ++i) {
-    for (int j = i + 1; j < hashes.size(); ++j) {
+  for (unsigned i = 0; i < hashes.size() - 1; ++i) {
+    for (unsigned j = i + 1; j < hashes.size(); ++j) {
       TEST_ASSERT(hashes[i] != hashes[j]);
     }
   }
