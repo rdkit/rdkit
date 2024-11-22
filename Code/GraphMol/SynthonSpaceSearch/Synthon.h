@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <RDGeneral/export.h>
 
 #ifndef RDKIT_REAGENT_H
 #define RDKIT_REAGENT_H
