@@ -12,6 +12,11 @@
 
 using namespace RDKit;
 
+constexpr double test_opt_param = 0.5;
+constexpr unsigned int test_max_preiters = 3;
+constexpr unsigned int test_max_postiters = 16;
+constexpr double test_use_colors = true;
+
 TEST_CASE("basic alignment") {
   std::string dirName = getenv("RDBASE");
   dirName += "/External/pubchem_shape/test_data";
@@ -24,7 +29,9 @@ TEST_CASE("basic alignment") {
   SECTION("basics") {
     RWMol cp(*probe);
     std::vector<float> matrix(12, 0.0);
-    auto [nbr_st, nbr_ct] = AlignMolecule(*ref, cp, matrix);
+    auto [nbr_st, nbr_ct] =
+        AlignMolecule(*ref, cp, matrix, -1, -1, test_use_colors, test_opt_param,
+                      test_max_preiters, test_max_postiters);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.773, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.303, 0.005));
     for (auto i = 0u; i < probe->getNumAtoms(); ++i) {
@@ -35,7 +42,9 @@ TEST_CASE("basic alignment") {
   SECTION("from shape") {
     auto ref_shape = PrepareConformer(*ref);
     std::vector<float> matrix(12, 0.0);
-    auto [nbr_st, nbr_ct] = AlignMolecule(ref_shape, *probe, matrix);
+    auto [nbr_st, nbr_ct] =
+        AlignMolecule(ref_shape, *probe, matrix, -1, test_use_colors,
+                      test_opt_param, test_max_preiters, test_max_postiters);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.773, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.303, 0.005));
   }
@@ -43,7 +52,9 @@ TEST_CASE("basic alignment") {
     ref->clearProp("PUBCHEM_PHARMACOPHORE_FEATURES");
     probe->clearProp("PUBCHEM_PHARMACOPHORE_FEATURES");
     std::vector<float> matrix(12, 0.0);
-    auto [nbr_st, nbr_ct] = AlignMolecule(*ref, *probe, matrix);
+    auto [nbr_st, nbr_ct] =
+        AlignMolecule(*ref, *probe, matrix, -1, -1, test_use_colors,
+                      test_opt_param, test_max_preiters, test_max_postiters);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.773, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.231, 0.005));
   }
@@ -53,16 +64,21 @@ TEST_CASE("basic alignment") {
     int prbConfId = -1;
     bool useColors = false;
     auto [nbr_st, nbr_ct] =
-        AlignMolecule(*ref, *probe, matrix, refConfId, prbConfId, useColors);
+        AlignMolecule(*ref, *probe, matrix, refConfId, prbConfId, useColors,
+                      test_opt_param, test_max_preiters, test_max_postiters);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.773, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.000, 0.005));
   }
   SECTION("we are re-entrant") {
     RWMol cp(*probe);
     std::vector<float> matrix(12, 0.0);
-    auto [nbr_st, nbr_ct] = AlignMolecule(*ref, cp, matrix);
+    auto [nbr_st, nbr_ct] =
+        AlignMolecule(*ref, cp, matrix, -1, -1, test_use_colors, test_opt_param,
+                      test_max_preiters, test_max_postiters);
     RWMol cp2(cp);
-    auto [nbr_st2, nbr_ct2] = AlignMolecule(*ref, cp2, matrix);
+    auto [nbr_st2, nbr_ct2] =
+        AlignMolecule(*ref, cp2, matrix, -1, -1, test_use_colors,
+                      test_opt_param, test_max_preiters, test_max_postiters);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(nbr_st2, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(nbr_ct2, 0.005));
 
@@ -84,7 +100,9 @@ TEST_CASE("bulk") {
     auto probe = suppl[1];
     REQUIRE(probe);
     std::vector<float> matrix(12, 0.0);
-    auto [nbr_st, nbr_ct] = AlignMolecule(*ref, *probe, matrix);
+    auto [nbr_st, nbr_ct] =
+        AlignMolecule(*ref, *probe, matrix, -1, -1, test_use_colors,
+                      test_opt_param, test_max_preiters, test_max_postiters);
     CHECK_THAT(nbr_st,
                Catch::Matchers::WithinAbs(
                    probe->getProp<float>("shape_align_shape_tanimoto"), 0.005));
@@ -109,7 +127,9 @@ TEST_CASE("handling molecules with Hs") {
   SECTION("basics") {
     RWMol cp(*probe);
     std::vector<float> matrix(12, 0.0);
-    auto [nbr_st, nbr_ct] = AlignMolecule(*ref, cp, matrix);
+    auto [nbr_st, nbr_ct] =
+        AlignMolecule(*ref, cp, matrix, -1, -1, test_use_colors, test_opt_param,
+                      test_max_preiters, test_max_postiters);
     CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.837, 0.005));
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.694, 0.005));
     for (auto i = 0u; i < cp.getNumAtoms(); ++i) {
