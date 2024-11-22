@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-
+#include <RDGeneral/export.h>
 #ifndef RDKIT_SYNTHONSPACE_H
 #define RDKIT_SYNTHONSPACE_H
 /*! \file SynthonSpace.h
@@ -89,7 +89,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  public:
   // Create the synthonspace from a file in the correct format.
   explicit SynthonSpace() = default;
-
+  SynthonSpace(const SynthonSpace &other) = delete;
+  SynthonSpace &operator=(const SynthonSpace &other) = delete;
   // Get the number of different reactions in the SynthonSpace.
   /*!
    *

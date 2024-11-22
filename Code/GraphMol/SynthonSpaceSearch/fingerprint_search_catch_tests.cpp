@@ -14,6 +14,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
