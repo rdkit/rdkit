@@ -11,6 +11,7 @@
 // This file declares an abstract base class for searching a synthon
 // space.  Concrete base classes include SynthonSpaceSubstructureSearcher
 // and SynthonSpaceFingerprintSearcher.
+#include <RDGeneral/export.h>
 
 #ifndef SYNTHONSPACESEARCHER_H
 #define SYNTHONSPACESEARCHER_H
@@ -18,6 +19,7 @@
 #include <boost/random.hpp>
 
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 
 namespace RDKit {
 class ROMol;

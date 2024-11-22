@@ -10,6 +10,7 @@
 
 // This file declares a concrete class derived from SynthonSpaceSearcher
 // that does substructure searching of the SynthonSpace.
+#include <RDGeneral/export.h>
 
 #ifndef SYNTHONSPACESUBSTRUCTURESEARCHER_H
 #define SYNTHONSPACESUBSTRUCTURESEARCHER_H

@@ -15,6 +15,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
