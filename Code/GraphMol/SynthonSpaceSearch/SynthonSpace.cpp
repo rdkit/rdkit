@@ -82,6 +82,32 @@ void fixConnectors(std::string &smiles) {
   }
 }
 
+int deduceFormat(const std::string &line) {
+  // formats are based on the headers which should be one of the forms here.
+  // If the columns are white-space separated the return value is 0-2, if
+  // comma separated 3-5.
+  std::vector<std::vector<std::string>> firstLineOpts{
+      std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id"},
+      std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id",
+                               "release"},
+      std::vector<std::string>{"SMILES", "synton_id", "synton_role",
+                               "reaction_id"}};
+  std::regex regexws("\\s+");
+  auto lineParts = splitLine(line, regexws);
+  for (size_t i = 0; i < firstLineOpts.size(); ++i) {
+    if (lineParts == firstLineOpts[i]) {
+      return static_cast<int>(i);
+    }
+  }
+  std::regex regexc(",+");
+  lineParts = splitLine(line, regexc);
+  for (size_t i = 0; i < firstLineOpts.size(); ++i) {
+    if (lineParts == firstLineOpts[i]) {
+      return static_cast<int>(i + firstLineOpts.size());
+    }
+  }
+  return -1;
+}
 }  // namespace
 
 void SynthonSpace::readTextFile(const std::string &inFilename) {
@@ -90,7 +116,8 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
   if (!ifs.is_open() || ifs.bad()) {
     throw std::runtime_error("Couldn't open file " + d_fileName);
   }
-  std::regex regexz("[\\s,]+");
+  std::regex regexws("\\s+");
+  std::regex regexc(",+");
 
   std::vector<std::vector<std::string>> firstLineOpts{
       std::vector<std::string>{"SMILES", "synton_id", "synton#", "reaction_id"},
@@ -101,26 +128,25 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
   int format = -1;
   std::string nextLine;
   int lineNum = 1;
-
+  std::vector<std::string> nextSynthon;
   while (getline(ifs, nextLine)) {
     ++lineNum;
     if (nextLine.empty() || nextLine[0] == '#') {
       continue;
     }
     if (format == -1) {
-      auto lineParts = splitLine(nextLine, regexz);
-      for (size_t i = 0; i < firstLineOpts.size(); ++i) {
-        if (lineParts == firstLineOpts[i]) {
-          format = static_cast<int>(i);
-        }
-      }
+      format = deduceFormat(nextLine);
       if (format == -1) {
         throw std::runtime_error("Bad format for SynthonSpace file " +
                                  d_fileName);
       }
       continue;
     }
-    auto nextSynthon = splitLine(nextLine, regexz);
+    if (format < 3) {
+      nextSynthon = splitLine(nextLine, regexws);
+    } else {
+      nextSynthon = splitLine(nextLine, regexc);
+    }
     if (nextSynthon.size() < 4) {
       throw std::runtime_error("Bad format for SynthonSpace file " +
                                d_fileName + " on line " +
@@ -133,9 +159,9 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
     fixConnectors(nextSynthon[0]);
     auto &currReaction = d_reactions[nextSynthon[3]];
     int synthonNum{std::numeric_limits<int>::max()};
-    if (format == 0 || format == 1) {
+    if (format == 0 || format == 1 || format == 3 || format == 4) {
       synthonNum = std::stoi(nextSynthon[2]);
-    } else if (format == 2) {
+    } else if (format == 2 || format == 5) {
       // in this case it's a string "synton_2" etc.
       synthonNum = std::stoi(nextSynthon[2].substr(7));
     }
