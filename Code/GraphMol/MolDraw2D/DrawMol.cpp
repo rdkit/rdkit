@@ -1516,6 +1516,15 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
         for (const auto bond : mol.atomBonds(&atom)) {
           const Point2D &at2_cds = atCds_[bond->getOtherAtomIdx(atom.getIdx())];
           Point2D bond_vec = at2_cds - at1_cds;
+          if (std::fabs(bond_vec.x) < 1.e-16) {
+            if (bond_vec.y > 0.0) {
+              orient = OrientType::S;
+              break;
+            } else {
+              orient = OrientType::N;
+              break;
+            }
+          }
           double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
           if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
             orient = OrientType::S;

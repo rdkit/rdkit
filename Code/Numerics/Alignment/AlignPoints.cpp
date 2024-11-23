@@ -188,7 +188,7 @@ unsigned int jacobi(double quad[4][4], double eigenVals[4],
         offDiagNorm += fabs(quad[i][j]);
       }
     }
-    if ((offDiagNorm / diagNorm) <= TOLERANCE) {
+    if (fabs(diagNorm) > 1.e-16 && (offDiagNorm / diagNorm) <= TOLERANCE) {
       goto Exit_now;
     }
     for (j = 1; j <= 3; j++) {
