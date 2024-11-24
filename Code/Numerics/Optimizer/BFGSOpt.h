@@ -155,15 +155,6 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
   }
 }
 
-#define CLEANUP()        \
-  {                      \
-    delete[] grad;       \
-    delete[] dGrad;      \
-    delete[] hessDGrad;  \
-    delete[] newPos;     \
-    delete[] xi;         \
-    delete[] invHessian; \
-  }
 //! Do a BFGS minimization of a function.
 /*!
    See Numerical Recipes in C, Section 10.7 for a description of the algorithm.
@@ -199,26 +190,19 @@ int minimize(unsigned int dim, double *pos, double gradTol,
   PRECONDITION(pos, "bad input array");
   PRECONDITION(gradTol > 0, "bad tolerance");
 
-  double sum, maxStep, fp;
-
-  double *grad, *dGrad, *hessDGrad;
-  double *newPos, *xi;
-  double *invHessian;
-
-  grad = new double[dim];
-  dGrad = new double[dim];
-  hessDGrad = new double[dim];
-  newPos = new double[dim];
-  xi = new double[dim];
-  invHessian = new double[dim * dim];
+  std::vector<double> grad(dim);
+  std::vector<double> dGrad(dim);
+  std::vector<double> hessDGrad(dim);
+  std::vector<double> xi(dim);
+  std::vector<double> invHessian(dim * dim, 0);
+  std::unique_ptr<double[]> newPos(new double[dim]);
   snapshotFreq = std::min(snapshotFreq, maxIts);
 
   // evaluate the function and gradient in our current position:
-  fp = func(pos);
-  gradFunc(pos, grad);
+  double fp = func(pos);
+  gradFunc(pos, grad.data());
 
-  sum = 0.0;
-  memset(invHessian, 0, dim * dim * sizeof(double));
+  double sum = 0.0;
   for (unsigned int i = 0; i < dim; i++) {
     unsigned int itab = i * dim;
     // initialize the inverse hessian to be identity:
@@ -228,15 +212,15 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     sum += pos[i] * pos[i];
   }
   // pick a max step size:
-  maxStep = MAXSTEP * std::max(sqrt(sum), static_cast<double>(dim));
+  double maxStep = MAXSTEP * std::max(sqrt(sum), static_cast<double>(dim));
 
-  for (unsigned int iter = 1; iter <= maxIts; iter++) {
+  for (unsigned int iter = 1; iter <= maxIts; ++iter) {
     numIters = iter;
-    int status;
+    int status = -1;
 
     // do the line search:
-    linearSearch(dim, pos, fp, grad, xi, newPos, funcVal, func, maxStep,
-                 status);
+    linearSearch(dim, pos, fp, grad.data(), xi.data(), newPos.get(), funcVal, func,
+                 maxStep, status);
     CHECK_INVARIANT(status >= 0, "bad direction in linearSearch");
 
     // save the function value for the next search:
@@ -257,16 +241,14 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // "<<TOLX<<std::endl;
     if (test < TOLX) {
       if (snapshotVect && snapshotFreq) {
-        RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
+        RDKit::Snapshot s(boost::shared_array<double>(newPos.release()), fp);
         snapshotVect->push_back(s);
-        newPos = nullptr;
-      }
-      CLEANUP();
+              }
       return 0;
     }
 
     // update the gradient:
-    double gradScale = gradFunc(pos, grad);
+    double gradScale = gradFunc(pos, grad.data());
 
     // is the gradient converged?
     test = 0.0;
@@ -281,11 +263,9 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // "<<gradTol<<std::endl;
     if (test < gradTol) {
       if (snapshotVect && snapshotFreq) {
-        RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
+        RDKit::Snapshot s(boost::shared_array<double>(newPos.release()), fp);
         snapshotVect->push_back(s);
-        newPos = nullptr;
       }
-      CLEANUP();
       return 0;
     }
 
@@ -306,7 +286,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
 #else
       double *ivh = &(invHessian[i * dim]);
       double &hdgradi = hessDGrad[i];
-      double *dgj = dGrad;
+      double *dgj = dGrad.data();
       hdgradi = 0.0;
       for (unsigned int j = 0; j < dim; ++j, ++ivh, ++dgj) {
         hdgradi += *ivh * *dgj;
@@ -353,19 +333,20 @@ int minimize(unsigned int dim, double *pos, double gradTol,
         xi[i] -= invHessian[itab + j] * grad[j];
       }
 #else
-      double &pxi = xi[i], *ivh = &(invHessian[itab]), *gj = grad;
+      double &pxi = xi[i];
+      double *ivh = &(invHessian[itab]);
+      double *gj = grad.data();
       for (unsigned int j = 0; j < dim; ++j, ++ivh, ++gj) {
         pxi -= *ivh * *gj;
       }
 #endif
     }
     if (snapshotVect && snapshotFreq && !(iter % snapshotFreq)) {
-      RDKit::Snapshot s(boost::shared_array<double>(newPos), fp);
+      RDKit::Snapshot s(boost::shared_array<double>(newPos.release()), fp);
       snapshotVect->push_back(s);
-      newPos = new double[dim];
+      newPos.reset(new double[dim]);
     }
   }
-  CLEANUP();
   return 1;
 }
 

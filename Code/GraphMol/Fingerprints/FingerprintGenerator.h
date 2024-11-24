@@ -76,19 +76,18 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   hold fingerprint type specific arguments
 
  */
-class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
-    : private boost::noncopyable {
+class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments {
  public:
   FingerprintArguments(bool countSimulation,
                        const std::vector<std::uint32_t> countBounds,
                        std::uint32_t fpSize,
                        std::uint32_t numBitsPerFeature = 1,
                        bool includeChirality = false);
-  bool df_countSimulation;
-  bool df_includeChirality;
+  bool df_countSimulation = false;
+  bool df_includeChirality = false;
   std::vector<std::uint32_t> d_countBounds;
-  std::uint32_t d_fpSize;
-  std::uint32_t d_numBitsPerFeature;
+  std::uint32_t d_fpSize = 2048;
+  std::uint32_t d_numBitsPerFeature = 1;
 
   /**
    \brief method that returns information string about the fingerprint specific
@@ -107,6 +106,7 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
   std::string commonArgumentsString() const;
 
   virtual ~FingerprintArguments() {}
+  FingerprintArguments() = default;
 };
 
 /*!

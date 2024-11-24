@@ -19,8 +19,7 @@ import numpy
 from rdkit import DataStructs, ForceField, RDConfig, rdBase
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
-from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers,
-                                               StereoEnumerationOptions)
+from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers, StereoEnumerationOptions)
 from rdkit.Chem.rdChemReactions import *
 from rdkit.Chem.rdDepictor import *
 from rdkit.Chem.rdDistGeom import *
@@ -49,8 +48,14 @@ logger = logger()
 
 def TransformMol(mol, tform, confId=-1, keepConfs=False):
   """  Applies the transformation (usually a 4x4 double matrix) to a molecule
-    if keepConfs is False then all but that conformer are removed
-    """
+    
+  Arguments:
+    - mol: the molecule to be transformed
+    - tform: the transformation to apply
+    - confId: (optional) the conformer id to transform
+    - keepConfs: (optional) if keepConfs is False then all but that conformer are removed
+  
+  """
   refConf = mol.GetConformer(confId)
   TransformConformer(refConf, tform)
   if not keepConfs:
@@ -66,7 +71,17 @@ def TransformMol(mol, tform, confId=-1, keepConfs=False):
 
 def ComputeMolShape(mol, confId=-1, boxDim=(20, 20, 20), spacing=0.5, **kwargs):
   """ returns a grid representation of the molecule's shape
-    """
+
+  Arguments:
+    - mol: the molecule
+    - confId: (optional) the conformer id to use
+    - boxDim: (optional) the dimensions of the box to use
+    - spacing: (optional) the spacing to use
+    - kwargs: additional arguments to pass to the encoding function
+
+  Returns:
+    a UniformGrid3D object
+  """
   res = rdGeometry.UniformGrid3D(boxDim[0], boxDim[1], boxDim[2], spacing=spacing)
   EncodeShape(mol, res, confId, **kwargs)
   return res
@@ -75,6 +90,13 @@ def ComputeMolShape(mol, confId=-1, boxDim=(20, 20, 20), spacing=0.5, **kwargs):
 def ComputeMolVolume(mol, confId=-1, gridSpacing=0.2, boxMargin=2.0):
   """ Calculates the volume of a particular conformer of a molecule
     based on a grid-encoding of the molecular shape.
+
+
+  Arguments:
+    - mol: the molecule
+    - confId: (optional) the conformer id to use
+    - gridSpacing: (optional) the spacing to use 
+    - boxMargin: (optional) the margin to use around the molecule
 
     A bit of demo as well as a test of github #1883:
 
@@ -196,6 +218,12 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False)
   """ Returns a generator for the virtual library defined by
     a reaction and a sequence of sidechain sets
 
+    Arguments:
+      - reaction: the reaction
+      - sidechainSets: a sequence of sequences of sidechains
+      - returnReactants: (optional) if True, the generator will return information about the reactants
+                         as well as the products
+
     >>> from rdkit import Chem
     >>> from rdkit.Chem import AllChem
     >>> s1=[Chem.MolFromSmiles(x) for x in ('NC','NCC')]
@@ -225,6 +253,15 @@ def EnumerateLibraryFromReaction(reaction, sidechainSets, returnReactants=False)
     >>> [Chem.MolToSmiles(next(r)[0]) for x in range(4)]
     ['NC=O', 'CNC=O', 'CCNC=O', 'CCCNC=O']
 
+    Here's what returnReactants does:
+
+    >>> l = list(AllChem.EnumerateLibraryFromReaction(rxn,[s2,s1],returnReactants=True))
+    >>> type(l[0])
+    <class 'rdkit.Chem.AllChem.ProductReactants'>
+    >>> [Chem.MolToSmiles(x) for x in l[0].reactants]
+    ['O=CO', 'CN']
+    >>> [Chem.MolToSmiles(x) for x in l[0].products]
+    ['CNC=O']
 
     """
   if len(sidechainSets) != reaction.GetNumReactantTemplates():
@@ -267,7 +304,9 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
           used in the optimization.
       - coreConfId: (optional) id of the core conformation to use
       - randomSeed: (optional) seed for the random number generator
-
+      - getForceField: (optional) a function to use to get a force field
+          for the final cleanup
+      - kwargs: additional arguments to pass to the embedding function
 
     An example, start by generating a template with a 3D structure:
 
@@ -437,18 +476,3 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     else:
       raise ValueError("No matching found")
   return mol2
-
-
-# ------------------------------------
-#
-#  doctest boilerplate
-#
-def _runDoctests(verbose=None):  # pragma: nocover
-  import doctest
-  import sys
-  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-  sys.exit(failed)
-
-
-if __name__ == '__main__':  # pragma: nocover
-  _runDoctests()

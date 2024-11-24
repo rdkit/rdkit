@@ -692,4 +692,39 @@ RDKit::QueryBond *getUnspecifiedQueryBond(const RDKit::Atom *a1,
   return newB;
 }
 
+namespace detail {
+
+void printSyntaxErrorMessage(std::string_view input,
+                             std::string_view err_message,
+                             unsigned int bad_token_position) {
+  // NOTE: If the input is very long, the pointer to the failed location
+  // becomes less useful. We should truncate the length of the error message
+  // to 41 chars.
+  static constexpr unsigned int error_size{41};
+  static constexpr unsigned int prefix_size{error_size / 2};
+  static auto truncate_input = [=](const auto &input, const unsigned int pos) {
+    if ((pos >= prefix_size) && (pos + prefix_size) < input.size()) {
+      return input.substr(pos - prefix_size, error_size);
+    } else if (pos >= prefix_size) {
+      return input.substr(pos - prefix_size);
+    } else {
+      return input.substr(
+          0, std::min(input.size(), static_cast<size_t>(error_size)));
+    }
+  };
+
+  size_t num_dashes =
+      (bad_token_position >= prefix_size ? prefix_size
+                                         : bad_token_position - 1);
+
+  BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << err_message
+                        << " while parsing: " << input << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "SMILES Parse Error: check for mistakes around position "
+      << bad_token_position << ":" << std::endl;
+  BOOST_LOG(rdErrorLog) << truncate_input(input, bad_token_position - 1)
+                        << std::endl;
+  BOOST_LOG(rdErrorLog) << std::string(num_dashes, '~') << "^" << std::endl;
+}
+}  // namespace detail
 }  // end of namespace SmilesParseOps

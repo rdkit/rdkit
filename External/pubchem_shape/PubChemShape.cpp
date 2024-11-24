@@ -283,12 +283,11 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
   res.coord.resize(nAlignmentAtoms * 3);
 
   for (unsigned i = 0; i < nAtoms; ++i) {
-    // translate all atoms
-    RDGeom::Point3D pos = conformer.getAtomPos(i);
-    pos -= ave;
-
-    // but use only non-H for alignment
+    // use only non-H for alignment
     if (mol.getAtomWithIdx(i)->getAtomicNum() > 1) {
+      RDGeom::Point3D pos = conformer.getAtomPos(i);
+      pos -= ave;
+
       res.coord[i * 3] = pos.x;
       res.coord[(i * 3) + 1] = pos.y;
       res.coord[(i * 3) + 2] = pos.z;
@@ -387,9 +386,9 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
     fitShape.coord.resize(3 * fit.getNumAtoms());
     for (unsigned int i = 0; i < fit.getNumAtoms(); ++i) {
       const auto &pos = fit_conformer.getAtomPos(i);
-      fitShape.coord[i * 3] = pos.x;
-      fitShape.coord[i * 3 + 1] = pos.y;
-      fitShape.coord[i * 3 + 2] = pos.z;
+      fitShape.coord[i * 3] = pos.x + fitShape.shift[0];
+      fitShape.coord[i * 3 + 1] = pos.y + fitShape.shift[1];
+      fitShape.coord[i * 3 + 2] = pos.z + fitShape.shift[2];
     }
   }
   std::vector<float> transformed(fit.getNumAtoms() * 3);
@@ -397,12 +396,12 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
                                 fit.getNumAtoms(), matrix.data());
 
   for (unsigned i = 0; i < fit.getNumAtoms(); ++i) {
-    RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
     // both conformers have been translated to the origin, translate the fit
     // conformer back to the steric center of the reference.
-    pos.x = transformed[i * 3] - refShape.shift[0] + fitShape.shift[0];
-    pos.y = transformed[(i * 3) + 1] - refShape.shift[1] + fitShape.shift[1];
-    pos.z = transformed[(i * 3) + 2] - refShape.shift[2] + fitShape.shift[2];
+    RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
+    pos.x = transformed[i * 3] - refShape.shift[0];
+    pos.y = transformed[(i * 3) + 1] - refShape.shift[1];
+    pos.z = transformed[(i * 3) + 2] - refShape.shift[2];
   }
   fit.setProp("shape_align_shape_tanimoto", nbr_st);
   fit.setProp("shape_align_color_tanimoto", nbr_ct);

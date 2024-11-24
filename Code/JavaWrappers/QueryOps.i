@@ -36,6 +36,9 @@
 %}
 
 %ignore RDKit::RecursiveStructureQuery::d_mutex;
+%ignore RDKit::HasPropWithValueQuery::getPair;
+%ignore RDKit::HasPropWithValueQueryBase::getPair;
+
 %include <Query/QueryObjects.h>
 %include <Query/EqualityQuery.h>
 %include <GraphMol/QueryOps.h>
