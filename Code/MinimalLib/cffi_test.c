@@ -2268,15 +2268,16 @@ void release_streams(CapturedStreams **captured_streams) {
 
 CapturedStreams *capture_streams(unsigned int buf_size) {
   CapturedStreams *res;
+  size_t i;
   res = (CapturedStreams *)malloc(sizeof(CapturedStreams));
   if (!res) {
     return NULL;
   }
   memset(res, 0, sizeof(CapturedStreams));
-  res->stdout_pipes[0] = -1;
-  res->stdout_pipes[1] = -1;
-  res->stderr_pipes[0] = -1;
-  res->stderr_pipes[1] = -1;
+  for (i = 0; i < 2; ++i) {
+    res->stdout_pipes[i] = -1;
+    res->stderr_pipes[i] = -1;
+  }
   fflush(stdout);
   fflush(stderr);
   res->orig_stdout = DUP_FUNC(FILENO_FUNC(stdout));
