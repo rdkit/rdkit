@@ -125,7 +125,7 @@ RWMol *mol_from_input(const std::string &input,
   bool makeDummiesQueries = false;
   RWMol *res = nullptr;
   boost::property_tree::ptree pt;
-  unsigned int sanitizeOps = MolOps::SanitizeFlags::SANITIZE_ALL;\
+  unsigned int sanitizeOps = MolOps::SanitizeFlags::SANITIZE_ALL;
   if (!details_json.empty()) {
     std::istringstream ss;
     ss.str(details_json);
@@ -153,6 +153,9 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(makeDummiesQueries);
   }
   try {
+    // We set default sanitization to false
+    // as we want to enable partial sanitization
+    // if required by the user through JSON details
     if (haveMolBlock) {
       bool strictParsing = false;
       LPT_OPT_GET(strictParsing);

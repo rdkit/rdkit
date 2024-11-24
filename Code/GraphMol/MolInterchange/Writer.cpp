@@ -396,8 +396,12 @@ void addSubstanceGroup(const SubstanceGroup &sg, rj::Value &rjSG,
   }
 }
 
+// RapidJSON truncates doubles rather than rounding them, so
+// we add a small increment to the number to ensure that, e.g.,
+// 0.1237999999 is not get truncated to 0.1237 when written to JSON
 double rjPrepareForTrunc(double n) {
-  static const double TRUNC_INCREMENT = 5.0 * pow(10.0, -(MAX_DECIMAL_PLACES + 1));
+  static const double TRUNC_INCREMENT =
+      5.0 * pow(10.0, -(MAX_DECIMAL_PLACES + 1));
   auto res = n + std::copysign(TRUNC_INCREMENT, n);
   return res;
 }
