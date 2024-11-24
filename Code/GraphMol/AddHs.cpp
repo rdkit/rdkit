@@ -1084,13 +1084,20 @@ std::pair<bool,bool> queryHasHs(Q queryAtom, bool inor=false) {
     QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = *childit;
     if (query->getDescription() == "AtomOr") {
       return queryHasHs(query, true);
-    } else if (query->getDescription() == "AtomAtomicNum") {
+    } else if (query->getDescription() == "AtomAtomicNum") { 
       if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
           !query->getNegation()) {
         return std::make_pair(true, inor);
       }
+    } else if (query->getDescription() == "AtomType") {
+      auto val = static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal();
+      // 1001 == aromtic hydrogen (not a thing, really)
+      // 1 == aliphatic hydrogen
+      if ( (val == 1001 || val == 1) && !query->getNegation()) {
+        return std::make_pair(true, inor);
+      }
     }
-   }
+  }
   return std::make_pair(false, inor);;
 }
 
