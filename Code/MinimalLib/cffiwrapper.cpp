@@ -766,6 +766,21 @@ extern "C" short remove_all_hs(char **mol_pkl, size_t *mol_pkl_sz) {
   return 1;
 }
 
+extern "C" short remove_hs(char **mol_pkl, size_t *mol_pkl_sz,
+                           const char *details_json) {
+  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
+  MolOps::RemoveHsParameters ps;
+  bool sanitize = true;
+  MinimalLib::updateRemoveHsParametersFromJSON(ps, sanitize, details_json);
+  MolOps::removeHs(mol, ps, sanitize);
+
+  mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
+  return 1;
+}
+
 // standardization
 namespace {
 template <typename T>

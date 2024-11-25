@@ -1731,3 +1731,25 @@ M  END)CTAB";
           0);
   }
 }
+
+TEST_CASE("Custom Scoring Functions") {
+  SECTION("basics") {
+    auto mol = "CC\\C=C(/O)[C@@H](C)C(C)=O"_smiles;
+    REQUIRE(MolStandardize::TautomerScoringFunctions::scoreRings(*mol) == 0);
+    REQUIRE(MolStandardize::TautomerScoringFunctions::scoreHeteroHs(*mol) == 0);
+    REQUIRE(MolStandardize::TautomerScoringFunctions::scoreSubstructs(*mol) ==
+            6);
+
+    auto terms = MolStandardize::TautomerScoringFunctions::
+        getDefaultTautomerScoreSubstructs();
+    REQUIRE(terms.size() == 12);
+  }
+
+  SECTION("Override default tautomer scoring functions") {
+    auto mol = "CC\\C=C(/O)[C@@H](C)C(C)=O"_smiles;
+    std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm> terms =
+        {{"C=O", "[#6]=,:[#8]", 1000}};
+    REQUIRE(MolStandardize::TautomerScoringFunctions::scoreSubstructs(
+                *mol, terms) == 1000);
+  }
+}
