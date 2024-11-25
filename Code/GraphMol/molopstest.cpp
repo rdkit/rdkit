@@ -27,6 +27,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/QueryOps.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -7131,6 +7132,23 @@ void testGithubIssue868() {
                 std::string::npos);
     delete m;
   }
+
+  // test atom type query merging
+  for (int aromatic =0; aromatic<2; ++aromatic) {
+    sstrm.str("");
+    TEST_ASSERT(sstrm.str() == "");
+    RWMol m;
+    QueryAtom *qa = new QueryAtom();
+    qa->setQuery(makeAtomTypeQuery(1, aromatic));
+    qa->expandQuery(makeAtomNumQuery(6), Queries::CompositeQueryType::COMPOSITE_OR);
+    m.addAtom(qa, true, true);
+    MolOps::mergeQueryHs(m);
+    TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
+				 "ORs is not supported") != std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") !=
+		std::string::npos);
+  }
+   
   {
     sstrm.str("");
     TEST_ASSERT(sstrm.str() == "");
