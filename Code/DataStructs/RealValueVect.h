@@ -16,6 +16,9 @@
 #include <string>
 #include <cstring>
 
+namespace RDGeom {
+class UniformRealValueGrid3D;
+}
 namespace RDKit {
 
 //! a class for efficiently storing vectors of float values
@@ -23,28 +26,17 @@ namespace RDKit {
 //! construct from and write to pickle
 class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
  public:
-  typedef boost::shared_array<double> DATA_SPTR;
+  friend double computeL1Norm(const RealValueVect &, const RealValueVect &);
 
   //! initialize with a particular size
   RealValueVect(unsigned int length) : d_length(length) {
-    auto *data = new double[d_length];
-    memset(static_cast<void *>(data), 0, d_length * sizeof(double));
-    d_data.reset(data);
+    d_data.resize(d_length, 0.0);
   }
 
   //! initialize with a particular size and initial value
   RealValueVect(double val, unsigned int length) : d_length(length) {
-    auto *data = new double[d_length];
-    memset(static_cast<void *>(data), 0, d_length * sizeof(double));
-    d_data.reset(data);
-    for (unsigned int i = 0; i < d_length; ++i) {
-      d_data[i] = val;
-    }
+    d_data.resize(d_length, val);
   }
-
-  //! Copy constructor
-  RealValueVect(const RealValueVect &other);
-  RealValueVect &operator=(const RealValueVect &other);
 
   //! constructor from a pickle
   RealValueVect(const std::string &pkl) {
@@ -74,13 +66,8 @@ class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
   //! returns the length
   unsigned int size() const { return getLength(); };
 
-  //! return a pointer to our raw data storage
-  const double *getData() const { return d_data.get(); };
-
   //! compares 2 vectors and returns false if different
   bool compareVectors(const RealValueVect &other);
-
-  const DATA_SPTR &getArray() { return d_data; };
 
   //! support rvv3 = rvv1&rvv2
   /*!
@@ -110,16 +97,19 @@ class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
   //! returns a binary string representation (pickle)
   std::string toString() const;
 
+  const std::vector<double> &getData() const { return d_data; }
+  std::vector<double> &getData() { return d_data; }
+
  private:
-  unsigned int d_length;
-  DATA_SPTR d_data;
+  unsigned int d_length = 0;
+  std::vector<double> d_data;
 
   void initFromText(const char *pkl, const unsigned int len);
 };  // end of declaration of class RealValueVect
 
 //! returns L1 Norm of vectors
 RDKIT_DATASTRUCTS_EXPORT double computeL1Norm(const RealValueVect &v1,
-                                       const RealValueVect &v2);
+                                              const RealValueVect &v2);
 
 //! returns the sum of vectors
 RDKIT_DATASTRUCTS_EXPORT RealValueVect operator+(const RealValueVect &p1,

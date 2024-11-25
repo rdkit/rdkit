@@ -163,14 +163,18 @@ void UniformRealValueGrid3D::setVal(unsigned int pointId, double val) {
 
 bool UniformRealValueGrid3D::compareParams(
     const UniformRealValueGrid3D &other) const {
-  if (d_numX != other.getNumX()) { return false;
-}
-  if (d_numY != other.getNumY()) { return false;
-}
-  if (d_numZ != other.getNumZ()) { return false;
-}
-  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) { return false;
-}
+  if (d_numX != other.getNumX()) {
+    return false;
+  }
+  if (d_numY != other.getNumY()) {
+    return false;
+  }
+  if (d_numZ != other.getNumZ()) {
+    return false;
+  }
+  if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
+    return false;
+  }
   RDGeom::Point3D dOffset = d_offSet;
   dOffset -= other.getOffset();
   return dOffset.lengthSq() <= OFFSET_TOL;
@@ -207,8 +211,7 @@ UniformRealValueGrid3D &UniformRealValueGrid3D::operator|=(
   PRECONDITION(this->compareParams(other), "incompatible grids");
 
   // EFF: we're probably doing too much copying here:
-  auto *newData =
-      new RDKit::RealValueVect((*dp_storage) | (*other.dp_storage));
+  auto *newData = new RDKit::RealValueVect((*dp_storage) | (*other.dp_storage));
   delete dp_storage;
   dp_storage = newData;
   return *this;
@@ -221,8 +224,7 @@ UniformRealValueGrid3D &UniformRealValueGrid3D::operator&=(
   PRECONDITION(this->compareParams(other), "incompatible grids");
 
   // EFF: we're probably doing too much copying here:
-  auto *newData =
-      new RDKit::RealValueVect((*dp_storage) & (*other.dp_storage));
+  auto *newData = new RDKit::RealValueVect((*dp_storage) & (*other.dp_storage));
   delete dp_storage;
   dp_storage = newData;
   return *this;

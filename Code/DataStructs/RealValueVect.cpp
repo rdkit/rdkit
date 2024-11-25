@@ -13,33 +13,10 @@
 #include <RDGeneral/StreamOps.h>
 #include "DatastructsException.h"
 
-#define VAL_TOL 0.01
+constexpr double VAL_TOL = 0.01;
 
 namespace RDKit {
 const int ci_REALVALUEVECTPICKLE_VERSION = 0x1;
-
-RealValueVect::RealValueVect(const RealValueVect &other) {
-  d_length = other.getLength();
-  const double *odata = other.getData();
-  auto *data = new double[d_length];
-  memcpy(static_cast<void *>(data), static_cast<const void *>(odata),
-         d_length * sizeof(double));
-  d_data.reset(data);
-}
-
-RealValueVect &RealValueVect::operator=(const RealValueVect &other) {
-  if (this == &other) {
-    return *this;
-  }
-
-  d_length = other.getLength();
-  const double *odata = other.getData();
-  auto *data = new double[d_length];
-  memcpy(static_cast<void *>(data), static_cast<const void *>(odata),
-         d_length * sizeof(double));
-  d_data.reset(data);
-  return *this;
-};
 
 double RealValueVect::getVal(unsigned int i) const {
   if (i >= d_length) {
@@ -68,43 +45,20 @@ bool RealValueVect::compareVectors(const RealValueVect &other) {
   if (getLength() != other.getLength()) {
     throw ValueErrorException("Comparing vectors of different lengths");
   }
-
-  const double *sd1 = this->getData();
-  const double *sd2 = other.getData();
-
-  const double *send = sd1 + this->getLength();
-  while (sd1 != send) {
-    if (fabs((*sd1 - *sd2) / (*sd1)) > VAL_TOL) {
-      return false;
-    }
-    sd1++;
-    sd2++;
-  }
-  return true;
+  return std::equal(this->d_data.begin(), this->d_data.end(),
+                    other.d_data.begin(), [](auto v1, auto v2) {
+                      return fabs((v1 - v2) / (v1 != 0 ? v1 : 1)) <= VAL_TOL;
+                    });
 }
 
 double computeL1Norm(const RealValueVect &v1, const RealValueVect &v2) {
   if (v1.getLength() != v2.getLength()) {
     throw ValueErrorException("Comparing vectors of different lengths");
   }
-
-  const double *data1 = v1.getData();
-  const double *data2 = v2.getData();
-
   double res = 0.0;
-
-  const double *sd1 = data1;
-  const double *sd2 = data2;
-
-  const double *send = sd1 + v1.getLength();
-  while (sd1 != send) {
-    if (*sd1 != *sd2) {
-      res += fabs((*sd1) - (*sd2));
-    }
-    sd1++;
-    sd2++;
+  for (auto i = 0u; i < v1.getLength(); ++i) {
+    res += fabs(v1.getData()[i] - v2.getData()[i]);
   }
-
   return res;
 }
 
@@ -121,12 +75,11 @@ std::string RealValueVect::toString() const {
 #if defined(BOOST_BIG_ENDIAN)
   double *td = new double[d_length];
   for (unsigned int i = 0; i < d_length; ++i)
-    td[i] = EndianSwapBytes<HOST_ENDIAN_ORDER, LITTLE_ENDIAN_ORDER>(
-        d_data.get()[i]);
+    td[i] = EndianSwapBytes<HOST_ENDIAN_ORDER, LITTLE_ENDIAN_ORDER>(d_data[i]);
   ss.write((const char *)td, d_length * sizeof(double));
   delete[] td;
 #else
-  ss.write((const char *)d_data.get(), d_length * sizeof(double));
+  ss.write((const char *)d_data.data(), d_length * sizeof(double));
 #endif
   std::string res(ss.str());
   return res;
@@ -146,17 +99,14 @@ void RealValueVect::initFromText(const char *pkl, const unsigned int len) {
   boost::uint32_t tInt;
   streamRead(ss, tInt);
   d_length = tInt;
-  auto *data = new double[d_length];
+  d_data.resize(d_length);
+  auto *data = d_data.data();
   ss.read((char *)data, d_length * sizeof(double));
 
 #if defined(BOOST_BIG_ENDIAN)
-  double *td = new double[d_length];
-  for (unsigned int i = 0; i < d_length; ++i)
-    td[i] = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(data[i]);
-  d_data.reset(td);
-  delete[] data;
-#else
-  d_data.reset(data);
+  for (auto &v : d_data) {
+    v = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(v);
+  }
 #endif
 };
 

@@ -114,10 +114,9 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
     return dp_storage;
   };
 
-  //! brief returns shared pointer
-  const boost::shared_array<double> &getDataPtr() {
-    return dp_storage->getArray();
-  }
+  //! brief returns raw vector
+  const std::vector<double> &getData() const { return dp_storage->getData(); }
+  std::vector<double> &getData() { return dp_storage->getData(); }
 
   //! \brief returns true if the grid \c other has parameters
   //!        compatible with ours.

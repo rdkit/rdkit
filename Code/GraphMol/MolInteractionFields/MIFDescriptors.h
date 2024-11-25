@@ -45,9 +45,9 @@ namespace RDMIF {
  pointer to a grid
  */
 RDKIT_MOLINTERACTIONFIELDS_EXPORT
-    std::unique_ptr<RDGeom::UniformRealValueGrid3D>
-    constructGrid(const RDKit::ROMol &mol, int confId = -1, double margin = 5.0,
-                  double spacing = 0.5);
+std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
+    const RDKit::ROMol &mol, int confId = -1, double margin = 5.0,
+    double spacing = 0.5);
 
 //! \brief calculates a descriptor at every grid point of MIF
 /*!
@@ -61,8 +61,8 @@ RDKIT_MOLINTERACTIONFIELDS_EXPORT
  than threshold, negative threshold: no threshold, defaults to -1.0
  */
 template <typename T>
-void calculateDescriptors(
-    RDGeom::UniformRealValueGrid3D &grd, T functor, double thres = -1.0) {
+void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
+                          double thres = -1.0) {
   const RDGeom::Point3D &offSet = grd.getOffset();
   double oX = offSet.x, oY = offSet.y, z = offSet.z;
   double x = oX, y = oY;
@@ -73,7 +73,7 @@ void calculateDescriptors(
   thres *= thres;  // comparing squared distance
 
   unsigned int id = 0;
-  const boost::shared_array<double> &data = grd.getDataPtr();
+  auto &data = grd.getData();
 
   for (unsigned int idZ = 0; idZ < grd.getNumZ(); idZ++) {
     for (unsigned int idY = 0; idY < grd.getNumY(); idY++) {
@@ -421,7 +421,10 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT HBond {
  private:
   boost::uint8_t d_DAprop;
 
-  enum atomtype { N, O };
+  enum atomtype {
+    N,
+    O
+  };
   double d_cutoff;
   atomtype d_probetype;
   unsigned int d_nInteract;  // number of HBond interactions
