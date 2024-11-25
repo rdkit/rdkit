@@ -99,7 +99,7 @@ ROMol *MolFromSmarts(python::object ismarts, bool mergeHs,
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromTPLFile(const char *filename, bool sanitize = true,
+ROMol *MolFromTPLFile(const std::string &filename, bool sanitize = true,
                       bool skipFirstConf = false) {
   RWMol *newM;
   try {
@@ -126,7 +126,7 @@ ROMol *MolFromTPLBlock(python::object itplBlock, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFileHelper(const char *molFilename, bool sanitize,
+ROMol *MolFromMolFileHelper(const std::string &molFilename, bool sanitize,
                             bool removeHs, bool strictParsing) {
   RWMol *newM = nullptr;
   try {
@@ -156,7 +156,7 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
+ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize, bool removeHs,
                       bool strictParsing) {
   RWMol *newM = nullptr;
   try {
@@ -171,7 +171,7 @@ ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMrvFile(const char *molFilename, bool sanitize, bool removeHs) {
+ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize, bool removeHs) {
   RWMol *newM = nullptr;
   try {
     newM = MrvFileToMol(molFilename, sanitize, removeHs);
@@ -226,7 +226,7 @@ ROMol *MolFromSVG(python::object imolBlock, bool sanitize, bool removeHs) {
   return static_cast<ROMol *>(res);
 }
 
-ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
+ROMol *MolFromMol2File(const std::string &molFilename, bool sanitize = true,
                        bool removeHs = true, bool cleanupSubstructures = true) {
   RWMol *newM;
   try {
@@ -255,7 +255,7 @@ ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
+ROMol *MolFromPDBFile(const std::string &filename, bool sanitize, bool removeHs,
                       unsigned int flavor, bool proximityBonding) {
   RWMol *newM = nullptr;
   try {
@@ -415,12 +415,8 @@ std::vector<unsigned int> CanonicalRankAtoms(
     bool includeIsotopes = true, bool includeAtomMaps = true,
     bool includeChiralPresence = false) {
   std::vector<unsigned int> ranks(mol.getNumAtoms());
-  const bool includeStereoGroups = true;
-  const bool useNonStereoRanks = false;
-
   Canon::rankMolAtoms(mol, ranks, breakTies, includeChirality, includeIsotopes,
-                      includeAtomMaps, includeChiralPresence,
-                      includeStereoGroups, useNonStereoRanks);
+                      includeAtomMaps, includeChiralPresence);
   return ranks;
 }
 
@@ -506,7 +502,7 @@ python::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
   return pyres;
 }
 
-ROMol *MolFromPNGFile(const char *filename, python::object pyParams) {
+ROMol *MolFromPNGFile(const std::string &filename, python::object pyParams) {
   SmilesParserParams params;
   if (pyParams) {
     params = python::extract<SmilesParserParams>(pyParams);
@@ -604,7 +600,7 @@ python::object addMetadataToPNGStringHelper(python::dict pymetadata,
   return retval;
 }
 
-python::object MolsFromPNGFile(const char *filename, const std::string &tag,
+python::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
                                python::object pyParams) {
   SmilesParserParams params;
   if (pyParams) {
@@ -645,7 +641,7 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
   return python::tuple(res);
 }
 
-python::object MolsFromCDXMLFile(const char *filename, bool sanitize,
+python::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
                                  bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
@@ -1573,9 +1569,6 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "this will thrown an exception if the molecule cannot be kekulized")
       .def_readwrite("canonical", &RDKit::SmilesWriteParams::canonical,
                      "generate canonical SMILES")
-      .def_readwrite(
-          "cleanStereo", &RDKit::SmilesWriteParams::cleanStereo,
-          "chiral centers are removed if they have duplicate sidechains")
       .def_readwrite("allBondsExplicit",
                      &RDKit::SmilesWriteParams::allBondsExplicit,
                      "include symbols for all bonds")
@@ -1611,8 +1604,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
-      to start at a particular atom. Defaults to -1.  If not -1, overrides\n\
-      canonical setting.\n\
+      to start at a particular atom. Defaults to -1.\n\
     - canonical: (optional) if false no attempt will be made to canonicalize\n\
       the molecule. Defaults to true.\n\
     - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
@@ -1620,8 +1612,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
     - doRandom: (optional) if true, randomize the traversal of the molecule graph,\n\
-      so we can generate random smiles. Defaults to false.  If true, overrides\n\
-      canonical setting.\n\
+      so we can generate random smiles. Defaults to false.\n\
     - ignoreAtomMapNumbers (optional) if true, ignores any atom map numbers when\n\
       canonicalizing the molecule \n\
 \n\
@@ -1683,8 +1674,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
-      to start at a particular atom. Defaults to -1.  If not -1, over-rides\n\
-      setting for canonical.\n\
+      to start at a particular atom. Defaults to -1.\n\
     - canonical: (optional) if false no attempt will be made to canonicalize\n\
       the molecule. Defaults to true.\n\
     - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\
@@ -1762,9 +1752,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       in the output SMILES. Defaults to false.\n\
     - allHsExplicit: (optional) if true, all H counts will be explicitly indicated\n\
       in the output SMILES. Defaults to false.\n\
-    - doRandom: (optional) if true, randomizes the traversal of the molecule graph,\n\
-      so we can generate random smiles. Defaults to false.  If true, overrides\n\
-      canonical setting.\n\
+    - doRandom: (optional) if true, randomized the trasversal of the molecule graph,\n\
+      so we can generate random smiles. Defaults to false.\n\
 \n\
   RETURNS:\n\
 \n\
@@ -1824,8 +1813,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - kekuleSmiles: (optional) use the Kekule form (no aromatic bonds) in\n\
       the SMILES.  Defaults to false.\n\
     - rootedAtAtom: (optional) if non-negative, this forces the SMILES \n\
-      to start at a particular atom. Defaults to -1.  If not -1, overrides\n\
-      canonical setting.\n\
+      to start at a particular atom. Defaults to -1.\n\
     - canonical: (optional) if false no attempt will be made to canonicalize\n\
       the molecule. Defaults to true.\n\
     - allBondsExplicit: (optional) if true, all bond orders will be explicitly indicated\n\

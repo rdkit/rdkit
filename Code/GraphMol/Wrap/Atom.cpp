@@ -42,18 +42,18 @@ void setQuery(QueryAtom *self, const QueryAtom *other) {
 }
 
 template <class T>
-void AtomSetProp(const Atom *atom, const char *key, const T &val) {
+void AtomSetProp(const Atom *atom, const std::string &key, const T &val) {
   // std::cerr<<"asp: "<<atom<<" " << key<<" - " << val << std::endl;
   atom->setProp<T>(key, val);
 }
 
-int AtomHasProp(const Atom *atom, const char *key) {
+int AtomHasProp(const Atom *atom, const std::string &key) {
   // std::cerr<<"ahp: "<<atom<<" " << key<< std::endl;
   int res = atom->hasProp(key);
   return res;
 }
 
-void AtomClearProp(const Atom *atom, const char *key) {
+void AtomClearProp(const Atom *atom, const std::string &key) {
   if (!atom->hasProp(key)) {
     return;
   }
@@ -104,11 +104,7 @@ std::string AtomGetSmarts(const Atom *atom, bool doKekule, bool allHsExplicit,
 }
 
 void SetAtomMonomerInfo(Atom *atom, const AtomMonomerInfo *info) {
-  if(!info) {
-    atom->setMonomerInfo(nullptr);
-  } else {
-    atom->setMonomerInfo(info->copy());
-  }
+  atom->setMonomerInfo(info->copy());
 }
 
 AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
@@ -116,12 +112,6 @@ AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
 }
 
 void AtomSetPDBResidueInfo(Atom *atom, const AtomMonomerInfo *info) {
-  if(!info) {
-    // This clears out the monomer info
-    atom->setMonomerInfo(nullptr);
-    return;
-  }
-  
   if (info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     throw_value_error("MonomerInfo is not a PDB Residue");
   }
