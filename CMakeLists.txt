@@ -73,7 +73,7 @@ option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrar
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 
-set(RDK_BOOST_VERSION "1.70.0")
+set(RDK_BOOST_VERSION "1.81.0")
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)

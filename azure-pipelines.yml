@@ -9,11 +9,11 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    python: python=3.8
-    boost_version: 1.71.0
+    python: python=3.9
+    boost_version: 1.81.0
     compiler: gxx_linux-64
     number_of_cores: nproc
-    python_name: python38
+    python_name: python39
     cc: gcc-10
     cxx: g++-10
   steps:
@@ -82,7 +82,7 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    boost_version: 1.71.0
+    boost_version: 1.81.0
     number_of_cores: nproc
     compiler: gxx_linux-64
     cc: gcc-10
@@ -109,7 +109,7 @@ jobs:
   variables:
     boost_version: 1.84.0
     number_of_cores: nproc
-    python_name: python37
+    python_name: python39
     compiler: gxx_linux-64
     cc: gcc-10
     cxx: g++-10
@@ -122,7 +122,7 @@ jobs:
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
-    python_name: python38
+    python_name: python39
   steps:
   - template: .azure-pipelines/vs_build_swig.yml
 
