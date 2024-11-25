@@ -10,7 +10,7 @@ jobs:
     vmImage: ubuntu-20.04
   variables:
     python: python=3.9
-    boost_version: 1.81.0
+    boost_version: 1.82.0
     compiler: gxx_linux-64
     number_of_cores: nproc
     python_name: python39
@@ -82,7 +82,7 @@ jobs:
   pool:
     vmImage: ubuntu-20.04
   variables:
-    boost_version: 1.81.0
+    boost_version: 1.82.0
     number_of_cores: nproc
     compiler: gxx_linux-64
     cc: gcc-10
