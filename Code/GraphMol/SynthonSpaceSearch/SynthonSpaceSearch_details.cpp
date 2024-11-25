@@ -122,13 +122,16 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   maxBondSplits =
       std::min({maxBondSplits, MAX_CONNECTOR_NUM, query.getNumBonds()});
   const auto ringInfo = query.getRingInfo();
+  if (ringInfo->bondRings().empty()) {
+    // Query molecules don't seem to have the ring info generated on creation.
+    MolOps::findSSSR(query);
+  }
   boost::dynamic_bitset<> ringBonds(query.getNumBonds());
   for (const auto &r : ringInfo->bondRings()) {
     for (const auto b : r) {
       ringBonds.set(b);
     }
   }
-
   std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
   // lots of hits but it is necessary if, for example, the query is a match
