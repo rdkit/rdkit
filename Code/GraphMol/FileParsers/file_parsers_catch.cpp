@@ -7155,7 +7155,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit){};
+        newSgroupCount(newSgroupCountInit) {};
 };
 
 void testFragmentation(const FragTest &fragTest) {
@@ -7410,5 +7410,30 @@ TEST_CASE("Github #7306: bad crossed bonds in large aromatic rings") {
     CHECK(ctab.find("CFG=2") == std::string::npos);
     ctab = MolToMolBlock(*m);
     CHECK(ctab.find("2  3\n") == std::string::npos);
+  }
+}
+
+TEST_CASE(
+    "Github #8023: explicit valence for charged organic atoms in mol block") {
+  SECTION("as reported 1") {
+    auto m = "C[NH3+]"_smiles;
+    REQUIRE(m);
+    auto ctab = MolToMolBlock(*m);
+    CHECK(ctab.find("N   0  0  0  0  0  0  0") != std::string::npos);
+    ctab = MolToV3KMolBlock(*m);
+    CHECK(ctab.find("CHG=1") != std::string::npos);
+    CHECK(ctab.find("VAL=4") == std::string::npos);
+  }
+  SECTION("nitro-type") {
+    auto m = "C[N+](=S)[O-]"_smiles;
+    REQUIRE(m);
+    auto ctab = MolToMolBlock(*m);
+    CHECK(ctab.find("N   0  0  0  0  0  0  0") != std::string::npos);
+    CHECK(ctab.find("O   0  0  0  0  0  0  0") != std::string::npos);
+    ctab = MolToV3KMolBlock(*m);
+    CHECK(ctab.find("CHG=1") != std::string::npos);
+    CHECK(ctab.find("VAL=4") == std::string::npos);
+    CHECK(ctab.find("CHG=-1") != std::string::npos);
+    CHECK(ctab.find("VAL=1") == std::string::npos);
   }
 }
