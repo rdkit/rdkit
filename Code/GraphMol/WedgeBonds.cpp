@@ -383,16 +383,6 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
                 return nChiralNbrs[i1] < nChiralNbrs[i2];
               });
   }
-#if 0
-  std::cerr << "  nbrs: ";
-  std::copy(nChiralNbrs.begin(), nChiralNbrs.end(),
-            std::ostream_iterator<int>(std::cerr, " "));
-  std::cerr << std::endl;
-  std::cerr << "  order: ";
-  std::copy(indices.begin(), indices.end(),
-            std::ostream_iterator<int>(std::cerr, " "));
-  std::cerr << std::endl;
-#endif
   std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> wedgeInfo;
   for (auto idx : indices) {
     if (nChiralNbrs[idx] > noNbrs) {

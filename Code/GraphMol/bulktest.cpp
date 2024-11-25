@@ -43,21 +43,6 @@ void test1() {
       if (!m) {
         BOOST_LOG(rdErrorLog) << "failure:" << *smilIt << endl;
       }
-#if 0
-      CHECK_INVARIANT(m,"Smiles parse failed:");
-      canonSmi = MolToSmiles(*m);
-      string pickle;
-      MolPickler::pickleMol(*m,pickle);
-      Mol newM(pickle);
-      string trySmi = MolToSmiles(newM);
-      if(canonSmi!=trySmi){
-	BOOST_LOG(rdErrorLog) << "failure:" << *smilIt << endl;
-	BOOST_LOG(rdErrorLog) << canonSmi << endl;
-	BOOST_LOG(rdErrorLog) << " != " << endl;
-	BOOST_LOG(rdErrorLog) << trySmi << endl;
-      }
-      CHECK_INVARIANT(canonSmi==trySmi,(char *)(string("pickling/depickling failed: ")+trySmi).c_str());
-#endif
       delete m;
     }
   }

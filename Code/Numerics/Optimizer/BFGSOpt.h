@@ -276,14 +276,6 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     // compute hessian*dGrad:
     double fac = 0, fae = 0, sumDGrad = 0, sumXi = 0;
     for (unsigned int i = 0; i < dim; i++) {
-#if 0
-      unsigned int itab = i * dim;
-      hessDGrad[i] = 0.0;
-      for (unsigned int j = 0; j < dim; j++) {
-        hessDGrad[i] += invHessian[itab + j] * dGrad[j];
-      }
-
-#else
       double *ivh = &(invHessian[i * dim]);
       double &hdgradi = hessDGrad[i];
       double *dgj = dGrad.data();
@@ -291,7 +283,6 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       for (unsigned int j = 0; j < dim; ++j, ++ivh, ++dgj) {
         hdgradi += *ivh * *dgj;
       }
-#endif
       fac += dGrad[i] * xi[i];
       fae += dGrad[i] * hessDGrad[i];
       sumDGrad += dGrad[i] * dGrad[i];
@@ -306,14 +297,6 @@ int minimize(unsigned int dim, double *pos, double gradTol,
 
       for (unsigned int i = 0; i < dim; i++) {
         unsigned int itab = i * dim;
-#if 0
-        for (unsigned int j = i; j < dim; j++) {
-          invHessian[itab + j] += fac * xi[i] * xi[j] -
-                                  fad * hessDGrad[i] * hessDGrad[j] +
-                                  fae * dGrad[i] * dGrad[j];
-          invHessian[j * dim + i] = invHessian[itab + j];
-        }
-#else
         double pxi = fac * xi[i], hdgi = fad * hessDGrad[i],
                dgi = fae * dGrad[i];
         double *pxj = &(xi[i]), *hdgj = &(hessDGrad[i]), *dgj = &(dGrad[i]);
@@ -321,25 +304,18 @@ int minimize(unsigned int dim, double *pos, double gradTol,
           invHessian[itab + j] += pxi * *pxj - hdgi * *hdgj + dgi * *dgj;
           invHessian[j * dim + i] = invHessian[itab + j];
         }
-#endif
       }
     }
     // generate the next direction to move:
     for (unsigned int i = 0; i < dim; i++) {
       unsigned int itab = i * dim;
       xi[i] = 0.0;
-#if 0
-      for (unsigned int j = 0; j < dim; j++) {
-        xi[i] -= invHessian[itab + j] * grad[j];
-      }
-#else
       double &pxi = xi[i];
       double *ivh = &(invHessian[itab]);
       double *gj = grad.data();
       for (unsigned int j = 0; j < dim; ++j, ++ivh, ++gj) {
         pxi -= *ivh * *gj;
       }
-#endif
     }
     if (snapshotVect && snapshotFreq && !(iter % snapshotFreq)) {
       RDKit::Snapshot s(boost::shared_array<double>(newPos.release()), fp);

@@ -1689,24 +1689,6 @@ M  END)CTAB"_ctab;
   auto csmiles = MolToSmiles(*mol);
   CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
 
-#if 0
-  // FIX: this test fails. The SMILES generated for this random permutation
-  // has the stereo for one of the double bonds wrong.
-  SECTION("specific random output") {
-    SmilesWriteParams ps;
-    ps.doRandom = true;
-    getRandomGenerator(51)();
-    auto rsmiles = MolToSmiles(*mol, ps);
-    std::unique_ptr<RWMol> mol2(SmilesToMol(rsmiles));
-    REQUIRE(mol2);
-    auto smiles = MolToSmiles(*mol2);
-    if (smiles != csmiles) {
-      std::cerr << smiles << std::endl;
-    }
-    CHECK(smiles == csmiles);
-  }
-#endif
-
   SECTION("bulk random output order") {
     auto csmiles = MolToSmiles(*mol);
     CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
@@ -2986,13 +2968,13 @@ TEST_CASE("Ignore atom map numbers") {
 TEST_CASE("Github #7340", "[Reaction][CX][CXSmiles]") {
   SECTION("Test getCXExtensions with a Vector"){
     // Create the MOL_SPTR_VECT to hold the molecular pointers
-    const auto mols = {  
-      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles, 
-      "C1CCCCC1 |$;label2;$|"_smiles, 
-      "CC(=O)O |$;label1;$|"_smiles, 
-      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles, 
-    }; 
-    
+    const auto mols = {
+      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles,
+      "C1CCCCC1 |$;label2;$|"_smiles,
+      "CC(=O)O |$;label1;$|"_smiles,
+      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles,
+    };
+
     std::vector<ROMol *> mol_vect;
     mol_vect.reserve(mols.size());
     for (const auto& mol : mols) {
@@ -3010,12 +2992,12 @@ TEST_CASE("Github #7340", "[Reaction][CX][CXSmiles]") {
   }
 
   SECTION("Expects an error"){
-    const auto mols = {  
-      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles, 
-      "C1CCCCC1 |$;label2;$|"_smiles, 
+    const auto mols = {
+      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles,
+      "C1CCCCC1 |$;label2;$|"_smiles,
       "CC(=O)O |$;label1;$|"_smiles,
-      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles, 
-    };  
+      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles,
+    };
 
     std::vector<ROMol *> mol_vect;
     mol_vect.reserve(mols.size());
