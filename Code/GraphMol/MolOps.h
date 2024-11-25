@@ -178,15 +178,6 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
     std::map<T, std::unique_ptr<ROMol>> &molFrags, bool sanitizeFrags = true,
     const std::vector<T> *whiteList = nullptr, bool negateList = false);
 
-#if 0
-    //! finds a molecule's minimum spanning tree (MST)
-    /*!
-      \param mol  the molecule of interest
-      \param mst  used to return the MST as a vector of bond indices
-    */
-    RDKIT_GRAPHMOL_EXPORT void findSpanningTree(const ROMol &mol,std::vector<int> &mst);
-#endif
-
 //! \name Dealing with hydrogens
 //{@
 
