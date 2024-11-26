@@ -135,8 +135,6 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
                 const auto rsim = rhs->getProp<double>("Similarity");
                 return lsim > rsim;
               });
-  } else {
-    std::cout << "couldn't sort" << std::endl;
   }
 }
 }  // namespace
