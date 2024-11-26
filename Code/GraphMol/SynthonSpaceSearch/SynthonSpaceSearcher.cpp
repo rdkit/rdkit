@@ -135,6 +135,8 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
                 const auto rsim = rhs->getProp<double>("Similarity");
                 return lsim > rsim;
               });
+  } else {
+    std::cout << "couldn't sort" << std::endl;
   }
 }
 }  // namespace
@@ -170,6 +172,7 @@ void SynthonSpaceSearcher::buildAllHits(
         results.push_back(std::move(prod));
       }
       if (results.size() == static_cast<size_t>(d_params.maxHits)) {
+        sortHits(results);
         return;
       }
       stepper.step();
