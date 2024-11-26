@@ -1104,6 +1104,29 @@ enum class HydrogenType {
   QueryHydrogen
 };
 
+template<class Q>
+std::pair<bool,bool> queryHasHs(Q queryAtom, bool inor=false) {
+  for(auto childit = queryAtom->beginChildren(); childit != queryAtom->endChildren(); ++childit) {
+    QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = *childit;
+    if (query->getDescription() == "AtomOr") {
+      return queryHasHs(query, true);
+    } else if (query->getDescription() == "AtomAtomicNum") {
+      if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
+          !query->getNegation()) {
+        return std::make_pair(true, inor);
+      }
+    } else if (query->getDescription() == "AtomType") {
+       auto val = static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal();
+       // 1001 == aromtic hydrogen (not a thing, really)
+       // 1 == aliphatic hydrogen
+       if ( (val == 1001 || val == 1) && !query->getNegation()) {
+         return std::make_pair(true, inor);
+       }
+     }
+   }
+  return std::make_pair(false, inor);;
+}
+
 HydrogenType isQueryH(const Atom *atom) {
   PRECONDITION(atom, "bogus atom");
   if (atom->getAtomicNum() == 1) {
@@ -1126,44 +1149,26 @@ HydrogenType isQueryH(const Atom *atom) {
     return HydrogenType::NotAHydrogen;
   }
 
-  bool hasHQuery = false, hasOr = false;
   if (atom->hasQuery()) {
+    std::pair<bool, bool> res = std::make_pair(false, false);
     if (atom->getQuery()->getDescription() == "AtomOr") {
-      hasOr = true;
+      res = queryHasHs(atom->getQuery(), true);
+    } else if (atom->getQuery()->getDescription() == "AtomAnd") {
+      res = queryHasHs(atom->getQuery(), false);
     }
-    std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
-        atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
-    // the logic gets too complicated if there's an OR in the children, so
-    // just punt on those (with a warning)
-    while (!(hasHQuery && hasOr) && childStack.size()) {
-      QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
-      childStack.pop_front();
-      if (query->getDescription() == "AtomOr") {
-        hasOr = true;
-      } else if (query->getDescription() == "AtomAtomicNum") {
-        if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
-            !query->getNegation()) {
-          hasHQuery = true;
-        }
-      } else {
-        QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
-        for (child1 = query->beginChildren(); child1 != query->endChildren();
-             ++child1) {
-          childStack.push_back(*child1);
+    if(res.first) { // hasH
+        if(res.second) { // inOr
+          BOOST_LOG(rdWarningLog) << "WARNING: merging explicit H queries involved "
+                                     "in ORs is not supported. This query will not "
+                                     "be merged"
+                                  << std::endl;
+          return HydrogenType::UnMergableQueryHydrogen;
+        } else {
+          return HydrogenType::QueryHydrogen;
         }
       }
     }
-    // std::cerr<<"   !!!1 "<<atom->getIdx()<<" "<<hasHQuery<<"
-    // "<<hasOr<<std::endl;
-    if (hasHQuery && hasOr) {
-      BOOST_LOG(rdWarningLog) << "WARNING: merging explicit H queries involved "
-                                 "in ORs is not supported. This query will not "
-                                 "be merged"
-                              << std::endl;
-      return HydrogenType::UnMergableQueryHydrogen;
-    }
-  }
-  return hasHQuery ? HydrogenType::QueryHydrogen : HydrogenType::NotAHydrogen;
+  return HydrogenType::NotAHydrogen;
 }
 }  // namespace
 
