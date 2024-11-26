@@ -7,10 +7,10 @@ rdkit_library(GraphMol
         Matrices.cpp Chirality.cpp RingInfo.cpp Conformer.cpp
         Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
-              NontetrahedralStereo.cpp Atropisomers.cpp
-              WedgeBonds.cpp MolProps.cpp
+        NontetrahedralStereo.cpp Atropisomers.cpp
+        WedgeBonds.cpp MolProps.cpp
         SHARED
-              LINK_LIBRARIES RDGeometryLib RDGeneral )
+        LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
 if (RDK_USE_URF)
     target_link_libraries(GraphMol PUBLIC ${RDK_URF_LIBS})
@@ -84,6 +84,7 @@ add_subdirectory(FMCS)
 add_subdirectory(MolHash)
 add_subdirectory(MMPA)
 add_subdirectory(RascalMCES)
+add_subdirectory(SynthonSpaceSearch)
 
 add_subdirectory(CIPLabeler)
 add_subdirectory(Deprotect)
@@ -151,7 +152,7 @@ rdkit_test(graphmolIterTest itertest.cpp LINK_LIBRARIES SmilesParse GraphMol)
 
 rdkit_test(hanoiTest hanoitest.cpp LINK_LIBRARIES
         SubstructMatch SmilesParse FileParsers GraphMol
-        )
+)
 
 rdkit_test(graphmolMemTest1 memtest1.cpp LINK_LIBRARIES SmilesParse GraphMol)
 
