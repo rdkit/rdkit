@@ -123,15 +123,11 @@ std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
     if (!a->getAtomicNum() && a->getIsotope()) {
       inFrag[a->getIdx()] = true;
       for (const auto &n1 : mol.atomNeighbors(a)) {
-        if (!inFrag[n1->getIdx()]) {
-          inFrag[n1->getIdx()] = true;
-          for (const auto &n2 : mol.atomNeighbors(n1)) {
-            if (!inFrag[n2->getIdx()]) {
-              inFrag[n2->getIdx()] = true;
-              for (const auto &n3 : mol.atomNeighbors(n2)) {
-                inFrag[n3->getIdx()] = true;
-              }
-            }
+        inFrag[n1->getIdx()] = true;
+        for (const auto &n2 : mol.atomNeighbors(n1)) {
+          inFrag[n2->getIdx()] = true;
+          for (const auto &n3 : mol.atomNeighbors(n2)) {
+            inFrag[n3->getIdx()] = true;
           }
         }
       }
