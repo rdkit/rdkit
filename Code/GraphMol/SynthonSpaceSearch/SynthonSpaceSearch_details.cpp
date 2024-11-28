@@ -122,7 +122,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   maxBondSplits =
       std::min({maxBondSplits, MAX_CONNECTOR_NUM, query.getNumBonds()});
   const auto ringInfo = query.getRingInfo();
-  if (ringInfo->bondRings().empty()) {
+  if (!ringInfo->isInitialized()) {
     // Query molecules don't seem to have the ring info generated on creation.
     MolOps::findSSSR(query);
   }
