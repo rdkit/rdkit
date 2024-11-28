@@ -26,8 +26,6 @@ namespace RDKit {
 //! construct from and write to pickle
 class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
  public:
-  friend double computeL1Norm(const RealValueVect &, const RealValueVect &);
-
   //! initialize with a particular size
   RealValueVect(unsigned int length) : d_length(length) {
     d_data.resize(d_length, 0.0);
