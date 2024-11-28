@@ -36,8 +36,7 @@ permMFromN(unsigned int m, unsigned int n);
 // 2.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxBondSplits);
-// Counts the number of [1*], [2*]...[4*] in the string.
-RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const std::string &smiles);
+// Counts the number of [1*], [2*]...[4*] in the fragment.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &frag);
 }  // namespace details
 }  // namespace SynthonSpaceSearch

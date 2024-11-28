@@ -243,13 +243,6 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   return fragments;
 }
 
-int countConnections(const std::string &smiles) {
-  static const std::regex conns(R"(\[[1-4]\*\])");
-  return static_cast<int>(std::distance(
-      std::sregex_token_iterator(smiles.begin(), smiles.end(), conns),
-      std::sregex_token_iterator()));
-}
-
 int countConnections(const ROMol &mol) {
   int res = 0;
   for (const auto atom : mol.atoms()) {

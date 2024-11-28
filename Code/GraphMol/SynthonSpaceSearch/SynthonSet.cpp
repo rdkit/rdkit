@@ -173,7 +173,7 @@ void SynthonSet::buildConnectorRegions() {
   // one of each.
   for (const auto &synthonSet : d_synthons) {
     d_numConnectors.push_back(
-        details::countConnections(synthonSet.front()->getSmiles()));
+        details::countConnections(*synthonSet.front()->getMol()));
   }
 }
 }  // namespace RDKit::SynthonSpaceSearch
