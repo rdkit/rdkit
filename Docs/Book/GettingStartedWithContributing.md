@@ -40,7 +40,7 @@ RDKit makes use of both the Issues and Discussions functionality on GitHub.
 
 The [Discussions](https://github.com/rdkit/rdkit/discussions) board is used to ask questions about the RDKit and for help if you cannot find the functionality you need, or for debugging errors in your code. If you aren't sure if what you're seeing is the right behavior we would recommend posting this as a discussion first (unless you are 100% certain it is a genuine bug) instead of posting it as an issue. More often than not the unexpected behaviour is an issue from your side - "guilty until proven innocent"!
 
-If you have a suggestion for a new RDKit feature or enhancement starting a discussion first before creating a pull request is a useful exercise. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do. This is especially important for larger contributions, where approval from the maintainers is advised.
+If you have a suggestion for a new RDKit feature or enhancement, starting a discussion before creating a pull request is a useful exercise. Community input on how a feature could work is often helpful and it could be that there's already a way to do what you want to do. This is especially important for larger contributions, where having a discussion with the maintainers before starting serious work is strongly advised.
 
 Discussions should be tagged as follows: <br>
 *Development*: Suggestions for improvement / (potential) bug fixes <br>
@@ -143,7 +143,7 @@ Contributions are made to the RDKit Codebase via GitHub pull requests. A summary
 
   `git clone https://github.com/YOURUSERNAME/rdkit.git`
 
-**Step 3:** Make your changes to your local copy. For development of features we generally recommend working on a [branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-and-deleting-branches-within-your-repository), and regularly **commit** your changes incase you need to undo something you've changed.
+**Step 3:** Make your changes to your local copy. For development of features we recommend working on a [branch](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-and-deleting-branches-within-your-repository), and regularly **commiting** your changes in case you need to undo something you've changed.
 
   ```
   git commit -a -m "update what and how section"
@@ -278,7 +278,7 @@ Examples of how to use RDKit in C++ are found [here](https://github.com/rdkit/rd
 ### Building RDKit for Development
 
 If you also have, or plan to, contribute C++ code to the RDKit, the same set-up can be used for Python contributions (see instructions below). However if you intend only to contribute pure Python, which may be easiest for beginners, [Greg recently created some easier to follow recipes](https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html) to simplify the start-up process. To build the environment you will need:
-- Local installation of git and either [Anaconda](https://www.anaconda.com/download) or [Miniconda](https://docs.anaconda.com/miniconda/miniconda-install/)
+- Local installation of git and either [miniconda](https://docs.anaconda.com/miniconda/miniconda-install/) or [miniforge](https://github.com/conda-forge/miniforge)
 - Clone your fork of the RDKit GitHub repository following the instructions given above
 - Change to the directory containing the local clone and set the RDBASE environment variable:
     ```
@@ -294,12 +294,12 @@ If you also have, or plan to, contribute C++ code to the RDKit, the same set-up 
 - Copy the RDKit binary components from that environment into our local clone of the RDKit repo (remembering to adjust the path if you have changed the Python version):
   - **Mac and Linux**
       ```
-      cd $CONDA_PREFIX/lib/python3.11/site-packages/rdkit
+      cd $CONDA_PREFIX/lib/python3.12/site-packages/rdkit
       rsync -a -m --include '*/' --include='*.so' --include='inchi.py' --exclude='*' . $RDBASE/rdkit
       ```
   - **Windows**
       ```
-      cd $CONDA_PREFIX/lib/python3.11/site-packages/rdkit
+      cd $CONDA_PREFIX/lib/python3.12/site-packages/rdkit
       find . -name '*.pyd' -exec cp --parents \{\} $RDBASE/rdkit \; 
       cp Chem/inchi.py $RDBASE/rdkit/Chem
       ```
@@ -311,7 +311,7 @@ If you also have, or plan to, contribute C++ code to the RDKit, the same set-up 
     ```
 - You can also test this by running the Python tests:
     ```
-    cd $RDBASE/rdkit/Chem
+    cd $RDBASE/rdkit
     python -m pytest
     ```
 - You might also need to set the origin of your fork to keep in sync with any changes made to the main RDKit repository:
@@ -439,7 +439,7 @@ As discussed in the Python section above, there is no official formal style guid
 - Local variable names are usually lower-case, but sometimes use either snake_case or camelCase.
 - We follow the formatting suggestions from [Google's C++ style guidelines](https://google.github.io/styleguide/cppguide.html).
 - Use of an auto-formatter (e.g. [clang-format](http://clang.llvm.org/docs/ClangFormat.html)) is strongly recommended. This can be integrated with editors, but note that at least version 3.8 of clang-format is required as the configuration files are not backwards compatible. There is a .clang-format config file at the root of the repository; code layout should be based on this configuration.
-- The public classes / functions exposed in the API are typically defined in the header file, and the underlying method in the C++ file of the same name.
+- The public classes / functions exposed in the API are typically declared in the header file, and the underlying definition is in the C++ file of the same name.
 - Use multi-line comments in the header file to document code:
     ```c++
     /*!
@@ -451,7 +451,7 @@ We would also recommend checking your code for memory leaks with [Valgrind](http
 
 ### Tests
 
-The RDKit C++ Tests use the [Catch2 framework](https://github.com/catchorg/Catch2). The tests generally are placed in a file named "catch_tests.cpp" in the same directory as the corresponding code. Small changes and bug fixes may only need the addition of a new TEST\_CASE to an existing test set rather than a new file.
+The RDKit C++ Tests use the [Catch2 framework](https://github.com/catchorg/Catch2). The tests generally are placed in a file named "catch_tests.cpp" in the same directory as the corresponding code. Unless you are adding a significant new feature, it's generally best to add the new TEST\_CASE to an existing test set rather than creating an entirely new file.
 
 For example, to test the atom count function:
 
@@ -477,7 +477,7 @@ TEST_CASE("test basic Mol features", "[ROMol]") {
 }
 ```
 
-When adding new tests the CMakeLists.txt file of the respective folder will also need updated to call the test and link the required libraries (e.g. the above example needs the FileParsers library):
+When adding new test file the CMakeLists.txt file of the respective folder will also need updated to call the test and link the required libraries (e.g. the above example needs the FileParsers library):
 
 ```
 rdkit_catch_test(dummyTest catch_dummy.cpp LINK_LIBRARIES FileParsers)
