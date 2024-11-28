@@ -553,3 +553,23 @@ TEST_CASE("Map numbers in connectors") {
     CHECK(hitNames == missNames);
   }
 }
+
+TEST_CASE("Greg Space Failure") {
+  // This failed at one point due to the aliphatic synthon, aromatic
+  // product issue.
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/gregs_space_fail.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+
+  auto queryMol =
+      "Cc1nn(C)c(C)c1-c1nc(Cn2cc(CNC(C)C(=O)NC3CCCC3)nn2)no1"_smarts;
+  REQUIRE(queryMol);
+  SynthonSpaceSearchParams params;
+  params.maxBondSplits = 2;
+
+  auto results = synthonspace.substructureSearch(*queryMol, params);
+  CHECK(results.getHitMolecules().size() == 1);
+}
