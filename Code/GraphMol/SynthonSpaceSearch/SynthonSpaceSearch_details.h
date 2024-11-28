@@ -39,7 +39,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void fixAromaticRingSplits(
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxBondSplits);
 // Counts the number of [1*], [2*]...[4*] in the string.
-RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const std::string &smiles);
+RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &frag);
 
 // Return a bitset for each fragment giving the connector patterns
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<boost::dynamic_bitset<>>
