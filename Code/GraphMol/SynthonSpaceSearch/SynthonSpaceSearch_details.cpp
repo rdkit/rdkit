@@ -249,4 +249,16 @@ int countConnections(const std::string &smiles) {
       std::sregex_token_iterator(smiles.begin(), smiles.end(), conns),
       std::sregex_token_iterator()));
 }
+
+int countConnections(const ROMol &mol) {
+  int res = 0;
+  for (const auto atom : mol.atoms()) {
+    if (!atom->getAtomicNum() && atom->getIsotope() >= 1 &&
+        atom->getIsotope() <= MAX_CONNECTOR_NUM) {
+      ++res;
+    }
+  }
+  return res;
+}
+
 }  // namespace RDKit::SynthonSpaceSearch::details

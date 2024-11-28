@@ -402,7 +402,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpace::searchFragSet(
   std::vector<int> numFragConns;
   numFragConns.reserve(fragSet.size());
   for (const auto &frag : fragSet) {
-    numFragConns.push_back(details::countConnections(MolToSmiles(*frag)));
+    numFragConns.push_back(details::countConnections(*frag));
   }
 
   auto conns = getConnectorPattern(fragSet);
