@@ -192,7 +192,6 @@
 %include "enums.swg"
 %javaconst(1);
 #endif
-%include <RDGeneral/BetterEnums.h>
 %include <GraphMol/MolPickler.h>
 #ifdef SWIGJAVA
 %javaconst(0);

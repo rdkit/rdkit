@@ -42,8 +42,7 @@ class JSMolBase {
   std::string get_molblock() const { return get_molblock("{}"); }
   std::string get_v3Kmolblock(const std::string &details) const;
   std::string get_v3Kmolblock() const { return get_v3Kmolblock("{}"); }
-  std::string get_pickle(const std::string &details) const;
-  std::string get_pickle() const { return get_pickle(""); };
+  std::string get_pickle() const;
 #ifdef RDK_BUILD_INCHI_SUPPORT
   std::string get_inchi(const std::string &options) const;
   std::string get_inchi() const { return get_inchi(""); }

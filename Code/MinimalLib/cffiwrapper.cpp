@@ -84,10 +84,9 @@ char *str_to_c(const char *str) {
 }
 }  // namespace
 
-void mol_to_pkl(
-    const ROMol &mol, char **mol_pkl, size_t *mol_pkl_sz,
-    unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
-                             PicklerOps::PropertyPickleOptions::ComputedProps) {
+void mol_to_pkl(const ROMol &mol, char **mol_pkl, size_t *mol_pkl_sz) {
+  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
+                           PicklerOps::PropertyPickleOptions::ComputedProps;
   std::string pkl;
   MolPickler::pickleMol(mol, pkl, propFlags);
   free(*mol_pkl);
@@ -269,9 +268,9 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz,
     *pkl_sz = 0;
     return nullptr;
   }
-  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
-                           PicklerOps::PropertyPickleOptions::ComputedProps;
-  MinimalLib::updatePropertyPickleOptionsFromJSON(propFlags, details_json);
+  static const unsigned int propFlags =
+      PicklerOps::PropertyPickleOptions::AllProps ^
+      PicklerOps::PropertyPickleOptions::ComputedProps;
   std::string pkl;
   MolPickler::pickleMol(*mol, pkl, propFlags);
   return str_to_c(pkl, pkl_sz);
@@ -871,77 +870,6 @@ extern "C" bool clear_log_buffer(void *log_handle) {
     return 1;
   }
   return 0;
-}
-
-extern "C" short has_prop(const char *mol_pkl, size_t mol_pkl_sz,
-                          const char *key) {
-  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
-  return mol.hasProp(key);
-}
-
-extern "C" char **get_prop_list(const char *mol_pkl, size_t mol_pkl_sz,
-                                short includePrivate, short includeComputed) {
-  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
-  auto propList = mol.getPropList(includePrivate, includeComputed);
-  std::string propNames;
-  for (const auto &prop : propList) {
-    propNames += prop + ",";
-  }
-  auto resLen = sizeof(char *) * (propList.size() + 1);
-  char **res = (char **)malloc(resLen);
-  if (!res) {
-    return nullptr;
-  }
-  memset(res, 0, resLen);
-  for (size_t i = 0; i < propList.size(); ++i) {
-    res[i] = strdup(propList.at(i).c_str());
-    if (!res[i]) {
-      while (i--) {
-        free(res[i]);
-      }
-      return nullptr;
-    }
-  }
-  return res;
-}
-
-extern "C" void set_prop(char **mol_pkl, size_t *mol_pkl_sz, const char *key,
-                         const char *val, short computed) {
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  std::string valAsString(val);
-  mol.setProp(key, valAsString, computed);
-  mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
-}
-
-extern "C" char *get_prop(const char *mol_pkl, size_t mol_pkl_sz,
-                          const char *key) {
-  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
-  if (!mol.hasProp(key)) {
-    return nullptr;
-  }
-  std::string val;
-  mol.getProp(key, val);
-  return strdup(val.c_str());
-}
-
-extern "C" short clear_prop(char **mol_pkl, size_t *mol_pkl_sz,
-                            const char *key) {
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  short res = mol.hasProp(key);
-  if (res) {
-    mol.clearProp(key);
-    mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
-  }
-  return res;
-}
-
-extern "C" void keep_props(char **mol_pkl, size_t *mol_pkl_sz,
-                           const char *details_json) {
-  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
-  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
-                           PicklerOps::PropertyPickleOptions::ComputedProps;
-  MinimalLib::updatePropertyPickleOptionsFromJSON(propFlags, details_json);
-  mol_to_pkl(mol, mol_pkl, mol_pkl_sz, propFlags);
 }
 
 #if (defined(__GNUC__) || defined(__GNUG__))
