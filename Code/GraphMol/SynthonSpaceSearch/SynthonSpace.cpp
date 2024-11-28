@@ -117,7 +117,7 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
     throw std::runtime_error("Couldn't open file " + d_fileName);
   }
   static const std::regex regexws("\\s+");
-  std::regex regexc(",+");
+  static const std::regex regexc(",+");
 
   int format = -1;
   std::string nextLine;
