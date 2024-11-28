@@ -19,7 +19,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
-#include <RDGeneral/BetterEnums.h>
 #include "SanitException.h"
 #include <RDGeneral/FileParseException.h>
 
@@ -308,7 +307,6 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
       false; /**<  remove Hs which are bonded to atoms with specified
                 non-tetrahedral stereochemistry */
 };
-
 //! \overload
 /// modifies the molecule in place
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
@@ -493,8 +491,7 @@ RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
 //! \name Sanitization
 /// {
 
-// clang-format off
-BETTER_ENUM(SanitizeFlags, unsigned int,
+typedef enum {
   SANITIZE_NONE = 0x0,
   SANITIZE_CLEANUP = 0x1,
   SANITIZE_PROPERTIES = 0x2,
@@ -509,8 +506,7 @@ BETTER_ENUM(SanitizeFlags, unsigned int,
   SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
   SANITIZE_CLEANUPATROPISOMERS = 0x800,
   SANITIZE_ALL = 0xFFFFFFF
-);
-// clang-format on
+} SanitizeFlags;
 
 //! \brief carries out a collection of tasks for cleaning up a molecule and
 //! ensuring that it makes "chemical sense"
@@ -547,9 +543,9 @@ BETTER_ENUM(SanitizeFlags, unsigned int,
       this function to a ROMol, so that new atoms and bonds cannot be added to
       the molecule and screw up the sanitizing that has been done here
 */
-RDKIT_GRAPHMOL_EXPORT void sanitizeMol(
-    RWMol &mol, unsigned int &operationThatFailed,
-    unsigned int sanitizeOps = SanitizeFlags::SANITIZE_ALL);
+RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol,
+                                       unsigned int &operationThatFailed,
+                                       unsigned int sanitizeOps = SANITIZE_ALL);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
 
@@ -577,7 +573,7 @@ RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT
 std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
-    const ROMol &mol, unsigned int sanitizeOps = SanitizeFlags::SANITIZE_ALL);
+    const ROMol &mol, unsigned int sanitizeOps = SANITIZE_ALL);
 
 //! Possible aromaticity models
 /*!

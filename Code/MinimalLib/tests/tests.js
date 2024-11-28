@@ -1982,22 +1982,16 @@ function test_hs_in_place() {
     }
     {
         var mol = RDKitModule.get_mol("C([H])([H])([H])C([H])([H])[H]", JSON.stringify({ removeHs: false }));
-        assert(mol.get_smiles() === '[H]C([H])([H])C([H])([H])[H]');
         assert(!mol.has_coords());
         var descH = JSON.parse(mol.get_descriptors());
         assert(`${descH.chi0v}` === '1');
         assert(`${descH.chi1v}` === '0.25');
-        // '' will use removeAllHs, while '{}' will use removeHs with default parameters
-        ['', '{}'].forEach((details) => {
-            var molCopy = mol.copy();
-            molCopy.remove_hs_in_place(details);
-            assert(!molCopy.has_coords());
-            assert(molCopy.get_smiles() === 'CC');
-            var descNoH = JSON.parse(molCopy.get_descriptors());
-            assert(`${descNoH.chi0v}` === '2');
-            assert(`${descNoH.chi1v}` === '1');
-            molCopy.delete();
-        });
+        mol.remove_hs_in_place();
+        assert(!mol.has_coords());
+        assert(mol.get_smiles() === 'CC');
+        var descNoH = JSON.parse(mol.get_descriptors());
+        assert(`${descNoH.chi0v}` === '2');
+        assert(`${descNoH.chi1v}` === '1');
         mol.delete();
     }
     {
@@ -2681,29 +2675,6 @@ function test_partial_sanitization() {
     }
     assert(exceptionThrown);
     mol2.delete();
-    let mb;
-    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: false}));
-    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
-    assert(mb.includes('  1  2  4  0'));
-    assert(mb.includes('  7  8  2  0') && mb.includes('  7  9  2  0'));
-    assert(!mb.includes('M  CHG'));
-    mol1.delete();
-    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: {SANITIZE_CLEANUP: true}}));
-    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
-    assert(mb.includes('  1  2  4  0'));
-    assert((mb.includes('  7  8  1  0') && mb.includes('  7  9  2  0'))
-        || (mb.includes('  7  8  2  0') && mb.includes('  7  9  1  0')));
-    assert(mb.includes('M  CHG  2'));
-    mol1.delete();
-    mol1 = RDKitModule.get_mol('c1ccccc1N(=O)=O', JSON.stringify({sanitize: {
-        SANITIZE_CLEANUP: true, SANITIZE_KEKULIZE: true
-    }}));
-    mb = mol1.get_molblock(JSON.stringify({kekulize: false}));
-    assert(!mb.includes('  1  2  4  0'));
-    assert((mb.includes('  7  8  1  0') && mb.includes('  7  9  2  0'))
-        || (mb.includes('  7  8  2  0') && mb.includes('  7  9  1  0')));
-    assert(mb.includes('M  CHG  2'));
-    mol1.delete();
 }
 
 function test_capture_logs() {
@@ -3450,21 +3421,6 @@ function test_pickle() {
     molFromPkl.delete();
 }
 
-function test_remove_hs_details() {
-    let mol;
-    let smi;
-    mol = RDKitModule.get_mol('C([H])([H])([H])C([2H])([H])C([H])([H])[H]', JSON.stringify({removeHs: false}));
-    smi = mol.get_smiles();
-    assert(smi === '[H]C([H])([H])C([H])([2H])C([H])([H])[H]');
-    assert(mol.remove_hs_in_place(JSON.stringify({removeIsotopes: false})));
-    smi = mol.get_smiles();
-    assert(smi === '[2H]C(C)C');
-    assert(mol.remove_hs_in_place(JSON.stringify({removeIsotopes: true})));
-    smi = mol.get_smiles();
-    assert(smi === 'CCC');
-    mol.delete();
-}
-
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3554,7 +3510,6 @@ initRDKitModule().then(function(instance) {
     test_bw_palette();
     test_custom_palette();
     test_pickle();
-    test_remove_hs_details();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")

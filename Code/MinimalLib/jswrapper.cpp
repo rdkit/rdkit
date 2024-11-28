@@ -586,16 +586,8 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                     &JSMolBase::condense_abbreviations))
       .function("add_hs", &JSMolBase::add_hs)
       .function("add_hs_in_place", &JSMolBase::add_hs_in_place)
-      .function("remove_hs",
-                select_overload<std::string(const std::string &) const>(
-                    &JSMolBase::remove_hs))
-      .function("remove_hs",
-                select_overload<std::string() const>(&JSMolBase::remove_hs))
-      .function("remove_hs_in_place",
-                select_overload<bool(const std::string &)>(
-                    &JSMolBase::remove_hs_in_place))
-      .function("remove_hs_in_place",
-                select_overload<bool()>(&JSMolBase::remove_hs_in_place))
+      .function("remove_hs", &JSMolBase::remove_hs)
+      .function("remove_hs_in_place", &JSMolBase::remove_hs_in_place)
       .function("normalize_depiction",
                 select_overload<double()>(&JSMolBase::normalize_depiction))
       .function("normalize_depiction",
