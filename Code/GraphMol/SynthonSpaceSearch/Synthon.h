@@ -38,9 +38,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   const std::unique_ptr<ROMol> &getSearchMol() const;
   const std::unique_ptr<ExplicitBitVect> &getPattFP() const;
   const std::vector<std::shared_ptr<ROMol>> &getConnRegions() const;
-  // This moves the molecule into dp_SearchMol, so mol will be empty at the
-  // end.
-  void setSearchMol(std::unique_ptr<RWMol> &mol);
+  void setSearchMol(std::unique_ptr<RWMol> mol);
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;

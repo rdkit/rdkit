@@ -35,6 +35,7 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
     const double similarityCutoff, const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
+  synthonsToUse.reserve(reaction->getSynthons().size());
   for (const auto &synthonSet : reaction->getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
   }
@@ -63,10 +64,11 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet) const {
   std::vector<SynthonSpaceHitSet> results;
-  unsigned int otf;
   std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs;
+  fragFPs.reserve(fragSet.size());
   for (auto &frag : fragSet) {
     // For the fingerprints, ring info is required.
+    unsigned int otf;
     sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                 MolOps::SANITIZE_SYMMRINGS);
     fragFPs.emplace_back(d_fpGen.getFingerprint(*frag));

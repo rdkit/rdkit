@@ -66,8 +66,10 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                             // controls how many loops it makes to try and get
                             // the hits before giving up.
   double similarityCutoff{0.5};  // Similarity cutoff for returning hits by
-                                 // fingerprint similarity.  At present the fp
-                                 // is hard-coded to be Morgan, bits, radius=2.
+                                 // fingerprint similarity.  The default is
+                                 // appropriate for a Morgan fingerprint of
+                                 // radius=2, it may need changing for other
+                                 // fingerprint types.
   double fragSimilarityAdjuster{
       0.1};  // Similarity values for fragments are generally low
              // due to low bit densities.  For the fragment

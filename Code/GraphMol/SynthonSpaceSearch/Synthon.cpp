@@ -89,7 +89,7 @@ const std::vector<std::shared_ptr<ROMol>> &Synthon::getConnRegions() const {
   return d_connRegions;
 }
 
-void Synthon::setSearchMol(std::unique_ptr<RWMol> &mol) {
+void Synthon::setSearchMol(std::unique_ptr<RWMol> mol) {
   dp_searchMol = std::move(mol);
   finishInitialization();
 }

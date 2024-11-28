@@ -256,6 +256,9 @@ void SynthonSpace::summarise(std::ostream &os) const {
 }
 
 void SynthonSpace::writeEnumeratedFile(const std::string &outFilename) const {
+  BOOST_LOG(rdWarningLog) << "Writing the enumerated file may take quite"
+                          << " some time and result in a large file."
+                          << std::endl;
   std::ofstream os(outFilename);
   for (const auto &[fst, snd] : d_reactions) {
     snd->enumerateToStream(os);
@@ -272,6 +275,8 @@ bool SynthonSpace::hasFingerprints() const {
 
 void SynthonSpace::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
+  BOOST_LOG(rdWarningLog) << "Building the fingerprints may take some time."
+                          << std::endl;
   if (const auto fpType = fpGen.infoString();
       fpType != d_fpType || !hasFingerprints()) {
     d_fpType = fpType;

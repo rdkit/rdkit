@@ -135,7 +135,6 @@ void SynthonSet::enumerateToStream(std::ostream &os) const {
     numSynthons.push_back(synths.size());
   }
   details::Stepper stepper(numSynthons);
-  std::vector<size_t> theseSynthNums(numSynthons.size(), 0);
   while (stepper.d_currState[0] != numSynthons[0]) {
     auto prod = buildProduct(stepper.d_currState);
     auto prodName = buildProductName(stepper.d_currState);
@@ -189,6 +188,8 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
 // transfer information for bonds created by molzip
 void fixSynthonAtomAndBond(const Atom *sampleMolAtom, const Bond *bond,
                            RWMol &synthCp) {
+  PRECONDITION(sampleMolAtom, "No atom passed in.");
+  PRECONDITION(bond, "No bond passed in.");
   const auto synthAt =
       synthCp.getAtomWithIdx(sampleMolAtom->getProp<int>("idx"));
   for (const auto nbor : synthCp.atomNeighbors(synthAt)) {
@@ -232,7 +233,7 @@ void SynthonSet::transferProductBondsToSynthons() {
     }
     auto sampleMols = buildSampleMolecules(synthonMolCopies, synthSetNum);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
-      std::unique_ptr<RWMol> synthCp =
+      auto synthCp =
           std::make_unique<RWMol>(*d_synthons[synthSetNum][j]->getOrigMol());
       // transfer the aromaticity of the atom in the sample molecule to the
       // corresponding atom in the synthon copy
@@ -266,7 +267,7 @@ void SynthonSet::transferProductBondsToSynthons() {
           }
         }
       }
-      d_synthons[synthSetNum][j]->setSearchMol(synthCp);
+      d_synthons[synthSetNum][j]->setSearchMol(std::move(synthCp));
     }
   }
 }
@@ -346,9 +347,10 @@ void SynthonSet::buildSynthonFingerprints(
 
   d_synthonFPs.clear();
 
+  d_synthonFPs.reserve(d_synthons.size());
   for (size_t synthSetNum = 0; synthSetNum < d_synthons.size(); ++synthSetNum) {
     d_synthonFPs.emplace_back();
-    d_synthonFPs[synthSetNum].reserve(d_synthons[synthSetNum].size());
+    d_synthonFPs.back().reserve(d_synthons[synthSetNum].size());
     for (const auto &synth : d_synthons[synthSetNum]) {
       d_synthonFPs[synthSetNum].emplace_back(
           fpGen.getFingerprint(*synth->getSearchMol()));
