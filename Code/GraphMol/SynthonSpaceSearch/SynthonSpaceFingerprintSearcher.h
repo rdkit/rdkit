@@ -11,11 +11,10 @@
 // This file declares a concrete class derived from SynthonSpaceSearcher
 // that does fingerprint similarity searching of the SynthonSpace.
 
-#include <RDGeneral/export.h>
-
 #ifndef SYNTHONSPACEFINGERPRINTSEARCHER_H
 #define SYNTHONSPACEFINGERPRINTSEARCHER_H
 
+#include <RDGeneral/export.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
 
 namespace RDKit::SynthonSpaceSearch {

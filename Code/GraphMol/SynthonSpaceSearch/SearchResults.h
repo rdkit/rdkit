@@ -7,10 +7,11 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
+
 #ifndef RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
 #define RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
 
+#include <RDGeneral/export.h>
 #include <GraphMol/ROMol.h>
 
 namespace RDKit::SynthonSpaceSearch {

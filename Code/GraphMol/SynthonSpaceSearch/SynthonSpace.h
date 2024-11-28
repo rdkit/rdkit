@@ -7,9 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
 #ifndef RDKIT_SYNTHONSPACE_H
 #define RDKIT_SYNTHONSPACE_H
+
 /*! \file SynthonSpace.h
 
   \brief contains a class for searching combinatorial libraries in
@@ -25,6 +25,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include <RDGeneral/export.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
@@ -195,7 +196,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // Writes the enumerated library to file in SMILES format (1 compound
   // per line, SMILES name
   /*!
-  @param outFileName: name of the file to write
+  @param outFilename: name of the file to write
    */
   void writeEnumeratedFile(const std::string &outFilename) const;
 

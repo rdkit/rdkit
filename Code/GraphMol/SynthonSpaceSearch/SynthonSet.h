@@ -7,7 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/export.h>
 
 #ifndef RDKIT_SYNTHONSET_H
 #define RDKIT_SYNTHONSET_H
@@ -18,7 +17,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 
-#include <DataStructs/ExplicitBitVect.h>
+#include <RDGeneral/export.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
