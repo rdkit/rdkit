@@ -16,29 +16,10 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 #include <GraphMol/MolDraw2D/MolDraw2DJS.h>
-#if defined(RDK_BUILD_MINIMAL_LIB_MOLZIP) && \
-    defined(RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP)
-#include <GraphMol/ChemTransforms/MolFragmenter.h>
-#include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
-#endif
+
 using namespace RDKit;
 
 namespace {
-const emscripten::val JSMolObj() {
-  static const auto JSMOL = emscripten::val::module_property("Mol");
-  return JSMOL;
-}
-
-const emscripten::val JSMolListObj() {
-  static const auto JSMOLLIST = emscripten::val::module_property("MolList");
-  return JSMOLLIST;
-}
-
-const emscripten::val ObjectObj() {
-  static const auto OBJECT = emscripten::val::global("Object");
-  return OBJECT;
-}
-
 class JSDrawerFromDetails : public MinimalLib::DrawerFromDetails {
  public:
   JSDrawerFromDetails(const emscripten::val &ctx, int w = -1, int h = -1,
@@ -151,66 +132,6 @@ JSMolBase *get_mcs_as_mol_no_details(const JSMolList &mols) {
 std::string get_mcs_as_smarts_no_details(const JSMolList &mols) {
   return get_mcs_as_smarts(mols, std::string());
 }
-#endif
-
-#ifdef RDK_BUILD_MINIMAL_LIB_MOLZIP
-JSMolBase *molzip_no_details_helper(const JSMolBase &a, const JSMolBase &b) {
-  return molzip(a, b, std::string());
-}
-
-#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
-JSMolBase *molzip_rgd_row_helper(const emscripten::val &rgdRow,
-                                 const std::string &details_json) {
-  auto rlabelsAsVal = ObjectObj().call<emscripten::val>("keys", rgdRow);
-  auto rlabels = emscripten::vecFromJSArray<std::string>(rlabelsAsVal);
-  if (rlabels.empty()) {
-    return nullptr;
-  }
-  bool dynamicCastOk = true;
-  std::map<std::string, ROMOL_SPTR> molzipRow;
-  for (const auto &rlabel : rlabels) {
-    auto jsMolAsVal = rgdRow[rlabel];
-    if (!jsMolAsVal.instanceof (JSMolObj())) {
-      return nullptr;
-    }
-    auto jsMolShared = dynamic_cast<JSMolShared *>(
-        jsMolAsVal.as<JSMolBase *>(emscripten::allow_raw_pointers()));
-    if (!jsMolShared) {
-      dynamicCastOk = false;
-      return nullptr;
-    }
-    molzipRow.emplace(rlabel, jsMolShared->get_sptr());
-  }
-  MolzipParams params;
-  parseMolzipParametersJSON(params, details_json.c_str());
-  auto res = RDKit::molzip(molzipRow, params);
-  return new JSMol(new RWMol(*res));
-}
-
-JSMolBase *molzip_no_details_rgd_row_helper(const emscripten::val &rgdRow) {
-  return molzip_rgd_row_helper(rgdRow, std::string());
-}
-
-JSMolBase *molzip_2params_helper(const emscripten::val &param1,
-                                 const emscripten::val &param2) {
-  JSMolBase *res = nullptr;
-  static const auto JSMOL = emscripten::val::module_property("Mol");
-  if (param1.instanceof (JSMolObj()) && param2.instanceof (JSMolObj())) {
-    const auto aJsMolPtr =
-        param1.as<JSMolBase *>(emscripten::allow_raw_pointers());
-    const auto bJsMolPtr =
-        param2.as<JSMolBase *>(emscripten::allow_raw_pointers());
-    if (aJsMolPtr && bJsMolPtr) {
-      res = molzip_no_details_helper(*aJsMolPtr, *bJsMolPtr);
-    }
-  } else if (!param1.instanceof
-             (JSMolObj()) && param2.typeOf().as<std::string>() == "string") {
-    auto details_json = param2.as<std::string>();
-    res = molzip_rgd_row_helper(param1, details_json);
-  }
-  return res;
-}
-#endif
 #endif
 
 emscripten::val binary_string_to_uint8array(const std::string &pkl) {
@@ -419,14 +340,16 @@ emscripten::val get_mmpa_frags_helper(const JSMolBase &self,
 JSRGroupDecomposition *get_rgd_helper(
     const emscripten::val &singleOrMultipleCores,
     const std::string &details_json) {
+  static const auto JSMOL = emscripten::val::module_property("Mol");
+  static const auto JSMOLLIST = emscripten::val::module_property("MolList");
   JSRGroupDecomposition *res = nullptr;
-  if (singleOrMultipleCores.instanceof (JSMolObj())) {
+  if (singleOrMultipleCores.instanceof (JSMOL)) {
     const auto jsMolPtr =
         singleOrMultipleCores.as<JSMolBase *>(emscripten::allow_raw_pointers());
     if (jsMolPtr) {
       res = new JSRGroupDecomposition(*jsMolPtr, details_json);
     }
-  } else if (singleOrMultipleCores.instanceof (JSMolListObj())) {
+  } else if (singleOrMultipleCores.instanceof (JSMOLLIST)) {
     const auto jsMolListPtr =
         singleOrMultipleCores.as<JSMolList *>(emscripten::allow_raw_pointers());
     if (jsMolListPtr) {
@@ -831,14 +754,5 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   // https://github.com/emscripten-core/emscripten/issues/11274
   function("get_rgd", &get_rgd_helper, allow_raw_pointers());
   function("get_rgd", &get_rgd_no_details_helper, allow_raw_pointers());
-#endif
-#if defined(RDK_BUILD_MINIMAL_LIB_MOLZIP) && defined(__EMSCRIPTEN__)
-  function("molzip", &::molzip, allow_raw_pointers());
-#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
-  function("molzip", &molzip_2params_helper, allow_raw_pointers());
-  function("molzip", &molzip_no_details_rgd_row_helper, allow_raw_pointers());
-#else
-  function("molzip", &molzip_no_details_helper, allow_raw_pointers());
-#endif
 #endif
 }

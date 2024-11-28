@@ -13,7 +13,6 @@
 
 #include <istream>
 #include <GraphMol/ROMol.h>
-#include <RDGeneral/BetterEnums.h>
 
 namespace RDKit {
 namespace MolFragmenter {
@@ -104,15 +103,13 @@ RDKIT_CHEMTRANSFORMS_EXPORT void constructBRICSBondTypes(
 
 // n.b. AtomProperty must resolve to an unsigned integer value on an atom
 // property
-// clang-format off
-BETTER_ENUM_CLASS(MolzipLabel, unsigned int,
-    AtomMapNumber,
-    Isotope,
-    FragmentOnBonds,
-    AtomType,
-    AtomProperty
-);
-// clang-format on
+enum class MolzipLabel {
+  AtomMapNumber,
+  Isotope,
+  FragmentOnBonds,
+  AtomType,
+  AtomProperty
+};
 
 struct RDKIT_CHEMTRANSFORMS_EXPORT MolzipParams {
   MolzipLabel label = MolzipLabel::AtomMapNumber;
@@ -160,6 +157,5 @@ RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
 RDKIT_CHEMTRANSFORMS_EXPORT std::unique_ptr<ROMol> molzip(
     const std::map<std::string, ROMOL_SPTR> &row,
     const MolzipParams &params = MolzipParams());
-
 }  // namespace RDKit
 #endif

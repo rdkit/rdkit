@@ -34,7 +34,6 @@
 %{
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
-#include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
 #include <GraphMol/Bond.h>
 // Fixes annoying compilation namespace issue
 typedef RDKit::MatchVectType MatchVectType;
@@ -121,6 +120,4 @@ RDKit::ROMol * new_molzip(
 
 %newobject fragmentOnBRICSBonds;
 %template(UIntMolMap) std::map<unsigned int,boost::shared_ptr<RDKit::ROMol> >;
-%include <RDGeneral/BetterEnums.h>
 %include <GraphMol/ChemTransforms/MolFragmenter.h>
-%include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
