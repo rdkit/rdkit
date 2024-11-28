@@ -109,9 +109,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   std::int64_t getNumProducts() const;
 
-  [[nodiscard]] std::string getSynthonFingerprintType() const {
-    return d_fpType;
-  }
+  std::string getSynthonFingerprintType() const { return d_fpType; }
 
   // Perform a substructure search with the given query molecule across
   // the synthonspace library.  Duplicate SMILES strings produced by different

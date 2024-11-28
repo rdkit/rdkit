@@ -37,22 +37,18 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   SynthonSet(const SynthonSet &rhs) = delete;
   SynthonSet(SynthonSet &&rhs) = delete;
 
-  [[nodiscard]] const std::string &getId() const { return d_id; }
-  [[nodiscard]] const std::vector<std::vector<std::unique_ptr<Synthon>>> &
-  getSynthons() const {
+  const std::string &getId() const { return d_id; }
+  const std::vector<std::vector<std::unique_ptr<Synthon>>> &getSynthons()
+      const {
     return d_synthons;
   }
-  [[nodiscard]] const boost::dynamic_bitset<> &getConnectors() const {
-    return d_connectors;
-  }
-  [[nodiscard]] const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions()
-      const;
+  const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
+  const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions() const;
 
-  [[nodiscard]] const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
-  [[nodiscard]] const std::vector<int> &getNumConnectors() const;
-  [[nodiscard]] bool hasFingerprints() const;
-  [[nodiscard]] const std::vector<
-      std::vector<std::unique_ptr<ExplicitBitVect>>> &
+  const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
+  const std::vector<int> &getNumConnectors() const;
+  bool hasFingerprints() const;
+  const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
   getSynthonFPs() const;
 
   // Writes to/reads from a binary stream.
