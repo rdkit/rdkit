@@ -54,7 +54,7 @@ std::set<std::string> bruteForceSearch(
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen;
   fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   const auto queryFP =
-      std::make_unique<ExplicitBitVect>(*fpGen->getFingerprint(queryMol));
+      std::unique_ptr<ExplicitBitVect>(fpGen->getFingerprint(queryMol));
   std::set<std::string> fullSmi;
   std::set<std::string> names;
   for (auto &it : fps) {
