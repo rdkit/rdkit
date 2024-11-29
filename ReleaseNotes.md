@@ -1,3 +1,115 @@
+# Release_2024.09.3
+(Changes relative to Release_2024.09.2)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+François Bérenger, Eric Boittier, Jessica Braun, Michael Cho, David Cosgrove,
+Hussein Faara, Richard Gowers, Tad Hurst, Eisuke Kawashima, Brian Kelley, Alan
+Kerstjens, Daniel McNeela, Rocco Moretti, Dan Nealschneider, Jin Pan, Patrick
+Penner, Ricardo Rodriguez, Vincent F. Scalfani, Evan Senter, Julius Seumer, Efim
+Shats, Scott Smith, Paolo Tosco, Ivan Tubert-Brohman, Fabio Urbina, Franz Waibl,
+Nic Zonta, SPKorhonen, YOUNG-JAME, esiaero, Polydynamical, sirbiscuit,
+marcobICR, jasondbiggs, nbehrnd
+
+
+## New Features and Enhancements:
+  - Update reaction fingerprints to use generators
+ (github issue #7521 from vfscalfani)
+  - Allow inclusion of molecule names in ScaffoldNetwork
+ (github pull #7956 from PatrickPenner)
+  - SynthonSpace Search
+ (github pull #7978 from DavidACosgrove)
+  - Update SMILES parsing syntax error to include bad token position 
+ (github pull #7979 from whosayn)
+  - Expose tautomer scoring functions to python
+ (github pull #7994 from bp-kelley)
+  - Explicit valence for charged organic atoms when creating a MolBlock
+ (github issue #8023 from greglandrum)
+  - improve defaults for the shape-based alignment
+ (github pull #8029 from greglandrum)
+  - Synthon fingerprint search
+ (github pull #8025 from greglandrum)
+
+## Documentation:
+  - expanded documentation in Chem and AllChem
+ (github pull #8004 from greglandrum)
+  - Mol to smiles docs
+ (github pull #8005 from DavidACosgrove)
+  - fixing the doc string in the shape alignment code
+ (github pull #8040 from brje01)
+  - Improve doc string for ParseAbbreviations in python wrapper.
+ (github pull #8049 from DavidACosgrove)
+
+## Bug Fixes:
+  - Online Documentation: `Mol.GetAtoms` and `Mol.GetBonds` miss signatures
+ (github issue #7527 from e-kwsm)
+  - Chem.MolToSmiles(mol, rootedAtAtom=pos), when the parameter rootedAtAtom is greater than or equal to 20, the range error is reported.
+ (github issue #7572 from YOUNG-JAME)
+  - MergeQueryHs fails to detect explicit H involved in OR queries where there's more than 2 options in the query
+ (github issue #7687 from ricrogz)
+  - Fix 4.3.0--4.4.0 sql upgrade script
+ (github pull #7774 from esiaero)
+  - Catch exceptions in MultithreadedMolSupplier callbacks
+ (github pull #7810 from i-tub)
+  - HasPropWithValueQueryBase::getPair() may leak the value of RDValue.
+ (github issue #7865 from ricrogz)
+  - Use .dylib on macOS for PostgreSQL 16+
+ (github pull #7869 from cho-m)
+  - Fix for trimethylcyclohexane error
+ (github pull #7949 from tadhurst-cdd)
+  - Fix incorrect CIP values for some aromatic atropisomers
+ (github pull #7957 from tadhurst-cdd)
+  - Need to reserve space before assignment
+ (github pull #7964 from bp-kelley)
+  - Fixes a regression introduced in #7582 which made all SWIG enums become type-unsafe
+ (github pull #7972 from ptosco)
+  - Morgan fingerprints with chirality distinguish chiral atoms too early
+ (github pull #7972 from greglandrum)
+  - Wrong SMARTS pattern in O-benzyl deprotection reaction
+ (github issue #7989 from marcobICR)
+  - Fix for kekuleAtrop wedge error
+ (github pull #7992 from tadhurst-cdd)
+  - RMS pruning in conformer generation misses conformers above the threshold
+ (github issue #8001 from fwaibl)
+  - Fix potential division by zero in UFF TorsionAngle
+ (github pull #8007 from ricrogz)
+  - Fix probe molecule transformation for ShapeAlign
+ (github pull #8016 from greglandrum)
+  - DistanceConstraintContrib is not exposed to SWIG wrappers anymore
+ (github issue #8019 from ptosco)
+
+## Cleanup work:
+  - ... and more mem errors fixed
+ (github pull #7924 from ricrogz)
+  - SA Score updates
+ (github pull #7928 from DavidACosgrove)
+  - Remove deprecation warnings by switching MinimalLib to fingerprint generators
+ (github pull #7938 from ptosco)
+  - One final round of mem errors
+ (github pull #7943 from ricrogz)
+  - Make sure that FreeSASA can be built as DLL on Windows
+ (github pull #7985 from ptosco)
+  - Remove unused code from GraphMol/SmilesParse
+ (github pull #7996 from whosayn)
+  - Throw when attempting to normalize a Zero RDGeom::Point
+ (github pull #8008 from ricrogz)
+  - Avoid division by zero in DrawMol
+ (github pull #8011 from ricrogz)
+  - remove no-op macros and dead code (pt 1)
+ (github pull #8012 from whosayn)
+  - Avoid division by zero in AlignPoints
+ (github pull #8013 from ricrogz)
+  - Fix shifting of a potentially negative number
+ (github pull #8014 from ricrogz)
+  - Fix some minor issues reported by ubsan and the compiler
+ (github pull #8015 from ricrogz)
+  - Remove explicit default constructor from Compute2DCoordParameters
+ (github pull #8046 from d-b-w)
+
+
 # Release_2024.09.2
 (Changes relative to Release_2024.09.1)
 
@@ -11,6 +123,7 @@ Monat, Dan Nealschneider, Timothy Palpant, Yakov Pechersky, Julianus Pfeuffer,
 Ricardo Rodriguez, Fio Ruggiu, Eva Snow, Paolo Tosco, Kollin Trujillo,
 UENO, M., bzoracler, esiaero
 
+## Backwards incompatible changes
 - HasPropWithValueQueryBase used RDKit::Dict::Pair to return data used for serializing object in a molecule  pickle.  This has been changed to RDKit::PairHolder which automatically manages memory.
 
 ## New Features and Enhancements:
