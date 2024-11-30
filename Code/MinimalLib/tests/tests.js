@@ -3402,6 +3402,98 @@ function test_custom_palette() {
     mol.delete();
 }
 
+function test_get_mol_remove_hs() {
+    const mbIn = `
+  MJ240300                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.4955    1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2099    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2099   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4955   -0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7810   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7810    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0666    1.1152    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9244   -0.5348    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  1  0  0  0  0
+  3  8  1  0  0  0  0
+M  ISO  1   7   2
+M  END
+`;
+    const noDetails = {};
+    const removeHsTrue = { removeHs: true };
+    const removeHsFalse = { removeHs: false };
+    const deuteriumCoords = '  -0.0666    1.1152    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0';
+    const hydrogenCoords = '  -2.9244   -0.5348    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0';
+    let mol;
+    let mbOut;
+    let smiOut;
+    let jb;
+    let smi;
+    [noDetails, removeHsFalse].forEach((details) => {
+        mol = RDKitModule.get_mol(mbIn, JSON.stringify(details));
+        assert(mol);
+        mbOut = mol.get_molblock();
+        assert(mbOut);
+        assert(mbOut.includes(deuteriumCoords));
+        assert(mbOut.includes(hydrogenCoords));
+        if (!jb) {
+            jb = mol.get_json();
+            assert(jb);
+        }
+        if (!smi) {
+            smi = mol.get_smiles();
+            assert(smi);
+        }
+        mol.delete();
+    });
+    mol = RDKitModule.get_mol(mbIn, JSON.stringify(removeHsTrue));
+    assert(mol);
+    mbOut = mol.get_molblock();
+    assert(mbOut);
+    assert(mbOut.includes(deuteriumCoords));
+    assert(!mbOut.includes(hydrogenCoords));
+    mol.delete();
+    [noDetails, removeHsFalse].forEach((details) => {
+        mol = RDKitModule.get_mol(mbIn, JSON.stringify(details));
+        assert(mol);
+        mbOut = mol.get_molblock();
+        assert(mbOut);
+        assert(mbOut.includes(deuteriumCoords));
+        assert(mbOut.includes(hydrogenCoords));
+        mol.delete();
+    });
+    mol = RDKitModule.get_mol(jb, JSON.stringify(removeHsTrue));
+    assert(mol);
+    mbOut = mol.get_molblock();
+    assert(mbOut);
+    assert(mbOut.includes(deuteriumCoords));
+    assert(!mbOut.includes(hydrogenCoords));
+    mol.delete();
+    [noDetails, removeHsTrue].forEach((details) => {
+        mol = RDKitModule.get_mol(smi, JSON.stringify(details));
+        assert(mol);
+        smiOut = mol.get_smiles();
+        assert(smiOut);
+        assert(smiOut.includes('[2H]'));
+        assert(!smiOut.includes('[H]'));
+        mol.delete();
+    });
+    mol = RDKitModule.get_mol(smi, JSON.stringify(removeHsFalse));
+    assert(mol);
+    smiOut = mol.get_smiles();
+    assert(smiOut);
+    assert(smiOut.includes('[2H]'));
+    assert(smiOut.includes('[H]'));
+    mol.delete();
+}
+
 initRDKitModule().then(function(instance) {
     var done = {};
     const waitAllTestsFinished = () => {
@@ -3490,6 +3582,7 @@ initRDKitModule().then(function(instance) {
     }
     test_bw_palette();
     test_custom_palette();
+    test_get_mol_remove_hs();
 
     waitAllTestsFinished().then(() =>
         console.log("Tests finished successfully")

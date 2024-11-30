@@ -770,6 +770,20 @@ void test_modifications() {
   assert(!strstr(ctab, " H "));
   free(ctab);
 
+  mpkl = get_mol("C([H])([H])([H])C([2H])([H])C([H])([H])[H]", &mpkl_size,
+                 "{\"removeHs\":false}");
+  smi = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smi, "[H]C([H])([H])C([H])([2H])C([H])([H])[H]"));
+  free(smi);
+  assert(!remove_hs(NULL, NULL, NULL));
+  assert(remove_hs(&mpkl, &mpkl_size, "{\"removeIsotopes\":false}"));
+  smi = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smi, "[2H]C(C)C"));
+  free(smi);
+  assert(remove_hs(&mpkl, &mpkl_size, "{\"removeIsotopes\":true}"));
+  smi = get_smiles(mpkl, mpkl_size, NULL);
+  assert(!strcmp(smi, "CCC"));
+  free(smi);
   free(mpkl);
   mpkl = NULL;
   printf("  done\n");
@@ -2168,6 +2182,33 @@ void test_partial_sanitization() {
   free(fp);
 #endif
   free(mpkl);
+
+  mpkl = get_mol("c1ccccc1N(=O)=O", &mpkl_size, "{\"sanitize\":false}");
+  mb = get_molblock(mpkl, mpkl_size, "{\"kekulize\":false}");
+  assert(strstr(mb, "  1  2  4  0"));
+  assert(strstr(mb, "  7  8  2  0") && strstr(mb, "  7  9  2  0"));
+  assert(!strstr(mb, "M  CHG"));
+  free(mb);
+  free(mpkl);
+  mpkl = get_mol("c1ccccc1N(=O)=O", &mpkl_size,
+                 "{\"sanitize\":{\"SANITIZE_CLEANUP\":true}}");
+  mb = get_molblock(mpkl, mpkl_size, "{\"kekulize\":false}");
+  assert(strstr(mb, "  1  2  4  0"));
+  assert((strstr(mb, "  7  8  1  0") && strstr(mb, "  7  9  2  0")) ||
+         (strstr(mb, "  7  8  2  0") && strstr(mb, "  7  9  1  0")));
+  assert(strstr(mb, "M  CHG  2"));
+  free(mb);
+  free(mpkl);
+  mpkl = get_mol(
+      "c1ccccc1N(=O)=O", &mpkl_size,
+      "{\"sanitize\":{\"SANITIZE_CLEANUP\":true,\"SANITIZE_KEKULIZE\":true}}");
+  mb = get_molblock(mpkl, mpkl_size, "{\"kekulize\":false}");
+  assert(!strstr(mb, "  1  2  4  0"));
+  assert((strstr(mb, "  7  8  1  0") && strstr(mb, "  7  9  2  0")) ||
+         (strstr(mb, "  7  8  2  0") && strstr(mb, "  7  9  1  0")));
+  assert(strstr(mb, "M  CHG  2"));
+  free(mb);
+  free(mpkl);
 }
 
 void test_capture_logs() {
@@ -2765,6 +2806,112 @@ void test_custom_palette() {
   free(mpkl);
 }
 
+void test_get_mol_remove_hs() {
+  printf("--------------------------\n");
+  printf("  get_mol removeHs parameter\n");
+  const char *mb_in =
+      "\n\
+  MJ240300                      \n\
+\n\
+  8  8  0  0  0  0  0  0  0  0999 V2000\n\
+   -1.4955    1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.2099    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.2099   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -1.4955   -0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.7810   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.7810    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -0.0666    1.1152    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n\
+   -2.9244   -0.5348    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0\n\
+  1  2  2  0  0  0  0\n\
+  2  3  1  0  0  0  0\n\
+  3  4  2  0  0  0  0\n\
+  4  5  1  0  0  0  0\n\
+  5  6  2  0  0  0  0\n\
+  6  1  1  0  0  0  0\n\
+  6  7  1  0  0  0  0\n\
+  3  8  1  0  0  0  0\n\
+M  ISO  1   7   2\n\
+M  END\n\
+";
+  const char *no_details = "";
+  const char *removehs_true = "{\"removeHs\":true}";
+  const char *removehs_false = "{\"removeHs\":false}";
+  const char *deuterium_coords =
+      "  -0.0666    1.1152    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0";
+  const char *hydrogen_coords =
+      "  -2.9244   -0.5348    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0";
+  char *mpkl;
+  size_t mpkl_size;
+  char *mb_out;
+  char *smi_out;
+  char *jb = NULL;
+  char *smi = NULL;
+  for (int i = 0; i < 2; ++i) {
+    mpkl = get_mol(mb_in, &mpkl_size, i ? removehs_false : no_details);
+    assert(mpkl && mpkl_size);
+    mb_out = get_molblock(mpkl, mpkl_size, NULL);
+    assert(mb_out);
+    assert(strstr(mb_out, deuterium_coords));
+    assert(strstr(mb_out, hydrogen_coords));
+    free(mb_out);
+    if (!smi) {
+      smi = get_smiles(mpkl, mpkl_size, NULL);
+      assert(smi);
+    }
+    if (!jb) {
+      jb = get_json(mpkl, mpkl_size, NULL);
+      assert(jb);
+    }
+    free(mpkl);
+  }
+  mpkl = get_mol(mb_in, &mpkl_size, removehs_true);
+  assert(mpkl && mpkl_size);
+  mb_out = get_molblock(mpkl, mpkl_size, NULL);
+  assert(mb_out);
+  assert(strstr(mb_out, deuterium_coords));
+  assert(!strstr(mb_out, hydrogen_coords));
+  free(mb_out);
+  free(mpkl);
+  for (int i = 0; i < 2; ++i) {
+    mpkl = get_mol(jb, &mpkl_size, i ? removehs_false : no_details);
+    assert(mpkl && mpkl_size);
+    mb_out = get_molblock(mpkl, mpkl_size, NULL);
+    assert(mb_out);
+    assert(strstr(mb_out, deuterium_coords));
+    assert(strstr(mb_out, hydrogen_coords));
+    free(mb_out);
+    free(mpkl);
+  }
+  mpkl = get_mol(jb, &mpkl_size, removehs_true);
+  assert(mpkl && mpkl_size);
+  mb_out = get_molblock(mpkl, mpkl_size, NULL);
+  assert(mb_out);
+  assert(strstr(mb_out, deuterium_coords));
+  assert(!strstr(mb_out, hydrogen_coords));
+  free(mb_out);
+  free(jb);
+  free(mpkl);
+  for (int i = 0; i < 2; ++i) {
+    mpkl = get_mol(smi, &mpkl_size, i ? removehs_true : no_details);
+    assert(mpkl && mpkl_size);
+    smi_out = get_smiles(mpkl, mpkl_size, NULL);
+    assert(smi_out);
+    assert(strstr(smi_out, "[2H]"));
+    assert(!strstr(smi_out, "[H]"));
+    free(smi_out);
+    free(mpkl);
+  }
+  mpkl = get_mol(smi, &mpkl_size, removehs_false);
+  assert(mpkl && mpkl_size);
+  smi_out = get_smiles(mpkl, mpkl_size, NULL);
+  assert(smi_out);
+  assert(strstr(smi_out, "[2H]"));
+  assert(strstr(smi_out, "[H]"));
+  free(smi_out);
+  free(smi);
+  free(mpkl);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -2802,5 +2949,6 @@ int main() {
   test_multi_highlights();
   test_bw_palette();
   test_custom_palette();
+  test_get_mol_remove_hs();
   return 0;
 }
