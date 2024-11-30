@@ -104,9 +104,18 @@ static constexpr int d_defaultHeight = 200;
 
 RWMol *mol_from_input(const std::string &input,
                       const std::string &details_json = "") {
+  auto haveMolBlock = false;
+  auto haveRDKitJson = false;
+  if (input.find("M  END") != std::string::npos) {
+    haveMolBlock = true;
+  } else if (input.find("commonchem") != std::string::npos ||
+             input.find("rdkitjson") != std::string::npos) {
+    haveRDKitJson = true;
+  }
+  auto haveSmiles = (!haveMolBlock && !haveRDKitJson);
   bool sanitize = true;
   bool kekulize = true;
-  bool removeHs = true;
+  bool removeHs = haveSmiles;
   bool mergeQueryHs = false;
   bool setAromaticity = true;
   bool fastFindRings = true;
@@ -134,12 +143,14 @@ RWMol *mol_from_input(const std::string &input,
     LPT_OPT_GET(makeDummiesQueries);
   }
   try {
-    if (input.find("M  END") != std::string::npos) {
+    // We set default sanitization to false
+    // as we want to enable partial sanitization
+    // if required by the user through JSON details
+    if (haveMolBlock) {
       bool strictParsing = false;
       LPT_OPT_GET(strictParsing);
-      res = MolBlockToMol(input, false, removeHs, strictParsing);
-    } else if (input.find("commonchem") != std::string::npos ||
-               input.find("rdkitjson") != std::string::npos) {
+      res = MolBlockToMol(input, false, false, strictParsing);
+    } else if (haveRDKitJson) {
       auto ps = MolInterchange::defaultJSONParseParameters;
       LPT_OPT_GET2(ps, setAromaticBonds);
       LPT_OPT_GET2(ps, strictValenceCheck);
@@ -163,6 +174,10 @@ RWMol *mol_from_input(const std::string &input,
   }
   if (res) {
     try {
+      if (removeHs && !haveSmiles) {
+        MolOps::RemoveHsParameters removeHsParams;
+        MolOps::removeHs(*res, removeHsParams, false);
+      }
       if (sanitize) {
         unsigned int failedOp;
         unsigned int sanitizeOps = MolOps::SANITIZE_ALL;

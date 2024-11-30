@@ -423,3 +423,38 @@ TEST_CASE("github #5923: add more error checking to substance groups") {
     }
   }
 }
+
+TEST_CASE(
+    "github #8031: make sure floating point coords are not incorrectly truncated") {
+  auto mb = R"CTAB(
+  MJ240300                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.4955    1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2099    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2099   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4955   -0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7810   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7810    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0666    1.1152    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9244   -0.5348    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  1  0  0  0  0
+  3  8  1  0  0  0  0
+M  ISO  1   7   2
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(mb, true, false));
+  REQUIRE(mol);
+  std::string pickle;
+  MolPickler::pickleMol(*mol, pickle);
+  ROMol molFromPickle(pickle);
+  auto json = MolInterchange::MolToJSONData(molFromPickle);
+  CHECK(json.find("-0.5347") == std::string::npos);
+  CHECK(json.find("-0.5348") != std::string::npos);
+}
