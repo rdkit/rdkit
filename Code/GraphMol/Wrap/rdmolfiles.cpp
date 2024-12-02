@@ -99,7 +99,7 @@ ROMol *MolFromSmarts(python::object ismarts, bool mergeHs,
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromTPLFile(const char *filename, bool sanitize = true,
+ROMol *MolFromTPLFile(const std::string &filename, bool sanitize = true,
                       bool skipFirstConf = false) {
   RWMol *newM;
   try {
@@ -126,7 +126,7 @@ ROMol *MolFromTPLBlock(python::object itplBlock, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFileHelper(const char *molFilename, bool sanitize,
+ROMol *MolFromMolFileHelper(const std::string &molFilename, bool sanitize,
                             bool removeHs, bool strictParsing) {
   RWMol *newM = nullptr;
   try {
@@ -156,7 +156,7 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
+ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize, bool removeHs,
                       bool strictParsing) {
   RWMol *newM = nullptr;
   try {
@@ -171,7 +171,7 @@ ROMol *MolFromMolFile(const char *molFilename, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMrvFile(const char *molFilename, bool sanitize, bool removeHs) {
+ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize, bool removeHs) {
   RWMol *newM = nullptr;
   try {
     newM = MrvFileToMol(molFilename, sanitize, removeHs);
@@ -226,7 +226,7 @@ ROMol *MolFromSVG(python::object imolBlock, bool sanitize, bool removeHs) {
   return static_cast<ROMol *>(res);
 }
 
-ROMol *MolFromMol2File(const char *molFilename, bool sanitize = true,
+ROMol *MolFromMol2File(const std::string &molFilename, bool sanitize = true,
                        bool removeHs = true, bool cleanupSubstructures = true) {
   RWMol *newM;
   try {
@@ -255,7 +255,7 @@ ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromPDBFile(const char *filename, bool sanitize, bool removeHs,
+ROMol *MolFromPDBFile(const std::string &filename, bool sanitize, bool removeHs,
                       unsigned int flavor, bool proximityBonding) {
   RWMol *newM = nullptr;
   try {
@@ -506,7 +506,7 @@ python::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
   return pyres;
 }
 
-ROMol *MolFromPNGFile(const char *filename, python::object pyParams) {
+ROMol *MolFromPNGFile(const std::string &filename, python::object pyParams) {
   SmilesParserParams params;
   if (pyParams) {
     params = python::extract<SmilesParserParams>(pyParams);
@@ -604,7 +604,7 @@ python::object addMetadataToPNGStringHelper(python::dict pymetadata,
   return retval;
 }
 
-python::object MolsFromPNGFile(const char *filename, const std::string &tag,
+python::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
                                python::object pyParams) {
   SmilesParserParams params;
   if (pyParams) {
@@ -645,7 +645,7 @@ python::tuple MolsFromPNGString(python::object png, const std::string &tag,
   return python::tuple(res);
 }
 
-python::object MolsFromCDXMLFile(const char *filename, bool sanitize,
+python::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
                                  bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {

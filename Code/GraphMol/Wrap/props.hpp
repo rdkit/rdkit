@@ -167,11 +167,11 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
 }
 
 template <class RDOb, class T>
-T GetProp(const RDOb *ob, const char *key) {
+T GetProp(const RDOb *ob, const std::string &key) {
   T res;
   try {
     if (!ob->getPropIfPresent(key, res)) {
-      PyErr_SetString(PyExc_KeyError, key);
+      PyErr_SetString(PyExc_KeyError, key.c_str());
       throw python::error_already_set();
     }
     return res;
@@ -203,7 +203,7 @@ template <class RDOb>
 python::object GetPyProp(const RDOb *obj, const std::string &key,
                          bool autoConvert) {
   if (!autoConvert) {
-    return python::object(GetProp<RDOb, std::string>(obj, key.c_str()));
+    return python::object(GetProp<RDOb, std::string>(obj, key));
   } else {
     auto &data = obj->getDict().getData();
     for (auto &rdvalue : data) {
@@ -283,20 +283,20 @@ python::object GetPyProp(const RDOb *obj, const std::string &key,
 }
 
 template <class RDOb>
-int MolHasProp(const RDOb &mol, const char *key) {
+int MolHasProp(const RDOb &mol, const std::string &key) {
   int res = mol.hasProp(key);
   // std::cout << "key: "  << key << ": " << res << std::endl;
   return res;
 }
 
 template <class RDOb, class T>
-void MolSetProp(const RDOb &mol, const char *key, const T &val,
+void MolSetProp(const RDOb &mol, const std::string &key, const T &val,
                 bool computed = false) {
   mol.setProp(key, val, computed);
 }
 
 template <class RDOb>
-void MolClearProp(const RDOb &mol, const char *key) {
+void MolClearProp(const RDOb &mol, const std::string &key) {
   if (!mol.hasProp(key)) {
     return;
   }
