@@ -7691,7 +7691,6 @@ CAS<~>
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 16)
     smi = Chem.MolToCXSmiles(m1)
-    print('smi: ', smi)
     print('inWedges: ', inNoWedges)
 
     self.assertTrue(smi == inNoWedges)
