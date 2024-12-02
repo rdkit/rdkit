@@ -104,7 +104,11 @@ std::string AtomGetSmarts(const Atom *atom, bool doKekule, bool allHsExplicit,
 }
 
 void SetAtomMonomerInfo(Atom *atom, const AtomMonomerInfo *info) {
-  atom->setMonomerInfo(info->copy());
+  if(!info) {
+    atom->setMonomerInfo(nullptr);
+  } else {
+    atom->setMonomerInfo(info->copy());
+  }
 }
 
 AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
@@ -112,6 +116,12 @@ AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
 }
 
 void AtomSetPDBResidueInfo(Atom *atom, const AtomMonomerInfo *info) {
+  if(!info) {
+    // This clears out the monomer info
+    atom->setMonomerInfo(nullptr);
+    return;
+  }
+  
   if (info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     throw_value_error("MonomerInfo is not a PDB Residue");
   }
