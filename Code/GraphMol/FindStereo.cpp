@@ -225,7 +225,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
           UNDER_CONSTRUCTION("unrecognized bond stereo type");
       }
     } else {
-      sinfo.specified = Chirality::StereoSpecified::Unspecified;
+      UNDER_CONSTRUCTION("unrecognized bond stereo type");
     }
   } else if (bond->getBondType() == Bond::BondType::SINGLE &&
              (bond->getStereo() == Bond::BondStereo::STEREOATROPCCW ||
@@ -272,7 +272,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
         UNDER_CONSTRUCTION("unrecognized bond stereo type");
     }
   } else {
-    UNDER_CONSTRUCTION("unsupported bond type in getStereoInfo()");
+    sinfo.type = StereoType::Unspecified;
   }
 
   return sinfo;
@@ -850,6 +850,10 @@ bool updateBonds(ROMol &mol, const std::vector<unsigned int> &aranks,
     auto bidx = bond->getIdx();
     if (knownBonds[bidx] || possibleBonds[bidx]) {
       auto sinfo = detail::getStereoInfo(bond);
+      if (sinfo.type == Chirality::StereoType::Unspecified) {
+        continue;  // not a double bond nor an atropisomer bond
+      }
+
       ASSERT_INVARIANT(sinfo.controllingAtoms.size() == 4,
                        "bad controlling atoms size");
 
