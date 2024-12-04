@@ -225,7 +225,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
           UNDER_CONSTRUCTION("unrecognized bond stereo type");
       }
     } else {
-      sinfo.specified = Chirality::StereoSpecified::Unspecified;
+      UNDER_CONSTRUCTION("unrecognized bond stereo type");
     }
   } else if (bond->getBondType() == Bond::BondType::SINGLE &&
              (bond->getStereo() == Bond::BondStereo::STEREOATROPCCW ||
