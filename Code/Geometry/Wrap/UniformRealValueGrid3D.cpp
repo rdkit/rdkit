@@ -23,17 +23,16 @@ using namespace RDKit;
 namespace RDGeom {
 struct urvg3d_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const UniformRealValueGrid3D &self) {
-    std::string res = self.toString();
-    python::object retval = python::object(
+    auto res = self.toString();
+    python::object retval(
         python::handle<>(PyBytes_FromStringAndSize(res.c_str(), res.length())));
     return python::make_tuple(retval);
   }
 };
 
-UniformRealValueGrid3D *makeUniformRealValueGrid3D(double dimX, double dimY,
-                                                   double dimZ,
-                                                   double spacing = 0.5,
-                                                   const Point3D *offSet = 0) {
+UniformRealValueGrid3D *makeUniformRealValueGrid3D(
+    double dimX, double dimY, double dimZ, double spacing = 0.5,
+    const Point3D *offSet = nullptr) {
   UniformRealValueGrid3D *grd =
       new UniformRealValueGrid3D(dimX, dimY, dimZ, spacing, offSet);
   return grd;
@@ -59,11 +58,7 @@ python::tuple getGridIndicesWrap(const UniformRealValueGrid3D &grid,
                                  unsigned int idx) {
   unsigned int xi, yi, zi;
   grid.getGridIndices(idx, xi, yi, zi);
-  python::list pyRes;
-  pyRes.append(xi);
-  pyRes.append(yi);
-  pyRes.append(zi);
-  return python::tuple(pyRes);
+  return python::make_tuple(xi, yi, zi);
 }
 
 std::string urvGridClassDoc =
@@ -73,10 +68,17 @@ std::string urvGridClassDoc =
 struct urvGrid3D_wrapper {
   static void wrap() {
     python::class_<UniformRealValueGrid3D>(
-        "UniformRealValueGrid3D_", urvGridClassDoc.c_str(),
-        python::init<std::string>("pickle constructor"))
-        .def(python::init<>("Default Constructor"))
+        "UniformRealValueGrid3D", urvGridClassDoc.c_str(),
+        python::init<std::string>("Pickle constructor"))
+        .def(python::init<>("Default constructor"))
         .def(python::init<RDGeom::UniformRealValueGrid3D>("Copy constructor"))
+        .def("__init__",
+             python::make_constructor(
+                 makeUniformRealValueGrid3D, python::default_call_policies(),
+                 (python::arg("dimX"), python::arg("dimY"), python::arg("dimZ"),
+                  python::arg("spacing") = 0.5,
+                  python::arg("offSet") = python::object())),
+             "Constructor")
         .def("GetGridPointIndex", &UniformRealValueGrid3D::getGridPointIndex,
              "Get the index to the grid point closest to the specified point")
         .def(
@@ -119,13 +121,6 @@ struct urvGrid3D_wrapper {
         .def(python::self += python::self)
         .def(python::self -= python::self)
         .def_pickle(RDGeom::urvg3d_pickle_suite());
-
-    python::def("UniformRealValueGrid3D", makeUniformRealValueGrid3D,
-                (python::arg("dimX"), python::arg("dimY"), python::arg("dimZ"),
-                 python::arg("spacing") = 0.5,
-                 python::arg("offSet") = (const Point3D *)(0)),
-                "Faking the constructor",
-                python::return_value_policy<python::manage_new_object>());
   }
 };
 }  // namespace RDGeom

@@ -686,6 +686,7 @@ class TestCase(unittest.TestCase):
     grd1.SetVal(50, 37.37)
     grd2.SetVal(50, 1.03)
     grd3 = copy.deepcopy(grd2)
+    grd4 = geom.UniformRealValueGrid3D(grd2)
 
     grd1 |= grd2
     self.assertTrue(feq(grd1.GetVal(50), 37.37))
@@ -702,6 +703,14 @@ class TestCase(unittest.TestCase):
     grd3 &= grd1
     self.assertTrue(feq(grd1.GetVal(50), 37.37))
     self.assertTrue(feq(grd3.GetVal(50), 1.03))
+
+    grd2 &= grd4
+    self.assertTrue(feq(grd2.GetVal(50), 1.03))
+    self.assertTrue(feq(grd4.GetVal(50), 1.03))
+
+    grd4 &= grd1
+    self.assertTrue(feq(grd1.GetVal(50), 37.37))
+    self.assertTrue(feq(grd4.GetVal(50), 1.03))
 
     grd1 += grd2
     self.assertTrue(feq(grd1.GetVal(50), 38.40))

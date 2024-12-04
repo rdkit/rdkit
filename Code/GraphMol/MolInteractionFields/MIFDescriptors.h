@@ -32,9 +32,9 @@ namespace RDMIF {
 //! \brief constructs a UniformRealValueGrid3D which fits to the molecule mol
 /*!
  \returns a pointer to a UniformRealValueGrid which has a spacing of \c spacing
- (default = 0.5 Angstrom) and a spatial extent of conformer \c confId
- (default=-1) of molecule \c mol plus a defined margin \c margin on each side
- (default = 5.0 Angstrom).
+ (default: 0.5 Angstrom) and a spatial extent of conformer \c confId
+ (default: -1) of molecule \c mol plus a defined margin \c margin on each side
+ (default: 5.0 Angstrom).
 
  \param mol		Molecule for which the grid is constructed
  \param confId		Id of Conformer which is used
@@ -64,9 +64,12 @@ template <typename T>
 void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
                           double thres = -1.0) {
   const RDGeom::Point3D &offSet = grd.getOffset();
-  double oX = offSet.x, oY = offSet.y, z = offSet.z;
-  double x = oX, y = oY;
-  double spacing = grd.getSpacing();
+  auto x = offSet.x;
+  auto y = offSet.y;
+  auto z = offSet.z;
+  auto oX = x;
+  auto oY = y;
+  auto spacing = grd.getSpacing();
   if (thres < 0) {
     thres = spacing * grd.getSize();
   }
@@ -75,9 +78,9 @@ void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
   unsigned int id = 0;
   auto &data = grd.getData();
 
-  for (unsigned int idZ = 0; idZ < grd.getNumZ(); idZ++) {
-    for (unsigned int idY = 0; idY < grd.getNumY(); idY++) {
-      for (unsigned int idX = 0; idX < grd.getNumX(); idX++) {
+  for (unsigned int idZ = 0; idZ < grd.getNumZ(); ++idZ) {
+    for (unsigned int idY = 0; idY < grd.getNumY(); ++idY) {
+      for (unsigned int idX = 0; idX < grd.getNumX(); ++idX) {
         data[id++] = functor(x, y, z, thres);
         x += spacing;
       }
@@ -89,33 +92,20 @@ void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
   }
 }
 
-//! \brief class for calculation of distance to closest atom of \c mol from grid
-//! point \c pt
-class RDKIT_MOLINTERACTIONFIELDS_EXPORT DistanceToClosestAtom {
- public:
-  //! construct a distanceToClosestAtom from a ROMol
-  DistanceToClosestAtom(const RDKit::ROMol &mol, int confId = -1);
-
-  //! Calculates the closest distance, \returns distance in Angstrom
-  double operator()(double x, double y, double z, double thres);
-
- private:
-  unsigned int d_nAtoms;
-  std::vector<double> d_pos;
-};
-
 //! \brief class for calculation of electrostatic interaction (Coulomb energy)
-//! between probe and molecule in vaccuum (no dielectric)
+//! between probe and molecule in vacuum (no dielectric)
 /*
  d_nAtoms     No of atoms in molecule
  d_softcore   true if softcore interaction is used, else minimum cutoff distance
- is used d_probe      charge of probe [e] d_absVal     if true, absolute values
- of interactions are calculated d_alpha      softcore interaction parameter
- [A^2] d_cutoff     squared minimum cutoff distance [A^2] d_charges    vector of
- doubles with all partial charges of the atoms in a molecule [e] d_pos vector of
- Point3Ds with all positions of the atoms in a molecule [A] d_prefactor
- prefactor taking into account the geometric factors,natural constants and
- conversion of units
+ is used
+ d_probe      charge of probe [e]
+ d_absVal     if true, absolute values of interactions are calculated
+ d_alpha      softcore interaction parameter [A^2]
+ d_cutoff     squared minimum cutoff distance [A^2]
+ d_charges    vector of doubles with all partial charges of the atoms in a
+ molecule [e] d_pos        vector of doubles with all positions of the atoms in
+ a molecule [A] d_prefactor  prefactor taking into account the geometric
+ factors,natural constants and conversion of units
  */
 class RDKIT_MOLINTERACTIONFIELDS_EXPORT Coulomb {
  public:
@@ -126,18 +116,17 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT Coulomb {
   /*!
    \param charges     vector of charges [e]
    \param pos         vector of postions [A]
-   \param probecharge charge of probe [e] (default: 1.0)
+   \param probeCharge charge of probe [e] (default: 1.0)
    \param absVal      if true, negative (favored) values of interactions are
    calculated (default: false)
-   \param alpha       softcore interaction parameter
-   [A^2], if zero, a minimum cutoff distance is used (default=0.0)
-   \param cutoff
-   minimum cutoff distance [A] (default:1.0)
+   \param alpha       softcore interaction parameter [A^2]; if zero,
+   a minimum cutoff distance is used (default: 0.0)
+   \param cutoff      minimum cutoff distance [A] (default: 1.0)
 
    */
   Coulomb(const std::vector<double> &charges,
           const std::vector<RDGeom::Point3D> &positions,
-          double probecharge = 1.0, bool absVal = false, double alpha = 0.0,
+          double probeCharge = 1.0, bool absVal = false, double alpha = 0.0,
           double cutoff = 1.0);
 
   //! \brief constructs Coulomb object from a molecule object
@@ -149,16 +138,15 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT Coulomb {
    (default=-1)
    \param absVal      if true, absolute values of interactions are
    calculated (default: false)
-   \param probecharge charge of probe [e]
-   (default: 1.0)
+   \param probeCharge charge of probe [e] (default: 1.0)
    \param prop	     property key for retrieving partial charges
-   of atoms (default="_GasteigerCharge")
+   of atoms (default: "_GasteigerCharge")
    \param alpha       softcore interaction parameter [A^2], if zero, a minimum
-   cutoff distance is used (default=0.0)
-   \param cutoff      minimum cutoff distance [A] (default:1.0)
+   cutoff distance is used (default: 0.0)
+   \param cutoff      minimum cutoff distance [A] (default: 1.0)
 
    */
-  Coulomb(const RDKit::ROMol &mol, int confId = -1, double probecharge = 1.0,
+  Coulomb(const RDKit::ROMol &mol, int confId = -1, double probeCharge = 1.0,
           bool absVal = false, const std::string &prop = "_GasteigerCharge",
           double alpha = 0.0, double cutoff = 1.0);
 
@@ -196,16 +184,21 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT Coulomb {
  member variables:
  d_nAtoms:     No of atoms in molecule
  d_softcore:   true if softcore interaction is used, else minimum cutoff
- distance is used d_dielectric: factor of dielectric constants d_probe: charge
- of probe [e] d_absVal:     if true, negative (favored) values of interactions
- are calculated (default: false) d_epsilon:    relative permittivity of solvent
+ distance is used
+ d_dielectric: factor of dielectric constants
+ d_probe:      charge of probe [e]
+ d_absVal:     if true, negative (favored) values of interactions
+ are calculated (default: false)
+ d_epsilon:    relative permittivity of solvent
  d_xi:         relative permittivity of solute
  d_alpha:      softcore interaction parameter [A^2]
  d_cutoff:     squared minimum cutoff distance [A^2]
- d_charges:    vector of doubles with all partial charges of the atoms in a
- molecule [e] d_pos:        vector of Point3Ds with all positions of the atoms
- in a molecule [A] d_prefactor:  prefactor taking into account the geometric
- factors,natural constants and conversion of units
+ d_charges:    vector of doubles with all partial charges of the atoms
+ in a molecule [e]
+ d_pos:        vector of Point3Ds with all positions of the atoms
+ in a molecule [A]
+ d_prefactor:  prefactor taking into account the geometric factors,
+ natural constants and conversion of units
  */
 class RDKIT_MOLINTERACTIONFIELDS_EXPORT CoulombDielectric {
  public:
@@ -226,19 +219,19 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT CoulombDielectric {
   /*!
    \param charges     vector of charges [e]
    \param pos         vector of postions [A]
-   \param probecharge charge of probe [e] (default: 1.0)
+   \param probeCharge charge of probe [e] (default: 1.0)
    \param absVal      if true, negative (favored) values of interactions are
    calculated (default: false)
-   \param alpha     softcore interaction parameter
-   [A^2], if zero, a minimum cutoff distance is used (default=0.0)
-   \param cutoff    minimum cutoff distance [A] (default:1.0)
-   \param epsilon   relative permittivity of solvent (default=80.0)
-   \param xi        relative  permittivity of solute (default=4.0)
+   \param alpha       softcore interaction parameter [A^2]; if zero,
+   a minimum cutoff distance is used (default: 0.0)
+   \param cutoff      minimum cutoff distance [A] (default: 1.0)
+   \param epsilon     relative permittivity of solvent (default: 80.0)
+   \param xi          relative permittivity of solute (default: 4.0)
 
    */
   CoulombDielectric(const std::vector<double> &charges,
                     const std::vector<RDGeom::Point3D> &positions,
-                    double probecharge = 1.0, bool absVal = false,
+                    double probeCharge = 1.0, bool absVal = false,
                     double alpha = 0.0, double cutoff = 1.0,
                     double epsilon = 80.0, double xi = 4.0);
 
@@ -249,19 +242,19 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT CoulombDielectric {
    \param mol         molecule object
    \param confId      conformation id which is used to get positions of atoms
    (default=-1)
-   \param probecharge charge of probe [e] (default: 1.0)
+   \param probeCharge charge of probe [e] (default: 1.0)
    \param absVal      if true, negative (favored) values of interactions are
    calculated (default: false)
    \param prop	       property key for retrieving partial charges of atoms
-   (default="_GasteigerCharge")
+   (default: "_GasteigerCharge")
    \param alpha       softcore interaction parameter [A^2], if zero, a minimum
-   cutoff distance is used (default=0.0)
-   \param cutoff      minimum cutoff distance [A] (default:1.0)
-   \param epsilon     relative permittivity of solvent (default=80.0)
-   \param xi          relative permittivity of solute (default=4.0)
+   cutoff distance is used (default: 0.0)
+   \param cutoff      minimum cutoff distance [A] (default: 1.0)
+   \param epsilon     relative permittivity of solvent (default: 80.0)
+   \param xi          relative permittivity of solute (default: 4.0)
    */
   CoulombDielectric(const RDKit::ROMol &mol, int confId = -1,
-                    double probecharge = 1.0, bool absVal = false,
+                    double probeCharge = 1.0, bool absVal = false,
                     const std::string &prop = "_GasteigerCharge",
                     double alpha = 0.0, double cutoff = 1.0,
                     double epsilon = 80.0, double xi = 4.0);
@@ -287,24 +280,25 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT CoulombDielectric {
   std::vector<double> d_dists;
 };
 
-//! \brief class for calculation of Van der Waals interaction between probe and
-//! molecule at gridpoint \c pt
+//! \brief Abstract class for calculation of Van der Waals interaction between
+//! probe and molecule at gridpoint \c pt
 /*
- Either the MMFF94 or the UFF VdW term can be calculated with a defined probe
- atom and molecule. d_cutoff:     minimum cutoff distance [A] d_nAtoms:     No
- of atoms in molecule d_R_star_ij   vector of Lennard Jones parameters for every
- interaction (vdW-radii) d_wellDepth   vector of Lennard Jones parameters for
- every interaction (well depths) d_pos	        vector of positions of atoms in
- molecule
+ * Either the MMFF94 or the UFF VdW term can be calculated with a defined probe
+ * atom and molecule.
+ * d_cutoff: minimum cutoff distance [A]
+ * d_nAtoms: No of atoms in molecule
+ * d_R_star_ij: vector of Lennard Jones parameters for every
+ * interaction (vdW-radii)
+ * d_wellDepth: vector of Lennard Jones parameters for
+ * every interaction (well depths)
+ * d_pos: vector of positions of atoms in  molecule
  */
 class RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals {
  public:
-  VdWaals() : d_cutoff(1), d_nAtoms(0), d_getEnergy(nullptr) {};
-  VdWaals(RDKit::ROMol &mol, int confId, unsigned int probeAtomTypeMMFF,
-          const std::string &probeAtomTypeUFF, const std::string &FF,
-          bool scaling, double cutoff);
-  ~VdWaals() {};
-
+  VdWaals() : d_cutoff(1.0), d_nAtoms(0){};
+  VdWaals(const RDKit::ROMol &mol, int confId = -1, double cutoff = 1.0);
+  VdWaals(const VdWaals &other);
+  virtual ~VdWaals(){};
   //! \brief returns the VdW interaction at point \c pt in the molecules field
   //! in [kJ mol^-1]
   /*!
@@ -315,51 +309,67 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals {
    */
   double operator()(double x, double y, double z, double thres);
 
- private:
+ protected:
+  void fillVectors();
+  virtual double calcEnergy(double, double, double) const = 0;
+  virtual void fillVdwParamVectors(unsigned int atomIdx) = 0;
   double d_cutoff;
   unsigned int d_nAtoms;
-  std::vector<double> d_R_star_ij, d_wellDepth;
   std::vector<double> d_pos;
-
-  double (*d_getEnergy)(double, double,
-                        double);  // pointer to energy function (MMFF94 or UFF)
-  static double d_calcUFFEnergy(double, double, double);  // UFF energy function
-  static double d_calcMMFFEnergy(double, double,
-                                 double);  // MMFF energy function
+  std::vector<double> d_R_star_ij;
+  std::vector<double> d_wellDepth;
+  std::unique_ptr<RDKit::ROMol> d_mol;
 };
 
-// Factory functions for VdWaals
+class RDKIT_MOLINTERACTIONFIELDS_EXPORT MMFFVdWaals : public VdWaals {
+ public:
+  //! \brief constructs VdWaals object which uses MMFF94 from a molecule object
+  /*!
+  \param mol           molecule object
+  \param confId        conformation id which is used to get positions of atoms
+  (default: -1)
+  \param probeAtomType MMFF94 atom type for the probe atom
+  (default: 6, sp3 oxygen)
+  \param cutoff        minimum cutoff distance [A] (default: 1.0)
+  \param scaling       scaling of VdW parameters to take hydrogen bonds into
+  account (default: false)
+  */
+  MMFFVdWaals(const RDKit::ROMol &mol, int confId = -1,
+              unsigned int probeAtomType = 6, bool scaling = false,
+              double cutoff = 1.0);
+  MMFFVdWaals(const MMFFVdWaals &other);
 
-//! \brief constructs VdWaals object which uses MMFF94 from a molecule object
-/*!
- The molecule \c mol needs to have partial charges set as property of atoms.
- \param mol           molecule object
- \param confId        conformation id which is used to get positions of atoms
- (default=-1)
- \param probeAtomType MMFF94 atom type for the probe atom
- (default=6, sp3 oxygen)
- \param scaling       scaling of VdW parameters to take hydrogen bonds into
- account (default=false)
- \param cutoff        minimum cutoff distance [A] (default:1.0)
- */
-RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals constructVdWaalsMMFF(
-    RDKit::ROMol &mol, int confId = -1, unsigned int probeAtomType = 6,
-    bool scaling = false, double cutoff = 1.0);
+ private:
+  double calcEnergy(double, double, double) const;  // MMFF energy function
+  void fillVdwParamVectors(unsigned int atomIdx);
+  bool d_scaling;
+  std::unique_ptr<RDKit::MMFF::MMFFMolProperties> d_props;
+  const ForceFields::MMFF::MMFFVdWCollection *d_mmffVdW;
+  const ForceFields::MMFF::MMFFVdW *d_probeParams;
+};
 
-//! \brief constructs VdWaals object which uses UFF from a molecule object
-/*!
- The molecule \c mol needs to have partial charges set as property of atoms.
- \param mol           molecule object
- \param confId        conformation id which is used to get positions of atoms
- (default=-1)
- \param probeAtomType UFF atom type for the probe atom (eg. "O_3", i.e. a
- tetrahedral oxygen)
- \param cutoff        minimum cutoff distance [A] (default:1.0)
- */
-RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals
-constructVdWaalsUFF(RDKit::ROMol &mol, int confId = -1,
-                    const std::string &probeAtomType = "O_3",
-                    double cutoff = 1.0);  // constructor for UFF LJ interaction
+class RDKIT_MOLINTERACTIONFIELDS_EXPORT UFFVdWaals : public VdWaals {
+ public:
+  //! \brief constructs VdWaals object which uses UFF from a molecule object
+  /*!
+  \param mol           molecule object
+  \param confId        conformation id which is used to get positions of atoms
+  (default: -1)
+  \param probeAtomType UFF atom type for the probe atom (e.g. "O_3", i.e. a
+  tetrahedral oxygen)
+  \param cutoff        minimum cutoff distance [A] (default: 1.0)
+  */
+  UFFVdWaals(const RDKit::ROMol &mol, int confId = -1,
+             const std::string &probeAtomType = "O_3", double cutoff = 1.0);
+  UFFVdWaals(const UFFVdWaals &other);
+
+ private:
+  double calcEnergy(double, double, double) const;  // UFF energy function
+  void fillVdwParamVectors(unsigned int atomIdx);
+  const ForceFields::UFF::ParamCollection *d_uffParamColl;
+  const ForceFields::UFF::AtomicParams *d_probeParams;
+  RDKit::UFF::AtomicParamVect d_params;
+};
 
 //! \brief class for calculation of hydrogen bond potential between probe and
 //! molecule
@@ -378,12 +388,12 @@ constructVdWaalsUFF(RDKit::ROMol &mol, int confId = -1,
  d_pos:          vector of positions of target atoms in molecule
  d_direction:    if target accepting, vector of directions of lone pairs on
  target atoms (if there are two lone pairs, the resulting direction is used) if
- target donating, the X-H bond direction is saved d_plane:        vector of
- plane vectors in which the lone pairs are
+ target donating, the X-H bond direction is saved
+ d_plane:        vector of plane vectors in which the lone pairs are
  */
 class RDKIT_MOLINTERACTIONFIELDS_EXPORT HBond {
  public:
-  HBond() : d_cutoff(1.0), d_probetype(O), d_nInteract(0) {};
+  HBond() : d_cutoff(1.0), d_probetype(O), d_nInteract(0){};
 
   //! \brief constructs HBond object from a molecule object
   /*!
@@ -391,20 +401,18 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT HBond {
    \param mol           molecule object
    \param confId        conformation id which is used to get positions of atoms
    (default=-1)
-   \param probeType     atom type for the probe atom (either, "OH",
-   "O", "NH" or "N")
+   \param probeAtomType atom type for the probe atom ("OH", "O", "NH", "N")
    \param fixed         for some groups, two different angle
    dependencies are defined in GRID: one which takes some flexibility of groups
    (rotation/swapping of lone pairs and hydrogen) into account and one for
    strictly fixed conformations if true, strictly fixed conformations
-   (default=fixed)
-   \param cutoff        minimum cutoff distance [A]
-   (default:1.0)
+   (default: fixed)
+   \param cutoff        minimum cutoff distance [A] (default: 1.0)
    */
   HBond(const RDKit::ROMol &mol, int confId = -1,
-        const std::string &probeType = "OH", bool fixed = true,
+        const std::string &probeAtomType = "OH", bool fixed = true,
         double cutoff = 1.0);
-  ~HBond() {};
+  ~HBond(){};
 
   //! \brief returns the hydrogen bonding interaction at point \c pt in the
   //! molecules field in [kJ mol^-1]
@@ -444,10 +452,10 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT HBond {
                              const std::vector<unsigned int> &specials);
   unsigned int findDonors(const RDKit::ROMol &mol, int confId,
                           const std::vector<unsigned int> &specials);
-  unsigned int findAcceptors_unfixed(const RDKit::ROMol &mol, int confId,
-                                     const std::vector<unsigned int> &specials);
-  unsigned int findDonors_unfixed(const RDKit::ROMol &mol, int confId,
-                                  const std::vector<unsigned int> &specials);
+  unsigned int findAcceptorsUnfixed(const RDKit::ROMol &mol, int confId,
+                                    const std::vector<unsigned int> &specials);
+  unsigned int findDonorsUnfixed(const RDKit::ROMol &mol, int confId,
+                                 const std::vector<unsigned int> &specials);
 
   void addVectElements(atomtype type, double (*funct)(double, double, double),
                        const RDGeom::Point3D &pos, const RDGeom::Point3D &dir,
@@ -476,17 +484,17 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT Hydrophilic {
    params:
    \param mol           		 molecule object
    \param confId        		 conformation id which is used to get
-   positions of atoms (default=-1)
+   positions of atoms (default: -1)
    \param fixed         		 for some groups, two different angle
    dependencies are defined in GRID: one which takes some flexibility of groups
    (rotation/swapping of lone pairs and hydrogen) into account and one for
    strictly fixed conformations if true, strictly fixed conformations
-   (default=fixed)
-   \param cutoff  minimum cutoff distance [A] (default:1.0)
+   (default: fixed)
+   \param cutoff  minimum cutoff distance [A] (default: 1.0)
    */
   Hydrophilic(const RDKit::ROMol &mol, int confId = -1, bool fixed = true,
               double cutoff = 1.0);
-  ~Hydrophilic() {};
+  ~Hydrophilic(){};
 
   double operator()(double x, double y, double z, double thres);
 
@@ -495,37 +503,39 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT Hydrophilic {
 };
 
 //! \brief writes the contents of the MIF to a stream
-/*
+/*!
  The Grid \c grd is written in Gaussian Cube format
- A molecule \c mol has to be specified
+ A molecule \c mol and a \c confId can optionally be provided
  */
 RDKIT_MOLINTERACTIONFIELDS_EXPORT void writeToCubeStream(
-    const RDGeom::UniformRealValueGrid3D &grd, const RDKit::ROMol &mol,
-    std::ostream &outStrm, int confid = -1);
+    const RDGeom::UniformRealValueGrid3D &grd, std::ostream &outStrm,
+    const RDKit::ROMol *mol = nullptr, int confid = -1);
 
 //! \brief writes the contents of the MIF to a file
-/*
+/*!
  The Grid \c grd is written in Gaussian Cube format
- A molecule \c mol has to be specified
+ A molecule \c mol and a \c confId can optionally be provided
  */
 RDKIT_MOLINTERACTIONFIELDS_EXPORT void writeToCubeFile(
-    const RDGeom::UniformRealValueGrid3D &grd, const RDKit::ROMol &mol,
-    const std::string &filename, int confid = -1);
+    const RDGeom::UniformRealValueGrid3D &grd, const std::string &filename,
+    const RDKit::ROMol *mol = nullptr, int confid = -1);
 
 //! \brief reads the contents of the MIF from a stream in Gaussian cube format
-/*
+/*!
  The Grid \c grd is modified according to input values
- A pointer to a molecule is returned with all atoms and its positions but NO
- bond information!
+ If a molecule was associated to the grid on write, a non-null pointer to a
+ molecule is returned with atoms and a conformer, but NO bond information.
+ If there is no atom information in the cube file, a null pointer is returned.
  */
 RDKIT_MOLINTERACTIONFIELDS_EXPORT std::unique_ptr<RDKit::RWMol>
 readFromCubeStream(RDGeom::UniformRealValueGrid3D &grd, std::istream &inStrm);
 
 //! \brief reads the contents of the MIF from a file in Gaussian cube format
-/*
+/*!
  The Grid \c grd is modified according to input values
- A pointer to a molecule is returned with all atoms and its positions but NO
- bond information!
+ If a molecule was associated to the grid on write, a non-null pointer to a
+ molecule is returned with atoms and a conformer, but NO bond information.
+ If there is no atom information in the cube file, a null pointer is returned.
  */
 RDKIT_MOLINTERACTIONFIELDS_EXPORT std::unique_ptr<RDKit::RWMol>
 readFromCubeFile(RDGeom::UniformRealValueGrid3D &grd,

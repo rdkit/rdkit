@@ -18,20 +18,27 @@
 #include <iomanip>
 #include <boost/cstdint.hpp>
 
-#define OFFSET_TOL 1.e-4
-#define SPACING_TOL 1.e-4
 using namespace RDKit;
+
+namespace {
+constexpr double OFFSET_TOL = 1.e-4;
+constexpr double SPACING_TOL = 1.e-4;
+const char *UNINITIALIZED_GRID = "uninitialized grid";
+const char *INCOMPATIBLE_GRIDS = "incompatible grids";
+}  // end anonymous namespace
 
 namespace RDGeom {
 boost::int32_t ci_RealValueGrid3DPICKLE_VERSION = 0x1;
 UniformRealValueGrid3D::UniformRealValueGrid3D(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(other.dp_storage,
-               "cannot copy an uninitialized RealValueGrid3D");
-  auto *data = new RDKit::RealValueVect(*other.dp_storage);
-  UniformRealValueGrid3D::initGrid(
-      other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
-      other.d_numZ * other.d_spacing, other.d_spacing, other.d_offSet, data);
+  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
+  std::unique_ptr<RDKit::RealValueVect> data(
+      new RDKit::RealValueVect(*other.dp_storage));
+  UniformRealValueGrid3D::initGrid(other.d_numX * other.d_spacing,
+                                   other.d_numY * other.d_spacing,
+                                   other.d_numZ * other.d_spacing,
+                                   other.d_spacing, other.d_offSet, data.get());
+  data.release();
 }
 
 void UniformRealValueGrid3D::initGrid(double dimX, double dimY, double dimZ,
@@ -47,7 +54,7 @@ void UniformRealValueGrid3D::initGrid(double dimX, double dimY, double dimZ,
   d_numZ = static_cast<unsigned int>(floor(dimZ / spacing + 0.5));
   // PRECONDITION((!data)||data->getValueType()==double,"grid data type
   // mismatch");
-  PRECONDITION((!data) || data->size() == d_numX * d_numY * d_numZ,
+  PRECONDITION(!data || data->size() == d_numX * d_numY * d_numZ,
                "grid data size mismatch");
 
   d_spacing = spacing;
@@ -102,14 +109,13 @@ void UniformRealValueGrid3D::getGridIndices(unsigned int idx, unsigned int &xi,
 
 int UniformRealValueGrid3D::getGridPointIndex(
     const RDGeom::Point3D &point) const {
-  RDGeom::Point3D tPt(point);
+  auto tPt = point;
   tPt -= d_offSet;  // d_origin;
   tPt /= d_spacing;
-  int xi, yi, zi;
-  double move = 0.5;
-  xi = static_cast<int>(floor(tPt.x + move));
-  yi = static_cast<int>(floor(tPt.y + move));
-  zi = static_cast<int>(floor(tPt.z + move));
+  constexpr double move = 0.5;
+  auto xi = static_cast<int>(floor(tPt.x + move));
+  auto yi = static_cast<int>(floor(tPt.y + move));
+  auto zi = static_cast<int>(floor(tPt.z + move));
 
   if ((xi < 0) || (xi >= static_cast<int>(d_numX))) {
     return -1;
@@ -125,7 +131,8 @@ int UniformRealValueGrid3D::getGridPointIndex(
 }
 
 double UniformRealValueGrid3D::getVal(const RDGeom::Point3D &point) const {
-  int id = getGridPointIndex(point);
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
+  auto id = getGridPointIndex(point);
   if (id < 0) {
     return -1;
   }
@@ -133,11 +140,13 @@ double UniformRealValueGrid3D::getVal(const RDGeom::Point3D &point) const {
 }
 
 double UniformRealValueGrid3D::getVal(unsigned int pointId) const {
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
   return dp_storage->getVal(pointId);
 }
 
 void UniformRealValueGrid3D::setVal(const RDGeom::Point3D &point, double val) {
-  int id = getGridPointIndex(point);
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
+  auto id = getGridPointIndex(point);
   if (id < 0) {
     return;
   }
@@ -149,15 +158,15 @@ RDGeom::Point3D UniformRealValueGrid3D::getGridPointLoc(
   if (pointId >= d_numX * d_numY * d_numZ) {
     throw IndexErrorException(pointId);
   }
-  RDGeom::Point3D res;
-  res.x = (pointId % d_numX) * d_spacing;
-  res.y = ((pointId % (d_numX * d_numY)) / d_numX) * d_spacing;
-  res.z = (pointId / (d_numX * d_numY)) * d_spacing;
+  RDGeom::Point3D res((pointId % d_numX) * d_spacing,
+                      ((pointId % (d_numX * d_numY)) / d_numX) * d_spacing,
+                      (pointId / (d_numX * d_numY)) * d_spacing);
   res += d_offSet;  // d_origin;
-  return res;
+  return std::move(res);
 }
 
 void UniformRealValueGrid3D::setVal(unsigned int pointId, double val) {
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
   dp_storage->setVal(pointId, val);
 }
 
@@ -175,19 +184,21 @@ bool UniformRealValueGrid3D::compareParams(
   if (fabs(d_spacing - other.getSpacing()) > SPACING_TOL) {
     return false;
   }
-  RDGeom::Point3D dOffset = d_offSet;
+  auto dOffset = d_offSet;
   dOffset -= other.getOffset();
   return dOffset.lengthSq() <= OFFSET_TOL;
 }
 
 bool UniformRealValueGrid3D::compareVectors(
     const UniformRealValueGrid3D &other) const {
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
   return dp_storage->compareVectors(*(other.dp_storage));
 }
 
 bool UniformRealValueGrid3D::compareGrids(
     const UniformRealValueGrid3D &other) const {
-  if (!(compareParams(other))) {
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
+  if (!compareParams(other)) {
     return false;
   }
   return dp_storage->compareVectors(*(other.dp_storage));
@@ -195,6 +206,8 @@ bool UniformRealValueGrid3D::compareGrids(
 
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator=(
     const UniformRealValueGrid3D &other) {
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
   d_numX = other.d_numX;
   d_numY = other.d_numY;
   d_numZ = other.d_numZ;
@@ -206,48 +219,40 @@ UniformRealValueGrid3D &UniformRealValueGrid3D::operator=(
 }
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator|=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, "unintialized grid");
-  PRECONDITION(other.dp_storage, "unintialized grid");
-  PRECONDITION(this->compareParams(other), "incompatible grids");
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(compareParams(other), INCOMPATIBLE_GRIDS);
 
-  // EFF: we're probably doing too much copying here:
-  auto *newData = new RDKit::RealValueVect((*dp_storage) | (*other.dp_storage));
-  delete dp_storage;
-  dp_storage = newData;
+  *dp_storage |= *other.dp_storage;
   return *this;
 }
 
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator&=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, "unintialized grid");
-  PRECONDITION(other.dp_storage, "unintialized grid");
-  PRECONDITION(this->compareParams(other), "incompatible grids");
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(compareParams(other), INCOMPATIBLE_GRIDS);
 
-  // EFF: we're probably doing too much copying here:
-  auto *newData = new RDKit::RealValueVect((*dp_storage) & (*other.dp_storage));
-  delete dp_storage;
-  dp_storage = newData;
+  *dp_storage &= *other.dp_storage;
   return *this;
 }
 
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator+=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, "unintialized grid");
-  PRECONDITION(other.dp_storage, "unintialized grid");
-  PRECONDITION(this->compareParams(other), "incompatible grids");
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(compareParams(other), INCOMPATIBLE_GRIDS);
 
-  // EFF: we're probably doing too much copying here:
   *dp_storage += *other.dp_storage;
   return *this;
 }
 
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator-=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, "unintialized grid");
-  PRECONDITION(other.dp_storage, "unintialized grid");
-  PRECONDITION(this->compareParams(other), "incompatible grids");
+  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
+  PRECONDITION(compareParams(other), INCOMPATIBLE_GRIDS);
 
-  // EFF: we're probably doing too much copying here:
   *dp_storage -= *other.dp_storage;
   return *this;
 }
@@ -273,8 +278,7 @@ std::string UniformRealValueGrid3D::toString() const {
   streamWrite(ss, pklSz);
   ss.write(storePkl.c_str(), pklSz * sizeof(char));
 
-  std::string res(ss.str());
-  return (res);
+  return ss.str();
 }
 
 void UniformRealValueGrid3D::initFromText(const char *pkl,
@@ -284,7 +288,7 @@ void UniformRealValueGrid3D::initFromText(const char *pkl,
   ss.write(pkl, length);
   boost::int32_t tVers;
   streamRead(ss, tVers);
-  tVers *= -1;
+  tVers = -tVers;
   if (tVers == 0x1) {
   } else {
     throw ValueErrorException("bad version in UniformRealValueGrid3D pickle");
@@ -305,39 +309,38 @@ void UniformRealValueGrid3D::initFromText(const char *pkl,
 
   boost::uint32_t pklSz;
   streamRead(ss, pklSz);
-  char *buff = new char[pklSz];
-  ss.read(buff, pklSz * sizeof(char));
+  std::vector<char> buff(pklSz);
+  ss.read(buff.data(), pklSz * sizeof(char));
   delete dp_storage;
-  dp_storage = new RDKit::RealValueVect(buff, pklSz);
-  delete[] buff;
-}
-
-UniformRealValueGrid3D operator|(const UniformRealValueGrid3D &grd1,
-                                 const UniformRealValueGrid3D &grd2) {
-  UniformRealValueGrid3D res(grd1);
-  res |= grd2;
-  return res;
+  dp_storage = new RDKit::RealValueVect(buff.data(), pklSz);
 }
 
 UniformRealValueGrid3D operator&(const UniformRealValueGrid3D &grd1,
                                  const UniformRealValueGrid3D &grd2) {
-  UniformRealValueGrid3D res(grd1);
-  res &= grd2;
-  return res;
-}
+  UniformRealValueGrid3D ans(grd1);
+  ans &= grd2;
+  return ans;
+};
+
+UniformRealValueGrid3D operator|(const UniformRealValueGrid3D &grd1,
+                                 const UniformRealValueGrid3D &grd2) {
+  UniformRealValueGrid3D ans(grd1);
+  ans |= grd2;
+  return ans;
+};
 
 UniformRealValueGrid3D operator+(const UniformRealValueGrid3D &grd1,
                                  const UniformRealValueGrid3D &grd2) {
-  UniformRealValueGrid3D res(grd1);
-  res += grd2;
-  return res;
-}
+  UniformRealValueGrid3D ans(grd1);
+  ans += grd2;
+  return ans;
+};
 
 UniformRealValueGrid3D operator-(const UniformRealValueGrid3D &grd1,
                                  const UniformRealValueGrid3D &grd2) {
-  UniformRealValueGrid3D res(grd1);
-  res -= grd2;
-  return res;
-}
+  UniformRealValueGrid3D ans(grd1);
+  ans -= grd2;
+  return ans;
+};
 
 }  // namespace RDGeom

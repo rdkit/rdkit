@@ -67,29 +67,16 @@ class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
   //! compares 2 vectors and returns false if different
   bool compareVectors(const RealValueVect &other);
 
-  //! support rvv3 = rvv1&rvv2
-  /*!
-     operator& returns the minimum value for each element.
-     e.g.:
-       [0,1,2,0] & [0,1,1,1] -> [0,1,1,0]
+  //! in-place operator&
+  RealValueVect &operator&=(const RealValueVect &other);
 
-   */
-  RealValueVect operator&(const RealValueVect &other) const;
+  //! in-place operator|
+  RealValueVect &operator|=(const RealValueVect &other);
 
-  //! support rvv3 = rvv1|rvv2
-  /*!
-
-     operator| returns the maximum value for each element.
-     e.g.:
-       [0,1,2,0] | [0,1,1,1] -> [0,1,2,1]
-
-   */
-  RealValueVect operator|(const RealValueVect &other) const;
-
-  //! sums up vectors
+  //! in-place operator+
   RealValueVect &operator+=(const RealValueVect &other);
 
-  //! subtracts vectors
+  //! in-place operator-
   RealValueVect &operator-=(const RealValueVect &other);
 
   //! returns a binary string representation (pickle)
@@ -103,6 +90,8 @@ class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
   std::vector<double> d_data;
 
   void initFromText(const char *pkl, const unsigned int len);
+  template <typename O>
+  RealValueVect &applyBinaryOp(const RealValueVect &other, O op);
 };  // end of declaration of class RealValueVect
 
 //! returns L1 Norm of vectors
@@ -115,6 +104,27 @@ RDKIT_DATASTRUCTS_EXPORT RealValueVect operator+(const RealValueVect &p1,
 
 //! returns the difference of vectors
 RDKIT_DATASTRUCTS_EXPORT RealValueVect operator-(const RealValueVect &p1,
+                                                 const RealValueVect &p2);
+
+//! support rvv3 = rvv1|rvv2
+/*!
+
+   operator| returns the maximum value for each element.
+   e.g.:
+     [0,1,2,0] | [0,1,1,1] -> [0,1,2,1]
+
+ */
+RDKIT_DATASTRUCTS_EXPORT RealValueVect operator|(const RealValueVect &p1,
+                                                 const RealValueVect &p2);
+
+//! support rvv3 = rvv1&rvv2
+/*!
+   operator& returns the minimum value for each element.
+   e.g.:
+     [0,1,2,0] & [0,1,1,1] -> [0,1,1,0]
+
+ */
+RDKIT_DATASTRUCTS_EXPORT RealValueVect operator&(const RealValueVect &p1,
                                                  const RealValueVect &p2);
 
 }  // end of namespace RDKit

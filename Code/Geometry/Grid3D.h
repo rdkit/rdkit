@@ -38,7 +38,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT GridException : public std::exception {
 template <typename VectorType, typename ValueType1, typename ValueType2>
 class RDKIT_RDGEOMETRYLIB_EXPORT Grid3D {
  public:
-  virtual ~Grid3D() {};
+  virtual ~Grid3D(){};
   virtual int getGridPointIndex(const Point3D &point) const = 0;
   virtual ValueType1 getVal(const Point3D &point) const = 0;
   virtual void setVal(const Point3D &point, ValueType2 val) = 0;

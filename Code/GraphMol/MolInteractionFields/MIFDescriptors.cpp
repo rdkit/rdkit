@@ -31,18 +31,16 @@
 #ifndef M_PI_2
 #define M_PI_2 1.57079632679489661923
 #endif
-#ifndef M_55D
-#define M_55D 0.95993108859688126730
-#endif
-#ifndef M_70_5D  // angle C-O-H , C-N-H
-#define M_70_5D 1.23045712265600235173
-#endif
-#ifndef M_110D
-#define M_110D 1.91986217719376253461
-#endif
 
-#define CUTOFF 0.001
-#define MIN_VAL 1.e-6
+namespace {
+constexpr double M_55D = 0.95993108859688126730;
+// angle C-O-H , C-N-H
+constexpr double M_70_5D = 1.23045712265600235173;
+constexpr double M_110D = 1.91986217719376253461;
+
+constexpr double CUTOFF = 0.001;
+constexpr double MIN_CUTOFF_VAL = CUTOFF * CUTOFF;
+}  // namespace
 
 namespace RDMIF {
 
@@ -52,157 +50,126 @@ std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
 
   const std::vector<RDGeom::Point3D> &ptVect =
       mol.getConformer(confId).getPositions();
-  double minX = ptVect[0].x, maxX = minX, minY = ptVect[0].y, maxY = minY,
-         minZ = ptVect[0].z, maxZ = minZ;
-  for (auto it = ptVect.begin() + 1;
-       it != ptVect.end(); ++it) {
-    minX = std::min((*it).x, minX);
-    maxX = std::max((*it).x, maxX);
+  RDGeom::Point3D originPt(0.0, 0.0, 0.0);
+  RDGeom::Point3D marginPt(margin, margin, margin);
+  const RDGeom::Point3D &firstPoint =
+      (!ptVect.empty() ? ptVect.front() : originPt);
 
-    minY = std::min((*it).y, minY);
-    maxY = std::max((*it).y, maxY);
-
-    minZ = std::min((*it).z, minZ);
-    maxZ = std::max((*it).z, maxZ);
+  auto minPt = firstPoint;
+  auto maxPt = minPt;
+  for (const auto &pt : ptVect) {
+    for (auto i = 0u; i < pt.dimension(); ++i) {
+      minPt[i] = std::min(minPt[i], pt[i]);
+      maxPt[i] = std::max(maxPt[i], pt[i]);
+    }
   }
-
-  minX -= margin;
-  maxX += margin;
-  minY -= margin;
-  maxY += margin;
-  minZ -= margin;
-  maxZ += margin;
-
-  RDGeom::Point3D offset(minX, minY, minZ);
+  minPt -= marginPt;
+  maxPt += marginPt;
 
   auto res = std::make_unique<RDGeom::UniformRealValueGrid3D>(
-      maxX - minX, maxY - minY, maxZ - minZ, spacing, &offset);
+      maxPt.x - minPt.x, maxPt.y - minPt.y, maxPt.z - minPt.z, spacing, &minPt);
 
   return res;
 }
 
-DistanceToClosestAtom::DistanceToClosestAtom(const RDKit::ROMol &mol,
-                                             int confId) {
-  PRECONDITION(mol.getNumConformers() > 0,
-               "No Conformers available for molecule");
-  d_nAtoms = mol.getNumAtoms();
-  d_pos.reserve(d_nAtoms);
-  RDKit::Conformer conf = mol.getConformer(confId);
-
-  for (unsigned int i = 0; i < d_nAtoms; i++) {
-    RDGeom::Point3D &pos = conf.getAtomPos(i);
-    d_pos.push_back(pos.x);
-    d_pos.push_back(pos.y);
-    d_pos.push_back(pos.z);
-  }
-}
-
-double DistanceToClosestAtom::operator()(double x, double y, double z, double) {
-  unsigned int j = 0;
-  double temp = x - d_pos[j];
-  double dist2 = temp * temp;
-  temp = y - d_pos[j + 1];
-  dist2 += temp * temp;
-  temp = z - d_pos[j + 2];
-  dist2 += temp * temp;
-  double res = dist2;
-  for (j = 1; j < d_nAtoms; j++) {
-    temp = x - d_pos[j];
-    dist2 = temp * temp;
-    temp = y - d_pos[j + 1];
-    dist2 += temp * temp;
-    temp = z - d_pos[j + 2];
-    dist2 += temp * temp;
-    res = std::min(res, dist2);
-  }
-  return sqrt(res);
-}
-
-VdWaals::VdWaals(RDKit::ROMol &mol, int confId, unsigned int probeAtomTypeMMFF,
-                 const std::string &probeAtomTypeUFF, const std::string &FF,
-                 bool scaling, double cutoff)
-    : d_cutoff(cutoff * cutoff) {
-  PRECONDITION((FF == "MMFF94") || (FF == "UFF"), "Force Field not known.");
-
+VdWaals::VdWaals(const RDKit::ROMol &mol, int confId, double cutoff) {
+  d_cutoff = std::max(cutoff * cutoff, MIN_CUTOFF_VAL);
   d_nAtoms = mol.getNumAtoms();
   d_pos.reserve(3 * d_nAtoms);
   d_R_star_ij.reserve(d_nAtoms);
   d_wellDepth.reserve(d_nAtoms);
-  RDKit::Conformer conf = mol.getConformer(confId);
+  // this will throw a ConformerException if confId does not exist
+  const RDKit::Conformer &conf = mol.getConformer(confId);
+  d_mol.reset(new RDKit::ROMol(mol, false, conf.getId()));
+}
 
-  if (FF == "MMFF94") {
-    const ForceFields::MMFF::MMFFVdW *params, *probeparams;
-    RDKit::MMFF::MMFFMolProperties props(mol);
-    if (!props.isValid()) {
-      throw ValueErrorException(
-          "No MMFF atom types available for at least one atom in molecule.");
-    }
+VdWaals::VdWaals(const VdWaals &other)
+    : d_cutoff(other.d_cutoff),
+      d_nAtoms(other.d_nAtoms),
+      d_pos(other.d_pos),
+      d_R_star_ij(other.d_R_star_ij),
+      d_wellDepth(other.d_wellDepth),
+      d_mol(new RDKit::ROMol(*other.d_mol)) {}
 
-    const auto *mmffVdW = RDKit::MMFF::DefaultParameters::getMMFFVdW();
-    probeparams = (*mmffVdW)(probeAtomTypeMMFF);
-
-    for (unsigned int i = 0; i < d_nAtoms; i++) {
-      const unsigned int iAtomType = props.getMMFFAtomType(i);
-      params = (*mmffVdW)(iAtomType);
-      const RDGeom::Point3D &pt = conf.getAtomPos(i);
-      d_pos.push_back(pt.x);
-      d_pos.push_back(pt.y);
-      d_pos.push_back(pt.z);
-      d_R_star_ij.push_back(ForceFields::MMFF::Utils::calcUnscaledVdWMinimum(
-          mmffVdW, params, probeparams));
-      d_wellDepth.push_back(ForceFields::MMFF::Utils::calcUnscaledVdWWellDepth(
-          d_R_star_ij[i], params, probeparams));
-      // scaling for taking undirected H-Bonds into account
-      if (scaling) {
-        ForceFields::MMFF::Utils::scaleVdWParams(d_R_star_ij[i], d_wellDepth[i],
-                                                 mmffVdW, params, probeparams);
-      }
-      d_getEnergy = d_calcMMFFEnergy;
-    }
-  } else if (FF == "UFF") {
-    const auto *paramcoll = ForceFields::UFF::ParamCollection::getParams();
-    const auto probeparams = (*paramcoll)(probeAtomTypeUFF);
-
-    std::pair<RDKit::UFF::AtomicParamVect, bool> params =
-        RDKit::UFF::getAtomTypes(mol);
-    if (!params.second) {
-      throw ValueErrorException(
-          "No UFF atom types available for at least one atom in molecule.");
-    }
-
-    for (unsigned int i = 0; i < d_nAtoms; i++) {
-      const RDGeom::Point3D &pt = conf.getAtomPos(i);
-      d_pos.push_back(pt.x);
-      d_pos.push_back(pt.y);
-      d_pos.push_back(pt.z);
-      d_R_star_ij.push_back(probeparams->x1 * params.first[i]->x1);
-      d_wellDepth.push_back(ForceFields::UFF::Utils::calcNonbondedDepth(
-          probeparams, params.first[i]));
-    }
-    d_getEnergy = d_calcUFFEnergy;
-  }
-
-  if (d_cutoff < MIN_VAL) {
-    d_cutoff = CUTOFF;
+void VdWaals::fillVectors() {
+  const auto &conf = d_mol->getConformer();
+  for (unsigned int i = 0; i < d_nAtoms; i++) {
+    const RDGeom::Point3D &pt = conf.getAtomPos(i);
+    d_pos.push_back(pt.x);
+    d_pos.push_back(pt.y);
+    d_pos.push_back(pt.z);
+    fillVdwParamVectors(i);
   }
 }
 
-VdWaals constructVdWaalsMMFF(RDKit::ROMol &mol, int confId,
-                             unsigned int probeAtomType, bool scaling,
-                             double cutoff) {
-  VdWaals res(mol, confId, probeAtomType, "", "MMFF94", scaling, cutoff);
-  return res;
+MMFFVdWaals::MMFFVdWaals(const RDKit::ROMol &mol, int confId,
+                         unsigned int probeAtomType, bool scaling,
+                         double cutoff)
+    : VdWaals::VdWaals(mol, confId, cutoff), d_scaling(scaling) {
+  d_props.reset(new RDKit::MMFF::MMFFMolProperties(*d_mol));
+  if (!d_props->isValid()) {
+    throw ValueErrorException(
+        "No MMFF atom types available for at least one atom in molecule.");
+  }
+  d_mmffVdW = RDKit::MMFF::DefaultParameters::getMMFFVdW();
+  d_probeParams = (*d_mmffVdW)(probeAtomType);
+  fillVectors();
 }
 
-VdWaals constructVdWaalsUFF(RDKit::ROMol &mol, int confId,
-                            const std::string &probeAtomType, double cutoff) {
-  VdWaals res(mol, confId, 1, probeAtomType, "UFF", false, cutoff);
-  return res;
+MMFFVdWaals::MMFFVdWaals(const MMFFVdWaals &other)
+    : VdWaals::VdWaals(other),
+      d_scaling(other.d_scaling),
+      d_props(new RDKit::MMFF::MMFFMolProperties(*other.d_props)),
+      d_mmffVdW(other.d_mmffVdW),
+      d_probeParams(other.d_probeParams) {}
+
+void MMFFVdWaals::fillVdwParamVectors(unsigned int atomIdx) {
+  PRECONDITION(atomIdx < d_mol->getNumAtoms(), "atomIdx out of bounds");
+  const auto iAtomType = d_props->getMMFFAtomType(atomIdx);
+  auto params = (*d_mmffVdW)(iAtomType);
+  auto rStarIJ = ForceFields::MMFF::Utils::calcUnscaledVdWMinimum(
+      d_mmffVdW, params, d_probeParams);
+  d_R_star_ij.push_back(rStarIJ);
+  d_wellDepth.push_back(ForceFields::MMFF::Utils::calcUnscaledVdWWellDepth(
+      rStarIJ, params, d_probeParams));
+  // scaling for taking undirected H-Bonds into account
+  if (d_scaling) {
+    ForceFields::MMFF::Utils::scaleVdWParams(d_R_star_ij[atomIdx],
+                                             d_wellDepth[atomIdx], d_mmffVdW,
+                                             params, d_probeParams);
+  }
+}
+
+UFFVdWaals::UFFVdWaals(const RDKit::ROMol &mol, int confId,
+                       const std::string &probeAtomType, double cutoff)
+    : VdWaals::VdWaals(mol, confId, cutoff) {
+  d_uffParamColl = ForceFields::UFF::ParamCollection::getParams();
+  d_probeParams = (*d_uffParamColl)(probeAtomType);
+  const auto [params, haveParams] = RDKit::UFF::getAtomTypes(mol);
+  if (!haveParams) {
+    throw ValueErrorException(
+        "No UFF atom types available for at least one atom in molecule.");
+  }
+  d_params = std::move(params);
+  fillVectors();
+}
+
+UFFVdWaals::UFFVdWaals(const UFFVdWaals &other)
+    : VdWaals::VdWaals(other),
+      d_uffParamColl(other.d_uffParamColl),
+      d_probeParams(other.d_probeParams),
+      d_params(other.d_params) {}
+
+void UFFVdWaals::fillVdwParamVectors(unsigned int atomIdx) {
+  PRECONDITION(atomIdx < d_mol->getNumAtoms(), "atomIdx out of bounds");
+  d_R_star_ij.push_back(d_probeParams->x1 * d_params[atomIdx]->x1);
+  d_wellDepth.push_back(ForceFields::UFF::Utils::calcNonbondedDepth(
+      d_probeParams, d_params[atomIdx]));
 }
 
 double VdWaals::operator()(double x, double y, double z, double thres) {
   double res = 0.0, dist2, temp;
-  for (unsigned int i = 0, j = 0; i < d_nAtoms; i++) {
+  for (unsigned int i = 0, j = 0; i < d_nAtoms; ++i) {
     temp = x - d_pos[j++];
     dist2 = temp * temp;
     temp = y - d_pos[j++];
@@ -211,61 +178,51 @@ double VdWaals::operator()(double x, double y, double z, double thres) {
     dist2 += temp * temp;
     if (dist2 < thres) {
       dist2 = std::max(dist2, d_cutoff);
-      res += (*d_getEnergy)(dist2, d_R_star_ij[i], d_wellDepth[i]);
+      res += calcEnergy(dist2, d_R_star_ij[i], d_wellDepth[i]);
     }
   }
   return res;
 }
 
-double VdWaals::d_calcUFFEnergy(double dist2, double x_ij, double wellDepth) {
+double UFFVdWaals::calcEnergy(double dist2, double x_ij,
+                              double wellDepth) const {
   double r6 = x_ij / dist2;
   r6 *= r6 * r6;
   double r12 = r6 * r6;
   return wellDepth * (r12 - 2.0 * r6);
 }
 
-double VdWaals::d_calcMMFFEnergy(double dist2, double R_star_ij,
-                                 double wellDepth) {
-  double const vdw1 = 1.07;
-  double const vdw1m1 = vdw1 - 1.0;
-  double const vdw2 = 1.12;
-  double const vdw2m1 = vdw2 - 1.0;
-  double dist = sqrt(dist2);
-  double dist7 = dist2 * dist2 * dist2 * dist;
-  double aTerm = vdw1 * R_star_ij / (dist + vdw1m1 * R_star_ij);
-  double aTerm2 = aTerm * aTerm;
-  double aTerm7 = aTerm2 * aTerm2 * aTerm2 * aTerm;
-  double R_star_ij2 = R_star_ij * R_star_ij;
-  double R_star_ij7 = R_star_ij2 * R_star_ij2 * R_star_ij2 * R_star_ij;
-  double bTerm = vdw2 * R_star_ij7 / (dist7 + vdw2m1 * R_star_ij7) - 2.0;
-  return wellDepth * aTerm7 * bTerm;
+double MMFFVdWaals::calcEnergy(double dist2, double R_star_ij,
+                               double wellDepth) const {
+  return ForceFields::MMFF::Utils::calcVdWEnergy(sqrt(dist2), R_star_ij,
+                                                 wellDepth);
 }
 
 namespace CoulombDetail {
-const double prefactor =
+constexpr double prefactor =
     1 / (4.0 * 3.141592 * 8.854188) * 1.602 * 1.602 * 6.02214129 * 10000;
 }
 
 Coulomb::Coulomb(const std::vector<double> &charges,
                  const std::vector<RDGeom::Point3D> &positions,
-                 double probecharge, bool absVal, double alpha, double cutoff)
+                 double probeCharge, bool absVal, double alpha, double cutoff)
     : d_nAtoms(charges.size()),
       d_absVal(absVal),
       d_cutoff(cutoff * cutoff),
-      d_probe(probecharge),
+      d_probe(probeCharge),
       d_alpha(alpha),
       d_charges(charges) {
   PRECONDITION(d_charges.size() == positions.size(),
                "Lengths of positions and charges vectors do not match.");
   d_pos.reserve(3 * d_nAtoms);
-  for (const auto & position : positions) {
+  for (const auto &position : positions) {
     d_pos.push_back(position.x);
     d_pos.push_back(position.y);
     d_pos.push_back(position.z);
   }
-  if (fabs(d_alpha) < MIN_VAL) {
+  if (fabs(d_alpha) < MIN_CUTOFF_VAL) {
     d_softcore = false;
-    if (d_cutoff < MIN_VAL) {
+    if (d_cutoff < MIN_CUTOFF_VAL) {
       d_cutoff = CUTOFF;
     }
   } else {
@@ -273,13 +230,13 @@ Coulomb::Coulomb(const std::vector<double> &charges,
   }
 }
 
-Coulomb::Coulomb(const RDKit::ROMol &mol, int confId, double probecharge,
+Coulomb::Coulomb(const RDKit::ROMol &mol, int confId, double probeCharge,
                  bool absVal, const std::string &prop, double alpha,
                  double cutoff)
     : d_nAtoms(mol.getNumAtoms()),
       d_absVal(absVal),
       d_cutoff(cutoff * cutoff),
-      d_probe(probecharge),
+      d_probe(probeCharge),
       d_alpha(alpha) {
   d_charges.reserve(d_nAtoms);
   d_pos.reserve(3 * d_nAtoms);
@@ -291,9 +248,9 @@ Coulomb::Coulomb(const RDKit::ROMol &mol, int confId, double probecharge,
     d_pos.push_back(pt.y);
     d_pos.push_back(pt.z);
   }
-  if (fabs(d_alpha) < MIN_VAL) {
+  if (fabs(d_alpha) < MIN_CUTOFF_VAL) {
     d_softcore = false;
-    if (d_cutoff < MIN_VAL) {
+    if (d_cutoff < MIN_CUTOFF_VAL) {
       d_cutoff = CUTOFF;
     }
   } else {
@@ -339,33 +296,33 @@ double Coulomb::operator()(double x, double y, double z, double thres) {
 
 CoulombDielectric::CoulombDielectric(
     const std::vector<double> &charges,
-    const std::vector<RDGeom::Point3D> &positions, double probecharge,
+    const std::vector<RDGeom::Point3D> &positions, double probeCharge,
     bool absVal, double alpha, double cutoff, double epsilon, double xi)
     : d_nAtoms(charges.size()),
       d_absVal(absVal),
       d_cutoff(cutoff * cutoff),
-      d_probe(probecharge),
+      d_probe(probeCharge),
       d_epsilon(epsilon),
       d_xi(xi),
       d_alpha(alpha),
       d_charges(charges) {
   PRECONDITION(d_charges.size() == positions.size(),
-               "Lengths of positions and charges vectors do not match.");
+               "Lengths of position and charge vectors do not match.");
   d_dielectric = (d_xi - d_epsilon) / (d_xi + d_epsilon);
   std::vector<unsigned int> neighbors(positions.size(), 0);
 
   d_dists.resize(d_nAtoms);
   d_sp.reserve(d_nAtoms);
   d_pos.reserve(3 * d_nAtoms);
-  for (unsigned int i = 0; i < positions.size(); i++) {
+  for (unsigned int i = 0; i < positions.size(); ++i) {
     d_pos.push_back(positions[i].x);
     d_pos.push_back(positions[i].y);
     d_pos.push_back(positions[i].z);
-    for (unsigned int j = i + 1; j < positions.size(); j++) {
+    for (unsigned int j = i + 1; j < positions.size(); ++j) {
       double dis = (positions[j] - positions[i]).length();
       if (dis < 4.0) {
-        neighbors[i]++;
-        neighbors[j]++;
+        ++neighbors[i];
+        ++neighbors[j];
       }
     }
   }
@@ -399,9 +356,9 @@ CoulombDielectric::CoulombDielectric(
         d_sp.push_back(4.0);
     }
   }
-  if (fabs(d_alpha) < MIN_VAL) {
+  if (fabs(d_alpha) < MIN_CUTOFF_VAL) {
     d_softcore = false;
-    if (d_cutoff < MIN_VAL * MIN_VAL) {
+    if (d_cutoff < MIN_CUTOFF_VAL * MIN_CUTOFF_VAL) {
       d_cutoff = CUTOFF * CUTOFF;
     }
   } else {
@@ -410,13 +367,13 @@ CoulombDielectric::CoulombDielectric(
 }
 
 CoulombDielectric::CoulombDielectric(const RDKit::ROMol &mol, int confId,
-                                     double probecharge, bool absVal,
+                                     double probeCharge, bool absVal,
                                      const std::string &prop, double alpha,
                                      double cutoff, double epsilon, double xi)
     : d_nAtoms(mol.getNumAtoms()),
       d_absVal(absVal),
       d_cutoff(cutoff * cutoff),
-      d_probe(probecharge),
+      d_probe(probeCharge),
       d_epsilon(epsilon),
       d_xi(xi),
       d_alpha(alpha) {
@@ -483,9 +440,9 @@ CoulombDielectric::CoulombDielectric(const RDKit::ROMol &mol, int confId,
         d_sp.push_back(4.0);
     }
   }
-  if (fabs(d_alpha) < MIN_VAL) {
+  if (fabs(d_alpha) < MIN_CUTOFF_VAL) {
     d_softcore = false;
-    if (d_cutoff < MIN_VAL * MIN_VAL) {
+    if (d_cutoff < MIN_CUTOFF_VAL * MIN_CUTOFF_VAL) {
       d_cutoff = CUTOFF * CUTOFF;
     }
   } else {
@@ -675,27 +632,27 @@ double cos_acc(double, double t_0, double t_i) {
 double no_dep(double, double, double) { return 1.0; };
 }  // namespace HBondDetail
 
-HBond::HBond(const RDKit::ROMol &mol, int confId, const std::string &probeType,
+HBond::HBond(const RDKit::ROMol &mol, int confId, const std::string &probeAtomType,
              bool fixed, double cutoff)
     : d_cutoff(cutoff * cutoff) {
-  if (d_cutoff < (MIN_VAL * MIN_VAL)) {
+  if (d_cutoff < (MIN_CUTOFF_VAL * MIN_CUTOFF_VAL)) {
     d_cutoff = CUTOFF * CUTOFF;
   }
 
-  if (probeType == "O") {
+  if (probeAtomType == "O") {
     d_DAprop = 'D';
     d_probetype = O;
-  } else if (probeType == "OH") {
+  } else if (probeAtomType == "OH") {
     d_DAprop = 'A';
     d_probetype = O;
-  } else if (probeType == "N") {
+  } else if (probeAtomType == "N") {
     d_DAprop = 'D';
     d_probetype = N;
-  } else if (probeType == "NH") {
+  } else if (probeAtomType == "NH") {
     d_DAprop = 'A';
     d_probetype = N;
   } else {
-    const std::string msg = "Type of Probe not supported: " + probeType;
+    const std::string msg = "Probe atom type not supported: " + probeAtomType;
     BOOST_LOG(rdErrorLog) << msg << std::endl;
     throw ValueErrorException(msg);
   }
@@ -710,13 +667,13 @@ HBond::HBond(const RDKit::ROMol &mol, int confId, const std::string &probeType,
     if (fixed) {
       findAcceptors(mol, confId, specialAtoms);
     } else {
-      findAcceptors_unfixed(mol, confId, specialAtoms);
+      findAcceptorsUnfixed(mol, confId, specialAtoms);
     }
   } else if (d_DAprop == 'D') {
     if (fixed) {
       findDonors(mol, confId, specialAtoms);
     } else {
-      findDonors_unfixed(mol, confId, specialAtoms);
+      findDonorsUnfixed(mol, confId, specialAtoms);
     }
   } else {  // this should never be the case
     BOOST_LOG(rdErrorLog) << "HBond: unknown target property d_DAprop: "
@@ -755,7 +712,7 @@ unsigned int HBond::findSpecials(const RDKit::ROMol &mol, int confId,
   unsigned int nbrs;
   unsigned int match = 0, nMatches = 0;
 
-  const RDKit::Conformer conf = mol.getConformer(confId);
+  const RDKit::Conformer &conf = mol.getConformer(confId);
   // RDKit::RWMol thr = *RDKit::SmilesToMol("C[C@H]([C@@H](C(=O))N)O");
   // //threonine, serine itself is a substructure of this
   static const auto ser = RDKit::v2::SmilesParse::MolFromSmiles(
@@ -766,8 +723,8 @@ unsigned int HBond::findSpecials(const RDKit::ROMol &mol, int confId,
   match = RDKit::SubstructMatch(mol, *ser, matches);
   nMatches += match;
 
-  for (auto & matche : matches) {
-    const RDKit::Atom *atom = mol.getAtomWithIdx(matche.second);
+  for (auto &matche : matches) {
+    const auto *atom = mol.getAtomWithIdx(matche.second);
     if (atom->getAtomicNum() == 8) {
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
       pos = conf.getAtomPos(matche.second);
@@ -827,17 +784,17 @@ unsigned int HBond::findSpecials(const RDKit::ROMol &mol, int confId,
   return nMatches;
 }
 
-/* General structure of findAcceptors, findAcceptors_unfixed, findDonors,
- * findDonors_unfixed functions: loop over all atoms:
- * 	- check whether atom was already treated in specialAtoms
- * 	- switch ( atomicNum ): find atoms which are able to donate/accept
+/* General structure of findAcceptors, findAcceptorsUnfixed, findDonors,
+ * findDonorsUnfixed functions: loop over all atoms:
+ *   - check whether atom was already treated in specialAtoms
+ *   - switch ( atomicNum ): find atoms which are able to donate/accept
  * hydrogen bonds if able:
- * 		- switch ( number of neighbors ): find the right geometry
- * 			- check for charge or aromatic neighborhood
- * 			- calculate adequate hydrogen bond direction vector,
+ *   - switch ( number of neighbors ): find the right geometry
+ *   - check for charge or aromatic neighborhood
+ *   - calculate adequate hydrogen bond direction vector,
  * lone pair plane vector
- * 			- choose correct angular function
- * 			- add atomtype, angular function, position of atom,
+ *   - choose correct angular function
+ *   - add atomtype, angular function, position of atom,
  * hydrogen bond direction vector and lone pair plane vector to vectors for
  * calculating the interaction returns number of added interactions
  */
@@ -845,7 +802,7 @@ unsigned int HBond::findAcceptors(const RDKit::ROMol &mol, int confId,
                                   const std::vector<unsigned int> &specials) {
   using namespace HBondDetail;
 
-  const RDKit::Conformer conf =
+  const RDKit::Conformer &conf =
       mol.getConformer(confId);  // get conformer of molecule
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   RDKit::ROMol::ADJ_ITER secnbrIdx, secendNbrs;
@@ -861,7 +818,7 @@ unsigned int HBond::findAcceptors(const RDKit::ROMol &mol, int confId,
       continue;
     }
 
-    const RDKit::Atom *atom = mol.getAtomWithIdx(i);  // get ptr to atom
+    const auto *atom = mol.getAtomWithIdx(i);  // get ptr to atom
 
     switch (atom->getAtomicNum()) {  // find atoms able to donate hydrogen bonds
       case 7:                        // Nitrogen
@@ -1018,12 +975,12 @@ unsigned int HBond::findAcceptors(const RDKit::ROMol &mol, int confId,
   return interact;
 }
 
-unsigned int HBond::findAcceptors_unfixed(
+unsigned int HBond::findAcceptorsUnfixed(
     const RDKit::ROMol &mol, int confId,
     const std::vector<unsigned int> &specials) {
   using namespace HBondDetail;
 
-  const RDKit::Conformer conf =
+  const RDKit::Conformer &conf =
       mol.getConformer(confId);  // get conformer of molecule
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   RDKit::ROMol::ADJ_ITER secnbrIdx, secendNbrs;
@@ -1040,7 +997,7 @@ unsigned int HBond::findAcceptors_unfixed(
       continue;
     }
 
-    const RDKit::Atom *atom = mol.getAtomWithIdx(i);  // get pointer to atom
+    const auto *atom = mol.getAtomWithIdx(i);  // get pointer to atom
 
     switch (atom->getAtomicNum()) {  // find atoms able to accept hydrogen bonds
                                      // (O, N, halogens)
@@ -1065,7 +1022,7 @@ unsigned int HBond::findAcceptors_unfixed(
         }
 
         switch (nbrs) {  // number of neigbors
-          case 1:        // sp, eg. nitriles, 	no difference to fixed bonds
+          case 1:        // sp, eg. nitriles,   no difference to fixed bonds
             if (atom->getFormalCharge() <=
                 0) {  // no positively charged nitrogens
               addVectElements(
@@ -1282,7 +1239,7 @@ unsigned int HBond::findDonors(const RDKit::ROMol &mol, int confId,
                                const std::vector<unsigned int> &specials) {
   using namespace HBondDetail;
 
-  const RDKit::Conformer conf =
+  const RDKit::Conformer &conf =
       mol.getConformer(confId);  // get conformer of molecule
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   RDGeom::Point3D pos, dir;
@@ -1295,7 +1252,7 @@ unsigned int HBond::findDonors(const RDKit::ROMol &mol, int confId,
       continue;
     }
 
-    const RDKit::Atom *atom = mol.getAtomWithIdx(i);  // get ptr to atom
+    const auto *atom = mol.getAtomWithIdx(i);  // get ptr to atom
 
     switch (
         atom->getAtomicNum()) {  // find atoms able to donate hydrogen bonds (O,
@@ -1343,13 +1300,12 @@ unsigned int HBond::findDonors(const RDKit::ROMol &mol, int confId,
   return interact;
 }
 
-unsigned int HBond::findDonors_unfixed(
+unsigned int HBond::findDonorsUnfixed(
     const RDKit::ROMol &mol, int confId,
     const std::vector<unsigned int> &specials) {
   using namespace HBondDetail;
 
-  const RDKit::Conformer conf =
-      mol.getConformer(confId);  // get conformer of molecule
+  const auto &conf = mol.getConformer(confId);  // get conformer of molecule
   RDKit::ROMol::ADJ_ITER nbrIdx, endNbrs;
   RDGeom::Point3D pos, hbonddir, dir, plane;
   unsigned int nbrs, nonhnbrs;  // no of neighbors, no of non hydrogen neighbors
@@ -1363,7 +1319,7 @@ unsigned int HBond::findDonors_unfixed(
       continue;  // skip loop for this atom
     }
 
-    const RDKit::Atom *atom = mol.getAtomWithIdx(i);  // get ptr to atom
+    const auto *atom = mol.getAtomWithIdx(i);  // get ptr to atom
 
     switch (
         atom->getAtomicNum()) {  // find atoms able to donate hydrogen bonds (O,
@@ -1880,7 +1836,7 @@ double HBond::angle(double x1, double y1, double z1, double x2, double y2,
     dotProd = -1.0;
   } else if (dotProd > 1.0) {
     dotProd = 1.0;
-}
+  }
   return acos(dotProd);
 }
 
@@ -1898,19 +1854,21 @@ double Hydrophilic::operator()(double x, double y, double z, double thres) {
 }
 
 void writeToCubeStream(const RDGeom::UniformRealValueGrid3D &grd,
-                       const RDKit::ROMol &mol, std::ostream &outStrm,
+                       std::ostream &outStrm, const RDKit::ROMol *mol,
                        int confid) {
+  PRECONDITION(outStrm, "bad stream");
   const double bohr = 0.529177249;
-  int dimX = (int)grd.getNumX();  //+2;
-  int dimY = (int)grd.getNumY();  //+2;
-  int dimZ = (int)grd.getNumZ();  //+2;
-  double spacing = grd.getSpacing() / bohr;
-  RDGeom::Point3D offSet = grd.getOffset() / bohr;
+  int dimX = grd.getNumX();  //+2;
+  int dimY = grd.getNumY();  //+2;
+  int dimZ = grd.getNumZ();  //+2;
+  auto spacing = grd.getSpacing() / bohr;
+  auto offSet = grd.getOffset() / bohr;
+  auto nAtoms = mol ? mol->getNumAtoms() : 0u;
   outStrm.setf(std::ios::left);
   outStrm
       << "Gaussian cube format generated by RDKit\n*************************\n";
-  outStrm << std::setw(20) << std::setprecision(6) << mol.getNumAtoms()
-          << std::setw(20) << std::setprecision(6) << offSet.x << std::setw(20)
+  outStrm << std::setw(20) << std::setprecision(6) << nAtoms << std::setw(20)
+          << std::setprecision(6) << offSet.x << std::setw(20)
           << std::setprecision(6) << offSet.y << std::setw(20)
           << std::setprecision(6) << offSet.z << std::endl;
   outStrm << std::setw(20) << std::setprecision(6) << dimX << std::setw(20)
@@ -1925,35 +1883,31 @@ void writeToCubeStream(const RDGeom::UniformRealValueGrid3D &grd,
           << std::setw(20) << std::setprecision(6) << 0 << std::setw(20)
           << std::setprecision(6) << spacing << std::endl;
 
-  RDGeom::Point3D pt;
-  RDKit::Conformer conf = mol.getConformer(confid);
+  if (mol) {
+    // this will throw a ConformerException if confId does not exist
+    const auto &conf = mol->getConformer(confid);
 
-  int i = 0;
-  for (RDKit::AtomIterator_<const RDKit::Atom, const RDKit::ROMol> atomIt =
-           mol.beginAtoms();
-       atomIt != mol.endAtoms(); ++atomIt) {
-    pt = conf.getAtomPos(i) / bohr;
-    outStrm << std::setw(20) << std::setprecision(6) << std::left
-            << (*atomIt)->getAtomicNum() << std::setw(20)
-            << std::setprecision(6) << (*atomIt)->getAtomicNum()
-            << std::setw(20) << std::setprecision(6) << pt.x << std::setw(20)
-            << std::setprecision(6) << std::setw(20) << std::setprecision(6)
-            << pt.y << std::setw(20) << std::setprecision(6) << pt.z
-            << std::endl;
-    i++;
+    for (const auto &atom : mol->atoms()) {
+      const auto &pt = conf.getAtomPos(atom->getIdx()) / bohr;
+      outStrm << std::setw(20) << std::setprecision(6) << std::left
+              << atom->getAtomicNum() << std::setw(20) << std::setprecision(6)
+              << atom->getAtomicNum() << std::setw(20) << std::setprecision(6)
+              << pt.x << std::setw(20) << std::setprecision(6) << std::setw(20)
+              << std::setprecision(6) << pt.y << std::setw(20)
+              << std::setprecision(6) << pt.z << std::endl;
+    }
   }
 
-  const unsigned int numX = grd.getNumX(), numY = grd.getNumY(),
-                     numZ = grd.getNumZ();
-  for (auto xi = 0u; xi < numX; xi++) {
-    for (auto yi = 0u; yi < numY; yi++) {
-      for (auto zi = 0u; zi < numZ; zi++) {
+  for (auto xi = 0u; xi < grd.getNumX(); ++xi) {
+    for (auto yi = 0u; yi < grd.getNumY(); ++yi) {
+      for (auto zi = 0u; zi < grd.getNumZ(); ++zi) {
         outStrm << std::setw(20) << std::setprecision(6) << std::left
                 << static_cast<double>(
                        grd.getVal(grd.getGridIndex(xi, yi, zi)));
         // grd->d_numX-xi-1, grd->d_numY-yi-1, grd->d_numZ-zi-1
-        if ((zi + 1) % 8 == 0) { outStrm << std::endl;
-}
+        if ((zi + 1) % 8 == 0) {
+          outStrm << std::endl;
+        }
       }
       outStrm << std::endl;
     }
@@ -1962,18 +1916,17 @@ void writeToCubeStream(const RDGeom::UniformRealValueGrid3D &grd,
 }
 
 void writeToCubeFile(const RDGeom::UniformRealValueGrid3D &grd,
-                     const RDKit::ROMol &mol, const std::string &filename,
+                     const std::string &filename, const RDKit::ROMol *mol,
                      int confid) {
-  auto *ofStrm = new std::ofstream(filename.c_str());
-  auto *oStrm = static_cast<std::ostream *>(ofStrm);
-  writeToCubeStream(grd, mol, *oStrm, confid);
-  delete ofStrm;
+  std::ofstream ofStrm(filename.c_str());
+  writeToCubeStream(grd, ofStrm, mol, confid);
 }
 
 std::unique_ptr<RDKit::RWMol> readFromCubeStream(
     RDGeom::UniformRealValueGrid3D &grd, std::istream &inStrm) {
-  PRECONDITION(inStrm, "no stream");
+  PRECONDITION(inStrm, "bad stream");
   constexpr double bohr = 0.529177249;
+  constexpr double spacingThreshold = 0.0001;
   if (inStrm.eof()) {
     return nullptr;
   }
@@ -1986,61 +1939,59 @@ std::unique_ptr<RDKit::RWMol> readFromCubeStream(
   inStrm >> x >> y >> z;
   const RDGeom::Point3D offSet(x * bohr, y * bohr, z * bohr);
 
-  double dimX, dimY, dimZ;
-  double spacingx, spacingy, spacingz, temp1, temp2;
-  inStrm >> dimX >> spacingx >> temp1 >> temp2;
-  inStrm >> dimY >> temp1 >> spacingy >> temp2;
-  inStrm >> dimZ >> temp1 >> temp2 >> spacingz;
+  int dimX, dimY, dimZ;
+  double spacingX, spacingY, spacingZ, temp1, temp2;
+  inStrm >> dimX >> spacingX >> temp1 >> temp2;
+  inStrm >> dimY >> temp1 >> spacingY >> temp2;
+  inStrm >> dimZ >> temp1 >> temp2 >> spacingZ;
 
-  if ((fabs(spacingx - spacingy) > 0.0001) ||
-      (fabs(spacingx - spacingz) > 0.0001)) {
+  if ((fabs(spacingX - spacingY) > spacingThreshold) ||
+      (fabs(spacingX - spacingZ) > spacingThreshold)) {
     std::ostringstream errout;
     errout << "Same spacing in all directions needed";
     throw RDKit::FileParseException(errout.str());
   } else {
-    spacingx *= bohr;
-    grd = RDGeom::UniformRealValueGrid3D(spacingx * dimX, spacingx * dimY,
-                                         spacingx * dimZ, spacingx, &offSet);
+    spacingX *= bohr;
+    grd = RDGeom::UniformRealValueGrid3D(spacingX * static_cast<double>(dimX),
+                                         spacingX * static_cast<double>(dimY),
+                                         spacingX * static_cast<double>(dimZ),
+                                         spacingX, &offSet);
   }
-  auto molecule = std::make_unique<RDKit::RWMol>();
-  auto *conf = new RDKit::Conformer(nAtoms);
-
-  int atomNum;
-  for (auto i = 0; i < nAtoms; i++) {
-    inStrm >> atomNum >> temp1 >> x >> y >> z;
-    RDKit::Atom atom(atomNum);
-    molecule->addAtom(&atom, true, false);
-    RDGeom::Point3D pos(x * bohr, y * bohr, z * bohr);
-    conf->setAtomPos(i, pos);
+  std::unique_ptr<RDKit::RWMol> molecule;
+  if (nAtoms) {
+    molecule.reset(new RDKit::RWMol());
+    std::unique_ptr<RDKit::Conformer> conf(new RDKit::Conformer(nAtoms));
+    int atomNum;
+    for (auto i = 0; i < nAtoms; ++i) {
+      inStrm >> atomNum >> temp1 >> x >> y >> z;
+      RDKit::Atom atom(atomNum);
+      molecule->addAtom(&atom, true, false);
+      RDGeom::Point3D pos(x * bohr, y * bohr, z * bohr);
+      conf->setAtomPos(i, pos);
+    }
+    molecule->addConformer(conf.release(), false);
   }
-  for (auto xi = 0; xi < dimX; xi++) {
-    for (auto yi = 0; yi < dimY; yi++) {
-      for (auto zi = 0; zi < dimZ; zi++) {
+  for (auto xi = 0; xi < dimX; ++xi) {
+    for (auto yi = 0; yi < dimY; ++yi) {
+      for (auto zi = 0; zi < dimZ; ++zi) {
         double tempVal;
         inStrm >> tempVal;
         grd.setVal(grd.getGridIndex(xi, yi, zi), tempVal);
       }
     }
   }
-  molecule->addConformer(conf, false);
   return molecule;
 }
 
 std::unique_ptr<RDKit::RWMol> readFromCubeFile(
     RDGeom::UniformRealValueGrid3D &grd, const std::string &filename) {
-  auto *ifStrm = new std::ifstream(filename.c_str());
-  if (!ifStrm || (ifStrm->bad())) {
+  std::ifstream ifStrm(filename.c_str());
+  if (ifStrm.bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << filename;
     throw RDKit::BadFileException(errout.str());
   };
 
-  auto *iStrm = static_cast<std::istream *>(ifStrm);
-  std::unique_ptr<RDKit::RWMol> mol;
-  if (!iStrm->eof()) {
-    mol = readFromCubeStream(grd, *iStrm);
-  }
-  delete ifStrm;
-  return mol;
+  return readFromCubeStream(grd, ifStrm);
 }
 }  // namespace RDMIF

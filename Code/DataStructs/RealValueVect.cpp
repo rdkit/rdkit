@@ -33,12 +33,8 @@ void RealValueVect::setVal(unsigned int i, double val) {
 }
 
 double RealValueVect::getTotalVal() const {
-  double res = 0;
-
-  for (unsigned int i = 0; i < d_length; ++i) {
-    res += d_data[i];
-  }
-  return res;
+  return std::accumulate(d_data.begin(), d_data.end(), 0.0,
+                         std::plus<double>());
 }
 
 bool RealValueVect::compareVectors(const RealValueVect &other) {
@@ -68,21 +64,22 @@ std::string RealValueVect::toString() const {
 
   boost::int32_t tVers = ci_REALVALUEVECTPICKLE_VERSION * -1;
   streamWrite(ss, tVers);
-  boost::uint32_t tInt;
-  tInt = d_length;
+  boost::uint32_t tInt = d_length;
   streamWrite(ss, tInt);
 
 #if defined(BOOST_BIG_ENDIAN)
-  double *td = new double[d_length];
-  for (unsigned int i = 0; i < d_length; ++i)
-    td[i] = EndianSwapBytes<HOST_ENDIAN_ORDER, LITTLE_ENDIAN_ORDER>(d_data[i]);
-  ss.write((const char *)td, d_length * sizeof(double));
-  delete[] td;
+  std::vector<double> td(d_length);
+  std::transform(d_data.begin(), d_data.end(), td.begin(), [](const auto v) {
+    return EndianSwapBytes<HOST_ENDIAN_ORDER, LITTLE_ENDIAN_ORDER>(v);
+  });
+  ss.write(reinterpret_cast<const char *>(td.data()),
+           d_length * sizeof(double));
+  const auto *data = td.data();
 #else
-  ss.write((const char *)d_data.data(), d_length * sizeof(double));
+  const auto *data = d_data.data();
 #endif
-  std::string res(ss.str());
-  return res;
+  ss.write(reinterpret_cast<const char *>(data), d_length * sizeof(double));
+  return ss.str();
 };
 
 void RealValueVect::initFromText(const char *pkl, const unsigned int len) {
@@ -91,9 +88,8 @@ void RealValueVect::initFromText(const char *pkl, const unsigned int len) {
   ss.write(pkl, len);
   boost::int32_t tVers;
   streamRead(ss, tVers);
-  tVers *= -1;
-  if (tVers == 0x1) {
-  } else {
+  tVers = -tVers;
+  if (!(tVers == 0x1)) {
     throw ValueErrorException("bad version in RealValueVect pickle");
   }
   boost::uint32_t tInt;
@@ -101,67 +97,67 @@ void RealValueVect::initFromText(const char *pkl, const unsigned int len) {
   d_length = tInt;
   d_data.resize(d_length);
   auto *data = d_data.data();
-  ss.read((char *)data, d_length * sizeof(double));
+  ss.read(reinterpret_cast<char *>(data), d_length * sizeof(double));
 
 #if defined(BOOST_BIG_ENDIAN)
-  for (auto &v : d_data) {
-    v = EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(v);
-  }
+  std::transform(d_data.begin(), d_data.end(), d_data.begin(), [](auto &v) {
+    return EndianSwapBytes<LITTLE_ENDIAN_ORDER, HOST_ENDIAN_ORDER>(v);
+  });
 #endif
 };
 
-RealValueVect RealValueVect::operator&(const RealValueVect &other) const {
+template <typename O>
+RealValueVect &RealValueVect::applyBinaryOp(const RealValueVect &other, O op) {
   PRECONDITION(other.d_length == d_length, "length mismatch");
-  RealValueVect ans(d_length);
   for (unsigned int i = 0; i < d_length; ++i) {
     double v1 = getVal(i);
     double v2 = other.getVal(i);
-    ans.setVal(i, std::min(v1, v2));
-  }
-  return (ans);
-};
-
-RealValueVect RealValueVect::operator|(const RealValueVect &other) const {
-  PRECONDITION(other.d_length == d_length, "length mismatch");
-  RealValueVect ans(d_length);
-  for (unsigned int i = 0; i < d_length; ++i) {
-    double v1 = getVal(i);
-    double v2 = other.getVal(i);
-    ans.setVal(i, std::max(v1, v2));
-  }
-  return (ans);
-};
-
-RealValueVect &RealValueVect::operator+=(const RealValueVect &other) {
-  PRECONDITION(other.d_length == d_length, "length mismatch");
-  for (unsigned int i = 0; i < d_length; i++) {
-    double v1 = getVal(i);
-    double v2 = other.getVal(i);
-    setVal(i, v1 + v2);
+    setVal(i, op(v1, v2));
   }
   return *this;
 }
 
-RealValueVect &RealValueVect::operator-=(const RealValueVect &other) {
-  PRECONDITION(other.d_length == d_length, "length mismatch");
+RealValueVect &RealValueVect::operator&=(const RealValueVect &other) {
+  static const double &(*minOp)(const double &, const double &) =
+      std::min<double>;
+  return applyBinaryOp(other, minOp);
+}
 
-  for (unsigned int i = 0; i < d_length; i++) {
-    double v1 = getVal(i);
-    double v2 = other.getVal(i);
-    setVal(i, v1 - v2);
-  }
-  return *this;
+RealValueVect &RealValueVect::operator|=(const RealValueVect &other) {
+  static const double &(*maxOp)(const double &, const double &) =
+      std::max<double>;
+  return applyBinaryOp(other, maxOp);
+}
+
+RealValueVect &RealValueVect::operator+=(const RealValueVect &other) {
+  return applyBinaryOp(other, std::plus<double>());
+}
+
+RealValueVect &RealValueVect::operator-=(const RealValueVect &other) {
+  return applyBinaryOp(other, std::minus<double>());
 }
 
 RealValueVect operator+(const RealValueVect &p1, const RealValueVect &p2) {
   RealValueVect res(p1);
   res += p2;
   return res;
-};
+}
 
 RealValueVect operator-(const RealValueVect &p1, const RealValueVect &p2) {
   RealValueVect res(p1);
   res -= p2;
+  return res;
+}
+
+RealValueVect operator|(const RealValueVect &p1, const RealValueVect &p2) {
+  RealValueVect res(p1);
+  res |= p2;
+  return res;
+};
+
+RealValueVect operator&(const RealValueVect &p1, const RealValueVect &p2) {
+  RealValueVect res(p1);
+  res &= p2;
   return res;
 };
 
