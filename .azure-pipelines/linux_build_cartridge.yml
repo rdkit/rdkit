@@ -5,11 +5,26 @@ steps:
     sudo apt-get remove postgresql postgresql-common postgresql-client-common libpq5
     sudo apt purge postgresql-14 postgresql-client-14
     sudo apt purge postgresql postgresql-common postgresql-client-common libpq5
-    sudo apt-get install -y libboost-all-dev postgresql-common postgresql-12 postgresql-server-dev-12
+    sudo apt-get install -y postgresql-common postgresql-12 postgresql-server-dev-12
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
+    source ${CONDA}/etc/profile.d/conda.sh
+    sudo chown -R ${USER} ${CONDA}
+    conda config --set always_yes yes --set changeps1 no
+    conda update -q conda
+    conda info -a
+    conda create --name rdkit_build -c conda-forge $(python) cmake \
+        boost-cpp=$(boost_version) \
+        boost=$(boost_version) \
+        numpy pillow eigen pandas=2.0 matplotlib-base=3.8 \
+        qt=5.9.7 cairo
+    conda activate rdkit_build
+    conda install -c conda-forge pytest nbval ipykernel>=6.0
+
   displayName: Setup build environment
 - bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
