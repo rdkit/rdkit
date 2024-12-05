@@ -179,43 +179,6 @@ void test190() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void test45() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test45" << std::endl;
-  std::cout << "\n test45()\n";
-  std::vector<ROMOL_SPTR> mols;
-  const char *smi[] = {
-      // SLOW
-      // test 45 #  Using CHEMBL551656 CHEMBL563796 CHEMBL561978 CHEMBL559467
-      // CHEMBL550503 CHEMBL562866 CHEMBL552190 CHEMBL181547 CHEMBL359567
-      // CHEMBL373316
-      // 45 . 1 30 32 27.01
-      // n12-C-c:c(-c:2:c:c2-C(-O)(-C-C)-C(-O-C-c:2:c:1=O)=O):n:c(:c:c:c-O):c(:c):c-C-C-C
-      "CCC1(O)c2cc3n(c(=O)c2COC1=O)Cc1c-3nc2ccc(OC)cc2c1C1CCCCC1 CHEMBL551656",
-      "CCC1(O)c2cc3n(c(=O)c2COC1=O)Cc1c-3nc2ccc(OC)cc2c1C1CCCC1 CHEMBL563796",  // Q
-      "CCC1(O)C(=O)OCc2c1cc1n(c2=O)Cc2c-1nc1ccc(OC)cc1c2C1CCCCCC1 CHEMBL561978",
-      "CCC1(O)C(=O)OCc2c1cc1n(c2=O)Cc2c-1nc1ccc(OC)cc1c2C1CCC1 CHEMBL559467",
-      "CCC1(O)C(=O)OCc2c1cc1n(c2=O)Cc2c-1nc1ccc(O)cc1c2C1CCCC1 CHEMBL550503",
-      "CCC1(O)c2cc3n(c(=O)c2COC1=O)Cc1c-3nc2ccc(O)cc2c1C1CCCCCC1 CHEMBL562866",
-      "CCC1(O)C(=O)OCc2c1cc1n(c2=O)Cc2c-1nc1ccc(O)cc1c2C1CCCCC1 CHEMBL552190",
-      "CCC1(O)c2c(c(=O)n3c(c2)-c2nc4cc5c(cc4c(C4CCCC4)c2C3)OCO5)COC1=O "
-      "CHEMBL181547",
-      "CCC1(O)c2c(c(=O)n3c(c2)-c2nc4c(c(C5CCCCC5)c2C3)cc2c(c4)OCO2)COC1=O "
-      "CHEMBL359567",
-      "CCCc1c(OC)ccc2nc3c(c(CC)c21)Cn1c-3cc2c(c1=O)COC(=O)C2(O)CC CHEMBL373316",
-  };
-  for (auto &i : smi) {
-    mols.emplace_back(SmilesToMol(getSmilesOnly(i)));
-  }
-  t0 = nanoClock();
-  MCSResult res = findMCS(mols);
-  std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
-            << res.NumBonds << " bonds\n";
-  printTime();
-  TEST_ASSERT(res.NumAtoms == 31 && res.NumBonds == 33);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
-
 void test3() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing FMCS test3" << std::endl;
@@ -408,55 +371,6 @@ void testThreshold() {
   printTime();
   p.Threshold = 1.0;  // restore default value
   TEST_ASSERT(res.NumAtoms == 3 && res.NumBonds == 2);
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
-
-void test330() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing FMCS test330" << std::endl;
-  std::cout << "\ntest330()\n";
-  std::vector<ROMOL_SPTR> mols;
-  const char *smi[] = {
-      // TEST 330  40 sec
-      "CCC(C)C(NC(=O)C(NC(C(CCC(O)=O)NC(=O)C(NC(=O)C(NC(C(CC(O)=O)NC(C(CC(C)C)"
-      "NC(C(Cc1ccccc1)NC(CN)=O)=O)=O)=O)C(C)CC)C(C)CC)=O)CCCCN)C(NC(C)C(NC("
-      "CCCCN)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O CHEMBL1240742",
-      "CCC(C)C(NC(=O)C(NC(C(CCCCN)NC(=O)C(NC(=O)C(NC(C(CC(O)=O)NC(C(Cc1ccccc1)"
-      "NC(C(CC(C)C)NC(CN)=O)=O)=O)=O)C(C)CC)C(C)CC)=O)CCCCN)C(NC(C)C(NC(CCC(O)="
-      "O)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O)=O)=O CHEMBL1240736",
-      "CCC(C)C(NC(CN)=O)C(NC(C(NC(CC(O)=O)C(NC(C(NC(C)C(NC(CCCCN)C(NC(C(NC(CC("
-      "C)C)C(NC(Cc1ccccc1)C(NC(CCC(O)=O)C(NC(CO)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)="
-      "O)=O)=O)=O)=O)CCCCN)=O)=O)=O)C(C)CC)=O)=O)C(C)CC)=O CHEMBL1240738",
-      "CCC(C)C(NC(CN)=O)C(NC(Cc1ccccc1)C(NC(CC(O)=O)C(NC(CCCCN)C(NC(CC(C)C)C("
-      "NC(C)C(NC(CCCCN)C(NC(CCC(O)=O)C(NC(C(NC(CO)C(NC(C(NC(Cc1c[nH]c2c1cccc2)"
-      "C(O)=O)=O)C(C)CC)=O)=O)C(C)CC)=O)=O)=O)=O)=O)=O)=O)=O CHEMBL1240740",
-      "CCC(C)C(NC(CN)=O)C(NC(Cc1c[nH]c2c1cccc2)C(NC(CO)C(NC(CC(O)=O)C(NC(CC(C)"
-      "C)C(NC(C)C(NC(CCC(O)=O)C(NC(C(NC(C(NC(CCCCN)C(NC(CCCCN)C(NC(Cc1ccccc1)C("
-      "O)=O)=O)=O)=O)C(C)CC)=O)C(C)CC)=O)=O)=O)=O)=O)=O)=O CHEMBL1240741",
-      "CCC(C)C(NC(=O)C(NC(=O)C(CCCCN)NC(C(CC(C)C)NC(C(Cc1c[nH]c2c1cccc2)NC(CN)="
-      "O)=O)=O)CCCCN)C(NC(CCC(O)=O)C(NC(CO)C(=O)NC(C(NC(C(NC(CC(O)=O)C(NC(C)C("
-      "NC(Cc1ccccc1)C(O)=O)=O)=O)=O)C(C)CC)=O)C(C)CC)=O)=O CHEMBL1240743",
-      "CCC(C)C(NC(C(CCC(O)=O)NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)="
-      "O)=O)=O)=O)C(NC(Cc1c[nH]c2ccccc12)C(O)=O)=O CHEMBL431874",
-      "CCC(C)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)C(NC("
-      "CCC(O)=O)C(NC(Cc1c[nH]c2ccccc12)C(O)=O)=O)=O CHEMBL262166",
-      "CCC(C)C(NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)=O)=O)C(NC("
-      "CCCCN)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O)=O CHEMBL313122",
-      "CCC(C)C(NC(C(CCCCN)NC(C(CC(O)=O)NC(C(CC(C)C)NC(C(Cc1ccccc1)NC(C)=O)=O)="
-      "O)=O)=O)C(NC(Cc1c[nH]c2c1cccc2)C(O)=O)=O CHEMBL314239",
-      // # 330 F  42 41 30.93 sec MCS:
-      //[#6]-[#6](-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6](-[#6]-[#6]-[#6])-[#7]-[#6](-[#6](-[#6])-[#7]-[#6](-[#6])=[#8])=[#8])=[#8])=[#8])=[#8])-[#6](-[#7]-[#6](-[#6]-[#6](:[#6]):[#6]:[#6]:[#6]:[#6])-[#6](-[#8])=[#8])=[#8]
-  };
-  for (auto &i : smi) {
-    mols.emplace_back(SmilesToMol(getSmilesOnly(i)));
-  }
-  MCSParameters p;
-  t0 = nanoClock();
-  MCSResult res = findMCS(mols, &p);
-  std::cout << "MCS: " << res.SmartsString << " " << res.NumAtoms << " atoms, "
-            << res.NumBonds << " bonds\n";
-  printTime();
-  TEST_ASSERT(res.NumAtoms == 42 && res.NumBonds == 41);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -1484,7 +1398,6 @@ void testGithub945() {
   BOOST_LOG(rdInfoLog) << "Testing Github #945: MCS returning partial rings "
                           "with completeRingsOnly=True"
                        << std::endl;
-#if 1
   {
     std::vector<ROMOL_SPTR> mols;
     const char *smi[] = {"c1cc2ccccc2s1", "c1cc2ccccc2o1"};
@@ -1533,7 +1446,6 @@ void testGithub945() {
       TEST_ASSERT(res.NumBonds == 6);
     }
   }
-#endif
   {
     std::vector<ROMOL_SPTR> mols;
     const char *smi[] = {"c1cc2ccc(C)cc2s1", "c1cc2c(cccc2s1)C"};
@@ -3132,7 +3044,6 @@ void testAtomRingQueries() {
 int main(int argc, const char *argv[]) {
   (void)argc;
   (void)argv;
-  // p.Verbose = true;
   RDLog::InitLogs();
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
@@ -3150,7 +3061,6 @@ int main(int argc, const char *argv[]) {
   T0 = nanoClock();
   t0 = nanoClock();
 
-#if 1
   testJSONParameters();
 
   test1Basics();
@@ -3175,9 +3085,6 @@ int main(int argc, const char *argv[]) {
 
   test18();
   test504();
-  // very SLOW optional tests:
-  //    test330();  // SLOW test
-  //    test45();   // SLOW test
 
   testInitialSeed();
   testInitialSeed2();
@@ -3222,7 +3129,6 @@ int main(int argc, const char *argv[]) {
   testGitHub6773();
   testBondCompareCompleteRingsOnly();
   testAtomRingQueries();
-#endif
 
   unsigned long long t1 = nanoClock();
   double sec = double(t1 - T0) / 1000000.;

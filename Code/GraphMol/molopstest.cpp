@@ -27,6 +27,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/QueryOps.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -534,97 +535,6 @@ void test5() {
   delete m;
 }
 
-/*
-  void test6(){
-  string smi;
-  Mol *m;
-  VECT_INT_VECT sssr;
-
-  int c1,c2;
-  smi = "C1(Cl)C(Cl)C1Cl";
-  m = SmilesToMol(smi);
-  INT_SET ringAtoms,ringBonds;
-  //boost::tie(c1,c2) = MolOps::findRingAtomsAndBonds(*m,ringAtoms,ringBonds);
-
-  CHECK_INVARIANT(c1==3,"bad nRingAtoms");
-  CHECK_INVARIANT(ringAtoms.count(0)==1,"bad RingAtoms");
-  CHECK_INVARIANT(ringAtoms.count(1)==0,"bad RingAtoms");
-  CHECK_INVARIANT(ringAtoms.count(2)==1,"bad RingAtoms");
-  CHECK_INVARIANT(ringAtoms.count(3)==0,"bad RingAtoms");
-  CHECK_INVARIANT(ringAtoms.count(4)==1,"bad RingAtoms");
-  CHECK_INVARIANT(ringAtoms.count(5)==0,"bad RingAtoms");
-
-  CHECK_INVARIANT(c2==3,"bad nRingBonds");
-  CHECK_INVARIANT(ringBonds.count(0)==0,"");
-  CHECK_INVARIANT(ringBonds.count(1)==1,"");
-  CHECK_INVARIANT(ringBonds.count(2)==0,"");
-  CHECK_INVARIANT(ringBonds.count(3)==1,"");
-  CHECK_INVARIANT(ringBonds.count(4)==0,"");
-  CHECK_INVARIANT(ringBonds.count(5)==1,"");
-
-
-  }
-*/
-
-void test7() {
-#if 0
-  string smi;
-  Mol *m;
-  INT_VECT tree;
-#if 1
-  smi = "C(CO)OCC";
-  m = SmilesToMol(smi);
-  MolOps::findSpanningTree(*m,tree);
-  CHECK_INVARIANT(tree.size()==5,"bad mst");
-  delete m;
-
-  smi = "C1CC1";
-  m = SmilesToMol(smi);
-  MolOps::findSpanningTree(*m,tree);
-  CHECK_INVARIANT(tree.size()==2,"bad mst");
-  delete m;
-
-  smi = "C1C=C1";
-  m = SmilesToMol(smi);
-  MolOps::findSpanningTree(*m,tree);
-  CHECK_INVARIANT(tree.size()==2,"bad mst");
-  CHECK_INVARIANT(std::find(tree.begin(),tree.end(),1)==tree.end(),"bogus idx in mst");
-  delete m;
-#endif
-
-  smi = "C1C=CC=CC=1";
-  m = SmilesToMol(smi);
-  MolOps::findSpanningTree(*m,tree);
-  CHECK_INVARIANT(tree.size()==5,"bad mst");
-  delete m;
-
-
-  smi = "C1C(=CC1)";
-  m = SmilesToMol(smi);
-  MolOps::findSpanningTree(*m,tree);
-  CHECK_INVARIANT(tree.size()==3,"bad mst");
-  delete m;
-
-
-  smi = "C1C(C=C1)";
-  m = SmilesToMol(smi);
-  MolOps::findSpanningTree(*m,tree);
-  CHECK_INVARIANT(tree.size()==3,"bad mst");
-  delete m;
-
-  smi = "C1C(C2)CCC2C1";
-  m = SmilesToMol(smi);
-  MolOps::findSpanningTree(*m,tree);
-  CHECK_INVARIANT(tree.size()==6,"bad mst");
-  delete m;
-
-  smi = "C1C2CC3CCCCC3CC2CCC1";
-  m = SmilesToMol(smi);
-  MolOps::findSpanningTree(*m,tree);
-  CHECK_INVARIANT(tree.size()==13,"bad mst");
-  delete m;
-#endif
-}
 
 void test8() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Hydrogen Ops"
@@ -4199,7 +4109,6 @@ void testBasicCanon() {
   BOOST_LOG(rdInfoLog) << "Testing canonicalization basics" << std::endl;
 // these are all cases that were problematic at one time or another during
 // the canonicalization rewrite.
-#if 1
   {
     std::string smi = "FC1C(=C/Cl)\\C1";
     RWMol *m = SmilesToMol(smi);
@@ -4427,7 +4336,6 @@ void testBasicCanon() {
     delete m;
     delete m2;
   }
-#endif
 
   {
     std::string pathName = getenv("RDBASE");
@@ -5776,7 +5684,6 @@ void testAdjustQueryProperties() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing adjustQueryProperties()"
       << std::endl;
-#if 1
   {  // basics from SMILES
     std::string smiles = "C1CCC1C";
     ROMol *qm = SmilesToMol(smiles);
@@ -6101,7 +6008,6 @@ void testAdjustQueryProperties() {
     delete m;
     delete t;
   }
-#endif
   {  // make atoms generic
     std::string smiles = "C1CC1CC";
     ROMol *qm = SmilesToMol(smiles);
@@ -7217,6 +7123,40 @@ void testGithubIssue868() {
                 std::string::npos);
     delete m;
   }
+
+  // test atom type query merging
+  for (int aromatic =0; aromatic<2; ++aromatic) {
+    sstrm.str("");
+    TEST_ASSERT(sstrm.str() == "");
+    RWMol m;
+    QueryAtom *qa = new QueryAtom();
+    qa->setQuery(makeAtomTypeQuery(1, aromatic));
+    qa->expandQuery(makeAtomNumQuery(6), Queries::CompositeQueryType::COMPOSITE_OR);
+    m.addAtom(qa, true, true);
+    MolOps::mergeQueryHs(m);
+    TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
+				 "ORs is not supported") != std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") !=
+		std::string::npos);
+  }
+   
+  {
+    sstrm.str("");
+    TEST_ASSERT(sstrm.str() == "");
+    // github 7687 - merge with more than one option in or
+    std::string sma = "[#6]-[#1,#6,#7]";
+    RWMol *m = SmartsToMol(sma);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    MolOps::mergeQueryHs(*m);
+    std::cerr << sstrm.str() << std::endl;
+    TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
+                                 "ORs is not supported") != std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") !=
+                std::string::npos);
+    delete m;
+  }
+
   rdWarningLog->ClearTee();
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -7664,7 +7604,6 @@ void testGithub1614() {
                           "1614: AssignStereochemistry incorrectly removing "
                           "CIS/TRANS bond stereo"
                        << std::endl;
-#if 1
   {
     RWMol m;
     m.addAtom(new Atom(9), true, true);
@@ -7788,8 +7727,6 @@ void testGithub1614() {
       TEST_ASSERT(smi == "C/C(F)=C(/C)Cl");
     }
   }
-#endif
-#if 1
   {
     RWMol *m = SmilesToMol("F/C=C(\\C/C=C/C)C/C=C\\F", false, false);
     TEST_ASSERT(m);
@@ -7808,7 +7745,6 @@ void testGithub1614() {
     }
     delete m;
   }
-#endif
 
   {
     RWMol *m = SmilesToMol("FC=C(C/C=C/C)C/C=C\\F", false, false);
@@ -7832,7 +7768,6 @@ void testGithub1614() {
     delete m;
   }
 
-#if 1
   {
     RWMol *m = SmilesToMol("F/C=C(\\C/C=C/C)C/C=C\\C", false, false);
     TEST_ASSERT(m);
@@ -7849,7 +7784,6 @@ void testGithub1614() {
     }
     delete m;
   }
-#endif
   {
     RWMol *m = SmilesToMol("FC=C(C/C=C/C)C/C=C\\C", false, false);
     TEST_ASSERT(m);
@@ -7896,7 +7830,6 @@ void testGithub1810() {
     TEST_ASSERT(mol->getNumAtoms() == 4);
     TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOZ);
   }
-#if 1
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("FC=C(F)[H]", false, false));
     TEST_ASSERT(mol);
@@ -7909,7 +7842,6 @@ void testGithub1810() {
     TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereoAtoms()[0] == 0);
     TEST_ASSERT(mol->getBondBetweenAtoms(1, 2)->getStereoAtoms()[1] == 3);
   }
-#endif
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -8560,6 +8492,12 @@ void testHasQueryHs() {
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle) ==
               has_only_query_hs);
 
+  auto github7687 = "[#1,#6,#7]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687) == has_unmergeable_hs );
+  auto github7687b = "[1;#7,#1,#6]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687b) == has_unmergeable_hs );
+  auto github7687c = "[1&#7,#1,#6]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687c) == has_unmergeable_hs );
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
@@ -8643,8 +8581,6 @@ int main() {
   test3();
   test4();
   test5();
-  // test6();
-  test7();
   test8();
   test9();
   test10();

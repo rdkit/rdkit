@@ -17,6 +17,8 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include <RDGeneral/export.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
 
@@ -34,26 +36,38 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   SynthonSet(const SynthonSet &rhs) = delete;
   SynthonSet(SynthonSet &&rhs) = delete;
 
-  [[nodiscard]] const std::string &getId() const { return d_id; }
-  [[nodiscard]] const std::vector<std::vector<std::unique_ptr<Synthon>>> &
-  getSynthons() const {
+  const std::string &getId() const { return d_id; }
+  const std::vector<std::vector<std::unique_ptr<Synthon>>> &getSynthons()
+      const {
     return d_synthons;
   }
-  [[nodiscard]] const boost::dynamic_bitset<> &getConnectors() const {
-    return d_connectors;
-  }
-  [[nodiscard]] const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions()
-      const;
+  const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
+  const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions() const;
 
-  [[nodiscard]] const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
-  [[nodiscard]] const std::vector<int> &getNumConnectors() const;
+  const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
+  const std::vector<int> &getNumConnectors() const;
+  bool hasFingerprints() const;
+  const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
+  getSynthonFPs() const;
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
   void readFromDBStream(std::istream &is, std::uint32_t version);
+  // write the enumerated molecules to the stream in SMILES format.
+  void enumerateToStream(std::ostream &os) const;
 
   // SynthonSet takes control of the newSynthon and manages it.
   void addSynthon(int synthonSetNum, std::unique_ptr<Synthon> newSynthon);
+
+  // Sometimes the synthon sets are numbered from 1 in the text file,
+  // in which case there'll be an empty set 0.
+  void removeEmptySynthonSets();
+
+  // The bonds in the synthons may not be the same as in the products, and
+  // this is a problem for aromatic ring creation in particular.  Such as:
+  // [1*]=CC=C[2*] and [1*]Nc1c([2*])cccc1 giving c1ccc2ncccc2c1.  So
+  // transfer the types of bonds from the products to the synthons.
+  void transferProductBondsToSynthons();
 
   // Build the connector regions and their fingerprints.  Only used when
   // creating a SynthonSpace from a text file.
@@ -65,6 +79,19 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // 1 rather than 0.  Only used when creating a SynthonSpace from a text
   // file.
   void assignConnectorsUsed();
+
+  void buildSynthonFingerprints(
+      const FingerprintGenerator<std::uint64_t> &fpGen);
+
+  // Return the molecules for synthons for which the bits are true.
+  // Obviously requires that reqSynths is the same dimensions as
+  // d_synthons.
+  std::vector<std::vector<ROMol *>> getSynthons(
+      const std::vector<boost::dynamic_bitset<>> &reqSynths) const;
+
+  std::string buildProductName(const std::vector<size_t> &synthNums) const;
+  std::unique_ptr<ROMol> buildProduct(
+      const std::vector<size_t> &synthNums) const;
 
  private:
   std::string d_id;
@@ -86,6 +113,15 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   std::unique_ptr<ExplicitBitVect> d_connRegFP;
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
+
+  // The fingerprints for the synthons for use with a fingerprint similarity
+  // search. They are not properties of the Synthons because they are not
+  // generated directly from them, as explained in buildSynthonFingerprints.
+  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_synthonFPs;
+
+  // Tag each atom and bond in each synthon with its index and the synthon
+  // set number it came from.
+  void tagSynthonAtomsAndBonds() const;
 };
 
 }  // namespace SynthonSpaceSearch
