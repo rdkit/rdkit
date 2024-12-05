@@ -621,16 +621,6 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
                          rxnComponentNumber);
 
   std::string symbol = AtomGetMolFileSymbol(atom, true, queryListAtoms);
-#if 0
-  const boost::format fmter(
-      "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d");
-  std::stringstream ss;
-  ss << boost::format(fmter) % x % y % z % symbol.c_str() % massDiff % chg %
-            parityFlag % hCount % stereoCare % totValence % rxnComponentType %
-            rxnComponentNumber % atomMapNumber % inversionFlag %
-            exactChangeFlag;
-  res += ss.str();
-#else
   // it feels ugly to use snprintf instead of boost::format, but at least of the
   // time of this writing (with boost 1.55), the snprintf version runs in 20% of
   // the time.
@@ -654,7 +644,6 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
 
 #endif
   res += dest;
-#endif
   return res;
 };
 
