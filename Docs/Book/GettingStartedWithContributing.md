@@ -171,8 +171,14 @@ Any code changes made should generally come with an associated unit test. Please
 The unit tests are run from the build directory (`$RDBASE/build`) using the
 [ctest](https://cmake.org/cmake/help/latest/manual/ctest.1.html) command. 
 
+On MacOS:
   ```
-  RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest
+  RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" ctest
+  ```
+
+Otherwise:
+  ```
+  RDBASE=$RDBASE ctest
   ```
 
 See the help message for a full list of options, but some frequently useful options include:
@@ -187,7 +193,7 @@ See the help message for a full list of options, but some frequently useful opti
 If working only in Python (having followed [Greg's set up instructions](https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html) for setting up an environment), the tests can be run as follows:
 
   ```
-  cd $RDBASE/rdkit/Chem
+  cd $RDBASE/rdkit
   python -m pytest
   ```
 
@@ -214,7 +220,7 @@ Writing documentation is a great place to begin with contributing to the RDKit. 
 The RDKit documentation consists of several different sections. Here we'll give an overview of how each of these is generated, and what contributions should go where. An index of the RDKit documentation can be found [here](https://www.rdkit.org/docs/index.html). The major parts of the documentation (excluding the Overview and Installation instructions, which generally won't require community contributions) are as follows: 
 - The [Python API](https://www.rdkit.org/docs/api-docs.html) and [C++ API](https://www.rdkit.org/docs/cppapi/index.html) docs are generated automatically from the codebase.
 - The "Getting Started With" guides for [Python](https://www.rdkit.org/docs/GettingStartedInPython.html) and [C++](https://www.rdkit.org/docs/GettingStartedInC%2B%2B.html) provide an overview of how to use the core functionality of RDKit. 
-- The [RDKit Cookbook](https://www.rdkit.org/docs/Cookbook.html) contains more in-depth example recipes in Python for how to use RDKit for common tasks, generally contributed by the community.
+- The [RDKit Cookbook](https://www.rdkit.org/docs/Cookbook.html) contains more in-depth example recipes in Python for how to use RDKit for common tasks, generally contributed by the community. Example code can also be provided as part of the [tutorials](https://github.com/rdkit/rdkit-tutorials).
 - The [RDKit Book](https://www.rdkit.org/docs/RDKit_Book.html) gives more technical details about how various parts of the RDKit work.  
 - Not strictly speaking documentation but we'll include it here for completeness, Greg writes a [Blog](https://greglandrum.github.io/rdkit-blog/) highlighting in more detail how to use new and existing bits of the RDKit.
 
@@ -261,21 +267,9 @@ The RDKit docs support inclusion of Sphinx doctests to allow the result of a cod
   .. image:: pathtoimage/name.png
   ```
 
-### Tutorials
-
-In addition to written examples, another useful form of documentation is the [RDKit tutorials](https://github.com/rdkit/rdkit-tutorials
-), which provide examples in Python of how to carry out common tasks. Full instructions can be found in [Contributing.md](https://github.com/rdkit/rdkit-tutorials/blob/master/Contributing.md), but in summary:
-- tutorials are written in [Jupyter](https://jupyter.org/) format
-- naming of tutorials follows the convention `XXX_NAME.ipynb` where XXX is a zero-padded number and NAME gives a brief idea of what is contained in the tutorial
-- include a cell with `@TAGS:` and the relevant tags appropriate to the tutorial
-- content can include brief explanations with links to more detail to complement the code examples
-
-Examples of how to use RDKit in C++ are found [here](https://github.com/rdkit/rdkit/tree/master/Docs/Book/C%2B%2BExamples
-). 
-
 ## Contributing to the Code - Python 
 
-### Building RDKit for Development
+### Building RDKit for Python Development
 
 If you also have, or plan to, contribute C++ code to the RDKit, the same set-up can be used for Python contributions (see instructions below). However if you intend only to contribute pure Python, which may be easiest for beginners, [Greg recently created some easier to follow recipes](https://greglandrum.github.io/rdkit-blog/posts/2020-03-30-setting-up-an-environment.html) to simplify the start-up process. To build the environment you will need:
 - Local installation of git and either [miniconda](https://docs.anaconda.com/miniconda/miniconda-install/) or [miniforge](https://github.com/conda-forge/miniforge)
@@ -287,8 +281,8 @@ If you also have, or plan to, contribute C++ code to the RDKit, the same set-up 
     ```
 - Create a conda environment containing the most recent RDKit version (you can give this whatever name you like and adjust Python version as needed):
     ```
-    conda create -y -n py311_rdkit_beta python=3.11
-    conda activate py311_rdkit_beta
+    conda create -y -n py312_rdkit_beta python=3.12
+    conda activate py312_rdkit_beta
     conda install -y -c conda-forge rdkit pytest
     ```
 - Copy the RDKit binary components from that environment into our local clone of the RDKit repo (remembering to adjust the path if you have changed the Python version):
@@ -320,28 +314,6 @@ If you also have, or plan to, contribute C++ code to the RDKit, the same set-up 
     ```
 
 Any issues encountered with these instructions can be reported in [this thread](https://github.com/rdkit/rdkit/issues/3052).
-
-### Where Should I Put My Code? 
-
-The RDKit Python code lives in the `rdkit/rdkit` directory. Most contributions (and their corresponding unit tests) will be added to `Chem` and the relevant sub-directory, but check with the maintainers if you are unsure. Files containing any examples used in tests should be placed in a sub-directory called `test_data`.
-
-### Coding Standards
-
-There is currently no official style guide or linter setup that you should use for Python. However, there are a few rules to adhere to so that the code and API design stays relatively coherent (sidenote: it is currently not):
-- Use `CamelCase` for `PackageNames`, `ModuleNames`, `ClassNames`, `MethodNames` and `FunctionNames`, but note the different style for `functionAttributeNames` and `methodAttributeNames`
- - These recommendations are made based on the most commonly found patterns in the `Chem` module. However, you may see small inconsistencies here and then...
-   <img src="../Book/images/style.png" width="500">
-
-- Use `snake_case` names for local variables inside methods and functions. However, `justlowercase` is also fine.
-- Use multi-line Python strings to document modules and methods, i.e.:
-    ```python
-    def xy():
-      """ This is a documentation string.
-      
-      It is continued here...
-      """
-    ```
-- Use double quotes (`"String Example"`) for string literals.
 
 ### Tests
 
@@ -396,110 +368,13 @@ In order to continue to allow the code to be built on older systems, the RDKit i
 
 ### Building RDKit for Development
 
-Full installation instructions for the RDKit can be found [here](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Install.md). Development in C++ requires a build from source. A summary of the required steps is as follows:
-- Clone the RDKit GitHub repository following the instructions above
-- Set the required paths:
-    ```
-    export RDBASE=$(pwd) # from your local rdkit directory
-    export DYLD_LIBRARY_PATH=$RDBASE/build/lib
-    export CPATH= /USER/RESTOFPATHTO/rdkit/Code
-    export LIBRARY_PATH=/USER/RESTOFPATHTO/rdkit/lib
-    export PYTHONPATH=$RDBASE
-    export PYROOT=/USER/RESTOFPATHTO/miniconda3
-    ```
-- create and move to the build directory:
-    ```
-    mkdir build
-    cd build
-    ```
-- run cmake with the relevant flags e.g.
-  ```
-  cmake -DRDK_BUILD_PYTHON_WRAPPERS=OFF ..
-  ```
-  if you don't want to build the Python wrappers. The full list of options can be found in the [CMakeLists.txt](https://github.com/rdkit/rdkit/blob/master/CMakeLists.txt) file.
-- run make:
-  ```
-  make install -j10
-  ```
-- run the tests to check the build has been successful:
-  ```
-  RDBASE=$RDBASE DYLD_FALLBACK_LIBRARY_PATH="$RDBASE/lib:$PYROOT/lib" PYTHONPATH=$RDBASE ctest -j 10
-  ```
+Full installation instructions for the RDKit can be found [here](https://github.com/rdkit/rdkit/blob/master/Docs/Book/Install.md). Development in C++ requires a build from source from a clone of the current RDKit GitHub Repo.
 
 Note: on MacOS for v14.0 onwards some of the changes caused problems with the standard CMake spell. This [discussion thread](https://github.com/rdkit/rdkit/discussions/6859) provides some useful solutions in this case.
 
-### Where Should I Put My Code? 
-
-The RDKit C++ code lives in `rdkit/Code`, with the majority of the functionality sitting in the `GraphMol` sub-directory. If the code being contributed interfaces with another project it should go in `rdkit/External` and in an appropriate sub-directory. Again if you are unsure where your submission should go check with the maintainers!
-
-### Coding Standards
-
-As discussed in the Python section above, there is no official formal style guide for RDKit, but we recommend following the suggestions below:
-- Generally the toolkit uses camelCase. Class and namespace names start with an upper-case letter (e.g. ExplicitBitVect), function and method names starting with a lower-case letter (e.g. getNumAtoms()).
-- Local variable names are usually lower-case, but sometimes use either snake_case or camelCase.
-- We follow the formatting suggestions from [Google's C++ style guidelines](https://google.github.io/styleguide/cppguide.html).
-- Use of an auto-formatter (e.g. [clang-format](http://clang.llvm.org/docs/ClangFormat.html)) is strongly recommended. This can be integrated with editors, but note that at least version 3.8 of clang-format is required as the configuration files are not backwards compatible. There is a .clang-format config file at the root of the repository; code layout should be based on this configuration.
-- The public classes / functions exposed in the API are typically declared in the header file, and the underlying definition is in the C++ file of the same name.
-- Use multi-line comments in the header file to document code:
-    ```c++
-    /*!
-    this is a documentation string
-    */
-    ```
-
-We would also recommend checking your code for memory leaks with [Valgrind](https://valgrind.org/) before opening a pull request.
-
 ### Tests
 
-The RDKit C++ Tests use the [Catch2 framework](https://github.com/catchorg/Catch2). The tests generally are placed in a file named "catch_tests.cpp" in the same directory as the corresponding code. Unless you are adding a significant new feature, it's generally best to add the new TEST\_CASE to an existing test set rather than creating an entirely new file.
-
-For example, to test the atom count function:
-
-```c++
-#include "RDGeneral/test.h"
-#include <catch2 /catch_all.hpp>
-#include <GraphMol /SmilesParse/SmilesParse.h>
-
-using namespace RDKit;
-
-TEST_CASE("test basic Mol features", "[ROMol]") {
-  SECTION("basics") {
-    {
-    // shortcut to create a molecule from SMILES
-    auto m = "CCO"_smiles;
-    // check that the molecule was created successfully
-    REQUIRE(m);
-    // test some functionality
-    int nAtoms = m->getNumAtoms();
-    CHECK(nAtoms == 3);
-    }
-  }
-}
-```
-
-When adding new test file the CMakeLists.txt file of the respective folder will also need updated to call the test and link the required libraries (e.g. the above example needs the FileParsers library):
-
-```
-rdkit_catch_test(dummyTest catch_dummy.cpp LINK_LIBRARIES FileParsers)
-```
-
-### Documentation
-
-Documentation for the [C++ API](https://www.rdkit.org/docs/cppapi/) is generated from the docstrings, which should be placed above the corresponding function. We'd recommend these take the following format:
-
-```c++
-/*!
-    A brief description of what the function does
-
-    Reference / Source (if there is one)
-
-    \param name: what the parameter is
-    \param name2: what the parameter is
-    etc...
-  */
-```
-
-Where relevant, example useage can also be added to the [Getting Started with C++ Guide](https://www.rdkit.org/docs/GettingStartedInC%2B%2B.html) as part of the pull request.
+The RDKit C++ Tests use the [Catch2 framework](https://github.com/catchorg/Catch2). The tests generally are placed in a file named "catch_tests.cpp" in the same directory as the corresponding code. Unless you are adding a significant new feature, it's generally best to add the new TEST\_CASE to an existing test set rather than creating an entirely new file. Remember also to update the relevant `CMakeLists.txt` file to call the test and link the required libraries.
 
 ### Wrapping the C++ Code for Python
 
