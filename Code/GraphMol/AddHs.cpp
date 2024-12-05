@@ -275,6 +275,17 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
                 nbr2Vect =
                     nbr1Pos.directionVector((*cfi)->getAtomPos(nbr2->getIdx()));
                 perpVect = nbr2Vect.crossProduct(nbr1Vect);
+
+                // if nbr1 and nbr2 are aligned, the perpendicular will be null,
+                // so fall back to the default calculation
+                if (perpVect.lengthSq() < sq_dist_zero_tol) {
+                  // we need to pick a different perpendicular
+                  if ((*cfi)->is3D()) {
+                    perpVect = nbr1Vect.getPerpendicular();
+                  } else {
+                    perpVect.z = 1.0;
+                  }
+                }
               }
             }
             perpVect.normalize();
@@ -1104,9 +1115,10 @@ enum class HydrogenType {
   QueryHydrogen
 };
 
-template<class Q>
-std::pair<bool,bool> queryHasHs(Q queryAtom, bool inor=false) {
-  for(auto childit = queryAtom->beginChildren(); childit != queryAtom->endChildren(); ++childit) {
+template <class Q>
+std::pair<bool, bool> queryHasHs(Q queryAtom, bool inor = false) {
+  for (auto childit = queryAtom->beginChildren();
+       childit != queryAtom->endChildren(); ++childit) {
     QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = *childit;
     if (query->getDescription() == "AtomOr") {
       return queryHasHs(query, true);
@@ -1116,15 +1128,16 @@ std::pair<bool,bool> queryHasHs(Q queryAtom, bool inor=false) {
         return std::make_pair(true, inor);
       }
     } else if (query->getDescription() == "AtomType") {
-       auto val = static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal();
-       // 1001 == aromtic hydrogen (not a thing, really)
-       // 1 == aliphatic hydrogen
-       if ( (val == 1001 || val == 1) && !query->getNegation()) {
-         return std::make_pair(true, inor);
-       }
-     }
-   }
-  return std::make_pair(false, inor);;
+      auto val = static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal();
+      // 1001 == aromtic hydrogen (not a thing, really)
+      // 1 == aliphatic hydrogen
+      if ((val == 1001 || val == 1) && !query->getNegation()) {
+        return std::make_pair(true, inor);
+      }
+    }
+  }
+  return std::make_pair(false, inor);
+  ;
 }
 
 HydrogenType isQueryH(const Atom *atom) {
@@ -1156,18 +1169,19 @@ HydrogenType isQueryH(const Atom *atom) {
     } else if (atom->getQuery()->getDescription() == "AtomAnd") {
       res = queryHasHs(atom->getQuery(), false);
     }
-    if(res.first) { // hasH
-        if(res.second) { // inOr
-          BOOST_LOG(rdWarningLog) << "WARNING: merging explicit H queries involved "
-                                     "in ORs is not supported. This query will not "
-                                     "be merged"
-                                  << std::endl;
-          return HydrogenType::UnMergableQueryHydrogen;
-        } else {
-          return HydrogenType::QueryHydrogen;
-        }
+    if (res.first) {     // hasH
+      if (res.second) {  // inOr
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: merging explicit H queries involved "
+               "in ORs is not supported. This query will not "
+               "be merged"
+            << std::endl;
+        return HydrogenType::UnMergableQueryHydrogen;
+      } else {
+        return HydrogenType::QueryHydrogen;
       }
     }
+  }
   return HydrogenType::NotAHydrogen;
 }
 }  // namespace
