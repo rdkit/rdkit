@@ -115,8 +115,10 @@ public class ChemAtomTests extends GraphMolTest {
 	
 	@Test(expected=GenericRDKitException.class)
 	public void testExceptionHandler() {
-		Atom a = new Atom(6);	
-		a.getImplicitValence();
+		RWMol m = new RWMol();
+		m.addAtom(new Atom(6));
+		// explicit valence hasn't been calculated, so this throws an exception
+		m.getAtomWithIdx(0).getValence(Atom.ValenceType.EXPLICIT);
 	}
 
 	public static void main(String args[]) {

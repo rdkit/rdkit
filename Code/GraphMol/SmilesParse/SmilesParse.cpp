@@ -485,9 +485,9 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
 
   if (res && (params.sanitize || params.removeHs)) {
     if (params.removeHs) {
-      bool implicitOnly = false, updateExplicitCount = true;
-      MolOps::removeHs(*res, implicitOnly, updateExplicitCount,
-                       params.sanitize);
+      MolOps::RemoveHsParameters rhp;
+      rhp.updateExplicitCount = true;
+      MolOps::removeHs(*res, rhp, params.sanitize);
     } else if (params.sanitize) {
       MolOps::sanitizeMol(*res);
     }

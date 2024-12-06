@@ -320,7 +320,6 @@ bool DetectAtropisomerChiralityOneBond(Bond *bond, ROMol &mol,
     }
   }
 
-
   // the convention is that in the absence of coords, the coordiates are choosen
   // with the lowest numbered atom of the atrop bond down, and the other atom
   // straight up.
@@ -540,13 +539,11 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
 
   bool foundAtrop = false;
   for (auto bondToTry : bondsToTry) {
-    if (bondToTry->getBeginAtom()->getImplicitValence() == -1) {
-      bondToTry->getBeginAtom()->calcExplicitValence(false);
-      bondToTry->getBeginAtom()->calcImplicitValence(false);
+    if (bondToTry->getBeginAtom()->needsUpdatePropertyCache()) {
+      bondToTry->getBeginAtom()->updatePropertyCache(false);
     }
-    if (bondToTry->getEndAtom()->getImplicitValence() == -1) {
-      bondToTry->getEndAtom()->calcExplicitValence(false);
-      bondToTry->getEndAtom()->calcImplicitValence(false);
+    if (bondToTry->getEndAtom()->needsUpdatePropertyCache()) {
+      bondToTry->getEndAtom()->updatePropertyCache(false);
     }
     if (bondToTry->getBondType() != Bond::SINGLE ||
         bondToTry->getStereo() == Bond::BondStereo::STEREOANY ||

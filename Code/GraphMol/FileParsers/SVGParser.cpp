@@ -88,8 +88,8 @@ RWMol *RDKitSVGToMol(std::istream *instream, bool sanitize, bool removeHs) {
       ptreeToMol(res, molE.second);
       if (res->getNumAtoms()) {
         if (removeHs) {
-          bool implicitOnly = false, updateExplicitCount = false;
-          MolOps::removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
+          MolOps::RemoveHsParameters rhp;
+          MolOps::removeHs(*res, rhp, sanitize);
         } else if (sanitize) {
           MolOps::sanitizeMol(*res);
         }

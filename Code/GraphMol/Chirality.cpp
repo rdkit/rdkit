@@ -1756,8 +1756,8 @@ std::pair<bool, bool> isAtomPotentialChiralCenter(
           // (this is from InChI)
           legalCenter = true;
         } else if (atom->getAtomicNum() == 16 || atom->getAtomicNum() == 34) {
-          if (atom->getExplicitValence() == 4 ||
-              (atom->getExplicitValence() == 3 &&
+          if (atom->getValence(Atom::ValenceType::EXPLICIT) == 4 ||
+              (atom->getValence(Atom::ValenceType::EXPLICIT) == 3 &&
                atom->getFormalCharge() == 1)) {
             // we also accept sulfur or selenium with either a positive charge
             // or a double bond:
@@ -3059,10 +3059,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+          }  // end of 2 and 3 coordinated atoms only
+        }  // end of we want it or CIP code is not set
+      }  // end of double bond
+    }  // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
@@ -3588,9 +3588,8 @@ void assignChiralTypesFromMolParity(ROMol &mol, bool replaceExistingTags) {
       parity = 1 - parity;
     }
     atom->setChiralTag(chiralTypeVect[parity]);
-    if (atom->getImplicitValence() == -1) {
-      atom->calcExplicitValence(false);
-      atom->calcImplicitValence(false);
+    if (atom->needsUpdatePropertyCache()) {
+      atom->updatePropertyCache(false);
     }
     // within the RD representation, if a three-coordinate atom
     // is chiral and has an implicit H, that H needs to be made explicit:
@@ -3829,9 +3828,8 @@ void assignChiralTypesFromBondDirs(ROMol &mol, const int confId,
              atom->getChiralTag() != Atom::CHI_UNSPECIFIED)) {
           continue;
         }
-        if (atom->getImplicitValence() == -1) {
-          atom->calcExplicitValence(false);
-          atom->calcImplicitValence(false);
+        if (atom->needsUpdatePropertyCache()) {
+          atom->updatePropertyCache(false);
         }
         Atom::ChiralType code =
             Chirality::atomChiralTypeFromBondDirPseudo3D(mol, bond, &conf)

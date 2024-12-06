@@ -223,10 +223,7 @@ def shouldKekulize(mol, kekulize):
 
 
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
-  try:
-    with rdBase.BlockLogs():
-      mol.GetAtomWithIdx(0).GetExplicitValence()
-  except RuntimeError:
+  if mol.NeedsUpdatePropertyCache():
     mol.UpdatePropertyCache(False)
 
   kekulize = shouldKekulize(mol, kwargs.get('kekulize', True))
@@ -260,10 +257,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs):
-  try:
-    with rdBase.BlockLogs():
-      mol.GetAtomWithIdx(0).GetExplicitValence()
-  except RuntimeError:
+  if mol.NeedsUpdatePropertyCache():
     mol.UpdatePropertyCache(False)
 
   kekulize = shouldKekulize(mol, kekulize)
