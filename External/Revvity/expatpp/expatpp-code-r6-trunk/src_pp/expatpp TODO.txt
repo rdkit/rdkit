@@ -1,0 +1,29 @@
+expatpp TODO.txt
+
+As of 2002/12/30 having completed revisions to make it compatible with expat 1.95.6
+
+Add Makefile to match project changes so can build on Unix.
+
+Contact BC project author and get him to do revision.
+
+Update Visual C++ project to build DLL and Unicode versions like expat.
+
+Add test targets to VC project.
+
+ADD UNIT TESTS FOR EXPATPP
+- start subparser
+- start subparser with desired info in attributes of starting element
+- consider all new methods
+- missing data
+  - missing expected char content
+- how handle parser crash
+- add reset and test
+
+
+
+
+OTHER TO DO
+
+Static function calling XML_ParserReset.
+
+Static top-level functions providing parsing loop like example.
