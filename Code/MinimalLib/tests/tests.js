@@ -2788,24 +2788,135 @@ function test_partial_sanitization() {
     mol1.delete();
 }
 
+function captureStdoutStderr(stdoutCallback, optStderrCallback) {
+    if (!stdoutCallback) {
+        return null;
+    }
+    const stderrCallback = optStderrCallback || stdoutCallback;
+    const origStdoutWrite = process.stdout.write;
+    const origStderrWrite = process.stderr.write;
+    process.stdout.write = (chunk) => stdoutCallback(chunk);
+    process.stderr.write = (chunk) => stderrCallback(chunk);
+    return () => {
+        process.stdout.write = origStdoutWrite;
+        process.stderr.write = origStderrWrite;
+    };
+}
+
 function test_capture_logs() {
-    ["set_log_tee", "set_log_capture"].forEach((func, i) => {
-        console.log(`${i + 1}. ${func}`);
-        var logHandle = RDKitModule[func]("dummy");
-        assert(!logHandle);
-        var logHandle = RDKitModule[func]("rdApp.*");
-        assert(logHandle);
-        var logBuffer = logHandle.get_buffer();
-        assert(!logBuffer);
-        var mol = RDKitModule.get_mol("CN(C)(C)C");
+    const PENTAVALENT_CARBON = 'CC(C)(C)(C)C';
+    const PENTAVALENT_CARBON_VALENCE_ERROR = 'Explicit valence for atom # 1 C, 5, is greater than permitted';
+    const TETRAVALENT_NITROGEN = 'CN(C)(C)C';
+    const TETRAVALENT_NITROGEN_VALENCE_ERROR = 'Explicit valence for atom # 1 N, 4, is greater than permitted';
+    RDKitModule.disable_logging();
+    assert(!RDKitModule.enable_logging('dummy'));
+    assert(RDKitModule.enable_logging('rdApp.info'));
+    var restoreStreams;
+    var captureHasHappened;
+    // Should see no warning on pentavalent carbon below
+    captureHasHappened = false;
+    restoreStreams = captureStdoutStderr((capturedStreams) => {
+        captureHasHappened = true;
+    });
+    assert(restoreStreams);
+    try {
+        var mol = RDKitModule.get_mol(PENTAVALENT_CARBON);
         assert(!mol);
-        logBuffer = logHandle.get_buffer();
-        assert(logBuffer);
-        assert(logBuffer.includes('Explicit valence for atom # 1 N, 4, is greater than permitted'));
-        logHandle.clear_buffer();
-        assert(!logHandle.get_buffer());
-        logHandle.delete();
+    } finally {
+        restoreStreams();
+    }
+    assert(!captureHasHappened);
+    RDKitModule.enable_logging("rdApp.error");
+    // Should see warning on pentavalent carbon below
+    restoreStreams = captureStdoutStderr((capturedStreams) => {
+        captureHasHappened = true;
+        assert(capturedStreams.includes(PENTAVALENT_CARBON_VALENCE_ERROR));
+    });
+    assert(restoreStreams);
+    try {
+        var mol = RDKitModule.get_mol(PENTAVALENT_CARBON);
+        assert(!mol);
+    } finally {
+        restoreStreams();
+    }
+    assert(captureHasHappened);
+    captureHasHappened = false;
+    RDKitModule.disable_logging();
+    // Should again see no warning on pentavalent carbon below
+    restoreStreams = captureStdoutStderr((capturedStreams) => {
+        captureHasHappened = true;
+    });
+    assert(restoreStreams);
+    try {
+        var mol = RDKitModule.get_mol(PENTAVALENT_CARBON);
+        assert(!mol);
+    } finally {
+        restoreStreams();
+    }
+    assert(!captureHasHappened);
+    var logHandle1;
+    var logHandle2;
+    var logBuffer1;
+    var mol;
+    ['set_log_tee', 'set_log_capture'].forEach((func, i) => {
+        logHandle1 = RDKitModule[func]('rdApp.*');
+        assert(logHandle1);
+        logBuffer1 = logHandle1.get_buffer();
+        assert(!logBuffer1);
+        restoreStreams = captureStdoutStderr((capturedStreams) => {
+            captureHasHappened = true;
+            assert(capturedStreams.includes(TETRAVALENT_NITROGEN_VALENCE_ERROR));
+        });
+        assert(restoreStreams);
+        try {
+            mol = RDKitModule.get_mol(TETRAVALENT_NITROGEN);
+            assert(!mol);
+        } finally {
+            restoreStreams();
+        }
+        assert(!((func === 'set_log_tee') ^ captureHasHappened));
+        captureHasHappened = false;
+        logBuffer1 = logHandle1.get_buffer();
+        assert(logBuffer1);
+        assert(logBuffer1.includes(TETRAVALENT_NITROGEN_VALENCE_ERROR));
+        logHandle1.clear_buffer();
+        assert(!logHandle1.get_buffer());
+        logHandle2 = RDKitModule[func]('rdApp.*');
+        assert(!logHandle2);
+        restoreStreams = captureStdoutStderr((capturedStreams) => {
+            captureHasHappened = true;
+            assert(capturedStreams.includes(PENTAVALENT_CARBON_VALENCE_ERROR));
+        });
+        assert(restoreStreams);
+        try {
+            mol = RDKitModule.get_mol(PENTAVALENT_CARBON);
+            assert(!mol);
+        } finally {
+            restoreStreams();
+        }
+        assert(!((func === 'set_log_tee') ^ captureHasHappened));
+        captureHasHappened = false;
+        logBuffer1 = logHandle1.get_buffer();
+        assert(logBuffer1);
+        assert(logBuffer1.includes(PENTAVALENT_CARBON_VALENCE_ERROR));
+        assert(!logBuffer1.includes(TETRAVALENT_NITROGEN_VALENCE_ERROR));
+        logHandle1.delete();
+        logHandle2 = RDKitModule[func]('rdApp.*');
+        assert(logHandle2);
+        logHandle2.delete();
     })
+    // Should again see no warning on pentavalent carbon below
+    restoreStreams = captureStdoutStderr((capturedStreams) => {
+        captureHasHappened = true;
+    });
+    assert(restoreStreams);
+    try {
+        var mol = RDKitModule.get_mol(PENTAVALENT_CARBON);
+        assert(!mol);
+    } finally {
+        restoreStreams();
+    }
+    assert(!captureHasHappened);
 }
 
 function test_rgroup_match_heavy_hydro_none_charged() {
