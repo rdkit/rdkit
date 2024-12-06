@@ -40,7 +40,13 @@ struct SearchResults_wrapper {
                       " may be fewer than this in practice for several reasons"
                       " such as duplicate reagent sets being removed or the"
                       " final product not matching the query even though the"
-                      " synthons suggested they would.");
+                      " synthons suggested they would.")
+        .def_readonly("GetTimedOut",
+                      &SynthonSpaceSearch::SearchResults::getTimedOut,
+                      "Returns whether the search timed out or not.")
+        .def_readonly("GetRunTime",
+                      &SynthonSpaceSearch::SearchResults::getRunTime,
+                      "Returns the approximate run time in seconds.");
   }
 };
 
@@ -141,7 +147,10 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           &SynthonSpaceSearch::SynthonSpaceSearchParams::fragSimilarityAdjuster,
           "Similarities of fragments are generally low due to low bit"
           " densities.  For the fragment matching, reduce the similarity cutoff"
-          " off by this amount.  Default=0.3.");
+          " off by this amount.  Default=0.3.")
+      .def_readwrite(
+          "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
+          "Time limit for search, in seconds.  Default is 600s, requires an integer.");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(

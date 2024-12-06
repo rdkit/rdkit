@@ -44,7 +44,17 @@ SearchResults SynthonSpaceSearcher::search() {
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
+  auto startTime = std::chrono::high_resolution_clock::now();
+
   for (auto &fragSet : fragments) {
+    auto currTime = std::chrono::high_resolution_clock::now();
+    auto runTime =
+        std::chrono::duration_cast<std::chrono::seconds>(currTime - startTime)
+            .count();
+    if (runTime > d_params.timeOut) {
+      BOOST_LOG(rdWarningLog) << "Timed out after " << runTime << " seconds\n";
+      break;
+    }
     if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
       totHits += std::accumulate(
           theseHits.begin(), theseHits.end(), 0,
@@ -55,10 +65,17 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   }
 
+  bool timedOut = false;
   if (d_params.buildHits) {
-    buildHits(allHits, totHits, results);
+    buildHits(allHits, totHits, startTime, timedOut, results);
   }
-  return SearchResults{std::move(results), totHits};
+
+  auto currTime = std::chrono::high_resolution_clock::now();
+  auto runTime =
+      std::chrono::duration_cast<std::chrono::seconds>(currTime - startTime)
+          .count();
+
+  return SearchResults{std::move(results), totHits, timedOut, runTime};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
@@ -97,7 +114,8 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::chrono::time_point<std::chrono::steady_clock> &startTime,
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
@@ -119,9 +137,10 @@ void SynthonSpaceSearcher::buildHits(
   std::set<std::string> resultsNames;
 
   if (d_params.randomSample) {
-    buildRandomHits(hitsets, totHits, resultsNames, results);
+    buildRandomHits(hitsets, totHits, resultsNames, startTime, timedOut,
+                    results);
   } else {
-    buildAllHits(hitsets, resultsNames, results);
+    buildAllHits(hitsets, resultsNames, startTime, timedOut, results);
   }
 }
 
@@ -142,7 +161,8 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
     std::set<std::string> &resultsNames,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::chrono::time_point<std::chrono::steady_clock> &startTime,
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
     std::vector<std::vector<size_t>> synthonNums;
     synthonNums.reserve(synthonsToUse.size());
@@ -174,6 +194,22 @@ void SynthonSpaceSearcher::buildAllHits(
         return;
       }
       stepper.step();
+      // Don't check the time every go, as it's quite expensive.
+      if (!(results.size() % 100)) {
+        auto currTime = std::chrono::high_resolution_clock::now();
+        auto runTime = std::chrono::duration_cast<std::chrono::seconds>(
+                           currTime - startTime)
+                           .count();
+        if (runTime > d_params.timeOut) {
+          BOOST_LOG(rdWarningLog)
+              << "Timed out after " << runTime << " seconds\n";
+          timedOut = true;
+          break;
+        }
+      }
+    }
+    if (timedOut) {
+      break;
     }
   }
   sortHits(results);
@@ -241,7 +277,8 @@ struct RandomHitSelector {
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
     std::set<std::string> &resultsNames,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::chrono::time_point<std::chrono::steady_clock> &startTime,
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
@@ -257,6 +294,19 @@ void SynthonSpaceSearcher::buildRandomHits(
       results.push_back(std::move(prod));
     } else {
       numFails++;
+    }
+    // Don't check the time every go, as it's quite expensive.
+    if (!(results.size() % 100)) {
+      auto currTime = std::chrono::high_resolution_clock::now();
+      auto runTime =
+          std::chrono::duration_cast<std::chrono::seconds>(currTime - startTime)
+              .count();
+      if (runTime > d_params.timeOut) {
+        BOOST_LOG(rdWarningLog)
+            << "Timed out after " << runTime << " seconds\n";
+        timedOut = true;
+        break;
+      }
     }
   }
   sortHits(results);

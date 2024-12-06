@@ -77,13 +77,19 @@ class SynthonSpaceSearcher {
   // but duplicate SMILES from different reactions will be.  Hitsets will
   // be re-ordered on exit.
   void buildHits(std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
+                 std::chrono::time_point<std::chrono::steady_clock> &startTime,
+                 bool &timedOut,
                  std::vector<std::unique_ptr<ROMol>> &results) const;
-  void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
-                    std::set<std::string> &resultsNames,
-                    std::vector<std::unique_ptr<ROMol>> &results) const;
-  void buildRandomHits(const std::vector<SynthonSpaceHitSet> &hitsets,
-                       size_t totHits, std::set<std::string> &resultsNames,
-                       std::vector<std::unique_ptr<ROMol>> &results) const;
+  void buildAllHits(
+      const std::vector<SynthonSpaceHitSet> &hitsets,
+      std::set<std::string> &resultsNames,
+      std::chrono::time_point<std::chrono::steady_clock> &startTime,
+      bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const;
+  void buildRandomHits(
+      const std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
+      std::set<std::string> &resultsNames,
+      std::chrono::time_point<std::chrono::steady_clock> &startTime,
+      bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const;
   // get the subset of synthons for the given reaction to use for this
   // enumeration.
   std::vector<std::vector<ROMol *>> getSynthonsToUse(
