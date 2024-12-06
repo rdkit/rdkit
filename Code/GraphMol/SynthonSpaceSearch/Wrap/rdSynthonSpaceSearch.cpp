@@ -147,7 +147,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           &SynthonSpaceSearch::SynthonSpaceSearchParams::fragSimilarityAdjuster,
           "Similarities of fragments are generally low due to low bit"
           " densities.  For the fragment matching, reduce the similarity cutoff"
-          " off by this amount.  Default=0.3.")
+          " off by this amount.  Default=0.1.")
       .def_readwrite(
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           "Time limit for search, in seconds.  Default is 600s, requires an integer.");
