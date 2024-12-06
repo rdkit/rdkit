@@ -1,0 +1,16 @@
+rdkit_library(MolInteractionFields MIFDescriptors.cpp LINK_LIBRARIES ForceFieldHelpers ForceField DataStructs RDGeneral GraphMol SmilesParse)
+target_compile_definitions(MolInteractionFields PRIVATE RDKIT_MOLINTERACTIONFIELDS_BUILD)
+
+rdkit_headers(MIFDescriptors.h DEST GraphMol/MolInteractionFields)
+
+rdkit_catch_test(testMIF testMIF.cpp LINK_LIBRARIES MolInteractionFields DistGeomHelpers DistGeometry ForceFieldHelpers ForceField
+ PartialCharges SubstructMatch FileParsers SmilesParse
+MolAlign MolTransforms
+GraphMol
+Optimizer EigenSolvers
+Alignment
+DataStructs RDGeometryLib RDGeneral
+${RDKit_THREAD_LIBS} )
+
+add_subdirectory(Wrap)
+

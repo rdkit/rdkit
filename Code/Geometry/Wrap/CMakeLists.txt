@@ -1,6 +1,6 @@
 remove_definitions(-DRDKIT_RDGEOMETRYLIB_BUILD)
 rdkit_python_extension(rdGeometry
-                       Point.cpp UniformGrid3D.cpp rdGeometry.cpp
+                       Point.cpp UniformGrid3D.cpp UniformRealValueGrid3D.cpp rdGeometry.cpp
                        DEST Geometry
                        LINK_LIBRARIES RDGeometryLib)
 
