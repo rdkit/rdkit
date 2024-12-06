@@ -1150,21 +1150,10 @@ std::string parse_inchi_options(const char *details_json) {
 
 namespace {
 #ifdef RDK_BUILD_THREADSAFE_SSS
-std::mutex &logger_mutex_get() {
+std::mutex &getLoggerMutex() {
   // create on demand
   static std::mutex _mutex;
   return _mutex;
-}
-
-void logger_mutex_create() {
-  std::mutex &mutex = logger_mutex_get();
-  std::lock_guard<std::mutex> test_lock(mutex);
-}
-
-std::mutex &getLoggerMutex() {
-  static std::once_flag flag;
-  std::call_once(flag, logger_mutex_create);
-  return logger_mutex_get();
 }
 #endif
 
