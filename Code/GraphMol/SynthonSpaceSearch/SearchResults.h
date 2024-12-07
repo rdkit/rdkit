@@ -18,7 +18,8 @@ namespace RDKit::SynthonSpaceSearch {
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
  public:
   explicit SearchResults() : d_maxNumResults(0) {}
-  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes);
+  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes,
+                bool timedOut, long long int runTime);
   SearchResults(const SearchResults &other);
   SearchResults(SearchResults &&other) = default;
   ~SearchResults() = default;
@@ -45,14 +46,29 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
     return d_hitMolecules;
   }
 
+  /*!
+   * Returns whether the search timed out or not,
+   * @return bool
+   */
+  bool getTimedOut() const { return d_timedOut; }
+
+  /*!
+   * Returns the approximate run time in seconds.
+   * @return long long int
+   */
+  long long int getRunTime() const { return d_runTime; }
+
  private:
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
   size_t d_maxNumResults;
+  bool d_timedOut{false};
+  long long int d_runTime{0};
 };
 
 inline SearchResults::SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
-                                    const size_t maxNumRes)
-    : d_maxNumResults(maxNumRes) {
+                                    const size_t maxNumRes, bool timedOut,
+                                    long long int runTime)
+    : d_maxNumResults(maxNumRes), d_timedOut(timedOut), d_runTime(runTime) {
   d_hitMolecules = std::move(mols);
   mols.clear();
 }
