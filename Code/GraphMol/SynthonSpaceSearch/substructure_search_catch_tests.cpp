@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <cstdlib>
 #include <fstream>
 
 #include <GraphMol/Fingerprints/MorganGenerator.h>
@@ -80,11 +79,9 @@ TEST_CASE("Enumerate") {
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
-  char templateName[] = "/tmp/fileXXXXXX";
-  auto fp = mkstemp(templateName);
-  close(fp);
-  std::cout << "Enumerating to " << templateName << std::endl;
-  synthonspace.writeEnumeratedFile(templateName);
+  auto testName = std::tmpnam(nullptr);
+  std::cout << "Enumerating to " << testName << std::endl;
+  synthonspace.writeEnumeratedFile(testName);
 
   std::string enumLibName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space_enum.smi";
@@ -105,14 +102,14 @@ TEST_CASE("Enumerate") {
     }
     return smiles;
   };
-  auto newSmiles = loadLibrary(templateName);
+  auto newSmiles = loadLibrary(testName);
   auto oldSmiles = loadLibrary(enumLibName);
   REQUIRE(newSmiles.size() == oldSmiles.size());
   for (const auto &[name, smiles] : oldSmiles) {
     REQUIRE(oldSmiles.find(name) != oldSmiles.end());
     REQUIRE(newSmiles.at(name) == oldSmiles.at(name));
   }
-  std::remove(templateName);
+  std::remove(testName);
 }
 
 TEST_CASE("S Amide 1") {
@@ -305,9 +302,7 @@ TEST_CASE("DB Writer") {
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   synthonspace.buildSynthonFingerprints(*fpGen);
 
-  char spaceName[] = "/tmp/fileXXXXXX";
-  auto fp = mkstemp(spaceName);
-  close(fp);
+  auto spaceName = std::tmpnam(nullptr);
 
   synthonspace.writeDBFile(spaceName);
 
