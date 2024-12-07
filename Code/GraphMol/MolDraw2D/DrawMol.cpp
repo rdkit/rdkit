@@ -287,9 +287,6 @@ void DrawMol::extractAtomSymbols() {
     }
     std::pair<std::string, OrientType> atSym =
         getAtomSymbolAndOrientation(*at1);
-    // std::cout << at1->getIdx() << " : " << atSym.first << " : " <<
-    // atSym.second
-    //           << "\n";
     atomSyms_.push_back(atSym);
     if (!atSym.first.empty()) {
       DrawColour atCol = getColour(at1->getIdx());
