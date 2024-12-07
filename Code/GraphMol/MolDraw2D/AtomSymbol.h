@@ -67,6 +67,7 @@ class AtomSymbol {
   // we might be scaling the font differently from the drawing as a whole.
   virtual void scale(const Point2D &scaleFactor);
   virtual void move(const Point2D &trans);
+  virtual void recalculateRects();
   void draw(MolDraw2D &molDrawer) const;
   bool doesRectClash(const StringRect &rect, double padding) const;
   // Because a colon is a lot shorter than other characters, there are cases,
