@@ -348,6 +348,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_7739_5.svg", 2541364166U},
     {"testHighlightHeteroAtoms_1.svg", 1769258632U},
     {"testHighlightHeteroAtoms_2.svg", 893937335U},
+    {"testAtomAbbreviationsClash.svg", 137773688U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10102,4 +10103,79 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
                                           atomRads, bondMults),
         Invar::Invariant);
   }
+}
+
+TEST_CASE("Atom abbreviations clash") {
+  auto m = "C(OC)C(OC)C(OC)C(OC)C(OC)C(OC)C(OC)COC"_smiles;
+  RDDepict::preferCoordGen = false;
+  MolDraw2DUtils::prepareMolForDrawing(*m);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().explicitMethyl = true;
+  drawer.drawOptions().baseFontSize = 1.2;
+  drawer.drawMolecule(*m);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testAtomAbbreviationsClash.svg");
+  outs << text;
+  outs.flush();
+  // If this is worked correctly, the first 2 characters of atoms 8 and 14
+  // should be below each other, and the characters of atom 20 should
+  // be in increasing x, with the y of 1 and 3 (H and C) the same.
+  // If this wasn't a test, this would probably be done more elegantly.
+  {
+    const static std::regex text8(
+        "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-8'.*</text>");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), text8),
+                      std::sregex_iterator()));
+    CHECK(match_count == 3);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), text8);
+    std::smatch match = *match_begin;
+    double x1 = stod(match[1]);
+    double y1 = stod(match[2]);
+    ++match_begin;
+    match = *match_begin;
+    double x2 = stod(match[1]);
+    double y2 = stod(match[2]);
+    CHECK_THAT(x1, Catch::Matchers::WithinAbs(x2, 0.1));
+    CHECK(y2 > y1);
+  }
+  {
+    const static std::regex text14(
+        "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-14'.*</text>");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), text14),
+                      std::sregex_iterator()));
+    CHECK(match_count == 3);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), text14);
+    std::smatch match = *match_begin;
+    double x1 = stod(match[1]);
+    double y1 = stod(match[2]);
+    ++match_begin;
+    match = *match_begin;
+    double x2 = stod(match[1]);
+    double y2 = stod(match[2]);
+    CHECK_THAT(x1, Catch::Matchers::WithinAbs(x2, 0.1));
+    CHECK(y2 > y1);
+  }
+  {
+    const static std::regex text20(
+        "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-20'.*</text>");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), text20),
+                      std::sregex_iterator()));
+    CHECK(match_count == 3);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), text20);
+    std::smatch match = *match_begin;
+    double x1 = stod(match[1]);
+    double y1 = stod(match[2]);
+    ++match_begin;
+    ++match_begin;
+    match = *match_begin;
+    double x2 = stod(match[1]);
+    double y2 = stod(match[2]);
+    CHECK_THAT(y1, Catch::Matchers::WithinAbs(y2, 0.1));
+    CHECK(x2 > x1);
+  }
+  check_file_hash("testAtomAbbreviationsClash.svg");
 }

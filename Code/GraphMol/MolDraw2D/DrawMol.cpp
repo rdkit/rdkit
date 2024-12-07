@@ -216,6 +216,7 @@ void DrawMol::extractAll(double scale) {
   // the * which won't be in the final picture.
   extractVariableBonds();
   extractBonds();
+  resolveAtomSymbolClashes();
   extractRegions();
   extractHighlights(scale);
   extractAttachments();
@@ -260,6 +261,21 @@ void DrawMol::extractAtomCoords() {
   }
 }
 
+namespace {
+bool doLabelsClash(AtomSymbol &atsym1, const AtomSymbol &atsym2) {
+  for (auto &rect1 : atsym1.rects_) {
+    auto oldTrans = rect1->trans_;
+    rect1->trans_ += atsym1.cds_;
+    bool res = atsym2.doesRectClash(*rect1, 0.0);
+    rect1->trans_ = oldTrans;
+    if (res) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
 // ****************************************************************************
 void DrawMol::extractAtomSymbols() {
   atomicNums_.clear();
@@ -271,6 +287,9 @@ void DrawMol::extractAtomSymbols() {
     }
     std::pair<std::string, OrientType> atSym =
         getAtomSymbolAndOrientation(*at1);
+    // std::cout << at1->getIdx() << " : " << atSym.first << " : " <<
+    // atSym.second
+    //           << "\n";
     atomSyms_.push_back(atSym);
     if (!atSym.first.empty()) {
       DrawColour atCol = getColour(at1->getIdx());
@@ -950,6 +969,82 @@ void DrawMol::extractCloseContacts() {
                                 DrawColour(1.0, 0.0, 0.0), false, i);
       postShapes_.emplace_back(pl);
     };
+  }
+}
+
+namespace {
+bool doesLabelClashWithBonds(
+    AtomSymbol &atsym1, const std::vector<std::unique_ptr<DrawShape>> &bonds) {
+  for (auto &rect1 : atsym1.rects_) {
+    auto oldTrans = rect1->trans_;
+    rect1->trans_ += atsym1.cds_;
+    for (const auto &bond : bonds) {
+      bool res = bond->doesRectClash(*rect1, 0.0);
+      if (res) {
+        rect1->trans_ = oldTrans;
+        return true;
+      }
+    }
+    rect1->trans_ = oldTrans;
+  }
+  return false;
+}
+
+bool doesLabelClashWithLabels(
+    unsigned idx, const std::vector<std::unique_ptr<AtomSymbol>> &atomLabels) {
+  for (size_t i = 0; i < atomLabels.size(); ++i) {
+    if (i == idx || atomLabels[i] == nullptr) {
+      continue;
+    }
+    if (doLabelsClash(*atomLabels[idx], *atomLabels[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
+// ****************************************************************************
+void DrawMol::resolveAtomSymbolClashes() {
+  const static std::vector<OrientType> allOrients{OrientType::N, OrientType::E,
+                                                  OrientType::S, OrientType::W};
+  for (auto at1 : drawMol_->atoms()) {
+    const auto atIdx1 = at1->getIdx();
+    for (auto at2 : drawMol_->atoms()) {
+      const auto atIdx2 = at2->getIdx();
+      if (atIdx1 == atIdx2) {
+        continue;
+      }
+      if (atomLabels_[atIdx1] != nullptr && atomLabels_[atIdx2] != nullptr &&
+          (atomLabels_[atIdx1]->rects_.size() > 1 ||
+           atomLabels_[atIdx2]->rects_.size() > 1)) {
+        if (doLabelsClash(*atomLabels_[atIdx1], *atomLabels_[atIdx2])) {
+          // Move the smaller label that isn't a single character.
+          auto idx = atIdx1;
+          if (atomLabels_[atIdx1]->rects_.size() >
+                  atomLabels_[atIdx2]->rects_.size() &&
+              atomLabels_[atIdx2]->rects_.size() != 1) {
+            idx = atIdx2;
+          }
+          auto orig = atomLabels_[idx]->orient_;
+          bool ok = false;
+          for (auto &orient1 : allOrients) {
+            atomLabels_[idx]->orient_ = orient1;
+            atomLabels_[idx]->recalculateRects();
+            if (!doesLabelClashWithLabels(idx, atomLabels_) &&
+                !doesLabelClashWithBonds(*atomLabels_[idx], bonds_)) {
+              ok = true;
+              break;
+            }
+          }
+          if (!ok) {
+            // Leave it as it is and hope when the other one is moved
+            // a better solution is found.
+            atomLabels_[idx]->orient_ = orig;
+          }
+        }
+      }
+    }
   }
 }
 
