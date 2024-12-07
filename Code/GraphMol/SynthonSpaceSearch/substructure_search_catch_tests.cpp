@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <fstream>
 
 #include <GraphMol/Fingerprints/MorganGenerator.h>
@@ -79,9 +80,11 @@ TEST_CASE("Enumerate") {
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
-  auto testName = std::tmpnam(nullptr);
-  std::cout << "enumerating to " << testName << std::endl;
-  synthonspace.writeEnumeratedFile(testName);
+  char templateName[] = "/tmp/fileXXXXXX";
+  auto fp = mkstemp(templateName);
+  close(fp);
+  std::cout << "Enumerating to " << templateName << std::endl;
+  synthonspace.writeEnumeratedFile(templateName);
 
   std::string enumLibName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space_enum.smi";
@@ -102,14 +105,14 @@ TEST_CASE("Enumerate") {
     }
     return smiles;
   };
-  auto newSmiles = loadLibrary(testName);
+  auto newSmiles = loadLibrary(templateName);
   auto oldSmiles = loadLibrary(enumLibName);
   REQUIRE(newSmiles.size() == oldSmiles.size());
   for (const auto &[name, smiles] : oldSmiles) {
     REQUIRE(oldSmiles.find(name) != oldSmiles.end());
     REQUIRE(newSmiles.at(name) == oldSmiles.at(name));
   }
-  std::remove(testName);
+  std::remove(templateName);
 }
 
 TEST_CASE("S Amide 1") {
@@ -301,10 +304,15 @@ TEST_CASE("DB Writer") {
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   synthonspace.buildSynthonFingerprints(*fpGen);
-  synthonspace.writeDBFile("doebner_miller_space.spc");
+
+  char spaceName[] = "/tmp/fileXXXXXX";
+  auto fp = mkstemp(spaceName);
+  close(fp);
+
+  synthonspace.writeDBFile(spaceName);
 
   SynthonSpace newsynthonspace;
-  newsynthonspace.readDBFile("doebner_miller_space.spc");
+  newsynthonspace.readDBFile(spaceName);
   auto it = newsynthonspace.getReactions().find("doebner-miller-quinoline");
   CHECK(it != newsynthonspace.getReactions().end());
   const auto &irxn = it->second;
@@ -325,6 +333,7 @@ TEST_CASE("DB Writer") {
       CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
     }
   }
+  std::remove(spaceName);
 }
 
 TEST_CASE("S Biggy") {

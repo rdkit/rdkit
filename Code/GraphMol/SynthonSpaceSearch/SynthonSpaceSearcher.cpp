@@ -114,7 +114,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    std::chrono::time_point<std::chrono::steady_clock> &startTime,
+    std::chrono::time_point<std::chrono::system_clock> &startTime,
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -161,7 +161,7 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
     std::set<std::string> &resultsNames,
-    std::chrono::time_point<std::chrono::steady_clock> &startTime,
+    std::chrono::time_point<std::chrono::system_clock> &startTime,
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
     std::vector<std::vector<size_t>> synthonNums;
@@ -196,7 +196,7 @@ void SynthonSpaceSearcher::buildAllHits(
       stepper.step();
       // Don't check the time every go, as it's quite expensive.
       if (!(results.size() % 100)) {
-        auto currTime = std::chrono::high_resolution_clock::now();
+	auto currTime = std::chrono::high_resolution_clock::now();
         auto runTime = std::chrono::duration_cast<std::chrono::seconds>(
                            currTime - startTime)
                            .count();
@@ -277,7 +277,7 @@ struct RandomHitSelector {
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
     std::set<std::string> &resultsNames,
-    std::chrono::time_point<std::chrono::steady_clock> &startTime,
+    std::chrono::time_point<std::chrono::system_clock> &startTime,
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
