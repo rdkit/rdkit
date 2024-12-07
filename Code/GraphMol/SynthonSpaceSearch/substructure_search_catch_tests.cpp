@@ -551,3 +551,13 @@ TEST_CASE("Greg Space Failure") {
   auto results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 1);
 }
+
+TEST_CASE("DOS File") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName = fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_dos.csv";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  std::cout << "num prods : " << synthonspace.getNumProducts() << std::endl;
+  CHECK(synthonspace.getNumProducts() == 995916);
+}

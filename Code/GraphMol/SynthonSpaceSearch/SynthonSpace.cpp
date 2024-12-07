@@ -26,6 +26,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <RDGeneral/StreamOps.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -123,7 +124,8 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
   std::string nextLine;
   int lineNum = 1;
   std::vector<std::string> nextSynthon;
-  while (getline(ifs, nextLine)) {
+  while (!ifs.eof()) {
+    nextLine = getLine(ifs);
     ++lineNum;
     if (nextLine.empty() || nextLine[0] == '#') {
       continue;
