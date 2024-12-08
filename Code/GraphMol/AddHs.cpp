@@ -274,17 +274,13 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
                 nbr2 = getAtomNeighborNot(&mol, nbr1, otherAtom);
                 nbr2Vect =
                     nbr1Pos.directionVector((*cfi)->getAtomPos(nbr2->getIdx()));
-                perpVect = nbr2Vect.crossProduct(nbr1Vect);
+                auto crossProd = nbr2Vect.crossProduct(nbr1Vect);
 
                 // if nbr1 and nbr2 are aligned, the perpendicular will be null,
-                // so fall back to the default calculation
-                if (perpVect.lengthSq() < sq_dist_zero_tol) {
-                  // we need to pick a different perpendicular
-                  if ((*cfi)->is3D()) {
-                    perpVect = nbr1Vect.getPerpendicular();
-                  } else {
-                    perpVect.z = 1.0;
-                  }
+                // and we'll just keep the default calculated above. Otherwise
+                // we use the cross product
+                if (crossProd.lengthSq() >= sq_dist_zero_tol) {
+                  perpVect = crossProd;
                 }
               }
             }
