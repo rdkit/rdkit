@@ -555,9 +555,9 @@ TEST_CASE("Greg Space Failure") {
 TEST_CASE("DOS File") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
-  std::string libName = fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_dos.csv";
+  std::string libName = fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_dos.txt";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
   std::cout << "num prods : " << synthonspace.getNumProducts() << std::endl;
-  CHECK(synthonspace.getNumProducts() == 995916);
+  CHECK(synthonspace.getNumProducts() == 12);
 }
