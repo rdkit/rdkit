@@ -1380,10 +1380,13 @@ void setRGPProps(const std::string_view symb, Atom *res) {
   res->setProp(common_properties::dummyLabel, symbc);
 }
 
-void lookupAtomicNumber(Atom *res, const std::string &symb,
-                        bool strictParsing) {
+void lookupAtomicNumber(Atom *res, std::string &symb, bool strictParsing) {
+  std::string tCopy(symb);
+  if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
+    tCopy[1] = static_cast<char>(tolower(symb[1]));
+  }
   try {
-    res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(symb));
+    res->setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(tCopy));
   } catch (const Invar::Invariant &e) {
     if (strictParsing || symb.empty()) {
       throw FileParseException(e.what());
@@ -1510,9 +1513,6 @@ Atom *ParseMolFileAtomLine(const std::string_view text, RDGeom::Point3D &pos,
     res.reset(new QueryAtom(0));
     res->setProp(common_properties::atomLabel, std::string(symb));
   } else {
-    if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
-      symb[1] = static_cast<char>(tolower(symb[1]));
-    }
     lookupAtomicNumber(res.get(), symb, strictParsing);
   }
 
@@ -2182,9 +2182,6 @@ Atom *ParseV3000AtomSymbol(std::string_view token, unsigned int &line,
       res->setProp(common_properties::atomLabel, std::string(token));
     } else {
       std::string tcopy(token);
-      if (token.size() == 2 && token[1] >= 'A' && token[1] <= 'Z') {
-        tcopy[1] = static_cast<char>(tolower(token[1]));
-      }
       res.reset(new Atom(0));
       lookupAtomicNumber(res.get(), tcopy, strictParsing);
     }
@@ -2381,7 +2378,45 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         }
       }
     } else if (prop == "ATTCHORD") {
-      if (val != "0") {
+      // there are two kinds of ATTAHORD
+      // one is for template instances and look like this: ATTCHORD=(4 1 Al 3
+      // Br)
+
+      if (val.substr(0, 1) == "(") {
+        // this is a template instance
+
+        val = val.substr(1, val.size() - 2);
+        std::vector<std::string> splitToken;
+        boost::split(splitToken, val, boost::is_any_of(" \t"));
+
+        unsigned int itemCount = 0;
+        if (splitToken.size() > 0) {
+          itemCount = FileParserUtils::toInt(splitToken[0]);
+        }
+
+        if (itemCount == 0 || itemCount % 2 != 0 ||
+            splitToken.size() != itemCount + 1) {
+          errout << "Invalid ATTCHORD value: '" << val << "' for atom "
+                 << atom->getIdx() + 1 << " on line " << line << std::endl;
+          throw FileParseException(errout.str());
+        }
+        std::vector<AtomAttchOrd> attchOrds;
+        for (unsigned int i = 1; i < itemCount; i += 2) {
+          unsigned int idx = FileParserUtils::toInt(splitToken[i]);
+          // check for uniqueness
+          for (auto attachOrd : attchOrds) {
+            if (idx == attachOrd.getAtomIdx() ||
+                splitToken[i + 1] == attachOrd.getLabel()) {
+              errout << "Invalid ATTCHORD value: '" << val << "' for atom "
+                     << atom->getIdx() + 1 << " on line " << line << std::endl;
+              throw FileParseException(errout.str());
+            }
+          }
+          attchOrds.emplace_back(idx, splitToken[i + 1]);
+        }
+        atom->setProp(common_properties::molAttachOrderTemplate, attchOrds);
+      } else {
+        // this is a normal ATTCHORD
         auto ival = FileParserUtils::toInt(val);
         atom->setProp(common_properties::molAttachOrder, ival);
       }
@@ -3192,37 +3227,87 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
     tempStr = getV3000Line(inStream, line);
   }
 
-  if (nSgroups) {
-    boost::to_upper(tempStr);
-    if (tempStr.length() < 12 || tempStr.substr(0, 12) != "BEGIN SGROUP") {
-      std::ostringstream errout;
-      errout << "BEGIN SGROUP line not found on line " << line;
-      if (strictParsing) {
-        throw FileParseException(errout.str());
-      } else {
-        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-      }
-    } else {
-      tempStr =
-          ParseV3000SGroupsBlock(inStream, line, nSgroups, mol, strictParsing);
-      boost::to_upper(tempStr);
-      if (tempStr.length() < 10 || tempStr.substr(0, 10) != "END SGROUP") {
+  bool sgroupFound = false;
+  bool obj3dFound = false;
+  boost::to_upper(tempStr);
+  while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
+    if (tempStr.length() >= 12 && tempStr.substr(0, 12) == "BEGIN SGROUP") {
+      if (sgroupFound) {
         std::ostringstream errout;
-        errout << "END SGROUP line not found on line " << line;
+        errout << "BEGIN SGROUP found more than once on line " << line;
+        throw FileParseException(errout.str());
+
+      } else if (!nSgroups) {
+        std::ostringstream errout;
+        errout
+
+                    << "BEGIN SGROUP  found but Sgroups NOT expected not found on line "
+            << line;
         if (strictParsing) {
           throw FileParseException(errout.str());
         } else {
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         }
       } else {
+        sgroupFound = true;
+        tempStr = ParseV3000SGroupsBlock(inStream, line, nSgroups, mol,
+                                         strictParsing);
+        boost::to_upper(tempStr);
+        if (tempStr.length() < 10 || tempStr.substr(0, 10) != "END SGROUP") {
+          std::ostringstream errout;
+          errout << "END SGROUP line not found on line " << line;
+          if (strictParsing) {
+            throw FileParseException(errout.str());
+          } else {
+            BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+          }
+        } else {
+          tempStr = getV3000Line(inStream, line);
+          boost::to_upper(tempStr);
+        }
+      }
+
+    } else if (tempStr.length() >= 15 &&
+               tempStr.substr(6, 10) == "COLLECTION") {
+      tempStr = parseEnhancedStereo(inStream, line, mol);
+      boost::to_upper(tempStr);
+    } else if (tempStr.length() >= 11 &&
+               tempStr.substr(0, 11) == "BEGIN OBJ3D") {
+      if (obj3dFound) {
+        std::ostringstream errout;
+        errout << "BEGIN OBJ3D found more than once on line " << line;
+        throw FileParseException(errout.str());
+      }
+      if (!n3DConstraints) {
+        std::ostringstream errout;
+        errout << "BEGIN OBJ3D found but 3n3DConstraints NOT expected on line "
+               << line;
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+        }
+      }
+      BOOST_LOG(rdWarningLog)
+          << "3D constraint information in mol block ignored at line " << line
+          << std::endl;
+      obj3dFound = true;
+      for (unsigned int i = 0; i < n3DConstraints; ++i) {
         tempStr = getV3000Line(inStream, line);
       }
-    }
-  }
-
-  while (tempStr.length() > 5 && tempStr.substr(0, 5) == "BEGIN") {
-    if (tempStr.length() > 15 && tempStr.substr(6, 10) == "COLLECTION") {
-      tempStr = parseEnhancedStereo(inStream, line, mol);
+      tempStr = getV3000Line(inStream, line);
+      boost::to_upper(tempStr);
+      if (tempStr.length() < 9 || tempStr.substr(0, 9) != "END OBJ3D") {
+        std::ostringstream errout;
+        errout << "END OBJ3D line not found on line " << line;
+        if (strictParsing) {
+          throw FileParseException(errout.str());
+        } else {
+          BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+        }
+      }
+      tempStr = getV3000Line(inStream, line);
+      boost::to_upper(tempStr);
     } else {
       // skip blocks we don't know how to read
       BOOST_LOG(rdWarningLog) << "skipping block at line " << line << ": '"
@@ -3231,38 +3316,27 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
         tempStr = getV3000Line(inStream, line);
       }
       tempStr = getV3000Line(inStream, line);
+      boost::to_upper(tempStr);
     }
   }
 
-  if (n3DConstraints) {
-    BOOST_LOG(rdWarningLog)
-        << "3D constraint information in mol block ignored at line " << line
-        << std::endl;
-    boost::to_upper(tempStr);
-    if (tempStr.length() < 11 || tempStr.substr(0, 11) != "BEGIN OBJ3D") {
-      std::ostringstream errout;
-      errout << "BEGIN OBJ3D line not found on line " << line;
-      if (strictParsing) {
-        throw FileParseException(errout.str());
-      } else {
-        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-      }
-    }
-    for (unsigned int i = 0; i < n3DConstraints; ++i) {
-      tempStr = getV3000Line(inStream, line);
-    }
-    tempStr = getV3000Line(inStream, line);
-    boost::to_upper(tempStr);
-    if (tempStr.length() < 9 || tempStr.substr(0, 9) != "END OBJ3D") {
-      std::ostringstream errout;
-      errout << "END OBJ3D line not found on line " << line;
-      if (strictParsing) {
-        throw FileParseException(errout.str());
-      } else {
-        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-      }
+  if (nSgroups && !sgroupFound) {
+    std::ostringstream errout;
+    errout << "BEGIN SGROUP line not found on line " << line;
+    if (strictParsing) {
+      throw FileParseException(errout.str());
     } else {
-      tempStr = getV3000Line(inStream, line);
+      BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
+    }
+  }
+
+  if (n3DConstraints && !obj3dFound) {
+    std::ostringstream errout;
+    errout << "BEGIN OBJ3D line not found on line " << line;
+    if (strictParsing) {
+      throw FileParseException(errout.str());
+    } else {
+      BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
     }
   }
 

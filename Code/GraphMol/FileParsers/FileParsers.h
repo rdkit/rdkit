@@ -63,6 +63,16 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolFile(
     const std::string &fName,
     const MolFileParserParams &params = MolFileParserParams());
 
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<SCSRMol> ScsrMolFromScsrDataStream(
+    std::istream &inStream, unsigned int &line,
+    const MolFileParserParams &params = MolFileParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<SCSRMol> ScsrMolFromScsrBlock(
+    const std::string &molBlock,
+    const MolFileParserParams &params = MolFileParserParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<SCSRMol> ScsrMolFromScsrFile(
+    const std::string &fName,
+    const MolFileParserParams &params = MolFileParserParams());
+
 }  // namespace FileParsers
 }  // namespace v2
 

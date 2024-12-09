@@ -250,12 +250,19 @@ const std::vector<std::string> sGroupTypes = {
 
 const std::vector<std::string> sGroupSubtypes = {"ALT", "RAN", "BLO"};
 const std::vector<std::string> sGroupConnectTypes = {"HH", "HT", "EU"};
+const std::vector<std::string> sGroupClasses = {
+    "AA",        "dAA",    "DNA",     "RNA",      "SUGAR",    "BASE",
+    "PHOSPHATE", "LINKER", "CHEM",    "LGRP",     "MODAA",    "MODdAA",
+    "MODDNA",    "MODRNA", "XLINKAA", "XLINKdAA", "XLINKDNA", "XLINKRNA",
+};
 
 RDKIT_GRAPHMOL_EXPORT bool isValidType(const std::string &type);
 
 RDKIT_GRAPHMOL_EXPORT bool isValidSubType(const std::string &type);
 
 RDKIT_GRAPHMOL_EXPORT bool isValidConnectType(const std::string &type);
+
+RDKIT_GRAPHMOL_EXPORT bool isValidClass(const std::string &sgroupClass);
 
 RDKIT_GRAPHMOL_EXPORT bool isSubstanceGroupIdFree(const ROMol &mol,
                                                   unsigned int id);
