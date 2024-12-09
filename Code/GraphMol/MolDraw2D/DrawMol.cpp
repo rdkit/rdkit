@@ -999,45 +999,89 @@ bool doesLabelClashWithLabels(
   }
   return false;
 }
+
+bool orientAtomLabel(int atIdx,
+                     const std::vector<std::unique_ptr<AtomSymbol>> &atomLabels,
+                     const std::vector<std::unique_ptr<DrawShape>> &bonds) {
+  // Prefer the opposite to what it was already, as a starter.
+  const static std::vector<std::vector<OrientType>> newOrients{
+      {OrientType::S, OrientType::E, OrientType::W},
+      {OrientType::N, OrientType::W, OrientType::E},
+      {OrientType::E, OrientType::S, OrientType::N},
+      {OrientType::W, OrientType::N, OrientType::S},
+  };
+  // If it's a 2 character label and the second character is lower case,
+  // don't do anything.  This function is only called if there's more
+  // than 1 character.
+  if (atomLabels[atIdx]->rects_.size() == 2 &&
+      islower(atomLabels[atIdx]->drawChars_[1])) {
+    return false;
+  }
+  auto orig = atomLabels[atIdx]->orient_;
+  unsigned int pref = 0;
+  switch (orig) {
+    case OrientType::S:
+      pref = 1;
+      break;
+    case OrientType::W:
+      pref = 2;
+      break;
+    case OrientType::E:
+      pref = 3;
+      break;
+    default:
+      break;
+  }
+  bool ok = false;
+  for (auto &orient1 : newOrients[pref]) {
+    atomLabels[atIdx]->orient_ = orient1;
+    atomLabels[atIdx]->recalculateRects();
+    if (!doesLabelClashWithLabels(atIdx, atomLabels) &&
+        !doesLabelClashWithBonds(*atomLabels[atIdx], bonds)) {
+      ok = true;
+      break;
+    }
+  }
+  if (!ok) {
+    // Leave it as it is and hope when the other one is moved
+    // a better solution is found.
+    atomLabels[atIdx]->orient_ = orig;
+  }
+
+  return ok;
+}
 }  // namespace
 
 // ****************************************************************************
 void DrawMol::resolveAtomSymbolClashes() {
-  const static std::vector<OrientType> allOrients{OrientType::N, OrientType::E,
-                                                  OrientType::S, OrientType::W};
   for (auto at1 : drawMol_->atoms()) {
     const auto atIdx1 = at1->getIdx();
     for (auto at2 : drawMol_->atoms()) {
       const auto atIdx2 = at2->getIdx();
-      if (atIdx1 == atIdx2) {
+      if (atIdx1 >= atIdx2) {
         continue;
       }
       if (atomLabels_[atIdx1] != nullptr && atomLabels_[atIdx2] != nullptr &&
           (atomLabels_[atIdx1]->rects_.size() > 1 ||
            atomLabels_[atIdx2]->rects_.size() > 1)) {
         if (doLabelsClash(*atomLabels_[atIdx1], *atomLabels_[atIdx2])) {
-          // Move the smaller label that isn't a single character.
-          auto idx = atIdx1;
+          // Prefer moving the smaller label that isn't a single character.
+          int idxs[2]{-1, -1};
+          if (atomLabels_[atIdx1]->rects_.size() > 1) {
+            idxs[0] = atIdx1;
+          }
+          if (atomLabels_[atIdx2]->rects_.size() > 1) {
+            idxs[1] = atIdx2;
+          }
           if (atomLabels_[atIdx1]->rects_.size() >
-                  atomLabels_[atIdx2]->rects_.size() &&
-              atomLabels_[atIdx2]->rects_.size() != 1) {
-            idx = atIdx2;
+              atomLabels_[atIdx2]->rects_.size()) {
+            std::swap(idxs[0], idxs[1]);
           }
-          auto orig = atomLabels_[idx]->orient_;
-          bool ok = false;
-          for (auto &orient1 : allOrients) {
-            atomLabels_[idx]->orient_ = orient1;
-            atomLabels_[idx]->recalculateRects();
-            if (!doesLabelClashWithLabels(idx, atomLabels_) &&
-                !doesLabelClashWithBonds(*atomLabels_[idx], bonds_)) {
-              ok = true;
-              break;
+          if (!(idxs[0] != -1 &&
+                orientAtomLabel(idxs[0], atomLabels_, bonds_))) {
+            if (idxs[1] != -1) {
+              orientAtomLabel(idxs[1], atomLabels_, bonds_);
             }
-          }
-          if (!ok) {
-            // Leave it as it is and hope when the other one is moved
-            // a better solution is found.
-            atomLabels_[idx]->orient_ = orig;
           }
         }
       }
