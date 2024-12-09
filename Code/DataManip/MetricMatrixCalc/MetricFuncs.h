@@ -31,11 +31,11 @@ double EuclideanDistanceMetric(const T1 &v1, const T2 &v2, unsigned int dim) {
 // a different sim function as a template param
 //! return the Tanimoto distance (1-TanimotoSimilarity) between two bit vectors
 template <typename T1, typename T2>
-double TanimotoDistanceMetric(const T1 &bv1, const T2 &bv2, unsigned int dim) {
+double TanimotoDistanceMetric(const T1 &bv1, const T2 &bv2,
+                              [[maybe_unused]] unsigned int dim) {
   // the dim parameter is actually irrelevant here but we have to include it to
   // deal with
   // template version of setMetricFunc in MetricMatricCalc
-  RDUNUSED_PARAM(dim);
   return (1.0 - SimilarityWrapper(
                     bv1, bv2,
                     (double (*)(const T1 &, const T2 &))TanimotoSimilarity));
@@ -44,8 +44,7 @@ double TanimotoDistanceMetric(const T1 &bv1, const T2 &bv2, unsigned int dim) {
 //! return the Tanimoto similarity between two bit vectors
 template <typename T1, typename T2>
 double TanimotoSimilarityMetric(const T1 &bv1, const T2 &bv2,
-                                unsigned int dim) {
-  RDUNUSED_PARAM(dim);
+                                [[maybe_unused]] unsigned int dim) {
   return SimilarityWrapper(
       bv1, bv2, (double (*)(const T1 &, const T2 &))TanimotoSimilarity);
 };
