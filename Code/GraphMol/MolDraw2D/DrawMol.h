@@ -125,6 +125,7 @@ class DrawMol {
   // at the end of changeToDrawCoords() and any necessary DrawShapePolyLines
   // added to postShapes_ in drawCoords.
   void extractCloseContacts();
+  void resolveAtomSymbolClashes();
   void calculateScale();
   void findExtremes();
   void changeToDrawCoords();
