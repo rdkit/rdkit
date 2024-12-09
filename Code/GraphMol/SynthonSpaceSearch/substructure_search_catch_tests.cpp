@@ -558,6 +558,5 @@ TEST_CASE("DOS File") {
   std::string libName = fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_dos.txt";
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
-  std::cout << "num prods : " << synthonspace.getNumProducts() << std::endl;
   CHECK(synthonspace.getNumProducts() == 12);
 }
