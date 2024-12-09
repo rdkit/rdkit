@@ -551,3 +551,12 @@ TEST_CASE("Greg Space Failure") {
   auto results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 1);
 }
+
+TEST_CASE("DOS File") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName = fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_dos.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  CHECK(synthonspace.getNumProducts() == 12);
+}
