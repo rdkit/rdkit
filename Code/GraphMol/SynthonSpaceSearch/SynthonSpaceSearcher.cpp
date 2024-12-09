@@ -20,6 +20,23 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
+namespace {
+bool checkTimeOut(
+    const std::chrono::time_point<std::chrono::high_resolution_clock>
+        &startTime,
+    std::int64_t timeOut) {
+  auto currTime = std::chrono::high_resolution_clock::now();
+  auto runTime =
+      std::chrono::duration_cast<std::chrono::seconds>(currTime - startTime)
+          .count();
+  if (runTime > timeOut) {
+    BOOST_LOG(rdWarningLog) << "Timed out after " << runTime << " seconds\n";
+    return true;
+  }
+  return false;
+}
+}  // namespace
+
 SearchResults SynthonSpaceSearcher::search() {
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
@@ -46,13 +63,10 @@ SearchResults SynthonSpaceSearcher::search() {
   size_t totHits = 0;
   auto startTime = std::chrono::high_resolution_clock::now();
 
+  bool timedOut = false;
   for (auto &fragSet : fragments) {
-    auto currTime = std::chrono::high_resolution_clock::now();
-    auto runTime =
-        std::chrono::duration_cast<std::chrono::seconds>(currTime - startTime)
-            .count();
-    if (runTime > d_params.timeOut) {
-      BOOST_LOG(rdWarningLog) << "Timed out after " << runTime << " seconds\n";
+    timedOut = checkTimeOut(startTime, d_params.timeOut);
+    if (timedOut) {
       break;
     }
     if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
@@ -65,17 +79,11 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   }
 
-  bool timedOut = false;
-  if (d_params.buildHits) {
+  if (!timedOut && d_params.buildHits) {
     buildHits(allHits, totHits, startTime, timedOut, results);
   }
 
-  auto currTime = std::chrono::high_resolution_clock::now();
-  auto runTime =
-      std::chrono::duration_cast<std::chrono::seconds>(currTime - startTime)
-          .count();
-
-  return SearchResults{std::move(results), totHits, timedOut, runTime};
+  return SearchResults{std::move(results), totHits, timedOut};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
@@ -165,6 +173,7 @@ void SynthonSpaceSearcher::buildAllHits(
     const std::chrono::time_point<std::chrono::high_resolution_clock>
         &startTime,
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
+  std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
     std::vector<std::vector<size_t>> synthonNums;
     synthonNums.reserve(synthonsToUse.size());
@@ -197,15 +206,11 @@ void SynthonSpaceSearcher::buildAllHits(
       }
       stepper.step();
       // Don't check the time every go, as it's quite expensive.
-      if (!(results.size() % 100)) {
-        auto currTime = std::chrono::high_resolution_clock::now();
-        auto runTime = std::chrono::duration_cast<std::chrono::seconds>(
-                           currTime - startTime)
-                           .count();
-        if (runTime > d_params.timeOut) {
-          BOOST_LOG(rdWarningLog)
-              << "Timed out after " << runTime << " seconds\n";
-          timedOut = true;
+      --numTries;
+      if (!numTries) {
+        numTries = 100;
+        timedOut = checkTimeOut(startTime, d_params.timeOut);
+        if (timedOut) {
           break;
         }
       }
@@ -287,7 +292,8 @@ void SynthonSpaceSearcher::buildRandomHits(
   }
   auto rhs = RandomHitSelector(hitsets, d_space);
 
-  uint64_t numFails = 0;
+  std::uint64_t numFails = 0;
+  std::uint64_t numTries = 100;
   while (results.size() < std::min(static_cast<std::uint64_t>(d_params.maxHits),
                                    static_cast<std::uint64_t>(totHits)) &&
          numFails < totHits * d_params.numRandomSweeps) {
@@ -299,15 +305,11 @@ void SynthonSpaceSearcher::buildRandomHits(
       numFails++;
     }
     // Don't check the time every go, as it's quite expensive.
-    if (!(results.size() % 100)) {
-      auto currTime = std::chrono::high_resolution_clock::now();
-      auto runTime =
-          std::chrono::duration_cast<std::chrono::seconds>(currTime - startTime)
-              .count();
-      if (runTime > d_params.timeOut) {
-        BOOST_LOG(rdWarningLog)
-            << "Timed out after " << runTime << " seconds\n";
-        timedOut = true;
+    --numTries;
+    if (!numTries) {
+      numTries = 100;
+      timedOut = checkTimeOut(startTime, d_params.timeOut);
+      if (timedOut) {
         break;
       }
     }

@@ -216,7 +216,7 @@ TEST_CASE("Timeout") {
   params.maxHits = -1;
   params.similarityCutoff = 0.3;
   params.fragSimilarityAdjuster = 0.3;
-  params.timeOut = 10;
+  params.timeOut = 2;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
 

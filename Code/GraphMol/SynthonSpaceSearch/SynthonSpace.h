@@ -78,7 +78,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // times, a lower number will give faster searches at the
              // risk of missing some hits.  The value you use should have
              // a positive correlation with your FOMO.
-  long long int timeOut{
+  std::int64_t timeOut{
       600};  // Maximum number of seconds to spend on a single search.
 };
 
