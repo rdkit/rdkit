@@ -43,10 +43,7 @@ struct SearchResults_wrapper {
                       " synthons suggested they would.")
         .def_readonly("GetTimedOut",
                       &SynthonSpaceSearch::SearchResults::getTimedOut,
-                      "Returns whether the search timed out or not.")
-        .def_readonly("GetRunTime",
-                      &SynthonSpaceSearch::SearchResults::getRunTime,
-                      "Returns the approximate run time in seconds.");
+                      "Returns whether the search timed out or not.");
   }
 };
 
