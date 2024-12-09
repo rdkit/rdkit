@@ -527,6 +527,7 @@ It's always possible to see the RDKit's interpretation of a SMARTS using the ``D
       AtomIsotope 2 = val
     AtomFormalCharge 1 = val
 
+The safest (and clearest) way to incorporate H atoms into your queries is to use the atomic number primitive `[#1]` instead of `[H]`.
 
 Mol/SDF Support and Extensions
 ==============================
