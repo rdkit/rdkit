@@ -109,6 +109,7 @@ Submodules
    rdkit.Chem.rdEHTTools
    rdkit.Chem.rdDetermineBonds
    rdkit.Chem.rdShapeAlign
+   rdkit.Chem.rdSynthonSpaceSearch
 
 Module contents
 ---------------

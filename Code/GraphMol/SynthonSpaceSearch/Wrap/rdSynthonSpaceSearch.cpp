@@ -9,6 +9,7 @@
 //
 
 #include <RDBoost/python.h>
+#include <RDBoost/Wrap.h>
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
@@ -17,34 +18,33 @@ namespace python = boost::python;
 
 namespace RDKit {
 
-python::list hitMolecules_helper(
-    const SynthonSpaceSearch::SubstructureResults &res) {
+python::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
   python::list pyres;
   for (auto &r : res.getHitMolecules()) {
-    pyres.append(boost::shared_ptr<ROMol>(new ROMol(*r)));
+    pyres.append(boost::make_shared<ROMol>(*r));
   }
   return pyres;
 }
 
-struct SubstructureResults_wrapper {
+struct SearchResults_wrapper {
   static void wrap() {
-    std::string docString = "Used to return results of SynthonSpace searches.";
-    python::class_<SynthonSpaceSearch::SubstructureResults>(
+    const std::string docString =
+        "Used to return results of SynthonSpace searches.";
+    python::class_<SynthonSpaceSearch::SearchResults>(
         "SubstructureResult", docString.c_str(), python::no_init)
         .def("GetHitMolecules", hitMolecules_helper, python::args("self"),
              "A function returning hits from the search")
-        .def_readonly(
-            "GetMaxNumResults",
-            &SynthonSpaceSearch::SubstructureResults::getMaxNumResults,
-            "The upper bound on number of results possible.  There"
-            " may be fewer than this in practice for several reasons"
-            " such as duplicate reagent sets being removed or the"
-            " final product not matching the query even though the"
-            " synthons suggested they would.");
+        .def_readonly("GetMaxNumResults",
+                      &SynthonSpaceSearch::SearchResults::getMaxNumResults,
+                      "The upper bound on number of results possible.  There"
+                      " may be fewer than this in practice for several reasons"
+                      " such as duplicate reagent sets being removed or the"
+                      " final product not matching the query even though the"
+                      " synthons suggested they would.");
   }
 };
 
-SynthonSpaceSearch::SubstructureResults substructureSearch_helper(
+SynthonSpaceSearch::SearchResults substructureSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &py_params) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
@@ -52,11 +52,31 @@ SynthonSpaceSearch::SubstructureResults substructureSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
-  auto results = self.substructureSearch(query, params);
-  return results;
+  {
+    NOGIL gil;
+    return self.substructureSearch(query, params);
+  }
 }
 
-void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
+SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &fingerprintGenerator,
+    const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  {
+    NOGIL gil;
+    const FingerprintGenerator<std::uint64_t> *fpGen =
+        python::extract<FingerprintGenerator<std::uint64_t> *>(
+            fingerprintGenerator);
+    return self.fingerprintSearch(query, *fpGen, params);
+  }
+}
+
+void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
@@ -67,7 +87,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       "  NOTE: This functionality is experimental and the API"
       " and/or results may change in future releases.";
 
-  SubstructureResults_wrapper::wrap();
+  SearchResults_wrapper::wrap();
 
   std::string docString = "SynthonSpaceSearch parameters.";
   python::class_<SynthonSpaceSearch::SynthonSpaceSearchParams,
@@ -109,7 +129,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "The random sampling doesn't always produce the"
           " required number of hits in 1 go.  This parameter"
           " controls how many loops it makes to try and get"
-          " the hits before giving up.  Default=10.");
+          " the hits before giving up.  Default=10.")
+      .def_readwrite(
+          "similarityCutoff",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::similarityCutoff,
+          "Similarity cutoff for returning hits by fingerprint similarity."
+          "  At present the fp is hard-coded to be Morgan, bits, radius=2."
+          "  Default=0.5.")
+      .def_readwrite(
+          "fragSimilarityAdjuster",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::fragSimilarityAdjuster,
+          "Similarities of fragments are generally low due to low bit"
+          " densities.  For the fragment matching, reduce the similarity cutoff"
+          " off by this amount.  Default=0.3.");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
@@ -123,6 +155,10 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def("WriteDBFile", &SynthonSpaceSearch::SynthonSpace::writeDBFile,
            (python::arg("self"), python::arg("outFile")),
            "Writes binary database file.")
+      .def("WriteEnumeratedFile",
+           &SynthonSpaceSearch::SynthonSpace::writeEnumeratedFile,
+           (python::arg("self"), python::arg("outFile")),
+           "Writes enumerated library to file.")
       .def("GetNumReactions",
            &SynthonSpaceSearch::SynthonSpace::getNumReactions,
            python::arg("self"),
@@ -136,7 +172,21 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def("SubstructureSearch", &substructureSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("params") = python::object()),
-           "Does a substructure search in the SynthonSpace.");
+           "Does a substructure search in the SynthonSpace.")
+      .def("FingerprintSearch", &fingerprintSearch_helper,
+           (python::arg("self"), python::arg("query"),
+            python::arg("fingerprintGenerator"),
+            python::arg("params") = python::object()),
+           "Does a fingerprint search in the SynthonSpace using the"
+           " FingerprintGenerator passed in.")
+      .def(
+          "BuildSynthonFingerprints",
+          &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,
+          (python::arg("self"), python::arg("fingerprintGenerator")),
+          "Build the synthon fingerprints ready for similarity searching.  This"
+          " is done automatically when the first similarity search is done, but if"
+          " converting a text file to binary format it might need to be done"
+          " explicitly.");
 }
 
 }  // namespace RDKit
