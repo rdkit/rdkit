@@ -93,12 +93,15 @@ CoulombDielectric *makeAltCoulombDielectric(const python::object &charges,
 }
 
 python::tuple readCubeFile(const std::string &filename) {
-  RDGeom::UniformRealValueGrid3D grd;
-  auto res = readFromCubeFile(grd, filename);
-  boost::python::manage_new_object::apply<RDKit::ROMol *>::type converter;
-  return python::make_tuple(
-      grd,
-      python::handle<>(converter(static_cast<RDKit::ROMol *>(res.release()))));
+  std::unique_ptr<RDGeom::UniformRealValueGrid3D> grd(
+      new RDGeom::UniformRealValueGrid3D());
+  auto res = readFromCubeFile(*grd, filename);
+  boost::python::manage_new_object::apply<
+      RDGeom::UniformRealValueGrid3D *>::type grdConverter;
+  boost::python::manage_new_object::apply<RDKit::ROMol *>::type molConverter;
+  return python::make_tuple(python::handle<>(grdConverter(grd.release())),
+                            python::handle<>(molConverter(
+                                static_cast<RDKit::ROMol *>(res.release()))));
 }
 
 struct mif_wrapper {
