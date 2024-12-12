@@ -3679,7 +3679,7 @@ DrawColour DrawMol::getColour(int atom_idx) const {
     // the same highlight colour as the bonds.  It doesn't look right
     // if only some of the bonds are highlighted, IMO.
     if (!highlightedAtom) {
-      Atom *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
+      const auto *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
       int numBonds = 0, numHighBonds = 0;
       std::unique_ptr<DrawColour> highCol;
       for (const auto &nbri :
@@ -3689,7 +3689,7 @@ DrawColour DrawMol::getColour(int atom_idx) const {
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       nbr->getIdx()) != highlightBonds_.end() ||
             highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
-          DrawColour hc = getHighlightBondColour(
+          auto hc = getHighlightBondColour(
               nbr, drawOptions_, highlightBonds_, highlightBondMap_,
               highlightAtoms_, highlightAtomMap_);
           if (!highCol) {
@@ -3707,18 +3707,21 @@ DrawColour DrawMol::getColour(int atom_idx) const {
         retval = *highCol;
       }
     }
-  } else {
-    // There's going to be a colour behind the atom, so if the
-    // atom has a symbol, it should be the same colour as carbon.  This
-    // function should only be called if there is an atom symbol.
-    if (highlightedAtom) {
-      if (auto it = drawOptions_.atomColourPalette.find(6);
-          it != drawOptions_.atomColourPalette.end()) {
-        retval = it->second;
-      } else {
-        // Use the default if no carbon.
-        retval = drawOptions_.atomColourPalette.at(-1);
-      }
+  } else if (highlightedAtom) {
+  // There's going to be a colour behind the atom, so if the
+  // atom has a symbol, it should be the same colour as carbon.  This
+  // function should only be called if there is an atom symbol.
+
+    if (auto it = drawOptions_.atomColourPalette.find(6);
+        it != drawOptions_.atomColourPalette.end()) {
+      retval = it->second;
+    } else if (auto it = drawOptions_.atomColourPalette.find(-1);
+        it != drawOptions_.atomColourPalette.end()) {
+      // Use the default if no carbon.
+      retval = it->second;
+    } else {
+      // if all else fails, default to black:
+      retval = DrawColour(0, 0, 0);
     }
   }
   return retval;
@@ -3758,20 +3761,20 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
 // ****************************************************************************
 DrawColour getColourByAtomicNum(int atomic_num,
                                 const MolDrawOptions &drawOptions) {
-  DrawColour res;
+  // if all else fails, default to black:
+  DrawColour res(0, 0, 0);
   if (atomic_num == 1 && drawOptions.noAtomLabels) {
     atomic_num = 201;
   }
-  if (drawOptions.atomColourPalette.find(atomic_num) !=
-      drawOptions.atomColourPalette.end()) {
-    res = drawOptions.atomColourPalette.find(atomic_num)->second;
-  } else if (atomic_num != -1 && drawOptions.atomColourPalette.find(-1) !=
-                                     drawOptions.atomColourPalette.end()) {
+  if (auto it = drawOptions.atomColourPalette.find(atomic_num);
+          it != drawOptions.atomColourPalette.end()) {
+    res = it->second;
+  } else if (atomic_num != -1) {
     // if -1 is in the palette, we use that for undefined colors
-    res = drawOptions.atomColourPalette.find(-1)->second;
-  } else {
-    // if all else fails, default to black:
-    res = DrawColour(0, 0, 0);
+    if (auto it = drawOptions.atomColourPalette.find(-1);
+          it != drawOptions.atomColourPalette.end()) {
+      res = it->second;
+    }
   }
   return res;
 }
