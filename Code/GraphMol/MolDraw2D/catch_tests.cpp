@@ -349,6 +349,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHighlightHeteroAtoms_1.svg", 1769258632U},
     {"testHighlightHeteroAtoms_2.svg", 893937335U},
     {"testAtomAbbreviationsClash.svg", 1847939197U},
+    {"testBlackAtomsUnderHighlight.svg", 3916069581U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10180,3 +10181,40 @@ TEST_CASE("Atom abbreviations clash") {
   }
   check_file_hash("testAtomAbbreviationsClash.svg");
 }
+
+TEST_CASE("DrawMol::getColour should not throw if the palette has no carbon color and no default color") {
+  auto m = "c1ccc(C2CN2)cc1"_smiles;
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().atomColourPalette = ColourPalette();
+  std::vector<int> highlightAtoms{0, 1, 2, 3, 4, 5, 6, 7, 8};
+  std::vector<int> highlightBonds;
+  REQUIRE_NOTHROW(drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds));
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testBlackAtomsUnderHighlight.svg");
+  outs << text;
+  outs.flush();
+  {
+    std::regex path("<path.*fill:none;.*stroke:#000000;.*/>");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), path),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 19);
+  }
+  {
+    std::regex path("<text.*stroke:none;.*fill:#000000.*</text>");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), path),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 2);
+  }
+  {
+    std::regex path("<ellipse.*fill:#FF7F7F;.*stroke:#FF7F7F;.*/>");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), path),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 9);
+  }
+  check_file_hash("testBlackAtomsUnderHighlight.svg");
+}
+
