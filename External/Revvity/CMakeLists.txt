@@ -99,7 +99,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   endif()
 
   rdkit_library(RDChemDrawLib chemdraw.cpp SHARED LINK_LIBRARIES ChemDraw
-                GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
+                ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
   target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD)
 
   rdkit_headers(chemdraw.h DEST GraphMol)
@@ -110,7 +110,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   add_definitions(-DRDK_BUILD_CHEMDRAW_SUPPORT)
 
   rdkit_catch_test(chemdrawCatchTest test.cpp
-        LINK_LIBRARIES RDChemDrawLib SubstructMatch FileParsers SmilesParse GraphMol)
+        LINK_LIBRARIES RDChemDrawLib SubstructMatch FileParsers SmilesParse ChemTransforms GraphMol)
 
 endif(RDK_BUILD_CHEMDRAW_SUPPORT)
 

@@ -35,5 +35,14 @@
 #include <string>
 
 namespace RDKit {
-void RDKIT_CHEMDRAW_EXPORT ChemDrawToMols(const std::string &filename);
+struct RDKIT_FILEPARSERS_EXPORT ChemDrawParserParams {
+  bool sanitize = true;
+  bool removeHs = true;
+};
+
+std::vector<std::unique_ptr<ROMol>> RDKIT_CHEMDRAW_EXPORT ChemDrawToMols(std::istream &inStream,
+                                                                         const ChemDrawParserParams &params=ChemDrawParserParams());
+
+std::vector<std::unique_ptr<ROMol>> RDKIT_CHEMDRAW_EXPORT ChemDrawToMols(const std::string &filename,
+                                                                         const ChemDrawParserParams &params=ChemDrawParserParams());
 }
