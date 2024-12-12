@@ -37,7 +37,7 @@ double RealValueVect::getTotalVal() const {
                          std::plus<double>());
 }
 
-bool RealValueVect::compareVectors(const RealValueVect &other) {
+bool RealValueVect::compareVectors(const RealValueVect &other) const {
   if (getLength() != other.getLength()) {
     throw ValueErrorException("Comparing vectors of different lengths");
   }

@@ -48,10 +48,6 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
   }
   UniformRealValueGrid3D(const UniformRealValueGrid3D &other);
   UniformRealValueGrid3D &operator=(const UniformRealValueGrid3D &other);
-  // UniformRealValueGrid3D(UniformRealValueGrid3D &&other) = default;
-  // UniformRealValueGrid3D &operator=(UniformRealValueGrid3D &&other) =
-  // default;
-  ~UniformRealValueGrid3D() override;
 
   //! construct from a string pickle
   UniformRealValueGrid3D(const std::string &pkl);
@@ -114,12 +110,12 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
 
   //! \brief return a \b const pointer to our occupancy vector
   const RDKit::RealValueVect *getOccupancyVect() const override {
-    return dp_storage;
+    return &d_storage;
   };
 
   //! brief returns raw vector
-  const std::vector<double> &getData() const { return dp_storage->getData(); }
-  std::vector<double> &getData() { return dp_storage->getData(); }
+  const std::vector<double> &getData() const { return d_storage.getData(); }
+  std::vector<double> &getData() { return d_storage.getData(); }
 
   //! \brief returns true if the grid \c other has parameters
   //!        compatible with ours.
@@ -185,8 +181,8 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
       d_numZ;        //! number of grid points along x, y, z axes
   double d_spacing;  //! grid spacing
 
-  RDGeom::Point3D d_offSet;          //! the grid offset (from the origin)
-  RDKit::RealValueVect *dp_storage;  //! storage for values at each grid point
+  RDGeom::Point3D d_offSet;        //! the grid offset (from the origin)
+  RDKit::RealValueVect d_storage;  //! storage for values at each grid point
 
   //! \brief construct from a pickle
   void initFromText(const char *pkl, const unsigned int length);

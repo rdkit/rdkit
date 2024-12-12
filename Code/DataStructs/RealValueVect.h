@@ -26,6 +26,7 @@ namespace RDKit {
 //! construct from and write to pickle
 class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
  public:
+  RealValueVect() = default;
   //! initialize with a particular size
   RealValueVect(unsigned int length) : d_length(length) {
     d_data.resize(d_length, 0.0);
@@ -63,7 +64,7 @@ class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
   unsigned int size() const { return getLength(); };
 
   //! compares 2 vectors and returns false if different
-  bool compareVectors(const RealValueVect &other);
+  bool compareVectors(const RealValueVect &other) const;
 
   //! in-place operator&
   RealValueVect &operator&=(const RealValueVect &other);
@@ -80,14 +81,20 @@ class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
   //! returns a binary string representation (pickle)
   std::string toString() const;
 
+  void setLength(unsigned int sz) {
+    d_length = sz;
+    d_data.resize(sz);
+  }
+  void setToVal(double val) { std::fill(d_data.begin(), d_data.end(), val); }
+
   const std::vector<double> &getData() const { return d_data; }
   std::vector<double> &getData() { return d_data; }
 
  private:
+  void initFromText(const char *pkl, const unsigned int len);
   unsigned int d_length = 0;
   std::vector<double> d_data;
 
-  void initFromText(const char *pkl, const unsigned int len);
   template <typename O>
   RealValueVect &applyBinaryOp(const RealValueVect &other, O op);
 };  // end of declaration of class RealValueVect

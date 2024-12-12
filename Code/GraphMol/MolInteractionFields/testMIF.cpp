@@ -68,12 +68,12 @@ TEST_CASE("constructGrid") {
 }
 
 TEST_CASE("CalculateDescriptors") {
-  auto *data = new RealValueVect(0.0, 125);
+  RealValueVect data(0.0, 125);
   Point3D o(0.0, 0.0, 0.0);
-  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, data);
+  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, &data);
 
   calculateDescriptors(grd, testfunctor());
-  CHECK(feq(data->getTotalVal(), grd.getSize()));
+  CHECK(grd.getOccupancyVect()->getTotalVal() == grd.getSize());
 }
 
 TEST_CASE("CubeFiles") {

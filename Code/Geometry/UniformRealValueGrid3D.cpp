@@ -22,7 +22,6 @@ using namespace RDKit;
 namespace {
 constexpr double OFFSET_TOL = 1.e-4;
 constexpr double SPACING_TOL = 1.e-4;
-constexpr const char *UNINITIALIZED_GRID = "uninitialized grid";
 constexpr const char *INCOMPATIBLE_GRIDS = "incompatible grids";
 }  // end anonymous namespace
 
@@ -30,9 +29,8 @@ namespace RDGeom {
 std::int32_t ci_RealValueGrid3DPICKLE_VERSION = 0x1;
 UniformRealValueGrid3D::UniformRealValueGrid3D(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
   std::unique_ptr<RDKit::RealValueVect> data(
-      new RDKit::RealValueVect(*other.dp_storage));
+      new RDKit::RealValueVect(other.d_storage));
   UniformRealValueGrid3D::initGrid(other.d_numX * other.d_spacing,
                                    other.d_numY * other.d_spacing,
                                    other.d_numZ * other.d_spacing,
@@ -59,26 +57,20 @@ void UniformRealValueGrid3D::initGrid(double dimX, double dimY, double dimZ,
   d_spacing = spacing;
   d_offSet = offSet;
   if (!data) {
-    dp_storage = new RDKit::RealValueVect(d_numX * d_numY * d_numZ);
+    d_storage.setLength(d_numX * d_numY * d_numZ);
+    d_storage.setToVal(0.0);
   } else {
-    dp_storage = data;
+    d_storage = *data;
   }
 }
 
 UniformRealValueGrid3D::UniformRealValueGrid3D(const std::string &pkl) {
-  dp_storage = nullptr;
   this->initFromText(pkl.c_str(), pkl.size());
 }
 
 UniformRealValueGrid3D::UniformRealValueGrid3D(const char *pkl,
                                                unsigned int len) {
-  dp_storage = nullptr;
   this->initFromText(pkl, len);
-}
-
-UniformRealValueGrid3D::~UniformRealValueGrid3D() {
-  delete dp_storage;
-  dp_storage = nullptr;
 }
 
 int UniformRealValueGrid3D::getGridIndex(unsigned int xi, unsigned int yi,
@@ -130,26 +122,23 @@ int UniformRealValueGrid3D::getGridPointIndex(
 }
 
 double UniformRealValueGrid3D::getVal(const RDGeom::Point3D &point) const {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
   auto id = getGridPointIndex(point);
   if (id < 0) {
     return -1;
   }
-  return dp_storage->getVal(static_cast<unsigned int>(id));
+  return d_storage.getVal(static_cast<unsigned int>(id));
 }
 
 double UniformRealValueGrid3D::getVal(unsigned int pointId) const {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
-  return dp_storage->getVal(pointId);
+  return d_storage.getVal(pointId);
 }
 
 void UniformRealValueGrid3D::setVal(const RDGeom::Point3D &point, double val) {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
   auto id = getGridPointIndex(point);
   if (id < 0) {
     return;
   }
-  dp_storage->setVal(static_cast<unsigned int>(id), val);
+  d_storage.setVal(static_cast<unsigned int>(id), val);
 }
 
 RDGeom::Point3D UniformRealValueGrid3D::getGridPointLoc(
@@ -165,8 +154,7 @@ RDGeom::Point3D UniformRealValueGrid3D::getGridPointLoc(
 }
 
 void UniformRealValueGrid3D::setVal(unsigned int pointId, double val) {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
-  dp_storage->setVal(pointId, val);
+  d_storage.setVal(pointId, val);
 }
 
 bool UniformRealValueGrid3D::compareParams(
@@ -190,69 +178,60 @@ bool UniformRealValueGrid3D::compareParams(
 
 bool UniformRealValueGrid3D::compareVectors(
     const UniformRealValueGrid3D &other) const {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
-  return dp_storage->compareVectors(*(other.dp_storage));
+  return d_storage.compareVectors(other.d_storage);
 }
 
 bool UniformRealValueGrid3D::compareGrids(
     const UniformRealValueGrid3D &other) const {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
   if (!compareParams(other)) {
     return false;
   }
-  return dp_storage->compareVectors(*(other.dp_storage));
+  return d_storage.compareVectors(other.d_storage);
 }
 
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
-  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
+  if (this == &other) {
+    return *this;
+  }
   d_numX = other.d_numX;
   d_numY = other.d_numY;
   d_numZ = other.d_numZ;
   d_spacing = other.d_spacing;
   d_offSet = other.d_offSet;
-  *dp_storage = *other.dp_storage;
+  d_storage = other.d_storage;
 
   return *this;
 }
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator|=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
-  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
   PRECONDITION(compareParams(other), INCOMPATIBLE_GRIDS);
 
-  *dp_storage |= *other.dp_storage;
+  d_storage |= other.d_storage;
   return *this;
 }
 
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator&=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
-  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
   PRECONDITION(compareParams(other), INCOMPATIBLE_GRIDS);
 
-  *dp_storage &= *other.dp_storage;
+  d_storage &= other.d_storage;
   return *this;
 }
 
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator+=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
-  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
   PRECONDITION(compareParams(other), INCOMPATIBLE_GRIDS);
 
-  *dp_storage += *other.dp_storage;
+  d_storage += other.d_storage;
   return *this;
 }
 
 UniformRealValueGrid3D &UniformRealValueGrid3D::operator-=(
     const UniformRealValueGrid3D &other) {
-  PRECONDITION(dp_storage, UNINITIALIZED_GRID);
-  PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
   PRECONDITION(compareParams(other), INCOMPATIBLE_GRIDS);
 
-  *dp_storage -= *other.dp_storage;
+  d_storage -= other.d_storage;
   return *this;
 }
 
@@ -272,7 +251,7 @@ std::string UniformRealValueGrid3D::toString() const {
   streamWrite(ss, d_offSet.x);
   streamWrite(ss, d_offSet.y);
   streamWrite(ss, d_offSet.z);
-  std::string storePkl = dp_storage->toString();
+  std::string storePkl = d_storage.toString();
   std::uint32_t pklSz = storePkl.size();
   streamWrite(ss, pklSz);
   ss.write(storePkl.c_str(), pklSz * sizeof(char));
@@ -310,8 +289,7 @@ void UniformRealValueGrid3D::initFromText(const char *pkl,
   streamRead(ss, pklSz);
   std::vector<char> buff(pklSz);
   ss.read(buff.data(), pklSz * sizeof(char));
-  delete dp_storage;
-  dp_storage = new RDKit::RealValueVect(buff.data(), pklSz);
+  d_storage = RDKit::RealValueVect(buff.data(), pklSz);
 }
 
 UniformRealValueGrid3D operator&(const UniformRealValueGrid3D &grd1,
