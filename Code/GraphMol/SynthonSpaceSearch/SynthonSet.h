@@ -102,9 +102,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // The lists of synthons.  A product of the reaction is created by
   // combining 1 synthon from each of the outer vectors.
   std::vector<std::vector<std::unique_ptr<Synthon>>> d_synthons;
-  // 4 bits showing which connectors are present in the all synthons.
+  // 4 bits showing which connectors are present in all the
+  // synthon sets.
   boost::dynamic_bitset<> d_connectors;
-  // and the connector patterns for each synthon set
+  // and the connector patterns for each synthon set.
   std::vector<boost::dynamic_bitset<>> d_synthConnPatts;
 
   // The connector regions of a molecule are the pieces of up to 3 bonds from
