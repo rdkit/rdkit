@@ -1184,7 +1184,7 @@ struct PrecomputedBondFeatures {
   std::vector<std::uint8_t> numNeighbors;
 };
 
-constexpr int kMaxBonds = 8;
+constexpr int kMaxBonds = 16;
 
 //! Lookup neighbor indices and compute counts for each atom.
 PrecomputedBondFeatures computeBondFeatures(const ROMol &mol) {
@@ -1199,7 +1199,7 @@ PrecomputedBondFeatures computeBondFeatures(const ROMol &mol) {
       const unsigned int nbrIdx = bond->getOtherAtomIdx(atomIdx);
       features.numNeighbors[nbrIdx]++;
       auto &[count, neighborIndex] =
-          features.countsAndNeighborIndices[indexOffset];
+          features.countsAndNeighborIndices.at(indexOffset);
       neighborIndex = nbrIdx;
 
       // put the neighbor in 2N times where N is the bond order as a double.
@@ -3059,10 +3059,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+          }  // end of 2 and 3 coordinated atoms only
+        }  // end of we want it or CIP code is not set
+      }  // end of double bond
+    }  // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
