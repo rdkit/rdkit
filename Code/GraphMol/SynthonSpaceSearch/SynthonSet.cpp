@@ -127,6 +127,10 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
       d_synthonFPs[i][j] = std::make_unique<ExplicitBitVect>(fString);
     }
   }
+  // So that d_synthConnPatts is filled in. Next time the binary file format
+  // is updated they can be put in it, but they're cheap enough to calculate
+  // so leave it for now.
+  assignConnectorsUsed();
 }
 
 void SynthonSet::enumerateToStream(std::ostream &os) const {
@@ -322,13 +326,18 @@ void SynthonSet::assignConnectorsUsed() {
     }
   }
   d_connectors.resize(MAX_CONNECTOR_NUM + 1, false);
-  for (const auto &reagSet : d_synthons) {
-    for (const auto &reag : reagSet) {
-      for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
-        if (std::regex_search(reag->getSmiles(), connRegexs[2 * i]) ||
-            std::regex_search(reag->getSmiles(), connRegexs[2 * i + 1])) {
-          d_connectors.set(i + 1);
-        }
+  d_synthConnPatts.clear();
+  for (const auto &synthSet : d_synthons) {
+    // We only need to look at the first synthon in each set, as they
+    // should all be the same.
+    d_synthConnPatts.emplace_back();
+    d_synthConnPatts.back().resize(MAX_CONNECTOR_NUM + 1, false);
+    const auto &reag = synthSet.front();
+    for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
+      if (std::regex_search(reag->getSmiles(), connRegexs[2 * i]) ||
+          std::regex_search(reag->getSmiles(), connRegexs[2 * i + 1])) {
+        d_connectors.set(i + 1);
+        d_synthConnPatts.back().set(i + 1);
       }
     }
   }

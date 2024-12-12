@@ -50,12 +50,15 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
       }
     }
     if (!fragMatched) {
+      // No synthons matched this fragment, so the whole fragment set is a
+      // bust.
       synthonsToUse.clear();
       return synthonsToUse;
     }
   }
 
-  // Fill in any synthons where they all didn't match.
+  // Fill in any synthons where they all didn't match because there were
+  // fewer fragments than synthons.
   details::expandBitSet(synthonsToUse);
   return synthonsToUse;
 }
@@ -89,10 +92,12 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     if (fragSet.size() > reaction->getSynthons().size()) {
       continue;
     }
+    auto synthConnPatts = reaction->getSynthonConnectorPatterns();
+
     // Need to try all combinations of synthon orders.
     auto synthonOrders =
         details::permMFromN(fragSet.size(), reaction->getSynthons().size());
-    for (const auto &so : synthonOrders) {
+    for (const auto &synthonOrder : synthonOrders) {
       // Get all the possible permutations of connector numbers compatible with
       // the number of synthon sets in this reaction.  So if the
       // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
@@ -102,13 +107,15 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
           fragSet, conns, reaction->getConnectors());
 
       for (auto &connComb : connCombs) {
-        // All the fragment connectors must match something in the corresponding
-        // synthon.
+        // Make sure that for this connector combination, the synthons in this
+        // order have something similar.  All query fragment connectors must
+        // match something in the corresponding synthon.  The synthon can
+        // have unused connectors.
         auto connCombConnPatterns = details::getConnectorPatterns(connComb);
         bool skip = false;
         for (size_t i = 0; i < connCombConnPatterns.size(); ++i) {
-          if ((connCombConnPatterns[i] & connPatterns[i]).count() <
-              connPatterns[i].count()) {
+          if ((connCombConnPatterns[i] & synthConnPatts[synthonOrder[i]])
+                  .count() < connCombConnPatterns[i].count()) {
             skip = true;
             break;
           }
@@ -116,13 +123,14 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
         if (skip) {
           continue;
         }
-        // It appears that for Morgan fingerprints, the isotope numbers are
+
+        // It appears that for fingerprints, the isotope numbers are
         // ignored so there's no need to worry about the connector numbers
         // in the fingerprints.
         auto theseSynthons = getHitSynthons(
             fragFPs,
             getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
-            reaction, so);
+            reaction, synthonOrder);
         if (!theseSynthons.empty()) {
           const size_t numHits = std::accumulate(
               theseSynthons.begin(), theseSynthons.end(), 1,
