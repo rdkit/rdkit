@@ -48,15 +48,9 @@ std::set<std::string> bruteForceSearch(
   std::set<std::string> fullSmi;
   std::set<std::string> names;
   for (auto &[name, mol] : mols) {
-    std::cout << "Doing " << name << std::endl;
     auto res = rascalMCES(queryMol, *mol, rascalOptions);
     if (!res.empty() &&
         res.front().getSimilarity() > rascalOptions.similarityThreshold) {
-      std::cout << "BF " << name << " : " << res.front().getSimilarity()
-                << " : " << res.front().getSmarts() << " : "
-                << res.front().getTier1Sim() << " : "
-                << res.front().getTier2Sim()
-                << " :: " << rascalOptions.similarityThreshold << std::endl;
       names.insert(name);
     }
   }
@@ -69,12 +63,12 @@ TEST_CASE("RASCAL Small tests") {
   std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
   std::vector<std::string> libNames{
       fullRoot + "amide_space.txt",
-      fullRoot + "triazole_space_test.txt",
+      fullRoot + "triazole_space.txt",
       fullRoot + "urea_space.txt",
   };
   std::vector<std::string> enumLibNames{
       fullRoot + "amide_space_enum.smi",
-      fullRoot + "triazole_space_test_enum.smi",
+      fullRoot + "triazole_space_enum.smi",
       fullRoot + "urea_space_enum.smi",
   };
 
@@ -84,15 +78,11 @@ TEST_CASE("RASCAL Small tests") {
       "C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1",
   };
 
-  std::vector<size_t> expNumHits{6, 5, 3};
+  std::vector<size_t> expNumHits{6, 4, 1};
 
   RascalOptions rascalOptions;
-  // rascalOptions.returnEmptyMCES = true;
 
   for (size_t i = 0; i < libNames.size(); i++) {
-    if (i != 1) {
-      continue;
-    }
     SynthonSpace synthonspace;
     synthonspace.readTextFile(libNames[i]);
     SynthonSpaceSearchParams params;
@@ -103,8 +93,6 @@ TEST_CASE("RASCAL Small tests") {
     CHECK(results.getHitMolecules().size() == expNumHits[i]);
     std::set<std::string> resSmis;
     for (const auto &r : results.getHitMolecules()) {
-      std::cout << r->getProp<std::string>(common_properties::_Name) << " : "
-                << r->getProp<double>("Similarity") << std::endl;
       resSmis.insert(MolToSmiles(*r));
     }
     // Do the enumerated library, just to check
@@ -115,6 +103,41 @@ TEST_CASE("RASCAL Small tests") {
     for (const auto &r : names) {
       fullSmis.insert(MolToSmiles(*mols[r]));
     }
-    CHECK(fullSmis == resSmis);
+    // As with fingerprints, we don't get all the hits with synthon search
+    // that we would with a full search.
+    for (const auto &rs : resSmis) {
+      CHECK(fullSmis.find(rs) != fullSmis.end());
+    }
+  }
+}
+
+TEST_CASE("Rascal Biggy") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+
+  const std::vector<std::string> smis{
+      "c1ccccc1C(=O)N1CCCC1", "c1ccccc1NC(=O)C1CCN1",
+      "c12ccccc1c(N)nc(N)n2", "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
+      "c1n[nH]cn1",           "C(=O)NC(CC)C(=O)N(CC)C"};
+  const std::vector<size_t> numRes{253, 89, 2, 34, 0, 14};
+  const std::vector<size_t> maxRes{376104, 278738, 79833, 34803, 190, 45932};
+  SynthonSpaceSearchParams params;
+  params.maxHits = -1;
+  RascalOptions rascalOptions;
+
+  for (size_t i = 0; i < smis.size(); ++i) {
+    auto queryMol = v2::SmilesParse::MolFromSmiles(smis[i]);
+    auto results = synthonspace.rascalSearch(*queryMol, rascalOptions, params);
+    CHECK(results.getHitMolecules().size() == numRes[i]);
+    CHECK(results.getMaxNumResults() == maxRes[i]);
+    // for (const auto &r : results.getHitMolecules()) {
+    //   std::cout << "\"" << MolToSmiles(*r) << " "
+    //             << r->getProp<std::string>(common_properties::_Name) << " "
+    //             << r->getProp<double>("Similarity") << "\"," << std::endl;
+    // }
   }
 }

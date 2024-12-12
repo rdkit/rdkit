@@ -20,7 +20,10 @@ SynthonSpaceRascalSearcher::SynthonSpaceRascalSearcher(
     const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
     const SynthonSpaceSearchParams &params, SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space),
-      d_rascalOptions(rascalOptions) {}
+      d_rascalOptions(rascalOptions),
+      d_rascalFragOptions(rascalOptions) {
+  d_rascalFragOptions.similarityThreshold -= params.fragSimilarityAdjuster;
+}
 
 namespace {
 std::vector<boost::dynamic_bitset<>> getHitSynthons(
@@ -28,12 +31,6 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
     const RascalMCES::RascalOptions &rascalOptions,
     const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
-  std::cout << "getHitSynthons for " << std::endl;
-  for (const auto &f : fragSet) {
-    std::cout << MolToSmiles(*f) << "  ";
-  }
-  std::cout << std::endl;
-
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
   synthonsToUse.reserve(reaction->getSynthons().size());
   for (const auto &synthonSet : reaction->getSynthons()) {
@@ -64,9 +61,6 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 std::vector<SynthonSpaceHitSet> SynthonSpaceRascalSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet) const {
   std::vector<SynthonSpaceHitSet> results;
-  if (fragSet.size() != 3) {
-    return results;
-  }
   for (auto &frag : fragSet) {
     // Ring info is required.
     unsigned int otf;
@@ -75,18 +69,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceRascalSearcher::searchFragSet(
   }
 
   const auto connPatterns = details::getConnectorPatterns(fragSet);
-  std::cout << "fragSet connPatterns : ";
-  for (const auto &connPattern : connPatterns) {
-    std::cout << connPattern << " ";
-  }
-  std::cout << std::endl;
   boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
   for (auto &connPattern : connPatterns) {
     conns |= connPattern;
-  }
-  std::cout << "conns : " << conns << std::endl;
-  if (!conns[3]) {
-    return results;
   }
 
   for (const auto &[id, reaction] : getSpace().getReactions()) {
@@ -98,10 +83,12 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceRascalSearcher::searchFragSet(
     if (fragSet.size() > reaction->getSynthons().size()) {
       continue;
     }
+    auto synthConnPatts = reaction->getSynthonConnectorPatterns();
+
     // Need to try all combinations of synthon orders.
     auto synthonOrders =
         details::permMFromN(fragSet.size(), reaction->getSynthons().size());
-    for (const auto &so : synthonOrders) {
+    for (const auto &synthonOrder : synthonOrders) {
       // Get all the possible permutations of connector numbers compatible with
       // the number of synthon sets in this reaction.  So if the
       // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
@@ -111,23 +98,15 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceRascalSearcher::searchFragSet(
           fragSet, conns, reaction->getConnectors());
 
       for (auto &connComb : connCombs) {
-        // All the fragment connectors must match something in the corresponding
-        // synthon.
-        std::cout << "connComb  ";
-        for (const auto &conn : connComb) {
-          std::cout << MolToSmiles(*conn) << " ";
-        }
-        std::cout << std::endl;
+        // Make sure that for this connector combination, the synthons in this
+        // order have something similar.  All query fragment connectors must
+        // match something in the corresponding synthon.  The synthon can
+        // have unused connectors.
         auto connCombConnPatterns = details::getConnectorPatterns(connComb);
-        std::cout << "connCombConnPatterns : ";
-        for (const auto &connCombConnPattern : connCombConnPatterns) {
-          std::cout << connCombConnPattern << " ";
-        }
-        std::cout << std::endl;
         bool skip = false;
         for (size_t i = 0; i < connCombConnPatterns.size(); ++i) {
-          if ((connCombConnPatterns[i] & connPatterns[i]).count() <
-              connPatterns[i].count()) {
+          if ((connCombConnPatterns[i] & synthConnPatts[synthonOrder[i]])
+                  .count() < connPatterns[i].count()) {
             skip = true;
             break;
           }
@@ -136,8 +115,8 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceRascalSearcher::searchFragSet(
           continue;
         }
         // Rascal ignores isotope numbers, which makes things easier.
-        auto theseSynthons =
-            getHitSynthons(fragSet, d_rascalOptions, reaction, so);
+        auto theseSynthons = getHitSynthons(fragSet, d_rascalFragOptions,
+                                            reaction, synthonOrder);
         if (!theseSynthons.empty()) {
           const size_t numHits = std::accumulate(
               theseSynthons.begin(), theseSynthons.end(), 1,
@@ -157,7 +136,11 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceRascalSearcher::searchFragSet(
 
 bool SynthonSpaceRascalSearcher::verifyHit(const ROMol &hit) const {
   auto res = RascalMCES::rascalMCES(hit, getQuery(), d_rascalOptions);
-  if (!res.empty()) {
+  // Rascal reports all matches that proceed to full MCES elucidation,
+  // even if the final similarity value ends up below the threshold.
+  // We only want those over the threshold.
+  if (!res.empty() &&
+      res.front().getSimilarity() >= d_rascalOptions.similarityThreshold) {
     hit.setProp<double>("Similarity", res.front().getSimilarity());
     return true;
   }

@@ -154,7 +154,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param query : query molecule
    * @param rascalOptions: RASCAL options.  The similarityThreshold value
    *                       in the rascalOptions will be used rather than
-   *                       params.similarityCutoff.
+   *                       params.similarityCutoff,
+   *                       but params.fragSimilarityAdjuster will be used
+   *                       to adjust the threshold for the fragment
+   *                       comparisons.
    * @param params : (optional) settings for the search
    * @return : the hits as a SearchResults object.
    */

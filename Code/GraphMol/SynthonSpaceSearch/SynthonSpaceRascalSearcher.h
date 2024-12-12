@@ -38,6 +38,7 @@ class SynthonSpaceRascalSearcher : public SynthonSpaceSearcher {
   bool verifyHit(const ROMol &hit) const override;
 
   const RascalMCES::RascalOptions &d_rascalOptions;
+  RascalMCES::RascalOptions d_rascalFragOptions;
 };
 
 }  // namespace RDKit::SynthonSpaceSearch
