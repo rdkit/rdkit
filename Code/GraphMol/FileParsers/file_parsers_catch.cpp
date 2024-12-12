@@ -31,6 +31,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/test_fixtures.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -7478,6 +7479,11 @@ TEST_CASE("Github #8060: crash with a bad mol block") {
 M  END)CTAB";
     auto m = v2::FileParsers::MolFromMolBlock(molblock);
     REQUIRE(m);
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+      auto m = v2::FileParsers::MolFromMolBlock(molblock);
+      REQUIRE(m);
+    }
   }
   SECTION("catch expected exception") {
     // the molecule is really stupid
@@ -7549,5 +7555,10 @@ M  END)CTAB";
 M  END)CTAB";
     REQUIRE_THROWS_AS(v2::FileParsers::MolFromMolBlock(molblock),
                       std::out_of_range);
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+      auto m = v2::FileParsers::MolFromMolBlock(molblock);
+      REQUIRE(m);
+    }
   }
 }
