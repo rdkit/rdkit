@@ -31,12 +31,15 @@ namespace MolDraw2D_detail {
 
 class AtomSymbol {
  public:
-  virtual ~AtomSymbol() = default;
+  ~AtomSymbol() = default;
 
   /*!
    *
    * @param symbol     : the full symbol
+   * @param atIdx      : index of atom that this is the symbol of
    * @param orient     : text orientation (up, down, left, right)
+   * @param cds        : coords for symbol
+   * @param colour     : colour for symbol
    * @param textDrawer : instance of DrawText to get the character sizes
    * etc.
    */
@@ -61,12 +64,13 @@ class AtomSymbol {
   std::vector<char> drawChars_;
 
   // expects xmin etc to be initialised to something sensible.
-  virtual void findExtremes(double &xmin, double &xmax, double &ymin,
-                            double &ymax) const;
+  void findExtremes(double &xmin, double &xmax, double &ymin,
+                    double &ymax) const;
   // scaleFactor moves the cds_, but the fontScaleFactor changes rects_, because
   // we might be scaling the font differently from the drawing as a whole.
-  virtual void scale(const Point2D &scaleFactor);
-  virtual void move(const Point2D &trans);
+  void scale(const Point2D &scaleFactor);
+  void move(const Point2D &trans);
+  void recalculateRects();
   void draw(MolDraw2D &molDrawer) const;
   bool doesRectClash(const StringRect &rect, double padding) const;
   // Because a colon is a lot shorter than other characters, there are cases,

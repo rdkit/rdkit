@@ -42,18 +42,18 @@ void setQuery(QueryAtom *self, const QueryAtom *other) {
 }
 
 template <class T>
-void AtomSetProp(const Atom *atom, const char *key, const T &val) {
+void AtomSetProp(const Atom *atom, const std::string &key, const T &val) {
   // std::cerr<<"asp: "<<atom<<" " << key<<" - " << val << std::endl;
   atom->setProp<T>(key, val);
 }
 
-int AtomHasProp(const Atom *atom, const char *key) {
+int AtomHasProp(const Atom *atom, const std::string &key) {
   // std::cerr<<"ahp: "<<atom<<" " << key<< std::endl;
   int res = atom->hasProp(key);
   return res;
 }
 
-void AtomClearProp(const Atom *atom, const char *key) {
+void AtomClearProp(const Atom *atom, const std::string &key) {
   if (!atom->hasProp(key)) {
     return;
   }

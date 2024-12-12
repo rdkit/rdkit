@@ -28,6 +28,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/QueryOps.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -7126,6 +7127,40 @@ void testGithubIssue868() {
                 std::string::npos);
     delete m;
   }
+
+  // test atom type query merging
+  for (int aromatic =0; aromatic<2; ++aromatic) {
+    sstrm.str("");
+    TEST_ASSERT(sstrm.str() == "");
+    RWMol m;
+    QueryAtom *qa = new QueryAtom();
+    qa->setQuery(makeAtomTypeQuery(1, aromatic));
+    qa->expandQuery(makeAtomNumQuery(6), Queries::CompositeQueryType::COMPOSITE_OR);
+    m.addAtom(qa, true, true);
+    MolOps::mergeQueryHs(m);
+    TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
+				 "ORs is not supported") != std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") !=
+		std::string::npos);
+  }
+   
+  {
+    sstrm.str("");
+    TEST_ASSERT(sstrm.str() == "");
+    // github 7687 - merge with more than one option in or
+    std::string sma = "[#6]-[#1,#6,#7]";
+    RWMol *m = SmartsToMol(sma);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 2);
+    MolOps::mergeQueryHs(*m);
+    std::cerr << sstrm.str() << std::endl;
+    TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
+                                 "ORs is not supported") != std::string::npos);
+    TEST_ASSERT(sstrm.str().find("This query will not be merged") !=
+                std::string::npos);
+    delete m;
+  }
+
   rdWarningLog->ClearTee();
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
@@ -8461,6 +8496,12 @@ void testHasQueryHs() {
   TEST_ASSERT(RDKit::MolOps::hasQueryHs(*keto_def_heterocycle) ==
               has_only_query_hs);
 
+  auto github7687 = "[#1,#6,#7]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687) == has_unmergeable_hs );
+  auto github7687b = "[1;#7,#1,#6]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687b) == has_unmergeable_hs );
+  auto github7687c = "[1&#7,#1,#6]"_smarts;
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687c) == has_unmergeable_hs );
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

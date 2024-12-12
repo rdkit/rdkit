@@ -8259,6 +8259,22 @@ M  END
     self.assertEqual(len(chain2mol), 1)
     self.assertIn("", chain2mol)
 
+  def testGithub4570(self):
+    # test sending None to get/set prop
+    m = Chem.Mol()
+    # these should not seg fault
+    for func in ["HasProp", "GetProp", "GetIntProp", "GetDoubleProp"]:
+      try:
+        getattr(m, func)(None)
+      except Exception as e:
+        assert "Python argument types" in str(e), f"{func}: {str(e)}"
+
+    for func, val in [("SetProp", ""), ("SetIntProp", 1), ("SetDoubleProp", 1.0)]:
+      try:
+        getattr(m, func)(None, val)
+      except Exception as e:
+        assert "Python argument types" in str(e), f"{func}: {str(e)}"
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
