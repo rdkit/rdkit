@@ -260,7 +260,7 @@ void SynthonSet::transferProductBondsToSynthons() {
             sbond->setBondType(bond->getBondType());
           }
         } else {
-          // it came from molzip, so in the synth, one end atom corresponds to
+          // it came from molzip, so in the synthon, one end atom corresponds to
           // an atom in sampleMol and the other end was a dummy.
           if (static_cast<size_t>(bond->getBeginAtom()->getProp<int>(
                   "molNum")) == synthSetNum) {
