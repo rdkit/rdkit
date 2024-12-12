@@ -92,6 +92,8 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     if (fragSet.size() > reaction->getSynthons().size()) {
       continue;
     }
+    auto synthConnPatts = reaction->getSynthonConnectorPatterns();
+
     // Need to try all combinations of synthon orders.
     auto synthonOrders =
         details::permMFromN(fragSet.size(), reaction->getSynthons().size());
@@ -111,7 +113,6 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
         // have unused connectors.
         auto connCombConnPatterns = details::getConnectorPatterns(connComb);
         bool skip = false;
-        auto synthConnPatts = reaction->getSynthonConnectorPatterns();
         for (size_t i = 0; i < connCombConnPatterns.size(); ++i) {
           if ((connCombConnPatterns[i] & synthConnPatts[synthonOrder[i]])
                   .count() < connCombConnPatterns[i].count()) {
