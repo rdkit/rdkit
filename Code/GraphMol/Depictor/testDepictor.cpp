@@ -801,10 +801,6 @@ void testGitHubIssue910() {
     }
     MolOps::addHs(*m, false, false, &chiralAts);
     RDDepict::compute2DCoords(*m, nullptr, true);
-#if 0
-    m->setProp("_Name", "github910");
-    std::cerr << MolToMolBlock(*m);
-#endif
     // now look for close contacts.
     const Conformer &conf = m->getConformer();
     for (unsigned int i = 0; i < conf.getNumAtoms(); ++i) {
@@ -971,7 +967,6 @@ void testGithub1691() {
       << "-----------------------\n Testing Github issue "
          "1691: Acetylenic hydrogens not given appropriate 2D coordinates"
       << std::endl;
-#if 1
   {
     SmilesParserParams ps;
     ps.removeHs = false;
@@ -994,7 +989,6 @@ void testGithub1691() {
     TEST_ASSERT(v20.dotProduct(v10) <= -1.0);
     TEST_ASSERT(v31.dotProduct(v01) <= -1.0);
   }
-#endif
   {
     SmilesParserParams ps;
     ps.removeHs = false;
@@ -1799,7 +1793,6 @@ int main() {
 #endif
 
   RDLog::InitLogs();
-#if 1
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   test1 \n";
@@ -1991,7 +1984,6 @@ int main() {
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   testGithub1691();
-#endif
   testGithub2027();
   testGenerate2DDepictionRefPatternMatchVect();
   testGenerate2DDepictionAllowRGroupsOrig();

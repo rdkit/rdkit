@@ -501,12 +501,10 @@ void test5() {
 
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
-#if 1
   test1();
   test2();
   test3();
   test4();
   test5();
-#endif
   return 0;
 }

@@ -545,10 +545,8 @@ void testGithub4281() {
 
 int main() {
   RDLog::InitLogs();
-#if 1
   test1();
   test2();
-#endif
   testGithub2414();
   testNormalizeMultipleAltSmarts();
   testGithub3460();

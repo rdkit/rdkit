@@ -584,7 +584,6 @@ void testSmilesSupFromText() {
       "mol-2 CC 4.0\n"
       "mol-3 CCC 9.0\n"
       "mol-4 CCCC 16.0\n";
-#if 1
   nSup2.setData(text, " ", 1, 0, true, true);
   mol = nSup2[3];
   //  BOOST_LOG(rdErrorLog) << "SIZE: " << nSup2.length() << std::endl;
@@ -631,7 +630,6 @@ void testSmilesSupFromText() {
   mol = nSup2[2];
   TEST_ASSERT(!mol);
   delete mol;
-#endif
 
   // issue 114, no \n at EOF:
   text =
@@ -2566,7 +2564,7 @@ CC(C)(C)(C)C duff2
   }
 
   std::string sdf1 = R"SDF(
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2577,7 +2575,7 @@ CC(C)(C)(C)C duff2
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2614,7 +2612,7 @@ $$$$
 
   // truncated file1
   std::string sdf2 = R"SDF(
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2625,7 +2623,7 @@ $$$$
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2636,7 +2634,7 @@ $$$$
 M  END
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2669,7 +2667,7 @@ $$$$
   }
   // truncated file2
   std::string sdf3 = R"SDF(
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -13.3985    4.9850    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2678,12 +2676,12 @@ $$$$
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
 M  END
->  <pval>  (1) 
+>  <pval>  (1)
 [1,2,]
 
 $$$$
 
-  Mrv1810 06051911332D          
+  Mrv1810 06051911332D
 
   3  2  0  0  0  0            999 V2000
   -10.3083    4.8496    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -2692,7 +2690,7 @@ $$$$
   1  2  1  0  0  0  0
   2  3  1  0  0  0  0
 M  END
->  <pval>  (1) 
+>  <pval>  (1)
 [1,2,]
 )SDF";
   {
@@ -2717,7 +2715,7 @@ M  END
 
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
 void testGitHub2881() {
-  std::string data = R"DATA(f_m_ct { 
+  std::string data = R"DATA(f_m_ct {
  s_m_title
  s_m_entry_id
  s_m_entry_name
@@ -2731,28 +2729,28 @@ void testGitHub2881() {
  b_m_subgroup_collapsed
  i_m_ct_format
  :::
- "Untitled Document-4" 
-  17 
-  newTemplates2.1 
-  /Users/nicola/schrodinger/coordgen_standalone 
-  templates.mae 
+ "Untitled Document-4"
   17
-  3_S_4_6_2 
-  7_S_8_9_6_10 
-  templates->templates->templates 
-  templates->templates1->templates11 
+  newTemplates2.1
+  /Users/nicola/schrodinger/coordgen_standalone
+  templates.mae
+  17
+  3_S_4_6_2
+  7_S_8_9_6_10
+  templates->templates->templates
+  templates->templates1->templates11
   0
   2
- m_depend[2] { 
+ m_depend[2] {
   # First column is dependency index #
   i_m_depend_dependency
   s_m_depend_property
   :::
-  1 10 s_st_Chirality_1 
-  2 10 s_st_Chirality_2 
+  1 10 s_st_Chirality_1
+  2 10 s_st_Chirality_2
   :::
- } 
- m_atom[15] { 
+ }
+ m_atom[15] {
   # First column is atom index #
   i_m_mmod_type
   r_m_x_coord
@@ -2764,24 +2762,24 @@ void testGitHub2881() {
   s_m_color_rgb
   s_m_atom_name
   :::
-  1 5 1.186400 1.035900 0.000000 900 2 6 A0A0A0  C1 
-  2 5 0.370300 1.157000 0.000000 900 2 6 A0A0A0  C2 
-  3 4 -0.326500 0.715300 0.000000 900 2 6 A0A0A0  C3 
-  4 5 0.085100 0.000400 0.000000 900 2 6 A0A0A0  C4 
-  5 26 -0.328300 -0.713600 0.000000 900 43 7 5757FF  N5 
-  6 5 -1.151500 0.716400 0.000000 900 2 6 A0A0A0  C6 
-  7 5 -1.564900 0.002400 0.000000 900 2 6 A0A0A0  C7 
-  8 5 -1.153300 -0.712600 0.000000 900 2 6 A0A0A0  C9 
-  9 2 1.724800 0.410800 0.000000 900 2 6 A0A0A0  C12 
-  10 2 1.723800 -0.414200 0.000000 900 2 6 A0A0A0  C13 
-  11 5 1.183800 -1.037900 0.000000 900 2 6 A0A0A0  C14 
-  12 5 0.367400 -1.157000 0.000000 900 2 6 A0A0A0  C15 
-  13 7 2.508100 -0.670100 0.000000 900 2 6 A0A0A0  C16 
-  14 7 2.993800 -0.003300 0.000000 900 2 6 A0A0A0  C17 
-  15 29 2.509700 0.664800 0.000000 900 43 7 5757FF  N18 
+  1 5 1.186400 1.035900 0.000000 900 2 6 A0A0A0  C1
+  2 5 0.370300 1.157000 0.000000 900 2 6 A0A0A0  C2
+  3 4 -0.326500 0.715300 0.000000 900 2 6 A0A0A0  C3
+  4 5 0.085100 0.000400 0.000000 900 2 6 A0A0A0  C4
+  5 26 -0.328300 -0.713600 0.000000 900 43 7 5757FF  N5
+  6 5 -1.151500 0.716400 0.000000 900 2 6 A0A0A0  C6
+  7 5 -1.564900 0.002400 0.000000 900 2 6 A0A0A0  C7
+  8 5 -1.153300 -0.712600 0.000000 900 2 6 A0A0A0  C9
+  9 2 1.724800 0.410800 0.000000 900 2 6 A0A0A0  C12
+  10 2 1.723800 -0.414200 0.000000 900 2 6 A0A0A0  C13
+  11 5 1.183800 -1.037900 0.000000 900 2 6 A0A0A0  C14
+  12 5 0.367400 -1.157000 0.000000 900 2 6 A0A0A0  C15
+  13 7 2.508100 -0.670100 0.000000 900 2 6 A0A0A0  C16
+  14 7 2.993800 -0.003300 0.000000 900 2 6 A0A0A0  C17
+  15 29 2.509700 0.664800 0.000000 900 43 7 5757FF  N18
   :::
- } 
- m_bond[17] { 
+ }
+ m_bond[17] {
   # First column is bond index #
   i_m_from
   i_m_to
@@ -2805,8 +2803,8 @@ void testGitHub2881() {
   16 13 14 2
   17 14 15 1
   :::
- } 
-} 
+ }
+}
 )DATA";
   {
     auto *iss = new std::istringstream(data);
@@ -2840,7 +2838,6 @@ void testGitHub3517() {
 int main() {
   RDLog::InitLogs();
 
-#if 1
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testMolSup();
   BOOST_LOG(rdErrorLog) << "Finished: testMolSup()\n";
@@ -3014,7 +3011,6 @@ int main() {
   testGitHub2285();
   BOOST_LOG(rdErrorLog) << "Finished: testGitHub2285()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-#endif
 
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testGitHub2479();

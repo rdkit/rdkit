@@ -350,12 +350,6 @@ RWMOL_SPTR_VECT enumerateLibrary(RWMol *templateMol,
     // existing result set and move the molecules we just generated
     // over
     if (tmp.size()) {
-#if 0      
-	RWMOL_SPTR_VECT::iterator tmpMolIt;
-	for(tmpMolIt=res.begin();tmpMolIt!=res.end();tmpMolIt++){
-	  delete *tmpMolIt;
-	}
-#endif
       res = tmp;
       tmp.clear();
     }
@@ -404,16 +398,6 @@ RWMOL_SPTR_VECT enumFromFiles(const char *templateName,
   //
   //--------------------------
   delete templ;
-#if 0
-    VECT_RWMOL_SPTR_VECT::iterator vmpvI;
-    for(vmpvI=allSidechains.begin();vmpvI!=allSidechains.end();vmpvI++){
-      RWMOL_SPTR_VECT::iterator mpvI;
-      for(mpvI=vmpvI->begin();mpvI!=vmpvI->end();mpvI++){
-	delete *mpvI;
-      }
-      vmpvI->clear();
-    }
-#endif
   allSidechains.clear();
 
   return library;
