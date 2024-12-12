@@ -83,28 +83,6 @@ VdWaals::VdWaals(const RDKit::ROMol &mol, int confId, double cutoff) {
   d_mol.reset(new RDKit::ROMol(mol, false, conf.getId()));
 }
 
-VdWaals::VdWaals(const VdWaals &other)
-    : d_cutoff(other.d_cutoff),
-      d_nAtoms(other.d_nAtoms),
-      d_pos(other.d_pos),
-      d_R_star_ij(other.d_R_star_ij),
-      d_wellDepth(other.d_wellDepth),
-      d_mol(new RDKit::ROMol(*other.d_mol)) {}
-
-VdWaals &VdWaals::operator=(const VdWaals &other) {
-  if (this == &other) {
-    return *this;
-  }
-  d_cutoff = other.d_cutoff;
-  d_nAtoms = other.d_nAtoms;
-  d_pos = other.d_pos;
-  d_R_star_ij = other.d_R_star_ij;
-  d_wellDepth = other.d_wellDepth;
-  d_mol.reset(new RDKit::ROMol(*other.d_mol));
-
-  return *this;
-}
-
 void VdWaals::fillVectors() {
   const auto &conf = d_mol->getConformer();
   for (unsigned int i = 0; i < d_nAtoms; i++) {
@@ -129,13 +107,6 @@ MMFFVdWaals::MMFFVdWaals(const RDKit::ROMol &mol, int confId,
   d_probeParams = (*d_mmffVdW)(probeAtomType);
   fillVectors();
 }
-
-MMFFVdWaals::MMFFVdWaals(const MMFFVdWaals &other)
-    : VdWaals::VdWaals(other),
-      d_scaling(other.d_scaling),
-      d_props(new RDKit::MMFF::MMFFMolProperties(*other.d_props)),
-      d_mmffVdW(other.d_mmffVdW),
-      d_probeParams(other.d_probeParams) {}
 
 void MMFFVdWaals::fillVdwParamVectors(unsigned int atomIdx) {
   PRECONDITION(atomIdx < d_mol->getNumAtoms(), "atomIdx out of bounds");
@@ -168,12 +139,6 @@ UFFVdWaals::UFFVdWaals(const RDKit::ROMol &mol, int confId,
   fillVectors();
 }
 
-UFFVdWaals::UFFVdWaals(const UFFVdWaals &other)
-    : VdWaals::VdWaals(other),
-      d_uffParamColl(other.d_uffParamColl),
-      d_probeParams(other.d_probeParams),
-      d_params(other.d_params) {}
-
 void UFFVdWaals::fillVdwParamVectors(unsigned int atomIdx) {
   PRECONDITION(atomIdx < d_mol->getNumAtoms(), "atomIdx out of bounds");
   d_R_star_ij.push_back(d_probeParams->x1 * d_params[atomIdx]->x1);
@@ -181,11 +146,11 @@ void UFFVdWaals::fillVdwParamVectors(unsigned int atomIdx) {
       d_probeParams, d_params[atomIdx]));
 }
 
-double VdWaals::operator()(double x, double y, double z, double thres) {
-  double res = 0.0, dist2, temp;
+double VdWaals::operator()(double x, double y, double z, double thres) const {
+  double res = 0.0;
   for (unsigned int i = 0, j = 0; i < d_nAtoms; ++i) {
-    temp = x - d_pos[j++];
-    dist2 = temp * temp;
+    auto temp = x - d_pos[j++];
+    auto dist2 = temp * temp;
     temp = y - d_pos[j++];
     dist2 += temp * temp;
     temp = z - d_pos[j++];
@@ -272,7 +237,7 @@ Coulomb::Coulomb(const RDKit::ROMol &mol, int confId, double probeCharge,
   }
 }
 
-double Coulomb::operator()(double x, double y, double z, double thres) {
+double Coulomb::operator()(double x, double y, double z, double thres) const {
   double res = 0.0, dist2, temp;
   if (d_softcore) {
     for (unsigned int i = 0, j = 0; i < d_nAtoms; i++) {
@@ -465,7 +430,7 @@ CoulombDielectric::CoulombDielectric(const RDKit::ROMol &mol, int confId,
 }
 
 double CoulombDielectric::operator()(double x, double y, double z,
-                                     double thres) {
+                                     double thres) const {
   int neigh = 0;
   double res = 0.0, sq = 0.0;
 
@@ -1591,7 +1556,7 @@ unsigned int HBond::findDonorsUnfixed(
   return interact;
 }
 
-double HBond::operator()(double x, double y, double z, double thres) {
+double HBond::operator()(double x, double y, double z, double thres) const {
   using namespace HBondDetail;
 
   if (d_nInteract < 1) {  // no interactions
@@ -1860,7 +1825,8 @@ Hydrophilic::Hydrophilic(const RDKit::ROMol &mol, int confId, bool fixed,
   d_hbondO = HBond(mol, confId, "O", fixed, cutoff);
 }
 
-double Hydrophilic::operator()(double x, double y, double z, double thres) {
+double Hydrophilic::operator()(double x, double y, double z,
+                               double thres) const {
   double hbondO, hbondOH;
   hbondO = d_hbondO(x, y, z, thres);
   hbondOH = d_hbondOH(x, y, z, thres);

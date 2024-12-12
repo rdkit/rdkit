@@ -143,8 +143,7 @@ struct mif_wrapper {
             (python::arg("mol"), python::arg("confId") = -1,
              python::arg("probeCharge") = 1.0, python::arg("absVal") = false,
              python::arg("chargeKey") = "_GasteigerCharge",
-             python::arg("softcoreParam") = 0.0,
-             python::arg("cutoff") = 1.0),
+             python::arg("softcoreParam") = 0.0, python::arg("cutoff") = 1.0),
             docStringConst.c_str()))
         .def("__init__",
              python::make_constructor(
@@ -205,9 +204,8 @@ struct mif_wrapper {
             (python::arg("mol"), python::arg("confId") = -1,
              python::arg("probeCharge") = 1.0, python::arg("absVal") = false,
              python::arg("chargeKey") = "_GasteigerCharge",
-             python::arg("softcoreParam") = 0.0,
-             python::arg("cutoff") = 1.0, python::arg("epsilon") = 80.0,
-             python::arg("xi") = 4.0),
+             python::arg("softcoreParam") = 0.0, python::arg("cutoff") = 1.0,
+             python::arg("epsilon") = 80.0, python::arg("xi") = 4.0),
             docStringConst.c_str()))
         .def("__init__",
              python::make_constructor(
@@ -216,8 +214,8 @@ struct mif_wrapper {
                   python::arg("probeCharge") = 1.0,
                   python::arg("absVal") = false,
                   python::arg("softcoreParam") = 0.0,
-                  python::arg("cutoff") = 1.0,
-                  python::arg("epsilon") = 80.0, python::arg("xi") = 4.0)),
+                  python::arg("cutoff") = 1.0, python::arg("epsilon") = 80.0,
+                  python::arg("xi") = 4.0)),
              docStringConstAlt.c_str())
         .def(python::init<const std::string &>(
             python::args("self", "pklString")))
@@ -243,7 +241,7 @@ struct mif_wrapper {
         - threshold: maximal distance until which interactions are calculated\n\
         RETURNS:\n\
         - van der Waals potential in [kJ mol^-1]\n";
-    python::class_<MMFFVdWaals>(
+    python::class_<MMFFVdWaals, MMFFVdWaals *, boost::noncopyable>(
         "MMFFVdWaals", docStringClass.c_str(),
         python::init<const RDKit::ROMol &, int, unsigned int, bool, double>(
             (python::arg("self"), python::arg("mol"),
@@ -264,7 +262,7 @@ struct mif_wrapper {
         - confId        conformation id which is used to get positions of atoms (default=-1)\n\
         - probeAtomType UFF atom type for the probe atom (default='O_3', sp3 oxygen)\n\
         - cutoff        minimum cutoff distance [A] (default:1.0)\n";
-    python::class_<UFFVdWaals>(
+    python::class_<UFFVdWaals, UFFVdWaals *, boost::noncopyable>(
         "UFFVdWaals", docStringClass.c_str(),
         python::init<const RDKit::ROMol &, int, const std::string &, double>(
             (python::arg("self"), python::arg("mol"),
@@ -400,10 +398,11 @@ struct mif_wrapper {
         - filename:  filename of file to be written\n\
         - mol:       associated molecule (defaults to None)\n\
         - confId:    the ID of the conformer to be used (defaults to -1)\n";
-    python::def("WriteToCubeFile", writeToCubeFile,
-                (python::arg("grid"), python::arg("filename"),
-                 python::arg("mol") = python::object(), python::arg("confId") = -1),
-                docString.c_str());
+    python::def(
+        "WriteToCubeFile", writeToCubeFile,
+        (python::arg("grid"), python::arg("filename"),
+         python::arg("mol") = python::object(), python::arg("confId") = -1),
+        docString.c_str());
 
     docString =
         "Reads Grid from a file in Gaussian CUBE format.\n\n\

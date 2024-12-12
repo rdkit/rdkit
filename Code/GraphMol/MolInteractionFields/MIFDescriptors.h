@@ -61,7 +61,7 @@ std::unique_ptr<RDGeom::UniformRealValueGrid3D> constructGrid(
  than threshold, negative threshold: no threshold, defaults to -1.0
  */
 template <typename T>
-void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, T functor,
+void calculateDescriptors(RDGeom::UniformRealValueGrid3D &grd, const T &functor,
                           double thres = -1.0) {
   const RDGeom::Point3D &offSet = grd.getOffset();
   auto x = offSet.x;
@@ -158,7 +158,7 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT Coulomb {
 
    \return electrostatic interaction energy in [kJ mol^-1]
    */
-  double operator()(double x, double y, double z, double thres);
+  double operator()(double x, double y, double z, double thres) const;
 
  private:
   unsigned int d_nAtoms = 0;
@@ -267,7 +267,7 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT CoulombDielectric {
 
    \return electrostatic interaction energy in [kJ mol^-1]
    */
-  double operator()(double x, double y, double z, double thres);
+  double operator()(double x, double y, double z, double thres) const;
 
  private:
   unsigned int d_nAtoms;
@@ -277,7 +277,8 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT CoulombDielectric {
   double d_dielectric;
   std::vector<double> d_charges, d_sp;
   std::vector<double> d_pos;
-  std::vector<double> d_dists;
+  // used as a cache
+  mutable std::vector<double> d_dists;
 };
 
 //! \brief Abstract class for calculation of Van der Waals interaction between
@@ -297,12 +298,12 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals {
  public:
   VdWaals() = default;
   VdWaals(const RDKit::ROMol &mol, int confId = -1, double cutoff = 1.0);
-  VdWaals(const VdWaals &other);
-  VdWaals &operator=(const VdWaals &other);
+  VdWaals(const VdWaals &other) = delete;
+  VdWaals &operator=(const VdWaals &other) = delete;
   VdWaals(VdWaals &&other) = default;
   VdWaals &operator=(VdWaals &&other) = default;
+  virtual ~VdWaals() = default;
 
-  virtual ~VdWaals() {};
   //! \brief returns the VdW interaction at point \c pt in the molecules field
   //! in [kJ mol^-1]
   /*!
@@ -311,7 +312,7 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT VdWaals {
 
    \return vdW interaction energy in [kJ mol^-1]
    */
-  double operator()(double x, double y, double z, double thres);
+  double operator()(double x, double y, double z, double thres) const;
 
  protected:
   void fillVectors();
@@ -341,7 +342,11 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT MMFFVdWaals : public VdWaals {
   MMFFVdWaals(const RDKit::ROMol &mol, int confId = -1,
               unsigned int probeAtomType = 6, bool scaling = false,
               double cutoff = 1.0);
-  MMFFVdWaals(const MMFFVdWaals &other);
+  MMFFVdWaals(const MMFFVdWaals &other) = delete;
+  MMFFVdWaals &operator=(const MMFFVdWaals &other) = delete;
+  MMFFVdWaals(MMFFVdWaals &&other) = default;
+  MMFFVdWaals &operator=(MMFFVdWaals &&other) = default;
+  ~MMFFVdWaals() = default;
 
  private:
   double calcEnergy(double, double, double) const;  // MMFF energy function
@@ -365,7 +370,11 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT UFFVdWaals : public VdWaals {
   */
   UFFVdWaals(const RDKit::ROMol &mol, int confId = -1,
              const std::string &probeAtomType = "O_3", double cutoff = 1.0);
-  UFFVdWaals(const UFFVdWaals &other);
+  UFFVdWaals(const UFFVdWaals &other) = delete;
+  UFFVdWaals &operator=(const UFFVdWaals &other) = delete;
+  UFFVdWaals(UFFVdWaals &&other) = default;
+  UFFVdWaals &operator=(UFFVdWaals &&other) = default;
+  ~UFFVdWaals() = default;
 
  private:
   double calcEnergy(double, double, double) const;  // UFF energy function
@@ -416,7 +425,7 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT HBond {
   HBond(const RDKit::ROMol &mol, int confId = -1,
         const std::string &probeAtomType = "OH", bool fixed = true,
         double cutoff = 1.0);
-  ~HBond() {};
+  ~HBond() = default;
 
   //! \brief returns the hydrogen bonding interaction at point \c pt in the
   //! molecules field in [kJ mol^-1]
@@ -426,7 +435,7 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT HBond {
 
    \return hydrogen bonding interaction energy in [kJ mol^-1]
    */
-  double operator()(double x, double y, double z, double thres);
+  double operator()(double x, double y, double z, double thres) const;
 
   unsigned int getNumInteractions() const { return d_nInteract; }
 
@@ -442,12 +451,15 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT HBond {
   unsigned int d_nInteract;  // number of HBond interactions
 
   std::vector<atomtype> d_targettypes;
-  std::vector<double> d_pos;         // vector of positions of target atoms
-  std::vector<double> d_direction;   // vector of sum of lone pair vectors
-  std::vector<double> d_lengths;     // vector of lengths of direction vectors
-  std::vector<double> d_plane;       // vector of lone pair plane vectors
-  std::vector<double> d_eneContrib;  // energy contributions of all interactions
-  std::vector<double> d_vectTargetProbe;  // hydrogen bond direction of probe
+  std::vector<double> d_pos;        // vector of positions of target atoms
+  std::vector<double> d_direction;  // vector of sum of lone pair vectors
+  std::vector<double> d_lengths;    // vector of lengths of direction vectors
+  std::vector<double> d_plane;      // vector of lone pair plane vectors
+  // these two are used as a computational cache during operator()
+  mutable std::vector<double>
+      d_eneContrib;  // energy contributions of all interactions
+  mutable std::vector<double>
+      d_vectTargetProbe;  // hydrogen bond direction of probe
 
   // constructing functions
   unsigned int findSpecials(const RDKit::ROMol &mol, int confId, bool fixed,
@@ -500,7 +512,7 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT Hydrophilic {
               double cutoff = 1.0);
   ~Hydrophilic() {};
 
-  double operator()(double x, double y, double z, double thres);
+  double operator()(double x, double y, double z, double thres) const;
 
  private:
   HBond d_hbondOH, d_hbondO;

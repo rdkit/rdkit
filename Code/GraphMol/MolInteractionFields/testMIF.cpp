@@ -36,7 +36,8 @@ namespace RDMIF {
 class testfunctor {
  public:
   testfunctor() {}
-  double operator()(const double &, const double &, const double &, double) {
+  double operator()(const double &, const double &, const double &,
+                    double) const {
     return 1.0;
   }
 };

@@ -46,14 +46,17 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
       initGrid(dimX, dimY, dimZ, spacing, *offset, data);
     }
   }
-  //! copy ctor
   UniformRealValueGrid3D(const UniformRealValueGrid3D &other);
+  UniformRealValueGrid3D &operator=(const UniformRealValueGrid3D &other);
+  // UniformRealValueGrid3D(UniformRealValueGrid3D &&other) = default;
+  // UniformRealValueGrid3D &operator=(UniformRealValueGrid3D &&other) =
+  // default;
+  ~UniformRealValueGrid3D() override;
+
   //! construct from a string pickle
   UniformRealValueGrid3D(const std::string &pkl);
   //! construct from a text pickle
   UniformRealValueGrid3D(const char *pkl, unsigned int);
-
-  ~UniformRealValueGrid3D() override;
 
   //! \brief Get the index of the grid point closest to point
   //!
@@ -130,8 +133,6 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
   //!        values as ours.
   bool compareGrids(const UniformRealValueGrid3D &other) const;
 
-  //! \brief copies a grid \c other into grid
-  UniformRealValueGrid3D &operator=(const UniformRealValueGrid3D &other);
   //! \brief calculates the union between the data on this grid and
   //!  that on \c other.
   //!  This grid is modified.

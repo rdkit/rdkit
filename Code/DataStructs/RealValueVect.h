@@ -44,8 +44,6 @@ class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
   //! constructor from a pickle
   RealValueVect(const char *pkl, unsigned int len) { initFromText(pkl, len); };
 
-  ~RealValueVect() {}
-
   //! return the value at an index
   double getVal(unsigned int i) const;
 
