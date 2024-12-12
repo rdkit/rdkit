@@ -351,22 +351,12 @@ bool checkAromaticRings(const ROMol &mol1,
     return true;
   }
 
-  auto isInRing = [](const std::vector<std::vector<int>> &rings,
-                     int bondIdx) -> bool {
-    for (const auto &r : rings) {
-      if (std::find(r.begin(), r.end(), bondIdx) != r.end()) {
-        return true;
-      }
-    }
-    return false;
-  };
-
   // If neither bond was in a ring, but they were marked aromatic, then
   // the two mols are fragments so it's ok to match these bonds.
   const auto &mol1BondRings = mol1.getRingInfo()->bondRings();
   const auto &mol2BondRings = mol2.getRingInfo()->bondRings();
-  auto mol1BondInRing = isInRing(mol1BondRings, mol1BondIdx);
-  auto mol2BondInRing = isInRing(mol2BondRings, mol2BondIdx);
+  bool mol1BondInRing = mol1.getRingInfo()->numBondRings(mol1BondIdx);
+  bool mol2BondInRing = mol2.getRingInfo()->numBondRings(mol2BondIdx);
   if (!mol1BondInRing && !mol2BondInRing) {
     return true;
   }
