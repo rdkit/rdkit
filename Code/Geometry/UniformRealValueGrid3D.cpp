@@ -16,19 +16,18 @@
 #include <Geometry/point.h>
 #include <fstream>
 #include <iomanip>
-#include <boost/cstdint.hpp>
 
 using namespace RDKit;
 
 namespace {
 constexpr double OFFSET_TOL = 1.e-4;
 constexpr double SPACING_TOL = 1.e-4;
-const char *UNINITIALIZED_GRID = "uninitialized grid";
-const char *INCOMPATIBLE_GRIDS = "incompatible grids";
+constexpr const char *UNINITIALIZED_GRID = "uninitialized grid";
+constexpr const char *INCOMPATIBLE_GRIDS = "incompatible grids";
 }  // end anonymous namespace
 
 namespace RDGeom {
-boost::int32_t ci_RealValueGrid3DPICKLE_VERSION = 0x1;
+std::int32_t ci_RealValueGrid3DPICKLE_VERSION = 0x1;
 UniformRealValueGrid3D::UniformRealValueGrid3D(
     const UniformRealValueGrid3D &other) {
   PRECONDITION(other.dp_storage, UNINITIALIZED_GRID);
@@ -162,7 +161,7 @@ RDGeom::Point3D UniformRealValueGrid3D::getGridPointLoc(
                       ((pointId % (d_numX * d_numY)) / d_numX) * d_spacing,
                       (pointId / (d_numX * d_numY)) * d_spacing);
   res += d_offSet;  // d_origin;
-  return std::move(res);
+  return res;
 }
 
 void UniformRealValueGrid3D::setVal(unsigned int pointId, double val) {
@@ -260,9 +259,9 @@ UniformRealValueGrid3D &UniformRealValueGrid3D::operator-=(
 std::string UniformRealValueGrid3D::toString() const {
   std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                        std::ios_base::in);
-  boost::int32_t tVers = ci_RealValueGrid3DPICKLE_VERSION * -1;
+  std::int32_t tVers = ci_RealValueGrid3DPICKLE_VERSION * -1;
   streamWrite(ss, tVers);
-  boost::uint32_t tInt;
+  std::uint32_t tInt;
   tInt = d_numX;
   streamWrite(ss, tInt);
   tInt = d_numY;
@@ -274,7 +273,7 @@ std::string UniformRealValueGrid3D::toString() const {
   streamWrite(ss, d_offSet.y);
   streamWrite(ss, d_offSet.z);
   std::string storePkl = dp_storage->toString();
-  boost::uint32_t pklSz = storePkl.size();
+  std::uint32_t pklSz = storePkl.size();
   streamWrite(ss, pklSz);
   ss.write(storePkl.c_str(), pklSz * sizeof(char));
 
@@ -286,14 +285,14 @@ void UniformRealValueGrid3D::initFromText(const char *pkl,
   std::stringstream ss(std::ios_base::binary | std::ios_base::in |
                        std::ios_base::out);
   ss.write(pkl, length);
-  boost::int32_t tVers;
+  std::int32_t tVers;
   streamRead(ss, tVers);
   tVers = -tVers;
   if (tVers == 0x1) {
   } else {
     throw ValueErrorException("bad version in UniformRealValueGrid3D pickle");
   }
-  boost::uint32_t tInt;
+  std::uint32_t tInt;
   streamRead(ss, tInt);
   d_numX = tInt;
   streamRead(ss, tInt);
@@ -307,7 +306,7 @@ void UniformRealValueGrid3D::initFromText(const char *pkl,
   streamRead(ss, oZ);
   d_offSet = RDGeom::Point3D(oX, oY, oZ);
 
-  boost::uint32_t pklSz;
+  std::uint32_t pklSz;
   streamRead(ss, pklSz);
   std::vector<char> buff(pklSz);
   ss.read(buff.data(), pklSz * sizeof(char));

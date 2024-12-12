@@ -91,6 +91,20 @@ VdWaals::VdWaals(const VdWaals &other)
       d_wellDepth(other.d_wellDepth),
       d_mol(new RDKit::ROMol(*other.d_mol)) {}
 
+VdWaals &VdWaals::operator=(const VdWaals &other) {
+  if (this == &other) {
+    return *this;
+  }
+  d_cutoff = other.d_cutoff;
+  d_nAtoms = other.d_nAtoms;
+  d_pos = other.d_pos;
+  d_R_star_ij = other.d_R_star_ij;
+  d_wellDepth = other.d_wellDepth;
+  d_mol.reset(new RDKit::ROMol(*other.d_mol));
+
+  return *this;
+}
+
 void VdWaals::fillVectors() {
   const auto &conf = d_mol->getConformer();
   for (unsigned int i = 0; i < d_nAtoms; i++) {
@@ -632,8 +646,8 @@ double cos_acc(double, double t_0, double t_i) {
 double no_dep(double, double, double) { return 1.0; };
 }  // namespace HBondDetail
 
-HBond::HBond(const RDKit::ROMol &mol, int confId, const std::string &probeAtomType,
-             bool fixed, double cutoff)
+HBond::HBond(const RDKit::ROMol &mol, int confId,
+             const std::string &probeAtomType, bool fixed, double cutoff)
     : d_cutoff(cutoff * cutoff) {
   if (d_cutoff < (MIN_CUTOFF_VAL * MIN_CUTOFF_VAL)) {
     d_cutoff = CUTOFF * CUTOFF;

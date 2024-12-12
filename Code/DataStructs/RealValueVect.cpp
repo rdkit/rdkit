@@ -62,9 +62,9 @@ std::string RealValueVect::toString() const {
   std::stringstream ss(std::ios_base::binary | std::ios_base::out |
                        std::ios_base::in);
 
-  boost::int32_t tVers = ci_REALVALUEVECTPICKLE_VERSION * -1;
+  std::int32_t tVers = ci_REALVALUEVECTPICKLE_VERSION * -1;
   streamWrite(ss, tVers);
-  boost::uint32_t tInt = d_length;
+  std::uint32_t tInt = d_length;
   streamWrite(ss, tInt);
 
 #if defined(BOOST_BIG_ENDIAN)
@@ -86,13 +86,13 @@ void RealValueVect::initFromText(const char *pkl, const unsigned int len) {
   std::stringstream ss(std::ios_base::binary | std::ios_base::in |
                        std::ios_base::out);
   ss.write(pkl, len);
-  boost::int32_t tVers;
+  std::int32_t tVers;
   streamRead(ss, tVers);
-  tVers = -tVers;
-  if (!(tVers == 0x1)) {
+  tVers *= -1;
+  if (tVers != 0x1) {
     throw ValueErrorException("bad version in RealValueVect pickle");
   }
-  boost::uint32_t tInt;
+  std::uint32_t tInt;
   streamRead(ss, tInt);
   d_length = tInt;
   d_data.resize(d_length);
