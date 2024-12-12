@@ -1412,3 +1412,20 @@ TEST_CASE("Atom aromaticity match") {
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
+
+TEST_CASE("Fragment match") {
+  {
+    auto m1 = "[1*]C(=O)c1ccccc1.[1*]N1CCCC1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    // opts.similarityThreshold = 0.1;
+    // opts.ignoreAtomAromaticity = true;
+    auto res = rascalMCES(*m2, *m1, opts);
+    std::cout << "Num results : " << res.size() << std::endl;
+    std::cout << res.front().getSmarts() << std::endl;
+    std::cout << res.front().getSimilarity() << std::endl;
+  }
+}

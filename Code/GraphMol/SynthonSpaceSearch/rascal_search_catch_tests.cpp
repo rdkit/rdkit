@@ -1,0 +1,120 @@
+//
+// Copyright (C) David Cosgrove 2024.
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+
+#include <algorithm>
+#include <fstream>
+
+#include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/RascalMCES/RascalMCES.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SearchResults.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+
+#include <catch2/catch_all.hpp>
+
+using namespace RDKit;
+using namespace RDKit::SynthonSpaceSearch;
+using namespace RDKit::RascalMCES;
+
+const char *rdbase = getenv("RDBASE");
+
+void getMols(const std::string &molFilename,
+             std::map<std::string, std::unique_ptr<RWMol>> &mols) {
+  v2::FileParsers::SmilesMolSupplierParams fileparams;
+  fileparams.titleLine = false;
+  v2::FileParsers::SmilesMolSupplier suppl(molFilename, fileparams);
+  std::map<std::string, std::unique_ptr<ExplicitBitVect>> fps;
+  while (!suppl.atEnd()) {
+    auto mol = suppl.next();
+    auto molName = mol->getProp<std::string>(common_properties::_Name);
+    mols.insert(std::make_pair(molName, mol.release()));
+  }
+}
+
+std::set<std::string> bruteForceSearch(
+    const ROMol &queryMol,
+    const std::map<std::string, std::unique_ptr<RWMol>> &mols,
+    const RascalOptions &rascalOptions) {
+  std::set<std::string> fullSmi;
+  std::set<std::string> names;
+  for (auto &[name, mol] : mols) {
+    std::cout << "Doing " << name << std::endl;
+    auto res = rascalMCES(queryMol, *mol, rascalOptions);
+    if (!res.empty() &&
+        res.front().getSimilarity() > rascalOptions.similarityThreshold) {
+      std::cout << "BF " << name << " : " << res.front().getSimilarity()
+                << " : " << res.front().getSmarts() << " : "
+                << res.front().getTier1Sim() << " : "
+                << res.front().getTier2Sim()
+                << " :: " << rascalOptions.similarityThreshold << std::endl;
+      names.insert(name);
+    }
+  }
+  return names;
+}
+
+TEST_CASE("RASCAL Small tests") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+  std::vector<std::string> libNames{
+      fullRoot + "amide_space.txt",
+      fullRoot + "triazole_space_test.txt",
+      fullRoot + "urea_space.txt",
+  };
+  std::vector<std::string> enumLibNames{
+      fullRoot + "amide_space_enum.smi",
+      fullRoot + "triazole_space_test_enum.smi",
+      fullRoot + "urea_space_enum.smi",
+  };
+
+  std::vector<std::string> querySmis{
+      "c1ccccc1C(=O)N1CCCC1",
+      "CC1CCN(c2nnc(CO)n2C2CCCC2)C1",
+      "C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1",
+  };
+
+  std::vector<size_t> expNumHits{6, 5, 3};
+
+  RascalOptions rascalOptions;
+  // rascalOptions.returnEmptyMCES = true;
+
+  for (size_t i = 0; i < libNames.size(); i++) {
+    if (i != 1) {
+      continue;
+    }
+    SynthonSpace synthonspace;
+    synthonspace.readTextFile(libNames[i]);
+    SynthonSpaceSearchParams params;
+    params.maxBondSplits = 3;
+    auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
+
+    auto results = synthonspace.rascalSearch(*queryMol, rascalOptions, params);
+    CHECK(results.getHitMolecules().size() == expNumHits[i]);
+    std::set<std::string> resSmis;
+    for (const auto &r : results.getHitMolecules()) {
+      std::cout << r->getProp<std::string>(common_properties::_Name) << " : "
+                << r->getProp<double>("Similarity") << std::endl;
+      resSmis.insert(MolToSmiles(*r));
+    }
+    // Do the enumerated library, just to check
+    std::map<std::string, std::unique_ptr<RWMol>> mols;
+    getMols(enumLibNames[i], mols);
+    auto names = bruteForceSearch(*queryMol, mols, rascalOptions);
+    std::set<std::string> fullSmis;
+    for (const auto &r : names) {
+      fullSmis.insert(MolToSmiles(*mols[r]));
+    }
+    CHECK(fullSmis == resSmis);
+  }
+}

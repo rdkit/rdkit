@@ -33,6 +33,10 @@
 namespace RDKit {
 class ROMol;
 
+namespace RascalMCES {
+struct RascalOptions;
+}
+
 namespace SynthonSpaceSearch {
 
 // This the maximum number of connectors that we can deal with at the moment.
@@ -140,6 +144,22 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   SearchResults fingerprintSearch(
       const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  // Perform a RASCAL similarity search with the given query molecule
+  // across the synthonspace library.  Duplicate SMILES strings produced by
+  // different reactions will be returned.
+  /*!
+   *
+   * @param query : query molecule
+   * @param rascalOptions: RASCAL options.  The similarityThreshold value
+   *                       in the rascalOptions will be used rather than
+   *                       params.similarityCutoff.
+   * @param params : (optional) settings for the search
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults rascalSearch(
+      const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   /*!
