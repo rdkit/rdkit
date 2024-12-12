@@ -60,6 +60,10 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <mutex>
+#include <atomic>
+#endif
 
 #ifndef _MSC_VER
 // shutoff some warnings from rapidjson
@@ -1134,26 +1138,148 @@ std::string parse_inchi_options(const char *details_json) {
 }
 #endif
 
-struct LogHandle {
+namespace {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+std::mutex &getLoggerMutex() {
+  // create on demand
+  static std::mutex _mutex;
+  return _mutex;
+}
+#endif
+
+class LoggerState {
  public:
-  LogHandle(const std::string &logName) : d_logName(logName) {
-    d_logNameToLoggers = std::map<std::string, LoggerStateVector>{
-        {"rdApp.debug", {LoggerState(rdDebugLog)}},
-        {"rdApp.info", {LoggerState(rdInfoLog)}},
-        {"rdApp.warning", {LoggerState(rdWarningLog)}},
-        {"rdApp.error", {LoggerState(rdErrorLog)}},
-        {"rdApp.*",
-         {LoggerState(rdDebugLog), LoggerState(rdInfoLog),
-          LoggerState(rdWarningLog), LoggerState(rdErrorLog)}}};
+  // this runs only once under mutex lock
+  LoggerState(const std::string &logName, RDLogger &logger)
+      : d_logName(logName), d_logger(logger), d_lock(false) {
+    CHECK_INVARIANT(d_logger, "d_logger must not be null");
+    // store original logger stream
+    d_prevDest = d_logger->dp_dest;
+    // store whether the logger was originally enabled
+    d_enabled = d_logger->df_enabled;
   }
-  ~LogHandle() { close(); }
-  static void enableLogging() {
-    initLogsIfNeeded();
-    boost::logging::enable_logs("rdApp.*");
+  LoggerState(const LoggerState &) = delete;
+  LoggerState &operator=(const LoggerState &) = delete;
+  ~LoggerState() {}
+  void resetStream() { setStream(d_prevDest); }
+  void setTee(std::ostream &ostream) { d_logger->SetTee(ostream); }
+  void clearTee() { d_logger->ClearTee(); }
+  void setStream(std::ostream *ostream) {
+    if (d_logger->dp_dest) {
+      d_logger->dp_dest->flush();
+    }
+    d_logger->dp_dest = ostream;
   }
-  static void disableLogging() {
-    initLogsIfNeeded();
-    boost::logging::disable_logs("rdApp.*");
+  void setEnabled(bool enabled, bool store = false) {
+    if (store) {
+      d_enabled = enabled;
+    }
+    if (enabled) {
+      boost::logging::enable_logs(d_logName);
+    } else if (!d_lock) {
+      boost::logging::disable_logs(d_logName);
+    }
+  }
+  bool hasLock() { return d_lock; }
+  bool setLock() {
+    if (!d_lock) {
+      d_lock = true;
+      return true;
+    }
+    return false;
+  }
+  void releaseLock() {
+    d_lock = false;
+    setEnabled(d_enabled);
+  }
+
+ private:
+  bool d_enabled = false;
+  std::string d_logName;
+  RDLogger d_logger;
+  std::ostream *d_prevDest;
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::atomic<bool> d_lock;
+#else
+  bool d_lock;
+#endif
+};
+
+typedef std::vector<LoggerState *> LoggerStatePtrVector;
+
+class LoggerStateSingletons {
+ public:
+  static LoggerStatePtrVector *get(const std::string &logName) {
+    auto it = instance()->d_map.find(logName);
+    if (it != instance()->d_map.end()) {
+      return &it->second;
+    }
+    return nullptr;
+  }
+  static bool enable(const char *logNameCStr, bool enabled) {
+    std::string inputLogName(logNameCStr ? logNameCStr : defaultLogName());
+    auto loggerStates = get(inputLogName);
+    if (!loggerStates) {
+      return false;
+    }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    std::lock_guard<std::mutex> lock(getLoggerMutex());
+#endif
+    for (auto &loggerState : *loggerStates) {
+      loggerState->setEnabled(enabled, true);
+    }
+    return true;
+  }
+
+ private:
+  LoggerStateSingletons() {
+    // this runs only once under mutex lock
+    // and initializes LoggerState singletons
+    RDLog::InitLogs();
+    for (auto &[logName, logger] :
+         std::vector<std::pair<std::string, RDLogger>>{
+             {"rdApp.debug", rdDebugLog},
+             {"rdApp.info", rdInfoLog},
+             {"rdApp.warning", rdWarningLog},
+             {"rdApp.error", rdErrorLog},
+         }) {
+      d_singletonLoggerStates.emplace_back(new LoggerState(logName, logger));
+      auto loggerState = d_singletonLoggerStates.back().get();
+      CHECK_INVARIANT(loggerState, "loggerState must not be nullptr");
+      d_map[logName].push_back(loggerState);
+      d_map[defaultLogName()].push_back(loggerState);
+    }
+  }
+  static const char *defaultLogName() {
+    static const char *DEFAULT_LOG_NAME = "rdApp.*";
+    return DEFAULT_LOG_NAME;
+  }
+  static LoggerStateSingletons *instance() {
+    // this is called under mutex lock
+    if (!d_instance) {
+      d_instance.reset(new LoggerStateSingletons());
+    }
+    return d_instance.get();
+  }
+  std::vector<std::unique_ptr<LoggerState>> d_singletonLoggerStates;
+  std::map<std::string, LoggerStatePtrVector> d_map;
+  static std::unique_ptr<LoggerStateSingletons> d_instance;
+};
+}  // end anonymous namespace
+
+class LogHandle {
+ public:
+  ~LogHandle() {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    std::lock_guard<std::mutex> lock(getLoggerMutex());
+#endif
+    close();
+  }
+  static bool enableLogging(const char *logNameCStr = nullptr) {
+    return LoggerStateSingletons::enable(logNameCStr, true);
+  }
+  static bool disableLogging(const char *logNameCStr = nullptr) {
+    return LoggerStateSingletons::enable(logNameCStr, false);
   }
   void clearBuffer() {
     d_stream.str({});
@@ -1171,111 +1297,58 @@ struct LogHandle {
   }
 
  private:
-  struct LoggerState {
-   public:
-    LoggerState(RDLogger &logger) : d_logger(logger) {
-      if (d_logger) {
-        d_prevDest = d_logger->dp_dest;
-        d_prevWasEnabled = d_logger->df_enabled;
-      }
-    }
-    ~LoggerState() {
-      if (!d_prevDest) {
-        d_logger = nullptr;
-      } else {
-        if (d_logger->dp_dest) {
-          d_logger->dp_dest->flush();
-        }
-        d_logger->dp_dest = d_prevDest;
-        d_logger->df_enabled = d_prevWasEnabled;
-      }
-    }
-    const RDLogger &logger() const { return d_logger; }
-    std::ostream *stream() const { return d_logger->dp_dest; }
-    void setStream(std::ostream &ostream) {
-      if (!d_logger) {
-        d_logger = std::make_shared<boost::logging::rdLogger>(&ostream);
-      } else {
-        if (d_logger->dp_dest) {
-          d_logger->dp_dest->flush();
-        }
-        d_logger->dp_dest = &ostream;
-      }
-    }
-
-   private:
-    RDLogger &d_logger;
-    std::ostream *d_prevDest = nullptr;
-    bool d_prevWasEnabled = false;
-  };
-  typedef std::vector<LoggerState> LoggerStateVector;
-#ifdef RDK_BUILD_THREADSAFE_SSS
-  typedef std::atomic_bool LoggingFlag;
-#else
-  typedef bool LoggingFlag;
-#endif
-  bool open(bool setTee) {
-    d_haveTee = setTee;
-    auto loggerStates = getLoggerStates();
-    if (!loggerStates) {
-      return false;
-    }
-    clearBuffer();
-    if (d_haveTee) {
-      initLogsIfNeeded();
-    }
+  LogHandle(const std::string &logName, bool isTee)
+      : d_logName(logName), d_isTee(isTee) {
+    open();
+  }
+  void open() {
+    // this is called under mutex lock
+    auto loggerStates = LoggerStateSingletons::get(d_logName);
+    CHECK_INVARIANT(loggerStates, "loggerStates must not be nullptr");
     for (auto &loggerState : *loggerStates) {
-      if (d_haveTee) {
-        CHECK_INVARIANT(loggerState.logger(), "");
-        loggerState.logger()->SetTee(d_stream);
+      CHECK_INVARIANT(loggerState->setLock(), "Failed to acquire lock");
+      if (d_isTee) {
+        loggerState->setTee(d_stream);
       } else {
-        loggerState.setStream(d_stream);
+        loggerState->setStream(&d_stream);
       }
-      loggerState.logger()->df_enabled = true;
+      loggerState->setEnabled(true);
     }
-    return true;
   }
   void close() {
-    const auto loggerStates = getLoggerStates();
-    if (!loggerStates) {
-      return;
-    }
+    // this is called under mutex lock
+    auto loggerStates = LoggerStateSingletons::get(d_logName);
+    CHECK_INVARIANT(loggerStates, "loggerStates must not be nullptr");
     for (const auto &loggerState : *loggerStates) {
-      if (d_haveTee) {
-        CHECK_INVARIANT(loggerState.logger(), "");
-        loggerState.logger()->ClearTee();
+      if (d_isTee) {
+        loggerState->clearTee();
+      } else {
+        loggerState->resetStream();
       }
+      loggerState->releaseLock();
     }
   }
-  static LogHandle *setLogCommon(const char *logNameCStr, bool setTee) {
-    const auto logName = std::string(logNameCStr);
-    std::unique_ptr<MinimalLib::LogHandle> log_handle(
-        new MinimalLib::LogHandle(logName));
-    return (log_handle->open(setTee) ? log_handle.release() : nullptr);
-  }
-  // init logs if not yet initialized; returns true
-  // if they were actually initialized, false if not
-  static bool initLogsIfNeeded() {
-    if (d_loggingNeedsInit) {
-      RDLog::InitLogs();
-      d_loggingNeedsInit = false;
-      return true;
-    }
-    return false;
-  }
-  // returns nullptr if no loggers can be found
-  LoggerStateVector *getLoggerStates() {
-    const auto it = d_logNameToLoggers.find(d_logName);
-    if (it == d_logNameToLoggers.end()) {
+  // returns nullptr if the requested log does not exist or is already captured
+  static LogHandle *setLogCommon(const char *logNameCStr, bool isTee) {
+    if (!logNameCStr) {
       return nullptr;
     }
-    return &it->second;
+    std::string logName(logNameCStr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    std::lock_guard<std::mutex> lock(getLoggerMutex());
+#endif
+    auto loggerStates = LoggerStateSingletons::get(logName);
+    if (loggerStates && std::none_of(loggerStates->begin(), loggerStates->end(),
+                                     [](const auto &loggerState) {
+                                       return loggerState->hasLock();
+                                     })) {
+      return new LogHandle(logName, isTee);
+    }
+    return nullptr;
   }
-  bool d_haveTee;
-  std::map<std::string, LoggerStateVector> d_logNameToLoggers;
   std::string d_logName;
+  bool d_isTee;
   std::stringstream d_stream;
-  static LoggingFlag d_loggingNeedsInit;
 };
 
 }  // namespace MinimalLib
