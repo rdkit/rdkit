@@ -84,9 +84,9 @@ TEST_CASE("CubeFiles") {
   fopts.removeHs = false;
   auto mol = v2::FileParsers::MolFromMolFile(path + "HCl.mol", fopts);
   REQUIRE(mol);
-  auto *data = new RealValueVect(0.0, 125);
+  RealValueVect data(0.0, 125);
   Point3D o(0.0, 0.0, 0.0);
-  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, data);
+  UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, &data);
   for (unsigned int i = 0; i < grd.getSize(); i++) {
     grd.setVal(i, double(i / 10.0));
   }

@@ -29,19 +29,16 @@ namespace RDGeom {
 std::int32_t ci_RealValueGrid3DPICKLE_VERSION = 0x1;
 UniformRealValueGrid3D::UniformRealValueGrid3D(
     const UniformRealValueGrid3D &other) {
-  std::unique_ptr<RDKit::RealValueVect> data(
-      new RDKit::RealValueVect(other.d_storage));
-  UniformRealValueGrid3D::initGrid(other.d_numX * other.d_spacing,
-                                   other.d_numY * other.d_spacing,
-                                   other.d_numZ * other.d_spacing,
-                                   other.d_spacing, other.d_offSet, data.get());
-  data.release();
+  UniformRealValueGrid3D::initGrid(
+      other.d_numX * other.d_spacing, other.d_numY * other.d_spacing,
+      other.d_numZ * other.d_spacing, other.d_spacing, other.d_offSet,
+      &other.d_storage);
 }
 
 void UniformRealValueGrid3D::initGrid(double dimX, double dimY, double dimZ,
                                       double spacing,
                                       const RDGeom::Point3D &offSet,
-                                      RDKit::RealValueVect *data) {
+                                      const RDKit::RealValueVect *data) {
   PRECONDITION(dimX > 0.0, "Invalid x-dimension for grid");
   PRECONDITION(dimY > 0.0, "Invalid y-dimension for grid");
   PRECONDITION(dimZ > 0.0, "Invalid z-dimension for grid");

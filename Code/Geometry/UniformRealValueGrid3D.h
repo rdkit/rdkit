@@ -38,7 +38,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
   UniformRealValueGrid3D(double dimX, double dimY, double dimZ,
                          double spacing = 0.5,
                          const RDGeom::Point3D *offset = nullptr,
-                         RDKit::RealValueVect *data = nullptr) {
+                         const RDKit::RealValueVect *data = nullptr) {
     if (offset == nullptr) {
       initGrid(dimX, dimY, dimZ, spacing,
                RDGeom::Point3D(-0.5 * dimX, -0.5 * dimY, -0.5 * dimZ), data);
@@ -175,7 +175,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformRealValueGrid3D
    */
   void initGrid(double dimX, double dimY, double dimZ, double spacing,
                 const RDGeom::Point3D &offSet,
-                RDKit::RealValueVect *data = nullptr);
+                const RDKit::RealValueVect *data = nullptr);
 
   unsigned int d_numX, d_numY,
       d_numZ;        //! number of grid points along x, y, z axes
