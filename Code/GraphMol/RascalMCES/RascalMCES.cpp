@@ -351,22 +351,12 @@ bool checkAromaticRings(const ROMol &mol1,
     return true;
   }
 
-  auto isInRing = [](const std::vector<std::vector<int>> &rings,
-                     int bondIdx) -> bool {
-    for (const auto &r : rings) {
-      if (std::find(r.begin(), r.end(), bondIdx) != r.end()) {
-        return true;
-      }
-    }
-    return false;
-  };
-
   // If neither bond was in a ring, but they were marked aromatic, then
   // the two mols are fragments so it's ok to match these bonds.
   const auto &mol1BondRings = mol1.getRingInfo()->bondRings();
   const auto &mol2BondRings = mol2.getRingInfo()->bondRings();
-  auto mol1BondInRing = isInRing(mol1BondRings, mol1BondIdx);
-  auto mol2BondInRing = isInRing(mol2BondRings, mol2BondIdx);
+  bool mol1BondInRing = mol1.getRingInfo()->numBondRings(mol1BondIdx);
+  bool mol2BondInRing = mol2.getRingInfo()->numBondRings(mol2BondIdx);
   if (!mol1BondInRing && !mol2BondInRing) {
     return true;
   }
@@ -438,8 +428,7 @@ bool checkRingMatchesRing(const ROMol &mol1, int mol1BondIdx, const ROMol &mol2,
   return true;
 }
 
-// Make the set of pairs of vertices, where they're a pair if the labels
-// match.
+// Make the set of pairs of vertices, where they're a pair if the labels match.
 void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
                 const ROMol &mol2, const std::vector<unsigned int> &vtxLabels2,
                 const RascalOptions &opts,
@@ -447,8 +436,7 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
   std::vector<std::string> mol1RingSmiles, mol2RingSmiles;
   std::vector<std::unique_ptr<ROMol>> mol1Rings, mol2Rings;
   // For these purposes, it is correct that n1cccc1 and [nH]1cccc1 match - the
-  // former would be from an N-substituted pyrrole, the latter from a plain
-  // one.
+  // former would be from an N-substituted pyrrole, the latter from a plain one.
   static const std::regex reg(R"(\[([np])H\])");
   if (opts.completeAromaticRings) {
     extractRings(mol1, mol1Rings, mol1RingSmiles);
@@ -681,8 +669,7 @@ RWMol *makeCliqueFrags(const ROMol &mol,
   return molFrags;
 }
 
-// Calculate the shortest bond distance between the 2 fragments in the
-// molecule.
+// Calculate the shortest bond distance between the 2 fragments in the molecule.
 int minFragSeparation(const ROMol &mol, const ROMol &molFrags,
                       std::vector<int> &fragMapping, int frag1, int frag2) {
   auto extractFragAtoms = [&](int fragNum, std::vector<int> &fragAtoms) {
@@ -780,8 +767,7 @@ void updateMaxClique(const std::vector<unsigned int> &clique, bool deltaYPoss,
   }
 }
 
-// If the current time is beyond the timeout limit, throws a
-// TimedOutException.
+// If the current time is beyond the timeout limit, throws a TimedOutException.
 void checkTimeout(
     const std::chrono::time_point<std::chrono::high_resolution_clock>
         &startTime,
@@ -947,8 +933,8 @@ void explorePartitions(
 bool deltaYExchangePossible(const ROMol &mol1, const ROMol &mol2) {
   // A Delta-y exchange is an incorrect match when a cyclopropyl ring (the
   // delta) is matched to a C(C)(C) group (the y) because they both have
-  // isomorphic line graphs.  This checks to see if that's something we need
-  // to worry about for these molecules.
+  // isomorphic line graphs.  This checks to see if that's something we need to
+  // worry about for these molecules.
   const static std::unique_ptr<ROMol> delta(SmartsToMol("C1CC1"));
   const static std::unique_ptr<ROMol> y(SmartsToMol("C(C)C"));
   return (hasSubstructMatch(mol1, *delta) && hasSubstructMatch(mol2, *y)) ||
@@ -1149,8 +1135,8 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
   return results;
 }
 
-// calculate the RASCAL MCES between the 2 molecules, provided it is within
-// the similarity threshold given.
+// calculate the RASCAL MCES between the 2 molecules, provided it is within the
+// similarity threshold given.
 std::vector<RascalResult> rascalMCES(const ROMol &mol1, const ROMol &mol2,
                                      const RascalOptions &opts) {
   auto starter = makeInitialPartitionSet(&mol1, &mol2, opts);

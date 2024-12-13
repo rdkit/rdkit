@@ -1413,19 +1413,18 @@ TEST_CASE("Atom aromaticity match") {
   }
 }
 
-TEST_CASE("Fragment match") {
-  {
-    auto m1 = "[1*]C(=O)c1ccccc1.[1*]N1CCCC1"_smiles;
-    REQUIRE(m1);
-    auto m2 = "c1ccccc1C(=O)N1CCCC1"_smiles;
-    REQUIRE(m2);
+TEST_CASE("Aromatic fragment match") {
+  v2::SmilesParse::SmilesParserParams params;
+  params.sanitize = false;
 
-    RascalOptions opts;
-    // opts.similarityThreshold = 0.1;
-    // opts.ignoreAtomAromaticity = true;
-    auto res = rascalMCES(*m2, *m1, opts);
-    std::cout << "Num results : " << res.size() << std::endl;
-    std::cout << res.front().getSmarts() << std::endl;
-    std::cout << res.front().getSimilarity() << std::endl;
-  }
+  auto m1 = v2::SmilesParse::MolFromSmiles("[1*]c([3*])nc[2*]", params);
+  REQUIRE(m1);
+  auto m2 = v2::SmilesParse::MolFromSmiles("[1*]c([3*])nc[2*]", params);
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  auto res = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res.size() == 1);
+  CHECK(res.front().getAtomMatches().size() == 6);
+  CHECK(res.front().getBondMatches().size() == 5);
 }
