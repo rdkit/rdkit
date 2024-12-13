@@ -1412,3 +1412,19 @@ TEST_CASE("Atom aromaticity match") {
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
+
+TEST_CASE("Aromatic fragment match") {
+  v2::SmilesParse::SmilesParserParams params;
+  params.sanitize = false;
+
+  auto m1 = v2::SmilesParse::MolFromSmiles("[1*]c([3*])nc[2*]", params);
+  REQUIRE(m1);
+  auto m2 = v2::SmilesParse::MolFromSmiles("[1*]c([3*])nc[2*]", params);
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  auto res = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res.size() == 1);
+  CHECK(res.front().getAtomMatches().size() == 6);
+  CHECK(res.front().getBondMatches().size() == 5);
+}
