@@ -130,6 +130,9 @@ TEST_CASE("Rascal Biggy") {
   RascalOptions rascalOptions;
 
   for (size_t i = 0; i < smis.size(); ++i) {
+    // if (i != 0) {
+    // continue;
+    // }
     auto queryMol = v2::SmilesParse::MolFromSmiles(smis[i]);
     auto results = synthonspace.rascalSearch(*queryMol, rascalOptions, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
