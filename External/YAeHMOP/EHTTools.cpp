@@ -45,7 +45,7 @@ std::string randomstring(unsigned int len = 8) {
 // RAII tempfile class
 struct Tempfile {
   std::filesystem::path fname;
-  FILE *fptr;
+  FILE *fptr = nullptr;
 
   Tempfile() {
     fname = std::filesystem::temp_directory_path() / randomstring();
@@ -55,9 +55,16 @@ struct Tempfile {
     }
   }
   ~Tempfile() {
+    if (!fptr) {
+      return;
+    }
+#ifdef WIN32
+    std::fclose(fptr);
+#else
     if (fcntl(fileno(fptr), F_GETFD) != -1) {
       std::fclose(fptr);
     }
+#endif
     std::filesystem::remove(fname);
   }
   Tempfile(const Tempfile &o) = delete;
