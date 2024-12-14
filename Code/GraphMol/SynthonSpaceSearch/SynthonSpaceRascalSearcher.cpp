@@ -137,9 +137,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceRascalSearcher::searchFragSet(
 bool SynthonSpaceRascalSearcher::quickVerify(
     const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<size_t> &synthNums) const {
-  // If the query matches exactly to the product, then that's an upper
-  // bound on the Johnson similarity.  Check that that is not below
-  // the threshold.
+  // If the query is an exact substructure of the product, then that's an upper
+  // bound on the Johnson similarity.  Check that that is not below the
+  // threshold.
   int qbit = getQuery().getNumAtoms() + getQuery().getNumBonds();
   const auto &rsynths = reaction->getSynthons();
   int numAtoms = 0, numBonds = 0;
