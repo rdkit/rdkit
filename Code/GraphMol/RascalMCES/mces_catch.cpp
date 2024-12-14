@@ -1428,3 +1428,17 @@ TEST_CASE("Aromatic fragment match") {
   CHECK(res.front().getAtomMatches().size() == 6);
   CHECK(res.front().getBondMatches().size() == 5);
 }
+
+TEST_CASE("Empty results bug") {
+  // These 2 molecules gave an empty results object even
+  // when told not to.
+  auto m1 = "Cc1nnc(NC(=O)C(=O)NCCc2c[nH]c3ccccc23)s1"_smiles;
+  REQUIRE(m1);
+  auto m2 = "Cc1ccc2c(C(=O)NCc3cncs3)n[nH]c2c1"_smiles;
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  opts.returnEmptyMCES = true;
+  auto res = rascalMCES(*m1, *m2, opts);
+  REQUIRE(!res.empty());
+}
