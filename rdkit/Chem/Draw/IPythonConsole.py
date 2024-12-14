@@ -484,8 +484,6 @@ def DisableSubstructMatchRendering():
 
 def UninstallIPythonRenderer():
   global _rendererInstalled, _methodsToDelete
-  # if not _rendererInstalled:
-  #   return
 
   for cls, attr in _methodsToDelete:
     if hasattr(cls,attr):
