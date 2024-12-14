@@ -1413,6 +1413,22 @@ TEST_CASE("Atom aromaticity match") {
   }
 }
 
+TEST_CASE("Aromatic fragment match") {
+  v2::SmilesParse::SmilesParserParams params;
+  params.sanitize = false;
+
+  auto m1 = v2::SmilesParse::MolFromSmiles("[1*]c([3*])nc[2*]", params);
+  REQUIRE(m1);
+  auto m2 = v2::SmilesParse::MolFromSmiles("[1*]c([3*])nc[2*]", params);
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  auto res = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res.size() == 1);
+  CHECK(res.front().getAtomMatches().size() == 6);
+  CHECK(res.front().getBondMatches().size() == 5);
+}
+
 TEST_CASE("Empty results bug") {
   // These 2 molecules gave an empty results object even
   // when told not to.
