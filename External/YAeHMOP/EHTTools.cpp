@@ -4,6 +4,7 @@
 #include "EHTTools.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
+#include <RDGeneral/BadFileException.h>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
@@ -48,7 +49,10 @@ struct Tempfile {
 
   Tempfile() {
     fname = std::filesystem::temp_directory_path() / randomstring();
-    fptr = std::fopen(fname.c_str(), "w+");
+    fptr = std::fopen(fname.string().c_str(), "w+");
+    if (!fptr) {
+      throw BadFileException("could not open temporary file");
+    }
   }
   ~Tempfile() {
     if (fcntl(fileno(fptr), F_GETFD) != -1) {
