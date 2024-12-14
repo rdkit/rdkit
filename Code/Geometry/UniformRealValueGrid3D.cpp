@@ -62,12 +62,12 @@ void UniformRealValueGrid3D::initGrid(double dimX, double dimY, double dimZ,
 }
 
 UniformRealValueGrid3D::UniformRealValueGrid3D(const std::string &pkl) {
-  this->initFromText(pkl.c_str(), pkl.size());
+  initFromText(pkl.c_str(), pkl.size());
 }
 
 UniformRealValueGrid3D::UniformRealValueGrid3D(const char *pkl,
                                                unsigned int len) {
-  this->initFromText(pkl, len);
+  initFromText(pkl, len);
 }
 
 int UniformRealValueGrid3D::getGridIndex(unsigned int xi, unsigned int yi,
@@ -264,8 +264,7 @@ void UniformRealValueGrid3D::initFromText(const char *pkl,
   std::int32_t tVers;
   streamRead(ss, tVers);
   tVers = -tVers;
-  if (tVers == 0x1) {
-  } else {
+  if (tVers != 0x1) {
     throw ValueErrorException("bad version in UniformRealValueGrid3D pickle");
   }
   std::uint32_t tInt;

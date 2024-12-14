@@ -21,7 +21,7 @@ class UniformRealValueGrid3D;
 }
 namespace RDKit {
 
-//! a class for efficiently storing vectors of float values
+//! a class for efficiently storing vectors of double values
 //! Has additional features compared to std::vector<double>:
 //! construct from and write to pickle
 class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
@@ -33,7 +33,7 @@ class RDKIT_DATASTRUCTS_EXPORT RealValueVect {
   }
 
   //! initialize with a particular size and initial value
-  RealValueVect(double val, unsigned int length) : d_length(length) {
+  RealValueVect(unsigned int length, double val) : d_length(length) {
     d_data.resize(d_length, val);
   }
 

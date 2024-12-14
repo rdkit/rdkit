@@ -1482,7 +1482,7 @@ void test14RealVect() {
   }
 
   double Pi = 3.141592;
-  RealValueVect vect4(Pi, 60);
+  RealValueVect vect4(60, Pi);
   TEST_ASSERT(feq(vect4.getTotalVal(), 60 * Pi));
 }
 

@@ -68,7 +68,7 @@ TEST_CASE("constructGrid") {
 }
 
 TEST_CASE("CalculateDescriptors") {
-  RealValueVect data(0.0, 125);
+  RealValueVect data(125, 0.0);
   Point3D o(0.0, 0.0, 0.0);
   UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, &data);
 
@@ -84,7 +84,7 @@ TEST_CASE("CubeFiles") {
   fopts.removeHs = false;
   auto mol = v2::FileParsers::MolFromMolFile(path + "HCl.mol", fopts);
   REQUIRE(mol);
-  RealValueVect data(0.0, 125);
+  RealValueVect data(125, 0.0);
   Point3D o(0.0, 0.0, 0.0);
   UniformRealValueGrid3D grd(5.0, 5.0, 5.0, 1.0, &o, &data);
   for (unsigned int i = 0; i < grd.getSize(); i++) {
