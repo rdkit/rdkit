@@ -86,7 +86,7 @@ TEST_CASE("FP Small tests") {
       "C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1",
   };
 
-  std::vector<size_t> expNumHits{2, 4, 4};
+  std::vector<size_t> expNumHits{2, 3, 4};
 
   for (size_t i = 0; i < libNames.size(); i++) {
     SynthonSpace synthonspace;
@@ -112,7 +112,18 @@ TEST_CASE("FP Small tests") {
     for (const auto &r : names) {
       fullSmis.insert(MolToSmiles(*mols[r]));
     }
-    CHECK(resSmis == fullSmis);
+    if (i != 1) {
+      CHECK(resSmis == fullSmis);
+    } else {
+      // In the triazole library, one of the hits found by the brute force
+      // method (triazole-1_1-1_2-2_3-1) is missed by the SynthonSpaceSearch
+      // because it requires that the fragment [1*]n([3*])C1CCCC1 is similar
+      // to synthon c1ccccc1-n([3*])[1*] which it isn't.  Instead, make sure
+      // all the ones that are found are in the brute force results.
+      for (const auto &rs : resSmis) {
+        CHECK(fullSmis.find(rs) != fullSmis.end());
+      }
+    }
   }
 }
 

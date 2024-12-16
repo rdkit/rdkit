@@ -103,10 +103,10 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testBrackets-2b.svg", 776446765U},
     {"testBrackets-2c.svg", 1050851904U},
     {"testBrackets-2d.svg", 776446765U},
-    {"testBrackets-3a.svg", 1374944956U},
+    {"testBrackets-3a.svg", 3096284602U},
     {"testBrackets-4a.svg", 3837821771U},
     {"testBrackets-4b.svg", 1477006167U},
-    {"testBrackets-5a.svg", 3061667963U},
+    {"testBrackets-5a.svg", 2676997151U},
     {"testBrackets-5768.svg", 2559120196U},
     {"testSGroupData-1a.svg", 426096222U},
     {"testSGroupData-1b.svg", 1688385103U},
@@ -348,6 +348,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testGithub_7739_5.svg", 2541364166U},
     {"testHighlightHeteroAtoms_1.svg", 1769258632U},
     {"testHighlightHeteroAtoms_2.svg", 893937335U},
+    {"testAtomAbbreviationsClash.svg", 1847939197U},
+    {"testBlackAtomsUnderHighlight.svg", 3916069581U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10103,3 +10105,116 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
         Invar::Invariant);
   }
 }
+
+TEST_CASE("Atom abbreviations clash") {
+  auto m = "C(OC)C(OC)C(OC)C(OC)C(OC)C(OC)C(Cl)COC"_smiles;
+  RDDepict::preferCoordGen = false;
+  MolDraw2DUtils::prepareMolForDrawing(*m);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().explicitMethyl = true;
+  drawer.drawOptions().addAtomIndices = true;
+  drawer.drawOptions().baseFontSize = 1.2;
+  drawer.drawMolecule(*m);
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testAtomAbbreviationsClash.svg");
+  outs << text;
+  outs.flush();
+  // If this is worked correctly, the first 2 characters of atoms 8 and 14
+  // should be above each other, and the characters of atom 22 should
+  // be in increasing x, with the y of 1 and 3 (H and C) the same.
+  // If this wasn't a test, this would probably be done more elegantly.
+  {
+    const static std::regex text8(
+        "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-8'.*</text>");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), text8),
+                      std::sregex_iterator()));
+    CHECK(match_count == 3);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), text8);
+    std::smatch match = *match_begin;
+    double x1 = stod(match[1]);
+    double y1 = stod(match[2]);
+    ++match_begin;
+    match = *match_begin;
+    double x2 = stod(match[1]);
+    double y2 = stod(match[2]);
+    CHECK_THAT(x1, Catch::Matchers::WithinAbs(x2, 0.1));
+    CHECK(y1 > y2);
+  }
+  {
+    const static std::regex text14(
+        "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-14'.*</text>");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), text14),
+                      std::sregex_iterator()));
+    CHECK(match_count == 3);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), text14);
+    std::smatch match = *match_begin;
+    double x1 = stod(match[1]);
+    double y1 = stod(match[2]);
+    ++match_begin;
+    match = *match_begin;
+    double x2 = stod(match[1]);
+    double y2 = stod(match[2]);
+    CHECK_THAT(x1, Catch::Matchers::WithinAbs(x2, 0.1));
+    CHECK(y1 > y2);
+  }
+  {
+    const static std::regex text22(
+        "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-22'.*</text>");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), text22),
+                      std::sregex_iterator()));
+    CHECK(match_count == 3);
+    auto match_begin = std::sregex_iterator(text.begin(), text.end(), text22);
+    std::smatch match = *match_begin;
+    double x1 = stod(match[1]);
+    double y1 = stod(match[2]);
+    ++match_begin;
+    ++match_begin;
+    match = *match_begin;
+    double x2 = stod(match[1]);
+    double y2 = stod(match[2]);
+    CHECK_THAT(y1, Catch::Matchers::WithinAbs(y2, 0.1));
+    CHECK(x2 > x1);
+  }
+  check_file_hash("testAtomAbbreviationsClash.svg");
+}
+
+TEST_CASE("DrawMol::getColour should not throw if the palette has no carbon color and no default color") {
+  auto m = "c1ccc(C2CN2)cc1"_smiles;
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().atomColourPalette = ColourPalette();
+  std::vector<int> highlightAtoms{0, 1, 2, 3, 4, 5, 6, 7, 8};
+  std::vector<int> highlightBonds;
+  REQUIRE_NOTHROW(drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds));
+  drawer.finishDrawing();
+  std::string text = drawer.getDrawingText();
+  std::ofstream outs("testBlackAtomsUnderHighlight.svg");
+  outs << text;
+  outs.flush();
+  {
+    std::regex path("<path.*fill:none;.*stroke:#000000;.*/>");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), path),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 19);
+  }
+  {
+    std::regex path("<text.*stroke:none;.*fill:#000000.*</text>");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), path),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 2);
+  }
+  {
+    std::regex path("<ellipse.*fill:#FF7F7F;.*stroke:#FF7F7F;.*/>");
+    size_t nOccurrences = std::distance(
+        std::sregex_token_iterator(text.begin(), text.end(), path),
+        std::sregex_token_iterator());
+    CHECK(nOccurrences == 9);
+  }
+  check_file_hash("testBlackAtomsUnderHighlight.svg");
+}
+
