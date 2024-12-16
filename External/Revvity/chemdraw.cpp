@@ -663,9 +663,8 @@ void set_reaction_data(
 // list. The reaction schemes in the CDXML docs appear to use the fragment id
 // for ungrouped fragments and the grouped id for grouped fragments, so the
 // grouped_fragments holds both for ease of bookkeeping.
-template <class T>
 void visit_children(
-    T &node, std::map<unsigned int, Atom *> &ids,
+    CDXObject &node, std::map<unsigned int, Atom *> &ids,
     std::vector<std::unique_ptr<RWMol>>
         &mols,  // All molecules found in the doc
     std::map<unsigned int, size_t>
