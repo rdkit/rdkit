@@ -268,11 +268,12 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
     if (Z > 1) {
       ave += conformer.getAtomPos(i);
 
-      if (vdw_radii.find(Z) == vdw_radii.end()) {
+      if (auto rad = vdw_radii.find(Z); rad != vdw_radii.end()) {
+        rad_vector[activeAtomIdx++] = rad->second;
+      } else {
         throw ValueErrorException("No VdW radius for atom with Z=" +
                                   std::to_string(Z));
       }
-      rad_vector[activeAtomIdx++] = vdw_radii.at(Z);
     }
   }
 
