@@ -17,6 +17,7 @@
 #include "Graph.h"
 #include "DuplicatedSeedCache.h"
 #include "SubstructMatchCustom.h"
+#include "TargetMatch.h"
 
 namespace RDKit {
 namespace FMCS {
