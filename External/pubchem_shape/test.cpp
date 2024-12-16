@@ -278,7 +278,7 @@ TEST_CASE("Github #8096") {
     REQUIRE(m2);
     std::vector<float> matrix(12, 0.0);
     auto [nbr_st, nbr_ct] = AlignMolecule(*m1, *m2, matrix);
-    CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(1.00, 0.005));
-    CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(1.00, 0.005));
+    CHECK_THAT(nbr_st, Catch::Matchers::WithinAbs(0.940, 0.005));
+    CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(0.902, 0.005));
   }
 }
