@@ -468,6 +468,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite(
           "numThreads", &PyEmbedParameters::numThreads,
           "number of threads to use when embedding multiple conformations")
+      .def_readwrite("timeout", &RDKit::DGeomHelpers::EmbedParameters::timeout,
+                     "maximum time in seconds to generate a conformer for a "
+                     "single molecule fragment. If set to 0, no timeout is set")
       .def_readwrite("randomSeed", &PyEmbedParameters::randomSeed,
                      "seed for the random number generator")
       .def_readwrite("clearConfs", &PyEmbedParameters::clearConfs,
