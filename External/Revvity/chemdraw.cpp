@@ -38,6 +38,8 @@
 #include <CDXStdObjects.h>
 
 #include "chemdraw.h"
+#include "reaction.h"
+#include "utils.h"
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
@@ -51,144 +53,7 @@
 namespace {
 using namespace RDKit;
 
-const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
-const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
-const std::string CDXML_GROUP_ID("CDXML_GROUP_ID");
-const std::string FUSE_LABEL("CDXML_NODE_ID");
-const std::string CDX_SCHEME_ID("CDX_SCHEME_ID");
-const std::string CDX_STEP_ID("CDX_STEP_ID");
-const std::string CDX_REAGENT_ID("CDX_REAGENT_ID");
-const std::string CDX_PRODUCT_ID("CDX_PRODUCT_ID");
-const std::string CDX_AGENT_ID("CDX_AGENT_ID");
-const std::string CDX_ATOM_POS("CDX_ATOM_POS");
-const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
-const std::string CDX_BOND_ID("_CDX_BOND_ID");
-const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
-
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
-struct BondInfo {
-  int bond_id = -1;
-  int start = -1;
-  int end = -1;
-  Bond::BondType order;
-  std::string display;
-  Bond::BondType getBondType() { return order; }
-  bool validate(const std::map<unsigned int, Atom *> &ids,
-                unsigned int num_atoms) const {
-    auto s = ids.find(start);
-    auto e = ids.find(end);
-    if (s == ids.end() || e == ids.end()) {
-      return false;
-    }
-    auto st = s->second->getIdx();
-    auto et = e->second->getIdx();
-
-    return (st < num_atoms && et < num_atoms && st != et);
-  }
-};
-
-std::string NodeType(CDXNodeType nodetype) {
-  switch (nodetype) {
-    case kCDXNodeType_Unspecified: return "Unspecified";
-    case kCDXNodeType_Element: return "Element";
-    case kCDXNodeType_ElementList: return "ElementList";
-    case kCDXNodeType_ElementListNickname: return "ElementListNickname";
-    case kCDXNodeType_Nickname: return "Nickname";
-    case kCDXNodeType_Fragment: return "Fragment";
-    case kCDXNodeType_Formula: return "Forumla";
-    case kCDXNodeType_GenericNickname: return "GenericNickname";
-    case kCDXNodeType_AnonymousAlternativeGroup: return "Anonymous Alternative Group";
-    case kCDXNodeType_NamedAlternativeGroup: return "Named Alternative Group";
-    case kCDXNodeType_MultiAttachment: return "MultiAttachment";
-    case kCDXNodeType_VariableAttachment: return "Variable Attachment";
-    case kCDXNodeType_ExternalConnectionPoint: return "ExternalConnectionPoint";
-    case kCDXNodeType_LinkNode: return "LinkNode";
-    case kCDXNodeType_Monomer: return "Monomer";
-      default:
-      return "?";
-      }
-  }
-  
-struct StereoGroupInfo {
-  int sgroup = -1;
-  bool conflictingSgroupTypes = false;
-  StereoGroupType grouptype;
-  std::vector<Atom *> atoms;
-};
-
-struct SchemeInfo {
-  int scheme_id;
-  int step_id;
-  std::vector<int> ReactionStepProducts;
-  std::vector<int> ReactionStepReactants;
-  std::vector<int> ReactionStepObjectsAboveArrow;
-  std::vector<int> ReactionStepObjectsBelowArrow;
-  std::vector<std::pair<int,int>> ReactionStepAtomMap;
-};
-
-unsigned int get_fuse_label(Atom *atm) {
-  // return atm->getAtomMapNum(); easier debugging
-  unsigned int label = 0;  // default is no label
-  atm->getPropIfPresent<unsigned int>(FUSE_LABEL, label);
-  return label;
-}
-
-void set_fuse_label(Atom *atm, unsigned int idx) {
-  // atm->setAtomMapNum(idx); //for debugging
-  if (idx) {
-    atm->setProp<unsigned int>(FUSE_LABEL, idx);
-  } else {
-    atm->clearProp(FUSE_LABEL);
-  }
-}
-
-void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
-                double bondLength) {
-  double avg_bond_length = 0.0;
-  if (bondLength < 0) {
-    // If we don't have a bond length for any reason, just scale the avgerage
-    // bond length
-    for (auto &bond : mol.bonds()) {
-      avg_bond_length += (conf.getAtomPos(bond->getBeginAtomIdx()) -
-                          conf.getAtomPos(bond->getEndAtomIdx()))
-                             .length();
-    }
-    avg_bond_length /= mol.getNumBonds();
-  } else {
-    avg_bond_length = bondLength;
-  }
-
-  if (avg_bond_length > 0) {
-    double scale = targetBondLength / avg_bond_length;
-    for (auto &pos : conf.getPositions()) {
-      pos *= scale;
-    }
-  }
-}
-
-template <class T>
-std::vector<T> to_vec(const std::string &s) {
-  std::vector<T> n;
-  std::stringstream ss(s);
-  std::copy(std::istream_iterator<T>(ss), std::istream_iterator<T>(),
-            std::back_inserter(n));
-  return n;
-}
-
-template <typename Q>
-Atom *addquery(Q *qry, std::string symbol, RWMol &mol, unsigned int idx) {
-  PRECONDITION(qry, "bad query");
-  auto *atm = mol.getAtomWithIdx(idx);
-  auto qa = std::make_unique<QueryAtom>(*atm);
-  qa->setQuery(qry);
-  qa->setNoImplicit(true);
-  mol.replaceAtom(idx, qa.get());
-  Atom *res = mol.getAtomWithIdx(idx);
-  if (symbol != "") {
-    res->setProp(common_properties::atomLabel, symbol);
-  }
-  return res;
-}
 
 bool parse_fragment(RWMol &mol, CDXFragment &fragment,
                     std::map<unsigned int, Atom *> &ids, int &missing_frag_id,
@@ -205,8 +70,6 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment,
   mol.setProp(CDXML_FRAG_ID, frag_id);
 
   // for atom in frag
-  int atom_id = -1;
-  std::vector<BondInfo> bonds;
   std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> sgroups;
 
   // nodetypes =
@@ -616,44 +479,11 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment,
   return !skip_fragment;
 }
 
-void set_reaction_data(
-    std::string type, std::string prop, SchemeInfo &scheme,
-    const std::vector<int> &frag_ids,
-    const std::map<unsigned int, size_t> &fragments,
-    std::map<unsigned int, std::vector<int>> &grouped_fragments,
-    const std::vector<std::unique_ptr<RWMol>> &mols) {
-  unsigned int reagent_idx = 0;
-  for (auto idx : frag_ids) {
-    auto iter = grouped_fragments.find(idx);
-    if (iter == grouped_fragments.end()) {
-      BOOST_LOG(rdWarningLog)
-          << "CDXMLParser: Schema " << scheme.scheme_id << " step "
-          << scheme.step_id << " " << type << " reaction fragment " << idx
-          << " not found in document." << std::endl;
-      continue;
-    }
-    for (auto reaction_fragment_id : iter->second) {
-      auto fragment = fragments.find(reaction_fragment_id);
-      if (fragment == fragments.end()) {
-        BOOST_LOG(rdWarningLog)
-            << "CDXMLParser: Schema " << scheme.scheme_id << " step "
-            << scheme.step_id << " " << type << " fragment " << idx
-            << " not found in document." << std::endl;
-        continue;
-      }
-      auto &mol = mols[fragment->second];
-      mol->setProp(CDX_SCHEME_ID, scheme.scheme_id);
-      mol->setProp(CDX_STEP_ID, scheme.step_id);
-      mol->setProp(prop, reagent_idx);
-    }
-    reagent_idx += 1;
-  }
-}
+
 
 
 // The parsing of fragments needed to be moved to a recursive function since
-// they may be
-//  embedded further in the document, i.e. a group may hold multiple
+// they may be embedded further in the document, i.e. a group may hold multiple
 //  fragments
 //
 // Additionally, a grouped_fragments map is included to group fragments together
@@ -671,7 +501,7 @@ void visit_children(
         &fragment_lookup,  // fragment.id->molecule index
     std::map<unsigned int, std::vector<int>>
         &grouped_fragments,            // grouped.id -> [fragment.id]
-    std::vector<SchemeInfo> &schemes,  // reaction schemes found
+    std::vector<ReactionInfo> &schemes,  // reaction schemes found
     int &missing_frag_id,  // if we don't have a fragment id, start at -1 and
                            // decrement
     double bondLength,  // bond length of the document for assigning coordinates
@@ -784,6 +614,8 @@ void visit_children(
       }
     } else if (id == kCDXObj_ReactionScheme) {  // get the reaction info
       CDXReactionScheme &scheme = (CDXReactionScheme&)(*frag.second);
+      schemes.emplace_back(scheme);
+      /*
       int scheme_id = scheme.GetObjectID();   //frag.second.template get<int>("<xmlattr>.id", -1);
       for (auto &rxnNode : scheme.ContainedObjects()) {
         CDXDatumID type_id = (CDXDatumID)rxnNode.second->GetTag();
@@ -800,6 +632,7 @@ void visit_children(
           schemes.push_back(scheme);
         }
       }
+      */
     } else if (id == kCDXObj_Group) {
       CDXGroup &group = (CDXGroup&)(*frag.second);
       group_id = frag.second->GetObjectID();
@@ -831,7 +664,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   std::vector<std::unique_ptr<RWMol>> mols;  // All molecules found in the doc
   std::map<unsigned int, size_t> fragment_lookup;  // fragment.id->molecule index
   std::map<unsigned int, std::vector<int>> grouped_fragments; // grouped.id -> [fragment.id]
-  std::vector<SchemeInfo> schemes;  // reaction schemes found
+  std::vector<ReactionInfo> schemes;  // reaction schemes found
   auto bondLength = document->m_bondLength;
   
   int missing_frag_id = -1;
@@ -846,7 +679,10 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
         break;
     }
   }
-  
+  for(auto &scheme: schemes) {
+    scheme.set_reaction_steps(grouped_fragments, mols);
+  }
+  /*
     // Apply schemes
     if (schemes.size()) {
       std::map<unsigned int, size_t> fragments;
@@ -905,7 +741,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
         }
       }
     }
-
+*/
   // what do we do with the reaction schemes here???
   return mols;
 }

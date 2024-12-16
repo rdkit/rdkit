@@ -98,7 +98,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat-overflow=0 -Wformat=0 -Wno-format-security")
   endif()
 
-  rdkit_library(RDChemDrawLib chemdraw.cpp SHARED LINK_LIBRARIES ChemDraw
+  rdkit_library(RDChemDrawLib chemdraw.cpp reaction.cpp utils.cpp SHARED LINK_LIBRARIES ChemDraw
                 ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
   target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD)
 
@@ -122,7 +122,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 #                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
 #  else(RDK_BUILD_CHEMDRAW_SUPPORT)
 #    add_custom_command(TARGET inchi_support
-#                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
+#                  COMMAND ${C*MAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
 #                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
 #  endif(RDK_BUILD_CHEMDRAW_SUPPORT)
 #  get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
