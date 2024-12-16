@@ -40,7 +40,7 @@
 
 
 namespace RDKit {
-
+constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
 const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
 const std::string CDXML_GROUP_ID("CDXML_GROUP_ID");

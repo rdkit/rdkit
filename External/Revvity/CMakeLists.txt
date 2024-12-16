@@ -98,8 +98,15 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat-overflow=0 -Wformat=0 -Wno-format-security")
   endif()
 
-  rdkit_library(RDChemDrawLib chemdraw.cpp reaction.cpp utils.cpp SHARED LINK_LIBRARIES ChemDraw
-                ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
+  rdkit_library(RDChemDrawLib
+      bond.cpp
+      chemdraw.cpp
+      fragment.cpp
+      node.cpp
+      reaction.cpp
+      utils.cpp
+      SHARED LINK_LIBRARIES ChemDraw
+          ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
   target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD)
 
   rdkit_headers(chemdraw.h DEST GraphMol)
