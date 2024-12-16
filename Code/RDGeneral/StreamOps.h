@@ -41,7 +41,7 @@ enum EEndian {
 
 // this function swap the bytes of values given it's size as a template
 // parameter (could sizeof be used?).
-template <class T, unsigned int size>
+template<class T, unsigned int size>
 inline T SwapBytes(T value) {
   if (size < 2) {
     return value;
@@ -69,11 +69,11 @@ inline T SwapBytes(T value) {
 //     int x = someValue;
 //     int i = EndianSwapBytes<HOST_ENDIAN_ORDER, BIG_ENDIAN_ORDER>(x);
 //
-template <EEndian from, EEndian to, class T>
+template<EEndian from, EEndian to, class T>
 inline T EndianSwapBytes(T value) {
   // A : La donnée à swapper à une taille de 2, 4 ou 8 octets
   BOOST_STATIC_ASSERT(sizeof(T) == 1 || sizeof(T) == 2 || sizeof(T) == 4 ||
-                      sizeof(T) == 8);
+    sizeof(T) == 8);
   if (sizeof(T) == 1) {
     return value;
   }
@@ -88,18 +88,22 @@ inline T EndianSwapBytes(T value) {
 
   return SwapBytes<T, sizeof(T)>(value);
 }
-template <EEndian from, EEndian to>
+
+template<EEndian from, EEndian to>
 inline char EndianSwapBytes(char value) {
   return value;
 }
-template <EEndian from, EEndian to>
+
+template<EEndian from, EEndian to>
 inline unsigned char EndianSwapBytes(unsigned char value) {
   return value;
 }
-template <EEndian from, EEndian to>
+
+template<EEndian from, EEndian to>
 inline signed char EndianSwapBytes(signed char value) {
   return value;
 }
+
 // --------------------------------------
 
 //! Packs an integer and outputs it to a stream
@@ -140,7 +144,7 @@ inline void appendPackedIntToStream(std::stringstream &ss,
   // val = EndianSwapBytes<HOST_ENDIAN_ORDER,LITTLE_ENDIAN_ORDER>(val);
 
   for (bix = 0; bix < nbytes; bix++) {
-    tc = (char)(val & 255);
+    tc = (char) (val & 255);
     ss.write(&tc, 1);
     val >>= 8;
   }
@@ -161,7 +165,7 @@ inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
   if ((val & 1) == 0) {
     shift = 1;
   } else if ((val & 3) == 1) {
-    ss.read((char *)&tmp, sizeof(tmp));
+    ss.read((char *) &tmp, sizeof(tmp));
     if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
@@ -170,13 +174,13 @@ inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
     shift = 2;
     offset = (1 << 7);
   } else if ((val & 7) == 3) {
-    ss.read((char *)&tmp, sizeof(tmp));
+    ss.read((char *) &tmp, sizeof(tmp));
     if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
     val |= (UCHAR(tmp) << 8);
-    ss.read((char *)&tmp, sizeof(tmp));
+    ss.read((char *) &tmp, sizeof(tmp));
     if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
@@ -185,19 +189,19 @@ inline boost::uint32_t readPackedIntFromStream(std::stringstream &ss) {
     shift = 3;
     offset = (1 << 7) + (1 << 14);
   } else {
-    ss.read((char *)&tmp, sizeof(tmp));
+    ss.read((char *) &tmp, sizeof(tmp));
     if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
     val |= (UCHAR(tmp) << 8);
-    ss.read((char *)&tmp, sizeof(tmp));
+    ss.read((char *) &tmp, sizeof(tmp));
     if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
 
     val |= (UCHAR(tmp) << 16);
-    ss.read((char *)&tmp, sizeof(tmp));
+    ss.read((char *) &tmp, sizeof(tmp));
     if (ss.fail()) {
       throw std::runtime_error("failed to read from stream");
     }
@@ -257,20 +261,20 @@ inline boost::uint32_t pullPackedIntFromString(const char *&text) {
 }
 
 //! does a binary write of an object to a stream
-template <typename T>
+template<typename T>
 void streamWrite(std::ostream &ss, const T &val) {
   T tval = EndianSwapBytes<HOST_ENDIAN_ORDER, LITTLE_ENDIAN_ORDER>(val);
-  ss.write((const char *)&tval, sizeof(T));
+  ss.write((const char *) &tval, sizeof(T));
 }
 
 //! special case for string
 inline void streamWrite(std::ostream &ss, const std::string &what) {
-  unsigned int l = rdcast<unsigned int>(what.length());
-  ss.write((const char *)&l, sizeof(l));
+  unsigned int l = static_cast<unsigned int>(what.length());
+  streamWrite(ss, l);
   ss.write(what.c_str(), sizeof(char) * l);
 };
 
-template <typename T>
+template<typename T>
 void streamWriteVec(std::ostream &ss, const T &val) {
   streamWrite(ss, static_cast<boost::uint64_t>(val.size()));
   for (size_t i = 0; i < val.size(); ++i) {
@@ -279,10 +283,10 @@ void streamWriteVec(std::ostream &ss, const T &val) {
 }
 
 //! does a binary read of an object from a stream
-template <typename T>
+template<typename T>
 void streamRead(std::istream &ss, T &loc) {
   T tloc;
-  ss.read((char *)&tloc, sizeof(T));
+  ss.read((char *) &tloc, sizeof(T));
   if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
@@ -290,7 +294,7 @@ void streamRead(std::istream &ss, T &loc) {
 }
 
 //! special case for string
-template <class T>
+template<class T>
 void streamRead(std::istream &ss, T &obj, int version) {
   RDUNUSED_PARAM(version);
   streamRead(ss, obj);
@@ -299,10 +303,7 @@ void streamRead(std::istream &ss, T &obj, int version) {
 inline void streamRead(std::istream &ss, std::string &what, int version) {
   RDUNUSED_PARAM(version);
   unsigned int l;
-  ss.read((char *)&l, sizeof(l));
-  if (ss.fail()) {
-    throw std::runtime_error("failed to read from stream");
-  }
+  streamRead(ss, l);
   auto buff = std::make_unique<char[]>(l);
   ss.read(buff.get(), sizeof(char) * l);
   if (ss.fail()) {
@@ -311,7 +312,7 @@ inline void streamRead(std::istream &ss, std::string &what, int version) {
   what = std::string(buff.get(), l);
 };
 
-template <class T>
+template<class T>
 void streamReadVec(std::istream &ss, T &val) {
   boost::uint64_t size;
   streamRead(ss, size);
@@ -342,6 +343,7 @@ inline std::string getLine(std::istream *inStream) {
   }
   return res;
 }
+
 //! grabs the next line from an instream and returns it.
 inline std::string getLine(std::istream &inStream) {
   return getLine(&inStream);
@@ -363,22 +365,28 @@ const unsigned char VecBoolTag = 9;
 const unsigned char VecFloatTag = 10;
 const unsigned char VecDoubleTag = 11;
 
-const unsigned char CustomTag = 0xFE;  // custom data
+const unsigned char CustomTag = 0xFE; // custom data
 const unsigned char EndTag = 0xFF;
-}  // namespace DTags
+} // namespace DTags
 
 class CustomPropHandler {
- public:
-  virtual ~CustomPropHandler() {}
+public:
+  virtual ~CustomPropHandler() {
+  }
+
   virtual const char *getPropName() const = 0;
+
   virtual bool canSerialize(const RDValue &value) const = 0;
+
   virtual bool read(std::istream &ss, RDValue &value) const = 0;
+
   virtual bool write(std::ostream &ss, const RDValue &value) const = 0;
+
   virtual CustomPropHandler *clone() const = 0;
 };
 
-typedef std::vector<std::shared_ptr<const CustomPropHandler>>
-    CustomPropHandlerVec;
+typedef std::vector<std::shared_ptr<const CustomPropHandler> >
+CustomPropHandlerVec;
 
 inline bool isSerializable(const Dict::Pair &pair,
                            const CustomPropHandlerVec &handlers = {}) {
@@ -397,7 +405,7 @@ inline bool isSerializable(const Dict::Pair &pair,
     case RDTypeTag::VecDoubleTag:
       return true;
     case RDTypeTag::AnyTag:
-      for (auto &handler : handlers) {
+      for (auto &handler: handlers) {
         if (handler->canSerialize(pair.val)) {
           return true;
         }
@@ -443,26 +451,26 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
 
     case RDTypeTag::VecStringTag:
       streamWrite(ss, DTags::VecStringTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<std::string>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<std::string> >(pair.val));
       break;
     case RDTypeTag::VecDoubleTag:
       streamWrite(ss, DTags::VecDoubleTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<double>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<double> >(pair.val));
       break;
     case RDTypeTag::VecFloatTag:
       streamWrite(ss, DTags::VecFloatTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<float>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<float> >(pair.val));
       break;
     case RDTypeTag::VecIntTag:
       streamWrite(ss, DTags::VecIntTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<int>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<int> >(pair.val));
       break;
     case RDTypeTag::VecUnsignedIntTag:
       streamWrite(ss, DTags::VecUIntTag);
-      streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(pair.val));
+      streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int> >(pair.val));
       break;
     default:
-      for (auto &handler : handlers) {
+      for (auto &handler: handlers) {
         if (handler->canSerialize(pair.val)) {
           // The form of a custom tag is
           //  CustomTag
@@ -480,14 +488,14 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
   return true;
 }
 
-template <typename COUNT_TYPE = unsigned int>
+template<typename COUNT_TYPE = unsigned int>
 inline bool streamWriteProps(
-    std::ostream &ss, const RDProps &props, bool savePrivate = false,
-    bool saveComputed = false, const CustomPropHandlerVec &handlers = {},
-    const std::unordered_set<std::string> &ignore = {}) {
+  std::ostream &ss, const RDProps &props, bool savePrivate = false,
+  bool saveComputed = false, const CustomPropHandlerVec &handlers = {},
+  const std::unordered_set<std::string> &ignore = {}) {
   STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
   std::unordered_set<std::string> propnames;
-  for (const auto &pn : propsToSave) {
+  for (const auto &pn: propsToSave) {
     if (ignore.empty() || ignore.find(pn) == ignore.end()) {
       propnames.insert(pn);
     }
@@ -495,20 +503,20 @@ inline bool streamWriteProps(
 
   const Dict &dict = props.getDict();
   COUNT_TYPE count = 0;
-  for (const auto &elem : dict.getData()) {
+  for (const auto &elem: dict.getData()) {
     if (propnames.find(elem.key) != propnames.end()) {
       if (isSerializable(elem, handlers)) {
         count++;
       }
     }
   }
-  streamWrite(ss, count);  // packed int?
+  streamWrite(ss, count); // packed int?
   if (!count) {
     return false;
   }
 
   COUNT_TYPE writtenCount = 0;
-  for (const auto &elem : dict.getData()) {
+  for (const auto &elem: dict.getData()) {
     if (propnames.find(elem.key) != propnames.end()) {
       if (isSerializable(elem, handlers)) {
         // note - not all properties are serializable, this may be
@@ -524,14 +532,14 @@ inline bool streamWriteProps(
   return true;
 }
 
-template <class T>
+template<class T>
 void readRDValue(std::istream &ss, RDValue &value) {
   T v;
   streamRead(ss, v);
   value = v;
 }
 
-template <class T>
+template<class T>
 void readRDVecValue(std::istream &ss, RDValue &value) {
   std::vector<T> v;
   streamReadVec(ss, v);
@@ -605,7 +613,7 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
       std::string propType;
       int version = 0;
       streamRead(ss, propType, version);
-      for (auto &handler : handlers) {
+      for (auto &handler: handlers) {
         if (propType == handler->getPropName()) {
           handler->read(ss, pair.val);
           dictHasNonPOD = true;
@@ -621,7 +629,7 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
   return true;
 }
 
-template <typename COUNT_TYPE = unsigned int>
+template<typename COUNT_TYPE = unsigned int>
 inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
                                     const CustomPropHandlerVec &handlers = {},
                                     bool reset = true) {
@@ -630,19 +638,18 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
 
   Dict &dict = props.getDict();
   if (reset) {
-    dict.reset();  // Clear data before repopulating
+    dict.reset(); // Clear data before repopulating
   }
   auto startSz = dict.getData().size();
   dict.getData().resize(startSz + count);
   for (unsigned index = 0; index < count; ++index) {
     CHECK_INVARIANT(streamReadProp(ss, dict.getData()[startSz + index],
-                                   dict.getNonPODStatus(), handlers),
+                      dict.getNonPODStatus(), handlers),
                     "Corrupted property serialization detected");
   }
 
   return static_cast<unsigned int>(count);
 }
-
-}  // namespace RDKit
+} // namespace RDKit
 
 #endif
