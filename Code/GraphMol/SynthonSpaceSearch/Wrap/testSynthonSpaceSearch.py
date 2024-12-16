@@ -78,6 +78,10 @@ class TestCase(unittest.TestCase):
     fName = self.sssDir / "amide_space_error.txt"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
+
+    fName = self.sssDir / "synthon_error.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
     
     
 if __name__ == "__main__":
