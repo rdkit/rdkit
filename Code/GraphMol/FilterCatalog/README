@@ -67,7 +67,7 @@ using namespace RDKit;
               it != matches.end(); ++it) {
             // Get the SmartsMatcherBase that matched
             const FilterMatch & fm = (*it);
-            boost::shared_ptr<SmartsMatcherBase> matchingFilter = \
+            std::shared_ptr<SmartsMatcherBase> matchingFilter = \
               fm.filterMatch;
             
             // Get the matching atom indices
