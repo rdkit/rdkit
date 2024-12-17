@@ -335,11 +335,16 @@ struct mol_wrapper {
             "hardware. negative values are added to the number of concurrent"
             "threads supported by the hardware.")
         .def_readwrite(
+            "bondProperties", &RDKit::SubstructMatchParameters::bondProperties,
+            "bond properties that must be equivalent in order to match.")
+        .def_readwrite(
             "atomProperties", &RDKit::SubstructMatchParameters::atomProperties,
             "atom properties that must be equivalent in order to match.")
         .def_readwrite(
-            "bondProperties", &RDKit::SubstructMatchParameters::bondProperties,
-            "bond properties that must be equivalent in order to match.")
+            "specifiedQueryChiralityMatchesUnspecifiedChirality",
+            &RDKit::SubstructMatchParameters::
+                specifiedQueryChiralityMatchesUnspecifiedChirality,
+            "If set, query atoms and bonds with specified chirality will match atoms and bonds with unspecified chirality")
         .def("setExtraFinalCheck", setSubstructMatchFinalCheck,
              python::with_custodian_and_ward<1, 2>(),
              python::args("self", "func"),
