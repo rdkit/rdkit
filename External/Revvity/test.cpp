@@ -536,7 +536,8 @@ TEST_CASE("CDXML Advanced") {
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
-/*
+
+  /* XXX NEED TO INVESTIGATE
   SECTION("ChemDraw Template from the synthesis-workshop") {
     // this was hella fun to validate the stereo-chemistry...
     auto fname = cdxmlbase + "chemdraw_template1.cdxml";
@@ -561,7 +562,8 @@ TEST_CASE("CDXML Advanced") {
       CHECK(MolToSmiles(*mol) == expected[i++]);
     }
   }
-*/
+   */
+
   SECTION("deuterium atom") {
     auto fname = cdxmlbase + "deuterium-atom.cdxml";
     ChemDrawParserParams params;
@@ -1251,5 +1253,19 @@ TEST_CASE("Github #7501 - dative bonds") {
     auto mols = ChemDrawToMols(fname, params);
     CHECK(MolToSmiles(*mols[0]) ==
           "CC(C)->[Os]12<-CCCN->1CC=N->2");  // All datives to the Oxygen
+  }
+}
+
+TEST_CASE("Output CDXML") {
+  SECTION("basic") {
+   auto mol = "N#Cc1ccc(cc1Cl)O[C@@H]1CC[C@H](CC1)NC(=O)c1ccc(nn1)N1CCC(CC1)CN1CCN(CC1)c1cc2C(=O)N(C(=O)c2cc1F)C1CCC(=O)NC1=O"_smiles;
+    //auto mol = "[C@H](I)(F)Br"_smiles;
+    //auto res = MolToMolBlock(*mol);
+    //mol->debugMol(std::cerr);
+    std::string output = MolToChemDraw(*mol);
+    std::stringstream cdxml;
+    cdxml << output;
+    auto mols = ChemDrawToMols(cdxml);
+    CHECK(MolToSmiles(*mols[0]) == MolToSmiles(*mol));
   }
 }

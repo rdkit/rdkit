@@ -105,6 +105,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       node.cpp
       reaction.cpp
       utils.cpp
+      writer.cpp
       SHARED LINK_LIBRARIES ChemDraw
           ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
   target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD)

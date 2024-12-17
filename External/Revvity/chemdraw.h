@@ -40,9 +40,17 @@ struct RDKIT_FILEPARSERS_EXPORT ChemDrawParserParams {
   bool removeHs = true;
 };
 
+enum CDXFormat {
+  CDX = 1,
+  CDXML = 2
+};
+
 std::vector<std::unique_ptr<ROMol>> RDKIT_CHEMDRAW_EXPORT ChemDrawToMols(std::istream &inStream,
                                                                          const ChemDrawParserParams &params=ChemDrawParserParams());
 
 std::vector<std::unique_ptr<ROMol>> RDKIT_CHEMDRAW_EXPORT ChemDrawToMols(const std::string &filename,
                                                                          const ChemDrawParserParams &params=ChemDrawParserParams());
+
+std::string  RDKIT_CHEMDRAW_EXPORT MolToChemDraw(const ROMol&mol, CDXFormat format=CDXFormat::CDXML);
+
 }

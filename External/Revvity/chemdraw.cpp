@@ -255,67 +255,6 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   for(auto &scheme: schemes) {
     scheme.set_reaction_steps(grouped_fragments, mols);
   }
-  /*
-    // Apply schemes
-    if (schemes.size()) {
-      std::map<unsigned int, size_t> fragments;
-      std::map<unsigned int, size_t> agents;
-      std::map<unsigned int, size_t> products;
-      std::map<unsigned int, Atom *> atoms;
-      size_t mol_idx = 0;
-      for (auto &mol : mols) {
-        auto idx = mol->getProp<unsigned int>(CDXML_FRAG_ID);
-        fragments[idx] = mol_idx++;
-        for (auto &atom : mol->atoms()) {
-          unsigned int idx = atom->getProp<unsigned int>(CDX_ATOM_ID);
-          atoms[idx] = atom;
-        }
-      }
-
-      for (auto &scheme : schemes) {
-        // Set the molecule properties
-        set_reaction_data("ReactionStepReactants", CDX_REAGENT_ID, scheme,
-                          scheme.ReactionStepReactants, fragments,
-                          grouped_fragments, mols);
-        set_reaction_data("ReactionStepProducts", CDX_PRODUCT_ID, scheme,
-                          scheme.ReactionStepProducts, fragments,
-                          grouped_fragments, mols);
-        auto agents = scheme.ReactionStepObjectsAboveArrow;
-        agents.insert(agents.end(),
-                      scheme.ReactionStepObjectsBelowArrow.begin(),
-                      scheme.ReactionStepObjectsBelowArrow.end());
-        set_reaction_data("ReactionStepAgents", CDX_AGENT_ID, scheme, agents,
-                          fragments, grouped_fragments, mols);
-        // Set the Atom Maps
-        int atommap = 0;
-        for(auto mapping: scheme.ReactionStepAtomMap) {
-          ++atommap;
-          unsigned int idx1 = mapping.first;
-          unsigned int idx2 = mapping.second;
-          if (atoms.find(idx1) != atoms.end()) {
-            atoms[idx1]->setAtomMapNum(atommap);
-          } else {
-            BOOST_LOG(rdWarningLog)
-                << "CDXMLParser: Schema " << scheme.scheme_id << " step "
-                << scheme.step_id
-                << " ReactionStepAtomMap cannot find atom with node id " << idx1
-                << "skipping schema..." << std::endl;
-          }
-          if (atoms.find(idx2) != atoms.end()) {
-            atoms[idx2]->setAtomMapNum(atommap);
-          } else {
-            // XXX log error
-            BOOST_LOG(rdWarningLog)
-                << "CDXMLParser: Schema " << scheme.scheme_id << " step "
-                << scheme.step_id
-                << " ReactionStepAtomMap cannot find atom with node id " << idx2
-                << " skipping schema..." << std::endl;
-          }
-        }
-      }
-    }
-*/
-  // what do we do with the reaction schemes here???
   return mols;
 }
 }  // namespace
