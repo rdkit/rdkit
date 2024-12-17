@@ -18,13 +18,12 @@ BinaryStringChromosomePolicy::BinaryStringChromosomePolicy(
 
 BinaryStringChromosomePolicy::~BinaryStringChromosomePolicy() {}
 
-bool BinaryStringChromosomePolicy::mutate(int pos, bool currentValue) const {
-  (void)pos;  // not used
+bool BinaryStringChromosomePolicy::mutate([[maybe_unused]] int pos,
+                                          bool currentValue) const {
   return !currentValue;
 }
 
-bool BinaryStringChromosomePolicy::initialize(int pos) const {
-  (void)pos;  // not used
+bool BinaryStringChromosomePolicy::initialize([[maybe_unused]] int pos) const {
   return rng.randomBoolean();
 }
 
