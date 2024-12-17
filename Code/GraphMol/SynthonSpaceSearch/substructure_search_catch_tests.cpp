@@ -565,12 +565,14 @@ TEST_CASE("Synthon Error") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   {
-  std::string libName = fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_error.txt";
-  SynthonSpace synthonspace;
-  CHECK_THROWS(synthonspace.readTextFile(libName));
+    std::string libName =
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_error.txt";
+    SynthonSpace synthonspace;
+    CHECK_THROWS(synthonspace.readTextFile(libName));
   }
   {
-    std::string libName = fName + "/Code/GraphMol/SynthonSpaceSearch/data/synthon_error.txt";
+    std::string libName =
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/synthon_error.txt";
     SynthonSpace synthonspace;
     CHECK_THROWS(synthonspace.readTextFile(libName));
   }
