@@ -736,6 +736,10 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
   }
   ++first;
 
+  if (first >= last) {
+    return false;
+  }
+  
   parse_data_sgroup_attr(first, last, sgroup, keepSGroup, "FIELDNAME");
 
   // FIX:
@@ -743,12 +747,24 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
     sgroup.setProp("FIELDDISP", "    0.0000    0.0000    DR    ALL  0       0");
   }
 
+  if (first >= last) {
+    return false;
+  }
   parse_data_sgroup_attr(first, last, sgroup, keepSGroup, "DATAFIELDS", true);
 
+  if (first >= last) {
+    return false;
+  }
   parse_data_sgroup_attr(first, last, sgroup, keepSGroup, "QUERYOP");
 
+  if (first >= last) {
+    return false;
+  }
   parse_data_sgroup_attr(first, last, sgroup, keepSGroup, "FIELDINFO");
 
+  if (first >= last) {
+    return false;
+  }
   parse_data_sgroup_attr(first, last, sgroup, keepSGroup, "FIELDTAG");
 
   if (first < last && *first == '(') {
