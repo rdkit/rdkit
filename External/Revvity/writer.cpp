@@ -35,49 +35,52 @@
 #include <CDXStdObjects.h>
 
 namespace RDKit {
-std::string MolToChemDraw(const ROMol&mol, CDXFormat format) {
+std::string MolToChemDraw(const ROMol &mol, CDXFormat format) {
   RWMol trmol(mol);
   MolOps::Kekulize(trmol);
-  if(!trmol.getNumConformers()) {
+  if (!trmol.getNumConformers()) {
     RDDepict::compute2DCoords(trmol);
   }
-  
+
   CDXObjectID object_id = 1;
   CDXDocument document(object_id++);
   CDXPage *page = new CDXPage(object_id++);
   CDXFragment *fragment = new CDXFragment(object_id++);
   page->AddChild(fragment);
   auto atom_start = object_id;
-  std::vector<CDXNode*> nodes;
+  std::vector<CDXNode *> nodes;
   nodes.reserve(trmol.getNumAtoms());
-    
+
   const Conformer *conf = nullptr;
-  if (trmol.getNumConformers() > 0)
-    conf = &trmol.getConformer(0);
-  
+  if (trmol.getNumConformers() > 0) conf = &trmol.getConformer(0);
+
   auto wedgeBonds = Chirality::pickBondsToWedge(trmol, nullptr, conf);
-  
-  for(auto &atom : trmol.atoms()) {
+
+  for (auto &atom : trmol.atoms()) {
     CDXNode *node = new CDXNode(object_id + atom->getIdx());
     auto pos = conf->getAtomPos(atom->getIdx());
-    node->Position(CDXPoint2D(CDXCoordinatefromPoints(pos.x), CDXCoordinatefromPoints(pos.y)));
+    node->Position(CDXPoint2D(CDXCoordinatefromPoints(pos.x),
+                              CDXCoordinatefromPoints(pos.y)));
     node->m_nodeType = kCDXNodeType_Element;
     node->m_isotope = atom->getIsotope();
     node->m_elementNum = atom->getAtomicNum();
     node->m_charge = atom->getFormalCharge();
-    node->m_numHydrogens  = atom->getNumExplicitHs() ? atom->getNumExplicitHs() : kNumHydrogenUnspecified;
+    node->m_numHydrogens = atom->getNumExplicitHs() ? atom->getNumExplicitHs()
+                                                    : kNumHydrogenUnspecified;
     nodes.push_back(node);
     fragment->AddChild(node);
   }
-  
-  for(auto &bond : trmol.bonds()) {
-    CDXBond *cdxbond = new CDXBond(object_id + mol.getNumAtoms() + bond->getIdx());
-    
+
+  for (auto &bond : trmol.bonds()) {
+    CDXBond *cdxbond =
+        new CDXBond(object_id + mol.getNumAtoms() + bond->getIdx());
+
     int dirCode = 0;
     bool reverse = false;
-    Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode, reverse);
+    Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
+                                        reverse);
 
-    switch(bond->getBondType()) {
+    switch (bond->getBondType()) {
       case Bond::BondType::SINGLE:
         cdxbond->m_bondOrder = kCDXBondOrder_Single;
         break;
@@ -135,34 +138,37 @@ std::string MolToChemDraw(const ROMol&mol, CDXFormat format) {
         // unhandled
         break;
     }
-    
+
     cdxbond->Connects(nodes[bond->getBeginAtomIdx()],
                       nodes[bond->getEndAtomIdx()]);
-    
-    switch(dirCode) {
+
+    switch (dirCode) {
       case 1:
-        cdxbond->m_display = reverse ? kCDXBondDisplay_WedgedHashEnd : kCDXBondDisplay_WedgedHashBegin;
+        cdxbond->m_display = reverse ? kCDXBondDisplay_WedgedHashEnd
+                                     : kCDXBondDisplay_WedgedHashBegin;
         break;
       case 6:
-        cdxbond->m_display = reverse ? kCDXBondDisplay_WedgeEnd : kCDXBondDisplay_WedgeBegin;
+        cdxbond->m_display =
+            reverse ? kCDXBondDisplay_WedgeEnd : kCDXBondDisplay_WedgeBegin;
         break;
       default:
         break;
     }
-    
-    if(bond->getBondDir() == Bond::BondDir::EITHERDOUBLE ||
-       bond->getBondDir() == Bond::BondDir::UNKNOWN)
+
+    if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE ||
+        bond->getBondDir() == Bond::BondDir::UNKNOWN)
       cdxbond->m_display = kCDXBondDisplay_Wavy;
-    
+
     fragment->AddChild(cdxbond);
   }
-  
+
   document.AddChild(page);
-  document.m_colorTable.m_colors.clear(); // if this isn't empty something fails.
+  document.m_colorTable.m_colors
+      .clear();  // if this isn't empty something fails.
   std::ostringstream os;
   os << kCDXML_HeaderString;
-  XMLDataSink  ds (os);
-  document.XMLWrite (ds);
+  XMLDataSink ds(os);
+  document.XMLWrite(ds);
   return os.str();
 }
-}
+}  // namespace RDKit

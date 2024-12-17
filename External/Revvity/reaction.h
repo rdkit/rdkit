@@ -46,32 +46,32 @@ struct ReactionStepInfo {
   std::vector<int> ReactionStepReactants;
   std::vector<int> ReactionStepObjectsAboveArrow;
   std::vector<int> ReactionStepObjectsBelowArrow;
-  std::vector<std::pair<int,int>> ReactionStepAtomMap;
-  
+  std::vector<std::pair<int, int>> ReactionStepAtomMap;
+
   void set_reaction_data(
-      std::string type, std::string prop,
-      const std::vector<int> &frag_ids,
+      std::string type, std::string prop, const std::vector<int> &frag_ids,
       const std::map<unsigned int, size_t> &fragments,
       std::map<unsigned int, std::vector<int>> &grouped_fragments,
       const std::vector<std::unique_ptr<RWMol>> &mols) const;
-  
-  void set_reaction_step(size_t scheme_id,
-                         std::map<unsigned int, Atom *> &atoms,
-                         const std::map<unsigned int, size_t> &fragments,
-                         std::map<unsigned int, std::vector<int>> &grouped_fragments,
-                         const std::vector<std::unique_ptr<RWMol>> &mols) const;
+
+  void set_reaction_step(
+      size_t scheme_id, std::map<unsigned int, Atom *> &atoms,
+      const std::map<unsigned int, size_t> &fragments,
+      std::map<unsigned int, std::vector<int>> &grouped_fragments,
+      const std::vector<std::unique_ptr<RWMol>> &mols) const;
 };
 
 class ReactionInfo {
   std::vector<ReactionStepInfo> steps;
   unsigned int scheme_id;
-  
-public:
+
+ public:
   ReactionInfo(CDXReactionScheme &scheme);
 
-  void set_reaction_steps(std::map<unsigned int, std::vector<int>> &grouped_fragments,
-                          const std::vector<std::unique_ptr<RWMol>> &mols) const;
+  void set_reaction_steps(
+      std::map<unsigned int, std::vector<int>> &grouped_fragments,
+      const std::vector<std::unique_ptr<RWMol>> &mols) const;
 };
-}
+}  // namespace RDKit
 
 #endif

@@ -73,7 +73,7 @@ void visit_children(
     std::map<unsigned int, size_t>
         &fragment_lookup,  // fragment.id->molecule index
     std::map<unsigned int, std::vector<int>>
-        &grouped_fragments,            // grouped.id -> [fragment.id]
+        &grouped_fragments,              // grouped.id -> [fragment.id]
     std::vector<ReactionInfo> &schemes,  // reaction schemes found
     int &missing_frag_id,  // if we don't have a fragment id, start at -1 and
                            // decrement
@@ -84,12 +84,13 @@ void visit_children(
   molzip_params.label = MolzipLabel::AtomProperty;
   molzip_params.atomProperty = FUSE_LABEL;
   molzip_params.enforceValenceRules = false;
-  
+
   for (auto frag : node.ContainedObjects()) {
     CDXDatumID id = (CDXDatumID)frag.second->GetTag();
-    if (id == kCDXObj_Fragment ) {
+    if (id == kCDXObj_Fragment) {
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
-      if (!parse_fragment(*mol, (CDXFragment&)(*frag.second), ids, missing_frag_id)) {
+      if (!parse_fragment(*mol, (CDXFragment &)(*frag.second), ids,
+                          missing_frag_id)) {
         continue;
       }
       unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
@@ -186,20 +187,17 @@ void visit_children(
         MolOps::detectBondStereochemistry(*res);
       }
     } else if (id == kCDXObj_ReactionScheme) {  // get the reaction info
-      CDXReactionScheme &scheme = (CDXReactionScheme&)(*frag.second);
+      CDXReactionScheme &scheme = (CDXReactionScheme &)(*frag.second);
       schemes.emplace_back(scheme);
       /*
-      int scheme_id = scheme.GetObjectID();   //frag.second.template get<int>("<xmlattr>.id", -1);
-      for (auto &rxnNode : scheme.ContainedObjects()) {
-        CDXDatumID type_id = (CDXDatumID)rxnNode.second->GetTag();
-        if (type_id == kCDXObj_ReactionStep) {
-          CDXReactionStep &step = (CDXReactionStep&)(*rxnNode.second);
-          auto step_id = step.GetObjectID();
-          SchemeInfo scheme;
-          scheme.scheme_id = scheme_id;
-          scheme.step_id = step_id;
-          scheme.ReactionStepProducts = step.m_products;
-          scheme.ReactionStepReactants = step.m_reactants;
+      int scheme_id = scheme.GetObjectID();   //frag.second.template
+      get<int>("<xmlattr>.id", -1); for (auto &rxnNode :
+      scheme.ContainedObjects()) { CDXDatumID type_id =
+      (CDXDatumID)rxnNode.second->GetTag(); if (type_id == kCDXObj_ReactionStep)
+      { CDXReactionStep &step = (CDXReactionStep&)(*rxnNode.second); auto
+      step_id = step.GetObjectID(); SchemeInfo scheme; scheme.scheme_id =
+      scheme_id; scheme.step_id = step_id; scheme.ReactionStepProducts =
+      step.m_products; scheme.ReactionStepReactants = step.m_reactants;
           scheme.ReactionStepObjectsBelowArrow = step.m_objectsBelowArrow;
           scheme.ReactionStepAtomMap = step.m_aamap;
           schemes.push_back(scheme);
@@ -207,7 +205,7 @@ void visit_children(
       }
       */
     } else if (id == kCDXObj_Group) {
-      CDXGroup &group = (CDXGroup&)(*frag.second);
+      CDXGroup &group = (CDXGroup &)(*frag.second);
       group_id = frag.second->GetObjectID();
       visit_children(group, ids, mols, fragment_lookup, grouped_fragments,
                      schemes, missing_frag_id, bondLength, params, group_id);
@@ -220,39 +218,45 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   CDXMLParser parser;
   // populate tree structure pt
   std::string data = std::string(std::istreambuf_iterator<char>(inStream),
-                                  std::istreambuf_iterator<char>());
+                                 std::istreambuf_iterator<char>());
   const bool HaveAllXml = true;
-  if(XML_STATUS_OK != parser.XML_Parse(data.c_str(), static_cast<int>(data.size()), HaveAllXml)) {
+  if (XML_STATUS_OK != parser.XML_Parse(data.c_str(),
+                                        static_cast<int>(data.size()),
+                                        HaveAllXml)) {
     auto error = XML_GetErrorCode(parser);
     BOOST_LOG(rdErrorLog) << "Failed parsing XML with error code " << error;
     throw FileParseException("Bad Input File");
   }
-  
+
   std::unique_ptr<CDXDocument> document = parser.ReleaseDocument();
   if (!document) {
     // error
     return std::vector<std::unique_ptr<RWMol>>();
   }
-  std::map<unsigned int, Atom *> ids;  // id->Atom* in fragment (used for linkages)
+  std::map<unsigned int, Atom *>
+      ids;  // id->Atom* in fragment (used for linkages)
   std::vector<std::unique_ptr<RWMol>> mols;  // All molecules found in the doc
-  std::map<unsigned int, size_t> fragment_lookup;  // fragment.id->molecule index
-  std::map<unsigned int, std::vector<int>> grouped_fragments; // grouped.id -> [fragment.id]
+  std::map<unsigned int, size_t>
+      fragment_lookup;  // fragment.id->molecule index
+  std::map<unsigned int, std::vector<int>>
+      grouped_fragments;              // grouped.id -> [fragment.id]
   std::vector<ReactionInfo> schemes;  // reaction schemes found
   auto bondLength = document->m_bondLength;
-  
+
   int missing_frag_id = -1;
   for (auto node : document->ContainedObjects()) {
     CDXDatumID id = (CDXDatumID)node.second->GetTag();
     switch (id) {
       case kCDXObj_Page:
-        visit_children(*node.second, ids, mols, fragment_lookup, grouped_fragments,
-                       schemes, missing_frag_id, bondLength, params);
+        visit_children(*node.second, ids, mols, fragment_lookup,
+                       grouped_fragments, schemes, missing_frag_id, bondLength,
+                       params);
         break;
       default:
         break;
     }
   }
-  for(auto &scheme: schemes) {
+  for (auto &scheme : schemes) {
     scheme.set_reaction_steps(grouped_fragments, mols);
   }
   return mols;
@@ -260,32 +264,33 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
 }  // namespace
 
 namespace RDKit {
-std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(std::istream &inStream, const ChemDrawParserParams &params) {
+std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(
+    std::istream &inStream, const ChemDrawParserParams &params) {
   auto chemdrawmols = MolsFromCDXMLDataStream(inStream, params);
   std::vector<std::unique_ptr<ROMol>> mols;
   mols.reserve(chemdrawmols.size());
-  for(auto &mol : chemdrawmols) {
-    ROMol *m = (ROMol*)mol.release();
+  for (auto &mol : chemdrawmols) {
+    ROMol *m = (ROMol *)mol.release();
     mols.push_back(std::unique_ptr<ROMol>(m));
   }
   return mols;
 }
 
-std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(const std::string &filename, const ChemDrawParserParams &params) {
+std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(
+    const std::string &filename, const ChemDrawParserParams &params) {
   CDXMLParser parser;
   std::vector<std::unique_ptr<ROMol>> mols;
-  
+
   std::fstream chemdrawfile(filename);
   if (!chemdrawfile) {
     throw BadFileException(filename + " does not exist");
     return mols;
   }
   auto chemdrawmols = MolsFromCDXMLDataStream(chemdrawfile, params);
-  
-  
+
   mols.reserve(chemdrawmols.size());
-  for(auto &mol : chemdrawmols) {
-    ROMol *m = (ROMol*)mol.release();
+  for (auto &mol : chemdrawmols) {
+    ROMol *m = (ROMol *)mol.release();
     mols.push_back(std::unique_ptr<ROMol>(m));
   }
   return mols;

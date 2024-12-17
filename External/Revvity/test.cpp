@@ -45,7 +45,6 @@
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 using namespace RDKit;
 
-
 TEST_CASE("CDXML", "[unittest]") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
@@ -56,7 +55,6 @@ TEST_CASE("CDXML", "[unittest]") {
     auto smi = MolToSmiles(*mols[0]);
   }
 }
-
 
 std::string canon(const std::string &smi) {
   auto *m = SmilesToMol(smi);
@@ -547,7 +545,9 @@ TEST_CASE("CDXML Advanced") {
         "[B]",
         "*",
         "[C]",
-        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",  // this is may or may not be correct, but the structure is drawn incorrectly. There's a test below which fixes this
+        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
+  // this is may or may not be correct, but the structure is drawn incorrectly.
+  There's a test below which fixes this
         "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
         "Cc1ccc2ccc(=O)ccn12",
         "Cc1cccn1[C@H](C)C=O",
@@ -761,7 +761,7 @@ TEST_CASE("CDXML Advanced") {
       auto mols = ChemDrawToMols(fname);
       CHECK(0);
     } catch (FileParseException &e) {
-      //CHECK(std::string(e.what()) == "expected > at line: 373");
+      // CHECK(std::string(e.what()) == "expected > at line: 373");
     }
   }
   SECTION("Lots of stereo") {
@@ -902,7 +902,8 @@ TEST_CASE("atropisomers") {
 
   SECTION("atropisomer") {
     {
-      // XXX the rounding here is a little different from the original RDKit CDXML parser 0.64->0.39999
+      // XXX the rounding here is a little different from the original RDKit
+      // CDXML parser 0.64->0.39999
       //  This is something we should probably figure out.
       std::vector<std::string> filenames = {"atrop1.cdxml"};
       std::vector<std::string> expected = {
@@ -1258,10 +1259,11 @@ TEST_CASE("Github #7501 - dative bonds") {
 
 TEST_CASE("Output CDXML") {
   SECTION("basic") {
-   auto mol = "N#Cc1ccc(cc1Cl)O[C@@H]1CC[C@H](CC1)NC(=O)c1ccc(nn1)N1CCC(CC1)CN1CCN(CC1)c1cc2C(=O)N(C(=O)c2cc1F)C1CCC(=O)NC1=O"_smiles;
-    //auto mol = "[C@H](I)(F)Br"_smiles;
-    //auto res = MolToMolBlock(*mol);
-    //mol->debugMol(std::cerr);
+    auto mol =
+        "N#Cc1ccc(cc1Cl)O[C@@H]1CC[C@H](CC1)NC(=O)c1ccc(nn1)N1CCC(CC1)CN1CCN(CC1)c1cc2C(=O)N(C(=O)c2cc1F)C1CCC(=O)NC1=O"_smiles;
+    // auto mol = "[C@H](I)(F)Br"_smiles;
+    // auto res = MolToMolBlock(*mol);
+    // mol->debugMol(std::cerr);
     std::string output = MolToChemDraw(*mol);
     std::stringstream cdxml;
     cdxml << output;

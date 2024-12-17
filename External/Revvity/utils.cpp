@@ -4,22 +4,37 @@ namespace RDKit {
 
 std::string NodeType(CDXNodeType nodetype) {
   switch (nodetype) {
-    case kCDXNodeType_Unspecified: return "Unspecified";
-    case kCDXNodeType_Element: return "Element";
-    case kCDXNodeType_ElementList: return "ElementList";
-    case kCDXNodeType_ElementListNickname: return "ElementListNickname";
-    case kCDXNodeType_Nickname: return "Nickname";
-    case kCDXNodeType_Fragment: return "Fragment";
-    case kCDXNodeType_Formula: return "Forumla";
-    case kCDXNodeType_GenericNickname: return "GenericNickname";
-    case kCDXNodeType_AnonymousAlternativeGroup: return "Anonymous Alternative Group";
-    case kCDXNodeType_NamedAlternativeGroup: return "Named Alternative Group";
-    case kCDXNodeType_MultiAttachment: return "MultiAttachment";
-    case kCDXNodeType_VariableAttachment: return "Variable Attachment";
-    case kCDXNodeType_ExternalConnectionPoint: return "ExternalConnectionPoint";
-    case kCDXNodeType_LinkNode: return "LinkNode";
-    case kCDXNodeType_Monomer: return "Monomer";
-      default:
+    case kCDXNodeType_Unspecified:
+      return "Unspecified";
+    case kCDXNodeType_Element:
+      return "Element";
+    case kCDXNodeType_ElementList:
+      return "ElementList";
+    case kCDXNodeType_ElementListNickname:
+      return "ElementListNickname";
+    case kCDXNodeType_Nickname:
+      return "Nickname";
+    case kCDXNodeType_Fragment:
+      return "Fragment";
+    case kCDXNodeType_Formula:
+      return "Forumla";
+    case kCDXNodeType_GenericNickname:
+      return "GenericNickname";
+    case kCDXNodeType_AnonymousAlternativeGroup:
+      return "Anonymous Alternative Group";
+    case kCDXNodeType_NamedAlternativeGroup:
+      return "Named Alternative Group";
+    case kCDXNodeType_MultiAttachment:
+      return "MultiAttachment";
+    case kCDXNodeType_VariableAttachment:
+      return "Variable Attachment";
+    case kCDXNodeType_ExternalConnectionPoint:
+      return "ExternalConnectionPoint";
+    case kCDXNodeType_LinkNode:
+      return "LinkNode";
+    case kCDXNodeType_Monomer:
+      return "Monomer";
+    default:
       return "?";
   }
 }
@@ -64,5 +79,4 @@ void set_fuse_label(Atom *atm, unsigned int idx) {
   }
 }
 
-
-}
+}  // namespace RDKit

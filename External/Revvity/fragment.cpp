@@ -65,22 +65,22 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment,
     switch (id) {
       case kCDXObj_Node: {
         CDXNode &node = (CDXNode &)(*child.second);
-        if(!parse_node(mol, frag_id, node, ids, sgroups,
-                                    missing_frag_id, external_attachment)) {
+        if (!parse_node(mol, frag_id, node, ids, sgroups, missing_frag_id,
+                        external_attachment)) {
           skip_fragment = true;
         }
         break;
-        }
+      }
       case kCDXObj_Bond: {
         CDXBond &bond = (CDXBond &)(*child.second);
-        if(!parse_bond(mol, frag_id, bond, ids)) {
-          skip_fragment=true;
+        if (!parse_bond(mol, frag_id, bond, ids)) {
+          skip_fragment = true;
           break;
         }
       }
     }
   }
-  
+
   // Add the stereo groups
   if (!sgroups.empty()) {
     std::vector<StereoGroup> stereo_groups;
@@ -91,13 +91,13 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment,
         gId = sgroup.second.sgroup;
       }
       std::vector<Bond *> newBonds;
-      stereo_groups.emplace_back(sgroup.second.grouptype,
-                                 sgroup.second.atoms, newBonds, gId);
+      stereo_groups.emplace_back(sgroup.second.grouptype, sgroup.second.atoms,
+                                 newBonds, gId);
     }
     mol.setStereoGroups(std::move(stereo_groups));
   }
-  
+
   return !skip_fragment;
 }
 
-}
+}  // namespace RDKit

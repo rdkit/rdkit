@@ -33,142 +33,143 @@
 
 namespace RDKit {
 
-bool parse_bond(RWMol &mol,
-                unsigned int fragment_id,
-                CDXBond &bond,
+bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
                 std::map<unsigned int, Atom *> &ids) {
   int bond_id = bond.GetObjectID();
   Atom *start_atom = ids[bond.m_beginNodeID];
   Atom *end_atom = ids[bond.m_endNodeID];
-  if ( (!start_atom || !end_atom) ) {
+  if ((!start_atom || !end_atom)) {
     BOOST_LOG(rdErrorLog) << "Bad bond in CDXML skipping fragment "
-			  << fragment_id << "..." << std::endl;
+                          << fragment_id << "..." << std::endl;
     return false;
   }
   Bond::BondType order = Bond::UNSPECIFIED;
   std::unique_ptr<QueryBond> qb;
   switch (bond.m_bondOrder) {
-  case kCDXBondOrder_Single:
-    order = Bond::BondType::SINGLE;
-    break;
-  case kCDXBondOrder_Double:
-    order = Bond::BondType::DOUBLE;
-    break;
-  case kCDXBondOrder_Triple:
-    order = Bond::BondType::TRIPLE;
-    break;
-  case kCDXBondOrder_Quadruple:
-    order = Bond::BondType::QUADRUPLE;
-    break;
-  case kCDXBondOrder_Quintuple:
-    order = Bond::BondType::QUINTUPLE;
-    break;
-  case kCDXBondOrder_Sextuple:
-    order = Bond::BondType::HEXTUPLE;
-    break;
-  case kCDXBondOrder_OneHalf:
-    order = Bond::BondType::AROMATIC;
-    break;
-  case kCDXBondOrder_TwoHalf:
-    order = Bond::BondType::TWOANDAHALF;
-    break;
-  case kCDXBondOrder_ThreeHalf:
-    order = Bond::BondType::THREEANDAHALF;
-    break;
-  case kCDXBondOrder_FourHalf:
-    order = Bond::BondType::FOURANDAHALF;
-    break;
-  case kCDXBondOrder_FiveHalf:
-    order = Bond::BondType::FIVEANDAHALF;
-    break;
-  case kCDXBondOrder_Dative:
-    order = Bond::BondType::DATIVE;
-    break;
-  case kCDXBondOrder_Ionic:
-    order = Bond::BondType::IONIC;
-    break;
-  case kCDXBondOrder_SingleOrDouble: {
-    order = Bond::BondType::SINGLE;
-    qb = std::make_unique<QueryBond>();
-    qb->setQuery(makeSingleOrDoubleBondQuery());
-    break;
-  }
-  case kCDXBondOrder_SingleOrAromatic: {
-    order = Bond::BondType::SINGLE;
-    qb = std::make_unique<QueryBond>();
-    qb->setQuery(makeSingleOrAromaticBondQuery());
-    break;
-  }
-  case kCDXBondOrder_DoubleOrAromatic: {
-    order = Bond::BondType::DOUBLE;
-    qb = std::make_unique<QueryBond>();
-    qb->setQuery(makeDoubleOrAromaticBondQuery());
-    break;
-  }
-  case kCDXBondOrder_Any: {
-    qb = std::make_unique<QueryBond>();
-    qb->setQuery(makeBondNullQuery());
-    break;
-  }
-  case kCDXBondOrder_Hydrogen:
-      BOOST_LOG(rdErrorLog) << "Unhandled bond order Hydrogen, skipping fragment" << std::endl;
+    case kCDXBondOrder_Single:
+      order = Bond::BondType::SINGLE;
+      break;
+    case kCDXBondOrder_Double:
+      order = Bond::BondType::DOUBLE;
+      break;
+    case kCDXBondOrder_Triple:
+      order = Bond::BondType::TRIPLE;
+      break;
+    case kCDXBondOrder_Quadruple:
+      order = Bond::BondType::QUADRUPLE;
+      break;
+    case kCDXBondOrder_Quintuple:
+      order = Bond::BondType::QUINTUPLE;
+      break;
+    case kCDXBondOrder_Sextuple:
+      order = Bond::BondType::HEXTUPLE;
+      break;
+    case kCDXBondOrder_OneHalf:
+      order = Bond::BondType::AROMATIC;
+      break;
+    case kCDXBondOrder_TwoHalf:
+      order = Bond::BondType::TWOANDAHALF;
+      break;
+    case kCDXBondOrder_ThreeHalf:
+      order = Bond::BondType::THREEANDAHALF;
+      break;
+    case kCDXBondOrder_FourHalf:
+      order = Bond::BondType::FOURANDAHALF;
+      break;
+    case kCDXBondOrder_FiveHalf:
+      order = Bond::BondType::FIVEANDAHALF;
+      break;
+    case kCDXBondOrder_Dative:
+      order = Bond::BondType::DATIVE;
+      break;
+    case kCDXBondOrder_Ionic:
+      order = Bond::BondType::IONIC;
+      break;
+    case kCDXBondOrder_SingleOrDouble: {
+      order = Bond::BondType::SINGLE;
+      qb = std::make_unique<QueryBond>();
+      qb->setQuery(makeSingleOrDoubleBondQuery());
+      break;
+    }
+    case kCDXBondOrder_SingleOrAromatic: {
+      order = Bond::BondType::SINGLE;
+      qb = std::make_unique<QueryBond>();
+      qb->setQuery(makeSingleOrAromaticBondQuery());
+      break;
+    }
+    case kCDXBondOrder_DoubleOrAromatic: {
+      order = Bond::BondType::DOUBLE;
+      qb = std::make_unique<QueryBond>();
+      qb->setQuery(makeDoubleOrAromaticBondQuery());
+      break;
+    }
+    case kCDXBondOrder_Any: {
+      qb = std::make_unique<QueryBond>();
+      qb->setQuery(makeBondNullQuery());
+      break;
+    }
+    case kCDXBondOrder_Hydrogen:
+      BOOST_LOG(rdErrorLog)
+          << "Unhandled bond order Hydrogen, skipping fragment" << std::endl;
       return false;
-  case kCDXBondOrder_ThreeCenter:
-      BOOST_LOG(rdErrorLog) << "Unhandled bond order ThreeCenter, skipping fragment" << std::endl;
+    case kCDXBondOrder_ThreeCenter:
+      BOOST_LOG(rdErrorLog)
+          << "Unhandled bond order ThreeCenter, skipping fragment" << std::endl;
       return false;
-  case kCDXBondOrder_Half:
-      BOOST_LOG(rdErrorLog) << "Unhandled bond order Half, skipping fragment" << std::endl;
+    case kCDXBondOrder_Half:
+      BOOST_LOG(rdErrorLog)
+          << "Unhandled bond order Half, skipping fragment" << std::endl;
       return false;
-  default:
+    default:
       BOOST_LOG(rdErrorLog) << "Bad bond, skipping fragment" << std::endl;
       return false;
   };
-  
+
   // The RDKit only supports one direction for wedges so
   //  normalize it
   bool swap = false;
   switch (bond.m_display) {
-  case kCDXBondDisplay_Solid:
-    break;
-  case kCDXBondDisplay_Dash:
-    break;
-  case kCDXBondDisplay_Hash:
-    break;
-  case kCDXBondDisplay_WedgedHashBegin:
-    break;
-  case kCDXBondDisplay_WedgedHashEnd:
-    swap = true;
-    break;
-  case kCDXBondDisplay_Bold:
-    break;
-  case kCDXBondDisplay_WedgeBegin:
-    break;
-  case kCDXBondDisplay_WedgeEnd:
-    swap = true;
-    break;
-  case kCDXBondDisplay_Wavy:
-    break;
-  case kCDXBondDisplay_HollowWedgeBegin:
-    break;
-  case kCDXBondDisplay_HollowWedgeEnd:
-    break;
-  case kCDXBondDisplay_WavyWedgeBegin:
-    break;
-  case kCDXBondDisplay_WavyWedgeEnd:
-    break;
-  case kCDXBondDisplay_Dot:
-    break;
-  case kCDXBondDisplay_DashDot:
-    break;
-  case kCDXBondDisplay_DottedHydrogen:
-    break;
+    case kCDXBondDisplay_Solid:
+      break;
+    case kCDXBondDisplay_Dash:
+      break;
+    case kCDXBondDisplay_Hash:
+      break;
+    case kCDXBondDisplay_WedgedHashBegin:
+      break;
+    case kCDXBondDisplay_WedgedHashEnd:
+      swap = true;
+      break;
+    case kCDXBondDisplay_Bold:
+      break;
+    case kCDXBondDisplay_WedgeBegin:
+      break;
+    case kCDXBondDisplay_WedgeEnd:
+      swap = true;
+      break;
+    case kCDXBondDisplay_Wavy:
+      break;
+    case kCDXBondDisplay_HollowWedgeBegin:
+      break;
+    case kCDXBondDisplay_HollowWedgeEnd:
+      break;
+    case kCDXBondDisplay_WavyWedgeBegin:
+      break;
+    case kCDXBondDisplay_WavyWedgeEnd:
+      break;
+    case kCDXBondDisplay_Dot:
+      break;
+    case kCDXBondDisplay_DashDot:
+      break;
+    case kCDXBondDisplay_DottedHydrogen:
+      break;
   }
-  
+
   unsigned int bondIdx = 0;
   auto startIdx = start_atom->getIdx();
   auto endIdx = end_atom->getIdx();
   if (swap) std::swap(startIdx, endIdx);
-  
+
   if (qb) {
     qb->setBeginAtomIdx(startIdx);
     qb->setEndAtomIdx(endIdx);
@@ -176,7 +177,7 @@ bool parse_bond(RWMol &mol,
   } else {
     bondIdx = mol.addBond(startIdx, endIdx, order) - 1;
   }
-  
+
   Bond *bnd = mol.getBondWithIdx(bondIdx);
   if (order == Bond::BondType::AROMATIC) {
     bnd->setIsAromatic(true);
@@ -186,37 +187,37 @@ bool parse_bond(RWMol &mol,
   bnd->setProp(CDX_BOND_ID, bondIdx);
 
   switch (bond.m_display) {
-  case kCDXBondDisplay_WedgedHashBegin:
-  case kCDXBondDisplay_WedgedHashEnd: {
-    bnd->setBondDir(Bond::BondDir::BEGINDASH);
-    bnd->setProp(common_properties::_MolFileBondCfg, 3);
-  } break;
-  case kCDXBondDisplay_WedgeBegin:
-  case kCDXBondDisplay_WedgeEnd: {
-    bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
-    bnd->setProp(common_properties::_MolFileBondCfg, 1);
-  } break;
-  case kCDXBondDisplay_Wavy: {
-    switch (order) {
-    case Bond::BondType::SINGLE:
-      bnd->setBondDir(Bond::BondDir::UNKNOWN);
-      bnd->setProp(common_properties::_MolFileBondCfg, 2);
+    case kCDXBondDisplay_WedgedHashBegin:
+    case kCDXBondDisplay_WedgedHashEnd: {
+      bnd->setBondDir(Bond::BondDir::BEGINDASH);
+      bnd->setProp(common_properties::_MolFileBondCfg, 3);
+    } break;
+    case kCDXBondDisplay_WedgeBegin:
+    case kCDXBondDisplay_WedgeEnd: {
+      bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
+      bnd->setProp(common_properties::_MolFileBondCfg, 1);
+    } break;
+    case kCDXBondDisplay_Wavy: {
+      switch (order) {
+        case Bond::BondType::SINGLE:
+          bnd->setBondDir(Bond::BondDir::UNKNOWN);
+          bnd->setProp(common_properties::_MolFileBondCfg, 2);
+          break;
+        case Bond::BondType::DOUBLE:
+          bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
+          bnd->setStereo(Bond::STEREOANY);
+          break;
+        default:
+          BOOST_LOG(rdWarningLog)
+              << "ignoring Wavy bond set on a non double bond id: " << bond_id
+              << std::endl;
+      }
       break;
-    case Bond::BondType::DOUBLE:
-      bnd->setBondDir(Bond::BondDir::EITHERDOUBLE);
-      bnd->setStereo(Bond::STEREOANY);
-      break;
-    default:
-      BOOST_LOG(rdWarningLog)
-	<< "ignoring Wavy bond set on a non double bond id: "
-	<< bond_id << std::endl;
+
+      default:
+        break;
     }
-    break;
-          
-    default:
-      break;
-  }
   }
   return true;
 }
-}
+}  // namespace RDKit

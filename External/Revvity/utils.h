@@ -38,7 +38,6 @@
 #include <GraphMol/QueryOps.h>
 #include <CDXStdObjects.h>
 
-
 namespace RDKit {
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
@@ -61,11 +60,11 @@ std::string NodeType(CDXNodeType nodetype);
 // Scale the bonds to the targetBondLength.  If bondLength is zero
 //  use the average bond length in the molecule
 void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
-		  double bondLength);
+                double bondLength);
 
 // Indicate which atoms should be fused together from various
 //  fragments in the ChemDraw file
-  
+
 unsigned int get_fuse_label(Atom *atm);
 void set_fuse_label(Atom *atm, unsigned int idx);
 
@@ -93,6 +92,6 @@ struct StereoGroupInfo {
   std::vector<Atom *> atoms;
 };
 
-}
+}  // namespace RDKit
 
 #endif

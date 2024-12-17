@@ -34,19 +34,16 @@
 
 namespace RDKit {
 
-bool parse_node(RWMol &mol,
-                unsigned int fragment_id,
-		CDXNode &node,
-		std::map<unsigned int, Atom *> &ids,
-		std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
-		int &missing_frag_id,
-		int external_attachment) {
+bool parse_node(
+    RWMol &mol, unsigned int fragment_id, CDXNode &node,
+    std::map<unsigned int, Atom *> &ids,
+    std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
+    int &missing_frag_id, int external_attachment) {
   int atom_id = node.GetObjectID();
   int elemno = node.m_elementNum;  // default to carbon
   // UINT16 max is not addigned?
-  int num_hydrogens = node.m_numHydrogens == kNumHydrogenUnspecified
-    ? 0
-    : node.m_numHydrogens;
+  int num_hydrogens =
+      node.m_numHydrogens == kNumHydrogenUnspecified ? 0 : node.m_numHydrogens;
   bool explicitHs = node.m_numHydrogens != kNumHydrogenUnspecified;
   int charge = node.m_charge;
   int atommap = 0;
@@ -61,93 +58,94 @@ bool parse_node(RWMol &mol,
   std::cerr << NodeType(node.m_nodeType) << std::endl;
 #endif
   switch (node.m_nodeType) {
-    
-  case kCDXNodeType_Element: {
-    break;
-  }
-  case kCDXNodeType_ElementList: {
-    if (node.m_elementList) {
-      elementlist = *node.m_elementList;
-      query_label = "ElementList";
-    }
-    break;
-  }
-  case kCDXNodeType_Nickname:
-  case kCDXNodeType_Fragment: {
-    elemno = 0;
-    atommap = atom_id;
-    break;
-  }
-  case kCDXNodeType_ExternalConnectionPoint: {
-    if (external_attachment <= 0) {
-      BOOST_LOG(rdErrorLog)
-	<< "External Connection Point is not set skipping fragment";
-      return false;
+    case kCDXNodeType_Element: {
       break;
     }
-    elemno = 0;
-    atommap = external_attachment;
-    mergeparent = external_attachment;
-    break;
-  }
-  case kCDXNodeType_GenericNickname: {
-    if (node.m_genericNickname.size()) {
-      switch(node.m_genericNickname[0]) {
-      case 'R': {
-	for(auto &child : node.ContainedObjects()) {
-	  if(child.second->GetTag() == kCDXObj_Text) {
-	    const std::string & text = ((CDXText*)child.second)->GetText().str();
-                        
-	    //std::string &legacyText = (CDXText*)(child.second)->m_legacyText;
-	    rgroup_num = text.size() > 1 ? stoi(text.substr(1)) : 0;
-	  }
-	}
+    case kCDXNodeType_ElementList: {
+      if (node.m_elementList) {
+        elementlist = *node.m_elementList;
+        query_label = "ElementList";
       }
-      case 'A':
-      case 'Q': {
-	elemno = 0;
-	query_label = node.m_genericNickname;
-      }
-	break;
-      default:
-	std::cerr << "Unhandled generic nickname: " << node.m_genericNickname << std::endl;
-      }
+      break;
     }
-    break;
-  }
-  case kCDXNodeType_Unspecified:
-    break;
-  case kCDXNodeType_ElementListNickname:
-    break;
-  case kCDXNodeType_Formula:
-    break;
-  case kCDXNodeType_AnonymousAlternativeGroup:
-    break;
-  case kCDXNodeType_NamedAlternativeGroup:
-    break;
-  case kCDXNodeType_MultiAttachment:
-    break;
-  case kCDXNodeType_VariableAttachment:
-    break;
-  case kCDXNodeType_LinkNode:
-    break;
-  case kCDXNodeType_Monomer:
-    break;
+    case kCDXNodeType_Nickname:
+    case kCDXNodeType_Fragment: {
+      elemno = 0;
+      atommap = atom_id;
+      break;
+    }
+    case kCDXNodeType_ExternalConnectionPoint: {
+      if (external_attachment <= 0) {
+        BOOST_LOG(rdErrorLog)
+            << "External Connection Point is not set skipping fragment";
+        return false;
+        break;
+      }
+      elemno = 0;
+      atommap = external_attachment;
+      mergeparent = external_attachment;
+      break;
+    }
+    case kCDXNodeType_GenericNickname: {
+      if (node.m_genericNickname.size()) {
+        switch (node.m_genericNickname[0]) {
+          case 'R': {
+            for (auto &child : node.ContainedObjects()) {
+              if (child.second->GetTag() == kCDXObj_Text) {
+                const std::string &text =
+                    ((CDXText *)child.second)->GetText().str();
+
+                // std::string &legacyText =
+                // (CDXText*)(child.second)->m_legacyText;
+                rgroup_num = text.size() > 1 ? stoi(text.substr(1)) : 0;
+              }
+            }
+          }
+          case 'A':
+          case 'Q': {
+            elemno = 0;
+            query_label = node.m_genericNickname;
+          } break;
+          default:
+            std::cerr << "Unhandled generic nickname: "
+                      << node.m_genericNickname << std::endl;
+        }
+      }
+      break;
+    }
+    case kCDXNodeType_Unspecified:
+      break;
+    case kCDXNodeType_ElementListNickname:
+      break;
+    case kCDXNodeType_Formula:
+      break;
+    case kCDXNodeType_AnonymousAlternativeGroup:
+      break;
+    case kCDXNodeType_NamedAlternativeGroup:
+      break;
+    case kCDXNodeType_MultiAttachment:
+      break;
+    case kCDXNodeType_VariableAttachment:
+      break;
+    case kCDXNodeType_LinkNode:
+      break;
+    case kCDXNodeType_Monomer:
+      break;
   }
 
   StereoGroupType grouptype = StereoGroupType::STEREO_ABSOLUTE;
   switch (node.m_enhancedStereoType) {
-  case kCDXEnhancedStereo_Absolute:
-    grouptype = StereoGroupType::STEREO_ABSOLUTE;
-    break;
-  case kCDXEnhancedStereo_And:
-    grouptype = StereoGroupType::STEREO_AND;
-    break;
-  case kCDXEnhancedStereo_Or:
-    grouptype = StereoGroupType::STEREO_OR;
-    break;
-  default:
-    break;
+    case kCDXEnhancedStereo_Absolute:
+      grouptype = StereoGroupType::STEREO_ABSOLUTE;
+      break;
+    case kCDXEnhancedStereo_And:
+      grouptype = StereoGroupType::STEREO_AND;
+      break;
+    case kCDXEnhancedStereo_Or:
+      grouptype = StereoGroupType::STEREO_OR;
+      break;
+    default:
+      break;
   }
 
   CHECK_INVARIANT(atom_id != -1, "Uninitialized atom id in cdxml.");
@@ -185,17 +183,17 @@ bool parse_node(RWMol &mol,
       rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);
     } else if (query_label == "ElementList") {
       if (!elementlist.size()) {
-	BOOST_LOG(rdWarningLog)
-	  << "ElementList is empty, ignoring..." << std::endl;
+        BOOST_LOG(rdWarningLog)
+            << "ElementList is empty, ignoring..." << std::endl;
       } else {
-	auto *q = new ATOM_OR_QUERY;
-	q->setDescription("AtomOr");
-	for (auto atNum : elementlist) {
-	  q->addChild(QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(
-							     makeAtomNumQuery(atNum)));
-	}
-	rd_atom = addquery(q, query_label, mol, idx);
-	rd_atom->setAtomicNum(elementlist.front());
+        auto *q = new ATOM_OR_QUERY;
+        q->setDescription("AtomOr");
+        for (auto atNum : elementlist) {
+          q->addChild(
+              QueryAtom::QUERYATOM_QUERY::CHILD_TYPE(makeAtomNumQuery(atNum)));
+        }
+        rd_atom = addquery(q, query_label, mol, idx);
+        rd_atom->setAtomicNum(elementlist.front());
       }
     } else {
       rd_atom->setProp(common_properties::atomLabel, query_label);
@@ -216,7 +214,7 @@ bool parse_node(RWMol &mol,
     for (auto fragment : node.ContainedObjects()) {
       if (fragment.second->GetTag() == kCDXObj_Fragment) {
         if (!parse_fragment(mol, (CDXFragment &)(*fragment.second), ids,
-                missing_frag_id, atom_id)) {
+                            missing_frag_id, atom_id)) {
           return false;
         }
         mol.setProp<bool>(NEEDS_FUSE, true);
@@ -224,9 +222,9 @@ bool parse_node(RWMol &mol,
         // set
         //  it to the fragments
         mol.setProp(CDXML_FRAG_ID, fragment_id);
-        }
       }
     }
+  }
   return true;
 }
-}
+}  // namespace RDKit
