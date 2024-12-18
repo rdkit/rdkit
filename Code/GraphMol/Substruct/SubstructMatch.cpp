@@ -246,7 +246,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     }
     const Atom *mAt = d_mol.getAtomWithIdx(m_c[i]);
     if (!detail::hasChiralLabel(mAt)) {
-      if (d_params.specifiedQueryChiralityMatchesUnspecifiedChirality) {
+      if (d_params.specifiedStereoQueryMatchesUnspecified) {
         continue;
       }
       return false;
@@ -334,7 +334,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       continue;
     }
 
-    if (!d_params.specifiedQueryChiralityMatchesUnspecifiedChirality &&
+    if (!d_params.specifiedStereoQueryMatchesUnspecified &&
         mBnd->getStereo() <= Bond::STEREOANY) {
       return false;
     }
@@ -402,7 +402,7 @@ class AtomLabelFunctor {
       if (qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
         const Atom *mAt = d_mol.getAtomWithIdx(j);
-        if (!d_params.specifiedQueryChiralityMatchesUnspecifiedChirality &&
+        if (!d_params.specifiedStereoQueryMatchesUnspecified &&
             mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
             mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
           return false;
@@ -431,7 +431,7 @@ class BondLabelFunctor {
           qBnd->getStereo() > Bond::STEREOANY) {
         const Bond *mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
-            !d_params.specifiedQueryChiralityMatchesUnspecifiedChirality &&
+            !d_params.specifiedStereoQueryMatchesUnspecified &&
             mBnd->getStereo() <= Bond::STEREOANY) {
           return false;
         }

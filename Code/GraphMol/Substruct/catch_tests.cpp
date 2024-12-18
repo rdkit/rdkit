@@ -754,7 +754,7 @@ TEST_CASE("specified query matches unspecified atom") {
     CHECK(SubstructMatch(*m2, *q, ps).empty());
     CHECK(SubstructMatch(*m3, *q, ps).empty());
 
-    ps.specifiedQueryChiralityMatchesUnspecifiedChirality = true;
+    ps.specifiedStereoQueryMatchesUnspecified = true;
     CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
     CHECK(SubstructMatch(*m2, *q, ps).size() == 1);
     CHECK(SubstructMatch(*m3, *q, ps).empty());
@@ -776,7 +776,7 @@ TEST_CASE("specified query matches unspecified atom") {
     CHECK(SubstructMatch(*m2, *q, ps).empty());
     CHECK(SubstructMatch(*m3, *q, ps).empty());
 
-    ps.specifiedQueryChiralityMatchesUnspecifiedChirality = true;
+    ps.specifiedStereoQueryMatchesUnspecified = true;
     std::cerr << "m1" << std::endl;
     CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
     std::cerr << "m2" << std::endl;

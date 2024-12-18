@@ -68,9 +68,9 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   unsigned int maxRecursiveMatches =
       1000;  //!< maximum number of matches that the recursive substructure
   //!< matching should return
-  bool specifiedQueryChiralityMatchesUnspecifiedChirality =
-      false;  //!< If set, query atoms and bonds with specified chirality will
-              //!< match atoms and bonds with unspecified chirality
+  bool specifiedStereoQueryMatchesUnspecified =
+      false;  //!< If set, query atoms and bonds with specified stereochemistry
+              //!< will match atoms and bonds with unspecified stereochemistry
   SubstructMatchParameters() {}
 };
 

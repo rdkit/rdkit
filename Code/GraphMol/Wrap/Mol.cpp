@@ -341,10 +341,10 @@ struct mol_wrapper {
             "atomProperties", &RDKit::SubstructMatchParameters::atomProperties,
             "atom properties that must be equivalent in order to match.")
         .def_readwrite(
-            "specifiedQueryChiralityMatchesUnspecifiedChirality",
+            "specifiedStereoQueryMatchesUnspecified",
             &RDKit::SubstructMatchParameters::
-                specifiedQueryChiralityMatchesUnspecifiedChirality,
-            "If set, query atoms and bonds with specified chirality will match atoms and bonds with unspecified chirality")
+                specifiedStereoQueryMatchesUnspecified,
+            "If set, query atoms and bonds with specified stereochemistry will match atoms and bonds with unspecified stereochemistry.")
         .def("setExtraFinalCheck", setSubstructMatchFinalCheck,
              python::with_custodian_and_ward<1, 2>(),
              python::args("self", "func"),
