@@ -2334,6 +2334,6 @@ M  END)CTAB"_ctab;
   REQUIRE(m);
   RDDepict::normalizeDepiction(*m, -1, 0);
   auto ctd = MolTransforms::computeCentroid(m->getConformer());
-  CHECK_THAT(ctd.x, Catch::WithinAbs(0, 1e-4));
-  CHECK_THAT(ctd.y, Catch::WithinAbs(0, 1e-4));
+  CHECK_THAT(ctd.x, Catch::Matchers::WithinAbs(0.0, 1.0e-4));
+  CHECK_THAT(ctd.y, Catch::Matchers::WithinAbs(0.0, 1.0e-4));
 }
