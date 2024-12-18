@@ -150,7 +150,7 @@ std::string getV3000Line(std::istream *inStream, unsigned int &line) {
   std::string res;
   ++line;
   auto inl = getLine(inStream);
-  std::string_view tempStr = inl;  
+  std::string_view tempStr = inl;
   if (tempStr.size() < 7 || tempStr.substr(0, 7) != "M  V30 ") {
     std::ostringstream errout;
     errout << "Line " << line << " does not start with 'M  V30 '" << std::endl;
