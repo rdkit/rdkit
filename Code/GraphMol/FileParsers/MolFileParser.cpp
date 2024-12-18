@@ -150,18 +150,7 @@ std::string getV3000Line(std::istream *inStream, unsigned int &line) {
   std::string res;
   ++line;
   auto inl = getLine(inStream);
-  std::string_view tempStr = inl;
-
-  // Reject any non-ascii characters.
-  if (std::any_of(tempStr.begin(), tempStr.end(), [](char c) {
-    return static_cast<unsigned char>(c) > 127;
-    })) {
-    std::ostringstream errout;
-    errout << "Invalid character found in data stream when parsing V3000 line: "
-           << tempStr;
-    throw MolFileUnhandledFeatureException(errout.str());
-  }
-  
+  std::string_view tempStr = inl;  
   if (tempStr.size() < 7 || tempStr.substr(0, 7) != "M  V30 ") {
     std::ostringstream errout;
     errout << "Line " << line << " does not start with 'M  V30 '" << std::endl;
