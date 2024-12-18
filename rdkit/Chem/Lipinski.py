@@ -84,7 +84,9 @@ _bulkConvert = ("CalcFractionCSP3", "CalcNumAromaticRings", "CalcNumSaturatedRin
                 "CalcNumAromaticHeterocycles", "CalcNumAromaticCarbocycles",
                 "CalcNumSaturatedHeterocycles", "CalcNumSaturatedCarbocycles",
                 "CalcNumAliphaticRings", "CalcNumAliphaticHeterocycles",
-                "CalcNumAliphaticCarbocycles")
+                "CalcNumAliphaticCarbocycles", "CalcNumHeterocycles", "CalcNumBridgeheadAtoms",
+                "CalcNumAmideBonds", "CalcNumAtomStereoCenters", "CalcNumHeterocycles",
+                "CalcNumUnspecifiedAtomStereoCenters", "CalcNumSpiroAtoms", "CalcPhi")
 for txt in _bulkConvert:
   _cfn = getattr(rdMolDescriptors, txt)
   _fn = lambda x, y=_cfn: y(x)
