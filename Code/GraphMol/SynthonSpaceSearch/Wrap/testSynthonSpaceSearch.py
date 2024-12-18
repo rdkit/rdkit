@@ -74,6 +74,15 @@ class TestCase(unittest.TestCase):
     with tempfile.NamedTemporaryFile() as tmp:
       synthonspace.WriteEnumeratedFile(tmp.name)
     
+  def testSynthonError(self):
+    fName = self.sssDir / "amide_space_error.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
+
+    fName = self.sssDir / "synthon_error.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
+    
     
 if __name__ == "__main__":
   unittest.main()
