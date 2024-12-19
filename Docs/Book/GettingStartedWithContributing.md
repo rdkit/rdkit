@@ -266,6 +266,35 @@ The RDKit docs support inclusion of Sphinx doctests to allow the result of a cod
   .. image:: pathtoimage/name.png
   ```
 
+### How to Build RDKit Documentation Locally
+
+To preview your changes to the RDKit documentation, build the docs locally. First set up your development environment by following the instructions in [Building RDKit for Development](#building-rdkit-for-development). Then change to the directory `Docs/Book`:
+  ```
+  cd $RDBASE/Docs/Book
+  ```
+
+Then run one of the following commands based on whether you are working in C++ or only Python:
+
+#### C++
+  ```
+  make html
+  ```
+
+#### Python
+  ```
+  make html BUILD_CPP_DOCS=OFF
+  ```
+
+In either case, the output should end with
+
+  ```
+  The HTML pages are in _build/html.
+  
+  Build finished. The HTML pages are in _build/html.
+  ```
+
+Now you can preview the docs by pointing your web browser to the local file `rdkit/Docs/Book/_build/html/index.html` where `rdkit` is directory containing the local clone.
+
 ## Contributing to the Code - Python 
 
 ### Building RDKit for Development
