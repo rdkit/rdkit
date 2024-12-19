@@ -22,6 +22,9 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 
+using Clock = std::chrono::steady_clock;
+using TimePoint = std::chrono::time_point<Clock>;
+
 namespace RDKit {
 class ROMol;
 
@@ -77,23 +80,17 @@ class SynthonSpaceSearcher {
   // the hitsets, including duplicates.  Duplicates by name are not returned,
   // but duplicate SMILES from different reactions will be.  Hitsets will
   // be re-ordered on exit.
-  void buildHits(
-      std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
-      const std::chrono::time_point<std::chrono::high_resolution_clock>
-          &startTime,
-      bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const;
-  void buildAllHits(
-      const std::vector<SynthonSpaceHitSet> &hitsets,
-      std::set<std::string> &resultsNames,
-      const std::chrono::time_point<std::chrono::high_resolution_clock>
-          &startTime,
-      bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const;
-  void buildRandomHits(
-      const std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
-      std::set<std::string> &resultsNames,
-      const std::chrono::time_point<std::chrono::high_resolution_clock>
-          &startTime,
-      bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const;
+  void buildHits(std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
+                 const TimePoint *endTime, bool &timedOut,
+                 std::vector<std::unique_ptr<ROMol>> &results) const;
+  void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
+                    std::set<std::string> &resultsNames,
+                    const TimePoint *endTime, bool &timedOut,
+                    std::vector<std::unique_ptr<ROMol>> &results) const;
+  void buildRandomHits(const std::vector<SynthonSpaceHitSet> &hitsets,
+                       size_t totHits, std::set<std::string> &resultsNames,
+                       const TimePoint *endTime, bool &timedOut,
+                       std::vector<std::unique_ptr<ROMol>> &results) const;
   // get the subset of synthons for the given reaction to use for this
   // enumeration.
   std::vector<std::vector<ROMol *>> getSynthonsToUse(

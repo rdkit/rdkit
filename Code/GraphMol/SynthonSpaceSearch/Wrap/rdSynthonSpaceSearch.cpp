@@ -147,7 +147,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " off by this amount.  Default=0.1.")
       .def_readwrite(
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
-          "Time limit for search, in seconds.  Default is 600s, requires an integer.");
+          "Time limit for search, in seconds.  Default is 600s, 0 means no"
+          " timeout.  Requires an integer");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(

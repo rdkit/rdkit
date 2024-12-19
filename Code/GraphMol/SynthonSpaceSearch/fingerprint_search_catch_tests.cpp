@@ -223,4 +223,12 @@ TEST_CASE("Timeout") {
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getTimedOut());
+
+  // Make sure no timeout also works, but only on a short search.
+  params.maxHits = 100;
+  params.similarityCutoff = 0.3;
+  params.fragSimilarityAdjuster = 0.2;
+  params.timeOut = 0;
+  auto results1 = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(!results1.getTimedOut());
 }

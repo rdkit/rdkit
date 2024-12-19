@@ -21,16 +21,9 @@
 namespace RDKit::SynthonSpaceSearch {
 
 namespace {
-bool checkTimeOut(
-    const std::chrono::time_point<std::chrono::high_resolution_clock>
-        &startTime,
-    std::int64_t timeOut) {
-  auto currTime = std::chrono::high_resolution_clock::now();
-  auto runTime =
-      std::chrono::duration_cast<std::chrono::seconds>(currTime - startTime)
-          .count();
-  if (runTime > timeOut) {
-    BOOST_LOG(rdWarningLog) << "Timed out after " << runTime << " seconds\n";
+bool checkTimeOut(const TimePoint *endTime) {
+  if (endTime != nullptr && Clock::now() > *endTime) {
+    BOOST_LOG(rdWarningLog) << "Timed out.\n";
     return true;
   }
   return false;
@@ -61,11 +54,15 @@ SearchResults SynthonSpaceSearcher::search() {
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
-  auto startTime = std::chrono::high_resolution_clock::now();
-
+  TimePoint *endTime = nullptr;
+  std::optional<TimePoint> endTimeOpt;
+  if (d_params.timeOut > 0) {
+    endTimeOpt = Clock::now() + std::chrono::seconds(d_params.timeOut);
+    endTime = &*endTimeOpt;
+  }
   bool timedOut = false;
   for (auto &fragSet : fragments) {
-    timedOut = checkTimeOut(startTime, d_params.timeOut);
+    timedOut = checkTimeOut(endTime);
     if (timedOut) {
       break;
     }
@@ -80,7 +77,7 @@ SearchResults SynthonSpaceSearcher::search() {
   }
 
   if (!timedOut && d_params.buildHits) {
-    buildHits(allHits, totHits, startTime, timedOut, results);
+    buildHits(allHits, totHits, endTime, timedOut, results);
   }
 
   return SearchResults{std::move(results), totHits, timedOut};
@@ -122,9 +119,8 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    const std::chrono::time_point<std::chrono::high_resolution_clock>
-        &startTime,
-    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
+    const TimePoint *endTime, bool &timedOut,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
@@ -146,10 +142,9 @@ void SynthonSpaceSearcher::buildHits(
   std::set<std::string> resultsNames;
 
   if (d_params.randomSample) {
-    buildRandomHits(hitsets, totHits, resultsNames, startTime, timedOut,
-                    results);
+    buildRandomHits(hitsets, totHits, resultsNames, endTime, timedOut, results);
   } else {
-    buildAllHits(hitsets, resultsNames, startTime, timedOut, results);
+    buildAllHits(hitsets, resultsNames, endTime, timedOut, results);
   }
 }
 
@@ -169,9 +164,7 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
-    std::set<std::string> &resultsNames,
-    const std::chrono::time_point<std::chrono::high_resolution_clock>
-        &startTime,
+    std::set<std::string> &resultsNames, const TimePoint *endTime,
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
@@ -209,7 +202,7 @@ void SynthonSpaceSearcher::buildAllHits(
       --numTries;
       if (!numTries) {
         numTries = 100;
-        timedOut = checkTimeOut(startTime, d_params.timeOut);
+        timedOut = checkTimeOut(endTime);
         if (timedOut) {
           break;
         }
@@ -283,9 +276,7 @@ struct RandomHitSelector {
 
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    std::set<std::string> &resultsNames,
-    const std::chrono::time_point<std::chrono::high_resolution_clock>
-        &startTime,
+    std::set<std::string> &resultsNames, const TimePoint *endTime,
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -308,7 +299,7 @@ void SynthonSpaceSearcher::buildRandomHits(
     --numTries;
     if (!numTries) {
       numTries = 100;
-      timedOut = checkTimeOut(startTime, d_params.timeOut);
+      timedOut = checkTimeOut(endTime);
       if (timedOut) {
         break;
       }
