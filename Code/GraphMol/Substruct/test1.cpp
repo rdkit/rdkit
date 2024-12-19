@@ -985,7 +985,7 @@ void testChiralMatch() {
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
     delete mol;
     delete query;
-    TEST_ASSERT(!matched);
+    TEST_ASSERT(matched);
   }
   {
     std::string qSmi = "[C@@](C)(F)Br";
@@ -996,7 +996,161 @@ void testChiralMatch() {
     bool matched = SubstructMatch(*mol, *query, matchV, true, true);
     delete mol;
     delete query;
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi = "[C@!H0](C)(F)Br";
+    std::string mSmi = "[C@H](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
     TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "[C@@!H0](C)(F)Br";
+    std::string mSmi = "[C@H](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi = "[C@h](C)(F)Br";
+    std::string mSmi = "[C@H](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "[C@@h](C)(F)Br";
+    std::string mSmi = "[C@H](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi = "[C@h](C)(F)Br";
+    std::string mSmi = "[C@H](C)(F)Br";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "[S@@](=O)(C)CC";
+    std::string mSmi = "[S@@](=O)(C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "[S@](=O)(C)CC";
+    std::string mSmi = "[S@](=O)(C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "[S@](=O)(C)CC";
+    std::string mSmi = "[S@@](=O)(C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi = "[S@@](=O)(C)CC";
+    std::string mSmi = "[S@@](=O)(C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "[S@@](=O)(C)CC";
+    std::string mSmi = "[S@](=O)(C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi = "[S@](=O)(C)CC";
+    std::string mSmi = "O=[S@@](C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "[S@](=O)(C)CC";
+    std::string mSmi = "O=[S@](C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(!matched);
+  }
+  {
+    std::string qSmi = "[S@@](=O)(C)CC";
+    std::string mSmi = "O=[S@](C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(matched);
+  }
+  {
+    std::string qSmi = "[S@@](=O)(C)CC";
+    std::string mSmi = "O=[S@@](C)CC";
+    ROMol *query = SmartsToMol(qSmi);
+    ROMol *mol = SmilesToMol(mSmi);
+    MatchVectType matchV;
+    bool matched = SubstructMatch(*mol, *query, matchV, true, true);
+    delete mol;
+    delete query;
+    TEST_ASSERT(!matched);
   }
   {
     std::string qSmi = "C[C@](F)Br";
@@ -1444,8 +1598,7 @@ void testGitHubIssue688() {
     TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, false));
     TEST_ASSERT(match.size() == qmol->getNumAtoms());
 
-    TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, true));
-    TEST_ASSERT(match.size() == qmol->getNumAtoms());
+    TEST_ASSERT(!SubstructMatch(*mol, *qmol, match, true, true));
 
     delete mol;
     delete qmol;
@@ -1466,7 +1619,8 @@ void testGitHubIssue688() {
     TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, false));
     TEST_ASSERT(match.size() == qmol->getNumAtoms());
 
-    TEST_ASSERT(!SubstructMatch(*mol, *qmol, match, true, true));
+    TEST_ASSERT(SubstructMatch(*mol, *qmol, match, true, true));
+    TEST_ASSERT(match.size() == qmol->getNumAtoms());
 
     delete mol;
     delete qmol;
@@ -1615,26 +1769,26 @@ void testGithub2570() {
     {
       const auto query = R"([C@](Cl)(Br)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
     }
     {
       const auto query = R"([C@@](Cl)(Br)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
                                  recursionPossible, useChirality));
     }
     {  // Swap order of a pair of atoms
       const auto query = R"([C@](Br)(Cl)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
     }
     {
       const auto query = R"([C@@](Br)(Cl)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                recursionPossible, useChirality));
     }
     {  // Smaller fragments should always match as long as they have have a
        // chiral tag,
@@ -1667,38 +1821,38 @@ void testGithub2570() {
     {
       const auto query = R"([C@](C)(Cl)Br)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
     }
     {
       const auto query = R"([C@@](C)(Cl)Br)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                recursionPossible, useChirality));
     }
     {
       const auto query = R"([C@](Cl)(Br)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                recursionPossible, useChirality));
     }
     {
       const auto query = R"([C@@](Cl)(Br)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
     }
     {  // Swap order of a pair of atoms
       const auto query = R"([C@](Br)(Cl)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
-                                 recursionPossible, useChirality));
+      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
+                                  recursionPossible, useChirality));
     }
     {
       const auto query = R"([C@@](Br)(Cl)F)"_smarts;
       std::vector<MatchVectType> matches;
-      TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
-                                  recursionPossible, useChirality));
+      TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                                 recursionPossible, useChirality));
     }
   }
 
