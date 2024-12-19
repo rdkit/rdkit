@@ -692,6 +692,7 @@ template <typename Iterator>
 void parse_data_sgroup_attr(Iterator &first, Iterator last,
                             SubstanceGroup &sgroup, bool keepSGroup,
                             std::string fieldName, bool fieldIsArray = false) {
+  PRECONDITION(first < last, "parse_data_sgroup_attr: first >= last");
   if (first != last && *first != '|') {
     std::string data = read_text_to(first, last, ":");
     ++first;
@@ -735,7 +736,6 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
     }
   }
   ++first;
-
   parse_data_sgroup_attr(first, last, sgroup, keepSGroup, "FIELDNAME");
 
   // FIX:

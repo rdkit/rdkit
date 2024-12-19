@@ -1132,7 +1132,17 @@ void ParseV3000ParseLabel(const std::string &label,
     } else if (label == "PARENT") {
       // Store relationship until all SGroups have been read
       unsigned int parentIdx;
+      if (lineStream.eof()) {
+        std::ostringstream errout;
+        errout << "PARENT label not found on line " << line;
+        throw FileParseException(errout.str());
+      }
       lineStream >> parentIdx;
+      if (lineStream.fail()) {
+        std::ostringstream errout;
+        errout << "Invalid PARENT label found on line " << line;
+        throw FileParseException(errout.str());
+      }
       sgroup.setProp<unsigned int>("PARENT", parentIdx);
     } else if (label == "COMPNO") {
       unsigned int compno;
