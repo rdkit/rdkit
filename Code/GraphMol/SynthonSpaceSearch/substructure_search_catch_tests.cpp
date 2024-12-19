@@ -80,7 +80,7 @@ TEST_CASE("Enumerate") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
   auto testName = std::tmpnam(nullptr);
-  std::cout << "enumerating to " << testName << std::endl;
+  std::cout << "Enumerating to " << testName << std::endl;
   synthonspace.writeEnumeratedFile(testName);
 
   std::string enumLibName =
@@ -301,10 +301,13 @@ TEST_CASE("DB Writer") {
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   synthonspace.buildSynthonFingerprints(*fpGen);
-  synthonspace.writeDBFile("doebner_miller_space.spc");
+
+  auto spaceName = std::tmpnam(nullptr);
+
+  synthonspace.writeDBFile(spaceName);
 
   SynthonSpace newsynthonspace;
-  newsynthonspace.readDBFile("doebner_miller_space.spc");
+  newsynthonspace.readDBFile(spaceName);
   auto it = newsynthonspace.getReactions().find("doebner-miller-quinoline");
   CHECK(it != newsynthonspace.getReactions().end());
   const auto &irxn = it->second;
@@ -325,6 +328,7 @@ TEST_CASE("DB Writer") {
       CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
     }
   }
+  std::remove(spaceName);
 }
 
 TEST_CASE("S Biggy") {
