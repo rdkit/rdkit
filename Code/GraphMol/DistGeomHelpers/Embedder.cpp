@@ -37,6 +37,7 @@
 #include <iomanip>
 #include <RDGeneral/RDThreads.h>
 #include <typeinfo>
+#include <vector>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
@@ -1574,7 +1575,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
 #endif
   }
-  auto selfMatches = detail::getMolSelfMatches(mol, params);
+  std::vector<std::vector<unsigned int>> selfMatches;
+  if (params.pruneRmsThresh > 0.0) {
+    selfMatches = detail::getMolSelfMatches(mol, params);
+  }
 
   for (unsigned int ci = 0; ci < confs.size(); ++ci) {
     auto &conf = confs[ci];
