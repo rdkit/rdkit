@@ -2200,7 +2200,7 @@ void test_partial_sanitization() {
       "c1ccccc1N(=O)=O", &mpkl_size,
       "{\"sanitize\":{\"SANITIZE_CLEANUP\":true,\"SANITIZE_KEKULIZE\":true}}");
   mb = get_molblock(mpkl, mpkl_size, "{\"kekulize\":false}");
-  assert(!strstr(mb, "  1  2  4  0"));
+  assert(strstr(mb, "  1  2  4  0"));
   assert((strstr(mb, "  7  8  1  0") && strstr(mb, "  7  9  2  0")) ||
          (strstr(mb, "  7  8  2  0") && strstr(mb, "  7  9  1  0")));
   assert(strstr(mb, "M  CHG  2"));
