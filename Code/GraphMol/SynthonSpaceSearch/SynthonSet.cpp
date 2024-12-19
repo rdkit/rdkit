@@ -127,6 +127,10 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
       d_synthonFPs[i][j] = std::make_unique<ExplicitBitVect>(fString);
     }
   }
+  // So that d_synthConnPatts is filled in. Next time the binary file format
+  // is updated they can be put in it, but they're cheap enough to calculate
+  // so leave it for now.
+  assignConnectorsUsed();
 }
 
 void SynthonSet::enumerateToStream(std::ostream &os) const {
@@ -161,7 +165,7 @@ namespace {
 
 std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
     const std::vector<std::vector<ROMol *>> &synthons,
-    const size_t longVecNum) {
+    const size_t longVecNum, const SynthonSet &reaction) {
   std::vector<std::unique_ptr<ROMol>> sampleMolecules;
   sampleMolecules.reserve(synthons[longVecNum].size());
 
@@ -177,11 +181,26 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
         combMol.reset(combineMols(*combMol, *synthons[j].front()));
       }
     }
-    auto sampleMol = molzip(*combMol, mzparams);
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(sampleMol.get()));
-    sampleMolecules.push_back(std::move(sampleMol));
+    try {
+      auto sampleMol = molzip(*combMol, mzparams);
+      MolOps::sanitizeMol(*dynamic_cast<RWMol *>(sampleMol.get()));
+      sampleMolecules.push_back(std::move(sampleMol));
+    } catch (std::exception &e) {
+      const auto &synths = reaction.getSynthons();
+      std::string msg("Error:: in reaction " + reaction.getId() + " :: building molecule from synthons :");
+      for (size_t j = 0; j < synthons.size(); ++j) {
+        std::string sep = j ? " and " : " ";
+        if (j == longVecNum) {
+          msg += sep + synths[j][i]->getId() + " (" + synths[j][i]->getSmiles() + ")";
+        } else {
+          msg +=  sep + synths[j].front()->getId() + " (" + synths[j].front()->getSmiles() + ")";
+        }
+      }
+      msg += "\n" + std::string(e.what()) + "\n";
+      BOOST_LOG(rdErrorLog) << msg;
+      throw(e);
+    }
   }
-
   return sampleMolecules;
 }
 
@@ -231,7 +250,7 @@ void SynthonSet::transferProductBondsToSynthons() {
         synthsToUse[j][0] = true;
       }
     }
-    auto sampleMols = buildSampleMolecules(synthonMolCopies, synthSetNum);
+    auto sampleMols = buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
       auto synthCp =
           std::make_unique<RWMol>(*d_synthons[synthSetNum][j]->getOrigMol());
@@ -322,13 +341,18 @@ void SynthonSet::assignConnectorsUsed() {
     }
   }
   d_connectors.resize(MAX_CONNECTOR_NUM + 1, false);
-  for (const auto &reagSet : d_synthons) {
-    for (const auto &reag : reagSet) {
-      for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
-        if (std::regex_search(reag->getSmiles(), connRegexs[2 * i]) ||
-            std::regex_search(reag->getSmiles(), connRegexs[2 * i + 1])) {
-          d_connectors.set(i + 1);
-        }
+  d_synthConnPatts.clear();
+  for (const auto &synthSet : d_synthons) {
+    // We only need to look at the first synthon in each set, as they
+    // should all be the same.
+    d_synthConnPatts.emplace_back();
+    d_synthConnPatts.back().resize(MAX_CONNECTOR_NUM + 1, false);
+    const auto &reag = synthSet.front();
+    for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
+      if (std::regex_search(reag->getSmiles(), connRegexs[2 * i]) ||
+          std::regex_search(reag->getSmiles(), connRegexs[2 * i + 1])) {
+        d_connectors.set(i + 1);
+        d_synthConnPatts.back().set(i + 1);
       }
     }
   }

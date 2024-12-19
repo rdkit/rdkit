@@ -87,7 +87,15 @@ class TestCase(unittest.TestCase):
     results = synthonspace.FingerprintSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
                                              fpgen, params)
     self.assertFalse(results.GetTimedOut)
-                     
+   
+  def testSynthonError(self):
+    fName = self.sssDir / "amide_space_error.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
+
+    fName = self.sssDir / "synthon_error.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
     
 if __name__ == "__main__":
   unittest.main()
