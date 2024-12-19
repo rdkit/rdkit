@@ -53,10 +53,8 @@ namespace rj = rapidjson;
 using namespace RDKit;
 
 namespace {
-#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 static const char *NO_SUPPORT_FOR_PATTERN_FPS =
     "This SubstructLibrary was built without support for pattern fps";
-#endif
 
 std::string mappingToJsonArray(const ROMol &mol) {
   std::vector<unsigned int> atomMapping;

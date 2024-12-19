@@ -25,7 +25,6 @@
 #include <sstream>
 #include <exception>
 #include <map>
-#include <cmath>
 
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
@@ -39,8 +38,6 @@ namespace RDKit {
 namespace MolInterchange {
 
 namespace {
-constexpr int MAX_DECIMAL_PLACES = 4;
-
 template <typename T>
 void addMol(const T &imol, rj::Value &rjMol, rj::Document &doc,
             const rj::Value &atomDefaults, const rj::Value &bondDefaults,
@@ -396,16 +393,6 @@ void addSubstanceGroup(const SubstanceGroup &sg, rj::Value &rjSG,
   }
 }
 
-// RapidJSON truncates doubles rather than rounding them, so
-// we add a small increment to the number to ensure that, e.g.,
-// 0.1237999999 is not truncated to 0.1237 when written to JSON
-double rjPrepareForTrunc(double n) {
-  static const double TRUNC_INCREMENT =
-      5.0 * pow(10.0, -(MAX_DECIMAL_PLACES + 1));
-  auto res = n + std::copysign(TRUNC_INCREMENT, n);
-  return res;
-}
-
 void addConformer(const Conformer &conf, rj::Value &rjConf, rj::Document &doc) {
   int dim = 2;
   if (conf.is3D()) {
@@ -415,10 +402,10 @@ void addConformer(const Conformer &conf, rj::Value &rjConf, rj::Document &doc) {
   rj::Value rjCoords(rj::kArrayType);
   for (const auto &pos : conf.getPositions()) {
     rj::Value rjPos(rj::kArrayType);
-    rjPos.PushBack(rjPrepareForTrunc(pos.x), doc.GetAllocator());
-    rjPos.PushBack(rjPrepareForTrunc(pos.y), doc.GetAllocator());
+    rjPos.PushBack(pos.x, doc.GetAllocator());
+    rjPos.PushBack(pos.y, doc.GetAllocator());
     if (dim == 3) {
-      rjPos.PushBack(rjPrepareForTrunc(pos.z), doc.GetAllocator());
+      rjPos.PushBack(pos.z, doc.GetAllocator());
     }
     rjCoords.PushBack(rjPos, doc.GetAllocator());
   }
@@ -702,7 +689,7 @@ std::string MolsToJSONData(const std::vector<T> &mols,
 
   rj::StringBuffer buffer;
   rj::Writer<rj::StringBuffer> writer(buffer);
-  writer.SetMaxDecimalPlaces(MAX_DECIMAL_PLACES);
+  writer.SetMaxDecimalPlaces(4);
   doc.Accept(writer);
   return buffer.GetString();
 };
