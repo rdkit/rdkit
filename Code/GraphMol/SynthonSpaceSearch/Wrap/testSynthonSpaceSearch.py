@@ -38,7 +38,7 @@ import unittest
 from pathlib import Path
 
 from rdkit import Chem
-from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator
+from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator, rdRascalMCES
 
 class TestCase(unittest.TestCase):
 
@@ -65,6 +65,18 @@ class TestCase(unittest.TestCase):
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
     results = synthonspace.FingerprintSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
                                              fpgen, params)
+    self.assertEqual(10, len(results.GetHitMolecules()))
+                     
+  def testRascalSearch(self):
+    fName = self.sssDir / "Syntons_5567.csv"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    self.assertEqual(10, synthonspace.GetNumReactions())
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = 10
+    rascalOpts = rdRascalMCES.RascalOptions()
+    results = synthonspace.RascalSearch(Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"),
+                                             rascalOpts, params)
     self.assertEqual(10, len(results.GetHitMolecules()))
                      
   def testEnumerate(self):

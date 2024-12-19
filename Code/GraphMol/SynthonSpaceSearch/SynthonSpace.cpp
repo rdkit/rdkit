@@ -21,8 +21,10 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/RascalMCES/RascalMCES.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceFingerprintSearcher.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceRascalSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -59,6 +61,14 @@ SearchResults SynthonSpace::fingerprintSearch(
     const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
+  return ssss.search();
+}
+
+SearchResults SynthonSpace::rascalSearch(
+    const ROMol &query, const RascalMCES::RascalOptions &rascalOptions,
+    const SynthonSpaceSearchParams &params) {
+  PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  SynthonSpaceRascalSearcher ssss(query, rascalOptions, params, *this);
   return ssss.search();
 }
 
