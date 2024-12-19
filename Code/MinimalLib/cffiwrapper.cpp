@@ -55,6 +55,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include "cffiwrapper.h"
 
 namespace rj = rapidjson;
 
@@ -68,18 +69,25 @@ using namespace RDKit;
 namespace {
 char *str_to_c(const std::string &str, size_t *len = nullptr) {
   if (len) {
-    *len = str.size();
+    *len = 0;
   }
   char *res;
   res = (char *)malloc(str.size() + 1);
-  memcpy((void *)res, (const void *)str.c_str(), str.size());
-  res[str.size()] = 0;
+  if (res) {
+    if (len) {
+      *len = str.size();
+    }
+    memcpy(res, str.c_str(), str.size());
+    res[str.size()] = '\0';
+  }
   return res;
 }
 char *str_to_c(const char *str) {
   char *res;
   res = (char *)malloc(strlen(str) + 1);
-  strcpy(res, str);
+  if (res) {
+    strcpy(res, str);
+  }
   return res;
 }
 }  // namespace
@@ -657,7 +665,7 @@ extern "C" void prefer_coordgen(short val) {
 #endif
 };
 
-extern "C" short has_coords(char *mol_pkl, size_t mol_pkl_sz) {
+extern "C" short has_coords(const char *mol_pkl, size_t mol_pkl_sz) {
   short res = 0;
   if (mol_pkl && mol_pkl_sz) {
     auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);

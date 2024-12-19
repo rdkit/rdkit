@@ -28,7 +28,7 @@ const extractBondCoords = (svg, bondDetail) => {
         return [[m[1], m[2]], [m[3], m[4]]];
     };
     const bond = svg.split('\n').filter(line => line.includes(bondDetail));
-    assert(bond.length === 1);
+    assert.equal(bond.length, 1);
     return getStartEndCoords(bond[0]);
 }
 const angleDegBetweenVectors = (v1, v2) => 180 / Math.PI * Math.acos((v1[0] * v2[0] + v1[1] * v2[1])
@@ -1026,10 +1026,10 @@ function test_has_coords() {
     var mol = RDKitModule.get_mol('CC');
     assert(!mol.has_coords());
     var mol2 = RDKitModule.get_mol(mol.get_new_coords());
-    assert(mol2.has_coords() === 2);
+    assert.equal(mol2.has_coords(), 2);
     assert(!mol.has_coords());
     mol.set_new_coords();
-    assert(mol.has_coords() === 2);
+    assert.equal(mol.has_coords(), 2);
     var mol3 = RDKitModule.get_mol(`
      RDKit          3D
 
@@ -1054,7 +1054,7 @@ function test_has_coords() {
   3  9  1  0
 M  END
 `);
-    assert(mol3.has_coords() === 3);
+    assert.equal(mol3.has_coords(), 3);
 }
 
 function test_kekulize() {
@@ -1861,7 +1861,7 @@ function test_get_frags() {
             fragsMolAtomMapping: [[0,1,2,3,4,5],[6,7,8,9],[10,11,12,13,14]],
         };
         var { molList, mappings } = mol.get_frags();
-        assert(molList.size() === 3);
+        assert.equal(molList.size(), 3);
         assert(JSON.stringify(JSON.parse(mappings)) === JSON.stringify(expectedMappings));
         var i = 0;
         while (!molList.at_end()) {
@@ -1882,7 +1882,7 @@ function test_get_frags() {
         }
         assert(exceptionThrown);
         var { molList, mappings } = mol.get_frags(JSON.stringify({sanitizeFrags: false}));
-        assert(molList.size() === 2);
+        assert.equal(molList.size(), 2);
         var i = 0;
         while (!molList.at_end()) {
             var mol = molList.next();
@@ -1906,9 +1906,9 @@ function test_get_mmpa_frags() {
         "C1CCC([*:1])CC1.CC(C)C[*:2]", "C1CCC([*:1])CC1.CC(C)CC[*:2]"];
         var pairs = mol.get_mmpa_frags(2, 2, 20);
         assert(pairs.cores);
-        assert(pairs.cores.size() === 11);
+        assert.equal(pairs.cores.size(), 11);
         assert(pairs.sidechains);
-        assert(pairs.sidechains.size() === 11);
+        assert.equal(pairs.sidechains.size(), 11);
         var i = 0;
         while (!pairs.cores.at_end()) {
             var m = pairs.cores.next();
@@ -1935,9 +1935,9 @@ function test_get_mmpa_frags() {
 
         var pairs = mol.get_mmpa_frags(1, 1, 20);
         assert(pairs.cores);
-        assert(pairs.cores.size() === 5);
+        assert.equal(pairs.cores.size(), 5);
         assert(pairs.sidechains);
-        assert(pairs.sidechains.size() === 5);
+        assert.equal(pairs.sidechains.size(), 5);
         while (!pairs.cores.at_end()) {
             var m = pairs.cores.next();
             assert(m === null);
@@ -1957,7 +1957,7 @@ function test_get_mmpa_frags() {
         for (i = 0; i < numCores; ++i) {
             assert(pairs.cores.pop(0) === null);
         }
-        assert(pairs.cores.size() === 0);
+        assert.equal(pairs.cores.size(), 0);
         assert(pairs.cores.next() === null);
         pairs.cores.delete();
         pairs.sidechains.delete();
@@ -2493,7 +2493,7 @@ function test_mcs() {
                 molList.delete();
             }
         }
-        assert(res.size === 4);
+        assert.equal(res.size, 4);
     }
     {
         const smiArray = [
@@ -2539,8 +2539,8 @@ function test_mcs() {
         mcs = JSON.parse(mcs);
         assert(!mcs.canceled);
         assert(!Array.isArray(mcs.smarts));
-        assert(mcs.numAtoms === 8);
-        assert(mcs.numBonds === 8);
+        assert.equal(mcs.numAtoms, 8);
+        assert.equal(mcs.numBonds, 8);
         assert(mcs.smarts === '[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6]');
         try {
             molList = molListFromSmiArray(smiArray);
@@ -2554,9 +2554,9 @@ function test_mcs() {
         mcs = JSON.parse(mcs);
         assert(!mcs.canceled);
         assert(Array.isArray(mcs.smarts));
-        assert(mcs.numAtoms === 8);
-        assert(mcs.numBonds === 8);
-        assert(mcs.smarts.length === 2);
+        assert.equal(mcs.numAtoms, 8);
+        assert.equal(mcs.numBonds, 8);
+        assert.equal(mcs.smarts.length, 2);
         assert(mcs.smarts.includes('[#6]-[#6]1:[#6]:[#6]:[#6]:[#6]:[#6]:1-[#7]'));
         assert(mcs.smarts.includes('[#7]-[#6]1:[#6]:[#6]:[#6](:[#6]:[#6]:1)-[#6]'));
     }
