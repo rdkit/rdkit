@@ -55,10 +55,10 @@ SearchResults SynthonSpaceSearcher::search() {
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   TimePoint *endTime = nullptr;
-  std::optional<TimePoint> endTimeOpt;
+  TimePoint endTimePt;
   if (d_params.timeOut > 0) {
-    endTimeOpt = Clock::now() + std::chrono::seconds(d_params.timeOut);
-    endTime = &*endTimeOpt;
+    endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
+    endTime = &endTimePt;
   }
   bool timedOut = false;
   for (auto &fragSet : fragments) {
