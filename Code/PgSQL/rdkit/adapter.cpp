@@ -1032,11 +1032,7 @@ extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
     n = iter->first % numInts;
 
     if (iterV > INTRANGEMAX) {
-#if 0
-        elog(ERROR, "sparse fingerprint is too big, increase INTRANGEMAX in rdkit.h");
-#else
       iterV = INTRANGEMAX;
-#endif
     }
 
     if (s[n].low == 0 || s[n].low > iterV) {

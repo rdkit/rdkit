@@ -32,7 +32,6 @@
 #include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
-#if 1
 TEST_CASE("SMILES Parsing works", "[molops]") {
   std::unique_ptr<RWMol> mol(SmilesToMol("C1CC1"));
   REQUIRE(mol);
@@ -1151,7 +1150,7 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
     }
   }
 }
-#endif
+
 TEST_CASE("github #2895: acepentalene aromaticity perception ",
           "[molops][bug][aromaticity]") {
   SECTION("acepentalene") {
@@ -1679,7 +1678,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("a simpler system") {
     auto m = R"CTAB(
-  Mrv2014 03092106042D          
+  Mrv2014 03092106042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2607,7 +2606,7 @@ TEST_CASE("query moves") {
 
 TEST_CASE("moves with conformer") {
   auto m1 = R"CTAB(
-  Mrv2108 01192209042D          
+  Mrv2108 01192209042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3905,8 +3904,8 @@ TEST_CASE("atom output") {
     ss.str("");
   }
   SECTION("chirality 2") {
-    // same as 
-    // C[Pt@SP2]([H])(F)Cl which is stored internally as 
+    // same as
+    // C[Pt@SP2]([H])(F)Cl which is stored internally as
     // C[Pt@SP3](F)(Cl)[H]
     auto m = "C[Pt@SP2H](F)Cl"_smiles;
     REQUIRE(m);
@@ -3924,7 +3923,7 @@ TEST_CASE(
     "[RWMol]") {
   // This mols is made up, it probably doesn't make sense at all.
   auto m1 = R"CTAB(
-  Mrv2311 02062417062D          
+  Mrv2311 02062417062D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4198,7 +4197,7 @@ TEST_CASE("Try not to set wedged bonds as double in the kekulization") {
     // verify that in both cases the kekulization results in assigning
     // a single bond order to the wedged bonds.
     auto mblock1 = R"(
-  Mrv2311 05242408112D          
+  Mrv2311 05242408112D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4251,7 +4250,7 @@ M  END
           Bond::BondType::DOUBLE);
 
     auto mblock2 = R"(
-  Mrv2311 05242408162D          
+  Mrv2311 05242408162D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4313,7 +4312,7 @@ M  END
     // similar to the previous test case, but adding fused rings and
     // an O atom that wouldn't accept double bonds
     auto mblock1 = R"(
-  Mrv2311 05282412322D          
+  Mrv2311 05282412322D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4373,7 +4372,7 @@ M  END
           Bond::BondType::DOUBLE);
 
     auto mblock2 = R"(
-  Mrv2311 05282412342D          
+  Mrv2311 05282412342D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4438,7 +4437,6 @@ M  END
     pathName += "/Code/GraphMol/FileParsers/test_data/atropisomers/";
 
     std::vector<std::pair<std::string, int>> prs = {
-#if 1
         {"BMS-986142_atrop8.sdf", 8},
         {"Mrtx1719_atrop3.sdf", 21},
         {"AtropManyChiralsEnhanced2.sdf", 7},
@@ -4497,7 +4495,6 @@ M  END
         {"RP-6306_atrop3.sdf", 3},
         {"macrocycle-8-ortho-broken-hash.sdf", 14},
         {"JDQ443_atrop3.sdf", 26},
-#endif
         {"JDQ443_3d.sdf", 26},
         // keep
     };
@@ -4715,7 +4712,7 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
 	*deleted = true;
       }
     };
-    
+
     bool sanitize = true;
     int flavor = 0;
     std::unique_ptr<RWMol> mol(SequenceToMol("KY", sanitize, flavor));
@@ -4730,7 +4727,7 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
     mol->getAtomWithIdx(0)->setMonomerInfo(res);
     mol->getAtomWithIdx(0)->setMonomerInfo(nullptr);
     CHECK(was_deleted == true);
-    
-  }    
+
+  }
 }
 
