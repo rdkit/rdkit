@@ -72,6 +72,9 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
       return prod;
     }
+    if (!quickVerify(reaction, synthNums)) {
+      return prod;
+    }
     prod = reaction->buildProduct(synthNums);
 
     // Do a final check of the whole thing.  It can happen that the
