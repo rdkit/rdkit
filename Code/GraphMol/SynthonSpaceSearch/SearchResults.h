@@ -66,7 +66,7 @@ inline SearchResults::SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
 }
 
 inline SearchResults::SearchResults(const SearchResults &other)
-    : d_maxNumResults(other.d_maxNumResults) {
+    : d_maxNumResults(other.d_maxNumResults), d_timedOut(other.d_timedOut) {
   for (const auto &hm : other.d_hitMolecules) {
     d_hitMolecules.emplace_back(new ROMol(*hm));
   }

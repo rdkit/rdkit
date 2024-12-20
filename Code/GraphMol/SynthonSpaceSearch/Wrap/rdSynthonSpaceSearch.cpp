@@ -34,16 +34,15 @@ struct SearchResults_wrapper {
         "SubstructureResult", docString.c_str(), python::no_init)
         .def("GetHitMolecules", hitMolecules_helper, python::args("self"),
              "A function returning hits from the search")
-        .def_readonly("GetMaxNumResults",
-                      &SynthonSpaceSearch::SearchResults::getMaxNumResults,
-                      "The upper bound on number of results possible.  There"
-                      " may be fewer than this in practice for several reasons"
-                      " such as duplicate reagent sets being removed or the"
-                      " final product not matching the query even though the"
-                      " synthons suggested they would.")
-        .def_readonly("GetTimedOut",
-                      &SynthonSpaceSearch::SearchResults::getTimedOut,
-                      "Returns whether the search timed out or not.");
+        .def("GetMaxNumResults",
+             &SynthonSpaceSearch::SearchResults::getMaxNumResults,
+             "The upper bound on number of results possible.  There"
+             " may be fewer than this in practice for several reasons"
+             " such as duplicate reagent sets being removed or the"
+             " final product not matching the query even though the"
+             " synthons suggested they would.")
+        .def("GetTimedOut", &SynthonSpaceSearch::SearchResults::getTimedOut,
+             "Returns whether the search timed out or not.");
   }
 };
 
