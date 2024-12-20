@@ -476,3 +476,234 @@ def AssignBondOrdersFromTemplate(refmol, mol):
     else:
       raise ValueError("No matching found")
   return mol2
+
+
+def RotateGroup(mol, start_idx, end_idx, angle_deg):
+  """ Rotates a group of atoms around a bond in an RDKit molecule.
+
+    Arguments
+      - mol: RDKit molecule object.
+      - start_idx: index of the starting atom of the bond.
+      - end_idx: index of the ending atom of the bond.
+      - angle_deg: rotation angle in degrees.
+
+    An example:
+
+    >>> from rdkit.Chem import AllChem
+    >>> smiles = "CC(C)C1=CC=CC=C1"
+    >>> mol = Chem.MolFromSmiles(smiles)
+    >>> mol = Chem.AddHs(mol)
+    >>> AllChem.EmbedMolecule(mol)
+    >>> mol_rotated = AllChem.RotateGroup(mol, 0, 1, 30)
+
+    """
+  rotable_bonds = find_rotatable_bonds(mol)
+  
+  assert (start_idx, end_idx) in rotable_bonds or (end_idx, start_idx) in rotable_bonds, \
+  f"({start_idx}, {end_idx}) or ({end_idx}, {start_idx}) is not a rotatable bond."
+
+  conformer = mol.GetConformer()
+  positions = numpy.array(conformer.GetPositions())
+
+  group1, _ = collect_connected_groups(mol, start_idx, end_idx)
+  group1_positions = positions[list(group1)]
+  axis_point = positions[end_idx]
+
+  group1_positions -= axis_point
+  start_point = positions[start_idx] - axis_point
+  theta_1, theta_2 = get_rotation_angles_to_align(start_point)
+  aligned_group1 = apply_rotations(group1_positions, theta_1, theta_2)
+
+  rotation_angle = angle_deg * (numpy.pi / 180)
+  rot_mat = rotation_matrix(rotation_angle, 'y')
+  rotated_group1 = aligned_group1 @ rot_mat.T
+  r_z_minus = rotation_matrix(-theta_2, 'z')
+  step_1_cloud = rotated_group1 @ r_z_minus.T
+  r_y_minus = rotation_matrix(-theta_1, 'y')
+  step_2_cloud = step_1_cloud @ r_y_minus.T
+
+  step_2_cloud += axis_point
+  for i, atom_idx in enumerate(group1):
+    conformer.SetAtomPosition(atom_idx, step_2_cloud[i])
+
+  return mol
+
+
+def rotation_matrix(theta: float, axis: str):
+  """ Generates a 3D rotation matrix for a specified angle and axis.
+
+    Arguments
+      - theta: the rotation angle in radians.
+      - axis: the axis of rotation ('x', 'y', 'z').
+
+    Returns
+      A 3x3 numpy array representing the rotation matrix.
+
+    Example:
+
+    >>> theta = np.pi / 2
+    >>> axis = 'y'
+    >>> rot_matrix = rotation_matrix(theta, axis)
+    >>> rot_matrix
+    array([[ 0.,  0.,  1.],
+           [ 0.,  1.,  0.],
+           [-1.,  0.,  0.]])
+
+    """
+  matrices = {
+      'x': numpy.array([[1, 0, 0],
+                     [0, numpy.cos(theta), -numpy.sin(theta)],
+                     [0, numpy.sin(theta), numpy.cos(theta)]]),
+      'y': numpy.array([[numpy.cos(theta), 0, numpy.sin(theta)],
+                     [0, 1, 0],
+                     [-numpy.sin(theta), 0, numpy.cos(theta)]]),
+      'z': numpy.array([[numpy.cos(theta), -numpy.sin(theta), 0],
+                     [numpy.sin(theta), numpy.cos(theta), 0],
+                     [0, 0, 1]])
+  }
+  return matrices[axis]
+
+
+def get_rotation_angles_to_align(point: numpy.ndarray):
+  """ Calculates the rotation angles required to align a 3D point with the x-axis.
+
+    Arguments
+      - point: a numpy array of shape (3,) representing a 3D point.
+
+    Returns
+      A tuple (theta_1, theta_2) of rotation angles in radians for the 'y' and 'z' axes.
+
+    Example:
+
+    >>> point = numpy.array([1.0, 0.5, 0.5])
+    >>> theta_1, theta_2 = get_rotation_angles_to_align(point)
+    >>> (theta_1, theta_2)
+    (0.4636476090008061, 1.1071487177940904)
+
+    """
+  # Special case: If the point is already along the x-axis (point[1] == 0 and point[2] == 0)
+  if numpy.allclose(point[1:], 0.0):
+    return 0.0, 0.0
+      
+  ratio = point[2] / point[0]
+  theta_1 = numpy.arctan(ratio)
+  r_y = rotation_matrix(theta_1, 'y')
+  rotated_point = r_y @ point
+  
+  if rotated_point[1] == 0:
+    theta_2 = 0.0
+  else:
+    ratio_2 = rotated_point[0] / rotated_point[1]
+    theta_2 = numpy.arctan(ratio_2)
+
+  return theta_1, theta_2
+
+
+def apply_rotations(points: numpy.ndarray, theta_1: float, theta_2: float):
+  """ Applies rotations to align 3D points based on the specified angles.
+
+    Arguments
+      - points: a numpy array of shape (N, 3), where N is the number of points.
+      - theta_1: rotation angle in radians for the 'y' axis.
+      - theta_2: rotation angle in radians for the 'z' axis.
+
+    Returns
+      A numpy array of rotated points.
+
+    Example:
+
+    >>> points = numpy.array([[1.0, 0.0, 0.0]])
+    >>> theta_1, theta_2 = numpy.pi / 4, numpy.pi / 6
+    >>> rotated_points = apply_rotations(points, theta_1, theta_2)
+    >>> rotated_points
+    array([[ 0.61237244, -0.35355339,  0.70710678]])
+
+    """
+  r_y = rotation_matrix(theta_1, 'y')
+  rotated_points = points @ r_y.T
+  r_z = rotation_matrix(theta_2, 'z')
+  return rotated_points @ r_z.T
+
+
+def collect_connected_groups(mol, atom1_idx, atom2_idx):
+  """ Collects groups of atoms connected to two atoms in a molecule, partitioned by a bond.
+
+    Arguments
+      - mol: RDKit molecule object.
+      - atom1_idx: index of the first atom in the bond.
+      - atom2_idx: index of the second atom in the bond.
+
+    Returns
+      A tuple (group1, group2):
+        - group1: set of atoms connected to atom1, excluding atom2.
+        - group2: set of atoms connected to atom2, excluding atom1.
+
+    Example:
+
+    >>> from rdkit.Chem import MolFromSmiles
+    >>> mol = MolFromSmiles("CC(C)C1=CC=CC=C1")
+    >>> group1, group2 = collect_connected_groups(mol, 0, 1)
+    >>> (group1, group2)
+    ({0, 3, 4, 5}, {1, 2})
+
+    """
+  group1, group2 = set(), set()
+
+  def dfs(atom_idx, group, exclude_idx):
+    stack = [atom_idx]
+    visited = {atom_idx}
+    while stack:
+      current = stack.pop()
+      group.add(current)
+      for neighbor in mol.GetAtomWithIdx(current).GetNeighbors():
+        neighbor_idx = neighbor.GetIdx()
+        if neighbor_idx != exclude_idx and neighbor_idx not in visited:
+          visited.add(neighbor_idx)
+          stack.append(neighbor_idx)
+
+  dfs(atom1_idx, group1, atom2_idx)
+  dfs(atom2_idx, group2, atom1_idx)
+  return group1, group2
+
+
+def find_rotatable_bonds(mol):
+  """ Identifies rotatable bonds in an RDKit molecule.
+
+    A bond is considered rotatable if:
+      - It is a single bond.
+      - It is not part of a ring.
+      - Neither of the connected atoms is terminal (i.e., degree > 1).
+
+    Arguments
+      - mol: RDKit molecule object.
+
+    Returns
+      A list of tuples, where each tuple represents the indices of two atoms
+      connected by a rotatable bond.
+
+    Example:
+
+    >>> from rdkit.Chem import MolFromSmiles
+    >>> smiles = "CC(C)C1=CC=CC=C1"
+    >>> mol = MolFromSmiles(smiles)
+    >>> rotatable_bonds = find_rotatable_bonds(mol)
+    >>> rotatable_bonds
+    [(0, 1), (1, 2)]
+
+    """
+  rotatable_bonds = []
+  for bond in mol.GetBonds():
+    if (
+        bond.GetBondType() == BondType.SINGLE and  
+        not bond.IsInRing()                            
+    ):
+      atom1 = bond.GetBeginAtom()
+      atom2 = bond.GetEndAtom()
+
+      if atom1.GetDegree() != 1 and atom2.GetDegree() != 1:
+        atom1_idx = atom1.GetIdx()
+        atom2_idx = atom2.GetIdx()
+        rotatable_bonds.append((atom1_idx, atom2_idx))
+  
+  return rotatable_bonds
+
