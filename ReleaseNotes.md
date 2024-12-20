@@ -1,3 +1,80 @@
+# Release_2024.09.4
+(Changes relative to Release_2024.09.3)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+David Cosgrove, Jozef Fulop, Hussein Faara, Eisuke Kawashima, Brian Kelley,
+Radics Laszlo, Jeremy Monat, Dan Nealschneider, Rachael Pirie Ricardo Rodriguez,
+Nikitas Rontsis, Paolo Tosco, Marco Visani, JP,
+
+## New Features and Enhancements:
+  - NumAmideBonds descriptor missing
+ (github issue #1670 from malteseunderdog)
+  - Make sure that loggers can be enabled, disabled, captured and tee'd from MinimalLib
+ (github pull #7962 from ptosco)
+  - Add Molecular Interaction Fields
+ (github pull #7993 from greglandrum)
+  - Resolve clashing atom labels in 2D drawing
+ (github pull #8074 from DavidACosgrove)
+  - Add drawMols3D() and improve documentation for IPythonConsole
+ (github pull #8083 from greglandrum)
+  - Allow fragments of aromatic rings to match in RascalMCES
+ (github pull #8088 from DavidACosgrove)
+  - SynthonSearch synth check
+ (github pull #8109 from DavidACosgrove)
+  - Avoid expensive matching in conformer generation if it's not needed.
+ (github pull #8111 from nrontsis)
+  - allow specified chiral features to SSS match unspecified features
+ (github pull #8115 from greglandrum)
+
+## Documentation:
+  - Getting Started with Contributing to RDKit
+ (github pull #7813 from RPirie96)
+  - Some documentation updates
+ (github pull #8080 from greglandrum)
+  - document H atoms in SMARTS
+ (github pull #8081 from greglandrum)
+  - Add section `How to Build RDKit Documentation Locally`
+ (github pull #8120 from bertiewooster)
+
+## Bug Fixes:
+  - Segmentation fault using None as property name in SetProp
+ (github issue #4570 from bp-kelley)
+  - MinimalLib and CFFI get_mol() will not remove Hs even when removeHs is set to true
+ (github issue #8027 from ptosco)
+  - segfault when parsing molecule with high coordination number
+ (github issue #8060 from garaboncias)
+  - Adding Hs to a linear molecule throws "Cannot normalize a zero length vector"
+ (github issue #8065 from ricrogz)
+  - Handle DOS files in SynthonSpaceSearch
+ (github pull #8075 from DavidACosgrove)
+  - reloading IPythonConsole breaks it
+ (github issue #8082 from greglandrum)
+  - Avoid that map::at() throws an exception in case atomColourPalette includes neither 6 nor -1
+ (github pull #8085 from ptosco)
+  - Synthon search fp bug
+ (github pull #8086 from DavidACosgrove)
+  - rdDetermineBonds segfaults when called from readonly directory
+ (github issue #8092 from bp-kelley)
+  - Tanimoto score exceeds 1 for deuterium-containing molecules in rdShapeAlign.AlignMol()
+ (github issue #8096 from fulopjoz)
+  - Rascal returns empty results even when told not to
+ (github issue #8098 from DavidACosgrove)
+  - Use endian-aware read/write for length of string.
+ (github pull #8105 from DavidACosgrove)
+  - normalizeDepiction() should always center coordinates on the coordinate centroid, irrespective of the canonicalize parameter
+ (github pull #8107 from ptosco)
+
+## Cleanup work:
+  - Remove warnings from `npscorer.py`
+ (github issue #8052 from mvisani)
+  - Minor MinimalLib cleanup
+ (github pull #8112 from ptosco)
+
+
 # Release_2024.09.3
 (Changes relative to Release_2024.09.2)
 
