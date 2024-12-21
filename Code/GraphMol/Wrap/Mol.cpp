@@ -805,7 +805,8 @@ struct mol_wrapper {
                  python::with_custodian_and_ward_postcall<0, 1>>(),
              python::args("self", "qa"),
              "Returns a read-only sequence containing all of the atoms in a "
-             "molecule that match the query atom.\n")
+             "molecule that match the query atom. "
+             "Atom query options are given in the rdkit.Chem.rdqueries module.\n")
 
         // enable pickle support
         .def_pickle(mol_pickle_suite())
