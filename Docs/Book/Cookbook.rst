@@ -2028,7 +2028,7 @@ Explicit Valence Error - Partial Sanitization
    from rdkit import Chem
    from rdkit import rdqueries
 
-The default RDKit behavior is to reject hypervalent P, so you need to set `sanitize=False``:
+The default RDKit behavior is to reject hypervalent P, so you need to set `sanitize=False`:
 
 .. testcode::
 
