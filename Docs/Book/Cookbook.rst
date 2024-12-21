@@ -2026,14 +2026,56 @@ Explicit Valence Error - Partial Sanitization
 .. testcode::
 
    from rdkit import Chem
-   # default RDKit behavior is to reject hypervalent P, so you need to set sanitize=False
-   m = Chem.MolFromSmiles('F[P-](F)(F)(F)(F)F.CN(C)C(F)=[N+](C)C',sanitize=False)
+   from rdkit import rdqueries
+
+The default RDKit behavior is to reject hypervalent P, so you need to set sanitize=False:
 
 .. testcode::
 
-   # next, you probably want to at least do a partial sanitization so that the molecule is actually useful:
+   m = Chem.MolFromSmiles('F[P-](F)(F)(F)(F)F.CN(C)C(F)=[N+](C)C',sanitize=False)
+   m
+
+.. image:: images/RDKitCB_15_im0.png
+
+The arrangement of the six F around the P is not the octahedral arrangement we would expect because the RDKit has not assigned a hybridization to the P (or any other atoms):
+
+.. testcode::
+
+   # Build a query for the P
+   q = rdqueries.AtomNumEqualsQueryAtom(15)
+
+   # Select the first and only P
+   phosphorus = m.GetAtomsMatchingQuery(q)[0]
+
+   phosphorus.GetHybridization()
+
+.. testoutput::
+   
+   rdkit.Chem.rdchem.HybridizationType.UNSPECIFIED
+
+Next, you probably want to at least do a partial sanitization so that the molecule is actually useful.
+In this case, setting the hybridization is key:
+
+.. testcode::
+
+   # Regenerate computed properties like implicit valence and ring information
    m.UpdatePropertyCache(strict=False)
+
+   # Apply several sanitization rules
    Chem.SanitizeMol(m,Chem.SanitizeFlags.SANITIZE_FINDRADICALS|Chem.SanitizeFlags.SANITIZE_KEKULIZE|Chem.SanitizeFlags.SANITIZE_SETAROMATICITY|Chem.SanitizeFlags.SANITIZE_SETCONJUGATION|Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION|Chem.SanitizeFlags.SANITIZE_SYMMRINGS,catchErrors=True)
+   m
+
+.. image:: images/RDKitCB_15_im1.png
+
+Now the expected octahedral arrangement of the six F around the P exists because the hybridization of P has been assigned as SP3D2:
+
+.. testcode::
+
+   phosphorus.GetHybridization()
+
+.. testoutput::
+   
+   rdkit.Chem.rdchem.HybridizationType.SP3D2
 
 
 Detect Chemistry Problems
