@@ -2026,7 +2026,7 @@ Explicit Valence Error - Partial Sanitization
 .. testcode::
 
    from rdkit import Chem
-   from rdkit import rdqueries
+   from rdkit.Chem import rdqueries
 
 The default RDKit behavior is to reject hypervalent P, so you need to set `sanitize=False`:
 
@@ -2050,7 +2050,7 @@ The arrangement of the six F around the P is not the octahedral arrangement we w
    phosphorus.GetHybridization()
 
 .. testoutput::
-   
+
    rdkit.Chem.rdchem.HybridizationType.UNSPECIFIED
 
 Next, you probably want to at least do a partial sanitization so that the molecule is actually useful.
@@ -2074,7 +2074,7 @@ Now the expected octahedral arrangement of the six F around the P exists because
    phosphorus.GetHybridization()
 
 .. testoutput::
-   
+
    rdkit.Chem.rdchem.HybridizationType.SP3D2
 
 
