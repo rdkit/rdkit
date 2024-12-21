@@ -78,6 +78,8 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // times, a lower number will give faster searches at the
              // risk of missing some hits.  The value you use should have
              // a positive correlation with your FOMO.
+  std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
+                               // search.  0 means no maximum.
 };
 
 // Holds the information about a set of hits.  The molecules can be built
@@ -121,7 +123,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    *
    * @param query : query molecule
    * @param params : (optional) settings for the search
-   * @return : the hits as a SubstructureResults object.
+   * @return : the hits as a SearchResults object.
    */
   SearchResults substructureSearch(
       const ROMol &query,
@@ -136,7 +138,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param fpGen: a FingerprintGenerator object that will provide the
    *               fingerprints for the similarity calculation
    * @param params : (optional) settings for the search
-   * @return : the hits as a SubstructureResults object.
+   * @return : the hits as a SearchResults object.
    */
   SearchResults fingerprintSearch(
       const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,

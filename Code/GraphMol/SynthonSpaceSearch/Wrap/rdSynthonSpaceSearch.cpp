@@ -34,13 +34,15 @@ struct SearchResults_wrapper {
         "SubstructureResult", docString.c_str(), python::no_init)
         .def("GetHitMolecules", hitMolecules_helper, python::args("self"),
              "A function returning hits from the search")
-        .def_readonly("GetMaxNumResults",
-                      &SynthonSpaceSearch::SearchResults::getMaxNumResults,
-                      "The upper bound on number of results possible.  There"
-                      " may be fewer than this in practice for several reasons"
-                      " such as duplicate reagent sets being removed or the"
-                      " final product not matching the query even though the"
-                      " synthons suggested they would.");
+        .def("GetMaxNumResults",
+             &SynthonSpaceSearch::SearchResults::getMaxNumResults,
+             "The upper bound on number of results possible.  There"
+             " may be fewer than this in practice for several reasons"
+             " such as duplicate reagent sets being removed or the"
+             " final product not matching the query even though the"
+             " synthons suggested they would.")
+        .def("GetTimedOut", &SynthonSpaceSearch::SearchResults::getTimedOut,
+             "Returns whether the search timed out or not.");
   }
 };
 
@@ -141,7 +143,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           &SynthonSpaceSearch::SynthonSpaceSearchParams::fragSimilarityAdjuster,
           "Similarities of fragments are generally low due to low bit"
           " densities.  For the fragment matching, reduce the similarity cutoff"
-          " off by this amount.  Default=0.3.");
+          " off by this amount.  Default=0.1.")
+      .def_readwrite(
+          "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
+          "Time limit for search, in seconds.  Default is 600s, 0 means no"
+          " timeout.  Requires an integer");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(

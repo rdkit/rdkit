@@ -20,6 +20,16 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
+namespace {
+bool checkTimeOut(const TimePoint *endTime) {
+  if (endTime != nullptr && Clock::now() > *endTime) {
+    BOOST_LOG(rdWarningLog) << "Timed out.\n";
+    return true;
+  }
+  return false;
+}
+}  // namespace
+
 SearchResults SynthonSpaceSearcher::search() {
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
@@ -44,7 +54,18 @@ SearchResults SynthonSpaceSearcher::search() {
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
+  TimePoint *endTime = nullptr;
+  TimePoint endTimePt;
+  if (d_params.timeOut > 0) {
+    endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
+    endTime = &endTimePt;
+  }
+  bool timedOut = false;
   for (auto &fragSet : fragments) {
+    timedOut = checkTimeOut(endTime);
+    if (timedOut) {
+      break;
+    }
     if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
       totHits += std::accumulate(
           theseHits.begin(), theseHits.end(), 0,
@@ -55,10 +76,11 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   }
 
-  if (d_params.buildHits) {
-    buildHits(allHits, totHits, results);
+  if (!timedOut && d_params.buildHits) {
+    buildHits(allHits, totHits, endTime, timedOut, results);
   }
-  return SearchResults{std::move(results), totHits};
+
+  return SearchResults{std::move(results), totHits, timedOut};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
@@ -97,6 +119,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
+    const TimePoint *endTime, bool &timedOut,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -119,9 +142,9 @@ void SynthonSpaceSearcher::buildHits(
   std::set<std::string> resultsNames;
 
   if (d_params.randomSample) {
-    buildRandomHits(hitsets, totHits, resultsNames, results);
+    buildRandomHits(hitsets, totHits, resultsNames, endTime, timedOut, results);
   } else {
-    buildAllHits(hitsets, resultsNames, results);
+    buildAllHits(hitsets, resultsNames, endTime, timedOut, results);
   }
 }
 
@@ -141,8 +164,9 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
-    std::set<std::string> &resultsNames,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::set<std::string> &resultsNames, const TimePoint *endTime,
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
+  std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
     std::vector<std::vector<size_t>> synthonNums;
     synthonNums.reserve(synthonsToUse.size());
@@ -174,6 +198,18 @@ void SynthonSpaceSearcher::buildAllHits(
         return;
       }
       stepper.step();
+      // Don't check the time every go, as it's quite expensive.
+      --numTries;
+      if (!numTries) {
+        numTries = 100;
+        timedOut = checkTimeOut(endTime);
+        if (timedOut) {
+          break;
+        }
+      }
+    }
+    if (timedOut) {
+      break;
     }
   }
   sortHits(results);
@@ -240,14 +276,15 @@ struct RandomHitSelector {
 
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    std::set<std::string> &resultsNames,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::set<std::string> &resultsNames, const TimePoint *endTime,
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
   auto rhs = RandomHitSelector(hitsets, d_space);
 
-  uint64_t numFails = 0;
+  std::uint64_t numFails = 0;
+  std::uint64_t numTries = 100;
   while (results.size() < std::min(static_cast<std::uint64_t>(d_params.maxHits),
                                    static_cast<std::uint64_t>(totHits)) &&
          numFails < totHits * d_params.numRandomSweeps) {
@@ -257,6 +294,15 @@ void SynthonSpaceSearcher::buildRandomHits(
       results.push_back(std::move(prod));
     } else {
       numFails++;
+    }
+    // Don't check the time every go, as it's quite expensive.
+    --numTries;
+    if (!numTries) {
+      numTries = 100;
+      timedOut = checkTimeOut(endTime);
+      if (timedOut) {
+        break;
+      }
     }
   }
   sortHits(results);
