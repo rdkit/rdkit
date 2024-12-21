@@ -17,12 +17,6 @@
 #include <cstdlib>
 
 #include <RDGeneral/RDLog.h>
-#if 0
-#include <boost/log/functions.hpp>
-#if defined(BOOST_HAS_THREADS)
-#include <boost/log/extra/functions_ts.hpp>
-#endif
-#endif
 
 namespace python = boost::python;
 namespace logging = boost::logging;
@@ -162,17 +156,6 @@ void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
   (void)spec;
   (void)filename;
   (void)delay;
-#if 0
-#if defined(BOOST_HAS_THREADS)
-  logging::manipulate_logs(spec)
-    .add_appender(logging::ts_appender(logging::write_to_file(filename),
-				       delay));
-#else
-  logging::manipulate_logs(spec)
-    .add_appender(logging::write_to_file(filename));
-
-#endif
-#endif
 }
 
 void LogDebugMsg(const std::string &msg) {

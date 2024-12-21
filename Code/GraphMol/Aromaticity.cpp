@@ -48,12 +48,6 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
   res.push_back(curr);
 
   const auto &neighs = pos->second;
-#if 0
-    std::cerr<<"depth: "<<depth<<" ring: "<<curr<<" size: "<<res.size()<<" neighs: "<<neighs.size()<<std::endl;
-    std::cerr<<"   ";
-    std::copy(neighs.begin(),neighs.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr<<"\n";
-#endif
   for (int neigh : neighs) {
     if (!done[neigh]) {
       pickFusedRings(neigh, neighMap, res, done, depth + 1);
@@ -112,13 +106,6 @@ void makeRingNeighborMap(const VECT_INT_VECT &brings,
       }
     }
   }
-#if 0
-    for (i = 0; i < nrings; i++) {
-      std::cerr<<"**************\n    "<<i<<"\n*************\n";
-      std::copy(neighMap[i].begin(),neighMap[i].end(),std::ostream_iterator<int>(std::cerr," "));
-      std::cerr<<"\n";
-    }
-#endif
 }
 
 }  // end of namespace RingUtils
@@ -319,11 +306,6 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
   } else if (rup == 2) {
     aromatic = true;
   }
-#if 0
-    std::cerr <<" ring: ";
-    std::copy(ring.begin(),ring.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr <<" rlw: "<<rlw<<" rup: "<<rup<<" aromatic? "<<aromatic<<std::endl;
-#endif
   return aromatic;
 }
 
