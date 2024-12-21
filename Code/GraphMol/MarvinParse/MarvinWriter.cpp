@@ -429,8 +429,13 @@ class MarvinCMLWriter {
         marvinAtom->formalCharge = atom->getFormalCharge();
 
         unsigned int nRadEs = atom->getNumRadicalElectrons();
+        // value of radical electrons has to be one of the expected values or it
+        // is ignored
         if (nRadEs != 0) {
-          marvinAtom->radical = radicalElectronsToMarvinRadical.at(nRadEs);
+          if (const auto iter = radicalElectronsToMarvinRadical.find(nRadEs);
+              iter != radicalElectronsToMarvinRadical.end()) {
+            marvinAtom->radical = iter->second;
+          }
         }
 
         if (marvinAtom->isElement()) {
