@@ -2019,7 +2019,7 @@ Explicit Valence Error - Partial Sanitization
 ==============================================
 
 | **Author:** Greg Landrum
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/32599798/>`_
+| **Original Source:** `<https://sourceforge.net/p/rdkit/mailman/message/32599798/>`_
 | **Index ID#:** RDKitCB_15
 | **Summary:** Create a mol object with skipping valence check, followed by a partial sanitization. N.B. Use caution, and make sure your molecules actually make sense before doing this!
 
