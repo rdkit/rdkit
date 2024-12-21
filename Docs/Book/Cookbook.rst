@@ -2047,11 +2047,11 @@ The arrangement of the six F around the P is not the octahedral arrangement we w
    # Select the first and only P
    phosphorus = m.GetAtomsMatchingQuery(q)[0]
 
-   phosphorus.GetHybridization()
+   print(phosphorus.GetHybridization())
 
 .. testoutput::
 
-   rdkit.Chem.rdchem.HybridizationType.UNSPECIFIED
+   UNSPECIFIED
 
 Next, you probably want to at least do a partial sanitization so that the molecule is actually useful.
 In this case, setting the hybridization is key:
@@ -2071,11 +2071,11 @@ Now the expected octahedral arrangement of the six F around the P exists because
 
 .. testcode::
 
-   phosphorus.GetHybridization()
+   print(phosphorus.GetHybridization())
 
 .. testoutput::
 
-   rdkit.Chem.rdchem.HybridizationType.SP3D2
+   SP3D2
 
 
 Detect Chemistry Problems
