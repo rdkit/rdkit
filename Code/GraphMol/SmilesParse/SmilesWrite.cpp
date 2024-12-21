@@ -566,13 +566,6 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       }
     }
 
-#if 0
-    std::cout << "----------------------------" << std::endl;
-    std::cout << "MolToSmiles:" << std::endl;
-    tmol->debugMol(std::cout);
-    std::cout << "----------------------------" << std::endl;
-#endif
-
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively

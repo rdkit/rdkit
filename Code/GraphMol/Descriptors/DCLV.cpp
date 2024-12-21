@@ -352,12 +352,7 @@ struct State {
   void freeAtomList(AtomList *ptr) {
     while (ptr) {
       AtomList *next = ptr->next;
-#if 0
-      ptr->next = freeList;
-      freeList = ptr;
-#else
       free(ptr);
-#endif
       ptr = next;
     }
   }
