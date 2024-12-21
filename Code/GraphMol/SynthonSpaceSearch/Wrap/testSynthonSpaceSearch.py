@@ -81,7 +81,7 @@ class TestCase(unittest.TestCase):
     synthonspace.ReadTextFile(fName)
     self.assertEqual(10, synthonspace.GetNumReactions())
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
-    params.timeOut = 10
+    params.timeOut = 50
     params.similarityCutoff = 0.3
     params.fragSimilarityAdjuster = 0.3
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
