@@ -239,7 +239,7 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
 //! returns a copy of a molecule with hydrogens removed
 /*!
     \param mol          the molecule to remove Hs from
-    \param implicitOnly (optional) if this \c true, only implicit Hs will be
+    \param implicitOnly if this \c true, only implicit Hs will be
    removed
     \param updateExplicitCount  (optional) If this is \c true, when explicit Hs
    are removed
@@ -268,14 +268,14 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
-                                      bool implicitOnly = false,
+[[deprecated("Please use the version with RemoveHsParameters")]]
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly,
                                       bool updateExplicitCount = false,
                                       bool sanitize = true);
 //! \overload
 /// modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
+[[deprecated("Please use the version with RemoveHsParameters")]]
+RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly,
                                     bool updateExplicitCount = false,
                                     bool sanitize = true);
 struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
@@ -311,13 +311,14 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
 
 //! \overload
 /// modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
-                                    bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT void removeHs(
+    RWMol &mol, const RemoveHsParameters &ps = RemoveHsParameters(),
+    bool sanitize = true);
 //! \overload
 /// The caller owns the pointer this returns
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
-                                      const RemoveHsParameters &ps,
-                                      bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(
+    const ROMol &mol, const RemoveHsParameters &ps = RemoveHsParameters(),
+    bool sanitize = true);
 
 //! removes all Hs from a molecule
 RDKIT_GRAPHMOL_EXPORT void removeAllHs(RWMol &mol, bool sanitize = true);
