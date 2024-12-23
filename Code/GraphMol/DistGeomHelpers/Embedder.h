@@ -34,7 +34,8 @@ enum EmbedFailureCauses {
   LINEAR_DOUBLE_BOND = 8,
   BAD_DOUBLE_BOND_STEREO = 9,
   CHECK_CHIRAL_CENTERS2 = 10,
-  END_OF_ENUM = 11,
+  EXCEEDED_TIMEOUT = 11,
+  END_OF_ENUM = 12,
 };
 
 //! Parameter object for controlling embedding

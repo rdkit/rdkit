@@ -598,7 +598,8 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
     int needMore = 1;
     while (needMore) {
       if (end_time != nullptr && Clock::now() > *end_time) {
-        throw ValueErrorException("Timeout reached");
+        embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++
+        return false
       }
       needMore = field2->minimize(200, embedParams.optimizerForceTol);
     }
@@ -854,7 +855,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   unsigned int iter = 0;
   while (!gotCoords && iter < embedParams.maxIterations) {
     if (end_time != nullptr && Clock::now() > *end_time) {
-      throw ValueErrorException("Timeout reached");
+      embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++
+      return false
     }
 
     ++iter;
@@ -1324,7 +1326,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (end_time != nullptr && Clock::now() > *end_time) {
-      throw ValueErrorException("Timeout reached");
+      embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++
+      return;
     }
 
     if (rdcast<int>(ci % numThreads) != threadId) {
@@ -1606,6 +1609,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       }
     }
 #endif
+    if params[EXCEEDED_TIMEOUT] > 0 {
+      res.push_back(-1);
+      return;
+    }
   }
   std::vector<std::vector<unsigned int>> selfMatches;
   if (params.pruneRmsThresh > 0.0) {
