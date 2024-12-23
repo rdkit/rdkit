@@ -443,7 +443,7 @@ Bond *getTrigonalBipyramidalAxialBond(const Atom *cen, int axial) {
 
   unsigned int perm = 0;
   cen->getPropIfPresent(RDKit::common_properties::_chiralPermutation, perm);
-  if (perm == 0 || perm > 20) return 0;
+  if (perm == 0 || perm > 20) return nullptr;
 
   unsigned int idx = (axial != -1) ? trigonalbipyramidal_axial[perm][0]
                                    : trigonalbipyramidal_axial[perm][1];
