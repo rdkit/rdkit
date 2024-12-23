@@ -78,6 +78,13 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // times, a lower number will give faster searches at the
              // risk of missing some hits.  The value you use should have
              // a positive correlation with your FOMO.
+  double approxSimilarityAdjuster{
+      0.1};  // The fingerprint search uses an approximate similarity method
+             // before building a product and doing a final check.  The
+             // similarityCutoff is reduced by this value for the approximate
+             // check.  A lower value will give faster run times at the
+             // risk of missing some hits.  The value you use should have a
+             // positive correlation with your FOMO.
   std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
                                // search.  0 means no maximum.
 };
@@ -206,9 +213,16 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   bool hasFingerprints() const;
   // Create the fingerprints for the synthons ready for fingerprint searches.
-  // Valid values of fpType as described by SynthonSpaceSearchParams.
+  // Will be done by the fingerprint search if not done ahead of time.
   void buildSynthonFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
+
+  bool hasAddAndSubstractFingerprints() const;
+  // Create the add and substract fingerprints for the SynthonSets.
+  // Will be done by the fingerprint search if not done ahead of time.
+  void buildAddAndSubstractFingerprints(
+      const FingerprintGenerator<std::uint64_t> &fpGen,
+      const SynthonSpaceSearchParams &params);
 
  private:
   std::string d_fileName;

@@ -91,7 +91,13 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 
   std::unique_ptr<ROMol> prod;
   if (resultsNames.insert(prodName).second) {
+    std::cout << "possible prod name : " << prodName << std::endl;
+    prod = reaction->buildProduct(synthNums);
+    prod.reset();
     if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
+      return prod;
+    }
+    if (!quickVerify(reaction, synthNums)) {
       return prod;
     }
     prod = reaction->buildProduct(synthNums);

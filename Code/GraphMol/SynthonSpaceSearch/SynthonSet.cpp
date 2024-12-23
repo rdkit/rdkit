@@ -22,7 +22,10 @@
 // for example, it uses a different fingerprint for the initial synthon
 // screening.
 
+#include <random>
 #include <regex>
+
+#include <boost/random/discrete_distribution.hpp>
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolPickler.h>
@@ -41,6 +44,12 @@ const std::vector<std::shared_ptr<ROMol>> &SynthonSet::getConnectorRegions()
 
 const std::unique_ptr<ExplicitBitVect> &SynthonSet::getConnRegFP() const {
   return d_connRegFP;
+}
+const std::unique_ptr<ExplicitBitVect> &SynthonSet::getAddFP() const {
+  return d_addFP;
+}
+const std::unique_ptr<ExplicitBitVect> &SynthonSet::getSubtractFP() const {
+  return d_subtractFP;
 }
 
 const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
@@ -164,8 +173,8 @@ namespace {
 // element of the other vectors.
 
 std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
-    const std::vector<std::vector<ROMol *>> &synthons,
-    const size_t longVecNum, const SynthonSet &reaction) {
+    const std::vector<std::vector<ROMol *>> &synthons, const size_t longVecNum,
+    const SynthonSet &reaction) {
   std::vector<std::unique_ptr<ROMol>> sampleMolecules;
   sampleMolecules.reserve(synthons[longVecNum].size());
 
@@ -187,13 +196,16 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
       sampleMolecules.push_back(std::move(sampleMol));
     } catch (std::exception &e) {
       const auto &synths = reaction.getSynthons();
-      std::string msg("Error:: in reaction " + reaction.getId() + " :: building molecule from synthons :");
+      std::string msg("Error:: in reaction " + reaction.getId() +
+                      " :: building molecule from synthons :");
       for (size_t j = 0; j < synthons.size(); ++j) {
         std::string sep = j ? " and " : " ";
         if (j == longVecNum) {
-          msg += sep + synths[j][i]->getId() + " (" + synths[j][i]->getSmiles() + ")";
+          msg += sep + synths[j][i]->getId() + " (" +
+                 synths[j][i]->getSmiles() + ")";
         } else {
-          msg +=  sep + synths[j].front()->getId() + " (" + synths[j].front()->getSmiles() + ")";
+          msg += sep + synths[j].front()->getId() + " (" +
+                 synths[j].front()->getSmiles() + ")";
         }
       }
       msg += "\n" + std::string(e.what()) + "\n";
@@ -250,7 +262,8 @@ void SynthonSet::transferProductBondsToSynthons() {
         synthsToUse[j][0] = true;
       }
     }
-    auto sampleMols = buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
+    auto sampleMols =
+        buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
       auto synthCp =
           std::make_unique<RWMol>(*d_synthons[synthSetNum][j]->getOrigMol());
@@ -363,12 +376,17 @@ const std::vector<int> &SynthonSet::getNumConnectors() const {
 }
 
 bool SynthonSet::hasFingerprints() const { return !d_synthonFPs.empty(); }
+bool SynthonSet::hasAddAndSubtractFPs() const {
+  return static_cast<bool>(d_addFP);
+}
 
 void SynthonSet::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
+  d_addFP.reset();
+  d_subtractFP.reset();
+
   // The synthons should have had transferProductBondsToSynthons
   // applied to them by now.
-
   d_synthonFPs.clear();
 
   d_synthonFPs.reserve(d_synthons.size());
@@ -380,6 +398,87 @@ void SynthonSet::buildSynthonFingerprints(
           fpGen.getFingerprint(*synth->getSearchMol()));
     }
   }
+}
+
+void SynthonSet::buildAddAndSubtractFPs(
+    const FingerprintGenerator<std::uint64_t> &fpGen,
+    const SynthonSpaceSearchParams &params) {
+  d_addFP.reset();
+  d_subtractFP.reset();
+  auto lastAddFP = std::make_unique<ExplicitBitVect>();
+  auto lastsubtractFP = std::make_unique<ExplicitBitVect>();
+  std::unique_ptr<boost::mt19937> randGen;
+  if (params.randomSeed == -1) {
+    std::random_device rd;
+    randGen = std::make_unique<boost::mt19937>(rd());
+  } else {
+    randGen = std::make_unique<boost::mt19937>(params.randomSeed);
+  }
+  std::vector<boost::random::uniform_int_distribution<size_t>> synthSels;
+  size_t maxTries = 1;
+  for (const auto &synth : d_synthons) {
+    synthSels.push_back(
+        boost::random::uniform_int_distribution<size_t>(0, synth.size() - 1));
+    maxTries *= synth.size();
+  }
+  if (maxTries > 1000) {
+    maxTries = 1000;
+  }
+  std::vector<size_t> synthNums(synthSels.size(), 0);
+  size_t lastSameCount = 0;
+  for (size_t i = 0; i < maxTries; ++i) {
+    for (size_t j = 0; j < synthSels.size(); ++j) {
+      synthNums[j] = synthSels[j](*randGen);
+    }
+    std::cout << i << " :: ";
+    for (auto sn : synthNums) {
+      std::cout << sn << " ";
+    }
+    std::cout << std::endl;
+    auto prod = buildProduct(synthNums);
+    std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
+    ExplicitBitVect approxFP(*d_synthonFPs[0][synthNums[0]]);
+    for (size_t j = 1; j < d_synthonFPs.size(); ++j) {
+      approxFP |= *d_synthonFPs[j][synthNums[j]];
+    }
+    std::unique_ptr<ExplicitBitVect> subtractFP(
+        new ExplicitBitVect(approxFP & ~(*prodFP)));
+
+    if (!d_addFP) {
+      d_addFP = std::move(prodFP);
+      d_subtractFP = std::move(subtractFP);
+      lastAddFP.reset(new ExplicitBitVect(*d_addFP));
+      lastsubtractFP.reset(new ExplicitBitVect(*d_subtractFP));
+    } else {
+      *d_addFP &= *prodFP;
+      *d_subtractFP &= *subtractFP;
+    }
+    if (*d_addFP == *lastAddFP && *d_subtractFP == *lastsubtractFP) {
+      ++lastSameCount;
+      if (lastSameCount == 10) {
+        break;
+      }
+    } else {
+      lastAddFP.reset(new ExplicitBitVect(*d_addFP));
+      lastsubtractFP.reset(new ExplicitBitVect(*d_subtractFP));
+    }
+    // std::cout << "add : ";
+    // for (size_t i = 0; i < d_addFP->getNumBits(); ++i) {
+    //   if (d_addFP->getBit(i)) {
+    //     std::cout << i << " ";
+    //   }
+    // }
+    // std::cout << std::endl;
+    // std::cout << "sub : ";
+    // for (size_t i = 0; i < d_subtractFP->getNumBits(); ++i) {
+    //   if (d_subtractFP->getBit(i)) {
+    //     std::cout << i << " ";
+    //   }
+    // }
+    // std::cout << std::endl;
+  }
+  // Take the complement of the subtract FP so it can be used directly
+  *d_subtractFP = ~(*d_subtractFP);
 }
 
 std::string SynthonSet::buildProductName(
@@ -396,6 +495,17 @@ std::unique_ptr<ROMol> SynthonSet::buildProduct(
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
 
+  // for (size_t i = 0; i < synthNums.size(); ++i) {
+  //   std::cout << i << " : " << d_synthons[i][synthNums[i]]->getSmiles()
+  //             << " :: ";
+  // }
+  // std::cout << std::endl;
+  // for (size_t i = 0; i < synthNums.size(); ++i) {
+  //   std::cout << i << " : "
+  //             << MolToSmiles(*d_synthons[i][synthNums[i]]->getSearchMol())
+  //             << " :: ";
+  // }
+  // std::cout << std::endl;
   auto prodMol = std::make_unique<ROMol>(
       *d_synthons.front()[synthNums.front()]->getOrigMol().get());
   for (size_t i = 1; i < synthNums.size(); ++i) {

@@ -277,14 +277,29 @@ bool SynthonSpace::hasFingerprints() const {
 
 void SynthonSpace::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
-  BOOST_LOG(rdWarningLog) << "Building the fingerprints may take some time."
-                          << std::endl;
   if (const auto fpType = fpGen.infoString();
       fpType != d_fpType || !hasFingerprints()) {
+    BOOST_LOG(rdWarningLog)
+        << "Building the fingerprints may take some time." << std::endl;
     d_fpType = fpType;
     for (const auto &[id, synthSet] : d_reactions) {
       synthSet->buildSynthonFingerprints(fpGen);
     }
+  }
+}
+
+bool SynthonSpace::hasAddAndSubstractFingerprints() const {
+  if (d_reactions.empty()) {
+    return false;
+  }
+  return d_reactions.begin()->second->hasAddAndSubtractFPs();
+}
+
+void SynthonSpace::buildAddAndSubstractFingerprints(
+    const FingerprintGenerator<std::uint64_t> &fpGen,
+    const SynthonSpaceSearchParams &params) {
+  for (const auto &[id, synthSet] : d_reactions) {
+    synthSet->buildAddAndSubtractFPs(fpGen, params);
   }
 }
 
