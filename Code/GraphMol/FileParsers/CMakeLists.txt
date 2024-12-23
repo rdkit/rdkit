@@ -5,7 +5,8 @@ endif()
 
 rdkit_library(FileParsers
     CDXMLParser.cpp
-    Mol2FileParser.cpp MolFileParser.cpp ScsrMolFileParser.cpp
+    Mol2FileParser.cpp MolFileParser.cpp 
+    ScsrMolFileParser.cpp ScsrToMol.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp

@@ -7,48 +7,15 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/format.hpp>
-#include <RDGeneral/BoostEndInclude.h>
 
-#include "FileParsers.h"
 #include "FileParserUtils.h"
 #include "MolSGroupParsing.h"
-#include <GraphMol/FileParsers/MolFileStereochem.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/RDKitQueries.h>
-#include <GraphMol/StereoGroup.h>
-#include <GraphMol/SubstanceGroup.h>
-#include <GraphMol/Atropisomers.h>
 #include <RDGeneral/StreamOps.h>
-#include <RDGeneral/RDLog.h>
-#include <GraphMol/GenericGroups/GenericGroups.h>
-#include <GraphMol/QueryOps.h>
-#include <GraphMol/Atom.h>
-#include <GraphMol/Chirality.h>
 
-#include <fstream>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
-#include <RDGeneral/LocaleSwitcher.h>
-#include <typeinfo>
-#include <exception>
-#include <charconv>
-#include <regex>
-#include <sstream>
-#include <locale>
-#include <cstdlib>
-#include <cstdio>
-#include <string_view>
 
 using namespace RDKit::SGroupParsing;
-using std::regex;
-using std::regex_match;
-using std::smatch;
 
 namespace RDKit {
 

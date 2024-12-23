@@ -3241,7 +3241,7 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
         std::ostringstream errout;
         errout
 
-                    << "BEGIN SGROUP  found but Sgroups NOT expected not found on line "
+            << "BEGIN SGROUP  found but Sgroups NOT expected not found on line "
             << line;
         if (strictParsing) {
           throw FileParseException(errout.str());

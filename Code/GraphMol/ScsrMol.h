@@ -49,6 +49,8 @@ class RDKIT_GRAPHMOL_EXPORT SCSRMol {
     return templates[index].get();
   };
 
+  const ROMol *getMol() const { return mol.get(); }
+
   ROMol *getMol() { return mol.get(); }
 };
 }  // namespace RDKit
