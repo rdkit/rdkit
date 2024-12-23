@@ -598,7 +598,7 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
     int needMore = 1;
     while (needMore) {
       if (end_time != nullptr && Clock::now() > *end_time) {
-        embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+        embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT] = 1;
         return false;
       }
       needMore = field2->minimize(200, embedParams.optimizerForceTol);
@@ -855,8 +855,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   unsigned int iter = 0;
   while (!gotCoords && iter < embedParams.maxIterations) {
     if (end_time != nullptr && Clock::now() > *end_time) {
-      embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
-      return false;
+      embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT] = 1;
+      break;
     }
 
     ++iter;
@@ -1326,7 +1326,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (end_time != nullptr && Clock::now() > *end_time) {
-      params->failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+      params->failures[EmbedFailureCauses::EXCEEDED_TIMEOUT] = 1;
       return;
     }
 
