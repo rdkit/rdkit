@@ -30,7 +30,6 @@ target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 rdkit_headers(CDXMLParser.h
     FileParsers.h
     FileParserUtils.h
-    ScsrMolFileParser.h
     MolFileStereochem.h
     FileWriters.h
     MolSupplier.h MolSupplier.v1API.h
