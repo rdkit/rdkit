@@ -165,7 +165,7 @@ namespace {
 
 std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
     const std::vector<std::vector<ROMol *>> &synthons,
-    const size_t longVecNum) {
+    const size_t longVecNum, const SynthonSet &reaction) {
   std::vector<std::unique_ptr<ROMol>> sampleMolecules;
   sampleMolecules.reserve(synthons[longVecNum].size());
 
@@ -181,11 +181,26 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
         combMol.reset(combineMols(*combMol, *synthons[j].front()));
       }
     }
-    auto sampleMol = molzip(*combMol, mzparams);
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(sampleMol.get()));
-    sampleMolecules.push_back(std::move(sampleMol));
+    try {
+      auto sampleMol = molzip(*combMol, mzparams);
+      MolOps::sanitizeMol(*dynamic_cast<RWMol *>(sampleMol.get()));
+      sampleMolecules.push_back(std::move(sampleMol));
+    } catch (std::exception &e) {
+      const auto &synths = reaction.getSynthons();
+      std::string msg("Error:: in reaction " + reaction.getId() + " :: building molecule from synthons :");
+      for (size_t j = 0; j < synthons.size(); ++j) {
+        std::string sep = j ? " and " : " ";
+        if (j == longVecNum) {
+          msg += sep + synths[j][i]->getId() + " (" + synths[j][i]->getSmiles() + ")";
+        } else {
+          msg +=  sep + synths[j].front()->getId() + " (" + synths[j].front()->getSmiles() + ")";
+        }
+      }
+      msg += "\n" + std::string(e.what()) + "\n";
+      BOOST_LOG(rdErrorLog) << msg;
+      throw(e);
+    }
   }
-
   return sampleMolecules;
 }
 
@@ -235,7 +250,7 @@ void SynthonSet::transferProductBondsToSynthons() {
         synthsToUse[j][0] = true;
       }
     }
-    auto sampleMols = buildSampleMolecules(synthonMolCopies, synthSetNum);
+    auto sampleMols = buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
       auto synthCp =
           std::make_unique<RWMol>(*d_synthons[synthSetNum][j]->getOrigMol());

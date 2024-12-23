@@ -1295,14 +1295,17 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
     }
   }
   std::unique_ptr<RDGeom::Transform3D> canonTrans;
+  auto ctd = MolTransforms::computeCentroid(conf);
   if (canonicalize) {
-    auto ctd = MolTransforms::computeCentroid(conf);
     canonTrans.reset(MolTransforms::computeCanonicalTransform(conf, &ctd));
     if (canonicalize < 0) {
       RDGeom::Transform3D rotate90;
       rotate90.SetRotation(0., 1., RDGeom::Point3D(0., 0., 1.));
       *canonTrans *= rotate90;
     }
+  } else {
+    canonTrans.reset(new RDGeom::Transform3D());
+    canonTrans->SetTranslation(-ctd);
   }
   bool isScaleFactorSane = (scaleFactor > SCALE_FACTOR_THRESHOLD);
   if (isScaleFactorSane && fabs(scaleFactor - 1.0) > SCALE_FACTOR_THRESHOLD) {
