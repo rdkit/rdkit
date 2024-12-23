@@ -576,7 +576,7 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
 }
 bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
                              const detail::EmbedArgs &eargs,
-                             const EmbedParameters &embedParams,
+                             EmbedParameters &embedParams,
                              TimePoint* end_time) {
   // now redo the minimization if we have a chiral center
   // or have started from random coords. This
@@ -598,8 +598,8 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
     int needMore = 1;
     while (needMore) {
       if (end_time != nullptr && Clock::now() > *end_time) {
-        embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++
-        return false
+        embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+        return false;
       }
       needMore = field2->minimize(200, embedParams.optimizerForceTol);
     }
@@ -855,8 +855,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   unsigned int iter = 0;
   while (!gotCoords && iter < embedParams.maxIterations) {
     if (end_time != nullptr && Clock::now() > *end_time) {
-      embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++
-      return false
+      embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+      return false;
     }
 
     ++iter;
@@ -1326,7 +1326,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (end_time != nullptr && Clock::now() > *end_time) {
-      embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++
+      params->failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
       return;
     }
 
@@ -1609,7 +1609,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       }
     }
 #endif
-    if params[EXCEEDED_TIMEOUT] > 0 {
+    if (params.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT] > 0) {
       res.push_back(-1);
       return;
     }
