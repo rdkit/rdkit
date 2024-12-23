@@ -4,10 +4,13 @@
 #include "EHTTools.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolOps.h>
+#include <RDGeneral/BadFileException.h>
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 #include <fstream>
+#include <cstdio>
+#include <filesystem>
 
 extern "C" {
 #include <yaehmop/tightbind/bind.h>
@@ -25,6 +28,52 @@ const std::string _EHTChargeMatrix = "_EHTChargeMatrix";
 std::mutex yaehmop_mutex;
 #endif
 
+namespace {
+std::string randomstring(unsigned int len = 8) {
+  const std::string alphanum{
+      "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"};
+  const auto strSize = alphanum.size();
+  std::string res;
+  res.reserve(len);
+
+  while (res.size() != len) {
+    const auto pos = rand() % strSize;
+    res.push_back(alphanum[pos]);
+  }
+  return res;
+}
+// RAII tempfile class
+struct Tempfile {
+  std::filesystem::path fname;
+  FILE *fptr = nullptr;
+
+  Tempfile() {
+    fname = std::filesystem::temp_directory_path() / randomstring();
+    fptr = std::fopen(fname.string().c_str(), "w+");
+    if (!fptr) {
+      throw BadFileException("could not open temporary file");
+    }
+  }
+  ~Tempfile() {
+    if (!fptr) {
+      return;
+    }
+#ifdef WIN32
+    std::fclose(fptr);
+#else
+    if (fcntl(fileno(fptr), F_GETFD) != -1) {
+      std::fclose(fptr);
+    }
+#endif
+    std::filesystem::remove(fname);
+  }
+  Tempfile(const Tempfile &o) = delete;
+  Tempfile &operator=(const Tempfile &o) = delete;
+  Tempfile(Tempfile &&o) = default;
+  Tempfile &operator=(Tempfile &&o) = default;
+};
+}  // namespace
+
 bool runMol(const ROMol &mol, EHTResults &results, int confId,
             bool preserveHamiltonianAndOverlapMatrices) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -34,10 +83,12 @@ bool runMol(const ROMol &mol, EHTResults &results, int confId,
   // -----------------------------
   // ----- BOILERPLATE -----------
   // -----------------------------
-  FILE *nullfile = fopen("nul", "w");
+  Tempfile nullHolder;
+  FILE *nullfile = nullHolder.fptr;
   status_file = nullfile;
   output_file = nullfile;
-  FILE *dest = fopen("run.out", "w+");
+  Tempfile destHolder;
+  FILE *dest = destHolder.fptr;
 
   unit_cell = (cell_type *)calloc(1, sizeof(cell_type));
   details = (detail_type *)calloc(1, sizeof(detail_type));
