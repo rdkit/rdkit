@@ -469,6 +469,11 @@ emscripten::val get_rgroups_as_rows_helper(const JSRGroupDecomposition &self) {
   return arr;
 }
 #endif
+
+void enable_logging_all() { enable_logging("rdApp.*"); }
+
+void disable_logging_all() { disable_logging("rdApp.*"); }
+
 }  // namespace
 
 using namespace emscripten;
@@ -663,8 +668,16 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
                     &JSMolBase::condense_abbreviations))
       .function("add_hs", &JSMolBase::add_hs)
       .function("add_hs_in_place", &JSMolBase::add_hs_in_place)
-      .function("remove_hs", &JSMolBase::remove_hs)
-      .function("remove_hs_in_place", &JSMolBase::remove_hs_in_place)
+      .function("remove_hs",
+                select_overload<std::string(const std::string &) const>(
+                    &JSMolBase::remove_hs))
+      .function("remove_hs",
+                select_overload<std::string() const>(&JSMolBase::remove_hs))
+      .function("remove_hs_in_place",
+                select_overload<bool(const std::string &)>(
+                    &JSMolBase::remove_hs_in_place))
+      .function("remove_hs_in_place",
+                select_overload<bool()>(&JSMolBase::remove_hs_in_place))
       .function("normalize_depiction",
                 select_overload<double()>(&JSMolBase::normalize_depiction))
       .function("normalize_depiction",
@@ -794,7 +807,9 @@ EMSCRIPTEN_BINDINGS(RDKit_minimal) {
   function("get_mol_copy", &get_mol_copy, allow_raw_pointers());
   function("get_qmol", &get_qmol, allow_raw_pointers());
   function("enable_logging", &enable_logging);
+  function("enable_logging", &enable_logging_all);
   function("disable_logging", &disable_logging);
+  function("disable_logging", &disable_logging_all);
   function("set_log_capture", &set_log_capture, allow_raw_pointers());
   function("set_log_tee", &set_log_tee, allow_raw_pointers());
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN

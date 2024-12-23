@@ -142,8 +142,10 @@ class JSMolBase {
   }
   std::string get_prop(const std::string &key) const;
   bool clear_prop(const std::string &key);
-  std::string remove_hs() const;
-  bool remove_hs_in_place();
+  std::string remove_hs(const std::string &details_json) const;
+  std::string remove_hs() const { return remove_hs(""); }
+  bool remove_hs_in_place(const std::string &details_json);
+  bool remove_hs_in_place() { return remove_hs_in_place(""); }
   std::string add_hs() const;
   bool add_hs_in_place();
   double normalize_depiction(int canonicalize, double scaleFactor);
@@ -244,7 +246,7 @@ class JSMolList {
 
 namespace RDKit {
 namespace MinimalLib {
-struct LogHandle;
+class LogHandle;
 }
 }  // namespace RDKit
 
@@ -345,8 +347,8 @@ std::string version();
 void prefer_coordgen(bool prefer);
 bool use_legacy_stereo_perception(bool value);
 bool allow_non_tetrahedral_chirality(bool value);
-void enable_logging();
-void disable_logging();
+bool enable_logging(const std::string &logName);
+bool disable_logging(const std::string &logName);
 JSLog *set_log_tee(const std::string &log_name);
 JSLog *set_log_capture(const std::string &log_name);
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS

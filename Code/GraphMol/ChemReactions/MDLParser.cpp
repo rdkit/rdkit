@@ -283,7 +283,7 @@ void ParseV3000RxnBlock(std::istream &inStream, unsigned int &line,
   for (unsigned int i = 0; i < nAgents; ++i) {
     RWMol *agent;
     unsigned int natoms, nbonds;
-    bool chiralityPossible;
+    bool chiralityPossible = false;
     Conformer *conf = nullptr;
     agent = new RWMol();
     try {
