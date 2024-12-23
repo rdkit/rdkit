@@ -598,7 +598,6 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
     int needMore = 1;
     while (needMore) {
       if (end_time != nullptr && Clock::now() > *end_time) {
-        embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT] = 1;
         return false;
       }
       needMore = field2->minimize(200, embedParams.optimizerForceTol);
@@ -855,7 +854,6 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   unsigned int iter = 0;
   while (!gotCoords && iter < embedParams.maxIterations) {
     if (end_time != nullptr && Clock::now() > *end_time) {
-      embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT] = 1;
       break;
     }
 
@@ -921,6 +919,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 #ifdef RDK_BUILD_THREADSAFE_SSS
             std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
+            if (end_time != nullptr && Clock::now() > *end_time) {
+              embedParams
+                .failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+            }
             embedParams
                 .failures[EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION]++;
           }
@@ -1326,7 +1328,6 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (end_time != nullptr && Clock::now() > *end_time) {
-      params->failures[EmbedFailureCauses::EXCEEDED_TIMEOUT] = 1;
       return;
     }
 
@@ -1609,7 +1610,13 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       }
     }
 #endif
-    if (params.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT] > 0) {
+    if (end_time != nullptr && Clock::now() > *end_time) {
+      if (params->trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        params->failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+      }
       res.push_back(-1);
       return;
     }
