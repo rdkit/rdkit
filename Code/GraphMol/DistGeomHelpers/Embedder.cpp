@@ -1611,11 +1611,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
 #endif
     if (end_time != nullptr && Clock::now() > *end_time) {
-      if (params->trackFailures) {
+      if (params.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
         std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
-        params->failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+        params.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
       }
       res.push_back(-1);
       return;
