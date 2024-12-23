@@ -273,6 +273,7 @@ void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
   PT_OPT_GET(maxMatches);
   PT_OPT_GET(maxRecursiveMatches);
   PT_OPT_GET(numThreads);
+  PT_OPT_GET(specifiedStereoQueryMatchesUnspecified);
 }
 
 std::string substructMatchParamsToJSON(const SubstructMatchParameters &params) {
@@ -287,6 +288,7 @@ std::string substructMatchParamsToJSON(const SubstructMatchParameters &params) {
   PT_OPT_PUT(maxMatches);
   PT_OPT_PUT(maxRecursiveMatches);
   PT_OPT_PUT(numThreads);
+  PT_OPT_PUT(specifiedStereoQueryMatchesUnspecified);
 
   std::stringstream ss;
   boost::property_tree::json_parser::write_json(ss, pt);

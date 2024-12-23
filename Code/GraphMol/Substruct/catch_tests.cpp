@@ -710,7 +710,7 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 1);
-      // make sure we are idempotent in pickling      
+      // make sure we are idempotent in pickling
       CHECK(SubstructMatch(*target, *mol, ps).size() == 1);
     }
     {
@@ -720,7 +720,7 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
-      // make sure we are idempotent in pickling      
+      // make sure we are idempotent in pickling
       CHECK(SubstructMatch(*target, mol2, ps).size() == 0);
     }
     {
@@ -730,8 +730,58 @@ TEST_CASE("pickling HasPropWithValue queries") {
       REQUIRE(pklmol.getAtomWithIdx(0)->hasQuery());
       REQUIRE(pklmol.getBondWithIdx(0)->hasQuery());
       CHECK(SubstructMatch(*target, pklmol, ps).size() == 0);
-      // make sure we are idempotent in pickling      
+      // make sure we are idempotent in pickling
       CHECK(SubstructMatch(*target, mol3, ps).size() == 0);
     }
+  }
+}
+
+TEST_CASE("specified query matches unspecified atom") {
+  SECTION("atom basics") {
+    auto q = "F[C@](Cl)(Br)C"_smarts;
+    REQUIRE(q);
+
+    auto m1 = "F[C@](Cl)(Br)C"_smiles;
+    REQUIRE(m1);
+    auto m2 = "FC(Cl)(Br)C"_smiles;
+    REQUIRE(m2);
+    auto m3 = "F[C@@](Cl)(Br)C"_smiles;
+    REQUIRE(m3);
+
+    SubstructMatchParameters ps;
+    ps.useChirality = true;
+    CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m2, *q, ps).empty());
+    CHECK(SubstructMatch(*m3, *q, ps).empty());
+
+    ps.specifiedStereoQueryMatchesUnspecified = true;
+    CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m2, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m3, *q, ps).empty());
+  }
+  SECTION("bond basics") {
+    auto q = "F/C=C/Br"_smarts;
+    REQUIRE(q);
+
+    auto m1 = "F/C=C/Br"_smiles;
+    REQUIRE(m1);
+    auto m2 = "FC=CBr"_smiles;
+    REQUIRE(m2);
+    auto m3 = "F/C=C\\Br"_smiles;
+    REQUIRE(m3);
+
+    SubstructMatchParameters ps;
+    ps.useChirality = true;
+    CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
+    CHECK(SubstructMatch(*m2, *q, ps).empty());
+    CHECK(SubstructMatch(*m3, *q, ps).empty());
+
+    ps.specifiedStereoQueryMatchesUnspecified = true;
+    std::cerr << "m1" << std::endl;
+    CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
+    std::cerr << "m2" << std::endl;
+    CHECK(SubstructMatch(*m2, *q, ps).size() == 1);
+    std::cerr << "m3" << std::endl;
+    CHECK(SubstructMatch(*m3, *q, ps).empty());
   }
 }
