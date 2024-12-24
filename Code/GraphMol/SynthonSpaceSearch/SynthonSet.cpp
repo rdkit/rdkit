@@ -421,8 +421,8 @@ void SynthonSet::buildAddAndSubtractFPs(
         boost::random::uniform_int_distribution<size_t>(0, synth.size() - 1));
     maxTries *= synth.size();
   }
-  if (maxTries > 1000) {
-    maxTries = 1000;
+  if (maxTries > 5000) {
+    maxTries = 5000;
   }
   std::vector<size_t> synthNums(synthSels.size(), 0);
   size_t lastSameCount = 0;
@@ -450,27 +450,14 @@ void SynthonSet::buildAddAndSubtractFPs(
     }
     if (*d_addFP == *lastAddFP && *d_subtractFP == *lastsubtractFP) {
       ++lastSameCount;
-      if (lastSameCount == 10) {
+      if (lastSameCount == 20) {
+        // It has probably converged
         break;
       }
     } else {
       lastAddFP.reset(new ExplicitBitVect(*d_addFP));
       lastsubtractFP.reset(new ExplicitBitVect(*d_subtractFP));
     }
-    // std::cout << "add : ";
-    // for (size_t i = 0; i < d_addFP->getNumBits(); ++i) {
-    //   if (d_addFP->getBit(i)) {
-    //     std::cout << i << " ";
-    //   }
-    // }
-    // std::cout << std::endl;
-    // std::cout << "sub : ";
-    // for (size_t i = 0; i < d_subtractFP->getNumBits(); ++i) {
-    //   if (d_subtractFP->getBit(i)) {
-    //     std::cout << i << " ";
-    //   }
-    // }
-    // std::cout << std::endl;
   }
   // Take the complement of the subtract FP so it can be used directly
   *d_subtractFP = ~(*d_subtractFP);

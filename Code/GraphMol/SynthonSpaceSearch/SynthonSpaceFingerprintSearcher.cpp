@@ -168,7 +168,6 @@ bool SynthonSpaceFingerprintSearcher::quickVerify(
   fullFP &= *(reaction->getSubtractFP());
 
   double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
-
   return approxSim >=
          getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }

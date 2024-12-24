@@ -104,7 +104,6 @@ TEST_CASE("FP Small tests") {
     CHECK(results.getHitMolecules().size() == expNumHits[i]);
     std::set<std::string> resSmis;
     for (const auto &r : results.getHitMolecules()) {
-      std::cout << "hit " << MolToSmiles(*r) << std::endl;
       resSmis.insert(MolToSmiles(*r));
     }
 
@@ -114,7 +113,6 @@ TEST_CASE("FP Small tests") {
     auto names = bruteForceSearch(fps, *queryMol, params.similarityCutoff);
     std::set<std::string> fullSmis;
     for (const auto &r : names) {
-      std::cout << "BF : " << r << std::endl;
       fullSmis.insert(MolToSmiles(*mols[r]));
     }
     if (i != 1) {
@@ -261,6 +259,9 @@ TEST_CASE("FP Approx Similarity") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
   SynthonSpaceSearchParams params;
+  // The addFP and subtractFP are built from a random selection of
+  // products so do occasionally vary, so use a fixed seed.
+  params.randomSeed = 1;
   params.similarityCutoff = 0.5;
   params.fragSimilarityAdjuster = 0.1;
   params.timeOut = 0;
@@ -274,13 +275,13 @@ TEST_CASE("FP Approx Similarity") {
   // between speed and hits missed.
   params.approxSimilarityAdjuster = 0.05;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 486);
+  CHECK(results.getHitMolecules().size() == 496);
   CHECK(results.getMaxNumResults() == 1466);
 
-  // A tighter adjuster misses more hits
+  // A tighter adjuster misses more hits.
   params.approxSimilarityAdjuster = 0.01;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 131);
+  CHECK(results.getHitMolecules().size() == 138);
 
   // This is the actual number of hits achievable.
   params.approxSimilarityAdjuster = 0.25;
