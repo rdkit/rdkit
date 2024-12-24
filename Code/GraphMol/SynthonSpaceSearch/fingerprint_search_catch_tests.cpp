@@ -13,6 +13,7 @@
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -252,39 +253,37 @@ TEST_CASE("Timeout") {
   CHECK(!results1.getTimedOut());
 }
 
-TEST_CASE("FP Opt") {
+TEST_CASE("FP Approx Similarity") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
   std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2023-05_Freedom_synthons.spc";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readDBFile(libName);
+  synthonspace.readTextFile(libName);
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 2;
-  params.maxHits = -1;
   params.similarityCutoff = 0.5;
   params.fragSimilarityAdjuster = 0.1;
-  params.approxSimilarityAdjuster = 0.15;
   params.timeOut = 0;
+  params.maxHits = 1000;
 
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
-      MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>(3));
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
+
+  // With RDKit fingerprints, 0.05 gives a reasonable compromise
+  // between speed and hits missed.
+  params.approxSimilarityAdjuster = 0.05;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  std::cout << "Num results : " << results.getHitMolecules().size()
-            << std::endl;
-  std::cout << "Max num results : " << results.getMaxNumResults() << std::endl;
-  std::set<std::string> resNames;
-  for (const auto &result : results.getHitMolecules()) {
-    resNames.insert(result->getProp<std::string>(common_properties::_Name));
-    std::cout << MolToSmiles(*result) << "  \""
-              << result->getProp<std::string>(common_properties::_Name) << "\","
-              << std::endl;
-  }
-  CHECK(results.getHitMolecules().size() == 2034);
-  CHECK(results.getMaxNumResults() == 18811);
-  std::set<std::string> expNames{"a1_53216_100161",  "a1_102488_100161",
-                                 "a1_307043_100161", "a1_29178_100161",
-                                 "a1_233726_100161", "a1_336745_100161",
-                                 "a1_102480_100161", "a1_189891_100161",
-                                 "a1_212971_100161", "a1_229380_100161"};
-  // CHECK(resNames == expNames);
+  CHECK(results.getHitMolecules().size() == 486);
+  CHECK(results.getMaxNumResults() == 1466);
+
+  // A tighter adjuster misses more hits
+  params.approxSimilarityAdjuster = 0.01;
+  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 131);
+
+  // This is the actual number of hits achievable.
+  params.approxSimilarityAdjuster = 0.25;
+  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 914);
 }

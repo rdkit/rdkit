@@ -48,14 +48,6 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
     for (size_t j = 0; j < synthonFPs.size(); j++) {
       if (const auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
           sim >= similarityCutoff) {
-        double maxSim = double(std::min(fragFPs[i]->getNumOnBits(),
-                                        synthonFPs[j]->getNumOnBits()));
-        maxSim /= double(std::max(synthonFPs[j]->getNumOnBits(),
-                                  fragFPs[i]->getNumOnBits()));
-        std::cout << "frag sim : " << sim << " vs " << similarityCutoff
-                  << " :: " << fragFPs[i]->getNumOnBits()
-                  << " :: " << synthonFPs[j]->getNumOnBits()
-                  << " maxSim =  " << maxSim << std::endl;
         synthonsToUse[synthonOrder[i]][j] = true;
         fragMatched = true;
       }
@@ -77,11 +69,6 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 
 std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet) const {
-  std::cout << "searching with fragments : " << fragSet.size() << " : ";
-  for (const auto &f : fragSet) {
-    std::cout << MolToSmiles(*f) << " ";
-  }
-  std::cout << std::endl;
   std::vector<SynthonSpaceHitSet> results;
   std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs;
   fragFPs.reserve(fragSet.size());
@@ -108,7 +95,6 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     if (fragSet.size() > reaction->getSynthons().size()) {
       continue;
     }
-    std::cout << "Reaction " << reaction->getId() << std::endl;
     auto synthConnPatts = reaction->getSynthonConnectorPatterns();
 
     // Need to try all combinations of synthon orders.
@@ -168,10 +154,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
 bool SynthonSpaceFingerprintSearcher::quickVerify(
     const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<size_t> &synthNums) const {
-  // An upper bound on the Tanimoto similarity achievable
-  // is when all the bits in one fingerprint match something in the
-  // other.
-  // return true;
+  // Make an approximate fingerprint by combining the FPs for
+  // these synthons, adding in the addFP and taking out the
+  // subtractFP.
   const auto &synthFPs = reaction->getSynthonFPs();
   ExplicitBitVect fullFP(*synthFPs[0][synthNums[0]]);
   for (unsigned int i = 1; i < synthNums.size(); ++i) {
@@ -184,12 +169,6 @@ bool SynthonSpaceFingerprintSearcher::quickVerify(
 
   double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
 
-  if (approxSim <
-      getParams().similarityCutoff - getParams().approxSimilarityAdjuster) {
-    // std::cout << "SKIPPED approx : " << approxSim << std::endl;
-  } else {
-    // std::cout << "PASSED approx : " << approxSim << std::endl;
-  }
   return approxSim >=
          getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }

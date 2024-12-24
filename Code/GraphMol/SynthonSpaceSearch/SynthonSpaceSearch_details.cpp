@@ -267,13 +267,10 @@ void expandBitSet(std::vector<boost::dynamic_bitset<>> &bitSets) {
       bitSets.begin(), bitSets.end(),
       [](const boost::dynamic_bitset<> &bs) -> bool { return bs.any(); });
   if (someSet) {
-    std::cout << "expanding bit set" << std::endl;
     for (auto &bs : bitSets) {
       if (!bs.count()) {
-        std::cout << "Going for the whole lot" << std::endl;
         bs.set();
       }
-      std::cout << "New : " << bs.count() << " : " << bs << std::endl;
     }
   }
 }

@@ -145,6 +145,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " densities.  For the fragment matching, reduce the similarity cutoff"
           " off by this amount.  Default=0.1.")
       .def_readwrite(
+          "approxSimilarityAdjuster",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::
+              approxSimilarityAdjuster,
+          "The fingerprint search uses an approximate similarity method"
+          " before building a product and doing a final check.  The"
+          " similarityCutoff is reduced by this value for the approximate"
+          " check.  A lower value will give faster run times at the"
+          " risk of missing some hits.  The value you use should have a"
+          " positive correlation with your FOMO.  The default of 0.1 is"
+          " appropriate for Morgan fingerprints.  With RDKit fingerprints,"
+          " 0.05 is adequate, and higher than that has been seen to"
+          " produce long run times.")
+      .def_readwrite(
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
           " timeout.  Requires an integer");

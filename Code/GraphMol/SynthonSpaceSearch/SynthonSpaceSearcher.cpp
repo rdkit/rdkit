@@ -91,9 +91,6 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 
   std::unique_ptr<ROMol> prod;
   if (resultsNames.insert(prodName).second) {
-    std::cout << "possible prod name : " << prodName << std::endl;
-    prod = reaction->buildProduct(synthNums);
-    prod.reset();
     if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
       return prod;
     }
@@ -174,6 +171,11 @@ void SynthonSpaceSearcher::buildAllHits(
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
+    // std::cout << "building hits " << reactionId << " :: " << numHits
+    // << std::endl;
+    // for (const auto &stu : synthonsToUse) {
+    // std::cout << stu.count() << std::endl;
+    // }
     std::vector<std::vector<size_t>> synthonNums;
     synthonNums.reserve(synthonsToUse.size());
     std::vector<size_t> numSynthons;

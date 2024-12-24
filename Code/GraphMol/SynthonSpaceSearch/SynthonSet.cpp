@@ -430,11 +430,6 @@ void SynthonSet::buildAddAndSubtractFPs(
     for (size_t j = 0; j < synthSels.size(); ++j) {
       synthNums[j] = synthSels[j](*randGen);
     }
-    std::cout << i << " :: ";
-    for (auto sn : synthNums) {
-      std::cout << sn << " ";
-    }
-    std::cout << std::endl;
     auto prod = buildProduct(synthNums);
     std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
     ExplicitBitVect approxFP(*d_synthonFPs[0][synthNums[0]]);
