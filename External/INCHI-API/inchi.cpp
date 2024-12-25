@@ -1845,7 +1845,7 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
       atom->calcImplicitValence();
       if (auto tval = atom->getTotalValence(); tval < 3 || tval > 4) {
         BOOST_LOG(rdWarningLog)
-            << "tetrahedral chirality on atom with <3 or >4 neighbors will be ignore"
+            << "tetrahedral chirality on atom with <3 or >4 neighbors will be ignored."
             << std::endl;
 
         continue;
@@ -1970,7 +1970,7 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
     if (idx >= MAXVAL) {
       BOOST_LOG(rdErrorLog)
           << " atom " << atomIndex1 << " has too many bonds: " << idx
-          << ". The InChI library supports at most " << MAXVAL - 1 << std::endl;
+          << ". The InChI library supports at most " << MAXVAL << std::endl;
       return "";
     }
     inchiAtoms[atomIndex1].neighbor[idx] = atomIndex2;
