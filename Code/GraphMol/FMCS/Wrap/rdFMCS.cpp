@@ -105,7 +105,7 @@ struct PyMCSAtomCompare : public PyMCSWrapper {
  public:
   PyMCSAtomCompare() {}
   PyMCSAtomCompare(PyObject *obj) : PyMCSWrapper(obj) {}
-  ~PyMCSAtomCompare() {}
+  ~PyMCSAtomCompare() override {}
   bool extractAtomComparator(AtomComparator &ac) {
     bool res = false;
     python::extract<AtomComparator> predefinedAtomComparator(pyObject());
@@ -139,7 +139,7 @@ struct PyMCSAtomCompare : public PyMCSWrapper {
                                  const ROMol &mol2, unsigned int atom2) const {
     return RDKit::checkAtomChirality(p, mol1, atom1, mol2, atom2);
   }
-  inline const char *subclassName() const { return "MCSAtomCompare"; }
+  inline const char *subclassName() const override { return "MCSAtomCompare"; }
   virtual bool operator()(const MCSAtomCompareParameters &, const ROMol &,
                           unsigned int, const ROMol &, unsigned int) const {
     errorNotOverridden();
@@ -150,7 +150,7 @@ struct PyMCSAtomCompare : public PyMCSWrapper {
 struct PyMCSBondCompare : public PyMCSWrapper {
   PyMCSBondCompare() {}
   PyMCSBondCompare(PyObject *obj) : PyMCSWrapper(obj) {}
-  ~PyMCSBondCompare() {}
+  ~PyMCSBondCompare() override {}
   bool extractBondComparator(BondComparator &bc) {
     bool res = false;
     python::extract<BondComparator> predefinedBondComparator(pyObject());
@@ -179,7 +179,7 @@ struct PyMCSBondCompare : public PyMCSWrapper {
                                  const ROMol &mol2, unsigned int bond2) {
     return RDKit::checkBondRingMatch(p, mol1, bond1, mol2, bond2);
   }
-  inline const char *subclassName() const { return "MCSBondCompare"; }
+  inline const char *subclassName() const override { return "MCSBondCompare"; }
   virtual bool operator()(const MCSBondCompareParameters &, const ROMol &,
                           unsigned int, const ROMol &, unsigned int) const {
     errorNotOverridden();
@@ -218,7 +218,7 @@ struct PyMCSAcceptanceFunctionUserData : public PyBaseUserData {
 struct PyMCSProgress : public PyMCSWrapper {
   PyMCSProgress() {}
   PyMCSProgress(PyObject *obj) : PyMCSWrapper(obj) { extractPyMCSWrapper(); }
-  ~PyMCSProgress() {}
+  ~PyMCSProgress() override {}
   PyMCSProgress *extractPyObject() const {
     auto res = dynamic_cast<PyMCSProgress *>(pyObjectExtract());
     if (!res) {
@@ -226,7 +226,7 @@ struct PyMCSProgress : public PyMCSWrapper {
     }
     return res;
   }
-  inline const char *subclassName() const { return "MCSProgress"; }
+  inline const char *subclassName() const override { return "MCSProgress"; }
   virtual bool operator()(const MCSProgressData &,
                           const MCSParameters &) const {
     errorNotOverridden();
@@ -257,7 +257,7 @@ struct PyMCSFinalMatchCheck : public PyMCSWrapper {
   PyMCSFinalMatchCheck(PyObject *obj) : PyMCSWrapper(obj) {
     extractPyMCSWrapper();
   }
-  ~PyMCSFinalMatchCheck() {}
+  ~PyMCSFinalMatchCheck() override {}
   PyMCSFinalMatchCheck *extractPyObject() const {
     auto res = dynamic_cast<PyMCSFinalMatchCheck *>(pyObjectExtract());
     if (!res) {
@@ -265,7 +265,9 @@ struct PyMCSFinalMatchCheck : public PyMCSWrapper {
     }
     return res;
   }
-  inline const char *subclassName() const { return "MCSFinalMatchCheck"; }
+  inline const char *subclassName() const override {
+    return "MCSFinalMatchCheck";
+  }
   virtual bool operator()() const {
     errorNotOverridden();
     return false;
@@ -275,7 +277,7 @@ struct PyMCSFinalMatchCheck : public PyMCSWrapper {
 struct PyMCSAcceptance : public PyMCSWrapper {
   PyMCSAcceptance() {}
   PyMCSAcceptance(PyObject *obj) : PyMCSWrapper(obj) { extractPyMCSWrapper(); }
-  ~PyMCSAcceptance() {}
+  ~PyMCSAcceptance() override {}
   PyMCSAcceptance *extractPyObject() const {
     auto res = dynamic_cast<PyMCSAcceptance *>(pyObjectExtract());
     if (!res) {

@@ -185,7 +185,7 @@ struct RDKIT_FMCS_EXPORT MCSParameters {
 namespace detail {
 struct MCSParametersInternal : public MCSParameters {
   MCSParametersInternal() {}
-  ~MCSParametersInternal() {}
+  ~MCSParametersInternal() override {}
   MCSParametersInternal(const MCSParameters *params);
   MCSFinalMatchCheckFunction UserFinalMatchChecker = nullptr;
 };
