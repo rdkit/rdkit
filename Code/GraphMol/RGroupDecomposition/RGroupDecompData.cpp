@@ -500,10 +500,9 @@ void RGroupDecompData::relabelRGroup(RGroupData &rgroup,
 
   if (params.removeHydrogensPostMatch) {
     RDLog::LogStateSetter blocker;
-    bool implicitOnly = false;
-    bool updateExplicitCount = false;
+    MolOps::RemoveHsParameters rhp;
     bool sanitize = false;
-    MolOps::removeHs(mol, implicitOnly, updateExplicitCount, sanitize);
+    MolOps::removeHs(mol, rhp, sanitize);
   }
 
   mol.updatePropertyCache(false);  // this was github #1550
