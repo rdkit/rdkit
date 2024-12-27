@@ -943,7 +943,7 @@ void SDM::fillFromLAP(LAP &lap) {
     sdmElement->idx[0] = i;
     sdmElement->idx[1] = lap.getRowSol(i);
     sdmElement->cost = lap.getCost(i, lap.getRowSol(i));
-    d_SDMPtrVect.push_back(boost::shared_ptr<SDMElement>(sdmElement));
+    d_SDMPtrVect.push_back(std::shared_ptr<SDMElement>(sdmElement));
     ++n_equiv;
   }
   boost::multi_array<double, 2> diff(boost::extents[n_equiv][n_equiv]);
@@ -1067,7 +1067,7 @@ void SDM::fillFromDist(double threshold,
             ++mapIdx;
           }
         }
-        d_SDMPtrVect.push_back(boost::shared_ptr<SDMElement>(sdmElement));
+        d_SDMPtrVect.push_back(std::shared_ptr<SDMElement>(sdmElement));
         ++n;
       }
     }
@@ -1658,7 +1658,7 @@ typedef struct {
   RDNumeric::DoubleVector const *constraintWeights;
 } O3AHelperArgs_;
 void O3AHelper_(ROMol *prbMol, const ROMol *refMol, void *prbProp,
-                void *refProp, std::vector<boost::shared_ptr<O3A>> *res,
+                void *refProp, std::vector<std::shared_ptr<O3A>> *res,
                 unsigned int threadIdx, int numThreads,
                 const O3AHelperArgs_ *args) {
   unsigned int i = 0;
@@ -1679,8 +1679,7 @@ void O3AHelper_(ROMol *prbMol, const ROMol *refMol, void *prbProp,
 #endif
 
 void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol, void *prbProp,
-                         void *refProp,
-                         std::vector<boost::shared_ptr<O3A>> &res,
+                         void *refProp, std::vector<std::shared_ptr<O3A>> &res,
                          int numThreads, O3A::AtomTypeScheme atomTypes,
                          const int refCid, const bool reflect,
                          const unsigned int maxIters, unsigned int options,
