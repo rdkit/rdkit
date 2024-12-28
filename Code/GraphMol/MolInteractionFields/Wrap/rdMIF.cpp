@@ -72,6 +72,9 @@ extractChargesAndPositions(const python::object &charges,
   for (unsigned int i = 0; i < nrows; ++i) {
     const auto pyXyz = PySequence_GetItem(pyPos, i);
     if (!pyXyz || !PySequence_Check(pyXyz) || PySequence_Size(pyXyz) != 3) {
+      if (pyXyz) {
+        Py_DecRef(pyXyz);
+      }
       throw_value_error(
           "all elements in positions argument must be x,y,z sequences");
     }
