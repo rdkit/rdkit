@@ -59,6 +59,14 @@ extractChargesAndPositions(const python::object &charges,
   if (nrows != PySequence_Size(pyCharges)) {
     throw_value_error("positions and charges must have the same length");
   }
+
+  auto extract_double = [](PyObject *obj, size_t i) {
+    const auto dblObj = PySequence_GetItem(obj, i);
+    double value = python::extract<double>(dblObj);
+    Py_DecRef(dblObj);
+    return value;
+  };
+
   std::vector<RDGeom::Point3D> pos(nrows);
   std::vector<double> ch(nrows);
   for (unsigned int i = 0; i < nrows; ++i) {
@@ -67,29 +75,31 @@ extractChargesAndPositions(const python::object &charges,
       throw_value_error(
           "all elements in positions argument must be x,y,z sequences");
     }
-    pos[i].x = python::extract<double>(PySequence_GetItem(pyXyz, 0));
-    pos[i].y = python::extract<double>(PySequence_GetItem(pyXyz, 1));
-    pos[i].z = python::extract<double>(PySequence_GetItem(pyXyz, 2));
-    ch[i] = python::extract<double>(PySequence_GetItem(pyCharges, i));
+    pos[i].x = extract_double(pyXyz, 0);
+    pos[i].y = extract_double(pyXyz, 1);
+    pos[i].z = extract_double(pyXyz, 2);
+    ch[i] = extract_double(pyCharges, i);
+    Py_DecRef(pyXyz);
   }
   return std::make_pair(std::move(ch), std::move(pos));
 }
 
-Coulomb *makeAltCoulomb(const python::object &charges,
-                        const python::object &positions, double probecharge,
-                        bool absVal, double alpha, double cutoff) {
+boost::shared_ptr<Coulomb> makeAltCoulomb(const python::object &charges,
+                                          const python::object &positions,
+                                          double probecharge, bool absVal,
+                                          double alpha, double cutoff) {
   const auto [ch, pos] = extractChargesAndPositions(charges, positions);
-  return new Coulomb(ch, pos, probecharge, absVal, alpha, cutoff);
+  return boost::make_shared<Coulomb>(ch, pos, probecharge, absVal, alpha,
+                                     cutoff);
 }
 
-CoulombDielectric *makeAltCoulombDielectric(const python::object &charges,
-                                            const python::object &positions,
-                                            double probecharge, bool absVal,
-                                            double alpha, double cutoff,
-                                            double epsilon, double xi) {
+boost::shared_ptr<CoulombDielectric> makeAltCoulombDielectric(
+    const python::object &charges, const python::object &positions,
+    double probecharge, bool absVal, double alpha, double cutoff,
+    double epsilon, double xi) {
   const auto [ch, pos] = extractChargesAndPositions(charges, positions);
-  return new CoulombDielectric(ch, pos, probecharge, absVal, alpha, cutoff,
-                               epsilon, xi);
+  return boost::make_shared<CoulombDielectric>(ch, pos, probecharge, absVal,
+                                               alpha, cutoff, epsilon, xi);
 }
 
 python::tuple readCubeFile(const std::string &filename) {
@@ -136,7 +146,7 @@ struct mif_wrapper {
         - threshold: maximal distance until which interactions are calculated\n\
         RETURNS:\n\
         - electrostatic potential in [kJ mol^-1]\n";
-    python::class_<Coulomb>(
+    python::class_<Coulomb, boost::shared_ptr<Coulomb>>(
         "Coulomb", docStringClass.c_str(),
         python::init<const RDKit::ROMol &, int, double, bool,
                      const std::string &, double, double>(
@@ -197,7 +207,7 @@ struct mif_wrapper {
         - threshold: maximal distance until which interactions are calculated\n\
         RETURNS:\n\
         - electrostatic potential in [kJ mol^-1]\n";
-    python::class_<CoulombDielectric>(
+    python::class_<CoulombDielectric, boost::shared_ptr<CoulombDielectric>>(
         "CoulombDielectric", docStringClass.c_str(),
         python::init<const RDKit::ROMol &, int, double, bool,
                      const std::string &, double, double, double, double>(
@@ -241,7 +251,8 @@ struct mif_wrapper {
         - threshold: maximal distance until which interactions are calculated\n\
         RETURNS:\n\
         - van der Waals potential in [kJ mol^-1]\n";
-    python::class_<MMFFVdWaals, MMFFVdWaals *, boost::noncopyable>(
+    python::class_<MMFFVdWaals, boost::shared_ptr<MMFFVdWaals>,
+                   boost::noncopyable>(
         "MMFFVdWaals", docStringClass.c_str(),
         python::init<const RDKit::ROMol &, int, unsigned int, bool, double>(
             (python::arg("self"), python::arg("mol"),
@@ -262,7 +273,8 @@ struct mif_wrapper {
         - confId        conformation id which is used to get positions of atoms (default=-1)\n\
         - probeAtomType UFF atom type for the probe atom (default='O_3', sp3 oxygen)\n\
         - cutoff        minimum cutoff distance [A] (default:1.0)\n";
-    python::class_<UFFVdWaals, UFFVdWaals *, boost::noncopyable>(
+    python::class_<UFFVdWaals, boost::shared_ptr<UFFVdWaals>,
+                   boost::noncopyable>(
         "UFFVdWaals", docStringClass.c_str(),
         python::init<const RDKit::ROMol &, int, const std::string &, double>(
             (python::arg("self"), python::arg("mol"),
@@ -299,7 +311,7 @@ struct mif_wrapper {
         - threshold: maximal distance until which interactions are calculated\n\
         RETURNS:\n\
         hydrogen bonding energy in [kJ mol^-1]\n";
-    python::class_<HBond>(
+    python::class_<HBond, boost::shared_ptr<HBond>>(
         "HBond", docStringClass.c_str(),
         python::init<RDKit::ROMol &, int, const std::string &, bool, double>(
             (python::arg("mol"), python::arg("confId") = -1,
@@ -332,7 +344,7 @@ struct mif_wrapper {
         - threshold: maximal distance until which interactions are calculated\n\
         RETURNS:\n\
         hydrophilic field energy in [kJ mol^-1]\n";
-    python::class_<Hydrophilic>(
+    python::class_<Hydrophilic, boost::shared_ptr<Hydrophilic>>(
         "Hydrophilic", docStringClass.c_str(),
         python::init<RDKit::ROMol &, int, bool, double>(
             (python::arg("mol"), python::arg("confId") = -1,
