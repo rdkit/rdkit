@@ -491,26 +491,6 @@ int numComplexQueries(
   }
   return res;
 }
-#if 0
-// FIX: this is adapted from Fingerprints.cpp and we really should have code
-// like this centralized
-bool isComplexQuery(const Atom &a) {
-  if (!a.hasQuery()) return false;
-  // negated things are always complex:
-  if (a.getQuery()->getNegation()) return true;
-  std::string descr = a.getQuery()->getDescription();
-  if (descr == "AtomAtomicNum") return false;
-  if (descr == "AtomOr" || descr == "AtomXor") return true;
-  if (descr == "AtomAnd") {
-    auto childIt = a.getQuery()->beginChildren();
-    int ncq = numComplexQueries(childIt, a.getQuery()->endChildren());
-    if (ncq == 1) {
-      return false;
-    }
-  }
-  return true;
-}
-#endif
 bool isChangedAtom(const Atom &rAtom, const Atom &pAtom, int mapNum,
                    const std::map<int, const Atom *> &mappedProductAtoms) {
   PRECONDITION(mappedProductAtoms.find(mapNum) != mappedProductAtoms.end(),

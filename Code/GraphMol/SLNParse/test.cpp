@@ -322,7 +322,6 @@ void test3() {
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNoImplicit());
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
 
-#if 1
   // FIX: this should be accepted
 
   delete mol;
@@ -330,7 +329,6 @@ void test3() {
   mol = RDKit::SLNToMol(sln);  //,true,1);
   TEST_ASSERT(mol);
   TEST_ASSERT(mol->getNumAtoms() == 2);
-#endif
 
   // but this should not be accepted:
   delete mol;
@@ -378,7 +376,6 @@ void test5() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Test5: basic queries " << std::endl;
 
-#if 1
   sln = "C[charge=+1]";
   patt = RDKit::SLNQueryToMol(sln);
   TEST_ASSERT(patt);
@@ -550,7 +547,6 @@ void test5() {
   TEST_ASSERT(patt->getNumAtoms() == 2);
   TEST_ASSERT(RDKit::SubstructMatch(*mol, *patt, mV) == 4);
   delete patt;
-#endif
 
   delete mol;
   smi = "CO[2H]";
@@ -1268,91 +1264,6 @@ void test10() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void test11() {
-  std::string pval, cip;
-  RDKit::RWMol *mol;
-  std::vector<RDKit::MatchVectType> mV;
-  std::string sln, smi;
-
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Test11: chiral SLNs " << std::endl;
-
-  sln = "CH(Cl)(F)Br";
-  mol = RDKit::SLNToMol(sln);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 4);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() ==
-              RDKit::Atom::CHI_UNSPECIFIED);
-
-  delete mol;
-  sln = "C[s=N]H(Cl)(F)Br";
-  mol = RDKit::SLNToMol(sln);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 4);
-  std::cerr << sln << " -> " << MolToSmiles(*mol, true) << " "
-            << mol->getNumAtoms() << std::endl;
-  smi = MolToSmiles(*mol, true);
-  // TEST_ASSERT(smi=="F[C@@H](Cl)Br");
-
-  delete mol;
-  sln = "ClC[s=i]H(F)Br";
-  mol = RDKit::SLNToMol(sln);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 4);
-// mol->debugMol(std::cerr);
-#if 0
-  RDKit::MolOps::assignAtomChiralCodes(*mol);
-  TEST_ASSERT(mol->getAtomWithIdx(1)->hasProp(RDKit::common_properties::_CIPCode));
-  mol->getAtomWithIdx(1)->getProp(RDKit::common_properties::_CIPCode,cip);
-  TEST_ASSERT(cip=="R");
-#endif
-  std::cerr << sln << " -> " << MolToSmiles(*mol, true) << " "
-            << mol->getNumAtoms() << std::endl;
-  smi = MolToSmiles(*mol, true);
-  // TEST_ASSERT(smi=="F[C@@H](Cl)Br");
-
-  delete mol;
-  sln = "FC[s=N]H(Cl)Br";
-  mol = RDKit::SLNToMol(sln);
-  TEST_ASSERT(mol);
-  std::cerr << sln << " -> " << MolToSmiles(*mol, true) << " "
-            << mol->getNumAtoms() << std::endl;
-  smi = MolToSmiles(*mol, true);
-  // TEST_ASSERT(smi=="F[C@@H](Cl)Br");
-
-  delete mol;
-  sln = "FC[s=N]H(Br)Cl";
-  mol = RDKit::SLNToMol(sln);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 4);
-  std::cerr << sln << " -> " << MolToSmiles(*mol, true) << " "
-            << mol->getNumAtoms() << std::endl;
-  smi = MolToSmiles(*mol, true);
-  // TEST_ASSERT(smi=="F[C@H](Cl)Br");
-
-  delete mol;
-  sln = "HC[s=N](Cl)(F)Br";
-  mol = RDKit::SLNToMol(sln);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 4);
-  std::cerr << sln << " -> " << MolToSmiles(*mol, true) << " "
-            << mol->getNumAtoms() << std::endl;
-  smi = MolToSmiles(*mol, true);
-  // TEST_ASSERT(smi=="F[C@@H](Cl)Br");
-
-  delete mol;
-  sln = "C[s=i]H(Cl)(F)Br";
-  mol = RDKit::SLNToMol(sln);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getNumAtoms() == 4);
-  smi = MolToSmiles(*mol, true);
-  std::cerr << sln << " -> " << MolToSmiles(*mol, true) << " "
-            << mol->getNumAtoms() << std::endl;
-  // TEST_ASSERT(smi=="F[C@H](Cl)Br");
-
-  delete mol;
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
 
 void test12() {
   RDKit::RWMol *patt, *mol;
@@ -1975,7 +1886,6 @@ int main(int argc, char *argv[]) {
 // FIX: need a test for handling Hs in the SLN itself. This should be done for
 // both normal and query SLNs and must be done after the SLN parser handles
 // that case (errr, duh)
-#if 1
   test1();
   test2();
   test3();
@@ -1986,14 +1896,12 @@ int main(int argc, char *argv[]) {
   test8();
   test9();
   test10();
-  // test11();
   test12();
   test13();
   test14();
   test15();
   test16();
   test17();
-#endif
   testIssue277();
   testIssue278();
 }

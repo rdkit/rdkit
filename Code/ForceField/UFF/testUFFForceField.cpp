@@ -47,14 +47,6 @@ void test1() {
   ps.push_back(&p3);
   ps.push_back(&p4);
 
-#if 0
-  RDGeom::Point3D f1,f2,f3,f4;
-  RDGeom::PointPtrVect &fs=ff.forces();
-  fs.push_back(&f1);
-  fs.push_back(&f2);
-  fs.push_back(&f3);
-  fs.push_back(&f4);
-#endif
   TEST_ASSERT(ff.positions().size() == 4);
   // TEST_ASSERT(ff.forces().size()==4);
 
@@ -328,7 +320,6 @@ void testUFF4() {
 
   RDGeom::Point3D d, v1, v2;
   double theta;
-#if 1
   // ------- ------- ------- ------- ------- ------- -------
   // try a bit of minimization
   ff.initialize();
@@ -396,8 +387,6 @@ void testUFF4() {
   TEST_ASSERT(RDKit::feq(v1.length(), 1.514, 1e-3));
   TEST_ASSERT(RDKit::feq(v2.length(), 1.514, 1e-3));
   TEST_ASSERT(RDKit::feq(theta, param1.theta0, 1e-4));
-
-#endif
 
   // ------- ------- ------- ------- ------- ------- -------
   //
@@ -508,16 +497,6 @@ void testUFF4() {
   TEST_ASSERT(RDKit::feq(v1.length(), 1.514, 1e-3));
   TEST_ASSERT(RDKit::feq(v2.length(), 1.514, 1e-3));
   TEST_ASSERT(RDKit::feq(theta, param1.theta0, 1e-4));
-
-#if 0
-  std::cerr << " " << *ff.positions()[0] << std::endl;
-  std::cerr << " " << *ff.positions()[1] << std::endl;
-  std::cerr << " " << *ff.positions()[2] << std::endl;
-
-  std::cerr << "v1: " << v1 << std::endl;
-  std::cerr << "v2: " << v2 << std::endl;
-  std::cerr << "FINAL: " << v1.angleTo(v2) << " " << v1.signedAngleTo(v2) << std::endl;
-#endif
 
   std::cerr << "  done" << std::endl;
 }
@@ -735,7 +714,6 @@ void testUFF7() {
       &ff, 0, 1, 2, 3, 1, 6, 6, RDKit::Atom::SP3, RDKit::Atom::SP3, &param1,
       &param1);
   ff.contribs().push_back(ForceFields::ContribPtr(contrib));
-#if 1
   p1.x = 0;
   p1.y = 1.5;
   p1.z = 0;
@@ -892,8 +870,6 @@ void testUFF7() {
       *(RDGeom::Point3D *)ff.positions()[2],
       *(RDGeom::Point3D *)ff.positions()[3]);
   TEST_ASSERT(RDKit::feq(cosPhi, 0.0, 1e-4));
-
-#endif
 
   // ------- ------- ------- ------- ------- ------- -------
   // special case for (SP2 -) SP2 - SP3
@@ -1148,7 +1124,6 @@ void testUFFTorsionConflict() {
       new ForceFields::UFF::BondStretchContrib(&ff, 2, 6, 1, param1, param2);
   ff.contribs().push_back(ForceFields::ContribPtr(contrib));
 
-#if 1
   // ANGLES:
   contrib = new ForceFields::UFF::AngleBendContrib(&ff, 0, 1, 2, 2.0, 1.0,
                                                    param1, param1, param3);
@@ -1168,7 +1143,6 @@ void testUFFTorsionConflict() {
   contrib = new ForceFields::UFF::AngleBendContrib(&ff, 2, 1, 3, 1.0, 1.0,
                                                    param3, param1, param2);
   ff.contribs().push_back(ForceFields::ContribPtr(contrib));
-#endif
 
   // DIHEDRALS:
   contrib = new ForceFields::UFF::TorsionAngleContrib(
@@ -1232,7 +1206,6 @@ void testUFFTorsionConflict() {
   ff.initialize();
   ff.minimize(100, 1e-8, 1e-8);
 
-#if 1
   std::cerr.setf(std::ios_base::fixed, std::ios_base::floatfield);
   std::cerr.precision(4);
   std::cerr << "C " << *ff.positions()[0] << std::endl;
@@ -1242,7 +1215,6 @@ void testUFFTorsionConflict() {
   std::cerr << "H " << *ff.positions()[4] << std::endl;
   std::cerr << "O " << *ff.positions()[5] << std::endl;
   std::cerr << "F " << *ff.positions()[6] << std::endl;
-#endif
   std::cerr << "  done" << std::endl;
 }
 
@@ -1686,7 +1658,6 @@ M  END
 }
 
 int main() {
-#if 1
   test1();
   testUFF1();
   testUFF2();
@@ -1699,7 +1670,6 @@ int main() {
   testUFF8();
   testUFFTorsionConflict();
 
-#endif
   testUFFDistanceConstraints();
   testUFFAllConstraints();
   testUFFCopy();
