@@ -1795,9 +1795,15 @@ void HBond::addVectElements(atomtype type,
   d_direction.push_back(dir.y / len);
   d_direction.push_back(dir.z / len);
   len = plane.length();
-  d_plane.push_back(plane.x / len);
-  d_plane.push_back(plane.y / len);
-  d_plane.push_back(plane.z / len);
+  if (len > 1.e-16) {
+    d_plane.push_back(plane.x / len);
+    d_plane.push_back(plane.y / len);
+    d_plane.push_back(plane.z / len);
+  } else {
+    d_plane.push_back(0.0);
+    d_plane.push_back(0.0);
+    d_plane.push_back(0.0);
+  }
 }
 
 void HBond::normalize(double &x, double &y, double &z) const {
