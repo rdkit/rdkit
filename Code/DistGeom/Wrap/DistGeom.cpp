@@ -131,11 +131,24 @@ PyObject *embedBoundsMatrix(python::object boundsMatArg, int maxIters = 10,
     for (unsigned int entryIdx = 0; entryIdx < nElems; entryIdx++) {
       PyObject *entry = PySequence_GetItem(weights.ptr(), entryIdx);
       if (!PySequence_Check(entry) || PySequence_Size(entry) != 3) {
+        Py_DecRef(entry);
         throw_value_error("weights argument must be a sequence of 3-sequences");
       }
-      int idx1 = PyInt_AsLong(PySequence_GetItem(entry, 0));
-      int idx2 = PyInt_AsLong(PySequence_GetItem(entry, 1));
-      double w = PyFloat_AsDouble(PySequence_GetItem(entry, 2));
+
+      PyObject *obj = PySequence_GetItem(entry, 0);
+      int idx1 = PyInt_AsLong(obj);
+      Py_DecRef(obj);
+
+      obj = PySequence_GetItem(entry, 1);
+      int idx2 = PyInt_AsLong(obj);
+      Py_DecRef(obj);
+
+      obj = PySequence_GetItem(entry, 2);
+      double w = PyFloat_AsDouble(obj);
+      Py_DecRef(obj);
+
+      Py_DecRef(entry);
+
       weightMap[std::make_pair(idx1, idx2)] = w;
     }
     DistGeom::VECT_CHIRALSET csets;
