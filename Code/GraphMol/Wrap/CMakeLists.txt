@@ -70,6 +70,10 @@ add_pytest(pyTestTrajectory
 add_pytest(pyTestSGroups
          ${CMAKE_CURRENT_SOURCE_DIR}/testSGroups.py)
 
+add_pytest(pyTestScsr
+         ${CMAKE_CURRENT_SOURCE_DIR}/testScsr.py)
+
+
 if (RDK_TEST_MULTITHREADED)
   add_pytest(pyTestThreads
            ${CMAKE_CURRENT_SOURCE_DIR}/testThreads.py)
