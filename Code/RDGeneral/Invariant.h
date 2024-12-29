@@ -122,6 +122,13 @@ RDKIT_RDGENERAL_EXPORT std::ostream &operator<<(std::ostream &s,
     throw inv;                                                              \
   }
 
+#define POSTCONDITION_NOLOG(expr, mess)                                     \
+  if (!(expr)) {                                                            \
+    Invar::Invariant inv("Post-condition Violation", mess, #expr, __FILE__, \
+                         __LINE__);                                         \
+    throw inv;                                                              \
+  }
+
 #define UNDER_CONSTRUCTION(fn)                                        \
   Invar::Invariant inv("Incomplete Code",                             \
                        "This routine is still under development", fn, \

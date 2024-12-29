@@ -90,7 +90,7 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
         anum = iter->second;
       }
     }
-    POSTCONDITION(anum > -1, "Element '" + elementSymbol + "' not found");
+    POSTCONDITION_NOLOG(anum > -1, "Element '" + elementSymbol + "' not found");
     return anum;
   }
 

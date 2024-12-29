@@ -151,6 +151,18 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
   return mol.getNumAtoms(onlyExplicit);
 }
 
+int getTemplateCount(const SCSRMol &scsr) { return scsr.getTemplateCount(); }
+
+ROMol *getScsrMol(SCSRMol &scsr) { return scsr.getMol(); }
+
+const ROMol *getTemplate(SCSRMol &scsr, unsigned int idx) {
+  if (idx >= scsr.getTemplateCount()) {
+    return nullptr;
+    ;
+  }
+  return scsr.getTemplate(idx);
+}
+
 namespace {
 class pyobjFunctor {
  public:
@@ -799,14 +811,15 @@ struct mol_wrapper {
              python::args("self"),
              "Returns a read-only sequence containing all of the molecule's "
              "aromatic Atoms.\n")
-        .def("GetAtomsMatchingQuery", MolGetQueryAtoms,
-             python::return_value_policy<
-                 python::manage_new_object,
-                 python::with_custodian_and_ward_postcall<0, 1>>(),
-             python::args("self", "qa"),
-             "Returns a read-only sequence containing all of the atoms in a "
-             "molecule that match the query atom. "
-             "Atom query options are defined in the rdkit.Chem.rdqueries module.\n")
+        .def(
+            "GetAtomsMatchingQuery", MolGetQueryAtoms,
+            python::return_value_policy<
+                python::manage_new_object,
+                python::with_custodian_and_ward_postcall<0, 1>>(),
+            python::args("self", "qa"),
+            "Returns a read-only sequence containing all of the atoms in a "
+            "molecule that match the query atom. "
+            "Atom query options are defined in the rdkit.Chem.rdqueries module.\n")
 
         // enable pickle support
         .def_pickle(mol_pickle_suite())
@@ -828,6 +841,40 @@ struct mol_wrapper {
              python::args("self"),
              "Returns the number of molecule's RingInfo object.\n\n");
     python::register_ptr_to_python<std::shared_ptr<ROMol>>();
+    // ---------------------------------------------------------------------------------------------
+
+    std::string SCSRmolClassDoc =
+        "The SCSR Molecule class.\n\n\
+      Contains a self-contained sequence representation (SCSR):\n\
+    - a main molecule\n\n\
+    - a set of template molcules to define the atoms in the main molecule\n";
+
+    python::class_<SCSRMol, SCSRMOL_SPTR, boost::noncopyable>(
+        "SCSRMol", SCSRmolClassDoc.c_str(),
+        python::init<>(python::args("self"), "Constructor, takes no arguments"))
+
+        .def(python::init<const SCSRMol &>(
+            (python::arg("self"), python::arg("scsr"))))
+        .def("__copy__", &generic__copy__<SCSRMol>, python::args("self"))
+        .def("__deepcopy__", &generic__deepcopy__<SCSRMol>,
+             python::args("self", "memo"))
+
+        .def("GetNumTemplates", getTemplateCount, ((python::arg("self"))),
+             "Returns the number of tempaltes in the SCSR mol.\n\n")
+
+        .def("GetMol", getScsrMol,
+             python::return_internal_reference<
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
+             python::args("self"), "Returns a the main Mol.\n\n")
+
+        .def("GetTemplate", getTemplate,
+             python::return_internal_reference<
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
+             python::args("self", "idx"),
+             "Returns a particular Temlate Mol.\n\n"
+             "  ARGUMENTS:\n"
+             "    - idx: which Template to return\n\n"
+             "  NOTE: atom indices start at 0\n");
 
     // ---------------------------------------------------------------------------------------------
     python::def("_HasSubstructMatchStr", HasSubstructMatchStr,

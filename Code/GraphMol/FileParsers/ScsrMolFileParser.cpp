@@ -27,7 +27,7 @@ namespace FileParsers {
 //  Read a SCVSR molecule from a stream
 //
 //------------------------------------------------
-std::unique_ptr<SCSRMol> ScsrMolFromScsrDataStream(
+std::unique_ptr<SCSRMol> ScsrFromScsrDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::string tempStr;
@@ -428,12 +428,12 @@ std::unique_ptr<SCSRMol> ScsrMolFromScsrDataStream(
 //  Read a molecule from a string
 //
 //------------------------------------------------
-std::unique_ptr<SCSRMol> ScsrMolFromScsrBlock(
+std::unique_ptr<SCSRMol> ScsrFromScsrBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
-  return ScsrMolFromScsrDataStream(inStream, line, params);
+  return ScsrFromScsrDataStream(inStream, line, params);
 }
 
 //------------------------------------------------
@@ -441,7 +441,7 @@ std::unique_ptr<SCSRMol> ScsrMolFromScsrBlock(
 //  Read a molecule from a file
 //
 //------------------------------------------------
-std::unique_ptr<SCSRMol> ScsrMolFromScsrFile(
+std::unique_ptr<SCSRMol> ScsrFromScsrFile(
     const std::string &fName,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
@@ -452,7 +452,7 @@ std::unique_ptr<SCSRMol> ScsrMolFromScsrFile(
   }
   if (!inStream.eof()) {
     unsigned int line = 0;
-    return ScsrMolFromScsrDataStream(inStream, line, params);
+    return ScsrFromScsrDataStream(inStream, line, params);
   } else {
     return std::unique_ptr<SCSRMol>();
   }

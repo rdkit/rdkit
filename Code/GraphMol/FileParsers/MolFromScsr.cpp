@@ -129,10 +129,9 @@ unsigned int getNewAtomForBond(
   throw FileParseException("Attachment ord not found");
 }
 
-std::unique_ptr<RWMol> ScsrToMol(const SCSRMol &scsrMol) {
+std::unique_ptr<RWMol> MolFromScsr(const SCSRMol &scsrMol) {
   auto resMol = std::unique_ptr<RWMol>(new RWMol());
   auto mol = scsrMol.getMol();
-
   // first get some information from the templates to be used when creating the
   // coords for the new atoms. this is a dirty approach that simply expands the
   // orginal macro atom coords to be big enough to hold any expanded macro atom.
@@ -232,6 +231,7 @@ std::unique_ptr<RWMol> ScsrToMol(const SCSRMol &scsrMol) {
                             conf->getAtomPos(atomIdx) * maxSize);
       }
     } else {  // it is a macro atom - expand it
+
       unsigned int seqId = 0;
       atom->getPropIfPresent(common_properties::molAtomSeqId, seqId);
 
@@ -415,6 +415,10 @@ std::unique_ptr<RWMol> ScsrToMol(const SCSRMol &scsrMol) {
         }
       }
     }
+  }
+
+  if (resMol->getNumAtoms() == 0) {
+    return resMol;
   }
 
   newConf->resize(resMol->getNumAtoms());

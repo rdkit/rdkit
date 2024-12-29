@@ -53,5 +53,8 @@ class RDKIT_GRAPHMOL_EXPORT SCSRMol {
 
   ROMol *getMol() { return mol.get(); }
 };
+
+typedef boost::shared_ptr<SCSRMol> SCSRMOL_SPTR;
+
 }  // namespace RDKit
 #endif
