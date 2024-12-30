@@ -1,6 +1,6 @@
 
 //
-//  Copyright (C) 2024 Niels Maeder and other RDKit contributors
+//  Copyright (C) 2024-2025 Niels Maeder and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -41,8 +41,8 @@ TEST_CASE("Test empty force field") {
     auto forceField = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
     forceField->initialize();
     auto params = ForceFields::MMFF::MMFFBond{6.0, 100.0};
-    auto *contrib = new ForceFields::MMFF::BondStretchContrib(forceField.get(),
-                                                              0, 1, &params);
+    auto *contrib = new ForceFields::MMFF::BondStretchContrib(forceField.get());
+    contrib->addTerm(0, 1, &params);
     forceField->contribs().push_back(ForceFields::ContribPtr(contrib));
     CHECK(forceField->minimize() == 0);
     CHECK(std::round(forceField->distance(0, 1)) == 100);
