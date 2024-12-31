@@ -171,9 +171,10 @@ std::unique_ptr<SCSRMol> ScsrFromScsrDataStream(
       }
     }
     bool expectMEND = false;
+    bool expectMacroAtoms = true;
     molComplete = FileParserUtils::ParseV3000CTAB(
         &inStream, line, (RWMol *)res->getMol(), conf, chiralityPossible,
-        nAtoms, nBonds, params.strictParsing, expectMEND);
+        nAtoms, nBonds, params.strictParsing, expectMEND, expectMacroAtoms);
   } catch (MolFileUnhandledFeatureException &e) {
     // unhandled mol file feature, show an error
     res.reset();

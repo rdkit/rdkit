@@ -31,7 +31,7 @@ class TestCase(unittest.TestCase):
       scsrBlock = inf.read()
 
    
-    scsr = Chem.ScsrFromScsrBlock(scsrBlock,False,False,False)    
+    scsr = Chem.ScsrFromScsrBlock(scsrBlock,False,False)    
     self.assertTrue(scsr.GetNumTemplates() == 3)
     t1 = scsr.GetTemplate(0)
     self.assertTrue(t1.GetNumAtoms() == 11)

@@ -162,6 +162,10 @@ class ScsiMolTest {
 
     if (testToRun == "" || testToRun == "scsiTests") {
       std::list<ScsiTest> scsiTests{
+          ScsiTest("Mixed.mol", true, 14, 16, 5, 51, 54),
+          ScsiTest("CrossLink.mol", true, 8, 8, 5, 47, 48),
+          ScsiTest("cyclic.mol", true, 8, 9, 5, 45, 47),
+
           ScsiTest("Triplet.mol", true, 3, 2, 3, 30, 30),
           ScsiTest("FromBioviaDoc.mol", true, 5, 4, 3, 27, 26),
           ScsiTest("testScsr.mol", true, 8, 7, 6, 64, 66),

@@ -172,7 +172,7 @@ ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
 }
 
 SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
-                           bool removeHs, bool strictParsing) {
+                           bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   unsigned int line = 0;
   SCSRMol *scsrMol = nullptr;
@@ -180,7 +180,7 @@ SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
     RDKit::v2::FileParsers::MolFileParserParams params;
     params.sanitize = sanitize;
     params.removeHs = removeHs;
-    params.strictParsing = strictParsing;
+    params.strictParsing = false;
     scsrMol = ScsrFromScsrDataStream(inStream, line, params).release();
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
@@ -190,12 +190,12 @@ SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
 }
 
 SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
-                          bool removeHs, bool strictParsing) {
+                          bool removeHs) {
   SCSRMol *scsrMol = nullptr;
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
-    params.sanitize = false;
-    params.removeHs = false;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
     params.strictParsing = false;
     scsrMol = ScsrFromScsrFile(molFilename, params).release();
   } catch (RDKit::BadFileException &e) {
@@ -1161,20 +1161,15 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       This only make sense when sanitization is done.\n\
       Defaults to true.\n\
 \n\
-    - strictParsing: (optional) if this is false, the parser is more lax about.\n\
-      correctness of the content.\n\
-      Defaults to true.\n\
-\n\
   RETURNS:\n\
 \n\
     a Mol object, None on failure.\n\
 \n";
-  python::def(
-      "ScsrFromScsrFile", RDKit::ScsrFromScsrFile,
-      (python::arg("molFileName"), python::arg("sanitize") = true,
-       python::arg("removeHs") = true, python::arg("strictParsing") = true),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
+  python::def("ScsrFromScsrFile", RDKit::ScsrFromScsrFile,
+              (python::arg("molFileName"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Construct a SCSR molecule from an SCSR Mol block.\n\n\
@@ -1188,21 +1183,14 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
       This only make sense when sanitization is done.\n\
       Defaults to true.\n\
-\n\
-    - strictParsing: (optional) if this is false, the parser is more lax about.\n\
-      correctness of the content.\n\
-      Defaults to true.\n\
-\n\
-  RETURNS:\n\
-\n\
-    a Mol object, None on failure.\n\
-\n";
-  python::def(
-      "ScsrFromScsrBlock", RDKit::ScsrFromScsrBlock,
-      (python::arg("molBlock"), python::arg("sanitize") = true,
-       python::arg("removeHs") = true, python::arg("strictParsing") = true),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
+\n RETURNS :\n\
+\n a Mol object, None on failure.\n\
+\n ";
+  python::def("ScsrFromScsrBlock", RDKit::ScsrFromScsrBlock,
+              (python::arg("molBlock"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Construct a molecule (mol) from an SCSR Mol.  The templates are represented by\n\

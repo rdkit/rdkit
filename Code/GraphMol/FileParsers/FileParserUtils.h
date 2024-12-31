@@ -83,7 +83,8 @@ RDKIT_FILEPARSERS_EXPORT std::string getV3000Line(std::istream *inStream,
 RDKIT_FILEPARSERS_EXPORT bool ParseV3000CTAB(
     std::istream *inStream, unsigned int &line, RWMol *mol, Conformer *&conf,
     bool &chiralityPossible, unsigned int &nAtoms, unsigned int &nBonds,
-    bool strictParsing = true, bool expectMEND = true);
+    bool strictParsing = true, bool expectMEND = true,
+    bool expectMacroAtoms = false);
 
 // nAtoms and nBonds are used
 RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(

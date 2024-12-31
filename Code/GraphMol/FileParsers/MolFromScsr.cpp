@@ -104,11 +104,10 @@ unsigned int getNewAtomForBond(
     const Atom *atom, unsigned int otherAtomIdx,
     const std::map<OriginAtomDef, unsigned int> &originAtomMap,
     const std::map<OriginAtomConnection, unsigned int> &attachMap) {
-  auto beginSeq = 0;
+  unsigned int beginSeq = 0;
   unsigned int atomIdx = atom->getIdx();
-  beginSeq = atom->getProp<unsigned int>(common_properties::molAtomSeqId);
-
-  if (beginSeq == 0) {
+  if (!atom->getPropIfPresent<unsigned int>(common_properties::molAtomSeqId,
+                                            beginSeq)) {
     return originAtomMap.at(OriginAtomDef(atomIdx, UINT_MAX));
   }
 

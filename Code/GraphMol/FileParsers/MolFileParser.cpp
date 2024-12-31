@@ -2518,7 +2518,7 @@ bool calculate3dFlag(const RWMol &mol, const Conformer &conf,
 
 void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
                          unsigned int nAtoms, RWMol *mol, Conformer *conf,
-                         bool strictParsing) {
+                         bool strictParsing, bool expectMacroAtoms) {
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(nAtoms > 0, "bad atom count");
   PRECONDITION(mol, "bad molecule");
@@ -2558,7 +2558,35 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
       errout << "Bad atom line : '" << tempStr << "' on line " << line;
       throw FileParseException(errout.str());
     }
-    Atom *atom = ParseV3000AtomSymbol(*token, line, strictParsing);
+
+    // before we parse the symbol, we need to know if the atom has a class attr.
+    // if it does, it is a macro atom reference, and we do not need to parse the
+    // symbol.  (the single letter codes can be the same as element sysmbols or
+    // special query names)
+
+    auto isMacroAtom = false;
+    if (expectMacroAtoms) {
+      std::vector<std::string_view>::iterator lookAheadToken = token + 1;
+      while (lookAheadToken != tokens.end()) {
+        std::string prop;
+        std::string_view val;
+        if (splitAssignToken(*lookAheadToken, prop, val) && prop == "CLASS") {
+          isMacroAtom = true;
+          break;
+        }
+        ++lookAheadToken;
+      }
+    }
+
+    Atom *atom = nullptr;
+    if (isMacroAtom) {
+      atom = new Atom(0);
+      atom->setAtomicNum(0);
+      std::string tcopy(*token);
+      atom->setProp(common_properties::dummyLabel, tcopy);
+    } else {
+      atom = ParseV3000AtomSymbol(*token, line, strictParsing);
+    }
 
     // now the position;
     RDGeom::Point3D pos;
@@ -3150,7 +3178,8 @@ namespace FileParserUtils {
 bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
                     Conformer *&conf, bool &chiralityPossible,
                     unsigned int &nAtoms, unsigned int &nBonds,
-                    bool strictParsing, bool expectMEND) {
+                    bool strictParsing, bool expectMEND,
+                    bool expectMacroAtoms) {
   PRECONDITION(inStream, "bad stream");
   PRECONDITION(mol, "bad molecule");
 
@@ -3203,7 +3232,8 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
   mol->setProp(common_properties::_MolFileChiralFlag, chiralFlag);
 
   if (nAtoms) {
-    ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf, strictParsing);
+    ParseV3000AtomBlock(inStream, line, nAtoms, mol, conf, strictParsing,
+                        expectMacroAtoms);
   }
   if (nBonds) {
     ParseV3000BondBlock(inStream, line, nBonds, mol, chiralityPossible);
