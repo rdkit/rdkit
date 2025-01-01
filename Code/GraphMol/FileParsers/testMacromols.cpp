@@ -8,26 +8,15 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
-#include <GraphMol/FileParsers/SequenceParsers.h>
-#include <GraphMol/FileParsers/SequenceWriters.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
-#include <GraphMol/Depictor/RDDepictor.h>
-
-#include <GraphMol/ChemReactions/Reaction.h>
-#include <GraphMol/ChemReactions/ReactionParser.h>
-#include <GraphMol/SmilesParse/SmilesParse.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Atropisomers.h>
-#include <GraphMol/Chirality.h>
-#include <GraphMol/test_fixtures.h>
 
 #include <string>
 #include <fstream>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <filesystem>
 using namespace RDKit;
 

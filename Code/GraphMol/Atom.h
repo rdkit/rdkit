@@ -39,7 +39,6 @@ class RWMol;
 class AtomMonomerInfo;
 class AtomAttchOrd;  // class for ATTAHORD of the form  ATTCHORD=(4 1 Al 3 Br)
 
-// class RDKIT_GRAPHMOL_EXPORT AtomAttchOrd : public UINT_STR_PAIR {
 class RDKIT_GRAPHMOL_EXPORT AtomAttchOrd
     : public std::pair<unsigned int, std::string> {
  private:

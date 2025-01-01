@@ -11,15 +11,8 @@
 #include <boost/tokenizer.hpp>
 
 // our stuff
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
 #include "RWMol.h"
 #include "ScsrMol.h"
-#include "Atom.h"
-#include "Bond.h"
-#include "BondIterators.h"
-#include "RingInfo.h"
-#include "SubstanceGroup.h"
 #include <RDGeneral/FileParseException.h>
 
 namespace RDKit {
