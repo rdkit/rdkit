@@ -31,7 +31,9 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
     return SIZE_CHECK_FAILED;
   }
 
-  if (!mol.getRingInfo()->isInitialized()) mol.getRingInfo()->initialize();
+  if (!mol.getRingInfo()->isInitialized()) {
+    mol.getRingInfo()->initialize();
+  }
 
   /* it uses SDL text
           if (Options.ConvertAtomTexts)
@@ -68,27 +70,32 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
     AddMWMF(mol, true);  // Add mol mass data field "MW_PRE"
     if (StripSmallFragments(mol, Options.Verbose)) {
       flags |= FRAGMENTS_FOUND;
-      if (Options.Verbose)
+      if (Options.Verbose) {
         BOOST_LOG(rdInfoLog)
             << "Striped SmallFragments" << MolToSmiles(mol) << "\n";
+      }
     }
     AddMWMF(mol, false);  // Add mol mass data field "MW_POST"
   }
 
   // do tautomer standardization
   for (unsigned i = 0; i < Options.FromTautomer.size(); i++) {
-    if (Options.Verbose)
+    if (Options.Verbose) {
       BOOST_LOG(rdInfoLog) << "tautomerizing with rule " << i << "\n";
+    }
     // fprintf(stderr, "tautomerizing with rule %d\n", i);
     for (unsigned j = 0; j < 3; j++)  // limit to 3 run per rule
     {
       StructCheckTautomer sct(mol, Options);
-      if (!sct.applyTautomer(i)) break;
+      if (!sct.applyTautomer(i)) {
+        break;
+      }
       flags |= TAUTOMER_TRANSFORMED;
-      if (Options.Verbose)
+      if (Options.Verbose) {
         BOOST_LOG(rdInfoLog)
             << "molecule: has been tautomerized with rule " << i << ":\n"
             << MolToSmiles(mol) << "\n";
+      }
       //                sprintf(msg_buffer,"%10s: has been tautomerized with
       //                rule '%s'", mp->name, from_tautomer[i]->name);
       //                AddMsgToList(msg_buffer);
@@ -123,24 +130,30 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
     ChargeFix ch(Options, mol);
     if (ch.rechargeMolecule(ndeprot, nrefine)) {
       flags |= RECHARGED;
-      if (Options.Verbose)
+      if (Options.Verbose) {
         BOOST_LOG(rdInfoLog)
             << "Recharged Molecule:" << MolToSmiles(mol) << "\n";
+      }
     }
   }
   //
   const double clashLimit = Options.CollisionLimitPercent / 100.0;
   if (Options.CheckCollisions && AtomClash(mol, clashLimit)) {
     flags |= ATOM_CLASH;
-    if (Options.Verbose)
+    if (Options.Verbose) {
       BOOST_LOG(rdInfoLog) << "AtomClash done:" << MolToSmiles(mol) << "\n";
+    }
   }
 
-  if (!Options.GoodAtoms.empty())
-    if (!CheckAtoms(mol, Options.GoodAtoms, Options.Verbose))
+  if (!Options.GoodAtoms.empty()) {
+    if (!CheckAtoms(mol, Options.GoodAtoms, Options.Verbose)) {
       flags |= ATOM_CHECK_FAILED;
+    }
+  }
 
-  if (Options.CheckStereo && !CheckStereo(mol)) flags |= STEREO_ERROR;
+  if (Options.CheckStereo && !CheckStereo(mol)) {
+    flags |= STEREO_ERROR;
+  }
 
   //        if (Options.GroupsToSGroups)
   //            ConvertGroupsToSGroups(mol);
@@ -188,7 +201,9 @@ unsigned StructChecker::checkMolStructure(RWMol &mol) const {
   // the end:
   if (0 != (flags & TRANSFORMED)) {  // sanitize molecule
                                      // + ???? .............. ????
-    if (mol.getRingInfo()->isInitialized()) mol.getRingInfo()->reset();
+    if (mol.getRingInfo()->isInitialized()) {
+      mol.getRingInfo()->reset();
+    }
     mol.getRingInfo()->initialize();
   }
   return flags;
