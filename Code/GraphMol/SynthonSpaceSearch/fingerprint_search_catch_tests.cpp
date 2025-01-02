@@ -263,7 +263,6 @@ TEST_CASE("FP Approx Similarity") {
   // products so do occasionally vary, so use a fixed seed.
   params.randomSeed = 1;
   params.similarityCutoff = 0.5;
-  params.fragSimilarityAdjuster = 0.1;
   params.timeOut = 0;
   params.maxHits = 1000;
 
