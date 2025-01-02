@@ -471,7 +471,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
   PRECONDITION(
       params.rootedAtAtom < 0 ||
           static_cast<unsigned int>(params.rootedAtAtom) < mol.getNumAtoms(),
-      "rootedAtomAtom must be less than the number of atoms");
+      "rootedAtAtom must be less than the number of atoms");
+
   int rootedAtAtom = params.rootedAtAtom;
   std::vector<std::vector<int>> fragsMolAtomMapping;
   auto mols =
@@ -713,12 +714,24 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
 }
 
-std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
+std::string MolToCXSmiles(const ROMol &romol,
+                          const SmilesWriteParams &paramsInput,
                           std::uint32_t flags,
                           RestoreBondDirOption restoreBondDirs) {
   RWMol trwmol(romol);
 
   bool doingCXSmiles = true;
+  SmilesWriteParams params = paramsInput;
+
+  // if kekule is to be done, and the bond attrs (wedging) is to be done, we
+  // have to do the kekuleization here.  Otherwise, kekule happens in the
+  // fragment construction, and the wedges are done on the origin, possiibly
+  // aromatic mol. THis can put wedge bonds on double bonds, which is not valid.
+
+  if (params.doKekule) {
+    MolOps::Kekulize(trwmol);
+    params.doKekule = false;
+  }
 
   auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles);
   if (res.empty()) {
@@ -823,6 +836,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
       bondsInPlay.set(bidx);
     }
   } else {
+    PRECONDITION(
+        params.rootedAtAtom < 0 || MolOps::getMolFrags(mol).size() == 1,
+        "rootedAtAtom can only be used with molecules that have a single fragment");
+
     for (auto aidx : atomsToUse) {
       for (const auto &bndi : boost::make_iterator_range(
                mol.getAtomBonds(mol.getAtomWithIdx(aidx)))) {

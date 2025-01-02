@@ -27,7 +27,7 @@ class JSMolBase {
  public:
   JSMolBase(const JSMolBase &) = delete;
   JSMolBase &operator=(const JSMolBase &) = delete;
-  virtual ~JSMolBase() {};
+  virtual ~JSMolBase(){};
   virtual const RDKit::RWMol &get() const = 0;
   virtual RDKit::RWMol &get() = 0;
   std::string get_smiles() const;
@@ -142,8 +142,10 @@ class JSMolBase {
   }
   std::string get_prop(const std::string &key) const;
   bool clear_prop(const std::string &key);
-  std::string remove_hs() const;
-  bool remove_hs_in_place();
+  std::string remove_hs(const std::string &details_json) const;
+  std::string remove_hs() const { return remove_hs(""); }
+  bool remove_hs_in_place(const std::string &details_json);
+  bool remove_hs_in_place() { return remove_hs_in_place(""); }
   std::string add_hs() const;
   bool add_hs_in_place();
   double normalize_depiction(int canonicalize, double scaleFactor);
@@ -225,8 +227,8 @@ class JSMolShared : public JSMolBase {
 class JSMolList {
  public:
   JSMolList(const std::vector<RDKit::ROMOL_SPTR> &mols)
-      : d_mols(mols), d_idx(0) {};
-  JSMolList() : d_idx(0) {};
+      : d_mols(mols), d_idx(0){};
+  JSMolList() : d_idx(0){};
   JSMolBase *next();
   size_t append(const JSMolBase &mol);
   size_t insert(size_t idx, const JSMolBase &mol);
@@ -244,7 +246,7 @@ class JSMolList {
 
 namespace RDKit {
 namespace MinimalLib {
-struct LogHandle;
+class LogHandle;
 }
 }  // namespace RDKit
 
@@ -345,8 +347,8 @@ std::string version();
 void prefer_coordgen(bool prefer);
 bool use_legacy_stereo_perception(bool value);
 bool allow_non_tetrahedral_chirality(bool value);
-void enable_logging();
-void disable_logging();
+bool enable_logging(const std::string &logName);
+bool disable_logging(const std::string &logName);
 JSLog *set_log_tee(const std::string &log_name);
 JSLog *set_log_capture(const std::string &log_name);
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
@@ -363,11 +365,11 @@ class JSRGroupDecomposition {
  public:
   JSRGroupDecomposition(const JSMolBase &core, const std::string &details_json);
   JSRGroupDecomposition(const JSMolBase &core)
-      : JSRGroupDecomposition(core, "") {};
+      : JSRGroupDecomposition(core, ""){};
   JSRGroupDecomposition(const JSMolList &cores,
                         const std::string &details_json);
   JSRGroupDecomposition(const JSMolList &cores)
-      : JSRGroupDecomposition(cores, "") {};
+      : JSRGroupDecomposition(cores, ""){};
   int add(const JSMolBase &mol);
   bool process();
   std::map<std::string, std::unique_ptr<JSMolList>> getRGroupsAsColumns() const;
@@ -378,4 +380,9 @@ class JSRGroupDecomposition {
   std::unique_ptr<RDKit::RGroupDecomposition> d_decomp;
   std::vector<unsigned int> d_unmatched;
 };
+#endif
+
+#ifdef RDK_BUILD_MINIMAL_LIB_MOLZIP
+JSMolBase *molzip(const JSMolBase &a, const JSMolBase &b,
+                  const std::string &details_json);
 #endif
