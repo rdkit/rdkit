@@ -6732,7 +6732,28 @@ M  END
     pos2 = m.GetConformer(0).GetPositions()
 
     self.assertTrue( (pos==pos2).all())
-    
+
+
+  def test_get_set_positions_stride(self):
+    m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
+    # to check stride walking in SetPositions
+    # allocate a double size array, then slice every other element
+    # numpy will mess with the striding to create the view onto the double size array
+    pos = np.zeros([6,3], np.double)[::2]
+    pos[0][1] = 1
+    pos[0][2] = 2
+    pos[1][0] = 3
+    pos[1][1] = 4
+    pos[1][2] = 5
+    pos[2][0] = 6
+    pos[2][1] = 6
+    pos[2][2] = 7
+
+    m.GetConformer(0).SetPositions(pos)
+    pos2 = m.GetConformer(0).GetPositions()
+
+    self.assertTrue( (pos==pos2).all())
+
 
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
