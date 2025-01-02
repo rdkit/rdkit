@@ -57,6 +57,19 @@ SynthonSet::getSynthonFPs() const {
   return d_synthonFPs;
 }
 
+namespace {
+void writeBitSet(std::ostream &os, const boost::dynamic_bitset<> &bitset) {
+  streamWrite(os, bitset.size());
+  for (unsigned int i = 0; i < bitset.size(); ++i) {
+    if (bitset[i]) {
+      streamWrite(os, true);
+    } else {
+      streamWrite(os, false);
+    }
+  }
+}
+}  // namespace
+
 void SynthonSet::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_id);
   streamWrite(os, getConnectorRegions().size());
@@ -65,14 +78,13 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   }
   auto connRegFPstr = getConnRegFP()->toString();
   streamWrite(os, connRegFPstr);
-  streamWrite(os, d_connectors.size());
-  for (size_t i = 0; i < d_connectors.size(); ++i) {
-    if (d_connectors[i]) {
-      streamWrite(os, true);
-    } else {
-      streamWrite(os, false);
-    }
+
+  writeBitSet(os, d_connectors);
+  streamWrite(os, d_synthConnPatts.size());
+  for (const auto &scp : d_synthConnPatts) {
+    writeBitSet(os, scp);
   }
+
   streamWrite(os, d_synthons.size());
   for (const auto &rs : d_synthons) {
     streamWrite(os, rs.size());
@@ -80,6 +92,15 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
       r->writeToDBStream(os);
     }
   }
+
+  if (d_addFP) {
+    streamWrite(os, true);
+    streamWrite(os, d_addFP->toString());
+    streamWrite(os, d_subtractFP->toString());
+  } else {
+    streamWrite(os, false);
+  }
+
   streamWrite(os, d_synthonFPs.size());
   for (const auto &fpv : d_synthonFPs) {
     streamWrite(os, fpv.size());
@@ -89,7 +110,20 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   }
 }
 
-void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
+namespace {
+void readBitSet(std::istream &is, boost::dynamic_bitset<> &bitset) {
+  size_t bsSize;
+  streamRead(is, bsSize);
+  bitset.resize(bsSize);
+  bool s;
+  for (size_t i = 0; i < bsSize; ++i) {
+    streamRead(is, s);
+    bitset[i] = s;
+  }
+}
+}  // namespace
+
+void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t version) {
   streamRead(is, d_id, 0);
   size_t numConnRegs;
   streamRead(is, numConnRegs);
@@ -101,14 +135,18 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
   std::string pickle;
   streamRead(is, pickle, 0);
   d_connRegFP = std::make_unique<ExplicitBitVect>(pickle);
-  size_t connSize;
-  streamRead(is, connSize);
-  d_connectors.resize(connSize);
-  bool s;
-  for (size_t i = 0; i < connSize; ++i) {
-    streamRead(is, s);
-    d_connectors[i] = s;
+  readBitSet(is, d_connectors);
+  if (version >= 2010) {
+    size_t numSynthConnPatts;
+    streamRead(is, numSynthConnPatts);
+    d_synthConnPatts.resize(numSynthConnPatts);
+    for (size_t i = 0; i < numSynthConnPatts; ++i) {
+      boost::dynamic_bitset<> synthConnPatt;
+      readBitSet(is, synthConnPatt);
+      d_synthConnPatts[i] = synthConnPatt;
+    }
   }
+
   size_t numRS;
   streamRead(is, numRS);
   d_synthons.clear();
@@ -122,6 +160,19 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
       d_synthons[i][j]->readFromDBStream(is);
     }
   }
+
+  if (version >= 2010) {
+    bool haveAddFP;
+    streamRead(is, haveAddFP);
+    if (haveAddFP) {
+      std::string fString;
+      streamRead(is, fString, 0);
+      d_addFP = std::make_unique<ExplicitBitVect>(fString);
+      streamRead(is, fString, 0);
+      d_subtractFP = std::make_unique<ExplicitBitVect>(fString);
+    }
+  }
+
   size_t numFS;
   streamRead(is, numFS);
   d_synthonFPs.clear();
@@ -136,10 +187,10 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
       d_synthonFPs[i][j] = std::make_unique<ExplicitBitVect>(fString);
     }
   }
-  // So that d_synthConnPatts is filled in. Next time the binary file format
-  // is updated they can be put in it, but they're cheap enough to calculate
-  // so leave it for now.
-  assignConnectorsUsed();
+  // So that d_synthConnPatts is filled in.
+  if (version < 2010) {
+    assignConnectorsUsed();
+  }
 }
 
 void SynthonSet::enumerateToStream(std::ostream &os) const {
