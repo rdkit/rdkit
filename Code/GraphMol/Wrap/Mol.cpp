@@ -151,11 +151,13 @@ int getMolNumAtoms(const ROMol &mol, int onlyHeavy, bool onlyExplicit) {
   return mol.getNumAtoms(onlyExplicit);
 }
 
-int getTemplateCount(const SCSRMol &scsr) { return scsr.getTemplateCount(); }
+int getTemplateCount(const RDKit::SCSRMol &scsr) {
+  return scsr.getTemplateCount();
+}
 
-ROMol *getScsrMol(SCSRMol &scsr) { return scsr.getMol(); }
+ROMol *getScsrMol(RDKit::SCSRMol &scsr) { return scsr.getMol(); }
 
-const ROMol *getTemplate(SCSRMol &scsr, unsigned int idx) {
+const ROMol *getTemplate(RDKit::SCSRMol &scsr, unsigned int idx) {
   if (idx >= scsr.getTemplateCount()) {
     return nullptr;
     ;
@@ -849,14 +851,14 @@ struct mol_wrapper {
     - a main molecule\n\n\
     - a set of template molcules to define the atoms in the main molecule\n";
 
-    python::class_<SCSRMol, SCSRMOL_SPTR, boost::noncopyable>(
+    python::class_<RDKit::SCSRMol, SCSRMOL_SPTR, boost::noncopyable>(
         "SCSRMol", SCSRmolClassDoc.c_str(),
         python::init<>(python::args("self"), "Constructor, takes no arguments"))
 
-        .def(python::init<const SCSRMol &>(
+        .def(python::init<const RDKit::SCSRMol &>(
             (python::arg("self"), python::arg("scsr"))))
-        .def("__copy__", &generic__copy__<SCSRMol>, python::args("self"))
-        .def("__deepcopy__", &generic__deepcopy__<SCSRMol>,
+        .def("__copy__", &generic__copy__<RDKit::SCSRMol>, python::args("self"))
+        .def("__deepcopy__", &generic__deepcopy__<RDKit::SCSRMol>,
              python::args("self", "memo"))
 
         .def("GetNumTemplates", getTemplateCount, ((python::arg("self"))),

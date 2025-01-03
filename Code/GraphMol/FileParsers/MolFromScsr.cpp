@@ -91,7 +91,7 @@ unsigned int getNewAtomForBond(
   throw FileParseException("Attachment ord not found");
 }
 
-std::unique_ptr<RWMol> MolFromScsr(const SCSRMol &scsrMol) {
+std::unique_ptr<RWMol> MolFromScsr(const RDKit::SCSRMol &scsrMol) {
   auto resMol = std::unique_ptr<RWMol>(new RWMol());
   auto mol = scsrMol.getMol();
   // first get some information from the templates to be used when creating the

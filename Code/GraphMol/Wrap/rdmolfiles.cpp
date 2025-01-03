@@ -171,11 +171,11 @@ ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
-                           bool removeHs) {
+RDKit::SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
+                                  bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   unsigned int line = 0;
-  SCSRMol *scsrMol = nullptr;
+  RDKit::SCSRMol *scsrMol = nullptr;
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
     params.sanitize = sanitize;
@@ -186,12 +186,12 @@ SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
-  return static_cast<SCSRMol *>(scsrMol);
+  return static_cast<RDKit::SCSRMol *>(scsrMol);
 }
 
-SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
-                          bool removeHs) {
-  SCSRMol *scsrMol = nullptr;
+RDKit::SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
+                                 bool removeHs) {
+  RDKit::SCSRMol *scsrMol = nullptr;
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
     params.sanitize = sanitize;
@@ -205,10 +205,10 @@ SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
   }
-  return static_cast<SCSRMol *>(scsrMol);
+  return static_cast<RDKit::SCSRMol *>(scsrMol);
 }
 
-ROMol *ScsrToMol(const SCSRMol &scsrMol) {
+ROMol *ScsrToMol(const RDKit::SCSRMol &scsrMol) {
   ROMol *mol = nullptr;
   try {
     mol = RDKit::v2::FileParsers::MolFromScsr(scsrMol).release();
