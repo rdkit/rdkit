@@ -5,7 +5,8 @@ endif()
 
 rdkit_library(FileParsers
     CDXMLParser.cpp
-    Mol2FileParser.cpp MolFileParser.cpp
+    Mol2FileParser.cpp MolFileParser.cpp 
+    ScsrMolFileParser.cpp MolFromScsr.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
@@ -45,6 +46,9 @@ rdkit_test(fileParsersTest1 test1.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
 
 rdkit_test(testAtropisomers testAtropisomers.cpp
+    LINK_LIBRARIES FileParsers SubstructMatch)
+
+rdkit_test(testMacromols testMacromols.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
 
 rdkit_catch_test(testSquiggleDoubleBonds testSquiggleDoubleBonds.cpp

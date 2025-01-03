@@ -37,6 +37,21 @@ namespace RDKit {
 class ROMol;
 class RWMol;
 class AtomMonomerInfo;
+class AtomAttchOrd;  // class for ATTAHORD of the form  ATTCHORD=(4 1 Al 3 Br)
+
+class RDKIT_GRAPHMOL_EXPORT AtomAttchOrd
+    : public std::pair<unsigned int, std::string> {
+ private:
+ public:
+  AtomAttchOrd(unsigned int id, const std::string &lbl) {
+    this->first = id - 1;
+    this->second = lbl;
+  }
+
+  unsigned int getAtomIdx() const { return this->first; }
+
+  std::string getLabel() const { return this->second; }
+};
 
 //! The class for representing atoms
 /*!
