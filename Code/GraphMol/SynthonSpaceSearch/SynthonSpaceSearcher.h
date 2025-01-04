@@ -16,6 +16,7 @@
 #define SYNTHONSPACESEARCHER_H
 
 #include <chrono>
+#include <csignal>
 #include <boost/random.hpp>
 
 #include <RDGeneral/export.h>
@@ -35,8 +36,7 @@ class SynthonSpaceSearcher {
   SynthonSpaceSearcher() = delete;
   SynthonSpaceSearcher(const ROMol &query,
                        const SynthonSpaceSearchParams &params,
-                       SynthonSpace &space)
-      : d_query(query), d_params(params), d_space(space) {}
+                       SynthonSpace &space);
   SynthonSpaceSearcher(const SynthonSpaceSearcher &other) = delete;
   SynthonSpaceSearcher(SynthonSpaceSearcher &&other) = delete;
   SynthonSpaceSearcher &operator=(const SynthonSpaceSearcher &other) = delete;
@@ -81,15 +81,16 @@ class SynthonSpaceSearcher {
   // but duplicate SMILES from different reactions will be.  Hitsets will
   // be re-ordered on exit.
   void buildHits(std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
-                 const TimePoint *endTime, bool &timedOut,
+                 const TimePoint *endTime, bool &timedOut, bool &cancelled,
                  std::vector<std::unique_ptr<ROMol>> &results) const;
   void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
                     std::set<std::string> &resultsNames,
-                    const TimePoint *endTime, bool &timedOut,
+                    const TimePoint *endTime, bool &timedOut, bool &cancelled,
                     std::vector<std::unique_ptr<ROMol>> &results) const;
   void buildRandomHits(const std::vector<SynthonSpaceHitSet> &hitsets,
                        size_t totHits, std::set<std::string> &resultsNames,
                        const TimePoint *endTime, bool &timedOut,
+                       bool &cancelled,
                        std::vector<std::unique_ptr<ROMol>> &results) const;
   // get the subset of synthons for the given reaction to use for this
   // enumeration.

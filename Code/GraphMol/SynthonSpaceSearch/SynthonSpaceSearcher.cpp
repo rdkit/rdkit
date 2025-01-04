@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <csignal>
 #include <random>
 #include <boost/random/discrete_distribution.hpp>
 
@@ -20,6 +21,8 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
+static volatile sig_atomic_t sig_caught = 0;
+
 namespace {
 bool checkTimeOut(const TimePoint *endTime) {
   if (endTime != nullptr && Clock::now() > *endTime) {
@@ -28,9 +31,29 @@ bool checkTimeOut(const TimePoint *endTime) {
   }
   return false;
 }
+bool checkCancelled() {
+  if (sig_caught) {
+    sig_caught = 0;
+    return true;
+  }
+  return false;
+}
+auto handler = [](int code) {
+  std::string msg("SIGNAL " + std::to_string(code));
+  std::cout << "MSG :: " << msg << " vs " << SIGINT << std::endl;
+  std::cout << "setting flag to " << code << std::endl;
+  sig_caught = code;
+};
 }  // namespace
 
+SynthonSpaceSearcher::SynthonSpaceSearcher(
+    const ROMol &query, const SynthonSpaceSearchParams &params,
+    SynthonSpace &space)
+    : d_query(query), d_params(params), d_space(space) {}
+
 SearchResults SynthonSpaceSearcher::search() {
+  signal(SIGINT, handler);
+
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
         "Random sample is incompatible with maxHits of -1.");
@@ -61,9 +84,15 @@ SearchResults SynthonSpaceSearcher::search() {
     endTime = &endTimePt;
   }
   bool timedOut = false;
+  bool cancelled = false;
   for (auto &fragSet : fragments) {
     timedOut = checkTimeOut(endTime);
     if (timedOut) {
+      break;
+    }
+    if (checkCancelled()) {
+      std::cout << "control-C done" << std::endl;
+      cancelled = true;
       break;
     }
     if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
@@ -76,11 +105,11 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   }
 
-  if (!timedOut && d_params.buildHits) {
-    buildHits(allHits, totHits, endTime, timedOut, results);
+  if (!timedOut && !cancelled && d_params.buildHits) {
+    buildHits(allHits, totHits, endTime, timedOut, cancelled, results);
   }
 
-  return SearchResults{std::move(results), totHits, timedOut};
+  return SearchResults{std::move(results), totHits, timedOut, cancelled};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
@@ -117,9 +146,23 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   return prod;
 }
 
+namespace {
+void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
+  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
+    std::sort(hits.begin(), hits.end(),
+              [](const std::unique_ptr<ROMol> &lhs,
+                 const std::unique_ptr<ROMol> &rhs) {
+                const auto lsim = lhs->getProp<double>("Similarity");
+                const auto rsim = rhs->getProp<double>("Similarity");
+                return lsim > rsim;
+              });
+  }
+}
+}  // namespace
+
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    const TimePoint *endTime, bool &timedOut,
+    const TimePoint *endTime, bool &timedOut, bool &cancelled,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -142,30 +185,19 @@ void SynthonSpaceSearcher::buildHits(
   std::set<std::string> resultsNames;
 
   if (d_params.randomSample) {
-    buildRandomHits(hitsets, totHits, resultsNames, endTime, timedOut, results);
+    buildRandomHits(hitsets, totHits, resultsNames, endTime, timedOut,
+                    cancelled, results);
   } else {
-    buildAllHits(hitsets, resultsNames, endTime, timedOut, results);
+    buildAllHits(hitsets, resultsNames, endTime, timedOut, cancelled, results);
   }
+  sortHits(results);
 }
-
-namespace {
-void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
-  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
-    std::sort(hits.begin(), hits.end(),
-              [](const std::unique_ptr<ROMol> &lhs,
-                 const std::unique_ptr<ROMol> &rhs) {
-                const auto lsim = lhs->getProp<double>("Similarity");
-                const auto rsim = rhs->getProp<double>("Similarity");
-                return lsim > rsim;
-              });
-  }
-}
-}  // namespace
 
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
     std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
+    bool &timedOut, bool &cancelled,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
   std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
     std::vector<std::vector<size_t>> synthonNums;
@@ -207,12 +239,15 @@ void SynthonSpaceSearcher::buildAllHits(
           break;
         }
       }
+      if (checkCancelled()) {
+        cancelled = true;
+        break;
+      }
     }
-    if (timedOut) {
+    if (timedOut || cancelled) {
       break;
     }
   }
-  sortHits(results);
 }
 
 namespace {
@@ -277,7 +312,8 @@ struct RandomHitSelector {
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
     std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
+    bool &timedOut, bool &cancelled,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
@@ -304,8 +340,12 @@ void SynthonSpaceSearcher::buildRandomHits(
         break;
       }
     }
+    if (checkCancelled()) {
+      std::cout << "did somebody say ctrl-c" << std::endl;
+      cancelled = true;
+      break;
+    }
   }
-  sortHits(results);
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

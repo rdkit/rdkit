@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <csignal>
+
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 
@@ -42,7 +44,9 @@ struct SearchResults_wrapper {
              " final product not matching the query even though the"
              " synthons suggested they would.")
         .def("GetTimedOut", &SynthonSpaceSearch::SearchResults::getTimedOut,
-             "Returns whether the search timed out or not.");
+             "Returns whether the search timed out or not.")
+        .def("GetCancelled", &SynthonSpaceSearch::SearchResults::getCancelled,
+             "Returns whether the search was cancelled or not.");
   }
 };
 
@@ -76,6 +80,7 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
             fingerprintGenerator);
     return self.fingerprintSearch(query, *fpGen, params);
   }
+  return SynthonSpaceSearch::SearchResults();
 }
 
 void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
