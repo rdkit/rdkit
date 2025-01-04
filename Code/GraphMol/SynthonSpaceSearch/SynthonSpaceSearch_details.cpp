@@ -139,7 +139,10 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   fragments.emplace_back();
   fragments.back().emplace_back(new ROMol(query));
 
-  // Now do the splits.
+  // Now do the splits.  Symmetrical molecules can give rise to the same
+  // fragment set in different ways so keep track of what we've had to
+  // avoid duplicates.
+  std::set<std::string> fragSmis;
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
     auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
@@ -174,6 +177,10 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
         continue;
       }
       if (checkConnectorsInDifferentFrags(molFrags, i)) {
+        std::string fragSmi(MolToSmiles(*fragMol));
+        if (!fragSmis.insert(fragSmi).second) {
+          continue;
+        }
         fragments.emplace_back(std::move(molFrags));
       }
     }
