@@ -266,7 +266,9 @@ The RDKit docs support inclusion of Sphinx doctests to allow the result of a cod
   .. image:: pathtoimage/name.png
   ```
 
-### How to Build RDKit Documentation Locally
+### How to Build and Test RDKit Documentation Locally
+
+#### Build the Documentation
 
 To preview your changes to the RDKit documentation, build the docs locally. First set up your development environment by following the instructions in [Building RDKit for Development](#building-rdkit-for-development). Then change to the directory `Docs/Book`:
   ```
@@ -294,6 +296,14 @@ In either case, the output should end with
   ```
 
 Now you can preview the docs by pointing your web browser to the local file `rdkit/Docs/Book/_build/html/index.html` where `rdkit` is directory containing the local clone.
+
+#### Test the Documentation
+
+To ensure that code blocks in the documentation return the stated results, you can run doctests locally:
+
+  ```
+  make doctest
+  ```
 
 ## Contributing to the Code - Python 
 
