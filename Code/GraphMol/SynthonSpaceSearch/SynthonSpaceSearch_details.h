@@ -37,7 +37,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void fixAromaticRingSplits(
 // be altered.  Also, you can't split a molecule on 3 bonds if it only contains
 // 2.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
-splitMolecule(const ROMol &query, unsigned int maxBondSplits);
+splitMolecule(const ROMol &query, unsigned int maxBondSplits,
+              std::uint64_t maxNumFrags);
 // Counts the number of [1*], [2*]...[4*] in the string.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &frag);
 

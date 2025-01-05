@@ -51,7 +51,7 @@ SearchResults SynthonSpaceSearcher::search() {
   }
   std::vector<std::unique_ptr<ROMol>> results;
 
-  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
+  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits, d_params.maxNumFrags);
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   TimePoint *endTime = nullptr;

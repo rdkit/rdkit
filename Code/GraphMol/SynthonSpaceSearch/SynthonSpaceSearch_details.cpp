@@ -115,7 +115,7 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 }
 
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
-    const ROMol &query, unsigned int maxBondSplits) {
+    const ROMol &query, unsigned int maxBondSplits, std::uint64_t maxNumFrags) {
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
   }
@@ -182,7 +182,15 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
           continue;
         }
         fragments.emplace_back(std::move(molFrags));
+        if (fragments.size() > maxNumFrags) {
+          BOOST_LOG(rdWarningLog)
+              << "Maximum number of fragments reached." << std::endl;
+          break;
+        }
       }
+    }
+    if (fragments.size() > maxNumFrags) {
+      break;
     }
   }
   return fragments;

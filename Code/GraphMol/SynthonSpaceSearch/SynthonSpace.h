@@ -50,8 +50,15 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                          // than that will not matter as it will
                                          // be reduced to 4.  Likewise, values
                                          // lower than 1 will be increased to 1.
-  std::int64_t maxHits{1000};  // The maximum number of hits to return.  Use -1
-                               // for no maximum.
+  std::uint64_t maxNumFrags{
+      100000};  // The maximum number of fragments the query can
+                // be broken into.  Big molecules will create huge
+                // numbers of fragments that may cause excessive
+                // memory use.  If the number of fragments hits this number,
+                // fragmentation stops and the search results will likely be
+                // incomplete.
+  std::int64_t maxHits{1000};  // The maximum number of hits to return.  Use
+                               // -1 for no maximum.
   std::int64_t hitStart{0};    // Sequence number of hit to start from.  So that
                                // you can return the next N hits of a search
                                // having already obtained N-1.

@@ -106,6 +106,14 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
                      "The maximum number of hits to return.  Default=1000."
                      "Use -1 for no maximum.")
       .def_readwrite(
+          "maxNumFrags",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxNumFrags,
+          "The maximum number of fragments the query can be broken into."
+          "  Big molecules will create huge numbers of fragments that may cause"
+          " excessive memory use.  If the number of fragments hits this number,"
+          " fragmentation stops and the search results will likely be incomplete."
+          "  Default=100000.")
+      .def_readwrite(
           "hitStart", &SynthonSpaceSearch::SynthonSpaceSearchParams::hitStart,
           "The sequence number of the hit to start from.  So that you"
           " can return the next N hits of a search having already"
