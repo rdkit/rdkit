@@ -36,9 +36,11 @@ class TestCase(unittest.TestCase):
     t1 = scsr.GetTemplate(0)
     self.assertTrue(t1.GetNumAtoms() == 11)
     self.assertTrue(scsr.GetMol().GetNumAtoms() == 3)
-    scsr
-    mol = Chem.ScsrToMol(scsr)
-    mol
+
+    molFromScsrParams = Chem.MolFromScsrParams()
+    molFromScsrParams.includeLeavingGroups = True
+    
+    mol = Chem.ScsrToMol(scsr, molFromScsrParams)
 
     self.assertTrue(mol.GetNumAtoms() == 30)
     sgs = Chem.GetMolSubstanceGroups(mol)

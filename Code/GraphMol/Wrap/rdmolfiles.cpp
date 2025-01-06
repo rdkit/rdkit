@@ -208,10 +208,12 @@ RDKit::SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
   return static_cast<RDKit::SCSRMol *>(scsrMol);
 }
 
-ROMol *ScsrToMol(const RDKit::SCSRMol &scsrMol) {
+ROMol *ScsrToMol(const RDKit::SCSRMol &scsrMol,
+                 RDKit::v2::FileParsers::MolFromScsrParams &molFromScsrParams) {
   ROMol *mol = nullptr;
   try {
-    mol = RDKit::v2::FileParsers::MolFromScsr(scsrMol).release();
+    mol = RDKit::v2::FileParsers::MolFromScsr(scsrMol, molFromScsrParams)
+              .release();
 
   } catch (...) {
   }
@@ -1192,14 +1194,24 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
+  python::class_<RDKit::v2::FileParsers::MolFromScsrParams, boost::noncopyable>(
+      "MolFromScsrParams",
+      "Parameters controlling conversion of an SCSRMol to a Mol")
+      .def_readwrite(
+          "includeLeavingGroups",
+          &RDKit::v2::FileParsers::MolFromScsrParams::includeLeavingGroups,
+          "include leaving groups atoms if not substited at that position");
+
   docString =
       "Construct a molecule (mol) from an SCSR Mol.  The templates are represented by\n\
       SUP SGROUPS\n\n ARGUMENTS :\n\
 \n - scsrMol : SCSRMol to be converted.\n\
+\n - molFromScsrParams : MolFromScsrParams to control conversion\n\
 \n RETURNS :\n\
 \n a Mol object, None on failure.\n\
 \n ";
-  python::def("ScsrToMol", ScsrToMol, (python::arg("scsrMol")),
+  python::def("ScsrToMol", ScsrToMol,
+              (python::arg("scsrMol"), python::arg("molFromScsrParams")),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
