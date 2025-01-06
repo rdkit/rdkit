@@ -53,6 +53,12 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool expandAttachmentPoints =
       false; /**< toggle conversion of attachment points into dummy atoms */
 };
+
+struct RDKIT_FILEPARSERS_EXPORT MolFromScsrParams {
+  bool includeLeavingGroups =
+      true; /* when true, leaving groups on atoms that are not exo-bonded are
+                retained.  When false, no leaving groups are retained */
+};
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolDataStream(
     std::istream &inStream, unsigned int &line,
     const MolFileParserParams &params = MolFileParserParams());
@@ -72,9 +78,9 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrBlock(
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrFile(
     const std::string &fName,
     const MolFileParserParams &params = MolFileParserParams());
-
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromScsr(
-    const RDKit::SCSRMol &scsrMol);
+    const RDKit::SCSRMol &scsrMol,
+    const MolFromScsrParams &molFromScsrParams = MolFromScsrParams());
 
 }  // namespace FileParsers
 }  // namespace v2

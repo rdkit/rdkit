@@ -40,18 +40,24 @@ class ScsiMolTest {
     unsigned int templateCount;
     unsigned int totalAtomCount;
     unsigned int totalBondCount;
+    unsigned int totalQueryAtomCount;
+    unsigned int totalQueryBondCount;
     bool expectedResult;
 
     ScsiTest(std::string fileNameInit, bool expectedResultInit,
              unsigned int atomCountInit, unsigned int bondCountInit,
              unsigned int templateCountInit, unsigned int totalAtomCountInit,
-             unsigned int totalBondCountInit)
+             unsigned int totalBondCountInit,
+             unsigned int totalQueryAtomCountInit,
+             unsigned int totalQueryBondCountInit)
         : atomCount(atomCountInit),
           bondCount(bondCountInit),
           fileName(fileNameInit),
           templateCount(templateCountInit),
           totalAtomCount(totalAtomCountInit),
           totalBondCount(totalBondCountInit),
+          totalQueryAtomCount(totalQueryAtomCountInit),
+          totalQueryBondCount(totalQueryBondCountInit),
           expectedResult(expectedResultInit) {};
   };
 
@@ -86,7 +92,7 @@ class ScsiMolTest {
       pp.removeHs = false;
       pp.strictParsing = false;
 
-      std::unique_ptr<RDKit::SCSRMol> scsrMol(ScsrFromScsrFile(fName, pp));
+      std::unique_ptr<RDKit::SCSRMol> scsrMol = ScsrFromScsrFile(fName, pp);
       RDKit::Chirality::removeNonExplicit3DChirality(*scsrMol->getMol());
 
       TEST_ASSERT(scsrMol != nullptr);
@@ -98,8 +104,7 @@ class ScsiMolTest {
       inStream.open(fName);
 
       unsigned int line = 0;
-      std::unique_ptr<RDKit::SCSRMol> scsrMolFromStream(
-          ScsrFromScsrDataStream(inStream, line, pp));
+      auto scsrMolFromStream = ScsrFromScsrDataStream(inStream, line, pp);
 
       inStream.close();
 
@@ -114,7 +119,9 @@ class ScsiMolTest {
       TEST_ASSERT(scsrMolFromStream->getTemplateCount() ==
                   scsiTest->templateCount)
 
-      auto mol = RDKit::v2::FileParsers::MolFromScsr(*scsrMol.get());
+      RDKit::v2::FileParsers::MolFromScsrParams molFromScsrParams;
+      molFromScsrParams.includeLeavingGroups = true;
+      auto mol = MolFromScsr(*scsrMol, molFromScsrParams);
 
       TEST_ASSERT(mol != nullptr)
       TEST_ASSERT(mol->getNumAtoms() == scsiTest->totalAtomCount)
@@ -137,6 +144,34 @@ class ScsiMolTest {
 
         TEST_ASSERT(GetExpectedValue(expectedMolName) == outMolStr);
       }
+      // now make the expanded mol in "query" mode - not including any leaving
+      // groups
+
+      molFromScsrParams.includeLeavingGroups = false;
+      auto mol2 = MolFromScsr(*scsrMol, molFromScsrParams);
+
+      // const std::unique_ptr<RDKit::RWMol> mol;
+      TEST_ASSERT(mol2 != nullptr)
+      TEST_ASSERT(mol2->getNumAtoms() == scsiTest->totalQueryAtomCount)
+      TEST_ASSERT(mol2->getNumBonds() == scsiTest->totalQueryBondCount)
+
+      {
+        std::string expectedMolName = fName + ".expected2.sdf";
+        std::string outMolStr = "";
+        try {
+          outMolStr = MolToMolBlock(*mol2, true, 0, true, true);
+        } catch (const RDKit::KekulizeException &) {
+          outMolStr = "";
+        }
+        if (outMolStr == "") {
+          outMolStr = MolToMolBlock(*mol2, true, 0, false,
+                                    true);  // try without kekule'ing
+        }
+
+        generateNewExpectedFilesIfSoSpecified(fName + ".NEW2.sdf", outMolStr);
+
+        TEST_ASSERT(GetExpectedValue(expectedMolName) == outMolStr);
+      }
     } catch (const std::exception &e) {
       if (scsiTest->expectedResult != false) {
         throw;
@@ -151,23 +186,23 @@ class ScsiMolTest {
 
     if (testToRun == "" || testToRun == "scsiTests") {
       std::list<ScsiTest> scsiTests{
-          ScsiTest("Mixed.mol", true, 14, 16, 5, 51, 54),
-          ScsiTest("CrossLink.mol", true, 8, 8, 5, 47, 48),
-          ScsiTest("cyclic.mol", true, 8, 9, 5, 45, 47),
+          ScsiTest("Mixed.mol", true, 14, 16, 5, 51, 54, 51, 54),
+          ScsiTest("CrossLink.mol", true, 8, 8, 5, 47, 48, 45, 46),
+          ScsiTest("cyclic.mol", true, 8, 9, 5, 45, 47, 45, 47),
 
-          ScsiTest("Triplet.mol", true, 3, 2, 3, 30, 30),
-          ScsiTest("FromBioviaDoc.mol", true, 5, 4, 3, 27, 26),
-          ScsiTest("testScsr.mol", true, 8, 7, 6, 64, 66),
-          ScsiTest("testScsr.mol", false, 1, 7, 6, 64, 66),
-          ScsiTest("testScsr.mol", false, 8, 1, 6, 64, 66),
-          ScsiTest("badAtomName.mol", false, 8, 7, 6, 0, 0),
-          ScsiTest("badClass.mol", false, 8, 7, 6, 0, 0),
-          ScsiTest("badClassTemplate.mol", false, 8, 7, 6, 0, 0),
-          ScsiTest("badMissingTemplate.mol", false, 8, 7, 6, 0, 0),
-          ScsiTest("obj3dTest.mol", true, 5, 4, 3, 27, 26),
-          ScsiTest("obj3dTest2.mol", true, 5, 4, 3, 27, 26),
-          ScsiTest("obj3dFoundTwice.mol", false, 5, 4, 3, 27, 26),
-          ScsiTest("SgroupFoundTwice.mol", false, 5, 4, 3, 0, 0),
+          ScsiTest("Triplet.mol", true, 3, 2, 3, 30, 30, 27, 27),
+          ScsiTest("FromBioviaDoc.mol", true, 5, 4, 3, 27, 26, 25, 24),
+          ScsiTest("testScsr.mol", true, 8, 7, 6, 64, 66, 57, 59),
+          ScsiTest("testScsr.mol", false, 1, 7, 6, 64, 66, 64, 66),
+          ScsiTest("testScsr.mol", false, 8, 1, 6, 64, 66, 64, 66),
+          ScsiTest("badAtomName.mol", false, 8, 7, 6, 0, 0, 0, 0),
+          ScsiTest("badClass.mol", false, 8, 7, 6, 0, 0, 0, 0),
+          ScsiTest("badClassTemplate.mol", false, 8, 7, 6, 0, 0, 0, 0),
+          ScsiTest("badMissingTemplate.mol", false, 8, 7, 6, 0, 0, 0, 0),
+          ScsiTest("obj3dTest.mol", true, 5, 4, 3, 27, 26, 25, 24),
+          ScsiTest("obj3dTest2.mol", true, 5, 4, 3, 27, 26, 25, 24),
+          ScsiTest("obj3dFoundTwice.mol", false, 5, 4, 3, 27, 26, 27, 26),
+          ScsiTest("SgroupFoundTwice.mol", false, 5, 4, 3, 0, 0, 0, 0),
       };
 
       for (auto scsiTest : scsiTests) {
