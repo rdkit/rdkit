@@ -78,9 +78,13 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     const FingerprintGenerator<std::uint64_t> *fpGen =
         python::extract<FingerprintGenerator<std::uint64_t> *>(
             fingerprintGenerator);
-    return self.fingerprintSearch(query, *fpGen, params);
+    auto results = self.fingerprintSearch(query, *fpGen, params);
+    if (results.getCancelled()) {
+      std::cout << "cancelled" << std::endl;
+      // throw_runtime_error("fingerprintSearch cancelled");
+    }
+    return results;
   }
-  return SynthonSpaceSearch::SearchResults();
 }
 
 void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
