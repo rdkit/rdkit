@@ -210,7 +210,6 @@ void SynthonSpaceSearcher::buildAllHits(
         results.push_back(std::move(prod));
       }
       if (results.size() == static_cast<size_t>(d_params.maxHits)) {
-        sortHits(results);
         return;
       }
       stepper.step();
