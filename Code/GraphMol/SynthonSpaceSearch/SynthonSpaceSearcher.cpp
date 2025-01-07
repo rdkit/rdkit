@@ -8,25 +8,30 @@
 //  of the RDKit source tree.
 //
 
+#include <atomic>
 #include <random>
+#include <thread>
 #include <boost/random/discrete_distribution.hpp>
 
+#include <RDGeneral/RDThreads.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
+#include <boost/fusion/container/vector/vector.hpp>
 
 namespace RDKit::SynthonSpaceSearch {
 
+static std::atomic<bool> timedOut = false;
+
 namespace {
-bool checkTimeOut(const TimePoint *endTime) {
-  if (endTime != nullptr && Clock::now() > *endTime) {
+void checkTimeOut(const TimePoint *endTime) {
+  if (!timedOut && endTime != nullptr && Clock::now() > *endTime) {
     BOOST_LOG(rdWarningLog) << "Timed out.\n";
-    return true;
+    timedOut = true;
   }
-  return false;
 }
 }  // namespace
 
@@ -52,66 +57,92 @@ SearchResults SynthonSpaceSearcher::search() {
   std::vector<std::unique_ptr<ROMol>> results;
 
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
-  std::vector<SynthonSpaceHitSet> allHits;
-  size_t totHits = 0;
   TimePoint *endTime = nullptr;
   TimePoint endTimePt;
+  timedOut = false;
   if (d_params.timeOut > 0) {
     endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
     endTime = &endTimePt;
   }
-  bool timedOut = false;
-  for (auto &fragSet : fragments) {
-    timedOut = checkTimeOut(endTime);
-    if (timedOut) {
-      break;
+  std::vector<std::vector<SynthonSpaceHitSet>> allFragHits(fragments.size());
+#if RDK_BUILD_THREADSAFE_SSS
+  auto processPartFragSet =
+      [](std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments,
+         TimePoint *endTime,
+         std::vector<std::vector<SynthonSpaceHitSet>> &allFragHits,
+         SynthonSpaceSearcher *self, size_t start, size_t finish) -> void {
+    finish = finish > fragments.size() ? fragments.size() : finish;
+    for (size_t i = start; i < finish; i++) {
+      checkTimeOut(endTime);
+      if (timedOut) {
+        break;
+      }
+      allFragHits[i] = self->searchFragSet(fragments[i]);
     }
-    if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
-      totHits += std::accumulate(
-          theseHits.begin(), theseHits.end(), 0,
-          [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
-            return prevVal + hs.numHits;
-          });
-      allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
+  };
+
+  auto numThreads = getNumThreadsToUse(d_params.numThreads);
+  std::cout << "numThreads: " << numThreads << std::endl;
+  if (numThreads > 1) {
+    size_t eachThread = 1 + (fragments.size() / numThreads);
+    size_t start = 0;
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
+      threads.push_back(std::thread(processPartFragSet, std::ref(fragments),
+                                    endTime, std::ref(allFragHits), this, start,
+                                    start + eachThread));
     }
+    for (auto &t : threads) {
+      t.join();
+    }
+  } else {
+    processPartFragSet(fragments, endTime, allFragHits, this, 0,
+                       fragments.size());
+  }
+#else
+  processPartFragSet(fragments, endTime, allFragHits, this, 0,
+                     fragments.size());
+#endif
+
+  size_t totHits = 0;
+  std::vector<SynthonSpaceHitSet> allHits;
+  for (const auto &fh : allFragHits) {
+    totHits += std::accumulate(
+        fh.begin(), fh.end(), 0,
+        [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
+          return prevVal + hs.numHits;
+        });
+    allHits.insert(allHits.end(), fh.begin(), fh.end());
   }
 
   if (!timedOut && d_params.buildHits) {
-    buildHits(allHits, totHits, endTime, timedOut, results);
+    buildHits(allHits, totHits, endTime, results);
   }
 
   return SearchResults{std::move(results), totHits, timedOut};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
-    const std::unique_ptr<SynthonSet> &reaction,
-    const std::vector<size_t> &synthNums,
-    std::set<std::string> &resultsNames) const {
-  const auto prodName = reaction->buildProductName(synthNums);
-
+    const SynthonSet *reaction, const std::vector<size_t> &synthNums) const {
   std::unique_ptr<ROMol> prod;
-  if (resultsNames.insert(prodName).second) {
-    if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
-      return prod;
-    }
-    prod = reaction->buildProduct(synthNums);
+  prod = reaction->buildProduct(synthNums);
 
-    // Do a final check of the whole thing.  It can happen that the
-    // fragments match synthons but the final product doesn't match.
-    // A key example is when the 2 synthons come together to form an
-    // aromatic ring.  For substructure searching, an aliphatic query
-    // can match the aliphatic synthon so they are selected as a hit,
-    // but the final aromatic ring isn't a match.
-    // E.g. Cc1cccc(C(=O)N[1*])c1N=[2*] and c1ccoc1C(=[2*])[1*]
-    // making Cc1cccc2c(=O)[nH]c(-c3ccco3)nc12.  The query c1ccc(CN)o1
-    // when split is a match to the synthons (c1ccc(C[1*])o1 and [1*]N)
-    // but the product the hydroxyquinazoline is aromatic, at least in
-    // the RDKit model so the N in the query doesn't match.
-    if (!verifyHit(*prod)) {
-      prod.reset();
-    }
+  // Do a final check of the whole thing.  It can happen that the
+  // fragments match synthons but the final product doesn't match.
+  // A key example is when the 2 synthons come together to form an
+  // aromatic ring.  For substructure searching, an aliphatic query
+  // can match the aliphatic synthon so they are selected as a hit,
+  // but the final aromatic ring isn't a match.
+  // E.g. Cc1cccc(C(=O)N[1*])c1N=[2*] and c1ccoc1C(=[2*])[1*]
+  // making Cc1cccc2c(=O)[nH]c(-c3ccco3)nc12.  The query c1ccc(CN)o1
+  // when split is a match to the synthons (c1ccc(C[1*])o1 and [1*]N)
+  // but the product the hydroxyquinazoline is aromatic, at least in
+  // the RDKit model so the N in the query doesn't match.
+  if (!verifyHit(*prod)) {
+    prod.reset();
   }
   if (prod) {
+    const auto prodName = reaction->buildProductName(synthNums);
     prod->setProp<std::string>(common_properties::_Name, prodName);
   }
   return prod;
@@ -119,7 +150,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    const TimePoint *endTime, bool &timedOut,
+    const TimePoint *endTime,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -132,19 +163,11 @@ void SynthonSpaceSearcher::buildHits(
         }
         return hs1.reactionId < hs2.reactionId;
       });
-  // Keep track of the result names so we can weed out duplicates by
-  // reaction and synthons.  Different splits may give rise to the same
-  // synthon combination.  This will keep the same molecule produced via
-  // different reactions which I think makes sense.  The resultsNames will
-  // be accumulated even if the molecule itself doesn't make it into the
-  // results set, for example if it isn't a random selection or it's
-  // outside maxHits or hitStart.
-  std::set<std::string> resultsNames;
 
   if (d_params.randomSample) {
-    buildRandomHits(hitsets, totHits, resultsNames, endTime, timedOut, results);
+    buildRandomHits(hitsets, totHits, endTime, results);
   } else {
-    buildAllHits(hitsets, resultsNames, endTime, timedOut, results);
+    buildAllHits(hitsets, endTime, results);
   }
 }
 
@@ -163,10 +186,9 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 }  // namespace
 
 void SynthonSpaceSearcher::buildAllHits(
-    const std::vector<SynthonSpaceHitSet> &hitsets,
-    std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
-  std::uint64_t numTries = 100;
+    const std::vector<SynthonSpaceHitSet> &hitsets, const TimePoint *endTime,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
+  std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>> toTry;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
     std::vector<std::vector<size_t>> synthonNums;
     synthonNums.reserve(synthonsToUse.size());
@@ -189,30 +211,37 @@ void SynthonSpaceSearcher::buildAllHits(
       for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
         theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
       }
-      if (auto prod =
-              buildAndVerifyHit(reaction, theseSynthNums, resultsNames)) {
-        results.push_back(std::move(prod));
-      }
-      if (results.size() == static_cast<size_t>(d_params.maxHits)) {
-        sortHits(results);
-        return;
-      }
+      toTry.emplace_back(reaction.get(), theseSynthNums);
       stepper.step();
-      // Don't check the time every go, as it's quite expensive.
-      --numTries;
-      if (!numTries) {
-        numTries = 100;
-        timedOut = checkTimeOut(endTime);
-        if (timedOut) {
-          break;
-        }
-      }
-    }
-    if (timedOut) {
-      break;
     }
   }
-  sortHits(results);
+
+  // There are more than likely duplicate entries in toTry, because 2 different
+  // fragmentations might produce overlapping synthon lists in the same
+  // reaction. The duplicates need to be removed.
+  std::sort(toTry.begin(), toTry.end());
+  toTry.erase(std::unique(toTry.begin(), toTry.end()), toTry.end());
+  makeHitsFromDetails(toTry, endTime, results);
+
+  // Now get rid of any hits before d_params.hitStart.  It seems wasteful to
+  // do it like this, but until a hit has been through verifyHit there's
+  // no way of knowing whether it should be kept plus the threading makes it
+  // very complicated to do otherwise.
+  std::cout << "Number of hits : " << results.size()
+            << " hitStart : " << d_params.hitStart << std::endl;
+  if (d_params.hitStart) {
+    if (d_params.hitStart < results.size()) {
+      std::for_each(results.begin(), results.begin() + d_params.hitStart,
+                    [](std::unique_ptr<ROMol> &m) { m.reset(); });
+      results.erase(std::remove_if(results.begin(), results.end(),
+                                   [](const std::unique_ptr<ROMol> &r) {
+                                     return !bool(r);
+                                   }),
+                    results.end());
+    } else {
+      results.clear();
+    }
+  }
 }
 
 namespace {
@@ -276,8 +305,8 @@ struct RandomHitSelector {
 
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
+    const TimePoint *endTime,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
@@ -290,7 +319,7 @@ void SynthonSpaceSearcher::buildRandomHits(
          numFails < totHits * d_params.numRandomSweeps) {
     const auto &[reactionId, synths] = rhs.selectSynthComb(*d_randGen);
     const auto &reaction = getSpace().getReactions().find(reactionId)->second;
-    if (auto prod = buildAndVerifyHit(reaction, synths, resultsNames)) {
+    if (auto prod = buildAndVerifyHit(reaction.get(), synths)) {
       results.push_back(std::move(prod));
     } else {
       numFails++;
@@ -299,12 +328,90 @@ void SynthonSpaceSearcher::buildRandomHits(
     --numTries;
     if (!numTries) {
       numTries = 100;
-      timedOut = checkTimeOut(endTime);
+      checkTimeOut(endTime);
       if (timedOut) {
         break;
       }
     }
   }
+  sortHits(results);
+}
+
+namespace {
+void processPartHitsFromDetails(
+    const std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>>
+        &toDo,
+    const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
+    const SynthonSpaceSearcher *searcher, size_t startNum, size_t finishNum) {
+  std::uint64_t numTries = 100;
+  finishNum = finishNum > toDo.size() ? toDo.size() : finishNum;
+  for (size_t i = startNum; i < finishNum; ++i) {
+    auto prod =
+        searcher->buildAndVerifyHit(std::get<0>(toDo[i]), std::get<1>(toDo[i]));
+    results[i] = std::move(prod);
+    // Don't check the time every go, as it's quite expensive.
+    --numTries;
+    if (results[i]) {
+      if (!numTries) {
+        numTries = 100;
+        checkTimeOut(endTime);
+        if (timedOut) {
+          break;
+        }
+      }
+      std::int64_t numHits = std::accumulate(
+          results.begin(), results.end(), 0,
+          [](const size_t prevVal, const std::unique_ptr<ROMol> &m) -> size_t {
+            if (m) {
+              return prevVal + 1;
+            }
+            return prevVal;
+          });
+      // If there's a limit on the number of hits, we still need to keep the
+      // first hitStart hits and remove them later.  They had to be built
+      // to see if they passed verifyHit.
+      if (searcher->getParams().maxHits != -1 &&
+          numHits ==
+              searcher->getParams().maxHits + searcher->getParams().hitStart) {
+        break;
+      }
+    }
+  }
+}
+}  // namespace
+
+void SynthonSpaceSearcher::makeHitsFromDetails(
+    const std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>>
+        &toDo,
+    const TimePoint *endTime,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
+  results.resize(toDo.size());
+#if RDK_BUILD_THREADSAFE_SSS
+  auto numThreads = getNumThreadsToUse(d_params.numThreads);
+  std::cout << "numThreads: " << numThreads << std::endl;
+  if (numThreads > 1) {
+    size_t eachThread = 1 + (toDo.size() / numThreads);
+    size_t start = 0;
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
+      threads.push_back(std::thread(processPartHitsFromDetails, toDo, endTime,
+                                    std::ref(results), this, start,
+                                    start + eachThread));
+    }
+    for (auto &t : threads) {
+      t.join();
+    }
+  } else {
+    processPartHitsFromDetails(toDo, endTime, results, this, 0, toDo.size());
+  }
+#else
+  processPartHitsFromDetails(toDo, endTime, results, this, 0, toDo.size());
+#endif
+
+  results.erase(
+      std::remove_if(results.begin(), results.end(),
+                     [](const std::unique_ptr<ROMol> &r) { return !bool(r); }),
+      results.end());
   sortHits(results);
 }
 

@@ -466,23 +466,23 @@ TEST_CASE("S Later hits") {
   for (const auto &m : results.getHitMolecules()) {
     hitNames1.push_back(m->getProp<std::string>(common_properties::_Name));
   }
+  CHECK(hitNames1.size() == 200);
 
   params.maxHits = 100;
-  params.hitStart = 101;
+  params.hitStart = 100;
   results = synthonspace.substructureSearch(*queryMol, params);
   std::vector<std::string> hitNames2;
   for (const auto &m : results.getHitMolecules()) {
     hitNames2.push_back(m->getProp<std::string>(common_properties::_Name));
   }
-  CHECK(hitNames1.size() == 200);
-  CHECK(hitNames2.size() == 100);
+  REQUIRE(hitNames2.size() == 100);
   for (int i = 0; i < 100; ++i) {
     CHECK(hitNames1[100 + i] == hitNames2[i]);
   }
 
   params.hitStart = 6780;
   results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.getHitMolecules().size() == 6);
+  CHECK(results.getHitMolecules().size() == 5);
 
   params.hitStart = 7000;
   results = synthonspace.substructureSearch(*queryMol, params);

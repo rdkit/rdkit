@@ -80,6 +80,12 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // a positive correlation with your FOMO.
   std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
                                // search.  0 means no maximum.
+  int numThreads = 1; // The number of threads to use.  If > 0, will use that
+                      // number.  If <= 0, will use the number of hardware
+                      // threads plus this number.  So if the number of
+                      // hardware threads is 8, and numThreads is -1, it will
+                      // use 7 threads.
+
 };
 
 // Holds the information about a set of hits.  The molecules can be built

@@ -147,7 +147,15 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def_readwrite(
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
-          " timeout.  Requires an integer");
+          " timeout.  Requires an integer")
+      .def_readwrite(
+          "numThreads",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::numThreads,
+          "The number of threads to use for search.  If > 0, will use that"
+          " number.  If <= 0, will use the number of hardware"
+          " threads plus this number.  So if the number of"
+          " hardware threads is 8, and numThreads is -1, it will"
+          " use 7 threads.  Default=1.");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(

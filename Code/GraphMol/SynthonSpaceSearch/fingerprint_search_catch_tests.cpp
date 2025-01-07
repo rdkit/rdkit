@@ -243,3 +243,31 @@ TEST_CASE("Timeout") {
   auto results1 = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(!results1.getTimedOut());
 }
+
+TEST_CASE("FP Threads") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  SynthonSpaceSearchParams params;
+  params.maxBondSplits = 3;
+  params.maxHits = -1;
+  params.similarityCutoff = 0.5;
+  params.numThreads = -1;
+  params.timeOut = 2;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
+
+  auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
+  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  std::cout << results.getHitMolecules().size() << std::endl;
+  CHECK(results.getHitMolecules().size() == 66);
+
+  // Check that the hitStart option is working correctly.
+  params.hitStart = 50;
+  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  std::cout << results.getHitMolecules().size() << std::endl;
+  CHECK(results.getHitMolecules().size() == 16);
+}
