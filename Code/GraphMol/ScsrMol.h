@@ -39,6 +39,8 @@ class RDKIT_GRAPHMOL_EXPORT SCSRMol {
   SCSRMol(SCSRMol &&other) noexcept;
   SCSRMol &operator=(SCSRMol &&other) noexcept;
 
+  virtual ~SCSRMol() {}
+
   void addTemplate(ROMol *templateMol) {
     templates.push_back(std::unique_ptr<ROMol>(templateMol));
   }
