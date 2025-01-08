@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
 #include <atomic>
 #include <random>
 #include <thread>
@@ -163,12 +164,12 @@ void SynthonSpaceSearcher::buildHits(
         }
         return hs1.reactionId < hs2.reactionId;
       });
-
-  if (d_params.randomSample) {
-    buildRandomHits(hitsets, totHits, endTime, results);
-  } else {
-    buildAllHits(hitsets, endTime, results);
-  }
+  buildAllHits(hitsets, endTime, results);
+  // if (d_params.randomSample) {
+  //   buildRandomHits(hitsets, totHits, endTime, results);
+  // } else {
+  //   buildAllHits(hitsets, endTime, results);
+  // }
 }
 
 namespace {
@@ -219,8 +220,38 @@ void SynthonSpaceSearcher::buildAllHits(
   // There are more than likely duplicate entries in toTry, because 2 different
   // fragmentations might produce overlapping synthon lists in the same
   // reaction. The duplicates need to be removed.
-  std::sort(toTry.begin(), toTry.end());
+  // For most cases, it's quicker and just as effective to sort using the
+  // address of the SynthonSet.  If the randomSeed has been set, use the
+  // SynthonSet id for consistency - the addresses of the SynthonSets aren't
+  // guaranteed to be in the same order from run to run, but the ids must be.
+  // By default, std::sort just uses the first element of the tuple, which
+  // isn't enough for this.
+  std::cout << "Number to try: " << toTry.size() << std::endl;
+  if (d_params.randomSeed == -1) {
+    std::sort(
+        toTry.begin(), toTry.end(),
+        [](const std::tuple<const SynthonSet *, std::vector<size_t>> &rec1,
+           const std::tuple<const SynthonSet *, std::vector<size_t>> &rec2) {
+          if (std::get<0>(rec1) == std::get<0>(rec2)) {
+            return std::get<1>(rec1) < std::get<1>(rec2);
+          }
+          return std::get<0>(rec1) < std::get<0>(rec2);
+        });
+  } else {
+    std::sort(
+        toTry.begin(), toTry.end(),
+        [](const std::tuple<const SynthonSet *, std::vector<size_t>> &rec1,
+           const std::tuple<const SynthonSet *, std::vector<size_t>> &rec2) {
+          if (std::get<0>(rec1)->getId() == std::get<0>(rec2)->getId()) {
+            return std::get<1>(rec1) < std::get<1>(rec2);
+          }
+          return std::get<0>(rec1)->getId() < std::get<0>(rec2)->getId();
+        });
+  }
   toTry.erase(std::unique(toTry.begin(), toTry.end()), toTry.end());
+  if (d_params.randomSample) {
+    std::shuffle(toTry.begin(), toTry.end(), *d_randGen);
+  }
   makeHitsFromDetails(toTry, endTime, results);
 
   // Now get rid of any hits before d_params.hitStart.  It seems wasteful to
@@ -230,7 +261,7 @@ void SynthonSpaceSearcher::buildAllHits(
   std::cout << "Number of hits : " << results.size()
             << " hitStart : " << d_params.hitStart << std::endl;
   if (d_params.hitStart) {
-    if (d_params.hitStart < results.size()) {
+    if (d_params.hitStart < static_cast<std::int64_t>(results.size())) {
       std::for_each(results.begin(), results.begin() + d_params.hitStart,
                     [](std::unique_ptr<ROMol> &m) { m.reset(); });
       results.erase(std::remove_if(results.begin(), results.end(),

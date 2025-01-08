@@ -187,7 +187,7 @@ TEST_CASE("FP Random Hits") {
   std::map<std::string, int> expCounts{{"a1", 100}};
   CHECK(expCounts == libCounts);
   CHECK(results.getHitMolecules().front()->getProp<double>("Similarity") ==
-        Catch::Approx(0.711538));
+        Catch::Approx(0.636364));
   CHECK(results.getHitMolecules().back()->getProp<double>("Similarity") ==
         Catch::Approx(0.5));
 }
