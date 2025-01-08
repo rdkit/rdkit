@@ -150,7 +150,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 }
 
 void SynthonSpaceSearcher::buildHits(
-    std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
+    std::vector<SynthonSpaceHitSet> &hitsets,
     const TimePoint *endTime,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
@@ -165,11 +165,6 @@ void SynthonSpaceSearcher::buildHits(
         return hs1.reactionId < hs2.reactionId;
       });
   buildAllHits(hitsets, endTime, results);
-  // if (d_params.randomSample) {
-  //   buildRandomHits(hitsets, totHits, endTime, results);
-  // } else {
-  //   buildAllHits(hitsets, endTime, results);
-  // }
 }
 
 namespace {
@@ -273,99 +268,6 @@ void SynthonSpaceSearcher::buildAllHits(
       results.clear();
     }
   }
-}
-
-namespace {
-struct RandomHitSelector {
-  // Uses a weighted random number selector to give a random representation
-  // of the hits from each reaction proportionate to the total number of hits
-  // expected from each reaction.
-  RandomHitSelector(const std::vector<SynthonSpaceHitSet> &hitsets,
-                    const SynthonSpace &space)
-      : d_hitsets(hitsets), d_synthSpace(space) {
-    d_hitSetWeights.reserve(hitsets.size());
-    std::transform(
-        hitsets.begin(), hitsets.end(), std::back_inserter(d_hitSetWeights),
-        [](const SynthonSpaceHitSet &hs) -> size_t { return hs.numHits; });
-    d_hitSetSel = boost::random::discrete_distribution<size_t>(
-        d_hitSetWeights.begin(), d_hitSetWeights.end());
-    d_synthSels.resize(hitsets.size());
-    d_synthons.resize(hitsets.size());
-    for (size_t hi = 0; hi < hitsets.size(); ++hi) {
-      const SynthonSpaceHitSet &hs = hitsets[hi];
-      d_synthons[hi] =
-          std::vector<std::vector<size_t>>(hs.synthonsToUse.size());
-      d_synthSels[hi] =
-          std::vector<boost::random::uniform_int_distribution<size_t>>(
-              hs.synthonsToUse.size());
-      d_synthons[hi].resize(hs.synthonsToUse.size());
-      for (size_t i = 0; i < hs.synthonsToUse.size(); ++i) {
-        d_synthons[hi][i].reserve(hs.synthonsToUse[i].count());
-        d_synthSels[hi][i] = boost::random::uniform_int_distribution<size_t>(
-            0, hs.synthonsToUse[i].count() - 1);
-        for (size_t j = 0; j < hs.synthonsToUse[i].size(); ++j) {
-          if (hs.synthonsToUse[i][j]) {
-            d_synthons[hi][i].push_back(j);
-          }
-        }
-      }
-    }
-  }
-
-  std::pair<std::string, std::vector<size_t>> selectSynthComb(
-      boost::random::mt19937 &randGen) {
-    std::vector<size_t> synths;
-    const size_t hitSetNum = d_hitSetSel(randGen);
-    for (size_t i = 0; i < d_hitsets[hitSetNum].synthonsToUse.size(); ++i) {
-      const size_t synthNum = d_synthSels[hitSetNum][i](randGen);
-      synths.push_back(d_synthons[hitSetNum][i][synthNum]);
-    }
-    return std::make_pair(d_hitsets[hitSetNum].reactionId, synths);
-  }
-
-  const std::vector<SynthonSpaceHitSet> &d_hitsets;
-  const SynthonSpace &d_synthSpace;
-
-  std::vector<size_t> d_hitSetWeights;
-  boost::random::discrete_distribution<size_t> d_hitSetSel;
-  std::vector<std::vector<std::vector<size_t>>> d_synthons;
-  std::vector<std::vector<boost::random::uniform_int_distribution<size_t>>>
-      d_synthSels;
-};
-}  // namespace
-
-void SynthonSpaceSearcher::buildRandomHits(
-    const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    const TimePoint *endTime,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
-  if (hitsets.empty()) {
-    return;
-  }
-  auto rhs = RandomHitSelector(hitsets, d_space);
-
-  std::uint64_t numFails = 0;
-  std::uint64_t numTries = 100;
-  while (results.size() < std::min(static_cast<std::uint64_t>(d_params.maxHits),
-                                   static_cast<std::uint64_t>(totHits)) &&
-         numFails < totHits * d_params.numRandomSweeps) {
-    const auto &[reactionId, synths] = rhs.selectSynthComb(*d_randGen);
-    const auto &reaction = getSpace().getReactions().find(reactionId)->second;
-    if (auto prod = buildAndVerifyHit(reaction.get(), synths)) {
-      results.push_back(std::move(prod));
-    } else {
-      numFails++;
-    }
-    // Don't check the time every go, as it's quite expensive.
-    --numTries;
-    if (!numTries) {
-      numTries = 100;
-      checkTimeOut(endTime);
-      if (timedOut) {
-        break;
-      }
-    }
-  }
-  sortHits(results);
 }
 
 namespace {

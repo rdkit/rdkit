@@ -79,15 +79,12 @@ class SynthonSpaceSearcher {
   // the hitsets, including duplicates.  Duplicates by name are not returned,
   // but duplicate SMILES from different reactions will be.  Hitsets will
   // be re-ordered on exit.
-  void buildHits(std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
+  void buildHits(std::vector<SynthonSpaceHitSet> &hitsets,
                  const TimePoint *endTime,
                  std::vector<std::unique_ptr<ROMol>> &results) const;
   void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
                     const TimePoint *endTime,
                     std::vector<std::unique_ptr<ROMol>> &results) const;
-  void buildRandomHits(const std::vector<SynthonSpaceHitSet> &hitsets,
-                       size_t totHits, const TimePoint *endTime,
-                       std::vector<std::unique_ptr<ROMol>> &results) const;
   void makeHitsFromDetails(
       const std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>>
           &toDo,
