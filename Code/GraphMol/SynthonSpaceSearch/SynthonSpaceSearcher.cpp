@@ -345,6 +345,10 @@ void SynthonSpaceSearcher::makeHitsFromDetails(
                      [](const std::unique_ptr<ROMol> &r) { return !bool(r); }),
       results.end());
   sortHits(results);
+  // The multi-threaded versions might produce more hits than requested.
+  if (d_params.maxHits != -1 && results.size() > d_params.maxHits) {
+    results.erase(results.begin() + d_params.maxHits, results.end());
+  }
 }
 
 }  // namespace RDKit::SynthonSpaceSearch
