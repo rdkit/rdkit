@@ -106,6 +106,15 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
                      "The maximum number of hits to return.  Default=1000."
                      "Use -1 for no maximum.")
       .def_readwrite(
+          "toTryChunkSize",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::toTryChunkSize,
+          "For similarity searching, especially fingerprint similarity,"
+          " there can be a very large number of possible hits to screen which"
+          " can use a lot of memory and crash the program.  It will also be"
+          " very slow.  To alleviate the memory use, the possible hits are"
+          " processed in chunks. This parameter sets the chunk size."
+          "  Default=2500000.")
+      .def_readwrite(
           "hitStart", &SynthonSpaceSearch::SynthonSpaceSearchParams::hitStart,
           "The sequence number of the hit to start from.  So that you"
           " can return the next N hits of a search having already"

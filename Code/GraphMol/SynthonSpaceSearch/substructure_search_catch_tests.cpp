@@ -346,7 +346,7 @@ TEST_CASE("S Biggy") {
                                       "c1nncn1",
                                       "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
-  const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
+  const std::vector<std::int64_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
@@ -444,7 +444,7 @@ TEST_CASE("S Random Hits") {
     }
   }
   CHECK(results.getHitMolecules().size() == 100);
-  std::map<std::string, int> expCounts{{"a1", 61}, {"a6", 10}, {"a7", 29}};
+  std::map<std::string, int> expCounts{{"a1", 69}, {"a6", 6}, {"a7", 25}};
   CHECK(expCounts == libCounts);
 }
 

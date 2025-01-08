@@ -85,9 +85,13 @@ class SynthonSpaceSearcher {
   void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
                     const TimePoint *endTime,
                     std::vector<std::unique_ptr<ROMol>> &results) const;
-  void makeHitsFromDetails(
+  void makeHitsFromToTry(
       const std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>>
-          &toDo,
+          &toTry,
+      const TimePoint *endTime,
+      std::vector<std::unique_ptr<ROMol>> &results) const;
+  void processToTrySet(
+      std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>> &toTry,
       const TimePoint *endTime,
       std::vector<std::unique_ptr<ROMol>> &results) const;
 

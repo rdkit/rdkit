@@ -133,10 +133,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
             reaction, synthonOrder);
         if (!theseSynthons.empty()) {
           const size_t numHits = std::accumulate(
-              theseSynthons.begin(), theseSynthons.end(), 1,
-              [](const int prevRes, const boost::dynamic_bitset<> &s2) {
-                return prevRes * s2.count();
-              });
+              theseSynthons.begin(), theseSynthons.end(), size_t(1),
+              [](const int prevRes, const boost::dynamic_bitset<> &s2)
+                  -> size_t { return prevRes * s2.count(); });
           if (numHits) {
             results.push_back(
                 SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});

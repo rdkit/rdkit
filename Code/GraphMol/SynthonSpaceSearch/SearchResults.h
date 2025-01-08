@@ -18,8 +18,8 @@ namespace RDKit::SynthonSpaceSearch {
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
  public:
   explicit SearchResults() : d_maxNumResults(0) {}
-  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes,
-                bool timedOut);
+  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
+                std::int64_t maxNumRes, bool timedOut);
   SearchResults(const SearchResults &other);
   SearchResults(SearchResults &&other) = default;
   ~SearchResults() = default;
@@ -35,7 +35,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
    *
    * @return int
    */
-  size_t getMaxNumResults() const { return d_maxNumResults; }
+  std::int64_t getMaxNumResults() const { return d_maxNumResults; }
   /*!
    * Returns the hits from the search. Not necessarily all those possible,
    * just the maximum number requested.
@@ -54,12 +54,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
 
  private:
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
-  size_t d_maxNumResults;
+  std::int64_t d_maxNumResults;
   bool d_timedOut{false};
 };
 
 inline SearchResults::SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
-                                    const size_t maxNumRes, bool timedOut)
+                                    const std::int64_t maxNumRes, bool timedOut)
     : d_maxNumResults(maxNumRes), d_timedOut(timedOut) {
   d_hitMolecules = std::move(mols);
   mols.clear();

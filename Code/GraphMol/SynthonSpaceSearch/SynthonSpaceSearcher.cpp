@@ -10,7 +10,10 @@
 
 #include <algorithm>
 #include <atomic>
+#include <iostream>
+#include <locale>
 #include <random>
+#include <sstream>
 #include <thread>
 #include <boost/random/discrete_distribution.hpp>
 
@@ -22,6 +25,20 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
 #include <boost/fusion/container/vector/vector.hpp>
+
+template <class Char>
+class MyFacet : public std::numpunct<Char> {
+ public:
+  std::string do_grouping() const { return "\3"; }
+  Char do_thousands_sep() const { return ' '; }
+};
+
+std::string formatLargeInt(std::int64_t n) {
+  std::ostringstream oss;
+  oss.imbue(std::locale(oss.getloc(), new MyFacet<char>));
+  oss << n;
+  return oss.str();
+}
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -55,7 +72,6 @@ SearchResults SynthonSpaceSearcher::search() {
       }
     }
   }
-  std::vector<std::unique_ptr<ROMol>> results;
 
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
   TimePoint *endTime = nullptr;
@@ -78,7 +94,7 @@ SearchResults SynthonSpaceSearcher::search() {
       if (timedOut) {
         break;
       }
-      allFragHits[i] = self->searchFragSet(fragments[i]);
+      allFragHits[i] = self->searchFragSet(std::ref(fragments[i]));
     }
   };
 
@@ -104,17 +120,19 @@ SearchResults SynthonSpaceSearcher::search() {
                      fragments.size());
 #endif
 
-  size_t totHits = 0;
+  std::int64_t totHits = 0;
   std::vector<SynthonSpaceHitSet> allHits;
   for (const auto &fh : allFragHits) {
     totHits += std::accumulate(
-        fh.begin(), fh.end(), 0,
-        [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
+        fh.begin(), fh.end(), std::int64_t(0),
+        [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> std::int64_t {
           return prevVal + hs.numHits;
         });
     allHits.insert(allHits.end(), fh.begin(), fh.end());
   }
+  std::cout << "Total number to try : " << formatLargeInt(totHits) << std::endl;
 
+  std::vector<std::unique_ptr<ROMol>> results;
   if (!timedOut && d_params.buildHits) {
     buildHits(allHits, endTime, results);
   }
@@ -154,14 +172,18 @@ void SynthonSpaceSearcher::buildHits(
   if (hitsets.empty()) {
     return;
   }
-  std::sort(
-      hitsets.begin(), hitsets.end(),
-      [](const SynthonSpaceHitSet &hs1, const SynthonSpaceHitSet &hs2) -> bool {
-        if (hs1.reactionId == hs2.reactionId) {
-          return hs1.numHits < hs2.numHits;
-        }
-        return hs1.reactionId < hs2.reactionId;
-      });
+  if (d_params.randomSample) {
+    std::shuffle(hitsets.begin(), hitsets.end(), *d_randGen);
+  } else {
+    std::sort(hitsets.begin(), hitsets.end(),
+              [](const SynthonSpaceHitSet &hs1,
+                 const SynthonSpaceHitSet &hs2) -> bool {
+                if (hs1.reactionId == hs2.reactionId) {
+                  return hs1.numHits < hs2.numHits;
+                }
+                return hs1.reactionId < hs2.reactionId;
+              });
+  }
   buildAllHits(hitsets, endTime, results);
 }
 
@@ -177,49 +199,17 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
               });
   }
 }
-}  // namespace
 
-void SynthonSpaceSearcher::buildAllHits(
-    const std::vector<SynthonSpaceHitSet> &hitsets, const TimePoint *endTime,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
-  std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>> toTry;
-  for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
-    std::vector<std::vector<size_t>> synthonNums;
-    synthonNums.reserve(synthonsToUse.size());
-    std::vector<size_t> numSynthons;
-    numSynthons.reserve(synthonsToUse.size());
-    for (auto &stu : synthonsToUse) {
-      numSynthons.push_back(stu.count());
-      synthonNums.emplace_back();
-      synthonNums.back().reserve(stu.count());
-      for (size_t j = 0; j < stu.size(); ++j) {
-        if (stu[j]) {
-          synthonNums.back().push_back(j);
-        }
-      }
-    }
-    const auto &reaction = getSpace().getReactions().find(reactionId)->second;
-    details::Stepper stepper(numSynthons);
-    std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
-    while (stepper.d_currState[0] != numSynthons[0]) {
-      for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
-        theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
-      }
-      toTry.emplace_back(reaction.get(), theseSynthNums);
-      stepper.step();
-    }
-  }
-
-  // There are more than likely duplicate entries in toTry, because 2 different
-  // fragmentations might produce overlapping synthon lists in the same
-  // reaction. The duplicates need to be removed.
+void sortAndUniquifyToTry(
+    std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>> &toTry,
+    int randomSeed) {
   // For most cases, it's quicker and just as effective to sort using the
   // address of the SynthonSet.  If the randomSeed has been set, use the
   // SynthonSet id for consistency - the addresses of the SynthonSets aren't
   // guaranteed to be in the same order from run to run, but the ids must be.
   // By default, std::sort just uses the first element of the tuple, which
   // isn't enough for this.
-  if (d_params.randomSeed == -1) {
+  if (randomSeed == -1) {
     std::sort(
         toTry.begin(), toTry.end(),
         [](const std::tuple<const SynthonSet *, std::vector<size_t>> &rec1,
@@ -241,17 +231,98 @@ void SynthonSpaceSearcher::buildAllHits(
         });
   }
   toTry.erase(std::unique(toTry.begin(), toTry.end()), toTry.end());
-  if (d_params.randomSample) {
-    std::shuffle(toTry.begin(), toTry.end(), *d_randGen);
+}
+
+bool haveEnoughHits(const std::vector<std::unique_ptr<ROMol>> &results,
+                    std::int64_t maxHits, std::int64_t hitStart) {
+  std::int64_t numHits = std::accumulate(
+      results.begin(), results.end(), 0,
+      [](const size_t prevVal, const std::unique_ptr<ROMol> &m) -> size_t {
+        if (m) {
+          return prevVal + 1;
+        }
+        return prevVal;
+      });
+  // If there's a limit on the number of hits, we still need to keep the
+  // first hitStart hits and remove them later.  They had to be built
+  // to see if they passed verifyHit.
+  if (maxHits != -1 && numHits >= maxHits + hitStart) {
+    return true;
   }
-  makeHitsFromDetails(toTry, endTime, results);
+  return false;
+}
+}  // namespace
+
+void SynthonSpaceSearcher::buildAllHits(
+    const std::vector<SynthonSpaceHitSet> &hitsets, const TimePoint *endTime,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
+  std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>> toTry;
+  bool enoughHits = false;
+  for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
+    // Set up the stepper to move through the synthons.
+    std::vector<std::vector<size_t>> synthonNums;
+    synthonNums.reserve(synthonsToUse.size());
+    std::vector<size_t> numSynthons;
+    numSynthons.reserve(synthonsToUse.size());
+    for (auto &stu : synthonsToUse) {
+      numSynthons.push_back(stu.count());
+      synthonNums.emplace_back();
+      synthonNums.back().reserve(stu.count());
+      for (size_t j = 0; j < stu.size(); ++j) {
+        if (stu[j]) {
+          synthonNums.back().push_back(j);
+        }
+      }
+    }
+    details::Stepper stepper(numSynthons);
+
+    std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
+    const auto &reaction = getSpace().getReactions().find(reactionId)->second;
+    // process the synthons
+    while (stepper.d_currState[0] != numSynthons[0]) {
+      for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
+        theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
+      }
+      toTry.emplace_back(reaction.get(), theseSynthNums);
+      if (toTry.size() == static_cast<size_t>(d_params.toTryChunkSize)) {
+        std::vector<std::unique_ptr<ROMol>> partResults;
+        processToTrySet(toTry, endTime, partResults);
+        results.insert(results.end(),
+                       std::make_move_iterator(partResults.begin()),
+                       std::make_move_iterator(partResults.end()));
+        partResults.clear();
+        enoughHits =
+            haveEnoughHits(results, d_params.maxHits, d_params.hitStart);
+        toTry.clear();
+        std::cout << "Number of hits : " << results.size() << std::endl;
+        if (enoughHits || timedOut) {
+          break;
+        }
+      }
+      stepper.step();
+    }
+    if (enoughHits || timedOut) {
+      break;
+    }
+  }
+
+  // Do any remaining.
+  if (!toTry.empty()) {
+    processToTrySet(toTry, endTime, results);
+  }
+
+  sortHits(results);
+  // The multi-threaded versions might produce more hits than requested.
+  if (d_params.maxHits != -1 && static_cast<std::int64_t>(results.size()) >
+                                    d_params.maxHits + d_params.hitStart) {
+    results.erase(results.begin() + d_params.maxHits + d_params.hitStart,
+                  results.end());
+  }
 
   // Now get rid of any hits before d_params.hitStart.  It seems wasteful to
   // do it like this, but until a hit has been through verifyHit there's
   // no way of knowing whether it should be kept plus the threading makes it
   // very complicated to do otherwise.
-  std::cout << "Number of hits : " << results.size()
-            << " hitStart : " << d_params.hitStart << std::endl;
   if (d_params.hitStart) {
     if (d_params.hitStart < static_cast<std::int64_t>(results.size())) {
       std::for_each(results.begin(), results.begin() + d_params.hitStart,
@@ -270,31 +341,18 @@ void SynthonSpaceSearcher::buildAllHits(
 namespace {
 void processPartHitsFromDetails(
     const std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>>
-        &toDo,
+        &toTry,
     const TimePoint *endTime, std::vector<std::unique_ptr<ROMol>> &results,
     const SynthonSpaceSearcher *searcher, size_t startNum, size_t finishNum) {
   std::uint64_t numTries = 100;
-  finishNum = finishNum > toDo.size() ? toDo.size() : finishNum;
+  finishNum = finishNum > toTry.size() ? toTry.size() : finishNum;
   for (size_t i = startNum; i < finishNum; ++i) {
-    auto prod =
-        searcher->buildAndVerifyHit(std::get<0>(toDo[i]), std::get<1>(toDo[i]));
+    auto prod = searcher->buildAndVerifyHit(std::get<0>(toTry[i]),
+                                            std::get<1>(toTry[i]));
     if (prod) {
       results[i] = std::move(prod);
-      std::int64_t numHits = std::accumulate(
-          results.begin(), results.end(), 0,
-          [](const size_t prevVal, const std::unique_ptr<ROMol> &m) -> size_t {
-            if (m) {
-              return prevVal + 1;
-            }
-            return prevVal;
-          });
-      std::cout << "Number of hits : " << numHits << std::endl;
-      // If there's a limit on the number of hits, we still need to keep the
-      // first hitStart hits and remove them later.  They had to be built
-      // to see if they passed verifyHit.
-      if (searcher->getParams().maxHits != -1 &&
-          numHits ==
-              searcher->getParams().maxHits + searcher->getParams().hitStart) {
+      if (haveEnoughHits(results, searcher->getParams().maxHits,
+                         searcher->getParams().hitStart)) {
         break;
       }
     }
@@ -304,8 +362,6 @@ void processPartHitsFromDetails(
       numTries = 100;
       checkTimeOut(endTime);
       if (timedOut) {
-        std::cout << i << " of " << startNum << " to " << finishNum
-                  << std::endl;
         break;
       }
     }
@@ -313,22 +369,21 @@ void processPartHitsFromDetails(
 }
 }  // namespace
 
-void SynthonSpaceSearcher::makeHitsFromDetails(
+void SynthonSpaceSearcher::makeHitsFromToTry(
     const std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>>
-        &toDo,
+        &toTry,
     const TimePoint *endTime,
     std::vector<std::unique_ptr<ROMol>> &results) const {
-  results.resize(toDo.size());
+  results.resize(toTry.size());
+  std::cout << "Num to try " << formatLargeInt(toTry.size()) << std::endl;
 #if RDK_BUILD_THREADSAFE_SSS
   auto numThreads = getNumThreadsToUse(d_params.numThreads);
-  std::cout << "makeHitsFromDetails numThreads: " << numThreads << " : "
-            << results.size() << std::endl;
   if (numThreads > 1) {
-    size_t eachThread = 1 + (toDo.size() / numThreads);
+    size_t eachThread = 1 + (toTry.size() / numThreads);
     size_t start = 0;
     std::vector<std::thread> threads;
     for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
-      threads.push_back(std::thread(processPartHitsFromDetails, std::ref(toDo),
+      threads.push_back(std::thread(processPartHitsFromDetails, std::ref(toTry),
                                     endTime, std::ref(results), this, start,
                                     start + eachThread));
     }
@@ -336,22 +391,33 @@ void SynthonSpaceSearcher::makeHitsFromDetails(
       t.join();
     }
   } else {
-    processPartHitsFromDetails(toDo, endTime, results, this, 0, toDo.size());
+    processPartHitsFromDetails(toTry, endTime, results, this, 0, toTry.size());
   }
 #else
-  processPartHitsFromDetails(toDo, endTime, results, this, 0, toDo.size());
+  processPartHitsFromDetails(toTry, endTime, results, this, 0, toTry.size());
 #endif
 
+  // Take out any gaps in the results set, where products didn't make the grade.
   results.erase(
       std::remove_if(results.begin(), results.end(),
                      [](const std::unique_ptr<ROMol> &r) { return !bool(r); }),
       results.end());
-  sortHits(results);
-  // The multi-threaded versions might produce more hits than requested.
-  if (d_params.maxHits != -1 &&
-      static_cast<std::int64_t>(results.size()) > d_params.maxHits) {
-    results.erase(results.begin() + d_params.maxHits, results.end());
+}
+
+void SynthonSpaceSearcher::processToTrySet(
+    std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>> &toTry,
+    const TimePoint *endTime,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
+  // There are possibly duplicate entries in toTry, because 2
+  // different fragmentations might produce overlapping synthon lists in
+  // the same reaction. The duplicates need to be removed.  Although
+  // when doing the job in batches this is less likely.
+  sortAndUniquifyToTry(toTry, d_params.randomSeed);
+
+  if (d_params.randomSample) {
+    std::shuffle(toTry.begin(), toTry.end(), *d_randGen);
   }
+  makeHitsFromToTry(toTry, endTime, results);
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

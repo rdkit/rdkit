@@ -145,7 +145,7 @@ TEST_CASE("FP Biggy") {
       "c12ccccc1c(N)nc(N)n2", "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
       "c1n[nH]cn1",           "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{46, 2, 0, 123, 0, 0};
-  const std::vector<size_t> maxRes{2408, 197, 0, 833, 0, 4};
+  const std::vector<std::int64_t> maxRes{2408, 197, 0, 833, 0, 4};
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
@@ -270,4 +270,65 @@ TEST_CASE("FP Threads") {
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   std::cout << results.getHitMolecules().size() << std::endl;
   CHECK(results.getHitMolecules().size() == 16);
+}
+
+TEST_CASE("FP New Space") {
+  std::string libName =
+      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";
+  SynthonSpace synthonspace;
+
+  const auto rstart{std::chrono::steady_clock::now()};
+  synthonspace.readDBFile(libName);
+  const auto rend{std::chrono::steady_clock::now()};
+  const std::chrono::duration<double> elapsed_seconds{rend - rstart};
+  std::cout << "Time to read synthonspace : " << elapsed_seconds.count()
+            << std::endl;
+
+  SynthonSpaceSearchParams params;
+  // The addFP and subtractFP are built from a random selection of
+  // products so do occasionally vary, so use a fixed seed.
+  params.maxBondSplits = 4;
+  params.randomSeed = 1;
+  params.similarityCutoff = 0.55;
+  params.fragSimilarityAdjuster = 0.05;
+  params.timeOut = 60;
+  params.maxHits = 1000;
+  params.randomSample = false;
+  params.numThreads = -1;
+  params.toTryChunkSize = 25000000;
+
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  std::ifstream ifs(
+      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/RDKit_Queries/chembl_35_rand_0.0001.smi");
+  std::string smiles, name;
+  size_t molNum = 0;
+  std::chrono::duration<double> totTime{0};
+  while (true) {
+    ifs >> smiles;
+    if (ifs.eof()) {
+      break;
+    }
+    ifs >> name;
+    ++molNum;
+    // if (molNum != 6) {
+    // continue;
+    // }
+    std::cout << smiles << "  " << name << std::endl;
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    mol->setProp<std::string>("_Name", name);
+    const auto start{std::chrono::steady_clock::now()};
+    auto results = synthonspace.fingerprintSearch(*mol, *fpGen, params);
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{end - start};
+    std::cout << molNum << " : " << name << " : "
+              << results.getHitMolecules().size() << " in "
+              << elapsed_seconds.count() << "s" << std::endl;
+    totTime += elapsed_seconds;
+    // if (molNum == 10) {
+    // break;
+    // }
+  }
+  std::cout << "Total number of molecules : " << molNum << " in avge time "
+            << totTime.count() / molNum << std::endl;
 }
