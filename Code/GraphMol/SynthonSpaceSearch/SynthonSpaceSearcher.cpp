@@ -83,7 +83,6 @@ SearchResults SynthonSpaceSearcher::search() {
   };
 
   auto numThreads = getNumThreadsToUse(d_params.numThreads);
-  std::cout << "numThreads: " << numThreads << std::endl;
   if (numThreads > 1) {
     size_t eachThread = 1 + (fragments.size() / numThreads);
     size_t start = 0;
@@ -220,7 +219,6 @@ void SynthonSpaceSearcher::buildAllHits(
   // guaranteed to be in the same order from run to run, but the ids must be.
   // By default, std::sort just uses the first element of the tuple, which
   // isn't enough for this.
-  std::cout << "Number to try: " << toTry.size() << std::endl;
   if (d_params.randomSeed == -1) {
     std::sort(
         toTry.begin(), toTry.end(),
@@ -280,17 +278,8 @@ void processPartHitsFromDetails(
   for (size_t i = startNum; i < finishNum; ++i) {
     auto prod =
         searcher->buildAndVerifyHit(std::get<0>(toDo[i]), std::get<1>(toDo[i]));
-    results[i] = std::move(prod);
-    // Don't check the time every go, as it's quite expensive.
-    --numTries;
-    if (results[i]) {
-      if (!numTries) {
-        numTries = 100;
-        checkTimeOut(endTime);
-        if (timedOut) {
-          break;
-        }
-      }
+    if (prod) {
+      results[i] = std::move(prod);
       std::int64_t numHits = std::accumulate(
           results.begin(), results.end(), 0,
           [](const size_t prevVal, const std::unique_ptr<ROMol> &m) -> size_t {
@@ -299,12 +288,24 @@ void processPartHitsFromDetails(
             }
             return prevVal;
           });
+      std::cout << "Number of hits : " << numHits << std::endl;
       // If there's a limit on the number of hits, we still need to keep the
       // first hitStart hits and remove them later.  They had to be built
       // to see if they passed verifyHit.
       if (searcher->getParams().maxHits != -1 &&
           numHits ==
               searcher->getParams().maxHits + searcher->getParams().hitStart) {
+        break;
+      }
+    }
+    // Don't check the time every go, as it's quite expensive.
+    --numTries;
+    if (!numTries) {
+      numTries = 100;
+      checkTimeOut(endTime);
+      if (timedOut) {
+        std::cout << i << " of " << startNum << " to " << finishNum
+                  << std::endl;
         break;
       }
     }
@@ -320,14 +321,15 @@ void SynthonSpaceSearcher::makeHitsFromDetails(
   results.resize(toDo.size());
 #if RDK_BUILD_THREADSAFE_SSS
   auto numThreads = getNumThreadsToUse(d_params.numThreads);
-  std::cout << "numThreads: " << numThreads << std::endl;
+  std::cout << "makeHitsFromDetails numThreads: " << numThreads << " : "
+            << results.size() << std::endl;
   if (numThreads > 1) {
     size_t eachThread = 1 + (toDo.size() / numThreads);
     size_t start = 0;
     std::vector<std::thread> threads;
     for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
-      threads.push_back(std::thread(processPartHitsFromDetails, toDo, endTime,
-                                    std::ref(results), this, start,
+      threads.push_back(std::thread(processPartHitsFromDetails, std::ref(toDo),
+                                    endTime, std::ref(results), this, start,
                                     start + eachThread));
     }
     for (auto &t : threads) {
@@ -346,7 +348,8 @@ void SynthonSpaceSearcher::makeHitsFromDetails(
       results.end());
   sortHits(results);
   // The multi-threaded versions might produce more hits than requested.
-  if (d_params.maxHits != -1 && results.size() > d_params.maxHits) {
+  if (d_params.maxHits != -1 &&
+      static_cast<std::int64_t>(results.size()) > d_params.maxHits) {
     results.erase(results.begin() + d_params.maxHits, results.end());
   }
 }
