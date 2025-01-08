@@ -117,7 +117,7 @@ SearchResults SynthonSpaceSearcher::search() {
   }
 
   if (!timedOut && d_params.buildHits) {
-    buildHits(allHits, totHits, endTime, results);
+    buildHits(allHits, endTime, results);
   }
 
   return SearchResults{std::move(results), totHits, timedOut};
@@ -150,8 +150,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 }
 
 void SynthonSpaceSearcher::buildHits(
-    std::vector<SynthonSpaceHitSet> &hitsets,
-    const TimePoint *endTime,
+    std::vector<SynthonSpaceHitSet> &hitsets, const TimePoint *endTime,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
