@@ -130,7 +130,6 @@ SearchResults SynthonSpaceSearcher::search() {
         });
     allHits.insert(allHits.end(), fh.begin(), fh.end());
   }
-  std::cout << "Total number to try : " << formatLargeInt(totHits) << std::endl;
 
   std::vector<std::unique_ptr<ROMol>> results;
   if (!timedOut && d_params.buildHits) {
@@ -294,7 +293,6 @@ void SynthonSpaceSearcher::buildAllHits(
         enoughHits =
             haveEnoughHits(results, d_params.maxHits, d_params.hitStart);
         toTry.clear();
-        std::cout << "Number of hits : " << results.size() << std::endl;
         if (enoughHits || timedOut) {
           break;
         }
@@ -375,7 +373,6 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
     const TimePoint *endTime,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   results.resize(toTry.size());
-  std::cout << "Num to try " << formatLargeInt(toTry.size()) << std::endl;
 #if RDK_BUILD_THREADSAFE_SSS
   auto numThreads = getNumThreadsToUse(d_params.numThreads);
   if (numThreads > 1) {
