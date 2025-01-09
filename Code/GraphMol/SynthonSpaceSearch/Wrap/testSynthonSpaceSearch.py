@@ -103,6 +103,19 @@ class TestCase(unittest.TestCase):
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
 
+  def testThreadedFingerprintSearch(self):
+    fName = self.sssDir / "Syntons_5567.csv"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = 1000
+    params.numThreads = -1
+    fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
+    results = synthonspace.FingerprintSearch(
+      Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
+    self.assertEqual(981, len(results.GetHitMolecules()))
 
+    
 if __name__ == "__main__":
   unittest.main()
