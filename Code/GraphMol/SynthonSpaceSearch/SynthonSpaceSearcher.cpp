@@ -381,7 +381,7 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
     size_t eachThread = 1 + (toTry.size() / numThreads);
     size_t start = 0;
     std::vector<std::thread> threads;
-    for (int i = 0; i < numThreads; ++i, start += eachThread) {
+    for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
       threads.push_back(std::thread(processPartHitsFromDetails, std::ref(toTry),
                                     endTime, std::ref(results), this, start,
                                     start + eachThread));
