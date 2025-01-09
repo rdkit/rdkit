@@ -168,26 +168,17 @@ void SynthonSpaceSearcher::buildAllHits(
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
-    std::vector<std::vector<size_t>> synthonNums;
-    synthonNums.reserve(synthonsToUse.size());
     std::vector<size_t> numSynthons;
     numSynthons.reserve(synthonsToUse.size());
     for (auto &stu : synthonsToUse) {
-      numSynthons.push_back(stu.count());
-      synthonNums.emplace_back();
-      synthonNums.back().reserve(stu.count());
-      for (size_t j = 0; j < stu.size(); ++j) {
-        if (stu[j]) {
-          synthonNums.back().push_back(j);
-        }
-      }
+      numSynthons.push_back(stu.size());
     }
     const auto &reaction = getSpace().getReactions().find(reactionId)->second;
     details::Stepper stepper(numSynthons);
-    std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
+    std::vector<size_t> theseSynthNums(synthonsToUse.size(), 0);
     while (stepper.d_currState[0] != numSynthons[0]) {
       for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
-        theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
+        theseSynthNums[i] = synthonsToUse[i][stepper.d_currState[i]];
       }
       if (auto prod =
               buildAndVerifyHit(reaction, theseSynthNums, resultsNames)) {
@@ -230,24 +221,13 @@ struct RandomHitSelector {
     d_hitSetSel = boost::random::discrete_distribution<size_t>(
         d_hitSetWeights.begin(), d_hitSetWeights.end());
     d_synthSels.resize(hitsets.size());
-    d_synthons.resize(hitsets.size());
     for (size_t hi = 0; hi < hitsets.size(); ++hi) {
-      const SynthonSpaceHitSet &hs = hitsets[hi];
-      d_synthons[hi] =
-          std::vector<std::vector<size_t>>(hs.synthonsToUse.size());
       d_synthSels[hi] =
           std::vector<boost::random::uniform_int_distribution<size_t>>(
-              hs.synthonsToUse.size());
-      d_synthons[hi].resize(hs.synthonsToUse.size());
-      for (size_t i = 0; i < hs.synthonsToUse.size(); ++i) {
-        d_synthons[hi][i].reserve(hs.synthonsToUse[i].count());
+              hitsets[hi].synthonsToUse.size());
+      for (size_t i = 0; i < hitsets[hi].synthonsToUse.size(); ++i) {
         d_synthSels[hi][i] = boost::random::uniform_int_distribution<size_t>(
-            0, hs.synthonsToUse[i].count() - 1);
-        for (size_t j = 0; j < hs.synthonsToUse[i].size(); ++j) {
-          if (hs.synthonsToUse[i][j]) {
-            d_synthons[hi][i].push_back(j);
-          }
-        }
+            0, hitsets[hi].synthonsToUse[i].size() - 1);
       }
     }
   }
@@ -258,7 +238,7 @@ struct RandomHitSelector {
     const size_t hitSetNum = d_hitSetSel(randGen);
     for (size_t i = 0; i < d_hitsets[hitSetNum].synthonsToUse.size(); ++i) {
       const size_t synthNum = d_synthSels[hitSetNum][i](randGen);
-      synths.push_back(d_synthons[hitSetNum][i][synthNum]);
+      synths.push_back(d_hitsets[hitSetNum].synthonsToUse[i][synthNum]);
     }
     return std::make_pair(d_hitsets[hitSetNum].reactionId, synths);
   }
@@ -268,7 +248,6 @@ struct RandomHitSelector {
 
   std::vector<size_t> d_hitSetWeights;
   boost::random::discrete_distribution<size_t> d_hitSetSel;
-  std::vector<std::vector<std::vector<size_t>>> d_synthons;
   std::vector<std::vector<boost::random::uniform_int_distribution<size_t>>>
       d_synthSels;
 };

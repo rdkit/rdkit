@@ -30,11 +30,12 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
 namespace {
 // Take the fragged mol fps and flag all those synthons that have a fragment as
 // a similarity match.
-std::vector<boost::dynamic_bitset<>> getHitSynthons(
+std::vector<std::vector<size_t>> getHitSynthons(
     const std::vector<std::unique_ptr<ExplicitBitVect>> &fragFPs,
     const double similarityCutoff, const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
+  std::vector<std::vector<size_t>> retSynthons;
   synthonsToUse.reserve(reaction->getSynthons().size());
   for (const auto &synthonSet : reaction->getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
@@ -53,14 +54,15 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
       // No synthons matched this fragment, so the whole fragment set is a
       // bust.
       synthonsToUse.clear();
-      return synthonsToUse;
+      return retSynthons;
     }
   }
 
   // Fill in any synthons where they all didn't match because there were
   // fewer fragments than synthons.
   details::expandBitSet(synthonsToUse);
-  return synthonsToUse;
+  details::bitSetsToVectors(synthonsToUse, retSynthons);
+  return retSynthons;
 }
 }  // namespace
 
@@ -132,14 +134,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
             getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
             reaction, synthonOrder);
         if (!theseSynthons.empty()) {
-          const size_t numHits = std::accumulate(
-              theseSynthons.begin(), theseSynthons.end(), 1,
-              [](const int prevRes, const boost::dynamic_bitset<> &s2) {
-                return prevRes * s2.count();
-              });
-          if (numHits) {
-            results.push_back(
-                SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
+          SynthonSpaceHitSet hs{reaction->getId(), theseSynthons};
+          if (hs.numHits) {
+            results.push_back(hs);
           }
         }
       }

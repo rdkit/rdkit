@@ -275,4 +275,17 @@ void expandBitSet(std::vector<boost::dynamic_bitset<>> &bitSets) {
   }
 }
 
+void bitSetsToVectors(const std::vector<boost::dynamic_bitset<>> &bitSets,
+                      std::vector<std::vector<size_t>> &outVecs) {
+  outVecs.resize(bitSets.size());
+  for (size_t i = 0; i < bitSets.size(); ++i) {
+    outVecs[i].reserve(bitSets[i].count());
+    for (size_t j = 0; j < bitSets[i].size(); j++) {
+      if (bitSets[i][j]) {
+        outVecs[i].push_back(j);
+      }
+    }
+  }
+}
+
 }  // namespace RDKit::SynthonSpaceSearch::details
