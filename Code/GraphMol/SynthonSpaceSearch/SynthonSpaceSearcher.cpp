@@ -26,6 +26,8 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
 #include <boost/fusion/container/vector/vector.hpp>
 
+// When debugging in the synthon space the numbers get very large
+// and it is useful to have them formatted like this.
 template <class Char>
 class MyFacet : public std::numpunct<Char> {
  public:
@@ -305,7 +307,7 @@ void SynthonSpaceSearcher::buildAllHits(
   }
 
   // Do any remaining.
-  if (!toTry.empty()) {
+  if (!enoughHits && !timedOut && !toTry.empty()) {
     processToTrySet(toTry, endTime, results);
   }
 
@@ -379,7 +381,7 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
     size_t eachThread = 1 + (toTry.size() / numThreads);
     size_t start = 0;
     std::vector<std::thread> threads;
-    for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
+    for (int i = 0; i < numThreads; ++i, start += eachThread) {
       threads.push_back(std::thread(processPartHitsFromDetails, std::ref(toTry),
                                     endTime, std::ref(results), this, start,
                                     start + eachThread));
