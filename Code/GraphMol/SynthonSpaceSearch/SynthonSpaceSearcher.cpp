@@ -16,7 +16,6 @@
 #include <sstream>
 #include <thread>
 #include <boost/random/discrete_distribution.hpp>
-#include <boost/range/algorithm/random_shuffle.hpp>
 
 #include <RDGeneral/RDThreads.h>
 #include <GraphMol/MolOps.h>
@@ -25,7 +24,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
-#include <boost/fusion/container/vector/vector.hpp>
 
 // When debugging in the synthon space the numbers get very large
 // and it is useful to have them formatted like this.
@@ -175,11 +173,7 @@ void SynthonSpaceSearcher::buildHits(
     return;
   }
   if (d_params.randomSample) {
-    auto gen = [&](size_t i) {
-      static boost::random::uniform_int_distribution<size_t> dist(0, i);
-      return dist(*d_randGen);
-    };
-    boost::range::random_shuffle(hitsets, gen);
+    std::shuffle(hitsets.begin(), hitsets.end(), *d_randGen);
   } else {
     std::sort(hitsets.begin(), hitsets.end(),
               [](const SynthonSpaceHitSet &hs1,
@@ -419,11 +413,7 @@ void SynthonSpaceSearcher::processToTrySet(
   sortAndUniquifyToTry(toTry, d_params.randomSeed);
 
   if (d_params.randomSample) {
-    auto gen = [&](size_t i) {
-      static boost::random::uniform_int_distribution<size_t> dist(0, i);
-      return dist(*d_randGen);
-    };
-    boost::range::random_shuffle(toTry, gen);
+    std::shuffle(toTry.begin(), toTry.end(), *d_randGen);
   }
   makeHitsFromToTry(toTry, endTime, results);
 }
