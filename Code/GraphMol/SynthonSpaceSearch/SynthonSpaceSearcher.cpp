@@ -16,6 +16,7 @@
 #include <sstream>
 #include <thread>
 #include <boost/random/discrete_distribution.hpp>
+#include <boost/range/algorithm/random_shuffle.hpp>
 
 #include <RDGeneral/RDThreads.h>
 #include <GraphMol/MolOps.h>
@@ -174,7 +175,11 @@ void SynthonSpaceSearcher::buildHits(
     return;
   }
   if (d_params.randomSample) {
-    std::shuffle(hitsets.begin(), hitsets.end(), *d_randGen);
+    auto gen = [&](size_t i) {
+      static boost::random::uniform_int_distribution<size_t> dist(0, i);
+      return dist(*d_randGen);
+    };
+    boost::range::random_shuffle(hitsets, gen);
   } else {
     std::sort(hitsets.begin(), hitsets.end(),
               [](const SynthonSpaceHitSet &hs1,
@@ -414,7 +419,11 @@ void SynthonSpaceSearcher::processToTrySet(
   sortAndUniquifyToTry(toTry, d_params.randomSeed);
 
   if (d_params.randomSample) {
-    std::shuffle(toTry.begin(), toTry.end(), *d_randGen);
+    auto gen = [&](size_t i) {
+      static boost::random::uniform_int_distribution<size_t> dist(0, i);
+      return dist(*d_randGen);
+    };
+    boost::range::random_shuffle(toTry, gen);
   }
   makeHitsFromToTry(toTry, endTime, results);
 }
