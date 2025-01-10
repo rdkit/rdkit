@@ -83,7 +83,7 @@ SearchResults SynthonSpaceSearcher::search() {
     endTime = &endTimePt;
   }
   std::vector<std::vector<SynthonSpaceHitSet>> allFragHits(fragments.size());
-#if RDK_BUILD_THREADSAFE_SSS
+
   auto processPartFragSet =
       [](std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments,
          TimePoint *endTime,
@@ -99,6 +99,7 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   };
 
+#if RDK_BUILD_THREADSAFE_SSS
   auto numThreads = getNumThreadsToUse(d_params.numThreads);
   if (numThreads > 1) {
     size_t eachThread = 1 + (fragments.size() / numThreads);
