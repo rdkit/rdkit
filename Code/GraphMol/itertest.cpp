@@ -246,7 +246,6 @@ void test5() {
   BOOST_LOG(rdInfoLog) << "test5 done" << endl;
 }
 
-#if 1
 void _test6Help(const ROMol *m) {
   Mol::ConstAtomIterator atIt;
   unsigned int idx = 0;
@@ -312,11 +311,9 @@ void test6() {
   delete m;
   BOOST_LOG(rdInfoLog) << "test6 done" << endl;
 };
-#endif
 
 void test7() {
   string smi = "c1ccccc1C";
-#if 1
   Mol *m = SmilesToMol(smi);
   Mol::AromaticAtomIterator atomIt;
   Mol::AromaticAtomIterator beginP(m->beginAromaticAtoms());
@@ -346,13 +343,11 @@ void test7() {
   TEST_ASSERT(idx == 6);
   delete m;
 
-#endif
   BOOST_LOG(rdInfoLog) << "test7 done" << endl;
 }
 
 void testIssue263() {
   string smi = "c1ccccc1C";
-#if 1
   Mol *m = SmilesToMol(smi);
   Mol::AtomIterator atomIt;
   unsigned int idx = 0;
@@ -371,7 +366,6 @@ void testIssue263() {
   CHECK_INVARIANT(idx == 7, "bad idx");
   delete m;
 
-#endif
   BOOST_LOG(rdInfoLog) << "testIssue263 done" << endl;
 }
 
