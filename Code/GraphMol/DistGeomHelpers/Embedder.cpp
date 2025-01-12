@@ -36,7 +36,6 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/RDThreads.h>
 #include <cstddef>
-#include <optional>
 #include <stdexcept>
 #include <vector>
 #include <chrono>  // for time-related functions
@@ -1454,10 +1453,10 @@ std::vector<std::vector<unsigned int>> getMolSelfMatches(
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                         EmbedParameters &params) {
   TimePoint* end_time = nullptr;
-  std::optional<TimePoint> end_time_opt;
+  TimePoint end_time_storage; 
   if (params.timeout > 0) {
-    end_time_opt = Clock::now() + std::chrono::seconds(params.timeout);
-    end_time = &*end_time_opt;
+    end_time_storage =  Clock::now() + std::chrono::seconds(params.timeout);
+    end_time = &end_time_storage;
   }
 
   if (params.trackFailures) {
