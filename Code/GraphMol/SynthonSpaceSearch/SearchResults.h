@@ -8,23 +8,24 @@
 //  of the RDKit source tree.
 //
 
-#ifndef RDKIT_SYNTHONSPACE_SUBSTRUCTURERESULTS_H
-#define RDKIT_SYNTHONSPACE_SUBSTRUCTURERESULTS_H
+#ifndef RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
+#define RDKIT_SYNTHONSPACE_SEARCHRESULTS_H
 
+#include <RDGeneral/export.h>
 #include <GraphMol/ROMol.h>
 
 namespace RDKit::SynthonSpaceSearch {
-class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
+class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
  public:
-  explicit SubstructureResults() : d_maxNumResults(0) {}
-  SubstructureResults(std::vector<std::unique_ptr<ROMol>> &&mols,
-                      size_t maxNumRes);
-  SubstructureResults(const SubstructureResults &other);
-  SubstructureResults(SubstructureResults &&other) = default;
-  ~SubstructureResults() = default;
+  explicit SearchResults() : d_maxNumResults(0) {}
+  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes,
+                bool timedOut);
+  SearchResults(const SearchResults &other);
+  SearchResults(SearchResults &&other) = default;
+  ~SearchResults() = default;
 
-  SubstructureResults &operator=(const SubstructureResults &other);
-  SubstructureResults &operator=(SubstructureResults &&other) = default;
+  SearchResults &operator=(const SearchResults &other);
+  SearchResults &operator=(SearchResults &&other) = default;
 
   /*!
    * Returns the upper bound on the number of results the search might return.
@@ -45,25 +46,31 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SubstructureResults {
     return d_hitMolecules;
   }
 
+  /*!
+   * Returns whether the search timed out or not,
+   * @return bool
+   */
+  bool getTimedOut() const { return d_timedOut; }
+
  private:
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
   size_t d_maxNumResults;
+  bool d_timedOut{false};
 };
 
-inline SubstructureResults::SubstructureResults(
-    std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes)
-    : d_maxNumResults(maxNumRes) {
+inline SearchResults::SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
+                                    const size_t maxNumRes, bool timedOut)
+    : d_maxNumResults(maxNumRes), d_timedOut(timedOut) {
   d_hitMolecules = std::move(mols);
   mols.clear();
 }
 
-inline SubstructureResults::SubstructureResults(
-    const RDKit::SynthonSpaceSearch::SubstructureResults &other)
-    : d_maxNumResults(other.d_maxNumResults) {
+inline SearchResults::SearchResults(const SearchResults &other)
+    : d_maxNumResults(other.d_maxNumResults), d_timedOut(other.d_timedOut) {
   for (const auto &hm : other.d_hitMolecules) {
     d_hitMolecules.emplace_back(new ROMol(*hm));
   }
 }
 }  // namespace RDKit::SynthonSpaceSearch
 
-#endif  // RDKIT_SUBSTRUCTURERESULTS_H
+#endif  // RDKIT_SYNTHONSPACE_SEARCHRESULTS_H

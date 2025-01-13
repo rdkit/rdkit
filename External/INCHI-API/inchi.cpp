@@ -1840,11 +1840,14 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
     }
 
     // convert tetrahedral chirality info to Stereo0D
-    if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED ||
-        atom->hasProp("molParity")) {
-      // we ignore the molParity if the number of neighbors are below 3
+    if (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+        atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
       atom->calcImplicitValence();
-      if (atom->getNumImplicitHs() + atom->getDegree() < 3) {
+      if (auto tval = atom->getTotalValence(); tval < 3 || tval > 4) {
+        BOOST_LOG(rdWarningLog)
+            << "tetrahedral chirality on atom with <3 or >4 neighbors will be ignored."
+            << std::endl;
+
         continue;
       }
       inchi_Stereo0D stereo0D;
@@ -1865,7 +1868,6 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
       // std::cerr<<" at: "<<atom->getIdx();
       for (const auto &p : neighbors) {
         stereo0D.neighbor[nid++] = p.second;
-        // std::cerr<<" "<<p.second;
       }
       if (nid == 3) {
         // std::cerr<<" nid==3, reorder";
@@ -1964,6 +1966,13 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
 
     // neighbor
     unsigned int idx = inchiAtoms[atomIndex1].num_bonds;
+    // The InChI code has a max number of neighbors allowed:
+    if (idx >= MAXVAL) {
+      BOOST_LOG(rdErrorLog)
+          << " atom " << atomIndex1 << " has too many bonds: " << idx
+          << ". The InChI library supports at most " << MAXVAL << std::endl;
+      return "";
+    }
     inchiAtoms[atomIndex1].neighbor[idx] = atomIndex2;
 
     // bond type

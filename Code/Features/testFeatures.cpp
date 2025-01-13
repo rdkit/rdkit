@@ -1,6 +1,5 @@
-// $Id$
 //
-// Copyright (C)  2004-2006 Rational Discovery LLC
+// Copyright (C)  2004-2040 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,10 +14,6 @@
 #include <Geometry/point.h>
 
 #include <Features/Feature.h>
-
-#include <boost/spirit/core.hpp>
-#include <boost/spirit/actor/assign_actor.hpp>
-using namespace boost::spirit;
 
 using namespace RDKit;
 using namespace RDGeom;
@@ -75,7 +70,7 @@ void test2() {
   std::cerr << "Basics for ImplicitFeatures." << std::endl;
 
   ImplicitFeature<TypeMarker> f1;
-  f1.setFamily(fooType);
+  f1.setType(fooType);
   TEST_ASSERT(f1.getType() == fooType);
   f1.setType(grnType);
   TEST_ASSERT(f1.getType() == grnType);
@@ -86,7 +81,7 @@ void test2() {
 
   f1 = ImplicitFeature<TypeMarker>(barType, fooType);
   TEST_ASSERT(f1.getFamily() == barType);
-  TEST_ASSERT(f1.getType() == barType);
+  TEST_ASSERT(f1.getType() == fooType);
   TEST_ASSERT(feq(f1.getLoc().x, 0.0));
   TEST_ASSERT(feq(f1.getLoc().y, 0.0));
   TEST_ASSERT(feq(f1.getLoc().z, 0.0));
@@ -127,7 +122,7 @@ void test3() {
   TEST_ASSERT(f1.getDirs().size() == 0);
 
   f1 = LocalFeature("foo", "bar");
-  TEST_ASSERT(f1.getFamily() == "bar");
+  TEST_ASSERT(f1.getFamily() == "foo");
   TEST_ASSERT(f1.getType() == "bar");
   TEST_ASSERT(feq(f1.getLoc().x, 0.0));
   TEST_ASSERT(feq(f1.getLoc().y, 0.0));
@@ -148,35 +143,8 @@ void test3() {
   std::cerr << "  done" << std::endl;
 }
 
-void testParser() {
-  std::cerr << "-------------------------------------" << std::endl;
-  std::cerr << "parser testing." << std::endl;
-
-  std::string text;
-  int n;
-  bool ok;
-
-  text = "p1";
-  ok = parse(text.c_str(), (ch_p('p') >> int_p[assign_a(n)]), space_p).full;
-  TEST_ASSERT(ok);
-  TEST_ASSERT(n == 1);
-
-  text = "p12";
-  ok = parse(text.c_str(), (ch_p('p') >> int_p[assign_a(n)]), space_p).full;
-  TEST_ASSERT(ok);
-  TEST_ASSERT(n == 12);
-
-  text = "p2 + p3";
-  ok = parse(text.c_str(), (ch_p('p') >> int_p[assign_a(n)]), space_p).full;
-  TEST_ASSERT(!ok);
-
-  std::cerr << "  done" << std::endl;
-}
 int main() {
-#if 0
   test1();
   test2();
   test3();
-#endif
-  testParser();
 }

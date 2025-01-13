@@ -32,19 +32,21 @@
 # These tests are just to check that the Python wrappers are working
 # ok.  The bulk of the tests are in the C++ code.
 import os
+import tempfile
 import unittest
 
 from pathlib import Path
 
 from rdkit import Chem
-from rdkit.Chem import rdSynthonSpaceSearch
+from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator
+
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
     self.sssDir = Path(os.environ["RDBASE"]) / "Code" / "GraphMol" / "SynthonSpaceSearch" / "data"
 
-  def test1(self):
+  def testSubstructSearch(self):
     fName = self.sssDir / "Syntons_5567.csv"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadTextFile(fName)
@@ -53,7 +55,54 @@ class TestCase(unittest.TestCase):
     params.maxHits = 10
     results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"), params)
     self.assertEqual(10, len(results.GetHitMolecules()))
-                     
-    
+
+  def testFingerprintSearch(self):
+    fName = self.sssDir / "Syntons_5567.csv"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    self.assertEqual(10, synthonspace.GetNumReactions())
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = 10
+    fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
+    results = synthonspace.FingerprintSearch(
+      Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
+    self.assertEqual(10, len(results.GetHitMolecules()))
+
+  def testEnumerate(self):
+    fName = self.sssDir / "amide_space.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    with tempfile.NamedTemporaryFile() as tmp:
+      synthonspace.WriteEnumeratedFile(tmp.name)
+
+  def testTimeOut(self):
+    fName = self.sssDir / "Syntons_5567.csv"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    self.assertEqual(10, synthonspace.GetNumReactions())
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.timeOut = 50
+    params.similarityCutoff = 0.3
+    params.fragSimilarityAdjuster = 0.3
+    fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
+    results = synthonspace.FingerprintSearch(
+      Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
+    self.assertFalse(results.GetTimedOut())
+
+    params.timeOut = 1
+    results = synthonspace.FingerprintSearch(
+      Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
+    self.assertTrue(results.GetTimedOut())
+
+  def testSynthonError(self):
+    fName = self.sssDir / "amide_space_error.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
+
+    fName = self.sssDir / "synthon_error.txt"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
+
+
 if __name__ == "__main__":
   unittest.main()
