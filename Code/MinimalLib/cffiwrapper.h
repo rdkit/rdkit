@@ -138,7 +138,7 @@ RDKIT_RDKITCFFI_EXPORT short fragment_parent(char **pkl, size_t *pkl_sz,
 
 // coordinates
 RDKIT_RDKITCFFI_EXPORT void prefer_coordgen(short val);
-RDKIT_RDKITCFFI_EXPORT short has_coords(char *mol_pkl, size_t mol_pkl_sz);
+RDKIT_RDKITCFFI_EXPORT short has_coords(const char *mol_pkl, size_t mol_pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords(char **pkl, size_t *pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short set_3d_coords(char **pkl, size_t *pkl_sz,
                                            const char *params_json);
@@ -152,8 +152,10 @@ RDKIT_RDKITCFFI_EXPORT short set_2d_coords_aligned(char **pkl, size_t *pkl_sz,
 RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);
 
 RDKIT_RDKITCFFI_EXPORT char *version();
-RDKIT_RDKITCFFI_EXPORT void enable_logging();
-RDKIT_RDKITCFFI_EXPORT void disable_logging();
+RDKIT_RDKITCFFI_EXPORT short enable_logging();
+RDKIT_RDKITCFFI_EXPORT short enable_logger(const char *log_name);
+RDKIT_RDKITCFFI_EXPORT short disable_logging();
+RDKIT_RDKITCFFI_EXPORT short disable_logger(const char *log_name);
 
 // chirality
 RDKIT_RDKITCFFI_EXPORT short use_legacy_stereo_perception(short value);

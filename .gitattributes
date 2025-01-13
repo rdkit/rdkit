@@ -16,6 +16,7 @@ CMakeLists.txt text
 
 # Declare files that will always have CRLF line endings on checkout.
 #*.sln text eol=crlf
+Code/GraphMol/SynthonSpaceSearch/data/amide_space_dos.txt eol=crlf
 
 # Declare files that will always have LF line endings on checkout.
 #*.svg text eol=lf
@@ -25,5 +26,4 @@ CMakeLists.txt text
 *.jpg binary
 *.pkl binary
 *.fpb binary
-
 

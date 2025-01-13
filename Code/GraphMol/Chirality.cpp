@@ -171,14 +171,6 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
     return;
   }
   needsDir.set(dblBond->getIdx(), 0);
-#if 0
-  std::cerr << "**********************\n";
-  std::cerr << "**********************\n";
-  std::cerr << "**********************\n";
-  std::cerr << "UDBN: " << dblBond->getIdx() << " "
-            << dblBond->getBeginAtomIdx() << "=" << dblBond->getEndAtomIdx()
-            << "\n";
-#endif
 
   std::vector<Bond *> followupBonds;
 
@@ -380,24 +372,7 @@ void updateDoubleBondNeighbors(ROMol &mol, Bond *dblBond, const Conformer *conf,
                              bond2->getBeginAtom() == atom2, needsDir);
     needsDir[obond2->getIdx()] = 0;
   }
-#if 0
-  std::cerr << "  1:" << bond1->getIdx() << " ";
-  if (obond1)
-    std::cerr << obond1->getIdx() << std::endl;
-  else
-    std::cerr << "N/A" << std::endl;
-  std::cerr << "  2:" << bond2->getIdx() << " ";
-  if (obond2)
-    std::cerr << obond2->getIdx() << std::endl;
-  else
-    std::cerr << "N/A" << std::endl;
-  std::cerr << "**********************\n";
-  std::cerr << "**********************\n";
-  std::cerr << "**********************\n";
-#endif
   for (Bond *oDblBond : followupBonds) {
-    // std::cerr << "FOLLOWUP: " << oDblBond->getIdx() << " "
-    //           << needsDir[oDblBond->getIdx()] << std::endl;
     updateDoubleBondNeighbors(mol, oDblBond, conf, needsDir, singleBondCounts,
                               singleBondNbrs);
   }
@@ -820,24 +795,6 @@ std::optional<Atom::ChiralType> atomChiralTypeFromBondDirPseudo3D(
       const auto crossp2 = bv1.crossProduct(bv3);
       const auto dotp2 = bondVects[order[1]].dotProduct(bondVects[order[3]]);
       auto vol2 = crossp2.dotProduct(bondVects[order[0]]);
-#if 0
-      std::cerr << neighborBondIndices[order[0]] << " " <<
-      bondVects[order[0]]
-                << std::endl;
-      std::cerr << neighborBondIndices[order[1]] << " " <<
-      bondVects[order[1]]
-                << std::endl;
-      std::cerr << neighborBondIndices[order[2]] << " " <<
-      bondVects[order[2]]
-                << std::endl;
-      std::cerr << neighborBondIndices[order[3]] << " " <<
-      bondVects[order[3]]
-                << std::endl;
-      std::cerr << "------------" << std::endl;
-      std::cerr << crossp1 << " l2=" << crossp1.lengthSq()<<" " << std::endl;
-      std::cerr << crossp2 << " l2=" << crossp2.lengthSq()<< " " << dotp2 << std::endl;
-      std::cerr << " !!! " << vol << " " << vol2 << std::endl;
-#endif
 
       // detect the case where there's no chiral volume for the default
       // evaluation
@@ -1054,27 +1011,6 @@ void buildCIPInvariants(const ROMol &mol, DOUBLE_VECT &res) {
       mass = mass % maxMass;
     }
 
-#if 0
-        // NOTE: the inclusion of hybridization in the invariant (as
-        // suggested in the original paper), leads to the situation
-        // that
-        //   C[C@@](O)(C=C)C(C)CC
-        // and
-        //   C[C@@](O)(C=C)C(C)CO
-        // are assigned S chirality even though the rest of the world
-        // seems to agree that they ought to be R (atom 3, sp2, is ranked
-        // higher than atom 5, sp3, no matter what their environments)
-        int hyb=0;
-        switch(atom->getHybridization()) {
-        case Atom::SP: hyb=6;break;
-        case Atom::SP2: hyb=5;break;
-        case Atom::SP3: hyb=1;break;
-        case Atom::SP3D: hyb=3;break;
-        case Atom::SP3D2: hyb=2;break;
-        default: break;
-        }
-#endif
-
     invariant = num;  // 7 bits here
     invariant = (invariant << nMassBits) | mass;
 
@@ -1184,7 +1120,7 @@ struct PrecomputedBondFeatures {
   std::vector<std::uint8_t> numNeighbors;
 };
 
-constexpr int kMaxBonds = 8;
+constexpr int kMaxBonds = 16;
 
 //! Lookup neighbor indices and compute counts for each atom.
 PrecomputedBondFeatures computeBondFeatures(const ROMol &mol) {
@@ -1199,7 +1135,7 @@ PrecomputedBondFeatures computeBondFeatures(const ROMol &mol) {
       const unsigned int nbrIdx = bond->getOtherAtomIdx(atomIdx);
       features.numNeighbors[nbrIdx]++;
       auto &[count, neighborIndex] =
-          features.countsAndNeighborIndices[indexOffset];
+          features.countsAndNeighborIndices.at(indexOffset);
       neighborIndex = nbrIdx;
 
       // put the neighbor in 2N times where N is the bond order as a double.
@@ -2332,12 +2268,6 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
     MolOps::fastFindRings(mol);
   }
 
-#if 0
-  std::cerr << ">>>>>>>>>>>>>\n";
-  std::cerr << "assign stereochem\n";
-  mol.debugMol(std::cerr);
-#endif
-
   // as part of the preparation, we'll loop over the atoms and
   // bonds to see if anything has stereochemistry
   // indicated. There's no point in doing the work here if there
@@ -2433,13 +2363,6 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
       // update the atom ranks based on the new information we have:
       Chirality::rerankAtoms(mol, atomRanks);
     }
-#if 0
-    std::cout << "*************** done iteration " << keepGoing
-              << " ***********" << std::endl;
-    mol.debugMol(std::cout);
-    std::cout << "*************** done iteration " << keepGoing
-              << " ***********" << std::endl;
-#endif
   }
 
   if (cleanIt) {
@@ -2994,19 +2917,6 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
 // if both of the atoms have 2 neighbors (other than the one
 // connected
 // by the double bond) and ....
-#if 0
-                std::cerr << "Bond: " << dblBond->getIdx() << " "
-                          << begAtom->getIdx() << "=" << endAtom->getIdx()
-                          << std::endl;
-                std::cerr << "   " << begAtomNeighbors[0] << "="
-                          << ranks[begAtomNeighbors[0]] << ":";
-                std::cerr << "   " << begAtomNeighbors[1] << "="
-                          << ranks[begAtomNeighbors[1]] << std::endl;
-                std::cerr << "   " << endAtomNeighbors[0] << "="
-                          << ranks[endAtomNeighbors[0]] << ":";
-                std::cerr << "   " << endAtomNeighbors[1] << "="
-                          << ranks[endAtomNeighbors[1]] << std::endl;
-#endif
                 if ((ranks[begAtomNeighbors[0]] !=
                      ranks[begAtomNeighbors[1]]) &&
                     (ranks[endAtomNeighbors[0]] !=
@@ -3059,10 +2969,10 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
               }
             }  // end of check that beg and end atoms have at least 1
                // neighbor:
-          }    // end of 2 and 3 coordinated atoms only
-        }      // end of we want it or CIP code is not set
-      }        // end of double bond
-    }          // end of for loop over all bonds
+          }  // end of 2 and 3 coordinated atoms only
+        }  // end of we want it or CIP code is not set
+      }  // end of double bond
+    }  // end of for loop over all bonds
     mol.setProp(common_properties::_BondsPotentialStereo, 1, true);
   }
 }
@@ -3267,11 +3177,6 @@ static bool assignNontetrahedralChiralTypeFrom3D(ROMol &mol,
       }
     }
   }
-
-#if 0
-  printf("count=%u pairs=%u [%u,%u,%u,%u,%u,%u]\n", count, pairs,
-         pair[0], pair[1], pair[2], pair[3], pair[4], pair[5]);
-#endif
 
   Atom::ChiralType tag;
   unsigned int perm;
