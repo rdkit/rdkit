@@ -253,6 +253,70 @@ void test5() {
   }
 }
 
+void benchmarking() {
+  BOOST_LOG(rdErrorLog) << "benchmarking performance" << std::endl;
+  std::string rdbase = getenv("RDBASE");
+  {
+    std::string fName =
+        rdbase + "/Code/GraphMol/MolInterchange/test_data/znp.50k.smi";
+    SmilesMolSupplier suppl(fName);
+    std::vector<RWMol *> mols;
+    auto smir_t1 = std::chrono::system_clock::now();
+    while (mols.size() < 20000) {
+      mols.push_back(static_cast<RWMol *>(suppl.next()));
+    }
+    auto smir_t2 = std::chrono::system_clock::now();
+    std::cerr << "construction of " << mols.size() << " took "
+              << std::chrono::duration<double>(smir_t2 - smir_t1).count()
+              << std::endl;
+    for (auto &m : mols) {
+      MolOps::Kekulize(*m);
+    }
+    auto jsonw_t1 = std::chrono::system_clock::now();
+    auto json = MolInterchange::MolsToJSONData(mols);
+    auto jsonw_t2 = std::chrono::system_clock::now();
+    std::cerr << "json generation took "
+              << std::chrono::duration<double>(jsonw_t2 - jsonw_t1).count()
+              << std::endl;
+
+    auto jsonr_t1 = std::chrono::system_clock::now();
+    auto newms = MolInterchange::JSONDataToMols(json);
+    auto jsonr_t2 = std::chrono::system_clock::now();
+    std::cerr << "json parsing took "
+              << std::chrono::duration<double>(jsonr_t2 - jsonr_t1).count()
+              << std::endl;
+    newms.clear();
+
+    auto pklw_t1 = std::chrono::system_clock::now();
+    std::vector<std::string> pkls;
+    pkls.reserve(mols.size());
+    for (const auto &mol : mols) {
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      pkls.push_back(pkl);
+    }
+    auto pklw_t2 = std::chrono::system_clock::now();
+    std::cerr << "pickle generation took "
+              << std::chrono::duration<double>(pklw_t2 - pklw_t1).count()
+              << std::endl;
+
+    auto pklr_t1 = std::chrono::system_clock::now();
+    for (const auto &pkl : pkls) {
+      ROMol m;
+      MolPickler::molFromPickle(pkl, m);
+    }
+    auto pklr_t2 = std::chrono::system_clock::now();
+    std::cerr << "pickle parsing took "
+              << std::chrono::duration<double>(pklr_t2 - pklr_t1).count()
+              << std::endl;
+
+    for (auto &m : mols) {
+      delete m;
+    }
+  }
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
+}
+
 void test6() {
   BOOST_LOG(rdErrorLog) << "testing parse options" << std::endl;
   std::string rdbase = getenv("RDBASE");
@@ -379,6 +443,8 @@ void RunTests() {
   test6();
   testGithub2046();
   testEitherStereo();
+
+  // benchmarking();
 }
 
 int main(int argc, char *argv[]) {

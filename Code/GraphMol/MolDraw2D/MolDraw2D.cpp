@@ -1139,6 +1139,30 @@ int MolDraw2D::drawReactionPart(
     ++activeMolIdx_;
     reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
     reactBit[i]->draw(*this);
+#if 0
+    // this is convenient for debugging
+    setColour(DrawColour(0, 1.0, 1.0));
+    drawLine(Point2D(offsets[initOffset].x + reactBit[i]->width_, 0),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_, height_),
+             true);
+    drawLine(Point2D(offsets[initOffset].x, 0),
+             Point2D(offsets[initOffset].x, height_), true);
+    setColour(DrawColour(1.0, 0, 1.0));
+    drawLine(Point2D(offsets[initOffset].x, offsets[initOffset].y),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_,
+                     offsets[initOffset].y),
+             true);
+    drawLine(Point2D(offsets[initOffset].x,
+                     offsets[initOffset].y + reactBit[i]->height_),
+             Point2D(offsets[initOffset].x + reactBit[i]->width_,
+                     offsets[initOffset].y + reactBit[i]->height_),
+             true);
+    setColour(DrawColour(0.0, 1.0, 0.0));
+    drawLine(
+        Point2D(offsets[initOffset].x, height() / 2.0),
+        Point2D(offsets[initOffset].x + reactBit[i]->width_, height() / 2.0),
+        true);
+#endif
     if (plusWidth && i < reactBit.size() - 1) {
       plusPos.x = (offsets[initOffset].x + reactBit[i]->width_ +
                    offsets[initOffset + 1].x) /

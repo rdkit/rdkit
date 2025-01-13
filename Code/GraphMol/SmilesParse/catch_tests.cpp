@@ -1689,6 +1689,24 @@ M  END)CTAB"_ctab;
   auto csmiles = MolToSmiles(*mol);
   CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
 
+#if 0
+  // FIX: this test fails. The SMILES generated for this random permutation
+  // has the stereo for one of the double bonds wrong.
+  SECTION("specific random output") {
+    SmilesWriteParams ps;
+    ps.doRandom = true;
+    getRandomGenerator(51)();
+    auto rsmiles = MolToSmiles(*mol, ps);
+    std::unique_ptr<RWMol> mol2(SmilesToMol(rsmiles));
+    REQUIRE(mol2);
+    auto smiles = MolToSmiles(*mol2);
+    if (smiles != csmiles) {
+      std::cerr << smiles << std::endl;
+    }
+    CHECK(smiles == csmiles);
+  }
+#endif
+
   SECTION("bulk random output order") {
     auto csmiles = MolToSmiles(*mol);
     CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
