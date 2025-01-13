@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
@@ -286,4 +287,63 @@ TEST_CASE("FP Approx Similarity") {
   params.approxSimilarityAdjuster = 0.25;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 914);
+}
+
+TEST_CASE("FP New Space") {
+  std::string libName =
+      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/random_freedom_1.txt";
+  // std::string libName =
+  // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons.txt";
+  SynthonSpace synthonspace;
+
+  const auto rstart{std::chrono::steady_clock::now()};
+  synthonspace.readTextFile(libName);
+  const auto rend{std::chrono::steady_clock::now()};
+  const std::chrono::duration<double> elapsed_seconds{rend - rstart};
+  std::cout << "Time to read synthonspace : " << elapsed_seconds.count()
+            << std::endl;
+
+  SynthonSpaceSearchParams params;
+  // The addFP and subtractFP are built from a random selection of
+  // products so do occasionally vary, so use a fixed seed.
+  params.maxBondSplits = 4;
+  params.randomSeed = 1;
+  params.similarityCutoff = 0.5;
+  params.fragSimilarityAdjuster = 0.1;
+  params.approxSimilarityAdjuster = 0.05;
+  params.timeOut = 60;
+  params.maxHits = 1000;
+  params.randomSample = false;
+
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  std::ifstream ifs(
+      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/RDKit_Queries/chembl_35_rand_0.0001.smi");
+  std::string smiles, name;
+  size_t molNum = 0;
+  std::chrono::duration<double> totTime{0};
+  while (true) {
+    ifs >> smiles;
+    if (ifs.eof()) {
+      break;
+    }
+    ifs >> name;
+    std::cout << smiles << "  " << name << std::endl;
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    mol->setProp<std::string>("_Name", name);
+    const auto start{std::chrono::steady_clock::now()};
+    auto results = synthonspace.fingerprintSearch(*mol, *fpGen, params);
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{end - start};
+    std::cout << molNum << " : " << name << " : "
+              << results.getHitMolecules().size() << " in "
+              << elapsed_seconds.count() << "s" << std::endl;
+    totTime += elapsed_seconds;
+    ++molNum;
+    if (molNum == 1) {
+      break;
+    }
+  }
+  std::cout << "Total number of molecules : " << molNum << " in avge time "
+            << totTime.count() / molNum << std::endl;
 }

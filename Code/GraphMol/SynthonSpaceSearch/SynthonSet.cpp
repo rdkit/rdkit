@@ -22,6 +22,7 @@
 // for example, it uses a different fingerprint for the initial synthon
 // screening.
 
+#include <cmath>
 #include <random>
 #include <regex>
 
@@ -456,8 +457,116 @@ void SynthonSet::buildAddAndSubtractFPs(
     const SynthonSpaceSearchParams &params) {
   d_addFP.reset();
   d_subtractFP.reset();
+  double frac = 0.75;
+  std::cout << fpGen.getOptions()->d_fpSize << std::endl;
+#if 1
+  std::vector<std::vector<size_t>> synthonNums(d_synthons.size());
+  std::vector<size_t> numSynthons(d_synthons.size());
+  std::vector<int> naddbitcounts(fpGen.getOptions()->d_fpSize, 0);
+  std::vector<int> nsubbitcounts(fpGen.getOptions()->d_fpSize, 0);
+  std::cout << getId() << " : " << d_synthons.size() << std::endl;
+  size_t totSamples = 1;
+  for (size_t i = 0; i < d_synthons.size(); ++i) {
+    std::vector<std::tuple<size_t, Synthon *>> sortedSynthons(
+        d_synthons[i].size());
+    for (size_t j = 0; j < d_synthons[i].size(); ++j) {
+      sortedSynthons[j] = std::make_tuple(j, d_synthons[i][j].get());
+    }
+    std::sort(sortedSynthons.begin(), sortedSynthons.end(),
+              [](const std::tuple<size_t, Synthon *> &a,
+                 const std::tuple<size_t, Synthon *> &b) -> bool {
+                auto as = std::get<1>(a);
+                auto bs = std::get<1>(b);
+                if (as->getOrigMol()->getNumAtoms() ==
+                    bs->getOrigMol()->getNumAtoms()) {
+                  return as->getId() < bs->getId();
+                }
+                return as->getOrigMol()->getNumAtoms() <
+                       bs->getOrigMol()->getNumAtoms();
+              });
+    size_t stride = d_synthons[i].size() / 40;
+    if (!stride) {
+      stride = 1;
+    }
+    // std::cout << d_synthons[i].size() << " stride " << stride << " :: ";
+    for (size_t j = 0; j < d_synthons[i].size(); j += stride) {
+      synthonNums[i].push_back(j);
+    }
+    numSynthons[i] = synthonNums[i].size();
+    // std::cout << " num " << numSynthons[i] << " ";
+    totSamples *= numSynthons[i];
+  }
+  // std::cout << std::endl;
+  // std::cout << "total samples: " << totSamples << std::endl;
+  details::Stepper stepper(numSynthons);
+  std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
+  while (stepper.d_currState[0] != numSynthons[0]) {
+    for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
+      theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
+    }
+    auto prod = buildProduct(theseSynthNums);
+    std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
+    ExplicitBitVect approxFP(*d_synthonFPs[0][theseSynthNums[0]]);
+    for (size_t j = 1; j < d_synthonFPs.size(); ++j) {
+      approxFP |= *d_synthonFPs[j][theseSynthNums[j]];
+    }
+    // addFP is what's in the productFP and not in approxFP
+    // and subtractFP is vice versa.  The former captures the bits of
+    // the molecule formed by the joining the fragments, the latter
+    // the bits connecting the dummy atoms.
+    std::unique_ptr<ExplicitBitVect> addFP(
+        new ExplicitBitVect(*prodFP & ~approxFP));
+    IntVect v;
+    addFP->getOnBits(v);
+    for (auto i : v) {
+      naddbitcounts[i]++;
+    }
+    std::unique_ptr<ExplicitBitVect> subtractFP(
+        new ExplicitBitVect(approxFP & ~(*prodFP)));
+    subtractFP->getOnBits(v);
+    for (auto i : v) {
+      nsubbitcounts[i]++;
+    }
+    stepper.step();
+  }
+  // std::cout << getId() << "  NEW add bits : ";
+  // for (size_t i = 0; i < naddbitcounts.size(); ++i) {
+  //   if (naddbitcounts[i] > int(totSamples * frac)) {
+  //     std::cout << i << " ";
+  //   }
+  // }
+  // std::cout << std::endl;
+  d_addFP = std::make_unique<ExplicitBitVect>(fpGen.getOptions()->d_fpSize);
+  for (size_t i = 0; i < naddbitcounts.size(); ++i) {
+    if (naddbitcounts[i] > int(totSamples * frac)) {
+      d_addFP->setBit(i);
+    }
+  }
+  // std::cout << getId() << "  NEW sub bits : ";
+  // for (size_t i = 0; i < nsubbitcounts.size(); ++i) {
+  //   if (nsubbitcounts[i] > int(totSamples * frac)) {
+  //     std::cout << i << " ";
+  //   }
+  // }
+  // std::cout << std::endl;
+  d_subtractFP =
+      std::make_unique<ExplicitBitVect>(fpGen.getOptions()->d_fpSize);
+  for (size_t i = 0; i < nsubbitcounts.size(); ++i) {
+    if (nsubbitcounts[i] > int(totSamples * frac)) {
+      d_subtractFP->setBit(i);
+    }
+  }
+  std::cout << getId() << "  NEW fps : " << d_addFP->getNumOnBits() << " and "
+            << d_subtractFP->getNumOnBits() << std::endl;
+#endif
+
+#if 0
+  d_addFP.reset();
+  d_subtractFP.reset();
   auto lastAddFP = std::make_unique<ExplicitBitVect>();
   auto lastsubtractFP = std::make_unique<ExplicitBitVect>();
+  std::vector<int> oaddbitcounts(2048, 0), osubbitcounts(2048, 0);
+
   std::unique_ptr<boost::mt19937> randGen;
   if (params.randomSeed == -1) {
     std::random_device rd;
@@ -477,7 +586,9 @@ void SynthonSet::buildAddAndSubtractFPs(
   }
   std::vector<size_t> synthNums(synthSels.size(), 0);
   size_t lastSameCount = 0;
+  size_t numDone = 0;
   for (size_t i = 0; i < maxTries; ++i) {
+    ++numDone;
     for (size_t j = 0; j < synthSels.size(); ++j) {
       synthNums[j] = synthSels[j](*randGen);
     }
@@ -487,29 +598,58 @@ void SynthonSet::buildAddAndSubtractFPs(
     for (size_t j = 1; j < d_synthonFPs.size(); ++j) {
       approxFP |= *d_synthonFPs[j][synthNums[j]];
     }
+
+    // addFP is what's in the productFP and not in approxFP
+    // and subtractFP is vice versa.  The former captures the bits of
+    // the molecule formed by the joining the fragments, the latter
+    // the bits connecting the dummy atoms.
+    std::unique_ptr<ExplicitBitVect> addFP(
+        new ExplicitBitVect(*prodFP & ~approxFP));
+    IntVect ov;
+    addFP->getOnBits(ov);
+    for (auto i : ov) {
+      oaddbitcounts[i]++;
+    }
+
     std::unique_ptr<ExplicitBitVect> subtractFP(
         new ExplicitBitVect(approxFP & ~(*prodFP)));
-
-    if (!d_addFP) {
-      d_addFP = std::move(prodFP);
-      d_subtractFP = std::move(subtractFP);
-      lastAddFP.reset(new ExplicitBitVect(*d_addFP));
-      lastsubtractFP.reset(new ExplicitBitVect(*d_subtractFP));
-    } else {
-      *d_addFP &= *prodFP;
-      *d_subtractFP &= *subtractFP;
-    }
-    if (*d_addFP == *lastAddFP && *d_subtractFP == *lastsubtractFP) {
-      ++lastSameCount;
-      if (lastSameCount == 20) {
-        // It has probably converged
-        break;
-      }
-    } else {
-      lastAddFP.reset(new ExplicitBitVect(*d_addFP));
-      lastsubtractFP.reset(new ExplicitBitVect(*d_subtractFP));
+    ov.clear();
+    subtractFP->getOnBits(ov);
+    for (auto i : ov) {
+      osubbitcounts[i]++;
     }
   }
+  std::cout << getId() << "  OLD add bits : ";
+  for (size_t i = 0; i < oaddbitcounts.size(); ++i) {
+    if (oaddbitcounts[i] > numDone / frac) {
+      std::cout << i << " ";
+    }
+  }
+  std::cout << std::endl;
+  d_addFP = std::make_unique<ExplicitBitVect>(fpGen.getOptions()->d_fpSize);
+  for (size_t i = 0; i < oaddbitcounts.size(); ++i) {
+    if (oaddbitcounts[i] > numDone / frac) {
+      d_addFP->setBit(i);
+    }
+  }
+
+  std::cout << getId() << "  OLD sub bits : ";
+  for (size_t i = 0; i < osubbitcounts.size(); ++i) {
+    if (osubbitcounts[i] > numDone / frac) {
+      std::cout << i << " ";
+    }
+  }
+  std::cout << std::endl;
+  d_subtractFP =
+      std::make_unique<ExplicitBitVect>(fpGen.getOptions()->d_fpSize);
+  for (size_t i = 0; i < osubbitcounts.size(); ++i) {
+    if (osubbitcounts[i] > numDone / frac) {
+      d_subtractFP->setBit(i);
+    }
+  }
+
+#endif
+
   // Take the complement of the subtract FP so it can be used directly
   *d_subtractFP = ~(*d_subtractFP);
 }
