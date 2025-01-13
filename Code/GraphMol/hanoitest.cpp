@@ -722,7 +722,7 @@ void test5() {
 void test6() {
   BOOST_LOG(rdInfoLog) << "testing canonicalization using the wrapper."
                        << std::endl;
-// canonicalization using the wrapper
+  // canonicalization using the wrapper
   {
     std::string smi = "FC1C(CC)CCC1CC";
     RWMol *m = SmilesToMol(smi);
@@ -1559,6 +1559,30 @@ void testGithub1567() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void testRingsAndDoubleBonds() {
+  BOOST_LOG(rdInfoLog)
+      << "testing some particular ugly para-stereochemistry examples."
+      << std::endl;
+  std::vector<std::string> smis = {
+      "C/C=C/C=C/C=C/C=C/C",  // "C/C=C1/C[C@H](O)C1",
+      "C/C=C1/CC[C@H](O)CC1"};
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+  for (const auto &smi : smis) {
+    SmilesParserParams ps;
+    ps.sanitize = false;
+    ps.removeHs = false;
+    std::unique_ptr<ROMol> mol(SmilesToMol(smi, ps));
+    TEST_ASSERT(mol);
+    mol->setProp(common_properties::_StereochemDone, 1);
+    mol->updatePropertyCache();
+    MolOps::setBondStereoFromDirections(*mol);
+    std::cerr << "   " << MolToSmiles(*mol) << std::endl;
+    _renumberTest(mol.get(), smi, 500);
+    std::cerr << "   " << MolToSmiles(*mol) << std::endl;
+  }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::enable_logs("rdApp.info");
@@ -1576,6 +1600,7 @@ int main() {
   test7();
   test8();
   testGithub1567();
+  testRingsAndDoubleBonds();
 
   return 0;
 }
