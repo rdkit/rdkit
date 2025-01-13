@@ -777,11 +777,8 @@ TEST_CASE("specified query matches unspecified atom") {
     CHECK(SubstructMatch(*m3, *q, ps).empty());
 
     ps.specifiedStereoQueryMatchesUnspecified = true;
-    std::cerr << "m1" << std::endl;
     CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
-    std::cerr << "m2" << std::endl;
     CHECK(SubstructMatch(*m2, *q, ps).size() == 1);
-    std::cerr << "m3" << std::endl;
     CHECK(SubstructMatch(*m3, *q, ps).empty());
   }
 }
