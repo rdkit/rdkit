@@ -51,7 +51,8 @@ SearchResults SynthonSpaceSearcher::search() {
   }
   std::vector<std::unique_ptr<ROMol>> results;
 
-  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits, d_params.maxNumFrags);
+  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits,
+                                          d_params.maxNumFrags);
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   TimePoint *endTime = nullptr;
@@ -98,6 +99,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
       return prod;
     }
     prod = reaction->buildProduct(synthNums);
+    prod->setProp<std::string>(common_properties::_Name, prodName);
 
     // Do a final check of the whole thing.  It can happen that the
     // fragments match synthons but the final product doesn't match.

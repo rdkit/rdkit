@@ -86,7 +86,14 @@ class SparseIntVect {
     return res;
   }
 
-  //! set the value at an index
+  //! Set the value at an index.  If val is 0, the underlying map holding the
+  //! data is altered (element idx is erased) such that if you are iterating
+  //! over the map the iterator is invalidated.
+  //! I.e. the code
+  //! for (auto &b : d_addFP->getNonzeroElements()) {
+  //!   d_addFP->setVal(b.first, 0);
+  //! }
+  //! will cause a crash on the 2nd iteration of the loop.
   void setVal(IndexType idx, int val) {
     if (!checkIndex(idx)) {
       throw IndexErrorException(static_cast<int>(idx));

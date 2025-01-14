@@ -284,7 +284,7 @@ TEST_CASE("FP Approx Similarity") {
   CHECK(results.getHitMolecules().size() == 138);
 
   // This is the actual number of hits achievable.
-  params.approxSimilarityAdjuster = 0.25;
+  params.approxSimilarityAdjuster = 0.5;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 914);
 }

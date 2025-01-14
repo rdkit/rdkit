@@ -50,13 +50,14 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions() const;
 
   const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
-  const std::unique_ptr<ExplicitBitVect> &getAddFP() const;
-  const std::unique_ptr<ExplicitBitVect> &getSubtractFP() const;
+  const std::unique_ptr<SparseIntVect<std::uint32_t>> &getAddFP() const;
+  const std::unique_ptr<SparseIntVect<std::uint32_t>> &getSubtractFP() const;
   const std::vector<int> &getNumConnectors() const;
   bool hasFingerprints() const;
   bool hasAddAndSubtractFPs() const;
 
-  const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
+  const std::vector<
+      std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>>> &
   getSynthonFPs() const;
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -129,8 +130,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // the synthonFPs, adding d_addFP and subtracting d_subtractFP
   // accounts (a bit) for the joins and the dummy atoms
   // respectively.
-  std::unique_ptr<ExplicitBitVect> d_addFP;
-  std::unique_ptr<ExplicitBitVect> d_subtractFP;
+  std::unique_ptr<SparseIntVect<std::uint32_t>> d_addFP;
+  std::unique_ptr<SparseIntVect<std::uint32_t>> d_subtractFP;
 
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
@@ -138,7 +139,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // The fingerprints for the synthons for use with a fingerprint similarity
   // search. They are not properties of the Synthons because they are not
   // generated directly from them, as explained in buildSynthonFingerprints.
-  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_synthonFPs;
+  std::vector<std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>>>
+      d_synthonFPs;
 
   // Tag each atom and bond in each synthon with its index and the synthon
   // set number it came from.
