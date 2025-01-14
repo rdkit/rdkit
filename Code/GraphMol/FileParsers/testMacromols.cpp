@@ -186,6 +186,8 @@ class ScsiMolTest {
 
     if (testToRun == "" || testToRun == "scsiTests") {
       std::list<ScsiTest> scsiTests{
+          ScsiTest("RNA3_Fixed.mol", true, 15, 14, 6, 107, 118, 105, 116),
+          ScsiTest("TestRNA2_fixed.mol", true, 15, 14, 5, 106, 117, 104, 115),
           ScsiTest("Mixed.mol", true, 14, 16, 5, 51, 54, 51, 54),
           ScsiTest("CrossLink.mol", true, 8, 8, 5, 47, 48, 45, 46),
           ScsiTest("cyclic.mol", true, 8, 9, 5, 45, 47, 45, 47),
