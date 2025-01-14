@@ -491,29 +491,6 @@ void testConstReturns() {
     TEST_ASSERT(nv == "foo");
   }
 
-#if 0
-  {
-    Dict d;
-    std::string v="foo";
-    d.setVal("foo",v);
-
-    double ls=0;
-    BOOST_LOG(rdErrorLog) << "copy" << std::endl;
-    for(int i=0;i<100000000;++i){
-      std::string nv=d.getVal<std::string>("foo");
-      ls+= nv.size();
-    }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
-    ls=0;
-    BOOST_LOG(rdErrorLog) << "ref" << std::endl;
-    for(int i=0;i<100000000;++i){
-      const std::string &nv=d.getVal<std::string>("foo");
-      ls+= nv.size();
-    }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
-    //std::string nv=d.getVal<std::string>("foo");
-  }
-#else
   {
     // int nreps=100000000;
     int nreps = 100000;
@@ -589,8 +566,6 @@ void testConstReturns() {
 
     // std::string nv=d.getVal<std::string>("foo");
   }
-
-#endif
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -726,7 +701,6 @@ int main() {
   RDLog::InitLogs();
   testGithub940();
 
-#if 1
   testRDAny();
   Dict d;
   INT_VECT fooV;
@@ -812,7 +786,6 @@ int main() {
 
   testStringVals();
   testVectToString();
-#endif
   testConstReturns();
   testUpdate();
   testCustomProps();

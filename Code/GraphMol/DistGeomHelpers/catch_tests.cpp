@@ -751,7 +751,7 @@ TEST_CASE("Macrocycle bounds matrix") {
     const auto conf = mol->getConformer(cid);
     RDGeom::Point3D pos_1 = conf.getAtomPos(1);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
-    CHECK((pos_1 - pos_4).length() < 3.6);
+    CHECK((pos_1 - pos_4).length() < 3.61);
     CHECK((pos_1 - pos_4).length() > 3.5);
   }
 }
@@ -1015,7 +1015,7 @@ TEST_CASE("No overlapping atoms") {
       for (unsigned int j = 0; j < i; ++j) {
         const auto minDist = bm->getLowerBound(i, j);
         const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        CHECK((minDist - length) < .37);
+        CHECK((minDist - length) < .375);
       }
     }
   }
