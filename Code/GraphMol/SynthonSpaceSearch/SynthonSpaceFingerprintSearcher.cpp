@@ -25,17 +25,16 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     getSpace().buildSynthonFingerprints(fpGen);
   }
   if (!getSpace().hasAddAndSubstractFingerprints()) {
-    getSpace().buildAddAndSubstractFingerprints(fpGen, params);
+    getSpace().buildAddAndSubstractFingerprints(fpGen);
   }
-  d_queryFP = std::unique_ptr<SparseIntVect<std::uint32_t>>(
-      d_fpGen.getCountFingerprint(query));
+  d_queryFP = std::unique_ptr<ExplicitBitVect>(d_fpGen.getFingerprint(query));
 }
 
 namespace {
 // Take the fragged mol fps and flag all those synthons that have a fragment as
 // a similarity match.
 std::vector<boost::dynamic_bitset<>> getHitSynthons(
-    const std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>> &fragFPs,
+    const std::vector<std::unique_ptr<ExplicitBitVect>> &fragFPs,
     const double similarityCutoff, const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
@@ -71,14 +70,14 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet) const {
   std::vector<SynthonSpaceHitSet> results;
-  std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>> fragFPs;
+  std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs;
   fragFPs.reserve(fragSet.size());
   for (auto &frag : fragSet) {
     // For the fingerprints, ring info is required.
     unsigned int otf;
     sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                 MolOps::SANITIZE_SYMMRINGS);
-    fragFPs.emplace_back(d_fpGen.getCountFingerprint(*frag));
+    fragFPs.emplace_back(d_fpGen.getFingerprint(*frag));
   }
 
   const auto connPatterns = details::getConnectorPatterns(fragSet);
@@ -158,77 +157,24 @@ bool SynthonSpaceFingerprintSearcher::quickVerify(
   // Make an approximate fingerprint by combining the FPs for
   // these synthons, adding in the addFP and taking out the
   // subtractFP.
-  // const auto &synthFPs = reaction->getSynthonFPs();
-  // ExplicitBitVect fullFP(*synthFPs[0][synthNums[0]]);
-  // for (unsigned int i = 1; i < synthNums.size(); ++i) {
-  //   fullFP |= *synthFPs[i][synthNums[i]];
-  // }
-  // fullFP |= *(reaction->getAddFP());
-  // // The subtract FP has already had its bits flipped, so just do a
-  // // straight AND.
-  // fullFP &= *(reaction->getSubtractFP());
-  //
-  // double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
-  // return approxSim >=
-  //        getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
-  // std::cout << reaction->getId() << "   approxFP : ";
-  // for (const auto &b : reaction->getAddFP()->getNonzeroElements()) {
-  //   std::cout << "(" << b.first << "," << b.second << ")";
-  // }
-  // std::cout << std::endl;
-  SparseIntVect<std::uint32_t> approxFP(*reaction->getAddFP());
-  // std::cout << reaction->getId() << "  addFP : ";
-  // for (const auto &b : approxFP.getNonzeroElements()) {
-  //   std::cout << "(" << b.first << "," << b.second << ")";
-  // }
-  // std::cout << std::endl;
+  const auto &synthFPs = reaction->getSynthonFPs();
+  ExplicitBitVect fullFP(*synthFPs[0][synthNums[0]]);
   for (unsigned int i = 1; i < synthNums.size(); ++i) {
-    approxFP += *reaction->getSynthonFPs()[i][synthNums[i]];
+    fullFP |= *synthFPs[i][synthNums[i]];
   }
-  // std::cout << reaction->getId() << "   approxFP : ";
-  // for (const auto &b : approxFP.getNonzeroElements()) {
-  //   std::cout << "(" << b.first << "," << b.second << ")";
-  // }
-  // std::cout << std::endl;
-  // std::cout << std::endl;
-  // for (unsigned int i = 1; i < d_fpGen.getOptions()->d_fpSize; ++i) {
-  //   if (approxFP.getVal(i) < 0)
-  //     std::cout << i << " of " << approxFP.getNonzeroElements().size()
-  //               << " was " << approxFP.getVal(i) << std::endl;
-  //   {
-  //     approxFP.setVal(i, 0);
-  //   }
-  // }
-  ExplicitBitVect aqfp(d_fpGen.getOptions()->d_fpSize);
-  for (const auto &nzb : d_queryFP->getNonzeroElements()) {
-    aqfp.setBit(nzb.first);
-  }
-  ExplicitBitVect ahfp(d_fpGen.getOptions()->d_fpSize);
-  for (const auto &nzb : approxFP.getNonzeroElements()) {
-    if (nzb.second > 0) {
-      ahfp.setBit(nzb.first);
-    }
-  }
-  double approxSim = TanimotoSimilarity(aqfp, ahfp);
+  fullFP |= *(reaction->getAddFP());
+  // The subtract FP has already had its bits flipped, so just do a
+  // straight AND.
+  fullFP &= *(reaction->getSubtractFP());
+
+  double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
   return approxSim >=
          getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }
 
 bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
-  const std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
-      d_fpGen.getCountFingerprint(hit));
-  ExplicitBitVect aqfp(d_fpGen.getOptions()->d_fpSize);
-  for (const auto &nzb : d_queryFP->getNonzeroElements()) {
-    aqfp.setBit(nzb.first);
-  }
-  ExplicitBitVect ahfp(d_fpGen.getOptions()->d_fpSize);
-  for (const auto &nzb : fp->getNonzeroElements()) {
-    ahfp.setBit(nzb.first);
-  }
-  // std::cout << hit.getProp<std::string>(common_properties::_Name) << " : "
-  //           << TanimotoSimilarity(*fp, *d_queryFP) << " : "
-  //           << TanimotoSimilarity(ahfp, aqfp) << std::endl;
-  if (const auto sim = TanimotoSimilarity(ahfp, aqfp);
+  const std::unique_ptr<ExplicitBitVect> fp(d_fpGen.getFingerprint(hit));
+  if (const auto sim = TanimotoSimilarity(*fp, *d_queryFP);
       sim >= getParams().similarityCutoff) {
     hit.setProp<double>("Similarity", sim);
     return true;

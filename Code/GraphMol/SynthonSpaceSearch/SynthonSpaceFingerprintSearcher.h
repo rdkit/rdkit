@@ -27,7 +27,7 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
       const SynthonSpaceSearchParams &params, SynthonSpace &space);
 
  private:
-  std::unique_ptr<SparseIntVect<std::uint32_t>> d_queryFP;
+  std::unique_ptr<ExplicitBitVect> d_queryFP;
   const FingerprintGenerator<std::uint64_t> &d_fpGen;
 
   std::vector<SynthonSpaceHitSet> searchFragSet(

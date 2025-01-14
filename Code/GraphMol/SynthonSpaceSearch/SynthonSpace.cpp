@@ -296,10 +296,9 @@ bool SynthonSpace::hasAddAndSubstractFingerprints() const {
 }
 
 void SynthonSpace::buildAddAndSubstractFingerprints(
-    const FingerprintGenerator<std::uint64_t> &fpGen,
-    const SynthonSpaceSearchParams &params) {
+    const FingerprintGenerator<std::uint64_t> &fpGen) {
   for (const auto &[id, synthSet] : d_reactions) {
-    synthSet->buildAddAndSubtractFPs(fpGen, params);
+    synthSet->buildAddAndSubtractFPs(fpGen);
   }
 }
 

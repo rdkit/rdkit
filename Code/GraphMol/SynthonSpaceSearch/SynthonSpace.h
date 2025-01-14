@@ -231,8 +231,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // Create the add and substract fingerprints for the SynthonSets.
   // Will be done by the fingerprint search if not done ahead of time.
   void buildAddAndSubstractFingerprints(
-      const FingerprintGenerator<std::uint64_t> &fpGen,
-      const SynthonSpaceSearchParams &params);
+      const FingerprintGenerator<std::uint64_t> &fpGen);
 
  private:
   std::string d_fileName;
