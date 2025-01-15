@@ -11,6 +11,7 @@
 #ifndef RDKIT_SYNTHONSPACESEARCHDETAILS_H
 #define RDKIT_SYNTHONSPACESEARCHDETAILS_H
 
+#include <chrono>
 #include <vector>
 
 #include <RDGeneral/export.h>

@@ -11,6 +11,7 @@
 #ifndef CONTROLCHANDLER_H
 #define CONTROLCHANDLER_H
 
+#include <atomic>
 #include <csignal>
 
 #include <RDGeneral/export.h>
@@ -50,7 +51,7 @@ class RDKIT_RDGENERAL_EXPORT ControlCHandler {
   }
 
  private:
-  inline static volatile std::atomic<bool> d_gotSignal{false};
+  inline static std::atomic<bool> d_gotSignal{false};
   void (*d_prev_handler)(int);
 };
 }  // namespace RDKit

@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include "SynthonSpace.h"
-
 #include <algorithm>
 #include <list>
 #include <regex>
@@ -22,6 +20,7 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <RDGeneral/ControlCHandler.h>
 
