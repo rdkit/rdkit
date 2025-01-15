@@ -8,7 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include <csignal>
 #include <random>
 #include <boost/random/discrete_distribution.hpp>
 
@@ -21,15 +20,7 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
-namespace {
-bool checkTimeOut(const TimePoint *endTime) {
-  if (endTime != nullptr && Clock::now() > *endTime) {
-    BOOST_LOG(rdWarningLog) << "Timed out.\n";
-    return true;
-  }
-  return false;
-}
-}  // namespace
+namespace {}  // namespace
 
 SynthonSpaceSearcher::SynthonSpaceSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
@@ -37,8 +28,7 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
     : d_query(query), d_params(params), d_space(space) {}
 
 SearchResults SynthonSpaceSearcher::search() {
-  SignalHandler signalHandler;
-  // signalHandler.setupSignalHandler();
+  ControlCHandler signalHandler;
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
         "Random sample is incompatible with maxHits of -1.");
@@ -59,9 +49,6 @@ SearchResults SynthonSpaceSearcher::search() {
   }
   std::vector<std::unique_ptr<ROMol>> results;
 
-  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
-  std::vector<SynthonSpaceHitSet> allHits;
-  size_t totHits = 0;
   TimePoint *endTime = nullptr;
   TimePoint endTimePt;
   if (d_params.timeOut > 0) {
@@ -69,8 +56,17 @@ SearchResults SynthonSpaceSearcher::search() {
     endTime = &endTimePt;
   }
   bool timedOut = false;
+  bool cancelled = false;
+  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits,
+                                          endTime, timedOut, cancelled);
+  if (timedOut || cancelled) {
+    return SearchResults{std::move(results), 0UL, false, cancelled};
+  }
+
+  std::vector<SynthonSpaceHitSet> allHits;
+  size_t totHits = 0;
   for (auto &fragSet : fragments) {
-    timedOut = checkTimeOut(endTime);
+    timedOut = details::checkTimeOut(endTime);
     if (timedOut) {
       break;
     }
@@ -145,7 +141,7 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    const TimePoint *endTime, bool &timedOut, SignalHandler &signalHandler,
+    const TimePoint *endTime, bool &timedOut, ControlCHandler &signalHandler,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -180,7 +176,7 @@ void SynthonSpaceSearcher::buildHits(
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
     std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, SignalHandler &signalHandler,
+    bool &timedOut, ControlCHandler &signalHandler,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
@@ -217,7 +213,7 @@ void SynthonSpaceSearcher::buildAllHits(
       --numTries;
       if (!numTries) {
         numTries = 100;
-        timedOut = checkTimeOut(endTime);
+        timedOut = details::checkTimeOut(endTime);
         if (timedOut) {
           break;
         }
@@ -294,7 +290,7 @@ struct RandomHitSelector {
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
     std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, SignalHandler &signalHandler,
+    bool &timedOut, ControlCHandler &signalHandler,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -317,7 +313,7 @@ void SynthonSpaceSearcher::buildRandomHits(
     --numTries;
     if (!numTries) {
       numTries = 100;
-      timedOut = checkTimeOut(endTime);
+      timedOut = details::checkTimeOut(endTime);
       if (timedOut) {
         break;
       }

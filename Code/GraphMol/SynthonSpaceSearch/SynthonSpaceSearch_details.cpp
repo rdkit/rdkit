@@ -23,8 +23,17 @@
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <RDGeneral/ControlCHandler.h>
 
 namespace RDKit::SynthonSpaceSearch::details {
+
+bool checkTimeOut(const TimePoint *endTime) {
+  if (endTime != nullptr && Clock::now() > *endTime) {
+    BOOST_LOG(rdWarningLog) << "Timed out.\n";
+    return true;
+  }
+  return false;
+}
 
 // get a vector of vectors of unsigned ints that are all combinations of
 // M items chosen from N e.g. all combinations of 3 bonds from a
@@ -115,7 +124,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 }
 
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
-    const ROMol &query, unsigned int maxBondSplits) {
+    const ROMol &query, unsigned int maxBondSplits, TimePoint *endTime,
+    bool &timedOut, bool &cancelled) {
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
   }
@@ -139,14 +149,35 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   fragments.emplace_back();
   fragments.back().emplace_back(new ROMol(query));
 
+  ControlCHandler signalHandler;
+  cancelled = false;
+  timedOut = false;
+  std::uint64_t numTries = 100;
+
   // Now do the splits.
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
+    if (timedOut || cancelled) {
+      break;
+    }
     auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
     for (unsigned int j = 1; j <= i; ++j) {
       dummyLabels.emplace_back(j, j);
     }
     for (auto &c : combs) {
+      if (signalHandler.getGotSignal()) {
+        cancelled = true;
+        break;
+      }
+      --numTries;
+      if (!numTries) {
+        numTries = 100;
+        timedOut = details::checkTimeOut(endTime);
+        if (timedOut) {
+          break;
+        }
+      }
+
       // don't break just 1 ring bond, as it can't create 2 fragments.  It
       // could be better than this, by checking that any number of ring
       // bonds are all in the same ring system.  Maybe look at that

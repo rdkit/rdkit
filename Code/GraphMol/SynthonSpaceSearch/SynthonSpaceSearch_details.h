@@ -15,9 +15,14 @@
 
 #include <RDGeneral/export.h>
 
+using Clock = std::chrono::steady_clock;
+using TimePoint = std::chrono::time_point<Clock>;
+
 namespace RDKit {
 class ROMol;
 namespace SynthonSpaceSearch::details {
+
+RDKIT_SYNTHONSPACESEARCH_EXPORT bool checkTimeOut(const TimePoint *endTime);
 
 // Find all combinations of M things selected from N.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>>
@@ -37,7 +42,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void fixAromaticRingSplits(
 // be altered.  Also, you can't split a molecule on 3 bonds if it only contains
 // 2.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
-splitMolecule(const ROMol &query, unsigned int maxBondSplits);
+splitMolecule(const ROMol &query, unsigned int maxBondSplits,
+              TimePoint *endTime, bool &timedOut, bool &cancelled);
 // Counts the number of [1*], [2*]...[4*] in the string.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &frag);
 

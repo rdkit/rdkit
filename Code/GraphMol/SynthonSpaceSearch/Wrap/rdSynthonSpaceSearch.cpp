@@ -73,18 +73,18 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
+  SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
     const FingerprintGenerator<std::uint64_t> *fpGen =
         python::extract<FingerprintGenerator<std::uint64_t> *>(
             fingerprintGenerator);
-    auto results = self.fingerprintSearch(query, *fpGen, params);
-    if (results.getCancelled()) {
-      std::cout << "cancelled" << std::endl;
-      // throw_runtime_error("fingerprintSearch cancelled");
-    }
-    return results;
+    results = self.fingerprintSearch(query, *fpGen, params);
   }
+  if (results.getCancelled()) {
+    throw_runtime_error("FingerprintSearch cancelled");
+  }
+  return results;
 }
 
 void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
