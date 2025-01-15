@@ -211,3 +211,11 @@ TEST_CASE("getMolFormula") {
     CHECK(formula == "C2[13C]2H10[2H]BO2");
   }
 }
+
+TEST_CASE(
+    "github #8121: symmetric ring finding not returning correct results for molecules with fragments") {
+  auto twoCubanes = "C12C3C4C1C5C2C3C45.C12C3C4C1C5C2C3C45"_smiles;
+  REQUIRE(twoCubanes);
+  auto rinfo = twoCubanes->getRingInfo();
+  CHECK(rinfo->numRings() == 12);
+}
