@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
+
 #include <DataStructs/BitOps.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -36,6 +38,9 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
   std::vector<std::vector<size_t>> retSynthons;
+  std::vector<std::vector<std::tuple<size_t, double>>> fragSims(
+      reaction->getSynthons().size());
+
   synthonsToUse.reserve(reaction->getSynthons().size());
   for (const auto &synthonSet : reaction->getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
@@ -47,13 +52,13 @@ std::vector<std::vector<size_t>> getHitSynthons(
       if (const auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
           sim >= similarityCutoff) {
         synthonsToUse[synthonOrder[i]][j] = true;
+        fragSims[synthonOrder[i]].emplace_back(j, sim);
         fragMatched = true;
       }
     }
     if (!fragMatched) {
       // No synthons matched this fragment, so the whole fragment set is a
       // bust.
-      synthonsToUse.clear();
       return retSynthons;
     }
   }
@@ -62,6 +67,35 @@ std::vector<std::vector<size_t>> getHitSynthons(
   // fewer fragments than synthons.
   details::expandBitSet(synthonsToUse);
   details::bitSetsToVectors(synthonsToUse, retSynthons);
+
+  // Now order the synthons in descending order of their similarity to
+  // the corresponding fragFP.
+  for (size_t i = 0; i < fragFPs.size(); i++) {
+    if (fragSims[i].empty()) {
+      // This one will have been filled in by expandBitSet so we need to use
+      // all the synthons and a dummy similarity.
+      fragSims[i].resize(synthonsToUse[i].size());
+      for (size_t j = 0; j < fragSims[i].size(); j++) {
+        std::get<0>(fragSims[i][j]) = j;
+      }
+    } else {
+      std::sort(fragSims[i].begin(), fragSims[i].end(),
+                [](const auto &a, const auto &b) {
+                  return std::get<1>(a) > std::get<1>(b);
+                });
+    }
+    // std::cout << i << " : ";
+    // for (const auto &sim : fragSims[i]) {
+    //   std::cout << "(" << std::get<0>(sim) << " " << std::get<1>(sim) << ")
+    //   ";
+    // }
+    // std::cout << std::endl;
+    retSynthons[i].clear();
+    std::transform(
+        fragSims[i].begin(), fragSims[i].end(),
+        std::back_inserter(retSynthons[i]),
+        [](const std::pair<size_t, double> &fs) { return std::get<0>(fs); });
+  }
   return retSynthons;
 }
 }  // namespace
