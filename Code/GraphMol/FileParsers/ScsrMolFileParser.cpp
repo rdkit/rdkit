@@ -520,10 +520,6 @@ unsigned int getNewAtomForBond(
         return UINT_MAX;
       }
       return originAtomMap.at(OriginAtomDef(atomIdx, attachMapIt->second));
-      // return originAtomMap.at(OriginAtomDef(
-      //     atomIdx,
-      //     attachMap.at(OriginAtomConnection(atomIdx, attchOrd.getLabel()))));
-      break;
     }
   }
 
