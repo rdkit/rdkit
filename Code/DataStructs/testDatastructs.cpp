@@ -19,6 +19,7 @@
 #include "base64.h"
 #include <cmath>
 #include "DiscreteValueVect.h"
+#include "RealValueVect.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
@@ -1450,6 +1451,117 @@ void test17Github3994() {
   TEST_ASSERT(siv1 == siv2);
 }
 
+void test14RealVect() {
+  RealValueVect vect1(30);
+  unsigned int i;
+  for (i = 0; i < 15; ++i) {
+    vect1.setVal(2 * i, 1.0);
+  }
+
+  TEST_ASSERT(vect1.getLength() == 30);
+  TEST_ASSERT(feq(vect1.getTotalVal(), 15.0));
+  for (i = 0; i < vect1.getLength(); ++i) {
+    TEST_ASSERT(feq(vect1.getVal(i), (i + 1) % 2));
+  }
+
+  RealValueVect vect2(30);
+  for (i = 0; i < vect2.getLength(); ++i) {
+    vect2.setVal(i, double(1.0 / (i + 1.0)));
+  }
+
+  TEST_ASSERT(vect2.getLength() == 30);
+  for (i = 0; i < vect2.getLength(); ++i) {
+    TEST_ASSERT(feq(vect2.getVal(i), double(1.0 / (i + 1.0))));
+  }
+
+  // test copy constructor and operator[]
+  RealValueVect vect3(vect2);
+  TEST_ASSERT(vect3.getLength() == 30);
+  for (i = 0; i < vect3.getLength(); ++i) {
+    TEST_ASSERT(feq(vect3[i], double(1.0 / (i + 1.0))));
+  }
+
+  double Pi = 3.141592;
+  RealValueVect vect4(60, Pi);
+  TEST_ASSERT(feq(vect4.getTotalVal(), 60 * Pi));
+}
+
+void test15RealVectDists() {
+  RealValueVect v1(30);
+  RealValueVect v2(30);
+  unsigned int i;
+  for (i = 0; i < 15; ++i) {
+    v1.setVal(2 * i, 1.0);
+    v2.setVal(2 * i, 1.0);
+  }
+  TEST_ASSERT(feq(computeL1Norm(v1, v2), 0));
+  for (i = 0; i < 30; ++i) {
+    v2.setVal(i, i % 2);
+  }
+
+  TEST_ASSERT(feq(computeL1Norm(v1, v2), 30.0));
+
+  for (i = 0; i < 30; ++i) {
+    if (i % 3 == 0) {
+      v2.setVal(i, 1.0);
+    } else {
+      v2.setVal(i, 0.0);
+    }
+  }
+
+  TEST_ASSERT(feq(computeL1Norm(v1, v2), 15.0));
+
+  for (i = 0; i < 30; ++i) {
+    v1.setVal(i, 0.0);
+    v2.setVal(i, i / 10.0);
+  }
+
+  TEST_ASSERT(feq(computeL1Norm(v1, v2), 43.5))
+}
+
+void test16RealVectPickles() {
+  RealValueVect v1(30);
+  unsigned int i;
+  for (i = 0; i < 15; ++i) {
+    v1.setVal(2 * i, 1.1);
+  }
+  RealValueVect v2(v1.toString());
+  TEST_ASSERT(feq(computeL1Norm(v1, v2), 0.0));
+}
+
+void test17RealVectOps() {
+  RealValueVect vect1(8);
+  for (unsigned int i = 0; i < 4; ++i) {
+    vect1.setVal(2 * i, 2.1);
+  }
+  TEST_ASSERT(vect1.getLength() == 8);
+  TEST_ASSERT(feq(vect1.getTotalVal(), 8.4));
+
+  RealValueVect vect2(8);
+  for (unsigned int i = 0; i < 4; ++i) {
+    vect2.setVal(2 * i + 1, 2.2);
+    vect2.setVal(2 * i, 1.1);
+  }
+  TEST_ASSERT(feq(vect2.getTotalVal(), 13.2));
+
+  RealValueVect vect3 = vect1 & vect2;
+  TEST_ASSERT(vect3.getLength() == 8);
+  TEST_ASSERT(feq(vect3.getTotalVal(), 4.4));
+
+  RealValueVect vect4 = vect1 | vect2;
+  TEST_ASSERT(vect4.getLength() == 8);
+  TEST_ASSERT(feq(vect4.getTotalVal(), 17.2));
+
+  RealValueVect vect5 = vect1 + vect2;
+  TEST_ASSERT(vect5.getLength() == 8);
+  TEST_ASSERT(feq(vect5.getTotalVal(), 21.6));
+
+  vect5 = vect1 - vect2;
+  TEST_ASSERT(feq(vect5.getTotalVal(), -4.8));
+  vect5 = vect2 - vect1;
+  TEST_ASSERT(feq(vect5.getTotalVal(), 4.8));
+}
+
 int main() {
   RDLog::InitLogs();
   boost::logging::enable_logs("rdApp.info");
@@ -1561,5 +1673,21 @@ int main() {
                        << std::endl;
   test17Github3994();
 
+  BOOST_LOG(rdInfoLog)
+      << " Test RealValue Vectors 1: Constructors and Accessing Values -------------------------------"
+      << std::endl;
+  test14RealVect();
+  BOOST_LOG(rdInfoLog)
+      << " Test RealValue Vectors 2: L1Norm -------------------------------"
+      << std::endl;
+  test15RealVectDists();
+  BOOST_LOG(rdInfoLog)
+      << " Test RealValue Vectors 3: Pickles -------------------------------"
+      << std::endl;
+  test16RealVectPickles();
+  BOOST_LOG(rdInfoLog)
+      << " Test RealValue Vectors 4: Vector Operations  -------------------------------"
+      << std::endl;
+  test17RealVectOps();
   return 0;
 }

@@ -175,6 +175,84 @@ class MolAtropTest {
     return;
   }
 
+  void testAromAtropMolFile(const MolTest *molFileTest) {
+    BOOST_LOG(rdInfoLog) << "testing aromtizing mol files with atropisomers"
+                         << std::endl;
+
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase +
+                        "/Code/GraphMol/FileParsers/test_data/atropisomers/" +
+                        molFileTest->fileName;
+
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+
+    std::unique_ptr<RWMol> mol =
+        std::unique_ptr<RWMol>(MolFileToMol(fName, false, false, false));
+
+    TEST_ASSERT(mol->getNumAtoms() == molFileTest->atomCount)
+    TEST_ASSERT(mol->getNumBonds() == molFileTest->bondCount)
+
+    testAromAtropMol(mol.get(), molFileTest->expectedResult, fName);
+  }
+
+  void testAromAtropMol(RWMol *mol, bool expectedResult, std::string fName) {
+    try {
+      RDKit::Chirality::removeNonExplicit3DChirality(*mol);
+
+      auto sanitizeOps =
+          MolOps::SANITIZE_SETAROMATICITY + MolOps::SANITIZE_CLEANUPCHIRALITY +
+          MolOps::SANITIZE_SETHYBRIDIZATION + MolOps::SANITIZE_SETCONJUGATION;
+
+      unsigned int operationThatFailed = 0;
+      RDKit::MolOps::sanitizeMol(*mol, operationThatFailed, sanitizeOps);
+      for (const auto &atom : mol->atoms()) {
+        if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+          BOOST_LOG(rdInfoLog) << "atom with stereo" << std::endl;
+        }
+      }
+      for (const auto &bond : mol->bonds()) {
+        if (bond->getBondDir() != Bond::BondDir::NONE) {
+          BOOST_LOG(rdInfoLog) << "bond with wedging" << std::endl;
+        }
+      }
+      {
+        SmilesWriteParams ps;
+        ps.canonical = true;
+        ps.doKekule = false;
+        ps.allBondsExplicit = false;
+        ps.allHsExplicit = false;
+        ps.doIsomericSmiles = true;
+        ps.doKekule = false;
+        ps.doRandom = false;
+        ps.rootedAtAtom = -1;
+
+        unsigned int flags = SmilesWrite::CXSmilesFields::CX_COORDS |
+                             SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES |
+                             SmilesWrite::CXSmilesFields::CX_ATOM_PROPS |
+                             SmilesWrite::CXSmilesFields::CX_BOND_CFG |
+                             SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO;
+
+        std::string smilesOut =
+            MolToCXSmiles(*mol, ps, flags, RestoreBondDirOptionClear);
+        std::string expectedFileName = fName + ".expectedArom.cxsmi";
+
+        generateNewExpectedFilesIfSoSpecified(fName + ".NEWArom.cxsmi",
+                                              smilesOut);
+
+        TEST_ASSERT(GetExpectedValue(fName + ".expectedArom.cxsmi") ==
+                    smilesOut);
+      }
+
+      BOOST_LOG(rdInfoLog) << "done" << std::endl;
+    } catch (const std::exception &e) {
+      if (expectedResult != false) {
+        throw;
+      }
+      return;
+    }
+    TEST_ASSERT(expectedResult == true);
+  }
+
   void testKekuleWedgeError(RWMol *mol, std::string expectedSmi,
                             bool expectedResult, unsigned int expectedAtomCount,
                             unsigned int expectedBondCount) {
@@ -378,6 +456,20 @@ class MolAtropTest {
         BOOST_LOG(rdInfoLog) << "Test: " << sdfTest.fileName << std::endl;
 
         testMolFiles(&sdfTest);
+      }
+    }
+
+    if (testToRun == "" || testToRun == "AromAtropMol") {
+      std::list<MolTest> sdfTests{
+          MolTest("BMS-986142_atrop1.sdf", true, 42, 47),
+          MolTest("BMS-986142_3d_chiral.sdf", true, 72, 77),
+          MolTest("BMS-986142_3d.sdf", true, 72, 77),
+      };
+
+      for (auto sdfTest : sdfTests) {
+        BOOST_LOG(rdInfoLog) << "Test: " << sdfTest.fileName << std::endl;
+
+        testAromAtropMolFile(&sdfTest);
       }
     }
 

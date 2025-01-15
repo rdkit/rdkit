@@ -246,7 +246,7 @@ class JSMolList {
 
 namespace RDKit {
 namespace MinimalLib {
-struct LogHandle;
+class LogHandle;
 }
 }  // namespace RDKit
 
@@ -347,8 +347,8 @@ std::string version();
 void prefer_coordgen(bool prefer);
 bool use_legacy_stereo_perception(bool value);
 bool allow_non_tetrahedral_chirality(bool value);
-void enable_logging();
-void disable_logging();
+bool enable_logging(const std::string &logName);
+bool disable_logging(const std::string &logName);
 JSLog *set_log_tee(const std::string &log_name);
 JSLog *set_log_capture(const std::string &log_name);
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS

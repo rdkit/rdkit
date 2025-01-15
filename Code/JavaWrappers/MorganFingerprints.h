@@ -14,8 +14,8 @@ RDKit::SparseIntVect<std::uint32_t> *getFeatureFingerprint(
   RDKit::MorganFingerprints::getFeatureInvariants(mol, *invars);
   RDKit::SparseIntVect<std::uint32_t> *res =
       RDKit::MorganFingerprints::getFingerprint(
-          mol, static_cast<unsigned int>(radius), invars, 0, useChirality,
-          useBondTypes, useCounts, false, 0);
+          mol, static_cast<unsigned int>(radius), invars, nullptr, useChirality,
+          useBondTypes, useCounts, false, nullptr);
   delete invars;
   return res;
 }
