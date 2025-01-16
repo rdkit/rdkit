@@ -22,6 +22,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <RDGeneral/export.h>
 #include <RDGeneral/ControlCHandler.h>
 
 namespace RDKit::SynthonSpaceSearch::details {
