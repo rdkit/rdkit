@@ -851,16 +851,10 @@ struct mol_wrapper {
     - a main molecule\n\n\
     - a set of template molcules to define the atoms in the main molecule\n";
 
-    python::class_<RDKit::SCSRMol, SCSRMOL_SPTR, boost::noncopyable>(
-        "SCSRMol", SCSRmolClassDoc.c_str(),
-        python::init<>(python::args("self"), "Constructor, takes no arguments"))
+    python::class_<RDKit::SCSRMol>("SCSRMol", SCSRmolClassDoc.c_str())
 
         .def(python::init<const RDKit::SCSRMol &>(
             (python::arg("self"), python::arg("scsr"))))
-        .def("__copy__", &generic__copy__<RDKit::SCSRMol>, python::args("self"))
-        .def("__deepcopy__", &generic__deepcopy__<RDKit::SCSRMol>,
-             python::args("self", "memo"))
-
         .def("GetNumTemplates", getTemplateCount, ((python::arg("self"))),
              "Returns the number of tempaltes in the SCSR mol.\n\n")
 

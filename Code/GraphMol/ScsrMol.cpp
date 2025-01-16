@@ -16,12 +16,12 @@
 #include <RDGeneral/FileParseException.h>
 
 namespace RDKit {
-SCSRMol::SCSRMol() { mol = std::unique_ptr<ROMol>(new RWMol()); }
+SCSRMol::SCSRMol() { p_mol = std::unique_ptr<ROMol>(new RWMol()); }
 
 SCSRMol::SCSRMol(const SCSRMol &other) {
-  mol = std::unique_ptr<ROMol>(other.mol.get());
-  for (auto &oneTemplate : other.templates) {
-    templates.push_back(std::make_unique<RWMol>(*oneTemplate));
+  p_mol = std::unique_ptr<ROMol>(other.p_mol.get());
+  for (auto &oneTemplate : other.p_templates) {
+    p_templates.push_back(std::make_unique<RWMol>(*oneTemplate));
   }
 }
 SCSRMol &SCSRMol::operator=(const SCSRMol &) {
@@ -29,15 +29,15 @@ SCSRMol &SCSRMol::operator=(const SCSRMol &) {
 };
 
 SCSRMol::SCSRMol(SCSRMol &&other) noexcept {
-  mol = std::move(other.mol);
-  for (auto &oneTemplate : other.templates) {
-    templates.push_back(std::move(oneTemplate));
+  p_mol = std::move(other.p_mol);
+  for (auto &oneTemplate : other.p_templates) {
+    p_templates.push_back(std::move(oneTemplate));
   }
 }
 SCSRMol &SCSRMol::operator=(SCSRMol &&other) noexcept {
-  mol = std::move(other.mol);
-  for (auto &oneTemplate : other.templates) {
-    templates.push_back(std::move(oneTemplate));
+  p_mol = std::move(other.p_mol);
+  for (auto &oneTemplate : other.p_templates) {
+    p_templates.push_back(std::move(oneTemplate));
   }
   return *this;
 }

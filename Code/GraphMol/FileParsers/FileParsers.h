@@ -56,7 +56,7 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
 
 struct RDKIT_FILEPARSERS_EXPORT MolFromScsrParams {
   bool includeLeavingGroups =
-      true; /* when true, leaving groups on atoms that are not exo-bonded are
+      true; /**< when true, leaving groups on atoms that are not exo-bonded are
                 retained.  When false, no leaving groups are retained */
 };
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolDataStream(
@@ -69,18 +69,19 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolFile(
     const std::string &fName,
     const MolFileParserParams &params = MolFileParserParams());
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrDataStream(
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol>
+SCSRMolFromScsrDataStream(
     std::istream &inStream, unsigned int &line,
     const MolFileParserParams &params = MolFileParserParams());
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrBlock(
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrBlock(
     const std::string &molBlock,
     const MolFileParserParams &params = MolFileParserParams());
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrFile(
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrFile(
     const std::string &fName,
     const MolFileParserParams &params = MolFileParserParams());
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromScsr(
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromSCSRMol(
     const RDKit::SCSRMol &scsrMol,
-    const MolFromScsrParams &molFromScsrParams = MolFromScsrParams());
+    const MolFromScsrParams &params = MolFromScsrParams());
 
 }  // namespace FileParsers
 }  // namespace v2

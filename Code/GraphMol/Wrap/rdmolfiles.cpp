@@ -181,7 +181,7 @@ RDKit::SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    scsrMol = ScsrFromScsrDataStream(inStream, line, params).release();
+    scsrMol = SCSRMolFromScsrDataStream(inStream, line, params).release();
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -197,7 +197,7 @@ RDKit::SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    scsrMol = ScsrFromScsrFile(molFilename, params).release();
+    scsrMol = SCSRMolFromScsrFile(molFilename, params).release();
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -212,7 +212,7 @@ ROMol *ScsrToMol(const RDKit::SCSRMol &scsrMol,
                  RDKit::v2::FileParsers::MolFromScsrParams &molFromScsrParams) {
   ROMol *mol = nullptr;
   try {
-    mol = RDKit::v2::FileParsers::MolFromScsr(scsrMol, molFromScsrParams)
+    mol = RDKit::v2::FileParsers::MolFromSCSRMol(scsrMol, molFromScsrParams)
               .release();
 
   } catch (...) {

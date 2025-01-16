@@ -29,8 +29,8 @@ namespace RDKit {
 
 class RDKIT_GRAPHMOL_EXPORT SCSRMol {
  private:
-  std::unique_ptr<ROMol> mol;
-  std::vector<std::unique_ptr<ROMol>> templates;
+  std::unique_ptr<ROMol> p_mol;
+  std::vector<std::unique_ptr<ROMol>> p_templates;
 
  public:
   SCSRMol();
@@ -39,24 +39,21 @@ class RDKIT_GRAPHMOL_EXPORT SCSRMol {
   SCSRMol(SCSRMol &&other) noexcept;
   SCSRMol &operator=(SCSRMol &&other) noexcept;
 
-  virtual ~SCSRMol() {}
-
-  void addTemplate(ROMol *templateMol) {
-    templates.push_back(std::unique_ptr<ROMol>(templateMol));
+  void addTemplate(std::unique_ptr<ROMol> templateMol) {
+    PRECONDITION(templateMol, "bad template molecule");
+    p_templates.push_back(std::move(templateMol));
   }
 
-  unsigned int getTemplateCount() const { return templates.size(); }
+  unsigned int getTemplateCount() const { return p_templates.size(); }
 
   const ROMol *getTemplate(unsigned int index) const {
-    return templates[index].get();
+    return p_templates[index].get();
   };
 
-  const ROMol *getMol() const { return mol.get(); }
+  const ROMol *getMol() const { return p_mol.get(); }
 
-  ROMol *getMol() { return mol.get(); }
+  ROMol *getMol() { return p_mol.get(); }
 };
-
-typedef boost::shared_ptr<SCSRMol> SCSRMOL_SPTR;
 
 }  // namespace RDKit
 #endif

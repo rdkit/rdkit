@@ -27,7 +27,7 @@ namespace FileParsers {
 //  Read a SCVSR molecule from a stream
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrDataStream(
+std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::string tempStr;
@@ -262,7 +262,7 @@ std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrDataStream(
       throw FileParseException(errout.str());
     }
 
-    res->addTemplate(new ROMol());
+    res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
     auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
 
     templateMol->setProp(common_properties::natReplace, natReplace);
@@ -429,12 +429,12 @@ std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrDataStream(
 //  Read a molecule from a string
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrBlock(
+std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
-  return ScsrFromScsrDataStream(inStream, line, params);
+  return SCSRMolFromScsrDataStream(inStream, line, params);
 }
 
 //------------------------------------------------
@@ -442,7 +442,7 @@ std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrBlock(
 //  Read a molecule from a file
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrFile(
+std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrFile(
     const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
@@ -452,7 +452,7 @@ std::unique_ptr<RDKit::SCSRMol> ScsrFromScsrFile(
   }
   if (!inStream.eof()) {
     unsigned int line = 0;
-    return ScsrFromScsrDataStream(inStream, line, params);
+    return SCSRMolFromScsrDataStream(inStream, line, params);
   } else {
     return std::unique_ptr<RDKit::SCSRMol>();
   }
@@ -527,7 +527,7 @@ unsigned int getNewAtomForBond(
   return UINT_MAX;
 }
 
-std::unique_ptr<RDKit::RWMol> MolFromScsr(
+std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     const RDKit::SCSRMol &scsrMol, const MolFromScsrParams &molFromScsrParams) {
   auto resMol = std::unique_ptr<RWMol>(new RWMol());
   auto mol = scsrMol.getMol();

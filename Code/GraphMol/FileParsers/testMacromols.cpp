@@ -92,7 +92,7 @@ class ScsiMolTest {
       pp.removeHs = false;
       pp.strictParsing = false;
 
-      std::unique_ptr<RDKit::SCSRMol> scsrMol = ScsrFromScsrFile(fName, pp);
+      std::unique_ptr<RDKit::SCSRMol> scsrMol = SCSRMolFromScsrFile(fName, pp);
       RDKit::Chirality::removeNonExplicit3DChirality(*scsrMol->getMol());
 
       TEST_ASSERT(scsrMol != nullptr);
@@ -104,7 +104,7 @@ class ScsiMolTest {
       inStream.open(fName);
 
       unsigned int line = 0;
-      auto scsrMolFromStream = ScsrFromScsrDataStream(inStream, line, pp);
+      auto scsrMolFromStream = SCSRMolFromScsrDataStream(inStream, line, pp);
 
       inStream.close();
 
@@ -121,7 +121,7 @@ class ScsiMolTest {
 
       RDKit::v2::FileParsers::MolFromScsrParams molFromScsrParams;
       molFromScsrParams.includeLeavingGroups = true;
-      auto mol = MolFromScsr(*scsrMol, molFromScsrParams);
+      auto mol = MolFromSCSRMol(*scsrMol, molFromScsrParams);
 
       TEST_ASSERT(mol != nullptr)
       TEST_ASSERT(mol->getNumAtoms() == scsiTest->totalAtomCount)
@@ -148,7 +148,7 @@ class ScsiMolTest {
       // groups
 
       molFromScsrParams.includeLeavingGroups = false;
-      auto mol2 = MolFromScsr(*scsrMol, molFromScsrParams);
+      auto mol2 = MolFromSCSRMol(*scsrMol, molFromScsrParams);
 
       // const std::unique_ptr<RDKit::RWMol> mol;
       TEST_ASSERT(mol2 != nullptr)

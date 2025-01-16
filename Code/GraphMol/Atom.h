@@ -39,18 +39,19 @@ class RWMol;
 class AtomMonomerInfo;
 class AtomAttchOrd;  // class for ATTAHORD of the form  ATTCHORD=(4 1 Al 3 Br)
 
-class RDKIT_GRAPHMOL_EXPORT AtomAttchOrd
-    : public std::pair<unsigned int, std::string> {
+class RDKIT_GRAPHMOL_EXPORT AtomAttchOrd {
  private:
+  std::pair<unsigned int, std::string> p_pair;
+
  public:
   AtomAttchOrd(unsigned int id, const std::string &lbl) {
-    this->first = id - 1;
-    this->second = lbl;
+    p_pair.first = id - 1;
+    p_pair.second = lbl;
   }
 
-  unsigned int getAtomIdx() const { return this->first; }
+  unsigned int getAtomIdx() const { return p_pair.first; }
 
-  std::string getLabel() const { return this->second; }
+  std::string getLabel() const { return p_pair.second; }
 };
 
 //! The class for representing atoms
