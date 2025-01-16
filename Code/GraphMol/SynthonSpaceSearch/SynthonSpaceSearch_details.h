@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <RDGeneral/export.h>
+#include <RDGeneral/ControlCHandler.h>
 
 using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;
@@ -44,7 +45,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void fixAromaticRingSplits(
 // 2.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxBondSplits,
-              TimePoint *endTime, bool &timedOut, bool &cancelled);
+              TimePoint *endTime, bool &timedOut,
+              ControlCHandler &signalHandler);
 // Counts the number of [1*], [2*]...[4*] in the string.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &frag);
 

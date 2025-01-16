@@ -22,8 +22,6 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
-#include <RDGeneral/export.h>
-#include <RDGeneral/ControlCHandler.h>
 
 namespace RDKit::SynthonSpaceSearch::details {
 
@@ -125,7 +123,7 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxBondSplits, TimePoint *endTime,
-    bool &timedOut, bool &cancelled) {
+    bool &timedOut, ControlCHandler &signalHandler) {
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
   }
@@ -149,8 +147,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   fragments.emplace_back();
   fragments.back().emplace_back(new ROMol(query));
 
-  ControlCHandler signalHandler;
-  cancelled = false;
+  bool cancelled = false;
   timedOut = false;
   std::uint64_t numTries = 100;
 
@@ -172,7 +169,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
       --numTries;
       if (!numTries) {
         numTries = 100;
-        timedOut = details::checkTimeOut(endTime);
+        timedOut = checkTimeOut(endTime);
         if (timedOut) {
           break;
         }

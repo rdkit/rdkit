@@ -56,11 +56,11 @@ SearchResults SynthonSpaceSearcher::search() {
     endTime = &endTimePt;
   }
   bool timedOut = false;
-  bool cancelled = false;
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits,
-                                          endTime, timedOut, cancelled);
-  if (timedOut || cancelled) {
-    return SearchResults{std::move(results), 0UL, false, cancelled};
+                                          endTime, timedOut, signalHandler);
+  if (timedOut || signalHandler.getGotSignal()) {
+    return SearchResults{std::move(results), 0UL, false,
+                         signalHandler.getGotSignal()};
   }
 
   std::vector<SynthonSpaceHitSet> allHits;
