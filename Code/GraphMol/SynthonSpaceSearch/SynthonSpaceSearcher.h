@@ -15,6 +15,8 @@
 #ifndef SYNTHONSPACESEARCHER_H
 #define SYNTHONSPACESEARCHER_H
 
+#include <chrono>
+
 #include <boost/random.hpp>
 
 #include <RDGeneral/export.h>
