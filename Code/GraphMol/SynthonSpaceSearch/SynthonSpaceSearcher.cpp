@@ -59,7 +59,7 @@ SearchResults SynthonSpaceSearcher::search() {
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits,
                                           endTime, timedOut, signalHandler);
   if (timedOut || signalHandler.getGotSignal()) {
-    return SearchResults{std::move(results), 0UL, false,
+    return SearchResults{std::move(results), 0UL, timedOut,
                          signalHandler.getGotSignal()};
   }
 
