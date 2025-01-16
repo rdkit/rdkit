@@ -390,6 +390,8 @@ std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
       "[C;!$(C-C(=[NH])-[NH2])]-[C;!$(C(-C)(=[NH])-[NH2])](=[O,N,S])-[O,N,S]",  //< one side of the "amide", with an ugly exclusion for amidine
       "[C;!$(C=[O,N,S])]-[O,N,S]-C=[O,N,S]",  //< the other side
       "[OH0,SH0]-C=[O,N,S]",                  //< "esters" and "carboxyls"
+      "[C]-[c](:[o,n,s]):[o,n,s]",  //< a limited version of handling this for
+                                    //aromatic systems
   };
   static std::vector<std::unique_ptr<RDKit::RWMol>> queries;
   if (queries.empty()) {

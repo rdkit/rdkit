@@ -918,7 +918,11 @@ TEST_CASE("v2 tautomers, carboxylic acids, amids, and related structures") {
         {"CC(C)C[C@@H](C(=O)O)N",
          "[CH3]-[CH](-[CH3])-[CH2]-[C@H](-[NH2])-[C](:[O]):[O]_1_0"},
         // github #8090 (carboxylate)
-        {"O=C(O)CCC", "[CH3]-[CH2]-[CH2]-[C](:[O]):[O]_1_0"}};
+        {"O=C(O)CCC", "[CH3]-[CH2]-[CH2]-[C](:[O]):[O]_1_0"},
+        // aromatic "imine"
+        {"CC[C@@H](N)C1=NC=CN1",
+         "[CH3]-[CH2]-[C@@H](-[NH2])-[C]1:[N]:[C]:[C]:[N]:1_3_0"},
+    };
     for (const auto &[smiles, ref] : data) {
       INFO(smiles);
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
