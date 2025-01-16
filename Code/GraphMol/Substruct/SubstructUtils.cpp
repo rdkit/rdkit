@@ -168,6 +168,12 @@ bool bondCompat(const Bond *b1, const Bond *b2,
   PRECONDITION(b1, "bad bond");
   PRECONDITION(b2, "bad bond");
   bool res;
+
+  auto isConjugatedSingleOrDoubleBond([](const Bond *bond) {
+    return bond->getIsConjugated() && (bond->getBondType() == Bond::SINGLE ||
+                                       bond->getBondType() == Bond::DOUBLE);
+  });
+
   if (ps.useQueryQueryMatches && b1->hasQuery() && b2->hasQuery()) {
     res = static_cast<const QueryBond *>(b1)->QueryMatch(
         static_cast<const QueryBond *>(b2));
@@ -175,8 +181,10 @@ bool bondCompat(const Bond *b1, const Bond *b2,
              !b2->hasQuery() &&
              ((b1->getBondType() == Bond::AROMATIC &&
                b2->getBondType() == Bond::AROMATIC) ||
-              (b1->getBondType() == Bond::AROMATIC && b2->getIsConjugated()) ||
-              (b2->getBondType() == Bond::AROMATIC && b1->getIsConjugated()))) {
+              (b1->getBondType() == Bond::AROMATIC &&
+               isConjugatedSingleOrDoubleBond(b2)) ||
+              (b2->getBondType() == Bond::AROMATIC &&
+               isConjugatedSingleOrDoubleBond(b1)))) {
     res = true;
   } else {
     res = b1->Match(b2);
