@@ -38,6 +38,10 @@ namespace RDKit {
 class RDKIT_RDGENERAL_EXPORT ControlCHandler {
  public:
   ControlCHandler() { d_prev_handler = std::signal(SIGINT, signalHandler); }
+  ControlCHandler(const ControlCHandler &) = delete;
+  ControlCHandler(ControlCHandler &&) = delete;
+  ControlCHandler &operator=(const ControlCHandler &) = delete;
+  ControlCHandler &operator=(ControlCHandler &&) = delete;
   ~ControlCHandler() {
     std::signal(SIGINT, d_prev_handler);
     d_gotSignal = false;
