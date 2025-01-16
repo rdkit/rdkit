@@ -381,12 +381,6 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
 }
 
 namespace details {
-constexpr std::uint64_t atomFlagCarboxyl =
-    1;  //*< central C in carboxyl, amide, etc.
-
-std::vector<std::pair<std::string, std::uint64_t>> atomFlags = {
-    {"", atomFlagCarboxyl},
-};
 
 constexpr std::uint64_t bondFlagCarboxyl =
     1;  //*< bond involved in in carboxyl, amide, etc.
