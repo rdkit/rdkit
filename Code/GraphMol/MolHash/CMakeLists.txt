@@ -1,7 +1,7 @@
 
 rdkit_library(MolHash
               hashfunctions.cpp normalize.cpp
-              LINK_LIBRARIES Depictor GraphMol)
+              LINK_LIBRARIES SubstructMatch Depictor GraphMol)
 target_compile_definitions(MolHash PRIVATE RDKIT_MOLHASH_BUILD)
 
 rdkit_headers(MolHash.h nmmolhash.h           
