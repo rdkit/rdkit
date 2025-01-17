@@ -58,10 +58,15 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
+  SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    return self.substructureSearch(query, params);
+    results = self.substructureSearch(query, params);
   }
+  if (results.getCancelled()) {
+    throw_runtime_error("SubstructureSearch cancelled");
+  }
+  return results;
 }
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
