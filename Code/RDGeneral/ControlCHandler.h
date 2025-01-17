@@ -35,7 +35,7 @@ namespace RDKit {
 //!  }
 //! It's important that the exception is thrown once the GIL has been
 //! released, otherwise a crash is inevitable at some future point.
-class RDKIT_RDGENERAL_EXPORT ControlCHandler {
+class ControlCHandler {
  public:
   ControlCHandler() { d_prev_handler = std::signal(SIGINT, signalHandler); }
   ControlCHandler(const ControlCHandler &) = delete;
