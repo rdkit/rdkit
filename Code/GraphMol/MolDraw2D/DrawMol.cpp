@@ -176,19 +176,18 @@ void DrawMol::initDrawMolecule(const ROMol &mol) {
       centerMolForDrawing(*drawMol_, confId_);
     }
   }
+  if (!isReactionMol_ && !drawMol_->getNumConformers()) {
+    const bool canonOrient = true;
+    RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
+  }
   if (drawOptions_.unspecifiedStereoIsUnknown) {
     markUnspecifiedStereoAsUnknown(*drawMol_);
   }
   if (drawOptions_.useMolBlockWedging) {
     Chirality::reapplyMolBlockWedging(*drawMol_);
   }
-  if (!isReactionMol_) {
-    if (drawOptions_.prepareMolsBeforeDrawing) {
-      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
-    } else if (!mol.getNumConformers()) {
-      const bool canonOrient = true;
-      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
-    }
+  if (!isReactionMol_ && drawOptions_.prepareMolsBeforeDrawing) {
+    MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
@@ -3689,9 +3688,9 @@ DrawColour DrawMol::getColour(int atom_idx) const {
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       nbr->getIdx()) != highlightBonds_.end() ||
             highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
-          auto hc = getHighlightBondColour(
-              nbr, drawOptions_, highlightBonds_, highlightBondMap_,
-              highlightAtoms_, highlightAtomMap_);
+          auto hc = getHighlightBondColour(nbr, drawOptions_, highlightBonds_,
+                                           highlightBondMap_, highlightAtoms_,
+                                           highlightAtomMap_);
           if (!highCol) {
             highCol.reset(new DrawColour(hc));
           } else {
@@ -3708,15 +3707,15 @@ DrawColour DrawMol::getColour(int atom_idx) const {
       }
     }
   } else if (highlightedAtom) {
-  // There's going to be a colour behind the atom, so if the
-  // atom has a symbol, it should be the same colour as carbon.  This
-  // function should only be called if there is an atom symbol.
+    // There's going to be a colour behind the atom, so if the
+    // atom has a symbol, it should be the same colour as carbon.  This
+    // function should only be called if there is an atom symbol.
 
     if (auto it = drawOptions_.atomColourPalette.find(6);
         it != drawOptions_.atomColourPalette.end()) {
       retval = it->second;
     } else if (auto it = drawOptions_.atomColourPalette.find(-1);
-        it != drawOptions_.atomColourPalette.end()) {
+               it != drawOptions_.atomColourPalette.end()) {
       // Use the default if no carbon.
       retval = it->second;
     } else {
@@ -3767,12 +3766,12 @@ DrawColour getColourByAtomicNum(int atomic_num,
     atomic_num = 201;
   }
   if (auto it = drawOptions.atomColourPalette.find(atomic_num);
-          it != drawOptions.atomColourPalette.end()) {
+      it != drawOptions.atomColourPalette.end()) {
     res = it->second;
   } else if (atomic_num != -1) {
     // if -1 is in the palette, we use that for undefined colors
     if (auto it = drawOptions.atomColourPalette.find(-1);
-          it != drawOptions.atomColourPalette.end()) {
+        it != drawOptions.atomColourPalette.end()) {
       res = it->second;
     }
   }
