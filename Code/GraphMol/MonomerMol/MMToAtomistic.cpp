@@ -136,7 +136,7 @@ ChainType get_chain_type(std::string_view polymer_id)
     } else if (polymer_id.find("CHEM") == 0) {
         return ChainType::CHEM;
     } else {
-        throw std::out_of_range("Invalid polymer id/ Must be one of PEPTIDE, RNA, CHEM");
+        throw std::out_of_range("Invalid polymer id. Must be one of PEPTIDE, RNA, CHEM");
     }
 }
 

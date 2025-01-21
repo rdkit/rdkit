@@ -27,6 +27,8 @@
 #include <GraphMol/MonomerMol/MonomerMol.h>
 #include <GraphMol/MonomerInfo.h>
 
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include <string>
 
@@ -61,11 +63,31 @@ std::string to_fasta(const ROMol& mol)
     return fasta.str();
 }
 
+void neutralize_atoms(RDKit::ROMol& mol)
+{
+    // Algorithm for neutralizing molecules from
+    // https://www.rdkit.org/docs/Cookbook.html#neutralizing-molecules by Noel
+    // O’Boyle Will neutralize the molecule by adding or removing hydrogens as
+    // needed. This will ensure SMILES can be used to match atomistic structures
+    // to the correct monomer.
+    static const std::unique_ptr<RDKit::RWMol> neutralize_query(
+        RDKit::SmartsToMol(
+            "[+1!h0!$([*]~[-1,-2,-3,-4]),-1!$([*]~[+1,+2,+3,+4])]"));
+    for (const auto& match : RDKit::SubstructMatch(mol, *neutralize_query)) {
+        auto atom = mol.getAtomWithIdx(match[0].second);
+        auto chg = atom->getFormalCharge();
+        auto hcount = atom->getTotalNumHs();
+        atom->setFormalCharge(0);
+        atom->setNumExplicitHs(hcount - chg);
+        atom->updatePropertyCache();
+    }
+}
+
 TEST_CASE("FASTAConversions") {
   SECTION("SIMPLE") {
     // Build MonomerMol
     RWMol monomer_mol;
-    add_monomer(monomer_mol, "R", 1, "A");
+    add_monomer(monomer_mol, "R", 1, "PEPTIDE1");
     add_monomer(monomer_mol, "D");
     add_monomer(monomer_mol, "K");
     add_monomer(monomer_mol, "I");
@@ -77,7 +99,7 @@ TEST_CASE("FASTAConversions") {
     add_connection(monomer_mol, 3, 4, ConnectionType::FORWARD);
 
     std::cerr << to_fasta(monomer_mol);
-    CHECK(std::string(">Chain A\nRDKIT") == to_fasta(monomer_mol));
+    CHECK(std::string(">Chain PEPTIDE1\nRDKIT") == to_fasta(monomer_mol));
   }
 
   SECTION("MultipleChains") {
@@ -93,16 +115,56 @@ TEST_CASE("FASTAConversions") {
     add_connection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
     add_connection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
 
-    CHECK(std::string(">>Chain A\nRD\n>Chain B\nKIT") == to_fasta(monomer_mol));
+    CHECK(std::string(">Chain A\nRD\n>Chain B\nKIT") == to_fasta(monomer_mol));
   }
 
-  SECTION("UsingFASTAReader") {
+  SECTION("UsingSequenceReader") {
     std::string seq = "CGCGAATTACCGCG";
     // the sequence parser creates an atomistic molecules
     auto atomistic_mol = SequenceToMol(seq);
     CHECK(atomistic_mol);
 
     auto monomer_mol = atomisticToMonomerMol(*atomistic_mol);
-    CHECK(std::string(">>Chain A\nRD\n>Chain B\nKIT") == to_fasta(*monomer_mol));
+    CHECK(std::string(">Chain PEPTIDE1\nCGCGAATTACCGCG") == to_fasta(*monomer_mol));
+  }
+}
+
+TEST_CASE("Conversions") {
+  SECTION("MonomerMolToAtomistic") {
+    // works similar to the SequenceToMol function
+    std::string seq = "CGCGA";
+    auto atomistic_mol = SequenceToMol(seq);
+
+    RWMol monomer_mol;
+    auto midx1 = add_monomer(monomer_mol, "C", 1, "PEPTIDE1");
+    auto midx2 = add_monomer(monomer_mol, "G");
+    auto midx3 = add_monomer(monomer_mol, "C");
+    auto midx4 = add_monomer(monomer_mol, "G");
+    auto midx5 = add_monomer(monomer_mol, "A");
+
+    add_connection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
+    add_connection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
+    add_connection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
+    add_connection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
+    auto atomistic_mol2 = monomerMolToAtomsitic(monomer_mol);
+
+    std::string smi1 = MolToSmiles(*atomistic_mol);
+    std::string smi2 = MolToSmiles(*atomistic_mol2);
+    CHECK(smi1 == smi2);
+  }
+
+  SECTION("AtomisticToMonomerMol") {
+    std::string pdbfile = getenv("RDBASE");
+    pdbfile += "/Code/GraphMol/MonomerMol/test_data/1dng.pdb";
+    auto mol = PDBFileToMol(pdbfile);
+    auto monomer_mol = atomisticToMonomerMol(*mol);
+    CHECK(std::string(">Chain PEPTIDE1\nQAPAYEEAAEELAKS") == to_fasta(*monomer_mol));
+
+    auto atomistic_mol2 = monomerMolToAtomsitic(*monomer_mol);
+    neutralize_atoms(*mol);
+    neutralize_atoms(*atomistic_mol2);
+    std::string smi1 = MolToSmiles(*mol);
+    std::string smi2 = MolToSmiles(*atomistic_mol2);
+    CHECK(smi1 == smi2);
   }
 }
