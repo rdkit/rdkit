@@ -115,7 +115,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
                  escape: Optional[str] = None, cxflag=DEFAULT_CXFLAG,
-                 enable_tautomer_hash_v2=False) -> set(HashLayer):
+                 enable_tautomer_hash_v2=False) -> dict[HashLayer, str]:
   """
     Generate layers of data about that could be used to identify a molecule
 
