@@ -738,6 +738,13 @@ extern "C" const char *MolInchi(CROMol i, const char *opts) {
   std::string inchi = "InChI not available";
 #ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
+  // Older versions of the InChI code returned an empty string for molecules
+  // without atoms. This changed with 1.07, but we'll keep doing an empty string
+  // here
+  if (!im->getNumAtoms()) {
+    inchi = "";
+    return strdup(inchi.c_str());
+  }
   ExtraInchiReturnValues rv;
   try {
     std::string sopts = "/AuxNone /WarnOnEmptyStructure";
@@ -759,6 +766,13 @@ extern "C" const char *MolInchiKey(CROMol i, const char *opts) {
   std::string key = "InChI not available";
 #ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
+  // Older versions of the InChI code returned an empty string for molecules
+  // without atoms. This changed with 1.07, but we'll keep doing an empty string
+  // here
+  if (!im->getNumAtoms()) {
+    key = "";
+    return strdup(key.c_str());
+  }
   ExtraInchiReturnValues rv;
   try {
     std::string sopts = "/AuxNone /WarnOnEmptyStructure";
@@ -1032,11 +1046,7 @@ extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
     n = iter->first % numInts;
 
     if (iterV > INTRANGEMAX) {
-#if 0
-        elog(ERROR, "sparse fingerprint is too big, increase INTRANGEMAX in rdkit.h");
-#else
       iterV = INTRANGEMAX;
-#endif
     }
 
     if (s[n].low == 0 || s[n].low > iterV) {
