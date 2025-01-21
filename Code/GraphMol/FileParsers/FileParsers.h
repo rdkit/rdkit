@@ -53,11 +53,20 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool expandAttachmentPoints =
       false; /**< toggle conversion of attachment points into dummy atoms */
 };
+typedef enum {
+  ScsrTemplateNamesAsEntered =
+      0,  //<! use the name of the temlate as entered in the SCSR Mol
+  ScsrTemplateNamesUseFirstName = 1,  //<!Use the first name in the template
+                                      // def (For AA, the 3 letter code
+  ScsrTemplateNamesUseLastName = 2    //<!use the last name in the tempate def (
+                                      // For AA, the 12 letter code)
+} ScsrTemplateNames;
 
 struct RDKIT_FILEPARSERS_EXPORT MolFromScsrParams {
   bool includeLeavingGroups =
       true; /**< when true, leaving groups on atoms that are not exo-bonded are
                 retained.  When false, no leaving groups are retained */
+  ScsrTemplateNames scsrTemplateNames = ScsrTemplateNamesAsEntered;
 };
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolDataStream(
     std::istream &inStream, unsigned int &line,

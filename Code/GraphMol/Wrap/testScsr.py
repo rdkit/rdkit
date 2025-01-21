@@ -44,7 +44,55 @@ class TestCase(unittest.TestCase):
 
     self.assertTrue(mol.GetNumAtoms() == 30)
     sgs = Chem.GetMolSubstanceGroups(mol)
-    self.assertTrue(len(sgs) == 3)
+    self.assertTrue(len(sgs) == 6)
+
+  def testThreeLetterCodes(self):
+    """Test the Scsr system with three letter codes"""
+
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data','macromols',
+                         'PepTla.mol')
+    with open(ofile) as inf:
+      scsrBlock = inf.read()
+
+   
+    scsr = Chem.ScsrFromScsrBlock(scsrBlock,False,False)    
+    self.assertTrue(scsr.GetNumTemplates() == 4)
+    t1 = scsr.GetTemplate(0)
+    self.assertTrue(t1.GetNumAtoms() == 7)
+    self.assertTrue(scsr.GetMol().GetNumAtoms() == 4)
+
+    molFromScsrParams = Chem.MolFromScsrParams()
+    molFromScsrParams.includeLeavingGroups = True
+    molFromScsrParams.scsrTemplateNames = Chem.ScsrTemplateNames.ScsrTemplateNamesAsEntered
+    
+    mol = Chem.ScsrToMol(scsr, molFromScsrParams)
+
+    self.assertEqual(mol.GetNumAtoms(),26)
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertTrue(len(sgs) == 7)
+    sgs[0].GetProp('LABEL')
+    self.assertTrue(sgs[0].GetProp('LABEL') == 'Ala_4')
+
+    molFromScsrParams.scsrTemplateNames =  Chem.ScsrTemplateNames.ScsrTemplateNamesUseFirstName
+    
+    mol = Chem.ScsrToMol(scsr, molFromScsrParams)
+
+    self.assertEqual(mol.GetNumAtoms(),26)
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertTrue(len(sgs) == 7)
+
+    self.assertTrue(sgs[0].GetProp('LABEL') == 'Ala_4')
+
+    molFromScsrParams.scsrTemplateNames =  Chem.ScsrTemplateNames.ScsrTemplateNamesUseLastName
+    
+    mol = Chem.ScsrToMol(scsr, molFromScsrParams)
+
+    self.assertEqual(mol.GetNumAtoms(),26)
+    sgs = Chem.GetMolSubstanceGroups(mol)
+    self.assertTrue(len(sgs) == 7)
+
+    self.assertTrue(sgs[0].GetProp('LABEL') == 'A_4')
+
 
 if __name__ == '__main__':
   unittest.main()

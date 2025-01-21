@@ -1200,7 +1200,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "includeLeavingGroups",
           &RDKit::v2::FileParsers::MolFromScsrParams::includeLeavingGroups,
-          "include leaving groups atoms if not substited at that position");
+          "include leaving groups atoms if not substited at that position")
+      .def_readwrite(
+          "scsrTemplateNames",
+          &RDKit::v2::FileParsers::MolFromScsrParams::scsrTemplateNames,
+          "If True, the first template name in the Sgroup is used as the Sgroup label");
 
   docString =
       "Construct a molecule (mol) from an SCSR Mol.  The templates are represented by\n\
@@ -1845,6 +1849,15 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL)
       .value("CX_ALL_BUT_COORDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+
+  python::enum_<RDKit::v2::FileParsers::ScsrTemplateNames>(
+      "ScsrTemplateNamesVal")
+      .value("ScsrTemplateNamesUseFirstName",
+             RDKit::v2::FileParsers::ScsrTemplateNamesUseFirstName)
+      .value("ScsrTemplateNamesUseLastName",
+             RDKit::v2::FileParsers::ScsrTemplateNamesUseLastName)
+      .value("ScsrTemplateNamesAsEntered",
+             RDKit::v2::FileParsers::ScsrTemplateNamesAsEntered);
 
   python::enum_<RDKit::RestoreBondDirOption>("RestoreBondDirOption")
       .value("RestoreBondDirOptionClear",

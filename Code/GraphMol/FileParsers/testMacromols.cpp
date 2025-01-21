@@ -181,12 +181,101 @@ class ScsiMolTest {
     TEST_ASSERT(scsiTest->expectedResult == true);
   }
 
+  void threeLetterCodeTest(const ScsiTest *scsiTest) {
+    BOOST_LOG(rdInfoLog) << "testing scsr  files with three letter codes"
+                         << std::endl;
+
+    std::string rdbase = getenv("RDBASE");
+    std::string fName = rdbase +
+                        "/Code/GraphMol/FileParsers/test_data/macromols/" +
+                        scsiTest->fileName;
+
+    try {
+      RDKit::v2::FileParsers::MolFileParserParams pp;
+      pp.sanitize = false;
+      pp.removeHs = false;
+      pp.strictParsing = false;
+
+      std::unique_ptr<RDKit::SCSRMol> scsrMol = SCSRMolFromScsrFile(fName, pp);
+      RDKit::Chirality::removeNonExplicit3DChirality(*scsrMol->getMol());
+
+      TEST_ASSERT(scsrMol != nullptr);
+      TEST_ASSERT(scsrMol->getMol()->getNumAtoms() == scsiTest->atomCount)
+      TEST_ASSERT(scsrMol->getMol()->getNumBonds() == scsiTest->bondCount)
+      TEST_ASSERT(scsrMol->getTemplateCount() == scsiTest->templateCount)
+
+      RDKit::v2::FileParsers::MolFromScsrParams molFromScsrParams;
+      molFromScsrParams.includeLeavingGroups = true;
+      molFromScsrParams.scsrTemplateNames =
+          RDKit::v2::FileParsers::ScsrTemplateNamesAsEntered;
+
+      auto mol = MolFromSCSRMol(*scsrMol, molFromScsrParams);
+
+      TEST_ASSERT(mol != nullptr)
+      TEST_ASSERT(mol->getNumAtoms() == scsiTest->totalAtomCount)
+      TEST_ASSERT(mol->getNumBonds() == scsiTest->totalBondCount)
+
+      {
+        std::string expectedMolName = fName + ".expected.sdf";
+        std::string outMolStr = "";
+        try {
+          outMolStr = MolToMolBlock(*mol, true, 0, true, true);
+        } catch (const RDKit::KekulizeException &) {
+          outMolStr = "";
+        }
+        if (outMolStr == "") {
+          outMolStr = MolToMolBlock(*mol, true, 0, false,
+                                    true);  // try without kekule'ing
+        }
+
+        generateNewExpectedFilesIfSoSpecified(fName + ".NEW.sdf", outMolStr);
+
+        TEST_ASSERT(GetExpectedValue(expectedMolName) == outMolStr);
+      }
+      // now make the expanded mol in "query" mode - not including any leaving
+      // groups
+
+      molFromScsrParams.includeLeavingGroups = true;
+      molFromScsrParams.scsrTemplateNames =
+          RDKit::v2::FileParsers::ScsrTemplateNamesUseFirstName;
+      auto mol2 = MolFromSCSRMol(*scsrMol, molFromScsrParams);
+
+      // const std::unique_ptr<RDKit::RWMol> mol;
+      TEST_ASSERT(mol2 != nullptr)
+      TEST_ASSERT(mol2->getNumAtoms() == scsiTest->totalQueryAtomCount)
+      TEST_ASSERT(mol2->getNumBonds() == scsiTest->totalQueryBondCount)
+
+      {
+        std::string expectedMolName = fName + ".expected2.sdf";
+        std::string outMolStr = "";
+        try {
+          outMolStr = MolToMolBlock(*mol2, true, 0, true, true);
+        } catch (const RDKit::KekulizeException &) {
+          outMolStr = "";
+        }
+        if (outMolStr == "") {
+          outMolStr = MolToMolBlock(*mol2, true, 0, false,
+                                    true);  // try without kekule'ing
+        }
+
+        generateNewExpectedFilesIfSoSpecified(fName + ".NEW2.sdf", outMolStr);
+
+        TEST_ASSERT(GetExpectedValue(expectedMolName) == outMolStr);
+      }
+    } catch (const std::exception &e) {
+      if (scsiTest->expectedResult != false) {
+        throw;
+      }
+      return;
+    }
+    TEST_ASSERT(scsiTest->expectedResult == true);
+  }
+
   void RunTests() {
     // the molecule tests
 
     if (testToRun == "" || testToRun == "scsiTests") {
       std::list<ScsiTest> scsiTests{
-          ScsiTest("KellanError.mol", true, 31, 30, 15, 244, 263, 236, 255),
           ScsiTest("TestRNA2_fixed.mol", true, 15, 14, 5, 106, 117, 104, 115),
           ScsiTest("Mixed.mol", true, 14, 16, 5, 51, 54, 51, 54),
           ScsiTest("CrossLink.mol", true, 8, 8, 5, 47, 48, 45, 46),
@@ -211,6 +300,20 @@ class ScsiMolTest {
         BOOST_LOG(rdInfoLog) << "Test: " << scsiTest.fileName << std::endl;
 
         testScsiFiles(&scsiTest);
+      }
+    }
+
+    if (testToRun == "" || testToRun == "threeLetterCodeTest") {
+      std::list<ScsiTest> scsiTests{
+          // ScsiTest("KellanError.mol", true, 31, 30, 15, 244, 263, 236, 255),
+          ScsiTest("PepTla.mol", true, 4, 3, 4, 26, 25, 26, 25),
+
+      };
+
+      for (auto scsiTest : scsiTests) {
+        BOOST_LOG(rdInfoLog) << "Test: " << scsiTest.fileName << std::endl;
+
+        threeLetterCodeTest(&scsiTest);
       }
     }
   }

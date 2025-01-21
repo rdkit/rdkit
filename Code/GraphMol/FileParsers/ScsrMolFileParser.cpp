@@ -501,10 +501,10 @@ unsigned int getNewAtomForBond(
     const Atom *atom, unsigned int otherAtomIdx,
     const std::map<OriginAtomDef, unsigned int> &originAtomMap,
     const std::map<OriginAtomConnection, unsigned int> &attachMap) {
-  unsigned int beginSeq = 0;
+  std::string atomClass = "";
   unsigned int atomIdx = atom->getIdx();
-  if (!atom->getPropIfPresent<unsigned int>(common_properties::molAtomSeqId,
-                                            beginSeq)) {
+  if (!atom->getPropIfPresent<std::string>(common_properties::molAtomClass,
+                                           atomClass)) {
     return originAtomMap.at(OriginAtomDef(atomIdx, UINT_MAX));
   }
 
@@ -527,6 +527,47 @@ unsigned int getNewAtomForBond(
   return UINT_MAX;
 }
 
+void copySgroupIntoResult(
+    const unsigned int atomIdx, const RDKit::SubstanceGroup &sgroup,
+    const ROMol &templateMol, RWMol *resMol, std::string sgroupName,
+    std::vector<std::unique_ptr<SubstanceGroup>> &newSgroups,
+    RDKit::Conformer *newConf,
+    std::map<OriginAtomDef, unsigned int> &originAtomMap,
+    const RDGeom::Point3D &coordOffset) {
+  // add a superatom sgroup to mark the atoms from this macro atom
+  // expansion. These new superatom sgroups are not put into the output mol yet,
+  // because the bonds have not be added to the mol nor to the sgroup. They are
+  // saved in an array to be added later
+
+  std::string typ = "SUP";
+  newSgroups.emplace_back(new SubstanceGroup((ROMol *)resMol, typ));
+  auto newSgroup = newSgroups.back().get();
+  newSgroup->setProp("LABEL", sgroupName);
+
+  // copy the atoms of the sgroup into the new molecule
+
+  if (newConf) {
+    newConf->resize(newConf->getNumAtoms() + templateMol.getNumAtoms());
+  }
+
+  for (auto templateAtomIdx : sgroup.getAtoms()) {
+    auto templateAtom = templateMol.getAtomWithIdx(templateAtomIdx);
+    auto newAtom = new Atom(*templateAtom);
+
+    resMol->addAtom(newAtom, true, true);
+    newSgroup->addAtomWithIdx(newAtom->getIdx());
+
+    originAtomMap[OriginAtomDef(atomIdx, templateAtomIdx)] = newAtom->getIdx();
+
+    // atomMap[atomIdx].push_back(newAtom->getIdx());
+    if (newConf) {
+      newConf->setAtomPos(
+          newAtom->getIdx(),
+          coordOffset + templateMol.getConformer().getAtomPos(templateAtomIdx));
+    }
+  }
+}
+
 std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     const RDKit::SCSRMol &scsrMol, const MolFromScsrParams &molFromScsrParams) {
   auto resMol = std::unique_ptr<RWMol>(new RWMol());
@@ -538,61 +579,60 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
   std::vector<RDGeom::Point3D> templateCentroids;
   double maxSize = 0.0;
 
-  bool skipCoords = true;
   const Conformer *conf = nullptr;
   std::unique_ptr<Conformer> newConf(nullptr);
   if (mol->getNumConformers() != 0) {
-    skipCoords = false;
     conf = &mol->getConformer(0);
     newConf.reset(new Conformer(scsrMol.getMol()->getNumAtoms()));
     newConf->set3D(conf->is3D());
-  }
 
-  for (unsigned int templateIdx = 0;
-       !skipCoords && templateIdx < scsrMol.getTemplateCount(); ++templateIdx) {
-    auto templateMol = scsrMol.getTemplate(templateIdx);
-    RDGeom::Point3D sumOfCoords;
-    auto confCount = templateMol->getNumConformers();
-    if (confCount == 0) {
-      skipCoords = true;
-      break;
-    }
-    auto templateConf = templateMol->getConformer(0);
-    RDGeom::Point3D maxCoord = templateConf.getAtomPos(0);
-    RDGeom::Point3D minCoord = maxCoord;
-    for (unsigned int atomIdx = 0; atomIdx < templateMol->getNumAtoms();
-         ++atomIdx) {
-      auto atomCoord = templateConf.getAtomPos(atomIdx);
-      sumOfCoords += atomCoord;
+    for (unsigned int templateIdx = 0; templateIdx < scsrMol.getTemplateCount();
+         ++templateIdx) {
+      auto templateMol = scsrMol.getTemplate(templateIdx);
+      RDGeom::Point3D sumOfCoords;
+      const RDKit::Conformer *templateConf = nullptr;
+      auto confCount = templateMol->getNumConformers();
+      if (confCount == 0) {
+        conf = nullptr;
+        break;
+      }
+      templateConf = &templateMol->getConformer(0);
+      RDGeom::Point3D maxCoord = templateConf->getAtomPos(0);
+      RDGeom::Point3D minCoord = maxCoord;
+      for (unsigned int atomIdx = 0; atomIdx < templateMol->getNumAtoms();
+           ++atomIdx) {
+        auto atomCoord = templateConf->getAtomPos(atomIdx);
+        sumOfCoords += atomCoord;
 
-      if (atomCoord.x > maxCoord.x) {
-        maxCoord.x = atomCoord.x;
+        if (atomCoord.x > maxCoord.x) {
+          maxCoord.x = atomCoord.x;
+        }
+        if (atomCoord.y > maxCoord.y) {
+          maxCoord.y = atomCoord.y;
+        }
+        if (atomCoord.z > maxCoord.z) {
+          maxCoord.z = atomCoord.z;
+        }
+        if (atomCoord.x < minCoord.x) {
+          minCoord.x = atomCoord.x;
+        }
+        if (atomCoord.y < minCoord.y) {
+          minCoord.y = atomCoord.y;
+        }
+        if (atomCoord.z < minCoord.z) {
+          minCoord.z = atomCoord.z;
+        }
       }
-      if (atomCoord.y > maxCoord.y) {
-        maxCoord.y = atomCoord.y;
+      templateCentroids.push_back(sumOfCoords / templateMol->getNumAtoms());
+      if (maxCoord.x - minCoord.x > maxSize) {
+        maxSize = maxCoord.x - minCoord.x;
       }
-      if (atomCoord.z > maxCoord.z) {
-        maxCoord.z = atomCoord.z;
+      if (maxCoord.y - minCoord.y > maxSize) {
+        maxSize = maxCoord.y - minCoord.y;
       }
-      if (atomCoord.x < minCoord.x) {
-        minCoord.x = atomCoord.x;
+      if (maxCoord.z - minCoord.z > maxSize) {
+        maxSize = maxCoord.z - minCoord.z;
       }
-      if (atomCoord.y < minCoord.y) {
-        minCoord.y = atomCoord.y;
-      }
-      if (atomCoord.z < minCoord.z) {
-        minCoord.z = atomCoord.z;
-      }
-    }
-    templateCentroids.push_back(sumOfCoords / templateMol->getNumAtoms());
-    if (maxCoord.x - minCoord.x > maxSize) {
-      maxSize = maxCoord.x - minCoord.x;
-    }
-    if (maxCoord.y - minCoord.y > maxSize) {
-      maxSize = maxCoord.y - minCoord.y;
-    }
-    if (maxCoord.z - minCoord.z > maxSize) {
-      maxSize = maxCoord.z - minCoord.z;
     }
   }
 
@@ -602,15 +642,17 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
   std::vector<Atom *> absoluteAtoms;
   std::vector<Bond *> absoluteBonds;
 
+  // maps main atom# and template atom# to new atom#
   std::map<OriginAtomDef, unsigned int> originAtomMap;
+
   // maps main atom# and attach label to template atom#
   std::map<OriginAtomConnection, unsigned int> attachMap;
-  std::vector<std::vector<unsigned int>> atomMap;
+
+  std::vector<std::unique_ptr<SubstanceGroup>> newSgroups;
 
   unsigned int atomCount = mol->getNumAtoms();
   for (unsigned int atomIdx = 0; atomIdx < atomCount; ++atomIdx) {
     auto atom = mol->getAtomWithIdx(atomIdx);
-    atomMap.push_back(std::vector<unsigned int>());
 
     std::string dummyLabel = "";
     std::string atomClass = "";
@@ -621,11 +663,11 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
       // NOT a template atom - just copy it
       auto newAtom = new Atom(*atom);
       resMol->addAtom(newAtom, true, true);
-      atomMap[atomIdx].push_back(newAtom->getIdx());
+      // atomMap[atomIdx].push_back(newAtom->getIdx());
 
       // templatesFound.push_back(nullptr);
       originAtomMap[OriginAtomDef(atomIdx, UINT_MAX)] = newAtom->getIdx();
-      if (!skipCoords) {
+      if (conf != nullptr) {
         newConf->setAtomPos(newAtom->getIdx(),
                             conf->getAtomPos(atomIdx) * maxSize);
       }
@@ -639,6 +681,7 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
       const ROMol *templateMol = nullptr;
       unsigned int templateIdx;
       bool templateFound = false;
+      std::string templateNameToUse = "";
       for (templateIdx = 0; templateIdx < scsrMol.getTemplateCount();
            ++templateIdx) {
         templateMol = scsrMol.getTemplate(templateIdx);
@@ -653,6 +696,17 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
             std::find(templateNames.begin(), templateNames.end(), dummyLabel) !=
                 templateNames.end()) {
           templateFound = true;
+          switch (molFromScsrParams.scsrTemplateNames) {
+            case ScsrTemplateNamesUseFirstName:
+              templateNameToUse = templateNames[0];
+              break;
+            case ScsrTemplateNamesUseLastName:
+              templateNameToUse = templateNames.back();
+              break;
+            case ScsrTemplateNamesAsEntered:
+              templateNameToUse = dummyLabel;
+              break;
+          }
           break;
         }
       }
@@ -664,14 +718,8 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
         throw FileParseException(errout.str());
       }
 
-      // find all the atoms in the leaving groups for this atom's
-      // expansion
-      // also record the attachment atoms in the template
-
       auto attchOrds = atom->getProp<std::vector<RDKit::AtomAttchOrd>>(
           common_properties::molAttachOrderTemplate);
-
-      std::vector<unsigned int> leavingGroupAtoms;
 
       // first find the sgroup that is the base for this atom's template
 
@@ -693,122 +741,108 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
         throw FileParseException("No SUP sgroup found for atom");
       }
 
+      // add the atoms from the main template to the new molecule
+      std::string sgroupName = templateNameToUse;
+      if (seqId != 0) {
+        sgroupName += "_" + std::to_string(seqId);
+      }
+
+      auto coordOffset = (conf->getAtomPos(atomIdx) * maxSize) -
+                         templateCentroids[templateIdx];
+
+      copySgroupIntoResult(atomIdx, *sgroup, *templateMol, resMol.get(),
+                           sgroupName, newSgroups, newConf.get(), originAtomMap,
+                           coordOffset);
+
       // find  the attachment points used by this atom and record them in
       // attachMap.
-      // also, if we are including leaving groups that are not
-      // substitued out, find the leaving group atoms that will not be included
-      // in the final molecule
 
       for (auto attchOrd : attchOrds) {
+        bool foundAttachPointAtom = false;
         for (auto attachPoint : sgroup->getAttachPoints()) {
           if (attachPoint.id == attchOrd.getLabel()) {
             attachMap[OriginAtomConnection(atomIdx, attachPoint.id)] =
                 attachPoint.aIdx;
-            if (molFromScsrParams.includeLeavingGroups) {
-              // only those leaving groups that are substitued are NOT included
-              for (auto lGrp : RDKit::getSubstanceGroups(*templateMol)) {
-                auto atomsInSAP = lGrp.getAtoms();
-                std::string lgrpClass;
-                if (lGrp.getProp<std::string>("TYPE") == "SUP" &&
-                    lGrp.getPropIfPresent<std::string>("CLASS", lgrpClass) &&
-                    lgrpClass == "LGRP" &&
-                    std::find(atomsInSAP.begin(), atomsInSAP.end(),
-                              attachPoint.lvIdx) != atomsInSAP.end()) {
-                  leavingGroupAtoms.insert(leavingGroupAtoms.end(),
-                                           atomsInSAP.begin(),
-                                           atomsInSAP.end());
+            foundAttachPointAtom = true;
+            break;
+          }
+        }
+        if (!foundAttachPointAtom) {
+          throw FileParseException("Attachment point not found");
+        }
+      }
+
+      // if we are including atoms from leaving groups, go through the
+      // attachment points of the main sgroup. If the attach point is not
+      // found in the attachords, then find the sgroup for that
+      // attach point and add its atoms the molecule
+
+      if (molFromScsrParams.includeLeavingGroups) {
+        for (auto attachPoint : sgroup->getAttachPoints()) {
+          if (attachMap.find(OriginAtomConnection(atomIdx, attachPoint.id)) ==
+              attachMap.end()) {
+            bool foundLgSgroup = false;
+
+            for (auto lgSgroup : getSubstanceGroups(*templateMol)) {
+              std::string lgSup;
+              std::string lgSgroupAtomClass;
+              if (lgSgroup.getPropIfPresent<std::string>("TYPE", lgSup) &&
+                  lgSup == "SUP" &&
+                  lgSgroup.getPropIfPresent<std::string>("CLASS",
+                                                         lgSgroupAtomClass) &&
+                  lgSgroupAtomClass == "LGRP") {
+                auto lgSgroupAtoms = lgSgroup.getAtoms();
+                if (std::find(lgSgroupAtoms.begin(), lgSgroupAtoms.end(),
+                              attachPoint.lvIdx) != lgSgroupAtoms.end()) {
+                  std::string sgroupName = dummyLabel;
+                  if (seqId != 0) {
+                    sgroupName += "_" + std::to_string(seqId);
+                  }
+                  sgroupName += "_" + attachPoint.id;
+                  foundLgSgroup = true;
+                  copySgroupIntoResult(
+                      atomIdx, lgSgroup, *templateMol, resMol.get(), sgroupName,
+                      newSgroups, newConf.get(), originAtomMap, coordOffset);
+
                   break;
                 }
               }
             }
-            break;
-          }
-        }
-      }
 
-      // if we are not including atoms from any leaving groups even if they are
-      // not substitued, find all the leaving group atoms
-
-      if (!molFromScsrParams.includeLeavingGroups) {
-        // all leaving groups are not to be included
-        for (auto lGrp : RDKit::getSubstanceGroups(*templateMol)) {
-          auto atomsInSAP = lGrp.getAtoms();
-          std::string lgrpClass;
-          if (lGrp.getProp<std::string>("TYPE") == "SUP" &&
-              lGrp.getPropIfPresent<std::string>("CLASS", lgrpClass) &&
-              lgrpClass == "LGRP") {
-            leavingGroupAtoms.insert(leavingGroupAtoms.end(),
-                                     atomsInSAP.begin(), atomsInSAP.end());
-          }
-        }
-      }
-
-      // add an superatom sgroup to mark the atoms from this macro atom
-      // expansion
-      std::string typ = "SUP";
-      std::unique_ptr<SubstanceGroup> newSgroup(
-          new SubstanceGroup(resMol.get(), typ));
-      newSgroup->setProp<unsigned int>("index", seqId);
-      newSgroup->setProp("LABEL", dummyLabel + "_" + std::to_string(seqId));
-
-      // copy the atoms of the template into the new molecule
-      // leaving group atoms are not copied if they are part of the main
-      // mol's atom's attachord
-      if (!skipCoords) {
-        newConf->resize(newConf->getNumAtoms() + templateMol->getNumAtoms());
-      }
-
-      RDGeom::Point3D newCentroid = conf->getAtomPos(atomIdx) * maxSize;
-
-      for (auto templateAtom : templateMol->atoms()) {
-        if (std::find(leavingGroupAtoms.begin(), leavingGroupAtoms.end(),
-                      templateAtom->getIdx()) == leavingGroupAtoms.end()) {
-          auto newAtom = new Atom(*templateAtom);
-
-          resMol->addAtom(newAtom, true, true);
-          newSgroup->addAtomWithIdx(newAtom->getIdx());
-
-          originAtomMap[OriginAtomDef(atomIdx, templateAtom->getIdx())] =
-              newAtom->getIdx();
-
-          atomMap[atomIdx].push_back(newAtom->getIdx());
-          if (!skipCoords) {
-            newConf->setAtomPos(newAtom->getIdx(),
-                                newCentroid +
-                                    templateMol->getConformer().getAtomPos(
-                                        templateAtom->getIdx()) -
-                                    templateCentroids[templateIdx]);
+            if (!foundLgSgroup) {
+              throw FileParseException("Leaving group SGroup " +
+                                       attachPoint.id + " not found");
+            }
           }
         }
       }
 
       // copy the bonds of the template into the new molecule
-      // if the bonds are between atoms NOT in the leaving group
+      // if the bonds are between atoms in the new molecule
+      // Bonds to atoms in leaving groups that "left" are NOT copied
 
       for (auto bond : templateMol->bonds()) {
-        if (std::find(leavingGroupAtoms.begin(), leavingGroupAtoms.end(),
-                      bond->getBeginAtomIdx()) == leavingGroupAtoms.end() &&
-            std::find(leavingGroupAtoms.begin(), leavingGroupAtoms.end(),
-                      bond->getEndAtomIdx()) == leavingGroupAtoms.end()) {
-          auto newBeginAtomIdx =
-              originAtomMap[OriginAtomDef(atomIdx, bond->getBeginAtomIdx())];
-          auto newEndAtomIdx =
-              originAtomMap[OriginAtomDef(atomIdx, bond->getEndAtomIdx())];
-
-          auto newBond = new Bond(bond->getBondType());
-          newBond->setBeginAtomIdx(newBeginAtomIdx);
-          newBond->setEndAtomIdx(newEndAtomIdx);
-          newBond->updateProps(*bond, false);
-          resMol->addBond(newBond, true);
-          newSgroup->addBondWithIdx(newBond->getIdx());
+        if (originAtomMap.find(OriginAtomDef(
+                atomIdx, bond->getBeginAtomIdx())) == originAtomMap.end() ||
+            originAtomMap.find(OriginAtomDef(atomIdx, bond->getEndAtomIdx())) ==
+                originAtomMap.end()) {
+          continue;  // bond not in the new molecule
         }
-      }
+        auto newBeginAtomIdx =
+            originAtomMap[OriginAtomDef(atomIdx, bond->getBeginAtomIdx())];
+        auto newEndAtomIdx =
+            originAtomMap[OriginAtomDef(atomIdx, bond->getEndAtomIdx())];
 
-      if (newSgroup->getIsValid()) {
-        addSubstanceGroup(*resMol, *newSgroup.get());
+        auto newBond = new Bond(bond->getBondType());
+        newBond->setBeginAtomIdx(newBeginAtomIdx);
+        newBond->setEndAtomIdx(newEndAtomIdx);
+        newBond->updateProps(*bond, false);
+        resMol->addBond(newBond, true);
       }
 
       // take care of stereo groups in the template
+      // abs groups are added to the list of abs atoms and bonds, so that we can
+      // add ONE abs group later
 
       for (auto &sg : templateMol->getStereoGroups()) {
         std::vector<Atom *> newGroupAtoms;
@@ -859,8 +893,10 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     return resMol;
   }
 
-  newConf->resize(resMol->getNumAtoms());
-  resMol->addConformer(newConf.release());
+  if (conf != nullptr) {
+    newConf->resize(resMol->getNumAtoms());
+    resMol->addConformer(newConf.release());
+  }
 
   // now deal with the bonds from the original mol.
 
@@ -893,11 +929,10 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     }
   }
 
-  // copy the sgroups from the main mol
+  // copy the sgroups from the main mol for atoms not in a template
 
   for (auto &sg : getSubstanceGroups(*mol)) {
     if (sg.getIsValid()) {
-      RDKit::SubstanceGroup newSg(sg);
       auto &atoms = sg.getAtoms();
       std::vector<unsigned int> newAtoms;
       for (auto atom : atoms) {
@@ -905,13 +940,47 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
         auto newAtomPtr = originAtomMap.find(originAtom);
         if (newAtomPtr != originAtomMap.end()) {
           newAtoms.push_back(newAtomPtr->second);
+        } else {
+          // some atoms were in templates and others were not - cannot add this
+          // sgroup
+          newAtoms.clear();
+          break;
         }
       }
+      if (newAtoms.size() > 0) {
+        newSgroups.emplace_back(new SubstanceGroup(sg));
+        auto newSg = newSgroups.back().get();
+        // RDKit::SubstanceGroup newSg(sg);
 
-      newSg.setAtoms(newAtoms);
-      addSubstanceGroup(*resMol, newSg);
+        newSg->setAtoms(newAtoms);
+      }
     }
   }
+
+  // now that we have all substance groups from the template and from the
+  // non-template atoms, and we have all the bonds, find the Xbonds for each
+  // substance group and add them
+
+  for (auto bond : resMol->bonds()) {
+    for (auto &sg : newSgroups) {
+      // if one atom of the bond is found and the other is not in the sgroup,
+      // this is a Xbond
+      auto sgAtoms = sg->getAtoms();
+      if ((std::find(sgAtoms.begin(), sgAtoms.end(), bond->getBeginAtomIdx()) ==
+           sgAtoms.end()) !=
+          (std::find(sgAtoms.begin(), sgAtoms.end(), bond->getEndAtomIdx()) ==
+           sgAtoms.end())) {
+        sg->addBondWithIdx(bond->getIdx());
+      }
+    }
+  }
+
+  if (newSgroups.size() > 0) {
+    for (auto &sg : newSgroups) {
+      addSubstanceGroup(*resMol, *sg.get());
+    }
+  }
+  newSgroups.clear();  // just tidy cleanup
 
   // take care of stereo groups in the main mol - for atoms that are NOT
   // template refs
