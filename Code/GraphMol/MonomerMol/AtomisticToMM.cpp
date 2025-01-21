@@ -4,13 +4,13 @@
 #include <unordered_map>
 #include <memory>
 
-#include <rdkit/GraphMol/RWMol.h>
-#include <rdkit/GraphMol/ROMol.h>
-#include <rdkit/GraphMol/MolOps.h>
-#include <rdkit/GraphMol/MonomerInfo.h>
-#include <rdkit/GraphMol/SmilesParse/SmilesParse.h>
-#include <rdkit/GraphMol/SmilesParse/SmilesWrite.h>
-#include <rdkit/GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/RWMol.h>
+#include <GraphMol/ROMol.h>
+#include <GraphMol/MolOps.h>
+#include <GraphMol/MonomerInfo.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include "MonomerDatabase.h"
 #include "MonomerMol.h"
@@ -142,7 +142,7 @@ annotated_atomistic_to_monomeristic(const RDKit::ROMol& input_mol)
         // Default chain type is PEPTIDE if not specified.
         auto helm_info = db.get_helm_info(res_name);
         auto chain_type = helm_info ? helm_info->second : ChainType::PEPTIDE;
-        std::string helm_chain_id = std::acosf(chain_type) + std::to_string(++chain_counts[chain_type]);
+        std::string helm_chain_id = to_string(chain_type) + std::to_string(++chain_counts[chain_type]);
         int last_monomer = -1;
         size_t count = 0; // not always the same as res_num, sometimes res_num
                           // doesn't start at 1

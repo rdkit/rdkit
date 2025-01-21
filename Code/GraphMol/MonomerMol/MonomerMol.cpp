@@ -23,7 +23,7 @@
 template <typename T>
 static bool is_dummy_obj(const T& obj)
 {
-    return obj.hasProp(REPETITION_DUMMY_ID);
+    return false; // placeholder from HELM parser
 }
 
 namespace RDKit
@@ -51,10 +51,10 @@ int get_residue_number(const Atom* atom)
         ->getResidueNumber();
 }
 
-std::vector<std::string> get_polymer_ids(const RDKit::ROMol& cg_mol)
+std::vector<std::string> get_polymer_ids(const RDKit::ROMol& monomer_mol)
 {
     std::vector<std::string> polymer_ids;
-    for (auto atom : cg_mol.atoms()) {
+    for (auto atom : monomer_mol.atoms()) {
         if (is_dummy_obj(*atom)) { // query/repeated monomer
             continue;
         }
@@ -68,11 +68,11 @@ std::vector<std::string> get_polymer_ids(const RDKit::ROMol& cg_mol)
     return polymer_ids;
 }
 
-Chain get_polymer(const RDKit::ROMol& cg_mol,
+Chain get_polymer(const RDKit::ROMol& monomer_mol,
                                        std::string_view polymer_id)
 {
     std::vector<unsigned int> atoms;
-    for (auto atom : cg_mol.atoms()) {
+    for (auto atom : monomer_mol.atoms()) {
         if (is_dummy_obj(*atom)) {
             continue;
         }
@@ -82,12 +82,12 @@ Chain get_polymer(const RDKit::ROMol& cg_mol,
     }
     // Sort by get_residue_num
     std::sort(atoms.begin(), atoms.end(),
-              [&cg_mol](unsigned int a, unsigned int b) {
-                  return get_residue_number(cg_mol.getAtomWithIdx(a)) <
-                         get_residue_number(cg_mol.getAtomWithIdx(b));
+              [&monomer_mol](unsigned int a, unsigned int b) {
+                  return get_residue_number(monomer_mol.getAtomWithIdx(a)) <
+                         get_residue_number(monomer_mol.getAtomWithIdx(b));
               });
     std::vector<unsigned int> bonds;
-    for (auto bond : cg_mol.bonds()) {
+    for (auto bond : monomer_mol.bonds()) {
         if (is_dummy_obj(*bond)) {
             continue;
         }
@@ -98,7 +98,7 @@ Chain get_polymer(const RDKit::ROMol& cg_mol,
     }
 
     std::string annotation{};
-    for (const auto& sg : ::RDKit::getSubstanceGroups(cg_mol)) {
+    for (const auto& sg : ::RDKit::getSubstanceGroups(monomer_mol)) {
         if ((sg.getProp<std::string>("TYPE") != "COP") ||
             !sg.hasProp(ANNOTATION) || !sg.hasProp("ID")) {
             continue;

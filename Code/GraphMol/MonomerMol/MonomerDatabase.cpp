@@ -13,11 +13,6 @@
 
 #include "MonomerMol.h" // ChainType
 
-#ifndef __EMSCRIPTEN__
-#include "mmfile.h"
-#include "schrodinger/path.h"
-#endif
-
 namespace RDKit
 {
 
@@ -103,7 +98,8 @@ const std::unordered_map<std::string, std::string> monomer_to_smiles(
       "O=C([C@H](Cc1ccc(O)cc1)N[H:1])[OH:2] |atomProp:0.pdbName. O  "
       ":1.pdbName. C  :2.pdbName. CA :3.pdbName. CB :4.pdbName. CG :5.pdbName. "
       "CD1:6.pdbName. CE1:7.pdbName. CZ :8.pdbName. OH :9.pdbName. "
-      "CE2:10.pdbName. CD2:11.pdbName. N  :12.pdbName. H  :13.pdbName. OXT|"}});
+      "CE2:10.pdbName. CD2:11.pdbName. N  :12.pdbName. H  :13.pdbName. OXT|"}
+});
 
 const std::unordered_map<std::string, std::string> three_character_codes({
     {"ALA", "A"}, // Alanine
@@ -126,20 +122,20 @@ const std::unordered_map<std::string, std::string> three_character_codes({
     {"TRP", "W"}, // Tryptophan
     {"TYR", "Y"}, // Tyrosine
     {"VAL", "V"}, // Valine
-    {"ARN", 'R'}, // Neutral-Arginine
-    {"ASH", 'D'}, // Protonated Aspartic
-    {"GLH", 'E'}, // Protonated Glutamic
-    {"HID", 'H'}, // Histidine (protonated at delta N)
-    {"HIE", 'H'}, // Histidine (protonated at epsilon N)
-    {"HIP", 'H'}, // Histidine (protonated at both N)
-    {"HSD", 'H'}, // Histidine (protonated at delta N, CHARMM name)
-    {"HSE", 'H'}, // Histidine (protonated at epsilon N, CHARMM name)
-    {"HSP", 'H'}, // Histidine (protonated at both N, CHARMM name)
-    {"LYN", 'K'}, // Protonated Lysine
-    {"SRO", 'S'}, // Ionized Serine
-    {"THO", 'T'}, // Ionized Threonine
-    {"TYO", 'Y'}, // Ionized Tyrosine
-    {"XXX", 'X'}, // Unknown
+    {"ARN", "R"}, // Neutral-Arginine
+    {"ASH", "D"}, // Protonated Aspartic
+    {"GLH", "E"}, // Protonated Glutamic
+    {"HID", "H"}, // Histidine (protonated at delta N)
+    {"HIE", "H"}, // Histidine (protonated at epsilon N)
+    {"HIP", "H"}, // Histidine (protonated at both N)
+    {"HSD", "H"}, // Histidine (protonated at delta N, CHARMM name)
+    {"HSE", "H"}, // Histidine (protonated at epsilon N, CHARMM name)
+    {"HSP", "H"}, // Histidine (protonated at both N, CHARMM name)
+    {"LYN", "K"}, // Protonated Lysine
+    {"SRO", "S"}, // Ionized Serine
+    {"THO", "T"}, // Ionized Threonine
+    {"TYO", "Y"}, // Ionized Tyrosine
+    {"XXX", "X"} // Unknown
 });
 
 MonomerDatabase::MonomerDatabase(std::string_view database_path)
@@ -154,13 +150,13 @@ MonomerDatabase::~MonomerDatabase()
     return;
 }
 
-MonomerDatabase::monomer_smiles_t
+[[nodiscard]] MonomerDatabase::monomer_smiles_t
 MonomerDatabase::get_monomer_smiles(std::string monomer_id,
                                         ChainType monomer_type)
 {
     // currently everything is a peptide
     if (monomer_to_smiles.find(monomer_id) != monomer_to_smiles.end()) {
-        return monomer_to_smiles[monomer_id];
+        return monomer_to_smiles.at(monomer_id);
     }
     return std::nullopt;
 }

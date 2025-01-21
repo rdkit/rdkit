@@ -102,10 +102,10 @@ RDKIT_MONOMERMOL_EXPORT void
 add_connection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
                ConnectionType connection_type = ConnectionType::FORWARD);
 
-
+RDKIT_MONOMERMOL_EXPORT std::vector<std::string> get_polymer_ids(const RDKit::ROMol& monomer_mol);
 RDKIT_MONOMERMOL_EXPORT std::string get_polymer_id(const Atom* atom);
 RDKIT_MONOMERMOL_EXPORT int get_residue_number(const Atom* atom);
-RDKIT_MONOMERMOL_EXPORT Chain get_polymer(const RDKit::ROMol& cg_mol,
+RDKIT_MONOMERMOL_EXPORT Chain get_polymer(const RDKit::ROMol& monomer_mol,
                                        std::string_view polymer_id);
 
 RDKIT_MONOMERMOL_EXPORT ChainType to_chain_type(std::string_view chain_type);
