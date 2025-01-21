@@ -63,7 +63,7 @@ class TestCase(unittest.TestCase):
 
     molFromScsrParams = Chem.MolFromScsrParams()
     molFromScsrParams.includeLeavingGroups = True
-    molFromScsrParams.scsrTemplateNames = Chem.ScsrTemplateNames.ScsrTemplateNamesAsEntered
+    molFromScsrParams.scsrTemplateNames = Chem.ScsrTemplateNamesVal.ScsrTemplateNamesAsEntered
     
     mol = Chem.ScsrToMol(scsr, molFromScsrParams)
 
@@ -73,7 +73,7 @@ class TestCase(unittest.TestCase):
     sgs[0].GetProp('LABEL')
     self.assertTrue(sgs[0].GetProp('LABEL') == 'Ala_4')
 
-    molFromScsrParams.scsrTemplateNames =  Chem.ScsrTemplateNames.ScsrTemplateNamesUseFirstName
+    molFromScsrParams.scsrTemplateNames =  Chem.ScsrTemplateNamesVal.ScsrTemplateNamesUseFirstName
     
     mol = Chem.ScsrToMol(scsr, molFromScsrParams)
 
@@ -83,7 +83,7 @@ class TestCase(unittest.TestCase):
 
     self.assertTrue(sgs[0].GetProp('LABEL') == 'Ala_4')
 
-    molFromScsrParams.scsrTemplateNames =  Chem.ScsrTemplateNames.ScsrTemplateNamesUseLastName
+    molFromScsrParams.scsrTemplateNames =  Chem.ScsrTemplateNamesVal.ScsrTemplateNamesUseLastName
     
     mol = Chem.ScsrToMol(scsr, molFromScsrParams)
 
