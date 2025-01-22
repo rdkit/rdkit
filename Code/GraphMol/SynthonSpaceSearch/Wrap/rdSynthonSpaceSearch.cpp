@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <csignal>
+
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 
@@ -42,7 +44,9 @@ struct SearchResults_wrapper {
              " final product not matching the query even though the"
              " synthons suggested they would.")
         .def("GetTimedOut", &SynthonSpaceSearch::SearchResults::getTimedOut,
-             "Returns whether the search timed out or not.");
+             "Returns whether the search timed out or not.")
+        .def("GetCancelled", &SynthonSpaceSearch::SearchResults::getCancelled,
+             "Returns whether the search was cancelled or not.");
   }
 };
 
@@ -54,10 +58,15 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
+  SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    return self.substructureSearch(query, params);
+    results = self.substructureSearch(query, params);
   }
+  if (results.getCancelled()) {
+    throw_runtime_error("SubstructureSearch cancelled");
+  }
+  return results;
 }
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
@@ -69,13 +78,18 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
+  SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
     const FingerprintGenerator<std::uint64_t> *fpGen =
         python::extract<FingerprintGenerator<std::uint64_t> *>(
             fingerprintGenerator);
-    return self.fingerprintSearch(query, *fpGen, params);
+    results = self.fingerprintSearch(query, *fpGen, params);
   }
+  if (results.getCancelled()) {
+    throw_runtime_error("FingerprintSearch cancelled");
+  }
+  return results;
 }
 
 void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {

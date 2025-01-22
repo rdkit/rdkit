@@ -11,6 +11,7 @@
 #include <random>
 #include <boost/random/discrete_distribution.hpp>
 
+#include <RDGeneral/ControlCHandler.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -20,15 +21,10 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
-namespace {
-bool checkTimeOut(const TimePoint *endTime) {
-  if (endTime != nullptr && Clock::now() > *endTime) {
-    BOOST_LOG(rdWarningLog) << "Timed out.\n";
-    return true;
-  }
-  return false;
-}
-}  // namespace
+SynthonSpaceSearcher::SynthonSpaceSearcher(
+    const ROMol &query, const SynthonSpaceSearchParams &params,
+    SynthonSpace &space)
+    : d_query(query), d_params(params), d_space(space) {}
 
 SearchResults SynthonSpaceSearcher::search() {
   if (d_params.randomSample && d_params.maxHits == -1) {
@@ -51,19 +47,29 @@ SearchResults SynthonSpaceSearcher::search() {
   }
   std::vector<std::unique_ptr<ROMol>> results;
 
-  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits, d_params.maxNumFrags);
-  std::vector<SynthonSpaceHitSet> allHits;
-  size_t totHits = 0;
   TimePoint *endTime = nullptr;
   TimePoint endTimePt;
   if (d_params.timeOut > 0) {
     endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
     endTime = &endTimePt;
   }
+  ControlCHandler::reset();
   bool timedOut = false;
+  auto fragments = details::splitMolecule(
+      d_query, d_params.maxBondSplits, d_params.maxNumFrags, endTime, timedOut);
+  if (timedOut || ControlCHandler::getGotSignal()) {
+    return SearchResults{std::move(results), 0UL, timedOut,
+                         ControlCHandler::getGotSignal()};
+  }
+
+  std::vector<SynthonSpaceHitSet> allHits;
+  size_t totHits = 0;
   for (auto &fragSet : fragments) {
-    timedOut = checkTimeOut(endTime);
+    timedOut = details::checkTimeOut(endTime);
     if (timedOut) {
+      break;
+    }
+    if (ControlCHandler::getGotSignal()) {
       break;
     }
     if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
@@ -76,11 +82,12 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   }
 
-  if (!timedOut && d_params.buildHits) {
+  if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, totHits, endTime, timedOut, results);
   }
 
-  return SearchResults{std::move(results), totHits, timedOut};
+  return SearchResults{std::move(results), totHits, timedOut,
+                       ControlCHandler::getGotSignal()};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
@@ -120,6 +127,20 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   return prod;
 }
 
+namespace {
+void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
+  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
+    std::sort(hits.begin(), hits.end(),
+              [](const std::unique_ptr<ROMol> &lhs,
+                 const std::unique_ptr<ROMol> &rhs) {
+                const auto lsim = lhs->getProp<double>("Similarity");
+                const auto rsim = rhs->getProp<double>("Similarity");
+                return lsim > rsim;
+              });
+  }
+}
+}  // namespace
+
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
     const TimePoint *endTime, bool &timedOut,
@@ -149,21 +170,8 @@ void SynthonSpaceSearcher::buildHits(
   } else {
     buildAllHits(hitsets, resultsNames, endTime, timedOut, results);
   }
+  sortHits(results);
 }
-
-namespace {
-void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
-  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
-    std::sort(hits.begin(), hits.end(),
-              [](const std::unique_ptr<ROMol> &lhs,
-                 const std::unique_ptr<ROMol> &rhs) {
-                const auto lsim = lhs->getProp<double>("Similarity");
-                const auto rsim = rhs->getProp<double>("Similarity");
-                return lsim > rsim;
-              });
-  }
-}
-}  // namespace
 
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
@@ -197,7 +205,6 @@ void SynthonSpaceSearcher::buildAllHits(
         results.push_back(std::move(prod));
       }
       if (results.size() == static_cast<size_t>(d_params.maxHits)) {
-        sortHits(results);
         return;
       }
       stepper.step();
@@ -205,17 +212,19 @@ void SynthonSpaceSearcher::buildAllHits(
       --numTries;
       if (!numTries) {
         numTries = 100;
-        timedOut = checkTimeOut(endTime);
+        timedOut = details::checkTimeOut(endTime);
         if (timedOut) {
           break;
         }
       }
+      if (ControlCHandler::getGotSignal()) {
+        break;
+      }
     }
-    if (timedOut) {
+    if (timedOut || ControlCHandler::getGotSignal()) {
       break;
     }
   }
-  sortHits(results);
 }
 
 namespace {
@@ -302,13 +311,15 @@ void SynthonSpaceSearcher::buildRandomHits(
     --numTries;
     if (!numTries) {
       numTries = 100;
-      timedOut = checkTimeOut(endTime);
+      timedOut = details::checkTimeOut(endTime);
       if (timedOut) {
         break;
       }
     }
+    if (ControlCHandler::getGotSignal()) {
+      break;
+    }
   }
-  sortHits(results);
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

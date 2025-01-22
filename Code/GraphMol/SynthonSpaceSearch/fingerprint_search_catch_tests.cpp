@@ -154,9 +154,6 @@ TEST_CASE("FP Biggy") {
   params.approxSimilarityAdjuster = 0.2;
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
-    if (i != 4) {
-      continue;
-    }
     auto queryMol = v2::SmilesParse::MolFromSmiles(smis[i]);
     auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
