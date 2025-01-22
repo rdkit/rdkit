@@ -15,6 +15,7 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include <RDGeneral/ControlCHandler.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
@@ -122,8 +123,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 }
 
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
-    const ROMol &query, unsigned int maxBondSplits, std::uint64_t maxNumFrags, TimePoint *endTime,
-    bool &timedOut, ControlCHandler &signalHandler) {
+    const ROMol &query, unsigned int maxBondSplits, std::uint64_t maxNumFrags,
+    TimePoint *endTime, bool &timedOut) {
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
   }
@@ -166,7 +167,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
       dummyLabels.emplace_back(j, j);
     }
     for (auto &c : combs) {
-      if (signalHandler.getGotSignal()) {
+      if (ControlCHandler::getGotSignal()) {
         cancelled = true;
         break;
       }

@@ -51,9 +51,8 @@ TEST_CASE("Test splits 1") {
   for (size_t i = 0; i < smiles.size(); ++i) {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles[i]);
     REQUIRE(mol);
-    ControlCHandler signalHandler;
     bool timedOut = false;
-    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, timedOut, signalHandler);
+    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, timedOut);
     CHECK(fragments.size() ==
           std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.
@@ -352,6 +351,7 @@ TEST_CASE("S Biggy") {
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
+    std::cerr << "Query " << i << std::endl;
     auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
     auto results = synthonspace.substructureSearch(*queryMol, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);

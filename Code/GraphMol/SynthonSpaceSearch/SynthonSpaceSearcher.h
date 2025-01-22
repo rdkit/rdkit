@@ -20,7 +20,6 @@
 #include <boost/random.hpp>
 
 #include <RDGeneral/export.h>
-#include <RDGeneral/ControlCHandler.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 
@@ -92,17 +91,14 @@ class SynthonSpaceSearcher {
   // be re-ordered on exit.
   void buildHits(std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
                  const TimePoint *endTime, bool &timedOut,
-                 ControlCHandler &signalHandler,
                  std::vector<std::unique_ptr<ROMol>> &results) const;
   void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
                     std::set<std::string> &resultsNames,
                     const TimePoint *endTime, bool &timedOut,
-                    ControlCHandler &signalHandler,
                     std::vector<std::unique_ptr<ROMol>> &results) const;
   void buildRandomHits(const std::vector<SynthonSpaceHitSet> &hitsets,
                        size_t totHits, std::set<std::string> &resultsNames,
                        const TimePoint *endTime, bool &timedOut,
-                       ControlCHandler &signalHandler,
                        std::vector<std::unique_ptr<ROMol>> &results) const;
   // get the subset of synthons for the given reaction to use for this
   // enumeration.
