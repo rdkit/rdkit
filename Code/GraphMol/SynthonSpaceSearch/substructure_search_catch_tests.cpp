@@ -46,12 +46,12 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
 TEST_CASE("Test splits 1") {
   const std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
                                         "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1"};
-  std::vector<std::vector<size_t>> expCounts{{1, 51, 345, 20},
-                                             {1, 38, 298, 56}};
+  std::vector<std::vector<size_t>> expCounts{{1, 47, 345, 20},
+                                             {1, 37, 262, 41}};
   for (size_t i = 0; i < smiles.size(); ++i) {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles[i]);
     REQUIRE(mol);
-    auto fragments = splitMolecule(*mol, 3);
+    auto fragments = splitMolecule(*mol, 3, 100000);
     CHECK(fragments.size() ==
           std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.
