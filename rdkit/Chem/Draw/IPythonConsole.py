@@ -206,17 +206,16 @@ def _toHTML(mol):
     nm = ''
 
   res = []
+
   if useInteractiveRenderer:
     content = InteractiveRenderer.generateHTMLBody(mol, molSize, legend=nm, useSVG=ipython_useSVG)
   else:
     if not ipython_useSVG:
-      png = Draw._moltoimg(mol, molSize, [], nm, returnPNG=True, kekulize=kekulizeStructures,
-                           drawOptions=drawOptions)
+      png = _toPNG(mol)
       png = base64.b64encode(png)
       content = f'<image src="data:image/png;base64,{png.decode()}">'
     else:
-      content = Draw._moltoSVG(mol, molSize, [], nm, kekulize=kekulizeStructures,
-                               drawOptions=drawOptions)
+      content = _toSVG(mol)
   res.append(f'<tr><td colspan="2" style="text-align: center;">{content}</td></tr>')
 
   for i, (pn, pv) in enumerate(props.items()):

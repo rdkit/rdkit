@@ -17,6 +17,7 @@
 #include <thread>
 #include <boost/random/discrete_distribution.hpp>
 
+#include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
@@ -43,16 +44,10 @@ std::string formatLargeInt(std::int64_t n) {
 
 namespace RDKit::SynthonSpaceSearch {
 
-static std::atomic<bool> timedOut = false;
-
-namespace {
-void checkTimeOut(const TimePoint *endTime) {
-  if (!timedOut && endTime != nullptr && Clock::now() > *endTime) {
-    BOOST_LOG(rdWarningLog) << "Timed out.\n";
-    timedOut = true;
-  }
-}
-}  // namespace
+SynthonSpaceSearcher::SynthonSpaceSearcher(
+    const ROMol &query, const SynthonSpaceSearchParams &params,
+    SynthonSpace &space)
+    : d_query(query), d_params(params), d_space(space) {}
 
 SearchResults SynthonSpaceSearcher::search() {
   if (d_params.randomSample && d_params.maxHits == -1) {
@@ -74,13 +69,19 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   }
 
-  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
   TimePoint *endTime = nullptr;
   TimePoint endTimePt;
-  timedOut = false;
   if (d_params.timeOut > 0) {
     endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
     endTime = &endTimePt;
+  }
+  ControlCHandler::reset();
+  bool timedOut = false;
+  auto fragments = details::splitMolecule(
+      d_query, d_params.maxBondSplits, d_params.maxNumFrags, endTime, timedOut);
+  if (timedOut || ControlCHandler::getGotSignal()) {
+    return SearchResults{std::vector<std::unique_ptr<ROMol>>(), 0UL, timedOut,
+                         ControlCHandler::getGotSignal()};
   }
   std::vector<std::vector<SynthonSpaceHitSet>> allFragHits(fragments.size());
 
@@ -91,8 +92,10 @@ SearchResults SynthonSpaceSearcher::search() {
          SynthonSpaceSearcher *self, size_t start, size_t finish) -> void {
     finish = finish > fragments.size() ? fragments.size() : finish;
     for (size_t i = start; i < finish; i++) {
-      checkTimeOut(endTime);
-      if (timedOut) {
+      if (details::checkTimeOut(endTime)) {
+        break;
+      }
+      if (ControlCHandler::getGotSignal()) {
         break;
       }
       allFragHits[i] = self->searchFragSet(std::ref(fragments[i]));
@@ -134,11 +137,12 @@ SearchResults SynthonSpaceSearcher::search() {
   }
 
   std::vector<std::unique_ptr<ROMol>> results;
-  if (!timedOut && d_params.buildHits) {
-    buildHits(allHits, endTime, results);
+  if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
+    buildHits(allHits, endTime, timedOut, results);
   }
 
-  return SearchResults{std::move(results), totHits, timedOut};
+  return SearchResults{std::move(results), totHits, timedOut,
+                       ControlCHandler::getGotSignal()};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
@@ -169,7 +173,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const TimePoint *endTime,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
@@ -185,7 +189,7 @@ void SynthonSpaceSearcher::buildHits(
                 return hs1.reactionId < hs2.reactionId;
               });
   }
-  buildAllHits(hitsets, endTime, results);
+  buildAllHits(hitsets, endTime, timedOut, results);
 }
 
 namespace {
@@ -256,7 +260,7 @@ bool haveEnoughHits(const std::vector<std::unique_ptr<ROMol>> &results,
 
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const TimePoint *endTime,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>> toTry;
   bool enoughHits = false;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
@@ -360,8 +364,7 @@ void processPartHitsFromDetails(
     --numTries;
     if (!numTries) {
       numTries = 100;
-      checkTimeOut(endTime);
-      if (timedOut) {
+      if (details::checkTimeOut(endTime)) {
         break;
       }
     }

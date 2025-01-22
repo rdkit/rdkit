@@ -52,6 +52,13 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                          // lower than 1 will be increased to 1.
   std::int64_t maxHits{1000};  // The maximum number of hits to return.  Use -1
                                // for no maximum.
+  std::uint64_t maxNumFrags{
+      100000};  // The maximum number of fragments the query can
+                // be broken into.  Big molecules will create huge
+                // numbers of fragments that may cause excessive
+                // memory use.  If the number of fragments hits this number,
+                // fragmentation stops and the search results will likely be
+                // incomplete.
   std::int64_t toTryChunkSize{
       2500000};              // For similarity searching, especially
                              // fingerprint similarity, there can be a
@@ -87,14 +94,23 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // times, a lower number will give faster searches at the
              // risk of missing some hits.  The value you use should have
              // a positive correlation with your FOMO.
+  double approxSimilarityAdjuster{
+      0.1};  // The fingerprint search uses an approximate similarity method
+             // before building a product and doing a final check.  The
+             // similarityCutoff is reduced by this value for the approximate
+             // check.  A lower value will give faster run times at the
+             // risk of missing some hits.  The value you use should have a
+             // positive correlation with your FOMO.  The default is
+             // appropriate for Morgan fingerprints.  With RDKit fingerprints,
+             // 0.05 is adequate, and higher than that has been seen to
+             // produce long run times.
   std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
                                // search.  0 means no maximum.
-  int numThreads = 1; // The number of threads to use.  If > 0, will use that
-                      // number.  If <= 0, will use the number of hardware
-                      // threads plus this number.  So if the number of
-                      // hardware threads is 8, and numThreads is -1, it will
-                      // use 7 threads.
-
+  int numThreads = 1;  // The number of threads to use.  If > 0, will use that
+                       // number.  If <= 0, will use the number of hardware
+                       // threads plus this number.  So if the number of
+                       // hardware threads is 8, and numThreads is -1, it will
+                       // use 7 threads.
 };
 
 // Holds the information about a set of hits.  The molecules can be built
@@ -221,8 +237,14 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   bool hasFingerprints() const;
   // Create the fingerprints for the synthons ready for fingerprint searches.
-  // Valid values of fpType as described by SynthonSpaceSearchParams.
+  // Will be done by the fingerprint search if not done ahead of time.
   void buildSynthonFingerprints(
+      const FingerprintGenerator<std::uint64_t> &fpGen);
+
+  bool hasAddAndSubstractFingerprints() const;
+  // Create the add and substract fingerprints for the SynthonSets.
+  // Will be done by the fingerprint search if not done ahead of time.
+  void buildAddAndSubstractFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
 
  private:

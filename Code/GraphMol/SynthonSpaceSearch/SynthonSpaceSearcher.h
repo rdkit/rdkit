@@ -16,6 +16,7 @@
 #define SYNTHONSPACESEARCHER_H
 
 #include <chrono>
+
 #include <boost/random.hpp>
 
 #include <RDGeneral/export.h>
@@ -35,8 +36,7 @@ class SynthonSpaceSearcher {
   SynthonSpaceSearcher() = delete;
   SynthonSpaceSearcher(const ROMol &query,
                        const SynthonSpaceSearchParams &params,
-                       SynthonSpace &space)
-      : d_query(query), d_params(params), d_space(space) {}
+                       SynthonSpace &space);
   SynthonSpaceSearcher(const SynthonSpaceSearcher &other) = delete;
   SynthonSpaceSearcher(SynthonSpaceSearcher &&other) = delete;
   SynthonSpaceSearcher &operator=(const SynthonSpaceSearcher &other) = delete;
@@ -70,6 +70,24 @@ class SynthonSpaceSearcher {
   // similarity.
   virtual std::vector<SynthonSpaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet) const = 0;
+  // Make the hit, constructed from a specific combination of
+  // synthons in the SynthonSet, and verify that it matches the
+  // query in the appropriate way.  There'll be 1 entry in synthNums
+  // for each synthon list in the reaction.  Returns an empty pointer
+  // if the hit isn't accepted for whatever reason.
+  std::unique_ptr<ROMol> buildAndVerifyHit(
+      const std::unique_ptr<SynthonSet> &reaction,
+      const std::vector<size_t> &synthNums,
+      std::set<std::string> &resultsNames) const;
+  // Some of the search methods (Rascal, for example) can do a quick
+  // check on whether this set of synthons can match the query without having to
+  // build the full molecule from the synthons.  They will over-ride this
+  // function which by default passes everything.
+  virtual bool quickVerify(
+      [[maybe_unused]] const std::unique_ptr<SynthonSet> &reaction,
+      [[maybe_unused]] const std::vector<size_t> &synthNums) const {
+    return true;
+  }
   virtual bool verifyHit(const ROMol &mol) const = 0;
 
   // Build the molecules from the synthons identified in reagentsToUse.
@@ -80,10 +98,10 @@ class SynthonSpaceSearcher {
   // but duplicate SMILES from different reactions will be.  Hitsets will
   // be re-ordered on exit.
   void buildHits(std::vector<SynthonSpaceHitSet> &hitsets,
-                 const TimePoint *endTime,
+                 const TimePoint *endTime, bool &timedOut,
                  std::vector<std::unique_ptr<ROMol>> &results) const;
   void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
-                    const TimePoint *endTime,
+                    const TimePoint *endTime, bool &timedOut,
                     std::vector<std::unique_ptr<ROMol>> &results) const;
   void makeHitsFromToTry(
       const std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>>

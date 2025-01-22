@@ -1812,23 +1812,6 @@ void testFragmentOnBRICSBonds() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void benchFragmentOnBRICSBonds() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBRICSBonds" << std::endl;
-  {
-    std::string pathName = getenv("RDBASE");
-    pathName += "/Regress/Data/mols.1000.sdf";
-    SDMolSupplier suppl(pathName);
-    while (!suppl.atEnd()) {
-      ROMol *m = suppl.next();
-      ROMol *nmol = MolFragmenter::fragmentOnBRICSBonds(*m);
-      delete m;
-      delete nmol;
-    }
-  }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
-
 void testFragmentOnSomeBonds() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing fragmentOnSomeBonds" << std::endl;
@@ -2169,7 +2152,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Transforms \n";
 
-#if 1
   testDeleteSubstruct();
   testReplaceSubstructs();
   testReplaceSubstructs2();
@@ -2195,12 +2177,10 @@ int main() {
   testFragmentOnBonds();
   testFragmentOnBRICSBonds();
   testFragmentOnSomeBonds();
-  // benchFragmentOnBRICSBonds();
   testGithubIssue429();
   testGithubIssue430();
   testGithubIssue511();
   testReplaceCore2();
-#endif
   testGithub1734();
   testGithub3206();
   testGithub4019();
