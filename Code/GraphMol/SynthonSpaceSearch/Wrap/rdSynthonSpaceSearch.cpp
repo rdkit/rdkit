@@ -106,6 +106,14 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
                      "The maximum number of hits to return.  Default=1000."
                      "Use -1 for no maximum.")
       .def_readwrite(
+          "maxNumFrags",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxNumFrags,
+          "The maximum number of fragments the query can be broken into."
+          "  Big molecules will create huge numbers of fragments that may cause"
+          " excessive memory use.  If the number of fragments hits this number,"
+          " fragmentation stops and the search results will likely be incomplete."
+          "  Default=100000.")
+      .def_readwrite(
           "hitStart", &SynthonSpaceSearch::SynthonSpaceSearchParams::hitStart,
           "The sequence number of the hit to start from.  So that you"
           " can return the next N hits of a search having already"
@@ -144,6 +152,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "Similarities of fragments are generally low due to low bit"
           " densities.  For the fragment matching, reduce the similarity cutoff"
           " off by this amount.  Default=0.1.")
+      .def_readwrite(
+          "approxSimilarityAdjuster",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::
+              approxSimilarityAdjuster,
+          "The fingerprint search uses an approximate similarity method"
+          " before building a product and doing a final check.  The"
+          " similarityCutoff is reduced by this value for the approximate"
+          " check.  A lower value will give faster run times at the"
+          " risk of missing some hits.  The value you use should have a"
+          " positive correlation with your FOMO.  The default of 0.1 is"
+          " appropriate for Morgan fingerprints.  With RDKit fingerprints,"
+          " 0.05 is adequate, and higher than that has been seen to"
+          " produce long run times.")
       .def_readwrite(
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
