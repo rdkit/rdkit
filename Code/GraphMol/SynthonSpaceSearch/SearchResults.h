@@ -18,7 +18,8 @@ namespace RDKit::SynthonSpaceSearch {
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
  public:
   explicit SearchResults() : d_maxNumResults(0) {}
-  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes);
+  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes,
+                bool timedOut, bool cancelled);
   SearchResults(const SearchResults &other);
   SearchResults(SearchResults &&other) = default;
   ~SearchResults() = default;
@@ -45,20 +46,36 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
     return d_hitMolecules;
   }
 
+  /*!
+   * Returns whether the search timed out or not,
+   * @return bool
+   */
+  bool getTimedOut() const { return d_timedOut; }
+  /*!
+   * Returns whether the search was cancelled or not,
+   * @return bool
+   */
+  bool getCancelled() const { return d_cancelled; }
+
  private:
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
   size_t d_maxNumResults;
+  bool d_timedOut{false};
+  bool d_cancelled{false};
 };
 
 inline SearchResults::SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
-                                    const size_t maxNumRes)
-    : d_maxNumResults(maxNumRes) {
+                                    const size_t maxNumRes, bool timedOut,
+                                    bool cancelled)
+    : d_maxNumResults(maxNumRes), d_timedOut(timedOut), d_cancelled(cancelled) {
   d_hitMolecules = std::move(mols);
   mols.clear();
 }
 
 inline SearchResults::SearchResults(const SearchResults &other)
-    : d_maxNumResults(other.d_maxNumResults) {
+    : d_maxNumResults(other.d_maxNumResults),
+      d_timedOut(other.d_timedOut),
+      d_cancelled(other.d_cancelled) {
   for (const auto &hm : other.d_hitMolecules) {
     d_hitMolecules.emplace_back(new ROMol(*hm));
   }

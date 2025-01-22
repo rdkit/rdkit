@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <csignal>
+
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 
@@ -34,13 +36,17 @@ struct SearchResults_wrapper {
         "SubstructureResult", docString.c_str(), python::no_init)
         .def("GetHitMolecules", hitMolecules_helper, python::args("self"),
              "A function returning hits from the search")
-        .def_readonly("GetMaxNumResults",
-                      &SynthonSpaceSearch::SearchResults::getMaxNumResults,
-                      "The upper bound on number of results possible.  There"
-                      " may be fewer than this in practice for several reasons"
-                      " such as duplicate reagent sets being removed or the"
-                      " final product not matching the query even though the"
-                      " synthons suggested they would.");
+        .def("GetMaxNumResults",
+             &SynthonSpaceSearch::SearchResults::getMaxNumResults,
+             "The upper bound on number of results possible.  There"
+             " may be fewer than this in practice for several reasons"
+             " such as duplicate reagent sets being removed or the"
+             " final product not matching the query even though the"
+             " synthons suggested they would.")
+        .def("GetTimedOut", &SynthonSpaceSearch::SearchResults::getTimedOut,
+             "Returns whether the search timed out or not.")
+        .def("GetCancelled", &SynthonSpaceSearch::SearchResults::getCancelled,
+             "Returns whether the search was cancelled or not.");
   }
 };
 
@@ -52,10 +58,15 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
+  SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    return self.substructureSearch(query, params);
+    results = self.substructureSearch(query, params);
   }
+  if (results.getCancelled()) {
+    throw_runtime_error("SubstructureSearch cancelled");
+  }
+  return results;
 }
 
 SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
@@ -67,13 +78,18 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
         py_params);
   }
+  SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
     const FingerprintGenerator<std::uint64_t> *fpGen =
         python::extract<FingerprintGenerator<std::uint64_t> *>(
             fingerprintGenerator);
-    return self.fingerprintSearch(query, *fpGen, params);
+    results = self.fingerprintSearch(query, *fpGen, params);
   }
+  if (results.getCancelled()) {
+    throw_runtime_error("FingerprintSearch cancelled");
+  }
+  return results;
 }
 
 void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
@@ -103,6 +119,14 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
                      &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHits,
                      "The maximum number of hits to return.  Default=1000."
                      "Use -1 for no maximum.")
+      .def_readwrite(
+          "maxNumFrags",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxNumFrags,
+          "The maximum number of fragments the query can be broken into."
+          "  Big molecules will create huge numbers of fragments that may cause"
+          " excessive memory use.  If the number of fragments hits this number,"
+          " fragmentation stops and the search results will likely be incomplete."
+          "  Default=100000.")
       .def_readwrite(
           "hitStart", &SynthonSpaceSearch::SynthonSpaceSearchParams::hitStart,
           "The sequence number of the hit to start from.  So that you"
@@ -141,7 +165,24 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           &SynthonSpaceSearch::SynthonSpaceSearchParams::fragSimilarityAdjuster,
           "Similarities of fragments are generally low due to low bit"
           " densities.  For the fragment matching, reduce the similarity cutoff"
-          " off by this amount.  Default=0.3.");
+          " off by this amount.  Default=0.1.")
+      .def_readwrite(
+          "approxSimilarityAdjuster",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::
+              approxSimilarityAdjuster,
+          "The fingerprint search uses an approximate similarity method"
+          " before building a product and doing a final check.  The"
+          " similarityCutoff is reduced by this value for the approximate"
+          " check.  A lower value will give faster run times at the"
+          " risk of missing some hits.  The value you use should have a"
+          " positive correlation with your FOMO.  The default of 0.1 is"
+          " appropriate for Morgan fingerprints.  With RDKit fingerprints,"
+          " 0.05 is adequate, and higher than that has been seen to"
+          " produce long run times.")
+      .def_readwrite(
+          "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
+          "Time limit for search, in seconds.  Default is 600s, 0 means no"
+          " timeout.  Requires an integer");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
