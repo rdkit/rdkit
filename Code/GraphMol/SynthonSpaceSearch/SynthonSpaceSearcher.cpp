@@ -20,8 +20,6 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
-namespace {}  // namespace
-
 SynthonSpaceSearcher::SynthonSpaceSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
     SynthonSpace &space)
@@ -56,7 +54,7 @@ SearchResults SynthonSpaceSearcher::search() {
     endTime = &endTimePt;
   }
   bool timedOut = false;
-  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits,
+  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits, d_params.maxNumFrags,
                                           endTime, timedOut, signalHandler);
   if (timedOut || signalHandler.getGotSignal()) {
     return SearchResults{std::move(results), 0UL, timedOut,
@@ -100,6 +98,9 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   std::unique_ptr<ROMol> prod;
   if (resultsNames.insert(prodName).second) {
     if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
+      return prod;
+    }
+    if (!quickVerify(reaction, synthNums)) {
       return prod;
     }
     prod = reaction->buildProduct(synthNums);

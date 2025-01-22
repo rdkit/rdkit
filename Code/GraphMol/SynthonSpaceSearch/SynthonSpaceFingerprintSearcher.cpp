@@ -24,6 +24,9 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
       getSpace().getSynthonFingerprintType() != fpGen.infoString()) {
     getSpace().buildSynthonFingerprints(fpGen);
   }
+  if (!getSpace().hasAddAndSubstractFingerprints()) {
+    getSpace().buildAddAndSubstractFingerprints(fpGen);
+  }
   d_queryFP = std::unique_ptr<ExplicitBitVect>(d_fpGen.getFingerprint(query));
 }
 
@@ -146,6 +149,27 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     }
   }
   return results;
+}
+
+bool SynthonSpaceFingerprintSearcher::quickVerify(
+    const std::unique_ptr<SynthonSet> &reaction,
+    const std::vector<size_t> &synthNums) const {
+  // Make an approximate fingerprint by combining the FPs for
+  // these synthons, adding in the addFP and taking out the
+  // subtractFP.
+  const auto &synthFPs = reaction->getSynthonFPs();
+  ExplicitBitVect fullFP(*synthFPs[0][synthNums[0]]);
+  for (unsigned int i = 1; i < synthNums.size(); ++i) {
+    fullFP |= *synthFPs[i][synthNums[i]];
+  }
+  fullFP |= *(reaction->getAddFP());
+  // The subtract FP has already had its bits flipped, so just do a
+  // straight AND.
+  fullFP &= *(reaction->getSubtractFP());
+
+  double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
+  return approxSim >=
+         getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }
 
 bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {

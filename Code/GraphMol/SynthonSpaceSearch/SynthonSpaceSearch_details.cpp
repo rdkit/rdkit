@@ -122,7 +122,7 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 }
 
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
-    const ROMol &query, unsigned int maxBondSplits, TimePoint *endTime,
+    const ROMol &query, unsigned int maxBondSplits, std::uint64_t maxNumFrags, TimePoint *endTime,
     bool &timedOut, ControlCHandler &signalHandler) {
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
@@ -147,6 +147,10 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   fragments.emplace_back();
   fragments.back().emplace_back(new ROMol(query));
 
+  // Now do the splits.  Symmetrical molecules can give rise to the same
+  // fragment set in different ways so keep track of what we've had to
+  // avoid duplicates.
+  std::set<std::string> fragSmis;
   bool cancelled = false;
   timedOut = false;
   std::uint64_t numTries = 100;
@@ -202,8 +206,20 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
         continue;
       }
       if (checkConnectorsInDifferentFrags(molFrags, i)) {
+        std::string fragSmi(MolToSmiles(*fragMol));
+        if (!fragSmis.insert(fragSmi).second) {
+          continue;
+        }
         fragments.emplace_back(std::move(molFrags));
+        if (fragments.size() > maxNumFrags) {
+          BOOST_LOG(rdWarningLog)
+              << "Maximum number of fragments reached." << std::endl;
+          break;
+        }
       }
+    }
+    if (fragments.size() > maxNumFrags) {
+      break;
     }
   }
   return fragments;
