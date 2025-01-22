@@ -391,7 +391,7 @@ std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
       "[C;!$(C=[O,N,S])]-[O,N,S]-C=[O,N,S]",  //< the other side
       "[OH0,SH0]-C=[O,N,S]",                  //< "esters" and "carboxyls"
       "[C]-[c](:[o,n,s]):[o,n,s]",  //< a limited version of handling this for
-                                    //aromatic systems
+                                    // aromatic systems
   };
   static std::vector<std::unique_ptr<RDKit::RWMol>> queries;
   if (queries.empty()) {
@@ -513,6 +513,8 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   unsigned int hcount = 0;
   int charge = 0;
 
+  // we aren't current doing anything with atomFlags, but we have added them in
+  // analogy to the bondFlags as a kind of future proofing.
   std::vector<std::uint64_t> atomFlags(mol->getNumAtoms(), 0);
   auto bondFlags = details::getBondFlags(*mol);
 
