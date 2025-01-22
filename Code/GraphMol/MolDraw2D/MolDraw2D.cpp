@@ -287,9 +287,6 @@ void MolDraw2D::drawReaction(
 
   // Copy the reaction because processing for drawing alters it.
   ChemicalReaction nrxn(rxn);
-  // I think a larger minimum font size than the default works better for this
-  int mfs = drawOptions().minFontSize > 12 ? drawOptions().minFontSize : 12;
-  text_drawer_->setMinFontSize(mfs);
   int plusWidth;
   getReactionDrawMols(nrxn, highlightByReactant, highlightColorsReactants,
                       confIds, reagents, products, agents, plusWidth);
