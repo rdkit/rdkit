@@ -16,6 +16,7 @@
 #define SYNTHONSPACESEARCHER_H
 
 #include <chrono>
+
 #include <boost/random.hpp>
 
 #include <RDGeneral/export.h>
@@ -35,8 +36,7 @@ class SynthonSpaceSearcher {
   SynthonSpaceSearcher() = delete;
   SynthonSpaceSearcher(const ROMol &query,
                        const SynthonSpaceSearchParams &params,
-                       SynthonSpace &space)
-      : d_query(query), d_params(params), d_space(space) {}
+                       SynthonSpace &space);
   SynthonSpaceSearcher(const SynthonSpaceSearcher &other) = delete;
   SynthonSpaceSearcher(SynthonSpaceSearcher &&other) = delete;
   SynthonSpaceSearcher &operator=(const SynthonSpaceSearcher &other) = delete;
