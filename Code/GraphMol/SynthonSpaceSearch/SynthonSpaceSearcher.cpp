@@ -11,6 +11,7 @@
 #include <random>
 #include <boost/random/discrete_distribution.hpp>
 
+#include <RDGeneral/ControlCHandler.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -28,7 +29,6 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
     : d_query(query), d_params(params), d_space(space) {}
 
 SearchResults SynthonSpaceSearcher::search() {
-  ControlCHandler signalHandler;
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
         "Random sample is incompatible with maxHits of -1.");
@@ -55,12 +55,13 @@ SearchResults SynthonSpaceSearcher::search() {
     endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
     endTime = &endTimePt;
   }
+  ControlCHandler::reset();
   bool timedOut = false;
   auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits,
-                                          endTime, timedOut, signalHandler);
-  if (timedOut || signalHandler.getGotSignal()) {
+                                          endTime, timedOut);
+  if (timedOut || ControlCHandler::getGotSignal()) {
     return SearchResults{std::move(results), 0UL, timedOut,
-                         signalHandler.getGotSignal()};
+                         ControlCHandler::getGotSignal()};
   }
 
   std::vector<SynthonSpaceHitSet> allHits;
@@ -70,7 +71,7 @@ SearchResults SynthonSpaceSearcher::search() {
     if (timedOut) {
       break;
     }
-    if (signalHandler.getGotSignal()) {
+    if (ControlCHandler::getGotSignal()) {
       break;
     }
     if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
@@ -83,12 +84,12 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   }
 
-  if (!timedOut && !signalHandler.getGotSignal() && d_params.buildHits) {
-    buildHits(allHits, totHits, endTime, timedOut, signalHandler, results);
+  if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
+    buildHits(allHits, totHits, endTime, timedOut, results);
   }
 
   return SearchResults{std::move(results), totHits, timedOut,
-                       signalHandler.getGotSignal()};
+                       ControlCHandler::getGotSignal()};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
@@ -141,7 +142,7 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    const TimePoint *endTime, bool &timedOut, ControlCHandler &signalHandler,
+    const TimePoint *endTime, bool &timedOut,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -164,11 +165,9 @@ void SynthonSpaceSearcher::buildHits(
   std::set<std::string> resultsNames;
 
   if (d_params.randomSample) {
-    buildRandomHits(hitsets, totHits, resultsNames, endTime, timedOut,
-                    signalHandler, results);
+    buildRandomHits(hitsets, totHits, resultsNames, endTime, timedOut, results);
   } else {
-    buildAllHits(hitsets, resultsNames, endTime, timedOut, signalHandler,
-                 results);
+    buildAllHits(hitsets, resultsNames, endTime, timedOut, results);
   }
   sortHits(results);
 }
@@ -176,8 +175,7 @@ void SynthonSpaceSearcher::buildHits(
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
     std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, ControlCHandler &signalHandler,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
     std::vector<std::vector<size_t>> synthonNums;
@@ -218,11 +216,11 @@ void SynthonSpaceSearcher::buildAllHits(
           break;
         }
       }
-      if (signalHandler.getGotSignal()) {
+      if (ControlCHandler::getGotSignal()) {
         break;
       }
     }
-    if (timedOut || signalHandler.getGotSignal()) {
+    if (timedOut || ControlCHandler::getGotSignal()) {
       break;
     }
   }
@@ -290,8 +288,7 @@ struct RandomHitSelector {
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
     std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, ControlCHandler &signalHandler,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
@@ -318,7 +315,7 @@ void SynthonSpaceSearcher::buildRandomHits(
         break;
       }
     }
-    if (signalHandler.getGotSignal()) {
+    if (ControlCHandler::getGotSignal()) {
       break;
     }
   }

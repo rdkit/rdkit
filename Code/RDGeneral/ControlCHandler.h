@@ -47,16 +47,20 @@ class ControlCHandler {
     d_gotSignal = false;
   }
   static bool getGotSignal() { return d_gotSignal; }
-  static void setGotSignal(bool newVal) { d_gotSignal = newVal; }
   static void signalHandler(int signalNumber) {
     if (signalNumber == SIGINT) {
       d_gotSignal = true;
+      std::signal(SIGINT, d_prev_handler);
     }
+  }
+  static void reset() {
+    d_gotSignal = false;
+    std::signal(SIGINT, signalHandler);
   }
 
  private:
-  inline static std::atomic<bool> d_gotSignal{false};
-  void (*d_prev_handler)(int);
+  inline static bool d_gotSignal{false};
+  inline static void (*d_prev_handler)(int);
 };
 }  // namespace RDKit
 #endif  // CONTROLCHANDLER_H
