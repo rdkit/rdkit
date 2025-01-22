@@ -34,10 +34,12 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/dynamic_bitset.hpp>
-#include <iomanip>
 #include <RDGeneral/RDThreads.h>
-#include <typeinfo>
+#include <cstddef>
+#include <stdexcept>
 #include <vector>
+#include <chrono>  // for time-related functions
+
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
@@ -63,6 +65,9 @@ constexpr double TETRAHEDRAL_CENTERINVOLUME_TOL = 0.30;
 inline bool haveOppositeSign(double a, double b) {
   return std::signbit(a) ^ std::signbit(b);
 }
+
+using Clock = std::chrono::steady_clock;
+using TimePoint = std::chrono::time_point<Clock>;
 
 }  // namespace
 
@@ -115,6 +120,7 @@ const EmbedParameters KDG(0,        // maxIterations
                           false,    // useSmallRingTorsions
                           false,    // useMacrocycleTorsions
                           false,    // useMacrocycle14config
+                          0,        // timeout
                           nullptr,  // CPCI
                           nullptr   // callback
 );
@@ -144,6 +150,7 @@ const EmbedParameters ETDG(0,        // maxIterations
                            false,    // useSmallRingTorsions
                            false,    // useMacrocycleTorsions
                            false,    // useMacrocycle14config
+                           0,        // timeout
                            nullptr,  // CPCI
                            nullptr   // callback
 );
@@ -172,6 +179,7 @@ const EmbedParameters ETKDG(0,        // maxIterations
                             false,    // useSmallRingTorsions
                             false,    // useMacrocycleTorsions
                             false,    // useMacrocycle14config
+                            0,        // timeout
                             nullptr,  // CPCI
                             nullptr   // callback
 );
@@ -201,6 +209,7 @@ const EmbedParameters ETKDGv2(0,        // maxIterations
                               false,    // useSmallRingTorsions
                               false,    // useMacrocycleTorsions
                               false,    // useMacrocycle14config
+                              0,        // timeout
                               nullptr,  // CPCI
                               nullptr   // callback
 );
@@ -231,6 +240,7 @@ const EmbedParameters ETKDGv3(0,        // maxIterations
                               false,    // useSmallRingTorsions
                               true,     // useMacrocycleTorsions
                               true,     // useMacrocycle14config
+                              0,        // timeout
                               nullptr,  // CPCI
                               nullptr   // callback
 );
@@ -261,6 +271,7 @@ const EmbedParameters srETKDGv3(0,        // maxIterations
                                 true,     // useSmallRingTorsions
                                 false,    // useMacrocycleTorsions
                                 false,    // useMacrocycle14config
+                                0,        // timeout
                                 nullptr,  // CPCI
                                 nullptr   // callback
 );
@@ -564,7 +575,8 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
 }
 bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
                              const detail::EmbedArgs &eargs,
-                             const EmbedParameters &embedParams) {
+                             EmbedParameters &embedParams,
+                             TimePoint* end_time) {
   // now redo the minimization if we have a chiral center
   // or have started from random coords. This
   // time removing the chiral constraints and
@@ -584,6 +596,9 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   if (field2->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
     while (needMore) {
+      if (end_time != nullptr && Clock::now() > *end_time) {
+        return false;
+      }
       needMore = field2->minimize(200, embedParams.optimizerForceTol);
     }
   }
@@ -805,7 +820,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
 }
 
 bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
-                 EmbedParameters &embedParams, int seed) {
+                 EmbedParameters &embedParams, int seed, TimePoint* end_time) {
   PRECONDITION(positions, "bogus positions");
   if (embedParams.maxIterations == 0) {
     embedParams.maxIterations = 10 * positions->size();
@@ -837,6 +852,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
   bool gotCoords = false;
   unsigned int iter = 0;
   while (!gotCoords && iter < embedParams.maxIterations) {
+    if (end_time != nullptr && Clock::now() > *end_time) {
+      break;
+    }
+
     ++iter;
     if (embedParams.callback != nullptr) {
       embedParams.callback(iter);
@@ -892,13 +911,17 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // or have started from random coords.
       if (gotCoords &&
           (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
-        gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
-                                                          embedParams);
+        gotCoords = EmbeddingOps::minimizeFourthDimension(
+            positions, eargs, embedParams, end_time);
         if (!gotCoords) {
           if (embedParams.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
             std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
+            if (end_time != nullptr && Clock::now() > *end_time) {
+              embedParams
+                .failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+            }
             embedParams
                 .failures[EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION]++;
           }
@@ -1283,7 +1306,7 @@ bool multiplication_overflows_(T a, T b) {
 }
 
 void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
-                  EmbedParameters *params) {
+                  EmbedParameters *params, TimePoint* end_time) {
   PRECONDITION(eargs, "bogus eargs");
   PRECONDITION(params, "bogus params");
   unsigned int nAtoms = eargs->mmat->numRows();
@@ -1303,6 +1326,10 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     positions[i] = positionsStore[i].get();
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
+    if (end_time != nullptr && Clock::now() > *end_time) {
+      return;
+    }
+
     if (rdcast<int>(ci % numThreads) != threadId) {
       continue;
     }
@@ -1349,7 +1376,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
     bool gotCoords =
-        EmbeddingOps::embedPoints(&positions, *eargs, *params, new_seed);
+        EmbeddingOps::embedPoints(&positions, *eargs, *params, new_seed,
+                                  end_time);
 
     // copy the coordinates into the correct conformer
     if (gotCoords) {
@@ -1424,6 +1452,13 @@ std::vector<std::vector<unsigned int>> getMolSelfMatches(
 
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                         EmbedParameters &params) {
+  TimePoint* end_time = nullptr;
+  TimePoint end_time_storage; 
+  if (params.timeout > 0) {
+    end_time_storage =  Clock::now() + std::chrono::seconds(params.timeout);
+    end_time = &end_time_storage;
+  }
+
   if (params.trackFailures) {
 #ifdef RDK_BUILD_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(GetFailMutex());
@@ -1560,20 +1595,30 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                                &doubleBondEnds, &stereoDoubleBonds,
                                &etkdgDetails};
     if (numThreads == 1) {
-      detail::embedHelper_(0, 1, &eargs, &params);
+      detail::embedHelper_(0, 1, &eargs, &params, end_time);
     }
 #ifdef RDK_BUILD_THREADSAFE_SSS
     else {
       std::vector<std::future<void>> tg;
       for (int tid = 0; tid < numThreads; ++tid) {
         tg.emplace_back(std::async(std::launch::async, detail::embedHelper_,
-                                   tid, numThreads, &eargs, &params));
+                                   tid, numThreads, &eargs, &params, end_time));
       }
       for (auto &fut : tg) {
         fut.get();
       }
     }
 #endif
+    if (end_time != nullptr && Clock::now() > *end_time) {
+      if (params.trackFailures) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+        std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+        params.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+      }
+      res.push_back(-1);
+      return;
+    }
   }
   std::vector<std::vector<unsigned int>> selfMatches;
   if (params.pruneRmsThresh > 0.0) {

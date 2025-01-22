@@ -44,7 +44,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void fixAromaticRingSplits(
 // 2.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxBondSplits,
-              TimePoint *endTime, bool &timedOut);
+              std::uint64_t maxNumFrags, TimePoint *endTime, bool &timedOut);
 // Counts the number of [1*], [2*]...[4*] in the string.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &frag);
 

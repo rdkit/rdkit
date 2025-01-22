@@ -512,7 +512,6 @@ void testGitHubIssue1705() {
   BOOST_LOG(rdInfoLog)
       << "test grouping substituents in chunks as large as possible"
       << std::endl;
-#if 1
   {
     RWMol *core = SmilesToMol("Oc1ccccc1");
     RGroupDecompositionParameters params;
@@ -566,8 +565,6 @@ Cl[*:2]
     TEST_ASSERT(ss.str() == expected);
 #endif
   }
-#endif
-  // std::cerr<<"n\n\n\n\n\n--------------------------------------------------------------\n\n\n\n\n";
   {
     RWMol *core = SmilesToMol("Cc1ccccc1");
     RGroupDecompositionParameters params;
@@ -4157,7 +4154,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition \n";
 
-#if 1
   testSymmetryMatching(FingerprintVariance);
   testSymmetryMatching();
   testRGroupOnlyMatching();
@@ -4182,7 +4178,6 @@ int main() {
 
   testUnprocessedMapping();
   testSingleAtomBridge();
-#endif
   testSymmetryPerformance();
   testScorePermutations();
   testMultiCorePreLabelled();
