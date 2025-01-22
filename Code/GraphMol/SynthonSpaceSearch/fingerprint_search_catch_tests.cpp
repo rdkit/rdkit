@@ -193,9 +193,9 @@ TEST_CASE("FP Random Hits") {
   CHECK(expCounts == libCounts);
   // Use of std::shuffle means different platforms give different results.
   CHECK((results.getHitMolecules().front()->getProp<double>("Similarity") ==
-	 Catch::Approx(0.673077) ||
-	results.getHitMolecules().front()->getProp<double>("Similarity") ==
-	 Catch::Approx(0.711538)));
+             Catch::Approx(0.673077) ||
+         results.getHitMolecules().front()->getProp<double>("Similarity") ==
+             Catch::Approx(0.711538)));
   CHECK(results.getHitMolecules().back()->getProp<double>("Similarity") ==
         Catch::Approx(0.5));
 }
@@ -236,6 +236,7 @@ TEST_CASE("Timeout") {
   params.similarityCutoff = 0.3;
   params.fragSimilarityAdjuster = 0.3;
   params.timeOut = 2;
+  params.numThreads = 2;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
 
@@ -300,6 +301,7 @@ TEST_CASE("FP Threads") {
   params.maxBondSplits = 3;
   params.maxHits = -1;
   params.similarityCutoff = 0.5;
+  params.approxSimilarityAdjuster = 0.2;
   params.numThreads = 2;
   params.timeOut = 2;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(

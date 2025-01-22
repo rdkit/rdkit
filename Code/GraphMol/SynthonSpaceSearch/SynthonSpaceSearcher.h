@@ -76,15 +76,14 @@ class SynthonSpaceSearcher {
   // for each synthon list in the reaction.  Returns an empty pointer
   // if the hit isn't accepted for whatever reason.
   std::unique_ptr<ROMol> buildAndVerifyHit(
-      const std::unique_ptr<SynthonSet> &reaction,
-      const std::vector<size_t> &synthNums,
+      const SynthonSet *reaction, const std::vector<size_t> &synthNums,
       std::set<std::string> &resultsNames) const;
   // Some of the search methods (Rascal, for example) can do a quick
   // check on whether this set of synthons can match the query without having to
   // build the full molecule from the synthons.  They will over-ride this
   // function which by default passes everything.
   virtual bool quickVerify(
-      [[maybe_unused]] const std::unique_ptr<SynthonSet> &reaction,
+      [[maybe_unused]] const SynthonSet *reaction,
       [[maybe_unused]] const std::vector<size_t> &synthNums) const {
     return true;
   }

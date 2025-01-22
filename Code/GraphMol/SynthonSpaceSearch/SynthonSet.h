@@ -88,9 +88,11 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // file.
   void assignConnectorsUsed();
 
-  void buildSynthonFingerprints(
+  // Both of these return true if ok, false if it failed for some reason,
+  // most likely because the user hit a Ctrl-C or equivalent.
+  bool buildSynthonFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
-  void buildAddAndSubtractFPs(const FingerprintGenerator<std::uint64_t> &fpGen);
+  bool buildAddAndSubtractFPs(const FingerprintGenerator<std::uint64_t> &fpGen);
 
   // Return the molecules for synthons for which the bits are true.
   // Obviously requires that reqSynths is the same dimensions as

@@ -26,6 +26,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/StreamOps.h>
 
 namespace RDKit::SynthonSpaceSearch {
@@ -275,7 +276,7 @@ bool SynthonSpace::hasFingerprints() const {
   return d_reactions.begin()->second->hasFingerprints();
 }
 
-void SynthonSpace::buildSynthonFingerprints(
+bool SynthonSpace::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
   if (const auto fpType = fpGen.infoString();
       fpType != d_fpType || !hasFingerprints()) {
@@ -284,8 +285,15 @@ void SynthonSpace::buildSynthonFingerprints(
     d_fpType = fpType;
     for (const auto &[id, synthSet] : d_reactions) {
       synthSet->buildSynthonFingerprints(fpGen);
+      if (ControlCHandler::getGotSignal()) {
+        return false;
+      }
     }
   }
+  if (!hasAddAndSubstractFingerprints()) {
+    return buildAddAndSubstractFingerprints(fpGen);
+  }
+  return true;
 }
 
 bool SynthonSpace::hasAddAndSubstractFingerprints() const {
@@ -295,11 +303,20 @@ bool SynthonSpace::hasAddAndSubstractFingerprints() const {
   return d_reactions.begin()->second->hasAddAndSubtractFPs();
 }
 
-void SynthonSpace::buildAddAndSubstractFingerprints(
+bool SynthonSpace::buildAddAndSubstractFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
+  BOOST_LOG(rdWarningLog)
+      << "Building the approximate fingerprints may take some time."
+      << std::endl;
+  ControlCHandler::reset();
   for (const auto &[id, synthSet] : d_reactions) {
+    std::cout << "doing for " << id << "\n";
     synthSet->buildAddAndSubtractFPs(fpGen);
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
   }
+  return true;
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

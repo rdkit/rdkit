@@ -13,6 +13,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceFingerprintSearcher.h>
+#include <RDGeneral/ControlCHandler.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -20,6 +21,7 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params, SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space), d_fpGen(fpGen) {
+  ControlCHandler::reset();
   if (!getSpace().hasFingerprints() ||
       getSpace().getSynthonFingerprintType() != fpGen.infoString()) {
     getSpace().buildSynthonFingerprints(fpGen);
@@ -151,8 +153,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
 }
 
 bool SynthonSpaceFingerprintSearcher::quickVerify(
-    const std::unique_ptr<SynthonSet> &reaction,
-    const std::vector<size_t> &synthNums) const {
+    const SynthonSet *reaction, const std::vector<size_t> &synthNums) const {
   // Make an approximate fingerprint by combining the FPs for
   // these synthons, adding in the addFP and taking out the
   // subtractFP.

@@ -238,13 +238,17 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   bool hasFingerprints() const;
   // Create the fingerprints for the synthons ready for fingerprint searches.
   // Will be done by the fingerprint search if not done ahead of time.
-  void buildSynthonFingerprints(
+  // Returns true if successful, false if not, most likely because the
+  // user hit a Ctrl-C or equivalent.
+  bool buildSynthonFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
 
   bool hasAddAndSubstractFingerprints() const;
   // Create the add and substract fingerprints for the SynthonSets.
   // Will be done by the fingerprint search if not done ahead of time.
-  void buildAddAndSubstractFingerprints(
+  // Returns true if successful, false if not, most likely because the
+  // user hit a Ctrl-C or equivalent.
+  bool buildAddAndSubstractFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
 
  private:

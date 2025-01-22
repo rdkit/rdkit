@@ -50,6 +50,14 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
     : d_query(query), d_params(params), d_space(space) {}
 
 SearchResults SynthonSpaceSearcher::search() {
+  // It's possible that it's already been cancelled, for example if this
+  // is a fingerprint search and the user got impatient waiting for
+  // the fingerprints to build.
+  if (ControlCHandler::getGotSignal()) {
+    return SearchResults{std::vector<std::unique_ptr<ROMol>>(), 0UL, false,
+                         ControlCHandler::getGotSignal()};
+  }
+
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
         "Random sample is incompatible with maxHits of -1.");
@@ -68,7 +76,6 @@ SearchResults SynthonSpaceSearcher::search() {
       }
     }
   }
-
   TimePoint *endTime = nullptr;
   TimePoint endTimePt;
   if (d_params.timeOut > 0) {
@@ -92,10 +99,7 @@ SearchResults SynthonSpaceSearcher::search() {
          SynthonSpaceSearcher *self, size_t start, size_t finish) -> void {
     finish = finish > fragments.size() ? fragments.size() : finish;
     for (size_t i = start; i < finish; i++) {
-      if (details::checkTimeOut(endTime)) {
-        break;
-      }
-      if (ControlCHandler::getGotSignal()) {
+      if (details::checkTimeOut(endTime) || ControlCHandler::getGotSignal()) {
         break;
       }
       allFragHits[i] = self->searchFragSet(std::ref(fragments[i]));
@@ -125,6 +129,8 @@ SearchResults SynthonSpaceSearcher::search() {
                      fragments.size());
 #endif
 
+  // Expand the allFragHits from a vector of vectors to a plain vector,
+  // allHits.
   std::int64_t totHits = 0;
   std::vector<SynthonSpaceHitSet> allHits;
   for (const auto &fh : allFragHits) {
@@ -137,6 +143,7 @@ SearchResults SynthonSpaceSearcher::search() {
   }
 
   std::vector<std::unique_ptr<ROMol>> results;
+  timedOut = details::checkTimeOut(endTime);
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, endTime, timedOut, results);
   }
@@ -148,6 +155,10 @@ SearchResults SynthonSpaceSearcher::search() {
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     const SynthonSet *reaction, const std::vector<size_t> &synthNums) const {
   std::unique_ptr<ROMol> prod;
+  if (!quickVerify(reaction, synthNums)) {
+    return prod;
+  }
+
   prod = reaction->buildProduct(synthNums);
 
   // Do a final check of the whole thing.  It can happen that the
@@ -298,14 +309,15 @@ void SynthonSpaceSearcher::buildAllHits(
         partResults.clear();
         enoughHits =
             haveEnoughHits(results, d_params.maxHits, d_params.hitStart);
+        timedOut = details::checkTimeOut(endTime);
         toTry.clear();
-        if (enoughHits || timedOut) {
+        if (enoughHits || timedOut || ControlCHandler::getGotSignal()) {
           break;
         }
       }
       stepper.step();
     }
-    if (enoughHits || timedOut) {
+    if (enoughHits || timedOut || ControlCHandler::getGotSignal()) {
       break;
     }
   }
@@ -367,6 +379,9 @@ void processPartHitsFromDetails(
       if (details::checkTimeOut(endTime)) {
         break;
       }
+    }
+    if (ControlCHandler::getGotSignal()) {
+      break;
     }
   }
 }

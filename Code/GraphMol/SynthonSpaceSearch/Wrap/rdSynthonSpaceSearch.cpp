@@ -96,6 +96,17 @@ void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
+void buildSynthonFingerprints_helper(SynthonSpaceSearch::SynthonSpace &self,
+                                     python::object &fingerprintGenerator) {
+  const FingerprintGenerator<std::uint64_t> *fpGen =
+      python::extract<FingerprintGenerator<std::uint64_t> *>(
+          fingerprintGenerator);
+  bool ok = self.buildSynthonFingerprints(*fpGen);
+  if (!ok) {
+    throw_runtime_error("Fingerprint generation cancelled");
+  }
+}
+
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::scope().attr("__doc__") =
       "Module containing implementation of SynthonSpace search of"
@@ -238,8 +249,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            "Does a fingerprint search in the SynthonSpace using the"
            " FingerprintGenerator passed in.")
       .def(
-          "BuildSynthonFingerprints",
-          &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,
+          "BuildSynthonFingerprints", &buildSynthonFingerprints_helper,
           (python::arg("self"), python::arg("fingerprintGenerator")),
           "Build the synthon fingerprints ready for similarity searching.  This"
           " is done automatically when the first similarity search is done, but if"
