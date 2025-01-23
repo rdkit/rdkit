@@ -45,28 +45,28 @@ namespace {
 // if the generated SVG hashes to the value we're expecting, delete
 // the file.  That way, only the files that need inspection will be
 // left at the end of the run.
-static const bool DELETE_WITH_GOOD_HASH = true;
+static const bool DELETE_WITH_GOOD_HASH = false;
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 2645695747U},   {"rxn_test1_2.svg", 2640646320U},
+    {"rxn_test1_1.svg", 4280849065U},   {"rxn_test1_2.svg", 2640646320U},
     {"rxn_test1_3.svg", 2781928588U},   {"rxn_test1_4.svg", 437863065U},
-    {"rxn_test1_5.svg", 2762972460U},   {"rxn_test1_6.svg", 2941728011U},
-    {"rxn_test1_7.svg", 1389845691U},   {"rxn_test2_1.svg", 3791815067U},
+    {"rxn_test1_5.svg", 3590497359U},   {"rxn_test1_6.svg", 907723784U},
+    {"rxn_test1_7.svg", 1389845691U},   {"rxn_test2_1.svg", 2288835686U},
     {"rxn_test2_2_1.svg", 2068242269U}, {"rxn_test2_2_2.svg", 269990608U},
-    {"rxn_test2_2_3.svg", 1544919807U}, {"rxn_test2_2_4.svg", 2015871327U},
-    {"rxn_test3_1.svg", 1359061920U},   {"rxn_test4_1.svg", 1727161552U},
-    {"rxn_test4_2.svg", 2032588691U},
+    {"rxn_test2_2_3.svg", 4111685373U}, {"rxn_test2_2_4.svg", 2015871327U},
+    {"rxn_test3_1.svg", 3211858221U},   {"rxn_test4_1.svg", 3018376157U},
+    {"rxn_test4_2.svg", 2114354417U},   {"rxn_testFonts.svg", 3894303182U},
 };
 #else
 static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
-    {"rxn_test1_1.svg", 703524479U},    {"rxn_test1_2.svg", 1280072916U},
-    {"rxn_test1_3.svg", 2600700359U},   {"rxn_test1_4.svg", 3286429351U},
-    {"rxn_test1_5.svg", 2368838440U},   {"rxn_test1_6.svg", 3851812310U},
-    {"rxn_test1_7.svg", 279033885U},    {"rxn_test2_1.svg", 2282193956U},
-    {"rxn_test2_2_1.svg", 2357406436U}, {"rxn_test2_2_2.svg", 2972357489U},
-    {"rxn_test2_2_3.svg", 3425980762U}, {"rxn_test2_2_4.svg", 4275243270U},
-    {"rxn_test3_1.svg", 1325773479U},   {"rxn_test4_1.svg", 1889252812U},
-    {"rxn_test4_2.svg", 1207887408U},
+  {"rxn_test1_1.svg", 1119603847U},     {"rxn_test1_2.svg", 1280072916U},
+  {"rxn_test1_3.svg", 2600700359U},     {"rxn_test1_4.svg", 3286429351U},
+  {"rxn_test1_5.svg", 2222269077U},     {"rxn_test1_6.svg", 2143149460U},
+  {"rxn_test1_7.svg", 279033885U},      {"rxn_test2_1.svg", 3180897141U},
+  {"rxn_test2_2_1.svg", 2357406436U},   {"rxn_test2_2_2.svg", 2972357489U},
+  {"rxn_test2_2_3.svg", 104932230U},    {"rxn_test2_2_4.svg", 4275243270U},
+  {"rxn_test3_1.svg", 4062096593U},     {"rxn_test4_1.svg", 3857985187U},
+  {"rxn_test4_2.svg", 634120496U},      {"rxn_testFonts.svg", 104468030U}
 };
 #endif
 
@@ -81,14 +81,25 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
 // better because the floats are all output to only 1 decimal place so there
 // is a much smaller chance of different systems producing different files.
 static const std::map<std::string, std::hash_result_t> PNG_HASHES = {
-    {"rxn_test1_1.png", 1556334749U},   {"rxn_test1_2.png", 1924084263U},
-    {"rxn_test1_3.png", 1644921059U},   {"rxn_test1_4.png", 2471435686U},
-    {"rxn_test1_5.png", 1428782307U},   {"rxn_test1_6.png", 483353696U},
-    {"rxn_test1_7.png", 528963379U},    {"rxn_test2_1.png", 399415052U},
-    {"rxn_test2_2_1.png", 1215378243U}, {"rxn_test2_2_2.png", 3645141778U},
-    {"rxn_test2_2_3.png", 551946805U},  {"rxn_test2_2_4.png", 4234617566U},
-    {"rxn_test3_1.png", 4176857511U},   {"rxn_test4_1.png", 4187207676U},
-    {"rxn_test4_2.png", 3490081297U},
+#ifdef RDK_BUILD_FREETYPE_SUPPORT
+  {"rxn_test1_1.png", 801892091U},      {"rxn_test1_2.png", 507435337U},
+  {"rxn_test1_3.png", 1590809137U},     {"rxn_test1_4.png", 1766700542U},
+  {"rxn_test1_5.png", 2552100594U},     {"rxn_test1_6.png", 3791582903U},
+  {"rxn_test1_7.png", 2325992935U},     {"rxn_test2_1.png", 1832649518U},
+  {"rxn_test2_2_1.png", 1054681488U},   {"rxn_test2_2_2.png", 82821108U},
+  {"rxn_test2_2_3.png", 587102059U},    {"rxn_test2_2_4.png", 1230108677U},
+  {"rxn_test3_1.png", 4164295921U},     {"rxn_test4_1.png", 3784357886U},
+  {"rxn_test4_2.png", 3094925886U},     {"rxn_testFonts.png", 1909836366U}
+#else
+  {"rxn_test1_1.png", 2210220355U},     {"rxn_test1_2.png", 1893037139U},
+  {"rxn_test1_3.png", 3655607410U},     {"rxn_test1_4.png", 3198786531U},
+  {"rxn_test1_5.png", 3953549149U},     {"rxn_test1_6.png", 666817168U},
+  {"rxn_test1_7.png", 3800773066U},     {"rxn_test2_1.png", 2099797126U},
+  {"rxn_test2_2_1.png", 3281449462U},   {"rxn_test2_2_2.png", 866241561U},
+  {"rxn_test2_2_3.png", 423619101U},    {"rxn_test2_2_4.png", 1830391339U},
+  {"rxn_test3_1.png", 3590433288U},     {"rxn_test4_1.png", 414814068U},
+  {"rxn_test4_2.png", 1852491568U},     {"rxn_testFonts.png", 352305339U}
+#endif
 };
 
 std::hash_result_t hash_file(const std::string &filename) {
@@ -111,30 +122,33 @@ void check_file_hash(const std::string &filename,
   std::map<std::string, std::hash_result_t>::const_iterator it;
   if (filename.substr(filename.length() - 4) == ".svg") {
     it = SVG_HASHES.find(filename);
+    TEST_ASSERT(it != SVG_HASHES.end());
   } else {
     it = PNG_HASHES.find(filename);
+    TEST_ASSERT(it != PNG_HASHES.end());
   }
   std::hash_result_t file_hash = hash_file(filename);
-  if (exp_hash == 0U) {
-    exp_hash = it == SVG_HASHES.end() ? 0U : it->second;
-  }
-  if (it != SVG_HASHES.end() && file_hash == exp_hash) {
+  //std::cout << "{" << "\"" << filename << "\"," << " " << file_hash << "U}," << std::endl;
+  exp_hash = it->second;
+  if (file_hash == exp_hash) {
     if (DELETE_WITH_GOOD_HASH) {
       std::remove(filename.c_str());
     }
   } else {
     std::cout << "file " << filename << " gave hash " << file_hash
               << "U not the expected " << exp_hash << "U" << std::endl;
+    TEST_ASSERT(file_hash == exp_hash);
   }
 }
 
 void drawit(ChemicalReaction *rxn, std::string nameBase,
             bool highlight_map = false,
-            const std::vector<DrawColour> *highlight_colors = nullptr) {
+            const std::vector<DrawColour> *highlight_colors = nullptr,
+            double width=-1., double height=-1.) {
   double panex = 200, paney = 150;
-  double width = panex * (rxn->getNumReactantTemplates() +
-                          rxn->getNumProductTemplates() + 1);
-  double height = paney;
+  width = width > 0 ? width : panex * (rxn->getNumReactantTemplates() +
+                                       rxn->getNumProductTemplates() + 1);
+  height = height > 0 ? height : paney;
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   {
     MolDraw2DCairo drawer(width, height);
@@ -277,7 +291,7 @@ C3)c4cccc(c4Cl)Cl	CCc1nc(c(n1c2ccccc2)C)C(=O)NCCN3CCN(CC3)c4cccc(c4Cl)Cl\n\
     for (auto &line : lines) {
       std::vector<std::string> tokens;
       boost::split(tokens, line, boost::is_any_of("\t "));
-      std::cerr << tokens.size() << " " << line << std::endl;
+      //std::cerr << tokens.size() << " " << line << std::endl;
       if (tokens.size() > 2) {
         ++idx;
 
@@ -334,9 +348,9 @@ void test4() {
     ChemicalReaction *rxn =
         RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles);
     TEST_ASSERT(rxn);
-    std::cerr << "draw!" << std::endl;
+    //std::cerr << "draw!" << std::endl;
     drawit(rxn, nameBase, true);
-    std::cerr << " done" << std::endl;
+    //std::cerr << " done" << std::endl;
     delete rxn;
   }
   {  // from the reaction role assignment paper
@@ -358,6 +372,18 @@ void test4() {
   std::cout << " Done" << std::endl;
 }
 
+void testFonts() {
+  std::cout << " ----------------- Test Fonts: test fonts when image size is small"
+            << std::endl;
+  std::string smiles = "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8].[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+  std::string nameBase = "rxn_testFonts";
+  bool useSmiles = false;
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+  TEST_ASSERT(rxn);
+  drawit(rxn.get(), nameBase, true, nullptr, 200., 200.);
+  std::cout << " Done" << std::endl;
+}
 int main() {
   RDLog::InitLogs();
 #if 1
@@ -365,5 +391,6 @@ int main() {
   test2();
   test3();
   test4();
+  testFonts();
 #endif
 }
