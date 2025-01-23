@@ -1172,11 +1172,12 @@ void testSmartsStereochem() {
   //  and a query - SingleOrAromatic, make sure that this
   //  is their current representation
   auto m1 = "C/C=C\\C"_smarts;
-  std::cerr << m1->getBondWithIdx(0)->getQuery()->getDescription()  << std::endl;
   TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
   TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() == "SingleOrAromaticBond");
 
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
+  // Make sure we output directional bonds correctly
+  auto m2 = "O=c1/c(=C/c2ccccc2)sc2n1-N-C-N-N=2"_smarts;
+  TEST_ASSERT(MolToSmarts(*m2) == "O=c1/c(=C/c2ccccc2)sc2n1-N-C-N-N=2");
 }
 
 void testIssue2884178_part1() {
