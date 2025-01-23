@@ -1733,6 +1733,7 @@ YY_RULE_SETUP
 #line 362 "smarts.ll"
 { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 153:
@@ -1740,6 +1741,7 @@ YY_RULE_SETUP
 #line 366 "smarts.ll"
 { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 154:
