@@ -1469,7 +1469,8 @@ TEST_CASE("Duplicate Single Largest Frag") {
     opts.singleLargestFrag = true;
     opts.allBestMCESs = true;
     auto res = rascalMCES(*m1, *m2, opts);
-    REQUIRE(res.size() == 20);
+    REQUIRE(!res.empty());
+    CHECK(res.size() == 4);
     CHECK(res.front().getAtomMatches().size() == 23);
     CHECK(res.front().getBondMatches().size() == 23);
     CHECK(res.back().getAtomMatches().size() == 23);
