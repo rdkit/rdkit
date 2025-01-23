@@ -1442,3 +1442,37 @@ TEST_CASE("Empty results bug") {
   auto res = rascalMCES(*m1, *m2, opts);
   REQUIRE(!res.empty());
 }
+
+TEST_CASE("Duplicate Single Largest Frag") {
+  {
+    auto m1 = "c1ccc2c(c1)c(ncn2)CNCc3ccc(cc3)Cl"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1ccc2c(c1)c(ncn2)CCCc3ccc(cc3)Cl"_smiles;
+    REQUIRE(m2);
+    RascalOptions opts;
+    opts.singleLargestFrag = true;
+    opts.allBestMCESs = true;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    CHECK(res.front().getAtomMatches().size() == 11);
+    CHECK(res.front().getBondMatches().size() == 12);
+  }
+  {
+    // Without the fix, there were 156 results sets, with different breaks
+    // in the long chain giving different numbers of atoms in the largest
+    // fragment.
+    auto m1 = "CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "CN(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1"_smiles;
+    REQUIRE(m2);
+    RascalOptions opts;
+    opts.singleLargestFrag = true;
+    opts.allBestMCESs = true;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 20);
+    CHECK(res.front().getAtomMatches().size() == 23);
+    CHECK(res.front().getBondMatches().size() == 23);
+    CHECK(res.back().getAtomMatches().size() == 23);
+    CHECK(res.back().getBondMatches().size() == 23);
+  }
+}
