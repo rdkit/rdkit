@@ -1167,6 +1167,14 @@ void testSmartsStereochem() {
   _checkMatches("C/C=C/C", "C/C=C/C", 1, 4);
   _checkMatches("C/C=C/C", "C\\C=C\\C", 1, 4);
   _checkMatches("C/C=C/C", "C/C=C\\C", 1, 4);
+  
+  // directional bonds are set to be a direction \ /
+  //  and a query - SingleOrAromatic, make sure that this
+  //  is their current representation
+  auto m1 = "C/C=C\\C"_smarts;
+  std::cerr << m1->getBondWithIdx(0)->getQuery()->getDescription()  << std::endl;
+  TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
+  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() == "SingleOrAromaticBond");
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
