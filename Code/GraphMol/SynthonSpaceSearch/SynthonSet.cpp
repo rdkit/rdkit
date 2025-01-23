@@ -22,7 +22,11 @@
 // for example, it uses a different fingerprint for the initial synthon
 // screening.
 
+#include <cmath>
+#include <random>
 #include <regex>
+
+#include <boost/random/discrete_distribution.hpp>
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolPickler.h>
@@ -42,11 +46,30 @@ const std::vector<std::shared_ptr<ROMol>> &SynthonSet::getConnectorRegions()
 const std::unique_ptr<ExplicitBitVect> &SynthonSet::getConnRegFP() const {
   return d_connRegFP;
 }
+const std::unique_ptr<ExplicitBitVect> &SynthonSet::getAddFP() const {
+  return d_addFP;
+}
+const std::unique_ptr<ExplicitBitVect> &SynthonSet::getSubtractFP() const {
+  return d_subtractFP;
+}
 
 const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
 SynthonSet::getSynthonFPs() const {
   return d_synthonFPs;
 }
+
+namespace {
+void writeBitSet(std::ostream &os, const boost::dynamic_bitset<> &bitset) {
+  streamWrite(os, bitset.size());
+  for (unsigned int i = 0; i < bitset.size(); ++i) {
+    if (bitset[i]) {
+      streamWrite(os, true);
+    } else {
+      streamWrite(os, false);
+    }
+  }
+}
+}  // namespace
 
 void SynthonSet::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_id);
@@ -56,14 +79,13 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   }
   auto connRegFPstr = getConnRegFP()->toString();
   streamWrite(os, connRegFPstr);
-  streamWrite(os, d_connectors.size());
-  for (size_t i = 0; i < d_connectors.size(); ++i) {
-    if (d_connectors[i]) {
-      streamWrite(os, true);
-    } else {
-      streamWrite(os, false);
-    }
+
+  writeBitSet(os, d_connectors);
+  streamWrite(os, d_synthConnPatts.size());
+  for (const auto &scp : d_synthConnPatts) {
+    writeBitSet(os, scp);
   }
+
   streamWrite(os, d_synthons.size());
   for (const auto &rs : d_synthons) {
     streamWrite(os, rs.size());
@@ -71,6 +93,15 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
       r->writeToDBStream(os);
     }
   }
+
+  if (d_addFP) {
+    streamWrite(os, true);
+    streamWrite(os, d_addFP->toString());
+    streamWrite(os, d_subtractFP->toString());
+  } else {
+    streamWrite(os, false);
+  }
+
   streamWrite(os, d_synthonFPs.size());
   for (const auto &fpv : d_synthonFPs) {
     streamWrite(os, fpv.size());
@@ -80,7 +111,20 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   }
 }
 
-void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
+namespace {
+void readBitSet(std::istream &is, boost::dynamic_bitset<> &bitset) {
+  size_t bsSize;
+  streamRead(is, bsSize);
+  bitset.resize(bsSize);
+  bool s;
+  for (size_t i = 0; i < bsSize; ++i) {
+    streamRead(is, s);
+    bitset[i] = s;
+  }
+}
+}  // namespace
+
+void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t version) {
   streamRead(is, d_id, 0);
   size_t numConnRegs;
   streamRead(is, numConnRegs);
@@ -92,14 +136,18 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
   std::string pickle;
   streamRead(is, pickle, 0);
   d_connRegFP = std::make_unique<ExplicitBitVect>(pickle);
-  size_t connSize;
-  streamRead(is, connSize);
-  d_connectors.resize(connSize);
-  bool s;
-  for (size_t i = 0; i < connSize; ++i) {
-    streamRead(is, s);
-    d_connectors[i] = s;
+  readBitSet(is, d_connectors);
+  if (version >= 2010) {
+    size_t numSynthConnPatts;
+    streamRead(is, numSynthConnPatts);
+    d_synthConnPatts.resize(numSynthConnPatts);
+    for (size_t i = 0; i < numSynthConnPatts; ++i) {
+      boost::dynamic_bitset<> synthConnPatt;
+      readBitSet(is, synthConnPatt);
+      d_synthConnPatts[i] = synthConnPatt;
+    }
   }
+
   size_t numRS;
   streamRead(is, numRS);
   d_synthons.clear();
@@ -113,6 +161,19 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
       d_synthons[i][j]->readFromDBStream(is);
     }
   }
+
+  if (version >= 2010) {
+    bool haveAddFP;
+    streamRead(is, haveAddFP);
+    if (haveAddFP) {
+      std::string fString;
+      streamRead(is, fString, 0);
+      d_addFP = std::make_unique<ExplicitBitVect>(fString);
+      streamRead(is, fString, 0);
+      d_subtractFP = std::make_unique<ExplicitBitVect>(fString);
+    }
+  }
+
   size_t numFS;
   streamRead(is, numFS);
   d_synthonFPs.clear();
@@ -127,10 +188,10 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t) {
       d_synthonFPs[i][j] = std::make_unique<ExplicitBitVect>(fString);
     }
   }
-  // So that d_synthConnPatts is filled in. Next time the binary file format
-  // is updated they can be put in it, but they're cheap enough to calculate
-  // so leave it for now.
-  assignConnectorsUsed();
+  // So that d_synthConnPatts is filled in.
+  if (version < 2010) {
+    assignConnectorsUsed();
+  }
 }
 
 void SynthonSet::enumerateToStream(std::ostream &os) const {
@@ -164,8 +225,8 @@ namespace {
 // element of the other vectors.
 
 std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
-    const std::vector<std::vector<ROMol *>> &synthons,
-    const size_t longVecNum, const SynthonSet &reaction) {
+    const std::vector<std::vector<ROMol *>> &synthons, const size_t longVecNum,
+    const SynthonSet &reaction) {
   std::vector<std::unique_ptr<ROMol>> sampleMolecules;
   sampleMolecules.reserve(synthons[longVecNum].size());
 
@@ -187,13 +248,16 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
       sampleMolecules.push_back(std::move(sampleMol));
     } catch (std::exception &e) {
       const auto &synths = reaction.getSynthons();
-      std::string msg("Error:: in reaction " + reaction.getId() + " :: building molecule from synthons :");
+      std::string msg("Error:: in reaction " + reaction.getId() +
+                      " :: building molecule from synthons :");
       for (size_t j = 0; j < synthons.size(); ++j) {
         std::string sep = j ? " and " : " ";
         if (j == longVecNum) {
-          msg += sep + synths[j][i]->getId() + " (" + synths[j][i]->getSmiles() + ")";
+          msg += sep + synths[j][i]->getId() + " (" +
+                 synths[j][i]->getSmiles() + ")";
         } else {
-          msg +=  sep + synths[j].front()->getId() + " (" + synths[j].front()->getSmiles() + ")";
+          msg += sep + synths[j].front()->getId() + " (" +
+                 synths[j].front()->getSmiles() + ")";
         }
       }
       msg += "\n" + std::string(e.what()) + "\n";
@@ -250,7 +314,8 @@ void SynthonSet::transferProductBondsToSynthons() {
         synthsToUse[j][0] = true;
       }
     }
-    auto sampleMols = buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
+    auto sampleMols =
+        buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
       auto synthCp =
           std::make_unique<RWMol>(*d_synthons[synthSetNum][j]->getOrigMol());
@@ -363,12 +428,17 @@ const std::vector<int> &SynthonSet::getNumConnectors() const {
 }
 
 bool SynthonSet::hasFingerprints() const { return !d_synthonFPs.empty(); }
+bool SynthonSet::hasAddAndSubtractFPs() const {
+  return static_cast<bool>(d_addFP);
+}
 
 void SynthonSet::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
+  d_addFP.reset();
+  d_subtractFP.reset();
+
   // The synthons should have had transferProductBondsToSynthons
   // applied to them by now.
-
   d_synthonFPs.clear();
 
   d_synthonFPs.reserve(d_synthons.size());
@@ -380,6 +450,97 @@ void SynthonSet::buildSynthonFingerprints(
           fpGen.getFingerprint(*synth->getSearchMol()));
     }
   }
+}
+
+void SynthonSet::buildAddAndSubtractFPs(
+    const FingerprintGenerator<std::uint64_t> &fpGen) {
+  d_addFP.reset();
+  d_subtractFP.reset();
+  std::vector<std::vector<size_t>> synthonNums(d_synthons.size());
+  std::vector<size_t> numSynthons(d_synthons.size());
+  std::vector<int> naddbitcounts(fpGen.getOptions()->d_fpSize, 0);
+  std::vector<int> nsubbitcounts(fpGen.getOptions()->d_fpSize, 0);
+  size_t totSamples = 1;
+  // Sample the synthons evenly across their size ranges.
+  for (size_t i = 0; i < d_synthons.size(); ++i) {
+    std::vector<std::tuple<size_t, Synthon *>> sortedSynthons(
+        d_synthons[i].size());
+    for (size_t j = 0; j < d_synthons[i].size(); ++j) {
+      sortedSynthons[j] = std::make_tuple(j, d_synthons[i][j].get());
+    }
+    std::sort(sortedSynthons.begin(), sortedSynthons.end(),
+              [](const std::tuple<size_t, Synthon *> &a,
+                 const std::tuple<size_t, Synthon *> &b) -> bool {
+                auto as = std::get<1>(a);
+                auto bs = std::get<1>(b);
+                if (as->getOrigMol()->getNumAtoms() ==
+                    bs->getOrigMol()->getNumAtoms()) {
+                  return as->getId() < bs->getId();
+                }
+                return as->getOrigMol()->getNumAtoms() <
+                       bs->getOrigMol()->getNumAtoms();
+              });
+    size_t stride = d_synthons[i].size() / 40;
+    if (!stride) {
+      stride = 1;
+    }
+    for (size_t j = 0; j < d_synthons[i].size(); j += stride) {
+      synthonNums[i].push_back(j);
+    }
+    numSynthons[i] = synthonNums[i].size();
+    totSamples *= numSynthons[i];
+  }
+  details::Stepper stepper(numSynthons);
+  std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
+  while (stepper.d_currState[0] != numSynthons[0]) {
+    for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
+      theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
+    }
+    auto prod = buildProduct(theseSynthNums);
+    std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
+    ExplicitBitVect approxFP(*d_synthonFPs[0][theseSynthNums[0]]);
+    for (size_t j = 1; j < d_synthonFPs.size(); ++j) {
+      approxFP |= *d_synthonFPs[j][theseSynthNums[j]];
+    }
+    // addFP is what's in the productFP and not in approxFP
+    // and subtractFP is vice versa.  The former captures the bits of
+    // the molecule formed by the joining the fragments, the latter
+    // the bits connecting the dummy atoms.
+    std::unique_ptr<ExplicitBitVect> addFP(
+        new ExplicitBitVect(*prodFP & ~approxFP));
+    IntVect v;
+    addFP->getOnBits(v);
+    for (auto i : v) {
+      naddbitcounts[i]++;
+    }
+    std::unique_ptr<ExplicitBitVect> subtractFP(
+        new ExplicitBitVect(approxFP & ~(*prodFP)));
+    subtractFP->getOnBits(v);
+    for (auto i : v) {
+      nsubbitcounts[i]++;
+    }
+    stepper.step();
+  }
+
+  // This is the fraction of products that must set a bit for
+  // it to be included.  Arrived at by empirical means.
+  double frac = 0.75;
+  d_addFP = std::make_unique<ExplicitBitVect>(fpGen.getOptions()->d_fpSize);
+  for (size_t i = 0; i < naddbitcounts.size(); ++i) {
+    if (naddbitcounts[i] > int(totSamples * frac)) {
+      d_addFP->setBit(i);
+    }
+  }
+  d_subtractFP =
+      std::make_unique<ExplicitBitVect>(fpGen.getOptions()->d_fpSize);
+  for (size_t i = 0; i < nsubbitcounts.size(); ++i) {
+    if (nsubbitcounts[i] > int(totSamples * frac)) {
+      d_subtractFP->setBit(i);
+    }
+  }
+
+  // Take the complement of the subtract FP so it can be used directly
+  *d_subtractFP = ~(*d_subtractFP);
 }
 
 std::string SynthonSet::buildProductName(

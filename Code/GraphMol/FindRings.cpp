@@ -302,8 +302,12 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
       extras.push_back(temp[i]);
     }
   }
-
-  mol.setProp(common_properties::extraRings, extras, true);
+  // add extra rings to the molecule (there could already be some from previous
+  // fragments)
+  VECT_INT_VECT molExtras;
+  mol.getPropIfPresent(common_properties::extraRings, molExtras);
+  molExtras.insert(molExtras.end(), extras.begin(), extras.end());
+  mol.setProp(common_properties::extraRings, molExtras, true);
 }
 
 void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
@@ -901,6 +905,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
       }
     }
   }
+  mol.clearProp(common_properties::extraRings);
 
   // find the number of fragments in the molecule - we will loop over them
   VECT_INT_VECT frags;
