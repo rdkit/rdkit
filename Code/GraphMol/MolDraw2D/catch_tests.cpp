@@ -10221,6 +10221,15 @@ TEST_CASE(
   check_file_hash("testBlackAtomsUnderHighlight.svg");
 }
 
+TEST_CASE("Github8177 - bad conformer if prepareMolsBeforeDrawing is false and unspecifiedStereoIsUnknown is true") {
+  auto m = "c1cccnc1CC"_smiles;
+  REQUIRE(m);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().prepareMolsBeforeDrawing = false;
+  drawer.drawOptions().unspecifiedStereoIsUnknown = true;
+  REQUIRE_NOTHROW(drawer.drawMolecule(*m));
+}
+
 TEST_CASE("Github8195 - Reaction rendering looks odd at small scales") {
   std::string smiles =
       "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."

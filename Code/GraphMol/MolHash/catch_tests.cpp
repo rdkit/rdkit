@@ -432,13 +432,25 @@ TEST_CASE("tautomer v2") {
              {}},
             {{"CC(=O)C=CC", "C=C(O)C=CC"}, {"CC(=O)CC=C"}},
             {{"N=C1N=CN(C)C2N=CNC=21", "NC1N=CN(C)C2=NC=NC2=1"}, {}},
-            {{"S=C1N=CN=C2NC=NC12", "S=C1NC=NC2N=CNC1=2"}, {}},
-            {{"CC1=CN=CN1", "CC1CN=CN=1"}, {}},
-            {{"N1C(=O)NC(=O)C2C=NNC=21", "N1C(=O)NC(=O)C2=CNNC2=1",
-              "N1C(=O)NC(=O)C2=CNNC2=1", "N1C(=O)NC(=O)C2CN=NC2=1"},
+            {{
+                 "S=C1N=CN=C2NC=NC12",
+                 "S=C2C1N=CN=C1NC=N2",
+
+             },
              {
-                 "N1C(=O)NC(=O)C2CN=NC=21",
+                 "S=C1NC=NC2N=CNC1=2",
+                 "S=C1N=CN=C2N=CNC12",
+                 "S=C2C1NC=NC1=NC=N2",
              }},
+            {{"S=C1NC=NC2N=CNC1=2", "S=C1NC=NC2NC=NC1=2", "SC1=NC=NC2N=CNC1=2"},
+             {}},
+            {{"CC1=CN=CN1", "CC1CN=CN=1"}, {}},
+            {{
+                 "N1C(=O)NC(=O)C2C=NNC=21",
+                 "N1C(=O)NC(=O)C2=CNNC2=1",
+                 "N1C(=O)NC(=O)C2=CNNC2=1",
+             },
+             {"N1C(=O)NC(=O)C2CN=NC=21", "N1C(=O)NC(=O)C2CN=NC2=1"}},
             // ---------------------------
             // more stereochemistry
             // ---------------------------
@@ -447,7 +459,13 @@ TEST_CASE("tautomer v2") {
             {{"C/C=C/O", "C/C=C\\O", "CC=CO"}, {}},
             {{"C/C=C/C=O", "C/C=C\\C=O", "CC=CC=O"}, {}},
             {{"C/C=C/CC=O"}, {"C/C=C\\CC=O", "CC=CCC=O"}},
-            {{"C1C=CC=C2C=C(O)NC=12", "C1C=CC=C2CC(=O)NC=12"}, {}},
+            {{"C1C=CC=C2CC(=O)NC=12", "C2=C1N=C(CC1=CC=C2)O",
+              "C1C=CC=C2CC(O)=NC=12"
+
+             },
+             {
+                 "C1C=CC=C2C=C(O)NC=12",
+             }},
             // ---------------------------
             // some areas for potential improvement
             // ---------------------------
@@ -500,7 +518,7 @@ TEST_CASE("tautomer v2") {
         {"CC(C)(C)C=O", "CC(C)(C)[CH][O]_0_0",
          "[CH3]-[C](-[CH3])(-[CH3])-[CH]=[O]_0_0"},
         {"CC(C)=CO", "C[C](C)[CH][O]_1_0", "[CH3]-[C](-[CH3]):[C]:[O]_2_0"},
-        {"COC=O", "CO[CH][O]_0_0", "[CH3]-[O]:[C]:[O]_1_0"},
+        {"COC=O", "CO[CH][O]_0_0", "[CH3]-[O]-[CH]=[O]_0_0"},
         {"CNC=O", "C[N][CH][O]_1_0", "[CH3]-[N]:[C]:[O]_2_0"},
         {"CN(C)C=O", "CN(C)[CH][O]_0_0", "[CH3]-[N](-[CH3]):[C]:[O]_1_0"},
         {"CC(C)(C)NC=O", "CC(C)(C)[N][CH][O]_1_0",
@@ -519,7 +537,7 @@ TEST_CASE("tautomer v2") {
          "[C]:[C](:[O]):[C]-[CH2]-[CH3]_5_0"},
         {"C=CCC(O)C", "C=CCC(C)[O]_1_0",
          "[CH2]=[CH]-[CH2]-[CH](-[CH3])-[OH]_0_0"},
-        {"C=NC(=O)C", "[CH2][N][C](C)[O]_0_0", "[C]:[N]:[C](:[C]):[O]_5_0"},
+        {"C=NC(=O)C", "[CH2][N][C](C)[O]_0_0", "[C]:[N]:[C](-[CH3]):[O]_2_0"},
         {"C=NC(O)=C", "[CH2][N][C]([CH2])[O]_1_0", "[C]:[N]:[C](:[C]):[O]_5_0"},
         {"CC(=O)CC(=O)C", "C[C]([O])C[C](C)[O]_0_0",
          "[C]:[C](:[O]):[C]:[C](:[C]):[O]_8_0"},
@@ -872,6 +890,46 @@ TEST_CASE("overreach with v2 tautomer hashes and imines") {
           MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
       CHECK(hsh ==
             "[CH3]-[C@H](-[F])-[N]:[C]1:[C]-[CH2]-[CH2]-[CH2]-[C]:1_4_0");
+    }
+  }
+}
+
+TEST_CASE("v2 tautomers, carboxylic acids, amids, and related structures") {
+  SECTION("basics") {
+    std::vector<std::pair<std::string, std::string>> data = {
+        {"CC(=O)O", "[CH3]-[C](:[O]):[O]_1_0"},
+        {"CC(=O)OCC", "[CH3]-[CH2]-[O]-[C](-[CH3])=[O]_0_0"},
+        {"CC(=N)O", "[CH3]-[C](:[N]):[O]_2_0"},
+        {"CC(=O)NCC", "[CH3]-[CH2]-[N]:[C](-[CH3]):[O]_1_0"},
+        {"CC(=N)N", "[C]:[C](:[N]):[N]_6_0"},
+    };
+    for (const auto &[smiles, ref] : data) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == ref);
+    }
+  }
+  SECTION("specific problems") {
+    std::vector<std::pair<std::string, std::string>> data = {
+        // losing amino acid chirality:
+        {"CC(C)C[C@@H](C(=O)O)N",
+         "[CH3]-[CH](-[CH3])-[CH2]-[C@H](-[NH2])-[C](:[O]):[O]_1_0"},
+        // github #8090 (carboxylate)
+        {"O=C(O)CCC", "[CH3]-[CH2]-[CH2]-[C](:[O]):[O]_1_0"},
+        // aromatic "imine"
+        {"CC[C@@H](N)C1=NC=CN1",
+         "[CH3]-[CH2]-[C@@H](-[NH2])-[C]1:[N]:[C]:[C]:[N]:1_3_0"},
+    };
+    for (const auto &[smiles, ref] : data) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == ref);
     }
   }
 }
