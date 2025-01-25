@@ -350,6 +350,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHighlightHeteroAtoms_2.svg", 893937335U},
     {"testAtomAbbreviationsClash.svg", 1847939197U},
     {"testBlackAtomsUnderHighlight.svg", 3916069581U},
+    {"testReactionProductSmoothCorners.svg", 1712682118U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10253,5 +10254,5 @@ TEST_CASE("Github8209 - Reaction products not having bond corners smoothed") {
       std::distance(std::sregex_token_iterator(text.begin(), text.end(), path),
                     std::sregex_token_iterator());
   CHECK(nOccurrences == 10);
-  // check_file_hash("testReactionProductSmoothCorners.svg");
+  check_file_hash("testReactionProductSmoothCorners.svg");
 }
