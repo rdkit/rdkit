@@ -10221,7 +10221,8 @@ TEST_CASE(
   check_file_hash("testBlackAtomsUnderHighlight.svg");
 }
 
-TEST_CASE("Github8177 - bad conformer if prepareMolsBeforeDrawing is false and unspecifiedStereoIsUnknown is true") {
+TEST_CASE(
+    "Github8177 - bad conformer if prepareMolsBeforeDrawing is false and unspecifiedStereoIsUnknown is true") {
   auto m = "c1cccnc1CC"_smiles;
   REQUIRE(m);
   MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
@@ -10254,7 +10255,7 @@ TEST_CASE("Github8195 - Reaction rendering looks odd at small scales") {
   CHECK(nOccurrences == 38);
   check_file_hash("testSmallReactionCanvas.svg");
 #ifdef RDK_BUILD_CAIRO_SUPPORT
-  SECTION("PNG for visual inspeaction") {
+  SECTION("PNG for visual inspection") {
     {
       MolDraw2DCairo drawer(300, 300);
       drawer.drawReaction(*rxn);
