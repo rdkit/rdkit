@@ -350,6 +350,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHighlightHeteroAtoms_2.svg", 893937335U},
     {"testAtomAbbreviationsClash.svg", 1847939197U},
     {"testBlackAtomsUnderHighlight.svg", 3916069581U},
+    {"testSmallReactionCanvas.svg", 1288652415U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10182,13 +10183,15 @@ TEST_CASE("Atom abbreviations clash") {
   check_file_hash("testAtomAbbreviationsClash.svg");
 }
 
-TEST_CASE("DrawMol::getColour should not throw if the palette has no carbon color and no default color") {
+TEST_CASE(
+    "DrawMol::getColour should not throw if the palette has no carbon color and no default color") {
   auto m = "c1ccc(C2CN2)cc1"_smiles;
   MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
   drawer.drawOptions().atomColourPalette = ColourPalette();
   std::vector<int> highlightAtoms{0, 1, 2, 3, 4, 5, 6, 7, 8};
   std::vector<int> highlightBonds;
-  REQUIRE_NOTHROW(drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds));
+  REQUIRE_NOTHROW(
+      drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds));
   drawer.finishDrawing();
   std::string text = drawer.getDrawingText();
   std::ofstream outs("testBlackAtomsUnderHighlight.svg");
@@ -10219,10 +10222,11 @@ TEST_CASE("DrawMol::getColour should not throw if the palette has no carbon colo
 }
 
 TEST_CASE("Github8195 - Reaction rendering looks odd at small scales") {
-  std::string smiles = "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
-                       "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
-                       "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
-                       "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+  std::string smiles =
+      "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+      "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+      "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+      "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
   bool useSmiles = false;
   std::unique_ptr<ChemicalReaction> rxn(
       RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
@@ -10235,10 +10239,11 @@ TEST_CASE("Github8195 - Reaction rendering looks odd at small scales") {
   outs << text;
   outs.close();
   std::regex path("font-size:6px");
-  size_t nOccurrences = std::distance(
-      std::sregex_token_iterator(text.begin(), text.end(), path),
-      std::sregex_token_iterator());
+  size_t nOccurrences =
+      std::distance(std::sregex_token_iterator(text.begin(), text.end(), path),
+                    std::sregex_token_iterator());
   CHECK(nOccurrences == 38);
+  check_file_hash("testSmallReactionCanvas.svg");
 #ifdef RDK_BUILD_CAIRO_SUPPORT
   SECTION("PNG for visual inspeaction") {
     {
