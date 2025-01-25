@@ -933,3 +933,61 @@ TEST_CASE("v2 tautomers, carboxylic acids, amids, and related structures") {
     }
   }
 }
+
+TEST_CASE("github #8205: order dependence in tautomer hash") {
+  SECTION("as reported") {
+    auto mol1 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 16 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.006857 -1.225143 0.000000 0
+M  V30 2 C -1.242571 -0.508286 0.000000 0
+M  V30 3 C -2.481143 -1.220000 0.000000 0
+M  V30 4 C -2.484000 -2.648571 0.000000 0
+M  V30 5 N -1.248286 -3.365429 0.000000 0
+M  V30 6 C -0.009714 -2.653714 0.000000 0
+M  V30 7 O -3.722571 -3.360572 0.000000 0
+M  V30 8 N -1.239714 0.920286 0.000000 0
+M  V30 9 C 1.549143 3.346571 0.000000 0
+M  V30 10 C 2.260857 2.108000 0.000000 0
+M  V30 11 C 1.302857 1.048286 0.000000 0
+M  V30 12 C -0.001143 1.632000 0.000000 0
+M  V30 13 C 0.151143 3.052571 0.000000 0
+M  V30 14 C -1.251227 -4.793997 0.000000 0
+M  V30 15 C -0.908467 4.010717 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 2 6 1
+M  V30 7 2 4 7
+M  V30 8 1 2 8
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 1 11 12
+M  V30 12 1 12 13
+M  V30 13 1 13 9
+M  V30 14 1 12 8 CFG=1
+M  V30 15 1 5 14
+M  V30 16 1 13 15
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol1);
+    auto mol2 = v2::SmilesParse::MolFromSmiles(MolToSmiles(*mol1));
+    REQUIRE(mol2);
+    auto hsh1 =
+        MolHash::MolHash(mol1.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    auto hsh2 =
+        MolHash::MolHash(mol2.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh1 == hsh2);
+    // make sure the chirality wasn't destroyed
+    CHECK(hsh1.find("@") != std::string::npos);
+  }
+}

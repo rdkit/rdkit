@@ -15,7 +15,7 @@
 #include <cstdio>
 #include <deque>
 
-// #define VERBOSE_HASH 1
+#define VERBOSE_HASH 1
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
@@ -564,12 +564,12 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         std::cerr << "  check neighbor1 " << nbrBond->getIdx() << " from "
                   << atm->getIdx() << "-" << oatom->getIdx() << std::endl;
         std::cerr << "    " << bondsConsidered[nbrBond->getIdx()] << " icao "
-                  << isCandidateAtom(oatom) << " hsbo "
+                  << isCandidateAtom(oatom, atomFlags) << " hsbo "
                   << hasStartBond(oatom, startBonds) << " atomunsato "
                   << queryAtomUnsaturated(oatom) << " atomunsat "
                   << queryAtomUnsaturated(atm) << " bondunsat "
                   << isUnsaturatedBond(nbrBond) << " icaa "
-                  << isCandidateAtom(atm) << " hsba "
+                  << isCandidateAtom(atm, atomFlags) << " hsba "
                   << hasStartBond(atm, startBonds) << std::endl;
 #endif
         // special case to prevent "overreach" with things like enamines.
@@ -642,12 +642,20 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
           std::cerr << "  check neighbor " << nbrBnd->getIdx() << " from "
                     << atm->getIdx() << "-" << oatom->getIdx() << std::endl;
           std::cerr << "    " << bondsConsidered[nbrBnd->getIdx()] << " icao "
-                    << isCandidateAtom(oatom) << " hsbo "
+                    << isCandidateAtom(oatom, atomFlags) << " hsbo "
                     << hasStartBond(oatom, startBonds) << " unsat "
                     << isUnsaturatedBond(nbrBnd) << " icaa "
-                    << isCandidateAtom(atm) << " hsba "
+                    << isCandidateAtom(atm, atomFlags) << " hsba "
                     << hasStartBond(atm, startBonds) << std::endl;
 #endif
+          // special case to prevent "overreach" with things like enamines.
+          // the logic here prevents the first bond in CNC=C from being included
+          // in the tautomeric system. So we get: [CH3]-[N]:[C] instead of
+          // [C]:[N]:[C]
+          // if (startBonds[bnd->getIdx()] && isHeteroAtom(atm) &&
+          //     !isUnsaturatedBond(nbrBnd)) {
+          //   continue;
+          // }
           if (bondsConsidered[nbrBnd->getIdx()] ||
               (skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
                                 bondFlags) &&
