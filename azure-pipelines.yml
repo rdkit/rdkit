@@ -7,7 +7,7 @@ jobs:
 - job: Ubuntu_x64
   timeoutInMinutes: 120
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
   variables:
     python: python=3.9
     boost_version: 1.82.0
@@ -80,7 +80,7 @@ jobs:
 - job: Ubuntu_x64_cartridge
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
   variables:
     boost_version: 1.82.0
     number_of_cores: nproc
@@ -105,7 +105,7 @@ jobs:
 - job: Ubuntu_x64_java
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-20.04
+    vmImage: ubuntu-22.04
   variables:
     boost_version: 1.84.0
     number_of_cores: nproc
