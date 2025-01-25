@@ -318,7 +318,7 @@ void MolDraw2D::drawReaction(
     frac *= 5 / delta;
   }
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
-  xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
+  drawReactionPart(products, plusWidth, xOffset, offsets);
   auto osbw = drawOptions().scaleBondWidth;
   if (reagents.empty() && products.empty() && agents.empty()) {
     // if it's an empty reaction, we won't have a DrawMol with a scale,
