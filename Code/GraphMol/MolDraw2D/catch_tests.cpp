@@ -350,6 +350,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHighlightHeteroAtoms_2.svg", 893937335U},
     {"testAtomAbbreviationsClash.svg", 1847939197U},
     {"testBlackAtomsUnderHighlight.svg", 3916069581U},
+    {"testOptionalAtomListBrackets_1.svg", 822046498U},
+    {"testOptionalAtomListBrackets_2.svg", 3881772214U},
+    {"testOptionalAtomListBrackets_3.svg", 2945415850U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10182,13 +10185,15 @@ TEST_CASE("Atom abbreviations clash") {
   check_file_hash("testAtomAbbreviationsClash.svg");
 }
 
-TEST_CASE("DrawMol::getColour should not throw if the palette has no carbon color and no default color") {
+TEST_CASE(
+    "DrawMol::getColour should not throw if the palette has no carbon color and no default color") {
   auto m = "c1ccc(C2CN2)cc1"_smiles;
   MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
   drawer.drawOptions().atomColourPalette = ColourPalette();
   std::vector<int> highlightAtoms{0, 1, 2, 3, 4, 5, 6, 7, 8};
   std::vector<int> highlightBonds;
-  REQUIRE_NOTHROW(drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds));
+  REQUIRE_NOTHROW(
+      drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds));
   drawer.finishDrawing();
   std::string text = drawer.getDrawingText();
   std::ofstream outs("testBlackAtomsUnderHighlight.svg");
@@ -10218,11 +10223,84 @@ TEST_CASE("DrawMol::getColour should not throw if the palette has no carbon colo
   check_file_hash("testBlackAtomsUnderHighlight.svg");
 }
 
-TEST_CASE("Github8177 - bad conformer if prepareMolsBeforeDrawing is false and unspecifiedStereoIsUnknown is true") {
+TEST_CASE(
+    "Github8177 - bad conformer if prepareMolsBeforeDrawing is false and unspecifiedStereoIsUnknown is true") {
   auto m = "c1cccnc1CC"_smiles;
   REQUIRE(m);
   MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
   drawer.drawOptions().prepareMolsBeforeDrawing = false;
   drawer.drawOptions().unspecifiedStereoIsUnknown = true;
   REQUIRE_NOTHROW(drawer.drawMolecule(*m));
+}
+
+TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
+  std::string baseName = "testOptionalAtomListBrackets";
+  auto checkTextChar = [](const std::string &svgText,
+                          const std::string &searchChar,
+                          size_t expected) -> void {
+    {
+      std::regex regex("<text .* >" + searchChar + "</text>");
+      size_t nOccurrences = std::distance(
+          std::sregex_token_iterator(svgText.begin(), svgText.end(), regex),
+          std::sregex_token_iterator());
+      CHECK(nOccurrences == expected);
+    }
+  };
+  {
+    std::string smiles =
+        "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+        "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+        "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+        "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+    bool useSmiles = false;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+    REQUIRE(rxn);
+    MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().bracketsRoundAtomLists = false;
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "_1.svg");
+    outs << text;
+    outs.close();
+    checkTextChar(text, R"(\[)", 0);
+    checkTextChar(text, R"(\])", 0);
+    check_file_hash(baseName + "_1.svg");
+  }
+  {
+    auto m = "c1ccccc1[F,Cl,Br,I,At]"_smarts;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().bracketsRoundAtomLists = false;
+    drawer.drawOptions().useComplexQueryAtomSymbols = false;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "_2.svg");
+    outs << text;
+    outs.close();
+    checkTextChar(text, R"(\[)", 0);
+    checkTextChar(text, R"(\])", 0);
+    check_file_hash(baseName + "_2.svg");
+  }
+  {
+    // Demonstrate that the complex query atom symbols aren't stuffed up by
+    // this change.
+    auto m = "c1ccccc1[F,Cl,Br,I,At]"_smarts;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().bracketsRoundAtomLists = false;
+    drawer.drawOptions().useComplexQueryAtomSymbols = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "_3.svg");
+    outs << text;
+    outs.close();
+    checkTextChar(text, R"(\[)", 0);
+    checkTextChar(text, R"(\])", 0);
+    checkTextChar(text, "X", 1);
+    check_file_hash(baseName + "_3.svg");
+  }
 }
