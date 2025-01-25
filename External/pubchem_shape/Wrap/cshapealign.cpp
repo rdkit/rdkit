@@ -82,7 +82,7 @@ probeConfId : int, optional
     Probe conformer ID (default is -1)
 useColors : bool, optional
     Whether or not to use colors in the scoring (default is True)
-optParam : float, optional
+opt_param : float, optional
 max_preiters : int, optional
 max_postiters : int, optional
 

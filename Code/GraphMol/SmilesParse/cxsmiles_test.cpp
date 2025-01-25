@@ -675,7 +675,7 @@ class SmilesTest {
       : fileName(fileNameInit),
         expectedResult(expectedResultInit),
         atomCount(atomCountInit),
-        bondCount(bondCountInit) {};
+        bondCount(bondCountInit){};
 
   bool isRxnTest() const { return false; }
 };
