@@ -321,7 +321,7 @@ def GetAllCombinations(choices, noDups=1, which=0):
   return res
 
 
-def GetUniqueCombinations_new(choices, classes, which=0):
+def GetUniqueCombinations_new(choices, classes):
   """  Does the combinatorial explosion of the possible combinations
     of the elements of _choices_.
 
