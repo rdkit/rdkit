@@ -38,7 +38,6 @@ const std::string CDX_AGENT_ID("CDX_AGENT_ID");
 const std::string CDX_ATOM_POS("CDX_ATOM_POS");
 const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
 const std::string CDX_BOND_ID("_CDX_BOND_ID");
-const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
 
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 
