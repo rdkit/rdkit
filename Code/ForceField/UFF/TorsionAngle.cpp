@@ -238,15 +238,6 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
 
   // dE/dPhi is independent of cartesians:
   double dE_dPhi = getThetaDeriv(cosPhi, sinPhi);
-#if 0
-      if(dE_dPhi!=dE_dPhi){
-        std::cout << "\tNaN in Torsion("<<d_at1Idx<<","<<d_at2Idx<<","<<d_at3Idx<<","<<d_at4Idx<<")"<< std::endl;
-        std::cout << "sin: " << sinPhi << std::endl;
-        std::cout << "cos: " << cosPhi << std::endl;
-      }
-
-#endif
-
   double sinTerm =
       dE_dPhi * (isDoubleZero(sinPhi) ? (1.0 / cosPhi) : (1.0 / sinPhi));
 
