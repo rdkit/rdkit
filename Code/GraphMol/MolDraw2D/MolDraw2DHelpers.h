@@ -308,7 +308,7 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
              // with complex query symbols A, Q, X, M, optionally followed
              // by H if hydrogen is included (except for AH, which stays *).
              // Default is true.
-  bool bracketsRoundAtomLists = true;  // If true, puts brackets round atom
+  bool bracketsAroundAtomLists = true;  // If true, puts brackets round atom
                                        // lists in query atoms.
 
   MolDrawOptions() {

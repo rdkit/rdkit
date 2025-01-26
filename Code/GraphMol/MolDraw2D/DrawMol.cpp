@@ -1508,7 +1508,7 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     if (drawOptions_.useComplexQueryAtomSymbols) {
       symbol = getComplexQueryAtomEquivalent(symbol);
     }
-    if (!drawOptions_.bracketsRoundAtomLists) {
+    if (!drawOptions_.bracketsAroundAtomLists) {
       if (symbol[0] == '[') {
         symbol = symbol.substr(1, symbol.size() - 2);
       }

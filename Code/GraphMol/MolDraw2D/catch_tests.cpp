@@ -10257,7 +10257,7 @@ TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
         RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
     REQUIRE(rxn);
     MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().bracketsRoundAtomLists = false;
+    drawer.drawOptions().bracketsAroundAtomLists = false;
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
@@ -10272,7 +10272,7 @@ TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
     auto m = "c1ccccc1[F,Cl,Br,I,At]"_smarts;
     REQUIRE(m);
     MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().bracketsRoundAtomLists = false;
+    drawer.drawOptions().bracketsAroundAtomLists = false;
     drawer.drawOptions().useComplexQueryAtomSymbols = false;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
@@ -10290,7 +10290,7 @@ TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
     auto m = "c1ccccc1[F,Cl,Br,I,At]"_smarts;
     REQUIRE(m);
     MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().bracketsRoundAtomLists = false;
+    drawer.drawOptions().bracketsAroundAtomLists = false;
     drawer.drawOptions().useComplexQueryAtomSymbols = true;
     drawer.drawMolecule(*m);
     drawer.finishDrawing();
