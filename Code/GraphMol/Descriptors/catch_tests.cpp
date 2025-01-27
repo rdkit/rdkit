@@ -30,18 +30,17 @@ TEST_CASE("Kier kappa2", "[2D]") {
         // Table 5 from the paper
         {"c1ccccc15.Cl5", 1.987},        {"c1ccccc15.F5", 1.735},
         {"c1ccccc15.[N+]5(=O)O", 2.259}, {"c1ccccc15.C5(=O)C", 2.444},
-#if 0
-      // expected values from paper (differences are due to hybridization mismatches)
-        {"c1ccccc15.N5(C)C", 2.646},
-        {"c1ccccc15.C5(=O)N", 2.416},
-        {"c1ccccc15.C5(=O)O", 2.416},
-        {"c1ccccc15.S5(=O)(=O)C", 2.617},
-        {"c1ccccc15.O5", 1.756},
-#else
+        /* expected values from paper (differences are due to hybridization
+           mismatches)
+          {"c1ccccc15.N5(C)C", 2.646},
+          {"c1ccccc15.C5(=O)N", 2.416},
+          {"c1ccccc15.C5(=O)O", 2.416},
+          {"c1ccccc15.S5(=O)(=O)C", 2.617},
+          {"c1ccccc15.O5", 1.756},
+        */
         {"c1ccccc15.N5(C)C", 2.53},      {"c1ccccc15.C5(=O)N", 2.31},
         {"c1ccccc15.C5(=O)O", 2.31},     {"c1ccccc15.S5(=O)(=O)C", 2.42},
         {"c1ccccc15.O5", 1.65},
-#endif
     };
     for (const auto &pr : data) {
       std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
@@ -94,15 +93,13 @@ TEST_CASE("Kier Phi", "[2D]") {
         {"CCC(O)CC", 3.14},
         {"CCCC(Cl)(Cl)CCC", 4.69},
         {"CCC(F)C(F)CC", 3.75},
-#if 0
-      // expected values from paper (differences are due to hybridization mismatches)
-        {"CCOC(=O)CC", 3.61},
-        {"CCC(=O)Nc1ccc(CC)cc1", 3.65},
-#else
+        /* expected values from paper (differences are due to hybridization
+          mismatches)
+          {"CCOC(=O)CC", 3.61},
+          {"CCC(=O)Nc1ccc(CC)cc1", 3.65},
+        */
         {"CCOC(=O)CC", 3.38},
         {"CCC(=O)Nc1ccc(CC)cc1", 3.50},
-#endif
-
     };
     for (const auto &pr : data) {
       std::unique_ptr<ROMol> m(SmilesToMol(pr.first));
