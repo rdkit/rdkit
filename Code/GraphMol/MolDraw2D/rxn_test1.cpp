@@ -51,10 +51,10 @@ static const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"rxn_test1_1.svg", 2645695747U},   {"rxn_test1_2.svg", 2640646320U},
     {"rxn_test1_3.svg", 2781928588U},   {"rxn_test1_4.svg", 437863065U},
     {"rxn_test1_5.svg", 2762972460U},   {"rxn_test1_6.svg", 2941728011U},
-    {"rxn_test1_7.svg", 1389845691U},   {"rxn_test2_1.svg", 3791815067U},
-    {"rxn_test2_2_1.svg", 2068242269U}, {"rxn_test2_2_2.svg", 269990608U},
-    {"rxn_test2_2_3.svg", 1544919807U}, {"rxn_test2_2_4.svg", 2015871327U},
-    {"rxn_test3_1.svg", 1359061920U},   {"rxn_test4_1.svg", 1727161552U},
+    {"rxn_test1_7.svg", 1831465890U},   {"rxn_test2_1.svg", 250961412U},
+    {"rxn_test2_2_1.svg", 3044844617U}, {"rxn_test2_2_2.svg", 269990608U},
+    {"rxn_test2_2_3.svg", 1940920292U}, {"rxn_test2_2_4.svg", 2015871327U},
+    {"rxn_test3_1.svg", 3415200111U},   {"rxn_test4_1.svg", 2557609172U},
     {"rxn_test4_2.svg", 2032588691U},
 };
 #else

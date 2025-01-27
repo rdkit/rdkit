@@ -3485,6 +3485,10 @@ void DrawMol::smoothBondJoins() {
   // classes for the atoms and bond it involves, and people use this to
   // identify the lines for other purposes.
   for (auto atom : drawMol_->atoms()) {
+    // If there's an atom label, there is no join.
+    if (atomLabels_[atom->getIdx()]) {
+      continue;
+    }
     bool doIt = false;
     if (atom->getDegree() == 2) {
       doIt = true;
@@ -3499,15 +3503,16 @@ void DrawMol::smoothBondJoins() {
         }
       }
     }
+    int adjAtomIdx = atom->getIdx() + activeAtmIdxOffset_;
     if (doIt) {
       bool done = false;
       for (unsigned int i = 0; i < singleBondLines_.size(); ++i) {
         auto &sbl1 = bonds_[singleBondLines_[i]];
         int p1 = -1;
         int p2 = -1;
-        if (static_cast<int>(atom->getIdx()) == sbl1->atom1_) {
+        if (adjAtomIdx == sbl1->atom1_) {
           p1 = 0;
-        } else if (static_cast<int>(atom->getIdx()) == sbl1->atom2_) {
+        } else if (adjAtomIdx == sbl1->atom2_) {
           p1 = 1;
         }
         if (p1 != -1) {
@@ -3516,9 +3521,9 @@ void DrawMol::smoothBondJoins() {
               continue;
             }
             auto &sbl2 = bonds_[singleBondLines_[j]];
-            if (static_cast<int>(atom->getIdx()) == sbl2->atom1_) {
+            if (adjAtomIdx == sbl2->atom1_) {
               p2 = 0;
-            } else if (static_cast<int>(atom->getIdx()) == sbl2->atom2_) {
+            } else if (adjAtomIdx == sbl2->atom2_) {
               p2 = 1;
             }
             if (p2 != -1) {
