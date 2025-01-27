@@ -37,6 +37,7 @@ namespace RDKit {
 class ROMol;
 class RWMol;
 class AtomMonomerInfo;
+class AtomPDBResidueInfo;
 
 //! The class for representing atoms
 /*!
@@ -406,7 +407,39 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     return mapno;
   }
 
+  //! Get the residue name of the atom. If no residue name exists, an empty
+  //! string is returned
+  std::string getResidueName() const;
+
+  //! Set the residue name of the atom.
+  void setResidueName(const std::string &residue_name);
+
+  //! Get the residue number of the atom. If no residue number exists, 0
+  //! is returned
+  int getResidueNumber() const;
+
+  //! Set the residue number of the atom.
+  void setResidueNumber(int residue_number);
+
+  //! Get the residue chain id of the atom. If no chain id exists, an empty
+  //! string is returned
+  std::string getChainId() const;
+
+  //! Set the residue chain id of the atom.
+  void setChainId(const std::string &chain_id);
+
+  //! Get the residue insertion code of the atom. If no insertion code exists,
+  //! an empty string is returned
+  std::string getInsertionCode() const;
+
+  //! Set the residue insertion code of the atom.
+  void setInsertionCode(const std::string &insertion_code);
+
  protected:
+  //! Get the residue information on the atom
+  const AtomPDBResidueInfo *getPDBResidueInfo() const;
+  AtomPDBResidueInfo *getPDBResidueInfo();
+
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
   //! sets our owning molecule
