@@ -10296,7 +10296,6 @@ TEST_CASE("Github8209 - Reaction products not having bond corners smoothed") {
   check_file_hash("testReactionProductSmoothCorners.svg");
 }
 
-
 TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
   std::string baseName = "testOptionalAtomListBrackets";
   auto checkTextChar = [](const std::string &svgText,
@@ -10368,3 +10367,4 @@ TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
     check_file_hash(baseName + "_3.svg");
   }
 }
+
