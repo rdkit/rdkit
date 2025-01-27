@@ -1,11 +1,7 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get remove postgresql-14 postgresql-client-14
-    sudo apt-get remove postgresql postgresql-common postgresql-client-common libpq5
-    sudo apt purge postgresql-14 postgresql-client-14
-    sudo apt purge postgresql postgresql-common postgresql-client-common libpq5
-    sudo apt-get install -y postgresql-common postgresql-12 postgresql-server-dev-12
+    sudo apt-get install -y postgresql-14 postgresql-client-14 postgresql-server-dev-14 postgresql-common
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
     source ${CONDA}/etc/profile.d/conda.sh
