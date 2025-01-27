@@ -26,12 +26,7 @@ const std::string MONOMER_IDX1{"monomerIndex1"};
 const std::string MONOMER_IDX2{"monomerIndex2"};
 const std::string REFERENCE_IDX{"referenceIndex"};
 
-constexpr int SIDECHAIN_IDX = 2;
-constexpr int MIN_ATTCHPTS = 2;
-constexpr auto NO_ATTACHMENT = std::numeric_limits<unsigned int>::max();
-
 // 3-letter to 1-letter amino acid code mapping
-// From mmpdb_get_three_to_one_letter_residue_map
 // These are not currently in the monomer database, but some have
 // symbols that are already in the monomer database. We may need to
 // figure out how to have multiple 3-letter codes for a single symbol
@@ -127,8 +122,6 @@ annotated_atomistic_to_monomeristic(const RDKit::ROMol& input_mol)
     for (const auto& [chain_id, residues] : chains_and_residues) {
         // Use first residue to determine chain type. We assume that PDB data
         // is correct and there aren't multiple chain types in a single chain.
-        // TODO: Actually check for this
-        // What if the first residue is unknown?
         // note: residues are 1-indexed
         const auto first_res_info =
             dynamic_cast<const RDKit::AtomPDBResidueInfo*>(
@@ -144,10 +137,7 @@ annotated_atomistic_to_monomeristic(const RDKit::ROMol& input_mol)
         auto chain_type = helm_info ? helm_info->second : ChainType::PEPTIDE;
         std::string helm_chain_id = to_string(chain_type) + std::to_string(++chain_counts[chain_type]);
         int last_monomer = -1;
-        size_t count = 0; // not always the same as res_num, sometimes res_num
-                          // doesn't start at 1
         for (const auto& [res_num, atom_idxs] : residues) {
-            ++count;
             const auto res_info =
                 dynamic_cast<const RDKit::AtomPDBResidueInfo*>(
                     mol.getAtomWithIdx(atom_idxs[0])->getMonomerInfo());
@@ -220,7 +210,6 @@ boost::shared_ptr<RDKit::RWMol> atomisticToMonomerMol(const RDKit::ROMol& mol)
             "No residue information found in molecule");
     }
     auto monomer_mol = annotated_atomistic_to_monomeristic(mol);
-    assign_chains(*monomer_mol);
     return monomer_mol;
 }
 

@@ -23,7 +23,8 @@
 template <typename T>
 static bool is_dummy_obj(const T& obj)
 {
-    return false; // placeholder from HELM parser
+    // placeholder from HELM parser; represents a query/repeated monomer or bond
+    return false;
 }
 
 namespace RDKit
@@ -173,9 +174,7 @@ std::unique_ptr<Monomer> make_monomer(std::string_view name,
 {
     auto a = std::make_unique<::RDKit::Atom>();
     std::string n{name};
-    a->setProp("atomLabel", n); // image
-    a->setProp("Name", n);  // other image pathway
-    a->setProp("smilesSymbol", n); // write as SMILES, convenient for testing
+    a->setProp(ATOM_LABEL, n); // temporary, for image generation
     // Always start with BRANCH_MONOMER as false, will be set to
     // true if branch linkage is made to this monomer
     a->setProp(BRANCH_MONOMER, false);
@@ -225,7 +224,6 @@ void set_residue_number(RDKit::Atom* atom, int residue_number)
     auto* residue_info =
         static_cast<RDKit::AtomPDBResidueInfo*>(atom->getMonomerInfo());
     if (residue_info == nullptr) {
-        // sdgr uses std::format here
         throw std::runtime_error("some Atom does not have residue info");
     }
     residue_info->setResidueNumber(residue_number);
@@ -334,64 +332,6 @@ void order_residues(RDKit::RWMol& monomer_mol)
             } else if (linkage == BACKBONE_LINKAGE) {
                 queue.push_back(bond->getOtherAtom(current));
             }
-        }
-    }
-}
-
-void assign_chains(RDKit::RWMol& monomer_mol)
-{
-    monomer_mol.setProp("HELM_MODEL", true);
-
-    // Currently, order_residues only works when there is a single chain
-    auto chain_ids = get_polymer_ids(monomer_mol);
-    if (chain_ids.size() == 1 && !is_valid_chain(monomer_mol, chain_ids[0])) {
-        order_residues(monomer_mol);
-    }
-
-    // Determine and mark the 'connection bonds'
-    if (!monomer_mol.getRingInfo()->isInitialized()) {
-        ::RDKit::MolOps::findSSSR(monomer_mol);
-    }
-    // get atom rings that belong to a single polymer
-    const auto& bnd_rings = monomer_mol.getRingInfo()->bondRings();
-
-    for (const auto& ring : bnd_rings) {
-        if (std::all_of(ring.begin(), ring.end(), [&](const auto& idx) {
-                auto begin_at = monomer_mol.getBondWithIdx(idx)->getBeginAtom();
-                auto end_at = monomer_mol.getBondWithIdx(idx)->getEndAtom();
-                return get_polymer_id(begin_at) == get_polymer_id(end_at);
-            })) {
-            // break this ring -- find bond between residue #s with largest
-            // difference
-            unsigned int connection_bond = monomer_mol.getNumBonds();
-            int max_diff = 0;
-            for (const auto& idx : ring) {
-                const auto bond = monomer_mol.getBondWithIdx(idx);
-                auto begin_at = bond->getBeginAtom();
-                auto end_at = bond->getEndAtom();
-                int diff =
-                    get_residue_number(begin_at) - get_residue_number(end_at);
-                if (std::abs(diff) > max_diff) {
-                    connection_bond = bond->getIdx();
-                    max_diff = std::abs(diff);
-                }
-            }
-            if (connection_bond != monomer_mol.getNumBonds()) {
-                std::string linkage = monomer_mol.getBondWithIdx(connection_bond)
-                                          ->getProp<std::string>(LINKAGE);
-                monomer_mol.getBondWithIdx(connection_bond)
-                    ->setProp(CUSTOM_BOND, linkage);
-            } else {
-                // temporary error handling
-                throw std::runtime_error("Could not find connection bond");
-            }
-        }
-    }
-    for (auto bond : monomer_mol.bonds()) {
-        if (get_polymer_id(bond->getBeginAtom()) !=
-            get_polymer_id(bond->getEndAtom())) {
-            std::string linkage = bond->getProp<std::string>(LINKAGE);
-            bond->setProp(CUSTOM_BOND, linkage);
         }
     }
 }

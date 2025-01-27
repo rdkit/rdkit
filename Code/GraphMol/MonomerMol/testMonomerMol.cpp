@@ -85,7 +85,7 @@ void neutralize_atoms(RDKit::ROMol& mol)
 
 TEST_CASE("FASTAConversions") {
   SECTION("SIMPLE") {
-    // Build MonomerMol
+    // Build MonomerMol with a single chain
     RWMol monomer_mol;
     add_monomer(monomer_mol, "R", 1, "PEPTIDE1");
     add_monomer(monomer_mol, "D");
@@ -98,11 +98,11 @@ TEST_CASE("FASTAConversions") {
     add_connection(monomer_mol, 2, 3, ConnectionType::FORWARD);
     add_connection(monomer_mol, 3, 4, ConnectionType::FORWARD);
 
-    std::cerr << to_fasta(monomer_mol);
     CHECK(std::string(">Chain PEPTIDE1\nRDKIT") == to_fasta(monomer_mol));
   }
 
   SECTION("MultipleChains") {
+    // Build MonomerMol with two chains
     RWMol monomer_mol;
     auto midx1 = add_monomer(monomer_mol, "R", 1, "A");
     auto midx2 = add_monomer(monomer_mol, "D");
@@ -120,10 +120,11 @@ TEST_CASE("FASTAConversions") {
 
   SECTION("UsingSequenceReader") {
     std::string seq = "CGCGAATTACCGCG";
-    // the sequence parser creates an atomistic molecules
+    // the sequence parser creates an atomistic molecule
     auto atomistic_mol = SequenceToMol(seq);
     CHECK(atomistic_mol);
 
+    // PDB info is used to convert the atomistic sturcture into a MonomerMol
     auto monomer_mol = atomisticToMonomerMol(*atomistic_mol);
     CHECK(std::string(">Chain PEPTIDE1\nCGCGAATTACCGCG") == to_fasta(*monomer_mol));
   }
@@ -131,7 +132,6 @@ TEST_CASE("FASTAConversions") {
 
 TEST_CASE("Conversions") {
   SECTION("MonomerMolToAtomistic") {
-    // works similar to the SequenceToMol function
     std::string seq = "CGCGA";
     auto atomistic_mol = SequenceToMol(seq);
 
@@ -148,6 +148,7 @@ TEST_CASE("Conversions") {
     add_connection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
     auto atomistic_mol2 = monomerMolToAtomsitic(monomer_mol);
 
+    // atomistic structure is same as using sequence parser
     std::string smi1 = MolToSmiles(*atomistic_mol);
     std::string smi2 = MolToSmiles(*atomistic_mol2);
     CHECK(smi1 == smi2);
