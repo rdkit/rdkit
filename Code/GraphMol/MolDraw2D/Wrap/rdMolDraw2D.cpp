@@ -992,6 +992,10 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "with complex query symbols A, Q, X, M, optionally followed "
           "by H if hydrogen is included (except for AH, which stays *). "
           "Default is true")
+      .def_readwrite("bracketsAroundAtomLists",
+                     &RDKit::MolDrawOptions::bracketsAroundAtomLists,
+                     "Whether to put brackets round atom lists in query atoms."
+                     "  Default is true.")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            python::args("self"),
            "method for getting the colour of variable attachment points")
