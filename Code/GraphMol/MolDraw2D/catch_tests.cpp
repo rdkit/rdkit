@@ -159,8 +159,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHydrogenBonds2.svg", 645414593U},
     {"testGithub3912.1.svg", 2513727029U},
     {"testGithub3912.2.svg", 3814673891U},
-    {"testGithub2976.svg", 2669316911U},
-    {"testReactionCoords.svg", 402445764U},
+    {"testGithub2976.svg", 3717916234U},
+    {"testReactionCoords.svg", 2572146469U},
     {"testAnnotationColors.svg", 2216313312U},
     {"testGithub4323_1.svg", 2536621192U},
     {"testGithub4323_2.svg", 2120846759U},
@@ -319,9 +319,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"lasso_highlights_6.svg", 2113147733U},
     {"lasso_highlights_7.svg", 514868036U},
     {"lasso_highlights_8.svg", 3231367552U},
-    {"testGithub6685_1.svg", 1835717197U},
-    {"testGithub6685_2.svg", 116380465U},
-    {"testGithub6685_3.svg", 409385402U},
+    {"testGithub6685_1.svg", 1206031802U},
+    {"testGithub6685_2.svg", 1946154328U},
+    {"testGithub6685_3.svg", 617181155U},
     {"testGithub6685_4.svg", 1239628830U},
     {"bad_lasso_1.svg", 726527516U},
     {"AtropCanon1.svg", 526339583U},
@@ -351,6 +351,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomAbbreviationsClash.svg", 1847939197U},
     {"testBlackAtomsUnderHighlight.svg", 3916069581U},
     {"testSmallReactionCanvas.svg", 1288652415U},
+    {"testReactionProductSmoothCorners.svg", 1712682118U},
     {"testReagentPadding_1.svg", 2106266352U},
     {"testReagentPadding_2.svg", 1006560295U},
 };
@@ -10267,6 +10268,33 @@ TEST_CASE("Github8195 - Reaction rendering looks odd at small scales") {
   }
 #endif
 }
+
+TEST_CASE("Github8209 - Reaction products not having bond corners smoothed") {
+  std::string smiles =
+      "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+      "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+      "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+      "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+  bool useSmiles = false;
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+  REQUIRE(rxn);
+  MolDraw2DSVG drawer(450, 200, -1, -1, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testReactionProductSmoothCorners.svg");
+  outs << text;
+  outs.close();
+  std::regex path(
+      "<path d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;stroke:#000000");
+  size_t nOccurrences =
+      std::distance(std::sregex_token_iterator(text.begin(), text.end(), path),
+                    std::sregex_token_iterator());
+  CHECK(nOccurrences == 10);
+  check_file_hash("testReactionProductSmoothCorners.svg");
+}
+
 
 TEST_CASE("Optionally increase padding round reagents in reaction drawing") {
   // No specific tests on the output, because this was an enhancement not
