@@ -850,12 +850,10 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
                                      reactantAtom.getIdx());
 
-  // preserve the atom map number from the reactant and drop old atom map
+  // preserve the atom map number from the reactant
   int mapNum;
   if (reactantAtom.getPropIfPresent(common_properties::molAtomMapNumber, mapNum)) {
     productAtom->setProp<unsigned int>(common_properties::molAtomMapNumber, mapNum);
-  } else {
-    productAtom->clearProp(common_properties::molAtomMapNumber);
   }
 
   if (setImplicitProperties) {
