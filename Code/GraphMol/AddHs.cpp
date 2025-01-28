@@ -1067,8 +1067,11 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
   auto *res = new RWMol(mol);
+  RemoveHsParameters ps;
+  ps.removeNonimplicit = !implicitOnly;
+  ps.updateExplicitCount = updateExplicitCount;
   try {
-    removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
+    removeHs(*res, ps, sanitize);
   } catch (const MolSanitizeException &) {
     delete res;
     throw;

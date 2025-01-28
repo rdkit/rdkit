@@ -548,7 +548,7 @@ bool hasNonDefaultValence(const Atom *atom) {
     // not the default value
     auto effAtomicNum = atom->getAtomicNum() - atom->getFormalCharge();
     return atom->getNoImplicit() &&
-           (atom->getExplicitValence() !=
+           (static_cast<int>(atom->getValence(Atom::ValenceType::EXPLICIT)) !=
             PeriodicTable::getTable()->getDefaultValence(effAtomicNum));
   }
   return true;

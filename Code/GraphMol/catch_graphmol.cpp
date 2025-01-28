@@ -2203,7 +2203,7 @@ TEST_CASE("valence edge") {
     m->getAtomWithIdx(0)->setNoImplicit(false);
     m->updatePropertyCache(false);
     CHECK(m->getAtomWithIdx(0)->getFormalCharge() == -2);
-    CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+    CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
   }
   {
     SmilesParserParams ps;
@@ -4105,7 +4105,9 @@ M  END
   }
 }
 
-TEST_CASE("Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group", "[RWMol]") {
+TEST_CASE(
+    "Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group",
+    "[RWMol]") {
   {
     auto mol = "C1CC1"_smiles;
     REQUIRE(mol);
@@ -4582,8 +4584,8 @@ TEST_CASE("explicit valence handling of transition metals") {
     for (const auto &smiles : smileses) {
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(m);
-      CHECK(m->getAtomWithIdx(0)->getExplicitValence() == 1);
-      CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+      CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 1);
+      CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
     }
   }
 }
@@ -4591,7 +4593,7 @@ TEST_CASE("explicit valence handling of transition metals") {
 TEST_CASE("valence handling of atoms with multiple possible valence states") {
   SECTION("basics") {
     // some of these examples are quite silly
-    std::vector<std::pair<std::string, int>> smileses = {
+    std::vector<std::pair<std::string, unsigned int>> smileses = {
         {"C[S-](=O)=O", 5},
         {"C[P-2](C)C", 3},
         {"C[Se-](=O)=O", 5},
@@ -4601,7 +4603,8 @@ TEST_CASE("valence handling of atoms with multiple possible valence states") {
       INFO(smiles);
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
       CHECK(m);
-      CHECK(val == m->getAtomWithIdx(1)->getExplicitValence());
+      CHECK(val ==
+            m->getAtomWithIdx(1)->getValence(Atom::ValenceType::EXPLICIT));
       // now try figuring out the implicit valence
       m->getAtomWithIdx(1)->setNoImplicit(false);
       m->getAtomWithIdx(1)->calcImplicitValence(true);  // <- should not throw
@@ -4704,13 +4707,10 @@ TEST_CASE("Valences on Al, Si, P, As, Sb, Bi") {
 TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
   SECTION("basics") {
     class FakeAtomMonomerInfo : public AtomMonomerInfo {
-    public:
+     public:
       bool *deleted;
-      FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {
-      }
-      virtual ~FakeAtomMonomerInfo() {
-	*deleted = true;
-      }
+      FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {}
+      virtual ~FakeAtomMonomerInfo() { *deleted = true; }
     };
 
     bool sanitize = true;
@@ -4727,7 +4727,5 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
     mol->getAtomWithIdx(0)->setMonomerInfo(res);
     mol->getAtomWithIdx(0)->setMonomerInfo(nullptr);
     CHECK(was_deleted == true);
-
   }
 }
-

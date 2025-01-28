@@ -2260,8 +2260,10 @@ void test21Issue2540021() {
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
     TEST_ASSERT(prod->getNumAtoms() == 6);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum() == 7);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence() == 0);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 3);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit() == false);
 
     delete rxn;
@@ -2976,8 +2978,10 @@ void test28RxnDepictor() {
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
     TEST_ASSERT(prod->getNumAtoms() == 6);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum() == 7);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence() == 0);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 3);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit() == false);
 
     delete rxn;
