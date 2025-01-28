@@ -628,7 +628,83 @@ void Atom::setMonomerInfo(AtomMonomerInfo *info) {
   delete dp_monomerInfo;
   dp_monomerInfo = info;
 }
-  
+
+const AtomPDBResidueInfo *Atom::getPDBResidueInfo() const {
+  return dynamic_cast<const AtomPDBResidueInfo *>(dp_monomerInfo);
+}
+
+AtomPDBResidueInfo *Atom::getPDBResidueInfo() {
+  return dynamic_cast<AtomPDBResidueInfo *>(dp_monomerInfo);
+}
+
+std::string Atom::getResidueName() const {
+  if (auto res_info = getPDBResidueInfo(); res_info) {
+    return res_info->getResidueName();
+  }
+  return "";
+}
+
+void Atom::setResidueName(const std::string &residue_name) {
+  auto res_info = getPDBResidueInfo();
+  if (!res_info) {
+    res_info = new RDKit::AtomPDBResidueInfo();
+    setMonomerInfo(res_info);
+  }
+  res_info->setResidueName(residue_name);
+}
+
+int Atom::getResidueNumber() const {
+  if (auto res_info = getPDBResidueInfo(); res_info) {
+    return res_info->getResidueNumber();
+  }
+
+  return 0;
+}
+
+void Atom::setResidueNumber(int residue_number) {
+  auto res_info = getPDBResidueInfo();
+  if (!res_info) {
+    res_info = new RDKit::AtomPDBResidueInfo();
+    setMonomerInfo(res_info);
+  }
+  res_info->setResidueNumber(residue_number);
+}
+
+std::string Atom::getChainId() const {
+  if (auto res_info = getPDBResidueInfo(); res_info) {
+    return res_info->getChainId();
+  }
+
+  return "";
+}
+
+void Atom::setChainId(const std::string &chain_id) {
+  auto res_info = getPDBResidueInfo();
+  if (!res_info) {
+    res_info = new RDKit::AtomPDBResidueInfo();
+    setMonomerInfo(res_info);
+  }
+
+  res_info->setChainId(chain_id);
+}
+
+std::string Atom::getInsertionCode() const {
+  if (auto res_info = getPDBResidueInfo(); res_info) {
+    return res_info->getInsertionCode();
+  }
+
+  return "";
+}
+
+void Atom::setInsertionCode(const std::string &insertion_code) {
+  auto res_info = getPDBResidueInfo();
+  if (!res_info) {
+    res_info = new RDKit::AtomPDBResidueInfo();
+    setMonomerInfo(res_info);
+  }
+  res_info->setInsertionCode(insertion_code);
+}
+
 void Atom::setIsotope(unsigned int what) { d_isotope = what; }
 
 double Atom::getMass() const {

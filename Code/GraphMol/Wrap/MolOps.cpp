@@ -190,20 +190,10 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 
 namespace {
 std::string getResidue(const ROMol &, const Atom *at) {
-  auto monomerInfo = at->getMonomerInfo();
-  if (!monomerInfo ||
-      monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
-    return "";
-  }
-  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getResidueName();
+  return at->getResidueName();
 }
 std::string getChainId(const ROMol &, const Atom *at) {
-  auto monomerInfo = at->getMonomerInfo();
-  if (!monomerInfo ||
-      monomerInfo->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
-    return "";
-  }
-  return static_cast<const AtomPDBResidueInfo *>(monomerInfo)->getChainId();
+  return at->getChainId();
 }
 }  // namespace
 python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
@@ -2150,9 +2140,9 @@ RETURNS:
     - cleanIt: (optional) if provided, any existing values of the property `_CIPCode`
         will be cleared, atoms with a chiral specifier that aren't
       actually chiral (e.g. atoms with duplicate substituents or only 2 substituents,
-      etc.) will have their chiral code set to CHI_UNSPECIFIED. Bonds with 
-      STEREOCIS/STEREOTRANS specified that have duplicate substituents based upon the CIP 
-      atom ranks will be marked STEREONONE. 
+      etc.) will have their chiral code set to CHI_UNSPECIFIED. Bonds with
+      STEREOCIS/STEREOTRANS specified that have duplicate substituents based upon the CIP
+      atom ranks will be marked STEREONONE.
     - force: (optional) causes the calculation to be repeated, even if it has already
       been done
     - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on
@@ -2258,9 +2248,9 @@ RETURNS:
                 docString.c_str());
 
     docString = R"DOC(returns the meso centers in a molecule (if any).
-    
+
   ARGUMENTS:
-    
+
     - mol: the molecule to use
     - includeIsotopes: (optional) toggles whether or not isotopes should be included in the
       calculation.
@@ -3024,7 +3014,7 @@ Note that some of the options here are either directly contradictory or make
   is doing something sensible and don't attempt to detect possible conflicts or
   problems.
 
-A note on the flags controlling which atoms/bonds are modified: 
+A note on the flags controlling which atoms/bonds are modified:
    These generally limit the set of atoms/bonds to be modified.
    For example:
        - ADJUST_IGNORERINGS atoms/bonds in rings will not be modified.
@@ -3183,7 +3173,7 @@ A note on the flags controlling which atoms/bonds are modified:
    - mol: molecule to be modified
    - addAsQueries: if true, the dummy atoms will be added as null queries
         (i.e. they will match any atom in a substructure search)
-   - addCoords: if true and the molecule has one or more conformers, 
+   - addCoords: if true and the molecule has one or more conformers,
         positions for the attachment points will be added to the conformer(s)
 )DOC");
     python::def(
