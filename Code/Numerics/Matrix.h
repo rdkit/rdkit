@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2006 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_MATRIX_H__
-#define __RD_MATRIX_H__
+#ifndef RD_MATRIX_H
+#define RD_MATRIX_H
 
 #include <RDGeneral/Invariant.h>
 #include "Vector.h"
@@ -100,6 +100,19 @@ class Matrix {
     d_data[id] = val;
   }
 
+  //! returns a particular element of the matrix
+  inline virtual TYPE getValUnchecked(unsigned int i, unsigned int j) const {
+    unsigned int id = i * d_nCols + j;
+    return d_data[id];
+  }
+
+  //! sets a particular element of the matrix
+  inline virtual void setValUnchecked(unsigned int i, unsigned int j,
+                                      TYPE val) {
+    unsigned int id = i * d_nCols + j;
+
+    d_data[id] = val;
+  }
   //! returns a copy of a row of the matrix
   inline virtual void getRow(unsigned int i, Vector<TYPE> &row) const {
     PRECONDITION(i < d_nRows, "bad index");
