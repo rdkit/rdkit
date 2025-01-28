@@ -1127,6 +1127,45 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
                      opts.maxFragSeparation, opts.exactConnectionsMatch,
                      opts.equivalentAtoms, opts.ignoreBondOrders));
   }
+
+  if (opts.singleLargestFrag) {
+    std::sort(results.begin(), results.end(),
+              [](const RascalResult &r1, const RascalResult &r2) -> bool {
+                if (r1.getAtomMatches() == r2.getAtomMatches()) {
+                  return (r1.getBondMatches() < r2.getBondMatches());
+                }
+                return (r1.getAtomMatches() < r2.getAtomMatches());
+              });
+
+    // the singleLargestFrag method throws bits of solutions out, so there may
+    // now be duplicates and results that are different sizes.
+    results.erase(
+        std::unique(results.begin(), results.end(),
+                    [](const RascalResult &r1, const RascalResult &r2) -> bool {
+                      return (r1.getAtomMatches() == r2.getAtomMatches() &&
+                              r1.getBondMatches() == r2.getBondMatches());
+                    }),
+        results.end());
+    boost::dynamic_bitset<> want(results.size());
+    want.set();
+    for (size_t i = 1; i < results.size(); ++i) {
+      if (results[i].getAtomMatches().size() <
+              results[0].getAtomMatches().size() ||
+          results[i].getBondMatches().size() <
+              results[0].getBondMatches().size()) {
+        want[i] = false;
+      }
+    }
+    if (want.count() < results.size()) {
+      size_t j = 0;
+      for (size_t i = 0; i < results.size(); ++i) {
+        if (want[i]) {
+          results[j++] = results[i];
+        }
+      }
+      results.erase(results.begin() + j, results.end());
+    }
+  }
   std::sort(results.begin(), results.end(), details::resultCompare);
   return results;
 }

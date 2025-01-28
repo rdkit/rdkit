@@ -179,59 +179,5 @@ void FragFPGenerator::computeFP(const ROMol &mol, const FragCatalog &fcat,
     mapkm1 = mapk;
   }  // end of loop over path order
 
-#if 0
-    /**************************************************************
-     * Another way of dealing with higher order paths - didn't work 
-     * too well for compound with lots of matches
-
-    PATH_LIST_CI km11, km12, tmpM;
-    PATH_TYPE oKpath;
-    INT_VECT dEnt1, dEnt2, intersect;
-    INT_VECT_CI iti;
-    double sinvar1, sinvar2;
-    int i, j, eid1, eid2;
-    int ord = 2;
-    for (ord = 2; ord <= uLen; ord++) {
-      std::cout << "Order: " << ord << " " << km1matches.size() << "\n";
-      kmatches.clear();
-      mapk.clear();
-      for (km11 = km1matches.begin(); km11 != km1matches.end(); km11++) {
-	tmpM = km11;
-	tmpM++;
-	
-	for (km12 = tmpM;  km12 != km1matches.end(); km12++) {
-	  Union((*km11), (*km12), oKpath);
-	  if (oKpath.size() == ord) {
-	    FragCatalogEntry *nent = new FragCatalogEntry(mol, oKpath, aidToFid);
-	    sinvar1 = computeIntVectPrimesProduct(*km11);
-	    sinvar2 = computeIntVectPrimesProduct(*km12);
-	    
-	    eid1 = mapkm1[sinvar1];
-	    eid2 = mapkm1[sinvar2];
-	    Intersect(fcat.getDownEntryList(eid1),
-		      fcat.getDownEntryList(eid2),
-		      intersect);
-	    // now search through the intersection list to check if we have a isomorphic
-	    // entry in the catalog
-	    for (iti = intersect.begin(); iti != intersect.end(); iti++) {
-	      entry = fcat.getEntryWithIdx(*iti);
-	      if (nent->match(entry, tol) ) {
-		bitId = entry->getBitId();
-		if (bitId >= 0) {
-		  fp->setBit(bitId);
-		}
-		invar = computeIntVectPrimesProduct(oKpath);
-		kmatches.push_back(oKpath);
-		mapk[invar] = (*iti);
-	      }
-	    }// end of for loop over intersect entries
-	  } // end of if block (if we found a order path)
-	}
-      }
-      km1matches = kmatches;
-      mapkm1 = mapk;
-    } // end of loop over higher order paths order
-    **************************/
-#endif
 }
 }  // namespace RDKit
