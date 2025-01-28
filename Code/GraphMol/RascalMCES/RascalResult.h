@@ -71,7 +71,7 @@ class RDKIT_RASCALMCES_EXPORT RascalResult {
   int getNumFrags() const;
 
   // returns how many bonds in the clique don't match
-  // cyclic/non-cyclic i.e. count as a matche in the MCES but
+  // cyclic/non-cyclic i.e. count as a match in the MCES but
   // are ring bonds in one of the molecules and not in the other.
   int getRingNonRingBondScore() const;
 

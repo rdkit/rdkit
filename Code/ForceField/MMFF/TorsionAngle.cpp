@@ -155,14 +155,6 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   // dE/dPhi is independent of cartesians:
   double dE_dPhi =
       0.5 * (-(d_V1)*sinPhi + 2.0 * d_V2 * sin2Phi - 3.0 * d_V3 * sin3Phi);
-#if 0
-      if(dE_dPhi!=dE_dPhi){
-        std::cout << "\tNaN in Torsion("<<d_at1Idx<<","<<d_at2Idx<<","<<d_at3Idx<<","<<d_at4Idx<<")"<< std::endl;
-        std::cout << "sin: " << sinPhi << std::endl;
-        std::cout << "cos: " << cosPhi << std::endl;
-      }
-
-#endif
   // FIX: use a tolerance here
   // this is hacky, but it's per the
   // recommendation from Niketic and Rasmussen:

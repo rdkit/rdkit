@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,6 +17,7 @@
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
+#include <RDGeneral/ControlCHandler.h>
 
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
@@ -141,6 +142,10 @@ int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
     NOGIL gil;
     res = DGeomHelpers::EmbedMolecule(mol, params);
   }
+  if (ControlCHandler::getGotSignal()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "Embedding cancelled");
+    boost::python::throw_error_already_set();
+  }
   return res;
 }
 
@@ -149,6 +154,10 @@ int EmbedMolecule2(ROMol &mol, DGeomHelpers::EmbedParameters &params) {
   {
     NOGIL gil;
     res = DGeomHelpers::EmbedMolecule(mol, params);
+  }
+  if (ControlCHandler::getGotSignal()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "Embedding cancelled");
+    boost::python::throw_error_already_set();
   }
   return res;
 }
@@ -188,6 +197,12 @@ INT_VECT EmbedMultipleConfs(
     NOGIL gil;
     DGeomHelpers::EmbedMultipleConfs(mol, res, numConfs, params);
   }
+
+  if (ControlCHandler::getGotSignal()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "Embedding cancelled");
+    boost::python::throw_error_already_set();
+  }
+
   return res;
 }
 
@@ -197,6 +212,10 @@ INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
   {
     NOGIL gil;
     DGeomHelpers::EmbedMultipleConfs(mol, res, numConfs, params);
+  }
+  if (ControlCHandler::getGotSignal()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "Embedding cancelled");
+    boost::python::throw_error_already_set();
   }
   return res;
 }

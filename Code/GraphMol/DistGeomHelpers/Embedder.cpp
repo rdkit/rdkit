@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,6 +25,7 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/ControlCHandler.h>
 
 #include <Geometry/Transform3D.h>
 #include <Numerics/Alignment/AlignPoints.h>
@@ -40,7 +41,6 @@
 #include <vector>
 #include <chrono>  // for time-related functions
 
-
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <future>
 #include <mutex>
@@ -53,6 +53,8 @@
 #endif
 
 namespace {
+constexpr const char *INTERRUPT_MESSAGE =
+    "Interrupted, cancelling conformer generation";
 constexpr double M_PI_2 = 1.57079632679489661923;
 constexpr double ERROR_TOL = 0.00001;
 // these tolerances, all to detect and filter out bogus conformations, are a
@@ -576,7 +578,7 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
 bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
                              const detail::EmbedArgs &eargs,
                              EmbedParameters &embedParams,
-                             TimePoint* end_time) {
+                             TimePoint *end_time) {
   // now redo the minimization if we have a chiral center
   // or have started from random coords. This
   // time removing the chiral constraints and
@@ -820,7 +822,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
 }
 
 bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
-                 EmbedParameters &embedParams, int seed, TimePoint* end_time) {
+                 EmbedParameters &embedParams, int seed, TimePoint *end_time) {
   PRECONDITION(positions, "bogus positions");
   if (embedParams.maxIterations == 0) {
     embedParams.maxIterations = 10 * positions->size();
@@ -860,6 +862,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     if (embedParams.callback != nullptr) {
       embedParams.callback(iter);
     }
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
     gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
                                                     embedParams, distMat, rng);
     if (!gotCoords) {
@@ -870,6 +875,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
         embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
       }
     } else {
+      if (ControlCHandler::getGotSignal()) {
+        return false;
+      }
       gotCoords =
           EmbeddingOps::firstMinimization(positions, eargs, embedParams);
       if (!gotCoords) {
@@ -911,6 +919,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // or have started from random coords.
       if (gotCoords &&
           (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
+        if (ControlCHandler::getGotSignal()) {
+          return false;
+        }
         gotCoords = EmbeddingOps::minimizeFourthDimension(
             positions, eargs, embedParams, end_time);
         if (!gotCoords) {
@@ -919,8 +930,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
             std::lock_guard<std::mutex> lock(GetFailMutex());
 #endif
             if (end_time != nullptr && Clock::now() > *end_time) {
-              embedParams
-                .failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+              embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
             }
             embedParams
                 .failures[EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION]++;
@@ -931,6 +941,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
       // (ET)(K)DG
       if (gotCoords && (embedParams.useExpTorsionAnglePrefs ||
                         embedParams.useBasicKnowledge)) {
+        if (ControlCHandler::getGotSignal()) {
+          return false;
+        }
         gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
                                                           embedParams);
         if (!gotCoords) {
@@ -1306,7 +1319,7 @@ bool multiplication_overflows_(T a, T b) {
 }
 
 void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
-                  EmbedParameters *params, TimePoint* end_time) {
+                  EmbedParameters *params, TimePoint *end_time) {
   PRECONDITION(eargs, "bogus eargs");
   PRECONDITION(params, "bogus params");
   unsigned int nAtoms = eargs->mmat->numRows();
@@ -1326,7 +1339,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     positions[i] = positionsStore[i].get();
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
-    if (end_time != nullptr && Clock::now() > *end_time) {
+    if (ControlCHandler::getGotSignal() ||
+        (end_time != nullptr && Clock::now() > *end_time)) {
       return;
     }
 
@@ -1375,9 +1389,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     }
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
-    bool gotCoords =
-        EmbeddingOps::embedPoints(&positions, *eargs, *params, new_seed,
-                                  end_time);
+    bool gotCoords = EmbeddingOps::embedPoints(&positions, *eargs, *params,
+                                               new_seed, end_time);
 
     // copy the coordinates into the correct conformer
     if (gotCoords) {
@@ -1452,10 +1465,10 @@ std::vector<std::vector<unsigned int>> getMolSelfMatches(
 
 void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                         EmbedParameters &params) {
-  TimePoint* end_time = nullptr;
-  TimePoint end_time_storage; 
+  TimePoint *end_time = nullptr;
+  TimePoint end_time_storage;
   if (params.timeout > 0) {
-    end_time_storage =  Clock::now() + std::chrono::seconds(params.timeout);
+    end_time_storage = Clock::now() + std::chrono::seconds(params.timeout);
     end_time = &end_time_storage;
   }
 
@@ -1587,6 +1600,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
     int numThreads = getNumThreadsToUse(params.numThreads);
 
+    ControlCHandler::reset();
+
     // do the embedding, using multiple threads if requested
     detail::EmbedArgs eargs = {&confsOk,        fourD,
                                &fragMapping,    &confs,
@@ -1617,6 +1632,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         params.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
       }
       res.push_back(-1);
+      return;
+    }
+    if (ControlCHandler::getGotSignal()) {
+      BOOST_LOG(rdWarningLog) << INTERRUPT_MESSAGE << std::endl;
       return;
     }
   }
