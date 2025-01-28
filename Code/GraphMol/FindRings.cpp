@@ -183,12 +183,6 @@ void findSSSRforDupCands(const ROMol &mol, VECT_INT_VECT &res,
       for (const auto &nring : nrings) {
         if (nring.size() == minSiz) {
           auto invr = RingUtils::computeRingInvariant(nring, mol.getNumAtoms());
-#if 0
-          std::cerr << "    res: " << invr << " | ";
-          std::copy(nring.begin(), nring.end(),
-                    std::ostream_iterator<int>(std::cerr, " "));
-          std::cerr << std::endl;
-#endif
           if (invars.find(invr) == invars.end()) {
             res.push_back(nring);
             invars.insert(invr);
@@ -206,16 +200,6 @@ auto compRingSize = [](const auto &v1, const auto &v2) {
 void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
   // sort on size
   std::sort(res.begin(), res.end(), compRingSize);
-
-#if 0
-        std::cerr<<"\n\nSORTED\n";
-        for(VECT_INT_VECT::const_iterator iter=res.begin();
-            iter!=res.end();++iter){
-          std::cerr<<iter-res.begin()<<": ";
-          std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
-        }
-#endif
 
   // change the rings from atom IDs to bondIds
   VECT_INT_VECT brings;
@@ -302,8 +286,12 @@ void removeExtraRings(VECT_INT_VECT &res, unsigned int, const ROMol &mol) {
       extras.push_back(temp[i]);
     }
   }
-
-  mol.setProp(common_properties::extraRings, extras, true);
+  // add extra rings to the molecule (there could already be some from previous
+  // fragments)
+  VECT_INT_VECT molExtras;
+  mol.getPropIfPresent(common_properties::extraRings, molExtras);
+  molExtras.insert(molExtras.end(), extras.begin(), extras.end());
+  mol.setProp(common_properties::extraRings, molExtras, true);
 }
 
 void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
@@ -356,11 +344,6 @@ void findRingsD2nodes(const ROMol &tMol, VECT_INT_VECT &res,
             tMol.getBondBetweenAtoms(nring[0], nring[nring.size() - 1])
                 ->getIdx());
         ringAtoms.set(nring[nring.size() - 1]);
-#if 0
-          std::cerr<<"    res: "<<invr<<" | ";
-          std::copy(nring.begin(),nring.end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
-#endif
       }
 
       nodeInvars[cand].push_back(invr);
@@ -822,11 +805,6 @@ bool findRingConnectingAtoms(const ROMol &tMol, const Bond *bond,
     if (invars.find(invr) == invars.end()) {
       res.push_back(nring);
       invars.insert(invr);
-#if 0
-        std::cerr<<"    local: "<<invr<<" | ";
-        std::copy(nring.begin(),nring.end(),std::ostream_iterator<int>(std::cerr," "));
-        std::cerr<<std::endl;
-#endif
       for (unsigned int i = 0; i < nring.size() - 1; ++i) {
         unsigned int bIdx =
             tMol.getBondBetweenAtoms(nring[i], nring[i + 1])->getIdx();
@@ -901,6 +879,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
       }
     }
   }
+  mol.clearProp(common_properties::extraRings);
 
   // find the number of fragments in the molecule - we will loop over them
   VECT_INT_VECT frags;
@@ -969,22 +948,11 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
       // collect all the degree two nodes;
       INT_VECT d2nodes;
       FindRings::pickD2Nodes(mol, d2nodes, curFrag, atomDegrees, activeBonds);
-#if 0
-          std::cerr<<"d2nodes: ";
-          std::copy(d2nodes.begin(),d2nodes.end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
-#endif
       if (d2nodes.size() > 0) {  // deal with the current degree two nodes
         // place to record any duplicate rings discovered from the current d2
         // nodes
         FindRings::findRingsD2nodes(mol, fragRes, invars, d2nodes, atomDegrees,
                                     activeBonds, ringBonds, ringAtoms);
-#if 0
-            std::cerr<<"  d2nodes post: ";
-            std::copy(d2nodes.begin(),d2nodes.end(),std::ostream_iterator<int>(std::cerr," "));
-            std::cerr<<std::endl;
-            std::cerr<<"  ring bonds: "<<ringBonds<<std::endl;
-#endif
         INT_VECT_CI d2i;
         // trim after we have dealt with all the current d2 nodes,
         for (d2i = d2nodes.begin(); d2i != d2nodes.end(); d2i++) {
@@ -1020,15 +988,6 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
       }  // done with degree 3 node
     }  // done finding rings in this fragment
 
-#if 0
-        std::cerr<<"\n\nFOUND:\n";
-        for(VECT_INT_VECT::const_iterator iter=fragRes.begin();
-            iter!=fragRes.end();++iter){
-          std::cerr<<iter-fragRes.begin()<<": ";
-          std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
-        }
-#endif
     // calculate the cyclomatic number for the fragment:
     int nexpt = rdcast<int>((nbnds - curFrag.size() + 1));
     int ssiz = rdcast<int>(fragRes.size());
@@ -1091,15 +1050,6 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
     if (ssiz > nexpt) {
       FindRings::removeExtraRings(fragRes, nexpt, mol);
     }
-
-#if 0
-        std::cerr<<"\n\nKEEPING:\n";
-        for(VECT_INT_VECT::const_iterator iter=fragRes.begin();
-            iter!=fragRes.end();++iter){
-          std::copy(iter->begin(),iter->end(),std::ostream_iterator<int>(std::cerr," "));
-          std::cerr<<std::endl;
-        }
-#endif
 
     res.reserve(res.size() + fragRes.size());
     for (VECT_INT_VECT::const_iterator iter = fragRes.begin();

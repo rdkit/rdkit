@@ -213,6 +213,14 @@ TEST_CASE("getMolFormula") {
   }
 }
 
+TEST_CASE(
+    "github #8121: symmetric ring finding not returning correct results for molecules with fragments") {
+  auto twoCubanes = "C12C3C4C1C5C2C3C45.C12C3C4C1C5C2C3C45"_smiles;
+  REQUIRE(twoCubanes);
+  auto rinfo = twoCubanes->getRingInfo();
+  CHECK(rinfo->numRings() == 12);
+}
+
 TEST_CASE("check division by zero in setTerminalAtomCoords") {
   SECTION("degree 4") {
     auto m = R"CTAB(

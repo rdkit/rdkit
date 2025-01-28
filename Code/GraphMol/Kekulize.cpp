@@ -433,7 +433,6 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
   while (!kekulized && questions.size()) {
     boost::dynamic_bitset<> dBndAdds(mol.getNumBonds());
     INT_VECT done;
-#if 1
     // reset the state: all aromatic bonds are remarked to single:
     for (const auto bond : mol.bonds()) {
       if (bond->getIsAromatic() && bond->getBondType() != Bond::SINGLE &&
@@ -442,7 +441,6 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
         bond->setBondType(Bond::SINGLE);
       }
     }
-#endif
     // pick a new permutation of the questionable atoms:
     const auto &switchOff = qEnum.next();
     if (!switchOff.size()) {
@@ -452,13 +450,6 @@ bool permuteDummiesAndKekulize(RWMol &mol, const INT_VECT &allAtms,
     for (int it : switchOff) {
       tCands[it] = 0;
     }
-#if 0
-        std::cerr<<"permute: ";
-        for (boost::dynamic_bitset<>::size_type i = 0; i < tCands.size(); ++i){
-          std::cerr << tCands[i];
-        }
-        std::cerr<<std::endl;
-#endif
     // try kekulizing again:
     kekulized =
         kekulizeWorker(mol, allAtms, tCands, dBndAdds, done, maxBackTracks);
@@ -482,11 +473,6 @@ void kekulizeFused(RWMol &mol, const VECT_INT_VECT &arings,
   boost::dynamic_bitset<> dBndCands(nats);
   boost::dynamic_bitset<> dBndAdds(nbnds);
   markDbondCands(mol, allAtms, dBndCands, questions, done);
-#if 0
-      std::cerr << "candidates: ";
-      for(int i=0;i<nats;++i) std::cerr << dBndCands[i];
-      std::cerr << std::endl;
-#endif
 
   auto kekulized =
       kekulizeWorker(mol, allAtms, dBndCands, dBndAdds, done, maxBackTracks);

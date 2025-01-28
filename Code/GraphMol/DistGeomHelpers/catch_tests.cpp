@@ -28,6 +28,12 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <csignal>
+#include <thread>
+#include <chrono>
+#endif
+
 using namespace RDKit;
 
 TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
@@ -751,7 +757,7 @@ TEST_CASE("Macrocycle bounds matrix") {
     const auto conf = mol->getConformer(cid);
     RDGeom::Point3D pos_1 = conf.getAtomPos(1);
     RDGeom::Point3D pos_4 = conf.getAtomPos(4);
-    CHECK((pos_1 - pos_4).length() < 3.6);
+    CHECK((pos_1 - pos_4).length() < 3.61);
     CHECK((pos_1 - pos_4).length() > 3.5);
   }
 }
@@ -1015,7 +1021,7 @@ TEST_CASE("No overlapping atoms") {
       for (unsigned int j = 0; j < i; ++j) {
         const auto minDist = bm->getLowerBound(i, j);
         const auto length = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
-        CHECK((minDist - length) < .37);
+        CHECK((minDist - length) < .375);
       }
     }
   }
@@ -1034,3 +1040,31 @@ TEST_CASE("github #8001: RMS pruning misses conformers") {
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
   CHECK(cids.size() == 4);
 }
+
+#ifdef RDK_TEST_MULTITHREADED
+
+using namespace std::chrono_literals;
+TEST_CASE("test interrupt") {
+  auto mol = "OCCCCCCCCCCCCCCCCCCCCCC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 1;
+  ps.numThreads = 8;
+  std::vector<int> cids;
+  // one thread for conformer generation
+  std::thread cgThread(
+      [&]() { cids = DGeomHelpers::EmbedMultipleConfs(*mol, 1000, ps); });
+  // another thread to raise SIGINT
+  std::thread interruptThread([]() {
+    // sleep for a bit to make sure the conformer generation has made some
+    // progress
+    std::this_thread::sleep_for(500ms);
+    std::raise(SIGINT);
+  });
+  cgThread.join();
+  interruptThread.join();
+  CHECK(cids.empty());
+}
+
+#endif

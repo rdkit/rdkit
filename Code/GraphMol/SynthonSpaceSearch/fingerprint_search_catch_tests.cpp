@@ -8,11 +8,13 @@
 //  of the RDKit source tree.
 
 #include <algorithm>
+#include <chrono>
 #include <fstream>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
+#include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -86,13 +88,15 @@ TEST_CASE("FP Small tests") {
       "C[C@@H]1CC(NC(=O)NC2COC2)CN(C(=O)c2nccnc2F)C1",
   };
 
-  std::vector<size_t> expNumHits{2, 4, 4};
+  std::vector<size_t> expNumHits{2, 3, 4};
 
   for (size_t i = 0; i < libNames.size(); i++) {
     SynthonSpace synthonspace;
     synthonspace.readTextFile(libNames[i]);
     SynthonSpaceSearchParams params;
     params.maxBondSplits = 3;
+    params.randomSeed = 1;
+    params.approxSimilarityAdjuster = 0.2;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
         MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
@@ -112,7 +116,18 @@ TEST_CASE("FP Small tests") {
     for (const auto &r : names) {
       fullSmis.insert(MolToSmiles(*mols[r]));
     }
-    CHECK(resSmis == fullSmis);
+    if (i != 1) {
+      CHECK(resSmis == fullSmis);
+    } else {
+      // In the triazole library, one of the hits found by the brute force
+      // method (triazole-1_1-1_2-2_3-1) is missed by the SynthonSpaceSearch
+      // because it requires that the fragment [1*]n([3*])C1CCCC1 is similar
+      // to synthon c1ccccc1-n([3*])[1*] which it isn't.  Instead, make sure
+      // all the ones that are found are in the brute force results.
+      for (const auto &rs : resSmis) {
+        CHECK(fullSmis.find(rs) != fullSmis.end());
+      }
+    }
   }
 }
 
@@ -136,6 +151,7 @@ TEST_CASE("FP Biggy") {
   const std::vector<size_t> numRes{46, 2, 0, 123, 0, 0};
   const std::vector<size_t> maxRes{2408, 197, 0, 833, 0, 4};
   SynthonSpaceSearchParams params;
+  params.approxSimilarityAdjuster = 0.2;
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
     auto queryMol = v2::SmilesParse::MolFromSmiles(smis[i]);
@@ -202,4 +218,70 @@ TEST_CASE("Other Fingerprints") {
       "C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C"_smiles;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().empty());
+}
+
+TEST_CASE("Timeout") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  SynthonSpaceSearchParams params;
+  params.maxBondSplits = 3;
+  params.maxHits = -1;
+  params.similarityCutoff = 0.3;
+  params.fragSimilarityAdjuster = 0.3;
+  params.timeOut = 2;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
+
+  auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
+  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getTimedOut());
+
+  // Make sure no timeout also works, but only on a short search.
+  params.maxHits = 100;
+  params.similarityCutoff = 0.3;
+  params.fragSimilarityAdjuster = 0.2;
+  params.timeOut = 0;
+  auto results1 = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(!results1.getTimedOut());
+}
+
+TEST_CASE("FP Approx Similarity") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  SynthonSpaceSearchParams params;
+  // The addFP and subtractFP are built from a random selection of
+  // products so do occasionally vary, so use a fixed seed.
+  params.randomSeed = 1;
+  params.similarityCutoff = 0.5;
+  params.timeOut = 0;
+  params.maxHits = 1000;
+
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>(3));
+  auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
+
+  // With RDKit fingerprints, 0.05 gives a reasonable compromise
+  // between speed and hits missed.
+  params.approxSimilarityAdjuster = 0.05;
+  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 482);
+  CHECK(results.getMaxNumResults() == 1466);
+
+  // A tighter adjuster misses more hits.
+  params.approxSimilarityAdjuster = 0.01;
+  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 124);
+
+  // This is the actual number of hits achievable.
+  params.approxSimilarityAdjuster = 0.25;
+  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 914);
 }

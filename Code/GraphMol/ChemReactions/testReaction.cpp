@@ -1716,7 +1716,6 @@ void test17Issue1920627() {
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
   TEST_ASSERT(rxn->getNumProductTemplates() == 1);
 
-#if 1
   reacts.clear();
   smi = "C[C@](Cl)(CO)CC(=O)NC";
   mol = SmilesToMol(smi);
@@ -1844,7 +1843,6 @@ void test17Issue1920627() {
   TEST_ASSERT(prod->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
   prod->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#endif
 
   reacts.clear();
   smi = "C(=O)N[C@@H](CC)C";

@@ -27,6 +27,7 @@ class ROMol;
 
 namespace SynthonSpaceSearch {
 class Synthon;
+struct SynthonSpaceSearchParams;
 
 // This class holds all the synthons for a particular reaction.
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
@@ -42,14 +43,21 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
     return d_synthons;
   }
   const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
+  const std::vector<boost::dynamic_bitset<>> &getSynthonConnectorPatterns()
+      const {
+    return d_synthConnPatts;
+  }
   const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions() const;
 
   const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
+  const std::unique_ptr<ExplicitBitVect> &getAddFP() const;
+  const std::unique_ptr<ExplicitBitVect> &getSubtractFP() const;
   const std::vector<int> &getNumConnectors() const;
   bool hasFingerprints() const;
+  bool hasAddAndSubtractFPs() const;
+
   const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
   getSynthonFPs() const;
-
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
   void readFromDBStream(std::istream &is, std::uint32_t version);
@@ -82,6 +90,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   void buildSynthonFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
+  void buildAddAndSubtractFPs(const FingerprintGenerator<std::uint64_t> &fpGen);
 
   // Return the molecules for synthons for which the bits are true.
   // Obviously requires that reqSynths is the same dimensions as
@@ -98,8 +107,11 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // The lists of synthons.  A product of the reaction is created by
   // combining 1 synthon from each of the outer vectors.
   std::vector<std::vector<std::unique_ptr<Synthon>>> d_synthons;
-  // 4 bits showing which connectors are present in the synthons.
+  // 4 bits showing which connectors are present in all the
+  // synthon sets.
   boost::dynamic_bitset<> d_connectors;
+  // and the connector patterns for each synthon set.
+  std::vector<boost::dynamic_bitset<>> d_synthConnPatts;
 
   // The connector regions of a molecule are the pieces of up to 3 bonds from
   // a connector atom into the molecule.  We keep a vector of all the ones
@@ -111,6 +123,14 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // The fingerprint of the connector regions.  Fingerprints for all
   // connector regions are folded into the same fingerprint.
   std::unique_ptr<ExplicitBitVect> d_connRegFP;
+
+  // When doing an approximate FP similarity by ORing together
+  // the synthonFPs, adding d_addFP and subtracting d_subtractFP
+  // accounts (a bit) for the joins and the dummy atoms
+  // respectively.
+  std::unique_ptr<ExplicitBitVect> d_addFP;
+  std::unique_ptr<ExplicitBitVect> d_subtractFP;
+
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
 

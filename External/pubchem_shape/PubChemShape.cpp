@@ -263,16 +263,17 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
   res.atom_type_vector.resize(nAlignmentAtoms, 0);
 
   RDGeom::Point3D ave;
-  for (unsigned i = 0; i < nAtoms; ++i) {
+  for (unsigned i = 0, activeAtomIdx = 0; i < nAtoms; ++i) {
     unsigned int Z = mol.getAtomWithIdx(i)->getAtomicNum();
     if (Z > 1) {
       ave += conformer.getAtomPos(i);
 
-      if (vdw_radii.find(Z) == vdw_radii.end()) {
+      if (auto rad = vdw_radii.find(Z); rad != vdw_radii.end()) {
+        rad_vector[activeAtomIdx++] = rad->second;
+      } else {
         throw ValueErrorException("No VdW radius for atom with Z=" +
                                   std::to_string(Z));
       }
-      rad_vector[i] = vdw_radii.at(Z);
     }
   }
 
