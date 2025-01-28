@@ -321,12 +321,11 @@ def GetAllCombinations(choices, noDups=1, which=0):
   return res
 
 
-def GetUniqueCombinations_new(choices, classes):
+def GetUniqueCombinations(choices, classes):
   """  Does the combinatorial explosion of the possible combinations
     of the elements of _choices_.
 
     """
-  #   print(choices, classes)
   assert len(choices) == len(classes)
   combos = set()
   for choice in itertools.product(*choices):
@@ -336,6 +335,7 @@ def GetUniqueCombinations_new(choices, classes):
     combos.add(tuple(sorted((cls, ch) for cls, ch in zip(classes, choice))))
   return [list(combo) for combo in sorted(combos)]
 
+GetUniqueCombinations_new = GetUniqueCombinations
 
 def UniquifyCombinations(combos):
   """ uniquifies the combinations in the argument

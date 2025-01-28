@@ -124,20 +124,13 @@ class TestCase(unittest.TestCase):
     self.assertEqual(actual, expected, 'Combinations are not in the same order')
 
   def testGetUniqueCombinations(self):
-    x = [[(1, (11, )), (1, (12, )), (2, (31, ))], [(1, (11, )), (1, (12, )), (2, (32, ))],
-         [(1, (11, )), (1, (13, )), (2, (31, ))], [(1, (11, )), (1, (13, )), (2, (32, ))],
-         [(1, (11, )), (1, (14, )), (2, (31, ))], [(1, (11, )), (1, (14, )), (2, (32, ))],
-         [(1, (12, )), (1, (13, )), (2, (31, ))], [(1, (12, )), (1, (13, )), (2, (32, ))],
-         [(1, (12, )), (1, (14, )), (2, (31, ))], [(1, (12, )), (1, (14, )), (2, (32, ))],
-         [(1, (13, )), (1, (14, )), (2, (31, ))], [(1, (13, )), (1, (14, )), (2, (32, ))]]
-
     # yapf: disable
-    GetUniqueCombinations_new = Utils.GetUniqueCombinations_new
+    GetUniqueCombinations = Utils.GetUniqueCombinations
 
     choices = [[(11,), (12,)], [(21,), (22,)], [(31,), (32,)]]
     classes = [1, 2, 3]
     self._compareCombinations(
-      GetUniqueCombinations_new(choices, classes),
+      GetUniqueCombinations(choices, classes),
       [[(1, (11,)), (2, (21,)), (3, (31,))], [(1, (11,)), (2, (21,)), (3, (32,))],
        [(1, (11,)), (2, (22,)), (3, (31,))], [(1, (11,)), (2, (22,)), (3, (32,))],
        [(1, (12,)), (2, (21,)), (3, (31,))], [(1, (12,)), (2, (21,)), (3, (32,))],
@@ -145,7 +138,7 @@ class TestCase(unittest.TestCase):
 
     classes = [1, 1, 2]
     self._compareCombinations(
-      GetUniqueCombinations_new(choices, classes),
+      GetUniqueCombinations(choices, classes),
       [[(1, (11,)), (1, (21,)), (2, (31,))], [(1, (11,)), (1, (21,)), (2, (32,))],
        [(1, (11,)), (1, (22,)), (2, (31,))], [(1, (11,)), (1, (22,)), (2, (32,))],
        [(1, (12,)), (1, (21,)), (2, (31,))], [(1, (12,)), (1, (21,)), (2, (32,))],
@@ -153,19 +146,19 @@ class TestCase(unittest.TestCase):
 
     choices = [[(11,), (12,)], [(11,), (12,)], [(31,), (32,)]]
     self._compareCombinations(
-      GetUniqueCombinations_new(choices, classes),
+      GetUniqueCombinations(choices, classes),
       [[(1, (11,)), (1, (12,)), (2, (31,))], [(1, (11,)), (1, (12,)), (2, (32,))]])
 
     choices = [[(11,), (12,)], [(11,), (12,), (13,)], [(31,), (32,)]]
     self._compareCombinations(
-      GetUniqueCombinations_new(choices, classes),
+      GetUniqueCombinations(choices, classes),
       [[(1, (11,)), (1, (12,)), (2, (31,))], [(1, (11,)), (1, (12,)), (2, (32,))],
        [(1, (11,)), (1, (13,)), (2, (31,))], [(1, (11,)), (1, (13,)), (2, (32,))],
        [(1, (12,)), (1, (13,)), (2, (31,))], [(1, (12,)), (1, (13,)), (2, (32,))]])
 
     choices = [[(11,), (12,), (14,)], [(11,), (12,), (13,)], [(31,), (32,)]]
     self._compareCombinations(
-      GetUniqueCombinations_new(choices, classes),
+      GetUniqueCombinations(choices, classes),
       [[(1, (11,)), (1, (12,)), (2, (31,))], [(1, (11,)), (1, (12,)), (2, (32,))],
        [(1, (11,)), (1, (13,)), (2, (31,))], [(1, (11,)), (1, (13,)), (2, (32,))],
        [(1, (12,)), (1, (13,)), (2, (31,))], [(1, (12,)), (1, (13,)), (2, (32,))],
@@ -175,42 +168,42 @@ class TestCase(unittest.TestCase):
 
     choices = [[(11, 111,), (12,), (14,)], [(11, 111,), (12,), (13,)], [(31,), (32,)]]
     self._compareCombinations(
-      GetUniqueCombinations_new(choices, classes),
+      GetUniqueCombinations(choices, classes),
       [[(1, (11, 111)), (1, (12,)), (2, (31,))], [(1, (11, 111)), (1, (12,)), (2, (32,))],
        [(1, (11, 111)), (1, (13,)), (2, (31,))], [(1, (11, 111)), (1, (13,)), (2, (32,))],
-       [(1, (12,)), (1, (13,)), (2, (31,))], [(1, (12,)), (1, (13,)), (2, (32,))],
        [(1, (11, 111)), (1, (14,)), (2, (31,))], [(1, (11, 111)), (1, (14,)), (2, (32,))],
+       [(1, (12,)), (1, (13,)), (2, (31,))], [(1, (12,)), (1, (13,)), (2, (32,))],
        [(1, (12,)), (1, (14,)), (2, (31,))], [(1, (12,)), (1, (14,)), (2, (32,))],
        [(1, (13,)), (1, (14,)), (2, (31,))], [(1, (13,)), (1, (14,)), (2, (32,))]])
 
     choices = [[(11,), (12,), ], [(11,), (13,), ], [(11,), (14,), ]]
     classes = [1, 1, 1]
     self._compareCombinations(
-      GetUniqueCombinations_new(choices, classes),
-      [[(1, (11,)), (1, (13,)), (1, (14,))], [(1, (11,)), (1, (12,)), (1, (14,))],
-       [(1, (11,)), (1, (12,)), (1, (13,))], [(1, (12,)), (1, (13,)), (1, (14,))]])
+      GetUniqueCombinations(choices, classes),
+      [[(1, (11,)), (1, (12,)), (1, (13,))], [(1, (11,)), (1, (12,)), (1, (14,))],
+       [(1, (11,)), (1, (13,)), (1, (14,))], [(1, (12,)), (1, (13,)), (1, (14,))]])
 
     choices = [[(0,), (4,)], [(0,)]]
     classes = [0, 1]
-    self._compareCombinations(GetUniqueCombinations_new(choices, classes), [[(0, (4,)), (1, (0,))]])
+    self._compareCombinations(GetUniqueCombinations(choices, classes), [[(0, (4,)), (1, (0,))]])
 
     choices = [[], [], []]
     classes = [0, 1, 1]
-    self.assertEqual(GetUniqueCombinations_new(choices, classes), [])
+    self.assertEqual(GetUniqueCombinations(choices, classes), [])
 
     choices = [[(0,), (4,)], [(0,), (4,)], [(0,), (4,)]]
     classes = [0, 0, 0]
-    self.assertEqual(GetUniqueCombinations_new(choices, classes), [])
+    self.assertEqual(GetUniqueCombinations(choices, classes), [])
 
     choices = [[(0,), (4,)], [(0,), (4,)], []]
     classes = [0, 0, 1]
-    self.assertEqual(GetUniqueCombinations_new(choices, classes), [])
+    self.assertEqual(GetUniqueCombinations(choices, classes), [])
 
     choices = [[(4,), (6,), (7,), (10,)], [(2,), (3,), (5,), (13,), (14,)],
                [(2,), (3,), (5,), (13,), (14,)]]
     classes = [0, 1, 1]
     self._compareCombinations(
-      GetUniqueCombinations_new(choices, classes),
+      GetUniqueCombinations(choices, classes),
       [[(0, (4,)), (1, (2,)), (1, (3,))], [(0, (4,)), (1, (2,)), (1, (5,))],
        [(0, (4,)), (1, (2,)), (1, (13,))], [(0, (4,)), (1, (2,)), (1, (14,))],
        [(0, (4,)), (1, (3,)), (1, (5,))], [(0, (4,)), (1, (3,)), (1, (13,))],
