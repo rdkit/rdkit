@@ -40,7 +40,7 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
          - 0: not a special case, use the \c theta0 value from \c at2Params
          - 2: linear coordination
          - 3: trigonal planar coordination
-         - 4: square planar or tetrahedral coordination
+         - 4: square planar or octahedral coordination
 
   */
   AngleBendContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
