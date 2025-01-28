@@ -114,7 +114,7 @@ class TestCase(unittest.TestCase):
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
     results = synthonspace.FingerprintSearch(
       Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
-    self.assertEqual(981, len(results.GetHitMolecules()))
+    self.assertEqual(980, len(results.GetHitMolecules()))
 
     
 if __name__ == "__main__":

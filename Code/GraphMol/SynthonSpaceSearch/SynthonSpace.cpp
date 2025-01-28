@@ -310,7 +310,6 @@ bool SynthonSpace::buildAddAndSubstractFingerprints(
       << std::endl;
   ControlCHandler::reset();
   for (const auto &[id, synthSet] : d_reactions) {
-    std::cout << "doing for " << id << "\n";
     synthSet->buildAddAndSubtractFPs(fpGen);
     if (ControlCHandler::getGotSignal()) {
       return false;
