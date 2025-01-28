@@ -146,7 +146,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
       print(f'    matchPerms: {str(matchPerms)}')
 
     # Get all unique combinations of those possible matches:
-    matchesToMap = Utils.GetUniqueCombinations_new(matchPerms, featClasses)
+    matchesToMap = Utils.GetUniqueCombinations(matchPerms, featClasses)
     for i, entry in enumerate(matchesToMap):
       matchesToMap[i] = [x[1] for x in entry]
     if _verbose:
