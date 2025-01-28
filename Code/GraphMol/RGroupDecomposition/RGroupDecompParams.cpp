@@ -8,12 +8,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "RGroupDecomp.h"
+#include "RGroupDecompParams.h"
 #include "RGroupUtils.h"
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/FMCS/FMCS.h>
+#include <GraphMol/QueryBond.h>
 #include <set>
 
 namespace RDKit {
@@ -32,7 +33,7 @@ bool hasLabel(const Atom *atom, unsigned int autoLabels) {
     atomHasLabel |= (atom->getAtomMapNum() > 0);
   }
   if (autoLabels & DummyAtomLabels) {
-    atomHasLabel |= (atom->getAtomicNum() == 0);
+    atomHasLabel |= (atom->getAtomicNum() == 0 && atom->getDegree() == 1);
   }
   // don't match negative rgroups as these are used by AtomIndexRLabels which
   // are set for the template core before the MCS and after the MCS for the
@@ -155,7 +156,9 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
 
   int maxLabel = 1;
-  if (alignCore && (alignment & MCS)) {
+  // makes no sense to do MCS alignment if we are only matching at user defined
+  // R-Groups
+  if (alignCore && !onlyMatchAtRGroups && (alignment & MCS)) {
     std::vector<ROMOL_SPTR> mols;
     mols.push_back(ROMOL_SPTR(new ROMol(core)));
     mols.push_back(ROMOL_SPTR(new ROMol(*alignCore)));
@@ -206,7 +209,6 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
   }
   std::set<int> foundLabels;
 
-  int nextOffset = 0;
   std::map<int, int> atomToLabel;
 
   for (auto atom : core.atoms()) {
@@ -249,8 +251,8 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
         }
       }
 
-      if (!found && (autoLabels & DummyAtomLabels) &&
-          atom->getAtomicNum() == 0 && atom->getDegree() == 1) {
+      if (!found && (autoLabels & DummyAtomLabels) && atom->getDegree() == 1 &&
+          !atom->hasProp(UNLABELED_CORE_ATTACHMENT)) {
         const bool forceRelabellingWithDummies = true;
         int defaultDummyStartLabel = maxLabel;
         if (setLabel(atom, defaultDummyStartLabel, foundLabels, maxLabel,
@@ -265,9 +267,11 @@ bool RGroupDecompositionParameters::prepareCore(RWMol &core,
     //  we have used (note that these are negative since they are
     //  potential rgroups and haven't been assigned yet)
     if (!found && (autoLabels & AtomIndexLabels)) {
+      // we should not need these on (non r group) core atoms when
+      // allowMultipleRGroupsOnUnlabelled is set, but it is useful in case
+      // insufficient dummy groups are added to the core
       if (setLabel(atom, indexOffset - atom->getIdx(), foundLabels, maxLabel,
                    relabel, Labelling::INDEX_LABELS)) {
-        nextOffset++;
       }
       found = true;
     }
@@ -302,6 +306,74 @@ void RGroupDecompositionParameters::checkNonTerminal(const Atom &atom) const {
          "in RGroupDecompositionParameters"
       << std::endl;
   throw ValueErrorException("Non terminal R group defined.");
+}
+
+void RGroupDecompositionParameters::addDummyAtomsToUnlabelledCoreAtoms(
+    RWMol &core) {
+  if (!allowMultipleRGroupsOnUnlabelled) {
+    return;
+  }
+
+  // add R group substitutions to fill atomic valence
+  std::vector<Atom *> unlabeledCoreAtoms{};
+  for (const auto atom : core.atoms()) {
+    if (atom->getAtomicNum() == 1) {
+      continue;
+    }
+    if (hasLabel(atom, labels)) {
+      continue;
+    }
+    unlabeledCoreAtoms.push_back(atom);
+  }
+
+  for (const auto atom : unlabeledCoreAtoms) {
+    atom->calcImplicitValence(false);
+    const auto atomIndex = atom->getIdx();
+    int dummiesToAdd;
+    int maxNumDummies = 4 - static_cast<int>(atom->getDegree());
+
+    // figure out the number of dummies to add
+    if (atom->getAtomicNum() == 0) {
+      dummiesToAdd = maxNumDummies;
+    } else {
+      double bondOrder = 0;
+      for (const auto bond : core.atomBonds(atom)) {
+        auto contrib = bond->getValenceContrib(atom);
+        if (contrib == 0.0 && bond->hasQuery()) {
+          contrib = 1.0;
+        }
+        bondOrder += contrib;
+      }
+
+      const auto &valances =
+          PeriodicTable::getTable()->getValenceList(atom->getAtomicNum());
+      auto valence = *std::max_element(valances.begin(), valances.end());
+      // round up aromatic contributions
+      dummiesToAdd = valence - (int)(bondOrder + .51);
+      dummiesToAdd = std::min(dummiesToAdd, maxNumDummies);
+    }
+
+    std::vector<int> newIndices;
+    for (int i = 0; i < dummiesToAdd; i++) {
+      const auto newAtom = new Atom(0);
+      newAtom->setProp<bool>(UNLABELED_CORE_ATTACHMENT, true);
+      const auto newIdx = core.addAtom(newAtom, false, true);
+      newIndices.push_back(newIdx);
+      auto *qb = new QueryBond();
+      qb->setQuery(makeBondNullQuery());
+      qb->setBeginAtomIdx(atomIndex);
+      qb->setEndAtomIdx(newIdx);
+      core.addBond(qb, true);
+      const auto dummy = core.getAtomWithIdx(newIdx);
+      dummy->updatePropertyCache();
+    }
+    atom->updatePropertyCache(false);
+    for (const auto newIdx : newIndices) {
+      if (core.getNumConformers() > 0) {
+        MolOps::setTerminalAtomCoords(core, newIdx, atomIndex);
+      }
+    }
+  }
 }
 
 }  // namespace RDKit

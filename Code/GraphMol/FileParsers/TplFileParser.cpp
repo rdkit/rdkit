@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2007-2010 Greg Landrum
+//  Copyright (C) 2007-2024 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,7 +15,7 @@
 
 #include "FileParsers.h"
 #include "FileParserUtils.h"
-#include "MolFileStereochem.h"
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/StreamOps.h>
 
 #include <fstream>
@@ -107,9 +107,8 @@ void ParseTPLBondLine(std::string text, unsigned int lineNum, RWMol *mol) {
   mol->getBondWithIdx(bondIdx)->setProp("TPLBondDir2", stereoFlag2);
 }
 
-Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
+Conformer *ParseConfData(std::istream &inStream, unsigned int &line, RWMol *mol,
                          unsigned int confId) {
-  PRECONDITION(inStream, "no stream");
   PRECONDITION(mol, "no mol");
 
   std::string tempStr;
@@ -134,7 +133,7 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
   for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
     line++;
     tempStr = getLine(inStream);
-    if (inStream->eof()) {
+    if (inStream.eof()) {
       delete conf;
       std::ostringstream errout;
       errout << "EOF hit while reading conformer  " << confId << std::endl;
@@ -162,49 +161,51 @@ Conformer *ParseConfData(std::istream *inStream, unsigned int &line, RWMol *mol,
   return conf;
 }
 
+namespace v2 {
+namespace FileParsers {
+
 //*************************************
 //
 // Every effort has been made to adhere to the BioCad tpl definition
-//
 //*************************************
-RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
-                          bool sanitize, bool skipFirstConf) {
-  PRECONDITION(inStream, "no stream");
+std::unique_ptr<RWMol> MolFromTPLDataStream(std::istream &inStream,
+                                            unsigned int &line,
+                                            const TPLParserParams &params) {
   std::string tempStr;
   std::vector<std::string> splitText;
 
   // format line:
   line++;
   tempStr = getLine(inStream);
-  if (inStream->eof()) {
+  if (inStream.eof()) {
     return nullptr;
   }
   // comment line:
   line++;
   tempStr = getLine(inStream);
-  if (inStream->eof()) {
+  if (inStream.eof()) {
     return nullptr;
   }
   // optional name line:
   line++;
   tempStr = getLine(inStream);
-  if (inStream->eof()) {
+  if (inStream.eof()) {
     return nullptr;
   }
-  auto *res = new RWMol();
+  auto res = std::make_unique<RWMol>();
   if (tempStr.size() >= 4 && tempStr.substr(0, 4) == "NAME") {
     tempStr = boost::trim_copy(tempStr.substr(4, tempStr.size() - 4));
     res->setProp(common_properties::_Name, tempStr);
     line++;
     tempStr = getLine(inStream);
-    if (inStream->eof()) {
+    if (inStream.eof()) {
       return res;
     }
   }
   if (tempStr.size() >= 4 && tempStr.substr(0, 4) == "PROP") {
     line++;
     tempStr = getLine(inStream);
-    if (inStream->eof()) {
+    if (inStream.eof()) {
       return res;
     }
   }
@@ -221,26 +222,26 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
   for (unsigned int i = 0; i < nAtoms; ++i) {
     line++;
     tempStr = getLine(inStream);
-    if (inStream->eof()) {
+    if (inStream.eof()) {
       delete conf;
       throw FileParseException("EOF hit while reading atoms.");
     }
-    ParseTPLAtomLine(tempStr, line, res, conf);
+    ParseTPLAtomLine(tempStr, line, res.get(), conf);
   }
   res->addConformer(conf, true);
 
   for (unsigned int i = 0; i < nBonds; ++i) {
     line++;
     tempStr = getLine(inStream);
-    if (inStream->eof()) {
+    if (inStream.eof()) {
       throw FileParseException("EOF hit while reading bonds.");
     }
-    ParseTPLBondLine(tempStr, line, res);
+    ParseTPLBondLine(tempStr, line, res.get());
   }
 
   line++;
   tempStr = getLine(inStream);
-  if (inStream->eof()) {
+  if (inStream.eof()) {
     return res;
   }
   unsigned int nConfs = 0;
@@ -250,8 +251,8 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
     nConfs = FileParserUtils::stripSpacesAndCast<unsigned int>(splitText[1]);
   }
   for (unsigned int i = 0; i < nConfs; ++i) {
-    Conformer *conf = ParseConfData(inStream, line, res, i + 1);
-    if (i > 0 || !skipFirstConf) {
+    Conformer *conf = ParseConfData(inStream, line, res.get(), i + 1);
+    if (i > 0 || !params.skipFirstConf) {
       conf->setId(i + 1);
       res->addConformer(conf, true);
     } else {
@@ -261,11 +262,11 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
     line++;
     tempStr = getLine(inStream);
     boost::trim(tempStr);
-    if (!inStream->eof() && tempStr != "") {
+    if (!inStream.eof() && tempStr != "") {
       throw FileParseException("Found a non-blank line between conformers.");
     }
   }
-  if (sanitize) {
+  if (params.sanitize) {
     MolOps::sanitizeMol(*res);
   }
 
@@ -277,22 +278,23 @@ RWMol *TPLDataStreamToMol(std::istream *inStream, unsigned int &line,
 //  Read a molecule from a file
 //
 //------------------------------------------------
-RWMol *TPLFileToMol(const std::string &fName, bool sanitize,
-                    bool skipFirstConf) {
+std::unique_ptr<RWMol> MolFromTPLFile(const std::string &fName,
+                                      const TPLParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
     std::ostringstream errout;
     errout << "Bad input file " << fName;
     throw BadFileException(errout.str());
   }
-  RWMol *res = nullptr;
   if (!inStream.eof()) {
     unsigned int line = 0;
-    res = TPLDataStreamToMol(&inStream, line, sanitize, skipFirstConf);
+    return MolFromTPLDataStream(inStream, line, params);
+  } else {
+    return nullptr;
   }
-  return res;
 }
-
+}  // namespace FileParsers
+}  // namespace v2
 #if 0  
 
   RWMol *MolDataStreamToMol(std::istream &inStream, unsigned int &line,

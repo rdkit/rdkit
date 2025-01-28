@@ -47,8 +47,10 @@ double RGroupScorer::matchScore(
   restoreInitialState();
   std::map<int, int> num_rgroups;
   for (size_t m = 0; m < permutation.size(); ++m) {  // for each molecule
-    for (auto l : matches[m + offset].at(permutation[m]).rgroups) {
-      d_current.N = std::max(d_current.N, ++num_rgroups[l.first]);
+    for (const auto &rlabelRGroupPair :
+         matches[m + offset].at(permutation[m]).rgroups) {
+      d_current.N =
+          std::max(d_current.N, ++num_rgroups[rlabelRGroupPair.first]);
     }
   }
   // for each label (r-group)
@@ -211,7 +213,8 @@ void RGroupScorer::breakTies(
   orderedLabels.reserve(labels.size());
   std::copy_if(labels.begin(), labels.end(), std::back_inserter(orderedLabels),
                [](const int &i) { return !(i < 0); });
-  std::copy_if(labels.begin(), labels.end(), std::back_inserter(orderedLabels),
+  std::copy_if(labels.rbegin(), labels.rend(),
+               std::back_inserter(orderedLabels),
                [](const int &i) { return (i < 0); });
   // We only care about the sign of the ordered labels,
   // not about their value, so we convert the ordered map

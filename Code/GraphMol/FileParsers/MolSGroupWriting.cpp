@@ -30,15 +30,13 @@ std::string BuildV2000STYLines(const ROMol &mol) {
          << FormatV2000StringField(sg->getProp<std::string>("TYPE"), 3, true,
                                    true);
     if (++count == 8) {
-      ret << "M  STY" << FormatV2000NumEntriesField(8) << temp.str()
-          << std::endl;
+      ret << "M  STY" << FormatV2000NumEntriesField(8) << temp.str() << "\n";
       temp.str("");
       count = 0;
     }
   }
   if (count) {
-    ret << "M  STY" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+    ret << "M  STY" << FormatV2000NumEntriesField(count) << temp.str() << "\n";
   }
 
   return ret.str();
@@ -62,7 +60,7 @@ std::string BuildV2000StringPropLines(const unsigned int entriesPerLine,
            << FormatV2000StringField(propValue, fieldWitdh, true, true);
       if (++count == entriesPerLine) {
         ret << "M  " << propCode << FormatV2000NumEntriesField(entriesPerLine)
-            << temp.str() << std::endl;
+            << temp.str() << "\n";
         temp.str("");
         count = 0;
       }
@@ -70,7 +68,7 @@ std::string BuildV2000StringPropLines(const unsigned int entriesPerLine,
   }
   if (count) {
     ret << "M  " << propCode << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+        << "\n";
   }
 
   return ret.str();
@@ -89,16 +87,14 @@ std::string BuildV2000SLBLines(const ROMol &mol) {
       temp << FormatV2000IntField(1 + (sg - sgroups.begin()))
            << FormatV2000IntField(id);
       if (++count == 8) {
-        ret << "M  SLB" << FormatV2000NumEntriesField(8) << temp.str()
-            << std::endl;
+        ret << "M  SLB" << FormatV2000NumEntriesField(8) << temp.str() << "\n";
         temp.str("");
         count = 0;
       }
     }
   }
   if (count) {
-    ret << "M  SLB" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+    ret << "M  SLB" << FormatV2000NumEntriesField(count) << temp.str() << "\n";
   }
 
   return ret.str();
@@ -117,7 +113,7 @@ std::string BuildV2000SDSLines(const ROMol &mol) {
       temp << FormatV2000IntField(1 + (sg - sgroups.begin()));
       if (++count == 15) {
         ret << "M  SDS EXP" << FormatV2000NumEntriesField(15) << temp.str()
-            << std::endl;
+            << "\n";
         temp.str("");
         count = 0;
       }
@@ -125,7 +121,7 @@ std::string BuildV2000SDSLines(const ROMol &mol) {
   }
   if (count) {
     ret << "M  SDS EXP" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+        << "\n";
   }
 
   return ret.str();
@@ -144,16 +140,14 @@ std::string BuildV2000SPLLines(const ROMol &mol) {
       temp << FormatV2000IntField(1 + (sg - sgroups.begin()))
            << FormatV2000IntField(parentIdx);
       if (++count == 8) {
-        ret << "M  SPL" << FormatV2000NumEntriesField(8) << temp.str()
-            << std::endl;
+        ret << "M  SPL" << FormatV2000NumEntriesField(8) << temp.str() << "\n";
         temp.str("");
         count = 0;
       }
     }
   }
   if (count) {
-    ret << "M  SPL" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+    ret << "M  SPL" << FormatV2000NumEntriesField(count) << temp.str() << "\n";
   }
 
   return ret.str();
@@ -172,16 +166,14 @@ std::string BuildV2000SNCLines(const ROMol &mol) {
       temp << FormatV2000IntField(1 + (sg - sgroups.begin()))
            << FormatV2000IntField(compno);
       if (++count == 8) {
-        ret << "M  SNC" << FormatV2000NumEntriesField(8) << temp.str()
-            << std::endl;
+        ret << "M  SNC" << FormatV2000NumEntriesField(8) << temp.str() << "\n";
         temp.str("");
         count = 0;
       }
     }
   }
   if (count) {
-    ret << "M  SNC" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+    ret << "M  SNC" << FormatV2000NumEntriesField(count) << temp.str() << "\n";
   }
 
   return ret.str();
@@ -208,16 +200,14 @@ std::string BuildV2000SBTLines(const ROMol &mol) {
         throw SubstanceGroupException(errout.str());
       }
       if (++count == 8) {
-        ret << "M  SBT" << FormatV2000NumEntriesField(8) << temp.str()
-            << std::endl;
+        ret << "M  SBT" << FormatV2000NumEntriesField(8) << temp.str() << "\n";
         temp.str("");
         count = 0;
       }
     }
   }
   if (count) {
-    ret << "M  SBT" << FormatV2000NumEntriesField(count) << temp.str()
-        << std::endl;
+    ret << "M  SBT" << FormatV2000NumEntriesField(count) << temp.str() << "\n";
   }
 
   return ret.str();
@@ -236,15 +226,14 @@ std::string BuildV2000IdxVectorDataLines(const unsigned int entriesPerLine,
     temp << FormatV2000IntField(1 + idx);
     if (++count == entriesPerLine) {
       ret << "M  " << code << FormatV2000IntField(sGroupId)
-          << FormatV2000NumEntriesField(entriesPerLine) << temp.str()
-          << std::endl;
+          << FormatV2000NumEntriesField(entriesPerLine) << temp.str() << "\n";
       temp.str("");
       count = 0;
     }
   }
   if (count) {
     ret << "M  " << code << FormatV2000IntField(sGroupId)
-        << FormatV2000NumEntriesField(count) << temp.str() << std::endl;
+        << FormatV2000NumEntriesField(count) << temp.str() << "\n";
   }
   return ret.str();
 }
@@ -257,7 +246,7 @@ std::string BuildV2000SMTLine(const int idx, const SubstanceGroup &sgroup) {
        sgroup.getPropIfPresent("MULT", smtValue)) ||
       sgroup.getPropIfPresent("LABEL", smtValue)) {
     ret << "M  SMT" << FormatV2000IntField(idx)
-        << FormatV2000StringField(smtValue, 69, false, true) << std::endl;
+        << FormatV2000StringField(smtValue, 69, false, true) << "\n";
   }
   return ret.str();
 }
@@ -275,7 +264,7 @@ std::string BuildV2000SDILine(const int idx, const SubstanceGroup &sgroup) {
       ret << FormatV2000DoubleField(bracket.at(iPoint).x);
       ret << FormatV2000DoubleField(bracket.at(iPoint).y);
     }
-    ret << std::endl;
+    ret << "\n";
   }
 
   return ret.str();
@@ -291,7 +280,7 @@ std::string BuildV2000SBVLine(const int idx, const SubstanceGroup &sgroup) {
       ret << FormatV2000DoubleField(cstate.vector.x);
       ret << FormatV2000DoubleField(cstate.vector.y);
     }
-    ret << std::endl;
+    ret << "\n";
   }
 
   return ret.str();
@@ -322,7 +311,7 @@ std::string BuildV2000SDTLine(const int idx, const SubstanceGroup &sgroup) {
       ret << FormatV2000StringField(sdtValue, 15, true, false);
     }
 
-    ret << std::endl;
+    ret << "\n";
   }
   return ret.str();
 }
@@ -334,7 +323,7 @@ std::string BuildV2000SDDLine(const int idx, const SubstanceGroup &sgroup) {
   if (sgroup.getPropIfPresent("FIELDDISP", sddValue)) {
     ret << "M  SDD" << FormatV2000IntField(idx);
     ret << FormatV2000StringField(sddValue, 69, false, true);
-    ret << std::endl;
+    ret << "\n";
   }
 
   return ret.str();
@@ -358,11 +347,11 @@ std::string BuildV2000SCDSEDLines(const int idx, const SubstanceGroup &sgroup) {
       for (; length > end; start += 69, end += 69) {
         std::string dataChunk = data.substr(start, end);
         ret << "M  SCD" << FormatV2000IntField(idx)
-            << FormatV2000StringField(dataChunk, 69, true, true) << std::endl;
+            << FormatV2000StringField(dataChunk, 69, true, true) << "\n";
       }
       std::string dataChunk = data.substr(start, end);
       ret << "M  SED" << FormatV2000IntField(idx)
-          << FormatV2000StringField(dataChunk, 69, false, true) << std::endl;
+          << FormatV2000StringField(dataChunk, 69, false, true) << "\n";
     }
   }
 
@@ -387,14 +376,14 @@ std::string BuildV2000SAPLines(const int idx, const SubstanceGroup &sgroup) {
     temp << FormatV2000StringField(sap.id, 2, false, true);
     if (++count == entriesPerLine) {
       ret << "M  SAP" << FormatV2000IntField(idx)
-          << FormatV2000IntField(entriesPerLine) << temp.str() << std::endl;
+          << FormatV2000IntField(entriesPerLine) << temp.str() << "\n";
       temp.str("");
       count = 0;
     }
   }
   if (count) {
     ret << "M  SAP" << FormatV2000IntField(idx)
-        << FormatV2000NumEntriesField(count) << temp.str() << std::endl;
+        << FormatV2000NumEntriesField(count) << temp.str() << "\n";
   }
   return ret.str();
 }
@@ -406,7 +395,7 @@ std::string BuildV2000SCLLine(const int idx, const SubstanceGroup &sgroup) {
   if (sgroup.getPropIfPresent("CLASS", sclValue)) {
     ret << "M  SCL" << FormatV2000IntField(idx);
     ret << FormatV2000StringField(sclValue, 69, false, true);
-    ret << std::endl;
+    ret << "\n";
   }
 
   return ret.str();

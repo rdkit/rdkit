@@ -1,9 +1,8 @@
-
 #from DataStructs import cDataStructs
-from DataStructs import cDataStructs
 import moduleA
 import moduleB
 import moduleC
+from DataStructs import cDataStructs
 
 print("*****************************")
 print("Testing self print for classA")

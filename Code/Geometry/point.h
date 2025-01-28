@@ -44,7 +44,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point {
 #ifndef _MSC_VER
 // g++ (at least as of v9.3.0) generates some spurious warnings from here.
 // disable them
-#if !defined(__clang__) and defined(__GNUC__)
+#if !defined(__clang__) && defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #endif
@@ -70,24 +70,30 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   inline unsigned int dimension() const override { return 3; }
 
   inline double operator[](unsigned int i) const override {
-    PRECONDITION(i < 3, "Invalid index on Point3D");
-    if (i == 0) {
-      return x;
-    } else if (i == 1) {
-      return y;
-    } else {
-      return z;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      case 2:
+        return z;
+      default:
+        throw ValueErrorException("Invalid index on Point3D");
+        break;
     }
   }
 
   inline double &operator[](unsigned int i) override {
-    PRECONDITION(i < 3, "Invalid index on Point3D");
-    if (i == 0) {
-      return x;
-    } else if (i == 1) {
-      return y;
-    } else {
-      return z;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      case 2:
+        return z;
+      default:
+        throw ValueErrorException("Invalid index on Point3D");
+        break;
     }
   }
 
@@ -139,6 +145,10 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
 
   void normalize() override {
     double l = this->length();
+    if (l < zero_tolerance) {
+      throw std::runtime_error("Cannot normalize a zero length vector");
+    }
+
     x /= l;
     y /= l;
     z /= l;
@@ -190,7 +200,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point3D : public Point {
   double signedAngleTo(const Point3D &other) const {
     double res = this->angleTo(other);
     // check the sign of the z component of the cross product:
-    if ((this->x * other.y - this->y * other.x) < -1e-6) {
+    if ((this->x * other.y - this->y * other.x) < -zero_tolerance) {
       res = 2.0 * M_PI - res;
     }
     return res;
@@ -289,20 +299,26 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   inline unsigned int dimension() const override { return 2; }
 
   inline double operator[](unsigned int i) const override {
-    PRECONDITION(i < 2, "Invalid index on Point2D");
-    if (i == 0) {
-      return x;
-    } else {
-      return y;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      default:
+        throw ValueErrorException("Invalid index on Point2D");
+        break;
     }
   }
 
   inline double &operator[](unsigned int i) override {
-    PRECONDITION(i < 2, "Invalid index on Point2D");
-    if (i == 0) {
-      return x;
-    } else {
-      return y;
+    switch (i) {
+      case 0:
+        return x;
+      case 1:
+        return y;
+      default:
+        throw ValueErrorException("Invalid index on Point2D");
+        break;
     }
   }
 
@@ -345,6 +361,10 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
 
   void normalize() override {
     double ln = this->length();
+    if (ln < zero_tolerance) {
+      throw std::runtime_error("Cannot normalize a zero length vector");
+    }
+
     x /= ln;
     y /= ln;
   }
@@ -372,9 +392,8 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
   }
 
   double angleTo(const Point2D &other) const {
-    Point2D t1, t2;
-    t1 = *this;
-    t2 = other;
+    auto t1 = *this;
+    auto t2 = other;
     t1.normalize();
     t2.normalize();
     double dotProd = t1.dotProduct(t2);
@@ -389,7 +408,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT Point2D : public Point {
 
   double signedAngleTo(const Point2D &other) const {
     double res = this->angleTo(other);
-    if ((this->x * other.y - this->y * other.x) < -1e-6) {
+    if ((this->x * other.y - this->y * other.x) < -zero_tolerance) {
       res = 2.0 * M_PI - res;
     }
     return res;
@@ -420,22 +439,6 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
   }
 
   Point *copy() const override { return new PointND(*this); }
-
-#if 0
-	template <typename T>
-    PointND(const T &vals){
-      RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(vals.size(), 0.0);
-      dp_storage.reset(nvec);
-      unsigned int idx=0;
-      typename T::const_iterator it;
-      for(it=vals.begin();
-          it!=vals.end();
-          ++it){
-        nvec->setVal(idx,*it);
-        ++idx;
-      };
-    };
-#endif
 
   ~PointND() override = default;
 
@@ -523,7 +526,7 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
   }
 };
 #ifndef _MSC_VER
-#if !defined(__clang__) and defined(__GNUC__)
+#if !defined(__clang__) && defined(__GNUC__)
 #pragma GCC diagnostic pop
 #endif
 #endif

@@ -1,18 +1,18 @@
 #  Copyright (c) 2015, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written
 #       permission.
 #
@@ -29,19 +29,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-
-import unittest
-import os,sys
+import itertools
+import os
 import pickle
+import sys
+import time
+import unittest
 
-from rdkit import rdBase
-from rdkit import Chem
-from rdkit.Chem import rdChemReactions, AllChem
-from rdkit import Geometry
-from rdkit import RDConfig
-import itertools, time
+from rdkit import Chem, Geometry, RDConfig, rdBase
+from rdkit.Chem import AllChem, rdChemReactions
 
-test_data = [("good", '''$RXN
+test_data = [
+  ("good", '''$RXN
 
       ISIS     052820091627
 
@@ -82,8 +81,7 @@ $MOL
   1  2  1  0  0  0  0
 M  RGP  2   1   1   2   2
 M  END'''),
-             
-("bad", '''$RXN
+  ("bad", '''$RXN
 
       ISIS     052820091627
 
@@ -124,8 +122,8 @@ $MOL
   1  2  1  0  0  0  0
 M  RGP  2   1   1   2   2
 M  END'''),
-# chemdraw style             
-("bad", '''$RXN
+  # chemdraw style
+  ("bad", '''$RXN
 
       ISIS     052820091627
 
@@ -163,7 +161,7 @@ $MOL
    11.9811   -6.9292    0.0000 R2  0  0  0  0  0  0  0  0  0  0  0  0
   1  2  1  0  0  0  0
 M  END'''),
-("fail", '''$RXN
+  ("fail", '''$RXN
 
       ISIS     052820091627
 
@@ -271,81 +269,80 @@ $MOL
 M  END
 """
 
-good_res = (0,0,2,1,(((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),)))
-bad_res = (3,0,2,1,(((0, 'halogen.bromine.aromatic'),), ((1, 'boronicacid'),)))
+good_res = (0, 0, 2, 1, (((0, 'halogen.bromine.aromatic'), ), ((1, 'boronicacid'), )))
+bad_res = (3, 0, 2, 1, (((0, 'halogen.bromine.aromatic'), ), ((1, 'boronicacid'), )))
 
-class TestCase(unittest.TestCase) :
-    def test_sanitize(self):
-        for status, block in test_data:
-            print("*"*44)
-            rxna = AllChem.ReactionFromRxnBlock(block)
-            rxnb = AllChem.ReactionFromRxnBlock(block)
-            rxna.Initialize()
-            res = rdChemReactions.PreprocessReaction(rxna)
-            print(AllChem.ReactionToRxnBlock(rxna))
-            if status == "good":
-                self.assertEquals(res, good_res)
-            elif status == "bad":
-                self.assertEquals(res, bad_res)
-            print (">"*44)
-            rxnb.Initialize()
-            try:
-                rdChemReactions.SanitizeRxn(rxnb)
-                res = rdChemReactions.PreprocessReaction(rxnb)
-                print(AllChem.ReactionToRxnBlock(rxnb))
-                self.assertEquals(res, good_res)
-                assert not status == "fail"
-            except Exception:
-                print ("$RXN Failed")
-                if status == "fail":
-                    continue
-                raise
-                
-    def test_unused_rlabel_in_product(self):
-        rxn = AllChem.ReactionFromRxnBlock(unused_rlabel_in_product)
-        # test was for a seg fault
-        rdChemReactions.SanitizeRxn(rxn)
 
-    def test_only_aromatize_if_possible(self):
-        rxn = AllChem.ReactionFromRxnBlock(kekule_rxn)
-        # test was for a seg fault
-        groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
-        print(groups)
-        self.assertFalse(len(groups))
+class TestCase(unittest.TestCase):
 
-        # check normal sanitization
-        rdChemReactions.SanitizeRxn(rxn)
-        groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
-        self.assertTrue(len(groups[0]))
+  def test_sanitize(self):
+    for status, block in test_data:
+      print("*" * 44)
+      rxna = AllChem.ReactionFromRxnBlock(block)
+      rxnb = AllChem.ReactionFromRxnBlock(block)
+      rxna.Initialize()
+      res = rdChemReactions.PreprocessReaction(rxna)
+      print(AllChem.ReactionToRxnBlock(rxna))
+      if status == "good":
+        self.assertEqual(res, good_res)
+      elif status == "bad":
+        self.assertEqual(res, bad_res)
+      print(">" * 44)
+      rxnb.Initialize()
+      try:
+        rdChemReactions.SanitizeRxn(rxnb)
+        res = rdChemReactions.PreprocessReaction(rxnb)
+        print(AllChem.ReactionToRxnBlock(rxnb))
+        self.assertEqual(res, good_res)
+        assert not status == "fail"
+      except Exception:
+        print("$RXN Failed")
+        if status == "fail":
+          continue
+        raise
 
-        # now check adjustparams with ONLY aromatize if possible
-        rxn = AllChem.ReactionFromRxnBlock(kekule_rxn)
-        rdChemReactions.SanitizeRxn(rxn)
-        
-        groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
-        self.assertTrue(len(groups[0]))
+  def test_unused_rlabel_in_product(self):
+    rxn = AllChem.ReactionFromRxnBlock(unused_rlabel_in_product)
+    # test was for a seg fault
+    rdChemReactions.SanitizeRxn(rxn)
 
-    def test_github_4162(self):
-        rxn = rdChemReactions.ReactionFromSmarts(
-            "[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
-        rxn_copy = rdChemReactions.ChemicalReaction(rxn)
-        rdChemReactions.SanitizeRxn(rxn)
-        rdChemReactions.SanitizeRxn(rxn_copy)
-        pkl = rxn.ToBinary()
-        rxn_from_pickle = rdChemReactions.ChemicalReaction(pkl)
-        rdChemReactions.SanitizeRxn(rxn_from_pickle)
-        pkl = pickle.dumps(rxn)
-        rxn_from_pickle = pickle.loads(pkl)
-        rdChemReactions.SanitizeRxn(rxn_from_pickle)
-        pkl = rxn_from_pickle.ToBinary()
-        rxn_from_pickle = rdChemReactions.ChemicalReaction(pkl)
-        rdChemReactions.SanitizeRxn(rxn_from_pickle)
-        pkl = pickle.dumps(rxn_from_pickle)
-        rxn_from_pickle = pickle.loads(pkl)
-        rdChemReactions.SanitizeRxn(rxn_from_pickle)
-        
+  def test_only_aromatize_if_possible(self):
+    rxn = AllChem.ReactionFromRxnBlock(kekule_rxn)
+    # test was for a seg fault
+    groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
+    print(groups)
+    self.assertFalse(len(groups))
 
-        
+    # check normal sanitization
+    rdChemReactions.SanitizeRxn(rxn)
+    groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
+    self.assertTrue(len(groups[0]))
+
+    # now check adjustparams with ONLY aromatize if possible
+    rxn = AllChem.ReactionFromRxnBlock(kekule_rxn)
+    rdChemReactions.SanitizeRxn(rxn)
+
+    groups = rxn.RunReactants([Chem.MolFromSmiles("c1ccccc1")])
+    self.assertTrue(len(groups[0]))
+
+  def test_github_4162(self):
+    rxn = rdChemReactions.ReactionFromSmarts("[C:1](=[O:2])-[OD1].[N!H0:3]>>[C:1](=[O:2])[N:3]")
+    rxn_copy = rdChemReactions.ChemicalReaction(rxn)
+    rdChemReactions.SanitizeRxn(rxn)
+    rdChemReactions.SanitizeRxn(rxn_copy)
+    pkl = rxn.ToBinary()
+    rxn_from_pickle = rdChemReactions.ChemicalReaction(pkl)
+    rdChemReactions.SanitizeRxn(rxn_from_pickle)
+    pkl = pickle.dumps(rxn)
+    rxn_from_pickle = pickle.loads(pkl)
+    rdChemReactions.SanitizeRxn(rxn_from_pickle)
+    pkl = rxn_from_pickle.ToBinary()
+    rxn_from_pickle = rdChemReactions.ChemicalReaction(pkl)
+    rdChemReactions.SanitizeRxn(rxn_from_pickle)
+    pkl = pickle.dumps(rxn_from_pickle)
+    rxn_from_pickle = pickle.loads(pkl)
+    rdChemReactions.SanitizeRxn(rxn_from_pickle)
+
 
 if __name__ == '__main__':
   unittest.main()

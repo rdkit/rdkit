@@ -6,8 +6,10 @@
 #   of the RDKit source tree.
 #
 
+import csv
+import os
+import unittest
 
-import unittest, os, csv
 from rdkit import Chem, RDConfig
 
 

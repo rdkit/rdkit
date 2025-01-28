@@ -37,14 +37,13 @@ namespace UFF {
      first: 0 if the optimization converged, 1 if more iterations are required.
      second: the energy
 */
-std::pair<int, double> UFFOptimizeMolecule(
+inline std::pair<int, double> UFFOptimizeMolecule(
     ROMol &mol, int maxIters = 1000, double vdwThresh = 10.0, int confId = -1,
     bool ignoreInterfragInteractions = true) {
-  ForceFields::ForceField *ff = UFF::constructForceField(
-      mol, vdwThresh, confId, ignoreInterfragInteractions);
+  std::unique_ptr<ForceFields::ForceField> ff(UFF::constructForceField(
+      mol, vdwThresh, confId, ignoreInterfragInteractions));
   std::pair<int, double> res =
       ForceFieldsHelper::OptimizeMolecule(*ff, maxIters);
-  delete ff;
   return res;
 }
 
@@ -67,15 +66,14 @@ std::pair<int, double> UFFOptimizeMolecule(
                                      fragments
 
 */
-void UFFOptimizeMoleculeConfs(ROMol &mol,
-                              std::vector<std::pair<int, double>> &res,
-                              int numThreads = 1, int maxIters = 1000,
-                              double vdwThresh = 10.0,
-                              bool ignoreInterfragInteractions = true) {
-  ForceFields::ForceField *ff =
-      UFF::constructForceField(mol, vdwThresh, -1, ignoreInterfragInteractions);
+inline void UFFOptimizeMoleculeConfs(ROMol &mol,
+                                     std::vector<std::pair<int, double>> &res,
+                                     int numThreads = 1, int maxIters = 1000,
+                                     double vdwThresh = 10.0,
+                                     bool ignoreInterfragInteractions = true) {
+  std::unique_ptr<ForceFields::ForceField> ff(UFF::constructForceField(
+      mol, vdwThresh, -1, ignoreInterfragInteractions));
   ForceFieldsHelper::OptimizeMoleculeConfs(mol, *ff, res, numThreads, maxIters);
-  delete ff;
 }
 }  // end of namespace UFF
 }  // end of namespace RDKit

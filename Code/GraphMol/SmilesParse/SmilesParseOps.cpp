@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/Canon.h>
+#include <GraphMol/Chirality.h>
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <list>
@@ -204,67 +205,81 @@ bool operator<(const std::pair<T, T> &p1, const std::pair<T, T> &p2) {
   return p1.first < p2.first;
 }
 
+//
+// Helper function to get the SMILES bond ordering around a given atom, this is
+// required to make sure the stereo information is correct as the storage order
+// may not match how it is SMILES due to ring closures and implicit/missing
+// ligands.
+//
+unsigned int GetBondOrdering(INT_LIST &bondOrdering, const RDKit::RWMol *mol,
+                             const RDKit::Atom *atom) {
+  PRECONDITION(mol, "no mol");
+  PRECONDITION(atom, "no atom");
+
+  //
+  // The atom is marked as chiral, set the SMILES-order of the
+  // atom's bonds.  This is easy for non-ring-closure bonds,
+  // because the SMILES order is determined solely by the atom
+  // indices.  Things are trickier for ring-closure bonds, which we
+  // need to insert into the list in a particular order
+  //
+  INT_VECT ringClosures;
+  atom->getPropIfPresent(common_properties::_RingClosures, ringClosures);
+
+#if 0
+  std::cerr << "CLOSURES: ";
+  std::copy(ringClosures.begin(), ringClosures.end(),
+            std::ostream_iterator<int>(std::cerr, " "));
+  std::cerr << std::endl;
+#endif
+  std::list<SIZET_PAIR> neighbors;
+  // push this atom onto the list of neighbors (we'll use this
+  // to find our place later):
+  neighbors.emplace_back(atom->getIdx(), -1);
+  std::list<size_t> bondOrder;
+  for (auto nbrIdx : boost::make_iterator_range(mol->getAtomNeighbors(atom))) {
+    const Bond *nbrBond = mol->getBondBetweenAtoms(atom->getIdx(), nbrIdx);
+    if (std::find(ringClosures.begin(), ringClosures.end(),
+                  static_cast<int>(nbrBond->getIdx())) == ringClosures.end()) {
+      neighbors.emplace_back(nbrIdx, nbrBond->getIdx());
+    }
+  }
+  // sort the list of non-ring-closure bonds:
+  neighbors.sort();
+
+  // find the location of this atom.  it pretty much has to be
+  // first in the list, e.g for smiles like [C@](F)(Cl)(Br)I, or
+  // second (everything else).
+  auto selfPos = neighbors.begin();
+  if (selfPos->first != atom->getIdx()) {
+    ++selfPos;
+  }
+  CHECK_INVARIANT(selfPos->first == atom->getIdx(), "weird atom ordering");
+
+  // copy over the bond ids:
+  for (auto neighborIt = neighbors.begin(); neighborIt != neighbors.end();
+       ++neighborIt) {
+    if (neighborIt != selfPos) {
+      bondOrdering.push_back(rdcast<int>(neighborIt->second));
+    } else {
+      // we are not going to add the atom itself, but we will push on
+      // ring closure bonds at this point (if required):
+      bondOrdering.insert(bondOrdering.end(), ringClosures.begin(),
+                          ringClosures.end());
+    }
+  }
+
+  return ringClosures.size();
+}
+
 void AdjustAtomChiralityFlags(RWMol *mol) {
   PRECONDITION(mol, "no molecule");
   for (auto atom : mol->atoms()) {
     Atom::ChiralType chiralType = atom->getChiralTag();
     if (chiralType == Atom::CHI_TETRAHEDRAL_CW ||
         chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
-      //
-      // The atom is marked as chiral, set the SMILES-order of the
-      // atom's bonds.  This is easy for non-ring-closure bonds,
-      // because the SMILES order is determined solely by the atom
-      // indices.  Things are trickier for ring-closure bonds, which we
-      // need to insert into the list in a particular order
-      //
-      INT_VECT ringClosures;
-      atom->getPropIfPresent(common_properties::_RingClosures, ringClosures);
-
-#if 0
-      std::cerr << "CLOSURES: ";
-      std::copy(ringClosures.begin(), ringClosures.end(),
-                std::ostream_iterator<int>(std::cerr, " "));
-      std::cerr << std::endl;
-#endif
-      std::list<SIZET_PAIR> neighbors;
-      // push this atom onto the list of neighbors (we'll use this
-      // to find our place later):
-      neighbors.emplace_back(atom->getIdx(), -1);
-      std::list<size_t> bondOrder;
-      for (auto nbrIdx :
-           boost::make_iterator_range(mol->getAtomNeighbors(atom))) {
-        Bond *nbrBond = mol->getBondBetweenAtoms(atom->getIdx(), nbrIdx);
-        if (std::find(ringClosures.begin(), ringClosures.end(),
-                      static_cast<int>(nbrBond->getIdx())) ==
-            ringClosures.end()) {
-          neighbors.emplace_back(nbrIdx, nbrBond->getIdx());
-        }
-      }
-      // sort the list of non-ring-closure bonds:
-      neighbors.sort();
-
-      // find the location of this atom.  it pretty much has to be
-      // first in the list, e.g for smiles like [C@](F)(Cl)(Br)I, or
-      // second (everything else).
-      auto selfPos = neighbors.begin();
-      if (selfPos->first != atom->getIdx()) {
-        ++selfPos;
-      }
-      CHECK_INVARIANT(selfPos->first == atom->getIdx(), "weird atom ordering");
-
-      // copy over the bond ids:
       INT_LIST bondOrdering;
-      for (auto neighborIt = neighbors.begin(); neighborIt != neighbors.end();
-           ++neighborIt) {
-        if (neighborIt != selfPos) {
-          bondOrdering.push_back(rdcast<int>(neighborIt->second));
-        } else {
-          // we are not going to add the atom itself, but we will push on
-          // ring closure bonds at this point (if required):
-          bondOrdering.insert(bondOrdering.end(), ringClosures.begin(),
-                              ringClosures.end());
-        }
-      }
+      unsigned int numClosures = GetBondOrdering(bondOrdering, mol, atom);
 
       // ok, we now have the SMILES ordering of the bonds, figure out the
       // permutation order.
@@ -296,7 +311,7 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       //
       if (Canon::chiralAtomNeedsTagInversion(
               *mol, atom, atom->hasProp(common_properties::_SmilesStart),
-              ringClosures.size())) {
+              numClosures)) {
         ++nSwaps;
       }
       // std::cerr << "nswaps " << atom->getIdx() << " " << nSwaps
@@ -307,6 +322,26 @@ void AdjustAtomChiralityFlags(RWMol *mol) {
       if (nSwaps % 2) {
         atom->invertChirality();
       }
+    } else if (chiralType == Atom::CHI_SQUAREPLANAR ||
+               chiralType == Atom::CHI_TRIGONALBIPYRAMIDAL ||
+               chiralType == Atom::CHI_OCTAHEDRAL) {
+      INT_LIST bonds;
+      GetBondOrdering(bonds, mol, atom);
+
+      unsigned int ref_max = Chirality::getMaxNbors(chiralType);
+
+      // insert (-1) for hydrogens or missing ligands, where these are placed
+      // depends on if it is the first atom or not
+      if (bonds.size() < ref_max) {
+        if (atom->hasProp(common_properties::_SmilesStart)) {
+          bonds.insert(bonds.begin(), ref_max - bonds.size(), -1);
+        } else {
+          bonds.insert(++bonds.begin(), ref_max - bonds.size(), -1);
+        }
+      }
+
+      atom->setProp(common_properties::_chiralPermutation,
+                    Chirality::getChiralPermutation(atom, bonds, true));
     }
   }
 }  // namespace SmilesParseOps
@@ -360,6 +395,55 @@ void swapBondDirIfNeeded(Bond *bond1, const Bond *bond2) {
   }
 }
 }  // namespace
+
+static const std::map<int, int> permutationLimits = {
+    {RDKit::Atom::ChiralType::CHI_TETRAHEDRAL, 2},
+    {RDKit::Atom::ChiralType::CHI_ALLENE, 2},
+    {RDKit::Atom::ChiralType::CHI_SQUAREPLANAR, 3},
+    {RDKit::Atom::ChiralType::CHI_OCTAHEDRAL, 30},
+    {RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL, 20}};
+
+bool checkChiralPermutation(int chiralTag, int permutation) {
+  if (chiralTag > RDKit::Atom::ChiralType::CHI_OTHER &&
+      permutationLimits.find(chiralTag) != permutationLimits.end() &&
+      (permutation < 0 || permutation > permutationLimits.at(chiralTag))) {
+    return false;
+  }
+  return true;
+}
+
+void CheckChiralitySpecifications(RDKit::RWMol *mol, bool strict) {
+  PRECONDITION(mol, "no molecule");
+  for (const auto atom : mol->atoms()) {
+    int permutation;
+    if (atom->getChiralTag() > RDKit::Atom::ChiralType::CHI_OTHER &&
+        permutationLimits.find(atom->getChiralTag()) !=
+            permutationLimits.end() &&
+        atom->getPropIfPresent(common_properties::_chiralPermutation,
+                               permutation)) {
+      if (!checkChiralPermutation(atom->getChiralTag(), permutation)) {
+        std::string error =
+            (boost::format("Invalid chiral specification on atom %d") %
+             atom->getIdx())
+                .str();
+        BOOST_LOG(rdWarningLog) << error << std::endl;
+        if (strict) {
+          throw SmilesParseException(error);
+        }
+      }
+      // directly convert @TH1 -> @ and @TH2 -> @@
+      if (atom->getChiralTag() == RDKit::Atom::ChiralType::CHI_TETRAHEDRAL) {
+        if (permutation == 0 || permutation == 1) {
+          atom->setChiralTag(RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+          atom->clearProp(common_properties::_chiralPermutation);
+        } else if (permutation == 2) {
+          atom->setChiralTag(RDKit::Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          atom->clearProp(common_properties::_chiralPermutation);
+        }
+      }
+    }
+  }
+}
 
 void CloseMolRings(RWMol *mol, bool toleratePartials) {
   //  Here's what we want to do here:
@@ -553,6 +637,18 @@ void CleanupAfterParsing(RWMol *mol) {
   for (auto atom : mol->atoms()) {
     atom->clearProp(common_properties::_RingClosures);
     atom->clearProp(common_properties::_SmilesStart);
+    std::string label;
+    if (atom->getAtomicNum() == 0 &&
+        atom->getPropIfPresent(common_properties::atomLabel, label)) {
+      // marvinsketch can output higher labels than _AP1 and _AP2, but they
+      // aren't part of the MOL file spec so we don't treat them as attachment
+      // points
+      if (label == "_AP1") {
+        atom->setProp(common_properties::_fromAttachPoint, 1);
+      } else if (label == "_AP2") {
+        atom->setProp(common_properties::_fromAttachPoint, 2);
+      }
+    }
   }
   for (auto bond : mol->bonds()) {
     bond->clearProp(common_properties::_unspecifiedOrder);
@@ -561,6 +657,74 @@ void CleanupAfterParsing(RWMol *mol) {
   for (auto sg : RDKit::getSubstanceGroups(*mol)) {
     sg.clearProp("_cxsmilesindex");
   }
+  if (!Chirality::getAllowNontetrahedralChirality()) {
+    bool needWarn = false;
+    for (auto atom : mol->atoms()) {
+      if (atom->hasProp(common_properties::_chiralPermutation)) {
+        needWarn = true;
+        atom->clearProp(common_properties::_chiralPermutation);
+      }
+      if (atom->getChiralTag() > Atom::ChiralType::CHI_OTHER) {
+        needWarn = true;
+        atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
+      }
+    }
+    if (needWarn) {
+      BOOST_LOG(rdWarningLog)
+          << "ignoring non-tetrahedral stereo specification since setAllowNontetrahedralChirality() is false."
+          << std::endl;
+    }
+  }
 }
 
+RDKit::QueryBond *getUnspecifiedQueryBond(const RDKit::Atom *a1,
+                                          const RDKit::Atom *a2) {
+  PRECONDITION(a1, "bad atom pointer");
+  QueryBond *newB;
+  if (!a1->getIsAromatic() || (a2 && !a2->getIsAromatic())) {
+    newB = new QueryBond(Bond::SINGLE);
+    newB->setQuery(makeSingleOrAromaticBondQuery());
+  } else {
+    newB = new QueryBond(Bond::AROMATIC);
+    newB->setQuery(makeSingleOrAromaticBondQuery());
+  }
+  newB->setProp(RDKit::common_properties::_unspecifiedOrder, 1);
+  return newB;
+}
+
+namespace detail {
+
+void printSyntaxErrorMessage(std::string_view input,
+                             std::string_view err_message,
+                             unsigned int bad_token_position) {
+  // NOTE: If the input is very long, the pointer to the failed location
+  // becomes less useful. We should truncate the length of the error message
+  // to 41 chars.
+  static constexpr unsigned int error_size{41};
+  static constexpr unsigned int prefix_size{error_size / 2};
+  static auto truncate_input = [=](const auto &input, const unsigned int pos) {
+    if ((pos >= prefix_size) && (pos + prefix_size) < input.size()) {
+      return input.substr(pos - prefix_size, error_size);
+    } else if (pos >= prefix_size) {
+      return input.substr(pos - prefix_size);
+    } else {
+      return input.substr(
+          0, std::min(input.size(), static_cast<size_t>(error_size)));
+    }
+  };
+
+  size_t num_dashes =
+      (bad_token_position >= prefix_size ? prefix_size
+                                         : bad_token_position - 1);
+
+  BOOST_LOG(rdErrorLog) << "SMILES Parse Error: " << err_message
+                        << " while parsing: " << input << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "SMILES Parse Error: check for mistakes around position "
+      << bad_token_position << ":" << std::endl;
+  BOOST_LOG(rdErrorLog) << truncate_input(input, bad_token_position - 1)
+                        << std::endl;
+  BOOST_LOG(rdErrorLog) << std::string(num_dashes, '~') << "^" << std::endl;
+}
+}  // namespace detail
 }  // end of namespace SmilesParseOps

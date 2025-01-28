@@ -29,7 +29,6 @@
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 
 using namespace RDKit;
-#if 1
 void testUFFTyper1() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "    Test UFF atom labels." << std::endl;
@@ -400,8 +399,6 @@ void testUFFBuilder2() {
 
     RDGeom::Point3D np0 = mol->getConformer().getAtomPos(0);
     RDGeom::Point3D np1 = mol->getConformer().getAtomPos(1);
-    TEST_ASSERT(feq(p0.x, np0.x));
-    TEST_ASSERT(feq(p0.y, np0.y));
     TEST_ASSERT(feq(p0.z, np0.z));
     TEST_ASSERT(feq(p1.x, np1.x));
     TEST_ASSERT(feq(p1.y, np1.y));
@@ -712,7 +709,6 @@ void testIssue239() {
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
-#endif
 
 void testCalcEnergyPassedCoords() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
@@ -808,116 +804,6 @@ void testCalcGrad() {
   delete field;
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
-}
-void testIssue242() {
-#if 0
-// FIX: Changes to the forcefield (connected to Issue 408) have
-// made it so that this particular problem no longer manifests
-// in this molecule/embedding. A new test case is needed.
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Testing Issue242." << std::endl;
-
-  RWMol *mol,*mol2;
-  int needMore;
-  ForceFields::ForceField *field=0,*field2=0;
-  std::string mb1,mb2;
-  double e1,e2;
-
-  std::string pathName=getenv("RDBASE");
-  pathName += "/Code/GraphMol/ForceFieldHelpers/UFF/test_data";
-
-  mol = MolFileToMol(pathName+"/Issue242.mol");
-  TEST_ASSERT(mol);
-
-  mol2 = MolFileToMol(pathName+"/Issue242.mol");
-  TEST_ASSERT(mol2);
-
-  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2,30,2300)>=0);
-  mb1 = MolToMolBlock(*mol);
-  mb2 = MolToMolBlock(*mol2);
-
-  //BOOST_LOG(rdInfoLog) << "\nMol1\n" << mb1 << std::endl;
-  //BOOST_LOG(rdInfoLog) << "\nMol2\n" << mb2 << std::endl;
-
-
-  field=UFF::constructForceField(*mol);
-  TEST_ASSERT(field);
-  field->initialize();
-  field2=UFF::constructForceField(*mol2);
-  TEST_ASSERT(field2);
-  field2->initialize();
-  e1 = field->calcEnergy();
-  e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
-  //TEST_ASSERT(feq(e2,e1,0.1));
-
-  needMore = field->minimize(600,1e-4);
-  TEST_ASSERT(!needMore)
-  needMore = field2->minimize(600,1e-4);
-  TEST_ASSERT(!needMore)
-  e1 = field->calcEnergy();
-  e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
-  TEST_ASSERT(feq(e2,e1,1.0));
-
-  needMore = field->minimize(600,1e-4);
-  TEST_ASSERT(!needMore)
-  needMore = field2->minimize(600,1e-4);
-  TEST_ASSERT(!needMore)
-  e1 = field->calcEnergy();
-  e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "rE1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "rE2: " << e2 << std::endl;
-  TEST_ASSERT(feq(e2,e1,1.0));
-
-  delete mol;
-  delete mol2;
-  delete field;
-  delete field2;
-
-  mol = MolFileToMol(pathName+"/Issue242-2.mol");
-  TEST_ASSERT(mol);
-
-  mol2 = MolFileToMol(pathName+"/Issue242-2.mol");
-  TEST_ASSERT(mol2);
-
-  TEST_ASSERT(DGeomHelpers::EmbedMolecule(*mol2,30,2370)>=0);
-  mb1 = MolToMolBlock(*mol);
-  mb2 = MolToMolBlock(*mol2);
-
-  //std::cout << mb1 << "------\n";
-  //std::cout << mb2 << "------\n";
-
-  field=UFF::constructForceField(*mol);
-  TEST_ASSERT(field);
-  field->initialize();
-  field2=UFF::constructForceField(*mol2);
-  TEST_ASSERT(field2);
-  field2->initialize();
-  e1 = field->calcEnergy();
-  e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
-  //TEST_ASSERT(feq(e2,e1,0.1));
-
-  needMore = field->minimize(200,1e-4);
-  needMore = field2->minimize(200,1e-4);
-  e1 = field->calcEnergy();
-  e2 = field2->calcEnergy();
-  BOOST_LOG(rdInfoLog) << "E1: " << e1 << std::endl;
-  BOOST_LOG(rdInfoLog) << "E2: " << e2 << std::endl;
-  TEST_ASSERT(feq(e2,e1,0.1));
-
-  delete mol;
-  delete mol2;
-  delete field;
-  delete field2;
-
-
-  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
-#endif
 }
 
 void testSFIssue1653802() {
@@ -1397,6 +1283,97 @@ void testGitHubIssue613() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testSquarePlanar() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test square planar complexes" << std::endl;
+  auto mol = R"CTAB(
+  Mrv2102 09072117482D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl -8.4583 1.2083 0 0
+M  V30 2 Pt -6.9183 1.2083 0 0
+M  V30 3 F -5.3783 1.2083 0 0 CHG=-1
+M  V30 4 Cl -6.9183 2.7483 0 0
+M  V30 5 F -6.9183 -0.3317 0 0 CHG=-1
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 9 3 2
+M  V30 3 1 2 4
+M  V30 4 9 5 2
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  TEST_ASSERT(mol);
+  // explicit hybridization:
+  mol->getAtomWithIdx(1)->setHybridization(Atom::HybridizationType::SP2D);
+
+  std::unique_ptr<ForceFields::ForceField> field{
+      UFF::constructForceField(*mol)};
+  TEST_ASSERT(field);
+  field->initialize();
+  auto e1 = field->calcEnergy();
+  auto needMore = field->minimize(200, 1e-6, 1e-3);
+  auto e2 = field->calcEnergy();
+  TEST_ASSERT(e2 < e1);
+  TEST_ASSERT(!needMore);
+  // make sure it's still square planar
+  auto conf = mol->getConformer();
+  for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
+    TEST_ASSERT(feq(conf.getAtomPos(i).z, 0.0));
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testOctahedral() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test octahedral complexes" << std::endl;
+  auto mol = R"CTAB(
+  Mrv2102 09082104493D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 7 6 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 F 1.9744 4.203 5.9405 0
+M  V30 2 U 0.2018 4.3631 7.0863 0
+M  V30 3 F 1.3377 4.551 8.8617 0
+M  V30 4 F 0.2351 6.4527 6.7888 0
+M  V30 5 F 0.1927 2.2693 7.3707 0
+M  V30 6 F -1.5636 4.5586 8.2312 0
+M  V30 7 F -0.977 4.1505 5.3427 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 4
+M  V30 3 1 5 2
+M  V30 4 1 3 2
+M  V30 5 1 2 6
+M  V30 6 1 2 7
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  TEST_ASSERT(mol);
+  TEST_ASSERT(mol->getAtomWithIdx(1)->getHybridization() ==
+              Atom::HybridizationType::SP3D2);
+
+  std::unique_ptr<ForceFields::ForceField> field{
+      UFF::constructForceField(*mol)};
+  TEST_ASSERT(field);
+  field->initialize();
+  auto e1 = field->calcEnergy();
+  auto needMore = field->minimize(200, 1e-6, 1e-3);
+  auto e2 = field->calcEnergy();
+  TEST_ASSERT(e2 < e1);
+  TEST_ASSERT(!needMore);
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -1405,7 +1382,6 @@ int main() {
   // we get a ton of warnings here about missing Hs... disable them
   boost::logging::disable_logs("rdApp.warning");
 
-#if 1
   testUFFTyper1();
   testUFFTyper2();
   testUFFBuilder1();
@@ -1415,7 +1391,6 @@ int main() {
   testIssue239();
   testCalcEnergyPassedCoords();
   testCalcGrad();
-  testIssue242();
   testSFIssue1653802();
   testSFIssue2378119();
   testUFFParamGetters();
@@ -1427,6 +1402,7 @@ int main() {
   testUFFMultiThread3();
 #endif
   testGitHubIssue62();
-#endif
   testGitHubIssue613();
+  testSquarePlanar();
+  testOctahedral();
 }

@@ -1,61 +1,68 @@
-# RDKit for JavaScript (Official)
+**IMPORTANT NOTE**:
 
-[![Azure build Status](https://dev.azure.com/rdkit-builds/RDKit/_apis/build/status/rdkit.rdkit?branchName=master)](https://dev.azure.com/rdkit-builds/RDKit/_build/latest?definitionId=1&branchName=master)
-[![Documentation Status](https://readthedocs.org/projects/rdkit/badge/?version=latest)](https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/GettingStartedInJS.html)
-[![License](https://img.shields.io/github/license/rdkit/rdkit)](https://github.com/rdkit/rdkit/blob/master/license.txt)
+The NPM release process has now moved to the official repository of [rdkit-js](https://github.com/rdkit/rdkit-js).  
+
+The official [rdkit-js](https://github.com/rdkit/rdkit-js) repository will now be the centralized place for everything built "on top of" the core RDKit MinimalLib source code ([this repository](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib)). Please read [this](https://github.com/rdkit/rdkit-js#introduction) for more context.
+
+# RDKit MinimalLib <!-- omit in toc -->
+
+[![Build Status](https://dev.azure.com/rdkit-js/rdkit-js/_apis/build/status/rdkit.rdkit-js?branchName=master)](https://dev.azure.com/rdkit-js/rdkit-js/_build/latest?definitionId=1&branchName=master)
+[![License](https://img.shields.io/github/license/rdkit/rdkit)](https://github.com/rdkit/rdkit-js/blob/master/LICENSE)
+[![DOI](https://zenodo.org/badge/10009991.svg)](https://zenodo.org/badge/latestdoi/10009991)  
 [![NPM Latest Version](https://img.shields.io/npm/v/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Weekly Downloads](https://img.shields.io/npm/dw/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Monthly Downloads](https://img.shields.io/npm/dm/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Yearly Downloads](https://img.shields.io/npm/dy/@rdkit/rdkit)](https://www.npmjs.com/package/@rdkit/rdkit)
 [![NPM Total Downloads](https://img.shields.io/npm/dt/@rdkit/rdkit?label=total%20downloads)](https://www.npmjs.com/package/@rdkit/rdkit)
 
-## Table of contents
+## Table of contents <!-- omit in toc -->
 
-  - [Introduction](#introduction)
-  - [Install](#install)
-  - [Using the RDKit package assets](#using-the-rdkit-package-assets)
-    - [Option 1: Use the npm package distribution files](#option-1-use-the-npm-package-distribution-files)
-    - [Option 2: Use the remote distribution files from unpkg.com](#option-2-use-the-remote-distribution-files-from-unpkgcom)
-  - [Running RDKit in your JavaScript code](#running-rdkit-in-your-javascript-code)
-  - [Usage](#usage)
-  - [Live demos](#live-demos)
-  - [Contributing](#contributing)
-    - [Preparing a new release of the package](#preparing-a-new-release-of-the-package)
-    - [Releasing a new beta version of the package](#releasing-a-new-beta-version-of-the-package)
+- [Introduction](#introduction)
+- [Install](#install)
+- [Usage](#usage)
+- [Live demos](#live-demos)
+- [Building the MinimalLib](#building-the-minimallib)
 
 ## Introduction
 
-**Note: This package should be considered experimental. The API is not yet stable and may change from release to release.**
+The idea of the MinimalLib is to allow the [RDKit](https://github.com/rdkit/rdkit) to be used from JavaScript so that we can add chemical capabilities to web applications.  
 
-The idea of this package is to allow the [RDKit](https://github.com/rdkit/rdkit) to be used from JavaScript so that we can add chemical capabilities to web applications.  
-
-Rather than attempting a comprehensive wrapper (like the old [RDKitJS](https://github.com/rdkit/RDKitjs)), this exposes a small set of key functionality. I think the general approach, including this actual library, can be useful for other wrapper projects in the future.
-
-This initial set of functionality is not complete, but it is intended to already be directly useful.
+This initial set of functionality does not cover all of RDKit's functionality, but it is intended to be directly useful.
 
 ## Install
 
+The most popular way of installing the MinimalLib is with NPM.
+
 ```bash
 npm i @rdkit/rdkit
+# yarn add @rdkit/rdkit
 ```  
 
-## Using the RDKit package assets
+To build the MinimalLib manually, refer to [this section](#building-the-minimallib).
 
-### Option 1: Use the npm package distribution files
+## Usage  
+
+### Using the RDKit package assets
+
+#### Option 1: Use the npm package distribution files
 
 Once you have the RDKit package installed in your node modules, copy the following distribution files anywhere in your deployed assets.
 
-- `node_modules/@rdkit/rdkit/CodeMinimalLib/dist/RDKit_minimal.js`
-- `node_modules/@rdkit/rdkit/CodeMinimalLib/dist/RDKit_minimal.wasm`
+- `node_modules/@rdkit/rdkit/dist/RDKit_minimal.js`
+- `node_modules/@rdkit/rdkit/dist/RDKit_minimal.wasm`
 
 **NOTE: Both files must be copied at the same location in your deployed assets for the library to work properly.**
 
-### Option 2: Use the remote distribution files from [unpkg.com](https://unpkg.com/)
+#### Option 2: Use the remote distribution files from [unpkg.com](https://unpkg.com/)
 
-- `https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.js`
-- `https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/RDKit_minimal.wasm`
+- `https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.js`
+- `https://unpkg.com/@rdkit/rdkit/dist/RDKit_minimal.wasm`
 
-## Running RDKit in your JavaScript code
+#### Option 3: Build your own distribution files
+
+For this method, refer to [Building the MinimalLib](#building-the-minimallib).
+
+### Running RDKit in your JavaScript code
 
 To use RDKit, load the javascript file and instantiate the wasm module inside the `head` tag of your `index.html`, before you run your application code:
 
@@ -85,60 +92,26 @@ To use RDKit, load the javascript file and instantiate the wasm module inside th
 
 ```
 
-## Usage
-
-See the getting started demo at https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/GettingStartedInJS.html .
-
-Follow the examples of this page to see the various ways to use the JavaScript release of RDKit.
-
 ## Live demos
 
-- From this npm package: https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/GettingStartedInJS.html
-- From this npm package: https://unpkg.com/@rdkit/rdkit/Code/MinimalLib/dist/demo.html
+If you are using the MinimalLib for the first time, see the getting started examples at https://www.rdkitjs.com/ .
 
-## Contributing
+### All live demos
 
-### Preparing a new release of the package
+- RDKit.js website: https://www.rdkitjs.com/
+- RDKit.js usage with React.js: https://react.rdkitjs.com/
+- Legacy examples #1: https://unpkg.com/@rdkit/rdkit/dist/GettingStartedInJS.html
+- Legacy examples #2: https://unpkg.com/@rdkit/rdkit/dist/demo.html
 
-Make sure you are at the root of the [RDKit](https://github.com/rdkit/rdkit) GitHub project, and on the branch and version of the project you want to release. **Note that no commits should occur during the release process.**
+## Building the MinimalLib
 
-#### Step 1: Set the release version in package.json
+Make sure you are at the root of the [MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib), and run the following script.
 
 ```bash
-npm --no-git-tag-version version <semver version matching an RDKit release>
-# Example npm --no-git-tag-version version 2021.3.1
+bash scripts/build_rdkitjs.sh <RDKit git release tag name>
+# Example: bash scripts/build_rdkitjs.sh Release_2021_03_1
 ```
 
-#### Step 2: Build the distribution files
+This command will take several minutes to complete, and will default to using the `master` branch if no version is provided. Also, checkout the `build_rdkitjs.sh` file and the minimallib `Dockerfile` to see how things are tied together.
 
-```bash
-npm run build -- <RDKit git release tag name>
-# Example: npm run build -- Release_2021_03_1
-```
-
-This command will default to using the `master` branch if no version is provided. Also, checkout the `build_rdkitjs.sh` file and the minimallib `Dockerfile` to see how things are tied together.
-
-#### Step 3: Publish the package to npm
-
-Once you have verified that the distribution files have been properly added in `Code/MinimalLib/dist`, publish the package:
-
-```bash
-npm publish --access public
-```  
-
-#### Step 4: Set back the placeholder version in package.json
-
-```bash
-npm run resetVersion
-```
-
-And you're done!
-
-### Releasing a new beta version of the package
-
-The process is the same as publishing a regular version, but the version specified and the npm publish command change slightly:
-
-```bash
-npm --no-git-tag-version version 2021.3.1-beta.0 # specify beta number in version here
-npm publish --beta --access public # specify npm that it's a beta version
-```
+Once you have verified that the distribution files have been properly added in `Code/MinimalLib/dist`, refer to the [Using the RDKit package assets](#using-the-rdkit-package-assets) section for the next steps.

@@ -1,19 +1,19 @@
 #
 #  Copyright (c) 2009, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
-# met: 
+# met:
 #
-#     * Redistributions of source code must retain the above copyright 
+#     * Redistributions of source code must retain the above copyright
 #       notice, this list of conditions and the following disclaimer.
 #     * Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following 
-#       disclaimer in the documentation and/or other materials provided 
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
 #       with the distribution.
-#     * Neither the name of Novartis Institutes for BioMedical Research Inc. 
-#       nor the names of its contributors may be used to endorse or promote 
+#     * Neither the name of Novartis Institutes for BioMedical Research Inc.
+#       nor the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -30,11 +30,12 @@
 #
 # Created by Greg Landrum and Anna Vulpetti, March 2009
 
+import pickle
+import sys
 
 from rdkit import Chem
 from rdkit.Chem import AllChem
 from rdkit.Chem.AtomPairs import Pairs, Torsions
-import sys, pickle
 
 # maxPathLength is the maximum path length in atoms
 # maxPathLength=6 corresponds to F-FP-5
@@ -47,11 +48,13 @@ maxPathLength = 8
 nameField = 'Compound_orig'
 #nameField = '_Name'
 
-extraQueries = (('SCF3?', Chem.MolFromSmarts('SC(F)(F)F')),
-                ('COCF3?', Chem.MolFromSmarts('C(=O)C(F)(F)F')),
-                ('OCF3?', Chem.MolFromSmarts('OC(F)(F)F')),
-                ('NCF3?', Chem.MolFromSmarts('NC(F)(F)F')),
-                ('CF3?', Chem.MolFromSmarts('C(F)(F)F')), )
+extraQueries = (
+  ('SCF3?', Chem.MolFromSmarts('SC(F)(F)F')),
+  ('COCF3?', Chem.MolFromSmarts('C(=O)C(F)(F)F')),
+  ('OCF3?', Chem.MolFromSmarts('OC(F)(F)F')),
+  ('NCF3?', Chem.MolFromSmarts('NC(F)(F)F')),
+  ('CF3?', Chem.MolFromSmarts('C(F)(F)F')),
+)
 
 
 def GetMolFingerprint(mol, maxPathLength):
@@ -95,8 +98,8 @@ if __name__ == '__main__':
   pickle.dump(colNames, outF)
   pickle.dump(fps, outF)
 
-  print('name1 smiles1 name2 smiles2 name12 smiles12 environment_id ' + ' '.join(
-    [x for x, y in extraQueries]))
+  print('name1 smiles1 name2 smiles2 name12 smiles12 environment_id ' +
+        ' '.join([x for x, y in extraQueries]))
   if 1:
     seen = []
     smis = []

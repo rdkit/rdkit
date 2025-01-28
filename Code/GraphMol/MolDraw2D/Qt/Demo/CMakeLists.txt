@@ -2,7 +2,6 @@
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED OFF)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS program_options iostreams filesystem)
 
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
@@ -10,10 +9,6 @@ set(CMAKE_AUTOMOC ON)
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_compile_options(-fPIC)
 endif()
-
-include_directories(
-  ${RDKIT_INCLUDE_DIR}
-  ${CMAKE_SOURCE_DIR} )
 
 set( RDKitSV_SRCS rdkitsv_main.cc
   MolDisplay2DWidget.cc
@@ -30,14 +25,15 @@ set( RDKitSV_INCS MolDisplay2DWidget.H
   QTGet2Strings.H
   QT4SelectItems.H )
 
-find_package(Qt5 COMPONENTS Widgets OpenGL REQUIRED)
-
-set( LIBS Boost::program_options Boost::iostreams Boost::filesystem
-  ${RDKit_THREAD_LIBS}
+set( LIBS 
+  ${RDKit_THREAD_LIBS} MolDraw2DQt 
   FileParsers SmilesParse Depictor RDGeometryLib
   RDGeneral SubstructMatch Subgraphs GraphMol RDGeometryLib
-   z Qt5::Widgets Qt5::OpenGL )
+   z QtDependencies)
+
+find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS program_options)
 
 add_executable( rdkitsv ${RDKitSV_SRCS}
   ${RDKitSV_MOC_SRCS} ${RDKitSV_INCS} )
-target_link_libraries( rdkitsv MolDraw2D ${LIBS}  )
+
+target_link_libraries( rdkitsv PUBLIC MolDraw2D ${LIBS} Boost::program_options rdkit_base )

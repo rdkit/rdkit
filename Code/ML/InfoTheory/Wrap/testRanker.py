@@ -1,13 +1,12 @@
-import unittest
-import numpy
-import os
 import io
-
+import os
 import pickle
+import unittest
 
-from rdkit import RDConfig, RDRandom
+import numpy
+
+from rdkit import DataStructs, RDConfig, RDRandom
 from rdkit.ML.InfoTheory import rdInfoTheory as rdit
-from rdkit import DataStructs
 
 
 def feq(a, b, tol=1e-4):
@@ -121,7 +120,7 @@ class TestCase(unittest.TestCase):
     ids = [int(x[0]) for x in res]
     ids.sort()
     self.assertTrue(ids == [10, 15, 25, 63, 70])
-    with self.assertRaisesRegexp(Exception, ""):
+    with self.assertRaisesRegex(Exception, ""):
       res = rn.GetTopN(10)
 
   def test3Issue140(self):

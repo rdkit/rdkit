@@ -100,6 +100,12 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
     return byanum[atomicNumber].Symbol();
   }
 
+  //! returns the full element name
+  std::string getElementName(UINT atomicNumber) const {
+    PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
+    return byanum[atomicNumber].Name();
+  }
+
   //! returns the atom's van der Waals radius
   double getRvdw(UINT atomicNumber) const {
     PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
@@ -308,6 +314,24 @@ class RDKIT_GRAPHMOL_EXPORT PeriodicTable {
       }
     }
     return false;
+  }
+
+  //! returns the maximum recognized atomic number
+  UINT getMaxAtomicNumber() const { return byanum.size() - 1; }
+  //! returns the row of the periodic table
+  UINT getRow(UINT atomicNumber) const {
+    PRECONDITION(atomicNumber < byanum.size(), "Atomic number not found");
+    return byanum[atomicNumber].Row();
+  }
+  //! \overload
+  UINT getRow(const std::string &elementSymbol) const {
+    PRECONDITION(byname.count(elementSymbol),
+                 "Element '" + elementSymbol + "' not found");
+    return getRow(byname.find(elementSymbol)->second);
+  }
+  //! \overload
+  UINT getRow(const char *elementSymbol) const {
+    return getRow(std::string(elementSymbol));
   }
 
  private:

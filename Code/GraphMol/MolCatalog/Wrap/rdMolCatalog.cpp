@@ -12,7 +12,7 @@
 namespace python = boost::python;
 using namespace RDKit;
 namespace {
-struct molcatalog_pickle_suite : python::pickle_suite {
+struct molcatalog_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const MolCatalog &self) {
     std::string res;
     res = self.Serialize();
@@ -21,7 +21,7 @@ struct molcatalog_pickle_suite : python::pickle_suite {
   };
 };
 
-struct molcatalogentry_pickle_suite : python::pickle_suite {
+struct molcatalogentry_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const MolCatalogEntry &self) {
     std::string res;
     res = self.Serialize();
@@ -78,25 +78,30 @@ const ROMol &catalogEntryGetMol(MolCatalogEntry &self) {
 }
 
 MolCatalog *createMolCatalog() {
-  return new MolCatalog(new MolCatalogParams());
+  MolCatalogParams params;
+  return new MolCatalog(&params);
 }
 struct MolCatalog_wrapper {
   static void wrap() {
-    python::class_<MolCatalog>("MolCatalog",
-                               python::init<const std::string &>())
-        .def("GetNumEntries", &MolCatalog::getNumEntries)
-        .def("GetFPLength", &MolCatalog::getFPLength)
-        .def("Serialize", &MolCatalog::Serialize)
+    python::class_<MolCatalog>(
+        "MolCatalog",
+        python::init<const std::string &>(python::args("self", "pickle")))
+        .def("GetNumEntries", &MolCatalog::getNumEntries, python::args("self"))
+        .def("GetFPLength", &MolCatalog::getFPLength, python::args("self"))
+        .def("Serialize", &MolCatalog::Serialize, python::args("self"))
 
-        .def("GetBitDescription", GetBitDescription)
-        .def("GetBitEntryId", GetBitEntryId)
+        .def("GetBitDescription", GetBitDescription,
+             python::args("self", "idx"))
+        .def("GetBitEntryId", GetBitEntryId, python::args("self", "idx"))
 
-        .def("GetEntryBitId", GetEntryBitId)
-        .def("GetEntryDescription", GetEntryDescription)
-        .def("GetEntryDownIds", GetEntryDownIds)
+        .def("GetEntryBitId", GetEntryBitId, python::args("self", "idx"))
+        .def("GetEntryDescription", GetEntryDescription,
+             python::args("self", "idx"))
+        .def("GetEntryDownIds", GetEntryDownIds, python::args("self", "idx"))
 
-        .def("AddEntry", AddEntry)
-        .def("AddEdge", &MolCatalog::addEdge)
+        .def("AddEntry", AddEntry, python::args("self", "entry"))
+        .def("AddEdge", &MolCatalog::addEdge,
+             python::args("self", "id1", "id2"))
 
         // enable pickle support
         .def_pickle(molcatalog_pickle_suite());
@@ -106,15 +111,19 @@ struct MolCatalog_wrapper {
 };
 struct MolCatalogEntry_wrapper {
   static void wrap() {
-    python::class_<MolCatalogEntry>("MolCatalogEntry", python::init<>())
-        .def(python::init<const std::string &>())
-        .def("GetDescription", &MolCatalogEntry::getDescription)
-        .def("SetDescription", &MolCatalogEntry::setDescription)
+    python::class_<MolCatalogEntry>("MolCatalogEntry",
+                                    python::init<>(python::args("self")))
+        .def(python::init<const std::string &>(python::args("self", "pickle")))
+        .def("GetDescription", &MolCatalogEntry::getDescription,
+             python::args("self"))
+        .def("SetDescription", &MolCatalogEntry::setDescription,
+             python::args("self", "val"))
         .def("GetMol", catalogEntryGetMol,
-             python::return_internal_reference<1>())
-        .def("SetMol", catalogEntrySetMol)
-        .def("GetOrder", &MolCatalogEntry::getOrder)
-        .def("SetOrder", &MolCatalogEntry::setOrder)
+             python::return_internal_reference<1>(), python::args("self"))
+        .def("SetMol", catalogEntrySetMol, python::args("self", "mol"))
+        .def("GetOrder", &MolCatalogEntry::getOrder, python::args("self"))
+        .def("SetOrder", &MolCatalogEntry::setOrder,
+             python::args("self", "order"))
 
         // enable pickle support
         .def_pickle(molcatalogentry_pickle_suite())

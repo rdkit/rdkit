@@ -1,4 +1,4 @@
-606     ! _N10_, 12.Dec.2008  incl. Sandoz R-...; C-C(=O)-D,T.
+607     ! _N10_, 12.Dec.2008  incl. Sandoz R-...; C-C(=O)-D,T.
 /* 00 */ "Li,Na,K,Rb,Cs,Fr,Tl+1"
 /* 00 */ "Be,Mg,Ca,Sr,Ba,Ra,Sn,Pb+2"
 /* 00 */ "Al,Ga,In,Tl,Sb,Bi,Fe+3"
@@ -309,6 +309,7 @@
 /* 03C*/ "C(-C+1)(-C)(-C)"
 /* 03 */ "C(-I+1)(-C)(-C)"
 /* 03 */ "C(-N+1)(-N+1)(-C)"
+/* 03 */ "@C(=C)(-O)(-O-1)"
 /* 03 */ "C(=C)(-B)(-B,C,N,O,S)"
 /* 03 */ "C(=C)(-C,Si,Ge,Sn,Pb)(-C,Si,Ge,Sn,Pb,O,S,Se,Te,N,P,As,F,Cl,Br,I,D,T)"
 /* 03 */ "C(=C)(-O,S,Se,Te,N,P,F,Cl,Br,I)(-O,S,Se,Te,N,P,F,Cl,Br,I)"

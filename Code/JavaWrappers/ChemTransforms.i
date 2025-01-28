@@ -34,6 +34,7 @@
 %{
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
 #include <GraphMol/Bond.h>
 // Fixes annoying compilation namespace issue
 typedef RDKit::MatchVectType MatchVectType;
@@ -68,7 +69,15 @@ RDKit::ROMol * new_molzip(
   return RDKit::molzip(a, params).release();
 }
 
+RDKit::ROMol * new_molzip(
+               std::vector<RDKit::ROMOL_SPTR> &mols,
+               const RDKit::MolzipParams &params=RDKit::MolzipParams()) {
+  return RDKit::molzip(mols, params).release();
+}
 %}
+
+%include "std_string.i"
+%include "std_vector.i"
 
 %newobject deleteSubstructs;
 %newobject replaceSidechains;
@@ -99,7 +108,11 @@ RDKit::ROMol * new_molzip(
 			  const RDKit::ROMol &a,
 			  const RDKit::MolzipParams &params=RDKit::MolzipParams());
 
-          
+
+RDKit::ROMol * new_molzip(
+                          std::vector<RDKit::ROMOL_SPTR> &mols,
+                          const RDKit::MolzipParams &params=RDKit::MolzipParams());
+
 %ignore fragmentOnSomeBonds;
 %ignore constructFragmenterAtomTypes;
 %ignore constructBRICSAtomTypes;
@@ -108,4 +121,6 @@ RDKit::ROMol * new_molzip(
 
 %newobject fragmentOnBRICSBonds;
 %template(UIntMolMap) std::map<unsigned int,boost::shared_ptr<RDKit::ROMol> >;
+%include <RDGeneral/BetterEnums.h>
 %include <GraphMol/ChemTransforms/MolFragmenter.h>
+%include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>

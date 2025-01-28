@@ -243,7 +243,7 @@ void testGithubIssue40() {
     ROMol *m = InchiToMol(inchi, tmp);
     TEST_ASSERT(m);
 
-    double mw = Descriptors::calcAMW(*m);
+    double mw = MolOps::getAvgMolWt(*m);
     TEST_ASSERT(feq(mw, 187.202));
 
     delete m;
@@ -575,6 +575,7 @@ void testGithubIssue614() {
     m->removeAtom(3);
     ExtraInchiReturnValues tmp;
     std::string inchi = MolToInchi(*m, tmp);
+    std::cerr << " inchi: " << inchi << std::endl;
     TEST_ASSERT(inchi == "InChI=1S/C3H6/c1-3-2/h3H,1H2,2H3");
     delete m;
   }
@@ -883,12 +884,66 @@ void test_clean_up_on_kekulization_error() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub6172() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "testing github #6172: bogus bond type when parsing InChI"
+      << std::endl;
+
+  {
+    std::string inchi =
+        "InChI=1S/2C18H36N3OP.2CH3.2ClH.Sn/c2*22-23(19-16-10-4-1-5-11-16,20-17-12-6-2-7-13-17)21-18-14-8-3-9-15-18;;;;;/h2*16-18H,1-15H2,(H3,19,20,21,22);2*1H3;2*1H;/q;;2*-1;;;+4/p-2";
+    ExtraInchiReturnValues tmp;
+    std::unique_ptr<ROMol> m{InchiToMol(inchi, tmp)};
+    TEST_ASSERT(!m);
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
+void testGithub5311() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing github #5311" << std::endl;
+
+  {
+    auto m = "O[PH2]=O"_smiles;
+    TEST_ASSERT(m);
+    ExtraInchiReturnValues tmp;
+    auto inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/H3O2P/c1-3-2/h3H2,(H,1,2)");
+    BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  }
+}
+
+void testGithub8123() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing github #8123" << std::endl;
+
+  {
+    // fails due to the presence of a dative bond
+    auto m =
+        "Cc1cc(C)c(N2CCN(c3c(C)cc(C)cc3C)C2[Ru@OH28]2(Cl)(Cl)=Cc3cc([S@SP3](=O)(=O)N(C)C)ccc3O->2C(C)C)c(C)c1"_smiles;
+    TEST_ASSERT(m);
+    ExtraInchiReturnValues tmp;
+    auto inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi.empty());
+  }
+  {
+    auto m =
+        "CC[C@H]1OC(=O)C[C@@H](O)[C@H](C)[C@@H](O[C@@H]2O[C@H](C)[C@@H](O)C(N(C)C)C2O)[C@@H](CC=O)C[C@@H](C)C(=O)/C=C/C(C)=C/[C@@H]1CO.CC[C@H]1OC(=O)C[C@@H](O)[C@H](C)[C@@H](O[C@@H]2O[C@H](C)[C@@H](O[C@H]3CC(C)(O)[C@@H](O)C(C)O3)C(N(C)C)C2O)[C@@H](CC=O)C[C@@H](C)C(=O)/C=C/C(C)=C/[C@@H]1CO[C@@H]1OC(C)[C@@H](O)[C@H](OC)C1OC.[3H][Y]([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])([3H])[3H]"_smiles;
+    TEST_ASSERT(m);
+    ExtraInchiReturnValues tmp;
+    auto inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "");
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 int main() {
   RDLog::InitLogs();
-
+  boost::logging::enable_logs("rdApp.info");
   testGithubIssue3();
   testGithubIssue8();
   testGithubIssue40();
@@ -905,4 +960,7 @@ int main() {
   testGithub3365();
   testGithub3645();
   test_clean_up_on_kekulization_error();
+  testGithub6172();
+  testGithub5311();
+  testGithub8123();
 }

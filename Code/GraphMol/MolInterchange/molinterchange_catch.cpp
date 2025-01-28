@@ -8,7 +8,7 @@
 //
 
 #include <RDGeneral/test.h>
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -17,6 +17,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include "MolInterchange.h"
+#include <RDGeneral/FileParseException.h>
 
 using namespace RDKit;
 
@@ -43,7 +44,7 @@ TEST_CASE("queries to JSON", "[query]") {
   }
   SECTION("mol blocks") {
     auto mol = R"CTAB(
-  Mrv2102 04092105442D          
+  Mrv2102 04092105442D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -75,4 +76,385 @@ M  END
     CHECK(mb.find(" Q ") != std::string::npos);
     CHECK(mb.find("TOPO=2") != std::string::npos);
   }
+}
+
+TEST_CASE("StereoGroups") {
+  auto ormol = "C[C@H](O)C[C@@H](C)F |o1:1,4|"_smiles;
+  REQUIRE(ormol);
+  auto andmol = "C[C@H](O)CC[C@@H](C)F |&1:1,5|"_smiles;
+  REQUIRE(andmol);
+  auto absmol = "CC(O)C[C@@H](C)F |a:4|"_smiles;
+  REQUIRE(absmol);
+  MolInterchange::JSONWriteParameters commonChemPs;
+  commonChemPs.useRDKitExtensions = false;
+  SECTION("writing") {
+    {
+      auto json = MolInterchange::MolToJSONData(*ormol);
+      CHECK(json.find("stereoGroups") != std::string::npos);
+      CHECK(json.find("\"or\"") != std::string::npos);
+      CHECK(json.find("[1,4]") != std::string::npos);
+      json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
+      CHECK(json.find("stereoGroups") == std::string::npos);
+      CHECK(json.find("\"or\"") == std::string::npos);
+      CHECK(json.find("[1,4]") == std::string::npos);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*andmol);
+      CHECK(json.find("stereoGroups") != std::string::npos);
+      CHECK(json.find("\"and\"") != std::string::npos);
+      CHECK(json.find("[1,5]") != std::string::npos);
+      json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
+      CHECK(json.find("stereoGroups") == std::string::npos);
+      CHECK(json.find("\"and\"") == std::string::npos);
+      CHECK(json.find("[1,5]") == std::string::npos);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*absmol);
+      CHECK(json.find("stereoGroups") != std::string::npos);
+      CHECK(json.find("\"abs\"") != std::string::npos);
+      CHECK(json.find("[4]") != std::string::npos);
+      json = MolInterchange::MolToJSONData(*ormol, commonChemPs);
+      CHECK(json.find("stereoGroups") == std::string::npos);
+      CHECK(json.find("\"abs\"") == std::string::npos);
+      CHECK(json.find("[4]") == std::string::npos);
+    }
+  }
+  SECTION("reading") {
+    {
+      auto json = MolInterchange::MolToJSONData(*ormol);
+      auto mols = MolInterchange::JSONDataToMols(json);
+      REQUIRE(mols.size() == 1);
+      auto sgs = mols[0]->getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_OR);
+      auto ats = sgs[0].getAtoms();
+      REQUIRE(ats.size() == 2);
+      CHECK(ats[0]->getIdx() == 1);
+      CHECK(ats[1]->getIdx() == 4);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*andmol);
+      auto mols = MolInterchange::JSONDataToMols(json);
+      REQUIRE(mols.size() == 1);
+      auto sgs = mols[0]->getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_AND);
+      auto ats = sgs[0].getAtoms();
+      REQUIRE(ats.size() == 2);
+      CHECK(ats[0]->getIdx() == 1);
+      CHECK(ats[1]->getIdx() == 5);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*absmol);
+      auto mols = MolInterchange::JSONDataToMols(json);
+      REQUIRE(mols.size() == 1);
+      auto sgs = mols[0]->getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+      auto ats = sgs[0].getAtoms();
+      REQUIRE(ats.size() == 1);
+      CHECK(ats[0]->getIdx() == 4);
+    }
+  }
+  SECTION("multiple groups") {
+    auto mol =
+        "C[C@H]1OC([C@H](O)F)[C@@H](C)[C@@H](C)C1[C@@H](O)F |a:1,o1:4,12,&1:7,&2:9|"_smiles;
+    REQUIRE(mol);
+    auto json = MolInterchange::MolToJSONData(*mol);
+    CHECK(json.find("stereoGroups") != std::string::npos);
+    CHECK(json.find("\"abs\"") != std::string::npos);
+    CHECK(json.find("\"or\"") != std::string::npos);
+    CHECK(json.find("\"and\"") != std::string::npos);
+
+    auto mols = MolInterchange::JSONDataToMols(json);
+    REQUIRE(mols.size() == 1);
+    auto sgs = mols[0]->getStereoGroups();
+    REQUIRE(sgs.size() == 4);
+    // rather than worry about group order here, just check the CXSMILES:
+    auto smi = MolToCXSmiles(*mols[0]);
+    CHECK(
+        smi ==
+        "C[C@H]1OC([C@H](O)F)[C@H](C)[C@H](C)C1[C@@H](O)F |a:1,o1:4,12,&1:7,&2:9|");
+  }
+  SECTION("writing multiple mols") {
+    std::vector<ROMol *> mols{ormol.get(), andmol.get()};
+    auto json = MolInterchange::MolsToJSONData(mols);
+    CHECK(json.find("stereoGroups") != std::string::npos);
+    CHECK(json.find("\"or\"") != std::string::npos);
+    CHECK(json.find("[1,4]") != std::string::npos);
+    CHECK(json.find("\"and\"") != std::string::npos);
+    CHECK(json.find("[1,5]") != std::string::npos);
+    json = MolInterchange::MolsToJSONData(mols, commonChemPs);
+    CHECK(json.find("stereoGroups") == std::string::npos);
+  }
+}
+
+TEST_CASE("SubstanceGroups") {
+  auto polymol = R"CTAB(
+  Mrv2219 12292206542D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 * -6.7083 3.2083 0 0
+M  V30 2 C -5.3747 3.9783 0 0
+M  V30 3 O -4.041 3.2083 0 0
+M  V30 4 * -2.7073 3.9783 0 0
+M  V30 5 C -5.3747 5.5183 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 2 5
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SRU 0 ATOMS=(3 3 2 5) XBONDS=(2 3 1) BRKXYZ=(9 -3.9538 4.3256 0 -
+M  V30 -3.0298 2.7252 0 0 0 0) BRKXYZ=(9 -5.4618 2.8611 0 -6.3858 4.4615 0 0 -
+M  V30 0 0) CONNECT=HT LABEL=n
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+  REQUIRE(polymol);
+
+  auto supmol = R"CTAB(example
+ -ISIS-  10171405052D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 14 15 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 6.4292 -1.1916 0 0 CFG=3
+M  V30 2 C 7.0125 -0.6042 0 0
+M  V30 3 N 6.4292 -0.0250999 0 0
+M  V30 4 C 5.8416 -0.6042 0 0
+M  V30 5 C 5.8416 -1.7708 0 0
+M  V30 6 N 6.4292 -2.3584 0 0 CFG=3
+M  V30 7 C 7.0125 -1.7708 0 0
+M  V30 8 O 5.7166 -3.5875 0 0
+M  V30 9 C 5.7166 -4.4125 0 0 CFG=3
+M  V30 10 C 4.8875 -4.4125 0 0
+M  V30 11 C 6.5376 -4.4166 0 0
+M  V30 12 C 5.7166 -5.2376 0 0
+M  V30 13 C 6.4292 -3.175 0 0
+M  V30 14 O 7.1375 -3.5875 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 1
+M  V30 5 1 1 5
+M  V30 6 1 5 6
+M  V30 7 1 6 7
+M  V30 8 1 7 1
+M  V30 9 1 6 13
+M  V30 10 1 8 9
+M  V30 11 1 9 10
+M  V30 12 1 9 11
+M  V30 13 1 9 12
+M  V30 14 2 13 14
+M  V30 15 1 8 13
+M  V30 END BOND
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(7 8 9 10 11 12 13 14) XBONDS=(1 9) BRKXYZ=(9 6.24 -2.9 0 -
+M  V30 6.24 -2.9 0 0 0 0) CSTATE=(4 9 0 0.82 0) LABEL=Boc SAP=(3 13 6 1)
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+  REQUIRE(supmol);
+
+  MolInterchange::JSONWriteParameters commonChemPs;
+  commonChemPs.useRDKitExtensions = false;
+  SECTION("writing") {
+    {
+      auto json = MolInterchange::MolToJSONData(*polymol);
+      CHECK(json.find("substanceGroups") != std::string::npos);
+      CHECK(json.find("\"TYPE\":\"SRU\"") != std::string::npos);
+      CHECK(json.find("\"atoms\":[2,1,4]") != std::string::npos);
+      CHECK(json.find("\"bonds\":[2,0]") != std::string::npos);
+      CHECK(json.find("\"brackets\"") != std::string::npos);
+      CHECK(json.find("\"cstates\"") == std::string::npos);
+      CHECK(json.find("\"attachPoints\"") == std::string::npos);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*polymol, commonChemPs);
+      CHECK(json.find("substanceGroups") == std::string::npos);
+    }
+    {
+      auto json = MolInterchange::MolToJSONData(*supmol);
+      CHECK(json.find("substanceGroups") != std::string::npos);
+      CHECK(json.find("\"TYPE\":\"SUP\"") != std::string::npos);
+      CHECK(json.find("\"atoms\":[7,8,9,10,11,12,13]") != std::string::npos);
+      CHECK(json.find("\"bonds\":[8]") != std::string::npos);
+      CHECK(json.find("\"brackets\"") != std::string::npos);
+      CHECK(json.find("\"cstates\"") != std::string::npos);
+      CHECK(json.find("\"bond\":8") != std::string::npos);
+      CHECK(json.find("\"vector\"") != std::string::npos);
+      CHECK(json.find("\"attachPoints\"") != std::string::npos);
+      CHECK(json.find("{\"aIdx\":12,\"lvIdx\":5,\"id\":\"1\"}") !=
+            std::string::npos);
+    }
+  }
+  SECTION("parsing") {
+    auto json = MolInterchange::MolToJSONData(*supmol);
+    auto mols = MolInterchange::JSONDataToMols(json);
+    REQUIRE(mols.size() == 1);
+    auto sgs = getSubstanceGroups(*mols[0]);
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getAtoms() == std::vector<unsigned>{7, 8, 9, 10, 11, 12, 13});
+    CHECK(sgs[0].getBonds() == std::vector<unsigned>{8});
+    REQUIRE(sgs[0].getBrackets().size() == 1);
+    REQUIRE(sgs[0].getBrackets()[0].size() == 3);
+    CHECK(sgs[0].getBrackets()[0][0].x == Catch::Approx(6.24).margin(0.01));
+    REQUIRE(sgs[0].getCStates().size() == 1);
+    CHECK(sgs[0].getCStates()[0].bondIdx == 8);
+    CHECK(sgs[0].getCStates()[0].vector.y == Catch::Approx(0.82).margin(0.01));
+    REQUIRE(sgs[0].getAttachPoints().size() == 1);
+    CHECK(sgs[0].getAttachPoints()[0].aIdx == 12);
+    CHECK(sgs[0].getAttachPoints()[0].lvIdx == 5);
+    CHECK(sgs[0].getAttachPoints()[0].id == "1");
+    std::string pval;
+    CHECK(sgs[0].getPropIfPresent("LABEL", pval));
+    CHECK(pval == "Boc");
+  }
+}
+
+TEST_CASE("do not crash with null molecules") {
+  SECTION("only null") {
+    std::vector<ROMol *> mols{nullptr};
+    CHECK_THROWS_AS(MolInterchange::MolsToJSONData(mols), ValueErrorException);
+  }
+  SECTION("not just null") {
+    auto tmol = "CCC"_smiles;
+    std::vector<ROMol *> mols{tmol.get(), nullptr};
+    CHECK_THROWS_AS(MolInterchange::MolsToJSONData(mols), ValueErrorException);
+  }
+}
+
+TEST_CASE("Test segv reported in #6890") {
+  {
+    std::string mol_json_with_bad_format{R"({
+  "commonchem": 10,
+  "molecules": [
+    {
+      "name": "ethane",
+      "atoms": [
+        {"z": 6, "impHs": 3},
+        {"z": 6, "impHs": 3}
+      ],
+      "bonds": [
+        {"type": 1, "atoms": [0, 1]}
+      ]
+    }
+  ]
+})"};
+
+    CHECK_THROWS_AS(MolInterchange::JSONDataToMols(mol_json_with_bad_format),
+                    FileParseException);
+  }
+
+  {
+    std::string mol_json_with_bad_format{R"({
+  "rdkitjson": 10,
+  "molecules": [
+    {
+      "name": "ethane",
+      "atoms": [
+        {"z": 6, "impHs": 3},
+        {"z": 6, "impHs": 3}
+      ],
+      "bonds": [
+        {"type": 1, "atoms": [0, 1]}
+      ]
+    }
+  ]
+})"};
+
+    CHECK_THROWS_AS(MolInterchange::JSONDataToMols(mol_json_with_bad_format),
+                    FileParseException);
+  }
+}
+
+TEST_CASE("github #5923: add more error checking to substance groups") {
+  SECTION("basics") {
+    std::string moljson =
+        R"JSON({"rdkitjson":{"version":11},"defaults":{"atom":{"z":6,"impHs":0,"chg":0,"nRad":0,"isotope":0,"stereo":"unspecified"},"bond":{"bo":1,"stereo":"unspecified"}},
+        "molecules":[{"name":"","atoms":[{"z":0},{"impHs":1},{"z":8},{"z":0},{"impHs":3}],
+        "bonds":[{"atoms":[0,1]},{"atoms":[1,2]},{"atoms":[2,3]},{"atoms":[1,4]}],
+        "substanceGroups":[{"properties":{"TYPE":"SRU","index":1,"CONNECT":"HT","LABEL":"n","DATAFIELDS":"[]"},
+           "atoms":[2,1,4],"bonds":[2,0],"parentAtoms":[0,3],
+           "brackets":[[[-3.9538,4.3256,0.0],[-3.0298,2.7252,0.0],[0.0,0.0,0.0]],[[-5.4618,2.8611,0.0],[-6.3858,4.4615,0.0],[0.0,0.0,0.0]]]}],
+        "conformers":[{"dim":2,"coords":[[-6.7083,3.2083],[-5.3747,3.9783],[-4.041,3.2083],[-2.7073,3.9783],[-5.3747,5.5183]]}],"extensions":[{"name":"rdkitRepresentation","formatVersion":2,"toolkitVersion":"2023.09.4","cipRanks":[0,3,4,1,2]},{"name":"rdkitQueries","formatVersion":10,"toolkitVersion":"2023.09.4","atomQueries":[{"descr":"AtomNull","tag":40},{},{},{"descr":"AtomNull","tag":40},{}]}]}]})JSON";
+    // everything ok
+    {
+      auto mols = MolInterchange::JSONDataToMols(moljson);
+      REQUIRE(mols.size() == 1);
+      CHECK(getSubstanceGroups(*mols[0]).size() == 1);
+    }
+    // bad atom index
+    {
+      std::string badjson = moljson;
+      std::string lookFor = R"JSON("atoms":[2,1,4])JSON";
+      badjson.replace(badjson.find(lookFor), lookFor.size(),
+                      R"JSON("atoms":[2,1,9])JSON");
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      ValueErrorException);
+    }
+    // bad parentAtom index
+    {
+      std::string badjson = moljson;
+      std::string lookFor = R"JSON("parentAtoms":[0,3])JSON";
+      badjson.replace(badjson.find(lookFor), lookFor.size(),
+                      R"JSON("parentAtoms":[8,3])JSON");
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      ValueErrorException);
+    }
+    // bad bond index
+    {
+      std::string badjson = moljson;
+      std::string lookFor = R"JSON("bonds":[2,0])JSON";
+      badjson.replace(badjson.find(lookFor), lookFor.size(),
+                      R"JSON("bonds":[2,7])JSON");
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      ValueErrorException);
+    }
+  }
+}
+
+TEST_CASE(
+    "github #8031: make sure floating point coords are not incorrectly truncated") {
+  auto mb = R"CTAB(
+  MJ240300                      
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+   -1.4955    1.1152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2099    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.2099   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4955   -0.5348    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7810   -0.1223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7810    0.7027    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0666    1.1152    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.9244   -0.5348    0.0000 H   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+  6  7  1  0  0  0  0
+  3  8  1  0  0  0  0
+M  ISO  1   7   2
+M  END
+)CTAB";
+  std::unique_ptr<RWMol> mol(MolBlockToMol(mb, true, false));
+  REQUIRE(mol);
+  std::string pickle;
+  MolPickler::pickleMol(*mol, pickle);
+  ROMol molFromPickle(pickle);
+  auto json = MolInterchange::MolToJSONData(molFromPickle);
+  CHECK(json.find("-0.5347") == std::string::npos);
+  CHECK(json.find("-0.5348") != std::string::npos);
 }

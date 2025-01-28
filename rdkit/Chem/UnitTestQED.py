@@ -1,17 +1,13 @@
-
-
-from collections import namedtuple
 import doctest
 import os.path
 import unittest
+from collections import namedtuple
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import QED
 
-
 doLong = False
-TestData = namedtuple('TestData', 'lineNo,smiles,mol,expected')
+_TestData = namedtuple('_TestData', 'lineNo,smiles,mol,expected')
 dataNCI200 = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'QED', 'NCI_200_qed.csv')
 dataRegression = os.path.join(RDConfig.RDCodeDir, 'Chem', 'test_data', 'QED', 'Regression_qed.csv')
 
@@ -76,11 +72,11 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('C1=NOC(C)=C1C(=O)Nc1ccc(cc1)C(F)(F)F')),
                            0.911, places=3)
     # Clomipramine 0.779
-    self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('CN(C)CCCN1c2ccccc2CCc2ccc(Cl)cc21')),
-                           0.818, places=3)
+    self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('CN(C)CCCN1c2ccccc2CCc2ccc(Cl)cc21')), 0.818,
+                           places=3)
     # Tegaserod 0.213
-    self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('CCCCCNC(=N)NN=CC1=CNc2ccc(CO)cc21')),
-                           0.235, places=3)
+    self.assertAlmostEqual(QED.qed(Chem.MolFromSmiles('CCCCCNC(=N)NN=CC1=CNc2ccc(CO)cc21')), 0.235,
+                           places=3)
 
 
 def readTestData(filename):
@@ -93,12 +89,15 @@ def readTestData(filename):
       mol = Chem.MolFromSmiles(smiles)
       if not mol:
         raise AssertionError('molecule construction failed on line %d' % lineNo)
-      yield TestData(lineNo, smiles, mol, float(expected))
+      yield _TestData(lineNo, smiles, mol, float(expected))
 
 
 def updateTestData():
   """ Update the test data. This should only be done if the method changes! """
-  for filename in (dataNCI200, dataRegression,):
+  for filename in (
+      dataNCI200,
+      dataRegression,
+  ):
     data = list(readTestData(filename))
     with open(filename, 'w') as f:
       print('# Test data for QED descriptor', file=f)

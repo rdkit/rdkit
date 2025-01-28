@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Greg Landrum
+//  Copyright (C) 2018-2022 Greg Landrum
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -38,15 +38,15 @@ namespace MolInterchange {
 // \brief parameters controlling parsing of MolJSON
 struct RDKIT_MOLINTERCHANGE_EXPORT JSONParseParameters {
   bool setAromaticBonds =
-      true; /*! toggles setting the BondType of aromatic bonds to Aromatic */
+      true; /*!< toggles setting the BondType of aromatic bonds to Aromatic */
   bool strictValenceCheck =
-      false; /*! toggles doing reasonable valence checks */
+      false; /*!< toggles doing reasonable valence checks */
   bool parseProperties =
-      true; /*! toggles extracting molecular properties from the JSON block */
+      true; /*!< toggles extracting molecular properties from the JSON block */
   bool parseConformers =
-      true; /*! toggles extracting conformers from the JSON block */
+      true; /*!< toggles extracting conformers from the JSON block */
   bool useHCounts =
-      true; /*! toggles using the implicit H counts for atoms from the JSON
+      true; /*!< toggles using the implicit H counts for atoms from the JSON
                block. You may want to set this to false when parsing queries. */
 };
 static JSONParseParameters defaultJSONParseParameters;
@@ -69,22 +69,31 @@ RDKIT_MOLINTERCHANGE_EXPORT std::vector<boost::shared_ptr<ROMol>>
 JSONDataToMols(const std::string &jsonBlock,
                const JSONParseParameters &params = defaultJSONParseParameters);
 
+// \brief parameters controlling generating of MolJSON
+struct RDKIT_MOLINTERCHANGE_EXPORT JSONWriteParameters {
+  bool useRDKitExtensions =
+      true; /*!< toggles using RDKit extensions to commmonchem */
+};
+static JSONWriteParameters defaultJSONWriteParameters;
+
 // \brief returns MolJSON for a set of molecules
 /*!
  *   \param mols  - the molecules to work with
  */
 template <typename T>
 RDKIT_MOLINTERCHANGE_EXPORT std::string MolsToJSONData(
-    const std::vector<T> &mols);
+    const std::vector<T> &mols,
+    const JSONWriteParameters &params = defaultJSONWriteParameters);
 
 // \brief returns MolJSON for a molecule
 /*!
  *   \param mol   - the molecule to work with
  */
 template <typename T>
-std::string MolToJSONData(const T &mol) {
+std::string MolToJSONData(const T &mol, const JSONWriteParameters &params =
+                                            defaultJSONWriteParameters) {
   std::vector<const T *> ms{&mol};
-  return MolsToJSONData(ms);
+  return MolsToJSONData(ms, params);
 };
 
 }  // end of namespace MolInterchange

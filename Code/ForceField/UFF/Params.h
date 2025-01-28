@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <string>
 #include <cmath>
 #include <map>
+#include <algorithm>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -23,18 +24,12 @@
 namespace ForceFields {
 namespace UFF {
 
-const double DEG2RAD = M_PI / 180.0;
-const double RAD2DEG = 180.0 / M_PI;
+constexpr double DEG2RAD = M_PI / 180.0;
+constexpr double RAD2DEG = 180.0 / M_PI;
 inline bool isDoubleZero(const double x) {
   return ((x < 1.0e-10) && (x > -1.0e-10));
 }
-inline void clipToOne(double &x) {
-  if (x > 1.0) {
-    x = 1.0;
-  } else if (x < -1.0) {
-    x = -1.0;
-  }
-}
+inline void clipToOne(double &x) { x = std::clamp(x, -1.0, 1.0); }
 
 //! class to store UFF parameters for bond stretching
 class RDKIT_FORCEFIELD_EXPORT UFFBond {
@@ -90,7 +85,7 @@ const double lambda = 0.1332;  //!< scaling factor for rBO correction
 const double G = 332.06;       //!< bond force constant prefactor
 const double amideBondOrder =
     1.41;  //!< special case bond order for amide C-N bonds.
-};         // namespace Params
+};  // namespace Params
 
 //! singleton class for retrieving UFF AtomParams
 /*!

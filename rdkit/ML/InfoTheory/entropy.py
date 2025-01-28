@@ -11,7 +11,6 @@ import math
 
 import numpy
 
-
 # try to get the C versions of these routines
 try:
   import rdkit.ML.InfoTheory.rdInfoTheory as cEntropy
@@ -92,6 +91,7 @@ def PyInfoGain(varMat):
   else:
     gain = 0
   return gain
+
 
 # if we have the C versions, use them, otherwise use the python stuff
 if hascEntropy:

@@ -1716,7 +1716,6 @@ void test17Issue1920627() {
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
   TEST_ASSERT(rxn->getNumProductTemplates() == 1);
 
-#if 1
   reacts.clear();
   smi = "C[C@](Cl)(CO)CC(=O)NC";
   mol = SmilesToMol(smi);
@@ -1844,7 +1843,6 @@ void test17Issue1920627() {
   TEST_ASSERT(prod->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
   prod->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#endif
 
   reacts.clear();
   smi = "C(=O)N[C@@H](CC)C";
@@ -5155,7 +5153,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     TEST_ASSERT(prods[0].size() == 1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@@](Cl)(Br)ONO[C@@](F)(Cl)Br";
+    smi = "F[C@](Cl)(Br)ONO[C@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5248,7 +5246,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     TEST_ASSERT(prods[0].size() == 1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@@](Cl)(Br)ONO[C@@](F)(Cl)Br";
+    smi = "F[C@](Cl)(Br)ONO[C@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -5340,7 +5338,7 @@ void test54RedundantProductMappingNumbersAndRSChirality() {
     TEST_ASSERT(prods[0].size() == 1);
 
     std::cout << MolToSmiles(*prods[0][0], true) << std::endl;
-    smi = "F[C@@](Cl)(Br)O[C@@](F)(Cl)Br";
+    smi = "F[C@](Cl)(Br)O[C@](F)(Cl)Br";
     TEST_ASSERT(MolToSmiles(*prods[0][0], true) == smi);
 
     ROMOL_SPTR prod = prods[0][0];
@@ -7650,6 +7648,234 @@ void testGithub4410() {
   TEST_ASSERT(MolToSmiles(*prods[0][0]) == R"(C/C(Cl)=C(\Cl)Br)");
 }
 
+void testMultiTemplateRxnQueries() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing multi-template isMoleculeXOfReaction queries"
+                       << std::endl;
+
+  std::string rxn_smarts =
+      "[S;v1&H0,v2&H1:1].[S;v2;H0,H1:2][S;v2;H0,H1:3]>>[S:3].[S:1][S:2]";
+  ChemicalReaction *rxn = RxnSmartsToChemicalReaction(rxn_smarts);
+  TEST_ASSERT(rxn->getNumReactantTemplates() == 2);
+  TEST_ASSERT(rxn->getNumProductTemplates() == 2);
+  rxn->initReactantMatchers();
+  unsigned int nWarn, nError;
+  TEST_ASSERT(rxn->validate(nWarn, nError, false));
+  TEST_ASSERT(nWarn == 0 && nError == 0);
+
+  ROMol *reactant = SmilesToMol("SC1=CC(CSSCC2=CC=CC=C2)=CC=C1");
+  ROMol *product = reactant;
+  ROMol *neither = SmilesToMol("c1ccccc1");
+
+  std::vector<unsigned int> which;
+  bool is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant, which);
+  TEST_ASSERT(is_reactant);
+  TEST_ASSERT(which == std::vector<unsigned int>({0, 1}));
+  unsigned int first_match;
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant, first_match);
+  TEST_ASSERT(is_reactant);
+  TEST_ASSERT(first_match == 0);
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *reactant);
+  TEST_ASSERT(is_reactant);
+
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither, which);
+  TEST_ASSERT(!is_reactant);
+  TEST_ASSERT(which.empty());
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither, first_match);
+  TEST_ASSERT(!is_reactant);
+  TEST_ASSERT(first_match == 2);
+  is_reactant = isMoleculeReactantOfReaction(*rxn, *neither);
+  TEST_ASSERT(!is_reactant);
+
+  bool is_product = isMoleculeProductOfReaction(*rxn, *product, which);
+  TEST_ASSERT(is_product);
+  TEST_ASSERT(which == std::vector<unsigned int>({0, 1}));
+  is_product = isMoleculeProductOfReaction(*rxn, *product, first_match);
+  TEST_ASSERT(is_product);
+  TEST_ASSERT(first_match == 0);
+  is_product = isMoleculeProductOfReaction(*rxn, *product);
+  TEST_ASSERT(is_product);
+
+  is_product = isMoleculeProductOfReaction(*rxn, *neither, which);
+  TEST_ASSERT(!is_product);
+  TEST_ASSERT(which.empty());
+  is_product = isMoleculeProductOfReaction(*rxn, *neither, first_match);
+  TEST_ASSERT(!is_product);
+  TEST_ASSERT(first_match == 2);
+  is_product = isMoleculeProductOfReaction(*rxn, *neither);
+  TEST_ASSERT(!is_product);
+
+  delete reactant;
+  delete neither;
+  delete rxn;
+}
+
+void testChemicalReactionCopyAssignment() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing ChemicalReaction copy assignment operator"
+                       << std::endl;
+
+  std::string rxn_smarts1 =
+      "[C;$(C=O):1][OH1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[C:1][N+0:2]";
+  ChemicalReaction *rxn1 = RxnSmartsToChemicalReaction(rxn_smarts1);
+  rxn1->setImplicitPropertiesFlag(true);
+  rxn1->initReactantMatchers();
+  unsigned int nWarn, nError;
+  TEST_ASSERT(rxn1->validate(nWarn, nError, false));
+  TEST_ASSERT(nWarn == 0 && nError == 0);
+
+  std::string rxn_smarts2 = "[O:1]>>[N:1]";
+  ChemicalReaction *rxn2 = RxnSmartsToChemicalReaction(rxn_smarts2);
+
+  *rxn2 = *rxn1;
+
+  // Check we copied the base class members
+  TEST_ASSERT(rxn2->getPropList() == rxn1->getPropList());
+
+  // Check we copied the flags
+  TEST_ASSERT(rxn2->getImplicitPropertiesFlag());
+  TEST_ASSERT(rxn2->isInitialized());
+
+  // Check we copied the reactant/product templates
+  TEST_ASSERT(rxn2->getNumReactantTemplates() == 2);
+  TEST_ASSERT(rxn2->getNumProductTemplates() == 1);
+  MOL_SPTR_VECT::const_iterator it1 = rxn1->beginReactantTemplates();
+  MOL_SPTR_VECT::const_iterator it2 = rxn2->beginReactantTemplates();
+  MOL_SPTR_VECT::const_iterator end_it1 = rxn1->endReactantTemplates();
+  while (it1 != end_it1) {
+    TEST_ASSERT(MolToSmiles(**it1) == MolToSmiles(**it2));
+    ++it1;
+    ++it2;
+  }
+  it1 = rxn1->beginProductTemplates();
+  it2 = rxn2->beginProductTemplates();
+  end_it1 = rxn1->endProductTemplates();
+  while (it1 != end_it1) {
+    TEST_ASSERT(MolToSmiles(**it1) == MolToSmiles(**it2));
+    ++it1;
+    ++it2;
+  }
+
+  // Check that the reactions don't share resources
+  const RWMol &rxn1_reactant = *rxn1->getReactants().at(0);
+  const_cast<RWMol &>(rxn1_reactant).clear();
+  ROMOL_SPTR rxn2_reactant = rxn2->getReactants().at(0);
+  TEST_ASSERT(rxn2_reactant->getNumAtoms() > 0);
+
+  // Check the reaction works
+  MOL_SPTR_VECT reactants;
+  reactants.emplace_back(SmilesToMol("CC(=O)O"));
+  reactants.emplace_back(SmilesToMol("CCN"));
+  std::vector<MOL_SPTR_VECT> products = rxn2->runReactants(reactants);
+  TEST_ASSERT(MolToSmiles(*products[0][0]) == "CCNC(C)=O");
+
+  delete rxn1;
+  delete rxn2;
+}
+
+void testGithub6138() {
+  // Pickling reactions removed some of their properties set after reaction
+  // initialization
+  auto rxn_smarts = "[c:1]:[n&H1&+0&D2:3]:[n:2]>>[c:1]:[3n&H0&+0&D3:3]:[2n:2]";
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(rxn_smarts));
+  ROMOL_SPTR mol("c1cn[nH]c1"_smiles);
+  rxn->initReactantMatchers();
+  MOL_SPTR_VECT reacts;
+  reacts.push_back(mol);
+  auto prods = rxn->runReactants(reacts);
+  std::string pkl;
+  ReactionPickler::pickleReaction(*rxn, pkl);
+  std::unique_ptr<ChemicalReaction> lrxn(new ChemicalReaction());
+  ReactionPickler::reactionFromPickle(pkl, lrxn.get());
+  auto prods2 = lrxn->runReactants(reacts);
+  auto s1 = MolToSmiles(*prods[0][0]);
+  auto s2 = MolToSmiles(*prods2[0][0]);
+  TEST_ASSERT(s1 == s2);
+}
+
+void testReactionWithChiralAgent() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Testing introduction of new atoms with chirality"
+                       << std::endl;
+
+  {  // a reaction with a chiral agent - v3000
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+
+    fName =
+        rdbase +
+        "/Code/GraphMol/ChemReactions/testData/testRXNChiralityAgentV3000.rxn";
+    ChemicalReaction *rxn =
+        RxnFileToChemicalReaction(fName, false, false, false);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    TEST_ASSERT(rxn->getNumAgentTemplates() == 1);
+    auto outputRxn = ChemicalReactionToRxnSmiles(*rxn);
+    TEST_ASSERT(
+        outputRxn ==
+        "[CH:1]([F:2])([CH3:3])[CH2:4][CH2:5][Br:6]>CC[C@H](C)Cl>[CH:1]([F:2])([CH3:3])[CH2:4][CH2:5][CH2:7][CH:8]([CH3:9])[Cl:10]");
+
+    BOOST_LOG(rdInfoLog) << ChemicalReactionToRxnSmiles(*rxn) << std::endl;
+
+    delete rxn;
+  }
+
+  {  // a reaction with a chiral agent - v2000
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+
+    fName =
+        rdbase +
+        "/Code/GraphMol/ChemReactions/testData/testRXNChiralityAgentV2000.rxn";
+    ChemicalReaction *rxn =
+        RxnFileToChemicalReaction(fName, false, false, false);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+    TEST_ASSERT(rxn->getNumAgentTemplates() == 1);
+    auto outputRxn = ChemicalReactionToRxnSmiles(*rxn);
+    TEST_ASSERT(
+        outputRxn ==
+        "[CH:1]([F:2])([CH3:3])[CH2:4][CH2:5][Br:6]>CC[C@H](C)Cl>[CH:1]([F:2])([CH3:3])[CH2:4][CH2:5][CH2:7][CH:8]([CH3:9])[Cl:10]");
+
+    BOOST_LOG(rdInfoLog) << ChemicalReactionToRxnSmiles(*rxn) << std::endl;
+
+    delete rxn;
+  }
+}
+
+void testGithub5890() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "Github Issue 5890: Testing reaction with radicals"
+                       << std::endl;
+
+  {
+    std::string rdbase = getenv("RDBASE");
+    std::string fName;
+
+    fName = rdbase + "/Code/GraphMol/ChemReactions/testData/v3k.radicals.rxn";
+    ChemicalReaction *rxn =
+        RxnFileToChemicalReaction(fName, false, false, false);
+    TEST_ASSERT(rxn);
+    TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
+    TEST_ASSERT(rxn->getNumProductTemplates() == 1);
+
+    std::string pkl;
+    ReactionPickler::pickleReaction(rxn, pkl);
+    delete rxn;
+    rxn = new ChemicalReaction();
+    ReactionPickler::reactionFromPickle(pkl, rxn);
+
+    auto outputRxn = ChemicalReactionToRxnSmiles(*rxn);
+    BOOST_LOG(rdInfoLog) << outputRxn << std::endl;
+    TEST_ASSERT(outputRxn == "[CH]1[CH][CH]1>>C");
+
+    delete rxn;
+  }
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -7747,6 +7973,11 @@ int main() {
   testGithub4114();
   testGithub4183();
   testGithub4410();
+  testMultiTemplateRxnQueries();
+  testChemicalReactionCopyAssignment();
+  testGithub6138();
+  testReactionWithChiralAgent();
+  testGithub5890();
 
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";

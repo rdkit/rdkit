@@ -35,8 +35,8 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              unsigned int nFlipsPerSample = 3,
                              unsigned int nSamples = 100, int sampleSeed = 100,
                              bool permuteDeg4Nodes = false,
-                             double bondLength = -1.0,
-                             bool forceRDKit = false) {
+                             double bondLength = -1.0, bool forceRDKit = false,
+                             bool useRingTemplates = false) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
@@ -53,9 +53,9 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
     RDDepict::BOND_LEN = bondLength;
   }
   unsigned int res;
-  res = RDDepict::compute2DCoords(mol, &cMap, canonOrient, clearConfs,
-                                  nFlipsPerSample, nSamples, sampleSeed,
-                                  permuteDeg4Nodes, forceRDKit);
+  res = RDDepict::compute2DCoords(
+      mol, &cMap, canonOrient, clearConfs, nFlipsPerSample, nSamples,
+      sampleSeed, permuteDeg4Nodes, forceRDKit, useRingTemplates);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -102,16 +102,14 @@ unsigned int Compute2DCoordsMimicDistmat(
 }
 
 python::tuple GenerateDepictionMatching2DStructure(
-    RDKit::ROMol &mol, RDKit::ROMol &reference, int confId,
-    python::object refPatt, bool acceptFailure, bool forceRDKit,
-    bool allowRGroups) {
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
+    const python::object &refPatt, const ConstrainedDepictionParams &params) {
   RDKit::ROMol *referencePattern = nullptr;
-  if (refPatt != python::object()) {
+  if (!refPatt.is_none()) {
     referencePattern = python::extract<RDKit::ROMol *>(refPatt);
   }
   auto matchVect = RDDepict::generateDepictionMatching2DStructure(
-      mol, reference, confId, referencePattern, acceptFailure, forceRDKit,
-      allowRGroups);
+      mol, reference, confId, referencePattern, params);
   python::list atomMap;
   for (const auto &pair : matchVect) {
     atomMap.append(python::make_tuple(pair.first, pair.second));
@@ -119,14 +117,58 @@ python::tuple GenerateDepictionMatching2DStructure(
   return python::tuple(atomMap);
 }
 
-void GenerateDepictionMatching2DStructureAtomMap(RDKit::ROMol &mol,
-                                                 RDKit::ROMol &reference,
-                                                 python::object atomMap,
-                                                 int confId, bool forceRDKit) {
-  std::unique_ptr<RDKit::MatchVectType> matchVect(translateAtomMap(atomMap));
+python::tuple GenerateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
+    const python::object &refPatt, bool acceptFailure, bool forceRDKit,
+    bool allowRGroups) {
+  ConstrainedDepictionParams params;
+  params.acceptFailure = acceptFailure;
+  params.forceRDKit = forceRDKit;
+  params.allowRGroups = allowRGroups;
+  return GenerateDepictionMatching2DStructure(mol, reference, confId, refPatt,
+                                              params);
+}
 
+python::tuple GenerateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
+    const python::object &refPatt, const python::object &pyParams) {
+  ConstrainedDepictionParams params;
+  if (pyParams) {
+    params = python::extract<ConstrainedDepictionParams>(pyParams);
+  }
+  return GenerateDepictionMatching2DStructure(mol, reference, confId, refPatt,
+                                              params);
+}
+
+void GenerateDepictionMatching2DStructureAtomMap(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference,
+    const python::object &atomMap, int confId,
+    const ConstrainedDepictionParams &params) {
+  std::unique_ptr<RDKit::MatchVectType> matchVect(translateAtomMap(atomMap));
   RDDepict::generateDepictionMatching2DStructure(mol, reference, *matchVect,
-                                                 confId, forceRDKit);
+                                                 confId, params);
+}
+
+void GenerateDepictionMatching2DStructureAtomMap(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference,
+    const python::object &atomMap, int confId, const python::object &pyParams) {
+  ConstrainedDepictionParams params;
+  if (pyParams) {
+    params = python::extract<ConstrainedDepictionParams>(pyParams);
+  }
+  GenerateDepictionMatching2DStructureAtomMap(mol, reference, atomMap, confId,
+                                              params);
+}
+
+void GenerateDepictionMatching2DStructureAtomMap(RDKit::ROMol &mol,
+                                                 const RDKit::ROMol &reference,
+                                                 const python::object &atomMap,
+                                                 int confId, bool forceRDKit) {
+  ConstrainedDepictionParams params;
+  params.forceRDKit = forceRDKit;
+
+  GenerateDepictionMatching2DStructureAtomMap(mol, reference, atomMap, confId,
+                                              params);
 }
 
 void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
@@ -142,11 +184,50 @@ void GenerateDepictionMatching3DStructure(RDKit::ROMol &mol,
   RDDepict::generateDepictionMatching3DStructure(
       mol, reference, confId, referencePattern, acceptFailure, forceRDKit);
 }
+
+bool isCoordGenSupportAvailable() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  return true;
+#else
+  return false;
+#endif
+}
+
 void setPreferCoordGen(bool value) {
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   RDDepict::preferCoordGen = value;
 #endif
 }
+bool getPreferCoordGen() {
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+  return RDDepict::preferCoordGen;
+#else
+  return false;
+#endif
+}
+
+class UsingCoordGen : public boost::noncopyable {
+ public:
+  UsingCoordGen() = delete;
+  UsingCoordGen(bool temp_state)
+      : m_initial_state{getPreferCoordGen()}, m_temp_state(temp_state) {}
+  ~UsingCoordGen() = default;
+
+  void enter() { setPreferCoordGen(m_temp_state); }
+
+  void exit(python::object exc_type, python::object exc_val,
+            python::object traceback) {
+    RDUNUSED_PARAM(exc_type);
+    RDUNUSED_PARAM(exc_val);
+    RDUNUSED_PARAM(traceback);
+    setPreferCoordGen(m_initial_state);
+  }
+
+ private:
+  bool m_initial_state;
+  bool m_temp_state;
+};
+
 }  // namespace RDDepict
 
 BOOST_PYTHON_MODULE(rdDepictor) {
@@ -158,6 +239,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
 
   rdkit_import_array();
 
+  python::def("IsCoordGenSupportAvailable", isCoordGenSupportAvailable,
+              "Returns whether RDKit was built with CoordGen support.");
+
   python::def("SetPreferCoordGen", setPreferCoordGen, python::arg("val"),
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
               "Sets whether or not the CoordGen library should be preferred to "
@@ -166,6 +250,83 @@ BOOST_PYTHON_MODULE(rdDepictor) {
               "Has no effect (CoordGen support not enabled)"
 #endif
   );
+  python::def(
+      "SetRingSystemTemplates", RDDepict::setRingSystemTemplates,
+      (python::arg("templatePath")),
+      "Loads the ring system templates from the specified file to be "
+      "used in 2D coordinate generation. Each template must be a single "
+      "line in the file represented using CXSMILES, and the structure should "
+      "be a single ring system. Throws a DepictException if any templates "
+      "are invalid.");
+  python::def(
+      "AddRingSystemTemplates", RDDepict::addRingSystemTemplates,
+      (python::arg("templatePath")),
+      "Adds the ring system templates from the specified file to be "
+      "used in 2D coordinate generation. If there are duplicates, the most "
+      "recently added template will be used. Each template must be a single "
+      "line in the file represented using CXSMILES, and the structure should "
+      "be a single ring system. Throws a DepictException if any templates "
+      "are invalid.");
+  python::def(
+      "LoadDefaultRingSystemTemplates",
+      RDDepict::loadDefaultRingSystemTemplates,
+      "Loads the default ring system templates and removes existing ones, if present.");
+  python::def(
+      "GetPreferCoordGen", getPreferCoordGen,
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+      "Return whether or not the CoordGen library is used for coordinate "
+      "generation in the RDKit depiction library."
+#else
+      "Always returns False (CoordGen support not enabled)"
+#endif
+  );
+
+  python::class_<UsingCoordGen, boost::noncopyable>(
+      "UsingCoordGen",
+      "Context manager to temporarily set CoordGen library preference in RDKit depiction.",
+      python::init<bool>(python::args("self", "temp_state"), "Constructor"))
+      .def("__enter__", &UsingCoordGen::enter)
+      .def("__exit__", &UsingCoordGen::exit);
+
+  python::class_<ConstrainedDepictionParams, boost::noncopyable>(
+      "ConstrainedDepictionParams",
+      "Parameters controlling constrained depiction")
+      .def_readwrite(
+          "acceptFailure", &ConstrainedDepictionParams::acceptFailure,
+          "if False (default), a DepictException is thrown if the molecule "
+          "does not have a substructure match to the reference; "
+          "if True, an unconstrained depiction will be generated")
+      .def_readwrite(
+          "forceRDKit", &ConstrainedDepictionParams::forceRDKit,
+          "if True, use RDKit to generate coordinates even if preferCoordGen "
+          "is set to True; defaults to False")
+      .def_readwrite(
+          "allowRGroups", &ConstrainedDepictionParams::allowRGroups,
+          "if True, terminal dummy atoms in the reference are ignored "
+          "if they match an implicit hydrogen in the molecule or if they are "
+          "attached top a query atom; defaults to False")
+      .def_readwrite(
+          "alignOnly", &ConstrainedDepictionParams::alignOnly,
+          "if False (default), a part of the molecule is hard-constrained "
+          "to have the same coordinates as the reference, and the rest of "
+          "the molecule is built around it; if True, coordinates "
+          "from conformation existingConfId are preserved (if they exist) "
+          "or generated without constraints (if they do not exist), then "
+          "the conformation is rigid-body aligned to the reference")
+      .def_readwrite("adjustMolBlockWedging",
+                     &ConstrainedDepictionParams::adjustMolBlockWedging,
+                     "if True (default), existing wedging information "
+                     "will be updated or cleared as required; if False, "
+                     "existing molblock wedging information will "
+                     "always be preserved")
+      .def_readwrite(
+          "existingConfId", &ConstrainedDepictionParams::existingConfId,
+          "conformation id whose 2D coordinates should be "
+          "rigid-body aligned to the reference (if alignOnly is True), "
+          "or used to determine whether existing molblock wedging information "
+          "can be preserved following the constrained depiction (if "
+          "adjustMolBlockWedging is True");
+
   std::string docString;
   docString =
       "Compute 2D coordinates for a molecule. \n\
@@ -186,7 +347,9 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                  node during the sampling process \n\
      bondLength - change the default bond length for depiction \n\
      forceRDKit - use RDKit to generate coordinates even if \n\
-                  preferCoordGen is set to true\n\n\
+                  preferCoordGen is set to true\n\
+     useRingTemplates - use templates to generate coordinates of complex\n\
+                  ring systems\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -196,7 +359,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("coordMap") = python::dict(),
        python::arg("nFlipsPerSample") = 0, python::arg("nSample") = 0,
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
-       python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false),
+       python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false,
+       python::arg("useRingTemplates") = false),
       docString.c_str());
 
   docString =
@@ -240,8 +404,37 @@ BOOST_PYTHON_MODULE(rdDepictor) {
   docString =
       "Generate a depiction for a molecule where a piece of the \n\
   molecule is constrained to have the same coordinates as a reference. \n\n\
-  This is useful for, for example, generating depictions of SAR data \n\
-  sets so that the cores of the molecules are all oriented the same way. \n\
+  The constraint can be hard (default) or soft. \n\
+\n\
+  Hard (default, ConstrainedDepictionParams.alignOnly=False): \n\
+  Existing molecule coordinates, if present, are discarded; \n\
+  new coordinates are generated constraining a piece of the molecule \n\
+  to have the same coordinates as the reference, while the rest of \n\
+  the molecule is built around it. \n\
+  If ConstrainedDepictionParams.adjustMolBlockWedging is False \n\
+  (default), existing molblock wedging information is always preserved. \n\
+  If ConstrainedDepictionParams.adjustMolBlockWedging is True, \n\
+  existing molblock wedging information is preserved in case it \n\
+  only involves the invariant core and the core conformation has not \n\
+  changed, while it is cleared in case the wedging is also outside \n\
+  the invariant core, or core coordinates were changed. \n\
+  If ConstrainedDepictionParams.acceptFailure is set to True and no \n\
+  substructure match is found, coordinates will be recomputed from \n\
+  scratch, hence molblock wedging information will be cleared. \n\
+ \n\
+  Soft (ConstrainedDepictionParams.alignOnly=True): \n\
+  Existing coordinates in the conformation identified by \n\
+  ConstrainedDepictionParams.existingConfId are preserved if present, \n\
+  otherwise unconstrained new coordinates are generated. \n\
+  Subsequently, coodinates undergo a rigid-body alignment to the reference. \n\
+  If ConstrainedDepictionParams.adjustMolBlockWedging is False \n\
+  (default), existing molblock wedging information is always preserved. \n\
+  If ConstrainedDepictionParams.adjustMolBlockWedging is True, \n\
+  existing molblock wedging information is inverted in case the rigid-body \n\
+  alignment involved a flip around the Z axis. \n\
+ \n\
+  This is useful, for example, for generating depictions of SAR data \n\
+  sets such that the cores of the molecules are all oriented the same way. \n\
   ARGUMENTS: \n\n\
   mol -    the molecule to be aligned, this will come back \n\
            with a single conformer. \n\
@@ -250,7 +443,35 @@ BOOST_PYTHON_MODULE(rdDepictor) {
   confId -       (optional) the id of the reference conformation to use \n\
   refPatt -      (optional) a query molecule to be used to generate \n\
                  the atom mapping between the molecule and the reference \n\
-  acceptFailure - (optional) if True, standard depictions will be generated \n\
+  params - (optional) a ConstrainedDepictionParams instance\n\n\
+  RETURNS: a tuple of (refIdx, molIdx) tuples corresponding to the atom \n\
+           indices in mol constrained to have the same coordinates as atom \n\
+           indices in reference.\n";
+  python::def(
+      "GenerateDepictionMatching2DStructure",
+      static_cast<python::tuple (*)(RDKit::ROMol &, const RDKit::ROMol &,
+                                    int confId, const python::object &,
+                                    const python::object &)>(
+          GenerateDepictionMatching2DStructure),
+      (python::arg("mol"), python::arg("reference"), python::arg("confId") = -1,
+       python::arg("refPatt") = python::object(),
+       python::arg("params") = python::object()),
+      docString.c_str());
+
+  docString =
+      "Generate a depiction for a molecule where a piece of the \n\
+  molecule is constrained to have the same coordinates as a reference. \n\n\
+  This is useful, for example, for generating depictions of SAR data \n\
+  sets such that the cores of the molecules are all oriented the same way. \n\
+  ARGUMENTS: \n\n\
+  mol -    the molecule to be aligned, this will come back \n\
+           with a single conformer. \n\
+  reference -    a molecule with the reference atoms to align to; \n\
+                 this should have a depiction. \n\
+  confId -       the id of the reference conformation to use \n\
+  refPatt -      a query molecule to be used to generate \n\
+                 the atom mapping between the molecule and the reference \n\
+  acceptFailure - if True, standard depictions will be generated \n\
                   for molecules that don't have a substructure match to the \n\
                   reference; if False, throws a DepictException.\n\
   forceRDKit -    (optional) use RDKit to generate coordinates even if \n\
@@ -264,7 +485,10 @@ BOOST_PYTHON_MODULE(rdDepictor) {
            indices in reference.\n";
   python::def(
       "GenerateDepictionMatching2DStructure",
-      RDDepict::GenerateDepictionMatching2DStructure,
+      static_cast<python::tuple (*)(RDKit::ROMol &, const RDKit::ROMol &,
+                                    int confId, const python::object &, bool,
+                                    bool, bool)>(
+          GenerateDepictionMatching2DStructure),
       (python::arg("mol"), python::arg("reference"), python::arg("confId") = -1,
        python::arg("refPatt") = python::object(),
        python::arg("acceptFailure") = false, python::arg("forceRDKit") = false,
@@ -283,15 +507,44 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                  this should have a depiction. \n\
   atomMap -      a sequence of (queryAtomIdx, molAtomIdx) pairs that will \n\
                  be used to generate the atom mapping between the molecule \n\
-                 and the reference. \n\
+                 and the reference. Note that this sequence can be shorter \n\
+                 than the number of atoms in the reference.\n\
   confId -       (optional) the id of the reference conformation to use \n\
-  forceRDKit -   (optional) use RDKit to generate coordinates even if \n\
+  params -       (optional) an instance of ConstrainedDepictionParams\n";
+  python::def(
+      "GenerateDepictionMatching2DStructure",
+      static_cast<void (*)(RDKit::ROMol &, const RDKit::ROMol &,
+                           const python::object &, int,
+                           const python::object &)>(
+          RDDepict::GenerateDepictionMatching2DStructureAtomMap),
+      (python::arg("mol"), python::arg("reference"), python::arg("atomMap"),
+       python::arg("confId") = -1, python::arg("params") = python::object()),
+      docString.c_str());
+
+  docString =
+      "Generate a depiction for a molecule where a piece of the \n\
+  molecule is constrained to have the same coordinates as a reference. \n\n\
+  This is useful for, for example, generating depictions of SAR data \n\
+  sets so that the cores of the molecules are all oriented the same way. \n\
+  ARGUMENTS: \n\n\
+  mol -    the molecule to be aligned, this will come back \n\
+           with a single conformer. \n\
+  reference -    a molecule with the reference atoms to align to; \n\
+                 this should have a depiction. \n\
+  atomMap -      a sequence of (queryAtomIdx, molAtomIdx) pairs that will \n\
+                 be used to generate the atom mapping between the molecule \n\
+                 and the reference. Note that this sequence can be shorter \n\
+                 than the number of atoms in the reference.\n\
+  confId -       the id of the reference conformation to use \n\
+  forceRDKit -   use RDKit to generate coordinates even if \n\
                  preferCoordGen is set to true\n";
   python::def(
       "GenerateDepictionMatching2DStructure",
-      RDDepict::GenerateDepictionMatching2DStructureAtomMap,
+      static_cast<void (*)(RDKit::ROMol &, const RDKit::ROMol &,
+                           const python::object &, int, bool)>(
+          RDDepict::GenerateDepictionMatching2DStructureAtomMap),
       (python::arg("mol"), python::arg("reference"), python::arg("atomMap"),
-       python::arg("confId") = -1, python::arg("forceRDKit") = false),
+       python::arg("confId"), python::arg("forceRDKit")),
       docString.c_str());
 
   docString =
@@ -326,11 +579,19 @@ BOOST_PYTHON_MODULE(rdDepictor) {
       "Rotate the 2D depiction such that the majority of bonds have a\n\
   30-degree angle with the X axis.\n\
   ARGUMENTS:\n\n\
-  mol -    the molecule to be rotated.\n\
-  confId -       (optional) the id of the reference conformation to use";
+  mol              - the molecule to be rotated.\n\
+  confId           - (optional) the id of the reference conformation to use.\n\
+  minimizeRotation - (optional) if False (the default), the molecule\n\
+                     is rotated such that the majority of bonds have an angle\n\
+                     with the X axis of 30 or 90 degrees. If True, the minimum\n\
+                     rotation is applied such that the majority of bonds have\n\
+                     an angle with the X axis of 0, 30, 60, or 90 degrees,\n\
+                     with the goal of altering the initial orientation as\n\
+                     little as possible .";
 
   python::def("StraightenDepiction", RDDepict::straightenDepiction,
-              (python::arg("mol"), python::arg("confId") = -1),
+              (python::arg("mol"), python::arg("confId") = -1,
+               python::arg("minimizeRotation") = false),
               docString.c_str());
 
   docString =

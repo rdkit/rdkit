@@ -14,6 +14,7 @@
 
 #include <RDGeneral/hash/hash_fwd.hpp>
 #include <functional>
+#include <boost/functional.hpp>
 #include <RDGeneral/hash/detail/hash_float.hpp>
 #include <boost/detail/container_fwd.hpp>
 #include <string>
@@ -337,52 +338,62 @@ std::hash_result_t hash_value(std::complex<T> const& v) {
 //
 
 #if !BOOST_WORKAROUND(BOOST_MSVC, < 1300)
-#define BOOST_HASH_SPECIALIZE(type)                                          \
-  template <>                                                                \
-  struct hash<type> : public std::unary_function<type, std::hash_result_t> { \
-    std::hash_result_t operator()(type v) const {                            \
-      return gboost::hash_value(v);                                          \
-    }                                                                        \
+#define BOOST_HASH_SPECIALIZE(type)                                            \
+  template <>                                                                  \
+  struct hash<type>                                                            \
+      : public boost::functional::detail::unary_function<type,                 \
+                                                         std::hash_result_t> { \
+    std::hash_result_t operator()(type v) const {                              \
+      return gboost::hash_value(v);                                            \
+    }                                                                          \
   };
 
-#define BOOST_HASH_SPECIALIZE_REF(type)                                      \
-  template <>                                                                \
-  struct hash<type> : public std::unary_function<type, std::hash_result_t> { \
-    std::hash_result_t operator()(type const& v) const {                     \
-      return gboost::hash_value(v);                                          \
-    }                                                                        \
+#define BOOST_HASH_SPECIALIZE_REF(type)                                        \
+  template <>                                                                  \
+  struct hash<type>                                                            \
+      : public boost::functional::detail::unary_function<type,                 \
+                                                         std::hash_result_t> { \
+    std::hash_result_t operator()(type const& v) const {                       \
+      return gboost::hash_value(v);                                            \
+    }                                                                          \
   };
 #else
-#define BOOST_HASH_SPECIALIZE(type)                                          \
-  template <>                                                                \
-  struct hash<type> : public std::unary_function<type, std::hash_result_t> { \
-    std::hash_result_t operator()(type v) const {                            \
-      return gboost::hash_value(v);                                          \
-    }                                                                        \
-  };                                                                         \
-                                                                             \
-  template <>                                                                \
-  struct hash<const type>                                                    \
-      : public std::unary_function<const type, std::hash_result_t> {         \
-    std::hash_result_t operator()(const type v) const {                      \
-      return gboost::hash_value(v);                                          \
-    }                                                                        \
+#define BOOST_HASH_SPECIALIZE(type)                                            \
+  template <>                                                                  \
+  struct hash<type>                                                            \
+      : public boost::functional::detail::unary_function<type,                 \
+                                                         std::hash_result_t> { \
+    std::hash_result_t operator()(type v) const {                              \
+      return gboost::hash_value(v);                                            \
+    }                                                                          \
+  };                                                                           \
+                                                                               \
+  template <>                                                                  \
+  struct hash<const type>                                                      \
+      : public boost::functional::detail::unary_function<const type,           \
+                                                         std::hash_result_t> { \
+    std::hash_result_t operator()(const type v) const {                        \
+      return gboost::hash_value(v);                                            \
+    }                                                                          \
   };
 
-#define BOOST_HASH_SPECIALIZE_REF(type)                                      \
-  template <>                                                                \
-  struct hash<type> : public std::unary_function<type, std::hash_result_t> { \
-    std::hash_result_t operator()(type const& v) const {                     \
-      return gboost::hash_value(v);                                          \
-    }                                                                        \
-  };                                                                         \
-                                                                             \
-  template <>                                                                \
-  struct hash<const type>                                                    \
-      : public std::unary_function<const type, std::hash_result_t> {         \
-    std::hash_result_t operator()(type const& v) const {                     \
-      return gboost::hash_value(v);                                          \
-    }                                                                        \
+#define BOOST_HASH_SPECIALIZE_REF(type)                                        \
+  template <>                                                                  \
+  struct hash<type>                                                            \
+      : public boost::functional::detail::unary_function<type,                 \
+                                                         std::hash_result_t> { \
+    std::hash_result_t operator()(type const& v) const {                       \
+      return gboost::hash_value(v);                                            \
+    }                                                                          \
+  };                                                                           \
+                                                                               \
+  template <>                                                                  \
+  struct hash<const type>                                                      \
+      : public boost::functional::detail::unary_function<const type,           \
+                                                         std::hash_result_t> { \
+    std::hash_result_t operator()(type const& v) const {                       \
+      return gboost::hash_value(v);                                            \
+    }                                                                          \
   };
 #endif
 
@@ -409,7 +420,8 @@ BOOST_HASH_SPECIALIZE(long double)
 
 #if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
 template <class T>
-struct hash<T*> : public std::unary_function<T*, std::hash_result_t> {
+struct hash<T*>
+    : public boost::functional::detail::unary_function<T*, std::hash_result_t> {
   std::hash_result_t operator()(T* v) const {
 #if !BOOST_WORKAROUND(__SUNPRO_CC, <= 0x590)
     return gboost::hash_value(v);
@@ -429,7 +441,9 @@ struct hash_impl;
 template <>
 struct hash_impl<true> {
   template <class T>
-  struct inner : public std::unary_function<T, std::hash_result_t> {
+  struct inner
+      : public boost::functional::detail::unary_function<T,
+                                                         std::hash_result_t> {
     std::hash_result_t operator()(T val) const {
 #if !BOOST_WORKAROUND(__SUNPRO_CC, <= 590)
       return gboost::hash_value(val);

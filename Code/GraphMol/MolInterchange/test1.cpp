@@ -27,9 +27,8 @@
 using namespace RDKit;
 
 void test1() {
-  BOOST_LOG(rdInfoLog) << "test1: basics" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test1: basics" << std::endl;
 
-#if 1
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
@@ -123,7 +122,6 @@ void test1() {
     TEST_ASSERT(m->getBondBetweenAtoms(1, 2));
     TEST_ASSERT(m->getBondBetweenAtoms(1, 2)->getBondType() == Bond::ZERO);
   }
-#endif
 
   {
     std::string json =
@@ -142,7 +140,7 @@ void test1() {
     TEST_ASSERT(m->getBondBetweenAtoms(0, 1));
   }
 
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void roundtripSmi(const char *smi) {
@@ -165,8 +163,7 @@ void roundtripSmi(const char *smi) {
 }
 
 void test2() {
-  BOOST_LOG(rdInfoLog) << "test2: basic writing" << std::endl;
-#if 1
+  BOOST_LOG(rdErrorLog) << "test2: basic writing" << std::endl;
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("CC"));
     TEST_ASSERT(mol);
@@ -174,34 +171,14 @@ void test2() {
     auto json = MolInterchange::MolToJSONData(*mol);
     std::cerr << json << std::endl;
   }
-#endif
   roundtripSmi("F[C@@](Cl)(O)C");
   roundtripSmi("c1ccccc1");
   roundtripSmi("CCC1=C(N)C=C(C)N=C1");
-#if 0
-  {
-    std::unique_ptr<RWMol> mol(SmilesToMol("F[C@](Cl)(O)/C=C/C"));
-    TEST_ASSERT(mol);
-    mol->setProp("_Name", "test mol");
-    mol->getBondBetweenAtoms(4, 5)->setStereo(Bond::STEREOTRANS);
-    auto json = MolInterchange::MolToJSONData(*mol, "test2 mol2");
-    std::cerr << json << std::endl;
-    std::string smi1 = MolToSmiles(*mol);
-    auto newMols = MolInterchange::JSONDataToMols(json);
-    TEST_ASSERT(newMols.size() == 1);
-    mol->debugMol(std::cerr);
-    newMols[0]->debugMol(std::cerr);
-    std::string smi2 = MolToSmiles(*newMols[0]);
-    std::cerr << "smi1: " << smi1 << std::endl;
-    std::cerr << "smi2: " << smi2 << std::endl;
-    TEST_ASSERT(smi1 == smi2);
-  }
-#endif
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void test3() {
-  BOOST_LOG(rdInfoLog) << "test3: writing conformers" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test3: writing conformers" << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
@@ -221,12 +198,11 @@ void test3() {
     TEST_ASSERT(!newMols[0]->getConformer(0).is3D());
     TEST_ASSERT(newMols[0]->getConformer(1).is3D());
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void test4() {
-  BOOST_LOG(rdInfoLog) << "test4: writing properties" << std::endl;
-#if 1
+  BOOST_LOG(rdErrorLog) << "test4: writing properties" << std::endl;
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("CC"));
     TEST_ASSERT(mol);
@@ -247,12 +223,11 @@ void test4() {
     TEST_ASSERT(newMols[0]->hasProp("foo_double"));
     TEST_ASSERT(newMols[0]->getProp<double>("foo_double") == 1.2);
   }
-#endif
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void test5() {
-  BOOST_LOG(rdInfoLog) << "test5: writing partial charges" << std::endl;
+  BOOST_LOG(rdErrorLog) << "test5: writing partial charges" << std::endl;
 
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("CO"));
@@ -279,7 +254,7 @@ void test5() {
 }
 
 void benchmarking() {
-  BOOST_LOG(rdInfoLog) << "benchmarking performance" << std::endl;
+  BOOST_LOG(rdErrorLog) << "benchmarking performance" << std::endl;
   std::string rdbase = getenv("RDBASE");
   {
     std::string fName =
@@ -339,11 +314,11 @@ void benchmarking() {
       delete m;
     }
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void test6() {
-  BOOST_LOG(rdInfoLog) << "testing parse options" << std::endl;
+  BOOST_LOG(rdErrorLog) << "testing parse options" << std::endl;
   std::string rdbase = getenv("RDBASE");
   std::string fName =
       rdbase + "/Code/GraphMol/MolInterchange/test_data/test3.json";
@@ -418,13 +393,13 @@ void test6() {
     TEST_ASSERT(
         m->getAtomWithIdx(0)->hasProp(common_properties::_GasteigerCharge));
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void testGithub2046() {
-  BOOST_LOG(rdInfoLog) << "testing github #2046: CIPRank values from "
-                          "JSONDataToMols are not unsigned"
-                       << std::endl;
+  BOOST_LOG(rdErrorLog) << "testing github #2046: CIPRank values from "
+                           "JSONDataToMols are not unsigned"
+                        << std::endl;
   roundtripSmi("C1CCO[C@H]1F");
   {
     std::unique_ptr<RWMol> mol(SmilesToMol("C1CCO[C@H]1F"));
@@ -435,11 +410,11 @@ void testGithub2046() {
     TEST_ASSERT(mols[0]->getAtomWithIdx(3)->getProp<unsigned int>(
                     RDKit::common_properties::_CIPRank) > 0);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void testEitherStereo() {
-  BOOST_LOG(rdInfoLog) << "testing 'either' stereochemistry" << std::endl;
+  BOOST_LOG(rdErrorLog) << "testing 'either' stereochemistry" << std::endl;
   {
     auto mol = "CC=CC/C=C/C"_smiles;
     TEST_ASSERT(mol);
@@ -456,90 +431,21 @@ void testEitherStereo() {
     auto mols = MolInterchange::JSONDataToMols(jsond);
     TEST_ASSERT(mols[0]->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
   }
-  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  BOOST_LOG(rdErrorLog) << "done" << std::endl;
 }
 
 void RunTests() {
-#if 1
   test1();
   test2();
   test3();
   test4();
   test5();
   test6();
-#endif
   testGithub2046();
   testEitherStereo();
 
   // benchmarking();
-  // test2();
 }
-
-#if 0
-// must be in German Locale for test...
-void testLocaleSwitcher() {
-  float d = -1.0;
-  char buffer[1024];
-  sprintf(buffer, "%0.2f", d);
-  if (std::string(buffer) != "-1,00") {
-    BOOST_LOG(rdInfoLog) << " ---- no German locale support (skipping) ---- "
-                         << std::endl;
-    return;
-  }
-
-  {
-    RDKit::Utils::LocaleSwitcher ls;
-    sprintf(buffer, "%0.2f", d);
-    CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
-    // test locale switcher recursion
-    {
-      RDKit::Utils::LocaleSwitcher ls;
-      sprintf(buffer, "%0.2f", d);
-      CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
-    }
-    // should still be in the "C" variant
-    sprintf(buffer, "%0.2f", d);
-    CHECK_INVARIANT(std::string(buffer) == "-1.00", "Locale Switcher Fail");
-  }
-
-  // Should be back in German Locale
-  sprintf(buffer, "%0.2f", d);
-  CHECK_INVARIANT(std::string(buffer) == "-1,00", "Locale Switcher Fail");
-}
-
-#ifdef RDK_TEST_MULTITHREADED
-
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/thread.hpp>
-#include <RDGeneral/BoostEndInclude.h>
-
-namespace {
-void runblock() { testLocaleSwitcher(); }
-}
-void testMultiThreadedSwitcher() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "    Test multithreading Locale Switching"
-                        << std::endl;
-
-  boost::thread_group tg;
-  unsigned int count = 100;
-  for (unsigned int i = 0; i < count; ++i) {
-    tg.add_thread(new boost::thread(runblock));
-  }
-  tg.join_all();
-  BOOST_LOG(rdErrorLog) << "    Test multithreading (Done)" << std::endl;
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-}
-
-#else
-
-void testMultiThreadedSwitcher() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << " ---- Multithreaded tests disabled ---- "
-                       << std::endl;
-}
-#endif
-#endif
 
 int main(int argc, char *argv[]) {
   (void)argc;

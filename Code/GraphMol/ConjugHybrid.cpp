@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,6 +21,15 @@ namespace RDKit {
 namespace {
 bool isAtomConjugCand(const Atom *at) {
   PRECONDITION(at, "bad atom");
+  // return false for neutral atoms where the current valence exceeds the
+  // minimal valence for the atom. logic: if we're hypervalent we aren't
+  // conjugated
+  const auto &vals =
+      PeriodicTable::getTable()->getValenceList(at->getAtomicNum());
+  if (!at->getFormalCharge() && vals.front() >= 0 &&
+      at->getTotalValence() > static_cast<unsigned int>(vals.front())) {
+    return false;
+  }
   // the second check here is for Issue211, where the c-P bonds in
   // Pc1ccccc1 were being marked as conjugated.  This caused the P atom
   // itself to be SP2 hybridized.  This is wrong.  For now we'll do a quick
@@ -28,9 +37,10 @@ bool isAtomConjugCand(const Atom *at) {
   // the first row of the periodic table.  (Conjugation in aromatic rings
   // has already been attended to, so this is safe.)
   int nouter = PeriodicTable::getTable()->getNouterElecs(at->getAtomicNum());
-  return ((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
-          (nouter == 6 && at->getTotalDegree() < 2u)) &&
-         (MolOps::countAtomElec(at) > 0);
+  auto res = ((at->getAtomicNum() <= 10) || (nouter != 5 && nouter != 6) ||
+              (nouter == 6 && at->getTotalDegree() < 2u)) &&
+             MolOps::countAtomElec(at) > 0;
+  return res;
 }
 
 void markConjAtomBonds(Atom *at) {
@@ -47,14 +57,12 @@ void markConjAtomBonds(Atom *at) {
     return;
   }
 
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    auto bnd1 = mol[nbri];
-    if (bnd1->getValenceContrib(at) < 1.5) {
+  for (const auto bnd1 : mol.atomBonds(at)) {
+    if (bnd1->getValenceContrib(at) < 1.5 ||
+        !isAtomConjugCand(bnd1->getOtherAtom(at))) {
       continue;
     }
-
-    for (const auto &nbrj : boost::make_iterator_range(mol.getAtomBonds(at))) {
-      auto bnd2 = mol[nbrj];
+    for (const auto bnd2 : mol.atomBonds(at)) {
       if (bnd1 == bnd2) {
         continue;
       }
@@ -76,9 +84,9 @@ int numBondsPlusLonePairs(Atom *at) {
   int deg = at->getTotalDegree();
 
   auto &mol = at->getOwningMol();
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    auto bond = mol[nbri];
-    if (bond->getBondType() == Bond::ZERO) {
+  for (const auto bond : mol.atomBonds(at)) {
+    if (bond->getBondType() == Bond::ZERO ||
+        (isDative(*bond) && at->getIdx() != bond->getEndAtomIdx())) {
       --deg;
     }
   }
@@ -109,8 +117,7 @@ bool atomHasConjugatedBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
 
   auto &mol = at->getOwningMol();
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    auto bnd = mol[nbri];
+  for (const auto bnd : mol.atomBonds(at)) {
     if (bnd->getIsConjugated()) {
       return true;
     }
@@ -136,11 +143,48 @@ void setHybridization(ROMol &mol) {
   for (auto atom : mol.atoms()) {
     if (atom->getAtomicNum() == 0) {
       atom->setHybridization(Atom::UNSPECIFIED);
-    } else if (atom->getAtomicNum() >= 89) {
-      // don't bother with the actinides and beyond
-      atom->setHybridization(Atom::S);
     } else {
-      auto norbs = numBondsPlusLonePairs(atom);
+      // if the stereo spec matches the coordination number, this is easy
+      switch (atom->getChiralTag()) {
+        case Atom::ChiralType::CHI_TETRAHEDRAL:
+        case Atom::ChiralType::CHI_TETRAHEDRAL_CW:
+        case Atom::ChiralType::CHI_TETRAHEDRAL_CCW:
+          if (atom->getTotalDegree() == 4) {
+            atom->setHybridization(Atom::HybridizationType::SP3);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_SQUAREPLANAR:
+          if (atom->getTotalDegree() <= 4 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP2D);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+          if (atom->getTotalDegree() <= 5 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP3D);
+            continue;
+          }
+          break;
+        case Atom::ChiralType::CHI_OCTAHEDRAL:
+          if (atom->getTotalDegree() <= 6 && atom->getTotalDegree() >= 2) {
+            atom->setHybridization(Atom::HybridizationType::SP3D2);
+            continue;
+          }
+          break;
+        default:
+          break;
+      }
+      // otherwise we have to do some work
+      int norbs;
+      // try to be smart for early elements, but for later
+      // ones just use the degree
+      // FIX: we should probably also be using the degree for metals
+      if (atom->getAtomicNum() < 89) {
+        norbs = numBondsPlusLonePairs(atom);
+      } else {
+        norbs = atom->getTotalDegree();
+      }
       switch (norbs) {
         case 0:
           // This occurs for things like Na+
@@ -165,7 +209,8 @@ void setHybridization(ROMol &mol) {
           //   has norbs = 4, and a conjugated bond, but clearly should
           //   not be SP2)
           // This is Issue276
-          if (atom->getDegree() > 3 || !MolOps::atomHasConjugatedBond(atom)) {
+          if (atom->getTotalDegree() > 3 ||
+              !MolOps::atomHasConjugatedBond(atom)) {
             atom->setHybridization(Atom::SP3);
           } else {
             atom->setHybridization(Atom::SP2);

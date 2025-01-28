@@ -96,7 +96,7 @@ void computeDihedral(const RDGeom::Point3D *p1, const RDGeom::Point3D *p2,
 namespace ForceFieldsHelper {
 class calcEnergy {
  public:
-  calcEnergy(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder){};
+  calcEnergy(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder) {};
   double operator()(double *pos) const { return mp_ffHolder->calcEnergy(pos); }
 
  private:
@@ -105,7 +105,7 @@ class calcEnergy {
 
 class calcGradient {
  public:
-  calcGradient(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder){};
+  calcGradient(ForceFields::ForceField *ffHolder) : mp_ffHolder(ffHolder) {};
   double operator()(double *pos, double *grad) const {
     double res = 1.0;
     // the contribs to the gradient function use +=, so we need
@@ -116,7 +116,6 @@ class calcGradient {
     }
     mp_ffHolder->calcGrad(pos, grad);
 
-#if 1
     // FIX: this hack reduces the gradients so that the
     // minimizer is more efficient.
     double maxGrad = -1e8;
@@ -140,7 +139,6 @@ class calcGradient {
       }
     }
     res = gradScale;
-#endif
     return res;
   }
 
@@ -194,25 +192,19 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) {
       }
     } else {
       res = 0.0;
-#if 0
-      for (unsigned int idx = 0; idx < d_dimension; idx++) {
-        double tmp = pos[d_dimension * i + idx] - pos[d_dimension * j + idx];
-        res += tmp * tmp;
-      }
-#else
       double *pi = &(pos[d_dimension * i]), *pj = &(pos[d_dimension * j]);
       for (unsigned int idx = 0; idx < d_dimension; ++idx, ++pi, ++pj) {
         double tmp = *pi - *pj;
         res += tmp * tmp;
       }
-#endif
     }
     res = sqrt(res);
   }
   return res;
 }
 
-double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
+double ForceField::distance2(unsigned int i, unsigned int j,
+                             double *pos) const {
   PRECONDITION(df_init, "not initialized");
   URANGE_CHECK(i, d_numPoints);
   URANGE_CHECK(j, d_numPoints);
@@ -231,20 +223,16 @@ double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
     }
   } else {
     res = 0.0;
-#if 0
-    for (unsigned int idx = 0; idx < d_dimension; idx++) {
-      double tmp = pos[d_dimension * i + idx] - pos[d_dimension * j + idx];
-      res += tmp * tmp;
-    }
-#else
     double *pi = &(pos[d_dimension * i]), *pj = &(pos[d_dimension * j]);
     for (unsigned int idx = 0; idx < d_dimension; ++idx, ++pi, ++pj) {
       double tmp = *pi - *pj;
       res += tmp * tmp;
     }
-#endif
   }
-  res = sqrt(res);
+  return res;
+}
+double ForceField::distance(unsigned int i, unsigned int j, double *pos) const {
+  auto res = sqrt(distance2(i, j, pos));
   return res;
 }
 
@@ -278,19 +266,18 @@ int ForceField::minimize(unsigned int snapshotFreq,
 
   unsigned int numIters = 0;
   unsigned int dim = this->d_numPoints * d_dimension;
-  double finalForce;
-  auto *points = new double[dim];
+  double finalForce = 0.0;
+  std::vector<double> points(dim);
 
-  this->scatter(points);
+  this->scatter(points.data());
   ForceFieldsHelper::calcEnergy eCalc(this);
   ForceFieldsHelper::calcGradient gCalc(this);
 
   int res =
-      BFGSOpt::minimize(dim, points, forceTol, numIters, finalForce, eCalc,
+      BFGSOpt::minimize(dim, points.data(), forceTol, numIters, finalForce, eCalc,
                         gCalc, snapshotFreq, snapshotVect, energyTol, maxIts);
-  this->gather(points);
+  this->gather(points.data());
 
-  delete[] points;
   return res;
 }
 

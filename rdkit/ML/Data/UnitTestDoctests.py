@@ -6,47 +6,47 @@
 """
 import doctest
 import unittest
-
-from rdkit.ML.Data import SplitData, DataUtils
-from rdkit.TestRunner import redirect_stdout
 from io import StringIO
+
+from rdkit.ML.Data import DataUtils, SplitData
+from rdkit.TestRunner import redirect_stdout
 
 
 def load_tests(loader, tests, ignore):
-    """ Add the Doctests from the module """
-    tests.addTests(doctest.DocTestSuite(SplitData, optionflags=doctest.ELLIPSIS))
-    tests.addTests(doctest.DocTestSuite(DataUtils, optionflags=doctest.ELLIPSIS))
-    return tests
+  """ Add the Doctests from the module """
+  tests.addTests(doctest.DocTestSuite(SplitData, optionflags=doctest.ELLIPSIS))
+  tests.addTests(doctest.DocTestSuite(DataUtils, optionflags=doctest.ELLIPSIS))
+  return tests
 
 
 class TestCaseSplitData(unittest.TestCase):
 
-    def test_exceptions(self):
-        self.assertRaises(ValueError, SplitData.SplitIndices, 10, -0.1)
-        self.assertRaises(ValueError, SplitData.SplitIndices, 10, 1.1)
+  def test_exceptions(self):
+    self.assertRaises(ValueError, SplitData.SplitIndices, 10, -0.1)
+    self.assertRaises(ValueError, SplitData.SplitIndices, 10, 1.1)
 
-        f = StringIO()
-        with redirect_stdout(f):
-            SplitData.SplitIndices(10, 0.5, replacement=True, silent=False)
-        s = f.getvalue()
-        self.assertIn('Training', s)
-        self.assertIn('hold-out', s)
+    f = StringIO()
+    with redirect_stdout(f):
+      SplitData.SplitIndices(10, 0.5, replacement=True, silent=False)
+    s = f.getvalue()
+    self.assertIn('Training', s)
+    self.assertIn('hold-out', s)
 
-    def test_SplitData(self):
-        self.assertRaises(ValueError, SplitData.SplitDataSet, None, -1.1)
-        self.assertRaises(ValueError, SplitData.SplitDataSet, None, 1.1)
+  def test_SplitData(self):
+    self.assertRaises(ValueError, SplitData.SplitDataSet, None, -1.1)
+    self.assertRaises(ValueError, SplitData.SplitDataSet, None, 1.1)
 
-        data = list(range(10))
-        DataUtils.InitRandomNumbers((23, 42))
-        f = StringIO()
-        with redirect_stdout(f):
-            result = SplitData.SplitDataSet(data, 0.5)
-        self.assertEqual(set(result[0]).intersection(result[1]), set())
-        self.assertEqual(len(result[0]), 5)
-        s = f.getvalue()
-        self.assertIn('Training', s)
-        self.assertIn('hold-out', s)
+    data = list(range(10))
+    DataUtils.InitRandomNumbers((23, 42))
+    f = StringIO()
+    with redirect_stdout(f):
+      result = SplitData.SplitDataSet(data, 0.5)
+    self.assertEqual(set(result[0]).intersection(result[1]), set())
+    self.assertEqual(len(result[0]), 5)
+    s = f.getvalue()
+    self.assertIn('Training', s)
+    self.assertIn('hold-out', s)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    unittest.main()
+  unittest.main()

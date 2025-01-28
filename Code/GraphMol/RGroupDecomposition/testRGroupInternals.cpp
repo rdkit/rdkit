@@ -40,6 +40,7 @@
 #define private public
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecompData.h>
+#include <GraphMol/RGroupDecomposition/RGroupGa.h>
 
 using namespace RDKit;
 
@@ -64,7 +65,7 @@ void testCoresLabelledProperly() {
   }
 
   RGroupDecompositionParameters params;
-  params.alignment = RGroupCoreAlignment::None;
+  params.alignment = RGroupCoreAlignment::NoAlignment;
   params.scoreMethod = FingerprintVariance;
   RGroupDecomposition decomposition(cores, params);
 
@@ -110,25 +111,13 @@ void testRingMatching3Score() {
       << "Test scoring function for RingMatching3- see GitHub ##3924"
       << std::endl;
 
-  R_DECOMP decomp1Mol1 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]"),
-      makeRData(1, "*C([H])([H])C")
-  };
-  R_DECOMP decomp1Mol2 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]"),
-      makeRData(1, "*C([H])([H])I")
-  };
-  R_DECOMP decomp1Mol3 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]"),
-      makeRData(1, "*C([H])([H])F")
-  };
+  R_DECOMP decomp1Mol1 = {makeRData(-4, "*[H]"), makeRData(-2, "*[H]"),
+                          makeRData(-1, "*[H]"), makeRData(1, "*C([H])([H])C")};
+  R_DECOMP decomp1Mol2 = {makeRData(-4, "*[H]"), makeRData(-3, "*[H]"),
+                          makeRData(-2, "*[H]"), makeRData(-1, "*[H]"),
+                          makeRData(1, "*C([H])([H])I")};
+  R_DECOMP decomp1Mol3 = {makeRData(-4, "*[H]"), makeRData(-2, "*[H]"),
+                          makeRData(-1, "*[H]"), makeRData(1, "*C([H])([H])F")};
   RGroupMatch match1Mol1(0, 0, decomp1Mol1, nullptr);
   RGroupMatch match1Mol2(0, 0, decomp1Mol2, nullptr);
   RGroupMatch match1Mol3(0, 0, decomp1Mol3, nullptr);
@@ -140,19 +129,11 @@ void testRingMatching3Score() {
       matches1Mol1, matches1Mol2, matches1Mol3};
   std::vector<size_t> permutation{0, 0, 0};
 
-  R_DECOMP decomp2Mol1 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*C([H])([H])C"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]")
-  };
-  R_DECOMP decomp2Mol2 = {
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(-1, "*[H]"),
-      makeRData(1, "*C([H])([H])I")
-  };
+  R_DECOMP decomp2Mol1 = {makeRData(-4, "*[H]"), makeRData(-3, "*C([H])([H])C"),
+                          makeRData(-2, "*[H]"), makeRData(-1, "*[H]")};
+  R_DECOMP decomp2Mol2 = {makeRData(-4, "*[H]"), makeRData(-3, "*[H]"),
+                          makeRData(-2, "*[H]"), makeRData(-1, "*[H]"),
+                          makeRData(1, "*C([H])([H])I")};
   R_DECOMP decomp2Mol3 = {makeRData(-4, "*[H]"), makeRData(-2, "*[H]"),
                           makeRData(-1, "*[H]"), makeRData(1, "*C([H])([H])F")};
   RGroupMatch match2Mol1(0, 1, decomp2Mol1, nullptr);
@@ -178,100 +159,6 @@ void testRingMatching3Score() {
   TEST_ASSERT(testFp1 > testFp2);
 }
 
-void testGeminalRGroups() {
-  BOOST_LOG(rdInfoLog)
-      << "********************************************************\n";
-  BOOST_LOG(rdInfoLog)
-      << "Test scoring function for Geminal R-Groups- see GitHub #3924"
-      << std::endl;
-
-  std::vector<int> attachments{5, 6};
-  R_DECOMP decomp1Mol1 = {
-      makeRData(-6, "*[H]"),
-      makeRData(-5, "*[H]"),
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(5, attachments, "*C([H])([H])C(*)([H])[H]"),
-      makeRData(6, attachments, "*C([H])([H])C(*)([H])[H]")
-  };
-  R_DECOMP decomp1Mol2 = {
-      makeRData(-6, "*[H]"),
-      makeRData(-5, "*[H]"),
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(5, "*C([H])([H])[H]"),
-      makeRData(6, "*C([H])([H])[H]")
-  };
-  R_DECOMP decomp1Mol3 = {
-      makeRData(-6, "*[H]"),
-      makeRData(-5, "*[H]"),
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(5, "*Cl"),
-      makeRData(6, "*Br")
-  };
-  RGroupMatch match1Mol1(0, 0, decomp1Mol1, nullptr);
-  RGroupMatch match1Mol2(0, 0, decomp1Mol2, nullptr);
-  RGroupMatch match1Mol3(0, 0, decomp1Mol3, nullptr);
-  std::set<int> labels{-6, -5, -4, -3, -2, 5, 6};
-  std::vector<RGroupMatch> matches1Mol1{match1Mol1};
-  std::vector<RGroupMatch> matches1Mol2{match1Mol2};
-  std::vector<RGroupMatch> matches1Mol3{match1Mol3};
-  std::vector<std::vector<RGroupMatch>> allMatches1 = {
-      matches1Mol1, matches1Mol2, matches1Mol3};
-  std::vector<size_t> permutation{0, 0, 0};
-
-  R_DECOMP decomp2Mol1 = {
-      makeRData(-6, " *C([H])([H])C(*)([H])[H]"),
-      makeRData(-5, "*[H]"),
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(5, "*[H]"),
-      makeRData(6, "*[H]")
-  };
-  R_DECOMP decomp2Mol2 = {
-      makeRData(-6, "*C([H])([H])[H].*C([H])([H])[H]"),
-      makeRData(-5, "*[H]"),
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(5, "*[H]"),
-      makeRData(6, "*[H]")
-  };
-  R_DECOMP decomp2Mol3 = {
-      makeRData(-6, "*Cl.*Br"),
-      makeRData(-5, "*[H]"),
-      makeRData(-4, "*[H]"),
-      makeRData(-3, "*[H]"),
-      makeRData(-2, "*[H]"),
-      makeRData(5, "*[H]"),
-      makeRData(6, "*[H]")
-  };
-  RGroupMatch match2Mol1(0, 2, decomp2Mol1, nullptr);
-  RGroupMatch match2Mol2(0, 2, decomp2Mol2, nullptr);
-  RGroupMatch match2Mol3(0, 2, decomp2Mol3, nullptr);
-  std::vector<RGroupMatch> matches2Mol1{match2Mol1};
-  std::vector<RGroupMatch> matches2Mol2{match2Mol2};
-  std::vector<RGroupMatch> matches2Mol3{match2Mol3};
-  std::vector<std::vector<RGroupMatch>> allMatches2 = {
-      matches2Mol1, matches2Mol2, matches2Mol3};
-  std::vector<size_t> permutation2{0, 0, 0};
-
-  RGroupScorer scorer;
-  auto test1 = scorer.matchScore(permutation, allMatches1, labels);
-  auto test2 = scorer.matchScore(permutation, allMatches2, labels);
-
-  TEST_ASSERT(test1 > test2);
-
-  auto testFp1 = fingerprintVarianceScore(permutation, allMatches1, labels);
-  auto testFp2 = fingerprintVarianceScore(permutation, allMatches2, labels);
-
-  TEST_ASSERT(testFp1 > testFp2);
-}
 void testGithub3746() {
   BOOST_LOG(rdInfoLog)
       << "********************************************************\n";
@@ -313,7 +200,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "Testing R-Group Decomposition Internals\n";
 
   testRingMatching3Score();
-  testGeminalRGroups();
   testGithub3746();
   testCoresLabelledProperly();
 

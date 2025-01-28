@@ -37,6 +37,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DJS : public MolDraw2D {
       : MolDraw2D(width, height, panelWidth, panelHeight), d_context(context) {
     PRECONDITION(width > 0, "bad width");
     PRECONDITION(height > 0, "bad height");
+    initDrawing();
+    needs_init_ = false;
     initTextDrawer(noFreetype);
   }
   MolDraw2DJS(const MolDraw2DJS &) = delete;
@@ -51,6 +53,10 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2DJS : public MolDraw2D {
   void drawEllipse(const Point2D &cds1, const Point2D &cds2,
                    bool rawCoords = false) override;
   void clearDrawing() override;
+  void drawWavyLine(const Point2D &cds1, const Point2D &cds2,
+                    const DrawColour &col1, const DrawColour &col2,
+                    unsigned int nSegments = 16, double vertOffset = 0.05,
+                    bool rawCoords = false) override;
 
  private:
   emscripten::val &d_context;

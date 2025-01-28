@@ -13,16 +13,16 @@
 
 #include <string>
 #include <fstream>
-
-// ours
-#include <RDGeneral/BadFileException.h>
-#include <RDGeneral/FileParseException.h>
-#include <GraphMol/FileParsers/MolSupplier.h>
-#include <GraphMol/RDKitBase.h>
-#include <RDBoost/python_streambuf.h>
+#include <memory>
 
 #include <maeparser/MaeConstants.hpp>
 #include <maeparser/Reader.hpp>
+
+#include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/RDKitBase.h>
+#include <RDBoost/python_streambuf.h>
+#include <RDGeneral/BadFileException.h>
+#include <RDGeneral/FileParseException.h>
 
 #include "MolSupplier.h"
 #include "ContextManagers.h"
@@ -40,45 +40,39 @@ bool streamIsGoodOrExhausted(std::istream *stream) {
 
 class LocalMaeMolSupplier : public RDKit::MaeMolSupplier {
  public:
-  LocalMaeMolSupplier(python::object &input, bool sanitize, bool removeHs) {
-    // FIX: minor leak here
-    auto *sb = new streambuf(input);
-    dp_inStream = new streambuf::istream(*sb);
-    dp_sInStream.reset(dp_inStream);
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-    d_reader.reset(new mae::Reader(dp_sInStream));
-    CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
+  LocalMaeMolSupplier() : RDKit::MaeMolSupplier() {}
 
-    try {
-      d_next_struct = d_reader->next(mae::CT_BLOCK);
-    } catch (const mae::read_exception &e) {
-      throw RDKit::FileParseException(e.what());
-    }
+  LocalMaeMolSupplier(python::object &input, bool sanitize, bool removeHs)
+      : dp_streambuf(new streambuf(input)) {
+    auto inStream = new streambuf::istream(*dp_streambuf);
+    bool owner = true;
+    RDKit::v2::FileParsers::MaeMolSupplierParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    dp_supplier.reset(
+        new RDKit::v2::FileParsers::MaeMolSupplier(inStream, owner, params));
   }
   LocalMaeMolSupplier(streambuf &input, bool sanitize, bool removeHs) {
-    dp_inStream = new streambuf::istream(input);
-    dp_sInStream.reset(dp_inStream);
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-    d_reader.reset(new mae::Reader(dp_sInStream));
-    CHECK_INVARIANT(streamIsGoodOrExhausted(dp_inStream), "bad instream");
+    auto inStream = new streambuf::istream(input);
 
-    try {
-      d_next_struct = d_reader->next(mae::CT_BLOCK);
-    } catch (const mae::read_exception &e) {
-      throw RDKit::FileParseException(e.what());
-    }
+    bool owner = true;
+    RDKit::v2::FileParsers::MaeMolSupplierParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    dp_supplier.reset(
+        new RDKit::v2::FileParsers::MaeMolSupplier(inStream, owner, params));
   }
 
   LocalMaeMolSupplier(const std::string &fname, bool sanitize = true,
                       bool removeHs = true)
       : RDKit::MaeMolSupplier(fname, sanitize, removeHs) {}
-};  // namespace
+
+ private:
+  std::unique_ptr<streambuf> dp_streambuf = nullptr;
+};
 
 LocalMaeMolSupplier *FwdMolSupplIter(LocalMaeMolSupplier *self) { return self; }
+
 }  // namespace
 
 namespace RDKit {
@@ -105,29 +99,42 @@ std::string maeMolSupplierClassDoc =
 struct maemolsup_wrap {
   static void wrap() {
     python::class_<LocalMaeMolSupplier, boost::noncopyable>(
-        "MaeMolSupplier", maeMolSupplierClassDoc.c_str(), python::no_init)
+        "MaeMolSupplier", maeMolSupplierClassDoc.c_str(),
+        python::init<>(python::args("self")))
         .def(python::init<python::object &, bool, bool>(
-            (python::arg("fileobj"), python::arg("sanitize") = true,
+            (python::arg("self"), python::arg("fileobj"),
+             python::arg("sanitize") = true,
              python::arg("removeHs") =
                  true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<streambuf &, bool, bool>(
-            (python::arg("streambuf"), python::arg("sanitize") = true,
+            (python::arg("self"), python::arg("streambuf"),
+             python::arg("sanitize") = true,
              python::arg("removeHs") =
                  true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<std::string, bool, bool>(
-            (python::arg("filename"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true)))
+            (python::arg("self"), python::arg("filename"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true)))
         .def("__enter__", &MolIOEnter<LocalMaeMolSupplier>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<LocalMaeMolSupplier>)
+        .def("__iter__", &FwdMolSupplIter,
+             python::return_internal_reference<1>(), python::args("self"))
         .def("__next__", &MolSupplNext<LocalMaeMolSupplier>,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
-        .def("atEnd", &MaeMolSupplier::atEnd,
-             "Returns whether or not we have hit EOF.\n")
-        .def("__iter__", &FwdMolSupplIter,
-             python::return_internal_reference<1>());
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
+        .def("__getitem__", &MolSupplGetItem<LocalMaeMolSupplier>,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self", "idx"))
+        .def("reset", &MaeMolSupplier::reset, python::args("self"),
+             "Resets our position in the file to the beginning.\n")
+        .def("__len__", &MaeMolSupplier::length, python::args("self"))
+        .def("SetData", &MaeMolSupplier::setData, "Sets the text to be parsed",
+             ((python::arg("self"), python::arg("data")),
+              python::arg("sanitize") = true, python::arg("removeHs") = true))
+        .def("atEnd", &MaeMolSupplier::atEnd, python::args("self"),
+             "Returns whether or not we have hit EOF.\n");
   };
 };
 }  // namespace RDKit

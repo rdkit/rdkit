@@ -34,6 +34,11 @@ package org.RDKit;
 
 import static org.junit.Assert.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import org.junit.*;
 
 public class PicklingTests extends GraphMolTest {
@@ -132,6 +137,72 @@ public class PicklingTests extends GraphMolTest {
 			for (int j = 0; j < s1.size(); j++)
 				assertEquals(s2.get(j), s1.get(j));
 		}
+	}
+
+	@Test
+	public void testToFromByteArray() throws IOException {
+		String smi = "CN(C)c1ccc2c(=O)cc[nH]c2c1";
+		String pklFileName = "quinolone.pkl";
+		{
+			ROMol mol = RWMol.MolFromSmiles(smi);
+			byte[] pkl = mol.toByteArray();
+			FileOutputStream pklOutStream = null;
+			try {
+				pklOutStream = new FileOutputStream(pklFileName);
+				pklOutStream.write(pkl);
+			} finally {
+				if (pklOutStream != null) {
+					pklOutStream.close();
+				}
+			}
+			mol.delete();
+		}
+		{
+			FileInputStream pklInStream = null;
+			byte[] pkl = null;
+			File pklInFile = new File(pklFileName);
+			try {
+				pklInStream = new FileInputStream(pklInFile);
+				pkl = new byte[(int)pklInFile.length()];
+				assertEquals(pklInStream.read(pkl), pkl.length);
+			} finally {
+				if (pklInStream != null) {
+					pklInStream.close();
+				}
+			}
+			ROMol mol = ROMol.fromByteArray(pkl);
+			assertEquals(mol.MolToSmiles(), smi);
+			mol.delete();
+		}
+	}
+
+	@Test
+	public void testPickleProperties() {
+		ROMol mol = RWMol.MolFromSmiles("c1ccccc1[C@](F)(Cl)Br");
+		mol.setProp("foo", "bar");
+		mol.setProp("_MolFileChiralFlag", "1");
+		{ 
+			Int_Vect pkl = mol.ToBinary();
+			ROMol mol2 = ROMol.MolFromBinary(pkl);
+			assertFalse(mol2.hasProp("_MolFileChiralFlag"));
+			assertFalse(mol2.hasProp("foo"));
+		}
+		{ 
+			Int_Vect pkl = mol.ToBinary(PropertyPickleOptions.AllProps.swigValue());
+			ROMol mol2 = ROMol.MolFromBinary(pkl);
+			assertTrue(mol2.hasProp("_MolFileChiralFlag"));
+			assertTrue(mol2.hasProp("foo"));
+		}
+		{ 
+			long val = RDKFuncs.getDefaultPickleProperties();
+			RDKFuncs.setDefaultPickleProperties(PropertyPickleOptions.AllProps.swigValue());
+			Int_Vect pkl = mol.ToBinary();
+			RDKFuncs.setDefaultPickleProperties(val);
+			ROMol mol2 = ROMol.MolFromBinary(pkl);
+			assertTrue(mol2.hasProp("_MolFileChiralFlag"));
+			assertTrue(mol2.hasProp("foo"));
+		}
+
 	}
 
 	public static void main(String args[]) {

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2014 Greg Landrum and NextMove Software
+//  Copyright (C) 2013-2024 Greg Landrum and NextMove Software
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -546,8 +546,9 @@ void BasicPDBCleanup(RWMol &mol) {
   }
 }
 
-void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
-                   unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> parsePdbBlock(const char *str, bool sanitize,
+                                     bool removeHs, unsigned int flavor,
+                                     bool proximityBonding) {
   PRECONDITION(str, "bad char ptr");
   std::map<int, Atom *> amap;
   std::map<Bond *, int> bmap;
@@ -555,6 +556,8 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
   bool multi_conformer = false;
   int conformer_atmidx = 0;
   Conformer *conf = nullptr;
+
+  std::unique_ptr<RWMol> mol;
 
   while (*str) {
     unsigned int len;
@@ -584,46 +587,46 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
         str[4] == ' ' && str[5] == ' ') {
       if (!multi_conformer) {
         if (!mol) {
-          mol = new RWMol();
+          mol.reset(new RWMol());
         }
-        PDBAtomLine(mol, str, len, flavor, amap);
+        PDBAtomLine(mol.get(), str, len, flavor, amap);
       } else {
-        PDBConformerLine(mol, str, len, conf, conformer_atmidx);
+        PDBConformerLine(mol.get(), str, len, conf, conformer_atmidx);
       }
       // HETATM records
     } else if (str[0] == 'H' && str[1] == 'E' && str[2] == 'T' &&
                str[3] == 'A' && str[4] == 'T' && str[5] == 'M') {
       if (!multi_conformer) {
         if (!mol) {
-          mol = new RWMol();
+          mol.reset(new RWMol());
         }
-        PDBAtomLine(mol, str, len, flavor, amap);
+        PDBAtomLine(mol.get(), str, len, flavor, amap);
       } else {
-        PDBConformerLine(mol, str, len, conf, conformer_atmidx);
+        PDBConformerLine(mol.get(), str, len, conf, conformer_atmidx);
       }
       // CONECT records
     } else if (str[0] == 'C' && str[1] == 'O' && str[2] == 'N' &&
                str[3] == 'E' && str[4] == 'C' && str[5] == 'T') {
       if (mol && !multi_conformer) {
-        PDBBondLine(mol, str, len, amap, bmap);
+        PDBBondLine(mol.get(), str, len, amap, bmap);
       }
       // COMPND records
     } else if (str[0] == 'C' && str[1] == 'O' && str[2] == 'M' &&
                str[3] == 'P' && str[4] == 'N' && str[5] == 'D') {
       if (!mol) {
-        mol = new RWMol();
+        mol.reset(new RWMol());
       }
       if (len > 10 &&
           (str[9] == ' ' || !strncmp(str + 9, "2 MOLECULE: ", 12))) {
-        PDBTitleLine(mol, str, len);
+        PDBTitleLine(mol.get(), str, len);
       }
       // HEADER records
     } else if (str[0] == 'H' && str[1] == 'E' && str[2] == 'A' &&
                str[3] == 'D' && str[4] == 'E' && str[5] == 'R') {
       if (!mol) {
-        mol = new RWMol();
+        mol.reset(new RWMol());
       }
-      PDBTitleLine(mol, str, len < 50 ? len : 50);
+      PDBTitleLine(mol.get(), str, len < 50 ? len : 50);
       // ENDMDL records
     } else if (str[0] == 'E' && str[1] == 'N' && str[2] == 'D' &&
                str[3] == 'M' && str[4] == 'D' && str[5] == 'L') {
@@ -638,15 +641,15 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
   }
 
   if (!mol) {
-    return;
+    return mol;
   }
 
   if (proximityBonding) {
-    ConnectTheDots(mol, ctdIGNORE_H_H_CONTACTS);
+    ConnectTheDots(mol.get(), ctdIGNORE_H_H_CONTACTS);
   }
   // flavor & 8 doesn't encode double bonds
   if (proximityBonding || flavor & 8) {
-    StandardPDBResidueBondOrders(mol);
+    StandardPDBResidueBondOrders(mol.get());
   }
 
   BasicPDBCleanup(*mol);
@@ -664,36 +667,27 @@ void parsePdbBlock(RWMol *&mol, const char *str, bool sanitize, bool removeHs,
 
   /* Set tetrahedral chirality from 3D co-ordinates */
   MolOps::assignChiralTypesFrom3D(*mol);
-  StandardPDBResidueChirality(mol);
-}
-}  // namespace
-
-RWMol *PDBBlockToMol(const char *str, bool sanitize, bool removeHs,
-                     unsigned int flavor, bool proximityBonding) {
-  RWMol *mol = nullptr;
-  try {
-    parsePdbBlock(mol, str, sanitize, removeHs, flavor, proximityBonding);
-  } catch (...) {
-    delete mol;
-    throw;
-  }
+  StandardPDBResidueChirality(mol.get());
 
   return mol;
 }
+}  // namespace
 
-RWMol *PDBBlockToMol(const std::string &str, bool sanitize, bool removeHs,
-                     unsigned int flavor, bool proximityBonding) {
-  return PDBBlockToMol(str.c_str(), sanitize, removeHs, flavor,
-                       proximityBonding);
+namespace v2 {
+namespace FileParsers {
+
+std::unique_ptr<RWMol> MolFromPDBBlock(const std::string &str,
+                                       const PDBParserParams &params) {
+  return parsePdbBlock(str.c_str(), params.sanitize, params.removeHs,
+                       params.flavor, params.proximityBonding);
 }
 
-RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
-                          unsigned int flavor, bool proximityBonding) {
-  PRECONDITION(inStream, "bad stream");
+std::unique_ptr<RWMol> MolFromPDBDataStream(std::istream &inStream,
+                                            const PDBParserParams &params) {
   std::string buffer;
-  while (!inStream->eof() && !inStream->fail()) {
+  while (!inStream.eof() && !inStream.fail()) {
     std::string line;
-    std::getline(*inStream, line);
+    std::getline(inStream, line);
     buffer += line;
     buffer += '\n';
     auto ptr = line.c_str();
@@ -703,29 +697,24 @@ RWMol *PDBDataStreamToMol(std::istream *inStream, bool sanitize, bool removeHs,
       break;
     }
     // Check for ENDMDL
-    if ((flavor & 2) != 0 && ptr[0] == 'E' && ptr[1] == 'N' && ptr[2] == 'D' &&
-        ptr[3] == 'M' && ptr[4] == 'D' && ptr[5] == 'L') {
+    if ((params.flavor & 2) != 0 && ptr[0] == 'E' && ptr[1] == 'N' &&
+        ptr[2] == 'D' && ptr[3] == 'M' && ptr[4] == 'D' && ptr[5] == 'L') {
       break;
     }
   }
-  return PDBBlockToMol(buffer.c_str(), sanitize, removeHs, flavor,
-                       proximityBonding);
-}
-RWMol *PDBDataStreamToMol(std::istream &inStream, bool sanitize, bool removeHs,
-                          unsigned int flavor, bool proximityBonding) {
-  return PDBDataStreamToMol(&inStream, sanitize, removeHs, flavor,
-                            proximityBonding);
+  return MolFromPDBBlock(buffer, params);
 }
 
-RWMol *PDBFileToMol(const std::string &fileName, bool sanitize, bool removeHs,
-                    unsigned int flavor, bool proximityBonding) {
+std::unique_ptr<RWMol> MolFromPDBFile(const std::string &fileName,
+                                      const PDBParserParams &params) {
   std::ifstream ifs(fileName.c_str(), std::ios_base::binary);
   if (!ifs || ifs.bad()) {
     std::ostringstream errout;
     errout << "Bad input file " << fileName;
     throw BadFileException(errout.str());
   }
-  return PDBDataStreamToMol(static_cast<std::istream *>(&ifs), sanitize,
-                            removeHs, flavor, proximityBonding);
+  return MolFromPDBDataStream(ifs, params);
 }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

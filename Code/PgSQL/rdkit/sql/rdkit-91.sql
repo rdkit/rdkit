@@ -26,7 +26,8 @@ SELECT mol_to_smiles('c1cccc[n,c]1'::qmol);
 SELECT is_valid_smiles('');
 SELECT mol_from_smiles('');
 SELECT mol_to_smiles(mol_from_smiles(''));
-
+SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br'));
+SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br'), false);
 
 CREATE TABLE pgmol (id int, m mol);
 \copy pgmol from 'data/data'
@@ -461,6 +462,7 @@ select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::qmol));
 -- CXSmiles
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
 SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
+SELECT mol_to_cxsmiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'), false);
 SELECT mol_to_cxsmarts(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
 SELECT mol_to_cxsmarts(qmol_from_smarts('C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
 
@@ -491,3 +493,57 @@ select mol_in('Cc1ccc2c(c1)-n1-c(=O)c=cc(=O)-n-2-c2cc(C)ccc2-1');
 select 'c1cccc1'::text::mol;
 select 'c1cccc1'::varchar::mol;
 select mol_from_smiles('CCN(=O)=O') @> 'CN(=O)=O';
+
+-- github #6002: molcmp failure
+select mol_cmp(mol_from_ctab('
+  Mrv2211 02092314292D
+
+  5  4  0  0  0  0            999 V2000
+    0.0000    3.6020    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    4.0145    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4290    4.4270    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1270    3.3001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3020    4.7291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  6  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  2  0  0  0  0
+  2  5  6  0  0  0  0
+M  END'),mol_from_ctab('
+  Mrv2211 02092314292D
+
+  5  4  0  0  0  0            999 V2000
+    0.0000    3.6020    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7145    4.0145    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4290    4.4270    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1270    3.3001    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3020    4.7291    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  6  0  0  0  0
+  2  3  2  0  0  0  0
+  2  4  2  0  0  0  0
+  2  5  6  0  0  0  0
+M  END'));
+
+-- mol properties being properly serialized
+select 'COC1=NNC=C1 |LN:1:1.3|'::mol;
+
+-- bond properties all preserved
+select mol_to_v3kctab(mol_from_ctab('
+  Mrv2211 09062306242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.7917 4.0833 0 0
+M  V30 2 C -6.458 4.8533 0 0
+M  V30 3 C -5.1243 4.0833 0 0
+M  V30 4 * -6.458 4.34 0 0
+M  V30 5 C -5.303 6.3405 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 4 5 ENDPTS=(3 1 2 3) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END'));

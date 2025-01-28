@@ -34,7 +34,6 @@
 #include <GraphMol/ChemReactions/ReactionUtils.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/ROMol.h>
-#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <cmath>
 
 namespace RDKit {
@@ -80,8 +79,9 @@ bool hasReactionMoleculeTemplateSubstructMatch(
        ++begin) {
     for (auto begin_query = getStartIterator(query_rxn, t);
          begin_query != getEndIterator(query_rxn, t); ++begin_query) {
-      MatchVectType tvect;
-      if (SubstructMatch(*begin->get(), *begin_query->get(), tvect)) {
+      auto tvect = SubstructMatch(*begin->get(), *begin_query->get(),
+                                  rxn.getSubstructParams());
+      if (!tvect.empty()) {
         return true;
       }
     }

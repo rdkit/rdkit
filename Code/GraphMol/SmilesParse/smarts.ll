@@ -1,6 +1,9 @@
 %option reentrant
 %option bison-bridge
 %option noyywrap
+%option never-interactive
+%option nodefault
+%option nostdinit
 
 %{
 
@@ -16,9 +19,6 @@ extern "C" int fileno(FILE*);
 #endif
 
 #include <cstdio>
-#ifdef WIN32
-#include <io.h>
-#endif
 
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
@@ -99,11 +99,11 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
     }
 %}
 
-@[' ']*TH |
-@[' ']*AL |
-@[' ']*SQ |
-@[' ']*BP |
-@[' ']*OH 	{ return CHI_CLASS_TOKEN; }
+@[' ']*TH { yylval->chiraltype = Atom::ChiralType::CHI_TETRAHEDRAL; return CHI_CLASS_TOKEN; }
+@[' ']*AL { yylval->chiraltype = Atom::ChiralType::CHI_ALLENE; return CHI_CLASS_TOKEN; }
+@[' ']*SP { yylval->chiraltype = Atom::ChiralType::CHI_SQUAREPLANAR; return CHI_CLASS_TOKEN; }
+@[' ']*TB { yylval->chiraltype = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL; return CHI_CLASS_TOKEN; }
+@[' ']*OH { yylval->chiraltype = Atom::ChiralType::CHI_OCTAHEDRAL; return CHI_CLASS_TOKEN; }
 
 @		{ return AT_TOKEN; }
 
@@ -360,10 +360,12 @@ A			{
 
 [\\]{1,2}    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());
 	return BOND_TOKEN;  }
 
 [\/]    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());	
 	return BOND_TOKEN;  }
 
 \-\> {

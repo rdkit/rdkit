@@ -23,6 +23,10 @@ struct chirality_wrapper {
     python::enum_<Chirality::StereoType>("StereoType")
         .value("Unspecified", Chirality::StereoType::Unspecified)
         .value("Atom_Tetrahedral", Chirality::StereoType::Atom_Tetrahedral)
+        .value("Atom_SquarePlanar", Chirality::StereoType::Atom_SquarePlanar)
+        .value("Atom_TrigonalBipyramidal",
+               Chirality::StereoType::Atom_TrigonalBipyramidal)
+        .value("Atom_Octahedral", Chirality::StereoType::Atom_Octahedral)
         .value("Bond_Double", Chirality::StereoType::Bond_Double)
         .value("Bond_Cumulene_Even", Chirality::StereoType::Bond_Cumulene_Even)
         .value("Bond_Atropisomer", Chirality::StereoType::Bond_Atropisomer);
@@ -49,6 +53,8 @@ struct chirality_wrapper {
                        "index of the item the stereo concerns")
         .def_readwrite("descriptor", &Chirality::StereoInfo::descriptor,
                        "stereo descriptor")
+        .def_readwrite("permutation", &Chirality::StereoInfo::permutation,
+                       "permutation index (used for non-tetrahedral chirality)")
         .def_readonly("controllingAtoms",
                       &Chirality::StereoInfo::controllingAtoms,
                       "indices of the atoms controlling the stereo");

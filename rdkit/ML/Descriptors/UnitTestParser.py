@@ -5,11 +5,10 @@
 
 """
 
-
+import math
 import unittest
 
 from rdkit.ML.Descriptors import Parser
-import math
 
 
 class TestCase(unittest.TestCase):
@@ -19,8 +18,10 @@ class TestCase(unittest.TestCase):
     self.aDict = {'Fe': {'d1': 1, 'd2': 2, 's1': 'abc'}, 'Pt': {'d1': 10, 'd2': 20, 's1': 'def'}}
     self.pDict = {'d1': 100., 'd2': 200.}
     self.compos = [('Fe', 1), ('Pt', 1)]
-    self.cExprs = ["SUM($1)", "SUM($1)+SUM($2)", "MEAN($1)", "DEV($2)", "MAX($1)", "MIN($2)",
-                   "SUM($1)/$a", 'HAS($3,"def")', 'HAS($3,"xyz")', 'HAS($3)', "sqrt($a+($b+$b))"]
+    self.cExprs = [
+      "SUM($1)", "SUM($1)+SUM($2)", "MEAN($1)", "DEV($2)", "MAX($1)", "MIN($2)", "SUM($1)/$a",
+      'HAS($3,"def")', 'HAS($3,"xyz")', 'HAS($3)', "sqrt($a+($b+$b))"
+    ]
     self.results = [11., 33., 5.5, 9., 10., 2., 0.11, 1, 0, -666, math.sqrt(500)]
     self.tol = 0.0001
 

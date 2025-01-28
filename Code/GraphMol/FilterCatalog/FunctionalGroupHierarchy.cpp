@@ -38,7 +38,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 
@@ -238,7 +238,7 @@ void hierarchy_create() {
 }  // namespace
 
 const FilterCatalog &GetFunctionalGroupHierarchy() {
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static std::once_flag flag;
   std::call_once(flag, &hierarchy_create);
 #else

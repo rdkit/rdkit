@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,10 +13,12 @@
 #include "FileParsers.h"
 #include "FileParserUtils.h"
 #include "MolSGroupWriting.h"
-#include "MolFileStereochem.h"
 #include <RDGeneral/Invariant.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SubstanceGroup.h>
+#include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
 #include <RDGeneral/Ranking.h>
 #include <RDGeneral/LocaleSwitcher.h>
 
@@ -137,6 +139,11 @@ int getQueryBondSymbol(const Bond *bond) {
   }
   return res;
 }
+
+bool isAtomRGroup(const Atom &atom) {
+  return atom.getAtomicNum() == 0 &&
+         atom.hasProp(common_properties::_MolFileRLabel);
+}
 }  // namespace
 
 const std::string GetMolFileChargeInfo(const RWMol &mol) {
@@ -155,7 +162,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
       chgss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                    atom->getFormalCharge();
       if (nChgs == 8) {
-        res << boost::format("M  CHG%3d") % nChgs << chgss.str() << std::endl;
+        res << boost::format("M  CHG%3d") % nChgs << chgss.str() << "\n";
         chgss.str("");
         nChgs = 0;
       }
@@ -170,12 +177,12 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
       }
       radss << boost::format(" %3d %3d") % (atom->getIdx() + 1) % nRadEs;
       if (nRads == 8) {
-        res << boost::format("M  RAD%3d") % nRads << radss.str() << std::endl;
+        res << boost::format("M  RAD%3d") % nRads << radss.str() << "\n";
         radss.str("");
         nRads = 0;
       }
     }
-    if (!atom->hasQuery()) {
+    if (!isAtomRGroup(*atom)) {
       int isotope = atom->getIsotope();
       if (isotope != 0) {
         ++nMassDiffs;
@@ -183,7 +190,7 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
                           isotope;
         if (nMassDiffs == 8) {
           res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str()
-              << std::endl;
+              << "\n";
           massdiffss.str("");
           nMassDiffs = 0;
         }
@@ -191,14 +198,13 @@ const std::string GetMolFileChargeInfo(const RWMol &mol) {
     }
   }
   if (nChgs) {
-    res << boost::format("M  CHG%3d") % nChgs << chgss.str() << std::endl;
+    res << boost::format("M  CHG%3d") % nChgs << chgss.str() << "\n";
   }
   if (nRads) {
-    res << boost::format("M  RAD%3d") % nRads << radss.str() << std::endl;
+    res << boost::format("M  RAD%3d") % nRads << radss.str() << "\n";
   }
   if (nMassDiffs) {
-    res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str()
-        << std::endl;
+    res << boost::format("M  ISO%3d") % nMassDiffs << massdiffss.str() << "\n";
   }
   return res.str();
 }
@@ -241,15 +247,14 @@ const std::string GetMolFileQueryInfo(
         hasComplexQuery(atom)) {
       std::string sma =
           SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
-      ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << sma
-         << std::endl;
+      ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << sma << "\n";
       wrote_query = true;
     }
     std::string molFileValue;
     if (!wrote_query &&
         atom->getPropIfPresent(common_properties::molFileValue, molFileValue)) {
       ss << "V  " << std::setw(3) << atom->getIdx() + 1 << " " << molFileValue
-         << std::endl;
+         << "\n";
     }
   }
   for (const auto atom : mol.atoms()) {
@@ -287,7 +292,7 @@ const std::string GetMolFileRGroupInfo(const RWMol &mol) {
   }
   std::stringstream ss2;
   if (nEntries) {
-    ss2 << "M  RGP" << std::setw(3) << nEntries << ss.str() << std::endl;
+    ss2 << "M  RGP" << std::setw(3) << nEntries << ss.str() << "\n";
   }
   return ss2.str();
 }
@@ -330,7 +335,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
       ss << " " << std::setw(3) << (*bondIt)->getIdx() + 1 << " "
          << std::setw(3) << 0;
       if (nEntries == 8) {
-        res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << std::endl;
+        res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << "\n";
         nEntries = 0;
         ss.str("");
       }
@@ -339,7 +344,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
     }
   }
   if (nEntries) {
-    res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << std::endl;
+    res << "M  ZBO" << std::setw(3) << nEntries << ss.str() << "\n";
   }
   if (atomsAffected.count()) {
     std::stringstream hydss;
@@ -355,7 +360,7 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
       hydss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                    atom->getTotalNumHs();
       if (nhyd == 8) {
-        res << boost::format("M  HYD%3d") % nhyd << hydss.str() << std::endl;
+        res << boost::format("M  HYD%3d") % nhyd << hydss.str() << "\n";
         hydss.str("");
         nhyd = 0;
       }
@@ -364,17 +369,17 @@ const std::string GetMolFileZBOInfo(const RWMol &mol) {
         zchss << boost::format(" %3d %3d") % (atom->getIdx() + 1) %
                      atom->getFormalCharge();
         if (nzch == 8) {
-          res << boost::format("M  ZCH%3d") % nzch << zchss.str() << std::endl;
+          res << boost::format("M  ZCH%3d") % nzch << zchss.str() << "\n";
           zchss.str("");
           nzch = 0;
         }
       }
     }
     if (nhyd) {
-      res << boost::format("M  HYD%3d") % nhyd << hydss.str() << std::endl;
+      res << boost::format("M  HYD%3d") % nhyd << hydss.str() << "\n";
     }
     if (nzch) {
-      res << boost::format("M  ZCH%3d") % nzch << zchss.str() << std::endl;
+      res << boost::format("M  ZCH%3d") % nzch << zchss.str() << "\n";
     }
   }
   return res.str();
@@ -400,6 +405,7 @@ const std::string AtomGetMolFileSymbol(
             static_cast<ATOM_EQUALS_QUERY *>(atom->getQuery())->getVal() ==
                 1))) {
         res = "A";
+        queryListAtoms.set(atom->getIdx());
       } else if (atom->hasQuery() &&
                  (atom->getQuery()->getTypeLabel() == "Q" ||
                   (atom->getQuery()->getNegation() &&
@@ -510,8 +516,7 @@ unsigned int getAtomParityFlag(const Atom *atom, const Conformer *conf) {
     vs.emplace_back(idx, v);
     ++nbrIdx;
   }
-  std::sort(vs.begin(), vs.end(),
-            Rankers::pairLess<unsigned int, RDGeom::Point3D>());
+  std::sort(vs.begin(), vs.end(), Rankers::pairLess);
   double vol;
   if (vs.size() == 4) {
     vol = vs[0].second.crossProduct(vs[1].second).dotProduct(vs[3].second);
@@ -531,16 +536,20 @@ bool hasNonDefaultValence(const Atom *atom) {
   if (atom->getNumRadicalElectrons() != 0) {
     return true;
   }
-  if (atom->hasQuery()) {
+  // for queries and atoms which don't have computed properties, the answer is
+  // always no:
+  if (atom->hasQuery() || atom->needsUpdatePropertyCache()) {
     return false;
   }
+
   if (atom->getAtomicNum() == 1 ||
       SmilesWrite ::inOrganicSubset(atom->getAtomicNum())) {
     // for the ones we "know", we may have to specify the valence if it's
     // not the default value
+    auto effAtomicNum = atom->getAtomicNum() - atom->getFormalCharge();
     return atom->getNoImplicit() &&
            (atom->getExplicitValence() !=
-            PeriodicTable::getTable()->getDefaultValence(atom->getAtomicNum()));
+            PeriodicTable::getTable()->getDefaultValence(effAtomicNum));
   }
   return true;
 }
@@ -612,16 +621,6 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
                          rxnComponentNumber);
 
   std::string symbol = AtomGetMolFileSymbol(atom, true, queryListAtoms);
-#if 0
-  const boost::format fmter(
-      "%10.4f%10.4f%10.4f %3s%2d%3d%3d%3d%3d%3d  0%3d%3d%3d%3d%3d");
-  std::stringstream ss;
-  ss << boost::format(fmter) % x % y % z % symbol.c_str() % massDiff % chg %
-            parityFlag % hCount % stereoCare % totValence % rxnComponentType %
-            rxnComponentNumber % atomMapNumber % inversionFlag %
-            exactChangeFlag;
-  res += ss.str();
-#else
   // it feels ugly to use snprintf instead of boost::format, but at least of the
   // time of this writing (with boost 1.55), the snprintf version runs in 20% of
   // the time.
@@ -645,31 +644,8 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
 
 #endif
   res += dest;
-#endif
   return res;
 };
-
-namespace {
-/*
-  If a molecule contains dative bonds the V2000 format should not
-  be used as it doesn't support dative bonds. If a dative bond is
-  detected while writing a V2000 molfile the RequiresV3000Exception
-  is thrown and the V2000 writer will redo the export in V3000 format.
-
-  This is arguably a rather brute-force way of detecting the proper output
-  format, but the only alternatives I (Jan Holst Jensen) had in mind were:
-
-    1) Check all bond types before output. Slow and would affect all
-       V2000 exports.
-    2) Maintain a reference count of dative bonds in molecule. Complex
-       and error-prone.
-*/
-class RequiresV3000Exception : public std::runtime_error {
- public:
-  explicit RequiresV3000Exception()
-      : std::runtime_error("RequiresV3000Exception"){};
-};
-}  // namespace
 
 int BondGetMolFileSymbol(const Bond *bond) {
   PRECONDITION(bond, "");
@@ -704,9 +680,9 @@ int BondGetMolFileSymbol(const Bond *bond) {
         res = 1;
         break;
       case Bond::DATIVE:
-        // Dative bonds requires V3000 format. Throw special exception to
-        // force output to be re-done in V3000.
-        throw RequiresV3000Exception();
+        // extension
+        res = 9;
+        break;
       default:
         break;
     }
@@ -715,133 +691,20 @@ int BondGetMolFileSymbol(const Bond *bond) {
   // return res.c_str();
 }
 
-// only valid for single bonds
-int BondGetDirCode(const Bond::BondDir dir) {
-  int res = 0;
-  switch (dir) {
-    case Bond::NONE:
-      res = 0;
-      break;
-    case Bond::BEGINWEDGE:
-      res = 1;
-      break;
-    case Bond::BEGINDASH:
-      res = 6;
-      break;
-    case Bond::UNKNOWN:
-      res = 4;
-      break;
-    default:
-      break;
-  }
-  return res;
-}
-
-namespace {
-bool checkNeighbors(const Bond *bond, const Atom *atom) {
-  PRECONDITION(bond, "no bond");
-  PRECONDITION(atom, "no atom");
-  std::vector<int> nbrRanks;
-  for (auto bondIt :
-       boost::make_iterator_range(bond->getOwningMol().getAtomBonds(atom))) {
-    const auto nbrBond = bond->getOwningMol()[bondIt];
-    if (nbrBond->getBondType() == Bond::SINGLE) {
-      if (nbrBond->getBondDir() == Bond::ENDUPRIGHT ||
-          nbrBond->getBondDir() == Bond::ENDDOWNRIGHT) {
-        return false;
-      } else {
-        const auto otherAtom = nbrBond->getOtherAtom(atom);
-        int rank;
-        if (otherAtom->getPropIfPresent(common_properties::_CIPRank, rank)) {
-          if (std::find(nbrRanks.begin(), nbrRanks.end(), rank) !=
-              nbrRanks.end()) {
-            return false;
-          } else {
-            nbrRanks.push_back(rank);
-          }
-        }
-      }
-    }
-  }
-  return true;
-}
-}  // namespace
-
-void GetMolFileBondStereoInfo(const Bond *bond, const INT_MAP_INT &wedgeBonds,
-                              const Conformer *conf, int &dirCode,
-                              bool &reverse) {
-  PRECONDITION(bond, "");
-  dirCode = 0;
-  reverse = false;
-  Bond::BondDir dir = Bond::NONE;
-  if (bond->getBondType() == Bond::SINGLE) {
-    // single bond stereo chemistry
-    dir = DetermineBondWedgeState(bond, wedgeBonds, conf);
-    dirCode = BondGetDirCode(dir);
-    // if this bond needs to be wedged it is possible that this
-    // wedging was determined by a chiral atom at the end of the
-    // bond (instead of at the beginning). In this case we need to
-    // reverse the begin and end atoms for the bond when we write
-    // the mol file
-    if ((dirCode == 1) || (dirCode == 6)) {
-      auto wbi = wedgeBonds.find(bond->getIdx());
-      if (wbi != wedgeBonds.end() &&
-          static_cast<unsigned int>(wbi->second) != bond->getBeginAtomIdx()) {
-        reverse = true;
-      }
-    }
-  } else if (bond->getBondType() == Bond::DOUBLE) {
-    // double bond stereochemistry -
-    // if the bond isn't specified, then it should go in the mol block
-    // as "any", this was sf.net issue 2963522.
-    // two caveats to this:
-    // 1) if it's a ring bond, we'll only put the "any"
-    //    in the mol block if the user specifically asked for it.
-    //    Constantly seeing crossed bonds in rings, though maybe
-    //    technically correct, is irritating.
-    // 2) if it's a terminal bond (where there's no chance of
-    //    stereochemistry anyway), we also skip the any.
-    //    this was sf.net issue 3009756
-    if (bond->getStereo() <= Bond::STEREOANY) {
-      if (bond->getStereo() == Bond::STEREOANY) {
-        dirCode = 3;
-      } else if (!(bond->getOwningMol().getRingInfo()->numBondRings(
-                     bond->getIdx())) &&
-                 bond->getBeginAtom()->getDegree() > 1 &&
-                 bond->getEndAtom()->getDegree() > 1) {
-        // we don't know that it's explicitly unspecified (covered above with
-        // the ==STEREOANY check)
-        // look to see if one of the atoms has a bond with direction set
-        if (bond->getBondDir() == Bond::EITHERDOUBLE) {
-          dirCode = 3;
-        } else {
-          if ((bond->getBeginAtom()->getTotalValence() -
-               bond->getBeginAtom()->getTotalDegree()) == 1 &&
-              (bond->getEndAtom()->getTotalValence() -
-               bond->getEndAtom()->getTotalDegree()) == 1) {
-            // we only do this if each atom only has one unsaturation
-            // FIX: this is the fix for github #2649, but we will need to change
-            // it once we start handling allenes properly
-
-            if (checkNeighbors(bond, bond->getBeginAtom()) &&
-                checkNeighbors(bond, bond->getEndAtom())) {
-              dirCode = 3;
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
-const std::string GetMolFileBondLine(const Bond *bond,
-                                     const INT_MAP_INT &wedgeBonds,
-                                     const Conformer *conf) {
+const std::string GetMolFileBondLine(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    const Conformer *conf, bool wasAromatic) {
   PRECONDITION(bond, "");
 
-  int dirCode;
-  bool reverse;
-  GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode, reverse);
+  int dirCode = 0;
+  bool reverse = false;
+  RDKit::Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
+                                             reverse);
+  // do not cross bonds which were aromatic before kekulization
+  if (wasAromatic && dirCode == 3) {
+    dirCode = 0;
+  }
   int symbol = BondGetMolFileSymbol(bond);
 
   std::stringstream ss;
@@ -868,7 +731,7 @@ const std::string GetMolFileBondLine(const Bond *bond,
 
 const std::string GetV3000MolFileAtomLine(
     const Atom *atom, const Conformer *conf,
-    boost::dynamic_bitset<> &queryListAtoms) {
+    boost::dynamic_bitset<> &queryListAtoms, unsigned int precision) {
   PRECONDITION(atom, "");
   int totValence, atomMapNumber;
   unsigned int parityFlag;
@@ -902,7 +765,12 @@ const std::string GetV3000MolFileAtomLine(
     }
   }
 
-  ss << std::fixed << " " << x << " " << y << " " << z << std::defaultfloat;
+  std::streamsize currentPrecision = ss.precision();
+  ss << std::fixed;
+  ss << std::setprecision(precision);
+  ss << " " << x << " " << y << " " << z;
+  ss << std::setprecision(currentPrecision);
+  ss << std::defaultfloat;
   ss << " " << atomMapNumber;
 
   // Extra atom properties.
@@ -914,7 +782,7 @@ const std::string GetV3000MolFileAtomLine(
   if (chg != 0) {
     ss << " CHG=" << chg;
   }
-  if (isotope != 0) {
+  if (isotope != 0 && !isAtomRGroup(*atom)) {
     // the documentation for V3000 CTABs says that this should contain the
     // "absolute atomic weight" (whatever that means).
     // Online examples seem to have integer (isotope) values and Marvin won't
@@ -983,6 +851,10 @@ const std::string GetV3000MolFileAtomLine(
         iprop) {
       ss << " SUBST=" << iprop;
     }
+    if (atom->getPropIfPresent(common_properties::molRingBondCount, iprop) &&
+        iprop) {
+      ss << " RBCNT=" << iprop;
+    }
   }
   {
     std::string sprop;
@@ -1032,6 +904,9 @@ int GetV3000BondCode(const Bond *bond) {
       case Bond::HYDROGEN:
         res = 10;
         break;
+      case Bond::ZERO:
+        res = 1;
+        break;
       default:
         res = 0;
         break;
@@ -1058,18 +933,122 @@ int BondStereoCodeV2000ToV3000(int dirCode) {
   }
 }
 
-void moveAdditionalPropertiesToSGroups(RWMol &mol) {
-  GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
+namespace {
+void createSMARTSQSubstanceGroups(ROMol &mol) {
+  auto isRedundantQuery = [](const auto query) {
+    if (query->getDescription() == "AtomAnd" &&
+        (query->endChildren() - query->beginChildren() == 2) &&
+        (*query->beginChildren())->getDescription() == "AtomAtomicNum" &&
+        !(*query->beginChildren())->getNegation() &&
+        !(*(query->beginChildren() + 1))->getNegation() &&
+        ((*(query->beginChildren() + 1))->getDescription() == "AtomIsotope" ||
+         (*(query->beginChildren() + 1))->getDescription() ==
+             "AtomFormalCharge")) {
+      return true;
+    }
+    return false;
+  };
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasQuery()) {
+      std::string sma;
+
+      if (!atom->getPropIfPresent(common_properties::MRV_SMA, sma) &&
+          !isAtomListQuery(atom) &&
+          atom->getQuery()->getDescription() != "AtomNull" &&
+          // we may want to re-think this next one.
+          // including AtomType queries will result in an entry
+          // for every atom that comes from SMARTS, and I don't think
+          // we want that.
+          !boost::starts_with(atom->getQuery()->getDescription(), "AtomType") &&
+          !boost::starts_with(atom->getQuery()->getDescription(),
+                              "AtomAtomicNum") &&
+          !isRedundantQuery(atom->getQuery())) {
+        sma = SmartsWrite::GetAtomSmarts(static_cast<const QueryAtom *>(atom));
+      }
+      if (!sma.empty()) {
+        SubstanceGroup sg(&mol, "DAT");
+        sg.setProp("QUERYTYPE", "SMARTSQ");
+        sg.setProp("QUERYOP", "=");
+        std::vector<std::string> dataFields{sma};
+        sg.setProp("DATAFIELDS", dataFields);
+        sg.addAtomWithIdx(atom->getIdx());
+        addSubstanceGroup(mol, sg);
+      }
+    }
+  }
 }
 
-const std::string GetV3000MolFileBondLine(const Bond *bond,
-                                          const INT_MAP_INT &wedgeBonds,
-                                          const Conformer *conf) {
+void createZBOSubstanceGroups(ROMol &mol) {
+  SubstanceGroup bsg(&mol, "DAT");
+  bsg.setProp("FIELDNAME", "ZBO");
+  boost::dynamic_bitset<> atomsAffected(mol.getNumAtoms(), 0);
+  for (const auto bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::ZERO) {
+      bsg.addBondWithIdx(bond->getIdx());
+      atomsAffected[bond->getBeginAtomIdx()] = 1;
+      atomsAffected[bond->getEndAtomIdx()] = 1;
+    }
+  }
+  if (atomsAffected.any()) {
+    for (auto i = 0u; i < atomsAffected.size(); ++i) {
+      if (atomsAffected[i]) {
+        bsg.addAtomWithIdx(i);
+      }
+    }
+    SubstanceGroup asg(&mol, "DAT");
+    asg.setProp("FIELDNAME", "HYD");
+    SubstanceGroup zsg(&mol, "DAT");
+    zsg.setProp("FIELDNAME", "ZCH");
+    std::string asgText;
+    std::string zsgText;
+    for (auto i = 0u; i < atomsAffected.size(); ++i) {
+      if (atomsAffected[i]) {
+        const Atom *atom = mol.getAtomWithIdx(i);
+        asg.addAtomWithIdx(i);
+        if (!asgText.empty()) {
+          asgText += ";";
+        }
+        asgText += std::to_string(atom->getTotalNumHs());
+        zsg.addAtomWithIdx(i);
+        if (!zsgText.empty()) {
+          zsgText += ";";
+        }
+        zsgText += std::to_string(atom->getFormalCharge());
+      }
+    }
+    addSubstanceGroup(mol, bsg);
+
+    std::vector<std::string> aDataFields{asgText};
+
+    asg.setProp("DATAFIELDS", aDataFields);
+    addSubstanceGroup(mol, asg);
+    std::vector<std::string> zDataFields{zsgText};
+    zsg.setProp("DATAFIELDS", zDataFields);
+    addSubstanceGroup(mol, zsg);
+  }
+}
+}  // namespace
+namespace FileParserUtils {
+void moveAdditionalPropertiesToSGroups(RWMol &mol) {
+  GenericGroups::convertGenericQueriesToSubstanceGroups(mol);
+  createSMARTSQSubstanceGroups(mol);
+  createZBOSubstanceGroups(mol);
+}
+}  // namespace FileParserUtils
+const std::string GetV3000MolFileBondLine(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    const Conformer *conf, bool wasAromatic) {
   PRECONDITION(bond, "");
 
-  int dirCode;
-  bool reverse;
-  GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode, reverse);
+  int dirCode = 0;
+  bool reverse = false;
+  RDKit::Chirality::GetMolFileBondStereoInfo(bond, wedgeBonds, conf, dirCode,
+                                             reverse);
+  // do not cross bonds which were aromatic before kekulization
+  if (wasAromatic && dirCode == 3) {
+    dirCode = 0;
+  }
 
   std::stringstream ss;
   ss << "M  V30 " << bond->getIdx() + 1;
@@ -1119,43 +1098,57 @@ const std::string GetV3000MolFileBondLine(const Bond *bond,
   return ss.str();
 }
 
-void appendEnhancedStereoGroups(std::string &res, const RWMol &tmol) {
-  unsigned or_count = 1u, and_count = 1u;
-  auto &stereo_groups = tmol.getStereoGroups();
-  if (!stereo_groups.empty()) {
+void appendEnhancedStereoGroups(
+    std::string &res, const RWMol &tmol,
+    std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds) {
+  if (!tmol.getStereoGroups().empty()) {
+    auto stereo_groups = tmol.getStereoGroups();
+    assignStereoGroupIds(stereo_groups);
     res += "M  V30 BEGIN COLLECTION\n";
+    std::string tmp;
+    tmp.reserve(80);
     for (auto &&group : stereo_groups) {
-      res += "M  V30 MDLV30/";
+      tmp += "M  V30 MDLV30/";
       switch (group.getGroupType()) {
         case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-          res += "STEABS";
+          tmp += "STEABS";
           break;
         case RDKit::StereoGroupType::STEREO_OR:
-          res += "STEREL";
-          res += std::to_string(or_count);
-          ++or_count;
+          tmp += "STEREL";
+          tmp += std::to_string(group.getWriteId());
           break;
         case RDKit::StereoGroupType::STEREO_AND:
-          res += "STERAC";
-          res += std::to_string(and_count);
-          ++and_count;
+          tmp += "STERAC";
+          tmp += std::to_string(group.getWriteId());
           break;
       }
-      res += " ATOMS=(";
-      auto &atoms = group.getAtoms();
-      res += std::to_string(atoms.size());
-      for (auto &&atom : atoms) {
-        res += ' ';
+      tmp += " ATOMS=(";
+
+      std::vector<unsigned int> atomIds;
+      Atropisomers::getAllAtomIdsForStereoGroup(tmol, group, atomIds,
+                                                wedgeBonds);
+
+      tmp += std::to_string(atomIds.size());
+      for (auto &&atom : atomIds) {
+        tmp += ' ';
         // atoms are 1 indexed in molfiles
-        res += std::to_string(atom->getIdx() + 1);
+        auto idxStr = std::to_string(atom + 1);
+        if (tmp.size() + idxStr.size() >= 78) {
+          res += tmp + "-\n";
+          tmp = "M  V30 ";
+        }
+        tmp += idxStr;
       }
-      res += ")\n";
+      res += tmp + ")\n";
+      tmp.clear();
     }
-    res += "M  V30 END COLLECTION\n";
+    res += tmp + "M  V30 END COLLECTION\n";
   }
 }
 namespace FileParserUtils {
-std::string getV3000CTAB(const ROMol &tmol, int confId) {
+std::string getV3000CTAB(const ROMol &tmol,
+                         const boost::dynamic_bitset<> &wasAromatic, int confId,
+                         unsigned int precision) {
   auto nAtoms = tmol.getNumAtoms();
   auto nBonds = tmol.getNumBonds();
   const auto &sgroups = getSubstanceGroups(tmol);
@@ -1181,17 +1174,18 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
   res += "M  V30 BEGIN ATOM\n";
   for (ROMol::ConstAtomIterator atomIt = tmol.beginAtoms();
        atomIt != tmol.endAtoms(); ++atomIt) {
-    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms);
+    res += GetV3000MolFileAtomLine(*atomIt, conf, queryListAtoms, precision);
     res += "\n";
   }
   res += "M  V30 END ATOM\n";
 
+  auto wedgeBonds = Chirality::pickBondsToWedge(tmol, nullptr, conf);
   if (tmol.getNumBonds()) {
     res += "M  V30 BEGIN BOND\n";
-    INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
-    for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
-         bondIt != tmol.endBonds(); ++bondIt) {
-      res += GetV3000MolFileBondLine(*bondIt, wedgeBonds, conf);
+
+    for (const auto bond : tmol.bonds()) {
+      res += GetV3000MolFileBondLine(bond, wedgeBonds, conf,
+                                     wasAromatic[bond->getIdx()]);
       res += "\n";
     }
     res += "M  V30 END BOND\n";
@@ -1215,21 +1209,28 @@ std::string getV3000CTAB(const ROMol &tmol, int confId) {
       res += "M  V30 LINKNODE " + linknode + "\n";
     }
   }
-  appendEnhancedStereoGroups(res, tmol);
+  appendEnhancedStereoGroups(res, tmol, wedgeBonds);
 
   res += "M  V30 END CTAB\n";
   return res;
 }
 }  // namespace FileParserUtils
+enum class MolFileFormat {
+  V2000,
+  V3000,
+  unspecified
+};
+
 //------------------------------------------------
 //
 //  gets a mol block as a string
 //
 //------------------------------------------------
 std::string outputMolToMolBlock(const RWMol &tmol, int confId,
-                                bool forceV3000) {
+                                MolFileFormat whichFormat,
+                                unsigned int precision,
+                                const boost::dynamic_bitset<> &aromaticBonds) {
   std::string res;
-  bool isV3000;
   unsigned int nAtoms, nBonds, nLists, chiralFlag, nsText, nRxnComponents;
   unsigned int nReactants, nProducts, nIntermediates;
   nAtoms = tmol.getNumAtoms();
@@ -1238,6 +1239,12 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
 
   const auto &sgroups = getSubstanceGroups(tmol);
   unsigned int nSGroups = sgroups.size();
+
+  if (whichFormat == MolFileFormat::V2000 &&
+      (nAtoms > 999 || nBonds > 999 || nSGroups > 999)) {
+    throw ValueErrorException(
+        "V2000 format does not support more than 999 atoms, bonds or SGroups.");
+  }
 
   chiralFlag = 0;
   nsText = 0;
@@ -1284,8 +1291,22 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   }
   res += "\n";
 
-  isV3000 = forceV3000 || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
-            !tmol.getStereoGroups().empty();
+  bool hasDative = false;
+  for (const auto bond : tmol.bonds()) {
+    if (bond->getBondType() == Bond::DATIVE) {
+      hasDative = true;
+      break;
+    }
+  }
+
+  bool isV3000 = false;
+  if (whichFormat == MolFileFormat::V3000) {
+    isV3000 = true;
+  } else if (whichFormat == MolFileFormat::unspecified &&
+             (hasDative || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
+              !tmol.getStereoGroups().empty())) {
+    isV3000 = true;
+  }
 
   // the counts line:
   std::stringstream ss;
@@ -1326,10 +1347,11 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
       res += "\n";
     }
 
-    INT_MAP_INT wedgeBonds = pickBondsToWedge(tmol);
-    for (ROMol::ConstBondIterator bondIt = tmol.beginBonds();
-         bondIt != tmol.endBonds(); ++bondIt) {
-      res += GetMolFileBondLine(*bondIt, wedgeBonds, conf);
+    auto wedgeBonds = Chirality::pickBondsToWedge(tmol, nullptr, conf);
+
+    for (const auto bond : tmol.bonds()) {
+      res += GetMolFileBondLine(bond, wedgeBonds, conf,
+                                aromaticBonds[bond->getIdx()]);
       res += "\n";
     }
 
@@ -1345,47 +1367,56 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     // FIX: R-group logic, SGroups and 3D features etc.
   } else {
     // V3000 output.
-    res += FileParserUtils::getV3000CTAB(tmol, confId);
+    res +=
+        FileParserUtils::getV3000CTAB(tmol, aromaticBonds, confId, precision);
   }
   res += "M  END\n";
   return res;
 }
 
-std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
-                          bool kekulize, bool forceV3000) {
-  RDKit::Utils::LocaleSwitcher switcher;
-  RWMol trwmol(mol);
+void prepareMol(RWMol &trwmol, const MolWriterParams &params,
+                boost::dynamic_bitset<> &aromaticBonds) {
   // NOTE: kekulize the molecule before writing it out
   // because of the way mol files handle aromaticity
   if (trwmol.needsUpdatePropertyCache()) {
     trwmol.updatePropertyCache(false);
   }
-  if (kekulize) {
+  if (params.kekulize && trwmol.getNumBonds()) {
+    for (const auto bond : trwmol.bonds()) {
+      if (bond->getIsAromatic()) {
+        aromaticBonds.set(bond->getIdx());
+      }
+    }
     MolOps::Kekulize(trwmol);
   }
 
-  if (includeStereo && !trwmol.getNumConformers()) {
+  if (params.includeStereo && !trwmol.getNumConformers()) {
     // generate coordinates so that the stereo we generate makes sense
     RDDepict::compute2DCoords(trwmol);
   }
-#if 0
-    if(includeStereo){
-      // assign "any" status to any stereo bonds that are not
-      // marked with "E" or "Z" code - these bonds need to be explicitly written
-      // out to the mol file
-      MolOps::findPotentialStereoBonds(trwmol);
-      // now assign stereo code if any have been specified by the directions on
-      // single bonds
-      MolOps::assignStereochemistry(trwmol);
-    }
-#endif
-  moveAdditionalPropertiesToSGroups(trwmol);
+  FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
+}
 
-  try {
-    return outputMolToMolBlock(trwmol, confId, forceV3000);
-  } catch (RequiresV3000Exception &) {
-    return outputMolToMolBlock(trwmol, confId, true);
-  }
+std::string MolToMolBlock(const ROMol &mol, const MolWriterParams &params,
+                          int confId) {
+  RDKit::Utils::LocaleSwitcher switcher;
+  RWMol trwmol(mol);
+  boost::dynamic_bitset<> aromaticBonds(trwmol.getNumBonds());
+  prepareMol(trwmol, params, aromaticBonds);
+  MolFileFormat whichFormat =
+      params.forceV3000 ? MolFileFormat::V3000 : MolFileFormat::unspecified;
+  return outputMolToMolBlock(trwmol, confId, whichFormat, params.precision,
+                             aromaticBonds);
+}
+
+std::string MolToV2KMolBlock(const ROMol &mol, const MolWriterParams &params,
+                             int confId) {
+  RDKit::Utils::LocaleSwitcher switcher;
+  RWMol trwmol(mol);
+  boost::dynamic_bitset<> aromaticBonds(trwmol.getNumBonds());
+  prepareMol(trwmol, params, aromaticBonds);
+  return outputMolToMolBlock(trwmol, confId, MolFileFormat::V2000,
+                             params.precision, aromaticBonds);
 }
 
 //------------------------------------------------
@@ -1394,8 +1425,7 @@ std::string MolToMolBlock(const ROMol &mol, bool includeStereo, int confId,
 //
 //------------------------------------------------
 void MolToMolFile(const ROMol &mol, const std::string &fName,
-                  bool includeStereo, int confId, bool kekulize,
-                  bool forceV3000) {
+                  const MolWriterParams &params, int confId) {
   auto *outStream = new std::ofstream(fName.c_str());
   if (!(*outStream) || outStream->bad()) {
     delete outStream;
@@ -1403,8 +1433,7 @@ void MolToMolFile(const ROMol &mol, const std::string &fName,
     errout << "Bad output file " << fName;
     throw BadFileException(errout.str());
   }
-  std::string outString =
-      MolToMolBlock(mol, includeStereo, confId, kekulize, forceV3000);
+  std::string outString = MolToMolBlock(mol, params, confId);
   *outStream << outString;
   delete outStream;
 }

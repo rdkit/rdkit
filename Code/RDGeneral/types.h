@@ -38,8 +38,8 @@
 #include <limits>
 
 #include <cstring>
+#include <any>
 #include <RDGeneral/BoostStartInclude.h>
-#include <boost/any.hpp>
 #include <boost/lexical_cast.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 
@@ -71,7 +71,6 @@ RDKIT_RDGENERAL_EXPORT extern const std::string _NeedsQueryScan;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string _fragSMARTS;      // std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string
     maxAttachIdx;  // int TemplEnumTools.cpp
-RDKIT_RDGENERAL_EXPORT extern const std::string origNoImplicit;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string
     ringMembership;  //? unused (molopstest.cpp)
 
@@ -124,6 +123,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _CIPCode;  // std::string COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string _CIPRank;  // int COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string
+    _CanonicalRankingNumber;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _ChiralityPossible;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _UnknownStereo;  // int (bool) AddHs/Chirality
@@ -133,6 +134,9 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereochemCand;  // chirality bool COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _ringStereoWarning;  // obsolete ?
+RDKIT_RDGENERAL_EXPORT extern const std::string _chiralPermutation;    // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _ringStereoOtherAtom;  // int
+RDKIT_RDGENERAL_EXPORT extern const std::string _mesoOtherAtom;        // int
 
 // Smiles parsing
 RDKIT_RDGENERAL_EXPORT extern const std::string _SmilesStart;  // int
@@ -146,6 +150,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string _hasMassQuery;  // atom bool
 RDKIT_RDGENERAL_EXPORT extern const std::string _protected;  // atom int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string
+    _ChiralAtomRank;  // atom rank (unsigned int)
+RDKIT_RDGENERAL_EXPORT extern const std::string
     _supplementalSmilesLabel;  // atom string (SmilesWrite)
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _unspecifiedOrder;  // atom int (bool) smarts/smiles
@@ -153,6 +159,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _RingClosures;  // INT_VECT smarts/smiles/canon
 RDKIT_RDGENERAL_EXPORT extern const std::string
     atomLabel;  // atom string from CXSMILES
+RDKIT_RDGENERAL_EXPORT extern const std::string OxidationNumber;  // int
 
 // MDL Style Properties (MolFileParser)
 RDKIT_RDGENERAL_EXPORT extern const std::string molAtomMapNumber;   // int
@@ -164,6 +171,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molStereoCare;      // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnComponent;    // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnRole;         // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molTotValence;      // int
+RDKIT_RDGENERAL_EXPORT extern const std::string molRingBondCount;   // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molSubstCount;      // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molAttachPoint;     // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molAttachOrder;     // int
@@ -172,6 +180,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string molAtomSeqId;       // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molRxnExactChange;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molReactStatus;     // int
 RDKIT_RDGENERAL_EXPORT extern const std::string molFileLinkNodes;   // string
+RDKIT_RDGENERAL_EXPORT extern const std::string _fromAttachPoint;   // int
 
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileRLabel;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _MolFileChiralFlag;  // int
@@ -185,9 +194,12 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondStereo;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string
     _MolFileBondCfg;  // unsigned int
-
 RDKIT_RDGENERAL_EXPORT extern const std::string
     MRV_SMA;  // smarts string from Marvin
+
+// flag indicating that the chirality wasn't specified in the input,
+// but was calculated from 3D coordinates in the input
+RDKIT_RDGENERAL_EXPORT extern const std::string _NonExplicit3DChirality;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string dummyLabel;  // atom string
 
 RDKIT_RDGENERAL_EXPORT extern const std::string
@@ -204,6 +216,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
 RDKIT_RDGENERAL_EXPORT extern const std::string NullBond;  // int (bool)
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupAtomMaps;
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupBonds;
+RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetAtoms;
+RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetBonds;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactantAtomIdx;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactionMapNum;
 

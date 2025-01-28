@@ -146,17 +146,18 @@ struct EHT_wrapper {
                       &RDKit::EHTTools::EHTResults::numElectrons)
         .def_readonly("fermiEnergy", &RDKit::EHTTools::EHTResults::fermiEnergy)
         .def_readonly("totalEnergy", &RDKit::EHTTools::EHTResults::totalEnergy)
-        .def("GetReducedChargeMatrix", getChargeMatrix,
+        .def("GetReducedChargeMatrix", getChargeMatrix, python::args("self"),
              "returns the reduced charge matrix")
         .def("GetReducedOverlapPopulationMatrix", getOPMatrix,
+             python::args("self"),
              "returns the reduced overlap population matrix")
-        .def("GetAtomicCharges", getCharges,
+        .def("GetAtomicCharges", getCharges, python::args("self"),
              "returns the calculated atomic charges")
-        .def("GetHamiltonian", getHamiltonian,
+        .def("GetHamiltonian", getHamiltonian, python::args("self"),
              "returns the symmetric Hamiltonian matrix")
-        .def("GetOverlapMatrix", getOverlapMatrix,
+        .def("GetOverlapMatrix", getOverlapMatrix, python::args("self"),
              "returns the symmetric overlap matrix")
-        .def("GetOrbitalEnergies", getOrbitalEnergies,
+        .def("GetOrbitalEnergies", getOrbitalEnergies, python::args("self"),
              "returns the energies of the molecular orbitals as a vector");
 
     docString =

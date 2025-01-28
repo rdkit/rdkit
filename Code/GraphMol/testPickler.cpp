@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -20,6 +20,14 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/archive_exception.hpp>
+#include <RDGeneral/BoostEndInclude.h>
+#endif
 
 #include <RDGeneral/RDLog.h>
 
@@ -68,69 +76,6 @@ void test1(bool doLong = 0) {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
-void _createPickleFile() {
-  std::string smiName = getenv("RDBASE");
-  smiName += "/Code/GraphMol/test_data/canonSmiles.smi";
-  std::string pklName = getenv("RDBASE");
-#ifdef OLD_PICKLE
-  pklName += "/Code/GraphMol/test_data/canonSmiles.v1.pkl";
-#else
-  pklName += "/Code/GraphMol/test_data/canonSmiles.v2.pkl";
-#endif
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "creating pickle file." << std::endl;
-
-  SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
-  std::ofstream outStream(pklName.c_str(), std::ios_base::binary);
-  int count = 0;
-  while (!suppl.atEnd()) {
-    ROMol *m = suppl.next();
-    TEST_ASSERT(m);
-
-    std::string pickle;
-    MolPickler::pickleMol(*m, outStream);
-    delete m;
-    count++;
-  }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-}
-
-void test2(bool doLong = 0) {
-  std::string smiName = getenv("RDBASE");
-  smiName += "/Code/GraphMol/test_data/canonSmiles.smi";
-  std::string pklName = getenv("RDBASE");
-  pklName += "/Code/GraphMol/test_data/canonSmiles.v1.pkl";
-
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Testing reading existing pickle file (v1)."
-                        << std::endl;
-
-  SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
-  std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
-  int count = 0;
-  while (!suppl.atEnd()) {
-    ROMol *m1 = suppl.next();
-    TEST_ASSERT(m1);
-    ROMol m2;
-    MolPickler::molFromPickle(inStream, m2);
-
-    std::string smi1 = MolToSmiles(*m1);
-    std::string smi2 = MolToSmiles(m2);
-
-    if (smi1 != smi2) {
-      BOOST_LOG(rdInfoLog) << "Line: " << count << "\n  " << smi1
-                           << "\n != \n  " << smi2 << std::endl;
-    }
-    TEST_ASSERT(smi1 == smi2);
-    delete m1;
-    count++;
-    if (!doLong && count >= 100) {
-      break;
-    }
-  }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-}
-
 void test3(bool doLong = 0) {
   std::string smiName = getenv("RDBASE");
   smiName += "/Code/GraphMol/test_data/canonSmiles.smi";
@@ -164,52 +109,6 @@ void test3(bool doLong = 0) {
       break;
     }
   }
-  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
-}
-
-void timeTest(bool doLong = 0) {
-  time_t t1, t2;
-  std::string smiName = getenv("RDBASE");
-  smiName += "/Code/GraphMol/test_data/canonSmiles.smi";
-
-  std::string pklName = getenv("RDBASE");
-  pklName += "/Code/GraphMol/test_data/canonSmiles.v2.pkl";
-
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Timing reads." << std::endl;
-
-  t1 = std::time(nullptr);
-  SmilesMolSupplier suppl(smiName, "\t", 0, 1, false);
-  int count = 0;
-  while (!suppl.atEnd()) {
-    ROMol *m1 = suppl.next();
-    TEST_ASSERT(m1);
-    count++;
-    if (!doLong && count >= 100) {
-      break;
-    }
-    delete m1;
-  }
-  t2 = std::time(nullptr);
-  BOOST_LOG(rdInfoLog) << " Smiles time: " << std::difftime(t2, t1)
-                       << std::endl;
-  ;
-
-  std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
-  t1 = std::time(nullptr);
-  while (count > 0) {
-    ROMol m2;
-    MolPickler::molFromPickle(inStream, m2);
-    count--;
-    if (!doLong && count >= 100) {
-      break;
-    }
-  }
-  t2 = std::time(nullptr);
-  BOOST_LOG(rdInfoLog) << " Pickle time: " << std::difftime(t2, t1)
-                       << std::endl;
-  ;
-
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
@@ -836,6 +735,22 @@ void testIssue3316407() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testGithubIssue6036() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing github issue 6036" << std::endl;
+  // Root cause
+  //  MurckoDecompose sets a boost::any as a distance matrix as well as
+  //  setting an explicit bit vector.  This checks to ensure that
+  //  rdvalue_is correctly works for ExplicitBitVectors and doesn't return
+  //  true when a boost::any has been set that isn't an explicit bit vector
+  auto m = "C"_smiles;
+  boost::shared_array<double> sptr;
+  m->setProp("shared_array", sptr);
+  std::string pkl;
+  MolPickler::pickleMol(*m, pkl, PicklerOps::AllProps);
+  std::unique_ptr<RWMol> roundTripped(new RWMol(pkl));
+}
+
 void testIssue3496759() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Testing sf.net issue 3496759." << std::endl;
@@ -1353,12 +1268,19 @@ void testEnhancedStereoChemistry() {
   {
     std::vector<StereoGroup> groups;
     std::vector<Atom *> atoms0 = {{m.getAtomWithIdx(0), m.getAtomWithIdx(1)}};
+    std::vector<Bond *> bonds0;
     groups.emplace_back(RDKit::StereoGroupType::STEREO_ABSOLUTE,
-                        std::move(atoms0));
+                        std::move(atoms0), std::move(bonds0));
     std::vector<Atom *> atoms1 = {{m.getAtomWithIdx(2), m.getAtomWithIdx(3)}};
-    groups.emplace_back(RDKit::StereoGroupType::STEREO_OR, std::move(atoms1));
+    std::vector<Bond *> bonds1;
+
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_OR, std::move(atoms1),
+                        std::move(bonds1));
     std::vector<Atom *> atoms2 = {{m.getAtomWithIdx(4), m.getAtomWithIdx(5)}};
-    groups.emplace_back(RDKit::StereoGroupType::STEREO_AND, std::move(atoms2));
+    std::vector<Bond *> bonds2;
+
+    groups.emplace_back(RDKit::StereoGroupType::STEREO_AND, std::move(atoms2),
+                        std::move(bonds2));
     m.setStereoGroups(std::move(groups));
   }
 
@@ -1755,6 +1677,64 @@ void testAdditionalQueryPickling() {
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
 
+void testBoostSerialization() {
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Testing boost::serialization integration"
+                        << std::endl;
+  auto m1 = "CCC"_smiles;
+  TEST_ASSERT(m1);
+  m1->setProp("foo", 1);
+  m1->getAtomWithIdx(0)->setProp("afoo", 2);
+  m1->getBondWithIdx(0)->setProp("bfoo", 3);
+  {
+    std::stringstream ss;
+    {
+      boost::archive::text_oarchive ar(ss);
+      ar << *m1;
+    }
+    ss.seekg(0);
+    ROMol m2;
+    {
+      boost::archive::text_iarchive ar(ss);
+      ar >> m2;
+    }
+    TEST_ASSERT(m2.getNumAtoms(m1->getNumAtoms()));
+    int pval = 0;
+    TEST_ASSERT(m2.getPropIfPresent("foo", pval));
+    TEST_ASSERT(pval == 1);
+    TEST_ASSERT(m2.getAtomWithIdx(0)->getPropIfPresent("afoo", pval));
+    TEST_ASSERT(pval == 2);
+    TEST_ASSERT(m2.getBondWithIdx(0)->getPropIfPresent("bfoo", pval));
+    TEST_ASSERT(pval == 3);
+  }
+
+  {  // test RWMol
+    RWMol m3(*m1);
+    std::stringstream ss;
+    {
+      boost::archive::text_oarchive ar(ss);
+      ar << m3;
+    }
+    ss.seekg(0);
+    RWMol m2;
+    {
+      boost::archive::text_iarchive ar(ss);
+      ar >> m2;
+    }
+    TEST_ASSERT(m2.getNumAtoms(m1->getNumAtoms()));
+    int pval = 0;
+    TEST_ASSERT(m2.getPropIfPresent("foo", pval));
+    TEST_ASSERT(pval == 1);
+    TEST_ASSERT(m2.getAtomWithIdx(0)->getPropIfPresent("afoo", pval));
+    TEST_ASSERT(pval == 2);
+    TEST_ASSERT(m2.getBondWithIdx(0)->getPropIfPresent("bfoo", pval));
+    TEST_ASSERT(pval == 3);
+  }
+  BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
+
+#endif
+}
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   bool doLong = false;
@@ -1764,16 +1744,12 @@ int main(int argc, char *argv[]) {
     }
   }
 
-//_createPickleFile();
-#if 1
   test1(doLong);
-  // test2(doLong);
   test3(doLong);
   test4();
   testIssue164();
   testIssue219();
   testIssue220();
-  // timeTest(doLong);
   testQueries();
   testRadicals();
   testPickleProps();
@@ -1793,10 +1769,11 @@ int main(int argc, char *argv[]) {
   testCustomPickler();
   testGithub2441();
   testGithubIssue2510();
-#endif
   testNegativeMaps();
   testHistoricalConfs();
   testConformerOptions();
   testPropertyOptions();
   testAdditionalQueryPickling();
+  testBoostSerialization();
+  testGithubIssue6036();
 }

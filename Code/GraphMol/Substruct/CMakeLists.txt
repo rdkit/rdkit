@@ -9,4 +9,4 @@ rdkit_headers(SubstructMatch.h
 
 rdkit_test(testSubstructMatch test1.cpp LINK_LIBRARIES FileParsers SmilesParse SubstructMatch)
 
-rdkit_catch_test(substructTestCatch ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse SubstructMatch)
+rdkit_catch_test(substructTestCatch catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse SubstructMatch)

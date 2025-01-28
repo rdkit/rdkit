@@ -16,7 +16,9 @@ You can find the latest version of this file:
 """
 # we depend on PIL for rotated strings so watch for changes in PIL
 
-import Tkinter, tkFont
+import tkFont
+import Tkinter
+
 tk = Tkinter
 import rdkit.sping.pid
 
@@ -178,12 +180,13 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
 
   __TRANSPARENT = ''  # transparent for Tk color
 
-  def __init__(self,
-               size=(300, 300),
-               name="sping.TK",
-               master=None,
-               scrollingViewPortSize=None,  # a 2-tuple to define the size of the viewport
-               **kw):
+  def __init__(
+      self,
+      size=(300, 300),
+      name="sping.TK",
+      master=None,
+      scrollingViewPortSize=None,  # a 2-tuple to define the size of the viewport
+      **kw):
     """This canvas allows you to add a tk.Canvas with a sping API for drawing.
         To add scrollbars, the simpliest method is to set the 'scrollingViewPortSize'
         equal to a tuple that describes the width and height of the visible porition
@@ -299,8 +302,9 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
   def _drawRotatedString(self, s, x, y, font=None, color=None, angle=0):
     # we depend on PIL for rotated strings so watch for changes in PIL
     try:
-      import rdkit.sping.PIL.pidPIL
       from PIL import Image, ImageTk
+
+      import rdkit.sping.PIL.pidPIL
       pp = rdkit.sping.PIL.pidPIL
     except ImportError:
       raise ImportError("Rotated strings only possible with PIL support")
@@ -340,7 +344,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
 
     # rotate
     if angle:
-      from math import pi, sin, cos
+      from math import cos, pi, sin
       tempimg = tempimg.rotate(angle, Image.BILINEAR)
       temppen = ImageDraw.ImageDraw(tempimg)
       radians = -angle * pi / 180.0
@@ -425,6 +429,7 @@ class TKCanvas(tk.Canvas, rdkit.sping.pid.Canvas):
         new_item = self.create_line(pointlist, **d)
 
     self._item_ids.append(new_item)
+
 
 #def drawFigure(self, partList,
 #               edgeColor=None, edgeWidth=None, fillColor=None):

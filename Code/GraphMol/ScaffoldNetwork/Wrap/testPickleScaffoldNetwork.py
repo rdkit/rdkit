@@ -11,9 +11,7 @@
 import pickle
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit import rdBase
+from rdkit import Chem, RDConfig, rdBase
 from rdkit.Chem.Scaffolds import rdScaffoldNetwork
 
 rdBase.DisableLog("rdApp.info")

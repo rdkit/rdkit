@@ -31,37 +31,29 @@ namespace RDKit {
 void alignMolConfs(ROMol &mol, python::object atomIds, python::object confIds,
                    python::object weights, bool reflect, unsigned int maxIters,
                    python::object RMSlist) {
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
-  std::vector<unsigned int> *aIds = translateIntSeq(atomIds);
-  std::vector<unsigned int> *cIds = translateIntSeq(confIds);
-  std::vector<double> *RMSvector = nullptr;
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
+  std::unique_ptr<std::vector<unsigned int>> aIds(translateIntSeq(atomIds));
+  std::unique_ptr<std::vector<unsigned int>> cIds(translateIntSeq(confIds));
+  std::unique_ptr<std::vector<double>> RMSvector;
   if (RMSlist != python::object()) {
-    RMSvector = new std::vector<double>();
+    RMSvector.reset(new std::vector<double>());
   }
   {
     NOGIL gil;
-    MolAlign::alignMolConformers(mol, aIds, cIds, wtsVec, reflect, maxIters,
-                                 RMSvector);
-  }
-  if (wtsVec) {
-    delete wtsVec;
-  }
-  if (aIds) {
-    delete aIds;
-  }
-  if (cIds) {
-    delete cIds;
+    MolAlign::alignMolConformers(mol, aIds.get(), cIds.get(), wtsVec.get(),
+                                 reflect, maxIters, RMSvector.get());
   }
   if (RMSvector) {
     auto &pyl = static_cast<python::list &>(RMSlist);
-    for (double &i : (*RMSvector)) {
+    for (double i : *RMSvector) {
       pyl.append(i);
     }
-    delete RMSvector;
   }
 }
 
-PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
+PyObject *generateRmsdTransMatchPyTuple(double rmsd,
+                                        const RDGeom::Transform3D &trans,
+                                        const MatchVectType *match = nullptr) {
   npy_intp dims[2];
   dims[0] = 4;
   dims[1] = 4;
@@ -75,10 +67,21 @@ PyObject *generateRmsdTransPyTuple(double rmsd, RDGeom::Transform3D &trans) {
       resData[itab + j] = tdata[itab + j];
     }
   }
-  PyObject *resTup = PyTuple_New(2);
+  PyObject *resTup = PyTuple_New(2 + (match ? 1 : 0));
   PyObject *rmsdItem = PyFloat_FromDouble(rmsd);
   PyTuple_SetItem(resTup, 0, rmsdItem);
   PyTuple_SetItem(resTup, 1, PyArray_Return(res));
+  if (match) {
+    PyObject *listTup = PyTuple_New(match->size());
+    for (unsigned int i = 0; i < match->size(); ++i) {
+      auto *pairTup = PyTuple_New(2);
+      PyTuple_SetItem(pairTup, 0, PyLong_FromLong((*match)[i].first));
+      PyTuple_SetItem(pairTup, 1, PyLong_FromLong((*match)[i].second));
+      PyTuple_SetItem(listTup, i, pairTup);
+    }
+
+    PyTuple_SetItem(resTup, 2, listTup);
+  }
   return resTup;
 }
 
@@ -88,14 +91,14 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
                                python::object weights = python::list(),
                                bool reflect = false,
                                unsigned int maxIters = 50) {
-  MatchVectType *aMap = translateAtomMap(atomMap);
+  std::unique_ptr<MatchVectType> aMap(translateAtomMap(atomMap));
   unsigned int nAtms;
   if (aMap) {
     nAtms = aMap->size();
   } else {
     nAtms = prbMol.getNumAtoms();
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   if (wtsVec) {
     if (wtsVec->size() != nAtms) {
       throw_value_error("Incorrect number of weights specified");
@@ -105,31 +108,60 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::getAlignmentTransform(
-        prbMol, refMol, trans, prbCid, refCid, aMap, wtsVec, reflect, maxIters);
-  }
-  if (aMap) {
-    delete aMap;
-  }
-  if (wtsVec) {
-    delete wtsVec;
+    rmsd = MolAlign::getAlignmentTransform(prbMol, refMol, trans, prbCid,
+                                           refCid, aMap.get(), wtsVec.get(),
+                                           reflect, maxIters);
   }
 
-  return generateRmsdTransPyTuple(rmsd, trans);
+  return generateRmsdTransMatchPyTuple(rmsd, trans);
+}
+
+PyObject *getBestMolAlignTransform(
+    const ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    python::object map = python::list(), int maxMatches = 1000000,
+    bool symmetrizeTerminalGroups = true,
+    python::object weights = python::list(), bool reflect = false,
+    unsigned int maxIters = 50, int numThreads = 1) {
+  std::vector<MatchVectType> aMapVec;
+  unsigned int nAtms = 0;
+  if (map != python::object()) {
+    aMapVec = translateAtomMapSeq(map);
+    if (!aMapVec.empty()) {
+      nAtms = aMapVec.front().size();
+    }
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
+  if (wtsVec) {
+    if (wtsVec->size() != nAtms) {
+      throw_value_error("Incorrect number of weights specified");
+    }
+  }
+  RDGeom::Transform3D bestTrans;
+  MatchVectType bestMatch;
+  double rmsd;
+  {
+    NOGIL gil;
+    rmsd = MolAlign::getBestAlignmentTransform(
+        prbMol, refMol, bestTrans, bestMatch, prbCid, refCid, aMapVec,
+        maxMatches, symmetrizeTerminalGroups, wtsVec.get(), reflect, maxIters,
+        numThreads);
+  }
+
+  return generateRmsdTransMatchPyTuple(rmsd, bestTrans, &bestMatch);
 }
 
 double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
                      int refCid = -1, python::object atomMap = python::list(),
                      python::object weights = python::list(),
                      bool reflect = false, unsigned int maxIters = 50) {
-  MatchVectType *aMap = translateAtomMap(atomMap);
+  std::unique_ptr<MatchVectType> aMap(translateAtomMap(atomMap));
   unsigned int nAtms;
   if (aMap) {
     nAtms = aMap->size();
   } else {
     nAtms = prbMol.getNumAtoms();
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   if (wtsVec) {
     if (wtsVec->size() != nAtms) {
       throw_value_error("Incorrect number of weights specified");
@@ -139,47 +171,69 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap, wtsVec,
-                              reflect, maxIters);
-  }
-  if (aMap) {
-    delete aMap;
-  }
-  if (wtsVec) {
-    delete wtsVec;
+    rmsd = MolAlign::alignMol(prbMol, refMol, prbCid, refCid, aMap.get(),
+                              wtsVec.get(), reflect, maxIters);
   }
   return rmsd;
 }
 
 double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
-                  python::object map, int maxMatches) {
+                  python::object map, int maxMatches,
+                  bool symmetrizeTerminalGroups,
+                  python::object weights = python::list(), int numThreads = 1) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
   }
-
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   double rmsd;
   {
     NOGIL gil;
-    rmsd =
-        MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec, maxMatches);
+    rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec,
+                                maxMatches, symmetrizeTerminalGroups,
+                                wtsVec.get(), numThreads);
   }
   return rmsd;
 }
 
+python::tuple GetAllConformerBestRMS(ROMol &mol, int numThreads,
+                                     python::object map, int maxMatches,
+                                     bool symmetrizeTerminalGroups,
+                                     python::object weights = python::list()) {
+  std::vector<MatchVectType> aMapVec;
+  if (map != python::object()) {
+    aMapVec = translateAtomMapSeq(map);
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
+  std::vector<double> rmsds;
+  {
+    NOGIL gil;
+    rmsds = MolAlign::getAllConformerBestRMS(
+        mol, numThreads, aMapVec, maxMatches, symmetrizeTerminalGroups,
+        wtsVec.get());
+  }
+  python::list res;
+  for (auto v : rmsds) {
+    res.append(v);
+  }
+  return python::tuple(res);
+}
+
 double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
                python::object map, int maxMatches,
+               bool symmetrizeTerminalGroups,
                python::object weights = python::list()) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec,
-                             maxMatches, wtsVec);
+    rmsd =
+        MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec, maxMatches,
+                          symmetrizeTerminalGroups, wtsVec.get());
   }
   return rmsd;
 }
@@ -187,14 +241,14 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
 namespace MolAlign {
 class PyO3A {
  public:
-  PyO3A(O3A *o) : o3a(o){};
-  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)){};
+  PyO3A(O3A *o) : o3a(o) {};
+  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)) {};
   ~PyO3A() = default;
   double align() { return o3a.get()->align(); };
   PyObject *trans() {
     RDGeom::Transform3D trans;
     double rmsd = o3a.get()->trans(trans);
-    return RDKit::generateRmsdTransPyTuple(rmsd, trans);
+    return RDKit::generateRmsdTransMatchPyTuple(rmsd, trans);
   };
   double score() { return o3a.get()->score(); };
   boost::python::list matches() {
@@ -228,18 +282,20 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
                   unsigned int options = 0,
                   python::list constraintMap = python::list(),
                   python::list constraintWeights = python::list()) {
-  MatchVectType *cMap =
-      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
-  RDNumeric::DoubleVector *cWts = nullptr;
+  std::unique_ptr<MatchVectType> cMap;
+  if (python::len(constraintMap)) {
+    cMap.reset(translateAtomMap(constraintMap));
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> cWts;
   if (cMap) {
-    cWts = translateDoubleSeq(constraintWeights);
+    cWts.reset(translateDoubleSeq(constraintWeights));
     if (cWts) {
-      if ((*cMap).size() != (*cWts).size()) {
+      if (cMap->size() != cWts->size()) {
         throw_value_error(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto &i : (*cMap)) {
+    for (const auto &i : *cMap) {
       if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
@@ -250,54 +306,42 @@ PyO3A *getMMFFO3A(ROMol &prbMol, ROMol &refMol, python::object prbProps,
       }
     }
   }
-  ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties = nullptr;
-  MMFF::MMFFMolProperties *prbMolProps = nullptr;
-  ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties = nullptr;
-  MMFF::MMFFMolProperties *refMolProps = nullptr;
+  std::unique_ptr<MMFF::MMFFMolProperties> prbMolProps;
+  MMFF::MMFFMolProperties *prbMolPropsPtr = nullptr;
+  std::unique_ptr<MMFF::MMFFMolProperties> refMolProps;
+  MMFF::MMFFMolProperties *refMolPropsPtr = nullptr;
 
   if (prbProps != python::object()) {
-    prbPyMMFFMolProperties =
+    ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(prbProps);
-    prbMolProps = prbPyMMFFMolProperties->mmffMolProperties.get();
+    prbMolPropsPtr = prbPyMMFFMolProperties->mmffMolProperties.get();
   } else {
-    prbMolProps = new MMFF::MMFFMolProperties(prbMol);
+    prbMolProps.reset(new MMFF::MMFFMolProperties(prbMol));
     if (!prbMolProps->isValid()) {
       throw_value_error("missing MMFF94 parameters for probe molecule");
     }
+    prbMolPropsPtr = prbMolProps.get();
   }
   if (refProps != python::object()) {
-    refPyMMFFMolProperties =
+    ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
-    refMolProps = refPyMMFFMolProperties->mmffMolProperties.get();
+    refMolPropsPtr = refPyMMFFMolProperties->mmffMolProperties.get();
   } else {
-    refMolProps = new MMFF::MMFFMolProperties(refMol);
+    refMolProps.reset(new MMFF::MMFFMolProperties(refMol));
     if (!refMolProps->isValid()) {
       throw_value_error("missing MMFF94 parameters for reference molecule");
     }
+    refMolPropsPtr = refMolProps.get();
   }
   O3A *o3a;
   {
     NOGIL gil;
-    o3a = new MolAlign::O3A(prbMol, refMol, prbMolProps, refMolProps,
+    o3a = new MolAlign::O3A(prbMol, refMol, prbMolPropsPtr, refMolPropsPtr,
                             MolAlign::O3A::MMFF94, prbCid, refCid, reflect,
-                            maxIters, options, cMap, cWts);
-  }
-  auto *pyO3A = new PyO3A(o3a);
-
-  if (!prbPyMMFFMolProperties) {
-    delete prbMolProps;
-  }
-  if (!refPyMMFFMolProperties) {
-    delete refMolProps;
-  }
-  if (cMap) {
-    delete cMap;
-  }
-  if (cWts) {
-    delete cWts;
+                            maxIters, options, cMap.get(), cWts.get());
   }
 
-  return pyO3A;
+  return new PyO3A(o3a);
 }
 
 python::tuple getMMFFO3AForConfs(
@@ -306,18 +350,20 @@ python::tuple getMMFFO3AForConfs(
     unsigned int maxIters = 50, unsigned int options = 0,
     python::list constraintMap = python::list(),
     python::list constraintWeights = python::list()) {
-  MatchVectType *cMap =
-      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
-  RDNumeric::DoubleVector *cWts = nullptr;
+  std::unique_ptr<MatchVectType> cMap;
+  if (python::len(constraintMap)) {
+    cMap.reset(translateAtomMap(constraintMap));
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> cWts;
   if (cMap) {
-    cWts = translateDoubleSeq(constraintWeights);
+    cWts.reset(translateDoubleSeq(constraintWeights));
     if (cWts) {
-      if ((*cMap).size() != (*cWts).size()) {
+      if (cMap->size() != cWts->size()) {
         throw_value_error(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto &i : (*cMap)) {
+    for (const auto &i : *cMap) {
       if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
@@ -328,55 +374,47 @@ python::tuple getMMFFO3AForConfs(
       }
     }
   }
-  ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties = nullptr;
-  MMFF::MMFFMolProperties *prbMolProps = nullptr;
-  ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties = nullptr;
-  MMFF::MMFFMolProperties *refMolProps = nullptr;
+  std::unique_ptr<MMFF::MMFFMolProperties> prbMolProps;
+  MMFF::MMFFMolProperties *prbMolPropsPtr = nullptr;
+  std::unique_ptr<MMFF::MMFFMolProperties> refMolProps;
+  MMFF::MMFFMolProperties *refMolPropsPtr = nullptr;
 
   if (prbProps != python::object()) {
-    prbPyMMFFMolProperties =
+    ForceFields::PyMMFFMolProperties *prbPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(prbProps);
-    prbMolProps = prbPyMMFFMolProperties->mmffMolProperties.get();
+    prbMolPropsPtr = prbPyMMFFMolProperties->mmffMolProperties.get();
   } else {
-    prbMolProps = new MMFF::MMFFMolProperties(prbMol);
+    prbMolProps.reset(new MMFF::MMFFMolProperties(prbMol));
     if (!prbMolProps->isValid()) {
       throw_value_error("missing MMFF94 parameters for probe molecule");
     }
+    prbMolPropsPtr = prbMolProps.get();
   }
   if (refProps != python::object()) {
-    refPyMMFFMolProperties =
+    ForceFields::PyMMFFMolProperties *refPyMMFFMolProperties =
         python::extract<ForceFields::PyMMFFMolProperties *>(refProps);
-    refMolProps = refPyMMFFMolProperties->mmffMolProperties.get();
+    refMolPropsPtr = refPyMMFFMolProperties->mmffMolProperties.get();
   } else {
-    refMolProps = new MMFF::MMFFMolProperties(refMol);
+    refMolProps.reset(new MMFF::MMFFMolProperties(refMol));
     if (!refMolProps->isValid()) {
       throw_value_error("missing MMFF94 parameters for reference molecule");
     }
+    refMolPropsPtr = refMolProps.get();
   }
   std::vector<boost::shared_ptr<O3A>> res;
   {
     NOGIL gil;
-    getO3AForProbeConfs(prbMol, refMol, prbMolProps, refMolProps, res,
+    getO3AForProbeConfs(prbMol, refMol, prbMolPropsPtr, refMolPropsPtr, res,
                         numThreads, MolAlign::O3A::MMFF94, refCid, reflect,
-                        maxIters, options, cMap, cWts);
+                        maxIters, options, cMap.get(), cWts.get());
   }
 
   python::list pyres;
+  boost::python::manage_new_object::apply<PyO3A *>::type converter;
   for (auto &i : res) {
-    pyres.append(new PyO3A(i));
-  }
-
-  if (!prbPyMMFFMolProperties) {
-    delete prbMolProps;
-  }
-  if (!refPyMMFFMolProperties) {
-    delete refMolProps;
-  }
-  if (cMap) {
-    delete cMap;
-  }
-  if (cWts) {
-    delete cWts;
+    // transfer ownership to python
+    python::handle<> handle(converter(new PyO3A(i)));
+    pyres.append(handle);
   }
 
   return python::tuple(pyres);
@@ -389,18 +427,20 @@ PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
                      unsigned int maxIters = 50, unsigned int options = 0,
                      python::list constraintMap = python::list(),
                      python::list constraintWeights = python::list()) {
-  MatchVectType *cMap =
-      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
-  RDNumeric::DoubleVector *cWts = nullptr;
+  std::unique_ptr<MatchVectType> cMap;
+  if (python::len(constraintMap)) {
+    cMap.reset(translateAtomMap(constraintMap));
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> cWts;
   if (cMap) {
-    cWts = translateDoubleSeq(constraintWeights);
+    cWts.reset(translateDoubleSeq(constraintWeights));
     if (cWts) {
-      if ((*cMap).size() != (*cWts).size()) {
+      if (cMap->size() != cWts->size()) {
         throw_value_error(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto &i : (*cMap)) {
+    for (const auto &i : *cMap) {
       if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
@@ -451,17 +491,10 @@ PyO3A *getCrippenO3A(ROMol &prbMol, ROMol &refMol,
     NOGIL gil;
     o3a = new MolAlign::O3A(prbMol, refMol, &prbLogpContribs, &refLogpContribs,
                             MolAlign::O3A::CRIPPEN, prbCid, refCid, reflect,
-                            maxIters, options, cMap, cWts);
-  }
-  auto *pyO3A = new PyO3A(o3a);
-  if (cMap) {
-    delete cMap;
-  }
-  if (cWts) {
-    delete cWts;
+                            maxIters, options, cMap.get(), cWts.get());
   }
 
-  return pyO3A;
+  return new PyO3A(o3a);
 }
 
 python::tuple getCrippenO3AForConfs(
@@ -470,18 +503,20 @@ python::tuple getCrippenO3AForConfs(
     int refCid = -1, bool reflect = false, unsigned int maxIters = 50,
     unsigned int options = 0, python::list constraintMap = python::list(),
     python::list constraintWeights = python::list()) {
-  MatchVectType *cMap =
-      (python::len(constraintMap) ? translateAtomMap(constraintMap) : nullptr);
-  RDNumeric::DoubleVector *cWts = nullptr;
+  std::unique_ptr<MatchVectType> cMap;
+  if (python::len(constraintMap)) {
+    cMap.reset(translateAtomMap(constraintMap));
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> cWts;
   if (cMap) {
-    cWts = translateDoubleSeq(constraintWeights);
+    cWts.reset(translateDoubleSeq(constraintWeights));
     if (cWts) {
-      if ((*cMap).size() != (*cWts).size()) {
+      if (cMap->size() != cWts->size()) {
         throw_value_error(
             "The number of weights should match the number of constraints");
       }
     }
-    for (auto &i : (*cMap)) {
+    for (const auto &i : *cMap) {
       if ((i.first < 0) || (i.first >= rdcast<int>(prbMol.getNumAtoms())) ||
           (i.second < 0) || (i.second >= rdcast<int>(refMol.getNumAtoms()))) {
         throw_value_error("Constrained atom idx out of range");
@@ -532,18 +567,15 @@ python::tuple getCrippenO3AForConfs(
     NOGIL gil;
     getO3AForProbeConfs(prbMol, refMol, &prbLogpContribs, &refLogpContribs, res,
                         numThreads, MolAlign::O3A::CRIPPEN, refCid, reflect,
-                        maxIters, options, cMap, cWts);
-  }
-  python::list pyres;
-  for (auto &re : res) {
-    pyres.append(new PyO3A(re));
+                        maxIters, options, cMap.get(), cWts.get());
   }
 
-  if (cMap) {
-    delete cMap;
-  }
-  if (cWts) {
-    delete cWts;
+  python::list pyres;
+  boost::python::manage_new_object::apply<PyO3A *>::type converter;
+  for (auto &i : res) {
+    // transfer ownership to python
+    python::handle<> handle(converter(new PyO3A(i)));
+    pyres.append(handle);
   }
 
   return python::tuple(pyres);
@@ -572,11 +604,11 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        the alignment is computed (defaults to first conformation)\n\
       - atomMap   a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
                        used to compute the alignments. If this mapping is \n\
-                       not specified an attempt is made to generate on by\n\
+                       not specified an attempt is made to generate one by\n\
                        substructure matching\n\
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
-      - maxIters  maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters  maximum number of iterations used in minimizing the RMSD\n\
        \n\
       RETURNS\n\
       a tuple of (RMSD value, transform matrix) \n\
@@ -587,6 +619,51 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("refCid") = -1, python::arg("atomMap") = python::list(),
        python::arg("weights") = python::list(), python::arg("reflect") = false,
        python::arg("maxIters") = 50),
+      docString.c_str());
+
+  docString =
+      "Compute the optimal RMS, transformation and atom map for aligning\n\
+      two molecules, taking symmetry into account. Molecule coordinates\n\
+      are left unaltered.\n\
+    \n\
+      This function will attempt to align all permutations of matching atom\n\
+      orders in both molecules, for some molecules it will lead to 'combinatorial\n\
+      explosion' especially if hydrogens are present.\n\
+      Use 'GetAlignmentTransform' to align molecules without changing the atom order.\n\
+    \n\
+     ARGUMENTS\n\
+      - prbMol      molecule that is to be aligned\n\
+      - refMol      molecule used as the reference for the alignment\n\
+      - prbCid      ID of the conformation in the probe to be used \n\
+                    for the alignment (defaults to first conformation)\n\
+      - refCid      ID of the conformation in the ref molecule to which \n\
+                    the alignment is computed (defaults to first conformation)\n\
+      - map:        (optional) a list of lists of (probeAtomId, refAtomId)\n\
+                    tuples with the atom-atom mappings of the two\n\
+                    molecules. If not provided, these will be generated\n\
+                    using a substructure search.\n\
+      - maxMatches  (optional) if atomMap is empty, this will be the max number of\n\
+                    matches found in a SubstructMatch().\n\
+      - symmetrizeConjugatedTerminalGroups (optional) if set, conjugated\n\
+                    terminal functional groups (like nitro or carboxylate)\n\
+                    will be considered symmetrically.\n\
+      - weights     Optionally specify weights for each of the atom pairs\n\
+      - reflect     if true reflect the conformation of the probe molecule\n\
+      - maxIters    maximum number of iterations used in minimizing the RMSD\n\
+      - numThreads  (optional) number of threads to use\n\
+       \n\
+      RETURNS\n\
+      a tuple of (RMSD value, best transform matrix, best atom map)\n\
+    \n";
+
+  python::def(
+      "GetBestAlignmentTransform", RDKit::getBestMolAlignTransform,
+      (python::arg("prbMol"), python::arg("refMol"), python::arg("prbCid") = -1,
+       python::arg("refCid") = -1, python::arg("map") = python::list(),
+       python::arg("maxMatches") = 1000000,
+       python::arg("symmetrizeConjugatedTerminalGroups") = true,
+       python::arg("weights") = python::list(), python::arg("reflect") = false,
+       python::arg("maxIters") = 50, python::arg("numThreads") = 1),
       docString.c_str());
 
   docString =
@@ -606,11 +683,11 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        the alignment is computed (defaults to first conformation)\n\
       - atomMap   a vector of pairs of atom IDs (probe AtomId, ref AtomId)\n\
                        used to compute the alignments. If this mapping is \n\
-                       not specified an attempt is made to generate on by\n\
+                       not specified an attempt is made to generate one by\n\
                        substructure matching\n\
       - weights   Optionally specify weights for each of the atom pairs\n\
       - reflect   if true reflect the conformation of the probe molecule\n\
-      - maxIters  maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters  maximum number of iterations used in minimizing the RMSD\n\
        \n\
       RETURNS\n\
       RMSD value\n\
@@ -646,6 +723,11 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        using a substructure search.\n\
         - maxMatches:  (optional) if map isn't specified, this will be\n\
                        the max number of matches found in a SubstructMatch()\n\
+        - symmetrizeConjugatedTerminalGroups:  (optional) if set, conjugated\n\
+                       terminal functional groups (like nitro or carboxylate)\n\
+                       will be considered symmetrically\n\
+        - weights:     (optional) weights for mapping\n\
+        - numThreads:  (optional) number of threads to use\n\
        \n\
       RETURNS\n\
       The best RMSD found\n\
@@ -654,31 +736,67 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       "GetBestRMS", RDKit::GetBestRMS,
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
-       python::arg("maxMatches") = 1000000),
+       python::arg("maxMatches") = 1000000,
+       python::arg("symmetrizeConjugatedTerminalGroups") = true,
+       python::arg("weights") = python::list(), python::arg("numThreads") = 1),
       docString.c_str());
 
   docString =
+      R"DOC(Returns the symmetric distance matrix between the conformers of a molecule.
+       getBestRMS() is used to calculate the inter-conformer distances
+
+       ARGUMENTS
+        - mol:       the molecule to be considered
+        - numThreads:  (optional) number of threads to use
+        - map:         (optional) a list of lists of (probeAtomId,refAtomId)
+                       tuples with the atom-atom mappings of the two
+                       molecules. If not provided, these will be generated
+                       using a substructure search.
+        - maxMatches:  (optional) if map isn't specified, this will be
+                       the max number of matches found in a SubstructMatch()
+        - symmetrizeConjugatedTerminalGroups:  (optional) if set, conjugated
+                       terminal functional groups (like nitro or carboxylate)
+                       will be considered symmetrically
+        - weights:     (optional) weights for mapping
+       
+      RETURNS
+      A tuple with the best RMSDS. The ordering is [(1,0),(2,0),(2,1),(3,0),... etc]
+  )DOC";
+  python::def("GetAllConformerBestRMS", RDKit::GetAllConformerBestRMS,
+              (python::arg("mol"), python::arg("numThreads") = 1,
+               python::arg("map") = python::object(),
+               python::arg("maxMatches") = 1000000,
+               python::arg("symmetrizeConjugatedTerminalGroups") = true,
+               python::arg("weights") = python::list()),
+              docString.c_str());
+
+  docString =
       "Returns the RMS between two molecules, taking symmetry into account.\n\
+       In contrast to getBestRMS, the RMS is computed 'in place', i.e.\n\
+       probe molecules are not aligned to the reference ahead of the\n\
+       RMS calculation. This is useful, for example, to compute\n\
+       the RMSD between docking poses and the co-crystallized ligand.\n\
       \n\
        Note:\n\
-       This function will attempt to align all permutations of matching atom\n\
+       This function will attempt to match all permutations of matching atom\n\
        orders in both molecules, for some molecules it will lead to\n\
        'combinatorial explosion' especially if hydrogens are present.\n\
-       Use 'rdkit.Chem.AllChem.AlignMol' to align molecules without changing\n\
-       the atom order.\n\
       \n\
        ARGUMENTS\n\
         - prbMol:      the molecule to be aligned to the reference\n\
         - refMol:      the reference molecule\n\
-        - prbId:       (optional) probe conformation to use\n\
-        - refId:       (optional) reference conformation to use\n\
-        - map:         (optional) a list of lists of (probeAtomId,refAtomId)\n\
+        - prbCId:      (optional) probe conformation to use\n\
+        - refCId:      (optional) reference conformation to use\n\
+        - map:         (optional) a list of lists of (probeAtomId, refAtomId)\n\
                        tuples with the atom-atom mappings of the two\n\
                        molecules. If not provided, these will be generated\n\
                        using a substructure search.\n\
         - maxMatches:  (optional) if map isn't specified, this will be\n\
                        the max number of matches found in a SubstructMatch()\n\
-        - weights:     (optional) weights for mapping \n\
+        - symmetrizeConjugatedTerminalGroups:  (optional) if set, conjugated\n\
+                       terminal functional groups (like nitro or carboxylate)\n\
+                       will be considered symmetrically\n\
+        - weights:     (optional) weights for mapping\n\
        \n\
       RETURNS\n\
       The best RMSD found\n\
@@ -688,21 +806,22 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       (python::arg("prbMol"), python::arg("refMol"), python::arg("prbId") = -1,
        python::arg("refId") = -1, python::arg("map") = python::object(),
        python::arg("maxMatches") = 1000000,
+       python::arg("symmetrizeConjugatedTerminalGroups") = true,
        python::arg("weights") = python::list()),
       docString.c_str());
 
   docString =
-      "Alignment conformations in a molecule to each other\n\
+      "Align conformations in a molecule to each other\n\
      \n\
       The first conformation in the molecule is used as the reference\n\
      \n\
      ARGUMENTS\n\
       - mol          molecule of interest\n\
-      - atomIds      List of atom ids to use a points for alingment - defaults to all atoms\n\
+      - atomIds      List of atom ids to use a points for alignment - defaults to all atoms\n\
       - confIds      Ids of conformations to align - defaults to all conformers \n\
       - weights      Optionally specify weights for each of the atom pairs\n\
       - reflect      if true reflect the conformation of the probe molecule\n\
-      - maxIters     maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters     maximum number of iterations used in minimizing the RMSD\n\
       - RMSlist      if provided, fills in the RMS values between the reference\n\
 		     conformation and the other aligned conformations\n\
        \n\
@@ -764,7 +883,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
                                  (defaults to false)\n\
-      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters                 maximum number of iterations used in minimizing the RMSD\n\
                                  (defaults to 50)\n\
       - options                  least 2 significant bits encode accuracy\n\
                                  (0: maximum, 3: minimum; defaults to 0)\n\
@@ -809,7 +928,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
                                  (defaults to false)\n\
-      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters                 maximum number of iterations used in minimizing the RMSD\n\
                                  (defaults to 50)\n\
       - options                  least 2 significant bits encode accuracy\n\
                                  (0: maximum, 3: minimum; defaults to 0)\n\
@@ -854,7 +973,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
                                  (defaults to false)\n\
-      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters                 maximum number of iterations used in minimizing the RMSD\n\
                                  (defaults to 50)\n\
       - options                  least 2 significant bits encode accuracy\n\
                                  (0: maximum, 3: minimum; defaults to 0)\n\
@@ -899,7 +1018,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                                  the alignment is computed (defaults to first conformation)\n\
       - reflect                  if true reflect the conformation of the probe molecule\n\
                                  (defaults to false)\n\
-      - maxIters                 maximum number of iterations used in mimizing the RMSD\n\
+      - maxIters                 maximum number of iterations used in minimizing the RMSD\n\
                                  (defaults to 50)\n\
       - options                  least 2 significant bits encode accuracy\n\
                                  (0: maximum, 3: minimum; defaults to 0)\n\

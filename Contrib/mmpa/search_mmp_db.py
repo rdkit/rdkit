@@ -30,12 +30,13 @@
 #
 # Created by Jameed Hussain, July 2013
 
-import sys
 import os
 import re
 import sqlite3
 import subprocess
+import sys
 from optparse import OptionParser
+
 from indexing import cansmirk, heavy_atom_count
 from rfrag import fragment_mol
 
@@ -343,13 +344,14 @@ parser.add_option(
   '-t', '--type', action='store', dest='type', type='string',
   help='Type of search required. Options are: mmp, subs, trans, subs_smarts, trans_smarts')
 parser.add_option(
-  '-m', '--maxsize', action='store', dest='maxsize', type='int',
-  help='Maximum size of change (in heavy atoms) allowed in matched molecular pairs identified. DEFAULT=10. \
+  '-m', '--maxsize', action='store', dest='maxsize', type='int', help=
+  'Maximum size of change (in heavy atoms) allowed in matched molecular pairs identified. DEFAULT=10. \
                   Note: This option overrides the ratio option if both are specified.')
 parser.add_option(
-  '-r', '--ratio', action='store', dest='ratio', type='float',
-  help='Only applicable with the mmp search type. Maximum ratio of change allowed in matched molecular pairs identified. The ratio is: size of change / \
-                  size of cmpd (in terms of heavy atoms) for the QUERY MOLECULE. DEFAULT=0.3. Note: If this option is used with the maxsize option, the maxsize option will be used.')
+  '-r', '--ratio', action='store', dest='ratio', type='float', help=
+  'Only applicable with the mmp search type. Maximum ratio of change allowed in matched molecular pairs identified. The ratio is: size of change / \
+                  size of cmpd (in terms of heavy atoms) for the QUERY MOLECULE. DEFAULT=0.3. Note: If this option is used with the maxsize option, the maxsize option will be used.'
+)
 parser.add_option('-p', '--prefix', action='store', dest='prefix', type='string',
                   help='Prefix for the db file. DEFAULT=mmp')
 
@@ -377,8 +379,8 @@ elif options.ratio is not None:
   use_ratio = True
 
 if options.type is not None:
-  if ((options.type == "mmp") or (options.type == "subs") or (options.type == "trans") or
-      (options.type == "subs_smarts") or (options.type == "trans_smarts")):
+  if ((options.type == "mmp") or (options.type == "subs") or (options.type == "trans")
+      or (options.type == "subs_smarts") or (options.type == "trans_smarts")):
     search_type = options.type
   else:
     print(

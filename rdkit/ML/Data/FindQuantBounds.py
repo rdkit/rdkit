@@ -2,8 +2,6 @@
 #  Copyright (C) 2001  greg Landrum
 #
 
-
-
 from rdkit.Dbase import DbConnection
 from rdkit.ML.Data import Quantize
 
@@ -32,8 +30,8 @@ def Usage():
 
 
 if __name__ == '__main__':
-  import sys
   import getopt
+  import sys
 
   try:
     args, extras = getopt.getopt(sys.argv[1:], 'n:r:i')

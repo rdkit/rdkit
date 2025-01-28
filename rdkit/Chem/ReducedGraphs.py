@@ -11,6 +11,7 @@
 # Created by Greg Landrum, July 2013
 
 import numpy
+
 from rdkit.Chem.rdReducedGraphs import *
 
 

@@ -7,15 +7,19 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 #
-from collections import abc  # this won't work in python2, but we don't support that any more
+from collections import \
+    abc  # this won't work in python2, but we don't support that any more
 
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
-from rdkit.Chem import rdPartialCharges, rdMolDescriptors
 import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
-from rdkit.Chem.EState.EState import (MaxEStateIndex, MinEStateIndex, MaxAbsEStateIndex,
-                                      MinAbsEStateIndex)
+from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
+from rdkit.Chem import rdPartialCharges
+from rdkit.Chem import rdFingerprintGenerator
+from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex, MinAbsEStateIndex,
+                                      MinEStateIndex)
 from rdkit.Chem.QED import qed
+from rdkit.Chem.SpacialScore import SPS
 
 
 def _isCallable(thing):
@@ -28,7 +32,8 @@ _descList = []
 
 def _setupDescriptors(namespace):
   global _descList, descList
-  from rdkit.Chem import GraphDescriptors, MolSurf, Lipinski, Fragments, Crippen, Descriptors3D
+  from rdkit.Chem import (Crippen, Descriptors3D, Fragments, GraphDescriptors, Lipinski, MolSurf,
+                          SpacialScore)
   from rdkit.Chem.EState import EState_VSA
   _descList.clear()
 
@@ -63,6 +68,7 @@ def _setupDescriptors(namespace):
         if _isCallable(thing):
           namespace[name] = thing
           _descList.append((name, thing))
+
   descList = _descList
 
 
@@ -196,27 +202,39 @@ MinAbsPartialCharge.version = "1.0.0"
 
 
 def _FingerprintDensity(mol, func, *args, **kwargs):
-  fp = func(*((mol, ) + args), **kwargs)
+  aname = f'_{func.__name__}_{args}'
+  if hasattr(mol, aname):
+    fp = getattr(mol, aname)
+  else:
+    fp = func(*((mol, ) + args), **kwargs)
+    setattr(mol, aname, fp)
   if hasattr(fp, 'GetNumOnBits'):
     val = fp.GetNumOnBits()
   else:
     val = len(fp.GetNonzeroElements())
   num_heavy_atoms = mol.GetNumHeavyAtoms()
   if num_heavy_atoms == 0:
-    return 0
-  return float(val) / num_heavy_atoms
+    res = 0.0
+  else:
+    res = float(val) / num_heavy_atoms
+  return res
+
+
+def _getMorganCountFingerprint(mol, radius):
+  fpg = rdFingerprintGenerator.GetMorganGenerator(radius)
+  return fpg.GetSparseCountFingerprint(mol)
 
 
 def FpDensityMorgan1(x):
-  return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 1)
+  return _FingerprintDensity(x, _getMorganCountFingerprint, 1)
 
 
 def FpDensityMorgan2(x):
-  return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 2)
+  return _FingerprintDensity(x, _getMorganCountFingerprint, 2)
 
 
 def FpDensityMorgan3(x):
-  return _FingerprintDensity(x, _rdMolDescriptors.GetMorganFingerprint, 3)
+  return _FingerprintDensity(x, _getMorganCountFingerprint, 3)
 
 
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
@@ -268,13 +286,43 @@ class PropertyFunctor(rdMolDescriptors.PythonPropertyFunctor):
     raise NotImplementedError("Please implement the __call__ method")
 
 
+def CalcMolDescriptors(mol, missingVal=None, silent=True):
+  ''' calculate the full set of descriptors for a molecule
+    
+    Parameters
+    ----------
+    mol : RDKit molecule
+    missingVal : float, optional
+                 This will be used if a particular descriptor cannot be calculated
+    silent : bool, optional
+             if True then exception messages from descriptors will be displayed
+
+    Returns
+    -------
+    dict 
+         A dictionary with decriptor names as keys and the descriptor values as values
+    '''
+  res = {}
+  for nm, fn in _descList:
+    # some of the descriptor fucntions can throw errors if they fail, catch those here:
+    try:
+      val = fn(mol)
+    except:
+      if not silent:
+        import traceback
+        traceback.print_exc()
+      val = missingVal
+    res[nm] = val
+  return res
+
+
 # ------------------------------------
 #
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

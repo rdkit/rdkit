@@ -1,7 +1,6 @@
-
-from rdkit import RDConfig
 import unittest
-from rdkit import Chem
+
+from rdkit import Chem, RDConfig
 from rdkit.Chem import rdMMPA
 
 
@@ -95,7 +94,8 @@ class TestCase(unittest.TestCase):
 
   def test5(self):
     m = Chem.MolFromSmiles(
-      "CC[C@H](C)[C@@H](C(=O)N[C@H]1CSSC[C@H]2C(=O)NCC(=O)N3CCC[C@H]3C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@@H](CSSC[C@@H](C(=O)N[C@H](C(=O)N4CCC[C@H]4C(=O)N[C@H](C(=O)N2)C)CC(=O)N)NC1=O)C(=O)N)CO)Cc5ccc(cc5)O)CCCC[NH3+])N")  # ALPHA-CONOTOXIN SI
+      "CC[C@H](C)[C@@H](C(=O)N[C@H]1CSSC[C@H]2C(=O)NCC(=O)N3CCC[C@H]3C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@@H](CSSC[C@@H](C(=O)N[C@H](C(=O)N4CCC[C@H]4C(=O)N[C@H](C(=O)N2)C)CC(=O)N)NC1=O)C(=O)N)CO)Cc5ccc(cc5)O)CCCC[NH3+])N"
+    )  # ALPHA-CONOTOXIN SI
     frags = rdMMPA.FragmentMol(m, resultsAsMols=False)
     self.assertFalse(len(frags))
     frags = rdMMPA.FragmentMol(m, maxCuts=2, maxCutBonds=21, resultsAsMols=False)
@@ -103,46 +103,41 @@ class TestCase(unittest.TestCase):
 
   def test6(self):
     m = Chem.MolFromSmiles(
-      "CC[C@H](C)[C@@H](C(=O)N[C@H]1CSSC[C@H]2C(=O)NCC(=O)N3CCC[C@H]3C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@@H](CSSC[C@@H](C(=O)N[C@H](C(=O)N4CCC[C@H]4C(=O)N[C@H](C(=O)N2)C)CC(=O)N)NC1=O)C(=O)N)CO)Cc5ccc(cc5)O)CCCC[NH3+])N")  # ALPHA-CONOTOXIN SI
+      "CC[C@H](C)[C@@H](C(=O)N[C@H]1CSSC[C@H]2C(=O)NCC(=O)N3CCC[C@H]3C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@H](C(=O)N[C@@H](CSSC[C@@H](C(=O)N[C@H](C(=O)N4CCC[C@H]4C(=O)N[C@H](C(=O)N2)C)CC(=O)N)NC1=O)C(=O)N)CO)Cc5ccc(cc5)O)CCCC[NH3+])N"
+    )  # ALPHA-CONOTOXIN SI
     frags = rdMMPA.FragmentMol(m, resultsAsMols=False)
     self.assertFalse(len(frags))
-    frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=1, maxCutBonds=21,
-                                resultsAsMols=False)
-    frags2 = rdMMPA.FragmentMol(m, minCuts=2, maxCuts=2, maxCutBonds=21,
-                                resultsAsMols=False)
+    frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=1, maxCutBonds=21, resultsAsMols=False)
+    frags2 = rdMMPA.FragmentMol(m, minCuts=2, maxCuts=2, maxCutBonds=21, resultsAsMols=False)
 
     frags = rdMMPA.FragmentMol(m, maxCuts=2, maxCutBonds=21, resultsAsMols=False)
 
-    self.assertEqual(set(frags1+frags2), set(frags))
+    self.assertEqual(set(frags1 + frags2), set(frags))
     self.assertEqual(set(frags1).intersection(set(frags2)), set())
-
 
   def test7(self):
     m = Chem.MolFromSmiles("Oc1ccccc1N")
 
-    frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=1, maxCutBonds=21,
-                                resultsAsMols=False)
+    frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=1, maxCutBonds=21, resultsAsMols=False)
 
-    frags2 = rdMMPA.FragmentMol(m, minCuts=2, maxCuts=2, maxCutBonds=21,
-                                resultsAsMols=False)
+    frags2 = rdMMPA.FragmentMol(m, minCuts=2, maxCuts=2, maxCutBonds=21, resultsAsMols=False)
 
     frags = rdMMPA.FragmentMol(m, maxCuts=2, maxCutBonds=21, resultsAsMols=False)
 
-    self.assertEqual(set(frags1+frags2), set(frags))
-
+    self.assertEqual(set(frags1 + frags2), set(frags))
 
   def test8(self):
     m = Chem.MolFromSmiles('Cc1ccccc1NC(=O)C(C)[NH+]1CCCC1')  # ZINC00000051
     sm = Chem.MolFromSmarts("[#6+0;!$(*=,#[!#6])]!@!=!#[*]")
     matching_atoms = m.GetSubstructMatches(sm)
     bonds = []
-    for a,b in matching_atoms:
-      bond = m.GetBondBetweenAtoms(a,b)
+    for a, b in matching_atoms:
+      bond = m.GetBondBetweenAtoms(a, b)
       bonds.append(bond.GetIdx())
 
     frags = rdMMPA.FragmentMol(m, resultsAsMols=False)
-    frags2 =  rdMMPA.FragmentMol(m, bonds, resultsAsMols=False)
-    frags3 =  rdMMPA.FragmentMol(m, tuple(bonds), resultsAsMols=False)
+    frags2 = rdMMPA.FragmentMol(m, bonds, resultsAsMols=False)
+    frags3 = rdMMPA.FragmentMol(m, tuple(bonds), resultsAsMols=False)
     self.assertEqual(frags, frags2)
     self.assertEqual(frags2, frags3)
 
@@ -150,21 +145,18 @@ class TestCase(unittest.TestCase):
     m = Chem.MolFromSmiles("Oc1ccccc1N")
 
     try:
-      
-      frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=0, maxCutBonds=21,
-                                  resultsAsMols=False)
-      self.assertTrue(False) # should not get here
+
+      frags1 = rdMMPA.FragmentMol(m, minCuts=1, maxCuts=0, maxCutBonds=21, resultsAsMols=False)
+      self.assertTrue(False)  # should not get here
     except ValueError as e:
       self.assertEqual(str(e), "supplied maxCuts is less than minCuts")
 
     try:
-      
-      frags1 = rdMMPA.FragmentMol(m, minCuts=0, maxCuts=0, maxCutBonds=21,
-                                  resultsAsMols=False)
-      self.assertTrue(False) # should not get here
+
+      frags1 = rdMMPA.FragmentMol(m, minCuts=0, maxCuts=0, maxCutBonds=21, resultsAsMols=False)
+      self.assertTrue(False)  # should not get here
     except ValueError as e:
       self.assertEqual(str(e), "minCuts must be greater than 0")
-    
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -233,8 +233,7 @@ TEST_CASE("Github issues", "[molhash]") {
 TEST_CASE("MolHash with CX extensions", "[molhash]") {
   SECTION("Tautomer") {
     auto mol =
-        "C[C@@H](O)[C@@H](C)[C@@H](C)C[C@H](C1=CN=CN1)C1=CNC=N1 "
-        "|o1:8,5,&1:1,3,r,c:11,18,t:9,15|"_smiles;
+        "C[C@@H](O)[C@@H](C)[C@@H](C)C[C@H](C1=CN=CN1)C1=CNC=N1 |o1:8,5,&1:1,3,r,c:11,18,t:9,15|"_smiles;
     REQUIRE(mol);
 
     {
@@ -242,8 +241,7 @@ TEST_CASE("MolHash with CX extensions", "[molhash]") {
       auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer);
       CHECK(
           hsh ==
-          "C[C@@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@H](C)[C@@H](C)"
-          "[O]_3_0");
+          "C[C@H]([C@@H](C)[O])[C@@H](C)CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1_3_0");
     }
     {
       RWMol cp(*mol);
@@ -252,8 +250,7 @@ TEST_CASE("MolHash with CX extensions", "[molhash]") {
           MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer, true);
       CHECK(
           hsh ==
-          "C[C@@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@H](C)[C@@H](C)"
-          "[O]_3_0 |o1:1,&1:14,16|");
+          "C[C@H](CC([C]1[CH][N][CH][N]1)[C]1[CH][N][CH][N]1)[C@@H](C)[C@H](C)[O]_3_0 |o1:1,&1:14,16|");
     }
   }
   SECTION("no coordinates please") {
@@ -402,6 +399,537 @@ M  END
       auto hsh =
           MolHash::MolHash(&cp, MolHash::HashFunction::AnonymousGraph, true);
       CHECK(hsh == "*1***(*(**(*2***2)*2**2)*2*****2)**1");
+    }
+  }
+}
+
+TEST_CASE("tautomer v2") {
+  SECTION("matches") {
+    // pairs of {molecules with the same hash} {molecules with different hashes
+    // from those}
+    std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>>
+        data = {
+            {{"CC=O", "C=CO"}, {}},
+            {{"CCC=O", "CC=CO"}, {"C=CCO"}},
+            {{"CC(=O)CC(=O)C", "C=C(O)CC(=O)C", "CC(=O)C=C(O)C",
+              "C=C(O)C=C(O)C", "C=C(O)CC(O)=C"},
+             {}},
+            {{"CN=CCF", "CNC=CF"}, {"C=NCCF", "CNCCF"}},
+            {{"CN=C(C)F", "CNC(=C)F"}, {"C=NC(C)F"}},
+            {{"Cc1n[nH]cc1", "Cc1[nH][n]cc1", "CC1=NN=CC1", "CC1N=NCC=1"}, {}},
+            {{"O=C1C=CC(=O)C=C1"}, {"Oc1ccc(O)cc1", "O=C1C=CC(O)C=C1"}},
+            {{"CC(=O)CCC(=O)C", "CC(=O)CCC(O)=C", "C=C(O)CCC(O)=C"},
+             {"CC(O)C=CC(=O)C", "CC(=O)C=CC(O)C"}},
+            {{"c1ccccc1/C=C/c1ccccc1"},
+             {"c1ccccc1/C=C\\c1ccccc1", "c1ccccc1C=Cc1ccccc1"}},
+            // imine stereochemistry is lost:
+            {{"CC/C=N/C", "CC/C=N\\C", "CCC=NC", "C/C=C/NC"}, {}},
+            // but only when tautomers can happen:
+            {{"FC(F)(F)/C(F)=N/C(F)(F)F"},
+             {"FC(F)(F)/C(F)=N\\C(F)(F)F", "FC(F)(F)C(F)=NC(F)(F)F"}},
+            {{"NC(=N)CC(=O)C", "NC(N)=CC(=O)C", "NC(=N)CC(O)=C",
+              "NC(=N)C=C(O)C"},
+             {}},
+            {{"CC(=O)C=CC", "C=C(O)C=CC"}, {"CC(=O)CC=C"}},
+            {{"N=C1N=CN(C)C2N=CNC=21", "NC1N=CN(C)C2=NC=NC2=1"}, {}},
+            {{
+                 "S=C1N=CN=C2NC=NC12",
+                 "S=C2C1N=CN=C1NC=N2",
+
+             },
+             {
+                 "S=C1NC=NC2N=CNC1=2",
+                 "S=C1N=CN=C2N=CNC12",
+                 "S=C2C1NC=NC1=NC=N2",
+             }},
+            {{"S=C1NC=NC2N=CNC1=2", "S=C1NC=NC2NC=NC1=2", "SC1=NC=NC2N=CNC1=2"},
+             {}},
+            {{"CC1=CN=CN1", "CC1CN=CN=1"}, {}},
+            {{
+                 "N1C(=O)NC(=O)C2C=NNC=21",
+                 "N1C(=O)NC(=O)C2=CNNC2=1",
+                 "N1C(=O)NC(=O)C2=CNNC2=1",
+             },
+             {"N1C(=O)NC(=O)C2CN=NC=21", "N1C(=O)NC(=O)C2CN=NC2=1"}},
+            // ---------------------------
+            // more stereochemistry
+            // ---------------------------
+            {{"C[C@H](F)C=O", "C[C@@H](F)C=O", "CC(F)C=O"}, {}},
+            {{"C[C@H](F)CC=O"}, {"C[C@@H](F)CC=O", "CC(F)CC=O"}},
+            {{"C/C=C/O", "C/C=C\\O", "CC=CO"}, {}},
+            {{"C/C=C/C=O", "C/C=C\\C=O", "CC=CC=O"}, {}},
+            {{"C/C=C/CC=O"}, {"C/C=C\\CC=O", "CC=CCC=O"}},
+            {{"C1C=CC=C2CC(=O)NC=12", "C2=C1N=C(CC1=CC=C2)O",
+              "C1C=CC=C2CC(O)=NC=12"
+
+             },
+             {
+                 "C1C=CC=C2C=C(O)NC=12",
+             }},
+            // ---------------------------
+            // some areas for potential improvement
+            // ---------------------------
+            // these two are tautomers, but the current algorithm does not catch
+            // them
+            // problematic because pyridine is recognized as tautomeric
+            {{"c1ccccc1/C=C/c1ncccc1", "c1ccccc1/C=C\\c1ncccc1",
+              "c1ccccc1C=Cc1ncccc1"},
+             {}},
+        };
+    for (const auto &[same, diff] : data) {
+      std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
+      REQUIRE(m);
+      RWMol cp(*m);
+      auto ref =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+      for (auto i = 1u; i < same.size(); ++i) {
+        INFO(same[0] + "." + same[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+        CHECK(hsh == ref);
+      }
+      for (auto i = 0u; i < diff.size(); ++i) {
+        INFO(same[0] + "." + diff[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(diff[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+        CHECK(hsh != ref);
+      }
+    }
+  }
+
+  SECTION("basics") {
+    std::vector<std::tuple<std::string, std::string, std::string>> data = {
+        {"C=O", "[CH2][O]_0_0", "[CH2]=[O]_0_0"},
+        {"CC=O", "C[CH][O]_0_0", "[C]:[C]:[O]_4_0"},
+        {"C=CO", "[CH2][CH][O]_1_0", "[C]:[C]:[O]_4_0"},
+        {"c1ccccc1", "[CH]1[CH][CH][CH][CH][CH]1_0_0",
+         "[cH]1:[cH]:[cH]:[cH]:[cH]:[cH]:1_0_0"},
+        {"n1ccccc1", "[CH]1[CH][CH][N][CH][CH]1_0_0",
+         "[C]1:[C]:[C]:[N]:[C]:[C]:1_5_0"},
+        {"Nc1ccccc1", "[N][C]1[CH][CH][CH][CH][CH]1_2_0",
+         "[N]:[C]1:[C]:[C]:[C]:[C]:[C]:1_7_0"},
+        {"C=COC", "[CH2][CH]OC_0_0", "[CH2]=[CH]-[O]-[CH3]_0_0"},
+        {"CC(C)(C)C=O", "CC(C)(C)[CH][O]_0_0",
+         "[CH3]-[C](-[CH3])(-[CH3])-[CH]=[O]_0_0"},
+        {"CC(C)=CO", "C[C](C)[CH][O]_1_0", "[CH3]-[C](-[CH3]):[C]:[O]_2_0"},
+        {"COC=O", "CO[CH][O]_0_0", "[CH3]-[O]-[CH]=[O]_0_0"},
+        {"CNC=O", "C[N][CH][O]_1_0", "[CH3]-[N]:[C]:[O]_2_0"},
+        {"CN(C)C=O", "CN(C)[CH][O]_0_0", "[CH3]-[N](-[CH3]):[C]:[O]_1_0"},
+        {"CC(C)(C)NC=O", "CC(C)(C)[N][CH][O]_1_0",
+         "[CH3]-[C](-[CH3])(-[CH3])-[N]:[C]:[O]_2_0"},
+        {"CC(C)=O", "C[C](C)[O]_0_0", "[C]:[C](:[C]):[O]_6_0"},
+        {"C=C(C)O", "[CH2][C](C)[O]_1_0", "[C]:[C](:[C]):[O]_6_0"},
+        {"N1CCC1", "C1C[N]C1_1_0", "[CH2]1-[CH2]-[NH]-[CH2]-1_0_0"},
+        {"CC=CC(=O)C", "C[CH][CH][C](C)[O]_0_0",
+         "[C]:[C](:[O]):[C]:[C]-[CH3]_5_0"},
+        {"N1C=CCC(F)C1", "FC1C[CH][CH][N]C1_1_0",
+         "[F]-[CH]1-[CH2]-[C]:[C]:[N]-[CH2]-1_3_0"},
+        {"CCC=C(O)C", "CC[CH][C](C)[O]_1_0",
+         "[C]:[C](:[O]):[C]-[CH2]-[CH3]_5_0"},
+        {"CCCC(=O)C", "CCC[C](C)[O]_0_0", "[C]:[C](:[O]):[C]-[CH2]-[CH3]_5_0"},
+        {"CCCC(O)=C", "[CH2][C]([O])CCC_1_0",
+         "[C]:[C](:[O]):[C]-[CH2]-[CH3]_5_0"},
+        {"C=CCC(O)C", "C=CCC(C)[O]_1_0",
+         "[CH2]=[CH]-[CH2]-[CH](-[CH3])-[OH]_0_0"},
+        {"C=NC(=O)C", "[CH2][N][C](C)[O]_0_0", "[C]:[N]:[C](-[CH3]):[O]_2_0"},
+        {"C=NC(O)=C", "[CH2][N][C]([CH2])[O]_1_0", "[C]:[N]:[C](:[C]):[O]_5_0"},
+        {"CC(=O)CC(=O)C", "C[C]([O])C[C](C)[O]_0_0",
+         "[C]:[C](:[O]):[C]:[C](:[C]):[O]_8_0"},
+        {"CC(=O)C=C(O)C", "C[C]([O])[CH][C](C)[O]_1_0",
+         "[C]:[C](:[O]):[C]:[C](:[C]):[O]_8_0"},
+        {"C=C(O)C=C(O)C", "[CH2][C]([O])[CH][C](C)[O]_2_0",
+         "[C]:[C](:[O]):[C]:[C](:[C]):[O]_8_0"},
+        {"C=C(O)CC(O)=C", "[CH2][C]([O])C[C]([CH2])[O]_2_0",
+         "[C]:[C](:[O]):[C]:[C](:[C]):[O]_8_0"},
+        {"CC(=O)CCC(=O)C", "C[C]([O])CC[C](C)[O]_0_0",
+         "[C]:[C](:[O]):[C]-[C]:[C](:[C]):[O]_10_0"},
+        {"CC(=O)C=CC(=O)C", "C[C]([O])[CH][CH][C](C)[O]_0_0",
+         "[C]:[C](:[O]):[C]:[C]:[C](:[C]):[O]_8_0"},
+    };
+    for (const auto &tpl : data) {
+      INFO(std::get<0>(tpl));
+      std::unique_ptr<RWMol> m{SmilesToMol(std::get<0>(tpl))};
+      REQUIRE(m);
+      {
+        RWMol cp(*m);
+        auto hsh1 =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomer);
+        CHECK(hsh1 == std::get<1>(tpl));
+      }
+      {
+        RWMol cp(*m);
+        auto hsh2 =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+        CHECK(hsh2 == std::get<2>(tpl));
+      }
+    }
+  }
+}
+
+TEST_CASE("tautomer hash problem cases") {
+#if 1
+  SECTION("sulfur problem") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 22 24  0  0  0  0  0  0  0  0999 V2000
+   -1.3203  -10.1153    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9127  -10.8290    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0927  -10.8317    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3205  -10.1216    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0921   -9.4072    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9107   -9.4080    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1477  -10.1129    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5593   -9.3951    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5637  -10.8282    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.3911  -10.8258    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8786  -10.1547    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.6663  -10.4082    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -4.6688  -11.2356    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8825  -11.4935    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.1480  -10.1229    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5606  -10.8402    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5629   -9.4070    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    2.3903   -9.4084    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8743  -10.0739    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6616   -9.8194    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    3.6630   -8.9920    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.8765   -8.7351    0.0000 S   0  0  0  0  0  0  0  0  0  0  0  0
+  2  3  1  0
+  5  6  2  0
+  6  1  1  0
+  1  2  2  0
+ 11 12  1  0
+ 12 13  2  0
+ 13 14  1  0
+ 14 10  2  0
+  1  7  1  0
+  4 15  1  0
+  3  4  2  0
+ 15 16  2  0
+  7  8  2  0
+ 15 17  1  0
+ 17 18  1  0
+ 18 19  2  0
+  7  9  1  0
+  4  5  1  0
+  9 10  1  0
+ 10 11  1  0
+ 19 20  1  0
+ 20 21  2  0
+ 21 22  1  0
+ 22 18  1  0
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+    auto hsh =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh.find("[s]") == std::string::npos);
+  }
+  SECTION("atom order") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+ 17 18  0  0  0  0  0  0  0  0999 V2000
+   12.9442  -15.7431    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+   10.7279  -14.6717    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.7266  -15.4976    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.4381  -15.9096    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   11.4361  -14.2599    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1526  -14.6678    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.1578  -15.4930    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   13.4251  -15.0725    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   12.9359  -14.4079    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0130  -14.2612    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   10.0123  -13.4380    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    9.3004  -14.6734    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   14.2501  -15.0676    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   14.6661  -15.7779    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   14.6573  -14.3521    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   15.4893  -15.7728    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   15.9055  -16.4831    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  1  8  1  0
+  8  9  2  0
+  9  6  1  0
+  6  5  2  0
+  5  2  1  0
+  6  7  1  0
+ 10 11  1  0
+ 10 12  2  0
+  2 10  1  0
+  3  4  1  0
+  4  7  2  0
+ 13 14  1  0
+ 13 15  2  0
+  8 13  1  0
+  2  3  2  0
+ 14 16  1  0
+  7  1  1  0
+ 16 17  1  0
+M  END
+
+ > <chembl_id>
+ CHEMBL503643
+
+ > <chembl_pref_name>
+ None
+ )CTAB"_ctab;
+    REQUIRE(m);
+    std::vector<std::string> row = {"CCOC(=O)c1cc2cc(C(=O)O)ccc2[nH]1",
+                                    "CCOC(=O)c1cc2cc(ccc2[nH]1)C(O)=O",
+                                    "O(C(=O)c1cc2c(ccc(c2)C(=O)O)[nH]1)CC"};
+    auto hsh =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    for (const auto &smi : row) {
+      std::unique_ptr<RWMol> mi{SmilesToMol(smi)};
+      REQUIRE(mi);
+      auto hshi =
+          MolHash::MolHash(mi.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == hshi);
+      break;
+    }
+  }
+#endif
+  SECTION("atom order 2") {
+    // {molecules with the same hash}
+    std::vector<std::vector<std::string>> data = {
+        {"Ic1ccc(Cn2cc[n+](Cc3ccc(I)cc3)c2)cc1",
+         "c1[n+](Cc2ccc(cc2)I)cn(Cc2ccc(cc2)I)c1"},
+        {"CN1C(=O)c2cccnc2NC1c1cccnc1", "c1ncccc1C1N(C)C(c2cccnc2N1)=O",
+         "c1nc2c(cc1)C(N(C)C(N2)c1cccnc1)=O"},
+        {"CC(=O)OCC1=C(C(=O)[O-])N2C(=O)C(=C(Br)Br)[C@H]2S(=O)(=O)C1",
+         "BrC(=C1C(=O)N2C(=C(COC(=O)C)CS([C@@H]21)(=O)=O)C(=O)[O-])Br"}};
+    for (const auto &same : data) {
+      std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
+      REQUIRE(m);
+      RWMol cp(*m);
+      auto ref =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+      for (auto i = 1u; i < same.size(); ++i) {
+        INFO(same[0] + "->" + same[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+        CHECK(ref == hsh);
+      }
+    }
+  }
+}
+
+TEST_CASE("GitHub Issue #6505") {
+  const auto m = "CCCCCC[NH3+] |SgD:6:lambda max:230:=:nm::|"_smiles;
+  REQUIRE(m);
+  REQUIRE(getSubstanceGroups(*m).size() == 1);
+
+  const auto use_cx_smiles = true;
+
+  SECTION("Do not skip any CX flags") {
+    const auto cx_to_skip = SmilesWrite::CXSmilesFields::CX_NONE;
+    const auto hsh1 =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2,
+                         use_cx_smiles, cx_to_skip);
+    CHECK(
+        hsh1 ==
+        "[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[NH3+]_0_0 |SgD:6:lambda max:230:=:nm::|");
+  }
+
+  SECTION("Strip all CX flags") {
+    const auto cx_to_skip = SmilesWrite::CXSmilesFields::CX_ALL;
+    const auto hsh2 =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2,
+                         use_cx_smiles, cx_to_skip);
+    CHECK(hsh2 == "[CH3]-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-[NH3+]_0_0");
+  }
+}
+
+TEST_CASE("Github Issue #6855 MakeScaffoldGeneric isotope removal") {
+  SECTION("Extended Murcko") {
+    auto mol = "[235U]C1CC1"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::ExtendedMurcko);
+      CHECK(hsh == "*C1CC1");
+    }
+  }
+  SECTION("Anonymous") {
+    auto mol = "[235U]1CC1"_smiles;
+    REQUIRE(mol);
+
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::AnonymousGraph);
+      CHECK(hsh == "*1**1");
+    }
+  }
+}
+
+TEST_CASE("Github Issue #6472 non-matching element and anononymous graph") {
+  SECTION("Element graph test1") {
+    auto mol = "C1COC(C1)C1=NC=NC=C1"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::ElementGraph);
+      CHECK(hsh == "C1COC(C2CCNCN2)C1");
+    }
+  }
+  SECTION("Element graph test2") {
+    auto mol = "C1CC(N=CN1)C1=CC=CO1"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::ElementGraph);
+      CHECK(hsh == "C1COC(C2CCNCN2)C1");
+    }
+  }
+  SECTION("Anonymous graph test 1") {
+    auto mol = "C1COC(C1)C1=NC=NC=C1"_smiles;
+    REQUIRE(mol);
+
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::AnonymousGraph);
+      CHECK(hsh == "*1***(*2****2)**1");
+    }
+  }
+  SECTION("Anonymous graph test 2") {
+    auto mol = "C1CC(N=CN1)C1=CC=CO1"_smiles;
+    REQUIRE(mol);
+
+    {
+      RWMol cp(*mol);
+      auto hsh = MolHash::MolHash(&cp, MolHash::HashFunction::AnonymousGraph);
+      CHECK(hsh == "*1***(*2****2)**1");
+    }
+  }
+}
+
+TEST_CASE("tautomer overreach") {
+  SECTION("as reported") {
+    auto mol = "C1=CN(C[C@H]2CNCCO2)N=C1"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(
+          hsh ==
+          "[C]1:[C]:[N]:[N](-[CH2]-[C@H]2-[CH2]-[NH]-[CH2]-[CH2]-[O]-2):[C]:1_3_0");
+    }
+  }
+  SECTION("dbw example") {
+    auto mol = "c1cccn1C[C@H](C)COC"_smiles;
+    REQUIRE(mol);
+    {
+      RWMol cp(*mol);
+      auto hsh =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(
+          hsh ==
+          "[CH3]-[O]-[CH2]-[C@@H](-[CH3])-[CH2]-[n]1:[cH]:[cH]:[cH]:[cH]:1_0_0");
+    }
+  }
+}
+
+TEST_CASE("HetAtomProtomerv2") {
+  SECTION("matches") {
+    // pairs of {molecules with the same hash} {molecules with different hashes
+    // from those}
+    std::vector<std::pair<std::vector<std::string>, std::vector<std::string>>>
+        data = {
+            // example from the NextMove documentation
+            {{"Cc1c[nH]cn1", "Cc1cnc[nH]1", "Cc1c[nH]c[nH+]1"}, {}},
+            {{"CC=CO", "CCC=O"}, {"C=CCO"}},
+
+        };
+    for (const auto &[same, diff] : data) {
+      std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
+      REQUIRE(m);
+      RWMol cp(*m);
+      auto ref =
+          MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+      for (auto i = 1u; i < same.size(); ++i) {
+        INFO(same[0] + "->" + same[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+        CHECK(hsh == ref);
+      }
+      for (auto i = 0u; i < diff.size(); ++i) {
+        INFO(same[0] + "->" + diff[i]);
+        std::unique_ptr<RWMol> m2{SmilesToMol(diff[i])};
+        REQUIRE(m2);
+        RWMol cp(*m2);
+        auto hsh =
+            MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomProtomerv2);
+        CHECK(hsh != ref);
+      }
+    }
+  }
+}
+
+TEST_CASE("overreach with v2 tautomer hashes and imines") {
+  SECTION("basics") {
+    std::vector<std::string> smileses = {"C[C@H](F)NC1=CCCCC1",
+                                         "C[C@H](F)N=C1CCCCC1"};
+    for (const auto &smiles : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh ==
+            "[CH3]-[C@H](-[F])-[N]:[C]1:[C]-[CH2]-[CH2]-[CH2]-[C]:1_4_0");
+    }
+  }
+}
+
+TEST_CASE("v2 tautomers, carboxylic acids, amids, and related structures") {
+  SECTION("basics") {
+    std::vector<std::pair<std::string, std::string>> data = {
+        {"CC(=O)O", "[CH3]-[C](:[O]):[O]_1_0"},
+        {"CC(=O)OCC", "[CH3]-[CH2]-[O]-[C](-[CH3])=[O]_0_0"},
+        {"CC(=N)O", "[CH3]-[C](:[N]):[O]_2_0"},
+        {"CC(=O)NCC", "[CH3]-[CH2]-[N]:[C](-[CH3]):[O]_1_0"},
+        {"CC(=N)N", "[C]:[C](:[N]):[N]_6_0"},
+    };
+    for (const auto &[smiles, ref] : data) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == ref);
+    }
+  }
+  SECTION("specific problems") {
+    std::vector<std::pair<std::string, std::string>> data = {
+        // losing amino acid chirality:
+        {"CC(C)C[C@@H](C(=O)O)N",
+         "[CH3]-[CH](-[CH3])-[CH2]-[C@H](-[NH2])-[C](:[O]):[O]_1_0"},
+        // github #8090 (carboxylate)
+        {"O=C(O)CCC", "[CH3]-[CH2]-[CH2]-[C](:[O]):[O]_1_0"},
+        // aromatic "imine"
+        {"CC[C@@H](N)C1=NC=CN1",
+         "[CH3]-[CH2]-[C@@H](-[NH2])-[C]1:[N]:[C]:[C]:[N]:1_3_0"},
+    };
+    for (const auto &[smiles, ref] : data) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == ref);
     }
   }
 }

@@ -11,17 +11,15 @@
 unit testing code for calculations in rdkit.Chem.MolSurf
 """
 
-
-from collections import namedtuple
 import os.path
 import unittest
+from collections import namedtuple
 
-from rdkit import Chem
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
 from rdkit.Chem import MolSurf
 
 doLong = False
-TestData = namedtuple('TestData', 'lineNo,smiles,mol,expected')
+_TestData = namedtuple('_TestData', 'lineNo,smiles,mol,expected')
 
 
 class TestCase(unittest.TestCase):
@@ -193,8 +191,8 @@ class TestCase_python(unittest.TestCase):
   def test_pySlogP_VSA_(self):
     for data in TestCase.readNCI_200():
       molPy = Chem.MolFromSmiles(data.smiles)
-      for calcC, calcPy in zip(
-          MolSurf.SlogP_VSA_(data.mol), MolSurf.pySlogP_VSA_(molPy, force=False)):
+      for calcC, calcPy in zip(MolSurf.SlogP_VSA_(data.mol),
+                               MolSurf.pySlogP_VSA_(molPy, force=False)):
         self.assertAlmostEqual(calcC, calcPy)
 
   def test_pySMR_VSA_(self):
@@ -220,7 +218,7 @@ def readPSAtestData(filename):
       mol = Chem.MolFromSmiles(smiles)
       if not mol:
         raise AssertionError('molecule construction failed on line %d' % lineNo)
-      yield TestData(lineNo, smiles, mol, float(expected))
+      yield _TestData(lineNo, smiles, mol, float(expected))
 
 
 def readRegressionData(filename, col):
@@ -237,7 +235,7 @@ def readRegressionData(filename, col):
       if mol is None:
         raise AssertionError('line %d, smiles: %s' % (lineNum, smi))
       expected = float(splitL[col])
-      yield TestData(lineNum, smi, mol, expected)
+      yield _TestData(lineNum, smi, mol, expected)
 
 
 if __name__ == '__main__':  # pragma: nocover

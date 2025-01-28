@@ -60,15 +60,12 @@ class DrawMolMCH : public DrawMol {
   DrawMolMCH &operator=(const DrawMol &) = delete;
   DrawMolMCH &operator=(DrawMol &&) = delete;
 
-  void extractHighlights() override;
-  void extractMCHighlights();
-  void makeBondHighlights();
-  void makeAtomHighlights();
-  void adjustLineEndForHighlight(int at_idx, Point2D p1, Point2D &p2) const;
-  void calcSymbolEllipse(unsigned int atomIdx, Point2D &centre, double &xradius,
-                         double &yradius) const;
+  void extractHighlights(double scale) override;
+  virtual void extractMCHighlights() = 0;
+  void getAtomRadius(unsigned int atomIdx, double &xradius,
+                     double &yradius) const;
 
-  const std::map<int, std::vector<DrawColour>> mcHighlightAtomMap_;
+  const std::map<int, std::vector<DrawColour>> &mcHighlightAtomMap_;
   const std::map<int, std::vector<DrawColour>> &mcHighlightBondMap_;
   const std::map<int, int> &highlightLinewidthMultipliers_;
 };

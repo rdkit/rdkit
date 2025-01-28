@@ -3,13 +3,14 @@
 #   __ add native drawCurve method
 #   __ native rectangle/round rect method
 #   __ native drawEllipse
-#   __ native drawArc    
+#   __ native drawArc
 #   __ drawImage support (work on Pyart side of things)
 
-import pyart
-from rdkit.sping.pid import *
-from rdkit.sping.PDF import pdfmetrics
 import Fontmapping  # helps by mapping pid font classes to Pyart font names
+import pyart
+
+from rdkit.sping.PDF import pdfmetrics
+from rdkit.sping.pid import *
 
 # note for now I'm just going to do the standard PDF fonts & forget the rest
 
@@ -168,8 +169,8 @@ class PyartCanvas(Canvas):
     color = color or self.defaultLineColor
     width = width or self.defaultLineWidth
     if color != transparent:
-      changed = self._protectArtState((color != self.defaultLineColor) or
-                                      (width != self.defaultLineWidth))
+      changed = self._protectArtState((color != self.defaultLineColor)
+                                      or (width != self.defaultLineWidth))
       if color != self.defaultLineColor:
         self._pycan.gstate.stroke = color.toHexRGB()
         # print("color is %s <-> %s" % (color, color.toHexStr()))
@@ -201,9 +202,9 @@ class PyartCanvas(Canvas):
     fColor = fillColor or self.defaultFillColor
     eWidth = edgeWidth or self.defaultLineWidth
 
-    changed = self._protectArtState((eColor != self.defaultLineColor) or
-                                    (eWidth != self.defaultLineWidth) or
-                                    (fColor != self.defaultFillColor))
+    changed = self._protectArtState((eColor != self.defaultLineColor)
+                                    or (eWidth != self.defaultLineWidth)
+                                    or (fColor != self.defaultFillColor))
 
     if eColor != self.defaultLineColor:
       self._pycan.gstate.stroke = eColor.toHexRGB()
@@ -242,7 +243,7 @@ class PyartCanvas(Canvas):
   #                        edgeColor=None, edgeWidth=None, fillColor=None):
   #          pass
 
-  #      def drawEllipse(self, x1,y1, x2,y2, edgeColor=None, edgeWidth=None, 
+  #      def drawEllipse(self, x1,y1, x2,y2, edgeColor=None, edgeWidth=None,
   #                      fillColor=None):
   #          pass
 

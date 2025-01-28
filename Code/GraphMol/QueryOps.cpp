@@ -20,7 +20,7 @@ namespace RDKit {
 // common general queries
 
 int queryIsAtomBridgehead(Atom const *at) {
-  // at least three ring bonds, at least one ring bond in a ring which shares at
+  // at least three ring bonds, all ring bonds in a ring which shares at
   // least two bonds with another ring involving this atom
   //
   // We can't just go with "at least three ring bonds shared between multiple
@@ -35,10 +35,9 @@ int queryIsAtomBridgehead(Atom const *at) {
   if (!ri || !ri->isInitialized()) {
     return 0;
   }
-  // track which bonds involve this atom
+  // track which ring bonds involve this atom
   boost::dynamic_bitset<> atomRingBonds(mol.getNumBonds());
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(at))) {
-    const auto &bnd = mol[nbri];
+  for (const auto bnd : mol.atomBonds(at)) {
     if (ri->numBondRings(bnd->getIdx())) {
       atomRingBonds.set(bnd->getIdx());
     }
@@ -47,13 +46,13 @@ int queryIsAtomBridgehead(Atom const *at) {
     return 0;
   }
 
-  boost::dynamic_bitset<> bondsInRing(mol.getNumBonds());
+  boost::dynamic_bitset<> bondsInRingI(mol.getNumBonds());
+  boost::dynamic_bitset<> ringsOverlap(ri->numRings());
   for (unsigned int i = 0; i < ri->bondRings().size(); ++i) {
-    bondsInRing.reset();
+    bondsInRingI.reset();
     bool atomInRingI = false;
-
     for (const auto bidx : ri->bondRings()[i]) {
-      bondsInRing.set(bidx);
+      bondsInRingI.set(bidx);
       if (atomRingBonds[bidx]) {
         atomInRingI = true;
       }
@@ -68,18 +67,23 @@ int queryIsAtomBridgehead(Atom const *at) {
         if (atomRingBonds[bidx]) {
           atomInRingJ = true;
         }
-        if (bondsInRing[bidx]) {
+        if (bondsInRingI[bidx]) {
           ++overlap;
         }
         if (overlap >= 2 && atomInRingJ) {
           // we have two rings containing the atom which share at least two
           // bonds:
-          return 1;
+          ringsOverlap.set(i);
+          ringsOverlap.set(j);
+          break;
         }
       }
     }
+    if (!ringsOverlap[i]) {
+      return 0;
+    }
   }
-  return 0;
+  return 1;
 }
 
 //! returns a Query for matching atoms with a particular number of ring bonds
@@ -474,6 +478,7 @@ ATOM_OR_QUERY *makeMAtomQuery() {
   // using the definition from Marvin Sketch, which produces the following
   // SMARTS:
   // !#1!#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86
+  // We expanded this with !#0 as part of #6106
   // it's easier to define what isn't a metal than what is. :-)
   ATOM_OR_QUERY *res = makeMHAtomQuery();
   res->addChild(
@@ -486,10 +491,13 @@ ATOM_OR_QUERY *makeMHAtomQuery() {
   // using the definition from Marvin Sketch, which produces the following
   // SMARTS:
   // !#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86
+  // We expanded this with !#0 as part of #6106
   // it's easier to define what isn't a metal than what is. :-)
   auto *res = new ATOM_OR_QUERY;
   res->setDescription("AtomOr");
   res->setNegation(true);
+  res->addChild(
+      Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(0)));
   res->addChild(
       Queries::Query<int, Atom const *, true>::CHILD_TYPE(makeAtomNumQuery(2)));
   res->addChild(
@@ -589,6 +597,7 @@ BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(Bond::BondType what) {
   res->setVal(what);
   res->setDataFunc(queryBondOrder);
   res->setDescription("BondOrder");
+  res->setTypeLabel("BondOrder");
   return res;
 }
 
@@ -597,6 +606,7 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery() {
   res->setVal(true);
   res->setDataFunc(queryBondIsSingleOrAromatic);
   res->setDescription("SingleOrAromaticBond");
+  res->setTypeLabel("BondOrder");
   return res;
 };
 
@@ -605,6 +615,7 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeDoubleOrAromaticBondQuery() {
   res->setVal(true);
   res->setDataFunc(queryBondIsDoubleOrAromatic);
   res->setDescription("DoubleOrAromaticBond");
+  res->setTypeLabel("BondOrder");
   return res;
 };
 
@@ -613,6 +624,7 @@ RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrDoubleBondQuery() {
   res->setVal(true);
   res->setDataFunc(queryBondIsSingleOrDouble);
   res->setDescription("SingleOrDoubleBond");
+  res->setTypeLabel("BondOrder");
   return res;
 };
 
@@ -622,10 +634,13 @@ makeSingleOrDoubleOrAromaticBondQuery() {
   res->setVal(true);
   res->setDataFunc(queryBondIsSingleOrDoubleOrAromatic);
   res->setDescription("SingleOrDoubleOrAromaticBond");
+  res->setTypeLabel("BondOrder");
   return res;
 };
 
 namespace QueryOps {
+// we don't use these anymore but we need to keep them around for backwards
+// compatibility with pickled queries. There's no reason to update this list.
 const std::vector<std::string> bondOrderQueryFunctions{
     std::string("BondOrder"), std::string("SingleOrAromaticBond"),
     std::string("DoubleOrAromaticBond"), std::string("SingleOrDoubleBond"),
@@ -633,9 +648,12 @@ const std::vector<std::string> bondOrderQueryFunctions{
 RDKIT_GRAPHMOL_EXPORT bool hasBondTypeQuery(
     const Queries::Query<int, Bond const *, true> &qry) {
   const auto df = qry.getDescription();
+  const auto dt = qry.getTypeLabel();
   // is this a bond order query?
-  if (std::find(bondOrderQueryFunctions.begin(), bondOrderQueryFunctions.end(),
-                df) != bondOrderQueryFunctions.end()) {
+  if (dt == "BondOrder" ||
+      (dt.empty() &&
+       std::find(bondOrderQueryFunctions.begin(), bondOrderQueryFunctions.end(),
+                 df) != bondOrderQueryFunctions.end())) {
     return true;
   }
   for (const auto &child :
@@ -726,6 +744,30 @@ ATOM_NULL_QUERY *makeAtomNullQuery() {
   return res;
 }
 
+void convertComplexNameToQuery(Atom *query, std::string_view symb) {
+  if (symb == "Q") {
+    query->setQuery(makeQAtomQuery());
+  } else if (symb == "QH") {
+    query->setQuery(makeQHAtomQuery());
+  } else if (symb == "A") {
+    query->setQuery(makeAAtomQuery());
+  } else if (symb == "AH") {
+    query->setQuery(makeAHAtomQuery());
+  } else if (symb == "X") {
+    query->setQuery(makeXAtomQuery());
+  } else if (symb == "XH") {
+    query->setQuery(makeXHAtomQuery());
+  } else if (symb == "M") {
+    query->setQuery(makeMAtomQuery());
+  } else if (symb == "MH") {
+    query->setQuery(makeMHAtomQuery());
+  } else {
+    // we control what this function gets called with, so we should never land
+    // here
+    ASSERT_INVARIANT(0, "bad complex query symbol");
+  }
+}
+
 bool isComplexQuery(const Bond *b) {
   PRECONDITION(b, "bad bond");
   if (!b->hasQuery()) {
@@ -796,9 +838,9 @@ bool _complexQueryHelper(Atom::QUERYATOM_QUERY const *query, bool &hasAtNum) {
 }
 
 template <typename T>
-bool _atomListQueryHelper(const T query) {
+bool _atomListQueryHelper(const T query, bool ignoreNegation) {
   PRECONDITION(query, "no query");
-  if (query->getNegation()) {
+  if (!ignoreNegation && query->getNegation()) {
     return false;
   }
   if (query->getDescription() == "AtomAtomicNum" ||
@@ -808,7 +850,7 @@ bool _atomListQueryHelper(const T query) {
   if (query->getDescription() == "AtomOr") {
     for (const auto &child : boost::make_iterator_range(query->beginChildren(),
                                                         query->endChildren())) {
-      if (!_atomListQueryHelper(child)) {
+      if (!_atomListQueryHelper(child, ignoreNegation)) {
         return false;
       }
     }
@@ -825,10 +867,15 @@ bool isAtomListQuery(const Atom *a) {
   if (a->getQuery()->getDescription() == "AtomOr") {
     for (const auto &child : boost::make_iterator_range(
              a->getQuery()->beginChildren(), a->getQuery()->endChildren())) {
-      if (!_atomListQueryHelper(child)) {
+      if (!_atomListQueryHelper(child, false)) {
         return false;
       }
     }
+    return true;
+  } else if (a->getQuery()->getNegation() &&
+             _atomListQueryHelper(a->getQuery(), true)) {
+    // this was github #5930: negated list queries containing a single atom were
+    // being lost on output
     return true;
   }
   return false;
@@ -839,7 +886,6 @@ void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
   // list queries are series of nested ors of AtomAtomicNum queries
   PRECONDITION(q, "bad query");
   auto descr = q->getDescription();
-  PRECONDITION(descr == "AtomOr", "bad query");
   if (descr == "AtomOr") {
     for (const auto &child :
          boost::make_iterator_range(q->beginChildren(), q->endChildren())) {
@@ -864,6 +910,18 @@ void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
         vals.push_back(v);
       }
     }
+  } else if (descr == "AtomAtomicNum") {
+    vals.push_back(static_cast<const ATOM_EQUALS_QUERY *>(q)->getVal());
+  } else if (descr == "AtomType") {
+    auto v = static_cast<const ATOM_EQUALS_QUERY *>(q)->getVal();
+    // aromatic AtomType queries add 1000 to the atomic number;
+    // correct for that:
+    if (v >= 1000) {
+      v -= 1000;
+    }
+    vals.push_back(v);
+  } else {
+    CHECK_INVARIANT(0, "bad query type");
   }
 }
 
@@ -1058,10 +1116,13 @@ void finalizeQueryFromDescription(
     query->setMatchFunc(nullQueryFun);
   } else if (descr == "AtomType") {
     query->setDataFunc(queryAtomType);
+  } else if (descr == "AtomNumRadicalElectrons") {
+    query->setDataFunc(queryAtomNumRadicalElectrons);
   } else if (descr == "AtomInNRings" || descr == "RecursiveStructure") {
     // don't need to do anything here because the classes
     // automatically have everything set
-  } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor") {
+  } else if (descr == "AtomAnd" || descr == "AtomOr" || descr == "AtomXor" ||
+             descr == "HasProp" || descr == "HasPropWithValue") {
     // don't need to do anything here because the classes
     // automatically have everything set
   } else {
@@ -1100,7 +1161,8 @@ void finalizeQueryFromDescription(
   } else if (descr == "BondNull") {
     query->setDataFunc(nullDataFun);
     query->setMatchFunc(nullQueryFun);
-  } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor") {
+  } else if (descr == "BondAnd" || descr == "BondOr" || descr == "BondXor" ||
+             descr == "HasProp" || descr == "HasPropWithValue") {
     // don't need to do anything here because the classes
     // automatically have everything set
   } else {

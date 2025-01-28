@@ -8,7 +8,7 @@ from rdkit.VLib.Node import VLibNode
 
 
 class FilterNode(VLibNode):
-    """ base class for nodes which filter their input
+  """ base class for nodes which filter their input
 
     Assumptions:
 
@@ -62,41 +62,41 @@ class FilterNode(VLibNode):
 
     """
 
-    def __init__(self, func=None, negate=0, **kwargs):
-        VLibNode.__init__(self, **kwargs)
-        self._func = func
-        self._negate = negate
+  def __init__(self, func=None, negate=0, **kwargs):
+    VLibNode.__init__(self, **kwargs)
+    self._func = func
+    self._negate = negate
 
-    def SetNegate(self, state):
-        self._negate = state
+  def SetNegate(self, state):
+    self._negate = state
 
-    def Negate(self):
-        return self._negate
+  def Negate(self):
+    return self._negate
 
-    def next(self):
-        parents = self.GetParents()
-        while 1:
-            args = []
-            try:
-                for parent in parents:
-                    args.append(next(parent))
-            except StopIteration:
-                raise StopIteration
-            args = tuple(args)
-            if self._func is not None:
-                r = self._func(*args)
-                if self._negate:
-                    r = not r
-                    # sys.stderr.write('\t\tNEGATE -> %d\n'%(r))
-                if r:
-                    res = args
-                    break
-            else:
-                res = args
-                break
-        if len(parents) == 1:
-            res = res[0]
-        return res
+  def next(self):
+    parents = self.GetParents()
+    while 1:
+      args = []
+      try:
+        for parent in parents:
+          args.append(next(parent))
+      except StopIteration:
+        raise StopIteration
+      args = tuple(args)
+      if self._func is not None:
+        r = self._func(*args)
+        if self._negate:
+          r = not r
+          # sys.stderr.write('\t\tNEGATE -> %d\n'%(r))
+        if r:
+          res = args
+          break
+      else:
+        res = args
+        break
+    if len(parents) == 1:
+      res = res[0]
+    return res
 
 
 FilterNode.__next__ = FilterNode.next
@@ -107,11 +107,11 @@ FilterNode.__next__ = FilterNode.next
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

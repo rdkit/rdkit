@@ -22,13 +22,14 @@ ScaffoldNetwork::ScaffoldNetwork *createNetworkHelper(
     python::object pmols,
     const ScaffoldNetwork::ScaffoldNetworkParams &params) {
   auto mols = pythonObjectToVect<ROMOL_SPTR>(pmols);
-  ScaffoldNetwork::ScaffoldNetwork *res = new ScaffoldNetwork::ScaffoldNetwork;
+  std::unique_ptr<ScaffoldNetwork::ScaffoldNetwork> res(
+      new ScaffoldNetwork::ScaffoldNetwork);
   if (mols) {
     NOGIL gil;
 
     updateScaffoldNetwork(*mols, *res, params);
   }
-  return res;
+  return res.release();
 }
 void updateNetworkHelper(python::object pmols,
                          ScaffoldNetwork::ScaffoldNetwork &net,
@@ -48,7 +49,7 @@ ScaffoldNetwork::ScaffoldNetworkParams *getBRICSParams() {
 }  // namespace
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
-struct scaffoldnetwork_pickle_suite : python::pickle_suite {
+struct scaffoldnetwork_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(
       const RDKit::ScaffoldNetwork::ScaffoldNetwork &self) {
     std::stringstream oss;
@@ -60,7 +61,7 @@ struct scaffoldnetwork_pickle_suite : python::pickle_suite {
   };
 };
 #else
-struct scaffoldnetwork_pickle_suite : python::pickle_suite {
+struct scaffoldnetwork_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(
       const RDKit::ScaffoldNetwork::ScaffoldNetwork &self) {
     throw_runtime_error("Pickling of ScaffoldNetwork instances is not enabled");
@@ -77,9 +78,10 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
   iterable_converter().from_python<std::vector<std::string>>();
 
   python::class_<ScaffoldNetwork::ScaffoldNetworkParams>(
-      "ScaffoldNetworkParams", "Scaffold network parameters", python::init<>())
+      "ScaffoldNetworkParams", "Scaffold network parameters",
+      python::init<>(python::args("self")))
       .def(python::init<const std::vector<std::string> &>(
-          (python::arg("bondBreakerSmartsList")),
+          (python::arg("self"), python::arg("bondBreakerSmartsList")),
           "Constructor taking a list of Reaction SMARTS for the fragmentation "
           "reactions"))
       .def_readwrite(
@@ -100,6 +102,11 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
           &ScaffoldNetwork::ScaffoldNetworkParams::
               includeScaffoldsWithAttachments,
           "Include the version of the scaffold with attachment points")
+      .def_readwrite(
+          "includeNames",
+          &ScaffoldNetwork::ScaffoldNetworkParams::
+              includeNames,
+          "Include molecules names of the input molecules")
       .def_readwrite(
           "keepOnlyFirstFragment",
           &ScaffoldNetwork::ScaffoldNetworkParams::keepOnlyFirstFragment,
@@ -141,9 +148,10 @@ BOOST_PYTHON_MODULE(rdScaffoldNetwork) {
       .def(python::self_ns::str(python::self_ns::self));
 
   python::class_<ScaffoldNetwork::ScaffoldNetwork>(
-      "ScaffoldNetwork", "A scaffold network", python::init<>())
+      "ScaffoldNetwork", "A scaffold network",
+      python::init<>(python::args("self")))
 #ifdef RDK_USE_BOOST_SERIALIZATION
-      .def(python::init<const std::string &>())
+      .def(python::init<const std::string &>(python::args("self", "pkl")))
       // enable pickle support
       .def_pickle(scaffoldnetwork_pickle_suite())
 #endif

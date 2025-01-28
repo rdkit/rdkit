@@ -18,20 +18,39 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include "FileParsers.h"
+#include <string_view>
 
 namespace RDKit {
 class RWMol;
 class Conformer;
 
 namespace FileParserUtils {
+RDKIT_FILEPARSERS_EXPORT inline std::string_view strip(
+    std::string_view orig, std::string stripChars = " \t\r\n") {
+  std::string_view res = orig;
+  auto start = res.find_first_not_of(stripChars);
+  if (start != std::string_view::npos) {
+    auto end = res.find_last_not_of(stripChars) + 1;
+    res = res.substr(start, end - start);
+  } else {
+    res = "";
+  }
+  return res;
+}
+
 template <typename T>
-T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
-  std::string trimmed = boost::trim_copy(input);
-  if (acceptSpaces && trimmed == "") {
+T stripSpacesAndCast(std::string_view input, bool acceptSpaces = false) {
+  auto trimmed = strip(input, " ");
+  if (acceptSpaces && trimmed.empty()) {
     return 0;
   } else {
     return boost::lexical_cast<T>(trimmed);
   }
+}
+template <typename T>
+T stripSpacesAndCast(const std::string &input, bool acceptSpaces = false) {
+  return stripSpacesAndCast<T>(std::string_view(input.c_str()), acceptSpaces);
 }
 RDKIT_FILEPARSERS_EXPORT int toInt(const std::string &input,
                                    bool acceptSpaces = true);
@@ -39,10 +58,23 @@ RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(const std::string &input,
                                                  bool acceptSpaces = true);
 RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string &input,
                                          bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT int toInt(const std::string_view input,
+                                   bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT unsigned int toUnsigned(std::string_view input,
+                                                 bool acceptSpaces = true);
+RDKIT_FILEPARSERS_EXPORT double toDouble(const std::string_view input,
+                                         bool acceptSpaces = true);
 
-// parses info from a V3000 CTAB into a molecule
-RDKIT_FILEPARSERS_EXPORT std::string getV3000CTAB(const ROMol &tmol,
-                                                  int confId = -1);
+// gets a V3000 CTAB for a molecule
+RDKIT_FILEPARSERS_EXPORT std::string getV3000CTAB(
+    const ROMol &tmol, const boost::dynamic_bitset<> &wasAromatic,
+    int confId = -1, unsigned int precision = 6);
+//! \overload
+inline std::string getV3000CTAB(const ROMol &tmol, int confId = -1,
+                                unsigned int precision = 6) {
+  boost::dynamic_bitset<> wasAromatic(tmol.getNumBonds());
+  return getV3000CTAB(tmol, wasAromatic, confId, precision);
+};
 // reads a line from an MDL v3K CTAB
 RDKIT_FILEPARSERS_EXPORT std::string getV3000Line(std::istream *inStream,
                                                   unsigned int &line);
@@ -61,9 +93,17 @@ RDKIT_FILEPARSERS_EXPORT bool ParseV2000CTAB(
 
 //! finishes up the processing (sanitization, etc.) of a molecule read from
 //! CTAB
-RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(RWMol *res,
-                                                  bool chiralityPossible,
-                                                  bool sanitize, bool removeHs);
+RDKIT_FILEPARSERS_EXPORT void finishMolProcessing(
+    RWMol *res, bool chiralityPossible,
+    const v2::FileParsers::MolFileParserParams &ps);
+//! \overload
+inline void finishMolProcessing(RWMol *res, bool chiralityPossible,
+                                bool sanitize, bool removeHs) {
+  v2::FileParsers::MolFileParserParams ps;
+  ps.sanitize = sanitize;
+  ps.removeHs = removeHs;
+  finishMolProcessing(res, chiralityPossible, ps);
+}
 
 //! Deprecated, please use QueryOps::replaceAtomWithQueryAtom instead
 RDKIT_FILEPARSERS_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
@@ -224,6 +264,8 @@ inline void createAtomStringPropertyList(
               getAtomPropertyList<std::string>(mol, atomPropName,
                                                missingValueMarker, lineSize));
 }
+
+RDKIT_FILEPARSERS_EXPORT void moveAdditionalPropertiesToSGroups(RWMol &mol);
 
 }  // namespace FileParserUtils
 }  // namespace RDKit

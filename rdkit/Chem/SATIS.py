@@ -11,7 +11,6 @@
 
 """
 
-
 import itertools
 
 from rdkit import Chem

@@ -1,21 +1,28 @@
 //
-//  Copyright (C) 2011-2022 NextMove Software and other RDKit contributors
+//  Copyright (C) 2011-2024 NextMove Software and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
+#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
+#endif
 
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <deque>
+
+// #define VERBOSE_HASH 1
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include "nmmolhash.h"
 #include "mf.h"
@@ -24,9 +31,9 @@ namespace {
 
 void addCXExtensions(RDKit::RWMol *mol, std::string &result,
                      unsigned additionalSkips = 0) {
+  unsigned int cxflagsToSkip = additionalSkips | RDKit::SmilesWrite::CX_COORDS;
   auto cxext = RDKit::SmilesWrite::getCXExtensions(
-      *mol, RDKit::SmilesWrite::CX_ALL ^ RDKit::SmilesWrite::CX_COORDS ^
-                additionalSkips);
+      *mol, RDKit::SmilesWrite::CX_ALL ^ cxflagsToSkip);
   if (!cxext.empty()) {
     result += " " + cxext;
   }
@@ -290,19 +297,27 @@ void NormalizeHCount(Atom *aptr) {
   aptr->setNumExplicitHs(hcount);
 }
 
-std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles) {
+namespace {
+std::string convertToSmilesWithCXFlags(
+    const RWMol &mol, bool doingCXSmiles,
+    SmilesWriteParams ps = SmilesWriteParams()) {
+  return SmilesWrite::detail::MolToSmiles(mol, ps, doingCXSmiles);
+}
+}  // namespace
+
+std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles,
+                           unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
-  int charge = 0;
 
   for (auto aptr : mol->atoms()) {
-    charge += aptr->getFormalCharge();
     aptr->setIsAromatic(false);
     aptr->setFormalCharge(0);
     if (!elem) {
       aptr->setNumExplicitHs(0);
       aptr->setNoImplicit(true);
       aptr->setAtomicNum(0);
+      aptr->setIsotope(0);
     } else {
       NormalizeHCount(aptr);
     }
@@ -310,6 +325,7 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles) {
 
   for (auto bptr : mol->bonds()) {
     bptr->setBondType(Bond::SINGLE);
+    bptr->setIsAromatic(false);  // clear aromatic flags
   }
   MolOps::assignRadicals(*mol);
 
@@ -319,16 +335,17 @@ std::string AnonymousGraph(RWMol *mol, bool elem, bool useCXSmiles) {
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
 
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
 
   return result;
 }
 
-std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles) {
+std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
+                        unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -352,18 +369,379 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles) {
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (netq) {
     sprintf(buffer, "_%d", charge);
     result += buffer;
   }
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
   return result;
 }
 
-std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
+namespace details {
+
+constexpr std::uint64_t bondFlagCarboxyl =
+    1;  //*< bond involved in in carboxyl, amide, etc.
+std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
+  // FIX: oversimplified, but should work for now
+  static std::vector<std::string> patterns{
+      "[C;!$(C-C(=[NH])-[NH2])]-[C;!$(C(-C)(=[NH])-[NH2])](=[O,N,S])-[O,N,S]",  //< one side of the "amide", with an ugly exclusion for amidine
+      "[C;!$(C=[O,N,S])]-[O,N,S]-C=[O,N,S]",  //< the other side
+      "[OH0,SH0]-C=[O,N,S]",                  //< "esters" and "carboxyls"
+      "[C]-[c](:[o,n,s]):[o,n,s]",  //< a limited version of handling this for
+                                    // aromatic systems
+  };
+  static std::vector<std::unique_ptr<RDKit::RWMol>> queries;
+  if (queries.empty()) {
+    for (const auto &pattern : patterns) {
+      queries.emplace_back(SmartsToMol(pattern));
+    }
+  }
+
+  std::vector<std::uint64_t> bondFlags(mol.getNumBonds(), 0);
+  for (const auto &qry : queries) {
+    auto matches = SubstructMatch(mol, *qry);
+    for (const auto &match : matches) {
+      const auto bnd =
+          mol.getBondBetweenAtoms(match[0].second, match[1].second);
+      bondFlags[bnd->getIdx()] |= bondFlagCarboxyl;
+    }
+  }
+  return bondFlags;
+}
+
+}  // namespace details
+
+namespace {
+// candidate atoms are either unsaturated or have implicit Hs
+// NOTE that being aromatic is not sufficient. The molecule
+//  Cn1cccc1 is a good example of this:
+//    - it should not be a tautomeric system
+//    - the N is not unsaturated, but it is aromatic
+bool isCandidateAtom(const Atom *aptr,
+                     const std::vector<std::uint64_t> &atomFlags) {
+  return !atomFlags[aptr->getIdx()] &&
+         (aptr->getTotalNumHs() || queryAtomUnsaturated(aptr));
+}
+
+// atomic number > 1, not carbon
+bool isHeteroAtom(const Atom *aptr) {
+  auto atNum = aptr->getAtomicNum();
+  return atNum != 6 && atNum > 1;
+}
+
+// aromatic (flagged or bond order), double, or triple
+bool isUnsaturatedBond(const Bond *bptr) {
+  return bptr->getIsAromatic() ||
+         bptr->getBondType() == Bond::BondType::AROMATIC ||
+         bptr->getBondType() == Bond::BondType::DOUBLE ||
+         bptr->getBondType() == Bond::BondType::TRIPLE;
+}
+
+// potential tautomeric bonds are unsaturated and both atoms are candidates
+bool isPossibleTautomericBond(const Bond *bptr,
+                              const std::vector<std::uint64_t> &atomFlags,
+                              const std::vector<std::uint64_t> &bondFlags) {
+  return !bondFlags[bptr->getIdx()] && isUnsaturatedBond(bptr) &&
+         isCandidateAtom(bptr->getBeginAtom(), atomFlags) &&
+         isCandidateAtom(bptr->getEndAtom(), atomFlags);
+}
+
+// a bond is a possible starting bond if it involves a candidate hetereoatom
+// (definition above) and an unsaturated atom
+bool isPossibleStartingBond(const Bond *bptr,
+                            const std::vector<std::uint64_t> &atomFlags,
+                            const std::vector<std::uint64_t> &bondFlags) {
+  if (bondFlags[bptr->getIdx()]) {
+    return false;
+  }
+  auto heteroBeg = isHeteroAtom(bptr->getBeginAtom()) &&
+                   isCandidateAtom(bptr->getBeginAtom(), atomFlags);
+  auto heteroEnd = isHeteroAtom(bptr->getEndAtom()) &&
+                   isCandidateAtom(bptr->getEndAtom(), atomFlags);
+  // at least one atom has to be an eligible heteroatom:
+  if (!heteroBeg && !heteroEnd) {
+    return false;
+  }
+
+  // Do not include a check for aromaticity here. See comment for
+  // isCandidateAtom() above.
+  auto unsatBeg = queryAtomUnsaturated(bptr->getBeginAtom());
+  auto unsatEnd = queryAtomUnsaturated(bptr->getEndAtom());
+
+  // both we need a heteroatom on one side and an unsaturated atom on the
+  // other:
+  if (!((heteroBeg && unsatEnd) || (heteroEnd && unsatBeg))) {
+    return false;
+  }
+
+  return true;
+}
+
+// is one of the atom's bonds in the startBonds set?
+bool hasStartBond(const Atom *aptr, const boost::dynamic_bitset<> &startBonds) {
+  for (const auto nbr : aptr->getOwningMol().atomBonds(aptr)) {
+    if (startBonds[nbr->getIdx()]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// skip the neighbor bond if otherAtom isn't a candidate and doesn't have a
+// start bond OR if the bond is neither unsaturated nor conjugated and atom
+// doesn't have a start bond
+bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
+                      const Bond *nbrBond,
+                      const boost::dynamic_bitset<> &startBonds,
+                      const std::vector<std::uint64_t> &atomFlags,
+                      const std::vector<std::uint64_t> &bondFlags) {
+  return (bondFlags[nbrBond->getIdx()] ||
+          ((!isCandidateAtom(otherAtom, atomFlags) &&
+            !hasStartBond(otherAtom, startBonds)) ||
+           (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
+            !hasStartBond(atom, startBonds))));
+}
+}  // namespace
+
+std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
+                           unsigned cxFlagsToSkip = 0) {
+  PRECONDITION(mol, "bad molecule");
+  std::string result;
+  unsigned int hcount = 0;
+  int charge = 0;
+
+  // we aren't current doing anything with atomFlags, but we have added them in
+  // analogy to the bondFlags as a kind of future proofing.
+  std::vector<std::uint64_t> atomFlags(mol->getNumAtoms(), 0);
+  auto bondFlags = details::getBondFlags(*mol);
+
+  boost::dynamic_bitset<> bondsToModify(mol->getNumBonds());
+  boost::dynamic_bitset<> bondsConsidered(mol->getNumBonds());
+
+  boost::dynamic_bitset<> startBonds(mol->getNumBonds());
+  for (const auto bnd : mol->bonds()) {
+    startBonds.set(bnd->getIdx(),
+                   isPossibleStartingBond(bnd, atomFlags, bondFlags));
+  }
+#ifdef VERBOSE_HASH
+  std::cerr << " START BONDS: " << startBonds << std::endl;
+#endif
+  for (auto bptr : mol->bonds()) {
+    // If this has already been considered or is not a possible starting bond,
+    // then skip it
+    if (bondsToModify[bptr->getIdx()] || bondsConsidered[bptr->getIdx()] ||
+        !startBonds[bptr->getIdx()]) {
+      continue;
+    }
+    boost::dynamic_bitset<> conjSystem(mol->getNumBonds());
+    boost::dynamic_bitset<> atomsInSystem(mol->getNumAtoms());
+    unsigned int numDonorCs = 0;
+    unsigned int activeHeteroHs = 0;
+    std::deque<const Bond *> bq;
+    // also include eligible neighbor bonds:
+    for (const auto atm :
+         std::vector<const Atom *>{bptr->getBeginAtom(), bptr->getEndAtom()}) {
+      if (atm->getAtomicNum() == 6) {
+        if (atm->getTotalNumHs()) {
+          ++numDonorCs;
+        }
+      } else if (isHeteroAtom(atm)) {
+        activeHeteroHs += atm->getTotalNumHs();
+      }
+      for (const auto nbrBond : mol->atomBonds(atm)) {
+        if (nbrBond == bptr || bondsConsidered[nbrBond->getIdx()]) {
+          continue;
+        }
+        auto oatom = nbrBond->getOtherAtom(atm);
+
+        // if the bond is unsaturated or to an atom with free Hs, include it:
+        // if (isUnsaturatedBond(nbrBond) || oatom->getTotalNumHs()) {
+
+#ifdef VERBOSE_HASH
+        std::cerr << "  check neighbor1 " << nbrBond->getIdx() << " from "
+                  << atm->getIdx() << "-" << oatom->getIdx() << std::endl;
+        std::cerr << "    " << bondsConsidered[nbrBond->getIdx()] << " icao "
+                  << isCandidateAtom(oatom) << " hsbo "
+                  << hasStartBond(oatom, startBonds) << " atomunsato "
+                  << queryAtomUnsaturated(oatom) << " atomunsat "
+                  << queryAtomUnsaturated(atm) << " bondunsat "
+                  << isUnsaturatedBond(nbrBond) << " icaa "
+                  << isCandidateAtom(atm) << " hsba "
+                  << hasStartBond(atm, startBonds) << std::endl;
+#endif
+        // special case to prevent "overreach" with things like enamines.
+        // the logic here prevents the first bond in CNC=C from being included
+        // in the tautomeric system. So we get: [CH3]-[N]:[C] instead of
+        // [C]:[N]:[C]
+        if (startBonds[bptr->getIdx()] && isHeteroAtom(atm) &&
+            !isUnsaturatedBond(nbrBond)) {
+          continue;
+        }
+
+        // if both bonds are not eligible, then we can skip this neighbor
+        if (skipNeighborBond(atm, oatom, nbrBond, startBonds, atomFlags,
+                             bondFlags) &&
+            skipNeighborBond(oatom, atm, nbrBond, startBonds, atomFlags,
+                             bondFlags)) {
+          continue;
+        }
+
+#ifdef VERBOSE_HASH
+        std::cerr << "    push " << nbrBond->getIdx() << " "
+                  << nbrBond->getBeginAtomIdx() << "-"
+                  << nbrBond->getEndAtomIdx() << std::endl;
+        std::cerr << " #### SET1 " << bptr->getIdx() << std::endl;
+#endif
+        bq.push_back(nbrBond);
+
+        // now we know that we should consider this bond
+
+        bondsConsidered.set(bptr->getIdx());
+        conjSystem.set(bptr->getIdx());
+      }
+    }
+
+    while (!bq.empty()) {
+      auto bnd = bq.front();
+      bq.pop_front();
+      if (bondsConsidered[bnd->getIdx()]) {
+        continue;
+      }
+
+#ifdef VERBOSE_HASH
+      std::cerr << "BQ: " << bnd->getIdx() << ": " << bnd->getBeginAtomIdx()
+                << "-" << bnd->getEndAtomIdx() << std::endl;
+      std::cerr << " #### SET2 " << bnd->getIdx() << std::endl;
+#endif
+      bondsConsidered.set(bnd->getIdx());
+      conjSystem.set(bnd->getIdx());
+      for (const auto atm :
+           std::vector<const Atom *>{bnd->getBeginAtom(), bnd->getEndAtom()}) {
+        if (atomsInSystem[atm->getIdx()]) {
+          continue;
+        }
+        if (atm->getAtomicNum() == 6) {
+          if (atm->getTotalNumHs()) {
+            ++numDonorCs;
+            atomsInSystem.set(atm->getIdx());
+          }
+        } else if (atm->getAtomicNum() > 1) {
+          activeHeteroHs += atm->getTotalNumHs();
+          atomsInSystem.set(atm->getIdx());
+        }
+        for (auto nbrBnd : mol->atomBonds(atm)) {
+          if (nbrBnd == bnd) {
+            continue;
+          }
+          auto oatom = nbrBnd->getOtherAtom(atm);
+
+#ifdef VERBOSE_HASH
+          std::cerr << "  check neighbor " << nbrBnd->getIdx() << " from "
+                    << atm->getIdx() << "-" << oatom->getIdx() << std::endl;
+          std::cerr << "    " << bondsConsidered[nbrBnd->getIdx()] << " icao "
+                    << isCandidateAtom(oatom) << " hsbo "
+                    << hasStartBond(oatom, startBonds) << " unsat "
+                    << isUnsaturatedBond(nbrBnd) << " icaa "
+                    << isCandidateAtom(atm) << " hsba "
+                    << hasStartBond(atm, startBonds) << std::endl;
+#endif
+          if (bondsConsidered[nbrBnd->getIdx()] ||
+              (skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
+                                bondFlags) &&
+               skipNeighborBond(oatom, atm, nbrBnd, startBonds, atomFlags,
+                                bondFlags))) {
+            // we won't add this bond for further traversal, but if both atoms
+            // are already in this system, then we should add the bond to the
+            // system
+            if (atomsInSystem[oatom->getIdx()]) {
+              conjSystem.set(nbrBnd->getIdx());
+            }
+            continue;
+          }
+          bq.push_back(nbrBnd);
+#ifdef VERBOSE_HASH
+          std::cerr << "  added!" << std::endl;
+#endif
+        }
+      }
+    }
+    // we need to have at least two bonds and include at least one active H
+    if (conjSystem.count() > 1 && (activeHeteroHs || numDonorCs)) {
+#ifdef VERBOSE_HASH
+      std::cerr << "CONJ: " << conjSystem << " hetero " << activeHeteroHs
+                << " donor " << std::endl;
+#endif
+      bondsToModify |= conjSystem;
+    } else {
+#ifdef VERBOSE_HASH
+      std::cerr << "REJECT CONJ: " << conjSystem << " hetero " << activeHeteroHs
+                << " donor " << std::endl;
+#endif
+    }
+  }
+#ifdef VERBOSE_HASH
+  std::cerr << "FINAL: " << bondsToModify << std::endl;
+#endif
+  boost::dynamic_bitset<> atomsToModify(mol->getNumAtoms());
+  if (bondsToModify.any()) {
+    for (auto bptr : mol->bonds()) {
+      if (!bondsToModify[bptr->getIdx()]) {
+        continue;
+      }
+      bptr->setIsAromatic(false);
+      bptr->setBondType(Bond::AROMATIC);
+      bptr->setStereo(Bond::BondStereo::STEREONONE);
+      atomsToModify.set(bptr->getBeginAtomIdx());
+      atomsToModify.set(bptr->getEndAtomIdx());
+    }
+  }
+
+  if (atomsToModify.any()) {
+    for (auto aptr : mol->atoms()) {
+      if (!atomsToModify[aptr->getIdx()]) {
+        continue;
+      }
+      charge += aptr->getFormalCharge();
+      hcount += aptr->getTotalNumHs();
+      aptr->setIsAromatic(false);
+      aptr->setFormalCharge(0);
+      aptr->setNoImplicit(true);
+      aptr->setNumExplicitHs(0);
+    }
+  }
+
+  if (!bondsToModify.empty() || !atomsToModify.empty()) {
+    MolOps::assignRadicals(*mol);
+    // we may have just destroyed some stereocenters/bonds
+    // clean that up:
+    bool cleanIt = true;
+    bool force = true;
+    MolOps::assignStereochemistry(*mol, cleanIt, force);
+  }
+
+  SmilesWriteParams ps;
+  ps.allBondsExplicit = true;
+  ps.allHsExplicit = true;
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles, ps);
+  char buffer[32];
+  if (!proto) {
+    sprintf(buffer, "_%d_%d", hcount, charge);
+  } else {
+    sprintf(buffer, "_%d", hcount - charge);
+  }
+  result += buffer;
+  if (useCXSmiles) {
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
+  }
+
+  return result;
+}
+
+std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles,
+                         unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -397,7 +775,7 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   bool cleanIt = true;
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (!proto) {
     sprintf(buffer, "_%d_%d", hcount, charge);
   } else {
@@ -405,7 +783,7 @@ std::string TautomerHash(RWMol *mol, bool proto, bool useCXSmiles) {
   }
   result += buffer;
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
 
   return result;
@@ -473,9 +851,12 @@ bool HasNbrInScaffold(Atom *aptr, unsigned char *is_in_scaffold) {
   return false;
 }
 
-std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles) {
+std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles,
+                                   unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
-  RDKit::MolOps::fastFindRings(*mol);
+  if (!mol->getRingInfo()->isFindFastOrBetter()) {
+    MolOps::fastFindRings(*mol);
+  }
 
   unsigned int maxatomidx = mol->getNumAtoms();
   auto *is_in_scaffold = (unsigned char *)alloca(maxatomidx);
@@ -494,6 +875,7 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles) {
       aptr->setFormalCharge(0);
       aptr->setNoImplicit(true);
       aptr->setNumExplicitHs(0);
+      aptr->setIsotope(0);
     } else {
       for_deletion.push_back(aptr);
     }
@@ -512,14 +894,15 @@ std::string ExtendedMurckoScaffold(RWMol *mol, bool useCXSmiles) {
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
   std::string result;
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
   return result;
 }
 
-std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles) {
+std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles,
+                               unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
   std::vector<Atom *> for_deletion;
   do {
@@ -555,9 +938,9 @@ std::string MurckoScaffoldHash(RWMol *mol, bool useCXSmiles) {
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
   std::string result;
-  result = MolToSmiles(*mol);
+  result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (useCXSmiles) {
-    addCXExtensions(mol, result, SmilesWrite::CX_RADICALS);
+    addCXExtensions(mol, result, cxFlagsToSkip | SmilesWrite::CX_RADICALS);
   }
   return result;
 }
@@ -685,13 +1068,16 @@ void ClearEZStereo(Atom *atm) {
   }
 }
 
-std::string RegioisomerHash(RWMol *mol, bool useCXSmiles) {
+std::string RegioisomerHash(RWMol *mol, bool useCXSmiles,
+                            unsigned cxFlagsToSkip = 0) {
   PRECONDITION(mol, "bad molecule");
 
   // we need a copy of the molecule so that we can loop over the bonds of
   // something while modifying something else
-  RDKit::MolOps::fastFindRings(*mol);
   RDKit::ROMol molcpy(*mol);
+  if (molcpy.getRingInfo()->isFindFastOrBetter()) {
+    MolOps::fastFindRings(molcpy);
+  }
   for (int i = molcpy.getNumBonds() - 1; i >= 0; --i) {
     auto bptr = molcpy.getBondWithIdx(i);
     int split = RegioisomerBond(bptr);
@@ -732,9 +1118,9 @@ std::string RegioisomerHash(RWMol *mol, bool useCXSmiles) {
   bool force = true;
   MolOps::assignStereochemistry(*mol, cleanIt, force);
 
-  std::string result = MolToSmiles(*mol);
+  auto result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
   if (useCXSmiles) {
-    addCXExtensions(mol, result);
+    addCXExtensions(mol, result, cxFlagsToSkip);
   }
 
   return result;
@@ -859,7 +1245,8 @@ std::string ArthorSubOrderHash(RWMol *mol) {
 }
 }  // namespace
 
-std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
+std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles,
+                    unsigned cxFlagsToSkip) {
   PRECONDITION(mol, "bad molecule");
   std::string result;
   char buffer[32];
@@ -868,34 +1255,40 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
   switch (func) {
     default:
     case HashFunction::AnonymousGraph:
-      result = AnonymousGraph(mol, false, useCXSmiles);
+      result = AnonymousGraph(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::ElementGraph:
-      result = AnonymousGraph(mol, true, useCXSmiles);
+      result = AnonymousGraph(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::CanonicalSmiles:
-      result = MolToSmiles(*mol);
+      result = convertToSmilesWithCXFlags(*mol, useCXSmiles);
       if (useCXSmiles) {
-        addCXExtensions(mol, result);
+        addCXExtensions(mol, result, cxFlagsToSkip);
       }
       break;
     case HashFunction::MurckoScaffold:
-      result = MurckoScaffoldHash(mol, useCXSmiles);
+      result = MurckoScaffoldHash(mol, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::ExtendedMurcko:
-      result = ExtendedMurckoScaffold(mol, useCXSmiles);
+      result = ExtendedMurckoScaffold(mol, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::Mesomer:
-      result = MesomerHash(mol, true, useCXSmiles);
+      result = MesomerHash(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::RedoxPair:
-      result = MesomerHash(mol, false, useCXSmiles);
+      result = MesomerHash(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomTautomer:
-      result = TautomerHash(mol, false, useCXSmiles);
+      result = TautomerHash(mol, false, useCXSmiles, cxFlagsToSkip);
+      break;
+    case HashFunction::HetAtomTautomerv2:
+      result = TautomerHashv2(mol, false, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::HetAtomProtomer:
-      result = TautomerHash(mol, true, useCXSmiles);
+      result = TautomerHash(mol, true, useCXSmiles, cxFlagsToSkip);
+      break;
+    case HashFunction::HetAtomProtomerv2:
+      result = TautomerHashv2(mol, true, useCXSmiles, cxFlagsToSkip);
       break;
     case HashFunction::MolFormula:
       result = NMMolecularFormula(mol);
@@ -923,7 +1316,7 @@ std::string MolHash(RWMol *mol, HashFunction func, bool useCXSmiles) {
       result = ArthorSubOrderHash(mol);
       break;
     case HashFunction::Regioisomer:
-      result = RegioisomerHash(mol, useCXSmiles);
+      result = RegioisomerHash(mol, useCXSmiles, cxFlagsToSkip);
       break;
   }
   return result;

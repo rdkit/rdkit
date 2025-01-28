@@ -43,6 +43,9 @@
 #include "ReactionUtils.h"
 
 namespace RDKit {
+namespace v2 {
+namespace ReactionParser {
+
 namespace DaylightParserUtils {
 std::vector<std::string> splitSmartsIntoComponents(
     const std::string &reactText) {
@@ -90,29 +93,27 @@ std::vector<std::string> splitSmartsIntoComponents(
   return res;
 }
 
-ROMol *constructMolFromString(const std::string &txt,
-                              std::map<std::string, std::string> *replacements,
-                              bool useSmiles) {
-  ROMol *mol;
+std::unique_ptr<RWMol> constructMolFromString(
+    const std::string &txt, const ReactionSmartsParserParams &params,
+    bool useSmiles) {
   if (!useSmiles) {
-    SmartsParserParams ps;
-    ps.replacements = replacements;
+    SmilesParse::SmartsParserParams ps;
+    ps.replacements = params.replacements;
     ps.allowCXSMILES = false;
     ps.parseName = false;
     ps.mergeHs = false;
     ps.skipCleanup = true;
-    mol = SmartsToMol(txt, ps);
+    return SmilesParse::MolFromSmarts(txt, ps);
   } else {
-    SmilesParserParams ps;
-    ps.replacements = replacements;
+    SmilesParse::SmilesParserParams ps;
+    ps.replacements = params.replacements;
     ps.allowCXSMILES = false;
     ps.parseName = false;
-    ps.sanitize = false;
+    ps.sanitize = params.sanitize;
     ps.removeHs = false;
     ps.skipCleanup = true;
-    mol = SmilesToMol(txt, ps);
+    return SmilesParse::MolFromSmiles(txt, ps);
   }
-  return mol;
 }
 
 }  // end of namespace DaylightParserUtils
@@ -135,14 +136,13 @@ void removeSpacesAround(std::string &text, size_t pos) {
     }
   }
 }
-}  // namespace
-ChemicalReaction *RxnSmartsToChemicalReaction(
-    const std::string &origText,
-    std::map<std::string, std::string> *replacements, bool useSmiles,
-    bool allowCXSMILES) {
+
+std::unique_ptr<ChemicalReaction> parseReaction(
+    const std::string &origText, const ReactionSmartsParserParams &params,
+    bool useSmiles) {
   std::string text = origText;
   std::string cxPart;
-  if (allowCXSMILES) {
+  if (params.allowCXSMILES) {
     auto sidx = origText.find_first_of("|");
     if (sidx != std::string::npos && sidx != 0) {
       text = origText.substr(0, sidx);
@@ -220,51 +220,47 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
   auto productSmarts =
       DaylightParserUtils::splitSmartsIntoComponents(productText);
 
-  auto *rxn = new ChemicalReaction();
+  auto rxn = std::make_unique<ChemicalReaction>();
 
   for (const auto &txt : reactSmarts) {
-    auto mol = DaylightParserUtils::constructMolFromString(txt, replacements,
-                                                           useSmiles);
+    auto mol =
+        DaylightParserUtils::constructMolFromString(txt, params, useSmiles);
     if (!mol) {
       std::string errMsg = "Problems constructing reactant from SMARTS: ";
       errMsg += txt;
-      delete rxn;
       throw ChemicalReactionParserException(errMsg);
     }
-    rxn->addReactantTemplate(ROMOL_SPTR(mol));
+    rxn->addReactantTemplate(ROMOL_SPTR(mol.release()));
   }
 
   for (const auto &txt : productSmarts) {
-    auto mol = DaylightParserUtils::constructMolFromString(txt, replacements,
-                                                           useSmiles);
+    auto mol =
+        DaylightParserUtils::constructMolFromString(txt, params, useSmiles);
     if (!mol) {
       std::string errMsg = "Problems constructing product from SMARTS: ";
       errMsg += txt;
-      delete rxn;
       throw ChemicalReactionParserException(errMsg);
     }
-    rxn->addProductTemplate(ROMOL_SPTR(mol));
+    rxn->addProductTemplate(ROMOL_SPTR(mol.release()));
   }
-  updateProductsStereochem(rxn);
+  updateProductsStereochem(rxn.get());
 
   // allow a reaction template to have no agent specified
   if (agentText.size() != 0) {
     auto agentMol = DaylightParserUtils::constructMolFromString(
-        agentText, replacements, useSmiles);
+        agentText, params, useSmiles);
     if (!agentMol) {
       std::string errMsg = "Problems constructing agent from SMARTS: ";
       errMsg += agentText;
-      delete rxn;
       throw ChemicalReactionParserException(errMsg);
     }
     std::vector<ROMOL_SPTR> agents = MolOps::getMolFrags(*agentMol, false);
-    delete agentMol;
     for (auto &agent : agents) {
       rxn->addAgentTemplate(agent);
     }
   }
 
-  if (allowCXSMILES && !cxPart.empty()) {
+  if (params.allowCXSMILES && !cxPart.empty()) {
     unsigned int startAtomIdx = 0;
     unsigned int startBondIdx = 0;
     for (auto &mol : boost::make_iterator_range(rxn->beginReactantTemplates(),
@@ -309,4 +305,16 @@ ChemicalReaction *RxnSmartsToChemicalReaction(
 
   return rxn;
 }
+}  // namespace
+
+std::unique_ptr<ChemicalReaction> ReactionFromSmarts(
+    const std::string &origText, const ReactionSmartsParserParams &options) {
+  return parseReaction(origText, options, false);
+}
+std::unique_ptr<ChemicalReaction> ReactionFromSmiles(
+    const std::string &origText, const ReactionSmartsParserParams &options) {
+  return parseReaction(origText, options, true);
+}
+}  // namespace ReactionParser
+}  // namespace v2
 }  // namespace RDKit

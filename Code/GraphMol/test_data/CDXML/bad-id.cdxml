@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 21.0.0.28"
+ Name="aromatic.cdxml"
+ BoundingBox="216.30 347.36 269.26 408.52"
+ WindowPosition="0 0"
+ WindowSize="0 0"
+ FractionalWidths="yes"
+ InterpretChemically="yes"
+ ShowAtomQuery="yes"
+ ShowAtomStereo="no"
+ ShowAtomEnhancedStereo="yes"
+ ShowAtomNumber="no"
+ ShowResidueID="no"
+ ShowBondQuery="yes"
+ ShowBondRxn="yes"
+ ShowBondStereo="no"
+ ShowTerminalCarbonLabels="no"
+ ShowNonTerminalCarbonLabels="no"
+ HideImplicitHydrogens="no"
+ LabelFont="21"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="21"
+ CaptionSize="12"
+ HashSpacing="2.70"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ LabelJustification="Auto"
+ CaptionJustification="Left"
+ AminoAcidTermini="HOH"
+ ShowSequenceTermini="yes"
+ ShowSequenceBonds="yes"
+ ShowSequenceUnlinkedBranches="no"
+ ResidueWrapCount="40"
+ ResidueBlockCount="10"
+ ResidueZigZag="yes"
+ NumberResidueBlocks="no"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000000480048000000000300024CFFF4FFF4030C02580367052803FC0002000000480048000000000300024C000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
+ ChemPropName=""
+ ChemPropFormula="Chemical Formula: "
+ ChemPropExactMass="Exact Mass: "
+ ChemPropMolWt="Molecular Weight: "
+ ChemPropMOverZ="m/z: "
+ ChemPropAnalysis="Elemental Analysis: "
+ ChemPropBoilingPt="Boiling Point: "
+ ChemPropMeltingPt="Melting Point: "
+ ChemPropCritTemp="Critical Temp: "
+ ChemPropCritPres="Critical Pres: "
+ ChemPropCritVol="Critical Vol: "
+ ChemPropGibbs="Gibbs Energy: "
+ ChemPropLogP="Log P: "
+ ChemPropMR="MR: "
+ ChemPropHenry="Henry&apos;s Law: "
+ ChemPropEForm="Heat of Form: "
+ ChemProptPSA="tPSA: "
+ ChemPropID=""
+ ChemPropFragmentLabel=""
+ color="0"
+ bgcolor="1"
+ RxnAutonumberStart="1"
+ RxnAutonumberConditions="no"
+ RxnAutonumberStyle="Roman"
+ RxnAutonumberFormat="(#)"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="0" g="0.6000" b="0"/>
+<color r="0" g="0" b="1"/>
+<color r="0" g="0.6000" b="0.6000"/>
+<color r="0.4000" g="0.4000" b="0"/>
+<color r="0.4000" g="0" b="0.6000"/>
+<color r="0.2000" g="0.2000" b="0.2000"/>
+<color r="0.6000" g="0.2000" b="0.2000"/>
+<color r="0.6000" g="0.4000" b="0"/>
+<color r="0.2000" g="0.2000" b="0.6000"/>
+<color r="0.4000" g="0.4000" b="0.2000"/>
+<color r="0" g="0.4000" b="0"/>
+<color r="0.4000" g="0.4000" b="0.4000"/>
+<color r="0.2000" g="0.4000" b="0.6000"/>
+<color r="0.4000" g="0.2000" b="0.2000"/>
+<color r="0.4000" g="0" b="0"/>
+<color r="0.6000" g="0.4000" b="0.4000"/>
+<color r="0.6000" g="0" b="0.2000"/>
+<color r="0.4000" g="0.8000" b="0.4000"/>
+<color r="0.8000" g="0.2000" b="0.2000"/>
+<color r="0.4000" g="0.4000" b="0.8000"/>
+<color r="0.2000" g="0.4000" b="0.2000"/>
+<color r="0.2000" g="0.2000" b="0.8000"/>
+<color r="0.8000" g="0.6000" b="0.2000"/>
+<color r="1" g="0.4000" b="0.2000"/>
+<color r="0.8000" g="0.2000" b="0"/>
+<color r="0.6000" g="0.4000" b="0.2000"/>
+<color r="1" g="0.6000" b="1"/>
+<color r="0.6000" g="0" b="0.6000"/>
+<color r="0.2000" g="1" b="0.2000"/>
+</colortable><fonttable>
+<font id="21" charset="x-mac-roman" name="Helvetica"/>
+</fonttable><page
+ id="26"
+ BoundingBox="0 0 540 720"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="5"
+ BoundingBox="216.30 347.36 269.26 408.52"
+ Z="1"
+><n
+ id="mydoghasfleas"
+ p="216.80 362.94"
+ Z="2"
+ AS="N"
+/><n
+ id="4"
+ p="216.80 392.94"
+ Z="3"
+ AS="N"
+/><n
+ id="6"
+ p="242.78 407.94"
+ Z="4"
+ AS="N"
+/><n
+ id="7"
+ p="268.76 392.94"
+ Z="5"
+ AS="N"
+/><n
+ id="8"
+ p="268.76 362.94"
+ Z="6"
+ AS="N"
+/><n
+ id="9"
+ p="242.78 347.94"
+ Z="7"
+ AS="N"
+/><b
+ id="16"
+ Z="14"
+ B="9"
+ E="3"
+ Order="1.5"
+ Display="Dash"
+ Display2="Dash"
+ BS="N"
+ BondCircularOrdering="17 0 0 21"
+/><b
+ id="17"
+ Z="15"
+ B="8"
+ E="9"
+ Order="1.5"
+ Display="Dash"
+ Display2="Dash"
+ BS="N"
+ BondCircularOrdering="18 0 0 16"
+/><b
+ id="18"
+ Z="16"
+ B="7"
+ E="8"
+ Order="1.5"
+ Display="Dash"
+ Display2="Dash"
+ BS="N"
+ BondCircularOrdering="19 0 0 17"
+/><b
+ id="19"
+ Z="17"
+ B="6"
+ E="7"
+ Order="1.5"
+ Display="Dash"
+ Display2="Dash"
+ BS="N"
+ BondCircularOrdering="20 0 0 18"
+/><b
+ id="20"
+ Z="18"
+ B="4"
+ E="6"
+ Order="1.5"
+ Display="Dash"
+ Display2="Dash"
+ BS="N"
+ BondCircularOrdering="21 0 0 19"
+/><b
+ id="21"
+ Z="19"
+ B="3"
+ E="4"
+ Order="1.5"
+ Display="Dash"
+ Display2="Dash"
+ BS="N"
+ BondCircularOrdering="16 0 0 20"
+/></fragment></page></CDXML>

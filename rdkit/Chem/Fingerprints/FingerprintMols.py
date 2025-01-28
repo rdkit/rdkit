@@ -258,6 +258,8 @@ def FingerprintsFromDetails(details, reportFreq=10):
         conn.InsertData(details.outTableName, tpl)
       conn.Commit()
   return fps
+
+
 # ------------------------------------------------
 #
 #  Command line parsing stuff
@@ -320,19 +322,23 @@ class FingerprinterDetails(object):
 
   def GetMetricName(self):
     # DataStructs.TverskySimilarity: 'Tversky'
-    metricDict = {DataStructs.DiceSimilarity: 'Dice', 
-                  DataStructs.TanimotoSimilarity: 'Tanimoto', 
-                  DataStructs.CosineSimilarity: 'Cosine', } 
+    metricDict = {
+      DataStructs.DiceSimilarity: 'Dice',
+      DataStructs.TanimotoSimilarity: 'Tanimoto',
+      DataStructs.CosineSimilarity: 'Cosine',
+    }
     metric = metricDict.get(self.metric, self.metric)
     if metric:
       return metric
     return 'Unknown'
 
   def SetMetricFromName(self, name):
-    # 'TVERSKY': DataStructs.TverskySimilarity, 
-    metricDict = {'DICE': DataStructs.DiceSimilarity, 
-                  'TANIMOTO': DataStructs.TanimotoSimilarity, 
-                  'COSINE': DataStructs.CosineSimilarity, } 
+    # 'TVERSKY': DataStructs.TverskySimilarity,
+    metricDict = {
+      'DICE': DataStructs.DiceSimilarity,
+      'TANIMOTO': DataStructs.TanimotoSimilarity,
+      'COSINE': DataStructs.CosineSimilarity,
+    }
     self.metric = metricDict.get(name.upper(), self.metric)
 
 
@@ -438,41 +444,42 @@ def ParseArgs(details=None):
   """
   args = sys.argv[1:]
   try:
-    args, extras = getopt.getopt(args,
-                                 'HVs:d:t:o:h',
-                                 [
-                                   'minSize=',
-                                   'maxSize=',
-                                   'density=',
-                                   'minPath=',
-                                   'maxPath=',
-                                   'bitsPerHash=',
-                                   'smilesName=',
-                                   'molPkl=',
-                                   'useSD',
-                                   'idName=',
-                                   'discrim',
-                                   'outTable=',
-                                   'outDbName=',
-                                   'fpColName=',
-                                   'maxMols=',
-                                   'useMACCS',
-                                   'keepTable',
-                                   # SCREENING:
-                                   'smilesTable=',
-                                   'doScreen=',
-                                   'topN=',
-                                   'thresh=',
-                                   'smiles=',
-                                   'dice',
-                                   'cosine',
-                                   # CLUSTERING:
-                                   'actTable=',
-                                   'actName=',
-                                   'SLINK',
-                                   'CLINK',
-                                   'UPGMA',
-                                 ])
+    args, extras = getopt.getopt(
+      args,
+      'HVs:d:t:o:h',
+      [
+        'minSize=',
+        'maxSize=',
+        'density=',
+        'minPath=',
+        'maxPath=',
+        'bitsPerHash=',
+        'smilesName=',
+        'molPkl=',
+        'useSD',
+        'idName=',
+        'discrim',
+        'outTable=',
+        'outDbName=',
+        'fpColName=',
+        'maxMols=',
+        'useMACCS',
+        'keepTable',
+        # SCREENING:
+        'smilesTable=',
+        'doScreen=',
+        'topN=',
+        'thresh=',
+        'smiles=',
+        'dice',
+        'cosine',
+        # CLUSTERING:
+        'actTable=',
+        'actName=',
+        'SLINK',
+        'CLINK',
+        'UPGMA',
+      ])
   except Exception:
     import traceback
     traceback.print_exc()

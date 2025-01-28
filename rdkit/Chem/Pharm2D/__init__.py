@@ -6,13 +6,15 @@
 """
 
 
-def DefaultSigFactory(fdefFile=None, minPointCount=2, maxPointCount=3,
-                      bins=[(2, 3), (3, 4), (4, 5), (5, 6), (6, 7), (7, 8), (8, 100)]):
-  from rdkit.Chem.Pharm2D import SigFactory
+def DefaultSigFactory(fdefFile=None, minPointCount=2, maxPointCount=3, bins=[(2, 3), (3, 4), (4, 5),
+                                                                             (5, 6), (6, 7), (7, 8),
+                                                                             (8, 100)]):
   from rdkit.Chem import ChemicalFeatures
+  from rdkit.Chem.Pharm2D import SigFactory
   if fdefFile is None:
-    from rdkit import RDConfig
     import os.path
+
+    from rdkit import RDConfig
     fdefFile = os.path.join(RDConfig.RDDataDir, 'BaseFeatures.fdef')
   featFactory = ChemicalFeatures.BuildFeatureFactory(fdefFile, )
   factory = SigFactory.SigFactory(featFactory, skipFeats=('ZnBinder', 'LumpedHydrophobe'),

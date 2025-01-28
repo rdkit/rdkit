@@ -3,12 +3,15 @@
 #  Copyright (C) 2003 Rational Discovery LLC
 #   All Rights Reserved
 #
-from qt import *
 import sys
+
+from qt import *
+
 if sys.platform == 'win32':
-  from rdkit.qtGui.qtActiveX import MakeActiveXClass
-  import win32com.client.gencache
   import win32clipboard
+  import win32com.client.gencache
+
+  from rdkit.qtGui.qtActiveX import MakeActiveXClass
   try:
     cdxModule = win32com.client.gencache.EnsureModule("{AF2D2DBA-75E4-4123-BC0B-A57BD5C5C5D2}", 0,
                                                       7, 0)
@@ -66,9 +69,12 @@ class ChemdrawPanel(QWidget):
     if self.cdx:
       self.cdx = None
 
+
 # demo code
 if __name__ == '__main__':
-  import sys, container
+  import sys
+
+  import container
   a = QApplication(sys.argv)
   widg = QMainWindow()
   panel = ChemdrawPanel(widg)

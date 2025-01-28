@@ -1,8 +1,5 @@
-if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
-    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
-else()
-      message("== Making EnumerateLibrary without boost Serialization support")
-    set(RDKit_SERIALIZATION_LIBS )
+if(NOT RDK_USE_BOOST_SERIALIZATION)
+    message("== Making EnumerateLibrary without boost Serialization support")
 endif()
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
@@ -15,13 +12,13 @@ rdkit_library(ChemReactions
               Reaction.cpp MDLParser.cpp DaylightParser.cpp ReactionPickler.cpp
 	            ReactionWriter.cpp ReactionDepict.cpp ReactionFingerprints.cpp ReactionUtils.cpp 
               MoleculeParser.cpp ReactionRunner.cpp PreprocessRxn.cpp SanitizeRxn.cpp
-              PNGParser.cpp
+              PNGParser.cpp CDXMLParser.cpp
                     Enumerate/Enumerate.cpp
                     Enumerate/EnumerationPickler.cpp
                     Enumerate/EvenSamplePairs.cpp
               LINK_LIBRARIES
-              FilterCatalog Descriptors Fingerprints DataStructs Depictor
-              FileParsers SubstructMatch ChemTransforms GraphMol ${RDKit_SERIALIZATION_LIBS})
+              FilterCatalog Fingerprints DataStructs Depictor
+              FileParsers SubstructMatch ChemTransforms GraphMol)
 target_compile_definitions(ChemReactions PRIVATE RDKIT_CHEMREACTIONS_BUILD)
 
 rdkit_headers(Reaction.h
@@ -53,7 +50,7 @@ ChemReactions )
 rdkit_test(testEnumeration Enumerate/testEnumerate.cpp LINK_LIBRARIES
 ChemReactions  )
 
-rdkit_catch_test(rxnTestCatch ../catch_main.cpp catch_tests.cpp LINK_LIBRARIES ChemReactions )
+rdkit_catch_test(rxnTestCatch catch_tests.cpp LINK_LIBRARIES ChemReactions )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

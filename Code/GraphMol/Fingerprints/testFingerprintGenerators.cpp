@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
@@ -128,6 +129,7 @@ void testAtomPairArgs() {
 
   atomPairGenerator =
       AtomPair::getAtomPairGenerator<std::uint32_t>(1, 30, true);
+  atomPairGenerator->getOptions()->df_countSimulation = false;
   fp = atomPairGenerator->getSparseCountFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 3);
   TEST_ASSERT(fp->getNonzeroElements().size() == 2);
@@ -139,10 +141,8 @@ void testAtomPairArgs() {
   TEST_ASSERT(fp->getVal(AtomPair::getAtomPairCode(c1, c3, 2, true)) == 1);
 
   delete fp;
-  delete atomPairGenerator;
 
-  atomPairGenerator = AtomPair::getAtomPairGenerator<std::uint32_t>(
-      1, 30, false, true, nullptr, false);
+  atomPairGenerator->getOptions()->df_includeChirality = false;
   fp = atomPairGenerator->getSparseCountFingerprint(*mol);
   TEST_ASSERT(fp->getTotalVal() == 3);
   TEST_ASSERT(fp->getNonzeroElements().size() == 2);
@@ -2008,7 +2008,7 @@ void testPairsAndTorsionsOptions() {
   {
     FingerprintGenerator<std::uint64_t> *generator =
         TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-            false, 4, nullptr, true, {1, 2, 4, 8}, 1024);
+            false, 4, nullptr, true, 1024, {1, 2, 4, 8});
     std::string smi = "C1=CC=CC=C1";
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
@@ -2037,7 +2037,7 @@ void testPairsAndTorsionsOptions() {
   {
     FingerprintGenerator<std::uint64_t> *generator =
         TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-            false, 4, nullptr, true, {1, 2, 4, 8}, 1024);
+            false, 4, nullptr, true, 1024, {1, 2, 4, 8});
     std::string smi = "C1=CC=CC=C1";
     RWMol *m1 = SmilesToMol(smi);
     TEST_ASSERT(m1);
@@ -2076,10 +2076,10 @@ void testChiralTorsions() {
   // 4000 size
   FingerprintGenerator<std::uint64_t> *generator =
       TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-          false, 4, nullptr, true, {1, 2, 4, 8}, 4096);
+          false, 4, nullptr, true, 4096, {1, 2, 4, 8});
   FingerprintGenerator<std::uint64_t> *generatorChirality =
       TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-          true, 4, nullptr, true, {1, 2, 4, 8}, 4096);
+          true, 4, nullptr, true, 4096, {1, 2, 4, 8});
 
   ROMol *m1, *m2, *m3;
 
@@ -2201,7 +2201,7 @@ void testGitHubIssue25() {
   {
     FingerprintGenerator<std::uint64_t> *generator =
         TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
-            false, 4, nullptr, true, {1, 2, 4, 8}, 1000);
+            false, 4, nullptr, true, 1000, {1, 2, 4, 8});
     ROMol *m1 = SmilesToMol("CCCCO");
     TEST_ASSERT(m1);
     SparseIntVect<std::uint32_t> *fp1;
@@ -2424,6 +2424,47 @@ void testBulkFP() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testAtomPairFPDifference() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue #6958" << std::endl;
+  auto zinc36905137 = "Nc1nncc(-c2ccc(OC(F)F)cc2)n1"_smiles;
+  const unsigned int minLength = 1;
+  const unsigned int maxLength = 30;
+  const std::vector<std::uint32_t> fromAtoms{12, 13};
+  std::unique_ptr<SparseIntVect<std::int32_t>> fpFromFreeFunc(
+      RDKit::AtomPairs::getAtomPairFingerprint(*zinc36905137, minLength,
+                                               maxLength, &fromAtoms));
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> atomPairGenerator(
+      AtomPair::getAtomPairGenerator<std::uint32_t>(minLength, maxLength));
+  std::unique_ptr<SparseIntVect<std::uint32_t>> fpFromGenerator(
+      atomPairGenerator->getSparseCountFingerprint(*zinc36905137, &fromAtoms));
+  TEST_ASSERT(fpFromFreeFunc->size() == fpFromGenerator->size());
+  const auto &fpFromFreeFuncNonZero = fpFromFreeFunc->getNonzeroElements();
+  std::vector<std::pair<std::uint32_t, int>> fpFromFreeFuncAsVectOfPairs(
+      fpFromFreeFuncNonZero.begin(), fpFromFreeFuncNonZero.end());
+  std::sort(fpFromFreeFuncAsVectOfPairs.begin(),
+            fpFromFreeFuncAsVectOfPairs.end());
+  const auto &fpFromGeneratorNonZero = fpFromGenerator->getNonzeroElements();
+  std::vector<std::pair<std::uint32_t, int>> fpFromGeneratorAsVectOfPairs(
+      fpFromGeneratorNonZero.begin(), fpFromGeneratorNonZero.end());
+  std::sort(fpFromGeneratorAsVectOfPairs.begin(),
+            fpFromGeneratorAsVectOfPairs.end());
+  if (fpFromFreeFuncAsVectOfPairs != fpFromGeneratorAsVectOfPairs) {
+    for (auto i = 0u; i < fpFromFreeFuncAsVectOfPairs.size(); ++i) {
+      const auto &fpFromFreeFuncPair = fpFromFreeFuncAsVectOfPairs.at(i);
+      const auto &fpFromGeneratorPair = fpFromGeneratorAsVectOfPairs.at(i);
+      if (fpFromFreeFuncPair != fpFromGeneratorPair) {
+        BOOST_LOG(rdErrorLog)
+            << "fpFromFreeFuncPair (" << fpFromFreeFuncPair.first << ", "
+            << fpFromFreeFuncPair.second << ")"
+            << "\nfpFromGeneratorPair (" << fpFromGeneratorPair.first << ", "
+            << fpFromGeneratorPair.second << ")" << std::endl;
+      }
+    }
+  }
+  TEST_ASSERT(fpFromFreeFuncAsVectOfPairs == fpFromGeneratorAsVectOfPairs);
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -2463,6 +2504,7 @@ int main(int argc, char *argv[]) {
   testGitHubIssue334();
   testGitHubIssue811();
   testBulkFP();
+  testAtomPairFPDifference();
 
   return 0;
 }

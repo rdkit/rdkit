@@ -77,6 +77,8 @@ class RDKIT_MOLSTANDARDIZE_EXPORT Normalizer {
   */
   ROMol *normalize(const ROMol &mol);
 
+  void normalizeInPlace(RWMol &mol);
+
  private:
   const TransformCatalog *d_tcat;
   unsigned int MAX_RESTARTS;

@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
 #include <RDGeneral/test.h>
 #include <GraphMol/RDKitBase.h>
@@ -387,7 +388,6 @@ void test5BackwardsCompatibility() {
 
 void test1Layers() {
   BOOST_LOG(rdInfoLog) << "testing basics layered fps" << std::endl;
-#if 1
   {
     RWMol *m1 = SmilesToMol("C1=CC=CC=C1");
     RWMol *m2 = SmilesToMol("C1=CC=CC=N1");
@@ -426,7 +426,6 @@ void test1Layers() {
     delete m3;
     delete m4;
   }
-#endif
   {
     RWMol *m1 = SmilesToMol("C1=CC=CC=C1");
     RWMol *m2 = SmilesToMol("C1=CC=CC=N1");
@@ -683,12 +682,6 @@ void test3Layers() {
     TEST_ASSERT(fp2->getNumOnBits());
 
     ExplicitBitVect fp3 = (*fp1) & (*fp2);
-#if 0
-    std::cerr<<BitVectToText(*fp1)<<std::endl;
-    std::cerr<<"---"<<std::endl;
-    std::cerr<<BitVectToText(*fp2)<<std::endl;
-    std::cerr<<BitVectToText(fp3)<<std::endl;
-#endif
     TEST_ASSERT(fp3 == (*fp2));
 
     delete fp1;
@@ -2916,14 +2909,6 @@ void testGitHubIssue258() {
     ExplicitBitVect *qbv = PatternFingerprintMol(*qm, 2048);
     ExplicitBitVect *mbv = PatternFingerprintMol(*m, 2048);
 
-#if 0
-    ExplicitBitVect dv=(*qbv)^((*qbv)&(*mbv));
-    IntVect iv;
-    dv.getOnBits(iv);
-    std::cerr<<"\n\n";
-    std::copy(iv.begin(),iv.end(),std::ostream_iterator<int>(std::cerr,", "));
-    std::cerr<<std::endl;
-#endif
     MatchVectType mv;
     TEST_ASSERT(SubstructMatch(*m, *qm, mv));
     TEST_ASSERT(AllProbeBitsMatch(*qbv, *mbv));
@@ -3179,14 +3164,6 @@ void testGitHubIssue695() {
     TEST_ASSERT(fp);
     TEST_ASSERT(fp->getNonzeroElements().size() == 4);
 
-#if 0
-    for (iter = fp->getNonzeroElements().begin();
-         iter != fp->getNonzeroElements().end(); ++iter) {
-      std::cerr << "   " << iter->first << ": " << iter->second << std::endl;
-    }
-    std::cerr << "  ------------ " << std::endl;
-#endif
-
     iter = fp->getNonzeroElements().find(736735794);
     TEST_ASSERT(iter != fp->getNonzeroElements().end() && iter->second == 2);
     iter = fp->getNonzeroElements().find(2246703798);
@@ -3219,13 +3196,6 @@ void testGitHubIssue695() {
     delete fp;
 
     fp = MorganFingerprints::getFingerprint(*m1, 1, nullptr, nullptr, true);
-#if 0
-    for (iter = fp->getNonzeroElements().begin();
-         iter != fp->getNonzeroElements().end(); ++iter) {
-      std::cerr << "   " << iter->first << ": " << iter->second << std::endl;
-    }
-    std::cerr << "  ------------ " << std::endl;
-#endif
     TEST_ASSERT(fp);
     TEST_ASSERT(fp->getNonzeroElements().size() == 4);
     iter = fp->getNonzeroElements().find(736735858);
@@ -3302,13 +3272,6 @@ void testRDKFPUnfolded() {
 
     fp1 = getUnfoldedRDKFingerprintMol(*m1);
     TEST_ASSERT(fp1);
-#if 0
-    for (iter = fp1->getNonzeroElements().begin();
-         iter != fp1->getNonzeroElements().end(); ++iter) {
-      std::cerr << "   " << iter->first << ": " << iter->second << std::endl;
-    }
-    std::cerr << "  ------------ " << std::endl;
-#endif
     TEST_ASSERT(fp1->getNonzeroElements().size() == 19);
     iter = fp1->getNonzeroElements().find(374073638);
     TEST_ASSERT(iter != fp1->getNonzeroElements().end() && iter->second == 6);
@@ -3349,29 +3312,6 @@ void testRDKFPUnfolded() {
     fp1 = getUnfoldedRDKFingerprintMol(*m1, 1, 7, true, true, true, nullptr,
                                        nullptr, nullptr, &bitInfo);
     TEST_ASSERT(fp1);
-
-#if 0
-    for (iter = fp1->getNonzeroElements().begin();
-         iter != fp1->getNonzeroElements().end(); ++iter) {
-      std::cerr << "   " << iter->first << ": " << iter->second << std::endl;
-    }
-    std::cerr << "  ------------ " << std::endl;
-#endif
-#if 0
-    for (iter2 = bitInfo.begin();
-         iter2 != bitInfo.end(); ++iter2) {
-      std::cerr << "   " << iter2->first << ": ";
-      for (unsigned i=0; i<iter2->second.size(); i++){
-        std::cerr << " [ ";
-        for (unsigned j=0; j<iter2->second.at(i).size(); j++){
-          std::cerr << iter2->second.at(i).at(j) << " ";
-        }
-        std::cerr << "], ";
-      }
-      std::cerr << std::endl;
-    }
-    std::cerr << "  ------------ " << std::endl;
-#endif
 
     TEST_ASSERT(fp1->getNonzeroElements().size() == 5);
     iter = fp1->getNonzeroElements().find(1524090560);
@@ -3424,13 +3364,11 @@ void testRDKFPBitInfo() {
                             nullptr, nullptr, nullptr, &bitInfo);
     TEST_ASSERT(fp1);
 
-#if 0
-    for (iter2 = bitInfo.begin();
-         iter2 != bitInfo.end(); ++iter2) {
+    for (iter2 = bitInfo.begin(); iter2 != bitInfo.end(); ++iter2) {
       std::cerr << "   " << iter2->first << ": ";
-      for (unsigned i=0; i<iter2->second.size(); i++){
+      for (unsigned i = 0; i < iter2->second.size(); i++) {
         std::cerr << " [ ";
-        for (unsigned j=0; j<iter2->second.at(i).size(); j++){
+        for (unsigned j = 0; j < iter2->second.at(i).size(); j++) {
           std::cerr << iter2->second.at(i).at(j) << " ";
         }
         std::cerr << "], ";
@@ -3438,7 +3376,6 @@ void testRDKFPBitInfo() {
       std::cerr << std::endl;
     }
     std::cerr << "  ------------ " << std::endl;
-#endif
 
     iter2 = bitInfo.find(1772);
     TEST_ASSERT(iter2 != bitInfo.end() && iter2->second[0][0] == 0);
@@ -3910,6 +3847,7 @@ M  END)CTAB";
   std::unique_ptr<ROMol> mol{MolBlockToMol(molblock)};
 
   TEST_ASSERT(AtomPairs::getAtomCode(mol->getAtomWithIdx(0), 0, false) == 486);
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
 int main(int argc, char *argv[]) {

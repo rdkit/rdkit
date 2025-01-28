@@ -1,12 +1,11 @@
-
-from rdkit import Chem
-from rdkit.Chem import ChemicalForceFields, rdtrajectory
-from rdkit.Chem.rdtrajectory import Snapshot, \
-  Trajectory, ReadAmberTrajectory, ReadGromosTrajectory
-import os, sys
+import os
+import sys
 import unittest
 
-from rdkit import RDConfig
+from rdkit import Chem, RDConfig
+from rdkit.Chem import ChemicalForceFields, rdtrajectory
+from rdkit.Chem.rdtrajectory import (ReadAmberTrajectory, ReadGromosTrajectory,
+                                     Snapshot, Trajectory)
 
 
 def feq(v1, v2, tol=1.0e-4):

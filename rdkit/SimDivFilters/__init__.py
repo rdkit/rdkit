@@ -3,6 +3,7 @@
 #    All Rights Reserved
 #
 from rdkit import rdBase
+
 try:
   from rdkit.SimDivFilters import rdSimDivPickers
   from rdkit.SimDivFilters.rdSimDivPickers import *

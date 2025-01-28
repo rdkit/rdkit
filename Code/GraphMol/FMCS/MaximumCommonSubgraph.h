@@ -21,71 +21,71 @@
 #include "DuplicatedSeedCache.h"
 #include "MatchTable.h"
 #include "TargetMatch.h"
-#include "RingMatchTableSet.h"
 
 namespace RDKit {
 
 inline bool FinalChiralityCheckFunction(
-    const std::uint32_t c1[], const std::uint32_t c2[], const ROMol& mol1,
-    const FMCS::Graph& query, const ROMol& mol2, const FMCS::Graph& target,
-    const MCSParameters* p);
+    const std::uint32_t c1[], const std::uint32_t c2[], const ROMol &mol1,
+    const FMCS::Graph &query, const ROMol &mol2, const FMCS::Graph &target,
+    const MCSParameters *p);
 
 bool FinalMatchCheckFunction(const std::uint32_t c1[], const std::uint32_t c2[],
-                             const ROMol& mol1, const FMCS::Graph& query,
-                             const ROMol& mol2, const FMCS::Graph& target,
-                             const MCSParameters* p);
+                             const ROMol &mol1, const FMCS::Graph &query,
+                             const ROMol &mol2, const FMCS::Graph &target,
+                             const MCSParameters *p);
 
 namespace FMCS {
 class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
-  struct MCS {  // current result. Reference to a fragment of source molecule
-    std::vector<const Atom*> Atoms;
-    std::vector<const Bond*> Bonds;
-    std::vector<unsigned> AtomsIdx;
-    std::vector<unsigned> BondsIdx;  // need for results and size() only !
-    const ROMol* QueryMolecule;
+  // current result. Reference to a fragment of source molecule
+  struct MCS {
+    std::vector<const Atom *> Atoms;
+    std::vector<const Bond *> Bonds;
+    const ROMol *QueryMolecule;
     std::vector<Target> Targets;
   };
-
   unsigned long long To;
   MCSProgressData Stat;
-  MCSParameters Parameters;
-  unsigned ThresholdCount;  // min number of matching
-  std::vector<const ROMol*> Molecules;
+  detail::MCSParametersInternal Parameters;
+  // min number of matches
+  unsigned int ThresholdCount;
+  std::vector<const ROMol *> Molecules;
 #ifdef FAST_SUBSTRUCT_CACHE
-  std::vector<unsigned> QueryAtomLabels;  // for code Morgan. Value based on
-                                          // current functor and parameters
-  std::vector<unsigned> QueryBondLabels;  // for code Morgan. Value based on
-                                          // current functor and parameters
+  // for Morgan code. Value based on current functor and parameters
+  std::vector<unsigned int> QueryAtomLabels;
+  // for Morgan code. Value based on current functor and parameters
+  std::vector<unsigned int> QueryBondLabels;
   SubstructureCache HashCache;
   MatchTable QueryAtomMatchTable;
   MatchTable QueryBondMatchTable;
-  RingMatchTableSet RingMatchTables;
 #endif
 #ifdef DUP_SUBSTRUCT_CACHE
   DuplicatedSeedCache DuplicateCache;
 #endif
-  const ROMol* QueryMolecule;
-  unsigned QueryMoleculeMatchedBonds;
-  unsigned QueryMoleculeMatchedAtoms;
-  const Atom* QueryMoleculeSingleMatchedAtom;
+  const ROMol *QueryMolecule;
+  unsigned int QueryMoleculeMatchedBonds;
+  unsigned int QueryMoleculeMatchedAtoms;
+  const Atom *QueryMoleculeSingleMatchedAtom;
   std::vector<Target> Targets;
   SeedSet Seeds;
   MCS McsIdx;
+  std::map<std::vector<unsigned int>, MCS> DegenerateMcsMap;
 
  public:
 #ifdef VERBOSE_STATISTICS_ON
   ExecStatistics VerboseStatistics;
 #endif
 
-  MaximumCommonSubgraph(const MCSParameters* params);
+  MaximumCommonSubgraph(const MCSParameters *params);
   ~MaximumCommonSubgraph() { clear(); }
-  MCSResult find(const std::vector<ROMOL_SPTR>& mols);
-  const ROMol& getQueryMolecule() const { return *QueryMolecule; }
-  unsigned getMaxNumberBonds() const { return McsIdx.BondsIdx.size(); }
+  MCSResult find(const std::vector<ROMOL_SPTR> &mols);
+  const ROMol &getQueryMolecule() const { return *QueryMolecule; }
+  unsigned int getMaxNumberBonds() const { return McsIdx.Bonds.size(); }
 
-  unsigned getMaxNumberAtoms() const { return McsIdx.AtomsIdx.size(); }
-  // internal:
-  bool checkIfMatchAndAppend(Seed& seed);
+  unsigned int getMaxNumberAtoms() const { return McsIdx.Atoms.size(); }
+  bool checkIfMatchAndAppend(Seed &seed);
+  bool match(Seed &seed);
+  const MCSParameters &parameters() const { return Parameters; }
+  MCSParameters &parameters() { return Parameters; }
 
  private:
   void clear() {
@@ -93,16 +93,14 @@ class RDKIT_FMCS_EXPORT MaximumCommonSubgraph {
     Molecules.clear();
     To = nanoClock();
   }
-  void init();
+  void init(size_t startIdx);
   void makeInitialSeeds();
-  bool createSeedFromMCS(size_t newQueryTarget, Seed& seed);
+  bool createSeedFromMCS(size_t newQueryTarget, Seed &seed);
   bool growSeeds();  // returns false if canceled
-  std::pair<std::string, RWMol*> generateResultSMARTSAndQueryMol(
-      const MCS& mcsIdx) const;
-  bool addFusedBondQueries(const MCS& McsIdx, RWMol* rwMol) const;
+  std::pair<std::string, ROMOL_SPTR> generateResultSMARTSAndQueryMol(
+      const MCS &mcsIdx) const;
 
-  bool match(Seed& seed);
-  bool matchIncrementalFast(Seed& seed, unsigned itarget);
+  bool matchIncrementalFast(Seed &seed, unsigned int itarget);
 };
 }  // namespace FMCS
 }  // namespace RDKit

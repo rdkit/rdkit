@@ -1,6 +1,9 @@
 %option reentrant
 %option bison-bridge
 %option noyywrap
+%option never-interactive
+%option nodefault
+%option nostdinit
 
 %{
 
@@ -11,15 +14,7 @@
 //   @@ All Rights Reserved  @@
 //
 
-#if defined(__CYGWIN__) && !defined(fileno)
-// -std=c++11 turns off recent posix features
-extern "C" int fileno(FILE*);
-#endif
-
 #include <cstdio>
-#ifdef WIN32
-#include <io.h>
-#endif
 
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/types.h>
@@ -34,6 +29,12 @@ extern "C" int fileno(FILE*);
 #include "smiles.tab.hpp"
 
 using namespace RDKit;
+
+// This will be called every time we construct a token an will allow us to track
+// the position of the current token.
+#undef YY_USER_ACTION
+#define YY_USER_ACTION current_token_position += yyleng;
+
 
 #define YY_FATAL_ERROR(msg) smiles_lexer_error(msg)
 
@@ -99,11 +100,11 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
     }
 %}
 
-@[' ']*TH |
-@[' ']*AL |
-@[' ']*SQ |
-@[' ']*BP |
-@[' ']*OH 	{ return CHI_CLASS_TOKEN; }
+@[' ']*TH { yylval->chiraltype = Atom::ChiralType::CHI_TETRAHEDRAL; return CHI_CLASS_TOKEN; }
+@[' ']*AL { yylval->chiraltype = Atom::ChiralType::CHI_ALLENE; return CHI_CLASS_TOKEN; }
+@[' ']*SP { yylval->chiraltype = Atom::ChiralType::CHI_SQUAREPLANAR; return CHI_CLASS_TOKEN; }
+@[' ']*TB { yylval->chiraltype = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL; return CHI_CLASS_TOKEN; }
+@[' ']*OH { yylval->chiraltype = Atom::ChiralType::CHI_OCTAHEDRAL; return CHI_CLASS_TOKEN; }
 
 @		{ return AT_TOKEN; }
 
@@ -359,7 +360,7 @@ s		    {	yylval->atom = new Atom( 16 );
 \%              { return PERCENT_TOKEN; }
 
 [0]		{ yylval->ival = 0; return ZERO_TOKEN; }
-[1-9]		{ yylval->ival = atoi( yytext ); return NONZERO_DIGIT_TOKEN; }
+[1-9]		{ yylval->ival = yytext[0] - '0'; return NONZERO_DIGIT_TOKEN; }
 
 
 

@@ -34,12 +34,19 @@
 %include "std_pair.i"
 %include "std_string.i"
 %include "std_vector.i"
+
+#ifdef SWIGCSHARP
+%include <std_unique_ptr.i>
+%unique_ptr(RDKit::RWMol)
+#endif
+
 %{
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -63,6 +70,7 @@
 #include <GraphMol/PartialCharges/GasteigerCharges.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/MolBundle.h>
+#include <GraphMol/Chirality.h>
 #include <sstream>
 %}
 
@@ -70,6 +78,7 @@
 %template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
 %template(Atom_Vect) std::vector<RDKit::Atom*>;
 %template(StereoGroup_Vect) std::vector<RDKit::StereoGroup>;
+%template(UChar_Vect) std::vector<unsigned char>;
 
 // These prevent duplicate definitions in Java code
 %ignore RDKit::ROMol::hasProp(std::string const) const ;
@@ -95,6 +104,19 @@
 %ignore RDKit::ROMol::getTopology() const ;
 
 
+#ifdef SWIGJAVA
+%typemap(jni) std::string RDKit::ROMol::toByteArray "jbyteArray"
+%typemap(jtype) std::string RDKit::ROMol::toByteArray "byte[]"
+%typemap(jstype) std::string RDKit::ROMol::toByteArray "byte[]"
+%typemap(javaout) std::string RDKit::ROMol::toByteArray {
+  return $jnicall;
+}
+%typemap(out) std::string RDKit::ROMol::toByteArray {
+  $result = JCALL1(NewByteArray, jenv, $1.size());
+  JCALL4(SetByteArrayRegion, jenv, $result, 0, $1.size(), (const jbyte*)$1.c_str());
+}
+#endif
+
 /*
  * Special handling for Conformer objects which should not be GCed until the molecule is destroyed
  * We want to modify the behavior of the Conformer coming into the addConformer method without
@@ -113,6 +135,52 @@
     conf.setSwigCMemOwn(false);
     return Conformer.getCPtr(conf);
   }
+  public static ROMol fromByteArray(byte[] pkl) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.reserve(pkl.length);
+      for (int i = 0; i < pkl.length; ++i) {
+        vec.add((byte)pkl[i]);
+      }
+      return ROMol.fromUCharVect(vec);
+    } finally {
+      if (vec != null) {
+        vec.delete();
+      }
+    }
+  }
+%}
+%typemap(cscode) RDKit::ROMol %{
+  public static ROMol FromByteArray(byte[] pkl) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.Capacity = pkl.Length;
+      for (int i = 0; i < pkl.Length; ++i) {
+        vec.Add((byte)pkl[i]);
+      }
+      return ROMol.fromUCharVect(vec);
+    } finally {
+      if (vec != null) {
+        vec.Dispose();
+      }
+    }
+  }
+  public
+   byte[] ToByteArray(int propertyFlags = -1) {
+     UChar_Vect vec = null;
+     try {
+       vec = toUCharVect(propertyFlags);
+       byte[] res = new byte[vec.Count];
+       vec.CopyTo(res);
+       return res;
+     } finally {
+       if (vec != null) {
+         vec.Dispose();
+       }
+     }
+   }
 %}
 %include <GraphMol/ROMol.h>
 
@@ -120,7 +188,15 @@
 %include <GraphMol/Substruct/SubstructMatch.h>
 
 %ignore RDKit::MolPickler;
+#ifdef SWIGJAVA
+%include "enums.swg"
+%javaconst(1);
+#endif
+%include <RDGeneral/BetterEnums.h>
 %include <GraphMol/MolPickler.h>
+#ifdef SWIGJAVA
+%javaconst(0);
+#endif
 
 
 
@@ -131,11 +207,12 @@
 %newobject replaceSidechains;
 %newobject deleteSubstructs;
 %newobject getAtoms;
+%newobject getBonds;
 %newobject getAtomNeighbors;
 %newobject getAtomBonds;
 
 %{
-#ifdef BUILD_COORDGEN_SUPPORT
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
 bool getPreferCoordGen() {
   return RDDepict::preferCoordGen;
 }
@@ -154,6 +231,47 @@ void setPreferCoordGen(bool val) {
 bool getPreferCoordGen();
 void setPreferCoordGen(bool);
 
+%{
+bool getUseLegacyStereoPerception() {
+  return RDKit::Chirality::getUseLegacyStereoPerception();
+}
+void setUseLegacyStereoPerception(bool val) {
+  RDKit::Chirality::setUseLegacyStereoPerception(val);
+}
+bool getAllowNontetrahedralChirality() {
+  return RDKit::Chirality::getAllowNontetrahedralChirality();
+}
+void setAllowNontetrahedralChirality(bool val) {
+  RDKit::Chirality::setAllowNontetrahedralChirality(val);
+}
+%}
+
+bool getUseLegacyStereoPerception();
+void setUseLegacyStereoPerception(bool);
+bool getAllowNontetrahedralChirality();
+void setAllowNontetrahedralChirality(bool);
+
+#ifdef SWIGJAVA
+%javamethodmodifiers RDKit::ROMol::fromUCharVect "private";
+#endif
+#ifdef SWIGCSHARP
+%csmethodmodifiers RDKit::ROMol::fromUCharVect "private";
+%csmethodmodifiers RDKit::ROMol::toUCharVect "private";
+#endif
+
+%{
+  /* From MolPickler.h */
+void setDefaultPickleProperties(unsigned int propertyFlags) {
+  RDKit::MolPickler::setDefaultPickleProperties(propertyFlags);
+}
+unsigned int getDefaultPickleProperties() {
+  return RDKit::MolPickler::getDefaultPickleProperties();
+}
+%}
+
+void setDefaultPickleProperties(unsigned int propertyFlags);
+unsigned int getDefaultPickleProperties();
+
 %extend RDKit::ROMol {
   std::string getProp(const std::string key){
     std::string res;
@@ -166,14 +284,18 @@ void setPreferCoordGen(bool);
     return self->addConformer(ownedConf, assignId);
   }
 
-  std::string MolToSmiles(bool doIsomericSmiles=false,bool doKekule=false, int rootedAtAtom=-1){
-    return RDKit::MolToSmiles(*($self),doIsomericSmiles,doKekule,rootedAtAtom);
+  std::string MolToSmiles(bool doIsomericSmiles=true, bool doKekule=false, int rootedAtAtom=-1, bool canonical=true,
+                          bool allBondsExplicit=false, bool allHsExplicit=false, bool doRandom=false) {
+    return RDKit::MolToSmiles(*($self), doIsomericSmiles, doKekule, rootedAtAtom, canonical, allBondsExplicit, allHsExplicit, doRandom);
   }
-  std::string MolToMolBlock(bool includeStereo=true, int confId=-1) {
-    return RDKit::MolToMolBlock(*($self),includeStereo,confId);
+  std::string MolToSmiles(const RDKit::SmilesWriteParams &params) {
+    return RDKit::MolToSmiles(*($self), params);
   }
-  void MolToMolFile(std::string fName,bool includeStereo=true, int confId=-1,bool kekulize=true) {
-    RDKit::MolToMolFile(*($self), fName, includeStereo, confId, kekulize);
+  std::string MolToMolBlock(bool includeStereo=true, int confId=-1, bool kekulize=true, bool forceV3000=false) {
+    return RDKit::MolToMolBlock(*($self), includeStereo, confId, kekulize, forceV3000);
+  }
+  void MolToMolFile(std::string fName,bool includeStereo=true, int confId=-1, bool kekulize=true, bool forceV3000=false) {
+    RDKit::MolToMolFile(*($self), fName, includeStereo, confId, kekulize, forceV3000);
   }
   std::string MolToTPLText(std::string partialChargeProp="_GasteigerCharge", bool writeFirstConfTwice=false) {
     return RDKit::MolToTPLText(*($self), partialChargeProp, writeFirstConfTwice);
@@ -289,6 +411,17 @@ void setPreferCoordGen(bool);
     return RDKit::replaceCore(*($self), coreQuery, replaceDummies, labelByIndex);
   };
 
+  /* Methods from SubstructUtils.h */
+  const RDKit::MatchVectType &getMostSubstitutedCoreMatch(const RDKit::ROMol& core,
+    const std::vector<RDKit::MatchVectType>& matches) {
+    return RDKit::getMostSubstitutedCoreMatch(*($self), core, matches);
+  };
+
+  std::vector<RDKit::MatchVectType> sortMatchesByDegreeOfCoreSubstitution(
+    const RDKit::ROMol& core, const std::vector<RDKit::MatchVectType>& matches) {
+    return RDKit::sortMatchesByDegreeOfCoreSubstitution(*($self), core, matches);
+  };
+
   /* Methods from MolFileStereoChem.h */
   void DetectBondStereoChemistry(const RDKit::Conformer *conf) {
     RDKit::DetectBondStereoChemistry(*($self), conf);
@@ -299,12 +432,24 @@ void setPreferCoordGen(bool);
   };
 
   void pickBondsToWedge() {
-    RDKit::pickBondsToWedge(*($self));
+    RDKit::Chirality::pickBondsToWedge(*($self));
   };
-
+  
   void ClearSingleBondDirFlags() {
     RDKit::ClearSingleBondDirFlags(*($self));
   };
+
+  void reapplyMolBlockWedging() {
+    RDKit::Chirality::reapplyMolBlockWedging(*($self));
+  }
+
+  void clearMolBlockWedgingInfo() {
+    RDKit::Chirality::clearMolBlockWedgingInfo(*($self));
+  }
+
+  void invertMolBlockWedgingInfo() {
+    RDKit::Chirality::invertMolBlockWedgingInfo(*($self));
+  }
 
   /* Methods from ConjugHybrid.cpp */
   void setConjugation() {
@@ -373,18 +518,35 @@ void setPreferCoordGen(bool);
 
   }
 
-  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+  void generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
+                                          const RDKit::MatchVectType &refMatchVect,
                                           int confId=-1,
-                                           bool acceptFailure=false, bool forceRDKit=false) {
-    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,nullptr,
-            acceptFailure,forceRDKit);
+                                          bool forceRDKit=false) {
+    RDDepict::generateDepictionMatching2DStructure(*($self),reference,refMatchVect,confId,forceRDKit);
   }
-  void generateDepictionMatching2DStructure(RDKit::ROMol &reference,
+  RDKit::MatchVectType generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
+                                          int confId=-1,
+                                          bool acceptFailure=false, bool forceRDKit=false,
+                                          bool allowOptionalAttachments=false) {
+    return RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,nullptr,
+            acceptFailure,forceRDKit,allowOptionalAttachments);
+  }
+  RDKit::MatchVectType generateDepictionMatching2DStructure(const RDKit::ROMol &reference,
                                           int confId,
-                                          RDKit::ROMol referencePattern,
-                                          bool acceptFailure=false, bool forceRDKit=false) {
-    RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,
-           &referencePattern,acceptFailure,forceRDKit);
+                                          const RDKit::ROMol &referencePattern,
+                                          bool acceptFailure=false, bool forceRDKit=false,
+                                          bool allowOptionalAttachments=false) {
+    return RDDepict::generateDepictionMatching2DStructure(*($self),reference,confId,
+           &referencePattern,acceptFailure,forceRDKit,allowOptionalAttachments);
+  }
+
+  double normalizeDepiction(int confId=-1, int canonicalize=1,
+                            double scaleFactor=-1.0) {
+    return RDDepict::normalizeDepiction(*($self), confId, canonicalize, scaleFactor);
+  }
+
+  void straightenDepiction(int confId=-1, bool minimizeRotation=false) {
+    RDDepict::straightenDepiction(*($self), confId, minimizeRotation);
   }
 
   /* From FindRings.cpp, MolOps.h */
@@ -436,43 +598,74 @@ void setPreferCoordGen(bool);
 
   /* From Python wrappers -- implied functionality */
   std::vector<RDKit::Atom*> *getAtoms() {
-    int c = ($self)->getNumAtoms();
-    std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;
-    for (int i = 0; i < c; i++) {
-      RDKit::Atom* a = ($self)->getAtomWithIdx(i);
-      atoms->push_back(a);
-    }
-    return atoms;
+    auto atoms = ($self)->atoms();
+    return new std::vector<RDKit::Atom*>(atoms.begin(), atoms.end());
+  }
+
+  std::vector<RDKit::Bond*> *getBonds() {
+    auto bonds = ($self)->bonds();
+    return new std::vector<RDKit::Bond*>(bonds.begin(), bonds.end());
   }
 
   std::vector<RDKit::Atom*> *getAtomNeighbors(RDKit::Atom *at) {
-    std::vector<RDKit::Atom*> *atoms = new std::vector<RDKit::Atom*>;
-    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomNeighbors(at))){
-      atoms->push_back((*($self))[nbri]);
-    }
-    return atoms;
+    auto atomNbrs = ($self)->atomNeighbors(at);
+    return new std::vector<RDKit::Atom*>(atomNbrs.begin(), atomNbrs.end());
   }
 
   std::vector<RDKit::Bond*> *getAtomBonds(RDKit::Atom *at) {
-    std::vector<RDKit::Bond*> *bonds = new std::vector<RDKit::Bond*>;
-    for(const auto &nbri : boost::make_iterator_range(($self)->getAtomBonds(at))){
-      bonds->push_back((*($self))[nbri]);
-    }
-    return bonds;
+    auto bondNbrs = ($self)->atomBonds(at);
+    return new std::vector<RDKit::Bond*>(bondNbrs.begin(), bondNbrs.end());
   }
 
-  /* From MolPickler.h */
-  std::vector<int> ToBinary(){
+  std::vector<int> ToBinary(int propertyFlags=-1){
     std::string sres;
-    RDKit::MolPickler::pickleMol(*($self),sres);
+    if(propertyFlags>=0) {
+      RDKit::MolPickler::pickleMol(*($self),sres,propertyFlags);
+    } else {
+      RDKit::MolPickler::pickleMol(*($self),sres);
+    }
     std::vector<int> res(sres.length());
     std::copy(sres.begin(),sres.end(),res.begin());
     return res;
   };
-  static RDKit::ROMOL_SPTR MolFromBinary(std::vector<int> pkl){
+  static RDKit::ROMOL_SPTR MolFromBinary(const std::vector<int> &pkl){
     std::string sres;
     sres.resize(pkl.size());
     std::copy(pkl.begin(),pkl.end(),sres.begin());
+    RDKit::ROMol *res;
+    try {
+      res = new RDKit::ROMol(sres);
+    } catch (const RDKit::MolPicklerException &e) {
+      res = nullptr;
+      throw;
+    }
+    return RDKit::ROMOL_SPTR(res);
+  }
+#ifdef SWIGJAVA
+  const std::string toByteArray(int propertyFlags=-1) {
+    std::string sres;
+    if(propertyFlags>=0) {
+      RDKit::MolPickler::pickleMol(*($self),sres,propertyFlags);
+    } else {
+      RDKit::MolPickler::pickleMol(*($self),sres);
+    }
+    return sres;
+  }
+#endif
+#ifdef SWIGCSHARP
+  const std::vector<unsigned char> toUCharVect(int propertyFlags=-1) {
+    std::string sres;
+    if(propertyFlags>=0) {
+      RDKit::MolPickler::pickleMol(*($self),sres,propertyFlags);
+    } else {
+      RDKit::MolPickler::pickleMol(*($self),sres);
+    }
+    const std::vector<unsigned char> vec(sres.begin(), sres.end());
+    return vec;
+  }
+#endif
+  static RDKit::ROMOL_SPTR fromUCharVect(const std::vector<unsigned char> &pkl) {
+    std::string sres(pkl.begin(), pkl.end());
     RDKit::ROMol *res;
     try {
       res = new RDKit::ROMol(sres);
@@ -505,7 +698,7 @@ void setPreferCoordGen(bool);
     return RDKit::MolAlign::alignMol(*($self), refMol, prbCid, refCid, atomMap, weights, reflect, maxIters);
   }
 
-  void alignMolConformers(ROMol &mol, const std::vector<unsigned int> *atomIds=0,
+  void alignMolConformers(const std::vector<unsigned int> *atomIds=0,
                           const std::vector<unsigned int> *confIds=0,
                           const RDNumeric::DoubleVector  *weights=0,
                           bool reflect=false, unsigned int maxIters=50) {
@@ -518,7 +711,34 @@ void setPreferCoordGen(bool);
                              int refCid = -1, const std::vector<std::pair<int,int> > *atomMap = 0,
                              const RDNumeric::DoubleVector *weights = 0,
                              bool reflect = false, unsigned int maxIters = 50){
-     return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters);
+    return RDKit::MolAlign::getAlignmentTransform(*($self), refMol, trans, prbCid, refCid, atomMap, weights, reflect, maxIters);
+  }
+
+  double getBestAlignmentTransform(
+    const RDKit::ROMol &refMol, RDGeom::Transform3D &bestTrans,
+    std::vector<std::pair<int,int> > &bestMatch, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr, bool reflect = false,
+    unsigned int maxIters = 50) {
+    return RDKit::MolAlign::getBestAlignmentTransform(*($self), refMol, bestTrans, bestMatch,
+      prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights, reflect, maxIters);
+  }
+
+  double calcRMS(
+    const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr) {
+    return RDKit::MolAlign::CalcRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
+  }
+
+  double getBestRMS(
+    const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    const std::vector<std::vector<std::pair<int,int> > > &map = std::vector<std::vector<std::pair<int,int> > >(),
+    int maxMatches = 1e6, bool symmetrizeConjugatedTerminalGroups = true,
+    const RDNumeric::DoubleVector *weights = nullptr) {
+    return RDKit::MolAlign::getBestRMS(*($self), refMol, prbCid, refCid, map, maxMatches, symmetrizeConjugatedTerminalGroups, weights);
   }
 
   /* From GraphMol/MolAlign/AlignMolecules */
@@ -537,13 +757,12 @@ void setPreferCoordGen(bool);
     return std::make_pair(rmsd,score);
   }
 
-  void computeGasteigerCharges(const RDKit::ROMol *mol,int nIter=12,bool throwOnParamFailure=false){
-    RDKit::computeGasteigerCharges(*mol,nIter,throwOnParamFailure);
+  void computeGasteigerCharges(int nIter=12,bool throwOnParamFailure=false){
+    RDKit::computeGasteigerCharges(*($self),nIter,throwOnParamFailure);
   }
-  void computeGasteigerCharges(const RDKit::ROMol *mol,
-                               std::vector<double> &charges,
+  void computeGasteigerCharges(std::vector<double> &charges,
                                int nIter=12,bool throwOnParamFailure=false){
-    RDKit::computeGasteigerCharges(*mol,charges,nIter,throwOnParamFailure);
+    RDKit::computeGasteigerCharges(*($self),charges,nIter,throwOnParamFailure);
   }
 
   /* From new_canon.h*/

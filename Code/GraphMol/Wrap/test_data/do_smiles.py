@@ -1,5 +1,5 @@
-
 import re
+
 splitExpr = re.compile('[\t ]')
 
 from rdkit import Chem

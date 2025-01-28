@@ -1,5 +1,6 @@
 //
-//  Copyright (C) 2016 Novartis Institutes for BioMedical Research
+//  Copyright (C) 2016-2022 Novartis Institutes for BioMedical Research and
+//  other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +12,8 @@
 #include "../../Geometry/point.h"
 #include "Utilites.h"
 #include <algorithm>
+#include <tuple>
+
 namespace RDKit {
 namespace StructureCheck {
 
@@ -56,19 +59,19 @@ bool getMolAtomPoints(const ROMol &mol, std::vector<RDGeom::Point3D> &atomPoint,
   return non_zero_z;
 }
 
-typedef boost::tuple<std::string, int, int, int> NbrData;
+typedef std::tuple<std::string, int, int, int> NbrData;
 
 bool lessTuple(const NbrData &left, const NbrData &right) {
-  if (left.get<0>() < right.get<0>()) return true;
-  if (left.get<0>() > right.get<0>()) return false;
+  if (std::get<0>(left) < std::get<0>(right)) return true;
+  if (std::get<0>(left) > std::get<0>(right)) return false;
 
-  if (left.get<1>() < right.get<1>()) return true;
-  if (left.get<1>() > right.get<1>()) return false;
+  if (std::get<1>(left) < std::get<1>(right)) return true;
+  if (std::get<1>(left) > std::get<1>(right)) return false;
 
-  if (left.get<2>() < right.get<2>()) return true;
-  if (left.get<2>() > right.get<2>()) return false;
+  if (std::get<2>(left) < std::get<2>(right)) return true;
+  if (std::get<2>(left) > std::get<2>(right)) return false;
 
-  if (left.get<3>() < right.get<3>()) return true;
+  if (std::get<3>(left) < std::get<3>(right)) return true;
 
   return false;
 }
@@ -106,7 +109,7 @@ std::string LogNeighbourhood(
   std::sort(nbrs.begin(), nbrs.end(), lessTuple);
   for (auto &nbr : nbrs) {
     std::string bs = "";
-    switch (nbr.get<1>()) {
+    switch (std::get<1>(nbr)) {
       case Bond::SINGLE:
         bs = "-";
         break;
@@ -121,13 +124,14 @@ std::string LogNeighbourhood(
         break;
     }
     if (bs.size())
-      oss << "(" << bs << nbr.get<0>();
+      oss << "(" << bs << std::get<0>(nbr);
     else
       oss << "("
-          << "?" << (int)nbr.get<1>() << "?" << nbr.get<0>();
-    if (nbr.get<2>()) oss << (nbr.get<2>() > 0 ? "+" : "") << nbr.get<2>();
+          << "?" << (int)std::get<1>(nbr) << "?" << std::get<0>(nbr);
+    if (std::get<2>(nbr))
+      oss << (std::get<2>(nbr) > 0 ? "+" : "") << std::get<2>(nbr);
 
-    if (nbr.get<3>()) oss << nbr.get<3>();
+    if (std::get<3>(nbr)) oss << std::get<3>(nbr);
     oss << ")";
   }
   return oss.str();

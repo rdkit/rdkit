@@ -7,7 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #ifndef CONCURRENT_QUEUE
 #define CONCURRENT_QUEUE
 #include <condition_variable>
@@ -26,11 +26,11 @@ class ConcurrentQueue {
   std::condition_variable d_notEmpty, d_notFull;
 
  private:
-  ConcurrentQueue<E>(const ConcurrentQueue<E>&);
-  ConcurrentQueue<E>& operator=(const ConcurrentQueue<E>&);
+  ConcurrentQueue(const ConcurrentQueue<E> &);
+  ConcurrentQueue &operator=(const ConcurrentQueue<E> &);
 
  public:
-  ConcurrentQueue<E>(unsigned int capacity)
+  ConcurrentQueue(unsigned int capacity)
       : d_capacity(capacity), d_done(false), d_head(0), d_tail(0) {
     std::vector<E> elements(capacity);
     d_elements = elements;
@@ -39,13 +39,13 @@ class ConcurrentQueue {
   //! tries to push an element into the queue if it is not full without
   //! modifying the variable element, if the queue is full then pushing an
   //! element will result in blocking
-  void push(const E& element);
+  void push(const E &element);
 
   //! tries to pop an element from the queue if it is not empty and not done
   //! the boolean value indicates the whether popping is successful, if the
   //! queue is empty and not done then popping an element will result in
   //! blocking
-  bool pop(E& element);
+  bool pop(E &element);
 
   //! checks whether the ConcurrentQueue is empty
   bool isEmpty() const;
@@ -61,7 +61,7 @@ class ConcurrentQueue {
 };
 
 template <typename E>
-void ConcurrentQueue<E>::push(const E& element) {
+void ConcurrentQueue<E>::push(const E &element) {
   std::unique_lock<std::mutex> lk(d_lock);
   //! concurrent queue is full so we wait until
   //! it is not full
@@ -80,7 +80,7 @@ void ConcurrentQueue<E>::push(const E& element) {
 }
 
 template <typename E>
-bool ConcurrentQueue<E>::pop(E& element) {
+bool ConcurrentQueue<E>::pop(E &element) {
   std::unique_lock<std::mutex> lk(d_lock);
   //! concurrent queue is empty so we wait until
   //! it is not empty

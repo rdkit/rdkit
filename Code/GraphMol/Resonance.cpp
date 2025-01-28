@@ -13,7 +13,7 @@
 #include <GraphMol/Resonance.h>
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/RDThreads.h>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>
 #include <future>
 #endif
@@ -47,7 +47,7 @@ class CEMetrics {
   friend class ConjElectrons;
 
  public:
-  CEMetrics(){};
+  CEMetrics() {};
   bool operator==(const CEMetrics &other) const {
     return (d_hash == other.d_hash);
   }
@@ -834,6 +834,7 @@ bool ConjElectrons::purgeMaps(CEMap &ceMap, CEDegCount &ceDegCount,
   bool ok = true;
   bool changed = true;
   while (changed) {
+    changed = false;
     for (auto it = ceMap.begin(); it != ceMap.end();) {
       if (!it->second->checkMetrics(ceStats, changed)) {
         auto it2 = ceDegCount.find(it->second->hash());
@@ -1403,7 +1404,7 @@ void ResonanceMolSupplier::enumerate() {
   if (d_numThreads == 1) {
     mainLoop(0, 1);
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
     auto functor = [this](unsigned int ti, unsigned int d_numThreads) -> void {

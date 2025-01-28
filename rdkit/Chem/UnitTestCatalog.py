@@ -9,12 +9,11 @@
 #
 import io
 import os
+import pickle
 import unittest
 
-from rdkit import Chem
-from rdkit import RDConfig
-from rdkit.Chem import FragmentCatalog, BuildFragmentCatalog
-import pickle
+from rdkit import Chem, RDConfig
+from rdkit.Chem import BuildFragmentCatalog, FragmentCatalog
 
 
 def feq(n1, n2, tol=1e-4):
@@ -24,28 +23,32 @@ def feq(n1, n2, tol=1e-4):
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    self.smiList = ["S(SC1=NC2=CC=CC=C2S1)C3=NC4=C(S3)C=CC=C4", "CC1=CC(=O)C=CC1=O",
-                    "OC1=C(Cl)C=C(C=C1[N+]([O-])=O)[N+]([O-])=O", "[O-][N+](=O)C1=CNC(=N)S1",
-                    "NC1=CC2=C(C=C1)C(=O)C3=C(C=CC=C3)C2=O",
-                    "OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br",
-                    "CN(C)C1=C(Cl)C(=O)C2=C(C=CC=C2)C1=O",
-                    "CC1=C(C2=C(C=C1)C(=O)C3=CC=CC=C3C2=O)[N+]([O-])=O", "CC(=NO)C(C)=NO"]
-    self.smiList2 = ['OCCC',
-                     'CCC',
-                     'C=CC',
-                     'OC=CC',
-                     'CC(O)C',
-                     'C=C(O)C',
-                     'OCCCC',
-                     'CC(O)CC',
-                     'C=CCC',
-                     'CC=CC',
-                     'OC=CCC',
-                     'CC=C(O)C',
-                     'OCC=CC',
-                     'C=C(O)CC',
-                     'C=CC(O)C',
-                     'C=CCCO', ]
+    self.smiList = [
+      "S(SC1=NC2=CC=CC=C2S1)C3=NC4=C(S3)C=CC=C4", "CC1=CC(=O)C=CC1=O",
+      "OC1=C(Cl)C=C(C=C1[N+]([O-])=O)[N+]([O-])=O", "[O-][N+](=O)C1=CNC(=N)S1",
+      "NC1=CC2=C(C=C1)C(=O)C3=C(C=CC=C3)C2=O",
+      "OC(=O)C1=C(C=CC=C1)C2=C3C=CC(=O)C(=C3OC4=C2C=CC(=C4Br)O)Br",
+      "CN(C)C1=C(Cl)C(=O)C2=C(C=CC=C2)C1=O", "CC1=C(C2=C(C=C1)C(=O)C3=CC=CC=C3C2=O)[N+]([O-])=O",
+      "CC(=NO)C(C)=NO"
+    ]
+    self.smiList2 = [
+      'OCCC',
+      'CCC',
+      'C=CC',
+      'OC=CC',
+      'CC(O)C',
+      'C=C(O)C',
+      'OCCCC',
+      'CC(O)CC',
+      'C=CCC',
+      'CC=CC',
+      'OC=CCC',
+      'CC=C(O)C',
+      'OCC=CC',
+      'C=C(O)CC',
+      'C=CC(O)C',
+      'C=CCCO',
+    ]
     self.list2Acts = [1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1]
     self.list2Obls = [(0, 1, 2), (1, 3), (1, 4, 5), (1, 6, 7), (0, 8), (0, 6, 9), (0, 1, 2, 3, 10),
                       (0, 1, 2, 8, 11), (1, 3, 4, 5, 12), (1, 4, 5, 13), (1, 3, 6, 7, 14),
@@ -120,30 +123,32 @@ class TestCase(unittest.TestCase):
     #  text representations (i.e. there is nothing to distinguish
     #  between 'CC<-O>CC' and 'CCC<-O>C').
     # This ought to eventually be cleaned up.
-    descrs = [(0, 'C<-O>C', 1, (34, )),
-              (1, 'CC', 1, ()),
-              (2, 'C<-O>CC', 2, (34, )),
-              (3, 'CCC', 2, ()),
-              (4, 'C=C', 1, ()),
-              (5, 'C=CC', 2, ()),
-              (6, 'C<-O>=C', 1, (34, )),
-              (7, 'C<-O>=CC', 2, (34, )),
-              (8, 'CC<-O>C', 2, (34, )),
-              (9, 'C=C<-O>C', 2, (34, )),
-              (10, 'C<-O>CCC', 3, (34, )),
-              (11, 'CC<-O>CC', 3, (34, )),
-              (12, 'C=CCC', 3, ()),
-              (13, 'CC=CC', 3, ()),
-              (14, 'C<-O>=CCC', 3, (34, )),
-              (15, 'CC=C<-O>C', 3, (34, )),
-              (16, 'C=CC<-O>', 2, (34, )), ]
+    descrs = [
+      (0, 'C<-O>C', 1, (34, )),
+      (1, 'CC', 1, ()),
+      (2, 'C<-O>CC', 2, (34, )),
+      (3, 'CCC', 2, ()),
+      (4, 'C=C', 1, ()),
+      (5, 'C=CC', 2, ()),
+      (6, 'C<-O>=C', 1, (34, )),
+      (7, 'C<-O>=CC', 2, (34, )),
+      (8, 'CC<-O>C', 2, (34, )),
+      (9, 'C=C<-O>C', 2, (34, )),
+      (10, 'C<-O>CCC', 3, (34, )),
+      (11, 'CC<-O>CC', 3, (34, )),
+      (12, 'C=CCC', 3, ()),
+      (13, 'CC=CC', 3, ()),
+      (14, 'C<-O>=CCC', 3, (34, )),
+      (15, 'CC=C<-O>C', 3, (34, )),
+      (16, 'C=CC<-O>', 2, (34, )),
+    ]
     for i in range(len(descrs)):
       ID, d, order, ids = descrs[i]
       descr = self.fragCat.GetBitDescription(ID)
       assert descr == d, '%d: %s != %s' % (ID, descr, d)
       assert self.fragCat.GetBitOrder(ID) == order
-      assert tuple(self.fragCat.GetBitFuncGroupIds(ID)) == ids, '%d: %s != %s' % (
-        ID, str(self.fragCat.GetBitFuncGroupIds(ID)), str(ids))
+      assert tuple(self.fragCat.GetBitFuncGroupIds(
+        ID)) == ids, '%d: %s != %s' % (ID, str(self.fragCat.GetBitFuncGroupIds(ID)), str(ids))
 
   def _test5MoreComplex(self):
     lastIdx = 0
@@ -176,8 +181,8 @@ class TestCase(unittest.TestCase):
     scores, obls = BuildFragmentCatalog.ScoreMolecules(suppl, cat, acts=self.list2Acts,
                                                        reportFreq=20)
     for i in range(len(self.list2Obls)):
-      assert tuple(obls[i]) == self.list2Obls[i], '%d: %s != %s' % (i, str(obls[i]),
-                                                                    str(self.list2Obls[i]))
+      assert tuple(
+        obls[i]) == self.list2Obls[i], '%d: %s != %s' % (i, str(obls[i]), str(self.list2Obls[i]))
 
     scores2 = BuildFragmentCatalog.ScoreFromLists(obls, suppl, cat, acts=self.list2Acts,
                                                   reportFreq=20)

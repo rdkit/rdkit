@@ -11,10 +11,10 @@
 """basic unit testing code for the wrapper of the SMARTS matcher
 
 """
-from rdkit import RDConfig
-import unittest
 import os.path
-from rdkit import Chem
+import unittest
+
+from rdkit import Chem, RDConfig
 
 
 class TestCase(unittest.TestCase):

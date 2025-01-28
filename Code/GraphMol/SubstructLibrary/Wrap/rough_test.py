@@ -34,18 +34,22 @@
 it is intended to be shallow but broad.
 """
 
-import doctest, unittest, os, sys
-
-from rdkit import rdBase
+import doctest
 import logging
-from rdkit import RDConfig, RDLogger
+import os
+import sys
+import unittest
+
+from rdkit import RDConfig, RDLogger, rdBase
 from rdkit.RDLogger import logger
+
 logger = logger()
-from rdkit import Chem
-from rdkit.Chem import rdSubstructLibrary
-import time
 import pickle
 import tempfile
+import time
+
+from rdkit import Chem
+from rdkit.Chem import rdSubstructLibrary, rdGeneralizedSubstruct, rdTautomerQuery
 
 
 def load_tests(loader, tests, ignore):
@@ -375,6 +379,7 @@ class TestCase(unittest.TestCase):
     self.assertEqual(lib.CountMatches(pat2), 1)
     print("done")
 
+  @unittest.skipIf(not rdBase._serializationEnabled, "not built with serialization support")
   def test_init_from_and_to_stream(self):
     mols = makeStereoExamples() * 10
     holder = rdSubstructLibrary.CachedSmilesMolHolder()
@@ -396,7 +401,7 @@ class TestCase(unittest.TestCase):
         slib2.InitFromStream(file)
         self.assertEqual(len(slib), len(slib2))
 
-    from io import StringIO, BytesIO
+    from io import BytesIO, StringIO
     s = StringIO()
     slib.ToStream(s)
 
@@ -680,6 +685,54 @@ class TestCase(unittest.TestCase):
       rdSubstructLibrary.AddPatterns(lib, -1)
     pylog.setLevel(logging.WARN)
     rdBase.LogToCppStreams()
+
+  @unittest.skipIf(not rdBase._serializationEnabled, "not built with serialization support")
+  def test_using_xqms(self):
+    smis = ["COCC=O", "COOCC=O", "COOOCC=O", "COOOOCC=O"]
+
+    for holder in [
+        rdSubstructLibrary.CachedSmilesMolHolder(),
+        rdSubstructLibrary.CachedTrustedSmilesMolHolder()
+    ]:
+      for smi in smis:
+        holder.AddSmiles(smi)
+      fph = rdSubstructLibrary.TautomerPatternHolder()
+      lib = rdSubstructLibrary.SubstructLibrary(holder)
+
+      mol = Chem.MolFromSmiles("COCC")
+      xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(mol)
+      res = lib.GetMatches(xqm)
+      self.assertEqual(list(res), [0])
+      self.assertTrue(lib.HasMatch(xqm))
+      self.assertEqual(lib.CountMatches(xqm), 1)
+
+      mol = Chem.MolFromSmiles("COC=CO")
+      xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(mol)
+      res = lib.GetMatches(xqm)
+      self.assertEqual(list(res), [0])
+      self.assertTrue(lib.HasMatch(xqm))
+      self.assertEqual(lib.CountMatches(xqm), 1)
+
+      mol = Chem.MolFromSmiles("COCC |LN:1:1.3|")
+      xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(mol)
+      res = lib.GetMatches(xqm)
+      self.assertEqual(list(res), [0, 1, 2])
+      self.assertTrue(lib.HasMatch(xqm))
+      self.assertEqual(lib.CountMatches(xqm), 3)
+
+      mol = Chem.MolFromSmiles("COC=CO |LN:1:1.3|")
+      xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(mol)
+      res = lib.GetMatches(xqm)
+      self.assertEqual(list(res), [0, 1, 2])
+      self.assertTrue(lib.HasMatch(xqm))
+      self.assertEqual(lib.CountMatches(xqm), 3)
+
+      mol = Chem.MolFromSmiles("CNC=CO |LN:1:1.3|")
+      xqm = rdGeneralizedSubstruct.CreateExtendedQueryMol(mol)
+      res = lib.GetMatches(xqm)
+      self.assertEqual(list(res), [])
+      self.assertFalse(lib.HasMatch(xqm))
+      self.assertEqual(lib.CountMatches(xqm), 0)
 
 
 if __name__ == '__main__':

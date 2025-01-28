@@ -30,7 +30,6 @@
 #
 # Created by Greg Landrum, May 2009
 
-
 import os
 
 from rdkit import Chem, RDConfig
@@ -159,10 +158,10 @@ def PreprocessReaction(reaction, funcGroupFilename=None, propName='molFileValue'
   return rdChemReactions.PreprocessReaction(reaction, propName=propName)
 
 
-def EnumerateReaction(
-    reaction, bbLists, uniqueProductsOnly=False,
-    funcGroupFilename=os.path.join(RDConfig.RDDataDir, 'Functional_Group_Hierarchy.txt'),
-    propName='molFileValue'):
+def EnumerateReaction(reaction, bbLists, uniqueProductsOnly=False,
+                      funcGroupFilename=os.path.join(RDConfig.RDDataDir,
+                                                     'Functional_Group_Hierarchy.txt'),
+                      propName='molFileValue'):
   """
   >>> testFile = os.path.join(RDConfig.RDCodeDir, 'Chem', 'SimpleEnum', 'test_data', 'boronic1.rxn')
   >>> rxn = AllChem.ReactionFromRxnFile(testFile)
@@ -206,9 +205,11 @@ def EnumerateReaction(
 
   def _uniqueOnly(lst):
     seen = []
+    ps = Chem.SmilesWriteParams()
+    cxflags = Chem.CXSmilesFields.CX_ENHANCEDSTEREO
     for entry in lst:
       if entry:
-        smi = '.'.join(sorted([Chem.MolToSmiles(x, True) for x in entry]))
+        smi = '.'.join(sorted([Chem.MolToCXSmiles(x, ps, cxflags) for x in entry]))
         if smi not in seen:
           seen.append(smi)
           yield entry
@@ -216,8 +217,9 @@ def EnumerateReaction(
   ps = AllChem.EnumerateLibraryFromReaction(reaction, bbLists)
   if not uniqueProductsOnly:
     return ps
-  
+
   return _uniqueOnly(ps)
+
 
 # ------------------------------------
 #

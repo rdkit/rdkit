@@ -1,4 +1,3 @@
-// $Id$
 //
 //  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
@@ -190,7 +189,7 @@ void dumpVIV(VECT_INT_VECT v) {
 
 PATH_LIST
 extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
-            int allowRingClosures = -1) {
+            int allowRingClosures = -1, double *distMat = nullptr) {
   PRECONDITION(adjMat, "no matrix");
   //
   //  extend each of the currently active paths by adding
@@ -198,15 +197,19 @@ extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
   //
   PATH_LIST res;
   PATH_LIST::const_iterator path;
-  for (path = paths.begin(); path != paths.end(); path++) {
+  for (path = paths.begin(); path != paths.end(); ++path) {
     unsigned int endIdx = (*path)[path->size() - 1];
     unsigned int iTab = endIdx * dim;
     for (unsigned int otherIdx = 0; otherIdx < dim; otherIdx++) {
       if (adjMat[iTab + otherIdx] == 1) {
+        if (distMat &&
+            distMat[path->front() * dim + otherIdx] - path->size() < -0.001) {
+          continue;
+        }
         // test 1: make sure the new atom is not already
         //   in the path
-        PATH_TYPE::const_iterator loc;
-        loc = std::find(path->begin(), path->end(), static_cast<int>(otherIdx));
+        auto loc =
+            std::find(path->begin(), path->end(), static_cast<int>(otherIdx));
         // The two conditions for adding the atom are:
         //   1) it's not there already
         //   2) it's there, but ring closures are allowed and this
@@ -241,7 +244,7 @@ extendPaths(int *adjMat, unsigned int dim, const PATH_LIST &paths,
 
 INT_PATH_LIST_MAP
 pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
-                 unsigned int maxLen, int rootedAtAtom) {
+                 unsigned int maxLen, int rootedAtAtom, double *distMat) {
   PRECONDITION(adjMat, "no matrix");
   PRECONDITION(minLen <= maxLen, "bad lengths provided");
   // finds all paths of length N using an adjacency matrix,
@@ -272,7 +275,7 @@ pathFinderHelper(int *adjMat, unsigned int dim, unsigned int minLen,
     if (length >= minLen) {
       res[length] = paths;
     }
-    paths = extendPaths(adjMat, dim, paths, maxLen);
+    paths = extendPaths(adjMat, dim, paths, maxLen, distMat);
   }
   res[maxLen] = paths;
 
@@ -440,7 +443,7 @@ PATH_LIST findUniqueSubgraphsOfLengthN(const ROMol &mol, unsigned int targetLen,
 INT_PATH_LIST_MAP
 findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
                           unsigned int upperLen, bool useBonds, bool useHs,
-                          int rootedAtAtom) {
+                          int rootedAtAtom, bool onlyShortestPaths) {
   //
   //  We can't be clever here and just use the bond adjacency matrix
   //  to solve this problem when useBonds is true.  This is because
@@ -452,20 +455,34 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
   //
   PRECONDITION(lowerLen <= upperLen, "");
 
+  // the molecule owns the distance matrix pointer (if we need to get it)
+  double *distMat = onlyShortestPaths ? MolOps::getDistanceMat(mol) : nullptr;
   int *adjMat, dim;
   dim = mol.getNumAtoms();
   adjMat = new int[dim * dim];
   memset((void *)adjMat, 0, dim * dim * sizeof(int));
 
-  // generate the adjacency matrix by hand by looping over the bonds
-  ROMol::ConstBondIterator bondIt;
-  for (bondIt = mol.beginBonds(); bondIt != mol.endBonds(); bondIt++) {
-    Atom *beg = (*bondIt)->getBeginAtom();
-    Atom *end = (*bondIt)->getEndAtom();
-    // check for H, which we might be skipping
-    if (useHs || (beg->getAtomicNum() != 1 && end->getAtomicNum() != 1)) {
-      adjMat[beg->getIdx() * dim + end->getIdx()] = 1;
-      adjMat[end->getIdx() * dim + beg->getIdx()] = 1;
+  if (!distMat) {
+    // generate the adjacency matrix by hand by looping over the bonds
+    ROMol::ConstBondIterator bondIt;
+    for (bondIt = mol.beginBonds(); bondIt != mol.endBonds(); bondIt++) {
+      Atom *beg = (*bondIt)->getBeginAtom();
+      Atom *end = (*bondIt)->getEndAtom();
+      // check for H, which we might be skipping
+      if (useHs || (beg->getAtomicNum() != 1 && end->getAtomicNum() != 1)) {
+        adjMat[beg->getIdx() * dim + end->getIdx()] = 1;
+        adjMat[end->getIdx() * dim + beg->getIdx()] = 1;
+      }
+    }
+  } else {
+    // if we have the distance matrix, we can just loop over that:
+    for (auto i = 0; i < dim; ++i) {
+      for (auto j = i + 1; j < dim; ++j) {
+        if (fabs(distMat[i * dim + j] - 1) < 1e-4) {
+          adjMat[i * dim + j] = 1;
+          adjMat[j * dim + i] = 1;
+        }
+      }
     }
   }
 
@@ -478,7 +495,7 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
 
   // find the paths themselves
   INT_PATH_LIST_MAP atomPaths = Subgraphs::pathFinderHelper(
-      adjMat, dim, lowerLen, upperLen, rootedAtAtom);
+      adjMat, dim, lowerLen, upperLen, rootedAtAtom, distMat);
 
   // clean up the adjacency matrix
   delete[] adjMat;
@@ -533,9 +550,9 @@ findAllPathsOfLengthsMtoN(const ROMol &mol, unsigned int lowerLen,
 }
 PATH_LIST
 findAllPathsOfLengthN(const ROMol &mol, unsigned int targetLen, bool useBonds,
-                      bool useHs, int rootedAtAtom) {
+                      bool useHs, int rootedAtAtom, bool onlyShortestPaths) {
   return findAllPathsOfLengthsMtoN(mol, targetLen, targetLen, useBonds, useHs,
-                                   rootedAtAtom)[targetLen];
+                                   rootedAtAtom, onlyShortestPaths)[targetLen];
 }
 
 PATH_TYPE findAtomEnvironmentOfRadiusN(

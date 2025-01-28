@@ -26,7 +26,7 @@
 #include <boost/serialization/array_wrapper.hpp>
 #endif
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #include <thread>
 #include <future>
@@ -175,7 +175,7 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               std::set<MatchVectType> *matches, unsigned int bi,
                               unsigned int ei);
 
-typedef std::list<
+typedef std::vector<
     std::pair<MolGraph::vertex_descriptor, MolGraph::vertex_descriptor>>
     ssPairType;
 
@@ -197,13 +197,10 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
 }
 
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
-                                           const std::uint32_t m_c[]) const {
+                                           const std::uint32_t m_c[]) {
   if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
     // EFF: we can no-doubt do better than this
     std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
-    for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
-      aids[i] = m_c[i];
-    }
     if (d_params.useGenericMatchers &&
         !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
       return false;
@@ -212,7 +209,27 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       return false;
     }
   }
+
+  HashedStorageType match;
+  if (d_params.uniquify) {
+    match.resize(d_mol.getNumAtoms());
+#ifdef RDK_INTERNAL_BITSET_HAS_HASH
+    match.reset();
+#else
+    std::fill(match.begin(), match.end(), 0);
+#endif
+    for (unsigned int i = 0; i < d_query.getNumAtoms(); ++i) {
+      match[m_c[i]] = 1;
+    }
+    if (matchesSeen.find(match) != matchesSeen.end()) {
+      return false;
+    }
+  }
+
   if (!d_params.useChirality) {
+    if (d_params.uniquify) {
+      matchesSeen.insert(match);
+    }
     return true;
   }
 
@@ -229,6 +246,9 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     }
     const Atom *mAt = d_mol.getAtomWithIdx(m_c[i]);
     if (!detail::hasChiralLabel(mAt)) {
+      if (d_params.specifiedStereoQueryMatchesUnspecified) {
+        continue;
+      }
       return false;
     }
     if (qAt->getDegree() > mAt->getDegree()) {
@@ -310,10 +330,15 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     const Bond *mBnd = d_mol.getBondBetweenAtoms(
         q_to_mol[qBnd->getBeginAtomIdx()], q_to_mol[qBnd->getEndAtomIdx()]);
     CHECK_INVARIANT(mBnd, "Matching bond not found");
-    if (mBnd->getBondType() != Bond::DOUBLE ||
-        qBnd->getStereo() <= Bond::STEREOANY) {
+    if (mBnd->getBondType() != Bond::DOUBLE) {
       continue;
     }
+
+    if (!d_params.specifiedStereoQueryMatchesUnspecified &&
+        mBnd->getStereo() <= Bond::STEREOANY) {
+      return false;
+    }
+
     // don't think this can actually happen, but check to be sure:
     if (mBnd->getStereoAtoms().size() != 2) {
       continue;
@@ -356,7 +381,9 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       return false;
     }
   }
-
+  if (d_params.uniquify) {
+    matchesSeen.insert(match);
+  }
   return true;
 }
 
@@ -366,7 +393,8 @@ class AtomLabelFunctor {
  public:
   AtomLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query), d_mol(mol), d_params(ps) {};
+
   bool operator()(unsigned int i, unsigned int j) const {
     bool res = false;
     if (d_params.useChirality) {
@@ -374,7 +402,8 @@ class AtomLabelFunctor {
       if (qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           qAt->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
         const Atom *mAt = d_mol.getAtomWithIdx(j);
-        if (mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
+        if (!d_params.specifiedStereoQueryMatchesUnspecified &&
+            mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CW &&
             mAt->getChiralTag() != Atom::CHI_TETRAHEDRAL_CCW) {
           return false;
         }
@@ -393,7 +422,7 @@ class BondLabelFunctor {
  public:
   BondLabelFunctor(const ROMol &query, const ROMol &mol,
                    const SubstructMatchParameters &ps)
-      : d_query(query), d_mol(mol), d_params(ps){};
+      : d_query(query), d_mol(mol), d_params(ps) {};
   bool operator()(MolGraph::edge_descriptor i,
                   MolGraph::edge_descriptor j) const {
     if (d_params.useChirality) {
@@ -402,6 +431,7 @@ class BondLabelFunctor {
           qBnd->getStereo() > Bond::STEREOANY) {
         const Bond *mBnd = d_mol[j];
         if (mBnd->getBondType() == Bond::DOUBLE &&
+            !d_params.specifiedStereoQueryMatchesUnspecified &&
             mBnd->getStereo() <= Bond::STEREOANY) {
           return false;
         }
@@ -444,7 +474,7 @@ struct RecursiveLocker {
   ~RecursiveLocker() {
     for (auto v : locked) {
       v->clear();
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
       v->d_mutex.unlock();
 #endif
     }
@@ -468,10 +498,10 @@ std::vector<MatchVectType> SubstructMatch(
   if (params.recursionPossible) {
     detail::SUBQUERY_MAP subqueryMap;
     ROMol::ConstAtomIterator atIt;
-    for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
-      if ((*atIt)->getQuery()) {
+    for (const auto atom : query.atoms()) {
+      if (atom->hasQuery()) {
         // std::cerr<<"recurse from atom "<<(*atIt)->getIdx()<<std::endl;
-        detail::MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap,
+        detail::MatchSubqueries(mol, atom->getQuery(), params, subqueryMap,
                                 locker.locked);
       }
     }
@@ -481,29 +511,19 @@ std::vector<MatchVectType> SubstructMatch(
   detail::BondLabelFunctor bondLabeler(query, mol, params);
   MolMatchFinalCheckFunctor matchChecker(query, mol, params);
 
-  std::list<detail::ssPairType> pms;
-#if 0
-  bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
-				atomLabeler,bondLabeler,pms);
-#else
+  std::vector<detail::ssPairType> pms;
   bool found =
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
                      bondLabeler, matchChecker, pms, params.maxMatches);
-#endif
   if (found) {
     unsigned int nQueryAtoms = query.getNumAtoms();
     matches.reserve(pms.size());
-    for (std::list<detail::ssPairType>::const_iterator iter1 = pms.begin();
-         iter1 != pms.end(); ++iter1) {
-      MatchVectType matchVect;
-      matchVect.resize(nQueryAtoms);
-      for (const auto &iter2 : *iter1) {
-        matchVect[iter2.first] = std::pair<int, int>(iter2.first, iter2.second);
+    MatchVectType matchVect(nQueryAtoms);
+    for (const auto &pairs : pms) {
+      for (const auto &pair : pairs) {
+        matchVect[pair.first] = pair;
       }
       matches.push_back(matchVect);
-    }
-    if (params.uniquify) {
-      removeDuplicates(matches, mol.getNumAtoms());
     }
   }
   return matches;
@@ -557,7 +577,7 @@ std::vector<MatchVectType> SubstructMatch(
     detail::ResSubstructMatchHelper_(args, &matches, 0,
                                      resMolSupplier.length());
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
     std::vector<std::set<MatchVectType> *> matchesThread(nt);
@@ -597,39 +617,36 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
                               SUBQUERY_MAP &subqueryMap,
                               const SubstructMatchParameters &params,
                               std::vector<RecursiveStructureQuery *> &locked) {
-  ROMol::ConstAtomIterator atIt;
-  for (atIt = query.beginAtoms(); atIt != query.endAtoms(); atIt++) {
-    if ((*atIt)->getQuery()) {
-      MatchSubqueries(mol, (*atIt)->getQuery(), params, subqueryMap, locked);
+  SubstructMatchParameters lparams = params;
+  lparams.maxMatches = std::max(params.maxRecursiveMatches, params.maxMatches);
+  lparams.uniquify = false;
+  for (auto qAtom : query.atoms()) {
+    if (qAtom->hasQuery()) {
+      MatchSubqueries(mol, qAtom->getQuery(), lparams, subqueryMap, locked);
     }
   }
 
-  detail::AtomLabelFunctor atomLabeler(query, mol, params);
-  detail::BondLabelFunctor bondLabeler(query, mol, params);
-  MolMatchFinalCheckFunctor matchChecker(query, mol, params);
+  detail::AtomLabelFunctor atomLabeler(query, mol, lparams);
+  detail::BondLabelFunctor bondLabeler(query, mol, lparams);
+  MolMatchFinalCheckFunctor matchChecker(query, mol, lparams);
 
   matches.clear();
   matches.resize(0);
-  std::list<detail::ssPairType> pms;
-#if 0
-      bool found=boost::ullmann_all(query.getTopology(),mol.getTopology(),
-				    atomLabeler,bondLabeler,pms);
-#else
-  bool found = boost::vf2_all(query.getTopology(), mol.getTopology(),
-                              atomLabeler, bondLabeler, matchChecker, pms);
-#endif
+  std::vector<detail::ssPairType> pms;
+  bool found =
+      boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
+                     bondLabeler, matchChecker, pms, lparams.maxMatches);
   unsigned int res = 0;
   if (found) {
     matches.reserve(pms.size());
-    for (std::list<detail::ssPairType>::const_iterator iter1 = pms.begin();
-         iter1 != pms.end(); ++iter1) {
+    for (const auto &pairs : pms) {
       if (!query.hasProp(common_properties::_queryRootAtom)) {
-        matches.push_back(iter1->begin()->second);
+        matches.push_back(pairs.begin()->second);
       } else {
         int rootIdx;
         query.getProp(common_properties::_queryRootAtom, rootIdx);
         bool found = false;
-        for (const auto &pairIter : *iter1) {
+        for (const auto &pairIter : pairs) {
           if (pairIter.first == static_cast<unsigned int>(rootIdx)) {
             matches.push_back(pairIter.second);
             found = true;
@@ -640,6 +657,9 @@ unsigned int RecursiveMatcher(const ROMol &mol, const ROMol &query,
           BOOST_LOG(rdErrorLog)
               << "no match found for queryRootAtom" << std::endl;
         }
+      }
+      if (matches.size() == lparams.maxMatches) {
+        break;
       }
     }
     res = matches.size();
@@ -653,11 +673,11 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
                      SUBQUERY_MAP &subqueryMap,
                      std::vector<RecursiveStructureQuery *> &locked) {
   PRECONDITION(query, "bad query");
-  // std::cout << "*-*-* MS: " << (int)query << std::endl;
+  // std::cout << "*-*-* MS: " << query << std::endl;
   // std::cout << "\t\t" << typeid(*query).name() << std::endl;
   if (query->getDescription() == "RecursiveStructure") {
     auto *rsq = (RecursiveStructureQuery *)query;
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
     rsq->d_mutex.lock();
 #endif
     locked.push_back(rsq);
@@ -668,7 +688,7 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
       // we've matched an equivalent serial number before, just
       // copy in the matches:
       matchDone = true;
-      const RecursiveStructureQuery *orsq =
+      auto orsq =
           (const RecursiveStructureQuery *)subqueryMap[rsq->getSerialNumber()];
       for (auto setIter = orsq->beginSet(); setIter != orsq->endSet();
            ++setIter) {
@@ -693,8 +713,9 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
       }
       if (rsq->getSerialNumber()) {
         subqueryMap[rsq->getSerialNumber()] = query;
-        // std::cerr<<" storing results for query serial number:
-        // "<<rsq->getSerialNumber()<<std::endl;
+        // std::cerr << " storing results for query serial number: "
+        //           << rsq->getSerialNumber() << " " << rsq->size() <<
+        //           std::endl;
       }
     }
   } else {
@@ -702,11 +723,8 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
   }
 
   // now recurse over our children (these things can be nested)
-  Queries::Query<int, Atom const *, true>::CHILD_VECT_CI childIt;
-  // std::cout << query << " " << query->endChildren()-query->beginChildren() <<
-  // std::endl;
-  for (childIt = query->beginChildren(); childIt != query->endChildren();
-       childIt++) {
+  for (auto childIt = query->beginChildren(); childIt != query->endChildren();
+       ++childIt) {
     MatchSubqueries(mol, childIt->get(), params, subqueryMap, locked);
   }
   // std::cout << "<<- back " << (int)query << std::endl;

@@ -161,7 +161,8 @@ class Configuration {
 
   Configuration(const CIPMol &mol, Atom *focus);
 
-  Configuration(const CIPMol &mol, std::vector<Atom *> &&foci);
+  Configuration(const CIPMol &mol, std::vector<Atom *> &&foci,
+                bool atropisomerMode = false);
 
   virtual ~Configuration();
 
@@ -185,6 +186,10 @@ class Configuration {
   bool isInternalEdge(const Edge *edge, Atom *f1, Atom *f2);
 
   void removeInternalEdges(std::vector<Edge *> &edges, Atom *f1, Atom *f2);
+
+  bool isDuplicateOrHydrogenEdge(const Edge *edge);
+
+  void removeDuplicatesAndHs(std::vector<Edge *> &edges);
 
   void setCarriers(std::vector<Atom *> &&carriers);
 

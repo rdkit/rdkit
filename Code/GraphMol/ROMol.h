@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,8 @@
 #define RD_ROMOL_H
 
 /// Std stuff
+#include <cstddef>
+#include <iterator>
 #include <utility>
 #include <map>
 
@@ -27,6 +29,10 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/smart_ptr.hpp>
 #include <boost/dynamic_bitset.hpp>
+
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <boost/serialization/split_member.hpp>
+#endif
 #include <RDGeneral/BoostEndInclude.h>
 
 // our stuff
@@ -111,6 +117,12 @@ struct CXXAtomIterator {
   Iterator vstart, vend;
 
   struct CXXAtomIter {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Vertex;
+    using pointer = Vertex *;
+    using reference = Vertex &;
+
     Graph *graph;
     Iterator pos;
     Atom *current;
@@ -118,7 +130,7 @@ struct CXXAtomIterator {
     CXXAtomIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
-    Vertex &operator*() {
+    reference operator*() {
       current = (*graph)[*pos];
       return current;
     }
@@ -126,6 +138,7 @@ struct CXXAtomIterator {
       ++pos;
       return *this;
     }
+    bool operator==(const CXXAtomIter &it) const { return pos == it.pos; }
     bool operator!=(const CXXAtomIter &it) const { return pos != it.pos; }
   };
 
@@ -135,7 +148,7 @@ struct CXXAtomIterator {
     vend = vs.second;
   }
   CXXAtomIterator(Graph *graph, Iterator start, Iterator end)
-      : graph(graph), vstart(start), vend(end){};
+      : graph(graph), vstart(start), vend(end) {};
   CXXAtomIter begin() { return {graph, vstart}; }
   CXXAtomIter end() { return {graph, vend}; }
 };
@@ -147,6 +160,12 @@ struct CXXBondIterator {
   Iterator vstart, vend;
 
   struct CXXBondIter {
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = std::ptrdiff_t;
+    using value_type = Edge;
+    using pointer = Edge *;
+    using reference = Edge &;
+
     Graph *graph;
     Iterator pos;
     Bond *current;
@@ -154,7 +173,7 @@ struct CXXBondIterator {
     CXXBondIter(Graph *graph, Iterator pos)
         : graph(graph), pos(pos), current(nullptr) {}
 
-    Edge &operator*() {
+    reference operator*() {
       current = (*graph)[*pos];
       return current;
     }
@@ -162,6 +181,7 @@ struct CXXBondIterator {
       ++pos;
       return *this;
     }
+    bool operator==(const CXXBondIter &it) const { return pos == it.pos; }
     bool operator!=(const CXXBondIter &it) const { return pos != it.pos; }
   };
 
@@ -171,7 +191,7 @@ struct CXXBondIterator {
     vend = vs.second;
   }
   CXXBondIterator(Graph *graph, Iterator start, Iterator end)
-      : graph(graph), vstart(start), vend(end){};
+      : graph(graph), vstart(start), vend(end) {};
   CXXBondIter begin() { return {graph, vstart}; }
   CXXBondIter end() { return {graph, vend}; }
 };
@@ -184,7 +204,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \cond TYPEDEFS
 
   //! \name typedefs
-  //@{
+  //! @{
   typedef MolGraph::vertex_descriptor vertex_descriptor;
   typedef MolGraph::edge_descriptor edge_descriptor;
 
@@ -241,7 +261,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   typedef CONF_SPTR_LIST_I ConformerIterator;
   typedef CONF_SPTR_LIST_CI ConstConformerIterator;
 
-  //@}
+  //! @}
   //! \endcond
 
   //! C++11 Range iterator
@@ -341,6 +361,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     for (auto conf : d_confs) {
       conf->setOwningMol(this);
     }
+    for (auto &sg : d_sgroups) {
+      sg.setOwningMol(this);
+    }
     o.d_graph.clear();
     o.numBonds = 0;
     dp_ringInfo = std::exchange(o.dp_ringInfo, nullptr);
@@ -377,6 +400,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     for (auto conf : d_confs) {
       conf->setOwningMol(this);
     }
+    for (auto &sg : d_sgroups) {
+      sg.setOwningMol(this);
+    }
 
     o.d_graph.clear();
     return *this;
@@ -387,9 +413,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   virtual ~ROMol() { destroy(); }
 
-  //@}
+  //! @}
   //! \name Atoms
-  //@{
+  //! @{
 
   //! returns our number of atoms
   inline unsigned int getNumAtoms() const {
@@ -414,10 +440,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   }
   //! returns the degree (number of neighbors) of an Atom in the graph
   unsigned int getAtomDegree(const Atom *at) const;
-  //@}
+  //! @}
 
   //! \name Bonds
-  //@{
+  //! @{
 
   //! returns our number of Bonds
   unsigned int getNumBonds(bool onlyHeavy = 1) const;
@@ -452,10 +478,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
                                rdcast<unsigned int>(idx2));
   }
 
-  //@}
+  //! @}
 
   //! \name Bookmarks
-  //@{
+  //! @{
 
   //! associates an Atom pointer with a bookmark
   void setAtomBookmark(Atom *at, int mark) {
@@ -508,10 +534,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! returns a pointer to all of our bond \c bookmarks
   BOND_BOOKMARK_MAP *getBondBookmarks() { return &d_bondBookmarks; }
 
-  //@}
+  //! @}
 
   //! \name Conformers
-  //@{
+  //! @{
 
   //! return the conformer with a specified ID
   //! if the ID is negative the first conformation will be returned
@@ -544,7 +570,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   }
 
   //! \name Topology
-  //@{
+  //! @{
 
   //! returns a pointer to our RingInfo structure
   //! <b>Note:</b> the client should not delete this.
@@ -652,10 +678,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
       \endcode
    */
   MolGraph const &getTopology() const { return d_graph; }
-  //@}
+  //! @}
 
   //! \name Iterators
-  //@{
+  //! @{
 
   //! get an AtomIterator pointing at our first Atom
   AtomIterator beginAtoms();
@@ -692,6 +718,9 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   //! \overload
   ConstHeteroatomIterator endHeteros() const;
 
+  //! if the Mol has any Query atoms or bonds
+  bool hasQuery() const;
+
   //! get an AtomIterator pointing at our first Atom that matches \c query
   QueryAtomIterator beginQueryAtoms(QueryAtom const *query);
   //! \overload
@@ -721,10 +750,10 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   inline ConstConformerIterator endConformers() const { return d_confs.end(); }
 
-  //@}
+  //! @}
 
   //! \name Properties
-  //@{
+  //! @{
 
   //! clears all of our \c computed \c properties
   void clearComputedProps(bool includeRings = true) const;
@@ -737,13 +766,13 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   bool needsUpdatePropertyCache() const;
 
-  //@}
+  //! @}
 
   //! \name Misc
-  //@{
+  //! @{
   //! sends some debugging info to a stream
   void debugMol(std::ostream &str) const;
-  //@}
+  //! @}
 
   Atom *operator[](const vertex_descriptor &v) { return d_graph[v]; }
   const Atom *operator[](const vertex_descriptor &v) const {
@@ -771,6 +800,17 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   */
   void setStereoGroups(std::vector<StereoGroup> stereo_groups);
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  //! \name boost::serialization support
+  //! @{
+  template <class Archive>
+  void save(Archive &ar, const unsigned int version) const;
+  template <class Archive>
+  void load(Archive &ar, const unsigned int version);
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
+  //! @}
+#endif
+
  private:
   MolGraph d_graph;
   ATOM_BOOKMARK_MAP d_atomBookmarks;
@@ -784,8 +824,8 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
 
   friend RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
       ROMol &);
-  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup>
-      &getSubstanceGroups(const ROMol &);
+  friend RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup> &
+  getSubstanceGroups(const ROMol &);
   void clearSubstanceGroups() { d_sgroups.clear(); }
 
  protected:
@@ -804,7 +844,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
     atom
                          instead of copying it.
 
-    \return the new number of atoms
+    \return the index of the new atom
   */
   unsigned int addAtom(Atom *atom, bool updateLabel = true,
                        bool takeOwnership = false);

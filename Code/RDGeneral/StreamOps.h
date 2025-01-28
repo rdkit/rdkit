@@ -18,6 +18,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <unordered_set>
 #include <boost/cstdint.hpp>
 #include <boost/predef.h>
 
@@ -87,18 +88,22 @@ inline T EndianSwapBytes(T value) {
 
   return SwapBytes<T, sizeof(T)>(value);
 }
+
 template <EEndian from, EEndian to>
 inline char EndianSwapBytes(char value) {
   return value;
 }
+
 template <EEndian from, EEndian to>
 inline unsigned char EndianSwapBytes(unsigned char value) {
   return value;
 }
+
 template <EEndian from, EEndian to>
 inline signed char EndianSwapBytes(signed char value) {
   return value;
 }
+
 // --------------------------------------
 
 //! Packs an integer and outputs it to a stream
@@ -264,8 +269,8 @@ void streamWrite(std::ostream &ss, const T &val) {
 
 //! special case for string
 inline void streamWrite(std::ostream &ss, const std::string &what) {
-  unsigned int l = rdcast<unsigned int>(what.length());
-  ss.write((const char *)&l, sizeof(l));
+  unsigned int l = static_cast<unsigned int>(what.length());
+  streamWrite(ss, l);
   ss.write(what.c_str(), sizeof(char) * l);
 };
 
@@ -298,17 +303,13 @@ void streamRead(std::istream &ss, T &obj, int version) {
 inline void streamRead(std::istream &ss, std::string &what, int version) {
   RDUNUSED_PARAM(version);
   unsigned int l;
-  ss.read((char *)&l, sizeof(l));
+  streamRead(ss, l);
+  auto buff = std::make_unique<char[]>(l);
+  ss.read(buff.get(), sizeof(char) * l);
   if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
-  char *buff = new char[l];
-  ss.read(buff, sizeof(char) * l);
-  if (ss.fail()) {
-    throw std::runtime_error("failed to read from stream");
-  }
-  what = std::string(buff, l);
-  delete[] buff;
+  what = std::string(buff.get(), l);
 };
 
 template <class T>
@@ -337,11 +338,12 @@ inline void streamReadStringVec(std::istream &ss, std::vector<std::string> &val,
 inline std::string getLine(std::istream *inStream) {
   std::string res;
   std::getline(*inStream, res);
-  if ((res.length() > 0) && (res[res.length() - 1] == '\r')) {
-    res.erase(res.length() - 1);
+  if (!res.empty() && (res.back() == '\r')) {
+    res.resize(res.length() - 1);
   }
   return res;
 }
+
 //! grabs the next line from an instream and returns it.
 inline std::string getLine(std::istream &inStream) {
   return getLine(&inStream);
@@ -370,10 +372,15 @@ const unsigned char EndTag = 0xFF;
 class CustomPropHandler {
  public:
   virtual ~CustomPropHandler() {}
+
   virtual const char *getPropName() const = 0;
+
   virtual bool canSerialize(const RDValue &value) const = 0;
+
   virtual bool read(std::istream &ss, RDValue &value) const = 0;
+
   virtual bool write(std::ostream &ss, const RDValue &value) const = 0;
+
   virtual CustomPropHandler *clone() const = 0;
 };
 
@@ -480,34 +487,40 @@ inline bool streamWriteProp(std::ostream &ss, const Dict::Pair &pair,
   return true;
 }
 
-inline bool streamWriteProps(std::ostream &ss, const RDProps &props,
-                             bool savePrivate = false,
-                             bool saveComputed = false,
-                             const CustomPropHandlerVec &handlers = {}) {
+template <typename COUNT_TYPE = unsigned int>
+inline bool streamWriteProps(
+    std::ostream &ss, const RDProps &props, bool savePrivate = false,
+    bool saveComputed = false, const CustomPropHandlerVec &handlers = {},
+    const std::unordered_set<std::string> &ignore = {}) {
   STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
-  std::set<std::string> propnames(propsToSave.begin(), propsToSave.end());
+  std::unordered_set<std::string> propnames;
+  for (const auto &pn : propsToSave) {
+    if (ignore.empty() || ignore.find(pn) == ignore.end()) {
+      propnames.insert(pn);
+    }
+  }
 
   const Dict &dict = props.getDict();
-  unsigned int count = 0;
-  for (Dict::DataType::const_iterator it = dict.getData().begin();
-       it != dict.getData().end(); ++it) {
-    if (propnames.find(it->key) != propnames.end()) {
-      if (isSerializable(*it, handlers)) {
+  COUNT_TYPE count = 0;
+  for (const auto &elem : dict.getData()) {
+    if (propnames.find(elem.key) != propnames.end()) {
+      if (isSerializable(elem, handlers)) {
         count++;
       }
     }
   }
-
   streamWrite(ss, count);  // packed int?
+  if (!count) {
+    return false;
+  }
 
-  unsigned int writtenCount = 0;
-  for (Dict::DataType::const_iterator it = dict.getData().begin();
-       it != dict.getData().end(); ++it) {
-    if (propnames.find(it->key) != propnames.end()) {
-      if (isSerializable(*it, handlers)) {
+  COUNT_TYPE writtenCount = 0;
+  for (const auto &elem : dict.getData()) {
+    if (propnames.find(elem.key) != propnames.end()) {
+      if (isSerializable(elem, handlers)) {
         // note - not all properties are serializable, this may be
         //  a null op
-        if (streamWriteProp(ss, *it, handlers)) {
+        if (streamWriteProp(ss, elem, handlers)) {
           writtenCount++;
         }
       }
@@ -615,23 +628,27 @@ inline bool streamReadProp(std::istream &ss, Dict::Pair &pair,
   return true;
 }
 
+template <typename COUNT_TYPE = unsigned int>
 inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
-                                    const CustomPropHandlerVec &handlers = {}) {
-  unsigned int count;
+                                    const CustomPropHandlerVec &handlers = {},
+                                    bool reset = true) {
+  COUNT_TYPE count;
   streamRead(ss, count);
 
   Dict &dict = props.getDict();
-  dict.reset();  // Clear data before repopulating
-  dict.getData().resize(count);
+  if (reset) {
+    dict.reset();  // Clear data before repopulating
+  }
+  auto startSz = dict.getData().size();
+  dict.getData().resize(startSz + count);
   for (unsigned index = 0; index < count; ++index) {
-    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[index],
+    CHECK_INVARIANT(streamReadProp(ss, dict.getData()[startSz + index],
                                    dict.getNonPODStatus(), handlers),
                     "Corrupted property serialization detected");
   }
 
-  return count;
+  return static_cast<unsigned int>(count);
 }
-
 }  // namespace RDKit
 
 #endif

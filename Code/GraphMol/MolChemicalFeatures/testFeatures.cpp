@@ -738,7 +738,7 @@ void testIssue347() {
   TEST_ASSERT(featSPtr->getFamily() == "LumpedHydrophobe");
   TEST_ASSERT(featSPtr->getType() == "CPair");
 
-  featSPtr = *(++++featSPtrs.begin());
+  featSPtr = *(++ ++featSPtrs.begin());
   TEST_ASSERT(featSPtr->getFamily() == "LumpedHydrophobe");
   TEST_ASSERT(featSPtr->getType() == "CTriplet");
 

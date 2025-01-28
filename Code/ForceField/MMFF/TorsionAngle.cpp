@@ -1,8 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2022 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -29,16 +26,21 @@ double calcTorsionCosPhi(const RDGeom::Point3D &iPoint,
   RDGeom::Point3D r4 = lPoint - kPoint;
   RDGeom::Point3D t1 = r1.crossProduct(r2);
   RDGeom::Point3D t2 = r3.crossProduct(r4);
-  double cosPhi = t1.dotProduct(t2) / (t1.length() * t2.length());
+  auto t1_len = t1.length();
+  auto t2_len = t2.length();
+  if (isDoubleZero(t1_len) || isDoubleZero(t2_len)) {
+    return 0.0;
+  }
+  double cosPhi = t1.dotProduct(t2) / (t1_len * t2_len);
   clipToOne(cosPhi);
 
   return cosPhi;
 }
 
-boost::tuple<double, double, double> calcTorsionForceConstant(
+std::tuple<double, double, double> calcTorsionForceConstant(
     const MMFFTor *mmffTorParams) {
-  return boost::make_tuple(mmffTorParams->V1, mmffTorParams->V2,
-                           mmffTorParams->V3);
+  return std::make_tuple(mmffTorParams->V1, mmffTorParams->V2,
+                         mmffTorParams->V3);
 }
 
 double calcTorsionEnergy(const double V1, const double V2, const double V3,
@@ -153,14 +155,6 @@ void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   // dE/dPhi is independent of cartesians:
   double dE_dPhi =
       0.5 * (-(d_V1)*sinPhi + 2.0 * d_V2 * sin2Phi - 3.0 * d_V3 * sin3Phi);
-#if 0
-      if(dE_dPhi!=dE_dPhi){
-        std::cout << "\tNaN in Torsion("<<d_at1Idx<<","<<d_at2Idx<<","<<d_at3Idx<<","<<d_at4Idx<<")"<< std::endl;
-        std::cout << "sin: " << sinPhi << std::endl;
-        std::cout << "cos: " << cosPhi << std::endl;
-      }
-
-#endif
   // FIX: use a tolerance here
   // this is hacky, but it's per the
   // recommendation from Niketic and Rasmussen:

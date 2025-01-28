@@ -18,10 +18,21 @@ namespace RDKit {
 
 inline PyObject *convertMatches(const MatchVectType &matches) {
   PyObject *res = PyTuple_New(matches.size());
-  MatchVectType::const_iterator i;
-  for (i = matches.begin(); i != matches.end(); i++) {
-    PyTuple_SetItem(res, i->first, PyInt_FromLong(i->second));
-  }
+  std::for_each(matches.begin(), matches.end(), [res](const auto &pair) {
+    PyTuple_SetItem(res, pair.first, PyInt_FromLong(pair.second));
+  });
+  return res;
+}
+
+inline PyObject *convertMatchesToTupleOfPairs(const MatchVectType &matches) {
+  PyObject *res = PyTuple_New(matches.size());
+  std::for_each(matches.begin(), matches.end(),
+                [res, &matches](const auto &pair) {
+                  PyObject *pyPair = PyTuple_New(2);
+                  PyTuple_SetItem(pyPair, 0, PyInt_FromLong(pair.first));
+                  PyTuple_SetItem(pyPair, 1, PyInt_FromLong(pair.second));
+                  PyTuple_SetItem(res, &pair - &matches.front(), pyPair);
+                });
   return res;
 }
 

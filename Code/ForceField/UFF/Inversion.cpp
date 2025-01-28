@@ -1,8 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,6 +9,7 @@
 //
 
 #include "Inversion.h"
+#include "Utils.h"
 #include "Params.h"
 #include <cmath>
 #include <ForceField/ForceField.h>
@@ -20,71 +18,6 @@
 
 namespace ForceFields {
 namespace UFF {
-namespace Utils {
-double calculateCosY(const RDGeom::Point3D &iPoint,
-                     const RDGeom::Point3D &jPoint,
-                     const RDGeom::Point3D &kPoint,
-                     const RDGeom::Point3D &lPoint) {
-  RDGeom::Point3D rJI = iPoint - jPoint;
-  RDGeom::Point3D rJK = kPoint - jPoint;
-  RDGeom::Point3D rJL = lPoint - jPoint;
-  rJI /= rJI.length();
-  rJK /= rJK.length();
-  rJL /= rJL.length();
-
-  RDGeom::Point3D n = rJI.crossProduct(rJK);
-  n /= n.length();
-
-  return n.dotProduct(rJL);
-}
-
-boost::tuple<double, double, double, double>
-calcInversionCoefficientsAndForceConstant(int at2AtomicNum, bool isCBoundToO) {
-  double res = 0.0;
-  double C0 = 0.0;
-  double C1 = 0.0;
-  double C2 = 0.0;
-  // if the central atom is sp2 carbon, nitrogen or oxygen
-  if ((at2AtomicNum == 6) || (at2AtomicNum == 7) || (at2AtomicNum == 8)) {
-    C0 = 1.0;
-    C1 = -1.0;
-    C2 = 0.0;
-    res = (isCBoundToO ? 50.0 : 6.0);
-  } else {
-    // group 5 elements are not clearly explained in the UFF paper
-    // the following code was inspired by MCCCS Towhee's ffuff.F
-    double w0 = M_PI / 180.0;
-    switch (at2AtomicNum) {
-      // if the central atom is phosphorous
-      case 15:
-        w0 *= 84.4339;
-        break;
-
-      // if the central atom is arsenic
-      case 33:
-        w0 *= 86.9735;
-        break;
-
-      // if the central atom is antimonium
-      case 51:
-        w0 *= 87.7047;
-        break;
-
-      // if the central atom is bismuth
-      case 83:
-        w0 *= 90.0;
-        break;
-    }
-    C2 = 1.0;
-    C1 = -4.0 * cos(w0);
-    C0 = -(C1 * cos(w0) + C2 * cos(2.0 * w0));
-    res = 22.0 / (C0 + C1 + C2);
-  }
-  res /= 3.0;
-
-  return boost::make_tuple(res, C0, C1, C2);
-}
-}  // end of namespace Utils
 
 InversionContrib::InversionContrib(ForceField *owner, unsigned int idx1,
                                    unsigned int idx2, unsigned int idx3,
@@ -103,14 +36,12 @@ InversionContrib::InversionContrib(ForceField *owner, unsigned int idx1,
   d_at3Idx = idx3;
   d_at4Idx = idx4;
 
-  boost::tuple<double, double, double, double> invCoeffForceCon =
-      Utils::calcInversionCoefficientsAndForceConstant(at2AtomicNum,
-                                                       isCBoundToO);
-  d_forceConstant =
-      oobForceScalingFactor * boost::tuples::get<0>(invCoeffForceCon);
-  d_C0 = boost::tuples::get<1>(invCoeffForceCon);
-  d_C1 = boost::tuples::get<2>(invCoeffForceCon);
-  d_C2 = boost::tuples::get<3>(invCoeffForceCon);
+  auto invCoeffForceCon = Utils::calcInversionCoefficientsAndForceConstant(
+      at2AtomicNum, isCBoundToO);
+  d_forceConstant = oobForceScalingFactor * std::get<0>(invCoeffForceCon);
+  d_C0 = std::get<1>(invCoeffForceCon);
+  d_C1 = std::get<2>(invCoeffForceCon);
+  d_C2 = std::get<3>(invCoeffForceCon);
 }
 
 double InversionContrib::getEnergy(double *pos) const {
@@ -173,12 +104,11 @@ void InversionContrib::getGrad(double *pos, double *grad) const {
   double cosY = n.dotProduct(rJL);
   clipToOne(cosY);
   double sinYSq = 1.0 - cosY * cosY;
-  double sinY = std::max(((sinYSq > 0.0) ? sqrt(sinYSq) : 0.0), 1.0e-8);
+  double sinY = std::max(sqrt(sinYSq), 1.0e-8);
   double cosTheta = rJI.dotProduct(rJK);
   clipToOne(cosTheta);
-  double sinThetaSq = std::max(1.0 - cosTheta * cosTheta, 1.0e-8);
-  double sinTheta =
-      std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
+  double sinThetaSq = 1.0 - cosTheta * cosTheta;
+  double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
   // sin(2 * W) = 2 * sin(W) * cos(W) = 2 * cos(Y) * sin(Y)
   double dE_dW = -d_forceConstant * (d_C1 * cosY - 4.0 * d_C2 * cosY * sinY);
   RDGeom::Point3D t1 = rJL.crossProduct(rJK);

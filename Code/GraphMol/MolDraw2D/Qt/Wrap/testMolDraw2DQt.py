@@ -1,19 +1,27 @@
-from rdkit import RDConfig
+import sys
 import unittest
-from rdkit import Chem
-from rdkit.Chem import Draw, AllChem, rdDepictor
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import AllChem, Draw, rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2DQt
 
-import sys
 try:
-  from PyQt5.Qt import *
+  if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
+    from PyQt6.QtGui import *
+    Format_RGB32 = QImage.Format.Format_RGB32
+  else:
+    from PyQt5.Qt import *
+    Format_RGB32 = QImage.Format_RGB32
 except ImportError:
   # If we can't find Qt, there's nothing we can do
   sip = None
 else:
   try:
-    # Prefer the PyQt5-bundled sip
-    from PyQt5 import sip
+    # Prefer the PyQt-bundled sip
+    if rdMolDraw2DQt.rdkitQtVersion.startswith('6'):
+      from PyQt6 import sip
+    else:
+      from PyQt5 import sip
   except ImportError:
     # No bundled sip, try the standalone package
     try:
@@ -21,7 +29,6 @@ else:
     except ImportError:
       # No sip at all
       sip = None
-
 
 
 @unittest.skipIf(sip is None, "skipping tests because pyqt is not installed")
@@ -33,7 +40,7 @@ class TestCase(unittest.TestCase):
   def testSIPBasics(self):
     m = Chem.MolFromSmiles('c1ccccc1O')
     Draw.PrepareMolForDrawing(m)
-    qimg = QImage(250, 200, QImage.Format_RGB32)
+    qimg = QImage(250, 200, Format_RGB32)
     with QPainter(qimg) as qptr:
       p = sip.unwrapinstance(qptr)
       d2d = rdMolDraw2DQt.MolDraw2DFromQPainter_(250, 200, p)
@@ -43,7 +50,7 @@ class TestCase(unittest.TestCase):
   def testBasics(self):
     m = Chem.MolFromSmiles('c1ccccc1O')
     Draw.PrepareMolForDrawing(m)
-    qimg = QImage(250, 200, QImage.Format_RGB32)
+    qimg = QImage(250, 200, Format_RGB32)
     with QPainter(qimg) as qptr:
       d2d = Draw.MolDraw2DFromQPainter(qptr)
       d2d.DrawMolecule(m)
@@ -54,7 +61,7 @@ class TestCase(unittest.TestCase):
     def testfunc():
       m = Chem.MolFromSmiles('c1ccccc1O')
       Draw.PrepareMolForDrawing(m)
-      qimg = QImage(250, 200, QImage.Format_RGB32)
+      qimg = QImage(250, 200, Format_RGB32)
       with QPainter(qimg) as qptr:
         p = sip.unwrapinstance(qptr)
         d2d = rdMolDraw2DQt.MolDraw2DFromQPainter_(250, 200, p, -1, -1)
@@ -68,7 +75,7 @@ class TestCase(unittest.TestCase):
     def testfunc():
       m = Chem.MolFromSmiles('c1ccccc1O')
       Draw.PrepareMolForDrawing(m)
-      qimg = QImage(250, 200, QImage.Format_RGB32)
+      qimg = QImage(250, 200, Format_RGB32)
       with QPainter(qimg) as qptr:
         d2d = Draw.MolDraw2DFromQPainter(qptr)
       raise ValueError("expected")

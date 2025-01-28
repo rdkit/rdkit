@@ -21,7 +21,7 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/RDThreads.h>
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <thread>
 #include <future>
 #endif
@@ -1646,7 +1646,7 @@ void randomTransform(ROMol &mol, const int cid, const int seed) {
                                     zRotAndTrans * yRot * xRot * transToOrigin);
 }
 
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 namespace detail {
 typedef struct {
   O3A::AtomTypeScheme atomTypes;
@@ -1698,7 +1698,7 @@ void getO3AForProbeConfs(ROMol &prbMol, const ROMol &refMol, void *prbProp,
       res[i].reset(lres);
     }
   }
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
     detail::O3AHelperArgs_ args = {atomTypes,        refCid,  reflect,

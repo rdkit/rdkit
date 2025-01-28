@@ -12,12 +12,14 @@
 
 """
 
+import os
+import tempfile
+import time
 
-import tempfile, os, time
 try:
   import pythoncom
-  from win32com.client import gencache, Dispatch, constants
   import win32com.client.gencache
+  from win32com.client import Dispatch, constants, gencache
   cdxModule = win32com.client.gencache.EnsureModule("{5F646AAB-3B56-48D2-904C-A68D7989C251}", 0, 7,
                                                     0)
 except Exception:
@@ -30,6 +32,7 @@ else:
 if cdxModule:
   from win32com.client import Dispatch
   import win32gui
+
 import re
 
 cdApp = None
@@ -241,8 +244,9 @@ def RaiseChemDraw():
 
 
 try:
-  from PIL import Image
   from io import StringIO
+
+  from PIL import Image
 
   def SmilesToPilImage(smilesStr):
     """takes a SMILES string and returns a PIL image using chemdraw
@@ -268,6 +272,7 @@ except ImportError:
   def MolToPilImage(dataStr, inFormat='chemical/daylight-smiles', outFormat='image/gif'):
     print('You need to have PIL installed to use this functionality')
     return None
+
 
 # ------------------------------------------------------------------
 #  interactions with Chem3D

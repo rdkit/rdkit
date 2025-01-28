@@ -1,0 +1,4 @@
+The Roboto-Regular font is license with Apache 2.0.
+https://www.apache.org/licenses/LICENSE-2.0
+It was developed by Google for Android, apparently.
+

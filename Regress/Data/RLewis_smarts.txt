@@ -327,8 +327,8 @@ N#C[C;R0;X4]O[!$(O=[C,S])] acyclic_cyanohydrin
 O=CON1C(=O)CCC1=O labile_ester
 O=COn1cncc1 labile_ester
 Fc1c(OC=O)c(F)c(F)c(F)c1F labile_ester
-# 14. quarternary S
-[S;D2][C;R0](C)(C)C quarternary_S
+# 14. quaternary S
+[S;D2][C;R0](C)(C)C quaternary_S
 # 15. hydrocarbon tails
 [C;R0;X4]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH]!@[CH][CH2] 10_alkyl_chain
 # 16. aldehydes

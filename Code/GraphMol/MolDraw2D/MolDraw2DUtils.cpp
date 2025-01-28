@@ -8,20 +8,29 @@
 //  of the RDKit source tree.
 //
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/Chirality.h>
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+#include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
+#endif
+#include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
 
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Depictor/RDDepictor.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <limits>
 #include <cmath>
+#include <sys/stat.h>
 #include <Numerics/Conrec.h>
 
 namespace RDKit {
@@ -42,11 +51,9 @@ bool isAtomCandForChiralH(const RWMol &mol, const Atom *atom) {
 void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
                           bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   if (kekulize) {
-    try {
-      MolOps::Kekulize(mol, false);  // kekulize, but keep the aromatic flags!
-    } catch (const RDKit::AtomKekulizeException &e) {
-      BOOST_LOG(rdInfoLog) << e.what() << std::endl;
-    }
+    RDLog::LogStateSetter blocker;
+    MolOps::KekulizeIfPossible(
+        mol, false);  // kekulize, but keep the aromatic flags!
   }
   if (addChiralHs) {
     std::vector<unsigned int> chiralAts;
@@ -69,7 +76,7 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   }
   if (wedgeBonds) {
-    WedgeMolBonds(mol, &mol.getConformer());
+    Chirality::wedgeMolBonds(mol, &mol.getConformer());
   }
   if (wavyBonds) {
     addWavyBondsForStereoAny(mol);
@@ -83,9 +90,11 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
                             const std::map<int, DrawColour> *highlight_atom_map,
                             const std::map<int, DrawColour> *highlight_bond_map,
                             const std::map<int, double> *highlight_radii,
-                            int confId, bool kekulize) {
+                            int confId, bool kekulize, bool addChiralHs,
+                            bool wedgeBonds, bool forceCoords, bool wavyBonds) {
   RWMol cpy(mol);
-  prepareMolForDrawing(cpy, kekulize);
+  prepareMolForDrawing(cpy, kekulize, addChiralHs, wedgeBonds, forceCoords,
+                       wavyBonds);
   // having done the prepare, we don't want to do it again in drawMolecule.
   bool old_prep_mol = drawer.drawOptions().prepareMolsBeforeDrawing;
   drawer.drawOptions().prepareMolsBeforeDrawing = false;
@@ -95,10 +104,16 @@ void prepareAndDrawMolecule(MolDraw2D &drawer, const ROMol &mol,
   drawer.drawOptions().prepareMolsBeforeDrawing = old_prep_mol;
 }
 
-void updateDrawerParamsFromJSON(MolDraw2D &drawer, const char *json) {
+void updateMolDrawOptionsFromJSON(MolDrawOptions &opts, const char *json) {
   PRECONDITION(json, "no parameter string");
-  updateDrawerParamsFromJSON(drawer, std::string(json));
+  updateMolDrawOptionsFromJSON(opts, std::string(json));
 };
+
+RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(MolDraw2D &drawer,
+                                                       const char *json) {
+  updateMolDrawOptionsFromJSON(drawer.drawOptions(), json);
+}
+
 #define PT_OPT_GET(opt) opts.opt = pt.get(#opt, opts.opt)
 
 void get_rgba(const boost::property_tree::ptree &node, DrawColour &colour) {
@@ -115,39 +130,79 @@ void get_rgba(const boost::property_tree::ptree &node, DrawColour &colour) {
   }
 }
 
-void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
+void get_colour_option(const boost::property_tree::ptree &pt, const char *pnm,
                        DrawColour &colour) {
   PRECONDITION(pnm && strlen(pnm), "bad property name");
-  if (pt->find(pnm) == pt->not_found()) {
+  if (pt.find(pnm) == pt.not_found()) {
     return;
   }
 
-  const auto &node = pt->get_child(pnm);
+  const auto &node = pt.get_child(pnm);
   get_rgba(node, colour);
 }
 
-void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
-                               ColourPalette &palette) {
+void get_colour_palette_option(const boost::property_tree::ptree &pt,
+                               const char *pnm, ColourPalette &palette) {
   PRECONDITION(pnm && strlen(pnm), "bad property name");
-  if (pt->find(pnm) == pt->not_found()) {
+  static const std::map<std::string, void (*)(ColourPalette &)>
+      PRESET_PALETTE_MAP{
+          {"default", assignDefaultPalette},
+          {"avalon", assignAvalonPalette},
+          {"cdk", assignCDKPalette},
+          {"darkmode", assignDarkModePalette},
+          {"bw", assignBWPalette},
+      };
+  auto atomColourPaletteIt = pt.find(pnm);
+  if (atomColourPaletteIt == pt.not_found()) {
     return;
   }
-
-  for (const auto &atomicNumNodeIt : pt->get_child(pnm)) {
-    int atomicNum = boost::lexical_cast<int>(atomicNumNodeIt.first);
-    DrawColour colour;
-    get_rgba(atomicNumNodeIt.second, colour);
-    palette[atomicNum] = colour;
+  // Does the "atomColourPalette" key correspond to a terminal value?
+  if (atomColourPaletteIt->second.empty()) {
+    const auto &v = atomColourPaletteIt->second.data();
+    if (v.empty()) {
+      return;
+    }
+    auto paletteName = boost::lexical_cast<std::string>(v);
+    boost::algorithm::to_lower(paletteName);
+    auto preSetPaletteIt = PRESET_PALETTE_MAP.find(paletteName);
+    if (preSetPaletteIt == PRESET_PALETTE_MAP.end()) {
+      return;
+    }
+    // Populate the palette calling the corresponding function
+    preSetPaletteIt->second(palette);
+  } else {
+    for (const auto &atomicNumNode : atomColourPaletteIt->second) {
+      int atomicNum = boost::lexical_cast<int>(atomicNumNode.first);
+      DrawColour colour;
+      get_rgba(atomicNumNode.second, colour);
+      palette[atomicNum] = colour;
+    }
   }
 }
 
-void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
+void get_highlight_style_option(const boost::property_tree::ptree &pt,
+                                const char *pnm,
+                                MultiColourHighlightStyle &mchs) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt.find(pnm) == pt.not_found()) {
+    return;
+  }
+  const auto &node = pt.get_child(pnm);
+  auto styleStr = node.get_value<std::string>();
+  if (styleStr == "Lasso") {
+    mchs = MultiColourHighlightStyle::LASSO;
+  } else if (styleStr == "CircleAndLine") {
+    mchs = MultiColourHighlightStyle::CIRCLEANDLINE;
+  }
+}
+
+void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
+                                  const std::string &json) {
   if (json == "") {
     return;
   }
   std::istringstream ss;
   ss.str(json);
-  MolDrawOptions &opts = drawer.drawOptions();
   boost::property_tree::ptree pt;
   boost::property_tree::read_json(ss, pt);
   PT_OPT_GET(atomLabelDeuteriumTritium);
@@ -195,24 +250,36 @@ void updateDrawerParamsFromJSON(MolDraw2D &drawer, const std::string &json) {
   PT_OPT_GET(variableAtomRadius);
   PT_OPT_GET(includeChiralFlagLabel);
   PT_OPT_GET(simplifiedStereoGroupLabel);
+  PT_OPT_GET(unspecifiedStereoIsUnknown);
   PT_OPT_GET(singleColourWedgeBonds);
+  PT_OPT_GET(useMolBlockWedging);
   PT_OPT_GET(scalingFactor);
   PT_OPT_GET(drawMolsSameScale);
+  PT_OPT_GET(useComplexQueryAtomSymbols);
+  PT_OPT_GET(bracketsAroundAtomLists);
 
-  get_colour_option(&pt, "highlightColour", opts.highlightColour);
-  get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
-  get_colour_option(&pt, "legendColour", opts.legendColour);
-  get_colour_option(&pt, "symbolColour", opts.symbolColour);
-  get_colour_option(&pt, "annotationColour", opts.annotationColour);
-  get_colour_option(&pt, "variableAttachmentColour",
+  get_colour_option(pt, "highlightColour", opts.highlightColour);
+  get_colour_option(pt, "backgroundColour", opts.backgroundColour);
+  get_colour_option(pt, "queryColour", opts.queryColour);
+  get_colour_option(pt, "legendColour", opts.legendColour);
+  get_colour_option(pt, "symbolColour", opts.symbolColour);
+  get_colour_option(pt, "annotationColour", opts.annotationColour);
+  get_colour_option(pt, "variableAttachmentColour",
                     opts.variableAttachmentColour);
-  get_colour_palette_option(&pt, "atomColourPalette", opts.atomColourPalette);
+  get_colour_palette_option(pt, "atomColourPalette", opts.atomColourPalette);
   if (pt.find("atomLabels") != pt.not_found()) {
     for (const auto &item : pt.get_child("atomLabels")) {
       opts.atomLabels[boost::lexical_cast<int>(item.first)] =
           item.second.get_value<std::string>();
     }
   }
+  get_highlight_style_option(pt, "multiColourHighlightStyle",
+                             opts.multiColourHighlightStyle);
+}
+
+RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(
+    MolDraw2D &drawer, const std::string &json) {
+  updateMolDrawOptionsFromJSON(drawer.drawOptions(), json);
 }
 
 void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
@@ -308,25 +375,45 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     std::vector<conrec::ConrecSegment> segs;
     conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
                     nContours, levels.data(), segs);
-    static DashPattern negDash = {2, 6};
+    static DashPattern negDash{2., 2.};
     static DashPattern posDash;
     drawer.setColour(params.contourColour);
     drawer.setLineWidth(params.contourWidth);
-    for (const auto &seg : segs) {
-      if (params.dashNegative && seg.isoVal < 0) {
-        drawer.setDash(negDash);
-      } else {
-        drawer.setDash(posDash);
+    if (!params.drawAsLines) {
+      for (const auto &seg : segs) {
+        if (params.dashNegative && seg.isoVal < 0) {
+          drawer.setDash(negDash);
+        } else {
+          drawer.setDash(posDash);
+        }
+        drawer.drawLine(seg.p1, seg.p2);
       }
-      drawer.drawLine(seg.p1, seg.p2);
+    } else {
+      drawer.setFillPolys(false);
+      auto lines =
+          conrec::connectLineSegments(segs, params.coordScaleForQuantization,
+                                      params.isovalScaleForQuantization);
+      for (const auto &pr : lines) {
+        auto [contour, val] = pr;
+        if (params.dashNegative && val < 0) {
+          drawer.setDash(negDash);
+        } else {
+          drawer.setDash(posDash);
+        }
+        if (contour.size() > 2) {
+          drawer.drawPolygon(contour);
+        } else if (contour.size() == 2) {
+          drawer.drawLine(contour[0], contour[1]);
+        }
+      }
     }
-  }
 
-  drawer.setDash(odash);
-  drawer.setLineWidth(olw);
-  drawer.setColour(ocolor);
-  drawer.setFillPolys(ofill);
-  drawer.setLineWidth(owidth);
+    drawer.setDash(odash);
+    drawer.setLineWidth(olw);
+    drawer.setColour(ocolor);
+    drawer.setFillPolys(ofill);
+    drawer.setLineWidth(owidth);
+  }
 };
 
 void contourAndDrawGaussians(MolDraw2D &drawer,
@@ -350,6 +437,9 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y = std::max(loc.y, maxP.y);
     }
     Point2D dims = maxP - minP;
+    // Here, the drawOptions().padding is just used to extend the grid
+    // beyond the molecule.  The actual padding round the image is added
+    // later.
     minP.x -= drawer.drawOptions().padding * dims.x;
     minP.y -= drawer.drawOptions().padding * dims.y;
     maxP.x += drawer.drawOptions().padding * dims.x;
@@ -362,7 +452,6 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y += params.extraGridPadding;
     }
     drawer.setScale(drawer.width(), drawer.height(), minP, maxP, mol);
-
   }
 
   size_t nx = (size_t)ceil(drawer.range().x / params.gridResolution) + 1;
@@ -400,5 +489,97 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
   contourAndDrawGrid(drawer, grid.get(), xcoords, ycoords, nContours, levels,
                      paramsCopy);
 };
+
+// ****************************************************************************
+void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
+                    const std::string &legend,
+                    const std::vector<int> *highlight_atoms,
+                    const std::vector<int> *highlight_bonds,
+                    const std::map<int, DrawColour> *highlight_atom_map,
+                    const std::map<int, DrawColour> *highlight_bond_map,
+                    const std::map<int, double> *highlight_radii, int confId) {
+  if (drawer.width() != -1 || drawer.height() != -1) {
+    BOOST_LOG(rdWarningLog)
+        << "ACS drawing mode works best with a flexiCanvas i.e. a drawer"
+        << " created with width and height of -1.  The scale will be fixed,"
+        << " and that may not look great with a pre-determined size."
+        << std::endl;
+  }
+  auto setAndGo = [&](const ROMol &theMol) -> void {
+    auto meanBondLen = MolDraw2DUtils::meanBondLength(theMol, confId);
+    setACS1996Options(drawer.drawOptions(), meanBondLen);
+    drawer.drawMolecule(theMol, legend, highlight_atoms, highlight_bonds,
+                        highlight_atom_map, highlight_bond_map, highlight_radii,
+                        confId);
+  };
+  if (!mol.getNumConformers()) {
+    // compute 2D coordinates in a standard orientation.  This needs to be
+    // done on a copy because mol is const.
+    const bool canonOrient = true;
+    RWMol cpy(mol);
+    RDDepict::compute2DCoords(cpy, nullptr, canonOrient);
+    setAndGo(cpy);
+  } else {
+    setAndGo(mol);
+  }
+}
+
+// ****************************************************************************
+void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
+  if (meanBondLen <= 0.0) {
+    throw ValueErrorException(
+        "ACS1996Options requires mean bond length > 0.0.");
+  }
+  opts.bondLineWidth = 0.6;
+  opts.scaleBondWidth = false;
+  // the guideline is for a bond length of 14.4px, and we set things up
+  // in pixels per Angstrom.
+  opts.scalingFactor = 14.4 / meanBondLen;
+  // setting the fixedBondLength means the drawing won't be scaled
+  // up in a drawer of defined size, so the bond length won't exceed
+  // 14.4 pixels.
+  opts.fixedBondLength = 14.4 / meanBondLen;
+  // offset for multiple bonds is 18% of the bond length.
+  opts.multipleBondOffset = 0.18;
+  opts.highlightBondWidthMultiplier = 32;
+  setMonochromeMode(opts, DrawColour(0.0, 0.0, 0.0), DrawColour(1.0, 1.0, 1.0));
+
+  opts.fixedFontSize = 10;
+  opts.additionalAtomLabelPadding = 0.066;
+  // The guidelines say Arial font, which is not a free font.  A close
+  // approximation is FreeSans, but that is under GPL v3.0, so can't be
+  // embedded.  Use it if it's there, but fall back on the Roboto font
+  // which uses an Apache 2.0 license and is also fairly close to Arial.
+  // It is up to the user to put the FreeSans.ttf in the right place.
+  // If the user has already specified a fontFile, assume they know
+  // what they're doing and use it.
+  if (opts.fontFile.empty()) {
+    const char *rdbase = getenv("RDBASE");
+    bool have_free_sans = false;
+    if (rdbase) {
+      opts.fontFile = std::string(rdbase) + "/Data/Fonts/FreeSans.ttf";
+      struct stat buffer;
+      have_free_sans = (stat(opts.fontFile.c_str(), &buffer) == 0);
+    }
+    if (!rdbase || !have_free_sans) {
+      opts.fontFile = "BuiltinRobotoRegular";
+    }
+  }
+}
+
+// ****************************************************************************
+double meanBondLength(const ROMol &mol, int confId) {
+  double bondLen = 0.0;
+  if (mol.getNumBonds()) {
+    auto conf = mol.getConformer(confId);
+    for (auto bond : mol.bonds()) {
+      bondLen += MolTransforms::getBondLength(conf, bond->getBeginAtomIdx(),
+                                              bond->getEndAtomIdx());
+    }
+    bondLen /= mol.getNumBonds();
+  }
+  return bondLen;
+}
+
 }  // namespace MolDraw2DUtils
 }  // namespace RDKit

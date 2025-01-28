@@ -52,7 +52,17 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
     NIH = (1u << 5),
     ZINC = (1u << 6),
 
-    ALL = PAINS | BRENK | NIH | ZINC
+    CHEMBL_Glaxo = (1u << 7),
+    CHEMBL_Dundee = (1u << 8),
+    CHEMBL_BMS = (1u << 9),
+    CHEMBL_SureChEMBL = (1u << 10),
+    CHEMBL_MLSMR = (1u << 11),
+    CHEMBL_Inpharmatica = (1u << 12),
+    CHEMBL_LINT = (1u << 13),
+    CHEMBL = CHEMBL_Glaxo | CHEMBL_Dundee | CHEMBL_BMS | CHEMBL_SureChEMBL |
+             CHEMBL_MLSMR | CHEMBL_Inpharmatica | CHEMBL_LINT,
+
+    ALL = PAINS | BRENK | NIH | ZINC | CHEMBL
   };
 
   FilterCatalogParams() : RDCatalog::CatalogParams() {
@@ -103,7 +113,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogParams
   template <class Archive>
   void serialize(Archive &ar, const unsigned int version) {
     RDUNUSED_PARAM(version);
-    ar &d_catalogs;
+    ar & d_catalogs;
   }
 #endif
 };

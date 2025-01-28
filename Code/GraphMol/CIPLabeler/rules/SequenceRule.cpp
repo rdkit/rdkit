@@ -49,6 +49,10 @@ const Sort *SequenceRule::getSorter() const {
 }
 
 int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
+  if (!CIPLabeler_detail::decrementRemainingCallCountAndCheck()) {
+    throw MaxIterationsExceeded();
+  }
+
   int cmp = compare(a, b);
   if (cmp != 0) {
     return cmp;
@@ -83,12 +87,6 @@ int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
           continue;
         }
 
-        // pseudo atoms (atomic no. 0) match all
-        if (aEdge->getEnd()->getAtomicNum() == 0 ||
-            bEdge->getEnd()->getAtomicNum() == 0) {
-          return 0;
-        }
-
         cmp = compare(aEdge, bEdge);
         if (cmp != 0) {
           return cmp;
@@ -114,12 +112,6 @@ int SequenceRule::recursiveCompare(const Edge *a, const Edge *b) const {
 
         if (areUpEdges(aNode, bNode, aEdge, bEdge)) {
           continue;
-        }
-
-        // pseudo atoms (atomic no. 0) match all
-        if (aEdge->getEnd()->getAtomicNum() == 0 ||
-            bEdge->getEnd()->getAtomicNum() == 0) {
-          return 0;
         }
 
         cmp = compare(aEdge, bEdge);

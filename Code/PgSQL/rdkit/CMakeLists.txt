@@ -1,7 +1,14 @@
+find_package(PostgreSQL REQUIRED)
+
 if(APPLE)
   set (EXTENSION_PREFIX "")
-  set (EXTENSION_SUFFIX ".so")
-  set (EXTENSION_DEST_SUFFIX ".so")
+  if(${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 16.0)
+    set (EXTENSION_SUFFIX ".dylib")
+    set (EXTENSION_DEST_SUFFIX ".dylib")
+  else()
+    set (EXTENSION_SUFFIX ".so")
+    set (EXTENSION_DEST_SUFFIX ".so")
+  endif()
 elseif(WIN32)
   set(REGEX_SEPARATOR "\\\\")
   if(MSVC)
@@ -20,16 +27,11 @@ else()
   set (EXTENSION_DEST_SUFFIX ".so")
 endif()
 
-find_package(PostgreSQL REQUIRED)
-
 if(RDK_OPTIMIZE_POPCNT)
-  add_definitions(-DUSE_BUILTIN_POPCOUNT)
+  add_definitions(-DRDK_OPTIMIZE_POPCNT)
 endif(RDK_OPTIMIZE_POPCNT)
 
 set(EXTENSION rdkit)
-if(NOT DEFINED Boost_INCLUDE_DIRS)
-  find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
-endif(NOT DEFINED Boost_INCLUDE_DIRS)
 include_directories(${Boost_INCLUDE_DIRS})
 message("postgres: ${PostgreSQL_INCLUDE_DIRS}")
 add_definitions(-DRDK_TOOLKIT_VERSION="${RDKit_RELEASENAME}")
@@ -137,7 +139,7 @@ if(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
   set(pgRDKitLibList "${pgRDKitLibList}MolInterchange;")
 endif(RDK_BUILD_MOLINTERCHANGE_SUPPORT)
 set(pgRDKitLibList "${pgRDKitLibList}"
-    "MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
+    "GeneralizedSubstruct;MolEnumerator;TautomerQuery;MolDraw2D;MolTransforms;MolHash;FMCS;ChemReactions;ChemTransforms;"
     "FileParsers;SmilesParse;Fingerprints;Subgraphs;Descriptors;"
     "PartialCharges;SubstructMatch;GraphMol;EigenSolvers;DataStructs;Depictor;"
     "RDGeometryLib;RDGeneral")
@@ -151,7 +153,7 @@ foreach(pgRDKitLib ${pgRDKitLibList})
   endif()
   set(pgRDKitLibs "${pgRDKitLibs}${pgRDKitLib}${pgRDKitLibSuffix}")
 endforeach()
-target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${pgRDKitLibs})
+target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${pgRDKitLibs} rdkit_base)
 if(RDK_BUILD_THREADSAFE_SSS)
   target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${RDKit_THREAD_LIBS})
 endif(RDK_BUILD_THREADSAFE_SSS)
@@ -203,9 +205,10 @@ if(MSVC)
   set(installPgSQLName "${installPgSQLName}.bat")
   set(installPgSQLCopyCommand "copy /Y")
   set(installPgSQLSeparator "\\")
-  set(installPgSQLBody "")
   set(BAT_QUOTE "\"")
   set(SH_QUOTE "")
+  set(PG_CPACK_STAGING_DIR "")
+  set(installPgSQLBody "")
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_CURRENT_SOURCE_DIR ${PG_CURRENT_SOURCE_DIR})
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_CURRENT_BINARY_DIR ${PG_CURRENT_BINARY_DIR})
   string(REGEX REPLACE "/" ${REGEX_SEPARATOR} PG_PKGLIBDIR ${PG_PKGLIBDIR})
@@ -216,14 +219,20 @@ else()
   set(installPgSQLName "${installPgSQLName}.sh")
   set(installPgSQLCopyCommand "cp")
   set(installPgSQLSeparator "/")
-  set(installPgSQLBody "set -x\n")
   set(BAT_QUOTE "")
   set(SH_QUOTE "\"")
+  set(PG_CPACK_STAGING_DIR "\$DESTDIR")
+  set(installPgSQLBody
+    "set -x\n"
+    "test -n \"${PG_CPACK_STAGING_DIR}\" && \\\n"
+    "  mkdir -p \"${PG_CPACK_STAGING_DIR}${PG_EXTENSIONDIR}\" && \\\n"
+    "  mkdir -p \"${PG_CPACK_STAGING_DIR}${PG_PKGLIBDIR}\"\n"
+  )
 endif()
 set(testPgSQLBody "cd \"${PG_CURRENT_BINARY_DIR}\"\n"
     "\"${PGREGRESS_BINARY}\" --inputdir=sql "
     "${PGREGRESS_BINDIR_SWITCH} rdkit-91 "
-    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs"
+    "props btree molgist bfpgist-91 sfpgist slfpgist fps reaction fmcs query xqm"
     " ${avalonRegress} ${inchiRegress} ${jsonRegress}\n")
 file(STRINGS ${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control
     PG_EXTVERSION LIMIT_COUNT 1 REGEX default_version)
@@ -237,45 +246,60 @@ if(MSVC)
     set(PG_RDKIT_LIB_SRC "${CMAKE_BUILD_TYPE}\\${PG_RDKIT_LIB_SRC}")
   endif(${CMAKE_GENERATOR} STREQUAL "NMake Makefiles")
 endif(MSVC)
-if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
-    set(RDKIT_PG_BFP_GIST_FETCH "")
-else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
-    set(RDKIT_PG_BFP_GIST_FETCH "FUNCTION    9   gbfp_fetch (internal),")
-endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.5)
 
-if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
-  set(RDKIT_RDK_GIN_BFP_TRICONSISTENT "")
-else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
-  set(RDKIT_GIN_BFP_TRICONSISTENT "FUNCTION    6   gin_bfp_triconsistent(internal, int2, bfp, int4, internal, internal, internal),")
-endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.3)
+if(RDK_PGSQL_MOL_GIST_SORTSUPPORT AND ${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 14.0)
+  set(RDKIT_PG_MOL_GIST_SORTSUPPORT "FUNCTION    11   gmol_sortsupport (internal),")
+else()
+  set(RDKIT_PG_MOL_GIST_SORTSUPPORT "")
+endif()
 
-if(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
-    set(RDKIT_PARALLEL_SAFE "")
-else(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
-    set(RDKIT_PARALLEL_SAFE "PARALLEL SAFE")
-endif(${PostgreSQL_VERSION_STRING} VERSION_LESS 9.6)
+if(RDK_PGSQL_QMOL_GIST_SORTSUPPORT AND ${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 14.0)
+  set(RDKIT_PG_QMOL_GIST_SORTSUPPORT "FUNCTION    11   gmol_sortsupport (internal),")
+else()
+  set(RDKIT_PG_QMOL_GIST_SORTSUPPORT "")
+endif()
 
+if(RDK_PGSQL_BFP_GIST_SORTSUPPORT AND ${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 14.0)
+  set(RDKIT_PG_BFP_GIST_SORTSUPPORT "FUNCTION    11   gbfp_sortsupport (internal),")
+else()
+  set(RDKIT_PG_BFP_GIST_SORTSUPPORT "")
+endif()
+
+if (${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 17.0)
+  set(RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL "ALTER OPERATOR @= (mol, mol) SET (
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>'
+);")
+  set(RDKIT_PG_ALTER_OPERATOR_ATEQ_REACTION "ALTER OPERATOR @= (reaction, reaction) SET (
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>'
+);")
+endif()
 
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 file(GLOB files "update_sql/*.in")
 foreach(file ${files})
   string(REPLACE ".in" "" output_name ${file})
+  if(MSVC)
+    string(REGEX REPLACE "/" ${REGEX_SEPARATOR} output_name ${output_name})
+  endif()
   string(REPLACE "${PG_CURRENT_SOURCE_DIR}" "${PG_CURRENT_BINARY_DIR}" output_name ${output_name})
   configure_file(${file} ${output_name})
 endforeach()
 set(installPgSQLBody "${installPgSQLBody}"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_EXTENSIONDIR}\"\n"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}update_sql${installPgSQLSeparator}${SH_QUOTE}*.sql${BAT_QUOTE} \"${PG_EXTENSIONDIR}\"\n"
-    "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" "
-    "\"${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n")
+  "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql\" \"${PG_CPACK_STAGING_DIR}${PG_EXTENSIONDIR}\"\n"
+  "${installPgSQLCopyCommand} \"${PG_CURRENT_SOURCE_DIR}${EXTENSION}.control\" \"${PG_CPACK_STAGING_DIR}${PG_EXTENSIONDIR}\"\n"
+  "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}update_sql${installPgSQLSeparator}${SH_QUOTE}*.sql${BAT_QUOTE} \"${PG_CPACK_STAGING_DIR}${PG_EXTENSIONDIR}\"\n"
+  "${installPgSQLCopyCommand} \"${PG_CURRENT_BINARY_DIR}${PG_RDKIT_LIB_SRC}\" \"${PG_CPACK_STAGING_DIR}${PG_PKGLIBDIR}${PG_RDKIT_LIB_DEST}\"\n"
+)
 file(WRITE ${testPgSQLName} ${testPgSQLBody})
 file(WRITE ${installPgSQLName} ${installPgSQLBody})
 foreach(testDir sql data expected)
   add_custom_command(TARGET ${EXTENSION}${EXTENSION_SUFFIX} PRE_BUILD
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
-      "${PG_CURRENT_SOURCE_DIR}${testDir}" "${PG_CURRENT_BINARY_DIR}${testDir}")
+      "${PG_CURRENT_SOURCE_DIR}${testDir}" "${PG_CURRENT_BINARY_DIR}${testDir}"
+      POST_BUILD)
 endforeach()
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/InstallPgSql.cmake.in"

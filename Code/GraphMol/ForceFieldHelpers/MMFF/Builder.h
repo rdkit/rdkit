@@ -1,7 +1,5 @@
 //
-//  Copyright (C) 2013-2018 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2022 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,11 +15,11 @@
 #include <string>
 #include <boost/shared_array.hpp>
 #include <boost/scoped_ptr.hpp>
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
 #endif
 #include <boost/noncopyable.hpp>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <cstdint>
 
 namespace ForceFields {
@@ -92,7 +90,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT DefaultTorsionBondSmarts
   static void create();
   static const std::string ds_string;
   static boost::scoped_ptr<const ROMol> ds_instance;
-#ifdef RDK_THREADSAFE_SSS
+#ifdef RDK_BUILD_THREADSAFE_SSS
   static std::once_flag ds_flag;
 #endif
 };

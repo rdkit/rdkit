@@ -7,11 +7,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
+import unittest
+
 #
 from rdkit import Chem
 from rdkit.Chem import rdAbbreviations
-
-import unittest
 
 
 class TestCase(unittest.TestCase):
@@ -22,6 +22,7 @@ class TestCase(unittest.TestCase):
     self.customLinkers = rdAbbreviations.ParseLinkers('''PEG3  *OCCOCCOCC* PEG3
 Pent  *CCCCC*
 Cy   *C1CCC(*)CC1  Cy''')
+    self.parseMapping = lambda mapping: tuple(map(int, mapping.strip('[],').split(',')))
 
   def testParsingAbbrevs(self):
     defn = '''CO2Et    C(=O)OCC
@@ -32,19 +33,36 @@ tBu      C(C)(C)C'''
     m = Chem.MolFromSmiles('CCC(=O)OCC')
     nm = rdAbbreviations.CondenseMolAbbreviations(m, abbrevs, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), '*CC |$CO2Et;;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (0, 1, 2))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (0, 1))
 
   def testCondense(self):
     m = Chem.MolFromSmiles('FC(F)(F)CC(=O)O')
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultAbbrevs, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C* |$CF3;;CO2H$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (1, 4, 5))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (3, 4))
+
     m = Chem.MolFromSmiles('CCC(F)(F)F')
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultAbbrevs)
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C(F)(F)F |$Et;;;;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (1, 2, 3, 4, 5))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (1, 2, 3, 4))
 
     # make sure we don't mess up chirality
     m = Chem.MolFromSmiles('FC(F)(F)[C@](Cl)(F)I')
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultAbbrevs, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), '*[C@@](F)(Cl)I |$CF3;;;;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (1, 4, 5, 6, 7))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (3, 4, 5, 6))
 
   def testLabel(self):
     m = Chem.MolFromSmiles('CC(C)CC(F)(F)F')
@@ -73,24 +91,48 @@ tBu      C(C)(C)C'''
     m = Chem.MolFromSmiles('FCOCCOCCOCCCCCCCCCCl')
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultLinkers, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), 'FC**Cl |$;;PEG3;Hept;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (0, 1, 2, 11, 18))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (0, 1, 10, 17))
 
     m = Chem.MolFromSmiles('COC1CCC(C)CC1')
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.customLinkers, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;Cy;;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (0, 1, 2, 6))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (0, 1, 5))
 
   def testAbbreviationsAndLinkers(self):
     m = Chem.MolFromSmiles('COC1CCC(C)CC1')
     # wouldn't normally do this in this order:
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.defaultAbbrevs, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C1CCC(C)CC1 |$OMe;;;;;;;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (1, 2, 3, 4, 5, 6, 7, 8))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (1, 2, 3, 4, 5, 6, 7, 8))
     nm = rdAbbreviations.CondenseMolAbbreviations(nm, self.customLinkers, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), '**C |$OMe;Cy;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (1, 2, 6))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (1, 5))
 
     # This is a more logical order
     nm = rdAbbreviations.CondenseMolAbbreviations(m, self.customLinkers, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;Cy;;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (0, 1, 2, 6))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (0, 1, 5))
     nm = rdAbbreviations.CondenseMolAbbreviations(nm, self.defaultAbbrevs, maxCoverage=1.0)
     self.assertEqual(Chem.MolToCXSmiles(nm), 'C*OC |$;Cy;;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (0, 1, 2, 6))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (0, 1, 5))
 
   def testAbbreviationsSubstanceGroups(self):
     m = Chem.MolFromMolBlock('''
@@ -125,6 +167,10 @@ M  END''')
     nm = rdAbbreviations.CondenseAbbreviationSubstanceGroups(m)
     nm.RemoveAllConformers()  # avoid coords in CXSMILES
     self.assertEqual(Chem.MolToCXSmiles(nm), '*C1CC1 |$CF3;;;$|')
+    self.assertTrue(nm.HasProp('_origAtomMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origAtomMapping')), (0, 1, 2, 4))
+    self.assertTrue(nm.HasProp('_origBondMapping'))
+    self.assertEqual(self.parseMapping(nm.GetProp('_origBondMapping')), (0, 1, 2, 3))
 
   def testGithub3692(self):
     defaults = rdAbbreviations.GetDefaultAbbreviations()

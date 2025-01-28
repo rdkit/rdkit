@@ -30,6 +30,7 @@
 #include <ios>
 #endif
 #include <cstdint>
+#include <RDGeneral/BetterEnums.h>
 
 namespace RDKit {
 class ROMol;
@@ -48,20 +49,19 @@ class RDKIT_GRAPHMOL_EXPORT MolPicklerException : public std::exception {
 };
 
 namespace PicklerOps {
-typedef enum {
-  NoProps = 0,  // no data pickled (default pickling, single-precision coords)
-  MolProps = 0x1,  // only public non computed properties
-  AtomProps = 0x2,
-  BondProps = 0x4,
-  QueryAtomData =
-      0x2,  // n.b. DEPRECATED and set to AtomProps (does the same work)
-  PrivateProps = 0x10,
-  ComputedProps = 0x20,
-  AllProps = 0x0000FFFF,        // all data pickled
-  CoordsAsDouble = 0x0001FFFF,  // save coordinates in double precision
-  NoConformers =
-      0x00020000  // do not include conformers or associated properties
-} PropertyPickleOptions;
+BETTER_ENUM(
+    PropertyPickleOptions, unsigned int,
+    NoProps = 0,  // no data pickled (default pickling, single-precision coords)
+    MolProps = 0x1,  // only public non computed properties
+    AtomProps = 0x2, BondProps = 0x4,
+    QueryAtomData =
+        0x2,  // n.b. DEPRECATED and set to AtomProps (does the same work)
+    PrivateProps = 0x10, ComputedProps = 0x20,
+    AllProps = 0x0000FFFF,        // all data pickled
+    CoordsAsDouble = 0x00010000,  // save coordinates in double precision
+    NoConformers =
+        0x00020000  // do not include conformers or associated properties
+);
 }  // namespace PicklerOps
 
 //! handles pickling (serializing) molecules
@@ -70,7 +70,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static const std::int32_t versionMajor;  //!< mark the pickle major version
   static const std::int32_t versionMinor;  //!< mark the pickle minor version
   static const std::int32_t versionPatch;  //!< mark the pickle patch version
-  static const std::int32_t endianId;  //! mark the endian-ness of the pickle
+  static const std::int32_t endianId;  //!< mark the endian-ness of the pickle
 
   //! the pickle format is tagged using these tags:
   //! NOTE: if you add to this list, be sure to put new entries AT THE BOTTOM,
@@ -143,6 +143,11 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     BEGINCONFPROPS,
     BEGINCONFS_DOUBLE,
     QUERY_TYPELABEL,
+    BEGINSYMMSSSR,
+    BEGINFASTFIND,
+    BEGINFINDOTHERORUNKNOWN,
+    QUERY_PROPERTY,
+    QUERY_PROPERTY_WITH_VALUE,
     // add new entries above here
     INVALID_TAG = 255
   } Tags;
@@ -183,10 +188,12 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     MolPickler::molFromPickle(pickle, &mol, propertyFlags);
   }
   static void molFromPickle(const std::string &pickle, ROMol *mol) {
-    MolPickler::molFromPickle(pickle, mol, PicklerOps::AllProps);
+    MolPickler::molFromPickle(pickle, mol,
+                              PicklerOps::PropertyPickleOptions::AllProps);
   }
   static void molFromPickle(const std::string &pickle, ROMol &mol) {
-    MolPickler::molFromPickle(pickle, &mol, PicklerOps::AllProps);
+    MolPickler::molFromPickle(pickle, &mol,
+                              PicklerOps::PropertyPickleOptions::AllProps);
   }
 
   //! constructs a molecule from a pickle stored in a stream
@@ -197,10 +204,12 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     MolPickler::molFromPickle(ss, &mol, propertyFlags);
   }
   static void molFromPickle(std::istream &ss, ROMol *mol) {
-    MolPickler::molFromPickle(ss, mol, PicklerOps::AllProps);
+    MolPickler::molFromPickle(ss, mol,
+                              PicklerOps::PropertyPickleOptions::AllProps);
   }
   static void molFromPickle(std::istream &ss, ROMol &mol) {
-    MolPickler::molFromPickle(ss, &mol, PicklerOps::AllProps);
+    MolPickler::molFromPickle(ss, &mol,
+                              PicklerOps::PropertyPickleOptions::AllProps);
   }
 
  private:
@@ -239,9 +248,9 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 
   //! do the actual work of pickling Stereo Group data
   template <typename T>
-  static void _pickleStereo(std::ostream &ss,
-                            const std::vector<StereoGroup> &groups,
-                            std::map<int, int> &atomIdxMap);
+  static void _pickleStereo(std::ostream &ss, std::vector<StereoGroup> groups,
+                            std::map<int, int> &atomIdxMap,
+                            std::map<int, int> &bondIdxMap);
 
   //! do the actual work of pickling a Conformer
   template <typename T, typename C>
@@ -267,8 +276,10 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   //! extract ring info from a pickle and add the resulting RingInfo to the
   /// molecule
   template <typename T>
-  static void _addRingInfoFromPickle(std::istream &ss, ROMol *mol, int version,
-                                     bool directMap = false);
+  static void _addRingInfoFromPickle(
+      std::istream &ss, ROMol *mol, int version, bool directMap = false,
+      FIND_RING_TYPE ringType =
+          FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN);
 
   //! extract a SubstanceGroup from a pickle
   template <typename T>
@@ -286,7 +297,8 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
   static void _pickleProperties(std::ostream &ss, const RDProps &props,
                                 unsigned int pickleFlags);
   //! unpickle standard properties
-  static void _unpickleProperties(std::istream &ss, RDProps &props);
+  static void _unpickleProperties(std::istream &ss, RDProps &props,
+                                  int version);
 
   //! backwards compatibility
   static void _pickleV1(const ROMol *mol, std::ostream &ss);
@@ -299,11 +311,15 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
 };
 
 namespace PicklerOps {
+// clang-format off
 using QueryDetails = boost::variant<
     MolPickler::Tags, std::tuple<MolPickler::Tags, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t>,
     std::tuple<MolPickler::Tags, int32_t, int32_t, int32_t, char>,
-    std::tuple<MolPickler::Tags, std::set<int32_t>>>;
+    std::tuple<MolPickler::Tags, std::set<int32_t>>,
+    std::tuple<MolPickler::Tags, std::string>,
+    std::tuple<MolPickler::Tags, PairHolder, double>>;
+// clang-format on
 template <class T>
 QueryDetails getQueryDetails(const Queries::Query<int, T const *, true> *query);
 

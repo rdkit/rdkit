@@ -31,14 +31,25 @@ namespace MolStandardize {
     -
 */
 
+struct RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnectorOptions {
+  bool splitGrignards = false;  // Whether to split Grignard-type complexes.
+  bool splitAromaticC = false;  // Whether to split metal-aromatic C bonds.
+  bool adjustCharges = true;    // Whether to adjust charges on ligand atoms.
+  bool removeHapticDummies =
+      false;  // Whether to remove the dummy atoms representing haptic bonds.
+              // Such dummies are bonded to the metal with a bond
+              // that has the _MolFileBondEndPts prop set.
+};
+
 class RDKIT_MOLSTANDARDIZE_EXPORT MetalDisconnector {
  public:
-  MetalDisconnector();
+  MetalDisconnector(
+      const MetalDisconnectorOptions &options = MetalDisconnectorOptions());
   MetalDisconnector(const MetalDisconnector &other);
   ~MetalDisconnector();
 
-  ROMol *getMetalNof();  // {return metal_nof;}
-  ROMol *getMetalNon();  // {return metal_non;}
+  ROMol *getMetalNof();  // {return dp_metal_nof;}
+  ROMol *getMetalNon();  // {return dp_metal_non;}
   void setMetalNof(const ROMol &mol);
   void setMetalNon(const ROMol &mol);
 
@@ -57,6 +68,7 @@ accordingly.
   //! overload
   /// modifies the molecule in place
   void disconnect(RWMol &mol);
+  void disconnectInPlace(RWMol &mol) { disconnect(mol); };
 
  private:
   struct NonMetal {
@@ -64,10 +76,21 @@ accordingly.
     std::vector<int> boundMetalIndices;
   };
   int chargeAdjustment(const Atom *a, int order);
-  ROMOL_SPTR metal_nof;
-  ROMOL_SPTR metal_non;
+  ROMOL_SPTR dp_metal_nof;
+  ROMOL_SPTR dp_metal_non;
+  ROMOL_SPTR dp_metalDummy;
+
+  const MetalDisconnectorOptions d_options;
+
+  void adjust_charges(RDKit::RWMol &mol, std::map<int, NonMetal> &nonMetals,
+                      std::map<int, int> &metalChargeExcess);
+  // Remove any dummy atoms that are bonded to a metal and have the ENDPTS
+  // prop.  These are assumed to marking a haptic bond from the aotms in
+  // ENDPTS to the metal, e.g. in ferrocene.
+  void remove_haptic_dummies(RDKit::RWMol &mol);
 
 };  // class Metal
+
 }  // namespace MolStandardize
 }  // namespace RDKit
 #endif

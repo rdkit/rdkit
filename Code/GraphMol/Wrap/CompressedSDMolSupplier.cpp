@@ -32,8 +32,12 @@ namespace io = boost::iostreams;
 namespace python = boost::python;
 
 namespace RDKit {
+
+// ForwardSDMolSupplier cannot (yet?) be reset, so we have to override
+// the template that was defined in MolSupplier.h.
 // Note that this returns a pointer to the supplier itself, so be careful
 // that it doesn't get deleted by python!
+template <>
 ForwardSDMolSupplier *MolSupplIter(ForwardSDMolSupplier *suppl) {
   return suppl;
 }
@@ -58,7 +62,7 @@ ForwardSDMolSupplier *createForwardSupplier(std::string filename, bool sanitize,
                                             bool removeHs) {
   std::vector<std::string> splitName;
   boost::split(splitName, filename, boost::is_any_of("."));
-  io::filtering_istream *strm = new io::filtering_istream();
+  std::unique_ptr<io::filtering_istream> strm(new io::filtering_istream());
   if (splitName.back() == "sdf") {
   } else if (splitName.back() == "gz") {
 #ifndef RDK_NOGZIP
@@ -84,7 +88,7 @@ ForwardSDMolSupplier *createForwardSupplier(std::string filename, bool sanitize,
   strm->push(fileSource);
 
   ForwardSDMolSupplier *res =
-      new ForwardSDMolSupplier(strm, true, sanitize, removeHs);
+      new ForwardSDMolSupplier(strm.release(), true, sanitize, removeHs);
   return res;
 }
 

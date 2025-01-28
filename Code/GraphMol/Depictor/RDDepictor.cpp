@@ -10,6 +10,7 @@
 
 #include "RDDepictor.h"
 #include "EmbeddedFrag.h"
+#include "Templates.h"
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
 #include <CoordGen/CoordGen.h>
@@ -18,14 +19,16 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/Conformer.h>
+#include <GraphMol/Chirality.h>
 #include <cmath>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Rings.h>
+#include <GraphMol/QueryAtom.h>
 #include <Geometry/point.h>
-#include <Geometry/Transform2D.h>
-#include <Geometry/Transform3D.h>
+#include <GraphMol/MolAlign/AlignMolecules.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
+#include <GraphMol/Chirality.h>
 #include "EmbeddedFrag.h"
 #include "DepictUtils.h"
 #include <iostream>
@@ -37,10 +40,215 @@ namespace RDDepict {
 bool preferCoordGen = false;
 
 namespace DepictorLocal {
+
+constexpr auto ISQRT2 = 0.707107;
+constexpr auto SQRT3_2 = 0.866025;
+
+std::vector<const RDKit::Atom *> getRankedAtomNeighbors(
+    const RDKit::ROMol &mol, const RDKit::Atom *atom,
+    const std::vector<int> &atomRanks) {
+  std::vector<const RDKit::Atom *> nbrs;
+  for (auto nbr : mol.atomNeighbors(atom)) {
+    nbrs.push_back(nbr);
+  }
+  std::sort(nbrs.begin(), nbrs.end(),
+            [&atomRanks](const auto e1, const auto e2) {
+              return atomRanks[e1->getIdx()] < atomRanks[e2->getIdx()];
+            });
+  return nbrs;
+}
+
+void embedSquarePlanar(const RDKit::ROMol &mol, const RDKit::Atom *atom,
+                       std::list<EmbeddedFrag> &efrags,
+                       const std::vector<int> &atomRanks) {
+  static const RDGeom::Point2D idealPoints[] = {
+      RDGeom::Point2D(ISQRT2 * BOND_LEN, ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(ISQRT2 * BOND_LEN, -ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(-ISQRT2 * BOND_LEN, -ISQRT2 * BOND_LEN),
+      RDGeom::Point2D(-ISQRT2 * BOND_LEN, ISQRT2 * BOND_LEN),
+  };
+  PRECONDITION(atom, "bad atom");
+  if (atom->getChiralTag() != RDKit::Atom::ChiralType::CHI_SQUAREPLANAR) {
+    return;
+  }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
+  RDGeom::INT_POINT2D_MAP coordMap;
+  coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
+  coordMap[nbrs[0]->getIdx()] = idealPoints[0];
+  bool q2Full = false;
+  for (const auto nbr : nbrs) {
+    if (nbr == nbrs.front()) {
+      continue;
+    }
+    auto angle =
+        RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs.front(), nbr);
+    if (fabs(angle - 180) < 0.1) {
+      coordMap[nbr->getIdx()] = idealPoints[2];
+    } else {
+      if (!q2Full) {
+        coordMap[nbr->getIdx()] = idealPoints[1];
+        q2Full = true;
+      } else {
+        coordMap[nbr->getIdx()] = idealPoints[3];
+      }
+    }
+  }
+  efrags.emplace_back(&mol, coordMap);
+}
+
+void embedTBP(const RDKit::ROMol &mol, const RDKit::Atom *atom,
+              std::list<EmbeddedFrag> &efrags,
+              const std::vector<int> &atomRanks) {
+  static const RDGeom::Point2D idealPoints[] = {
+      RDGeom::Point2D(0, BOND_LEN),                        // axial
+      RDGeom::Point2D(0, -BOND_LEN),                       // axial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN, BOND_LEN / 2),  // equatorial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN,
+                      -BOND_LEN / 2),  // equatorial
+      RDGeom::Point2D(BOND_LEN, 0),    // equatorial
+  };
+  PRECONDITION(atom, "bad atom");
+  if (atom->getChiralTag() !=
+      RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL) {
+    return;
+  }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
+  RDGeom::INT_POINT2D_MAP coordMap;
+  coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
+  const RDKit::Atom *axial1 =
+      RDKit::Chirality::getTrigonalBipyramidalAxialAtom(atom);
+  const RDKit::Atom *axial2 =
+      RDKit::Chirality::getTrigonalBipyramidalAxialAtom(atom, -1);
+  if (axial1) {
+    coordMap[axial1->getIdx()] = idealPoints[0];
+  }
+  if (axial2) {
+    coordMap[axial2->getIdx()] = idealPoints[1];
+  }
+  unsigned whichEq = 2;
+  for (const auto nbr : nbrs) {
+    if (nbr != axial1 && nbr != axial2) {
+      coordMap[nbr->getIdx()] = idealPoints[whichEq++];
+    }
+  }
+  efrags.emplace_back(&mol, coordMap);
+}
+
+void embedOctahedral(const RDKit::ROMol &mol, const RDKit::Atom *atom,
+                     std::list<EmbeddedFrag> &efrags,
+                     const std::vector<int> &atomRanks) {
+  static const RDGeom::Point2D idealPoints[] = {
+      RDGeom::Point2D(0, BOND_LEN),                         // axial
+      RDGeom::Point2D(0, -BOND_LEN),                        // axial
+      RDGeom::Point2D(SQRT3_2 * BOND_LEN, BOND_LEN / 2),    // equatorial
+      RDGeom::Point2D(SQRT3_2 * BOND_LEN, -BOND_LEN / 2),   // equatorial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN, -BOND_LEN / 2),  // equatorial
+      RDGeom::Point2D(-SQRT3_2 * BOND_LEN, BOND_LEN / 2),   // equatorial
+  };
+  PRECONDITION(atom, "bad atom");
+  if (atom->getChiralTag() != RDKit::Atom::ChiralType::CHI_OCTAHEDRAL) {
+    return;
+  }
+  auto nbrs = getRankedAtomNeighbors(mol, atom, atomRanks);
+  RDGeom::INT_POINT2D_MAP coordMap;
+  coordMap[atom->getIdx()] = RDGeom::Point2D(0., 0.);
+  const RDKit::Atom *axial1 = nullptr;
+  const RDKit::Atom *axial2 = nullptr;
+  for (auto i = 0u; i < nbrs.size(); ++i) {
+    bool all90 = true;
+    for (auto j = i + 1; j < nbrs.size(); ++j) {
+      if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(atom, nbrs[i],
+                                                             nbrs[j]) -
+               180) < 0.1) {
+        axial1 = nbrs[i];
+        axial2 = nbrs[j];
+        all90 = false;
+        break;
+      } else if (fabs(RDKit::Chirality::getIdealAngleBetweenLigands(
+                          atom, nbrs[i], nbrs[j]) -
+                      90) > 0.1) {
+        all90 = false;
+      }
+    }
+    if (all90) {
+      axial1 = nbrs[i];
+    }
+    if (axial1) {
+      break;
+    }
+  }
+  if (axial1) {
+    coordMap[axial1->getIdx()] = idealPoints[0];
+  }
+  if (axial2) {
+    coordMap[axial2->getIdx()] = idealPoints[1];
+  }
+  const RDKit::Atom *refEqAtom1 = nullptr;
+  const RDKit::Atom *refEqAtom2 = nullptr;
+  for (const auto nbr : nbrs) {
+    if (nbr != axial1 && nbr != axial2) {
+      if (!refEqAtom1) {
+        refEqAtom1 = nbr;
+        coordMap[nbr->getIdx()] = idealPoints[2];
+        refEqAtom2 = RDKit::Chirality::getChiralAcrossAtom(atom, nbr);
+        if (refEqAtom2) {
+          coordMap[refEqAtom2->getIdx()] = idealPoints[4];
+        }
+      } else {
+        if (nbr == refEqAtom2 || nbr == refEqAtom1) {
+          continue;
+        }
+        coordMap[nbr->getIdx()] = idealPoints[3];
+        const auto acrossAtom2 =
+            RDKit::Chirality::getChiralAcrossAtom(atom, nbr);
+        if (acrossAtom2) {
+          coordMap[acrossAtom2->getIdx()] = idealPoints[5];
+        }
+        break;
+      }
+    }
+  }
+  efrags.emplace_back(&mol, coordMap);
+}
+
+void embedNontetrahedralStereo(const RDKit::ROMol &mol,
+                               std::list<EmbeddedFrag> &efrags,
+                               const std::vector<int> &atomRanks) {
+  boost::dynamic_bitset<> consider(mol.getNumAtoms());
+  for (const auto atm : mol.atoms()) {
+    if (RDKit::Chirality::hasNonTetrahedralStereo(atm)) {
+      consider[atm->getIdx()] = 1;
+    }
+  }
+  if (consider.empty()) {
+    return;
+  }
+  for (const auto atm : mol.atoms()) {
+    if (!consider[atm->getIdx()]) {
+      continue;
+    }
+    switch (atm->getChiralTag()) {
+      case RDKit::Atom::ChiralType::CHI_SQUAREPLANAR:
+        embedSquarePlanar(mol, atm, efrags, atomRanks);
+        break;
+      case RDKit::Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL:
+        embedTBP(mol, atm, efrags, atomRanks);
+        break;
+      case RDKit::Atom::ChiralType::CHI_OCTAHEDRAL:
+        embedOctahedral(mol, atm, efrags, atomRanks);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 // arings: indices of atoms in rings
 void embedFusedSystems(const RDKit::ROMol &mol,
                        const RDKit::VECT_INT_VECT &arings,
-                       std::list<EmbeddedFrag> &efrags) {
+                       std::list<EmbeddedFrag> &efrags,
+                       const RDGeom::INT_POINT2D_MAP *coordMap,
+                       bool useRingTemplates) {
   RDKit::INT_INT_VECT_MAP neighMap;
   RingUtils::makeRingNeighborMap(arings, neighMap);
 
@@ -57,7 +265,22 @@ void embedFusedSystems(const RDKit::ROMol &mol,
     for (auto rid : fused) {
       frings.push_back(arings.at(rid));
     }
-    EmbeddedFrag efrag(&mol, frings);
+
+    // don't allow ring system templates if >1 atom in this ring system
+    // has a user-defined coordinate from coordMap
+    bool allowRingTemplates = useRingTemplates;
+    if (useRingTemplates && coordMap) {
+      boost::dynamic_bitset<> coordMapAtoms(mol.getNumAtoms());
+      for (const auto &ring : frings) {
+        for (const auto &aid : ring) {
+          if (coordMap->find(aid) != coordMap->end()) {
+            coordMapAtoms.set(aid);
+          }
+        }
+      }
+      allowRingTemplates = (coordMapAtoms.count() < 2);
+    }
+    EmbeddedFrag efrag(&mol, frings, allowRingTemplates);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);
     size_t rix;
@@ -179,12 +402,18 @@ void _shiftCoords(std::list<EmbeddedFrag> &efrags) {
 double copySign(double to, double from, double tol) {
   return (from < -tol ? -fabs(to) : fabs(to));
 }
+
+struct ThetaBin {
+  double d_thetaAvg = 0.0;
+  std::vector<double> thetaValues;
+};
 }  // namespace DepictorLocal
 
 void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
-                          std::list<EmbeddedFrag> &efrags) {
-  RDKit::INT_VECT atomRanks;
+                          std::list<EmbeddedFrag> &efrags,
+                          bool useRingTemplates) {
+  std::vector<int> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     atomRanks[i] = getAtomDepictRank(mol.getAtomWithIdx(i));
@@ -192,7 +421,8 @@ void computeInitialCoords(RDKit::ROMol &mol,
   RDKit::VECT_INT_VECT arings;
 
   // first find all the rings
-  RDKit::MolOps::symmetrizeSSSR(mol, arings);
+  bool includeDativeBonds = true;
+  RDKit::MolOps::symmetrizeSSSR(mol, arings, includeDativeBonds);
 
   // do stereochemistry
   RDKit::MolOps::assignStereochemistry(mol, false);
@@ -211,8 +441,13 @@ void computeInitialCoords(RDKit::ROMol &mol,
 
   if (arings.size() > 0) {
     // first deal with the fused rings
-    DepictorLocal::embedFusedSystems(mol, arings, efrags);
+    DepictorLocal::embedFusedSystems(mol, arings, efrags, coordMap,
+                                     useRingTemplates);
   }
+
+  // do non-tetrahedral stereo
+  DepictorLocal::embedNontetrahedralStereo(mol, efrags, atomRanks);
+
   // deal with any cis/trans systems
   DepictorLocal::embedCisTransSystems(mol, efrags);
   // now get the atoms that are not yet embedded in either a cis/trans system
@@ -288,6 +523,49 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
   }
   return confId;
 }
+
+void setRingSystemTemplates(const std::string template_path) {
+  // CoordinateTemplates is a singleton that holds all the templates, starting
+  // with the default templates if different templates are set using
+  // `RDDepictor::SetRingSystemTemplates`, the default templates are replaced by
+  // the new templates
+  CoordinateTemplates &coordinate_templates =
+      CoordinateTemplates::getRingSystemTemplates();
+  coordinate_templates.setRingSystemTemplates(template_path);
+}
+
+void addRingSystemTemplates(const std::string template_path) {
+  CoordinateTemplates &coordinate_templates =
+      CoordinateTemplates::getRingSystemTemplates();
+  coordinate_templates.addRingSystemTemplates(template_path);
+}
+
+void loadDefaultRingSystemTemplates() {
+  CoordinateTemplates &coordinate_templates =
+      CoordinateTemplates::getRingSystemTemplates();
+  coordinate_templates.loadDefaultTemplates();
+}
+
+unsigned int compute2DCoords(RDKit::ROMol &mol,
+                             const RDGeom::INT_POINT2D_MAP *coordMap,
+                             bool canonOrient, bool clearConfs,
+                             unsigned int nFlipsPerSample,
+                             unsigned int nSamples, int sampleSeed,
+                             bool permuteDeg4Nodes, bool forceRDKit,
+                             bool useRingTemplates) {
+  Compute2DCoordParameters params;
+  params.coordMap = coordMap;
+  params.canonOrient = canonOrient;
+  params.clearConfs = clearConfs;
+  params.nFlipsPerSample = nFlipsPerSample;
+  params.nSamples = nSamples;
+  params.sampleSeed = sampleSeed;
+  params.permuteDeg4Nodes = permuteDeg4Nodes;
+  params.forceRDKit = forceRDKit;
+  params.useRingTemplates = useRingTemplates;
+  return compute2DCoords(mol, params);
+}
+
 //
 //
 // 50,000 foot algorithm:
@@ -302,25 +580,26 @@ unsigned int copyCoordinate(RDKit::ROMol &mol, std::list<EmbeddedFrag> &efrags,
 //
 //
 unsigned int compute2DCoords(RDKit::ROMol &mol,
-                             const RDGeom::INT_POINT2D_MAP *coordMap,
-                             bool canonOrient, bool clearConfs,
-                             unsigned int nFlipsPerSample,
-                             unsigned int nSamples, int sampleSeed,
-                             bool permuteDeg4Nodes, bool forceRDKit) {
+                             const Compute2DCoordParameters &params) {
+  if (mol.needsUpdatePropertyCache()) {
+    mol.updatePropertyCache(false);
+  }
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
   // default to use CoordGen if we have it installed
-  if (!forceRDKit && preferCoordGen) {
-    RDKit::CoordGen::CoordGenParams params;
-    if (coordMap) {
-      params.coordMap = *coordMap;
+  if (!params.forceRDKit && preferCoordGen) {
+    RDKit::CoordGen::CoordGenParams coordgen_params;
+    if (params.coordMap) {
+      coordgen_params.coordMap = *params.coordMap;
     }
-    auto cid = RDKit::CoordGen::addCoords(mol, &params);
+    auto cid = RDKit::CoordGen::addCoords(mol, &coordgen_params);
     return cid;
   };
 #endif
+
+  RDKit::ROMol cp(mol);
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, coordMap, efrags);
+  computeInitialCoords(cp, params.coordMap, efrags, params.useRingTemplates);
 
 #if 1
   // perform random sampling here to improve the density
@@ -328,10 +607,10 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     // either sample the 2D space by randomly flipping rotatable
     // bonds in the structure or flip only bonds along the shortest
     // path between colliding atoms - don't do both
-    if ((nSamples > 0) && (nFlipsPerSample > 0)) {
-      eri.randomSampleFlipsAndPermutations(nFlipsPerSample, nSamples,
-                                           sampleSeed, nullptr, 0.0,
-                                           permuteDeg4Nodes);
+    if ((params.nSamples > 0) && (params.nFlipsPerSample > 0)) {
+      eri.randomSampleFlipsAndPermutations(
+          params.nFlipsPerSample, params.nSamples, params.sampleSeed, nullptr,
+          0.0, params.permuteDeg4Nodes);
     } else {
       eri.removeCollisionsBondFlip();
     }
@@ -341,8 +620,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
     eri.removeCollisionsOpenAngles();
     eri.removeCollisionsShortenBonds();
   }
-  if (!coordMap || !coordMap->size()) {
-    if (canonOrient && efrags.size()) {
+  if (!params.coordMap || !params.coordMap->size()) {
+    if (params.canonOrient && efrags.size()) {
       // if we do not have any prespecified coordinates - canonicalize
       // the orientation of the fragment so that the longest axes fall
       // along the x-axis etc.
@@ -354,12 +633,12 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   DepictorLocal::_shiftCoords(efrags);
 #endif
   // create a conformation on the molecule and copy the coordinates
-  auto cid = copyCoordinate(mol, efrags, clearConfs);
+  auto cid = copyCoordinate(mol, efrags, params.clearConfs);
 
   // special case for a single-atom coordMap template
-  if ((coordMap) && (coordMap->size() == 1)) {
+  if ((params.coordMap) && (params.coordMap->size() == 1)) {
     auto &conf = mol.getConformer(cid);
-    auto cRef = coordMap->begin();
+    auto cRef = params.coordMap->begin();
     const auto &confPos = conf.getAtomPos(cRef->first);
     auto refPos = cRef->second;
     refPos.x -= confPos.x;
@@ -423,7 +702,7 @@ unsigned int compute2DCoordsMimicDistMat(
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes, bool) {
   // storage for pieces of a molecule/s that are embedded in 2D
   std::list<EmbeddedFrag> efrags;
-  computeInitialCoords(mol, nullptr, efrags);
+  computeInitialCoords(mol, nullptr, efrags, false);
 
   // now perform random flips of rotatable bonds so that we can sample the space
   // and try to mimic the distances in dmat
@@ -445,122 +724,392 @@ unsigned int compute2DCoordsMimicDistMat(
   return copyCoordinate(mol, efrags, clearConfs);
 }
 
+namespace {
+void removeAllConformersButOne(RDKit::ROMol &mol, int confId) {
+  std::vector<int> conformerIndicesToRemove;
+  for (auto confIt = mol.beginConformers(); confIt != mol.endConformers();
+       ++confIt) {
+    int i = (*confIt)->getId();
+    if ((confId != -1 && i == confId) ||
+        (confId == -1 && confIt == mol.beginConformers())) {
+      continue;
+    }
+    conformerIndicesToRemove.push_back(i);
+  }
+  for (auto i : conformerIndicesToRemove) {
+    mol.removeConformer(i);
+  }
+  CHECK_INVARIANT(mol.getNumConformers() == 1, "");
+  mol.getConformer().setId(0);
+}
+}  // namespace
+
 //! \brief Compute 2D coordinates where a piece of the molecule is
-//   constrained to have the same coordinates as a reference;
-//   correspondences between reference and molecule atom indices
-//   are determined by refMatchVect
+///  hard or soft-constrained to have the same coordinates as a reference.
+///  Correspondences between reference and molecule atom indices
+///  are determined by refMatchVect.
 void generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference,
-    const RDKit::MatchVectType &refMatchVect, int confId, bool forceRDKit) {
+    const RDKit::MatchVectType &refMatchVect, int confId,
+    const ConstrainedDepictionParams &p) {
   if (refMatchVect.size() > reference.getNumAtoms()) {
-    throw RDDepict::DepictException(
+    throw DepictException(
         "When a refMatchVect is provided, it must have size "
         "<= number of atoms in the reference");
   }
-  RDGeom::INT_POINT2D_MAP coordMap;
-  const RDKit::Conformer &conf = reference.getConformer(confId);
   for (const auto &mv : refMatchVect) {
     if (mv.first > static_cast<int>(reference.getNumAtoms())) {
-      throw RDDepict::DepictException(
+      throw DepictException(
           "Reference atom index in refMatchVect out of range");
     }
     if (mv.second > static_cast<int>(mol.getNumAtoms())) {
-      throw RDDepict::DepictException(
-          "Molecule atom index in refMatchVect out of range");
+      throw DepictException("Molecule atom index in refMatchVect out of range");
     }
-    const auto &pt3 = conf.getAtomPos(mv.first);
-    RDGeom::Point2D pt2(pt3.x, pt3.y);
-    coordMap[mv.second] = pt2;
   }
-  RDDepict::compute2DCoords(mol, &coordMap, false /* canonOrient */,
-                            true /* clearConfs */, 0, 0, 0, false, forceRDKit);
+  bool hasExistingCoords = mol.getNumConformers() > 0;
+  bool shouldClearWedgingInfo = p.adjustMolBlockWedging && !hasExistingCoords;
+  bool shouldInvertWedgingIfRequired = false;
+  RDGeom::Transform3D trans;
+  if (p.alignOnly) {
+    if (!hasExistingCoords) {
+      compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false, p.forceRDKit);
+    }
+    RDKit::MatchVectType atomMap(refMatchVect.size());
+    std::transform(
+        refMatchVect.begin(), refMatchVect.end(), atomMap.begin(),
+        [](auto &pair) { return std::make_pair(pair.second, pair.first); });
+    RDKit::MolAlign::getAlignmentTransform(mol, reference, trans,
+                                           p.existingConfId, confId, &atomMap);
+    MolTransforms::transformConformer(mol.getConformer(p.existingConfId),
+                                      trans);
+    removeAllConformersButOne(mol, p.existingConfId);
+    if (!shouldClearWedgingInfo) {
+      shouldInvertWedgingIfRequired = p.adjustMolBlockWedging;
+    }
+  } else {
+    RDGeom::INT_POINT2D_MAP coordMap;
+    const RDKit::Conformer &refConf = reference.getConformer(confId);
+    for (const auto &mv : refMatchVect) {
+      const auto &pt3 = refConf.getAtomPos(mv.first);
+      coordMap[mv.second] = RDGeom::Point2D(pt3.x, pt3.y);
+    }
+    auto newConfId = compute2DCoords(
+        mol, &coordMap, false /* canonOrient */,
+        !(p.adjustMolBlockWedging && hasExistingCoords) /* clearConfs */, 0, 0,
+        0, false, p.forceRDKit);
+    if (p.adjustMolBlockWedging) {
+      // we need to clear the existing wedging information if:
+      // 1. the original molecule had no coordinates to start with
+      //    (in that case it should already have no wedging info either, anyway)
+      // 2. there is a match and wedges are outside the constrained scaffold
+      constexpr double RMSD_THRESHOLD = 1.e-2;
+      constexpr double MSD_THRESHOLD = RMSD_THRESHOLD * RMSD_THRESHOLD;
+      if (!shouldClearWedgingInfo) {
+        boost::dynamic_bitset<> molMatchingIndices(mol.getNumAtoms());
+        for (const auto &pair : refMatchVect) {
+          molMatchingIndices.set(pair.second);
+        }
+        // if any of the bonds that have wedging information from the molblock
+        // has at least one atom which is not part of the scaffold, we cannot
+        // preserve wedging information
+        auto molBonds = mol.bonds();
+        shouldClearWedgingInfo = std::any_of(
+            molBonds.begin(), molBonds.end(),
+            [&molMatchingIndices](const auto b) {
+              return (
+                  (b->hasProp(RDKit::common_properties::_MolFileBondStereo) ||
+                   b->hasProp(RDKit::common_properties::_MolFileBondCfg)) &&
+                  (!molMatchingIndices.test(b->getBeginAtomIdx()) ||
+                   !molMatchingIndices.test(b->getEndAtomIdx())));
+            });
+      }
+      if (!shouldClearWedgingInfo) {
+        // check that scaffold coordinates have not changed, which may
+        // happen when using CoordGen
+        const auto &molPos = mol.getConformer(newConfId).getPositions();
+        const auto &refPos = refConf.getPositions();
+        shouldClearWedgingInfo = std::any_of(
+            refMatchVect.begin(), refMatchVect.end(),
+            [&molPos, &refPos, MSD_THRESHOLD](const auto &pair) {
+              return (molPos.at(pair.second) - refPos.at(pair.first))
+                         .lengthSq() > MSD_THRESHOLD;
+            });
+      }
+      // final check: we still might need to invert wedging if the molecule
+      // has flipped to match the scaffold
+      if (!shouldClearWedgingInfo) {
+        RDKit::MatchVectType identityMatch(refMatchVect.size());
+        std::transform(refMatchVect.begin(), refMatchVect.end(),
+                       identityMatch.begin(), [](const auto &pair) {
+                         return std::make_pair(pair.second, pair.second);
+                       });
+        auto rmsd = RDKit::MolAlign::getAlignmentTransform(
+            mol, mol, trans, newConfId, p.existingConfId, &identityMatch);
+        // this should not happen as we checked that previously, but we are
+        // notoriously paranoid
+        if (rmsd > RMSD_THRESHOLD) {
+          shouldClearWedgingInfo = true;
+        } else {
+          shouldInvertWedgingIfRequired = true;
+        }
+      }
+    }
+    if (hasExistingCoords) {
+      removeAllConformersButOne(mol, newConfId);
+    }
+  }
+  if (shouldClearWedgingInfo) {
+    RDKit::Chirality::clearMolBlockWedgingInfo(mol);
+  } else if (shouldInvertWedgingIfRequired) {
+    invertWedgingIfMolHasFlipped(mol, trans);
+  }
+}
+
+// Overload
+void generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference,
+    const RDKit::MatchVectType &refMatchVect, int confId, bool forceRDKit) {
+  ConstrainedDepictionParams p;
+  p.forceRDKit = forceRDKit;
+  generateDepictionMatching2DStructure(mol, reference, refMatchVect, confId, p);
 }
 
 //! \brief Compute 2D coordinates where a piece of the molecule is
-//   constrained to have the same coordinates as a reference.
+///  hard or soft-constrained to have the same coordinates as a reference.
+RDKit::MatchVectType generateDepictionMatching2DStructure(
+    RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
+    const RDKit::ROMol *referencePattern,
+    const ConstrainedDepictionParams &params) {
+  // reference with added Hs
+  std::unique_ptr<RDKit::RWMol> referenceHs;
+  // mol with added Hs
+  std::unique_ptr<RDKit::RWMol> molHs;
+  // query with adjusted dummies and bond orders
+  std::unique_ptr<RDKit::RWMol> queryAdj;
+  // MatchVectType mapping reference atom indices to mol atom indices
+  RDKit::MatchVectType matchVect;
+  // holds multiple matches between reference atom indices
+  // and referencePattern atom indices
+  std::vector<RDKit::MatchVectType> patternToRefMatches;
+  // holds single match between reference atom indices
+  // and referencePattern atom indices
+  RDKit::MatchVectType patternToRefMatch;
+  // reference to best single match between reference atom indices
+  // and referencePattern atom indices
+  auto &bestPatternToRefMatch = patternToRefMatch;
+  // reference to referencePattern (if non-null) or reference
+  const RDKit::ROMol &query =
+      (referencePattern ? *referencePattern : reference);
+  // mapping of referencePattern atom indices to reference atom indices
+  std::vector<int> patternToRefMapping(query.getNumAtoms(), -1);
+  // reference to mol or, if allowRGroups is true, molHs
+  const RDKit::ROMol *prbMol = &mol;
+  // reference to query or, if allowRGroups is true, queryAdj
+  const RDKit::ROMol *refMol = &query;
+  // local copy of ConstrainedDepictionParams
+  ConstrainedDepictionParams p(params);
+  // we do not need the allowRGroups logic if there are no
+  // terminal dummy atoms
+  p.allowRGroups = p.allowRGroups && hasTerminalRGroupOrQueryHydrogen(query);
+  std::unique_ptr<RDKit::ROMol> reducedQuery;
+  if (p.allowRGroups) {
+    molHs.reset(new RDKit::RWMol(mol));
+    RDKit::MolOps::addHs(*molHs);
+    queryAdj.reset(new RDKit::RWMol(query));
+    reducedQuery = prepareTemplateForRGroups(*queryAdj);
+    prbMol = static_cast<const RDKit::ROMol *>(molHs.get());
+    refMol = reducedQuery ? reducedQuery.get()
+                          : static_cast<const RDKit::ROMol *>(queryAdj.get());
+  }
+  if (referencePattern) {
+    // if referencePattern has more atoms than reference and allowRGroups
+    // is true, then add Hs to reference and find the mapping that maps the
+    // largest number of heavy atoms to referencePattern
+    if (p.allowRGroups) {
+      referenceHs.reset(new RDKit::RWMol(reference));
+      RDKit::MolOps::addHs(*referenceHs);
+      CHECK_INVARIANT(queryAdj, "");
+      patternToRefMatches = RDKit::SubstructMatch(*referenceHs, *refMol);
+      if (reducedQuery) {
+        reducedToFullMatches(*reducedQuery, *referenceHs, patternToRefMatches);
+      }
+      if (!patternToRefMatches.empty()) {
+        bestPatternToRefMatch = RDKit::getMostSubstitutedCoreMatch(
+            *referenceHs, *queryAdj, patternToRefMatches);
+      }
+      // otherwise do a simple SubstructMatch
+    } else {
+      RDKit::SubstructMatch(reference, *referencePattern,
+                            bestPatternToRefMatch);
+    }
+    // either way, we should now have a single match
+    if (bestPatternToRefMatch.empty()) {
+      throw DepictException("Reference pattern does not map to reference.");
+    }
+    int numRefAtoms = reference.getNumAtoms();
+    for (auto &pair : bestPatternToRefMatch) {
+      // skip indices corresponding to added Hs
+      if (p.allowRGroups && pair.second >= numRefAtoms) {
+        continue;
+      }
+      CHECK_INVARIANT(
+          pair.first >= 0 &&
+              pair.first < static_cast<int>(patternToRefMapping.size()),
+          "");
+      patternToRefMapping[pair.first] = pair.second;
+    }
+  } else {
+    // 1-1 mapping as we use reference atom indices directly
+    std::iota(patternToRefMapping.begin(), patternToRefMapping.end(), 0);
+  }
+  if (p.alignOnly) {
+    // we only do a rigid-body alignment of the molecule onto the reference
+    std::vector<RDKit::MatchVectType> matches;
+    if (SubstructMatch(*prbMol, *refMol, matches, false)) {
+      if (p.allowRGroups) {
+        // we want to match the max number of R-groups to heavy atoms
+        if (reducedQuery) {
+          reducedToFullMatches(*reducedQuery, *prbMol, matches);
+        }
+        matches =
+            sortMatchesByDegreeOfCoreSubstitution(*prbMol, *queryAdj, matches);
+        int maxMatchedHeavies = -1;
+        int maxPrunedMatchSize = -1;
+        std::vector<RDKit::MatchVectType> prunedMatches;
+        prunedMatches.reserve(matches.size());
+        int numMolAtoms = mol.getNumAtoms();
+        for (const auto &match : matches) {
+          // we want to prune from the match any added hydrogens
+          // as they were not originally part of the molecule
+          int nMatchedHeavies = 0;
+          RDKit::MatchVectType prunedMatch;
+          prunedMatch.reserve(match.size());
+          for (const auto &pair : match) {
+            const auto refAtom = queryAdj->getAtomWithIdx(pair.first);
+            if (isAtomTerminalRGroupOrQueryHydrogen(refAtom)) {
+              // skip the match if it is an added H
+              if (pair.second >= numMolAtoms) {
+                continue;
+              }
+              ++nMatchedHeavies;
+            }
+            auto refIdx = patternToRefMapping.at(pair.first);
+            if (refIdx == -1) {
+              continue;
+            }
+            prunedMatch.push_back(std::move(pair));
+          }
+          if (nMatchedHeavies < maxMatchedHeavies) {
+            break;
+          }
+          maxMatchedHeavies = nMatchedHeavies;
+          int prunedMatchSize = prunedMatch.size();
+          if (prunedMatchSize > maxPrunedMatchSize) {
+            maxPrunedMatchSize = prunedMatchSize;
+            prunedMatches.clear();
+          }
+          if (prunedMatchSize == maxPrunedMatchSize) {
+            prunedMatches.push_back(std::move(prunedMatch));
+          }
+        }
+        matches = std::move(prunedMatches);
+      }
+      // matches maps reference atom idx to mol atom idx
+      // but getBestAlignmentTransform needs the reverse
+      // while we do the swap, we also map pattern indices
+      // back to reference indices
+      std::for_each(
+          matches.begin(), matches.end(), [&patternToRefMapping](auto &match) {
+            std::for_each(match.begin(), match.end(),
+                          [&patternToRefMapping](auto &pair) {
+                            auto refIdx = patternToRefMapping.at(pair.first);
+                            CHECK_INVARIANT(refIdx != -1, "");
+                            pair.first = pair.second;
+                            pair.second = refIdx;
+                          });
+          });
+      // if the molecule does not already have coordinates, we
+      // need to generate some before attempting the alignment
+      // and clear any existing wedging info if requested
+      if (!mol.getNumConformers()) {
+        compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false,
+                        p.forceRDKit);
+        if (p.adjustMolBlockWedging) {
+          RDKit::Chirality::clearMolBlockWedgingInfo(mol);
+          p.adjustMolBlockWedging = false;
+        }
+      }
+      RDGeom::Transform3D trans;
+      // cap the effort we are willing to make to get the best alignment
+      constexpr int MAX_MATCHES = 1000;
+      RDKit::MolAlign::getBestAlignmentTransform(mol, reference, trans,
+                                                 matchVect, p.existingConfId,
+                                                 confId, matches, MAX_MATCHES);
+      // swap again as we want to return (reference atom idx, mol atom idx)
+      std::for_each(matchVect.begin(), matchVect.end(),
+                    [](auto &pair) { std::swap(pair.first, pair.second); });
+      MolTransforms::transformConformer(mol.getConformer(p.existingConfId),
+                                        trans);
+      removeAllConformersButOne(mol, p.existingConfId);
+      if (p.adjustMolBlockWedging) {
+        invertWedgingIfMolHasFlipped(mol, trans);
+      }
+    }
+  } else {
+    // we do a full coordinate rebuild around the constrained reference
+    if (p.allowRGroups) {
+      std::vector<RDKit::MatchVectType> matches;
+      SubstructMatch(*prbMol, *refMol, matches, false);
+      if (!matches.empty()) {
+        if (reducedQuery) {
+          reducedToFullMatches(*reducedQuery, *prbMol, matches);
+        }
+        int numMolAtoms = mol.getNumAtoms();
+        for (const auto &pair :
+             getMostSubstitutedCoreMatch(*prbMol, *queryAdj, matches)) {
+          if (pair.second < numMolAtoms &&
+              patternToRefMapping.at(pair.first) != -1) {
+            matchVect.push_back(std::move(pair));
+          }
+        }
+      }
+    } else {
+      RDKit::SubstructMatch(*prbMol, *refMol, matchVect);
+    }
+    if (!matchVect.empty()) {
+      for (auto &pair : matchVect) {
+        pair.first = patternToRefMapping.at(pair.first);
+      }
+      generateDepictionMatching2DStructure(mol, reference, matchVect, confId,
+                                           p);
+    }
+  }
+  if (matchVect.empty()) {
+    if (p.acceptFailure) {
+      // if we accept failure, we generate a standard set of
+      // coordinates and clear any existing wedging info if requested
+      compute2DCoords(mol, nullptr, false, true, 0, 0, 0, false, p.forceRDKit);
+      if (p.adjustMolBlockWedging) {
+        RDKit::Chirality::clearMolBlockWedgingInfo(mol);
+      }
+    } else {
+      throw DepictException("Substructure match with reference not found.");
+    }
+  }
+  return matchVect;
+}
+
+// Overload
 RDKit::MatchVectType generateDepictionMatching2DStructure(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
     const RDKit::ROMol *referencePattern, bool acceptFailure, bool forceRDKit,
     bool allowOptionalAttachments) {
-  std::unique_ptr<RDKit::ROMol> referenceHs;
-  std::vector<int> refMatch;
-  RDKit::MatchVectType matchVect;
-  std::vector<RDKit::MatchVectType> multiRefMatchVect;
-  RDKit::MatchVectType singleRefMatchVect;
-  auto &refMatchVectRef = singleRefMatchVect;
-  const RDKit::ROMol &query =
-      (referencePattern ? *referencePattern : reference);
-  if (allowOptionalAttachments) {
-    // we do not need the allowOptionalAttachments logic if there are no
-    // terminal dummy atoms
-    allowOptionalAttachments = false;
-    for (const auto queryAtom : query.atoms()) {
-      if (queryAtom->getAtomicNum() == 0 && queryAtom->getDegree() == 1) {
-        allowOptionalAttachments = true;
-        break;
-      }
-    }
-  }
-  if (referencePattern) {
-    if (allowOptionalAttachments &&
-        referencePattern->getNumAtoms() > reference.getNumAtoms()) {
-      referenceHs.reset(RDKit::MolOps::addHs(reference));
-      CHECK_INVARIANT(referenceHs, "addHs returned a nullptr");
-      multiRefMatchVect =
-          RDKit::SubstructMatch(*referenceHs, *referencePattern);
-      if (!multiRefMatchVect.empty()) {
-        refMatchVectRef = RDKit::getMostSubstitutedCoreMatch(
-            *referenceHs, *referencePattern, multiRefMatchVect);
-      }
-    } else if (referencePattern->getNumAtoms() <= reference.getNumAtoms()) {
-      RDKit::SubstructMatch(reference, *referencePattern, singleRefMatchVect);
-    }
-    if (refMatchVectRef.empty()) {
-      throw RDDepict::DepictException(
-          "Reference pattern does not map to reference.");
-    }
-    refMatch.resize(query.getNumAtoms(), -1);
-    for (auto &i : refMatchVectRef) {
-      // skip indices corresponding to added Hs
-      if (allowOptionalAttachments &&
-          referenceHs->getAtomWithIdx(i.second)->getAtomicNum() == 1) {
-        continue;
-      }
-      refMatch[i.first] = i.second;
-    }
-  } else {
-    refMatch.resize(reference.getNumAtoms());
-    std::iota(refMatch.begin(), refMatch.end(), 0);
-  }
-  if (allowOptionalAttachments) {
-    std::unique_ptr<RDKit::ROMol> molHs(RDKit::MolOps::addHs(mol));
-    CHECK_INVARIANT(molHs, "addHs returned a nullptr");
-    auto matches = SubstructMatch(*molHs, query);
-    if (matches.empty()) {
-      allowOptionalAttachments = false;
-    } else {
-      for (const auto &pair :
-           getMostSubstitutedCoreMatch(*molHs, query, matches)) {
-        if (molHs->getAtomWithIdx(pair.second)->getAtomicNum() != 1 &&
-            refMatch.at(pair.first) >= 0) {
-          matchVect.push_back(pair);
-        }
-      }
-    }
-  }
-  if (!allowOptionalAttachments) {
-    RDKit::SubstructMatch(mol, query, matchVect);
-  }
-  if (matchVect.empty() && !acceptFailure) {
-    throw RDDepict::DepictException(
-        "Substructure match with reference not found.");
-  }
-  for (auto &pair : matchVect) {
-    pair.first = refMatch.at(pair.first);
-  }
-  generateDepictionMatching2DStructure(mol, reference, matchVect, confId,
-                                       forceRDKit);
-  return matchVect;
+  ConstrainedDepictionParams p;
+  p.acceptFailure = acceptFailure;
+  p.forceRDKit = forceRDKit;
+  p.allowRGroups = allowOptionalAttachments;
+  return generateDepictionMatching2DStructure(mol, reference, confId,
+                                              referencePattern, p);
 }
 
 //! \brief Generate a 2D depiction for a molecule where all or part of
@@ -573,10 +1122,10 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
   auto num_ats = mol.getNumAtoms();
   if (!referencePattern && reference.getNumAtoms() < num_ats) {
     if (acceptFailure) {
-      RDDepict::compute2DCoords(mol);
+      compute2DCoords(mol);
       return;
     } else {
-      throw RDDepict::DepictException(
+      throw DepictException(
           "Reference molecule not compatible with target molecule.");
     }
   }
@@ -588,10 +1137,10 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
     RDKit::SubstructMatch(reference, *referencePattern, refMatchVect);
     if (molMatchVect.empty() || refMatchVect.empty()) {
       if (acceptFailure) {
-        RDDepict::compute2DCoords(mol);
+        compute2DCoords(mol);
         return;
       } else {
-        throw RDDepict::DepictException(
+        throw DepictException(
             "Reference pattern didn't match molecule or reference.");
       }
     }
@@ -607,7 +1156,7 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
 
   const RDKit::Conformer &conf = reference.getConformer(confId);
   // the distance matrix is a triangular representation
-  RDDepict::DOUBLE_SMART_PTR dmat(new double[num_ats * (num_ats - 1) / 2]);
+  DOUBLE_SMART_PTR dmat(new double[num_ats * (num_ats - 1) / 2]);
   // negative distances are ignored, so initialise to -1.0 so subset by
   // referencePattern works.
   std::fill(dmat.get(), dmat.get() + num_ats * (num_ats - 1) / 2, -1.0);
@@ -625,22 +1174,23 @@ void generateDepictionMatching3DStructure(RDKit::ROMol &mol,
     }
   }
 
-  RDDepict::compute2DCoordsMimicDistMat(mol, &dmat, false, true, 0.5, 3, 100,
-                                        25, true, forceRDKit);
+  compute2DCoordsMimicDistMat(mol, &dmat, false, true, 0.5, 3, 100, 25, true,
+                              forceRDKit);
 }
 
-void straightenDepiction(RDKit::ROMol &mol, int confId) {
+void straightenDepiction(RDKit::ROMol &mol, int confId, bool minimizeRotation) {
+  if (!mol.getNumBonds()) {
+    return;
+  }
   constexpr double RAD2DEG = 180. / M_PI;
   constexpr double DEG2RAD = M_PI / 180.;
+  constexpr double ALMOST_ZERO = 1.e-5;
   constexpr double INCR_DEG = 30.;
   constexpr double HALF_INCR_DEG = 0.5 * INCR_DEG;
-  constexpr double TOL_DEG = 5.0;
-  constexpr double ALMOST_ZERO = 1.e-5;
+  constexpr double QUARTER_INCR_DEG = 0.25 * INCR_DEG;
   auto &conf = mol.getConformer(confId);
   auto &pos = conf.getPositions();
-  std::unordered_map<int, std::pair<unsigned int, double>> thetaBins;
-  std::vector<double> thetaValues;
-  thetaValues.reserve(mol.getNumBonds());
+  std::unordered_map<int, DepictorLocal::ThetaBin> thetaBins;
   for (const auto b : mol.bonds()) {
     auto bi = b->getBeginAtomIdx();
     auto ei = b->getEndAtomIdx();
@@ -654,60 +1204,68 @@ void straightenDepiction(RDKit::ROMol &mol, int confId) {
     }
     int thetaKey = static_cast<int>(
         d_theta + DepictorLocal::copySign(0.5, d_theta, ALMOST_ZERO));
-    auto it = thetaBins.find(thetaKey);
-    if (it == thetaBins.end()) {
-      it = thetaBins.emplace(thetaKey, std::make_pair(0U, 0.0)).first;
-    }
-    ++it->second.first;
-    it->second.second += d_theta;
-    thetaValues.push_back(theta);
+    auto &thetaBin = thetaBins[thetaKey];
+    thetaBin.d_thetaAvg += d_theta;
+    thetaBin.thetaValues.push_back(theta);
   }
-  unsigned int maxCount = 0;
-  double d_thetaMin = 0.;
-  for (const auto &it : thetaBins) {
-    const auto count = it.second.first;
-    const auto d_thetaAvg = it.second.second / static_cast<double>(count);
-    if (count > maxCount ||
-        (count == maxCount && fabs(d_thetaAvg) < fabs(d_thetaMin))) {
-      maxCount = count;
-      d_thetaMin = d_thetaAvg;
+  CHECK_INVARIANT(!thetaBins.empty(), "");
+  double d_thetaSmallest = std::numeric_limits<double>::max();
+  for (auto &it : thetaBins) {
+    auto &thetaBin = it.second;
+    thetaBin.d_thetaAvg /= static_cast<double>(thetaBin.thetaValues.size());
+    if (fabs(thetaBin.d_thetaAvg) < fabs(d_thetaSmallest)) {
+      d_thetaSmallest = thetaBin.d_thetaAvg;
     }
   }
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-lambda-capture"
-#endif
-  unsigned int n30 =
-      std::count_if(thetaValues.begin(), thetaValues.end(),
-                    [d_thetaMin, INCR_DEG, TOL_DEG](double theta) {
-                      theta += d_thetaMin;
-                      return (fabs(fmod(theta, INCR_DEG)) < TOL_DEG);
-                    });
-  unsigned int n60 = std::count_if(
-      thetaValues.begin(), thetaValues.end(),
-      [d_thetaMin, INCR_DEG, TOL_DEG, ALMOST_ZERO](double theta) {
-        theta += d_thetaMin;
-        return (fabs(fmod(theta, INCR_DEG)) < TOL_DEG &&
-                !(abs(static_cast<int>(
-                      theta / INCR_DEG +
-                      DepictorLocal::copySign(0.5, theta, ALMOST_ZERO))) %
-                  2));
-      });
-#ifdef __clang__
-#pragma clang diagnostic pop
-#endif
-  bool shouldRotate = (n60 > n30 / 2);
-  if (shouldRotate) {
-    d_thetaMin -= DepictorLocal::copySign(INCR_DEG, d_thetaMin, ALMOST_ZERO);
+  const auto &minRotationBin =
+      std::max_element(
+          thetaBins.begin(), thetaBins.end(),
+          [](const auto &a, const auto &b) {
+            const auto &aBin = a.second;
+            const auto &bBin = b.second;
+            return (aBin.thetaValues.size() < bBin.thetaValues.size() ||
+                    (aBin.thetaValues.size() == bBin.thetaValues.size() &&
+                     fabs(aBin.d_thetaAvg) > fabs(bBin.d_thetaAvg)));
+          })
+          ->second;
+  double d_thetaMin = minRotationBin.d_thetaAvg;
+  // unless we want to preserve as much as possible the initial orientation,
+  // we try to orient the molecule such that the majority of bonds have
+  // an angle of 30 or 90 degrees with the X axis
+  if (!minimizeRotation) {
+    unsigned int count60vs30[2] = {0, 0};
+    for (auto theta : minRotationBin.thetaValues) {
+      auto absTheta = fabs(theta + d_thetaMin);
+      // Do not count 0 as multiple of 60 degrees
+      if (absTheta < ALMOST_ZERO) {
+        continue;
+      }
+      auto idx = static_cast<unsigned int>((absTheta + 0.5) / INCR_DEG) % 2;
+      CHECK_INVARIANT(idx < 2, "");
+      ++count60vs30[idx];
+    }
+    if (count60vs30[0] > count60vs30[1]) {
+      d_thetaMin -= DepictorLocal::copySign(INCR_DEG, d_thetaMin, ALMOST_ZERO);
+    }
+  } else if (fabs(d_thetaSmallest) < ALMOST_ZERO ||
+             (fabs(d_thetaSmallest) < fabs(d_thetaMin) &&
+              fabs(d_thetaMin) > QUARTER_INCR_DEG)) {
+    d_thetaMin = d_thetaSmallest;
   }
-  d_thetaMin *= DEG2RAD;
-  RDGeom::Transform3D trans;
-  trans.SetRotation(d_thetaMin, RDGeom::Z_Axis);
-  MolTransforms::transformConformer(conf, trans);
+  if (fabs(d_thetaMin) > ALMOST_ZERO) {
+    d_thetaMin *= DEG2RAD;
+    RDGeom::Transform3D trans;
+    trans.SetRotation(d_thetaMin, RDGeom::Z_Axis);
+    MolTransforms::transformConformer(conf, trans);
+  }
 }
 
 double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
                           double scaleFactor) {
+  constexpr double SCALE_FACTOR_THRESHOLD = 1.e-5;
+  if (!mol.getNumBonds()) {
+    return -1.;
+  }
   auto &conf = mol.getConformer(confId);
   if (scaleFactor < 0.0) {
     constexpr double RDKIT_BOND_LEN = 1.5;
@@ -730,23 +1288,27 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
         mostCommonBondLengthInt = it->first;
       }
     }
-    if (!binnedBondLengths.empty()) {
+    if (mostCommonBondLengthInt > 0) {
       double mostCommonBondLength =
           static_cast<double>(mostCommonBondLengthInt) * 0.1;
       scaleFactor = RDKIT_BOND_LEN / mostCommonBondLength;
     }
   }
   std::unique_ptr<RDGeom::Transform3D> canonTrans;
+  auto ctd = MolTransforms::computeCentroid(conf);
   if (canonicalize) {
-    auto ctd = MolTransforms::computeCentroid(conf);
     canonTrans.reset(MolTransforms::computeCanonicalTransform(conf, &ctd));
     if (canonicalize < 0) {
       RDGeom::Transform3D rotate90;
       rotate90.SetRotation(0., 1., RDGeom::Point3D(0., 0., 1.));
       *canonTrans *= rotate90;
     }
+  } else {
+    canonTrans.reset(new RDGeom::Transform3D());
+    canonTrans->SetTranslation(-ctd);
   }
-  if (scaleFactor > 0. && fabs(scaleFactor - 1.0) > 1.e-5) {
+  bool isScaleFactorSane = (scaleFactor > SCALE_FACTOR_THRESHOLD);
+  if (isScaleFactorSane && fabs(scaleFactor - 1.0) > SCALE_FACTOR_THRESHOLD) {
     RDGeom::Transform3D trans;
     trans.setVal(0, 0, scaleFactor);
     trans.setVal(1, 1, scaleFactor);
@@ -756,6 +1318,9 @@ double normalizeDepiction(RDKit::ROMol &mol, int confId, int canonicalize,
     MolTransforms::transformConformer(conf, trans);
   } else if (canonTrans) {
     MolTransforms::transformConformer(conf, *canonTrans);
+  }
+  if (!isScaleFactorSane) {
+    scaleFactor = -1.;
   }
   return scaleFactor;
 }

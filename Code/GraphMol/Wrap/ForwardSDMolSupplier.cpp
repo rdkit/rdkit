@@ -30,26 +30,36 @@ using boost_adaptbx::python::streambuf;
 namespace {
 
 class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
+ private:
+  std::unique_ptr<streambuf> dp_streambuf;
+
  public:
   LocalForwardSDMolSupplier(python::object &input, bool sanitize, bool removeHs,
                             bool strictParsing) {
-    // FIX: minor leak here
-    auto *sb = new streambuf(input, 'b');
-    dp_inStream = new streambuf::istream(*sb);
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-    df_strictParsing = strictParsing;
-    POSTCONDITION(dp_inStream, "bad instream");
+    dp_streambuf.reset(new streambuf(input, 'b'));
+    auto sbis = new streambuf::istream(*dp_streambuf);
+    bool owner = true;
+
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(
+        new RDKit::v2::FileParsers::ForwardSDMolSupplier(sbis, owner, params));
+    POSTCONDITION(sbis, "bad instream");
   }
   LocalForwardSDMolSupplier(streambuf &input, bool sanitize, bool removeHs,
                             bool strictParsing) {
-    dp_inStream = new streambuf::istream(input);
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-    df_strictParsing = strictParsing;
-    POSTCONDITION(dp_inStream, "bad instream");
+    auto sbis = new streambuf::istream(input);
+    bool owner = true;
+
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(
+        new RDKit::v2::FileParsers::ForwardSDMolSupplier(sbis, owner, params));
+    POSTCONDITION(sbis, "bad instream");
   }
   LocalForwardSDMolSupplier(std::string filename, bool sanitize, bool removeHs,
                             bool strictParsing) {
@@ -62,12 +72,14 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
       errout << "Bad input file " << filename;
       throw RDKit::BadFileException(errout.str());
     }
-    dp_inStream = tmpStream;
-    df_owner = true;
-    df_sanitize = sanitize;
-    df_removeHs = removeHs;
-    df_strictParsing = strictParsing;
-    POSTCONDITION(dp_inStream, "bad instream");
+    bool owner = true;
+    RDKit::v2::FileParsers::MolFileParserParams params;
+    params.sanitize = sanitize;
+    params.removeHs = removeHs;
+    params.strictParsing = strictParsing;
+    dp_supplier.reset(new RDKit::v2::FileParsers::ForwardSDMolSupplier(
+        tmpStream, owner, params));
+    POSTCONDITION(tmpStream, "bad instream");
   }
 };
 
@@ -102,18 +114,18 @@ struct forwardsdmolsup_wrap {
     python::class_<LocalForwardSDMolSupplier, boost::noncopyable>(
         "ForwardSDMolSupplier", fsdMolSupplierClassDoc.c_str(), python::no_init)
         .def(python::init<python::object &, bool, bool, bool>(
-            (python::arg("fileobj"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true,
+            (python::arg("self"), python::arg("fileobj"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true,
              python::arg("strictParsing") =
                  true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<streambuf &, bool, bool, bool>(
-            (python::arg("streambuf"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true,
+            (python::arg("self"), python::arg("streambuf"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true,
              python::arg("strictParsing") =
                  true))[python::with_custodian_and_ward_postcall<0, 2>()])
         .def(python::init<std::string, bool, bool, bool>(
-            (python::arg("filename"), python::arg("sanitize") = true,
-             python::arg("removeHs") = true,
+            (python::arg("self"), python::arg("filename"),
+             python::arg("sanitize") = true, python::arg("removeHs") = true,
              python::arg("strictParsing") = true)))
         .def("__enter__",
              (LocalForwardSDMolSupplier * (*)(LocalForwardSDMolSupplier *)) &
@@ -126,20 +138,24 @@ struct forwardsdmolsup_wrap {
              (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolForwardSupplNext,
              "Returns the next molecule in the file.  Raises _StopIteration_ "
              "on EOF.\n",
-             python::return_value_policy<python::manage_new_object>())
-        .def("atEnd", &ForwardSDMolSupplier::atEnd,
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
+        .def("atEnd", &ForwardSDMolSupplier::atEnd, python::args("self"),
              "Returns whether or not we have hit EOF.\n")
         .def("GetEOFHitOnRead", &ForwardSDMolSupplier::getEOFHitOnRead,
+             python::args("self"),
              "Returns whether or EOF was hit while parsing the previous "
              "entry.\n")
         .def("__iter__", &FwdMolSupplIter,
-             python::return_internal_reference<1>())
+             python::return_internal_reference<1>(), python::args("self"))
         .def("GetProcessPropertyLists",
              &ForwardSDMolSupplier::getProcessPropertyLists,
+             python::args("self"),
              "returns whether or not any property lists that are present will "
              "be processed when reading molecules")
         .def("SetProcessPropertyLists",
              &ForwardSDMolSupplier::setProcessPropertyLists,
+             python::args("self", "val"),
              "sets whether or not any property lists that are present will be "
              "processed when reading molecules");
   };

@@ -38,7 +38,7 @@
 namespace {
 class ss_matcher {
  public:
-  ss_matcher(){};
+  ss_matcher() {};
   ss_matcher(const std::string &pattern) {
     RDKit::RWMol *p = RDKit::SmartsToMol(pattern);
     TEST_ASSERT(p);
@@ -74,27 +74,6 @@ const char *pqs[] = {
     //"[*]!@[R]~[R]~[R]!@[*]", Github #151: can't have !@ in an SSS pattern
     "[*]~[R](@[R])@[R](@[R])~[*]", "[*]~[R](@[R])@[R]@[R](@[R])~[*]",
     "[*]",  // single atom fragment
-#if 0
-                      "[*]~[*](~[*])(~[*])~[*]",
-                      "[*]~[*]~[*]~[*]~[*]~[*]",
-                      "[*]~[*]~[*]~[*](~[*])~[*]",
-                      "[*]~[*]~[*](~[*])~[*]~[*]",
-                      "[*]~[*]~[*](~[*])(~[*])~[*]",
-                      "[*]~[*](~[*])~[*](~[*])~[*]",
-                      "[*]~[R]~1[R]~[R]~1(~[*])~[*]",
-                      "[*]~[R]~1[R](~[*])~[R]~1[*]",
-                      "[*]~[R]~1[R]~[R](~[*])~[R]~1",
-                      "[*]~[R]~1[R]~[R]~[R]~1[*]",
-                      "[*]~[R]~1[R]~[R]~[R]~[R]~1",
-                      "[*]~[R]~1(~[*])~[R]~[R]~[R]~1",
-                      "[*]~[*]~[*]~[*]~[*]~[*]~[*]",
-                      "[*]~[*]~[*]~[*]~[*](~[*])~[*]",
-                      "[*]~[*]~[*]~[*](~[*])~[*]~[*]",
-                      "[*]~[*]~[*]~[*](~[*])(~[*])~[*]",
-                      "[*]~[*]~[*](~[*])~[*](~[*])~[*]",
-                      "[*]~[*](~[*])~[*]~[*](~[*])~[*]",
-                      "[*]~[*](~[*])~[*](~[*])(~[*])~[*]",
-#endif
     ""};
 typedef boost::flyweight<boost::flyweights::key_value<std::string, ss_matcher>,
                          boost::flyweights::no_tracking>
@@ -204,7 +183,7 @@ void updatePatternFingerprint(const ROMol &mol, ExplicitBitVect &fp,
     patts.push_back(matcher);
   }
 
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isFindFastOrBetter()) {
     MolOps::fastFindRings(mol);
   }
 

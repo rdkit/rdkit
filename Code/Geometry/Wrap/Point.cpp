@@ -15,17 +15,17 @@
 namespace python = boost::python;
 
 namespace {
-struct Point3D_pickle_suite : python::pickle_suite {
+struct Point3D_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(RDGeom::Point3D const &pt) {
     return python::make_tuple(pt.x, pt.y, pt.z);
   }
 };
-struct Point2D_pickle_suite : python::pickle_suite {
+struct Point2D_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(RDGeom::Point2D const &pt) {
     return python::make_tuple(pt.x, pt.y);
   }
 };
-struct PointND_pickle_suite : python::pickle_suite {
+struct PointND_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(RDGeom::PointND const &pt) {
     return python::make_tuple(pt.dimension());
   }
@@ -117,19 +117,22 @@ double point2dGetItem(const Point2D &self, int idx) {
 
 struct Point_wrapper {
   static void wrap() {
-    python::class_<Point3D>("Point3D", Point3Ddoc.c_str(),
-                            python::init<>("Default Constructor"))
-        .def(python::init<double, double, double>())
+    python::class_<Point3D>(
+        "Point3D", Point3Ddoc.c_str(),
+        python::init<>(python::args("self"), "Default Constructor"))
+        .def(python::init<double, double, double>(
+            python::args("self", "xv", "yv", "zv")))
         .def_readwrite("x", &Point3D::x)
         .def_readwrite("y", &Point3D::y)
         .def_readwrite("z", &Point3D::z)
-        .def("__getitem__", point3dGetItem)
-        .def("__len__", &Point3D::dimension)
+        .def("__getitem__", point3dGetItem, python::args("self", "idx"))
+        .def("__len__", &Point3D::dimension, python::args("self"))
         .def("__iadd__", &Point3D::operator+=,
              python::return_value_policy<python::copy_non_const_reference>(),
-             "Addition to another point")
+             python::args("self", "other"), "Addition to another point")
         .def("__isub__", &Point3D::operator-=,
              python::return_value_policy<python::copy_non_const_reference>(),
+             python::args("self", "other"),
              "Vector difference")
         .def(python::self - python::self)
 #ifdef __clang__
@@ -147,41 +150,47 @@ struct Point_wrapper {
         .def(python::self / double())
         .def("__imul__", &Point3D::operator*=,
              python::return_value_policy<python::copy_non_const_reference>(),
-             "Scalar multiplication")
+             python::args("self", "scale"), "Scalar multiplication")
         .def("__idiv__", &Point3D::operator/=,
              python::return_value_policy<python::copy_non_const_reference>(),
-             "Scalar division")
-        .def("Normalize", &Point3D::normalize,
+             python::args("self", "scale"), "Scalar division")
+        .def("Normalize", &Point3D::normalize, python::args("self"),
              "Normalize the vector (using L2 norm)")
-        .def("Length", &Point3D::length, "Length of the vector")
-        .def("Distance", point3Ddist,
+        .def("Length", &Point3D::length, python::args("self"),
+             "Length of the vector")
+        .def("Distance", point3Ddist, python::args("self", "pt2"),
              "Distance from this point to another point")
-        .def("LengthSq", &Point3D::lengthSq, "Square of the length")
-        .def("DotProduct", &Point3D::dotProduct,
+        .def("LengthSq", &Point3D::lengthSq, python::args("self"),
+             "Square of the length")
+        .def("DotProduct", &Point3D::dotProduct, python::args("self", "other"),
              "Dot product with another point")
-        .def("AngleTo", &Point3D::angleTo,
+        .def("AngleTo", &Point3D::angleTo, python::args("self", "other"),
              "determines the angle between a vector to this point (between 0 "
              "and PI)")
         .def("SignedAngleTo", &Point3D::signedAngleTo,
+             python::args("self", "other"),
              "determines the signed angle between a vector to this point "
              "(between 0 and 2*PI)")
         .def("DirectionVector", &Point3D::directionVector,
+             python::args("self", "other"),
              "return a normalized direction vector from this point to another")
         .def("CrossProduct", &Point3D::crossProduct,
+             python::args("self", "other"),
              "Get the cross product between two points")
 
         .def_pickle(Point3D_pickle_suite());
 
-    python::class_<Point2D>("Point2D", Point2Ddoc.c_str(),
-                            python::init<>("Default Constructor"))
-        .def(python::init<double, double>())
+    python::class_<Point2D>(
+        "Point2D", Point2Ddoc.c_str(),
+        python::init<>(python::args("self"), "Default Constructor"))
+        .def(python::init<double, double>(python::args("self", "xv", "yv")))
         .def(python::init<const Point3D &>(
             (python::args("self"), python::args("other")),
             "construct from a Point3D (ignoring the z component)"))
         .def_readwrite("x", &Point2D::x)
         .def_readwrite("y", &Point2D::y)
-        .def("__getitem__", point2dGetItem)
-        .def("__len__", &Point2D::dimension)
+        .def("__getitem__", point2dGetItem, python::args("self", "idx"))
+        .def("__len__", &Point2D::dimension, python::args("self"))
         .def(python::self - python::self)
 #ifdef __clang__
 #pragma GCC diagnostic push
@@ -198,37 +207,43 @@ struct Point_wrapper {
         .def(python::self / double())
         .def("__imul__", &Point2D::operator*=,
              python::return_value_policy<python::copy_non_const_reference>(),
-             "Scalar multiplication")
+             python::args("self", "scale"), "Scalar multiplication")
         .def("__idiv__", &Point2D::operator/=,
              python::return_value_policy<python::copy_non_const_reference>(),
-             "Scalar division")
-        .def("Normalize", &Point2D::normalize,
+             python::args("self", "scale"), "Scalar division")
+        .def("Normalize", &Point2D::normalize, python::args("self"),
              "Normalize the vector (using L2 norm)")
-        .def("Length", &Point2D::length, "Length of the vector")
-        .def("LengthSq", &Point2D::lengthSq, "Square of the length")
-        .def("DotProduct", &Point2D::dotProduct,
+        .def("Length", &Point2D::length, python::args("self"),
+             "Length of the vector")
+        .def("LengthSq", &Point2D::lengthSq, python::args("self"),
+             "Square of the length")
+        .def("DotProduct", &Point2D::dotProduct, python::args("self", "other"),
              "Dot product with another point")
-        .def("AngleTo", &Point2D::angleTo,
+        .def("AngleTo", &Point2D::angleTo, python::args("self", "other"),
              "determines the angle between a vector to this point (between 0 "
              "and PI)")
         .def("SignedAngleTo", &Point2D::signedAngleTo,
+             python::args("self", "other"),
              "determines the signed angle between a vector to this point "
              "(between 0 and 2*PI)")
         .def("DirectionVector", &Point2D::directionVector,
+             python::args("self", "other"),
              "return a normalized direction vector from this point to another")
 
         .def_pickle(Point2D_pickle_suite());
 
-    python::class_<PointND>("PointND", PointNDdoc.c_str(),
-                            python::init<unsigned int>())
-        .def("__getitem__", pointNdGetItem)
-        .def("__setitem__", pointNdSetItem)
-        .def("__len__", &PointND::dimension)
+    python::class_<PointND>(
+        "PointND", PointNDdoc.c_str(),
+        python::init<unsigned int>(python::args("self", "dim")))
+        .def("__getitem__", pointNdGetItem, python::args("self", "idx"))
+        .def("__setitem__", pointNdSetItem, python::args("self", "idx", "val"))
+        .def("__len__", &PointND::dimension, python::args("self"))
         .def("__iadd__", &PointND::operator+=,
              python::return_value_policy<python::copy_non_const_reference>(),
-             "Addition to another point")
+             python::args("self", "other"), "Addition to another point")
         .def("__isub__", &PointND::operator-=,
              python::return_value_policy<python::copy_non_const_reference>(),
+             python::args("self", "other"),
              "Vector difference")
         .def(python::self - python::self)
 #ifdef __clang__
@@ -246,22 +261,25 @@ struct Point_wrapper {
         .def(python::self / double())
         .def("__imul__", &PointND::operator*=,
              python::return_value_policy<python::copy_non_const_reference>(),
-             "Scalar multiplication")
+             python::args("self", "scale"), "Scalar multiplication")
         .def("__idiv__", &PointND::operator/=,
              python::return_value_policy<python::copy_non_const_reference>(),
-             "Scalar division")
-        .def("Normalize", &PointND::normalize,
+             python::args("self", "scale"), "Scalar division")
+        .def("Normalize", &PointND::normalize, python::args("self"),
              "Normalize the vector (using L2 norm)")
-        .def("Length", &PointND::length, "Length of the vector")
-        .def("Distance", point3Ddist,
+        .def("Length", &PointND::length, python::args("self"),
+             "Length of the vector")
+        .def("Distance", point3Ddist, python::args("self", "pt2"),
              "Distance from this point to another point")
-        .def("LengthSq", &PointND::lengthSq, "Square of the length")
-        .def("DotProduct", &PointND::dotProduct,
+        .def("LengthSq", &PointND::lengthSq, python::args("self"),
+             "Square of the length")
+        .def("DotProduct", &PointND::dotProduct, python::args("self", "other"),
              "Dot product with another point")
-        .def("AngleTo", &PointND::angleTo,
+        .def("AngleTo", &PointND::angleTo, python::args("self", "other"),
              "determines the angle between a vector to this point (between 0 "
              "and PI)")
         .def("DirectionVector", &PointND::directionVector,
+             python::args("self", "other"),
              "return a normalized direction vector from this point to another")
         //.def("SignedAngleTo", &PointND::signedAngleTo,
         //     "determines the signed angle between a vector to this point
@@ -272,8 +290,10 @@ struct Point_wrapper {
 
     python::def(
         "ComputeDihedralAngle", computeDihedralAngle,
+        python::args("pt1", "pt2", "pt3", "pt4"),
         "calculates the dihedral angle determined by four Point3D objects");
     python::def("ComputeSignedDihedralAngle", computeSignedDihedralAngle,
+                python::args("pt1", "pt2", "pt3", "pt4"),
                 "calculates the signed dihedral angle determined by four "
                 "Point3D objects");
   }

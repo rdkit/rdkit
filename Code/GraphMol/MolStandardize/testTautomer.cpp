@@ -316,6 +316,14 @@ void testEnumerator() {
   checkAns("C/C=C/C(C)=O", {"C=C(O)C=CC", "C=CC=C(C)O", "C=CCC(=C)O",
                             "C=CCC(C)=O", "CC=CC(C)=O"});
 
+  // No stereochemistry in conjugated double bonds to nitro
+  checkAns("c1ccnc(c1)C=C[N+](=O)[O-]", {"O=[N+]([O-])C=Cc1ccccn1",
+                                         "[O-][N+](O)=C=Cc1ccccn1"});
+
+  // Retain stereochemistry in conjugated double bonds to nitro
+  checkAns("c1ccnc(c1)/C=C/[N+](=O)[O-]", {"O=[N+]([O-])/C=C/c1ccccn1",
+                                           "[O-][N+](O)=C=Cc1ccccn1"});
+
   // Remove stereochemistry from mobile double bonds
   std::string smi66 = "C/C=C\\C(C)=O";
   ROMOL_SPTR m66(SmilesToMol(smi66));
@@ -334,7 +342,7 @@ void testEnumerator() {
   std::sort(ans66.begin(), ans66.end());
   TEST_ASSERT(sm66 == ans66);
 
-  // Gaunine tautomers
+  // Guanine tautomers
   std::string smi67 = "N1C(N)=NC=2N=CNC2C1=O";
   ROMOL_SPTR m67(SmilesToMol(smi67));
   TautomerEnumeratorResult res67 = te.enumerate(*m67);
@@ -374,15 +382,14 @@ void testEnumeratorParams() {
       << std::endl;
 
   // Test a structure with hundreds of tautomers.
-  std::string smi68 = "[H][C](CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
+  std::string smi68 = "C(CO)(NC(=O)C1=C(O)C(O)=CC=C1)C(O)=O";
   ROMOL_SPTR m68(SmilesToMol(smi68));
 
   {
     TautomerEnumerator te;
     TautomerEnumeratorResult res68 = te.enumerate(*m68);
-    TEST_ASSERT(res68.status() ==
-                TautomerEnumeratorStatus::MaxTransformsReached);
-    TEST_ASSERT(res68.size() == 252);
+    TEST_ASSERT(res68.status() == TautomerEnumeratorStatus::Completed);
+    TEST_ASSERT(res68.size() == 72);
   }
   {  // test v1 of the tautomerization parameters
     std::unique_ptr<TautomerEnumerator> te(getV1TautomerEnumerator());
@@ -491,6 +498,56 @@ void testEnumeratorParams() {
       }
     }
   }
+  std::string eOximeSmi = "c1ccnc(c1)/C=N/O";
+  ROMOL_SPTR eOxime(SmilesToMol(eOximeSmi));
+  TEST_ASSERT(eOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
+  {
+    // test remove oxime E stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*eOxime);
+    for (const auto &taut : res) {
+      TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    }
+  }
+  {
+    // test retain enol E stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*eOxime);
+    for (const auto &taut : res) {
+      if (taut->getBondWithIdx(6)->getBondType() == Bond::DOUBLE) {
+        TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
+      }
+    }
+  }
+  ROMOL_SPTR zOxime = "c1ccnc(c1)/C=N\\O"_smiles;
+  // zOxime->debugMol(std::cerr);
+  TEST_ASSERT(zOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+  {
+    // test remove enol Z stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*zOxime);
+    for (const auto &taut : res) {
+      TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    }
+  }
+  {
+    // test retain enol Z stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*zOxime);
+    for (const auto &taut : res) {
+      if (taut->getBondWithIdx(6)->getBondType() == Bond::DOUBLE) {
+        TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+      }
+    }
+  }
   ROMOL_SPTR chembl2024142 =
       "[2H]C1=C(C(=C2C(=C1[2H])C(=O)C(=C(C2=O)C([2H])([2H])[2H])C/C=C(\\C)/CC([2H])([2H])/C=C(/CC/C=C(\\C)/CCC=C(C)C)\\C([2H])([2H])[2H])[2H])[2H]"_smiles;
   MolOps::RemoveHsParameters hparams;
@@ -577,6 +634,8 @@ void testEnumeratorCallback() {
   CleanupParameters params;
   params.maxTransforms = 10000;
   params.maxTautomers = 10000;
+  params.tautomerTransformData =
+      MolStandardize::defaults::defaultTautomerTransformsv1;
   {
     TautomerEnumerator te(params);
     te.setCallback(new MyTautomerEnumeratorCallback(50.0));
@@ -606,9 +665,9 @@ void testEnumeratorCallback() {
     // either the enumeration completed
     // or it ran very slowly and was canceled due to timeout
     bool hasReachedTimeout =
-        (res68.size() < 295 &&
+        (res68.size() < 375 &&
          res68.status() == TautomerEnumeratorStatus::Canceled);
-    bool hasCompleted = (res68.size() == 295 &&
+    bool hasCompleted = (res68.size() == 375 &&
                          res68.status() == TautomerEnumeratorStatus::Completed);
     if (hasReachedTimeout) {
       std::cerr << "Enumeration was canceled due to timeout (10 s)"
@@ -711,16 +770,18 @@ void testCanonicalize() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto &itm : canonTautomerData) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    std::unique_ptr<RWMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     std::unique_ptr<ROMol> res{te.canonicalize(*mol)};
     TEST_ASSERT(res);
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
+    te.canonicalizeInPlace(*mol);
+    TEST_ASSERT(MolToSmiles(*mol) == itm.second);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -733,7 +794,7 @@ void testPickCanonical() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -758,7 +819,7 @@ void testCustomScoreFunc() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
@@ -827,7 +888,7 @@ void testEnumerationProblems() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 #if 1
@@ -859,7 +920,7 @@ void testPickCanonical2() {
   auto tautparams =
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
 
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
@@ -893,7 +954,7 @@ void testEnumerateDetails() {
   auto tautparams =
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     auto mol = "c1ccccc1CN=c1[nH]cccc1"_smiles;
@@ -949,7 +1010,7 @@ void testGithub2990() {
       std::unique_ptr<TautomerCatalogParams>(new TautomerCatalogParams(""));
 
   unsigned int ntransforms = tautparams->getTransforms().size();
-  TEST_ASSERT(ntransforms == 36);
+  TEST_ASSERT(ntransforms == 37);
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
   {
     // atom stereo
@@ -1373,10 +1434,12 @@ void testGithub3755() {
       {"NC(=N)C(N)CO", "N=C(N)C(N)CO"}, {"NC(=N)NC(N)CO", "N=C(N)NC(N)CO"}};
   TautomerEnumerator te;
   for (const auto &pair : orig_vs_expected) {
-    ROMOL_SPTR orig(SmilesToMol(pair.first));
+    std::unique_ptr<RWMol> orig{SmilesToMol(pair.first)};
     TEST_ASSERT(orig);
     ROMOL_SPTR canonical(te.canonicalize(*orig));
     TEST_ASSERT(MolToSmiles(*canonical) == pair.second);
+    te.canonicalizeInPlace(*orig);
+    TEST_ASSERT(MolToSmiles(*orig) == pair.second);
   }
 }
 

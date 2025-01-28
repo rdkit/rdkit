@@ -185,10 +185,13 @@ void testRDAny() {
       TEST_ASSERT(rdany_cast<std::vector<double>>(b)[i] == i);
     }
   }
-  const int loops = 10000000;
+
+  // growth in the loops below is loop * loops / 2, so going higher
+  // than this will cause an overflow of std::any_cast<int>(*v)
+  const int loops = sqrt(std::numeric_limits<int>::max());
   {
     std::clock_t clock1 = std::clock();
-    boost::any v;
+    std::any v;
     for (int i = 0; i < loops; ++i) {
       v = i;
     }
@@ -200,9 +203,9 @@ void testRDAny() {
   }
   {
     std::clock_t clock1 = std::clock();
-    boost::any *v = nullptr, *vv;
+    std::any *v = nullptr, *vv;
     for (int i = 0; i < loops; ++i) {
-      vv = new boost::any(v ? boost::any_cast<int>(*v) + i : i);
+      vv = new std::any(v ? std::any_cast<int>(*v) + i : i);
       delete v;
       v = vv;
     }
@@ -286,16 +289,16 @@ void testRDAny() {
     // Checks fallback to Any
     std::vector<std::pair<int, int>> pvect;
     pvect.push_back(std::make_pair<int, int>(2, 2));
-    boost::any any1(pvect);
-    boost::any_cast<std::vector<std::pair<int, int>>>(any1);
-    boost::any_cast<std::vector<std::pair<int, int>> &>(any1);
-    boost::any_cast<const std::vector<std::pair<int, int>> &>(any1);
+    std::any any1(pvect);
+    std::any_cast<std::vector<std::pair<int, int>>>(any1);
+    std::any_cast<std::vector<std::pair<int, int>> &>(any1);
+    std::any_cast<const std::vector<std::pair<int, int>> &>(any1);
 
     RDAny vv(pvect);
-    auto &any = rdany_cast<boost::any &>(vv);
-    boost::any_cast<std::vector<std::pair<int, int>>>(any);
-    boost::any_cast<std::vector<std::pair<int, int>> &>(any);
-    boost::any_cast<const std::vector<std::pair<int, int>> &>(any);
+    auto &any = rdany_cast<std::any &>(vv);
+    std::any_cast<std::vector<std::pair<int, int>>>(any);
+    std::any_cast<std::vector<std::pair<int, int>> &>(any);
+    std::any_cast<const std::vector<std::pair<int, int>> &>(any);
 
     const std::vector<std::pair<int, int>> &pv =
         rdany_cast<std::vector<std::pair<int, int>>>(vv);
@@ -316,7 +319,7 @@ void testRDAny() {
 #ifndef UNSAFE_RDVALUE
       PRECONDITION(0, "Should throw bad cast");
 #endif
-    } catch (boost::bad_any_cast &) {
+    } catch (std::bad_any_cast &) {
     }
 
     TEST_ASSERT((*rdany_cast<std::vector<int> *>(vv))[0] == 100);
@@ -333,7 +336,7 @@ void testRDAny() {
   }
 
   {
-    // check shared ptrs -- boost::any deletes these :)
+    // check shared ptrs -- std::any deletes these :)
     typedef boost::shared_ptr<std::vector<int>> vptr;
     vptr p(new std::vector<int>());
     p->push_back(100);
@@ -424,7 +427,7 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
   }
   {
     Dict d;
@@ -434,9 +437,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[1,0,]");
+    TEST_ASSERT(sv == "[1,0]");
   }
   {
     Dict d;
@@ -446,9 +449,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[1.2,0,]");
+    TEST_ASSERT(sv == "[1.2,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[1.2,0,]");
+    TEST_ASSERT(sv == "[1.2,0]");
   }
   {
     Dict d;
@@ -458,9 +461,9 @@ void testVectToString() {
     d.setVal("foo", v);
     std::string sv;
     d.getVal("foo", sv);
-    TEST_ASSERT(sv == "[10001,0,]");
+    TEST_ASSERT(sv == "[10001,0]");
     sv = d.getVal<std::string>("foo");
-    TEST_ASSERT(sv == "[10001,0,]");
+    TEST_ASSERT(sv == "[10001,0]");
   }
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
@@ -488,29 +491,6 @@ void testConstReturns() {
     TEST_ASSERT(nv == "foo");
   }
 
-#if 0
-  {
-    Dict d;
-    std::string v="foo";
-    d.setVal("foo",v);
-
-    double ls=0;
-    BOOST_LOG(rdErrorLog) << "copy" << std::endl;
-    for(int i=0;i<100000000;++i){
-      std::string nv=d.getVal<std::string>("foo");
-      ls+= nv.size();
-    }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
-    ls=0;
-    BOOST_LOG(rdErrorLog) << "ref" << std::endl;
-    for(int i=0;i<100000000;++i){
-      const std::string &nv=d.getVal<std::string>("foo");
-      ls+= nv.size();
-    }
-    BOOST_LOG(rdErrorLog) << "done: "<<ls << std::endl;
-    //std::string nv=d.getVal<std::string>("foo");
-  }
-#else
   {
     // int nreps=100000000;
     int nreps = 100000;
@@ -586,8 +566,6 @@ void testConstReturns() {
 
     // std::string nv=d.getVal<std::string>("foo");
   }
-
-#endif
 
   BOOST_LOG(rdErrorLog) << "\tdone" << std::endl;
 }
@@ -679,7 +657,7 @@ class FooHandler : public CustomPropHandler {
       streamWrite(ss, version);
       streamWrite(ss, f.bar);
       streamWrite(ss, f.baz);
-    } catch (boost::bad_any_cast &) {
+    } catch (std::bad_any_cast &) {
       return false;
     }
     return true;
@@ -723,7 +701,6 @@ int main() {
   RDLog::InitLogs();
   testGithub940();
 
-#if 1
   testRDAny();
   Dict d;
   INT_VECT fooV;
@@ -809,7 +786,6 @@ int main() {
 
   testStringVals();
   testVectToString();
-#endif
   testConstReturns();
   testUpdate();
   testCustomProps();

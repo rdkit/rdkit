@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016 Greg Landrum
+// Copyright (c) 2016-2022 Greg Landrum
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -21,7 +21,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/FPBReader.h>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 
 namespace RDKit {
 
@@ -36,7 +36,7 @@ namespace RDKit {
   MultiFPBReader fpbs(readers);
   fpbs.init();
   boost::shared_ptr<ExplicitBitVect> ebv = fpbs.getReader(0)->getFP(95);
-  std::vector<boost::tuple<double,unsigned int, unsigned int> > nbrs =
+  std::vector<std::tuple<double,unsigned int, unsigned int> > nbrs =
       fpbs.getTanimotoNeighbors(*ebv.get(), 0.70);
   \endcode
 
@@ -52,7 +52,7 @@ namespace RDKit {
 */
 class RDKIT_DATASTRUCTS_EXPORT MultiFPBReader {
  public:
-  typedef boost::tuple<double, unsigned int, unsigned int> ResultTuple;
+  typedef std::tuple<double, unsigned int, unsigned int> ResultTuple;
   MultiFPBReader() {}
 
   /*!

@@ -35,15 +35,17 @@
 
 import sys
 import unittest
-import sys
+
 from rdkit import Chem
 from rdkit.RDLogger import logger
+
 try:
   import matplotlib
 except ImportError:
   matplotlib = None
 
 from rdkit.Chem import Draw
+from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw import SimilarityMaps as sm
 
 logger = logger()
@@ -64,8 +66,9 @@ class TestCase(unittest.TestCase):
     for w, r in zip(weights, refWeights):
       self.assertEqual(w, r)
 
+    d2d = rdMolDraw2D.MolDraw2DSVG(400, 400)
     _, maxWeight = sm.GetSimilarityMapForFingerprint(
-      self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'))
+      self.mol1, self.mol2, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), d2d)
     self.assertEqual(maxWeight, 0.5)
 
     weights, maxWeight = sm.GetStandardizedWeights(weights)
@@ -192,7 +195,6 @@ class TestCase(unittest.TestCase):
     except ImportError:
       pass
 
-
   @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testGithub4763(self):
     mol = Chem.MolFromSmiles('COc1cccc2cc(C(=O)NCCCCN3CCN(c4cccc5nccnc54)CC3)oc21')
@@ -200,7 +202,8 @@ class TestCase(unittest.TestCase):
     d = Draw.MolDraw2DSVG(400, 400)
     d.ClearDrawing()
     _, maxWeight = sm.GetSimilarityMapForFingerprint(
-      refmol, mol, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), draw2d=d, colorMap="coolwarm")
+      refmol, mol, lambda m, i: sm.GetMorganFingerprint(m, i, radius=2, fpType='bv'), draw2d=d,
+      colorMap="coolwarm")
     d.FinishDrawing()
     svg = d.GetDrawingText()
     with open('github4763.svg', 'w+') as outf:

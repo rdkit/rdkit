@@ -10,14 +10,19 @@
 *
 */
 %{
+#include <GraphMol/RGroupDecomposition/RGroupDecompParams.h>
+#include <GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 typedef std::vector<std::string> STR_VECT;
 %}
 
+%include "enums.swg"
+%include "std_string.i"
+
+
 %template(SparseIntVect64) RDKit::SparseIntVect<boost::int64_t>;
 
 
-%template(StringMolMap) std::map<std::string, boost::shared_ptr<RDKit::ROMol>>;
 %template(ROMol_Vect) std::vector<boost::shared_ptr<RDKit::ROMol>>;
 %template(StringMolMap_Vect) std::vector<std::map<std::string, boost::shared_ptr<RDKit::ROMol>>>;
 %template(StringROMol_VectMap) std::map<std::string,std::vector<boost::shared_ptr<RDKit::ROMol>>>;
@@ -44,4 +49,7 @@ typedef std::vector<std::string> STR_VECT;
   }
 }
 
+%include <RDGeneral/BetterEnums.h>
+%include <GraphMol/RGroupDecomposition/RGroupDecompParams.h>
+%include <GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h>
 %include <GraphMol/RGroupDecomposition/RGroupDecomp.h>

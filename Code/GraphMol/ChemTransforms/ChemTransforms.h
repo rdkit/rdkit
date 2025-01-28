@@ -265,6 +265,15 @@ RDKIT_CHEMTRANSFORMS_EXPORT void parseQueryDefText(
     std::map<std::string, ROMOL_SPTR> &queryDefs, bool standardize = true,
     const std::string &delimiter = "\t", const std::string &comment = "//",
     unsigned int nameColumn = 0, unsigned int smartsColumn = 1);
-}  // namespace RDKit
 
+namespace details {
+//! not recommended for use in other code
+RDKIT_CHEMTRANSFORMS_EXPORT void updateSubMolConfs(
+    const ROMol &mol, RWMol &res, boost::dynamic_bitset<> &removedAtoms);
+RDKIT_CHEMTRANSFORMS_EXPORT void copyStereoGroups(
+    const std::map<const Atom *, Atom *> &molAtomMap, const ROMol &mol,
+    RWMol &newMol);
+}  // namespace details
+
+}  // namespace RDKit
 #endif

@@ -47,17 +47,16 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   RWMol(const RWMol &other) : ROMol(other) {}
   RWMol &operator=(const RWMol &);
   RWMol(RWMol &&other) noexcept : ROMol(std::move(other)) {}
-  RWMol &operator=(RWMol &&other) noexcept { 
-    ROMol::operator=(std::move(other)); 
+  RWMol &operator=(RWMol &&other) noexcept {
+    ROMol::operator=(std::move(other));
     return *this;
   }
-
 
   //! insert the atoms and bonds from \c other into this molecule
   void insertMol(const ROMol &other);
 
   //! \name Atoms
-  //@{
+  //! @{
 
   //! adds an empty Atom to our collection
   /*!
@@ -114,11 +113,13 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void removeAtom(unsigned int idx);
   //! \overload
   void removeAtom(Atom *atom);
+  //! \overload
+  void removeAtom(Atom *atom, bool clearProps);
 
-  //@}
+  //! @}
 
   //! \name Bonds
-  //@{
+  //! @{
 
   //! adds a Bond between the indicated Atoms
   /*!
@@ -196,9 +197,9 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   void replaceBond(unsigned int idx, Bond *bond, bool preserveProps = false,
                    bool keepSGroups = true);
 
-  //@}
+  //! @}
 
-    //! removes all atoms, bonds, properties, bookmarks, etc.
+  //! removes all atoms, bonds, properties, bookmarks, etc.
   void clear() {
     destroy();
     d_confs.clear();
@@ -212,6 +213,10 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     dp_delBonds.reset();
   }
   void commitBatchEdit();
+
+ private:
+  void batchRemoveBonds();
+  void batchRemoveAtoms();
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;

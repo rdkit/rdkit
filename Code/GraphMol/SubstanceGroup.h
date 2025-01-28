@@ -17,6 +17,7 @@
 #ifndef _RD_SGROUP_H
 #define _RD_SGROUP_H
 
+#include <iostream>
 #include <utility>
 #include <unordered_map>
 
@@ -154,6 +155,12 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   void addParentAtomWithBookmark(int mark);
   void addBondWithBookmark(int mark);
 
+  // These methods should be handled with care, since they can leave
+  // Attachment points and CStates in an invalid state!
+  void removeAtomWithIdx(unsigned int idx);
+  void removeParentAtomWithIdx(unsigned int idx);
+  void removeBondWithIdx(unsigned int idx);
+
   void addBracket(const Bracket &bracket);
   void addCState(unsigned int bondIdx, const RDGeom::Point3D &vector);
   void addAttachPoint(unsigned int aIdx, int lvIdx, const std::string &idStr);
@@ -164,11 +171,9 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   const std::vector<unsigned int> &getParentAtoms() const { return d_patoms; }
   const std::vector<unsigned int> &getBonds() const { return d_bonds; }
 
-  void setAtoms(std::vector<unsigned int> atoms) { d_atoms = std::move(atoms); }
-  void setParentAtoms(std::vector<unsigned int> patoms) {
-    d_patoms = std::move(patoms);
-  }
-  void setBonds(std::vector<unsigned int> bonds) { d_bonds = std::move(bonds); }
+  void setAtoms(std::vector<unsigned int> atoms);
+  void setParentAtoms(std::vector<unsigned int> patoms);
+  void setBonds(std::vector<unsigned int> bonds);
 
   const std::vector<Bracket> &getBrackets() const { return d_brackets; }
   const std::vector<CState> &getCStates() const { return d_cstates; }
@@ -258,7 +263,7 @@ RDKIT_GRAPHMOL_EXPORT bool isSubstanceGroupIdFree(const ROMol &mol,
 }  // namespace SubstanceGroupChecks
 
 //! \name SubstanceGroups and molecules
-//@{
+//! @{
 
 RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
     ROMol &mol);
@@ -287,7 +292,7 @@ RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingAtom(
 */
 RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingBond(
     RWMol &mol, unsigned int idx);
-//@}
+//! @}
 
 }  // namespace RDKit
 

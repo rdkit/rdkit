@@ -93,7 +93,7 @@ class TestCase(unittest.TestCase):
     assert len(d) == 10
     assert tuple(d[0]) == (0, 11)
     assert tuple(d[2]) == (4, 31)
-    with self.assertRaisesRegexp(IndexError, ""):
+    with self.assertRaisesRegex(IndexError, ""):
       d[11]
 
   def testGetData2(self):
@@ -103,14 +103,14 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0]) == (0, 11)
     assert tuple(d[2]) == (4, 31)
     assert len(d) == 10
-    with self.assertRaisesRegexp(IndexError, ""):
+    with self.assertRaisesRegex(IndexError, ""):
       d[11]
 
   def testGetData3(self):
     """ using a DbResultSet
     """
     d = DbUtils.GetData(self.dbName, 'ten_elements', forceList=0, randomAccess=0)
-    with self.assertRaisesRegexp(TypeError, ""):
+    with self.assertRaisesRegex(TypeError, ""):
       len(d)
     rs = []
     for thing in d:
@@ -130,7 +130,7 @@ class TestCase(unittest.TestCase):
     assert tuple(d[0]) == (0, 22)
     assert tuple(d[2]) == (4, 62)
     assert len(d) == 10
-    with self.assertRaisesRegexp(IndexError, ""):
+    with self.assertRaisesRegex(IndexError, ""):
       d[11]
 
   def testGetData5(self):
@@ -141,7 +141,7 @@ class TestCase(unittest.TestCase):
       return (x[0], x[1] * 2)
 
     d = DbUtils.GetData(self.dbName, 'ten_elements', forceList=0, randomAccess=0, transform=fn)
-    with self.assertRaisesRegexp(TypeError, ""):
+    with self.assertRaisesRegex(TypeError, ""):
       len(d)
 
     rs = []
@@ -190,8 +190,8 @@ class TestCase(unittest.TestCase):
 
   def test_TypeFinder(self):
     data = [('-', 1.45, 'abc', None), (20, 3, 'defgh', None)]
-    self.assertEqual(
-      DbUtils.TypeFinder(data, 2, 4, nullMarker='-'), [[int, 2], [float, 4], [str, 5], [-1, 1]])
+    self.assertEqual(DbUtils.TypeFinder(data, 2, 4, nullMarker='-'),
+                     [[int, 2], [float, 4], [str, 5], [-1, 1]])
 
   def test_AdjustColHeadings(self):
     headers = ['abc def', ' abc def', 'abc-def ', 'abc.def']
@@ -205,9 +205,8 @@ class TestCase(unittest.TestCase):
   def test_GetTypeStrings(self):
     headers = ['pk', 'a', 'b', 'c']
     colTypes = [(int, 2), (int, 3), (float, 5), (str, 10)]
-    self.assertEqual(
-      DbUtils.GetTypeStrings(headers, colTypes),
-      ['pk integer', 'a integer', 'b double precision', 'c varchar(10)'])
+    self.assertEqual(DbUtils.GetTypeStrings(headers, colTypes),
+                     ['pk integer', 'a integer', 'b double precision', 'c varchar(10)'])
     self.assertEqual(
       DbUtils.GetTypeStrings(headers, colTypes, keyCol='pk'),
       ['pk integer not null primary key', 'a integer', 'b double precision', 'c varchar(10)'])

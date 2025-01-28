@@ -14,14 +14,8 @@
 #cmakedefine RDK_USE_BOOST_STACKTRACE
 
 #cmakedefine RDK_OPTIMIZE_POPCNT
-#ifdef RDK_OPTIMIZE_POPCNT
-#define USE_BUILTIN_POPCOUNT
-#endif
 
 #cmakedefine RDK_BUILD_THREADSAFE_SSS
-#ifdef RDK_BUILD_THREADSAFE_SSS
-#define RDK_THREADSAFE_SSS
-#endif
 
 #cmakedefine RDK_TEST_MULTITHREADED
 
@@ -47,3 +41,7 @@
 #cmakedefine RDK_BUILD_FREETYPE_SUPPORT
 
 #cmakedefine RDK_USE_URF
+
+#cmakedefine RDK_BUILD_YAEHMOP_SUPPORT
+
+#cmakedefine RDK_BUILD_XYZ2MOL_SUPPORT

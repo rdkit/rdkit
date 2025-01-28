@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,13 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _RD_CANON_H_
-#define _RD_CANON_H_
-
-#include <RDGeneral/BoostStartInclude.h>
-#include <boost/tuple/tuple.hpp>
-#include <boost/dynamic_bitset.hpp>
-#include <RDGeneral/BoostEndInclude.h>
+#ifndef RD_CANON_H
+#define RD_CANON_H
 
 namespace RDKit {
 class ROMol;
@@ -28,9 +23,9 @@ const int MAX_BONDTYPE = 32;  //!< used in the canonical traversal code
 
 //! used in traversals of the molecule
 typedef enum {
-  WHITE_NODE = 0,  //! not visited
-  GREY_NODE,       //! visited, but not finished
-  BLACK_NODE,      //! visited and finished
+  WHITE_NODE = 0,  //!< not visited
+  GREY_NODE,       //!< visited, but not finished
+  BLACK_NODE,      //!< visited and finished
 } AtomColors;
 
 //! used to indicate types of entries in the molecular stack:
@@ -95,7 +90,7 @@ class RDKIT_GRAPHMOL_EXPORT MolStackElem {
 typedef std::vector<MolStackElem> MolStack;
 
 //! used to represent possible branches from an atom
-typedef boost::tuple<int, int, Bond *> PossibleType;
+typedef std::tuple<int, int, Bond *> PossibleType;
 
 //! constructs the canonical traversal order for a molecular fragment
 /*!
@@ -116,7 +111,8 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
     const std::vector<unsigned int> &ranks, MolStack &molStack,
     const boost::dynamic_bitset<> *bondsInPlay = nullptr,
     const std::vector<std::string> *bondSymbols = nullptr,
-    bool doIsomericSmiles = false, bool doRandom = false);
+    bool doIsomericSmiles = false, bool doRandom = false,
+    bool doChiralInversions = true);
 
 //! Check if a chiral atom needs to have its tag flipped after reading or before
 //! writing SMILES
@@ -124,6 +120,17 @@ RDKIT_GRAPHMOL_EXPORT bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
                                                        const RDKit::Atom *atom,
                                                        bool isAtomFirst,
                                                        size_t numClosures);
+
+//! Canonicalizes the atom stereo labels in enhanced stereo groups
+/*!
+
+  For example, after calling this function the chiral centers in the
+  molecules `C[C@H](F)Cl |&1:1|` and `C[C@@H](F)Cl |&1:1|` will have the same
+  chiral tags.
+
+*/
+RDKIT_GRAPHMOL_EXPORT void canonicalizeEnhancedStereo(
+    ROMol &mol, const std::vector<unsigned int> *atomRanks = nullptr);
 
 }  // end of namespace Canon
 }  // end of namespace RDKit

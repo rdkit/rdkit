@@ -5,11 +5,11 @@
 #  The contents are covered by the terms of the BSD license
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
-from rdkit import RDConfig
 import os
 import sys
 import unittest
-from rdkit import DataStructs, Chem
+
+from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem import rdEHTTools
 
 

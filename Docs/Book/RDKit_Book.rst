@@ -145,8 +145,6 @@ Neutral carbons with radicals, however, are still considered:
   1
 
 
-
-
 The Simple Aromaticity Model
 ----------------------------
 
@@ -167,6 +165,7 @@ This isn't well documented (at least not publicly), so we tried to reproduce wha
 
 
 **Note:** For reasons of computational expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
+
 
 SMILES Support and Extensions
 =============================
@@ -251,14 +250,17 @@ The features which are parsed include:
 - atomic labels/aliases ``$`` (recognized aliases are ``_AP``, ``star_e``,
   ``Q_e``, ``QH_p``, ``AH_P``, ``X_p``, ``XH_p``, ``M_p``, ``MH_p``, ``*``)
 - atomic properties ``atomprop``
-- coordinate bonds ``C`` (these are translated into double bonds)
+- coordinate/dative bonds ``C`` (these are translated into dative bonds)
 - radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
 - linknodes ``LN``
-- multi-center attachments ``m``
+- variable/multi-center attachments ``m``
 - ring bond count specifications ``rb``
 - non-hydrogen substitution count specifications ``s``
 - unsaturation specification ``u``
+- wedged bonds (only when atomic coordinates are present): ``wU``, ``wD``
+- wiggly bonds ``w``
+- double bond stereo (only for ring bonds) ``c``, ``t``, ``ctu``
 - SGroup Data ``SgD``
 - polymer SGroups ``Sg``
 - SGroup Hierarchy ``SgH``
@@ -271,9 +273,13 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic values
 - atomic labels
 - atomic properties
+- dative bonds (only if dative bonds are not also being written to the SMILES/SMARTS)
 - radicals
 - enhanced stereo
-- linknodes 
+- linknodes
+- wedged bonds (only when atomic coordinates are also written) 
+- wiggly bonds
+- double bond stereo (only for ring bonds)
 - SGroup Data
 - polymer SGroups
 - SGroup Hierarchy
@@ -432,7 +438,8 @@ SMARTS Reference
 escape special characters. This is a wart from the documentation system we are using.
 Please ignore those characters.
 
-**Atoms**
+Atoms
+^^^^^
 
 =========  ==========================================  ===============  ======  =========
 Primitive                  Property                    "Default value"  Range?    Notes
@@ -464,8 +471,8 @@ Z          "number of aliphatic heteroatom neighbors"  >0               Y       
 =========  ==========================================  ===============  ======  =========
 
 
-
-**Bonds**
+Bonds
+^^^^^
 
 =========  ====================  ===================
 Primitive        Property               Notes
@@ -483,6 +490,44 @@ Primitive        Property               Notes
 <-         "dative left"         extension
 =========  ====================  ===================
 
+Hs in SMARTS
+^^^^^^^^^^^^
+
+Hs in SMARTS are interpreted as hydrogen atoms if the equivalent atom expression would also be a valid SMILES; otherwise they are interpreted as a query for any atom with a single attached hydrogen.
+
+Some examples:
+
+======  ==============
+SMARTS  Interpretation
+======  ==============  
+[H]     [#1]
+[H+]    [#1+]
+[H,Cl]  [\*H1,Cl]
+[HH]    [\*H1;\*H1]
+======  ==============
+
+This is somewhat confusing, but is consistent with the Daylight documentation (https://www.daylight.com/dayhtml/doc/theory/theory.smirks.html):
+  
+  Hence, a single change to SMARTS interpretation, for expressions of the form:
+  [<weight>H<charge><map>]. In SMARTS, these expressions now are interpreted as
+  a hydrogen atom, rather than as any atom with one hydrogen attached. All other
+  SMARTS hydrogen expressions retain their pre-4.51 meanings.
+
+It's always possible to see the RDKit's interpretation of a SMARTS using the ``DescribeQuery()`` function::
+
+  >>> print(Chem.AtomFromSmarts('[H,Cl]').DescribeQuery())
+  AtomOr
+    AtomHCount 1 = val
+    AtomType 17 = val
+
+  >>> print(Chem.AtomFromSmarts('[2H+]').DescribeQuery())
+  AtomAnd
+    AtomAnd
+      AtomAtomicNum 1 = val
+      AtomIsotope 2 = val
+    AtomFormalCharge 1 = val
+
+The safest (and clearest) way to incorporate H atoms into your queries is to use the atomic number primitive `[#1]` instead of `[H]`.
 
 Mol/SDF Support and Extensions
 ==============================
@@ -494,7 +539,7 @@ Here are the non-element atom queries that are supported:
   - A: any heavy atom
   - Q: any non-carbon heavy atom
   - \*: unspecfied (interpreted as any atom)
-  - L: (v2000): atom list
+  - L: (V2000): atom list
   - AH: (ChemAxon Extension) any atom
   - QH: (ChemAxon Extension) any non-carbon atom
   - X: (ChemAxon Extension) halogen
@@ -508,6 +553,7 @@ Here's a partial list of the features that are supported:
   - enhanced stereochemistry (V3000 only)
   - Sgroups: Sgroups are read and written, but interpretation of their contents is still very much
     a work in progress
+  - Dative bonds in V2000 (type 9), despite them not being part of the standard, we support them because they frequently show up in real-world data
 
 Ring Finding and SSSR
 =====================
@@ -531,14 +577,15 @@ Stereochemistry
 Types of stereochemistry supported
 ----------------------------------
 
-The RDKit currently supports tetrahedral atomic stereochemistry and cis/trans
-stereochemistry at double bonds. We plan to add support for additional types of
-stereochemistry in the future.
+The RDKit currently fully supports tetrahedral atomic stereochemistry and
+cis/trans stereochemistry at double bonds. There is partial support for
+non-tetrahedral stereochemistry, see the section :ref:`Non-tetrahedral-stereo`.
 
 Identification of potential stereoatoms/stereobonds
 ---------------------------------------------------
 
-As of the 2020.09 release the RDKit has two different ways of identifying potential stereoatoms/stereobonds:
+As of the 2020.09 release the RDKit has two different ways of identifying
+potential stereoatoms/stereobonds:
 
    1. The legacy approach: ``AssignStereochemistry()``.
       This approach does a reasonable job of recognizing potential
@@ -622,8 +669,9 @@ The following atom types are potential tetrahedral stereogenic atoms:
   - atoms with degree 4
   - atoms with degree 3 and one implicit H
   - P or As with degree 3 or 4
-  - N with degree 3 which is in a ring of size 3 or which is shared between at
-    least 3 rings (this last condition is an extension to the InChI rules) 
+  - An SP3 hybridized N with degree 3 that is not involved in any conjugated
+    bonds and that is in a ring of size 3 or that is shared between at least 3
+    rings (this last condition is an extension to the InChI rules).
   - S or Se with degree 3 and a total valence of 4 or a total valence of 3 and a
     net charge of +1.
 
@@ -651,10 +699,325 @@ Brief description of the ``findPotentialStereo()`` algorithm
    7. If steps 5 and 6 modfied any atoms or bonds, loop back to step 4. 
    8. Add any potential stereogenic atom which does not have to identically 
       ranked neighbors to the results 
-   9. Add any potential stereogenic atom which does not have to identically
+   9. Add any potential stereogenic atom which does not have two identically
       ranked atoms attached to either end [#eitherend]_ to the results
    10. Return the results
 
+Sources of information about stereochemistry
+--------------------------------------------
+
+From SMILES
+^^^^^^^^^^^
+
+Atomic stereochemistry can be specified using ``@``, ``@@``, ``@SP``, etc.
+Potential stereocenters with no information provided are
+``ChiralType::CHI_UNSPECIFIED``.
+
+Double-bond stereochemistry is specfied using ``/`` and ``\`` to indicate the
+directionality of the neighboring single bonds. Double bonds with no stereo
+information provided are ``BondStereo::STEREONONE``. 
+
+
+From Mol
+^^^^^^^^
+
+Atomic stereochemistry can be specified using wedged bonds if 2D coordinates are
+present. If 3D coordinates are present, they are used to set the stereochemistry
+for stereogenic atoms. Wiggly bonds (``CFG=2`` in V3000 mol blocks) set the
+chiral tag of stereogenic start atom to ``ChiralType::CHI_UNSPECIFIED``.
+
+Double-bond stereochemistry is automatically set using the atomic coordinates;
+this is true for both 2D and 3D coordinates. If a stereogenic double bound is
+crossed (``CFG=2`` in V3000 mol blocks) or has an adjacent wiggly single bond
+(``CFG=2`` in V3000 mol blocks), then it will be ``BondStereo::STEREOANY``.
+
+
+From CXSMILES
+^^^^^^^^^^^^^
+
+An initial stereochemistry assignment is done following the SMILES rules (see above).
+
+A ``w:`` (wiggly bond) specification will set the stereochemistry of the start
+atom to ``ChiralType::CHI_UNSPECIFIED`` and double bonds to
+``BondStereo::STEREOANY``. Stereochemistry of ring bonds can be set using ``t``,
+``c``, or ``ctu``.
+
+If 2D coordinates are present in the CXSMILES, atomic stereo can be set using
+```wU``` or ```wD``` to create wedged bonds.
+
+If 3D coordinates are present in the CXSMILES, they are used to set the
+stereochemistry for stereogenic atoms and bonds. This supersedes other
+specifications in the CXSMILES except for ``ctu`` and ``w``.
+
+
+.. _Non-tetrahedral-stereo:
+
+Support for non-tetrahedral atomic stereochemistry
+==================================================
+
+Starting with the 2022.09 release, the RDKit has partial, but evolving, support
+for non-tetrahedral stereochemistry. The status of this work is being tracked in
+this github issue: https://github.com/rdkit/rdkit/issues/4851
+
+This code is being released in a preliminary state in order to get feedback as
+soon as we can and to start to gather experience working with these systems.
+
+
+Status as of 2022.09.1 release
+------------------------------
+
+"Complete"
+^^^^^^^^^^
+(Note that since is new territory, the term "complete" should be taken with a
+grain of salt.)
+
+- The basic representation
+- Parsing SMILES and SMARTS
+- Generation of 2D coordinates
+- Assignment of non-tetrahedral stereo from 3D structures
+
+Partial
+^^^^^^^
+- Writing SMILES. The SMILES generated should be correct, but they are not
+  canonical.
+- Generation of 3D coordinates. The basics here work but the "chirality" of TBP
+  and OH structures is not correct.
+- Writing mol files. Need wedged bonds for these to actually be done
+
+Totally missing
+^^^^^^^^^^^^^^^
+- Wedging bonds
+- Writing SMARTS
+- Substructure search integration
+- CIP assignment
+- Canonicalization
+- Stereochemistry cleanup: recognizing incorrect stereochemistry specifications
+- Assignment of non-tetrahedral stereo from 2D structures
+
+
+SMILES notation
+---------------
+
+This discussion of the SMILES notation is drawn heavily from the OpenSMILES
+documentation: http://opensmiles.org/opensmiles.html Many thanks to the team
+which put that document together and to John Mayfield for his excellent CDK
+Depict tool, which I used double check my work on this.
+
+
+The representation has a tag for what the stereo is, e.g. ``@SP``, and a permutation number.
+
+Square planar
+^^^^^^^^^^^^^
+
+
+.. |nts_sp1| image:: images/nontetstereo_sp1.png
+   :align: middle
+.. |nts_sp2| image:: images/nontetstereo_sp2.png
+   :align: middle
+.. |nts_sp3| image:: images/nontetstereo_sp3.png
+   :align: middle
+
++-----------+-----------+-----------+
+|   @SP1    |   @SP2    |   @SP3    |
++===========+===========+===========+
+| |nts_sp1| | |nts_sp2| | |nts_sp3| |
++-----------+-----------+-----------+
+|     U     |     4     |     Z     |
++-----------+-----------+-----------+
+
+
+.. |nts_sp4| image:: images/nontetstereo_sp4.png
+   :align: middle
+
+|nts_sp4|
+
+
+Here are the ligand numberings for the 3 possible permutations of the sample molecule:
+
+======= === === === === ========
+ Label   A   B   C   D   SMILES
+======= === === === === ========
+@SP1     0   1   2   3  ``C[Pt@SP1](F)(Cl)[H]``
+@SP2     0   2   1   3  ``C[Pt@SP2](Cl)(F)[H]``
+@SP3     0   1   3   2  ``C[Pt@SP3](F)([H])Cl``
+======= === === === === ========
+
+
+Trigonal bipyramidal
+^^^^^^^^^^^^^^^^^^^^
+
+
+Here's a specific example (from the OpenSMILES docs):
+
+.. |nts_tb2| image:: images/nontetstereo_tb2.png
+   :align: middle
+
+|nts_tb2|
+
+Here are the ligand labels and the ligand numbering for ``@TB1``:
+
+.. |nts_tb1| image:: images/nontetstereo_tb1.png
+   :align: middle
+
+|nts_tb1|
+
+And then the ligand numberings for the 20 possible permutations of the sample molecule:
+
+======= === === === === === ========
+ Label   A   B   C   D   E   SMILES
+======= === === === === === ========
+@TB1     0   4   1   2   3   ``S[As@TB1](F)(Cl)(Br)N``
+@TB2     0   4   1   3   2   ``S[As@TB2](F)(Br)(Cl)N``
+
+@TB3     0   3   1   2   4   ``S[As@TB3](F)(Cl)(N)Br``
+@TB4     0   3   1   4   2   ``S[As@TB4](F)(Br)(N)Cl``
+
+@TB5     0   2   1   3   4   ``S[As@TB5](F)(N)(Cl)Br``
+@TB6     0   2   1   4   3   ``S[As@TB6](F)(N)(Br)Cl``
+
+@TB7     0   1   2   3   4   ``S[As@TB7](N)(F)(Cl)Br``
+@TB8     0   1   2   4   3   ``S[As@TB8](N)(F)(Br)Cl``
+
+@TB9     1   4   0   2   3   ``F[As@TB9](S)(Cl)(Br)N``
+@TB11    1   4   0   3   2   ``F[As@TB11](S)(Br)(Cl)N``
+
+@TB10    1   3   0   2   4   ``F[As@TB10](S)(Cl)(N)Br``
+@TB12    1   3   0   4   2   ``F[As@TB12](S)(Br)(N)Cl``
+
+@TB13    1   2   0   3   4   ``F[As@TB13](S)(N)(Cl)Br``
+@TB14    1   2   0   4   3   ``F[As@TB14](S)(N)(Br)Cl``
+
+@TB15    2   4   0   1   3   ``F[As@TB15](Cl)(S)(Br)N``
+@TB20    2   4   0   3   1   ``F[As@TB20](Br)(S)(Cl)N``
+
+@TB16    2   3   0   1   4   ``F[As@TB16](Cl)(S)(N)Br``
+@TB19    2   3   0   4   1   ``F[As@TB19](Br)(S)(N)Cl``
+
+@TB17    3   4   0   1   2   ``F[As@TB17](Cl)(Br)(S)N``
+@TB18    3   4   0   2   1   ``F[As@TB18](Br)(Cl)(S)N``
+
+======= === === === === === ========
+
+
+Octahedral
+^^^^^^^^^^
+
+Here's a specific example (an invented molecule):
+
+.. |nts_oh2| image:: images/nontetstereo_oh2.png
+   :align: middle
+
+|nts_oh2|
+
+Here are the ligand labels and the ligand numbering for ``@OH1``:
+
+.. |nts_oh1| image:: images/nontetstereo_oh1.png
+   :align: middle
+
+|nts_oh1|
+
+
+And then the square planar shape and ligand numberings for the 30 possible permutations of the sample molecule:
+
+======= ==== === === === === === === ========
+ Label   SP   A   B   C   D   E   F   SMILES
+======= ==== === === === === === === ========
+@OH1     U    0   5   1   2   3   4   ``O[Co@OH1](Cl)(C)(N)(F)P``
+@OH2     U    0   5   1   4   3   2   ``O[Co@OH2](Cl)(F)(N)(C)P``
+
+@OH3     U    0   4   1   2   3   5   ``O[Co@OH3](Cl)(C)(N)(P)F``
+@OH16    U    0   4   1   5   3   2   ``O[Co@OH16](Cl)(F)(N)(P)C``
+
+@OH6     U    0   3   1   2   4   5   ``O[Co@OH6](Cl)(C)(P)(N)F``
+@OH18    U    0   3   1   5   4   2   ``O[Co@OH18](Cl)(F)(P)(N)C``
+
+@OH19    U    0   2   1   3   4   5   ``O[Co@OH19](Cl)(P)(C)(N)F``
+@OH24    U    0   2   1   5   4   3   ``O[Co@OH24](Cl)(P)(F)(N)C``
+
+@OH25    U    0   1   2   3   4   5   ``O[Co@OH25](P)(Cl)(C)(N)F``
+@OH30    U    0   1   2   5   4   3   ``O[Co@OH30](P)(Cl)(F)(N)C``
+
+@OH4     Z    0   5   1   2   4   3   ``O[Co@OH4](Cl)(C)(F)(N)P``
+@OH14    Z    0   5   1   3   4   2   ``O[Co@OH14](Cl)(F)(C)(N)P``
+
+@OH5     Z    0   4   1   2   5   3   ``O[Co@OH5](Cl)(C)(F)(P)N``
+@OH15    Z    0   4   1   3   5   2   ``O[Co@OH15](Cl)(F)(C)(P)N``
+
+@OH7     Z    0   3   1   2   5   4   ``O[Co@OH7](Cl)(C)(P)(F)N``
+@OH17    Z    0   3   1   4   5   2   ``O[Co@OH17](Cl)(F)(P)(C)N``
+
+@OH20    Z    0   2   1   3   5   4   ``O[Co@OH20](Cl)(P)(C)(F)N``
+@OH23    Z    0   2   1   4   5   3   ``O[Co@OH23](Cl)(P)(F)(C)N``
+
+@OH26    Z    0   1   2   3   5   4   ``O[Co@OH26](P)(Cl)(C)(F)N``
+@OH29    Z    0   1   2   4   5   3   ``O[Co@OH29](P)(Cl)(F)(C)N``
+
+@OH10    4    0   5   1   4   2   3   ``O[Co@OH10](Cl)(N)(F)(C)P``
+@OH8     4    0   5   1   3   2   4   ``O[Co@OH8](Cl)(N)(C)(F)P``
+
+@OH11    4    0   4   1   5   2   3   ``O[Co@OH11](Cl)(N)(F)(P)C``
+@OH9     4    0   4   1   3   2   5   ``O[Co@OH9](Cl)(N)(C)(P)F``
+
+@OH13    4    0   3   1   4   2   4   ``O[Co@OH13](Cl)(N)(P)(F)C``
+@OH12    4    0   3   1   4   2   5   ``O[Co@OH12](Cl)(N)(P)(C)F``
+
+@OH22    4    0   2   1   5   3   4   ``O[Co@OH22](Cl)(P)(N)(F)C``
+@OH21    4    0   2   1   4   3   5   ``O[Co@OH21](Cl)(P)(N)(C)F``
+
+@OH28    4    0   1   2   5   3   4   ``O[Co@OH28](P)(Cl)(N)(F)C``
+@OH27    4    0   1   2   4   3   5   ``O[Co@OH27](P)(Cl)(N)(C)F``
+======= ==== === === === === === === ========
+
+
+Duplicate ligands
+^^^^^^^^^^^^^^^^^
+
+One of the major differences between non-tetrahedral stereochemistry and the
+tetrahedral variant is that it's possible to have non-tetrahedral stereo with
+central atoms which have duplicate ligands.
+
+The classic example of this is cis-platin - ``Cl[Pt@SP1](Cl)(<-[NH3])<-[NH3]`` - vs trans-platin  - ``Cl[Pt@SP2](Cl)(<-[NH3])<-[NH3]`` - 
+
+.. |nts_ex1| image:: images/nontetstereo_ex1.png
+   :align: middle
+.. |nts_ex2| image:: images/nontetstereo_ex2.png
+   :align: middle
+
+
+=================================== ====================================
+ |nts_ex1|                           |nts_ex2| 
+=================================== ====================================
+``Cl[Pt@SP1](Cl)(<-[NH3])<-[NH3]``   ``Cl[Pt@SP2](Cl)(<-[NH3])<-[NH3]``
+=================================== ====================================
+
+
+
+
+
+
+
+Treatment of implicit Hs
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Implicit Hs are treated the same as in tetrahedral stereo: as if they are the
+first neighbors after the central atom. So the two smiles ``C[Pt@SP1H](Cl)F``
+and ``C[Pt@SP1]([H])(Cl)F`` corresponds to the same structure.
+
+This also works with multiple implicit Hs: ``C[Pt@SP1H2]Cl`` and ``C[Pt@SP1]([H])([H])Cl`` are equivalent.
+
+
+Missing ligands
+^^^^^^^^^^^^^^^
+
+Coordination environments with missing ligands are treated as if the missing ligands were at the end of the ligand ordering.
+For example, this invented complex can be presented with the SMILES ``O[Mn@OH1](Cl)(C)(N)F``.
+
+.. |nts_missing1| image:: images/nontetstereo_missing1.png
+   :align: middle
+
+|nts_missing1|
+
+Compare this to the SMILES for the related complex shown above in the discussion of ``@OH`` stereo.
 
 
 Chemical Reaction Handling
@@ -1223,23 +1586,42 @@ Here's an example of using the features:
 
 Here are the supported groups and a brief description of what they mean:
 
- ========================   =========
-  Alkyl (ALK)               alkyl side chains
-  Alkenyl (AEL)             alkenyl side chains                
+ =========================  =========
+  Alkyl (ALK)               alkyl side chains (not an H atom)
+  AlkylH (ALH)              alkyl side chains including an H atom
+  Alkenyl (AEL)             alkenyl side chains      
+  AlkenylH (AEH)            alkenyl side chains or an H atom 
   Alkynyl (AYL)             alkynyl side chains               
-  Alkoxy (AOX)              alkoxy side chains                
-  Carbocyclic (CBC)         carbocyclic side chains                
+  AlkynylH (AYH)            alkynyl side chains or an H atom
+  Alkoxy (AOX)              alkoxy side chains           
+  AlkoxyH (AOH)             alkoxy side chains or an H atom
+  Carbocyclic (CBC)         carbocyclic side chains
+  CarbocyclicH (CBH)        carbocyclic side chains or an H atom
   Carbocycloalkyl (CAL)     cycloalkyl side chains
+  CarbocycloalkylH (CAH)    cycloalkyl side chains or an H atom
   Carbocycloalkenyl (CEL)   cycloalkenyl side chains
+  CarbocycloalkenylH (CEH)  cycloalkenyl side chains or an H atom
   Carboaryl (ARY)           all-carbon aryl side chains
+  CarboarylH (ARH)          all-carbon aryl side chains or an H atom
   Cyclic (CYC)              cyclic side chains
-  Acyclic(ACY)              acyclic side chains
+  CyclicH (CYH)             cyclic side chains or an H atom
+  Acyclic(ACY)              acyclic side chains (not an H atom)
+  AcyclicH (ACH)            acyclic side chains or an H atom
   Carboacyclic (ABC)        all-carbon acyclic side chains
+  CarboacyclicH (ABH)       all-carbon acyclic side chains or an H atom
   Heteroacyclic (AHC)       acyclic side chains with at least one heteroatom
+  HeteroacyclicH (AHH)      acyclic side chains with at least one heteroatom or an H atom
   Heterocyclic (CHC)        cyclic side chains with at least one heteroatom
+  HeterocyclicH (CHH)       cyclic side chains with at least one heteroatom or an H atom
   Heteroaryl (HAR)          aryl side chains with at least one heteroatom
+  HeteroarylH (HAH)         aryl side chains with at least one heteroatom or an H atom
   NoCarbonRing (CXX)        ring containing no carbon atoms
- ========================   =========
+  NoCarbonRingH (CXH)       ring containing no carbon atoms or an H atom
+  Group (G)                 any group (not H atom)
+  GroupH (GH)               any group (including H atom)
+  Group* (G*)               any group with a ring closure
+  GroupH* (GH*)             any group with a ring closure or an H atom
+ =========================  =========
  
 For more detailed descriptions, look at the documentation for the C++ file GenericGroups.h
 
@@ -1281,39 +1663,130 @@ Here are the steps involved, in order.
         Example: ``O=Cl(=O)O -> [O-][Cl+2][O-]O``
 
      This step should not generate exceptions.
+  3. ``cleanUpOrganometallics``: standardizes a small number of non-standard
+     situations encountered in organometallics. The cleanup operations are:
 
-  3. ``updatePropertyCache``: calculates the explicit and implicit valences on
+       - replaces single bonds from hypervalent atoms to metals with dative bonds.
+
+     This step should not generate exceptions.
+
+  4. ``updatePropertyCache``: calculates the explicit and implicit valences on
      all atoms. This generates exceptions for atoms in higher-than-allowed
      valence states. This step is always performed, but if it is "skipped"
      the test for non-standard valences will not be carried out.
 
-  4. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
+  5. ``symmetrizeSSSR``: calls the symmetrized smallest set of smallest rings
      algorithm (discussed in the Getting Started document).
 
-  5. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
+  6. ``Kekulize``: converts aromatic rings to their Kekule form. Will raise an
      exception if a ring cannot be kekulized or if aromatic bonds are found
      outside of rings.
 
-  6. ``assignRadicals``: determines the number of radical electrons (if any) on
+  7. ``assignRadicals``: determines the number of radical electrons (if any) on
      each atom.
 
-  7. ``setAromaticity``: identifies the aromatic rings and ring systems
+  8. ``setAromaticity``: identifies the aromatic rings and ring systems
      (see above), sets the aromatic flag on atoms and bonds, sets bond orders
      to aromatic.
 
-  8. ``setConjugation``: identifies which bonds are conjugated
+  9. ``setConjugation``: identifies which bonds are conjugated
 
-  9. ``setHybridization``: calculates the hybridization state of each atom
+  10. ``setHybridization``: calculates the hybridization state of each atom
 
-  10. ``cleanupChirality``: removes chiral tags from atoms that are not sp3
+  11. ``cleanupChirality``: removes chiral tags from atoms that are not sp3
       hybridized.
 
-  11. ``adjustHs``: adds explicit Hs where necessary to preserve the chemistry.
+  12. ``adjustHs``: adds explicit Hs where necessary to preserve the chemistry.
       This is typically needed for heteroatoms in aromatic rings. The classic
       example is the nitrogen atom in pyrrole.
 
+  13. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
+      all atoms. This generates exceptions for atoms in higher-than-allowed
+      valence states. This step is required to catch some edge cases where input 
+      atoms with non-physical valences are accepted if they are flagged as aromatic.
+
+
 The individual steps can be toggled on or off when calling
 ``MolOps::sanitizeMol`` or ``Chem.SanitizeMol``.
+
+Valence calculation and allowed valences
+========================================
+
+The RDKit is, by default, fairly strict in the way it enforces allowed valences when sanitizing structures (this is done during the `updatePropertyCache` step of sanitization): atoms which have an explicit valence (sum of the specified bond orders + specified H count) exceeding the maximum allowed valence for the element will raise an exception. 
+
+Allowed valences of the elements (as of 2024.09.1):
+
+  =======  =======  =====  ======  ======  ========  ========  ==========
+  H 1                                                          He 0 
+  Li 1 -1  Be 2     B 3    C 4     N 3     O 2       F 1       Ne 0      
+  Na 1,-1  Mg 2,-1  Al 3   Si 4    P 3,5   S 2,4,6   Cl 1      Ar 0      
+  K  1,-1  Ca 2,-1  Ga 3   Ge 4    As 3,5  Se 2,4,6  Br 1      Kr 0      
+  Rb 1,-1  Sr 2,-1  In 3   Sn 2,4  Sb 3,5  Te 2,4,6  I  1,3,5  Xe 0,2,4,6
+  Cs 1,-1  Ba 2,-1  Tl -1  Pb 2,4  Bi 3,5  Po 2,4,6  At 1,3,5  Rn 0
+  =======  =======  =====  ======  ======  ========  ========  ==========
+
+Elements not listed in the table have a valence of `-1`.
+
+An allowed valence of `-1` indicates that the element can have any valence value. Implicit Hs will not be added to atoms with a possible valence of `-1` when the explicit valence exceeds the highest specified value. So, for example, an Mg atom with a single bond to it (explicit valence = 1) will have one implicit H added to it, while an Mg atom with three bonds to it will have no implicit Hs added. Atoms where the only allowed valence is `-1` will never have implicit Hs added.
+
+The allowed valences of charged atoms are calculated by looking at the isoelectronic element's allowed valences. For example, `N+` has the same allowed valences as `C`, while `N-` has the same allowed valences as `O`. `P-2`, `S-`, `As-2`, and `Se-` are special cases: they all have allowed valences of 1, 3 and 5.
+
+
+JSON Support
+************
+
+The RDKit supports writing to/reading from two closely related JSON formats: 
+commonchem (https://github.com/CommonChem/CommonChem) and rdkitjson. commonchem is a well-documented format designed to be used for efficient interchange between molecular toolkits. rdkitjson is an extension to commonchem which includes additional features allowing RDKit molecules to be serialized to JSON. The extensions in rdkitjson - enhanced stereo and substance groups - are generally useful, so it's easy to imagine them being integrated into commonchem at some point in the future.
+
+Lists of molecules can be converted to JSON with ``MolInterchange::MolsToJSONData()`` (C++) or ``Chem.MolsToJSONData()`` (Python). Those calls take an optional parameters object which can be used to specify whether commonchem or rdkitjson is generated. The default is to generate rdkitjson.
+
+JSON data can be converted back to RDKit molecules using ``MolInterchange::JSONDataToMols()`` (C++) or ``Chem.JSONDataToMols()`` (Python). The parser will automatically determine whether or not its working with commonchem or rdkitjson.
+
+rdkitjson format
+================
+
+Enhanced stereo 
+---------------
+
+Here's the rdkitjson representation of the stereo groups from the molecule ``C[C@@H]1C([C@H](O)F)O[C@H](C)C([C@@H](O)F)[C@@H]1C |a:7,o1:3,10,&1:1,&2:13|``::
+
+   'stereoGroups': [{'type': 'abs', 'atoms': [7]},
+    {'type': 'or', 'atoms': [3, 10]},
+    {'type': 'and', 'atoms': [1]},
+    {'type': 'and', 'atoms': [13]}],
+
+Substance groups 
+----------------
+
+Here's the rdkitjson representation of a ``SUP`` substance group::
+
+   'substanceGroups': [{'properties': {'TYPE': 'SUP',
+      'index': 1,
+      'LABEL': 'Boc',
+      'DATAFIELDS': '[]'},
+     'atoms': [7, 8, 9, 10, 11, 12, 13],
+     'bonds': [8],
+     'brackets': [[[6.24, -2.9, 0.0], [6.24, -2.9, 0.0], [0.0, 0.0, 0.0]]],
+     'cstates': [{'bond': 8, 'vector': [0.0, 0.82, 0.0]}],
+     'attachPoints': [{'aIdx': 12, 'lvIdx': 5, 'id': '1'}]}],
+
+
+and one for an ``SRU`` group::
+ 
+   'substanceGroups': [{'properties': {'TYPE': 'SRU',
+      'index': 1,
+      'CONNECT': 'HT',
+      'LABEL': 'n',
+      'DATAFIELDS': '[]'},
+     'atoms': [2, 1, 4],
+     'bonds': [2, 0],
+     'brackets': [[[-3.9538, 4.3256, 0.0],
+                   [-3.0298, 2.7252, 0.0],
+                   [0.0, 0.0, 0.0]],
+                  [[-5.4618, 2.8611, 0.0], 
+                   [-6.3858, 4.4615, 0.0], 
+                   [0.0, 0.0, 0.0]]]}],
+ 
 
 Implementation Details
 **********************
@@ -1399,7 +1872,7 @@ What has been tested
 --------------------
 
   - Reading molecules from SMILES/SMARTS/Mol blocks
-  - Writing molecules to SMILES/SMARTS/Mol blocks
+  - Writing molecules to SMILES/SMARTS/Mol blocks (see below)
   - Generating 2D coordinates
   - Generating 3D conformations with the distance geometry code
   - Optimizing molecules with UFF or MMFF
@@ -1428,6 +1901,8 @@ Known Problems
     ``RDK_BUILD_THREADSAFE_SSS`` argument (the default for the binaries
     we provide), a mutex is used to ensure that only one thread is
     using a given recursive query at a time.
+  - Calling MolToSmiles() on the same molecule from multiple threads can lead to
+    data races with the calculated properties on the molecule.
 
 Implementation of the TPSA Descriptor
 =====================================
@@ -1642,19 +2117,25 @@ Use cases
 
 The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation and depiction are future goals.
 
-It is possible to enumerate the elements of a ``StereoGroup`` using the function :py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`, which also
-preserves membership in the original ``StereoGroup``.
+It is possible to enumerate the elements of a ``StereoGroup`` using the function
+:py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`. Note that
+this removes the ``StereoGroup`` information from the products since they now
+correspond to specific molecules:
 
 .. doctest ::
 
-  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |&1:1|')
+  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |a:4,&1:1|')
   >>> m.GetStereoGroups()[0].GetGroupType()
-  rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
+  rdkit.Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE
   >>> [x.GetIdx() for x in m.GetStereoGroups()[0].GetAtoms()]
+  [4]
+  >>> m.GetStereoGroups()[1].GetGroupType()
+  rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
+  >>> [x.GetIdx() for x in m.GetStereoGroups()[1].GetAtoms()]
   [1]
   >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
   >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
-  ['C[C@@H](F)C[C@H](O)Cl |&1:1|', 'C[C@H](F)C[C@H](O)Cl |&1:1|']
+  ['C[C@@H](F)C[C@H](O)Cl', 'C[C@H](F)C[C@H](O)Cl']
 
 Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
 
@@ -1670,7 +2151,26 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   >>> ps=rxn.RunReactants([m])
   >>> clearAllAtomProps(ps[0][0])
   >>> Chem.MolToCXSmiles(ps[0][0])
-  'C[C@H](Br)C[C@H](O)Cl |&1:1|'
+  'C[C@H](Br)C[C@H](O)Cl |a:4,&1:1|'
+
+  Stereo Groups can be canonicalized.
+
+.. doctest ::
+  
+  >>> m = Chem.MolFromSmiles('CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,o1:11,o2:14|')
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.NeverInclude)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |o1:14|'
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.AlwaysInclude)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |a:3,11,o1:14|'
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |a:3,11,o1:14|'
+  >>> m = Chem.MolFromSmiles('CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3|')
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1'
 
 .. |EnhancedSSS_A|  image:: ./images/EnhancedStereoSSS_molA.png
    :scale: 75%
@@ -1748,6 +2248,224 @@ Some concrete examples of this:
   True
   >>> m_OR.HasSubstructMatch(m_AND,ps)
   False
+
+Atropisomeric Bonds
+*******************
+
+Some single bonds have restricted rotation because of steric interactions
+between the groups on adjacent atoms. If the groups on the adjacent atoms are
+different from each other, chirality can be induced. An atropisomer bond is such
+a restricted rotation bond. 
+
+The requirements for a bond to be eligible for atropisomerism in the RDKit are:
+
+- The bond must be a single bond between SP2 hybridized atoms.
+- The neighboring bonds must be single, double or aromatic. 
+- If there are two groups on either end, those groups must be different as per CIP rules. 
+- Currently RDKit considers ring bonds as potential atropisomer bonds only if the
+  ring in which the bond appears is 8 atoms or larger (thus allowing macrocycles).
+- The molecule must have coordinates for atropisomer bonds to be interpreted.
+
+The definition of potential atropisomer bonds is based on the wedging of
+adjacent bonds. 
+
+Defining Atropisomers
+=====================
+
+At least one of the neighbor bonds of one of the atoms of the potential
+atropisomer bond must be a single or aromatic bond, and must have a bond
+direction that is either "wedged" or "hashed". If any of the neighbor bonds is
+marked as "sqwiggly", the bond is considered to have "Any" stereochemistry.
+Example structure:
+
+.. testsetup::
+
+  'N1(C2C(C)=CC=CC=2I)C(C)=CC=C1Br |wU:1.1,(16.58,-10.58,;16.58,-9.58,;17.45,-9.08,;18.31,-9.57,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,)|'
+  
+
+.. image:: images/atrop_example1.png
+
+If more than one of the neighbor bonds are wedged or hashed, they must be consistent. 
+
+For example, if two neighbor bonds on the same end atom are wedged/hashed, one
+must be a wedge and the other must be a hash. If neighbor bonds on different
+ends of the atropisomer bond are wedged, and the two bonds are opposite sides of
+the potential atropisomer bond (the dihedral angle is greater than 90 degrees or
+less than -90 degrees), the two must both be wedges or both must be hashed. If
+the two wedged/hashed neighbor bonds are on the same side of the potential
+atropisomer bond (the dihedral angle is less than 90 degrees and greater than
+-90 degrees), one must be a wedge and the other a hash.
+
+Examples – valid atropisomers with multiple wedges:
+
+.. testsetup::
+
+  'N1(C2=C(I)C=CC=C2C)C(Br)=CC=C1C |wU:1.7,0.9,(15.40,-10.23,;15.40,-9.23,;14.54,-8.73,;13.67,-9.23,;14.54,-7.73,;15.40,-7.23,;16.26,-7.73,;16.27,-8.73,;17.13,-9.22,;14.60,-10.82,;13.64,-10.52,;14.90,-11.77,;15.90,-11.77,;16.20,-10.82,;17.16,-10.52,)|',
+  'N1(C(C)=CC=C1Br)C1C(C)=CC=CC=1I |wU:0.5,wD:0.0,(16.58,-10.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,;16.58,-9.58,;17.45,-9.08,;18.31,-9.57,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,)|'
+  
+.. image:: images/atrop_example2.png
+
+
+Examples – invalid atropisomers with multiple wedges:
+
+.. testsetup::
+
+  'N1(C(C)=CC=C1Br)C1C(C)=CC=CC=1I |wU:0.5,wD:7.8,(12.97,-10.71,;13.78,-11.30,;14.74,-11.00,;13.48,-12.25,;12.47,-12.25,;12.17,-11.30,;11.21,-11.00,;12.97,-9.70,;13.85,-9.20,;14.71,-9.69,;13.84,-8.20,;12.97,-7.70,;12.11,-8.20,;12.11,-9.20,;11.24,-9.70,)|',
+  'N1(C2=C(I)C=CC=C2C)C(Br)=CC=C1C |wU:0.9,0.14,(16.20,-9.43,;16.20,-8.43,;15.34,-7.93,;14.47,-8.43,;15.34,-6.93,;16.20,-6.43,;17.06,-6.93,;17.07,-7.93,;17.93,-8.42,;15.40,-10.02,;14.44,-9.72,;15.70,-10.97,;16.70,-10.97,;17.00,-10.02,;17.96,-9.72,)|'
+  
+.. image:: images/atrop_example3.png
+
+
+Note: the RDKit software makes no attempt to determine if the bond is actually
+rotationally constrained. If the bond meets the requirements above, it is
+marked as an atropisomer.
+
+Internal Representation of Atropisomers
+=======================================
+
+To help with the rest of the explanation, we include the bond indices in the molecule drawing:
+
+.. testsetup::
+
+  'CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wU:7.7,(18.31,-9.57,;17.45,-9.08,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,;16.58,-9.58,;16.58,-10.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,)|'
+  
+.. image:: images/atrop_representation1.png
+
+Here's part of the Debug output for that molecule::
+
+  Atoms:
+    ...
+    1 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    ...
+    5 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    ...
+    7 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    8 7 N chg: 0  deg: 3 exp: 3 imp: 0 hyb: SP2 arom?: 1
+    9 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    ...
+    13 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    ...
+  Bonds:
+    ...
+    6 5->7 order: a conj?: 1 aromatic?: 1
+    7 7->8 order: 1 stereo: CCW bonds: (14 6 8 15) conj?: 1
+    8 8->9 order: a conj?: 1 aromatic?: 1
+    ...
+    14 7->1 order: a dir: wedge conj?: 1 aromatic?: 1
+    15 13->8 order: a conj?: 1 aromatic?: 1
+
+This tells us that bond 7 is atropisomeric and that when looking down the bond
+(from atom C7 to atom N8), the rotation direction between bonds 14 and 8 (these
+are the bonds to the lowest numbered atoms on each of the atropisomeric bond) is
+counterclockwise (CCW).
+
+
+Formats supporting atropisomers
+===============================
+
+Atropisomers are supported for molecule parsing and writing in Mol, MRV, and CXSmiles formats. 
+For reactions, atropisomers are supported for in rxn, MRV and CXSmiles formats.
+Atropisomers can be parsed from a CDXML file.
+
+Enhanced Stereochemistry
+========================
+
+Atropisomers can be part of Enhanced Stereochemistry Groups (Or, And, or
+Absolute). This is indicated by marking one or both of the atropisomer bond's
+atoms as being in the enhanced Stereo Group
+
+Example:
+
+.. testsetup::
+
+  'C=C(N1C(=O)C=CNC1=O)[C@]([C@H](C)F)([C@H](C)Cl)[C@@H](C)Br |(-1.5948,0.91515,;-0.7334,0.39295,;-0.7868,-0.77245,;0.0764,-1.27085,;0.9432,-0.76745,;0.0748,-2.26505,;-0.7868,-2.76205,;-1.6494,-2.26165,;-1.6512,-1.26665,;-2.5194,-0.77025,;0.283,0.98175,;1.4986,1.05295,;2.1262,0.24415,;1.941,1.95055,;0.2298,1.98075,;1.059,2.52775,;-0.6704,2.43135,;0.631,0.16635,;0.0594,-0.45685,;1.4698,-0.05045,),wD:2.8,14.15,wU:2.1,2.2,10.10,11.12,17.18,o1:2,10,11,&1:14,17|'
+  
+.. image:: images/atrop_example4.png
+
+
+3D Coordinates for Input of Atropisomers
+========================================
+
+If 3D coordinates are available (and 2D coordinates are not), the atropisomer
+bond is marked only if one of the neighbor bonds is wedged/hashed. The
+wedge/hash information is ignored except for signaling the presence of the
+atropisomer. The actual configuration is determined by the 3D coordinates.
+
+Here's an example. The drawing at the left shows a 3D structure with a wedged
+bond on one end of the atropisomer bond. The drawing at the right shows a 2D
+drawing of the same structure. In both cases, the atropisomer bond is
+highlighted in red. Notice that the bond wedging in the 3D structure is
+inconsistent with the 3D coordinates; it's just used to indicate that there is
+an atropisomer bond, the actual stereochemistry of the bond is determined by the
+3D coordinates.
+
+.. testsetup::
+
+  'FC1=C(C2=C(C([H])([H])[H])C(N3C(=O)C4=C(N(C([H])([H])[H])C3=O)C(F)=C([H])C([H])=C4[H])=C([H])C([H])=C2[H])C2=C(N([H])C3=C2C([H])([H])C([H])([H])C(C(O[H])(C([H])([H])[H])C([H])([H])[H])([H])C3([H])[H])C(C(=O)N([H])[H])=C1[H] |(-1.4248,-1.9619,-2.2208;-1.8741,-1.6494,-1.6034;-1.6332,-0.9186,-1.2186;-0.9031,-0.4893,-1.4844;-0.138,-0.6553,-1.1342;-0.0582,-1.2887,-0.4699;-0.2862,-1.8851,-0.6843;0.5723,-1.396,-0.2643;-0.4068,-1.1014,0.0747;0.5573,-0.2316,-1.4028;1.3588,-0.3932,-1.0482;1.5905,0.0773,-0.3585;1.2002,0.6554,-0.0665;2.3933,-0.1194,0.0095;2.9068,-0.6967,-0.3594;2.6425,-1.1179,-1.0794;3.1982,-1.7169,-1.457;3.3106,-2.2227,-1.0278;3.7704,-1.4129,-1.6385;2.9318,-1.9829,-2.0144;1.8575,-1.0047,-1.4246;1.6168,-1.4364,-2.0026;3.6768,-0.8489,0.0041;4.2097,-1.3952,-0.3066;3.9217,-0.4363,0.7167;4.5184,-0.5645,0.9877;3.4017,0.1354,1.0788;3.5896,0.457,1.6328;2.6386,0.2956,0.7262;2.2428,0.7475,1.0192;0.4878,0.3584,-2.0214;1.0254,0.6927,-2.2354;-0.2773,0.5242,-2.3716;-0.3315,0.9837,-2.8531;-0.9727,0.1003,-2.1031;-1.5642,0.2383,-2.3831;-2.1142,-0.6018,-0.5711;-2.8218,-1.0304,-0.3345;-3.1799,-0.5981,0.3004;-3.7005,-0.7644,0.5964;-2.7239,0.0857,0.4696;-2.0583,0.1027,-0.0552;-1.4396,0.7778,-0.0395;-0.8137,0.538,-0.0869;-1.5466,1.1855,-0.5657;-1.4992,1.2797,0.7621;-1.2099,0.9291,1.2614;-1.1302,1.8345,0.67;-2.4007,1.4836,0.9934;-2.4335,2.0277,1.7578;-2.112,1.5747,2.4382;-2.128,1.9287,2.9199;-1.9128,2.8014,1.6418;-2.0588,3.1185,1.0662;-1.2527,2.6718,1.666;-2.0211,3.2354,2.1466;-3.3209,2.2556,1.9643;-3.6328,2.5429,1.4415;-3.3403,2.6896,2.48;-3.6795,1.7235,2.1686;-2.6689,1.821,0.4719;-2.9136,0.6925,1.1267;-2.7776,0.4065,1.7216;-3.5722,0.834,1.1115;-3.069,-1.7619,-0.7143;-3.8054,-2.1982,-0.4602;-4.2532,-1.9338,0.1012;-4.0043,-2.9212,-0.8738;-3.6777,-3.1773,-1.3373;-4.5184,-3.2354,-0.7104;-2.581,-2.0639,-1.3539;-2.7202,-2.6244,-1.6865),wD:10.20|',
+  
+.. image:: images/atrop_example5.png
+
+
+Interpreting atropisomers without coordinates
+=============================================
+
+Just as it is possible to interpret atomic and double bond stereochemistry from
+SMILES without providing atomic coordinates, the RDKit adopts (starting with the
+2024.03.2 release) a convention for interpreting bond wedge information in
+CXSMILES that do not have coordinates provided.
+
+In order to understand how this representation works, a quick digression is necessary to explain the difference in the way bonds are numbered in CXSMILES and the RDKit.
+In the RDKit ring closure bonds are added last; they are the highest numbered bonds in the molecule. In CXSMILES, the ring closure bonds are added immediately upon closing the ring.
+Here's an illustration of this for the SMILES ``CC1=CC=CC(I)=C1N1C(C)=CC=C1Br``; the RDKit bond numbering (what we saw above) is shown first and the CXSMILES numbering is shown second.
+
+.. testsetup::
+
+  'CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wU:7.7|'
+  
+.. image:: images/atrop_representation2.png
+
+To describe this atropisomer in CXSMILES without using coordinates, we adopt the convention that the atropisomeric bond's stereochemistry is ``CCW`` when the bond to the lowest-numbered neighbor of the start atom 
+(in this case the neighbor connected via bond 7) is wedged and write the CXSMILES for this molecule as ``CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wU:7.7||``. The stereo values for all possible combinations are shown here:
+
+
++-------+----+-------+-------+--------+------------+
+|       |    | bond  |       |        |            |
+| from  | to | index | type  | stereo |            |
++=======+====+=======+=======+========+============+
+| 7     | 1  | 7     | wedge | CCW    | ``wU7.7``  |
++-------+----+-------+-------+--------+------------+
+| 7     | 5  | 6     | wedge | CW     | ``wU7.6``  |
++-------+----+-------+-------+--------+------------+
+| 8     | 9  | 9     | wedge | CW     | ``wU8.9``  |
++-------+----+-------+-------+--------+------------+
+| 8     | 13 | 14    | wedge | CCW    | ``wU8.14`` |
++-------+----+-------+-------+--------+------------+
+| 7     | 1  | 7     | dash  | CW     | ``wD7.7``  |
++-------+----+-------+-------+--------+------------+
+| 7     | 5  | 6     | dash  | CCW    | ``wD7.6``  |
++-------+----+-------+-------+--------+------------+
+| 8     | 9  | 9     | dash  | CCW    | ``wD8.9``  |
++-------+----+-------+-------+--------+------------+
+| 8     | 13 | 14    | dash  | CW     | ``wD8.14`` |
++-------+----+-------+-------+--------+------------+
+
+
+It's also possible to wedge multiple neighbor bonds around an atropisomeric bond, but the wedging must be consistent based on the table above; 
+so the CXSMILES ``CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wD:7.7,wU:8.9|`` is valid, but ``CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wD:7.7,wU:8.14|`` is not.
+
+
+Validation of Atropisomers
+==========================
+
+Invalid atropisomers (for example, those with two equivalent groups on one end)
+will be removed when reading molecules in with sanitization enabled or by
+calling ``cleanupAtropisomers(mol)``.
+
+Searching and Canonicalization
+==============================
+
+Atropisomers are supported in the canonicalization algorithm of RDKit. They are ignored in 
+substructure searching and similarity searching at this time.
 
 
 Query Features in Molecule Drawings
@@ -1982,6 +2700,45 @@ The idea of the fingerprint is generate features using the same subgraph (or
 path) enumeration algorithm used in the RDKit fingerprint. After a subgraph has
 been generated, it is used to set multiple bits based on different atom and bond
 type definitions.
+
+
+Feature Flags: global variables affecting RDKit behavior
+********************************************************
+
+The RDKit uses a number of "feature flags": global variables which affect its
+behavior. These have generally been added to maintain backwards compatibility
+when introducing new algorithms which yield different results.
+
+Here's are the current feature flags:
+
+  - ``preferCoordGen``: when this is ``true`` Schrodinger's open-source Coordgen
+    library will be used to generate 2D coordinates of molecules. The default
+    value is ``false``. This can be set from C++ using the variable
+    ``RDKit::RDDepict::preferCoordGen`` or from Python using the function
+    ``rdDepictor.SetPreferCoordGen()``. Added in the 2018.03 release.
+
+  - ``allowNontetrahedralChirality``: when this is ``true`` non-tetrahedral
+    chirality will be perceived from 3D coordinates. The default value is
+    ``true`` unless the environment variable
+    ``RDK_ENABLE_NONTETRAHEDRAL_STEREO`` is set to ``"0"``. Can set/checked from
+    C++ using the functions
+    ``RDKit::Chirality::setAllowNontetrahedralChirality()`` /
+    ``RDKit::Chirality::getAllowNontetrahedralChirality()`` or from Python using
+    the functions ``Chem.SetAllowNontetrahedralChirality()`` /
+    ``Chem.GetAllowNontetrahedralChirality()``. Added in the 2022.09 release.
+
+  - ``useLegacyStereoPerception``: when this is ``true`` the legacy
+    implementation for perceiving stereochemistry will be used. 
+    The default value is ``true`` unless the environment variable
+    ``RDK_USE_LEGACY_STEREO_PERCEPTION`` is set to ``"0"``. Can set/checked from
+    C++ using the functions
+    ``RDKit::Chirality::setUseLegacyStereoPerception()`` /
+    ``RDKit::Chirality::getUseLegacyStereoPerception()`` or from Python using
+    the functions ``Chem.SetUseLegacyStereoPerception()`` /
+    ``Chem.GetUseLegacyStereoPerception()``. Added in the 2022.09 release.
+
+
+
 
 
 .. rubric:: Footnotes

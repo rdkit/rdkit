@@ -13,7 +13,6 @@
 
 from rdkit.Chem import rdMolDescriptors
 
-
 if hasattr(rdMolDescriptors, 'CalcPMI1'):
   PMI1 = lambda *x, **y: rdMolDescriptors.CalcPMI1(*x, **y)
   PMI1.version = rdMolDescriptors._CalcPMI1_version
@@ -197,3 +196,55 @@ if hasattr(rdMolDescriptors, 'CalcPMI1'):
       - confId: (optional) the conformation ID to use
 
     """
+
+  PBF = lambda *x, **y: rdMolDescriptors.CalcPBF(*x, **y)
+  PBF.version = rdMolDescriptors._CalcPBF_version
+  PBF.__doc__ = """ Plane of best fit
+      from: https://doi.org/10.1021/ci300293f
+
+    **Arguments**
+
+      - inMol: a molecule
+
+      - confId: (optional) the conformation ID to use
+
+    """
+
+
+
+from rdkit.Chem.Descriptors import _isCallable
+descList = []
+def _setupDescriptors(namespace):
+  global descList
+  descList.clear()
+
+  for nm, thing in tuple(namespace.items()):
+    if nm[0] != '_' and nm != 'CalcMolDescriptors3D' and _isCallable(thing):
+      descList.append((nm, thing))
+
+
+_setupDescriptors(locals())
+
+def CalcMolDescriptors3D(mol, confId=None):
+    """
+    Compute all 3D descriptors of a molecule
+    
+    Arguments:
+    - mol: the molecule to work with
+    - confId: conformer ID to work with. If not specified the default (-1) is used
+    
+    Return:
+    
+    dict
+        A dictionary with decriptor names as keys and the descriptor values as values
+
+    raises a ValueError 
+        If the molecule does not have conformers
+    """
+    if mol.GetNumConformers() == 0:
+        raise ValueError('Computing 3D Descriptors requires a structure with at least 1 conformer')
+    else:
+        vals_3D = {}
+        for nm,fn in descList:
+           vals_3D[nm] = fn(mol)
+        return vals_3D

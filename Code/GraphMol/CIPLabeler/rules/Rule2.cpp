@@ -27,8 +27,12 @@ int Rule2::compare(const Edge *a, const Edge *b) const {
 
   auto aAtomNum = a_end->getAtomicNum();
   auto bAtomNum = b_end->getAtomicNum();
-  if (aAtomNum == 0 || bAtomNum == 0) {
+
+  if (aAtomNum == 0 && bAtomNum == 0) {
     return 0;
+  } else if (aAtomNum == 0 || bAtomNum == 0) {
+    // This should be caught by Rule 1a, but just in case
+    return three_way_comparison(aAtomNum, bAtomNum);
   }
 
   auto aMassNum = a_end->getMassNum();

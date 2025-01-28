@@ -64,14 +64,21 @@ typedef std::vector<std::string> STR_VECT;
 
 
 %typemap(javacode) RDKit::FilterCatalog %{
-     public static FilterCatalog Deserialize(byte[] b) {
-     UChar_Vect vec = new UChar_Vect();
-     vec.reserve(b.length);
-     for (int size=0;size<b.length;++size) {
-       vec.add(b[size]);
-     }
-     return new FilterCatalog(vec);
-   }
+  public static FilterCatalog Deserialize(byte[] b) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.reserve(b.length);
+      for (int size=0;size<b.length;++size) {
+        vec.add((short)b[size]);
+      }
+      return new FilterCatalog(vec);
+    } finally {
+      if (vec != null) {
+        vec.delete();
+      }
+    }
+  }
 %}
 
 %extend RDKit::FilterMatch {
@@ -101,7 +108,7 @@ typedef std::vector<std::string> STR_VECT;
     return new RDKit::FilterCatalog(str);
   }
 
-  bool canSerialize() const {
+  static bool canSerialize() {
     return RDKit::FilterCatalogCanSerialize();
   }
 
@@ -176,7 +183,9 @@ typedef std::vector<std::string> STR_VECT;
 #ifdef SWIGCSHARP
 %typemap(csbase) RDKit::FilterCatalogParams::FilterCatalogs "uint"
 #endif
-  
+
+%immutable RDKit::DEFAULT_FILTERMATCHERBASE_NAME;
+
 %include <GraphMol/FilterCatalog/FilterMatcherBase.h>
 %include <GraphMol/FilterCatalog/FilterCatalogEntry.h>
 %include <GraphMol/FilterCatalog/FilterCatalog.h>
@@ -188,7 +197,7 @@ typedef std::vector<std::string> STR_VECT;
      UChar_Vect vec = new UChar_Vect();
      vec.reserve(b.length);
      for (int size=0;size<b.length;++size) {
-       vec.add(b[size]);
+       vec.add((short)b[size]);
      }
      return new FilterCatalog(vec);
    }

@@ -13,12 +13,15 @@
 # peter ertl, august 2015
 #
 
+import gzip
+import math
+import os.path
+import pickle
+import sys
+from collections import namedtuple
 
 from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
-import sys, math, gzip, pickle
-import os.path
-from collections import namedtuple
+from rdkit.Chem import rdFingerprintGenerator
 
 
 def readNPModel(filename=os.path.join(os.path.dirname(__file__), 'publicnp.model.gz')):
@@ -39,7 +42,9 @@ def scoreMolWConfidence(mol, fscore):
 
   if mol is None:
     raise ValueError('invalid molecule')
-  fp = rdMolDescriptors.GetMorganFingerprint(mol, 2)
+  fp = rdFingerprintGenerator.GetMorganGenerator(
+        radius=2, fpSize=2048
+    ).GetSparseCountFingerprint(mol)
   bits = fp.GetNonzeroElements()
 
   # calculating the score

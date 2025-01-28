@@ -19,6 +19,7 @@
 // #define VERBOSE 1
 
 namespace RDKit {
+class TautomerQuery;
 
 //! RCore is the core common to a series of molecules
 struct RCore {
@@ -50,23 +51,26 @@ struct RCore {
 
   // Return a copy of core where dummy atoms are replaced by
   // the respective matching atom in mol, while other atoms have
-  // their aromatic flag and formal charge copied from from
+  // their aromatic flag and formal charge copied from
   // the respective matching atom in mol
-  ROMOL_SPTR replaceCoreAtomsWithMolMatches(bool &hasCoreDummies,
-                                            const ROMol &mol,
+  ROMOL_SPTR replaceCoreAtomsWithMolMatches(const ROMol &mol,
                                             const MatchVectType &match) const;
 
-  // Final core returned to user with dummy atoms and bonds set to those in the
-  // match
-  RWMOL_SPTR coreWithMatches(const ROMol &coreReplacedAtoms) const;
+  // Final core returned to user, created by extracting core from target
+  // molecule
+  RWMOL_SPTR extractCoreFromMolMatch(
+      const ROMol &mol, const MatchVectType &match,
+      const RGroupDecompositionParameters &params) const;
 
   std::vector<MatchVectType> matchTerminalUserRGroups(
       const RWMol &target, MatchVectType match,
       const SubstructMatchParameters &sssParams) const;
 
+  std::shared_ptr<TautomerQuery> getMatchingTautomerQuery();
+
   inline bool isTerminalRGroupWithUserLabel(const int idx) const {
-    return terminalRGroupAtomsWithUserLabels.find(idx) !=
-           terminalRGroupAtomsWithUserLabels.end();
+    return terminalRGroupAtomToNeighbor.find(idx) !=
+           terminalRGroupAtomToNeighbor.end();
   }
 
   /*
@@ -74,15 +78,29 @@ struct RCore {
    * attachment points. Including when two user defined attachment points can
    * match the same target atom.
    */
+  [[deprecated("please use checkAllBondsToRGroupPresent")]]
   bool checkAllBondsToAttachmentPointPresent(
       const ROMol &mol, const int attachmentIdx,
       const MatchVectType &mapping) const;
 
+  /*
+   * For when onlyMatchAtRGroups = true.  Checks the query core can satisfy all
+   * attachment points. Including when two user defined attachment points can
+   * match the same target atom.
+   */
+  bool checkAllBondsToRGroupPresent(
+      const ROMol &mol, const int attachmentIdx,
+      const std::vector<std::vector<int>> &targetToCoreIndices) const;
+
  private:
   // The set of atom indices in the core for terminal R groups with atom indices
-  std::set<int> terminalRGroupAtomsWithUserLabels;
+  // with or without user labels
+  std::set<int> terminalRGroupAtoms;
   // An atom index map of terminal R groups to their heavy atom neighbor
   std::map<int, int> terminalRGroupAtomToNeighbor;
+  // TautomerQuery for matching
+  bool checkedForTautomerQuery = false;
+  std::shared_ptr<TautomerQuery> matchingTautomerQuery = nullptr;
 
   void replaceCoreAtom(RWMol &mol, Atom &atom, const Atom &other) const;
 
@@ -91,6 +109,9 @@ struct RCore {
 
   // Build the matching molecule (core minus user R groups)
   void buildMatchingMol();
+
+  // Add attachment points to unlabelled R Groups
+  void addDummyAtomsToUnlabelledCoreAtoms();
 };
 
 }  // namespace RDKit

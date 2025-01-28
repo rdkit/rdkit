@@ -75,12 +75,12 @@ void test2MultiFPBReaderTanimoto() {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes);
       TEST_ASSERT(nbrs.size() == 2);
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 1.));
-      TEST_ASSERT(nbrs[0].get<1>() == 0);
-      TEST_ASSERT(nbrs[0].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 1.));
-      TEST_ASSERT(nbrs[1].get<1>() == 0);
-      TEST_ASSERT(nbrs[1].get<2>() == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
     }
     {  // with a threshold
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
@@ -88,15 +88,15 @@ void test2MultiFPBReaderTanimoto() {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes, 0.30);
       TEST_ASSERT(nbrs.size() == 10);
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 1.));
-      TEST_ASSERT(nbrs[0].get<1>() == 0);
-      TEST_ASSERT(nbrs[0].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 1.));
-      TEST_ASSERT(nbrs[1].get<1>() == 0);
-      TEST_ASSERT(nbrs[1].get<2>() == 1);
-      TEST_ASSERT(feq(nbrs[2].get<0>(), 0.3703));
-      TEST_ASSERT(nbrs[2].get<1>() == 1);
-      TEST_ASSERT(nbrs[2].get<2>() == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.3703));
+      TEST_ASSERT(std::get<1>(nbrs[2]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[2]) == 0);
     }
     {  // with a threshold
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(95);
@@ -104,15 +104,15 @@ void test2MultiFPBReaderTanimoto() {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(bytes, 0.30);
       TEST_ASSERT(nbrs.size() == 4);
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 1.));
-      TEST_ASSERT(nbrs[0].get<1>() == 95);
-      TEST_ASSERT(nbrs[0].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 1.));
-      TEST_ASSERT(nbrs[1].get<1>() == 95);
-      TEST_ASSERT(nbrs[1].get<2>() == 1);
-      TEST_ASSERT(feq(nbrs[2].get<0>(), 0.4125));
-      TEST_ASSERT(nbrs[2].get<1>() == 89);
-      TEST_ASSERT(nbrs[2].get<2>() == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 95);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 95);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.4125));
+      TEST_ASSERT(std::get<1>(nbrs[2]) == 89);
+      TEST_ASSERT(std::get<2>(nbrs[2]) == 0);
     }
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -140,12 +140,12 @@ void test3MultiFPBReaderTversky() {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 1.);
       TEST_ASSERT(nbrs.size() == 2);
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 1.));
-      TEST_ASSERT(nbrs[0].get<1>() == 0);
-      TEST_ASSERT(nbrs[0].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 1.));
-      TEST_ASSERT(nbrs[1].get<1>() == 0);
-      TEST_ASSERT(nbrs[1].get<2>() == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
     }
     {  // with a threshold
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
@@ -153,15 +153,15 @@ void test3MultiFPBReaderTversky() {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 1., 0.30);
       TEST_ASSERT(nbrs.size() == 10);
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 1.));
-      TEST_ASSERT(nbrs[0].get<1>() == 0);
-      TEST_ASSERT(nbrs[0].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 1.));
-      TEST_ASSERT(nbrs[1].get<1>() == 0);
-      TEST_ASSERT(nbrs[1].get<2>() == 1);
-      TEST_ASSERT(feq(nbrs[2].get<0>(), 0.3703));
-      TEST_ASSERT(nbrs[2].get<1>() == 1);
-      TEST_ASSERT(nbrs[2].get<2>() == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.3703));
+      TEST_ASSERT(std::get<1>(nbrs[2]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[2]) == 0);
     }
     {  // with a threshold, asymmetric
       boost::shared_array<std::uint8_t> bytes = mfps.getReader(0)->getBytes(0);
@@ -169,15 +169,15 @@ void test3MultiFPBReaderTversky() {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTverskyNeighbors(bytes, 1., 0.5, 0.30);
       TEST_ASSERT(nbrs.size() == 10);
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 1.));
-      TEST_ASSERT(nbrs[0].get<1>() == 0);
-      TEST_ASSERT(nbrs[0].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 1.));
-      TEST_ASSERT(nbrs[1].get<1>() == 0);
-      TEST_ASSERT(nbrs[1].get<2>() == 1);
-      TEST_ASSERT(feq(nbrs[2].get<0>(), 0.4255));
-      TEST_ASSERT(nbrs[2].get<1>() == 1);
-      TEST_ASSERT(nbrs[2].get<2>() == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 1.));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.4255));
+      TEST_ASSERT(std::get<1>(nbrs[2]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[2]) == 0);
     }
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -263,27 +263,28 @@ void test5MultiFPBReaderThreaded() {
           mfps.getTanimotoNeighbors(qbv, 0.6);
       TEST_ASSERT(nbrs.size() == 6);
       // for (unsigned int i = 0; i < nbrs.size(); ++i) {
-      //   std::cerr << i << ": " << nbrs[i].get<0>() << " " << nbrs[i].get<1>()
-      //             << " " << nbrs[i].get<2>() << " " << std::endl;
+      //   std::cerr << i << ": " << std::get<0>(nbrs[i]) << " " <<
+      //   std::get<1>(nbrs[i])
+      //             << " " << std::get<2>(nbrs[i]) << " " << std::endl;
       // }
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 0.66412));
-      TEST_ASSERT(nbrs[0].get<1>() == 0);
-      TEST_ASSERT(nbrs[0].get<2>() == 3);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 0.65289));
-      TEST_ASSERT(nbrs[1].get<1>() == 1);
-      TEST_ASSERT(nbrs[1].get<2>() == 2);
-      TEST_ASSERT(feq(nbrs[2].get<0>(), 0.64341));
-      TEST_ASSERT(nbrs[2].get<1>() == 2);
-      TEST_ASSERT(nbrs[2].get<2>() == 1);
-      TEST_ASSERT(feq(nbrs[3].get<0>(), 0.61940));
-      TEST_ASSERT(nbrs[3].get<1>() == 1);
-      TEST_ASSERT(nbrs[3].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[4].get<0>(), 0.61905));
-      TEST_ASSERT(nbrs[4].get<1>() == 0);
-      TEST_ASSERT(nbrs[4].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[5].get<0>(), 0.61344));
-      TEST_ASSERT(nbrs[5].get<1>() == 0);
-      TEST_ASSERT(nbrs[5].get<2>() == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 0.66412));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 3);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 0.65289));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 2);
+      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.64341));
+      TEST_ASSERT(std::get<1>(nbrs[2]) == 2);
+      TEST_ASSERT(std::get<2>(nbrs[2]) == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[3]), 0.61940));
+      TEST_ASSERT(std::get<1>(nbrs[3]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[3]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[4]), 0.61905));
+      TEST_ASSERT(std::get<1>(nbrs[4]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[4]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[5]), 0.61344));
+      TEST_ASSERT(std::get<1>(nbrs[5]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[5]) == 1);
     }
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -291,47 +292,47 @@ void test5MultiFPBReaderThreaded() {
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(qbv, 0.6, 4);
       TEST_ASSERT(nbrs.size() == 6);
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 0.66412));
-      TEST_ASSERT(nbrs[0].get<1>() == 0);
-      TEST_ASSERT(nbrs[0].get<2>() == 3);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 0.65289));
-      TEST_ASSERT(nbrs[1].get<1>() == 1);
-      TEST_ASSERT(nbrs[1].get<2>() == 2);
-      TEST_ASSERT(feq(nbrs[2].get<0>(), 0.64341));
-      TEST_ASSERT(nbrs[2].get<1>() == 2);
-      TEST_ASSERT(nbrs[2].get<2>() == 1);
-      TEST_ASSERT(feq(nbrs[3].get<0>(), 0.61940));
-      TEST_ASSERT(nbrs[3].get<1>() == 1);
-      TEST_ASSERT(nbrs[3].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[4].get<0>(), 0.61905));
-      TEST_ASSERT(nbrs[4].get<1>() == 0);
-      TEST_ASSERT(nbrs[4].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[5].get<0>(), 0.61344));
-      TEST_ASSERT(nbrs[5].get<1>() == 0);
-      TEST_ASSERT(nbrs[5].get<2>() == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 0.66412));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 3);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 0.65289));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 2);
+      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.64341));
+      TEST_ASSERT(std::get<1>(nbrs[2]) == 2);
+      TEST_ASSERT(std::get<2>(nbrs[2]) == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[3]), 0.61940));
+      TEST_ASSERT(std::get<1>(nbrs[3]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[3]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[4]), 0.61905));
+      TEST_ASSERT(std::get<1>(nbrs[4]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[4]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[5]), 0.61344));
+      TEST_ASSERT(std::get<1>(nbrs[5]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[5]) == 1);
     }
     {  // request more threads than we have readers, this shouldn't be a problem
       std::vector<MultiFPBReader::ResultTuple> nbrs =
           mfps.getTanimotoNeighbors(qbv, 0.6, 8);
       TEST_ASSERT(nbrs.size() == 6);
-      TEST_ASSERT(feq(nbrs[0].get<0>(), 0.66412));
-      TEST_ASSERT(nbrs[0].get<1>() == 0);
-      TEST_ASSERT(nbrs[0].get<2>() == 3);
-      TEST_ASSERT(feq(nbrs[1].get<0>(), 0.65289));
-      TEST_ASSERT(nbrs[1].get<1>() == 1);
-      TEST_ASSERT(nbrs[1].get<2>() == 2);
-      TEST_ASSERT(feq(nbrs[2].get<0>(), 0.64341));
-      TEST_ASSERT(nbrs[2].get<1>() == 2);
-      TEST_ASSERT(nbrs[2].get<2>() == 1);
-      TEST_ASSERT(feq(nbrs[3].get<0>(), 0.61940));
-      TEST_ASSERT(nbrs[3].get<1>() == 1);
-      TEST_ASSERT(nbrs[3].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[4].get<0>(), 0.61905));
-      TEST_ASSERT(nbrs[4].get<1>() == 0);
-      TEST_ASSERT(nbrs[4].get<2>() == 0);
-      TEST_ASSERT(feq(nbrs[5].get<0>(), 0.61344));
-      TEST_ASSERT(nbrs[5].get<1>() == 0);
-      TEST_ASSERT(nbrs[5].get<2>() == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[0]), 0.66412));
+      TEST_ASSERT(std::get<1>(nbrs[0]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[0]) == 3);
+      TEST_ASSERT(feq(std::get<0>(nbrs[1]), 0.65289));
+      TEST_ASSERT(std::get<1>(nbrs[1]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[1]) == 2);
+      TEST_ASSERT(feq(std::get<0>(nbrs[2]), 0.64341));
+      TEST_ASSERT(std::get<1>(nbrs[2]) == 2);
+      TEST_ASSERT(std::get<2>(nbrs[2]) == 1);
+      TEST_ASSERT(feq(std::get<0>(nbrs[3]), 0.61940));
+      TEST_ASSERT(std::get<1>(nbrs[3]) == 1);
+      TEST_ASSERT(std::get<2>(nbrs[3]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[4]), 0.61905));
+      TEST_ASSERT(std::get<1>(nbrs[4]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[4]) == 0);
+      TEST_ASSERT(feq(std::get<0>(nbrs[5]), 0.61344));
+      TEST_ASSERT(std::get<1>(nbrs[5]) == 0);
+      TEST_ASSERT(std::get<2>(nbrs[5]) == 1);
     }
 
 #endif

@@ -24,31 +24,35 @@ RDLogger rdWarningLog = nullptr;
 RDLogger rdStatusLog = nullptr;
 namespace RDLog {
 
+namespace {
+const std::vector<RDLogger *> allLogs = {&rdAppLog,     &rdDebugLog,
+                                         &rdInfoLog,    &rdErrorLog,
+                                         &rdWarningLog, &rdStatusLog};
+}
+
 LogStateSetter::LogStateSetter() {
-  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
-                                   rdErrorLog, rdWarningLog, rdStatusLog};
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (allLogs[i] && allLogs[i]->df_enabled) {
+    if (*allLogs[i] && (*allLogs[i])->df_enabled) {
       d_origState |= 1 << i;
-      allLogs[i]->df_enabled = false;
+      (*allLogs[i])->df_enabled = false;
     }
   }
 }
 
 LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
-  for (auto &log : toEnable) {
-    if (log) {
-      log->df_enabled = true;
+  for (auto i = 0u; i < allLogs.size(); ++i) {
+    if (*allLogs[i] && std::find(toEnable.begin(), toEnable.end(),
+                                 *allLogs[i]) != toEnable.end()) {
+      d_origState ^= 1 << i;
+      (*allLogs[i])->df_enabled = true;
     }
   }
 }
 
 LogStateSetter::~LogStateSetter() {
-  std::vector<RDLogger> allLogs = {rdAppLog,   rdDebugLog,   rdInfoLog,
-                                   rdErrorLog, rdWarningLog, rdStatusLog};
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (allLogs[i]) {
-      allLogs[i]->df_enabled = d_origState & 1 << i;
+    if (*allLogs[i]) {
+      (*allLogs[i])->df_enabled ^= d_origState >> i & 1;
     }
   }
 }
@@ -148,7 +152,13 @@ void InitLogs() {
 std::ostream &toStream(std::ostream &logstrm) {
   char buffer[16];
   time_t t = time(nullptr);
+// localtime() is thread safe on windows, but not on *nix
+#ifdef WIN32
   strftime(buffer, 16, "[%T] ", localtime(&t));
+#else
+  struct tm buf;
+  strftime(buffer, 16, "[%T] ", localtime_r(&t, &buf));
+#endif
   return logstrm << buffer;
 }
 }  // namespace RDLog
@@ -218,25 +228,3 @@ void InitLogs() {
 
 }  // namespace RDLog
 #endif
-
-namespace RDLog {
-
-BlockLogs::BlockLogs() {
-  auto logs = {rdDebugLog, rdInfoLog, rdWarningLog, rdErrorLog};
-  for (auto log : logs) {
-    if (log != nullptr && is_log_enabled(log)) {
-      log->df_enabled = false;
-      logs_to_reenable.push_back(log);
-    }
-  }
-}
-
-BlockLogs::~BlockLogs() {
-  for (auto log : logs_to_reenable) {
-    if (log != nullptr && log.get() != nullptr) {
-      log->df_enabled = true;
-    }
-  }
-}
-
-}  // namespace RDLog

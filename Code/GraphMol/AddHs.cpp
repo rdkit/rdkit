@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,11 +12,14 @@
 #include "QueryAtom.h"
 #include "QueryOps.h"
 #include "MonomerInfo.h"
+#include "Chirality.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/range/iterator_range.hpp>
+
+constexpr double sq_dist_zero_tol = 1.e-4;
 
 namespace RDKit {
 
@@ -135,6 +138,22 @@ std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
   return isoMap;
 }
 
+bool may_need_extra_H(const ROMol &mol, const Atom *atom) {
+  unsigned single_bonds = 0;
+  unsigned aromatic_bonds = 0;
+  for (auto bond : mol.atomBonds(atom)) {
+    if (bond->getBondType() == Bond::SINGLE) {
+      ++single_bonds;
+    } else if (bond->getBondType() == Bond::AROMATIC) {
+      ++aromatic_bonds;
+    } else {
+      return false;
+    }
+  }
+  return single_bonds == 1 && aromatic_bonds == 2 &&
+         atom->getTotalValence() == 3;
+}
+
 }  // end of unnamed namespace
 
 namespace MolOps {
@@ -144,7 +163,7 @@ RDGeom::Point3D pickBisector(const RDGeom::Point3D &nbr1Vect,
                              const RDGeom::Point3D &nbr2Vect,
                              const RDGeom::Point3D &nbr3Vect) {
   auto dirVect = nbr2Vect + nbr3Vect;
-  if (dirVect.lengthSq() < 1e-4) {
+  if (dirVect.lengthSq() < sq_dist_zero_tol) {
     // nbr2Vect and nbr3Vect are anti-parallel (was #3854)
     dirVect = nbr2Vect;
     std::swap(dirVect.x, dirVect.y);
@@ -213,7 +232,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
         // get a normalized vector pointing away from the neighbor:
         nbr1Vect = nbr1Pos - otherPos;
-        if (fabs(nbr1Vect.lengthSq()) < 1e-4) {
+        if (nbr1Vect.lengthSq() < sq_dist_zero_tol) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -255,7 +274,14 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
                 nbr2 = getAtomNeighborNot(&mol, nbr1, otherAtom);
                 nbr2Vect =
                     nbr1Pos.directionVector((*cfi)->getAtomPos(nbr2->getIdx()));
-                perpVect = nbr2Vect.crossProduct(nbr1Vect);
+                auto crossProd = nbr2Vect.crossProduct(nbr1Vect);
+
+                // if nbr1 and nbr2 are aligned, the perpendicular will be null,
+                // and we'll just keep the default calculated above. Otherwise
+                // we use the cross product
+                if (crossProd.lengthSq() >= sq_dist_zero_tol) {
+                  perpVect = crossProd;
+                }
               }
             }
             perpVect.normalize();
@@ -303,8 +329,8 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         otherPos = (*cfi)->getAtomPos(otherIdx);
         nbr1Vect = otherPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = otherPos - (*cfi)->getAtomPos(nbr2->getIdx());
-        if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
-            fabs(nbr2Vect.lengthSq()) < 1e-4) {
+        if (nbr1Vect.lengthSq() < sq_dist_zero_tol ||
+            nbr2Vect.lengthSq() < sq_dist_zero_tol) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -314,6 +340,11 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         nbr2Vect.normalize();
         dirVect = nbr1Vect + nbr2Vect;
 
+        if (dirVect.lengthSq() < sq_dist_zero_tol) {
+          // nbr1Vect and nbr2Vect are non-null, but they may
+          // still cancel each other out
+          continue;
+        }
         dirVect.normalize();
         if ((*cfi)->is3D()) {
           switch (otherAtom->getHybridization()) {
@@ -359,51 +390,34 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
       // --------------------------------------------------------------------------
       boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(otherAtom);
 
-      if (otherAtom->hasProp(common_properties::_CIPCode)) {
-        // if the central atom is chiral, we'll order the neighbors
-        // by CIP rank:
-        std::vector<std::pair<unsigned int, int>> nbrs;
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != idx) {
-            const Atom *tAtom = mol.getAtomWithIdx(*nbrIdx);
-            unsigned int cip = 0;
-            tAtom->getPropIfPresent<unsigned int>(common_properties::_CIPRank,
-                                                  cip);
-            nbrs.emplace_back(cip, rdcast<int>(*nbrIdx));
+      // We're using chiral tag for checking chirality, so we just take the
+      // initial order
+      while (nbrIdx != endNbrs) {
+        if (*nbrIdx != idx) {
+          if (!nbr1) {
+            nbr1 = mol.getAtomWithIdx(*nbrIdx);
+          } else if (!nbr2) {
+            nbr2 = mol.getAtomWithIdx(*nbrIdx);
+          } else {
+            nbr3 = mol.getAtomWithIdx(*nbrIdx);
           }
-          ++nbrIdx;
         }
-        std::sort(nbrs.begin(), nbrs.end());
-        nbr1 = mol.getAtomWithIdx(nbrs[0].second);
-        nbr2 = mol.getAtomWithIdx(nbrs[1].second);
-        nbr3 = mol.getAtomWithIdx(nbrs[2].second);
-      } else {
-        // central atom isn't chiral, so the neighbor ordering isn't important:
-        while (nbrIdx != endNbrs) {
-          if (*nbrIdx != idx) {
-            if (!nbr1) {
-              nbr1 = mol.getAtomWithIdx(*nbrIdx);
-            } else if (!nbr2) {
-              nbr2 = mol.getAtomWithIdx(*nbrIdx);
-            } else {
-              nbr3 = mol.getAtomWithIdx(*nbrIdx);
-            }
-          }
-          ++nbrIdx;
-        }
+        ++nbrIdx;
       }
+
       TEST_ASSERT(nbr1);
       TEST_ASSERT(nbr2);
       TEST_ASSERT(nbr3);
+
       for (auto cfi = mol.beginConformers(); cfi != mol.endConformers();
            ++cfi) {
         otherPos = (*cfi)->getAtomPos(otherIdx);
         nbr1Vect = otherPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = otherPos - (*cfi)->getAtomPos(nbr2->getIdx());
         nbr3Vect = otherPos - (*cfi)->getAtomPos(nbr3->getIdx());
-        if (fabs(nbr1Vect.lengthSq()) < 1e-4 ||
-            fabs(nbr2Vect.lengthSq()) < 1e-4 ||
-            fabs(nbr3Vect.lengthSq()) < 1e-4) {
+        if (nbr1Vect.lengthSq() < sq_dist_zero_tol ||
+            nbr2Vect.lengthSq() < sq_dist_zero_tol ||
+            nbr3Vect.lengthSq() < sq_dist_zero_tol) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -422,6 +436,23 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               0.1) {
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
+
+            // Each of the nbr vectors is non-null, but there might be pairs
+            // that cancel each other out. Try to find a direction from atoms
+            // that do not overlap.
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              // This definition of dirVect reverses the parity around otherIdx
+              // the change of sign restores it
+              dirVect = nbr1Vect.crossProduct(nbr3Vect) * -1;
+            }
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              dirVect = nbr2Vect.crossProduct(nbr3Vect);
+            }
+            // We couldn't find a good direction
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              continue;
+            }
+
             std::string cipCode;
             if (otherAtom->getPropIfPresent(common_properties::_CIPCode,
                                             cipCode)) {
@@ -432,9 +463,13 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               RDGeom::Point3D v2 = nbr1Vect - nbr3Vect;
               RDGeom::Point3D v3 = nbr2Vect - nbr3Vect;
               double vol = v1.dotProduct(v2.crossProduct(v3));
-              // FIX: this is almost certainly wrong and should use the chiral
-              // tag
-              if ((cipCode == "S" && vol < 0) || (cipCode == "R" && vol > 0)) {
+
+              if ((otherAtom->getChiralTag() ==
+                       Atom::ChiralType::CHI_TETRAHEDRAL_CCW &&
+                   vol < 0) ||
+                  (otherAtom->getChiralTag() ==
+                       Atom::ChiralType::CHI_TETRAHEDRAL_CW &&
+                   vol > 0)) {
                 dirVect *= -1;
               }
             }
@@ -462,6 +497,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
             dirVect = pickBisector(nbr3Vect, nbr1Vect, nbr2Vect);
           }
         }
+
         dirVect.normalize();
         atomPos = otherPos + dirVect * ((*cfi)->is3D() ? bondLength : 1.0);
         (*cfi)->setAtomPos(idx, atomPos);
@@ -563,11 +599,6 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
           ++isoH;
         }
       }
-      // be very clear about implicits not being allowed in this
-      // representation
-      newAt->setProp(common_properties::origNoImplicit, newAt->getNoImplicit(),
-                     true);
-      newAt->setNoImplicit(true);
     }
     // update the atom's derived properties (valence count, etc.)
     // no sense in being strict here (was github #2782)
@@ -649,8 +680,7 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
 void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
   auto atom = mol.getAtomWithIdx(idx);
   PRECONDITION(atom->getAtomicNum() == 1, "idx corresponds to a non-Hydrogen");
-  for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
-    const Bond *bond = mol[nbri];
+  for (const auto bond : mol.atomBonds(atom)) {
     Atom *heavyAtom = bond->getOtherAtom(atom);
     int heavyAtomNum = heavyAtom->getAtomicNum();
 
@@ -671,7 +701,8 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       // explicit count, even if the H itself isn't marked as explicit
       const INT_VECT &defaultVs =
           PeriodicTable::getTable()->getValenceList(heavyAtomNum);
-      if (((heavyAtomNum == 7 || heavyAtomNum == 15) &&
+      if (((heavyAtomNum == 7 || heavyAtomNum == 15 ||
+            may_need_extra_H(mol, heavyAtom)) &&
            heavyAtom->getIsAromatic()) ||
           (std::find(defaultVs.begin() + 1, defaultVs.end(),
                      heavyAtom->getTotalValence()) != defaultVs.end())) {
@@ -685,9 +716,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
     // atom.  We deal with that by explicitly checking here:
     if (heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
       INT_LIST neighborIndices;
-      for (const auto &nbri :
-           boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
-        Bond *nbnd = mol[nbri];
+      for (const auto &nbnd : mol.atomBonds(heavyAtom)) {
         if (nbnd->getIdx() != bond->getIdx()) {
           neighborIndices.push_back(nbnd->getIdx());
         }
@@ -699,6 +728,20 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       // "<<heavyAtom->getIdx()<<" swaps: " << nSwaps<<std::endl;
       if (nSwaps % 2) {
         heavyAtom->invertChirality();
+      }
+    }
+
+    // If we are removing a H atom that defines bond stereo (e.g. imines),
+    // Then also remove the bond stereo information, as it is no longer valid.
+    if (heavyAtom->getDegree() == 2) {
+      for (auto &nbnd : mol.atomBonds(heavyAtom)) {
+        if (nbnd != bond) {
+          if (nbnd->getStereo() > Bond::STEREOANY) {
+            nbnd->setStereo(Bond::STEREONONE);
+            nbnd->getStereoAtoms().clear();
+          }
+          break;
+        }
       }
     }
 
@@ -750,8 +793,196 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       // This was part of github #1810
       adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
     }
+
+    // remove the bond from any SGroups that might include it.
+    for (auto &sg : getSubstanceGroups(mol)) {
+      sg.removeBondWithIdx(bond->getIdx());
+    }
   }
-  mol.removeAtom(atom);
+
+  // Finally, remove the atom from any SGroups that might include it, so that
+  // the SGroups don't get removed in removeAtom(). Since we allow removing
+  // SGroup SAP lvidx H atoms, we need to check for those and update them.
+  for (auto &sg : getSubstanceGroups(mol)) {
+    sg.removeAtomWithIdx(idx);
+    sg.removeParentAtomWithIdx(idx);
+
+    for (auto &sap : sg.getAttachPoints()) {
+      if (sap.lvIdx == static_cast<int>(idx)) {
+        sap.lvIdx = -1;
+      }
+    }
+  }
+  // computed properties will be cleared after all hydrogens are removed
+  bool clearProps = false;
+  mol.removeAtom(atom, clearProps);
+}
+
+bool shouldRemoveH(const RWMol &mol, const Atom *atom,
+                   const RemoveHsParameters &ps) {
+  if (atom->getAtomicNum() != 1) {
+    return false;
+  }
+  if (!ps.removeWithQuery && atom->hasQuery()) {
+    return false;
+  }
+  if (!ps.removeDegreeZero && !atom->getDegree()) {
+    if (ps.showWarnings) {
+      BOOST_LOG(rdWarningLog)
+          << "WARNING: not removing hydrogen atom without neighbors"
+          << std::endl;
+    }
+    return false;
+  }
+  if (!ps.removeHigherDegrees && atom->getDegree() > 1) {
+    return false;
+  }
+  if (!ps.removeIsotopes && !ps.removeAndTrackIsotopes && atom->getIsotope()) {
+    return false;
+  }
+  if (!ps.removeNonimplicit && !atom->hasProp(common_properties::isImplicit)) {
+    return false;
+  }
+  if (!ps.removeMapped && atom->getAtomMapNum()) {
+    return false;
+  }
+
+  if (ps.removeInSGroups) {
+    // If removing H in SGroups, do not remove H atoms in special
+    // roles in the SGroup
+    for (const auto &sg : getSubstanceGroups(mol)) {
+      // The H atom is one of the "caps" of the SGroup. Technically,
+      // it's not part of the group, but it defines its boundaries.
+      for (const auto &bond_idx : sg.getBonds()) {
+        if (sg.getBondType(bond_idx) == SubstanceGroup::BondType::XBOND) {
+          auto bond = mol.getBondWithIdx(bond_idx);
+          if (bond->getBeginAtom() == atom || bond->getEndAtom() == atom) {
+            return false;
+          }
+        }
+      }
+
+      for (const auto &sap : sg.getAttachPoints()) {
+        // The H atoms is an attach point. This would be weird, but is possible.
+        // (if it is a 'leaving atom' we don't care, though)
+        if (sap.aIdx == atom->getIdx()) {
+          return false;
+        }
+      }
+
+      for (const auto &cs : sg.getCStates()) {
+        // The bond to the H atom defines a CState
+        auto bond = mol.getBondWithIdx(cs.bondIdx);
+        if (bond->getBeginAtom() == atom || bond->getEndAtom() == atom) {
+          return false;
+        }
+      }
+    }
+  } else {
+    for (const auto &sg : getSubstanceGroups(mol)) {
+      if (sg.includesAtom(atom->getIdx())) {
+        return false;
+      }
+    }
+  }
+
+  if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
+    return false;
+  }
+  bool removeIt = true;
+  if (atom->getDegree() &&
+      (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
+       !ps.removeOnlyHNeighbors || !ps.removeNontetrahedralNeighbors ||
+       !ps.removeWithWedgedBond)) {
+    bool onlyHNeighbors = true;
+    for (const auto nbr : mol.atomNeighbors(atom)) {
+      // is it a dummy?
+      if (!ps.removeDummyNeighbors && nbr->getAtomicNum() < 1) {
+        if (ps.showWarnings) {
+          BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
+                                     "with dummy atom neighbors"
+                                  << std::endl;
+        }
+        return false;
+      }
+      // does it have non-tetrahedral stereo:
+      if (!ps.removeNontetrahedralNeighbors &&
+          Chirality::hasNonTetrahedralStereo(nbr)) {
+        if (ps.showWarnings) {
+          BOOST_LOG(rdWarningLog)
+              << "WARNING: not removing hydrogen atom "
+                 "with neighbor that has non-tetrahedral stereochemistry"
+              << std::endl;
+        }
+        return false;
+      }
+      if (!ps.removeOnlyHNeighbors && nbr->getAtomicNum() != 1) {
+        onlyHNeighbors = false;
+      }
+      if (!ps.removeWithWedgedBond) {
+        const auto bnd = mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx());
+        if (bnd->getBondDir() == Bond::BEGINDASH ||
+            bnd->getBondDir() == Bond::BEGINWEDGE) {
+          if (ps.showWarnings) {
+            BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
+                                       "with wedged bond"
+                                    << std::endl;
+          }
+          return false;
+        }
+      }
+      // Check to see if the neighbor has a double bond and we're the only
+      // neighbor at this end.  This was part of github #1810
+      if (!ps.removeDefiningBondStereo && nbr->getDegree() == 2) {
+        for (const auto bnd : mol.atomBonds(nbr)) {
+          if (bnd->getBondType() == Bond::DOUBLE &&
+              (bnd->getStereo() > Bond::STEREOANY ||
+               mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
+                       ->getBondDir() > Bond::NONE)) {
+            return false;
+          }
+        }
+      }
+    }
+    if (removeIt && (!ps.removeOnlyHNeighbors && onlyHNeighbors)) {
+      return false;
+    }
+  }
+  return removeIt;
+}
+
+// Do not remove H atoms that are part of SGroups that only contain H atoms.
+void filter_sgroup_emptying_hydrogens(const ROMol &mol,
+                                      boost::dynamic_bitset<> &atomsToRemove) {
+  for (const auto &sg : getSubstanceGroups(mol)) {
+    const auto &atoms = sg.getAtoms();
+    const auto &patoms = sg.getParentAtoms();
+
+    // If the SGroup already didn't have atoms, we don't care about it
+    if (atoms.empty() && patoms.empty()) {
+      continue;
+    }
+
+    auto would_remove_atom = [&atomsToRemove](const auto idx) {
+      return atomsToRemove[idx];
+    };
+
+    auto no_atoms = atoms.empty() ||
+                    std::all_of(atoms.begin(), atoms.end(), would_remove_atom);
+    if (no_atoms) {
+      auto no_patoms =
+          patoms.empty() ||
+          std::all_of(patoms.begin(), patoms.end(), would_remove_atom);
+      if (no_patoms) {
+        for (auto atom : atoms) {
+          atomsToRemove.set(atom, false);
+        }
+        for (auto patom : patoms) {
+          atomsToRemove.set(patom, false);
+        }
+      }
+    }
+  }
 }
 
 }  // end of anonymous namespace
@@ -784,109 +1015,19 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     }
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
+
   for (auto atom : mol.atoms()) {
-    if (atom->getAtomicNum() != 1) {
-      continue;
-    }
-    if (!ps.removeWithQuery && atom->hasQuery()) {
-      continue;
-    }
-    if (!ps.removeDegreeZero && !atom->getDegree()) {
-      if (ps.showWarnings) {
-        BOOST_LOG(rdWarningLog)
-            << "WARNING: not removing hydrogen atom without neighbors"
-            << std::endl;
-      }
-      continue;
-    }
-    if (!ps.removeHigherDegrees && atom->getDegree() > 1) {
-      continue;
-    }
-    if (!ps.removeIsotopes && !ps.removeAndTrackIsotopes &&
-        atom->getIsotope()) {
-      continue;
-    }
-    if (!ps.removeNonimplicit &&
-        !atom->hasProp(common_properties::isImplicit)) {
-      continue;
-    }
-    if (!ps.removeMapped && atom->getAtomMapNum()) {
-      continue;
-    }
-    if (!ps.removeInSGroups) {
-      bool skipIt = false;
-      for (const auto &sg : getSubstanceGroups(mol)) {
-        if (sg.includesAtom(atom->getIdx())) {
-          skipIt = true;
-          break;
-        }
-      }
-      if (skipIt) {
-        continue;
-      }
-    }
-    if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
-      continue;
-    }
-    bool removeIt = true;
-    if (atom->getDegree() &&
-        (!ps.removeDummyNeighbors || !ps.removeDefiningBondStereo ||
-         !ps.removeOnlyHNeighbors || !ps.removeWithWedgedBond)) {
-      bool onlyHNeighbors = true;
-      ROMol::ADJ_ITER begin, end;
-      boost::tie(begin, end) = mol.getAtomNeighbors(atom);
-      while (begin != end && removeIt) {
-        auto nbr = mol.getAtomWithIdx(*begin);
-        // is it a dummy?
-        if (!ps.removeDummyNeighbors && nbr->getAtomicNum() < 1) {
-          removeIt = false;
-          if (ps.showWarnings) {
-            BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
-                                       "with dummy atom neighbors"
-                                    << std::endl;
-          }
-        }
-        if (!ps.removeOnlyHNeighbors && nbr->getAtomicNum() != 1) {
-          onlyHNeighbors = false;
-        }
-        if (!ps.removeWithWedgedBond) {
-          const auto bnd =
-              mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx());
-          if (bnd->getBondDir() == Bond::BEGINDASH ||
-              bnd->getBondDir() == Bond::BEGINWEDGE) {
-            removeIt = false;
-            if (ps.showWarnings) {
-              BOOST_LOG(rdWarningLog) << "WARNING: not removing hydrogen atom "
-                                         "with wedged bond"
-                                      << std::endl;
-            }
-          }
-        }
-        // Check to see if the neighbor has a double bond and we're the only
-        // neighbor at this end.  This was part of github #1810
-        if (!ps.removeDefiningBondStereo && nbr->getDegree() == 2) {
-          for (const auto &nbri :
-               boost::make_iterator_range(mol.getAtomBonds(nbr))) {
-            const Bond *bnd = mol[nbri];
-            if (bnd->getBondType() == Bond::DOUBLE &&
-                (bnd->getStereo() > Bond::STEREOANY ||
-                 mol.getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
-                         ->getBondDir() > Bond::NONE)) {
-              removeIt = false;
-              break;
-            }
-          }
-        }
-        ++begin;
-      }
-      if (removeIt && (!ps.removeOnlyHNeighbors && onlyHNeighbors)) {
-        removeIt = false;
-      }
-    }
-    if (removeIt) {
+    if (shouldRemoveH(mol, atom, ps)) {
       atomsToRemove.set(atom->getIdx());
     }
   }  // end of the loop over atoms
+
+  // Once we know which H atoms would be removed, filter out those that
+  // would cause any SGroups to become empty
+  if (ps.removeInSGroups) {
+    filter_sgroup_emptying_hydrogens(mol, atomsToRemove);
+  }
+
   // now that we know which atoms need to be removed, go ahead and remove them
   // NOTE: there's too much complexity around stereochemistry here
   // to be able to safely use batch editing.
@@ -895,6 +1036,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
       molRemoveH(mol, idx, ps.updateExplicitCount);
     }
   }
+  mol.clearComputedProps(true);
   //
   //  If we didn't only remove implicit Hs, which are guaranteed to
   //  be the highest numbered atoms, we may have altered atom indices.
@@ -948,6 +1090,7 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   ps.removeInSGroups = true;
   ps.showWarnings = false;
   ps.removeHydrides = true;
+  ps.removeNontetrahedralNeighbors = true;
   removeHs(mol, ps, sanitize);
 };
 ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
@@ -962,7 +1105,38 @@ ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
 }
 
 namespace {
-bool isQueryH(const Atom *atom) {
+enum class HydrogenType {
+  NotAHydrogen,
+  UnMergableQueryHydrogen,
+  QueryHydrogen
+};
+
+template <class Q>
+std::pair<bool, bool> queryHasHs(Q queryAtom, bool inor = false) {
+  for (auto childit = queryAtom->beginChildren();
+       childit != queryAtom->endChildren(); ++childit) {
+    QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = *childit;
+    if (query->getDescription() == "AtomOr") {
+      return queryHasHs(query, true);
+    } else if (query->getDescription() == "AtomAtomicNum") {
+      if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
+          !query->getNegation()) {
+        return std::make_pair(true, inor);
+      }
+    } else if (query->getDescription() == "AtomType") {
+      auto val = static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal();
+      // 1001 == aromtic hydrogen (not a thing, really)
+      // 1 == aliphatic hydrogen
+      if ((val == 1001 || val == 1) && !query->getNegation()) {
+        return std::make_pair(true, inor);
+      }
+    }
+  }
+  return std::make_pair(false, inor);
+  ;
+}
+
+HydrogenType isQueryH(const Atom *atom) {
   PRECONDITION(atom, "bogus atom");
   if (atom->getAtomicNum() == 1) {
     // the simple case: the atom is flagged as being an H and
@@ -970,58 +1144,41 @@ bool isQueryH(const Atom *atom) {
     if (!atom->hasQuery() ||
         (!atom->getQuery()->getNegation() &&
          atom->getQuery()->getDescription() == "AtomAtomicNum")) {
-      return true;
+      return HydrogenType::QueryHydrogen;
     }
   }
 
-  if (atom->getDegree() != 1) {
-    // only degree 1
-    return false;
+  if (!(atom->getDegree() <= 1)) {
+    // bonded and unbonded H atoms will continue rest will be returned
+    return HydrogenType::NotAHydrogen;
   }
 
   if (atom->hasQuery() && atom->getQuery()->getNegation()) {
     // we will not merge negated queries
-    return false;
+    return HydrogenType::NotAHydrogen;
   }
 
-  bool hasHQuery = false, hasOr = false;
   if (atom->hasQuery()) {
+    std::pair<bool, bool> res = std::make_pair(false, false);
     if (atom->getQuery()->getDescription() == "AtomOr") {
-      hasOr = true;
+      res = queryHasHs(atom->getQuery(), true);
+    } else if (atom->getQuery()->getDescription() == "AtomAnd") {
+      res = queryHasHs(atom->getQuery(), false);
     }
-    std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
-        atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
-    // the logic gets too complicated if there's an OR in the children, so
-    // just punt on those (with a warning)
-    while (!(hasHQuery && hasOr) && childStack.size()) {
-      QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
-      childStack.pop_front();
-      if (query->getDescription() == "AtomOr") {
-        hasOr = true;
-      } else if (query->getDescription() == "AtomAtomicNum") {
-        if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
-            !query->getNegation()) {
-          hasHQuery = true;
-        }
+    if (res.first) {     // hasH
+      if (res.second) {  // inOr
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: merging explicit H queries involved "
+               "in ORs is not supported. This query will not "
+               "be merged"
+            << std::endl;
+        return HydrogenType::UnMergableQueryHydrogen;
       } else {
-        QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
-        for (child1 = query->beginChildren(); child1 != query->endChildren();
-             ++child1) {
-          childStack.push_back(*child1);
-        }
+        return HydrogenType::QueryHydrogen;
       }
     }
-    // std::cerr<<"   !!!1 "<<atom->getIdx()<<" "<<hasHQuery<<"
-    // "<<hasOr<<std::endl;
-    if (hasHQuery && hasOr) {
-      BOOST_LOG(rdWarningLog) << "WARNING: merging explicit H queries involved "
-                                 "in ORs is not supported. This query will not "
-                                 "be merged"
-                              << std::endl;
-      return false;
-    }
   }
-  return hasHQuery;
+  return HydrogenType::NotAHydrogen;
 }
 }  // namespace
 
@@ -1039,12 +1196,12 @@ bool isQueryH(const Atom *atom) {
 //   - By default all hydrogens are removed, however if
 //     merge_unmapped_only is true, any hydrogen participating
 //     in an atom map will be retained
-void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
+void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
   std::vector<unsigned int> atomsToRemove;
 
   boost::dynamic_bitset<> hatoms(mol.getNumAtoms());
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
-    hatoms[i] = isQueryH(mol.getAtomWithIdx(i));
+    hatoms[i] = isQueryH(mol.getAtomWithIdx(i)) == HydrogenType::QueryHydrogen;
   }
   unsigned int currIdx = 0, stopIdx = mol.getNumAtoms();
   while (currIdx < stopIdx) {
@@ -1057,8 +1214,11 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
       while (begin != end) {
         if (hatoms[*begin]) {
           Atom &bgn = *mol.getAtomWithIdx(*begin);
-          if (!mergeUnmappedOnly ||
-              !bgn.hasProp(common_properties::molAtomMapNumber)) {
+          bool checkUnmapped =
+              !mergeUnmappedOnly ||
+              !bgn.hasProp(common_properties::molAtomMapNumber);
+          bool checkIsotope = mergeIsotopes || bgn.getIsotope() == 0;
+          if (checkUnmapped && checkIsotope) {
             atomsToRemove.push_back(rdcast<unsigned int>(*begin));
             ++numHsToRemove;
           }
@@ -1103,7 +1263,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
           auto *rsq = dynamic_cast<RecursiveStructureQuery *>(atom->getQuery());
           CHECK_INVARIANT(rsq, "could not convert recursive structure query");
           RWMol *rqm = new RWMol(*rsq->getQueryMol());
-          mergeQueryHs(*rqm, mergeUnmappedOnly);
+          mergeQueryHs(*rqm, mergeUnmappedOnly, mergeIsotopes);
           rsq->setQueryMol(rqm);
         }
 
@@ -1117,7 +1277,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
             auto *rsq = dynamic_cast<RecursiveStructureQuery *>(qry.get());
             CHECK_INVARIANT(rsq, "could not convert recursive structure query");
             RWMol *rqm = new RWMol(*rsq->getQueryMol());
-            mergeQueryHs(*rqm, mergeUnmappedOnly);
+            mergeQueryHs(*rqm, mergeUnmappedOnly, mergeIsotopes);
             rsq->setQueryMol(rqm);
           } else if (qry->beginChildren() != qry->endChildren()) {
             childStack.insert(childStack.end(), qry->beginChildren(),
@@ -1134,9 +1294,10 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly) {
   }
   mol.commitBatchEdit();
 };
-ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly) {
+ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly,
+                    bool mergeIsotopes) {
   auto *res = new RWMol(mol);
-  mergeQueryHs(*res, mergeUnmappedOnly);
+  mergeQueryHs(*res, mergeUnmappedOnly, mergeIsotopes);
   return static_cast<ROMol *>(res);
 };
 
@@ -1156,6 +1317,57 @@ bool needsHs(const ROMol &mol) {
     }
   }
   return false;
+}
+
+std::pair<bool, bool> hasQueryHs(const ROMol &mol) {
+  bool queryHs = false;
+  // We don't care about announcing ORs or other items during isQueryH
+  RDLog::LogStateSetter blocker;
+
+  for (const auto atom : mol.atoms()) {
+    switch (isQueryH(atom)) {
+      case HydrogenType::UnMergableQueryHydrogen:
+        return std::make_pair(true, true);
+      case HydrogenType::QueryHydrogen:
+        queryHs = true;
+        break;
+      default:  // HydrogenType::NotAHydrogen:
+        break;
+    }
+    if (atom->hasQuery()) {
+      if (atom->getQuery()->getDescription() == "RecursiveStructure") {
+        auto *rsq = dynamic_cast<RecursiveStructureQuery *>(atom->getQuery());
+        CHECK_INVARIANT(rsq, "could not convert recursive structure query");
+        auto res = hasQueryHs(*rsq->getQueryMol());
+        if (res.second) {  // unmergableH implies queryH
+          return res;
+        }
+        queryHs |= res.first;
+      }
+
+      // FIX: shouldn't be repeating this code here -- yet again!
+      std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
+          atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
+      while (!childStack.empty()) {
+        QueryAtom::QUERYATOM_QUERY::CHILD_TYPE qry = childStack.front();
+        childStack.pop_front();
+        if (qry->getDescription() == "RecursiveStructure") {
+          auto *rsq = dynamic_cast<RecursiveStructureQuery *>(qry.get());
+          CHECK_INVARIANT(rsq, "could not convert recursive structure query");
+          auto res = hasQueryHs(*rsq->getQueryMol());
+          if (res.second) {
+            return res;
+          }
+          queryHs |= res.first;
+        } else {
+          childStack.insert(childStack.end(), qry->beginChildren(),
+                            qry->endChildren());
+        }
+      }
+    }
+  }  // end of recursion loop
+
+  return std::make_pair(queryHs, false);
 }
 
 }  // namespace MolOps

@@ -62,7 +62,14 @@ void AtomSymbol::findExtremes(double &xmin, double &xmax, double &ymin,
 void AtomSymbol::scale(const Point2D &scaleFactor) {
   cds_.x *= scaleFactor.x;
   cds_.y *= scaleFactor.y;
+  recalculateRects();
+}
 
+// ****************************************************************************
+void AtomSymbol::move(const Point2D &trans) { cds_ += trans; }
+
+// ****************************************************************************
+void AtomSymbol::recalculateRects() {
   // rebuild the rectangles, because the fontScale may be different,
   // and the widths etc might not scale by the same amount.
   rects_.clear();
@@ -71,9 +78,6 @@ void AtomSymbol::scale(const Point2D &scaleFactor) {
   textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_, drawChars_,
                              false, TextAlignType::MIDDLE);
 }
-
-// ****************************************************************************
-void AtomSymbol::move(const Point2D &trans) { cds_ += trans; }
 
 // ****************************************************************************
 void AtomSymbol::draw(MolDraw2D &molDrawer) const {
@@ -107,7 +111,7 @@ bool AtomSymbol::doesRectClash(const StringRect &rect, double padding) const {
 // ****************************************************************************
 void AtomSymbol::adjustColons() {
   if (symbol_.empty()) {
-    return; // but probably it's always got something in it.
+    return;  // but probably it's always got something in it.
   }
   size_t colonPos = symbol_.find(':');
   if (colonPos == std::string::npos) {
@@ -129,7 +133,7 @@ void AtomSymbol::adjustColons() {
   if (colonPos == std::string::npos) {
     return;
   }
-  CHECK_INVARIANT(colonPos<=rects_.size(),"bad rects_ size");
+  CHECK_INVARIANT(colonPos <= rects_.size(), "bad rects_ size");
   double leftHeight = colonPos ? rects_[colonPos - 1]->height_ : 0;
   double rightHeight =
       colonPos < symbol_.size() - 1 ? rects_[colonPos + 1]->height_ : 0;
@@ -156,5 +160,4 @@ void AtomSymbol::drawRects(MolDraw2D &molDrawer) const {
 }
 
 }  // namespace MolDraw2D_detail
-} // namespace RDKit
-
+}  // namespace RDKit

@@ -46,6 +46,8 @@
 #endif
 #endif
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
@@ -56,6 +58,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
@@ -70,6 +73,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/MolEnumerator/MolEnumerator.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/integer_traits.hpp>
@@ -102,14 +106,26 @@
 #include "guc.h"
 #include "bitstring.h"
 
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
 using namespace std;
 using namespace RDKit;
+using RDKit::GeneralizedSubstruct::ExtendedQueryMol;
+
+constexpr unsigned int pickleForQuery =
+    PicklerOps::PropertyPickleOptions::MolProps |
+    PicklerOps::PropertyPickleOptions::AtomProps |
+    PicklerOps::PropertyPickleOptions::BondProps |
+    PicklerOps::PropertyPickleOptions::PrivateProps |
+    PicklerOps::PropertyPickleOptions::QueryAtomData;
+constexpr unsigned int pickleDefault =
+    PicklerOps::PropertyPickleOptions::MolProps |
+    PicklerOps::PropertyPickleOptions::PrivateProps;
 
 class ByteA : public std::string {
  public:
-  ByteA() : string(){};
-  ByteA(bytea *b) : string(VARDATA(b), VARSIZE(b) - VARHDRSZ){};
-  ByteA(string &s) : string(s){};
+  ByteA() : string() {};
+  ByteA(bytea *b) : string(VARDATA(b), VARSIZE(b) - VARHDRSZ) {};
+  ByteA(string &s) : string(s) {};
 
   /*
    * Convert string to bytea. Convertaion is in pgsql's memory
@@ -167,12 +183,12 @@ extern "C" CROMol constructROMol(Mol *data) {
   return (CROMol)mol;
 }
 
-extern "C" Mol *deconstructROMol(CROMol data) {
+Mol *deconstructROMolWithProps(CROMol data, unsigned int properties) {
   auto *mol = (ROMol *)data;
   ByteA b;
 
   try {
-    MolPickler::pickleMol(mol, b);
+    MolPickler::pickleMol(mol, b, properties);
   } catch (MolPicklerException &e) {
     elog(ERROR, "pickleMol: %s", e.what());
   } catch (...) {
@@ -180,6 +196,14 @@ extern "C" Mol *deconstructROMol(CROMol data) {
   }
 
   return (Mol *)b.toByteA();
+}
+
+extern "C" Mol *deconstructROMol(CROMol data) {
+  return deconstructROMolWithProps(data, pickleDefault);
+}
+
+extern "C" Mol *deconstructROMolWithQueryProperties(CROMol data) {
+  return deconstructROMolWithProps(data, pickleForQuery);
 }
 
 extern "C" CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail,
@@ -376,15 +400,15 @@ extern "C" bool isValidMolBlob(char *data, int len) {
 }
 
 extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
-                             bool cxSmiles) {
+                             bool cxSmiles, bool doIsomeric) {
   auto *mol = (ROMol *)data;
 
   try {
     if (!asSmarts) {
       if (!cxSmiles) {
-        StringData = MolToSmiles(*mol);
+        StringData = MolToSmiles(*mol, doIsomeric);
       } else {
-        StringData = MolToCXSmiles(*mol);
+        StringData = MolToCXSmiles(*mol, doIsomeric);
       }
     } else {
       if (!cxSmiles) {
@@ -476,7 +500,7 @@ extern "C" char *makeMolBlob(CROMol data, int *len) {
   auto *mol = (ROMol *)data;
   StringData.clear();
   try {
-    MolPickler::pickleMol(*mol, StringData);
+    MolPickler::pickleMol(*mol, StringData, pickleDefault);
   } catch (...) {
     elog(ERROR, "makeMolBlob: Unknown exception");
   }
@@ -540,8 +564,8 @@ extern "C" int molcmp(CROMol i, CROMol a) {
     return res;
   }
 
-  res = int(RDKit::Descriptors::calcAMW(*im, false)) -
-        int(RDKit::Descriptors::calcAMW(*am, false));
+  res = int(RDKit::MolOps::getAvgMolWt(*im, false)) -
+        int(RDKit::MolOps::getAvgMolWt(*am, false));
   if (res) {
     return res;
   }
@@ -559,6 +583,7 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   params.useChirality = useChirality;
   params.useEnhancedStereo = useEnhancedStereo;
   params.maxMatches = 1;
+  params.useQueryQueryMatches = true;  // <- this was part of github #6002
   auto mv1 = RDKit::SubstructMatch(*im, *am, params);
   auto mv2 = RDKit::SubstructMatch(*am, *im, params);
   bool ss1 = mv1.size() != 0;
@@ -582,7 +607,8 @@ extern "C" int molcmp(CROMol i, CROMol a) {
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
 
-extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
+extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality,
+                            bool useMatchers) {
   auto *im = (ROMol *)i;
   auto *am = (ROMol *)a;
   RDKit::SubstructMatchParameters params;
@@ -593,7 +619,11 @@ extern "C" int MolSubstruct(CROMol i, CROMol a, bool useChirality) {
     params.useChirality = getDoChiralSSS();
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
+  params.useQueryQueryMatches = true;
+
+  params.useGenericMatchers = useMatchers;
   params.maxMatches = 1;
+
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
@@ -611,6 +641,7 @@ extern "C" int MolSubstructCount(CROMol i, CROMol a, bool uniquify,
     params.useEnhancedStereo = getDoEnhancedStereoSSS();
   }
   params.uniquify = uniquify;
+  params.useQueryQueryMatches = true;
   auto matchVect = RDKit::SubstructMatch(*im, *am, params);
   return static_cast<int>(matchVect.size());
 }
@@ -689,8 +720,8 @@ extern "C" char *makeMolFormulaText(CROMol data, int *len,
   auto *mol = (ROMol *)data;
 
   try {
-    StringData = RDKit::Descriptors::calcMolFormula(*mol, separateIsotopes,
-                                                    abbreviateHIsotopes);
+    StringData = RDKit::MolOps::getMolFormula(*mol, separateIsotopes,
+                                              abbreviateHIsotopes);
   } catch (...) {
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
@@ -707,6 +738,13 @@ extern "C" const char *MolInchi(CROMol i, const char *opts) {
   std::string inchi = "InChI not available";
 #ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
+  // Older versions of the InChI code returned an empty string for molecules
+  // without atoms. This changed with 1.07, but we'll keep doing an empty string
+  // here
+  if (!im->getNumAtoms()) {
+    inchi = "";
+    return strdup(inchi.c_str());
+  }
   ExtraInchiReturnValues rv;
   try {
     std::string sopts = "/AuxNone /WarnOnEmptyStructure";
@@ -728,6 +766,13 @@ extern "C" const char *MolInchiKey(CROMol i, const char *opts) {
   std::string key = "InChI not available";
 #ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
+  // Older versions of the InChI code returned an empty string for molecules
+  // without atoms. This changed with 1.07, but we'll keep doing an empty string
+  // here
+  if (!im->getNumAtoms()) {
+    key = "";
+    return strdup(key.c_str());
+  }
   ExtraInchiReturnValues rv;
   try {
     std::string sopts = "/AuxNone /WarnOnEmptyStructure";
@@ -769,18 +814,31 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
 
   MolOps::AdjustQueryParameters p;
 
+  bool includeGenericGroups = false;
   if (params && strlen(params)) {
     std::string pstring(params);
     try {
       MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
     } catch (const ValueErrorException &e) {
-      elog(ERROR, e.what());
+      elog(ERROR, "MolAdjustQueryProperties: %s", e.what());
     } catch (...) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
     }
+    std::istringstream ss;
+    ss.str(params);
+
+    boost::property_tree::ptree pt;
+    boost::property_tree::read_json(ss, pt);
+    includeGenericGroups = pt.get("setGenericQueryFromProperties", false);
   }
-  ROMol *mol = MolOps::adjustQueryProperties(*im, &p);
+
+  ROMol *mol = nullptr;
+  if (includeGenericGroups) {
+    mol = GenericGroups::adjustQueryPropertiesWithGenericGroups(*im, &p);
+  } else {
+    mol = MolOps::adjustQueryProperties(*im, &p);
+  }
   return (CROMol)mol;
 }
 
@@ -988,11 +1046,7 @@ extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
     n = iter->first % numInts;
 
     if (iterV > INTRANGEMAX) {
-#if 0
-        elog(ERROR, "sparse fingerprint is too big, increase INTRANGEMAX in rdkit.h");
-#else
       iterV = INTRANGEMAX;
-#endif
     }
 
     if (s[n].low == 0 || s[n].low > iterV) {
@@ -1906,8 +1960,8 @@ MoleculeDescriptors *calcMolecularDescriptorsReaction(
   for (; begin != end; ++begin) {
     des->nAtoms += begin->get()->getNumHeavyAtoms();
     des->nBonds += begin->get()->getNumBonds(true);
-    des->MW = RDKit::Descriptors::calcAMW(*begin->get(), true);
-    if (!begin->get()->getRingInfo()->isInitialized()) {
+    des->MW = RDKit::MolOps::getAvgMolWt(*begin->get(), true);
+    if (!begin->get()->getRingInfo()->isSssrOrBetter()) {
       begin->get()->updatePropertyCache();
       RDKit::MolOps::findSSSR(*begin->get());
     }
@@ -2082,6 +2136,8 @@ extern "C" char *computeNMMolHash(CROMol data, const char *which) {
     func = RDKit::MolHash::HashFunction::Mesomer;
   } else if (!strcmp(which, "HetAtomTautomer")) {
     func = RDKit::MolHash::HashFunction::HetAtomTautomer;
+  } else if (!strcmp(which, "HetAtomTautomerv2")) {
+    func = RDKit::MolHash::HashFunction::HetAtomTautomerv2;
   } else if (!strcmp(which, "HetAtomProtomer")) {
     func = RDKit::MolHash::HashFunction::HetAtomProtomer;
   } else if (!strcmp(which, "RedoxPair")) {
@@ -2127,7 +2183,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
   while (*s && *s <= ' ') {
     s++;
   }
-  while (s<s_end && * s> ' ') {
+  while (s < s_end && *s > ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;
@@ -2237,4 +2293,169 @@ extern "C" char *findMCS(void *vmols, char *params) {
   delete molecules;
   // elog(WARNING, "findMCS(): molecules deleted. FINISHED.");
   return strdup(mcs.c_str());
+}
+
+extern "C" char *makeXQMolBlob(CXQMol data, int *len) {
+  PRECONDITION(len, "empty len pointer");
+  StringData.clear();
+  auto *xqm = (ExtendedQueryMol *)data;
+  try {
+    StringData = xqm->toBinary();
+  } catch (...) {
+    elog(ERROR, "makeXQMolBlob: Unknown exception");
+  }
+
+  *len = StringData.size();
+  return (char *)StringData.data();
+}
+extern "C" CXQMol parseXQMolBlob(char *data, int len) {
+  ExtendedQueryMol *mol = nullptr;
+
+  try {
+    string binStr(data, len);
+    mol = new ExtendedQueryMol(binStr, false);
+  } catch (...) {
+    ereport(
+        ERROR,
+        (errcode(ERRCODE_DATA_EXCEPTION),
+         errmsg("problem generating extended query molecule from blob data")));
+  }
+  if (mol == nullptr) {
+    ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
+                    errmsg("blob data could not be parsed")));
+  }
+
+  return (CXQMol)mol;
+}
+
+extern "C" char *makeXQMolText(CXQMol data, int *len) {
+  PRECONDITION(len, "empty len pointer");
+  auto *mol = (ExtendedQueryMol *)data;
+
+  try {
+    StringData = mol->toJSON();
+  } catch (...) {
+    ereport(WARNING,
+            (errcode(ERRCODE_WARNING),
+             errmsg("makeXQMolText: problems converting molecule to text")));
+    StringData = "";
+  }
+
+  *len = StringData.size();
+  return (char *)StringData.c_str();
+}
+
+extern "C" CXQMol parseXQMolText(char *data) {
+  ExtendedQueryMol *mol = nullptr;
+
+  try {
+    string json(data);
+    mol = new ExtendedQueryMol(json, true);
+  } catch (...) {
+    ereport(
+        ERROR,
+        (errcode(ERRCODE_DATA_EXCEPTION),
+         errmsg("problem generating extended query molecule from text data")));
+  }
+  if (mol == nullptr) {
+    ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
+                    errmsg("text data could not be parsed")));
+  }
+
+  return (CXQMol)mol;
+}
+
+extern "C" CXQMol constructXQMol(XQMol *data) {
+  ExtendedQueryMol *mol = nullptr;
+
+  ByteA b(data);
+  try {
+    mol = new ExtendedQueryMol(b, false);
+  } catch (MolPicklerException &e) {
+    elog(ERROR, "constructXQMol: %s", e.what());
+  } catch (ValueErrorException &e) {
+    elog(ERROR, "constructXQMol Value Error: %s", e.what());
+  } catch (...) {
+    elog(ERROR, "constructXQMol: Unknown exception");
+  }
+
+  return (CXQMol)mol;
+}
+
+extern "C" XQMol *deconstructXQMol(CXQMol data) {
+  auto *mol = (ExtendedQueryMol *)data;
+  ByteA b;
+
+  try {
+    b = mol->toBinary();
+  } catch (MolPicklerException &e) {
+    elog(ERROR, "deconstructXQMol: %s", e.what());
+  } catch (...) {
+    elog(ERROR, "deconstructXQMol: Unknown exception");
+  }
+
+  return (XQMol *)b.toByteA();
+}
+
+extern "C" void freeCXQMol(CXQMol data) {
+  auto *mol = (ExtendedQueryMol *)data;
+  delete mol;
+}
+
+extern "C" CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
+                             bool adjustQueryProperties, const char *params) {
+  auto *im = (const ROMol *)m;
+  if (!im) {
+    return nullptr;
+  }
+
+  MolOps::AdjustQueryParameters p;
+
+  if (params && strlen(params)) {
+    std::string pstring(params);
+    try {
+      MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
+    } catch (const ValueErrorException &e) {
+      elog(ERROR, "adjustQueryProperties: %s", e.what());
+    } catch (...) {
+      elog(WARNING,
+           "adjustQueryProperties: Invalid argument \'params\' ignored");
+    }
+  }
+
+  ExtendedQueryMol *xqm = nullptr;
+  try {
+    xqm = new ExtendedQueryMol(GeneralizedSubstruct::createExtendedQueryMol(
+        *im, doEnumeration, doTautomers, adjustQueryProperties, p));
+  } catch (MolSanitizeException &e) {
+    elog(ERROR, "MolToXQMol: %s", e.what());
+    xqm = nullptr;
+  } catch (...) {
+    elog(ERROR, "MolToXQMol: unknown failure type");
+    xqm = nullptr;
+  }
+  return (CXQMol)xqm;
+}
+
+extern "C" int XQMolSubstruct(CROMol i, CXQMol a, bool useChirality,
+                              bool useMatchers) {
+  auto *im = (ROMol *)i;
+  auto *xqm = (ExtendedQueryMol *)a;
+  if (!im || !xqm) {
+    return 0;
+  }
+  RDKit::SubstructMatchParameters params;
+  if (useChirality) {
+    params.useChirality = true;
+    params.useEnhancedStereo = true;
+  } else {
+    params.useChirality = getDoChiralSSS();
+    params.useEnhancedStereo = getDoEnhancedStereoSSS();
+  }
+  params.useQueryQueryMatches = true;
+  params.maxMatches = 1;
+  params.useGenericMatchers = useMatchers;
+
+  int res = GeneralizedSubstruct::SubstructMatch(*im, *xqm, params).size();
+  return res;
 }

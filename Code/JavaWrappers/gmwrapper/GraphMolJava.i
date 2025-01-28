@@ -101,6 +101,7 @@ typedef unsigned long long int	uintmax_t;
 
 %shared_ptr(std::exception)
 %shared_ptr(RDKit::RDProps)
+%shared_ptr(RDKit::Conformer)
 %shared_ptr(RDKit::ROMol)
 %shared_ptr(RDKit::RWMol)
 %shared_ptr(RDKit::Atom)
@@ -124,7 +125,7 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(ForceFields::ForceFieldContrib);
 %shared_ptr(ForceFields::UFF::AngleBendContrib);
 %shared_ptr(ForceFields::UFF::BondStretchContrib);
-%shared_ptr(ForceFields::UFF::DistanceConstraintContrib);
+%shared_ptr(ForceFields::DistanceConstraintContrib);
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
 %shared_ptr(ForceFields::UFF::InversionContrib);
@@ -170,6 +171,7 @@ typedef unsigned long long int	uintmax_t;
 // Conformer seems to need to come before ROMol
 %include "../Conformer.i"
 %include "../Dict.i"
+%include "../RDLogger.i"
 %include "../RDProps.i"
 %include "../StereoGroup.i"
 %include "../ROMol.i"
@@ -222,6 +224,9 @@ typedef unsigned long long int	uintmax_t;
 %include "../MolHash.i"
 %include "../Abbreviations.i"
 %include "../Streams.i"
+%include "../GeneralizedSubstruct.i"
+%include "../RascalMCES.i"
+%include "../Queries.i"
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
 #ifdef INCLUDE_ERROR_GENERATOR
@@ -284,7 +289,7 @@ typedef unsigned long long int	uintmax_t;
   double getElement(int i) {
     return (*($self))[i];
   }
-  double setElement(int i, double value) {
+  void setElement(int i, double value) {
     (*($self))[i] = value;
   }
 }
@@ -292,7 +297,7 @@ typedef unsigned long long int	uintmax_t;
   int getElement(int i) {
     return (*($self))[i];
   }
-  int setElement(int i, int value) {
+  void setElement(int i, int value) {
     (*($self))[i] = value;
   }
 }
@@ -311,4 +316,9 @@ typedef unsigned long long int	uintmax_t;
 %{
 #include <RDGeneral/versions.h>
 %}
+
+%immutable RDKit::rdkitVersion;
+%immutable RDKit::boostVersion;
+%immutable RDKit::rdkitBuild;
+
 %include <RDGeneral/versions.h>

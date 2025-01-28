@@ -17,6 +17,8 @@
 #include "CIPMol.h"
 #include "configs/Sp2Bond.h"
 #include "configs/Tetrahedral.h"
+#include "configs/AtropisomerBond.h"
+#include <boost/algorithm/string.hpp>
 
 #include "rules/Rules.h"
 #include "rules/Rule1a.h"
@@ -28,6 +30,7 @@
 #include "rules/Rule4c.h"
 #include "rules/Rule5New.h"
 #include "rules/Rule6.h"
+#include <GraphMol/Chirality.h>
 
 namespace RDKit {
 namespace CIPLabeler {
@@ -61,23 +64,35 @@ std::vector<std::unique_ptr<Configuration>> findConfigs(
        index = bonds.find_next(index)) {
     auto bond = mol.getBond(index);
 
-    auto bond_cfg = Bond::STEREONONE;
-    switch (bond->getStereo()) {
+    auto bond_cfg = bond->getStereo();
+    switch (bond_cfg) {
       case Bond::STEREOE:
-      case Bond::STEREOTRANS:
         bond_cfg = Bond::STEREOTRANS;
         break;
       case Bond::STEREOZ:
-      case Bond::STEREOCIS:
         bond_cfg = Bond::STEREOCIS;
         break;
       default:
-        continue;
+        break;
     }
+    switch (bond_cfg) {
+      case Bond::STEREOTRANS:
+      case Bond::STEREOCIS: {
+        std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(
+            mol, bond, bond->getBeginAtom(), bond->getEndAtom(), bond_cfg));
+        configs.push_back(std::move(cfg));
+      } break;
 
-    std::unique_ptr<Sp2Bond> cfg(new Sp2Bond(mol, bond, bond->getBeginAtom(),
-                                             bond->getEndAtom(), bond_cfg));
-    configs.push_back(std::move(cfg));
+      case Bond::STEREOATROPCCW:
+      case Bond::STEREOATROPCW: {
+        std::unique_ptr<AtropisomerBond> cfgAtrop(new AtropisomerBond(
+            mol, bond, bond->getBeginAtom(), bond->getEndAtom(), bond_cfg));
+        configs.push_back(std::move(cfgAtrop));
+      } break;
+
+      default:
+        break;
+    }
   }
 
   return configs;
@@ -163,22 +178,39 @@ void label(std::vector<std::unique_ptr<Configuration>> &configs) {
   }
 }
 
+thread_local unsigned int remainingCallCount = 0;
+
 }  // namespace
 
 void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
-                     const boost::dynamic_bitset<> &bonds) {
+                     const boost::dynamic_bitset<> &bonds,
+                     unsigned int maxRecursiveIterations) {
+  if (maxRecursiveIterations != 0) {
+    remainingCallCount = maxRecursiveIterations;
+  } else {
+    remainingCallCount = UINT_MAX;  // really big - will never be hit
+  }
+
   CIPMol cipmol{mol};
   auto configs = findConfigs(cipmol, atoms, bonds);
   label(configs);
 }
 
-void assignCIPLabels(ROMol &mol) {
+void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations) {
   boost::dynamic_bitset<> atoms(mol.getNumAtoms());
   boost::dynamic_bitset<> bonds(mol.getNumBonds());
   atoms.set();
   bonds.set();
-  assignCIPLabels(mol, atoms, bonds);
+  assignCIPLabels(mol, atoms, bonds, maxRecursiveIterations);
 }
 
 }  // namespace CIPLabeler
+
+namespace CIPLabeler_detail {
+
+bool decrementRemainingCallCountAndCheck() {
+  return (--CIPLabeler::remainingCallCount) > 0;
+}
+
+}  // namespace CIPLabeler_detail
 }  // namespace RDKit

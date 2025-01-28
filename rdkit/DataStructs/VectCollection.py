@@ -11,11 +11,12 @@
 
 import copy
 import struct
+
 from rdkit import DataStructs
 
 
 class VectCollection(object):
-    """
+  """
 
     >>> vc = VectCollection()
     >>> bv1 = DataStructs.ExplicitBitVect(10)
@@ -134,137 +135,138 @@ class VectCollection(object):
 
 
     """
-    def __init__(self):
-      self.__vects = {}
-      self.__orVect = None
-      self.__numBits = -1
-      self.__needReset = True
 
-    def GetOrVect(self):
-        if self.__needReset:
-            self.Reset()
-        return self.__orVect
+  def __init__(self):
+    self.__vects = {}
+    self.__orVect = None
+    self.__numBits = -1
+    self.__needReset = True
 
-    orVect = property(GetOrVect)
+  def GetOrVect(self):
+    if self.__needReset:
+      self.Reset()
+    return self.__orVect
 
-    def AddVect(self, idx, vect):
-        self.__vects[idx] = vect
+  orVect = property(GetOrVect)
+
+  def AddVect(self, idx, vect):
+    self.__vects[idx] = vect
+    self.__needReset = True
+
+  def Reset(self):
+    if not self.__needReset:
+      return
+    self.__orVect = None
+    if not self.__vects:
+      return
+    ks = list(iter(self.__vects))
+    self.__orVect = copy.copy(self.__vects[ks[0]])
+    self.__numBits = self.__orVect.GetNumBits()
+    for i in range(1, len(ks)):
+      self.__orVect |= self.__vects[ks[i]]
+    self.__needReset = False
+
+  def NumChildren(self):
+    return len(self.__vects.keys())
+
+  def GetChildren(self):
+    return tuple(self.__vects.items())
+
+  def __getitem__(self, idx):
+    if self.__needReset:
+      self.Reset()
+    return self.__orVect.GetBit(idx)
+
+  GetBit = __getitem__
+
+  def __len__(self):
+    if self.__needReset:
+      self.Reset()
+    return self.__numBits
+
+  GetNumBits = __len__
+
+  def GetOnBits(self):
+    if self.__needReset:
+      self.Reset()
+    return self.__orVect.GetOnBits()
+
+  def DetachVectsNotMatchingBit(self, bit):
+    items = list(self.__vects.items())
+    for k, v in items:
+      if not v.GetBit(bit):
+        del (self.__vects[k])
         self.__needReset = True
 
-    def Reset(self):
-        if not self.__needReset:
-            return
-        self.__orVect = None
-        if not self.__vects:
-            return
-        ks = list(iter(self.__vects))
-        self.__orVect = copy.copy(self.__vects[ks[0]])
-        self.__numBits = self.__orVect.GetNumBits()
-        for i in range(1, len(ks)):
-            self.__orVect |= self.__vects[ks[i]]
-        self.__needReset = False
-
-    def NumChildren(self):
-        return len(self.__vects.keys())
-
-    def GetChildren(self):
-        return tuple(self.__vects.items())
-
-    def __getitem__(self, idx):
-        if self.__needReset:
-            self.Reset()
-        return self.__orVect.GetBit(idx)
-
-    GetBit = __getitem__
-
-    def __len__(self):
-        if self.__needReset:
-            self.Reset()
-        return self.__numBits
-
-    GetNumBits = __len__
-
-    def GetOnBits(self):
-        if self.__needReset:
-            self.Reset()
-        return self.__orVect.GetOnBits()
-
-    def DetachVectsNotMatchingBit(self, bit):
-        items = list(self.__vects.items())
-        for k, v in items:
-            if not v.GetBit(bit):
-                del (self.__vects[k])
-                self.__needReset = True
-
-    def DetachVectsMatchingBit(self, bit):
-        items = list(self.__vects.items())
-        for k, v in items:
-            if v.GetBit(bit):
-                del (self.__vects[k])
-                self.__needReset = True
-
-    def Uniquify(self, verbose=False):
-        obls = {}
-        for k, v in self.__vects.items():
-            obls[k] = list(v.GetOnBits())
-
-        keys = list(self.__vects.keys())
-        nKeys = len(keys)
-        keep = list(self.__vects.keys())
-        for i in range(nKeys):
-            k1 = keys[i]
-            if k1 in keep:
-                obl1 = obls[k1]
-                idx = keys.index(k1)
-                for j in range(idx + 1, nKeys):
-                    k2 = keys[j]
-                    if k2 in keep:
-                        obl2 = obls[k2]
-                        if obl1 == obl2:
-                            keep.remove(k2)
-
-        self.__needsReset = True
-        tmp = {}
-        for k in keep:
-            tmp[k] = self.__vects[k]
-        if verbose:
-            print('uniquify:', len(self.__vects), '->', len(tmp))
-        self.__vects = tmp
-
-    #
-    # set up our support for pickling:
-    #
-    def __getstate__(self):
-        pkl = struct.pack('<I', len(self.__vects))
-        for k, v in self.__vects.items():
-            pkl += struct.pack('<I', k)
-            p = v.ToBinary()
-            l = len(p)
-            pkl += struct.pack('<I', l)
-            pkl += struct.pack('%ds' % (l), p)
-        return pkl
-
-    def __setstate__(self, pkl):
-        if isinstance(pkl, str):
-            pkl = bytes(pkl, encoding='Latin1')
-
-        self.__vects = {}
-        self.__orVect = None
-        self.__numBits = -1
+  def DetachVectsMatchingBit(self, bit):
+    items = list(self.__vects.items())
+    for k, v in items:
+      if v.GetBit(bit):
+        del (self.__vects[k])
         self.__needReset = True
-        szI = struct.calcsize('I')
-        offset = 0
-        nToRead = struct.unpack('<I', pkl[offset:offset + szI])[0]
-        offset += szI
-        for _ in range(nToRead):
-            k = struct.unpack('<I', pkl[offset:offset + szI])[0]
-            offset += szI
-            l = struct.unpack('<I', pkl[offset:offset + szI])[0]
-            offset += szI
-            sz = struct.calcsize('%ds' % l)
-            bv = DataStructs.ExplicitBitVect(struct.unpack('%ds' % l, pkl[offset:offset + sz])[0])
-            offset += sz
-            self.AddVect(k, bv)
+
+  def Uniquify(self, verbose=False):
+    obls = {}
+    for k, v in self.__vects.items():
+      obls[k] = list(v.GetOnBits())
+
+    keys = list(self.__vects.keys())
+    nKeys = len(keys)
+    keep = list(self.__vects.keys())
+    for i in range(nKeys):
+      k1 = keys[i]
+      if k1 in keep:
+        obl1 = obls[k1]
+        idx = keys.index(k1)
+        for j in range(idx + 1, nKeys):
+          k2 = keys[j]
+          if k2 in keep:
+            obl2 = obls[k2]
+            if obl1 == obl2:
+              keep.remove(k2)
+
+    self.__needsReset = True
+    tmp = {}
+    for k in keep:
+      tmp[k] = self.__vects[k]
+    if verbose:
+      print('uniquify:', len(self.__vects), '->', len(tmp))
+    self.__vects = tmp
+
+  #
+  # set up our support for pickling:
+  #
+  def __getstate__(self):
+    pkl = struct.pack('<I', len(self.__vects))
+    for k, v in self.__vects.items():
+      pkl += struct.pack('<I', k)
+      p = v.ToBinary()
+      l = len(p)
+      pkl += struct.pack('<I', l)
+      pkl += struct.pack('%ds' % (l), p)
+    return pkl
+
+  def __setstate__(self, pkl):
+    if isinstance(pkl, str):
+      pkl = bytes(pkl, encoding='Latin1')
+
+    self.__vects = {}
+    self.__orVect = None
+    self.__numBits = -1
+    self.__needReset = True
+    szI = struct.calcsize('I')
+    offset = 0
+    nToRead = struct.unpack('<I', pkl[offset:offset + szI])[0]
+    offset += szI
+    for _ in range(nToRead):
+      k = struct.unpack('<I', pkl[offset:offset + szI])[0]
+      offset += szI
+      l = struct.unpack('<I', pkl[offset:offset + szI])[0]
+      offset += szI
+      sz = struct.calcsize('%ds' % l)
+      bv = DataStructs.ExplicitBitVect(struct.unpack('%ds' % l, pkl[offset:offset + sz])[0])
+      offset += sz
+      self.AddVect(k, bv)
 
 
 # ------------------------------------
@@ -272,11 +274,11 @@ class VectCollection(object):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-    import sys
-    import doctest
-    failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
-    sys.exit(failed)
+  import doctest
+  import sys
+  failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
+  sys.exit(failed)
 
 
 if __name__ == '__main__':  # pragma: nocover
-    _runDoctests()
+  _runDoctests()

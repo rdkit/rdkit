@@ -12,9 +12,9 @@
 """
 import unittest
 
-from rdkit import Chem
-from rdkit import DataStructs
+from rdkit import Chem, DataStructs
 from rdkit.Chem.Fingerprints import FingerprintMols
+
 
 class TestCase(unittest.TestCase):
 
@@ -32,7 +32,9 @@ class TestCase(unittest.TestCase):
 
   def test4(self):
     """ check containing mols, no Hs, no valence """
-    tgts = [('CCC(O)C(=O)O', ('CCC', 'OCC', 'OCC=O', 'OCCO', 'CCCC', 'OC=O', 'CC(O)C')), ]
+    tgts = [
+      ('CCC(O)C(=O)O', ('CCC', 'OCC', 'OCC=O', 'OCCO', 'CCCC', 'OC=O', 'CC(O)C')),
+    ]
     for smi, matches in tgts:
       m = Chem.MolFromSmiles(smi)
       fp1 = Chem.RDKFingerprint(m, 2, 7, 9192, 4, 0)
@@ -45,7 +47,9 @@ class TestCase(unittest.TestCase):
 
   def test5(self):
     """ check containing mols, use Hs, no valence """
-    tgts = [('CCC(O)C(=O)O', ('O[CH-][CH2-]', 'O[CH-][C-]=O')), ]
+    tgts = [
+      ('CCC(O)C(=O)O', ('O[CH-][CH2-]', 'O[CH-][C-]=O')),
+    ]
     for smi, matches in tgts:
       m = Chem.MolFromSmiles(smi)
       fp1 = Chem.RDKFingerprint(m, 2, 7, 9192, 4, 1)
@@ -78,7 +82,8 @@ class TestCase(unittest.TestCase):
     """ test github #1747: deprecated apply() function causes GetRDKFingerprint
         to fail in Python 3 """
     fp = FingerprintMols.GetRDKFingerprint(Chem.MolFromSmiles('CCO'))
-    self.assertNotEqual(0,fp.GetNumOnBits())
+    self.assertNotEqual(0, fp.GetNumOnBits())
+
 
 if __name__ == '__main__':  # pragma: nocover
   unittest.main()

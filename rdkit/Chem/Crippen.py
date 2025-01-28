@@ -18,10 +18,11 @@
 """
 
 import os
-from rdkit import RDConfig
-from rdkit import Chem
-from rdkit.Chem import rdMolDescriptors
+
 import numpy
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import rdMolDescriptors
 
 _smartsPatterns = {}
 _patternOrder = []

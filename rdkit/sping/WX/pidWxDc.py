@@ -18,6 +18,7 @@ see also piddleWxDcDemo.py
 '''
 
 from wxPython.wx import *
+
 from rdkit.sping import pid as sping_pid
 
 
@@ -149,6 +150,7 @@ class PiddleWxDc(sping_pid.Canvas):
     wx_font = self._setWXfont(font)
     extents = self.dc.GetFullTextExtent(' ', wx_font)
     return extents[2]
+
 
 #------------- drawing methods --------------
 # Note default parameters "=None" means use the defaults set in the

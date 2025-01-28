@@ -1,21 +1,26 @@
 
 rdkit_library(ForceField
-              ForceField.cpp 
+              ForceField.cpp AngleConstraint.cpp AngleConstraints.cpp 
+              DistanceConstraint.cpp DistanceConstraints.cpp
+              PositionConstraint.cpp TorsionConstraint.cpp
               UFF/AngleBend.cpp UFF/BondStretch.cpp UFF/Nonbonded.cpp
-              UFF/Inversion.cpp UFF/TorsionAngle.cpp
-              UFF/DistanceConstraint.cpp UFF/AngleConstraint.cpp
-              UFF/TorsionConstraint.cpp UFF/PositionConstraint.cpp
-              UFF/Params.cpp 
+              UFF/Inversion.cpp UFF/Inversions.cpp UFF/TorsionAngle.cpp
+              UFF/Params.cpp UFF/Utils.cpp
               MMFF/AngleBend.cpp MMFF/BondStretch.cpp MMFF/StretchBend.cpp
               MMFF/OopBend.cpp MMFF/TorsionAngle.cpp MMFF/Nonbonded.cpp
-              MMFF/DistanceConstraint.cpp MMFF/AngleConstraint.cpp
-              MMFF/TorsionConstraint.cpp MMFF/PositionConstraint.cpp
               MMFF/Params.cpp
               LINK_LIBRARIES Optimizer Trajectory)
 target_compile_definitions(ForceField PRIVATE RDKIT_FORCEFIELD_BUILD)
 
 rdkit_headers(Contrib.h
-              ForceField.h DEST ForceField)
+              ForceField.h
+              AngleConstraint.h
+              AngleConstraints.h
+              DistanceConstraint.h
+              DistanceConstraints.h
+              PositionConstraint.h
+              TorsionConstraint.h
+              DEST ForceField)
 
 rdkit_headers(UFF/AngleBend.h
               UFF/BondStretch.h
@@ -26,7 +31,9 @@ rdkit_headers(UFF/AngleBend.h
               UFF/PositionConstraint.h
               UFF/Nonbonded.h
               UFF/Params.h
+              UFF/Utils.h
               UFF/Inversion.h
+              UFF/Inversions.h
               UFF/TorsionAngle.h DEST ForceField/UFF)
 
 rdkit_headers(MMFF/AngleBend.h
@@ -41,6 +48,11 @@ rdkit_headers(MMFF/AngleBend.h
               MMFF/TorsionConstraint.h
               MMFF/PositionConstraint.h
               MMFF/Params.h DEST ForceField/MMFF)
+
+rdkit_catch_test(ForceFieldsCatch 
+                 catch_tests.cpp
+                 LINK_LIBRARIES 
+                 ForceField ForceFieldHelpers)
 
 add_subdirectory(UFF)
 add_subdirectory(MMFF)

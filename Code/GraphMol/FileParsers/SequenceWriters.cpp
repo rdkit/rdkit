@@ -436,13 +436,6 @@ static bool IsSupportedHELMBond(AtomPDBResidueInfo *src,
   if (src->getName() == " C  " && dst->getName() == " N  ") {
     return true;
   }
-#if 0
-  printf("%s%d%s.%s - %s%d%s.%s\n",
-         src->getResidueName().c_str(),src->getResidueNumber(),
-         src->getChainId().c_str(),src->getName().c_str(),
-         dst->getResidueName().c_str(),dst->getResidueNumber(),
-         dst->getChainId().c_str(),dst->getName().c_str());
-#endif
   return false;
 }
 
@@ -644,10 +637,6 @@ std::string MolToHELM(const ROMol &mol) {
       } else {
         switch (Pstate) {
           case 1:
-#if 0  // Do the same as state 4 for Biovia friendly HELM
-          Pstate = 3;
-          break;
-#endif
           case 4:
             result += '.';
             Pstate = 2;

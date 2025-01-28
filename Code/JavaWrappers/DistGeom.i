@@ -141,7 +141,7 @@
           basinThresh);
       }
 
-      static int EmbedMolecule(RDKit::ROMol &mol,const RDKit::DGeomHelpers::EmbedParameters &params) {
+      static int EmbedMolecule(RDKit::ROMol &mol,RDKit::DGeomHelpers::EmbedParameters &params) {
         return RDKit::DGeomHelpers::EmbedMolecule(mol,params);
       }
 
@@ -179,7 +179,7 @@
       }
       static RDKit::INT_VECT EmbedMultipleConfs(RDKit::ROMol &mol,
                                                 unsigned int numConfs,
-                                                const RDKit::DGeomHelpers::EmbedParameters &params) {
+                                                RDKit::DGeomHelpers::EmbedParameters &params) {
         return RDKit::DGeomHelpers::EmbedMultipleConfs(mol, numConfs, params);
       }
 

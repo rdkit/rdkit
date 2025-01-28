@@ -26,6 +26,8 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 
+#include "vf2.hpp"
+
 using namespace RDKit;
 
 void test1() {
@@ -1713,6 +1715,13 @@ void testGithub2570() {
     const auto mol = R"([H][C@](O)(F)Cl)"_smiles;
     const auto query = R"([C@H](O)(F)Cl)"_smarts;
     std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+  {
+    const auto mol = R"([H][C@](O)(F)Cl)"_smiles;
+    const auto query = R"([C@@H](O)(F)Cl)"_smarts;
+    std::vector<MatchVectType> matches;
     TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
                                 recursionPossible, useChirality));
   }
@@ -1729,6 +1738,13 @@ void testGithub2570() {
   {
     const auto mol = R"([C@H](O)(F)Cl)"_smiles;
     const auto query = R"([C@H](O)(F)Cl)"_smarts;
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+  {
+    const auto mol = R"([C@H](O)(F)Cl)"_smiles;
+    const auto query = R"([C@@H](O)(F)Cl)"_smarts;
     std::vector<MatchVectType> matches;
     TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
                                 recursionPossible, useChirality));
@@ -1881,10 +1897,10 @@ void testMostSubstitutedCoreMatch() {
   };
 
   const auto &coreRef = *core;
-  for (auto &molResPair :
-       {std::make_pair(orthoMeta.get(), 0u), std::make_pair(ortho.get(), 1u),
-        std::make_pair(meta.get(), 1u), std::make_pair(biphenyl.get(), 2u),
-        std::make_pair(phenyl.get(), 3u)}) {
+  for (auto &molResPair : std::vector<std::pair<RDKit::RWMol *, unsigned>>{
+           std::make_pair(orthoMeta.get(), 0u), std::make_pair(ortho.get(), 1u),
+           std::make_pair(meta.get(), 1u), std::make_pair(biphenyl.get(), 2u),
+           std::make_pair(phenyl.get(), 3u)}) {
     auto &mol = *molResPair.first;
     const auto res = molResPair.second;
     MolOps::addHs(mol);
@@ -1924,6 +1940,129 @@ void testMostSubstitutedCoreMatch() {
   TEST_ASSERT(raised);
 }
 
+void testLongRing() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "Test substructure matching with a pathological case "
+      << "for symmetric SSSR" << std::endl;
+  std::string mol_smiles = "c12ccc(CCCCCCCc5ccc(C2)cc5)cc1";
+  std::string query_smiles = "c1cc2ccc1CCCCCCCc1ccc(cc1)C2";
+  ROMol *mol = SmilesToMol(mol_smiles);
+  ROMol *query = SmilesToMol(query_smiles);
+  TEST_ASSERT(MolToSmiles(*query) == MolToSmiles(*mol));
+  MatchVectType match1;
+  MatchVectType match2;
+  SubstructMatchParameters params;
+  TEST_ASSERT(SubstructMatch(*mol, *query, match1));
+  TEST_ASSERT(SubstructMatch(*query, *mol, match2));
+  delete query;
+  delete mol;
+}
+
+void testIsAtomTerminalRGroupOrQueryHydrogen() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test isAtomTerminalRGroupOrQueryHydrogen"
+                        << std::endl;
+  {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -0.3795    1.5839    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0939    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0939    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.3795   -0.0661    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3349    0.3463    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.3349    1.1714    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0494    1.5839    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  4  0  0  0  0
+  5  6  4  0  0  0  0
+  6  1  4  0  0  0  0
+  6  7  1  0  0  0  0
+M  RGP  1   7   1
+M  END
+)CTAB"_ctab;
+    const auto rAtom = mol->getAtomWithIdx(mol->getNumAtoms() - 1);
+    TEST_ASSERT(isAtomTerminalRGroupOrQueryHydrogen(rAtom));
+  }
+  {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  6  6  0  0  0  0  0  0  0  0999 V2000
+   -0.7589    1.4277    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4733    1.0152    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.4733    0.1901    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7589   -0.2223    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0444    0.1901    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0444    1.0152    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  2  0  0  0  0
+  6  1  1  0  0  0  0
+M  RGP  1   6   1
+M  END
+)CTAB"_ctab;
+    const auto rAtom = mol->getAtomWithIdx(mol->getNumAtoms() - 1);
+    TEST_ASSERT(!isAtomTerminalRGroupOrQueryHydrogen(rAtom));
+  }
+  {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -0.9152    0.2893    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6296   -0.1231    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6296   -0.9482    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9152   -1.3607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2007   -0.9482    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2007   -0.1231    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5137    0.2893    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  4  0  0  0  0
+  5  6  4  0  0  0  0
+  6  1  4  0  0  0  0
+  6  7  1  0  0  0  0
+M  ALS   7 10 F H   C   N   O   F   P   S   Cl  Br  I   
+M  END
+)CTAB"_ctab;
+    const auto rAtom = mol->getAtomWithIdx(mol->getNumAtoms() - 1);
+    TEST_ASSERT(isAtomTerminalRGroupOrQueryHydrogen(rAtom));
+  }
+  {
+    auto mol = R"CTAB(
+  MJ201100                      
+
+  7  7  0  0  0  0  0  0  0  0999 V2000
+   -0.9152    0.2893    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6296   -0.1231    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6296   -0.9482    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.9152   -1.3607    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2007   -0.9482    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.2007   -0.1231    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.5137    0.2893    0.0000 L   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  4  0  0  0  0
+  2  3  4  0  0  0  0
+  3  4  4  0  0  0  0
+  4  5  4  0  0  0  0
+  5  6  4  0  0  0  0
+  6  1  4  0  0  0  0
+  6  7  1  0  0  0  0
+M  ALS   7  9 F C   N   O   F   P   S   Cl  Br  I   
+M  END
+)CTAB"_ctab;
+    const auto rAtom = mol->getAtomWithIdx(mol->getNumAtoms() - 1);
+    TEST_ASSERT(!isAtomTerminalRGroupOrQueryHydrogen(rAtom));
+  }
+}
+
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   test1();
@@ -1950,6 +2089,8 @@ int main(int argc, char *argv[]) {
   testGithub2570();
   testEZVsCisTransMatch();
   testMostSubstitutedCoreMatch();
+  testLongRing();
+  testIsAtomTerminalRGroupOrQueryHydrogen();
 
   return 0;
 }

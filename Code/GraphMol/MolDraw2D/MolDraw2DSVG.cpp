@@ -126,8 +126,9 @@ void MolDraw2DSVG::initDrawing() {
         xmlns:rdkit='http://www.rdkit.org/xml'\n              \
         xmlns:xlink='http://www.w3.org/1999/xlink'\n          \
         xml:space='preserve'\n";
-  d_os << boost::format{"width='%1%px' height='%2%px' viewBox='0 0 %1% %2%'>\n"}
-      % width() % height();
+  d_os
+      << boost::format{"width='%1%px' height='%2%px' viewBox='0 0 %1% %2%'>\n"} %
+             width() % height();
   d_os << "<!-- END OF HEADER -->\n";
 }
 
@@ -178,32 +179,27 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
                                 unsigned int nSegments, double vertOffset,
                                 bool rawCoords) {
   PRECONDITION(nSegments > 1, "too few segments");
-  if (nSegments % 2) {
-    ++nSegments;  // we're going to assume an even number of segments
-  }
+
   setColour(col1);
 
-  Point2D delta = (cds2 - cds1);
-  Point2D perp(delta.y, -delta.x);
-  perp.normalize();
-  perp *= vertOffset;
-  delta /= nSegments;
-
-  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  auto segments =
+      MolDraw2D_detail::getWavyLineSegments(cds1, cds2, nSegments, vertOffset);
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
   d_os << "<path ";
   outputClasses();
+
+  auto c1 = std::get<0>(segments[0]);
+  c1 = rawCoords ? c1 : getDrawCoords(c1);
   d_os << "d='M" << c1.x << "," << c1.y;
   for (unsigned int i = 0; i < nSegments; ++i) {
-    Point2D startpt = cds1 + delta * i;
-    Point2D segpt =
-        rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
-    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
+    auto cpt1 = std::get<1>(segments[i]);
     cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
-    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    auto cpt2 = std::get<2>(segments[i]);
     cpt2 = rawCoords ? cpt2 : getDrawCoords(cpt2);
+    auto segpt = std::get<3>(segments[i]);
+    segpt = rawCoords ? segpt : getDrawCoords(segpt);
     d_os << " C" << cpt1.x << "," << cpt1.y << " " << cpt2.x << "," << cpt2.y
          << " " << segpt.x << "," << segpt.y;
   }
@@ -216,6 +212,21 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   d_os << " />\n";
 }
 
+namespace {
+std::string getDashString(const DashPattern &dashes) {
+  std::string res;
+  if (dashes.size()) {
+    std::stringstream dss;
+    dss << ";stroke-dasharray:";
+    std::copy(dashes.begin(), dashes.end() - 1,
+              std::ostream_iterator<double>(dss, ","));
+    dss << dashes.back();
+    res = dss.str();
+  }
+  return res;
+}
+}  // namespace
+
 // ****************************************************************************
 void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2,
                             bool rawCoords) {
@@ -223,16 +234,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2,
   Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
-  std::string dashString = "";
-  const DashPattern &dashes = dash();
-  if (dashes.size()) {
-    std::stringstream dss;
-    dss << ";stroke-dasharray:";
-    std::copy(dashes.begin(), dashes.end() - 1,
-              std::ostream_iterator<double>(dss, ","));
-    dss << dashes.back();
-    dashString = dss.str();
-  }
+  std::string dashString = getDashString(dash());
   d_os << "<path ";
   outputClasses();
   d_os << "d='M " << MolDraw2D_detail::formatDouble(c1.x) << ","
@@ -253,7 +255,8 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds,
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
-  std::string dashString = "";
+  std::string dashString = getDashString(dash());
+
   d_os << "<path ";
   outputClasses();
   d_os << "d='M";
@@ -294,7 +297,7 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2,
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
-  std::string dashString = "";
+  std::string dashString = getDashString(dash());
   d_os << "<ellipse"
        << " cx='" << MolDraw2D_detail::formatDouble(cx) << "'"
        << " cy='" << MolDraw2D_detail::formatDouble(cy) << "'"
@@ -316,6 +319,8 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2,
 
 // ****************************************************************************
 void MolDraw2DSVG::clearDrawing() {
+  MolDraw2D::clearDrawing();
+
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
   d_os << "<rect";
   d_os << " style='opacity:1.0;fill:" << col << ";stroke:none'";
@@ -330,11 +335,13 @@ void MolDraw2DSVG::clearDrawing() {
 static const char *RDKIT_SVG_VERSION = "0.9";
 void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
   PRECONDITION(d_os, "no output stream");
-  d_os << "<metadata>" << std::endl;
+  d_os << "<metadata>"
+       << "\n";
   d_os << "<rdkit:mol"
        << " xmlns:rdkit = \"http://www.rdkit.org/xml\""
        << " version=\"" << RDKIT_SVG_VERSION << "\""
-       << ">" << std::endl;
+       << ">"
+       << "\n";
   for (const auto atom : mol.atoms()) {
     d_os << "<rdkit:atom idx=\"" << atom->getIdx() + 1 << "\"";
     bool doKekule = false, allHsExplicit = true, isomericSmiles = true;
@@ -361,7 +368,8 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
 
     outputMetaData(atom, d_os);
 
-    d_os << " />" << std::endl;
+    d_os << " />"
+         << "\n";
   }
   for (const auto bond : mol.bonds()) {
     d_os << "<rdkit:bond idx=\"" << bond->getIdx() + 1 << "\"";
@@ -374,9 +382,11 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
 
     outputMetaData(bond, d_os);
 
-    d_os << " />" << std::endl;
+    d_os << " />"
+         << "\n";
   }
-  d_os << "</rdkit:mol></metadata>" << std::endl;
+  d_os << "</rdkit:mol></metadata>"
+       << "\n";
 }
 
 // ****************************************************************************

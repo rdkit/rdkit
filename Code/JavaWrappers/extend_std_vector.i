@@ -20,7 +20,12 @@
   }
  };
 
-%include <std_vector.i>
+// suggested in the CHANGELOG for SWIG 4.0
+%extend std::vector {
+    vector(size_type count) { return new std::vector< T >(count); }
+}
+
+%include "std_vector.i"
 
 
 

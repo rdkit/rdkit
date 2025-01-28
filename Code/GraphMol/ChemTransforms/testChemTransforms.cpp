@@ -970,9 +970,7 @@ void testReplaceCoreMatchVectMultipleMappingToCore() {
   // 3 dummies in core map to single N in molecule
   core = "C1([*:1])C([*:2])C([*:3])C1"_smiles;
   mol = "C1C2C3N2C13"_smiles;
-  mapping.clear();
-  mapping.insert(mapping.end(),
-                 {{0, 4}, {1, 3}, {2, 2}, {3, 3}, {4, 1}, {5, 3}, {6, 0}});
+  mapping.assign({{0, 4}, {1, 3}, {2, 2}, {3, 3}, {4, 1}, {5, 3}, {6, 0}});
   result.reset(replaceCore(*mol.get(), *core.get(), mapping, false));
   smi = MolToSmiles(*result.get(), true);
   TEST_ASSERT("[1*]N([2*])[3*]" == smi);
@@ -1814,23 +1812,6 @@ void testFragmentOnBRICSBonds() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void benchFragmentOnBRICSBonds() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing fragmentOnBRICSBonds" << std::endl;
-  {
-    std::string pathName = getenv("RDBASE");
-    pathName += "/Regress/Data/mols.1000.sdf";
-    SDMolSupplier suppl(pathName);
-    while (!suppl.atEnd()) {
-      ROMol *m = suppl.next();
-      ROMol *nmol = MolFragmenter::fragmentOnBRICSBonds(*m);
-      delete m;
-      delete nmol;
-    }
-  }
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
-
 void testFragmentOnSomeBonds() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing fragmentOnSomeBonds" << std::endl;
@@ -2171,7 +2152,6 @@ int main() {
       << "********************************************************\n";
   BOOST_LOG(rdInfoLog) << "Testing Chemical Transforms \n";
 
-#if 1
   testDeleteSubstruct();
   testReplaceSubstructs();
   testReplaceSubstructs2();
@@ -2197,12 +2177,10 @@ int main() {
   testFragmentOnBonds();
   testFragmentOnBRICSBonds();
   testFragmentOnSomeBonds();
-  // benchFragmentOnBRICSBonds();
   testGithubIssue429();
   testGithubIssue430();
   testGithubIssue511();
   testReplaceCore2();
-#endif
   testGithub1734();
   testGithub3206();
   testGithub4019();

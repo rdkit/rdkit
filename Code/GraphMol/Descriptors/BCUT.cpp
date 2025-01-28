@@ -18,6 +18,8 @@
 
 namespace RDKit {
 namespace Descriptors {
+constexpr int NUM_BCUTS = 8;
+
 // diagonal elements are a property (atomic num, charge, etc)
 // off diagonal are 1/sqrt(bond_order)
 //  Original burden matrix was .1, .2, .3, .15 for single,double,triple or
@@ -66,6 +68,10 @@ std::unique_ptr<Eigen::MatrixXd> make_burden(const ROMol &m) {
 
 std::pair<double, double> BCUT2D(std::unique_ptr<Eigen::MatrixXd> &burden,
                                  const std::vector<double> &atom_props) {
+  if (atom_props.empty()) {
+    return std::pair<double, double>(0.0, 0.0);
+  }
+
   for (unsigned int i = 0; i < atom_props.size(); ++i) {
     (*burden)(i, i) = atom_props[i];
   }
@@ -101,12 +107,15 @@ std::pair<double, double> BCUT2D(const ROMol &m,
 }
 
 std::vector<double> BCUT2D(const ROMol &m) {
-  std::unique_ptr<ROMol> mol(MolOps::removeHs(m));
+  if (!m.getNumAtoms()) {
+    return std::vector<double>(NUM_BCUTS, 0.0);
+  }
+  std::unique_ptr<ROMol> mol(MolOps::removeAllHs(m));
+  unsigned int numAtoms = mol->getNumAtoms();
   std::vector<double> masses;
   std::vector<double> charges;
-  unsigned int num_atoms = mol->getNumAtoms();
-  masses.reserve(num_atoms);
-  charges.reserve(num_atoms);
+  masses.reserve(numAtoms);
+  charges.reserve(numAtoms);
 
   RDKit::computeGasteigerCharges(*mol, 12, true);
   for (auto &atom : mol->atoms()) {
@@ -115,13 +124,12 @@ std::vector<double> BCUT2D(const ROMol &m) {
         atom->getProp<double>(common_properties::_GasteigerCharge));
   }
 
-  std::vector<double> slogp(num_atoms, 0.0);
-  std::vector<double> cmr(num_atoms, 0.0);
+  std::vector<double> slogp(numAtoms, 0.0);
+  std::vector<double> cmr(numAtoms, 0.0);
   getCrippenAtomContribs(*mol, slogp, cmr);
-
   // polarizability? - need model
   // slogp?  sasa?
-  auto burden = make_burden(m);
+  auto burden = make_burden(*mol);
   auto atom_bcut = BCUT2D(burden, masses);
   auto gasteiger = BCUT2D(burden, charges);
   auto logp = BCUT2D(burden, slogp);

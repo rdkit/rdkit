@@ -38,11 +38,24 @@ yysmarts_error( const char *input,
                 RDKit::Atom* &,
                 RDKit::Bond* &,
                 unsigned int &,unsigned int &,
+                std::list<unsigned int> *,
 		void *,int , const char *msg  )
 {
   yyErrorCleanup(ms);
   BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
 }
+
+void
+yysmarts_error( const char *input,
+                std::vector<RDKit::RWMol *> *ms,
+                std::list<unsigned int> *,
+		void *,int, const char * msg )
+{
+  yyErrorCleanup(ms);
+  BOOST_LOG(rdErrorLog) << "SMARTS Parse Error: " << msg << " while parsing: " << input << std::endl;
+}
+
+
 %}
 
 %define api.pure full
@@ -54,18 +67,22 @@ yysmarts_error( const char *input,
 %parse-param {RDKit::Bond* &lastBond}
 %parse-param {unsigned &numAtomsParsed}
 %parse-param {unsigned &numBondsParsed}
+%parse-param {std::list<unsigned int> *branchPoints}
 %parse-param {void *scanner}
 %parse-param {int& start_token}
 
 %code provides {
+#ifndef YY_DECL
 #define YY_DECL int yylex \
                (YYSTYPE * yylval_param , yyscan_t yyscanner, int& start_token)
+#endif
 }
 
 %union {
   int                      moli;
   RDKit::QueryAtom * atom;
   RDKit::QueryBond * bond;
+  RDKit::Atom::ChiralType chiraltype;
   int                      ival;
 }
 
@@ -79,13 +96,13 @@ yysmarts_error( const char *input,
 %token GROUP_OPEN_TOKEN GROUP_CLOSE_TOKEN SEPARATOR_TOKEN
 %token RANGE_OPEN_TOKEN RANGE_CLOSE_TOKEN
 %token HASH_TOKEN MINUS_TOKEN PLUS_TOKEN
-%token CHIRAL_MARKER_TOKEN CHI_CLASS_TOKEN CHI_CLASS_OH_TOKEN
 %token H_TOKEN AT_TOKEN PERCENT_TOKEN
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
 %token NOT_TOKEN AND_TOKEN OR_TOKEN SEMI_TOKEN BEGIN_RECURSE END_RECURSE
 %token COLON_TOKEN UNDERSCORE_TOKEN
 %token <bond> BOND_TOKEN
-%type <moli>  mol branch
+%token <chiraltype> CHI_CLASS_TOKEN 
+%type <moli>  mol
 %type <atom> atomd simple_atom hydrogen_atom
 %type <atom> atom_expr point_query atom_query recursive_query possible_range_query
 %type <ival> ring_number nonzero_number number charge_spec digit
@@ -161,6 +178,7 @@ mol: atomd {
   int sz     = molList->size();
   molList->resize( sz + 1);
   (*molList)[ sz ] = new RWMol();
+  $1->setProp(RDKit::common_properties::_SmilesStart,1);
   (*molList)[ sz ]->addAtom($1,true,true);
   //delete $1;
   $$ = sz;
@@ -171,24 +189,12 @@ mol: atomd {
   int atomIdx1=a1->getIdx();
   int atomIdx2=mp->addAtom($2,true,true);
 
-  QueryBond *newB;
-  // this is a bit of a hack to try and get nicer "SMILES" from
-  // a SMARTS molecule:
-  if(!(a1->getIsAromatic() && $2->getIsAromatic())){
-    newB = new QueryBond(Bond::SINGLE);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  } else {
-    newB = new QueryBond(Bond::AROMATIC);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  }
-  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(a1,mp->getAtomWithIdx(atomIdx2));
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atomIdx1);
   newB->setEndAtomIdx(atomIdx2);
   newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  mp->addBond(newB);
-  delete newB;
-  //delete $2;
+  mp->addBond(newB,true);
 }
 
 | mol bond_expr atomd  {
@@ -214,6 +220,7 @@ mol: atomd {
 
 | mol SEPARATOR_TOKEN atomd {
   RWMol *mp = (*molList)[$$];
+  $3->setProp(RDKit::common_properties::_SmilesStart,1,true);
   mp->addAtom($3,true,true);
 }
 
@@ -221,17 +228,7 @@ mol: atomd {
   RWMol * mp = (*molList)[$$];
   Atom *atom=mp->getActiveAtom();
 
-  // this is a bit of a hack to try and get nicer "SMILES" from
-  // a SMARTS molecule:
-  QueryBond * newB;
-  if(!atom->getIsAromatic()){
-    newB = new QueryBond(Bond::SINGLE);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  } else {
-    newB = new QueryBond(Bond::AROMATIC);
-    newB->setQuery(makeSingleOrAromaticBondQuery());
-  }
-  newB->setProp(RDKit::common_properties::_unspecifiedOrder,1);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(atom, nullptr);
   newB->setOwningMol(mp);
   newB->setBeginAtomIdx(atom->getIdx());
   mp->setBondBookmark(newB,$2);
@@ -272,34 +269,57 @@ mol: atomd {
 
 }
 
-| mol branch {
-  RWMol *m1_p = (*molList)[$$],*m2_p=(*molList)[$2];
-  unsigned int origNumAts = m1_p->getNumAtoms();
-  Atom *active = m1_p->getActiveAtom();
-  // FIX: handle generic bonds here
-  SmilesParseOps::AddFragToMol(m1_p,m2_p,Bond::UNSPECIFIED,Bond::NONE);
-  delete m2_p;
-  Bond *bond = m1_p->getBondBetweenAtoms(active->getIdx(),origNumAts);
-  if(bond){
-    bond->setProp("_cxsmilesBondIdx",numBondsParsed++);
-  }
-  int sz = molList->size();
-  if ( sz==$2+1) {
-    molList->resize( sz-1 );
-  }
-}
-;
+| mol GROUP_OPEN_TOKEN atomd {
+  RWMol *mp = (*molList)[$$];
+  Atom *a1 = mp->getActiveAtom();
+  int atomIdx1=a1->getIdx();
+  int atomIdx2=mp->addAtom($3,true,true);
 
-/* --------------------------------------------------------------- */
-branch:	GROUP_OPEN_TOKEN mol GROUP_CLOSE_TOKEN { $$ = $2; }
-| GROUP_OPEN_TOKEN bond_expr mol GROUP_CLOSE_TOKEN {
-  // FIX: this needs to handle arbitrary bond_exprs
-  $$ = $3;
-  int sz     = molList->size();
-  $2->setOwningMol((*molList)[ sz-1 ]);
-  $2->setBeginAtomIdx(0);
-  (*molList)[ sz-1 ]->setBondBookmark($2,ci_LEADING_BOND);
+  QueryBond *newB = SmilesParseOps::getUnspecifiedQueryBond(a1,mp->getAtomWithIdx(atomIdx2));
+  newB->setOwningMol(mp);
+  newB->setBeginAtomIdx(atomIdx1);
+  newB->setEndAtomIdx(atomIdx2);
+  newB->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  mp->addBond(newB);
+  delete newB;
+
+  branchPoints->push_back(atomIdx1);
 }
+
+| mol GROUP_OPEN_TOKEN bond_expr atomd  {
+  RWMol *mp = (*molList)[$$];
+  int atomIdx1 = mp->getActiveAtom()->getIdx();
+  int atomIdx2 = mp->addAtom($4,true,true);
+  if( $3->getBondType() == Bond::DATIVER ){
+    $3->setBeginAtomIdx(atomIdx1);
+    $3->setEndAtomIdx(atomIdx2);
+    $3->setBondType(Bond::DATIVE);
+  }else if ( $3->getBondType() == Bond::DATIVEL ){
+    $3->setBeginAtomIdx(atomIdx2);
+    $3->setEndAtomIdx(atomIdx1);
+    $3->setBondType(Bond::DATIVE);
+  } else {
+    $3->setBeginAtomIdx(atomIdx1);
+    $3->setEndAtomIdx(atomIdx2);
+  }
+  $3->setProp("_cxsmilesBondIdx",numBondsParsed++);
+  mp->addBond($3,true);
+  branchPoints->push_back(atomIdx1);
+
+}
+
+
+| mol GROUP_CLOSE_TOKEN {
+  if(branchPoints->empty()){
+     yyerror(input,molList,branchPoints,scanner,start_token,"extra close parentheses");
+     yyErrorCleanup(molList);
+     YYABORT;
+  }
+  RWMol *mp = (*molList)[$$];
+  mp->setActiveAtom(branchPoints->back());
+  branchPoints->pop_back();
+}
+
 ;
 
 /* --------------------------------------------------------------- */
@@ -595,6 +615,20 @@ atom_query:	simple_atom
   newQ->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
   $$=newQ;
 }
+| CHI_CLASS_TOKEN {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomNullQuery());
+  newQ->setChiralTag($1);
+  newQ->setProp(common_properties::_chiralPermutation,0);
+  $$=newQ;
+}
+| CHI_CLASS_TOKEN number {
+  QueryAtom *newQ = new QueryAtom();
+  newQ->setQuery(makeAtomNullQuery());
+  newQ->setChiralTag($1);
+  newQ->setProp(common_properties::_chiralPermutation,$2);
+  $$=newQ;
+}
 | HYB_TOKEN
 | number {
   QueryAtom *newQ = new QueryAtom();
@@ -737,7 +771,7 @@ nonzero_number:  NONZERO_DIGIT_TOKEN
 | nonzero_number digit { 
     if($1 >= std::numeric_limits<std::int32_t>::max()/10 || 
      $1*10 >= std::numeric_limits<std::int32_t>::max()-$2 ){
-     yysmarts_error(input,molList,lastAtom,lastBond,numAtomsParsed,numBondsParsed,scanner,start_token,"number too large");
+     yysmarts_error(input,molList,lastAtom,lastBond,numAtomsParsed,numBondsParsed,branchPoints,scanner,start_token,"number too large");
      YYABORT;
   }
   $$ = $1*10 + $2; }

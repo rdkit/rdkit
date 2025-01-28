@@ -1,24 +1,141 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<!DOCTYPE CDXML>
-<CDXML CreationProgram="CDXMLWriter"><colortable><color b="1" g="1" r="1"/>
-<color b="0" g="0" r="0"/>
-<color b="0" g="0" r="1"/>
-<color b="0" g="1" r="1"/>
-<color b="0" g="1" r="0"/>
-<color b="1" g="1" r="0"/>
-<color b="1" g="0" r="0"/>
-<color b="1" g="0" r="1"/>
-</colortable>
-<fonttable><font id="8" name="Arial" charset="iso-8859-1"/>
-<font id="9" name="Times New Roman" charset="iso-8859-1"/>
-</fonttable>
-<page id="10"><fragment id="11"><n id="1" Element="6"/>
-<n id="2" Element="8"/>
-<n id="3" Element="6"/>
-<n id="4" Element="6"/>
-<b B="1" E="2" id="5" Order="1"/>
-<b B="2" E="3" id="6" Order="1"/>
-<b B="3" E="4" id="7" Order="1"/>
-</fragment>
-</page>
-</CDXML>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 21.0.0.28"
+ Name="chain3.cdxml"
+ BoundingBox="-26.23 -15.58 52.21 3.89"
+ WindowPosition="0 0"
+ WindowSize="0 0"
+ FractionalWidths="yes"
+ InterpretChemically="yes"
+ ShowAtomQuery="yes"
+ ShowAtomStereo="no"
+ ShowAtomEnhancedStereo="yes"
+ ShowAtomNumber="no"
+ ShowResidueID="no"
+ ShowBondQuery="yes"
+ ShowBondRxn="yes"
+ ShowBondStereo="no"
+ ShowTerminalCarbonLabels="no"
+ ShowNonTerminalCarbonLabels="no"
+ HideImplicitHydrogens="no"
+ Magnification="120"
+ LabelFont="21"
+ LabelSize="10"
+ LabelFace="96"
+ CaptionFont="20"
+ CaptionSize="12"
+ HashSpacing="2.70"
+ MarginWidth="2"
+ LineWidth="1"
+ BoldWidth="4"
+ BondLength="30"
+ BondSpacing="12"
+ ChainAngle="120"
+ LabelJustification="Auto"
+ CaptionJustification="Left"
+ AminoAcidTermini="HOH"
+ ShowSequenceTermini="yes"
+ ShowSequenceBonds="yes"
+ ShowSequenceUnlinkedBranches="no"
+ ResidueWrapCount="40"
+ ResidueBlockCount="10"
+ ResidueZigZag="yes"
+ NumberResidueBlocks="no"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="00030000004800480000000002DE0240FFEEFFEE030602520367052803FC00020000004800480000000002DE0240000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
+ ChemPropName=""
+ ChemPropFormula="Chemical Formula: "
+ ChemPropExactMass="Exact Mass: "
+ ChemPropMolWt="Molecular Weight: "
+ ChemPropMOverZ="m/z: "
+ ChemPropAnalysis="Elemental Analysis: "
+ ChemPropBoilingPt="Boiling Point: "
+ ChemPropMeltingPt="Melting Point: "
+ ChemPropCritTemp="Critical Temp: "
+ ChemPropCritPres="Critical Pres: "
+ ChemPropCritVol="Critical Vol: "
+ ChemPropGibbs="Gibbs Energy: "
+ ChemPropLogP="Log P: "
+ ChemPropMR="MR: "
+ ChemPropHenry="Henry&apos;s Law: "
+ ChemPropEForm="Heat of Form: "
+ ChemProptPSA="tPSA: "
+ ChemPropID=""
+ ChemPropFragmentLabel=""
+ color="0"
+ bgcolor="1"
+ RxnAutonumberStart="1"
+ RxnAutonumberConditions="no"
+ RxnAutonumberStyle="Roman"
+ RxnAutonumberFormat="(#)"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+</colortable><fonttable>
+<font id="20" charset="x-mac-roman" name="Helvetica"/>
+<font id="21" charset="x-mac-roman" name="Helvetica"/>
+</fonttable><page
+ id="13"
+ BoundingBox="0 0 540 720"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="1"
+ WidthPages="1"
+><fragment
+ id="11"
+ BoundingBox="-26.23 -15.58 52.21 3.89"
+ Z="1"
+><n
+ id="1"
+ p="-25.98 -15"
+ Z="2"
+ AS="N"
+/><n
+ id="2"
+ p="0 0"
+ Z="3"
+ Element="8"
+ NumHydrogens="0"
+ NeedsClean="yes"
+ AS="N"
+><t
+ p="-3.89 3.68"
+ BoundingBox="-3.50 -3.68 3.49 3.89"
+ LabelJustification="Left"
+><s font="21" size="10" color="0" face="96">O</s></t></n><n
+ id="3"
+ p="25.98 -15"
+ Z="4"
+ AS="N"
+/><n
+ id="4"
+ p="51.96 0"
+ Z="5"
+ AS="N"
+/><b
+ id="5"
+ Z="6"
+ B="1"
+ E="2"
+ BS="N"
+/><b
+ id="6"
+ Z="7"
+ B="2"
+ E="3"
+ BS="N"
+/><b
+ id="7"
+ Z="8"
+ B="3"
+ E="4"
+ BS="N"
+/></fragment></page></CDXML>

@@ -1,19 +1,18 @@
 # Copyright (C) 2002  Greg Landrum and Rational Discovery LLC
-# 
+#
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
 # License as published by the Free Software Foundation; either
 # version 2 of the License, or (at your option) any later version.
-# 
+#
 # This library is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU Lesser General Public
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 """piddleQt
 
 This module implements the PIDDLE/Sping API for a Qt canvas
@@ -33,11 +32,13 @@ Greg Landrum (Landrum@RationalDiscovery.com) 29 Octover, 2002
 
 """
 
-from rdkit.sping import pid
+import copy
+from math import *
+
 from qt import *
 from qtcanvas import *
-from math import *
-import copy
+
+from rdkit.sping import pid
 
 
 def _ColorToQt(color):
@@ -336,7 +337,7 @@ def test(canvas):
   canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon)
   canvas.drawCurve(20, 20, 100, 50, 50, 100, 160, 160)
 
-  #canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1), 
+  #canvas.drawString("This is a test!", 30,130, Font(face="times",size=16,bold=1),
   #                color=green, angle=-45)
 
   #canvas.drawString("This is a test!", 30,130, color=red, angle=-45)
@@ -362,8 +363,8 @@ def dashtest(canvas):
 
   canvas.drawEllipse(130, 30, 200, 100, fillColor=yellow, edgeWidth=4, dash=(3, 3))
 
-  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4, dash=(3,
-                                                                                               3))
+  canvas.drawArc(130, 30, 200, 100, 45, 50, fillColor=blue, edgeColor=navy, edgeWidth=4,
+                 dash=(3, 3))
 
   canvas.defaultLineWidth = 4
   canvas.drawRoundRect(30, 30, 100, 100, fillColor=blue, edgeColor=maroon, dash=(3, 3))
@@ -386,6 +387,7 @@ def dashtest(canvas):
 
 if __name__ == '__main__':
   import sys
+
   from rdkit.sping.pid import *
   app = QApplication(sys.argv)
   w = QCanvasView()

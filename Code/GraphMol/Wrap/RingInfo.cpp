@@ -89,30 +89,48 @@ std::string classDoc = "contains information about a molecule's rings\n";
 struct ringinfo_wrapper {
   static void wrap() {
     python::class_<RingInfo>("RingInfo", classDoc.c_str(), python::no_init)
-        .def("IsAtomInRingOfSize", &RingInfo::isAtomInRingOfSize)
-        .def("MinAtomRingSize", &RingInfo::minAtomRingSize)
-        .def("AreAtomsInSameRing", &RingInfo::areAtomsInSameRing)
-        .def("AreAtomsInSameRingOfSize", &RingInfo::areAtomsInSameRingOfSize)
-        .def("IsBondInRingOfSize", &RingInfo::isBondInRingOfSize)
-        .def("MinBondRingSize", &RingInfo::minBondRingSize)
-        .def("AreBondsInSameRing", &RingInfo::areBondsInSameRing)
-        .def("AreBondsInSameRingOfSize", &RingInfo::areBondsInSameRingOfSize)
-        .def("NumAtomRings", &RingInfo::numAtomRings)
-        .def("NumBondRings", &RingInfo::numBondRings)
-        .def("NumRings", &RingInfo::numRings)
-        .def("AtomRings", atomRings)
-        .def("BondRings", bondRings)
-        .def("AtomMembers", atomMembers)
-        .def("BondMembers", bondMembers)
-        .def("AtomRingSizes", atomRingSizes)
-        .def("BondRingSizes", bondRingSizes)
+        .def("IsAtomInRingOfSize", &RingInfo::isAtomInRingOfSize,
+             python::args("self", "idx", "size"))
+        .def("MinAtomRingSize", &RingInfo::minAtomRingSize,
+             python::args("self", "idx"))
+        .def("AreAtomsInSameRing", &RingInfo::areAtomsInSameRing,
+             python::args("self", "idx1", "idx2"))
+        .def("AreAtomsInSameRingOfSize", &RingInfo::areAtomsInSameRingOfSize,
+             python::args("self", "idx1", "idx2", "size"))
+        .def("IsBondInRingOfSize", &RingInfo::isBondInRingOfSize,
+             python::args("self", "idx", "size"))
+        .def("MinBondRingSize", &RingInfo::minBondRingSize,
+             python::args("self", "idx"))
+        .def("AreBondsInSameRing", &RingInfo::areBondsInSameRing,
+             python::args("self", "idx1", "idx2"))
+        .def("AreBondsInSameRingOfSize", &RingInfo::areBondsInSameRingOfSize,
+             python::args("self", "idx1", "idx2", "size"))
+        .def("NumAtomRings", &RingInfo::numAtomRings,
+             python::args("self", "idx"))
+        .def("NumBondRings", &RingInfo::numBondRings,
+             python::args("self", "idx"))
+        .def("NumRings", &RingInfo::numRings, python::args("self"))
+        .def("IsRingFused", &RingInfo::isRingFused,
+             python::args("self", "ringIdx"))
+        .def("AreRingsFused", &RingInfo::areRingsFused,
+             python::args("self", "ring1Idx", "ring2Idx"))
+        .def("NumFusedBonds", &RingInfo::numFusedBonds,
+             python::args("self", "ringIdx"))
+        .def("AtomRings", atomRings, python::args("self"))
+        .def("BondRings", bondRings, python::args("self"))
+        .def("AtomMembers", atomMembers, python::args("self", "idx"))
+        .def("BondMembers", bondMembers, python::args("self", "idx"))
+        .def("AtomRingSizes", atomRingSizes, python::args("self", "idx"))
+        .def("BondRingSizes", bondRingSizes, python::args("self", "idx"))
 #ifdef RDK_USE_URF
-        .def("NumRingFamilies", &RingInfo::numRingFamilies)
-        .def("NumRelevantCycles", &RingInfo::numRelevantCycles)
-        .def("AtomRingFamilies", atomRingFamilies)
-        .def("BondRingFamilies", bondRingFamilies)
+        .def("NumRingFamilies", &RingInfo::numRingFamilies,
+             python::args("self"))
+        .def("NumRelevantCycles", &RingInfo::numRelevantCycles,
+             python::args("self"))
+        .def("AtomRingFamilies", atomRingFamilies, python::args("self"))
+        .def("BondRingFamilies", bondRingFamilies, python::args("self"))
         .def("AreRingFamiliesInitialized",
-             &RingInfo::areRingFamiliesInitialized)
+             &RingInfo::areRingFamiliesInitialized, python::args("self"))
 #endif
         .def("AddRing", addRing,
              (python::arg("self"), python::arg("atomIds"),

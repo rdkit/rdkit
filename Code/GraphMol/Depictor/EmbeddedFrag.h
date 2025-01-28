@@ -182,8 +182,11 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
     ARGUMENTS:
     \param mol        the molecule of interest
     \param fusedRings a vector of rings, each ring is a list of atom ids
+    \param useRingTemplates whether to use ring system templates for generating
+      initial coordinates
   */
-  EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings);
+  EmbeddedFrag(const RDKit::ROMol *mol, const RDKit::VECT_INT_VECT &fusedRings,
+               bool useRingTemplates);
 
   //! Initializer for a cis/trans system using the double bond
   /*!
@@ -368,7 +371,14 @@ class RDKIT_DEPICTOR_EXPORT EmbeddedFrag {
  private:
   double totalDensity();
 
-  void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings);
+  // returns true if fused rings found a template
+  bool matchToTemplate(const RDKit::INT_VECT &ringSystemAtoms,
+                       unsigned int ring_count);
+
+  void embedFusedRings(const RDKit::VECT_INT_VECT &fusedRings,
+                       bool useRingTemplates);
+
+  void setupAttachmentPoints();
 
   //! \brief Find a transform to join a ring to the current embedded frag when
   /// we

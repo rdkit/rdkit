@@ -33,7 +33,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <typeinfo>
-#include <boost/any.hpp>
+#include <any>
 
 namespace RDKit {
 class DataStructsExplicitBitVecPropHandler : public CustomPropHandler {
@@ -58,7 +58,7 @@ class DataStructsExplicitBitVecPropHandler : public CustomPropHandler {
           rdvalue_cast<const ExplicitBitVect &>(value).toString();
       streamWrite(ss, output);
       return true;
-    } catch (boost::bad_any_cast &) {
+    } catch (std::bad_any_cast &) {
       return false;
     }
   }

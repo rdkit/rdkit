@@ -26,7 +26,6 @@
 
 """
 
-
 import numpy
 
 
@@ -45,7 +44,7 @@ def EuclideanDistance(inData):
 
   """
   nObjs = len(inData)
-  res = numpy.zeros((nObjs * (nObjs - 1) / 2), numpy.float)
+  res = numpy.zeros((nObjs * (nObjs - 1) / 2), float)
   nSoFar = 0
   for col in range(1, nObjs):
     for row in range(col):
@@ -135,7 +134,9 @@ def ShowMetricMat(metricMat, nObjs):
     print()
 
 
-methods = [("Euclidean", EuclideanDistance, "Euclidean Distance"), ]
+methods = [
+  ("Euclidean", EuclideanDistance, "Euclidean Distance"),
+]
 
 if __name__ == '__main__':
   m = [.1, .2, .3, .4, .5, .6, .7, .8, .9, 1.0]

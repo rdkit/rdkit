@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef _UNIFORMGRID3D_H_20050124_1703
-#define _UNIFORMGRID3D_H_20050124_1703
+#ifndef UNIFORMGRID3D_H_20050124_1703
+#define UNIFORMGRID3D_H_20050124_1703
 
 #include "point.h"
 #include <DataStructs/DiscreteValueVect.h>
@@ -17,7 +17,8 @@
 #include <iostream>
 
 namespace RDGeom {
-class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
+class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D
+    : public Grid3D<RDKit::DiscreteValueVect, int, unsigned int> {
  public:
   //! \brief ctor
   /*
@@ -28,13 +29,13 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
       \param valType: the data type of the grid (determines the number of bits
                       per point)
       \param offset:  OPTIONAL: the offset of the grid from (0,0,0), in
-     Angstroms.
+    Angstroms.
 
-      \b Note: the values of arguments such as \c dimX and \c spacing
-      don't actually need to be in Angstroms, but they should be internally
-      consistent.
+    \b Note: the values of arguments such as \c dimX and \c spacing
+    don't actually need to be in Angstroms, but they should be internally
+    consistent.
 
-  */
+*/
   UniformGrid3D(double dimX, double dimY, double dimZ, double spacing = 0.5,
                 RDKit::DiscreteValueVect::DiscreteValueType valType =
                     RDKit::DiscreteValueVect::TWOBITVALUE,
@@ -188,12 +189,13 @@ class RDKIT_RDGEOMETRYLIB_EXPORT UniformGrid3D : public Grid3D {
                 RDKit::DiscreteValueVect::DiscreteValueType valType,
                 const RDGeom::Point3D &offSet,
                 RDKit::DiscreteValueVect *data = nullptr);
-  unsigned int d_numX, d_numY,
-      d_numZ;        //! number of grid points along x, y, z axes
-  double d_spacing;  //! grid spacing
-  Point3D d_offSet;  //! the grid offset (from the origin)
+  unsigned int d_numX;  //!< number of grid points along x axis
+  unsigned int d_numY;  //!< number of grid points along y axis
+  unsigned int d_numZ;  //!< number of grid points along z axis
+  double d_spacing;     //!< grid spacing
+  Point3D d_offSet;     //!< the grid offset (from the origin)
   RDKit::DiscreteValueVect
-      *dp_storage;  //! storage for values at each grid point
+      *dp_storage;  //!< storage for values at each grid point
 
   //! \brief construct from a pickle
   void initFromText(const char *pkl, const unsigned int length);

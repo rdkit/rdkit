@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 
@@ -18,6 +18,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
+#include <GraphMol/RGroupDecomposition/RGroupData.h>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -67,19 +68,19 @@ TEST_CASE("toJSONTests", "[unittests]") {
     CHECK(rows.size() == mols.size());
     std::string expected = R"JSON([
     {
-        "Core": "Cc1cccc([*:2])c1[*:1]",
-        "R1": "CO[*:1]",
-        "R2": "[H][*:2]"
-    },
-    {
-        "Core": "Cc1cccc([*:2])c1[*:1]",
-        "R1": "CO[*:1]",
-        "R2": "[H][*:2]"
-    },
-    {
-        "Core": "Cc1cccc([*:2])c1[*:1]",
+        "Core": "Cc1cccc([*:1])c1[*:2]",
         "R1": "[H][*:1]",
         "R2": "CO[*:2]"
+    },
+    {
+        "Core": "Cc1cccc([*:1])c1[*:2]",
+        "R1": "[H][*:1]",
+        "R2": "CO[*:2]"
+    },
+    {
+        "Core": "Cc1cccc([*:1])c1[*:2]",
+        "R1": "CO[*:1]",
+        "R2": "[H][*:2]"
     }
 ])JSON";
     CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(expected));
@@ -91,19 +92,19 @@ TEST_CASE("toJSONTests", "[unittests]") {
     CHECK(cols.size() == mols.size());
     std::string expected = R"JSON([
   "Core": [
-    "Cc1cccc([*:2])c1[*:1]",
-    "Cc1cccc([*:2])c1[*:1]",
-    "Cc1cccc([*:2])c1[*:1]"
+    "Cc1cccc([*:1])c1[*:2]",
+    "Cc1cccc([*:1])c1[*:2]",
+    "Cc1cccc([*:1])c1[*:2]"
   ],
   "R1": [
-    "CO[*:1]",
-    "CO[*:1]",
-    "[H][*:1]"
+    "[H][*:1]",
+    "[H][*:1]",
+    "CO[*:1]"
   ],
   "R2": [
-    "[H][*:2]",
-    "[H][*:2]",
-    "CO[*:2]"
+    "CO[*:2]",
+    "CO[*:2]",
+    "[H][*:2]"
   ]
 ]
 )JSON";
@@ -307,6 +308,7 @@ TEST_CASE("substructure parameters and RGD: chirality") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
       CHECK(n == mols.size());
@@ -315,17 +317,17 @@ TEST_CASE("substructure parameters and RGD: chirality") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"C1CC([*:1])([*:2])N1",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"C1CC([*:1])([*:2])N1",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"O[*:2]"
   },
   {
-    "Core":"C1CC([*:1])([*:2])N1",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
@@ -370,6 +372,7 @@ TEST_CASE("substructure parameters and RGD: chirality") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     params.substructmatchParams.useChirality = false;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
@@ -447,6 +450,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
       CHECK(n == mols.size() - 1);
@@ -454,27 +458,27 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(unmatched.size() == mols.size() - n);
       // std::cerr << toJSON(rows) << std::endl;
 
-      // the core output here is SMARTS because the CXSMILES parser replaces the
-      // dummy atom with a query
+      // the core output no longer is SMARTS as the core output is the portion
+      // of the target that matches the core query.
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"O[*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"[H][*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -488,27 +492,27 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(unmatched.size() == 1);
       // std::cerr << toJSON(rows) << std::endl;
 
-      // the core output here is SMARTS because the CXSMILES parser replaces the
-      // dummy atom with a query
+      // the core output no longer is SMARTS as the core output is the portion
+      // of the target that matches the core query.
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"O[*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"[H][*:1]",
     "R2":"F[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -521,6 +525,7 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     params.substructmatchParams.useEnhancedStereo = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
@@ -528,22 +533,22 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(rows.size() == n);
       CHECK(unmatched.size() == mols.size() - n);
       // std::cerr << toJSON(rows) << std::endl;
-      // the core output here is SMARTS because the CXSMILES parser replaces the
-      // dummy atom with a query
+      // the core output no longer is SMARTS as the core output is the portion
+      // of the target that matches the core query.
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"O[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   }
@@ -556,27 +561,27 @@ TEST_CASE("substructure parameters and RGD: enhanced stereo") {
       CHECK(rows.size() == n);
       CHECK(unmatched.size() == 1);
       // std::cerr << toJSON(rows) << std::endl;
-      // the core output here is SMARTS because the CXSMILES parser replaces the
-      // dummy atom with a query
+      // the core output no longer is SMARTS as the core output is the portion
+      // of the target that matches the core query.
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"O[*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@]([*:1])([*:2])N1",
     "R1":"F[*:1]",
     "R2":"[H][*:2]"
   },
   {
-    "Core":"[#6]1-[#6]-[#7]-[#6@]-1(-[!#1:1])-[#0:2]",
+    "Core":"C1C[C@@]([*:1])([*:2])N1",
     "R1":"Cl[*:1]",
     "R2":"[H][*:2]"
   }
@@ -615,6 +620,7 @@ TEST_CASE("rgroupLabelling") {
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
     params.rgroupLabelling = RGroupLabelling::Isotope;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
       CHECK(n == mols.size());
@@ -623,17 +629,17 @@ TEST_CASE("rgroupLabelling") {
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
-    "Core":"[1*]C1([2*])CCN1",
+    "Core": "[1*][C@@]1([2*])CCN1",
     "R1":"[1*]F",
     "R2":"[2*][H]"
   },
   {
-    "Core":"[1*]C1([2*])CCN1",
+    "Core": "[1*][C@]1([2*])CCN1",
     "R1":"[1*]F",
     "R2":"[2*]O"
   },
   {
-    "Core":"[1*]C1([2*])CCN1",
+    "Core":"[1*][C@]1([2*])CCN1",
     "R1":"[1*]F",
     "R2":"[2*][H]"
   },
@@ -651,12 +657,16 @@ TEST_CASE("rgroupLabelling") {
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
     params.rgroupLabelling = RGroupLabelling::MDLRGroup;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     {
       auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
       CHECK(n == mols.size());
       CHECK(rows.size() == n);
       CHECK(unmatched.empty());
       // in this case the labels don't show up in the output SMILES
+      // Presumably the dummy atoms are no longer distinguishable without
+      // the isotope labels as the smiles no longer contains chiralty.
+      // Chirality is present in the core SMARTS
       CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
@@ -687,6 +697,7 @@ TEST_CASE("rgroupLabelling") {
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
     params.rgroupLabelling =
         RGroupLabelling::Isotope | RGroupLabelling::AtomMap;
     {
@@ -698,17 +709,17 @@ TEST_CASE("rgroupLabelling") {
 
 [
   {
-    "Core":"C1CC([1*:1])([2*:2])N1",
+    "Core":"C1C[C@@]([1*:1])([2*:2])N1",
     "R1":"F[1*:1]",
     "R2":"[H][2*:2]"
   },
   {
-    "Core":"C1CC([1*:1])([2*:2])N1",
+    "Core":"C1C[C@]([1*:1])([2*:2])N1",
     "R1":"F[1*:1]",
     "R2":"O[2*:2]"
   },
   {
-    "Core":"C1CC([1*:1])([2*:2])N1",
+    "Core":"C1C[C@]([1*:1])([2*:2])N1",
     "R1":"F[1*:1]",
     "R2":"[H][2*:2]"
   },
@@ -719,6 +730,380 @@ TEST_CASE("rgroupLabelling") {
   }
 ]
     )JSON"));
+    }
+  }
+}
+
+TEST_CASE("MDL R labels from original core") {
+  std::vector<std::string> smis = {"C1CN[C@H]1F", "C1CN[C@]1(O)F",
+                                   "C1CN[C@@H]1F", "C1CN[CH]1F"};
+  auto mols = smisToMols(smis);
+  std::vector<std::string> csmis = {"[*]C1CCN1 |$_R1;;;;$|"};
+  auto cores = smisToMols(csmis);
+  SECTION("Map") {
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.rgroupLabelling = RGroupLabelling::AtomMap;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->getAtomicNum() == 0);
+      CHECK(!rows[0]["Core"]->getAtomWithIdx(4)->hasProp(
+          common_properties::dummyLabel));
+      CHECK(rows[0]["Core"]->getAtomWithIdx(5)->getAtomicNum() == 0);
+      CHECK(!rows[0]["Core"]->getAtomWithIdx(5)->hasProp(
+          common_properties::dummyLabel));
+    }
+  }
+  SECTION("Map | MDL") {
+    RGroupRows rows;
+    std::vector<unsigned> unmatched;
+    RGroupDecompositionParameters params;
+    params.allowMultipleRGroupsOnUnlabelled = true;
+    params.rgroupLabelling =
+        RGroupLabelling::AtomMap | RGroupLabelling::MDLRGroup;
+    {
+      auto n = RGroupDecompose(cores, mols, rows, &unmatched, params);
+      CHECK(n == mols.size());
+      CHECK(rows.size() == n);
+      CHECK(unmatched.empty());
+      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->getAtomicNum() == 0);
+      CHECK(rows[0]["Core"]->getAtomWithIdx(4)->hasProp(
+          common_properties::dummyLabel));
+      CHECK(rows[0]["Core"]->getAtomWithIdx(5)->getAtomicNum() == 0);
+      CHECK(rows[0]["Core"]->getAtomWithIdx(5)->hasProp(
+          common_properties::dummyLabel));
+    }
+  }
+}
+
+TEST_CASE("Mol matches core") {
+  auto core = "[*:1]c1[!#1]([*:2])cc([*:3])n([*:4])c(=O)1"_smarts;
+  auto cmol = "Clc1c(C)cc(F)n(CC)c(=O)1"_smiles;
+  auto nmol = "Clc1ncc(F)n(CC)c(=O)1"_smiles;
+  auto smol = "Clc1ncc(F)n(CC)c(=S)1"_smiles;
+  RGroupDecompositionParameters params;
+  params.onlyMatchAtRGroups = true;
+  RGroupDecomposition decomp(*core, params);
+  CHECK(decomp.getMatchingCoreIdx(*cmol) == 0);
+  CHECK(decomp.getMatchingCoreIdx(*nmol) == 0);
+  CHECK(decomp.getMatchingCoreIdx(*smol) == -1);
+  std::vector<MatchVectType> matches;
+  CHECK(decomp.getMatchingCoreIdx(*cmol, &matches) == 0);
+  CHECK(matches.size() == 1);
+  CHECK(matches.front().size() == core->getNumAtoms());
+  CHECK(decomp.getMatchingCoreIdx(*nmol, &matches) == 0);
+  CHECK(matches.size() == 1);
+  CHECK(matches.front().size() == core->getNumAtoms() - 1);
+  CHECK(decomp.getMatchingCoreIdx(*smol, &matches) == -1);
+  CHECK(matches.empty());
+  MolOps::addHs(*cmol);
+  MolOps::addHs(*nmol);
+  MatchVectType match;
+  CHECK(SubstructMatch(*cmol, *core, match));
+  CHECK(match.size() == core->getNumAtoms());
+  match.clear();
+  CHECK(!SubstructMatch(*nmol, *core, match));
+}
+
+TEST_CASE("relabelMappedDummies") {
+  SmilesWriteParams p;
+  p.canonical = false;
+  auto allDifferentCore = R"CTAB(
+     RDKit          2D
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+    1.0808   -0.8772    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0827    0.1228    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2177    0.6246    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2198    1.6246    0.0000 R#  0  0  0  0  0 15  0  0  0  4  0  0
+   -0.6493    0.1262    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5142    0.6280    0.0000 R#  0  0  0  0  0 15  0  0  0  3  0  0
+   -0.6513   -0.8736    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2137   -1.3754    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  1  0
+  3  5  2  0
+  5  6  1  0
+  5  7  1  0
+  7  8  2  0
+  8  1  1  0
+M  RGP  2   4   2   6   1
+M  END
+)CTAB"_ctab;
+  allDifferentCore->removeConformer(0);
+  allDifferentCore->getAtomWithIdx(3)->setIsotope(6);
+  allDifferentCore->getAtomWithIdx(5)->setIsotope(5);
+  CHECK(
+      MolToCXSmiles(*allDifferentCore, p) ==
+      "c1cc([6*:4])c([5*:3])cn1 |atomProp:3.dummyLabel.R2:3.molAtomMapNumber.4:5.dummyLabel.R1:5.molAtomMapNumber.3|");
+  SECTION("AtomMap in, MDLRGroup out") {
+    auto core = "c1cc([*:2])c([*:1])cn1"_smiles;
+    CHECK(
+        MolToCXSmiles(*core, p) ==
+        "c1cc([*:2])c([*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
+    relabelMappedDummies(*core);
+    CHECK(MolToCXSmiles(*core, p) ==
+          "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
+  }
+  SECTION("Isotope in, MDLRGroup out") {
+    auto core = "c1cc([2*])c([1*])cn1"_smiles;
+    CHECK(MolToCXSmiles(*core, p) ==
+          "c1cc([2*])c([1*])cn1 |atomProp:3.dummyLabel.*:5.dummyLabel.*|");
+    relabelMappedDummies(*core);
+    CHECK(MolToCXSmiles(*core, p) ==
+          "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
+  }
+  SECTION("MDLRGroup in, MDLRGroup out") {
+    auto core = R"CTAB(
+     RDKit          2D
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+    1.0808   -0.8772    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0827    0.1228    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2177    0.6246    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2198    1.6246    0.0000 R#  0  0  0  0  0  1  0  0  0  0  0  0
+   -0.6493    0.1262    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5142    0.6280    0.0000 R#  0  0  0  0  0  1  0  0  0  0  0  0
+   -0.6513   -0.8736    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2137   -1.3754    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  1  0
+  3  5  2  0
+  5  6  1  0
+  5  7  1  0
+  7  8  2  0
+  8  1  1  0
+M  RGP  2   4   2   6   1
+M  END
+)CTAB"_ctab;
+    core->removeConformer(0);
+    CHECK(MolToCXSmiles(*core, p) ==
+          "c1cc([2*])c([1*])cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
+    relabelMappedDummies(*core);
+    CHECK(MolToCXSmiles(*core, p) ==
+          "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
+  }
+  SECTION("AtomMap and Isotope in, MDLRGroup out - AtomMap has priority") {
+    auto core = "c1cc([4*:2])c([3*:1])cn1"_smiles;
+    CHECK(
+        MolToCXSmiles(*core, p) ==
+        "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
+    relabelMappedDummies(*core);
+    CHECK(MolToCXSmiles(*core, p) ==
+          "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
+  }
+  SECTION("AtomMap and Isotope in, MDLRGroup out - force Isotope priority") {
+    auto core = "c1cc([4*:2])c([3*:1])cn1"_smiles;
+    CHECK(
+        MolToCXSmiles(*core, p) ==
+        "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|");
+    relabelMappedDummies(*core, Isotope);
+    CHECK(MolToCXSmiles(*core, p) ==
+          "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R4:5.dummyLabel.R3|");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, MDLRGroup out - AtomMap has priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core);
+    CHECK(MolToCXSmiles(core, p) ==
+          "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R4:5.dummyLabel.R3|");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, MDLRGroup out - force Isotope priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core, Isotope);
+    CHECK(MolToCXSmiles(core, p) ==
+          "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R6:5.dummyLabel.R5|");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, MDLRGroup out - force MDLRGroup priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core, MDLRGroup);
+    CHECK(MolToCXSmiles(core, p) ==
+          "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, AtomMap out - AtomMap has priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core, AtomMap | Isotope | MDLRGroup, AtomMap);
+    CHECK(
+        MolToCXSmiles(core, p) ==
+        "c1cc([*:4])c([*:3])cn1 |atomProp:3.molAtomMapNumber.4:5.molAtomMapNumber.3|");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, Isotope out - AtomMap has priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core, AtomMap | Isotope | MDLRGroup, Isotope);
+    CHECK(MolToCXSmiles(core, p) == "c1cc([4*])c([3*])cn1");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, AtomMap out - Isotope has priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core, Isotope | MDLRGroup, AtomMap);
+    CHECK(
+        MolToCXSmiles(core, p) ==
+        "c1cc([*:6])c([*:5])cn1 |atomProp:3.molAtomMapNumber.6:5.molAtomMapNumber.5|");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, Isotope out - Isotope has priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core, Isotope | MDLRGroup, Isotope);
+    CHECK(MolToCXSmiles(core, p) == "c1cc([6*])c([5*])cn1");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, AtomMap out - MDLRGroup has priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core, MDLRGroup, AtomMap);
+    CHECK(
+        MolToCXSmiles(core, p) ==
+        "c1cc([*:2])c([*:1])cn1 |atomProp:3.molAtomMapNumber.2:5.molAtomMapNumber.1|");
+  }
+  SECTION(
+      "AtomMap, Isotope and MDLRGroup in, Isotope out - MDLRGroup has priority") {
+    ROMol core(*allDifferentCore);
+    relabelMappedDummies(core, MDLRGroup, Isotope);
+    CHECK(MolToCXSmiles(core, p) == "c1cc([2*])c([1*])cn1");
+  }
+}
+
+TEST_CASE("includeTargetMolInResults") {
+  auto core =
+      "c1cc(-c2c([*:1])nn3nc([*:2])ccc23)nc(N(c2ccc([*:4])c([*:3])c2))n1"_smiles;
+  REQUIRE(core);
+  std::vector<ROMOL_SPTR> mols{
+      "Cc1ccc2c(c3ccnc(Nc4cccc(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccc(F)cc6"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5"_smiles,
+      "C1CC1c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4"_smiles,
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CC5)cc1F"_smiles,
+      "C1CCC(CC1)c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4"_smiles,
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CCCCC5)cc1F"_smiles,
+      "COCCOc1cnn2ncc(c3ccnc(Nc4cccc(OC)c4)n3)c2c1"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccccc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccccc5"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccccc6"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccccc4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5cccc(c5)C(F)(F)F"_smiles,
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6cccc(c6)C(F)(F)F"_smiles,
+  };
+  bool areMolsNonNull = std::all_of(mols.begin(), mols.end(),
+                                    [](const auto &mol) { return mol; });
+  REQUIRE(areMolsNonNull);
+  RGroupDecompositionParameters ps;
+  ps.includeTargetMolInResults = true;
+  RGroupDecomposition rgd(*core, ps);
+  for (const auto &mol : mols) {
+    CHECK(rgd.add(*mol) != -1);
+  }
+  REQUIRE(rgd.process());
+  auto checkRow = [](const RGroupRow &row) {
+    ROMOL_SPTR targetMol;
+    // These are sets of int vectors rather just plain int vectors
+    // because there can be cyclic R groups with 2 attachment points
+    // in that case it is OK for 2 R groups to have exactly the same
+    // target atom and bond indices
+    std::set<std::vector<int>> allAtomIndices;
+    std::set<std::vector<int>> allBondIndices;
+    for (const auto &pair : row) {
+      if (pair.first == RGroupData::getMolLabel()) {
+        targetMol = pair.second;
+      } else {
+        auto atoms = pair.second->atoms();
+        unsigned int numNonRAtoms =
+            std::count_if(atoms.begin(), atoms.end(), [](const auto &atom) {
+              return atom->getAtomicNum() > 0 || !atom->getAtomMapNum();
+            });
+        CHECK(pair.second->getNumAtoms() > numNonRAtoms);
+        unsigned int numBonds = 0;
+        if (pair.first == RGroupData::getCoreLabel()) {
+          auto bonds = pair.second->bonds();
+          numBonds =
+              std::count_if(bonds.begin(), bonds.end(), [](const auto &bond) {
+                return (bond->getBeginAtom()->getAtomicNum() > 0 ||
+                        !bond->getBeginAtom()->getAtomMapNum()) &&
+                       (bond->getEndAtom()->getAtomicNum() > 0 ||
+                        !bond->getEndAtom()->getAtomMapNum());
+              });
+        } else {
+          numBonds = pair.second->getNumBonds();
+        }
+        std::vector<int> atomIndices;
+        std::vector<int> bondIndices;
+        CHECK(pair.second->getPropIfPresent(
+            common_properties::_rgroupTargetAtoms, atomIndices));
+        CHECK(pair.second->getPropIfPresent(
+            common_properties::_rgroupTargetBonds, bondIndices));
+        CHECK(atomIndices.size() == numNonRAtoms);
+        allAtomIndices.insert(atomIndices);
+        CHECK(bondIndices.size() == numBonds);
+        allBondIndices.insert(bondIndices);
+      }
+    }
+    REQUIRE(targetMol);
+    auto flattenedAtomIndices = std::accumulate(
+        allAtomIndices.begin(), allAtomIndices.end(), std::vector<int>{},
+        [](std::vector<int> &acc, const std::vector<int> &v) {
+          acc.insert(acc.end(), std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    auto uniqueAtomIndices = std::accumulate(
+        allAtomIndices.begin(), allAtomIndices.end(), std::set<int>{},
+        [](std::set<int> &acc, const std::vector<int> &v) {
+          acc.insert(std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    CHECK(flattenedAtomIndices.size() == uniqueAtomIndices.size());
+    CHECK(flattenedAtomIndices.size() == targetMol->getNumAtoms());
+    auto flattenedBondIndices = std::accumulate(
+        allBondIndices.begin(), allBondIndices.end(), std::vector<int>{},
+        [](std::vector<int> &acc, const std::vector<int> &v) {
+          acc.insert(acc.end(), std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    auto uniqueBondIndices = std::accumulate(
+        allBondIndices.begin(), allBondIndices.end(), std::set<int>{},
+        [](std::set<int> &acc, const std::vector<int> &v) {
+          acc.insert(std::make_move_iterator(v.begin()),
+                     std::make_move_iterator(v.end()));
+          return acc;
+        });
+    CHECK(flattenedBondIndices.size() == uniqueBondIndices.size());
+    CHECK(flattenedBondIndices.size() == targetMol->getNumBonds());
+  };
+  SECTION("rows") {
+    auto rows = rgd.getRGroupsAsRows();
+    CHECK(rows.size() == mols.size());
+    for (const auto &row : rows) {
+      checkRow(row);
+    }
+  }
+  SECTION("columns") {
+    auto cols = rgd.getRGroupsAsColumns();
+    RGroupRows rows;
+    rows.reserve(mols.size());
+    for (size_t i = 0; i < mols.size(); ++i) {
+      RGroupRow row;
+      for (const auto &pair : cols) {
+        CHECK(pair.second.size() == mols.size());
+        row.emplace(pair.first, pair.second.at(i));
+      }
+      rows.push_back(std::move(row));
+    }
+    CHECK(rows.size() == mols.size());
+    for (const auto &row : rows) {
+      checkRow(row);
     }
   }
 }

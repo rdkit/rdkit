@@ -15,15 +15,13 @@
 #include <Numerics/SymmMatrix.h>
 #include <map>
 #include <Geometry/point.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include "ChiralSet.h"
 #include <RDGeneral/utils.h>
 #include <boost/dynamic_bitset.hpp>
 
 namespace ForceFields {
 class ForceField;
-namespace CrystalFF {
-struct CrystalFFDetails;
-}
 }  // namespace ForceFields
 
 namespace DistGeom {
@@ -171,14 +169,17 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *constructPlain3DForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails);
 
-//! Force field with only improper terms
+//! Force field with improper terms and SP linearity contributions
 /*!
 
   \param mmat            Distance bounds matrix
   \param positions       A vector of pointers to 3D Points to write out the
-  resulting coordinates \param improperAtoms   A list of groups of 4 atom
-  indices for inversion terms \param atomNums        A list of atomic numbers
-  for all atoms in the molecule
+  resulting coordinates
+  \param improperAtoms   A list of groups of 4 atom indices for inversion terms
+  \param angles          List of lists with the three angle indices and whether
+  the center atom in the angle is SP hybridized for every angle in the molecule.
+  \param atomNums        A list of atomic numbers for all atoms in the molecule,
+no longer used.
 
   \return a pointer to a ForceField with improper terms
     <b>NOTE:</b> the caller is responsible for deleting this force field.
@@ -188,8 +189,29 @@ RDKIT_DISTGEOMETRY_EXPORT ForceFields::ForceField *
 construct3DImproperForceField(
     const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
     const std::vector<std::vector<int>> &improperAtoms,
+    const std::vector<std::vector<int>> &angles,
     const std::vector<int> &atomNums);
 
+//! Force field with improper terms and SP linearity contributions
+/*!
+
+  \param mmat            Distance bounds matrix
+  \param positions       A vector of pointers to 3D Points to write out the
+  resulting coordinates
+  \param etkdgDetails    Contains information about the ETKDG force field
+
+  \return a pointer to a ForceField with improper terms
+    <b>NOTE:</b> the caller is responsible for deleting this force field.
+
+*/
+//! \overload
+inline ForceFields::ForceField *construct3DImproperForceField(
+    const BoundsMatrix &mmat, RDGeom::Point3DPtrVect &positions,
+    const ForceFields::CrystalFF::CrystalFFDetails &etkdgDetails) {
+  return construct3DImproperForceField(
+      mmat, positions, etkdgDetails.improperAtoms, etkdgDetails.angles,
+      etkdgDetails.atomNums);
+}
 }  // namespace DistGeom
 
 #endif

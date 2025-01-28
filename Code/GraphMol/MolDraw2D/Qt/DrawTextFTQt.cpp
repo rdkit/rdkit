@@ -20,6 +20,8 @@ DrawTextFTQt::DrawTextFTQt(double max_fnt_sz, double min_fnt_sz,
                            const std::string &font_file, QPainter *qp)
     : DrawTextFT(max_fnt_sz, min_fnt_sz, font_file), d_qp(qp) {}
 
+DrawTextFTQt::~DrawTextFTQt() = default;
+
 // ****************************************************************************
 double DrawTextFTQt::extractOutline() {
   dp_qpp.reset(new QPainterPath());

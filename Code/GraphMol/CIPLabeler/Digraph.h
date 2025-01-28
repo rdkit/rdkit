@@ -49,7 +49,7 @@ class Digraph {
   Digraph(const Digraph &) = delete;
   Digraph &operator=(const Digraph &) = delete;
 
-  Digraph(const CIPMol &mol, Atom *atom);
+  Digraph(const CIPMol &mol, Atom *atom, bool atropsomerMode = false);
 
   const CIPMol &getMol() const;
 
@@ -98,6 +98,10 @@ class Digraph {
   // The node from which the Digraph is first initialized.
   // It matches the atom that is being labeled.
   Node *dp_origin = nullptr;
+
+  // in atropisomer mode, we expand the two atoms of the atrop bond
+
+  bool d_atropisomerMode = false;
 
   // The current root of the Digraph
   Node *dp_root = nullptr;

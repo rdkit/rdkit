@@ -15,8 +15,8 @@
 """
 
 import numpy
-from rdkit.Chem.EState import EStateIndices
-from rdkit.Chem.EState import AtomTypes
+
+from rdkit.Chem.EState import AtomTypes, EStateIndices
 
 
 def FingerprintMol(mol):

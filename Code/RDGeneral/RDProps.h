@@ -128,8 +128,7 @@ class RDProps {
   //! clears the value of a \c property
   /*!
     <b>Notes:</b>
-    - if no \c property with name \c key exists, a KeyErrorException
-    will be thrown.
+    - if no \c property with name \c key exists, this will be a no-op.
     - if the \c property is marked as \c computed, it will also be removed
     from our list of \c computedProperties
   */
@@ -149,7 +148,8 @@ class RDProps {
   //! clears all of our \c computed \c properties
   void clearComputedProps() const {
     STR_VECT compLst;
-    if (getPropIfPresent(RDKit::detail::computedPropName, compLst)) {
+    if (getPropIfPresent(RDKit::detail::computedPropName, compLst) &&
+        !compLst.empty()) {
       for (const auto &sv : compLst) {
         d_props.clearVal(sv);
       }

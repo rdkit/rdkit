@@ -8,20 +8,28 @@
 //  of the RDKit source tree.
 //
 #include "SmilesWrite.h"
+#include "SmilesParseOps.h"
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/types.h>
 #include <GraphMol/Canon.h>
 #include <GraphMol/new_canon.h>
+#include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
+#include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+
 #include <RDGeneral/utils.h>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #include <RDGeneral/BoostEndInclude.h>
+#include <boost/format.hpp>
 
 #include <sstream>
 #include <map>
 #include <list>
 
-//#define VERBOSE_CANON 1
+// #define VERBOSE_CANON 1
 
 namespace RDKit {
 
@@ -35,8 +43,54 @@ bool inOrganicSubset(int atomicNumber) {
   return atomicSmiles[idx] == atomicNumber;
 }
 
-std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
-                          bool allHsExplicit, bool isomericSmiles) {
+namespace {
+std::string getAtomChiralityInfo(const Atom *atom) {
+  auto allowNontet = Chirality::getAllowNontetrahedralChirality();
+  std::string atString;
+  switch (atom->getChiralTag()) {
+    case Atom::CHI_TETRAHEDRAL_CW:
+      atString = "@@";
+      break;
+    case Atom::CHI_TETRAHEDRAL_CCW:
+      atString = "@";
+      break;
+    default:
+      break;
+  }
+  if (atString.empty() && allowNontet) {
+    switch (atom->getChiralTag()) {
+      case Atom::CHI_SQUAREPLANAR:
+        atString = "@SP";
+        break;
+      case Atom::CHI_TRIGONALBIPYRAMIDAL:
+        atString = "@TB";
+        break;
+      case Atom::CHI_OCTAHEDRAL:
+        atString = "@OH";
+        break;
+      default:
+        break;
+    }
+    if (!atString.empty()) {
+      // we added info about non-tetrahedral stereo, so check whether or not
+      // we need to also add permutation info
+      int permutation = 0;
+      if (atom->getChiralTag() > Atom::ChiralType::CHI_OTHER &&
+          atom->getPropIfPresent(common_properties::_chiralPermutation,
+                                 permutation) &&
+          !SmilesParseOps::checkChiralPermutation(atom->getChiralTag(),
+                                                  permutation)) {
+        throw ValueErrorException("bad chirality spec");
+      } else if (permutation) {
+        atString += std::to_string(permutation);
+      }
+    }
+  }
+  return atString;
+}
+}  // namespace
+
+std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
   PRECONDITION(atom, "bad atom");
   std::string res;
   int fc = atom->getFormalCharge();
@@ -52,26 +106,14 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
   }
 
   // check for atomic stereochemistry
-  std::string atString = "";
-  if (isomericSmiles ||
-      (atom->hasOwningMol() &&
-       atom->getOwningMol().hasProp(common_properties::_doIsoSmiles))) {
+  std::string atString;
+  if (params.doIsomericSmiles) {
     if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
         !atom->hasProp(common_properties::_brokenChirality)) {
-      switch (atom->getChiralTag()) {
-        case Atom::CHI_TETRAHEDRAL_CW:
-          atString = "@@";
-          break;
-        case Atom::CHI_TETRAHEDRAL_CCW:
-          atString = "@";
-          break;
-        default:
-          break;
-      }
+      atString = getAtomChiralityInfo(atom);
     }
   }
-
-  if (!allHsExplicit && inOrganicSubset(num)) {
+  if (!params.allHsExplicit && inOrganicSubset(num)) {
     // it's a member of the organic subset
 
     // -----
@@ -101,10 +143,7 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
     if (fc || nonStandard ||
         atom->hasProp(common_properties::molAtomMapNumber)) {
       needsBracket = true;
-    } else if ((isomericSmiles || (atom->hasOwningMol() &&
-                                   atom->getOwningMol().hasProp(
-                                       common_properties::_doIsoSmiles))) &&
-               (isotope || atString != "")) {
+    } else if (params.doIsomericSmiles && (isotope || atString != "")) {
       needsBracket = true;
     }
   } else {
@@ -114,15 +153,28 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
     res += "[";
   }
 
-  if (isotope && (isomericSmiles || (atom->hasOwningMol() &&
-                                     atom->getOwningMol().hasProp(
-                                         common_properties::_doIsoSmiles)))) {
+  if (isotope && params.doIsomericSmiles) {
     res += std::to_string(isotope);
   }
   // this was originally only done for the organic subset,
   // applying it to other atom-types is a fix for Issue 3152751:
-  if (!doKekule && atom->getIsAromatic() && symb[0] >= 'A' && symb[0] <= 'Z') {
-    symb[0] -= ('A' - 'a');
+  // Only accept for atom->getAtomicNum() in [5, 6, 7, 8, 14, 15, 16, 33, 34,
+  // 52]
+  if (!params.doKekule && atom->getIsAromatic() && symb[0] >= 'A' &&
+      symb[0] <= 'Z') {
+    switch (atom->getAtomicNum()) {
+      case 5:
+      case 6:
+      case 7:
+      case 8:
+      case 14:
+      case 15:
+      case 16:
+      case 33:
+      case 34:
+      case 52:
+        symb[0] -= ('A' - 'a');
+    }
   }
   res += symb;
 
@@ -168,8 +220,8 @@ std::string GetAtomSmiles(const Atom *atom, bool doKekule, const Bond *,
   return res;
 }
 
-std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
-                          bool allBondsExplicit) {
+std::string GetBondSmiles(const Bond *bond, const SmilesWriteParams &params,
+                          int atomToLeftIdx) {
   PRECONDITION(bond, "bad bond");
   if (atomToLeftIdx < 0) {
     atomToLeftIdx = bond->getBeginAtomIdx();
@@ -177,9 +229,9 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
 
   std::string res = "";
   bool aromatic = false;
-  if (!doKekule && (bond->getBondType() == Bond::SINGLE ||
-                    bond->getBondType() == Bond::DOUBLE ||
-                    bond->getBondType() == Bond::AROMATIC)) {
+  if (!params.doKekule && (bond->getBondType() == Bond::SINGLE ||
+                           bond->getBondType() == Bond::DOUBLE ||
+                           bond->getBondType() == Bond::AROMATIC)) {
     if (bond->hasOwningMol()) {
       auto a1 = bond->getOwningMol().getAtomWithIdx(atomToLeftIdx);
       auto a2 = bond->getOwningMol().getAtomWithIdx(
@@ -202,21 +254,17 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
-            if (allBondsExplicit || (bond->hasOwningMol() &&
-                                     bond->getOwningMol().hasProp(
-                                         common_properties::_doIsoSmiles))) {
+            if (params.allBondsExplicit || params.doIsomericSmiles) {
               res = "\\";
             }
             break;
           case Bond::ENDUPRIGHT:
-            if (allBondsExplicit || (bond->hasOwningMol() &&
-                                     bond->getOwningMol().hasProp(
-                                         common_properties::_doIsoSmiles))) {
+            if (params.allBondsExplicit || params.doIsomericSmiles) {
               res = "/";
             }
             break;
           default:
-            if (allBondsExplicit) {
+            if (params.allBondsExplicit) {
               res = "-";
             }
             break;
@@ -228,7 +276,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
         // FIX: we should be able to dump kekulized smiles
         //   currently this is possible by removing all
         //   isAromatic flags, but there should maybe be another way
-        if (allBondsExplicit) {
+        if (params.allBondsExplicit) {
           res = "-";
         } else if (aromatic && !bond->getIsAromatic()) {
           res = "-";
@@ -237,7 +285,7 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       break;
     case Bond::DOUBLE:
       // see note above
-      if (!aromatic || !bond->getIsAromatic() || allBondsExplicit) {
+      if (!aromatic || !bond->getIsAromatic() || params.allBondsExplicit) {
         res = "=";
       }
       break;
@@ -251,26 +299,22 @@ std::string GetBondSmiles(const Bond *bond, int atomToLeftIdx, bool doKekule,
       if (dir != Bond::NONE && dir != Bond::UNKNOWN) {
         switch (dir) {
           case Bond::ENDDOWNRIGHT:
-            if (allBondsExplicit || (bond->hasOwningMol() &&
-                                     bond->getOwningMol().hasProp(
-                                         common_properties::_doIsoSmiles))) {
+            if (params.allBondsExplicit || params.doIsomericSmiles) {
               res = "\\";
             }
             break;
           case Bond::ENDUPRIGHT:
-            if (allBondsExplicit || (bond->hasOwningMol() &&
-                                     bond->getOwningMol().hasProp(
-                                         common_properties::_doIsoSmiles))) {
+            if (params.allBondsExplicit || params.doIsomericSmiles) {
               res = "/";
             }
             break;
           default:
-            if (allBondsExplicit || !aromatic) {
+            if (params.allBondsExplicit || !aromatic) {
               res = ":";
             }
             break;
         }
-      } else if (allBondsExplicit || !aromatic) {
+      } else if (params.allBondsExplicit || !aromatic) {
         res = ":";
       }
       break;
@@ -326,6 +370,9 @@ std::string FragmentSmilesConstruct(
   }
   std::list<unsigned int> ringClosuresToErase;
 
+  if (params.canonical && params.doIsomericSmiles) {
+    Canon::canonicalizeEnhancedStereo(mol, &ranks);
+  }
   Canon::canonicalizeFragment(mol, atomIdx, colors, ranks, molStack,
                               bondsInPlay, bondSymbols, params.doIsomericSmiles,
                               params.doRandom);
@@ -337,10 +384,9 @@ std::string FragmentSmilesConstruct(
           ringClosureMap.erase(rclosure);
         }
         ringClosuresToErase.clear();
-        // std::cout<<"\t\tAtom: "<<mSE.obj.atom->getIdx()<<std::endl;
+        // std::cout << "\t\tAtom: " << mSE.obj.atom->getIdx() << std::endl;
         if (!atomSymbols) {
-          res << GetAtomSmiles(mSE.obj.atom, params.doKekule, bond,
-                               params.allHsExplicit, params.doIsomericSmiles);
+          res << GetAtomSmiles(mSE.obj.atom, params);
         } else {
           res << (*atomSymbols)[mSE.obj.atom->getIdx()];
         }
@@ -348,10 +394,9 @@ std::string FragmentSmilesConstruct(
         break;
       case Canon::MOL_STACK_BOND:
         bond = mSE.obj.bond;
-        // std::cout<<"\t\tBond: "<<bond->getIdx()<<std::endl;
+        // std::cout << "\t\tBond: " << bond->getIdx() << std::endl;
         if (!bondSymbols) {
-          res << GetBondSmiles(bond, mSE.number, params.doKekule,
-                               params.allBondsExplicit);
+          res << GetBondSmiles(bond, params, mSE.number);
         } else {
           res << (*bondSymbols)[bond->getIdx()];
         }
@@ -359,7 +404,7 @@ std::string FragmentSmilesConstruct(
         break;
       case Canon::MOL_STACK_RING:
         ringIdx = mSE.number;
-        // std::cout<<"\t\tRing: "<<ringIdx;
+        // std::cout << "\t\tRing: " << ringIdx << std::endl;
         if (ringClosureMap.count(ringIdx)) {
           // the index is already in the map ->
           //   we're closing a ring, so grab
@@ -416,31 +461,37 @@ static bool SortBasedOnFirstElement(
   return a.first < b.first;
 }
 
-std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
+namespace SmilesWrite {
+namespace detail {
+std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
+                        bool doingCXSmiles) {
   if (!mol.getNumAtoms()) {
     return "";
   }
   PRECONDITION(
       params.rootedAtAtom < 0 ||
           static_cast<unsigned int>(params.rootedAtAtom) < mol.getNumAtoms(),
-      "rootedAtomAtom must be less than the number of atoms");
+      "rootedAtAtom must be less than the number of atoms");
+
   int rootedAtAtom = params.rootedAtAtom;
   std::vector<std::vector<int>> fragsMolAtomMapping;
   auto mols =
       MolOps::getMolFrags(mol, false, nullptr, &fragsMolAtomMapping, false);
   // we got the mapping between fragments and atoms; repeat that for bonds
   std::vector<std::vector<int>> fragsMolBondMapping;
+  boost::dynamic_bitset<> atsPresent(mol.getNumAtoms());
+  std::vector<int> bondsInFrag;
+  bondsInFrag.reserve(mol.getNumBonds());
   for (const auto &atsInFrag : fragsMolAtomMapping) {
-    std::vector<int> bondsInFrag;
+    atsPresent.reset();
+    bondsInFrag.clear();
     for (auto aidx : atsInFrag) {
-      const auto atm = mol.getAtomWithIdx(aidx);
-      for (const auto bndIter :
-           boost::make_iterator_range(mol.getAtomBonds(atm))) {
-        const auto bnd = mol[bndIter];
-        if (std::find(bondsInFrag.begin(), bondsInFrag.end(), bnd->getIdx()) ==
-            bondsInFrag.end()) {
-          bondsInFrag.push_back(bnd->getIdx());
-        }
+      atsPresent.set(aidx);
+    }
+    for (const auto bnd : mol.bonds()) {
+      if (atsPresent[bnd->getBeginAtomIdx()] &&
+          atsPresent[bnd->getEndAtomIdx()]) {
+        bondsInFrag.push_back(bnd->getIdx());
       }
     }
     fragsMolBondMapping.push_back(bondsInFrag);
@@ -462,7 +513,12 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
     ROMol *tmol = mols[fragIdx].get();
 
     // update property cache
+    std::vector<int> atomMapNums(tmol->getNumAtoms(), 0);
     for (auto atom : tmol->atoms()) {
+      if (params.ignoreAtomMapNumbers) {
+        atomMapNums[atom->getIdx()] = atom->getAtomMapNum();
+        atom->setAtomMapNum(0);
+      }
       atom->updatePropertyCache(false);
     }
 
@@ -470,21 +526,50 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
     // but that should not be:
     if (params.doIsomericSmiles) {
       tmol->setProp(common_properties::_doIsoSmiles, 1);
-      if (!mol.hasProp(common_properties::_StereochemDone)) {
-        MolOps::assignStereochemistry(*tmol, true);
+
+      if (!tmol->hasProp(common_properties::_StereochemDone)) {
+        MolOps::assignStereochemistry(*tmol, params.cleanStereo);
       }
     }
-#if 0
-      std::cout << "----------------------------" << std::endl;
-      std::cout << "MolToSmiles:"<< std::endl;
-      tmol->debugMol(std::cout);
-      std::cout << "----------------------------" << std::endl;
-#endif
+    if (!doingCXSmiles) {
+      // remove any stereo groups that may be present. Otherwise they will be
+      // used in the canonicalization
+      std::vector<StereoGroup> noStereoGroups;
+      tmol->setStereoGroups(noStereoGroups);
+      // remove any wiggle bonds, unspecified double bond stereochemistry, or
+      // dative bonds (if we aren't doing dative bonds in the standard SMILES)
+      for (auto bond : tmol->bonds()) {
+        if (bond->getBondDir() == Bond::BondDir::UNKNOWN ||
+            bond->getBondDir() == Bond::BondDir::EITHERDOUBLE) {
+          bond->setBondDir(Bond::BondDir::NONE);
+        }
+        if (bond->getStereo() == Bond::BondStereo::STEREOANY) {
+          bond->setStereo(Bond::BondStereo::STEREONONE);
+        }
+      }
+      // if other CXSMILES features are added to the canonicalization code
+      // in the future, they should be removed here.
+    }
+
+    if (doingCXSmiles || !params.includeDativeBonds) {
+      // do not output dative bonds in the SMILES if we are doing CXSmiles (we
+      // output coordinate bonds there) or if the flag is set to ignore them
+      for (auto bond : tmol->bonds()) {
+        if (bond->getBondType() == Bond::DATIVE) {
+          // we are intentionally only handling DATIVE here. The other weird
+          // RDKit dative alternatives really shouldn't ever show up.
+          bond->setBondType(Bond::SINGLE);
+          // update the explicit valence of the begin atom since the implicit
+          // valence will no longer be properly perceived
+          bond->getBeginAtom()->calcExplicitValence(false);
+        }
+      }
+    }
 
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively
-      rootedAtAtom = getRandomGenerator()() % mol.getNumAtoms();
+      rootedAtAtom = getRandomGenerator()() % tmol->getNumAtoms();
     }
 
     std::string res;
@@ -494,16 +579,25 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
     std::vector<unsigned int> bondOrdering;
 
     if (params.canonical) {
-      if (tmol->hasProp("_canonicalRankingNumbers")) {
-        for (const auto atom : tmol->atoms()) {
-          unsigned int rankNum = 0;
-          atom->getPropIfPresent("_canonicalRankingNumber", rankNum);
-          ranks[atom->getIdx()] = rankNum;
+      const bool breakTies = true;
+      const bool includeChiralPresence = false;
+      const bool includeIsotopes = params.doIsomericSmiles;
+      ;
+      const bool includeChirality = params.doIsomericSmiles;
+      ;
+      const bool includeStereoGroups = params.doIsomericSmiles;
+      ;
+      const bool useNonStereoRanks = false;
+      const bool includeAtomMaps = true;
+
+      Canon::rankMolAtoms(*tmol, ranks, breakTies, includeChirality,
+                          includeIsotopes, includeAtomMaps,
+                          includeChiralPresence, includeStereoGroups,
+                          useNonStereoRanks);
+      if (params.ignoreAtomMapNumbers) {
+        for (auto atom : tmol->atoms()) {
+          atom->setAtomMapNum(atomMapNums[atom->getIdx()]);
         }
-      } else {
-        bool breakTies = true;
-        Canon::rankMolAtoms(*tmol, ranks, breakTies, params.doIsomericSmiles,
-                            params.doIsomericSmiles);
       }
     } else {
       std::iota(ranks.begin(), ranks.end(), 0);
@@ -540,13 +634,13 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
     vfragsmi[fragIdx] = res;
 
     for (unsigned int &vit : atomOrdering) {
-      vit = fragsMolAtomMapping[fragIdx][vit];  // Lookup the Id in the original
-                                                // molecule
+      vit = fragsMolAtomMapping[fragIdx][vit];  // Lookup the Id in the
+                                                // original molecule
     }
     allAtomOrdering.push_back(atomOrdering);
     for (unsigned int &vit : bondOrdering) {
-      vit = fragsMolBondMapping[fragIdx][vit];  // Lookup the Id in the original
-                                                // molecule
+      vit = fragsMolBondMapping[fragIdx][vit];  // Lookup the Id in the
+                                                // original molecule
     }
     allBondOrdering.push_back(bondOrdering);
   }
@@ -557,8 +651,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   std::vector<unsigned int> flattenedBondOrdering;
   flattenedBondOrdering.reserve(mol.getNumBonds());
   if (params.canonical) {
-    // Sort the vfragsmi, but also sort the atom and bond order vectors into the
-    // same order
+    // Sort the vfragsmi, but also sort the atom and bond order vectors into
+    // the same order
     typedef std::tuple<std::string, std::vector<unsigned int>,
                        std::vector<unsigned int>>
         tplType;
@@ -567,6 +661,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
       tmp[ti] = std::make_tuple(vfragsmi[ti], allAtomOrdering[ti],
                                 allBondOrdering[ti]);
     }
+
     std::sort(tmp.begin(), tmp.end());
 
     for (unsigned int ti = 0; ti < vfragsmi.size(); ++ti) {
@@ -585,6 +680,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
     for (auto &i : allAtomOrdering) {
       flattenedAtomOrdering.insert(flattenedAtomOrdering.end(), i.begin(),
                                    i.end());
+    }
+    for (auto &i : allBondOrdering) {
       flattenedBondOrdering.insert(flattenedBondOrdering.end(), i.begin(),
                                    i.end());
     }
@@ -600,16 +697,74 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   mol.setProp(common_properties::_smilesBondOutputOrder, flattenedBondOrdering,
               true);
   return result;
-}  // end of MolToSmiles()
+}
 
-std::string MolToCXSmiles(const ROMol &mol, const SmilesWriteParams &params,
-                          std::uint32_t flags) {
-  auto res = MolToSmiles(mol, params);
-  if (!res.empty()) {
-    auto cxext = SmilesWrite::getCXExtensions(mol, flags);
-    if (!cxext.empty()) {
-      res += " " + cxext;
+}  // namespace detail
+}  // namespace SmilesWrite
+
+std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
+  bool doingCXSmiles = false;
+  return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
+}
+
+std::string MolToCXSmiles(const ROMol &romol,
+                          const SmilesWriteParams &paramsInput,
+                          std::uint32_t flags,
+                          RestoreBondDirOption restoreBondDirs) {
+  RWMol trwmol(romol);
+
+  bool doingCXSmiles = true;
+  SmilesWriteParams params = paramsInput;
+
+  // if kekule is to be done, and the bond attrs (wedging) is to be done, we
+  // have to do the kekuleization here.  Otherwise, kekule happens in the
+  // fragment construction, and the wedges are done on the origin, possiibly
+  // aromatic mol. THis can put wedge bonds on double bonds, which is not valid.
+
+  if (params.doKekule) {
+    MolOps::Kekulize(trwmol);
+    params.doKekule = false;
+  }
+
+  auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles);
+  if (res.empty()) {
+    return res;
+  }
+
+  if (restoreBondDirs == RestoreBondDirOptionTrue) {
+    RDKit::Chirality::reapplyMolBlockWedging(trwmol);
+  } else if (restoreBondDirs == RestoreBondDirOptionClear) {
+    for (auto bond : trwmol.bonds()) {
+      if (!canHaveDirection(*bond)) {
+        continue;
+      }
+      if (bond->getBondDir() != Bond::BondDir::NONE) {
+        bond->setBondDir(Bond::BondDir::NONE);
+      }
+      unsigned int cfg;
+      if (bond->getPropIfPresent<unsigned int>(
+              common_properties::_MolFileBondCfg, cfg)) {
+        bond->clearProp(common_properties::_MolFileBondCfg);
+      }
     }
+  }
+
+  if (!params.doIsomericSmiles) {
+    flags &= ~(SmilesWrite::CXSmilesFields::CX_ENHANCEDSTEREO |
+               SmilesWrite::CXSmilesFields::CX_BOND_CFG);
+  }
+
+  if (params.cleanStereo) {
+    if (trwmol.needsUpdatePropertyCache()) {
+      trwmol.updatePropertyCache(false);
+    }
+    MolOps::assignStereochemistry(trwmol, true);
+    Chirality::cleanupStereoGroups(trwmol);
+  }
+
+  auto cxext = SmilesWrite::getCXExtensions(trwmol, flags);
+  if (!cxext.empty()) {
+    res += " " + cxext;
   }
   return res;
 }
@@ -674,6 +829,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
       bondsInPlay.set(bidx);
     }
   } else {
+    PRECONDITION(
+        params.rootedAtAtom < 0 || MolOps::getMolFrags(mol).size() == 1,
+        "rootedAtAtom can only be used with molecules that have a single fragment");
+
     for (auto aidx : atomsToUse) {
       for (const auto &bndi : boost::make_iterator_range(
                mol.getAtomBonds(mol.getAtomWithIdx(aidx)))) {
@@ -798,8 +957,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
       res += ".";
     }
   }
+
   mol.setProp(common_properties::_smilesAtomOutputOrder, atomOrdering, true);
   mol.setProp(common_properties::_smilesBondOutputOrder, bondOrdering, true);
+
   return res;
 }  // end of MolFragmentToSmiles()
 
@@ -817,4 +978,5 @@ std::string MolFragmentToCXSmiles(const ROMol &mol,
   }
   return res;
 }
+
 }  // namespace RDKit

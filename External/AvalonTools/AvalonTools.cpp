@@ -322,8 +322,10 @@ std::string getCanonSmiles(const std::string &data, bool isSmiles, int flags) {
     if (mp) {
       smiles = MOLToSMI(mp, ISOMERIC_SMILES);
       FreeMolecule(mp);
-      canSmiles = CanSmiles(smiles, flags);
-      MyFree(smiles);
+      if (smiles) {
+        canSmiles = CanSmiles(smiles, flags);
+        MyFree(smiles);
+      }
     }
   } else {
     canSmiles = CanSmiles((char *)data.c_str(), flags);
@@ -347,7 +349,7 @@ void getAvalonCountFP(const std::string &data, bool isSmiles,
     reaccsToCounts(mp, res, bitFlags, isQuery, nBits);
     FreeMolecule(mp);
   } else {
-    BOOST_LOG(rdErrorLog) << "ERROR: no fingeprint generated for molecule."
+    BOOST_LOG(rdErrorLog) << "ERROR: no fingerprint generated for molecule."
                           << std::endl;
   }
 }
@@ -366,7 +368,7 @@ void getAvalonFP(const std::string &data, bool isSmiles, ExplicitBitVect &res,
     reaccsToFingerprint(mp, res, bitFlags, isQuery, resetVect, nBytes);
     FreeMolecule(mp);
   } else {
-    BOOST_LOG(rdErrorLog) << "ERROR: no fingeprint generated for molecule."
+    BOOST_LOG(rdErrorLog) << "ERROR: no fingerprint generated for molecule."
                           << std::endl;
   }
 }
@@ -385,7 +387,7 @@ void getAvalonFP(const std::string &data, bool isSmiles,
     reaccsToFingerprint(mp, res, bitFlags, isQuery, resetVect, nBytes);
     FreeMolecule(mp);
   } else {
-    BOOST_LOG(rdErrorLog) << "ERROR: no fingeprint generated for molecule."
+    BOOST_LOG(rdErrorLog) << "ERROR: no fingerprint generated for molecule."
                           << std::endl;
   }
 }
@@ -436,8 +438,8 @@ int initCheckMol(const std::string &optString) {
   // n.b. always add a cr to the end for safety
   auto *optBuffer = new char[optString.size() + 2];
   optString.copy(optBuffer, optString.size());
-  optBuffer[optString.size() - 1] = '\n';
-  optBuffer[optString.size()] = '\0';
+  optBuffer[optString.size()] = '\n';
+  optBuffer[optString.size() + 1] = '\0';
   int res = InitCheckMol(optBuffer);
   delete[] optBuffer;
   return res;

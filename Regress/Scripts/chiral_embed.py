@@ -1,8 +1,8 @@
+import gzip
 
 from rdkit import Chem
-from rdkit.Chem.PyMol import MolViewer
 from rdkit.Chem import AllChem
-import gzip
+from rdkit.Chem.PyMol import MolViewer
 
 try:
   v = MolViewer()

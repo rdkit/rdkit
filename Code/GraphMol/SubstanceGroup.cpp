@@ -15,6 +15,17 @@
 
 namespace RDKit {
 
+namespace {
+
+template <class T>
+void remove_element(std::vector<T> &container, unsigned int element) {
+  auto pos = std::find(container.begin(), container.end(), element);
+  if (pos != container.end()) {
+    container.erase(pos);
+  }
+}
+}  // namespace
+
 SubstanceGroup::SubstanceGroup(ROMol *owning_mol, const std::string &type)
     : RDProps(), dp_mol(owning_mol) {
   PRECONDITION(owning_mol, "supplied owning molecule is bad");
@@ -49,10 +60,48 @@ unsigned int SubstanceGroup::getIndexInMol() const {
   return sgroupItr - sgroups.begin();
 }
 
+void SubstanceGroup::setAtoms(std::vector<unsigned int> atoms) {
+  PRECONDITION(dp_mol, "bad mol");
+  auto natoms = dp_mol->getNumAtoms();
+  for (auto atomIdx : atoms) {
+    if (atomIdx >= natoms) {
+      std::ostringstream errout;
+      errout << "Atom index " << atomIdx << " is out of range";
+      throw ValueErrorException(errout.str());
+    }
+  }
+  d_atoms = std::move(atoms);
+}
+void SubstanceGroup::setParentAtoms(std::vector<unsigned int> patoms) {
+  PRECONDITION(dp_mol, "bad mol");
+  auto natoms = dp_mol->getNumAtoms();
+  for (auto atomIdx : patoms) {
+    if (atomIdx >= natoms) {
+      std::ostringstream errout;
+      errout << "Atom index " << atomIdx << " is out of range";
+      throw ValueErrorException(errout.str());
+    }
+  }
+  d_patoms = std::move(patoms);
+}
+void SubstanceGroup::setBonds(std::vector<unsigned int> bonds) {
+  PRECONDITION(dp_mol, "bad mol");
+  auto nbonds = dp_mol->getNumBonds();
+  for (auto bondIdx : bonds) {
+    if (bondIdx >= nbonds) {
+      std::ostringstream errout;
+      errout << "Bond index " << bondIdx << " is out of range";
+      throw ValueErrorException(errout.str());
+    }
+  }
+  d_bonds = std::move(bonds);
+}
+
 void SubstanceGroup::addAtomWithIdx(unsigned int idx) {
   PRECONDITION(dp_mol, "bad mol");
-  PRECONDITION(dp_mol->getAtomWithIdx(idx), "wrong atom index");
-
+  if (idx >= dp_mol->getNumAtoms()) {
+    throw ValueErrorException("Atom index out of range");
+  }
   d_atoms.push_back(idx);
 }
 
@@ -65,7 +114,9 @@ void SubstanceGroup::addAtomWithBookmark(int mark) {
 
 void SubstanceGroup::addParentAtomWithIdx(unsigned int idx) {
   PRECONDITION(dp_mol, "bad mol");
-
+  if (idx >= dp_mol->getNumAtoms()) {
+    throw ValueErrorException("Atom index out of range");
+  }
   if (std::find(d_atoms.begin(), d_atoms.end(), idx) == d_atoms.end()) {
     std::ostringstream errout;
     errout << "Atom " << idx << " is not a member of current SubstanceGroup";
@@ -92,7 +143,9 @@ void SubstanceGroup::addParentAtomWithBookmark(int mark) {
 
 void SubstanceGroup::addBondWithIdx(unsigned int idx) {
   PRECONDITION(dp_mol, "bad mol");
-  PRECONDITION(dp_mol->getBondWithIdx(idx), "wrong bond index");
+  if (idx >= dp_mol->getNumBonds()) {
+    throw ValueErrorException("Bond index out of range");
+  }
 
   d_bonds.push_back(idx);
 }
@@ -101,6 +154,21 @@ void SubstanceGroup::addBondWithBookmark(int mark) {
   PRECONDITION(dp_mol, "bad mol");
   Bond *bond = dp_mol->getUniqueBondWithBookmark(mark);
   d_bonds.push_back(bond->getIdx());
+}
+
+void SubstanceGroup::removeAtomWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_atoms, idx);
+}
+
+void SubstanceGroup::removeParentAtomWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_patoms, idx);
+}
+
+void SubstanceGroup::removeBondWithIdx(unsigned int idx) {
+  PRECONDITION(dp_mol, "bad mol");
+  remove_element(d_bonds, idx);
 }
 
 void SubstanceGroup::addBracket(const SubstanceGroup::Bracket &bracket) {
@@ -422,5 +490,48 @@ std::ostream &operator<<(std::ostream &target,
                          const RDKit::SubstanceGroup &sgroup) {
   target << sgroup.getIndexInMol() << ' '
          << sgroup.getProp<std::string>("TYPE");
+
+  auto brackets = sgroup.getBrackets();
+  if (!brackets.empty()) {
+    target << " Brk: " << brackets.size();
+  }
+
+  auto cstates = sgroup.getCStates();
+  if (!cstates.empty()) {
+    target << " CSt: " << cstates.size();
+  }
+
+  auto attachpts = sgroup.getAttachPoints();
+  if (!attachpts.empty()) {
+    target << " AtPt: " << attachpts.size();
+  }
+
+  auto atoms = sgroup.getAtoms();
+  if (!atoms.empty()) {
+    target << " Atoms: { ";
+    for (auto atom_idx : atoms) {
+      target << atom_idx << ' ';
+    }
+    target << '}';
+  }
+
+  auto patoms = sgroup.getParentAtoms();
+  if (!patoms.empty()) {
+    target << " PAtoms: { ";
+    for (auto atom_idx : patoms) {
+      target << atom_idx << ' ';
+    }
+    target << '}';
+  }
+
+  auto bonds = sgroup.getBonds();
+  if (!bonds.empty()) {
+    target << " Bonds: { ";
+    for (auto bond_idx : bonds) {
+      target << bond_idx << ' ';
+    }
+    target << '}';
+  }
+
   return target;
 }

@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2014-2021, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2014-2023, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
@@ -39,12 +39,13 @@
 #include <map>
 #include <algorithm>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
-#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include "GraphMol/ChemReactions/ReactionRunner.h"
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
 
 namespace RDKit {
 typedef std::vector<MatchVectType> VectMatchVectType;
@@ -152,9 +153,9 @@ class StereoBondEndCap {
 };
 }  // namespace
 
-VectMatchVectType getReactantMatchesToTemplate(const ROMol &reactant,
-                                               const ROMol &templ,
-                                               unsigned int maxMatches) {
+VectMatchVectType getReactantMatchesToTemplate(
+    const ROMol &reactant, const ROMol &templ, unsigned int maxMatches,
+    const SubstructMatchParameters &ssparams) {
   // NOTE that we are *not* uniquifying the results.
   //   This is because we need multiple matches in reactions. For example,
   //   The ring-closure coded as:
@@ -175,7 +176,7 @@ VectMatchVectType getReactantMatchesToTemplate(const ROMol &reactant,
   //   with uniquifying their results.
   VectMatchVectType res;
 
-  SubstructMatchParameters ssps;
+  SubstructMatchParameters ssps = ssparams;
   ssps.uniquify = false;
   ssps.maxMatches = maxMatches;
   auto matchesHere = SubstructMatch(reactant, templ, ssps);
@@ -212,8 +213,9 @@ bool getReactantMatches(const MOL_SPTR_VECT &reactants,
   for (auto iter = rxn.beginReactantTemplates();
        iter != rxn.endReactantTemplates(); ++iter, i++) {
     if (matchSingleReactant == MatchAll || matchSingleReactant == i) {
-      auto matches = getReactantMatchesToTemplate(*reactants[i].get(),
-                                                  *iter->get(), maxMatches);
+      auto matches =
+          getReactantMatchesToTemplate(*reactants[i].get(), *iter->get(),
+                                       maxMatches, rxn.getSubstructParams());
       if (matches.empty()) {
         // no point continuing if we don't match one of the reactants:
         res = false;
@@ -727,16 +729,8 @@ void updateStereoBonds(RWMOL_SPTR product, const ROMol &reactant,
 void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
                                         const ROMol &reactant,
                                         ReactantProductAtomMapping *mapping) {
-  ROMol::BOND_ITER_PAIR bondItP = product->getEdges();
-  while (bondItP.first != bondItP.second) {
-    Bond *pBond = (*product)[*(bondItP.first)];
-    ++bondItP.first;
-
-    if (!pBond->hasProp(common_properties::NullBond) &&
-        !pBond->hasProp(common_properties::_MolFileBondQuery)) {
-      continue;
-    }
-
+  for (unsigned int bidx = 0; bidx < product->getNumBonds(); ++bidx) {
+    auto pBond = product->getBondWithIdx(bidx);
     auto rBondBegin = mapping->prodReactAtomMap.find(pBond->getBeginAtomIdx());
     auto rBondEnd = mapping->prodReactAtomMap.find(pBond->getEndAtomIdx());
 
@@ -751,8 +745,22 @@ void setReactantBondPropertiesToProduct(RWMOL_SPTR product,
     if (!rBond) {
       continue;
     }
+    if (!pBond->hasProp(common_properties::NullBond) &&
+        !pBond->hasProp(common_properties::_MolFileBondQuery) &&
+        !rBond->hasQuery()) {
+      continue;
+    }
 
-    pBond->setBondType(rBond->getBondType());
+    if (!rBond->hasQuery()) {
+      pBond->setBondType(rBond->getBondType());
+    } else {
+      QueryBond qBond(rBond->getBondType());
+      qBond.setQuery(rBond->getQuery()->copy());
+      // replaceBond copies, so we are safe passing a pointer
+      // to a local:
+      product->replaceBond(bidx, &qBond);
+      pBond = product->getBondWithIdx(bidx);
+    }
     if (rBond->getBondType() == Bond::DOUBLE &&
         rBond->getBondDir() == Bond::EITHERDOUBLE) {
       pBond->setBondDir(Bond::EITHERDOUBLE);
@@ -864,6 +872,22 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   }
 }
 
+Bond *addBondToProduct(const Bond &origB, RWMol &product,
+                       unsigned int begAtomIdx, unsigned int endAtomIdx) {
+  if (!origB.hasQuery()) {
+    auto idx = product.addBond(begAtomIdx, endAtomIdx, origB.getBondType());
+    return product.getBondWithIdx(idx - 1);
+  } else {
+    QueryBond *qbond = new QueryBond(origB.getBondType());
+    qbond->setBeginAtomIdx(begAtomIdx);
+    qbond->setEndAtomIdx(endAtomIdx);
+    qbond->setQuery(origB.getQuery()->copy());
+    bool takeOwnership = true;
+    product.addBond(qbond, takeOwnership);
+    return qbond;
+  }
+}
+
 void addMissingProductBonds(const Bond &origB, RWMOL_SPTR product,
                             ReactantProductAtomMapping *mapping) {
   unsigned int begIdx = origB.getBeginAtomIdx();
@@ -874,8 +898,7 @@ void addMissingProductBonds(const Bond &origB, RWMOL_SPTR product,
   CHECK_INVARIANT(prodBeginIdxs.size() == prodEndIdxs.size(),
                   "Different number of start-end points for product bonds.");
   for (unsigned i = 0; i < prodBeginIdxs.size(); i++) {
-    product->addBond(prodBeginIdxs.at(i), prodEndIdxs.at(i),
-                     origB.getBondType());
+    addBondToProduct(origB, *product, prodBeginIdxs.at(i), prodEndIdxs.at(i));
   }
 }
 
@@ -883,7 +906,12 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
                            unsigned prodNeighborIdx, RWMOL_SPTR product,
                            const ROMol &reactant,
                            ReactantProductAtomMapping *mapping) {
-  auto *newAtom = new Atom(reactAtom);
+  Atom *newAtom = nullptr;
+  if (!reactAtom.hasQuery()) {
+    newAtom = new Atom(reactAtom);
+  } else {
+    newAtom = new QueryAtom(dynamic_cast<const QueryAtom &>(reactAtom));
+  }
   unsigned reactAtomIdx = reactAtom.getIdx();
   newAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
                                  reactAtomIdx);
@@ -893,14 +921,12 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
   // add the bonds
   const Bond *origB =
       reactant.getBondBetweenAtoms(reactNeighborIdx, reactAtomIdx);
-  unsigned int begIdx = origB->getBeginAtomIdx();
-  if (begIdx == reactNeighborIdx) {
-    product->addBond(prodNeighborIdx, productIdx, origB->getBondType());
-  } else {
-    product->addBond(productIdx, prodNeighborIdx, origB->getBondType());
+  unsigned int begIdx = productIdx;
+  unsigned int endIdx = prodNeighborIdx;
+  if (origB->getBeginAtomIdx() == reactNeighborIdx) {
+    std::swap(begIdx, endIdx);
   }
-
-  auto prodB = product->getBondBetweenAtoms(prodNeighborIdx, productIdx);
+  Bond *prodB = addBondToProduct(*origB, *product, begIdx, endIdx);
   if (origB->getBondType() == Bond::DOUBLE &&
       origB->getBondDir() == Bond::EITHERDOUBLE) {
     prodB->setBondDir(Bond::EITHERDOUBLE);
@@ -1228,15 +1254,15 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
   std::vector<StereoGroup> new_stereo_groups;
   for (const auto &sg : reactant.getStereoGroups()) {
     std::vector<Atom *> atoms;
-    for (auto &&reactantAtom : sg.getAtoms()) {
+    std::vector<Bond *> bonds;
+    for (const auto &reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
       if (productAtoms == mapping.reactProdAtomMap.end()) {
         continue;
       }
 
-      for (auto &&productAtomIdx : productAtoms->second) {
+      for (auto &productAtomIdx : productAtoms->second) {
         auto productAtom = product->getAtomWithIdx(productAtomIdx);
-
         // If chirality destroyed by the reaction, skip the atom
         if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
           continue;
@@ -1252,9 +1278,14 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
       }
     }
     if (!atoms.empty()) {
-      new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms));
+      new_stereo_groups.emplace_back(sg.getGroupType(), std::move(atoms),
+                                     std::move(bonds), sg.getReadId());
     }
   }
+
+  // Although we have added storage, and canonicalization of Atropisomers,
+  // searching is not yet supported.  When it is, we will need to copy
+  // bond-part of the SG groups to the products as appropriate.
 
   if (!new_stereo_groups.empty()) {
     auto &existing_sg = product->getStereoGroups();
@@ -1309,7 +1340,7 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
   // ---------- ---------- ---------- ---------- ---------- ----------
   // Loop over the bonds in the product and look for those that have
   // the NullBond property set. These are bonds for which no information
-  // (other than their existence) was provided in the template:
+  // (other than their existence) was provided in the template
   setReactantBondPropertiesToProduct(product, *reactant, mapping);
 
   // ---------- ---------- ---------- ---------- ---------- ----------
@@ -1333,6 +1364,14 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
         Atom *productAtom = product->getAtomWithIdx(productAtomIdx);
         setReactantAtomPropertiesToProduct(productAtom, *reactantAtom,
                                            rxn.getImplicitPropertiesFlag());
+        if (reactantAtom->hasQuery()) {
+          // finally: if the reactant atom is a query we should copy over the
+          // query information. We need to replace the atom to do this
+          QueryAtom newAtom(*productAtom);
+          newAtom.setQuery(reactantAtom->getQuery()->copy());
+          // replaceAtom copies
+          product->replaceAtom(productAtomIdx, &newAtom);
+        }
       }
       // now traverse:
       addReactantNeighborsToProduct(*reactant, *reactantAtom, product,
@@ -1368,6 +1407,76 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
 
   delete (mapping);
 }  // end of addReactantAtomsAndBonds
+
+namespace {
+void copyTemplateStereoGroupsToMol(const ROMol &templateMol,
+                                   RWMOL_SPTR product) {
+  const auto &stereoGroups = templateMol.getStereoGroups();
+  if (stereoGroups.empty()) {
+    return;
+  }
+
+  boost::dynamic_bitset<> atomsInTemplateStereoGroups(product->getNumAtoms());
+  std::vector<StereoGroup> newStereoGroups;
+  for (const auto &sg : stereoGroups) {
+    bool keepIt = true;
+    std::vector<Atom *> atoms;
+    for (const auto &atom : sg.getAtoms()) {
+      if (auto mapNum = atom->getAtomMapNum()) {
+        for (auto productAtom : product->atoms()) {
+          int oldMapNum = 0;
+          if (productAtom->getPropIfPresent(common_properties::reactionMapNum,
+                                            oldMapNum) &&
+              oldMapNum == mapNum) {
+            atoms.push_back(productAtom);
+            atomsInTemplateStereoGroups.set(productAtom->getIdx());
+          }
+        }
+      } else {
+        keepIt = false;
+        break;
+      }
+    }
+    if (keepIt && !atoms.empty()) {
+      std::vector<Bond *> bonds;
+      newStereoGroups.emplace_back(sg.getGroupType(), std::move(atoms),
+                                   std::move(bonds), sg.getReadId());
+    }
+  }
+  if (!newStereoGroups.empty()) {
+    // remove any stereo groups that are already present in the product (these
+    // were copied over from the reactant in copyEnhancedStereoGroups()) and
+    // that overlap with the added ones
+    for (const auto &productSG : product->getStereoGroups()) {
+      unsigned int nOverlappingAtoms = 0;
+      for (const auto atom : productSG.getAtoms()) {
+        if (atomsInTemplateStereoGroups[atom->getIdx()]) {
+          ++nOverlappingAtoms;
+        }
+      }
+      if (!nOverlappingAtoms) {
+        // no overlapping atoms, we can just keep the stereogroup.
+        newStereoGroups.push_back(productSG);
+      } else if (nOverlappingAtoms < productSG.getAtoms().size()) {
+        // some of the atoms in the stereo group are not already there
+        // in the product, we need to split the stereo group
+        std::vector<Atom *> newAtoms;
+        for (const auto atom : productSG.getAtoms()) {
+          if (!atomsInTemplateStereoGroups[atom->getIdx()]) {
+            newAtoms.push_back(atom);
+          }
+        }
+        std::vector<Bond *> newBonds;
+        newStereoGroups.emplace_back(productSG.getGroupType(),
+                                     std::move(newAtoms), std::move(newBonds),
+                                     productSG.getReadId());
+      }
+      // else: all atoms in the stereo group are already there, we can skip it
+    }
+    product->setStereoGroups(std::move(newStereoGroups));
+  }
+}
+}  // namespace
 
 MOL_SPTR_VECT
 generateOneProductSet(const ChemicalReaction &rxn,
@@ -1427,6 +1536,11 @@ generateOneProductSet(const ChemicalReaction &rxn,
     // lost, add it back.
     if (doBondDirs) {
       MolOps::setDoubleBondNeighborDirections(*product);
+    }
+
+    // if the product template has stereo groups, copy them over now
+    if (!(*pTemplIt)->getStereoGroups().empty()) {
+      copyTemplateStereoGroupsToMol(**pTemplIt, product);
     }
 
     res[prodId] = product;
@@ -1546,7 +1660,8 @@ bool updateAtomsModifiedByReaction(
     const auto pAtom =
         productTemplate->getAtomWithIdx(productAtomMap.at(pr.first));
     const auto atom = reactant.getAtomWithIdx(match[pr.second].second);
-    if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
+    if (rAtom->getAtomicNum() != pAtom->getAtomicNum() &&
+        (pAtom->getAtomicNum() || !pAtom->hasQuery())) {
       atom->setAtomicNum(pAtom->getAtomicNum());
       molModified = true;
     }
@@ -1668,7 +1783,8 @@ bool updateBondsModifiedByReaction(
                                     pBond->getEndAtom()->getAtomMapNum())]
                               .second;
 
-            reactant.addBond(begIdx, endIdx, pBond->getBondType());
+            ReactionRunnerUtils::addBondToProduct(*pBond, reactant, begIdx,
+                                                  endIdx);
             molModified = true;
           } else if (bond->getBondType() != pBond->getBondType()) {
             bond->setBondType(pBond->getBondType());
@@ -1689,14 +1805,6 @@ bool updateBondsModifiedByReaction(
         molModified = true;
       }
     }
-
-    if (rAtom->getAtomicNum() != pAtom->getAtomicNum()) {
-      atom->setAtomicNum(pAtom->getAtomicNum());
-      molModified = true;
-    }
-    if (ReactionRunnerUtils::updatePropsFromImplicitProps(pAtom, atom)) {
-      molModified = true;
-    }
   }
   return molModified;
 }
@@ -1704,7 +1812,8 @@ bool updateBondsModifiedByReaction(
 }  // namespace
 
 // Modifies a single reactant IN PLACE
-bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant) {
+bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant,
+                  bool removeUnmatchedAtoms) {
   PRECONDITION(rxn.getNumReactantTemplates() == 1,
                "only one reactant supported");
   PRECONDITION(rxn.getNumProductTemplates() == 1, "only one product supported");
@@ -1746,21 +1855,25 @@ bool run_Reactant(const ChemicalReaction &rxn, RWMol &reactant) {
   }
 
   auto reactantMatch = ReactionRunnerUtils::getReactantMatchesToTemplate(
-      reactant, *reactantTemplate, 1);
+      reactant, *reactantTemplate, 1, rxn.getSubstructParams());
   if (reactantMatch.empty()) {
     return false;
   }
   const auto &match = reactantMatch[0];
 
   // we now have a match for the reactant, so we can work on it
-  // start by marking atoms which are in the reactants, but not in the product
+  // start by marking atoms which are in the reactant template, but not in the
+  // product template for removal
   boost::dynamic_bitset<> atomsToRemove(reactant.getNumAtoms());
   // finds atoms in the reactantTemplate which aren't in the productTemplate
   ReactionRunnerUtils::identifyAtomsInReactantTemplateNotProductTemplate(
       *reactantTemplate, atomsToRemove, reactantProductMap, match);
-  // identify atoms which should be removed from the molecule
-  ReactionRunnerUtils::traverseToFindAtomsToRemove(reactant, *reactantTemplate,
-                                                   atomsToRemove, match);
+  if (removeUnmatchedAtoms) {
+    // identify atoms which did not match something in the reactant template but
+    // which should be removed from the molecule
+    ReactionRunnerUtils::traverseToFindAtomsToRemove(
+        reactant, *reactantTemplate, atomsToRemove, match);
+  }
   bool molModified = false;
   reactant.beginBatchEdit();
 

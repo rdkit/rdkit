@@ -30,7 +30,7 @@ using namespace std::chrono;
 // thread safe printing for debugging
 // Usage Example: PrintThread{} << "something";
 struct PrintThread : public std::stringstream {
-  static std::mutex cout_mutex;
+  inline static std::mutex cout_mutex;
   ~PrintThread() override {
     std::lock_guard<std::mutex> l{cout_mutex};
     std::cout << rdbuf();
@@ -410,12 +410,12 @@ int main() {
   BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
-/*
-  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
-  testPerformance();
-  BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-*/
+  /*
+    BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+    testPerformance();
+    BOOST_LOG(rdErrorLog) << "Finished: testPerformance()\n";
+    BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+  */
 
 #endif
 

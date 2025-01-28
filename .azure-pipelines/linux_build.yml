@@ -9,14 +9,15 @@ steps:
     conda create --name rdkit_build $(python) cmake \
         boost-cpp=$(boost_version) \
         py-boost=$(boost_version) \
-        numpy pillow eigen pandas matplotlib-base \
-        qt cairo
+        numpy pillow eigen pandas=2.0 matplotlib-base=3.7 \
+        qt=5.9.7 cairo
     conda activate rdkit_build
-    conda install -c conda-forge nbval ipykernel>=6.0
+    conda install -c conda-forge pytest nbval ipykernel>=6.0
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    export CXXFLAGS="${CXXFLAGS} -Wall -Werror"
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -24,7 +25,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=ON \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -32,6 +32,8 @@ steps:
     -DRDK_BUILD_FREESASA_SUPPORT=ON \
     -DRDK_BUILD_AVALON_SUPPORT=ON \
     -DRDK_BUILD_INCHI_SUPPORT=ON \
+    -DRDK_BUILD_YAEHMOP_SUPPORT=ON \
+    -DRDK_BUILD_XYZ2MOL_SUPPORT=ON \
     -DRDK_BUILD_CAIRO_SUPPORT=ON \
     -DRDK_BUILD_QT_SUPPORT=ON \
     -DQt5_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
@@ -67,7 +69,7 @@ steps:
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    conda install ipython matplotlib-base sphinx=3.1.2 recommonmark 
+    conda install -c conda-forge ipython=8.12 sphinx myst-parser
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}

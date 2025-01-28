@@ -53,9 +53,9 @@ python::object classifyAtomsHelper(RDKit::ROMol &mol,
     for (double &i : radii) {
       l.append(i);
     }
-    return std::move(l);
+    return l;
   }
-  return std::move(l);
+  return l;
 }
 
 double calcSASAHelper(const RDKit::ROMol &mol, python::object radii,
@@ -102,11 +102,13 @@ struct freesasa_wrapper {
 
     python::class_<FreeSASA::SASAOpts>(
         "SASAOpts", docString.c_str(),
-        python::init<>("Constructor takes no arguments"))
+        python::init<>(python::args("self"), "Constructor takes no arguments"))
         .def(python::init<FreeSASA::SASAOpts::Algorithm,
-                          FreeSASA::SASAOpts::Classifier>())
+                          FreeSASA::SASAOpts::Classifier>(
+            python::args("self", "alg", "cls")))
         .def(python::init<FreeSASA::SASAOpts::Algorithm,
-                          FreeSASA::SASAOpts::Classifier, double>())
+                          FreeSASA::SASAOpts::Classifier, double>(
+            python::args("self", "alg", "cls", "pr")))
         .def_readwrite("algorithm", &FreeSASA::SASAOpts::algorithm)
         .def_readwrite("classifier", &FreeSASA::SASAOpts::classifier)
         .def_readwrite("probeRadius", &FreeSASA::SASAOpts::probeRadius);

@@ -168,6 +168,8 @@ def CalcEnrichment(scores, col, fractions):
   else:
     enrich = [0.0] * len(fractions)
   return enrich
+
+
 #
 #  Copyright (c) 2013, Novartis Institutes for BioMedical Research Inc.
 #  All rights reserved.

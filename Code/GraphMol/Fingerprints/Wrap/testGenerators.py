@@ -1,7 +1,9 @@
+import unittest
+
+import numpy as np
+
 from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
-import numpy as np
-import unittest
 
 
 class TestCase(unittest.TestCase):
@@ -228,7 +230,7 @@ class TestCase(unittest.TestCase):
     ao.AllocateAtomToBits()
     fp = g.GetFingerprint(m1, additionalOutput=ao)
     self.assertIsNone(ao.GetAtomCounts())
-    self.assertEqual(ao.GetAtomToBits(), ((351, 479), (351, 399), (479, 399)))
+    self.assertEqual(ao.GetAtomToBits(), ((1404, 1916), (1404, 1596), (1596, 1916)))
     self.assertIsNone(ao.GetBitInfoMap())
     self.assertIsNone(ao.GetBitPaths())
 
@@ -237,7 +239,7 @@ class TestCase(unittest.TestCase):
     fp = g.GetFingerprint(m1, additionalOutput=ao)
     self.assertIsNone(ao.GetAtomCounts())
     self.assertIsNone(ao.GetAtomToBits())
-    self.assertEqual(ao.GetBitInfoMap(), {351: ((0, 1), ), 399: ((1, 2), ), 479: ((0, 2), )})
+    self.assertEqual(ao.GetBitInfoMap(), {1404: ((0, 1), ), 1596: ((1, 2), ), 1916: ((0, 2), )})
     self.assertIsNone(ao.GetBitPaths())
 
   def testCountBounds(self):
@@ -282,6 +284,112 @@ class TestCase(unittest.TestCase):
       DataStructs.ConvertToNumpyArray(fp, oarr)
       arr = gen.GetCountFingerprintAsNumPy(m)
       np.testing.assert_array_equal(oarr, arr)
+
+  def testMorganRedundantEnvironments(self):
+    m = Chem.MolFromSmiles('CC(=O)O')
+
+    g = rdFingerprintGenerator.GetMorganGenerator(2)
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 8)
+
+    g = rdFingerprintGenerator.GetMorganGenerator(2, includeRedundantEnvironments=True)
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 12)
+
+  def testFingerprintOptions(self):
+    m = Chem.MolFromSmiles('CC(=O)O')
+
+    g = rdFingerprintGenerator.GetMorganGenerator(2)
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 8)
+
+    g.GetOptions().numBitsPerFeature = 2
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 16)
+
+    g.GetOptions().includeRedundantEnvironments = True
+    fp = g.GetSparseCountFingerprint(m)
+    self.assertEqual(fp.GetTotalVal(), 24)
+
+    m = Chem.MolFromSmiles('CC(=O)C')
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 6)
+    g.GetOptions().countSimulation = False
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 4)
+    g.GetOptions().maxDistance = 1
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 2)
+
+    m = Chem.MolFromSmiles('OC(C)(C)C')
+    g = rdFingerprintGenerator.GetAtomPairGenerator()
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 7)
+    g.GetOptions().SetCountBounds((1, 2, 3, 4))
+    fp = g.GetFingerprint(m)
+    self.assertEqual(fp.GetNumOnBits(), 10)
+
+  def testTopologicalTorsionShortestPaths(self):
+    m = Chem.MolFromSmiles('CC1CCC1')
+    g = rdFingerprintGenerator.GetTopologicalTorsionGenerator()
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 3)
+
+    g.GetOptions().onlyShortestPaths = True
+    fp = g.GetSparseCountFingerprint(m)
+    nz = fp.GetNonzeroElements()
+    self.assertEqual(len(nz), 1)
+
+  def testMorganGeneratorMultiMol(self):
+    smis = [
+      'CC1CCC1',
+      'CCC1CCC1',
+      'CCCC1CCC1',
+      'CC1CC(O)C1',
+      'CC1CC(OC)C1',
+    ]
+    for i in range(4):
+      smis = smis + smis
+    ms = [Chem.MolFromSmiles(smi) for smi in smis]
+    g = rdFingerprintGenerator.GetMorganGenerator()
+    ofps = tuple([g.GetFingerprint(m) for m in ms])
+    tfps = g.GetFingerprints(ms, numThreads=1)
+    for ofp, tfp in zip(ofps, tfps):
+      self.assertEqual(ofp, tfp)
+    tfps = g.GetFingerprints(ms, numThreads=4)
+    for ofp, tfp in zip(ofps, tfps):
+      self.assertEqual(ofp, tfp)
+
+    ofps = tuple([g.GetCountFingerprint(m) for m in ms])
+    tfps = g.GetCountFingerprints(ms, numThreads=1)
+    for ofp, tfp in zip(ofps, tfps):
+      self.assertEqual(ofp, tfp)
+    tfps = g.GetCountFingerprints(ms, numThreads=4)
+    for ofp, tfp in zip(ofps, tfps):
+      self.assertEqual(ofp, tfp)
+
+    ofps = tuple([g.GetSparseFingerprint(m) for m in ms])
+    tfps = g.GetSparseFingerprints(ms, numThreads=1)
+    for ofp, tfp in zip(ofps, tfps):
+      self.assertEqual(ofp, tfp)
+    tfps = g.GetSparseFingerprints(ms, numThreads=4)
+    for ofp, tfp in zip(ofps, tfps):
+      self.assertEqual(ofp, tfp)
+
+    ofps = tuple([g.GetSparseCountFingerprint(m) for m in ms])
+    tfps = g.GetSparseCountFingerprints(ms, numThreads=1)
+    for ofp, tfp in zip(ofps, tfps):
+      self.assertEqual(ofp, tfp)
+    tfps = g.GetSparseCountFingerprints(ms, numThreads=4)
+    for ofp, tfp in zip(ofps, tfps):
+      self.assertEqual(ofp, tfp)
+
+  def testFingerprintGeneratorOptionsLifetime(self):
+    # this should not result in a seg fault
+    import inspect
+    inspect.getmembers(rdFingerprintGenerator.GetRDKitFPGenerator().GetOptions())
 
 
 if __name__ == '__main__':

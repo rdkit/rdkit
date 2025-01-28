@@ -1,7 +1,5 @@
 //
-//  Copyright (C) 2015 Sereina Riniker
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2015 Sereina Riniker and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,7 +12,7 @@
 #define RD_TORSIONANGLEM6_H
 
 #include <ForceField/Contrib.h>
-#include <boost/tuple/tuple.hpp>
+#include <tuple>
 #include <vector>
 
 namespace RDGeom {

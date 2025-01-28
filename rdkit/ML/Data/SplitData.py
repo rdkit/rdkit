@@ -3,7 +3,6 @@
 #    All Rights Reserved
 #
 
-
 import random
 
 from rdkit import RDRandom
@@ -121,7 +120,7 @@ def SplitIndices(nPts, frac, silent=1, legacy=0, replacement=0):
         resTest.append(i)
   else:
     perm = list(range(nPts))
-    random.shuffle(perm, random=random.random)
+    RDRandom.shuffle(perm, random=random.random)
     nTrain = int(nPts * frac)
 
     resData = list(perm[:nTrain])
@@ -298,8 +297,8 @@ def SplitDbData(conn, fracs, table='', fields='*', where='', join='', labelCol='
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

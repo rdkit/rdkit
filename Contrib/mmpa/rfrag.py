@@ -33,8 +33,9 @@
 # Modifications and optimizations by Greg Landrum, July 2015
 #
 
-import sys
 import re
+import sys
+
 from rdkit import Chem
 from rdkit.Chem import rdMMPA
 
@@ -119,8 +120,8 @@ def delete_bonds(smi, id, mol, bonds, out):
       s2 = Chem.MolFromSmiles(fragments[1])
 
       #need to cansmi again as smiles can be different
-      output = '%s,%s,,%s.%s' % (smi, id, Chem.MolToSmiles(s1, isomericSmiles=True),
-                                 Chem.MolToSmiles(s2, isomericSmiles=True))
+      output = '%s,%s,,%s.%s' % (smi, id, Chem.MolToSmiles(
+        s1, isomericSmiles=True), Chem.MolToSmiles(s2, isomericSmiles=True))
       if output not in out:
         out.add(output)
 
@@ -197,7 +198,7 @@ def fragment_mol(smi, cid):
         outlines.add(output)
     if not outlines:
       # for molecules with no cuts, output the parent molecule itself
-      outlines.add('%s,%s,,' % (smi,cid))
+      outlines.add('%s,%s,,' % (smi, cid))
 
   return outlines
 
@@ -207,7 +208,8 @@ if __name__ == '__main__':
   if (len(sys.argv) >= 2):
     print("Program that fragments a user input set of smiles.")
     print(
-      "The program enumerates every single,double and triple acyclic single bond cuts in a molecule.\n")
+      "The program enumerates every single,double and triple acyclic single bond cuts in a molecule.\n"
+    )
     print("USAGE: ./rfrag.py <file_of_smiles")
     print("Format of smiles file: SMILES ID (space separated)")
     print("Output: whole mol smiles,ID,core,context\n")
@@ -226,7 +228,6 @@ if __name__ == '__main__':
     o = fragment_mol(smiles, cmpd_id)
     for l in o:
       print(l)
-
 """
 optimization work.
 

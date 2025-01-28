@@ -5,14 +5,16 @@ DefaultFace = 'times'
 
 # these are the required fonts for piddle
 
-PidLegalFonts = {"courier": "courier",  # note: keys are lowercased 
-                 "helvetica": "helvetica",
-                 "monospaced": "courier",
-                 "sansserif": "helvetica",
-                 "serif": "times",
-                 "times": "times",
-                 "symbol": "symbol",
-                 "zapfdingbats": "zapfdingbats"}  # Could add more...
+PidLegalFonts = {
+  "courier": "courier",  # note: keys are lowercased 
+  "helvetica": "helvetica",
+  "monospaced": "courier",
+  "sansserif": "helvetica",
+  "serif": "times",
+  "times": "times",
+  "symbol": "symbol",
+  "zapfdingbats": "zapfdingbats"
+}  # Could add more...
 
 #PidLegalShapes:
 Roman = "Roman"
@@ -20,26 +22,28 @@ Bold = "Bold"
 Italic = "Italic"
 BoldItalic = "BoldOblique"
 
-MapPid2PyartFontName = {("helvetica", Roman): "Helvetica",
-                        ("helvetica", Bold): "Helvetica-Bold",
-                        ("helvetica", Italic): "Helvetica-Oblique",
-                        ("helvetica", BoldItalic): "Helvetica-BoldOblique",
-                        ("times", Roman): "Times-Roman",
-                        ("times", Bold): "Times-Bold",
-                        ("times", Italic): "Times-Italic",
-                        ("times", BoldItalic): "Times-BoldItalic",
-                        ("courier", Roman): "Courier",
-                        ("courier", Bold): "Courier-Bold",
-                        ("courier", Italic): "Courier-Oblique",
-                        ("courier", BoldItalic): "Courier-BoldOblique",
-                        ("symbol", Roman): "Symbol",
-                        ("symbol", Bold): "Symbol",
-                        ("symbol", Italic): "Symbol",
-                        ("symbol", BoldItalic): "Symbol",
-                        ("zapfdingbats", Roman): "ZapfDingbats",
-                        ("zapfdingbats", Bold): "ZapfDingbats",
-                        ("zapfdingbats", Italic): "ZapfDingbats",
-                        ("zapfdingbats", BoldItalic): "ZapfDingbats"}
+MapPid2PyartFontName = {
+  ("helvetica", Roman): "Helvetica",
+  ("helvetica", Bold): "Helvetica-Bold",
+  ("helvetica", Italic): "Helvetica-Oblique",
+  ("helvetica", BoldItalic): "Helvetica-BoldOblique",
+  ("times", Roman): "Times-Roman",
+  ("times", Bold): "Times-Bold",
+  ("times", Italic): "Times-Italic",
+  ("times", BoldItalic): "Times-BoldItalic",
+  ("courier", Roman): "Courier",
+  ("courier", Bold): "Courier-Bold",
+  ("courier", Italic): "Courier-Oblique",
+  ("courier", BoldItalic): "Courier-BoldOblique",
+  ("symbol", Roman): "Symbol",
+  ("symbol", Bold): "Symbol",
+  ("symbol", Italic): "Symbol",
+  ("symbol", BoldItalic): "Symbol",
+  ("zapfdingbats", Roman): "ZapfDingbats",
+  ("zapfdingbats", Bold): "ZapfDingbats",
+  ("zapfdingbats", Italic): "ZapfDingbats",
+  ("zapfdingbats", BoldItalic): "ZapfDingbats"
+}
 
 #  PDFFontMapping = { ("helvetica", Roman): "Helvetica",
 #                     ("helvetica", Bold): "Helvetica-Bold",

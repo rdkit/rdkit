@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2010 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2022 greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,11 +10,16 @@
 #include <RDGeneral/types.h>
 #include <cmath>
 #include <Geometry/point.h>
-#include <Geometry/Transform2D.h>
 #include "DepictUtils.h"
 #include <iostream>
 #include <RDGeneral/Invariant.h>
+#include <GraphMol/Chirality.h>
 #include <algorithm>
+
+namespace {
+static const char *FORMER_NBR_INDICES = "__formerNbrIndices";
+static const char *FORMER_IDX = "__formerIdx";
+}  // end anonymous namespace
 
 namespace RDDepict {
 double BOND_LEN = 1.5;
@@ -55,6 +60,7 @@ RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
     RDGeom::Point2D loc(x, y);
     res[ring[i]] = loc;
   }
+
   return res;
 }
 
@@ -187,6 +193,72 @@ int pickFirstRingToEmbed(const RDKit::ROMol &mol,
   return res;
 }
 
+RDKit::VECT_INT_VECT findCoreRings(const RDKit::VECT_INT_VECT &fusedRings,
+                                   RDKit::INT_VECT &coreRingsIds,
+                                   const RDKit::ROMol &mol) {
+  // simplify the fused rings to a set of core rings by iteratively removing
+  // rings that share only one or two consecutive atoms. These
+  // are trivial to embed after the core rings have been embedded and will make
+  // template matching more powerful since it will not be affected by the side
+  // rings
+
+  boost::dynamic_bitset<> removedRings(fusedRings.size());
+  bool removedARing = false;
+  do {
+    removedARing = false;
+    for (unsigned int currRingId = 0; currRingId < fusedRings.size();
+         currRingId++) {
+      if (removedRings[currRingId] || removedARing) {
+        continue;
+      }
+      auto nIntersectingAtoms = 0u;
+      int aid1 = -1;
+      int aid2 = -1;
+      for (unsigned int otherRingId = 0; otherRingId < fusedRings.size();
+           otherRingId++) {
+        if (currRingId == otherRingId || removedRings[otherRingId]) {
+          continue;
+        }
+        RDKit::INT_VECT commmonAtoms;
+        RDKit::Intersect(fusedRings[currRingId], fusedRings[otherRingId],
+                         commmonAtoms);
+        for (auto rii : commmonAtoms) {
+          if (rii != aid1 && rii != aid2) {
+            ++nIntersectingAtoms;
+            if (aid1 == -1) {
+              aid1 = rii;
+            } else {
+              aid2 = rii;
+            }
+            if (nIntersectingAtoms == 2) {
+              break;
+            }
+          }
+        }
+      }
+      // note that the set of rings is not SSSR because we use symmetrizeSSSR,
+      // so we cannot force a check for only one fused ring. Instead we make
+      // sure that this ring shares only one atom or one bond (two consecutive
+      // atoms)
+      if (nIntersectingAtoms == 1 ||
+          (nIntersectingAtoms == 2 &&
+           mol.getBondBetweenAtoms(aid1, aid2) != nullptr)) {
+        removedRings[currRingId] = true;
+        removedARing = true;
+      }
+    }
+  } while (removedARing);
+  RDKit::VECT_INT_VECT res;
+  for (unsigned int currRingId = 0; currRingId < fusedRings.size();
+       currRingId++) {
+    if (!removedRings[currRingId]) {
+      res.push_back(fusedRings[currRingId]);
+      coreRingsIds.push_back(currRingId);
+    }
+  }
+  return res;
+}
+
 RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
                                     const RDKit::VECT_INT_VECT &fusedRings,
                                     int &nextId) {
@@ -196,17 +268,12 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
   // that have already been embedded will be the ring that will get embedded.
   // But
   // if we can find a ring with two atoms in common with the embedded atoms, we
-  // will
-  // choose that first before systems with more than 2 atoms in common. Cases
-  // with two atoms
-  // in common are in general flat systems to start with and can be embedded
-  // cleanly.
-  // when there are more than 2 atoms in common, these are most likely bridged
-  // systems, which are
-  // screwed up anyway, might as well screw them up later
-  // if we do not have a system with two rings in common then we will return the
-  // ring with max,
-  // common atoms
+  // will choose that first before systems with more than 2 atoms in common.
+  // Cases with two atoms in common are in general flat systems to start with
+  // and can be embedded cleanly. when there are more than 2 atoms in common,
+  // these are most likely bridged systems, which are screwed up anyway, might
+  // as well screw them up later if we do not have a system with two rings in
+  // common then we will return the ring with max, common atoms
   PRECONDITION(doneRings.size() > 0, "");
   PRECONDITION(fusedRings.size() > 1, "");
 
@@ -258,12 +325,11 @@ RDKit::INT_VECT findNextRingToEmbed(const RDKit::INT_VECT &doneRings,
   // - two rings here with three atoms in common
   // let ring1:(0,1,2,3,4,5) be a ring that is already embedded, then let
   // ring2:(4,3,6,7,8,5) be the ring that we found to be the next ring we should
-  // embed.
-  // The commonAtoms are (4,3,5) - note that they will be in this order since
-  // the rings are always traversed in order. Now we would like these common
-  // atoms to be returned in the order (5,4,3) - then we have a continuous
-  // chain, we can do this by simply looking at the original ring order
-  // (4,3,6,7,8,5) and observing that 5 need to come to the front
+  // embed. The commonAtoms are (4,3,5) - note that they will be in this order
+  // since the rings are always traversed in order. Now we would like these
+  // common atoms to be returned in the order (5,4,3) - then we have a
+  // continuous chain, we can do this by simply looking at the original ring
+  // order (4,3,6,7,8,5) and observing that 5 need to come to the front
 
   // find out how many atoms from the end we need to move to the front
   unsigned int cmnLst = 0;
@@ -388,9 +454,8 @@ INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
   // picture
   double dp1 = nbrPts[0].dotProduct(nbrPts[1]);
   if (fabs(dp1) < 1.e-3) {
-    // the first two vectors are perpendicular to each other. We now have b1 and
-    // b3 we need to
-    // find b4
+    // the first two vectors are perpendicular to each other. We now have b1
+    // and b3 we need to find b4
     INT_PAIR p1(nbrBids[0], nbrBids[1]);
     res.push_back(p1);
 
@@ -456,4 +521,109 @@ template RDKit::INT_DEQUE rankAtomsByRank(const RDKit::ROMol &mol,
 template RDKit::INT_LIST rankAtomsByRank(const RDKit::ROMol &mol,
                                          const RDKit::INT_LIST &commAtms,
                                          bool ascending);
+
+bool hasTerminalRGroupOrQueryHydrogen(const RDKit::ROMol &mol) {
+  // we do not need the allowRGroups logic if there are no
+  // terminal dummy atoms
+  auto atoms = mol.atoms();
+  return std::any_of(atoms.begin(), atoms.end(),
+                     RDKit::isAtomTerminalRGroupOrQueryHydrogen);
+}
+
+std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
+    RDKit::RWMol &templateMol) {
+  auto queryParams = RDKit::MolOps::AdjustQueryParameters::noAdjustments();
+  queryParams.adjustSingleBondsToDegreeOneNeighbors = true;
+  queryParams.adjustSingleBondsBetweenAromaticAtoms = true;
+  RDKit::MolOps::adjustQueryProperties(templateMol, &queryParams);
+  std::map<unsigned int, unsigned int> removedIdxToNbrIdx;
+  std::unique_ptr<RDKit::RWMol> reducedTemplateMol;
+  for (const auto &bond : templateMol.bonds()) {
+    int atomIdxToRemove = -1;
+    int nbrIdx = -1;
+    auto beginAtom = bond->getBeginAtom();
+    auto endAtom = bond->getEndAtom();
+    if (RDKit::isAtomTerminalRGroupOrQueryHydrogen(beginAtom) &&
+        endAtom->hasQuery()) {
+      atomIdxToRemove = beginAtom->getIdx();
+      nbrIdx = endAtom->getIdx();
+    } else if (RDKit::isAtomTerminalRGroupOrQueryHydrogen(endAtom) &&
+               beginAtom->hasQuery()) {
+      atomIdxToRemove = endAtom->getIdx();
+      nbrIdx = beginAtom->getIdx();
+    }
+    if (atomIdxToRemove != -1) {
+      removedIdxToNbrIdx[atomIdxToRemove] = nbrIdx;
+    }
+  }
+  if (!removedIdxToNbrIdx.empty()) {
+    reducedTemplateMol.reset(new RDKit::RWMol(templateMol));
+    for (auto reducedTemplateAtom : reducedTemplateMol->atoms()) {
+      auto formerIdx = reducedTemplateAtom->getIdx();
+      reducedTemplateAtom->setProp(FORMER_IDX, formerIdx);
+      auto it = removedIdxToNbrIdx.find(formerIdx);
+      if (it != removedIdxToNbrIdx.end()) {
+        auto otherAtom = reducedTemplateMol->getAtomWithIdx(it->second);
+        std::vector<unsigned int> formerNbrIndices;
+        otherAtom->getPropIfPresent(FORMER_NBR_INDICES, formerNbrIndices);
+        formerNbrIndices.push_back(formerIdx);
+        otherAtom->setProp(FORMER_NBR_INDICES, formerNbrIndices);
+      }
+    }
+    reducedTemplateMol->beginBatchEdit();
+    for (const auto &pair : removedIdxToNbrIdx) {
+      reducedTemplateMol->removeAtom(
+          reducedTemplateMol->getAtomWithIdx(pair.first));
+    }
+    reducedTemplateMol->commitBatchEdit();
+  }
+  return reducedTemplateMol;
+}
+
+void reducedToFullMatches(const RDKit::RWMol &reducedQuery,
+                          const RDKit::RWMol &molHs,
+                          std::vector<RDKit::MatchVectType> &matches) {
+  boost::dynamic_bitset<> molHsMatches(molHs.getNumAtoms());
+  for (auto &match : matches) {
+    molHsMatches.reset();
+    for (const auto &pair : match) {
+      molHsMatches.set(pair.second);
+    }
+    RDKit::MatchVectType newMatch;
+    for (auto pairIt = match.begin(); pairIt != match.end(); ++pairIt) {
+      const auto reducedQueryAtom = reducedQuery.getAtomWithIdx(pairIt->first);
+      const auto molAtom = molHs.getAtomWithIdx(pairIt->second);
+      unsigned int formerIdx;
+      reducedQueryAtom->getProp(FORMER_IDX, formerIdx);
+      pairIt->first = formerIdx;
+      std::vector<unsigned int> formerNbrIndices;
+      reducedQueryAtom->getPropIfPresent(FORMER_NBR_INDICES, formerNbrIndices);
+      for (const auto &molNbr : molHs.atomNeighbors(molAtom)) {
+        if (formerNbrIndices.empty()) {
+          break;
+        }
+        auto molNbrIdx = molNbr->getIdx();
+        if (!molHsMatches.test(molNbrIdx)) {
+          auto formerNbrIdx = formerNbrIndices.back();
+          formerNbrIndices.pop_back();
+          newMatch.emplace_back(formerNbrIdx, molNbrIdx);
+        }
+      }
+    }
+    auto matchSize = match.size();
+    match.resize(matchSize + newMatch.size());
+    std::move(newMatch.begin(), newMatch.end(), match.begin() + matchSize);
+  }
+}
+
+bool invertWedgingIfMolHasFlipped(RDKit::ROMol &mol,
+                                  const RDGeom::Transform3D &trans) {
+  constexpr double FLIP_THRESHOLD = -0.99;
+  auto zRot = trans.getVal(2, 2);
+  bool shouldFlip = zRot < FLIP_THRESHOLD;
+  if (shouldFlip) {
+    RDKit::Chirality::invertMolBlockWedgingInfo(mol);
+  }
+  return shouldFlip;
+}
 }  // namespace RDDepict

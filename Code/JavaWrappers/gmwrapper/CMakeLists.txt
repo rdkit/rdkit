@@ -116,10 +116,7 @@ SWIG_ADD_LIBRARY(GraphMolWrap TYPE MODULE LANGUAGE java SOURCES GraphMolJava.i )
 # as of Oct 2012 using boost 1.51 under at least ubuntu 12.04 we get a
 # link error if they aren't there.
 SWIG_LINK_LIBRARIES(GraphMolWrap ${RDKit_Wrapper_Libs}
-      ${Boost_SERIALIZATION_LIBRARY} ${RDKit_THREAD_LIBS})
-
-MESSAGE("serial: ${Boost_SERIALIZATION_LIBRARY}")
-MESSAGE("THREAD: ${RDKit_THREAD_LIBS}")
+      rdkit_base ${RDKit_THREAD_LIBS})
 
 # code adapted from the wrapper code for
 # GDCM: http://gdcm.svn.sf.net/viewvc/gdcm/trunk/Wrapping/Java/CMakeLists.txt?view=markup
@@ -139,9 +136,7 @@ ADD_CUSTOM_COMMAND(
     ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar -C ${CMAKE_CURRENT_SOURCE_DIR}/build
     org/RDKit
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  #DEPENDS GraphMolWrap
   DEPENDS "${swig_generated_file_fullname}"
-  COMMENT "javac *.java; jar cf -> .jar"
 
   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
   ## Run Javadoc against newly created .java files to create docs
@@ -152,7 +147,6 @@ ADD_CUSTOM_COMMAND(
     ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
     doc
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  #DEPENDS GraphMolWrap
   DEPENDS "${swig_generated_file_fullname}"
   COMMENT "jar cf org.RDKitDoc.jar -d doc"
 )
@@ -306,6 +300,14 @@ ADD_TEST(JavaWrapperTests
     java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
 	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
 	org.RDKit.WrapperTests)
+ADD_TEST(JavaRascalMCES
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.RascalMCESTest)
+ADD_TEST(JavaQueryAtomTest
+    java -Djava.library.path=${CMAKE_CURRENT_SOURCE_DIR}
+	-cp "${JUNIT_JAR}${PATH_SEP}${CMAKE_JAVA_TEST_OUTDIR}${PATH_SEP}${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar"
+	org.RDKit.QueryAtomTest)
 
 if(RDK_BUILD_AVALON_SUPPORT)
    ADD_TEST(JavaAvalonTests

@@ -4,13 +4,14 @@ Replaced numpy.oldnumeric with numpy methods - Jan 2015, PGedeck
 """
 #pylint: disable=E1101,C0111,R0904
 
+import copy
+import math
+import unittest
+
+import numpy as np
 
 import rdkit.Numerics.rdAlignment as rdAlg
 from rdkit import Geometry
-import unittest
-import numpy as np
-import math
-import copy
 
 
 def lstFeq(l1, l2, tol=1.e-4):
@@ -38,8 +39,8 @@ class TestCase(unittest.TestCase):
 
   def test1Basic(self):
     # passing two numeric arrays
-    refPts = np.zeros((2, 3), np.float)
-    prbPts = np.zeros((2, 3), np.float)
+    refPts = np.zeros((2, 3), float)
+    prbPts = np.zeros((2, 3), float)
 
     refPts[1, 0] = 1.0
 
@@ -68,7 +69,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(res[0], 0.0))
 
     # mix it up
-    refPts = np.zeros((2, 3), np.float)
+    refPts = np.zeros((2, 3), float)
     refPts[1, 0] = 1.0
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 0.0))
@@ -76,10 +77,10 @@ class TestCase(unittest.TestCase):
   def test2Weights(self):
     refPts = np.array([[-math.cos(math.pi / 6), -math.sin(math.pi / 6), 0.0],
                        [math.cos(math.pi / 6), -math.sin(math.pi / 6), 0.0], [0.0, 1.0, 0.0]],
-                      np.float)
-    prbPts = np.array([[-2 * math.sin(math.pi / 6) + 3.0, 2 * math.cos(math.pi / 6), 4.0],
-                       [-2 * math.sin(math.pi / 6) + 3.0, -2 * math.cos(math.pi / 6), 4.0],
-                       [5.0, 0.0, 4.0]], np.float)
+                      float)
+    prbPts = np.array(
+      [[-2 * math.sin(math.pi / 6) + 3.0, 2 * math.cos(math.pi / 6), 4.0],
+       [-2 * math.sin(math.pi / 6) + 3.0, -2 * math.cos(math.pi / 6), 4.0], [5.0, 0.0, 4.0]], float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 3.0))
     target = [[-1.732, -1., 0.], [1.732, -1., 0.], [0., 2., 0.]]
@@ -88,7 +89,7 @@ class TestCase(unittest.TestCase):
       self.assertTrue(lstFeq(transformPoint(res[1], item), target[cnt]))
       cnt += 1
 
-    weights = np.array([1.0, 1.0, 2.0], np.float)
+    weights = np.array([1.0, 1.0, 2.0], float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, weights)
     self.assertTrue(feq(res[0], 3.75))
     cnt = 0
@@ -105,13 +106,11 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(res[0], 4.8))
 
   def test3tetra(self):
-    refPts = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
-                      np.float)
-    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 3.0, 3.0]], np.float)
+    refPts = np.array([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]], float)
+    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 3.0, 3.0]], float)
     self.assertRaises(ValueError, lambda: rdAlg.GetAlignmentTransform(refPts, prbPts))
 
-    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 3.0, 3.0], [2.0, 2.0, 4.0]],
-                      np.float)
+    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 3.0, 3.0], [2.0, 2.0, 4.0]], float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 0.0))
 
@@ -123,8 +122,7 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(res[0], 0.0))
 
     # test reflection
-    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 2.0, 4.0], [2.0, 3.0, 3.0]],
-                      np.float)
+    prbPts = np.array([[2.0, 2.0, 3.0], [3.0, 2.0, 3.0], [2.0, 2.0, 4.0], [2.0, 3.0, 3.0]], float)
     res = rdAlg.GetAlignmentTransform(refPts, prbPts, wts)
     self.assertTrue(feq(res[0], 1.0))
 
@@ -137,27 +135,35 @@ class TestCase(unittest.TestCase):
       cnt += 1
 
   def test4points(self):
-    refPts = (Geometry.Point3D(0.0, 0.0, 0.0),
-              Geometry.Point3D(1.0, 0.0, 0.0),
-              Geometry.Point3D(0.0, 1.0, 0.0),
-              Geometry.Point3D(0.0, 0.0, 1.0), )
-    prbPts = (Geometry.Point3D(2.0, 2.0, 3.0),
-              Geometry.Point3D(3.0, 2.0, 3.0),
-              Geometry.Point3D(2.0, 3.0, 3.0),
-              Geometry.Point3D(2.0, 2.0, 4.0), )
+    refPts = (
+      Geometry.Point3D(0.0, 0.0, 0.0),
+      Geometry.Point3D(1.0, 0.0, 0.0),
+      Geometry.Point3D(0.0, 1.0, 0.0),
+      Geometry.Point3D(0.0, 0.0, 1.0),
+    )
+    prbPts = (
+      Geometry.Point3D(2.0, 2.0, 3.0),
+      Geometry.Point3D(3.0, 2.0, 3.0),
+      Geometry.Point3D(2.0, 3.0, 3.0),
+      Geometry.Point3D(2.0, 2.0, 4.0),
+    )
 
     res = rdAlg.GetAlignmentTransform(refPts, prbPts)
     self.assertTrue(feq(res[0], 0.0))
 
   def test5errorHandling(self):
-    refPts = (Geometry.Point3D(0.0, 0.0, 0.0),
-              Geometry.Point3D(1.0, 0.0, 0.0),
-              Geometry.Point3D(0.0, 1.0, 0.0),
-              Geometry.Point3D(0.0, 0.0, 1.0), )
-    prbPts = (1,
-              2,
-              3,
-              4, )
+    refPts = (
+      Geometry.Point3D(0.0, 0.0, 0.0),
+      Geometry.Point3D(1.0, 0.0, 0.0),
+      Geometry.Point3D(0.0, 1.0, 0.0),
+      Geometry.Point3D(0.0, 0.0, 1.0),
+    )
+    prbPts = (
+      1,
+      2,
+      3,
+      4,
+    )
     self.assertRaises(ValueError, lambda: rdAlg.GetAlignmentTransform(refPts, prbPts))
     prbPts = ()
     self.assertRaises(ValueError, lambda: rdAlg.GetAlignmentTransform(refPts, prbPts))
@@ -165,10 +171,12 @@ class TestCase(unittest.TestCase):
     prbPts = 1
     self.assertRaises(ValueError, lambda: rdAlg.GetAlignmentTransform(refPts, prbPts))
 
-    prbPts = (Geometry.Point3D(2.0, 2.0, 3.0),
-              Geometry.Point3D(3.0, 2.0, 3.0),
-              Geometry.Point3D(2.0, 3.0, 3.0),
-              (2.0, 2.0, 5.0), )
+    prbPts = (
+      Geometry.Point3D(2.0, 2.0, 3.0),
+      Geometry.Point3D(3.0, 2.0, 3.0),
+      Geometry.Point3D(2.0, 3.0, 3.0),
+      (2.0, 2.0, 5.0),
+    )
     self.assertRaises(ValueError, lambda: rdAlg.GetAlignmentTransform(refPts, prbPts))
 
 

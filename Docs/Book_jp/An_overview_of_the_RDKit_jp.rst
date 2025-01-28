@@ -84,7 +84,7 @@ RDKitっていったい？
    ナノシステムのシミュレーションと適合モデリングのためのソフトウェア
 -  `mol_frame <https://github.com/apahl/mol_frame>`__ - DaskとPandas
    DataFrameのための化学構造の取り扱い 　
--  `RDKitjs <https://github.com/cheminfo/RDKitjs>`__ -
+-  `RDKit.js <https://github.com/rdkit/rdkit-js>`__ -
    JavasScriptのためのRDKit機能のポート
 -  `DeepChem <https://deepchem.io/>`__ -
    化学のためのディープラーニングのためのpythonライブラリ

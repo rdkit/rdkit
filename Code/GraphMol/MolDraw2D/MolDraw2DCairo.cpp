@@ -14,6 +14,7 @@
 #include <fstream>
 #include <GraphMol/MolDraw2D/MolDraw2DCairo.h>
 #include <GraphMol/MolDraw2D/DrawTextCairo.h>
+#include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #ifdef RDK_BUILD_FREETYPE_SUPPORT
 #include <GraphMol/MolDraw2D/DrawTextFTCairo.h>
 #endif
@@ -98,6 +99,12 @@ void MolDraw2DCairo::setColour(const DrawColour &col) {
   cairo_set_source_rgba(dp_cr, col.r, col.g, col.b, col.a);
 }
 
+namespace {
+void setDashes(cairo_t *dp_cr, const DashPattern &dashes) {
+  cairo_set_dash(dp_cr, dashes.data(), dashes.size(), 0);
+}
+}  // namespace
+
 // ****************************************************************************
 void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2,
                               bool rawCoords) {
@@ -106,19 +113,10 @@ void MolDraw2DCairo::drawLine(const Point2D &cds1, const Point2D &cds2,
   Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
 
   double width = getDrawLineWidth();
-  std::string dashString = "";
 
   cairo_set_line_width(dp_cr, width);
 
-  const DashPattern &dashes = dash();
-  if (dashes.size()) {
-    auto *dd = new double[dashes.size()];
-    std::copy(dashes.begin(), dashes.end(), dd);
-    cairo_set_dash(dp_cr, dd, dashes.size(), 0);
-    delete[] dd;
-  } else {
-    cairo_set_dash(dp_cr, nullptr, 0, 0);
-  }
+  setDashes(dp_cr, dash());
 
   cairo_move_to(dp_cr, c1.x, c1.y);
   cairo_line_to(dp_cr, c2.x, c2.y);
@@ -133,32 +131,25 @@ void MolDraw2DCairo::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   PRECONDITION(dp_cr, "no draw context");
   PRECONDITION(nSegments > 1, "too few segments");
 
-  if (nSegments % 2) {
-    ++nSegments;  // we're going to assume an even number of segments
-  }
-
-  Point2D delta = (cds2 - cds1);
-  Point2D perp(delta.y, -delta.x);
-  perp.normalize();
-  perp *= vertOffset;
-  delta /= nSegments;
-
-  Point2D c1 = rawCoords ? cds1 : getDrawCoords(cds1);
+  auto segments =
+      MolDraw2D_detail::getWavyLineSegments(cds1, cds2, nSegments, vertOffset);
 
   double width = getDrawLineWidth();
   cairo_set_line_width(dp_cr, width);
   cairo_set_dash(dp_cr, nullptr, 0, 0);
   setColour(col1);
+
+  auto c1 = std::get<0>(segments[0]);
+  c1 = rawCoords ? c1 : getDrawCoords(c1);
+
   cairo_move_to(dp_cr, c1.x, c1.y);
   for (unsigned int i = 0; i < nSegments; ++i) {
-    Point2D startpt = cds1 + delta * i;
-    Point2D segpt =
-        rawCoords ? startpt + delta : getDrawCoords(startpt + delta);
-    Point2D cpt1 = startpt + delta / 3. + perp * (i % 2 ? -1 : 1);
+    auto cpt1 = std::get<1>(segments[i]);
     cpt1 = rawCoords ? cpt1 : getDrawCoords(cpt1);
-    Point2D cpt2 = startpt + delta * 2. / 3. + perp * (i % 2 ? -1 : 1);
+    auto cpt2 = std::get<2>(segments[i]);
     cpt2 = rawCoords ? cpt2 : getDrawCoords(cpt2);
-    // if (i == nSegments / 2 && col2 != col1) setColour(col2);
+    auto segpt = std::get<3>(segments[i]);
+    segpt = rawCoords ? segpt : getDrawCoords(segpt);
     cairo_curve_to(dp_cr, cpt1.x, cpt1.y, cpt2.x, cpt2.y, segpt.x, segpt.y);
   }
   cairo_stroke(dp_cr);
@@ -177,7 +168,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds,
 
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
   cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_BEVEL);
-  cairo_set_dash(dp_cr, nullptr, 0, 0);
+  setDashes(dp_cr, dash());
   cairo_set_line_width(dp_cr, width);
 
   if (!cds.empty()) {
@@ -200,6 +191,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds,
 
 // ****************************************************************************
 void MolDraw2DCairo::clearDrawing() {
+  MolDraw2D::clearDrawing();
   PRECONDITION(dp_cr, "no draw context");
   setColour(drawOptions().backgroundColour);
   cairo_rectangle(dp_cr, offset().x, offset().y, width(), height());

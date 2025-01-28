@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE CDXML SYSTEM "http://www.cambridgesoft.com/xml/cdxml.dtd" >
+<CDXML
+ CreationProgram="ChemDraw 21.0.0.28"
+ Name="chemdraw_template3.cdxml"
+ BoundingBox="235.23 1352.88 278.70 1376.37"
+ WindowPosition="0 0"
+ WindowSize="0 0"
+ FractionalWidths="yes"
+ InterpretChemically="yes"
+ ShowAtomQuery="yes"
+ ShowAtomStereo="no"
+ ShowAtomEnhancedStereo="yes"
+ ShowAtomNumber="no"
+ ShowResidueID="no"
+ ShowBondQuery="yes"
+ ShowBondRxn="yes"
+ ShowBondStereo="no"
+ ShowTerminalCarbonLabels="no"
+ ShowNonTerminalCarbonLabels="no"
+ HideImplicitHydrogens="no"
+ LabelFont="21"
+ LabelSize="14.45"
+ LabelFace="96"
+ CaptionFont="21"
+ CaptionSize="14.45"
+ HashSpacing="3.62"
+ MarginWidth="2.32"
+ LineWidth="1.77"
+ BoldWidth="3.67"
+ BondLength="20.83"
+ BondSpacing="18"
+ ChainAngle="120"
+ LabelJustification="Auto"
+ CaptionJustification="Left"
+ AminoAcidTermini="HOH"
+ ShowSequenceTermini="yes"
+ ShowSequenceBonds="yes"
+ ShowSequenceUnlinkedBranches="no"
+ ResidueWrapCount="40"
+ ResidueBlockCount="10"
+ ResidueZigZag="yes"
+ NumberResidueBlocks="no"
+ PrintMargins="36 36 36 36"
+ MacPrintInfo="0003000000480048000000000300024CFFF4FFF4030C02580367052803FC0002000000480048000000000300024C000100000064000000010001010100000001270F000100010000000000000000000000000002001901900000000000400000000000000000000100000000000000000000000000000000"
+ ChemPropName=""
+ ChemPropFormula="Chemical Formula: "
+ ChemPropExactMass="Exact Mass: "
+ ChemPropMolWt="Molecular Weight: "
+ ChemPropMOverZ="m/z: "
+ ChemPropAnalysis="Elemental Analysis: "
+ ChemPropBoilingPt="Boiling Point: "
+ ChemPropMeltingPt="Melting Point: "
+ ChemPropCritTemp="Critical Temp: "
+ ChemPropCritPres="Critical Pres: "
+ ChemPropCritVol="Critical Vol: "
+ ChemPropGibbs="Gibbs Energy: "
+ ChemPropLogP="Log P: "
+ ChemPropMR="MR: "
+ ChemPropHenry="Henry&apos;s Law: "
+ ChemPropEForm="Heat of Form: "
+ ChemProptPSA="tPSA: "
+ ChemPropID=""
+ ChemPropFragmentLabel=""
+ color="0"
+ bgcolor="1"
+ RxnAutonumberStart="1"
+ RxnAutonumberConditions="no"
+ RxnAutonumberStyle="Roman"
+ RxnAutonumberFormat="(#)"
+><colortable>
+<color r="1" g="1" b="1"/>
+<color r="0" g="0" b="0"/>
+<color r="1" g="0" b="0"/>
+<color r="1" g="1" b="0"/>
+<color r="0" g="1" b="0"/>
+<color r="0" g="1" b="1"/>
+<color r="0" g="0" b="1"/>
+<color r="1" g="0" b="1"/>
+<color r="0.5020" g="0" b="0"/>
+</colortable><fonttable>
+<font id="21" charset="x-mac-roman" name="Helvetica"/>
+</fonttable><page
+ id="80151"
+ BoundingBox="0 0 1080 1440"
+ HeaderPosition="36"
+ FooterPosition="36"
+ PrintTrimMarks="yes"
+ HeightPages="2"
+ WidthPages="2"
+><fragment
+ id="14246"
+ BoundingBox="237.20 1352.88 278.70 1369.39"
+ Z="1479"
+><n
+ id="14247"
+ p="237.64 1368.62"
+ Z="1478"
+ AS="N"
+/><n
+ id="14248"
+ p="255.69 1358.20"
+ Z="1480"
+ NodeType="Nickname"
+ NeedsClean="yes"
+ AS="N"
+><fragment
+ id="80152"
+><n
+ id="14250"
+ p="255.69 1358.20"
+ Z="911"
+ Element="14"
+ NumHydrogens="0"
+ NeedsClean="yes"
+><t
+ p="255.69 1363.52"
+ BoundingBox="249.94 1352.88 261.13 1363.83"
+ LabelJustification="Center"
+ Justification="Center"
+ LabelAlignment="Center"
+><s font="21" size="14.45" color="0" face="96">Si</s></t></n><n
+ id="14251"
+ p="255.69 1379"
+ Z="912"
+/><n
+ id="14252"
+ p="273.71 1389.40"
+ Z="913"
+/><n
+ id="14253"
+ p="237.68 1347.80"
+ Z="914"
+/><n
+ id="14254"
+ p="237.68 1327"
+ Z="915"
+/><n
+ id="14255"
+ p="273.71 1347.80"
+ Z="916"
+/><n
+ id="14256"
+ p="291.72 1358.20"
+ Z="917"
+/><n
+ id="14257"
+ p="237.68 1368.60"
+ Z="918"
+ NodeType="ExternalConnectionPoint"
+ ExternalConnectionNum="1"
+/><b
+ id="14258"
+ Z="919"
+ B="14255"
+ E="14256"
+/><b
+ id="14259"
+ Z="920"
+ B="14253"
+ E="14254"
+/><b
+ id="14260"
+ Z="921"
+ B="14251"
+ E="14252"
+/><b
+ id="14261"
+ Z="922"
+ B="14250"
+ E="14251"
+/><b
+ id="14262"
+ Z="923"
+ B="14250"
+ E="14253"
+/><b
+ id="14263"
+ Z="924"
+ B="14250"
+ E="14255"
+/><b
+ id="14264"
+ Z="925"
+ B="14257"
+ E="14250"
+/></fragment><t
+ p="251.28 1363.52"
+ BoundingBox="251.51 1352.88 278.70 1363.83"
+ LabelJustification="Left"
+ LabelAlignment="Left"
+><s font="21" size="14.45" color="0" face="96">TES</s></t></n><b
+ id="14265"
+ Z="1481"
+ B="14247"
+ E="14248"
+ BS="N"
+ CrossingBonds="14297"
+/></fragment><fragment
+ id="14294"
+ BoundingBox="235.23 1356.84 250.71 1376.37"
+ Z="1487"
+><n
+ id="14295"
+ p="237.19 1358.30"
+ Z="1486"
+ AS="N"
+/><n
+ id="14296"
+ p="249.09 1375.39"
+ Z="1488"
+ AS="N"
+/><b
+ id="14297"
+ Z="1489"
+ Warning="This isolated bond is probably not intended to have chemical significance."
+ B="14295"
+ E="14296"
+ Display="Wavy"
+ BS="N"
+ CrossingBonds="14265"
+/></fragment><annotation
+ Keyword="GUID"
+ Content="a987bd67-a520-4e09-8594-58d9146c8351"
+/><annotation
+ Keyword="Name"
+ Content="Chimp"
+/></page></CDXML>

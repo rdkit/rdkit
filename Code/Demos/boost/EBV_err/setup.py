@@ -1,11 +1,12 @@
 # Run this with:
 #  python setup.py install --install-lib=.
 
-from distutils.core import setup, Extension
-import RDConfig
-
 # force the use of g++ please
 from distutils import sysconfig
+from distutils.core import Extension, setup
+
+import RDConfig
+
 save_init_posix = sysconfig._init_posix
 
 
@@ -47,13 +48,17 @@ libDirs.append(pyLibDir)
 libraries.append(boostLib)
 libraries.append("python2.2")
 
-compileArgs = ['-ftemplate-depth-150',
-               '-DBOOST_PYTHON_DYNAMIC_LIB',
-               boostInc, ]
-setup(name="crossTest", version="1.0",
-      ext_modules=[Extension("moduleA", ["wrapA.cpp"], include_dirs=incDirs, library_dirs=libDirs,
-                             libraries=libraries, extra_compile_args=compileArgs),
-                   Extension("moduleB", ["moduleB.cpp"], include_dirs=incDirs, library_dirs=libDirs,
-                             libraries=libraries, extra_compile_args=compileArgs),
-                   Extension("moduleC", ["wrapC.cpp"], include_dirs=incDirs, library_dirs=libDirs,
-                             libraries=libraries, extra_compile_args=compileArgs)])
+compileArgs = [
+  '-ftemplate-depth-150',
+  '-DBOOST_PYTHON_DYNAMIC_LIB',
+  boostInc,
+]
+setup(
+  name="crossTest", version="1.0", ext_modules=[
+    Extension("moduleA", ["wrapA.cpp"], include_dirs=incDirs, library_dirs=libDirs,
+              libraries=libraries, extra_compile_args=compileArgs),
+    Extension("moduleB", ["moduleB.cpp"], include_dirs=incDirs, library_dirs=libDirs,
+              libraries=libraries, extra_compile_args=compileArgs),
+    Extension("moduleC", ["wrapC.cpp"], include_dirs=incDirs, library_dirs=libDirs,
+              libraries=libraries, extra_compile_args=compileArgs)
+  ])

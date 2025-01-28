@@ -40,6 +40,6 @@ int main(int main, char **argv) {
 
   std::vector<double> rms_list;
   std::vector<unsigned int> m2cids(mol2_cids.begin(), mol2_cids.end());
-  RDKit::MolAlign::alignMolConformers( *mol2, nullptr, &m2cids, nullptr,
-				       false, 50, &rms_list);
+  RDKit::MolAlign::alignMolConformers(*mol2, nullptr, &m2cids, nullptr, false,
+                                      50, &rms_list);
 }

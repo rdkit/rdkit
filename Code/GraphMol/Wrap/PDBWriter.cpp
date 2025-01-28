@@ -25,9 +25,8 @@ namespace RDKit {
 using boost_adaptbx::python::streambuf;
 namespace {
 PDBWriter *getPDBWriter(python::object &fileobj, unsigned int flavor = 0) {
-  // FIX: minor leak here
   auto *sb = new streambuf(fileobj, 't');
-  auto *ost = new streambuf::ostream(*sb);
+  auto *ost = new streambuf::ostream(sb);
   return new PDBWriter(ost, true, flavor);
 }
 }  // namespace
@@ -38,15 +37,16 @@ std::string pdbwDocStr =
     "     - flavor: (optional) \n\n";
 struct pdbwriter_wrap {
   static void wrap() {
-    python::class_<PDBWriter>("PDBWriter",
-                              "A class for writing molecules to PDB files.",
-                              python::no_init)
+    python::class_<PDBWriter, boost::noncopyable>(
+        "PDBWriter", "A class for writing molecules to PDB files.",
+        python::no_init)
         .def("__init__",
              python::make_constructor(
                  &getPDBWriter, python::default_call_policies(),
                  (python::arg("fileObj"), python::arg("flavor") = 0)))
         .def(python::init<std::string, unsigned int>(
-            (python::arg("fileName"), python::arg("flavor") = 0),
+            (python::arg("self"), python::arg("fileName"),
+             python::arg("flavor") = 0),
             pdbwDocStr.c_str()))
         .def("__enter__", &MolIOEnter<PDBWriter>,
              python::return_internal_reference<>())
@@ -59,13 +59,13 @@ struct pdbwriter_wrap {
              "  ARGUMENTS:\n\n"
              "    - mol: the Mol to be written\n"
              "    - confId: (optional) ignored \n\n")
-        .def("flush", &PDBWriter::flush,
+        .def("flush", &PDBWriter::flush, python::args("self"),
              "Flushes the output file (forces the disk file to be "
              "updated).\n\n")
-        .def("close", &PDBWriter::close,
+        .def("close", &PDBWriter::close, python::args("self"),
              "Flushes the output file and closes it. The Writer cannot be used "
              "after this.\n\n")
-        .def("NumMols", &PDBWriter::numMols,
+        .def("NumMols", &PDBWriter::numMols, python::args("self"),
              "Returns the number of molecules written so far.\n\n");
   };
 };

@@ -2,9 +2,9 @@
 
 Below a number of installation recipes is presented, with varying degree of complexity.
 
-## Cross-platform under anaconda python (fastest install)
+## Cross-platform using Conda
 
-### Introduction to anaconda
+### Introduction to Conda
 
 Conda is an open-source, cross-platform, software package manager. It supports the packaging and distribution of software components, and manages their installation inside isolated execution environments. It has several analogies with pip and virtualenv, but it is designed to be more "python-agnostic" and more suitable for the distribution of binary packages and their dependencies.
 
@@ -16,19 +16,19 @@ The easiest way to get Conda is having it installed as part of the [Anaconda Pyt
 
 Creating a new conda environment with the RDKit installed requires one single command similar to the following::
 
-```shellsession
+```shell-session
 $ conda create -c conda-forge -n my-rdkit-env rdkit
 ```
 
 Finally, the new environment must be activated so that the corresponding python interpreter becomes available in the same shell:
 
-```shellsession
+```shell-session
 $ conda activate my-rdkit-env
 ```
 
 If for some reason this does not work, try:
 
-```shellsession
+```shell-session
 $ cd [anaconda folder]/bin
 $ source activate my-rdkit-env
 ```
@@ -119,6 +119,12 @@ cmake -DPy_ENABLE_SHARED=1 \
 
 And finally, `make`, `make install` and `ctest`
 
+The `ctest` build requires that the installation path (the root of the source tree with RDK_INSTALL_INTREE=ON as above) be set in the RDBASE environment variable, and that the location of the installed Python files and shared library files to use for the tests be properly specified. This can be done by setting environment variables for the ctest run as follows:
+
+```
+RDBASE=$PWD/.. PYTHONPATH=$RDBASE LD_LIBRARY_PATH=$RDBASE/lib:$LD_LIBRARY_PATH ctest
+```
+
 
 ### Installing and using PostgreSQL and the RDKit PostgreSQL cartridge from a conda environment
 
@@ -161,6 +167,18 @@ psql my_rdkit_db
 
 If you are trying to use multiple installations of PostgreSQL in different environments, you will need to setup different pid files, unix sockets and ports by [editing the PostgreSQL config files](https://opensourcedbms.com/dbms/running-multiple-postgresql-9-2-instances-on-one-server-in-centos-6rhel-6fedora/). With the above configurations these files can be found in /folder/where/data/should/be/stored.
 
+## Cross-platform using PIP
+
+Linux, Windows, and macOS RDKit platform wheels are available at the [rdkit ](https://pypi.org/project/rdkit/) PyPi repository for all major Python versions. You can install RDKit using pip.
+
+```sh
+pip install rdkit
+```
+
+Build information and details can be found at the [https://github.com/kuelumbus/rdkit-pypi](https://github.com/kuelumbus/rdkit-pypi) GitHub page. Please open an issue directly at this Github page if you find something not working as expected.
+
+Note: Older versions of RDKit might be available at the [`rdkit-pypi`](https://pypi.org/project/rdkit-pypi/) PyPi repository. `rdkit-pypi` is the old name of RDKit at PyPi.
+
 ## Linux and OS X
 
 ### Installation from repositories
@@ -169,7 +187,7 @@ If you are trying to use multiple installations of PostgreSQL in different envir
 
 Thanks to the efforts of the Debichem team, RDKit is available via the Ubuntu repositories. To install:
 
-```shellsession
+```shell-session
 $ sudo apt-get install python-rdkit librdkit1 rdkit-data
 ```
 
@@ -205,7 +223,7 @@ This means that the compilers used to build it cannot be completely ancient. Her
 > for building with XCode4 on OS X there seems to be a problem with the version of numpy that comes with XCode4. Please see below in the (see faq) section for a workaround.
 
 
-###### Installing Boost
+##### Installing Boost
 
 If your linux distribution has a boost-devel package with a version >= 1.58 including the python and serialization libraries, you can use that and save yourself the steps below.
 
@@ -227,7 +245,7 @@ If you have any problems with this step, check the boost [installation instructi
 
 Fetch the source, here as tar.gz but you could use git as well:
 
-```shellsession
+```shell-session
 $ wget https://github.com/rdkit/rdkit/archive/Release_XXXX_XX_X.tar.gz
 ```
 
@@ -257,7 +275,7 @@ See below for a list of FAQ and solutions.
 
 ##### Specifying install location
 
-You need to turn `RDK_INSTALL_INTRE` off:
+You need to turn `RDK_INSTALL_INTREE` off:
 
 ```
 cmake -DRDK_INSTALL_INTREE=OFF -DCMAKE_INSTALL_PREFIX=/path/as/you/like ..
@@ -337,26 +355,6 @@ Type "copyright", "credits" or "license" for more information.
 #### Frequently Encountered Problems
 
 In each case I've replaced specific pieces of the path with `...`.
-
-*Problem:* :
-
-```
-Linking CXX shared library libSLNParse.so
-/usr/bin/ld: .../libboost_regex.a(cpp_regex_traits.o): relocation R_X86_64_32S against `std::basic_string<char, std::char_traits<char>, std::allocator<char> >::_Rep::_S_empty_rep_storage' can not be used when making a shared object; recompile with -fPIC
-.../libboost_regex.a: could not read symbols: Bad value
-collect2: ld returned 1 exit status
-make[2]: *** [Code/GraphMol/SLNParse/libSLNParse.so] Error 1
-make[1]: *** [Code/GraphMol/SLNParse/CMakeFiles/SLNParse.dir/all] Error 2
-make: *** [all] Error 2
-```
-
-*Solution:*
-
-Add this to the arguments when you call cmake: `-DBoost_USE_STATIC_LIBS=OFF`
-
-More information here: http://www.mail-archive.com/rdkit-discuss@lists.sourceforge.net/msg01119.html
-
-* * * * *
 
 *Problem:* :
 
@@ -461,15 +459,15 @@ This section assumes that python is installed in `C:\Python36 that the boost lib
 #### Building from the command line (recommended)
 
 -   Create a directory `C:\RDKit\build` and cd into it
--   Run cmake. Here's an example basic command line for 64bit windows that will download the InChI and Avalon toolkit sources from the InChI Trust and SourceForge repositories, respectively, and build the PostgreSQL cartridge for the installed version of PostgreSQL:  
+-   Run cmake. Here's an example basic command line for 64bit windows that will download the InChI and Avalon toolkit sources from the InChI Trust and SourceForge repositories, respectively, and build the PostgreSQL cartridge for the installed version of PostgreSQL:
   `cmake -DRDK_BUILD_PYTHON_WRAPPERS=ON -DBOOST_ROOT=C:/boost -DRDK_BUILD_INCHI_SUPPORT=ON -DRDK_BUILD_AVALON_SUPPORT=ON -DRDK_BUILD_PGSQL=ON -DPostgreSQL_ROOT="C:\Program Files\PostgreSQL\9.5" -G"Visual Studio 14 2015 Win64" ..`
--   Build the code. Here's an example command line:  
+-   Build the code. Here's an example command line:
   `C:/Windows/Microsoft.NET/Framework64/v4.0.30319/MSBuild.exe /m:4 /p:Configuration=Release INSTALL.vcxproj`
 -   If you have built in PostgreSQL support, you will need to open a shell with administrator privileges, stop the PostgreSQL service, run the `pgsql_install.bat` installation script, then restart the PostgreSQL service (please refer to `%RDBASE%\Code\PgSQL\rdkit\README` for further details):
     -   `"C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" -N "postgresql-9.5" -D "C:\Program Files\PostgreSQL\9.5\data" -w stop`
     -   `C:\RDKit\build\Code\PgSQL\rdkit\pgsql_install.bat`
     -   `"C:\Program Files\PostgreSQL\9.5\bin\pg_ctl.exe" -N "postgresql-9.5" -D "C:\Program Files\PostgreSQL\9.5\data" -w start`
-    -   Before restarting the PostgreSQL service, make sure that the Boost libraries the RDKit was built against are in the system PATH, or PostgreSQL will fail to create the `rdkit` extension with a deceptive error message such as:  
+    -   Before restarting the PostgreSQL service, make sure that the Boost libraries the RDKit was built against are in the system PATH, or PostgreSQL will fail to create the `rdkit` extension with a deceptive error message such as:
       `ERROR: could not load library "C:/Program Files/PostgreSQL/9.5/lib/rdkit.dll": The specified module could not be found.`
 
 

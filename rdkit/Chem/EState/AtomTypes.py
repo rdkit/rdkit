@@ -13,6 +13,7 @@
  defined in: Hall and Kier JCICS _35_ 1039-1045 (1995)  Table 1
 """
 import sys
+
 from rdkit import Chem
 
 _rawD = [
@@ -137,7 +138,7 @@ def TypeAtoms(mol):
         res[idx] = [name]
       elif name not in res[idx]:
         res[idx].append(name)
-  
+
   for i, v in enumerate(res):
     if v is not None:
       res[i] = tuple(v)

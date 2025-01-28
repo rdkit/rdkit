@@ -36,6 +36,8 @@
 %{
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/TautomerQuery/TautomerQuery.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
+using RDKit::GeneralizedSubstruct::ExtendedQueryMol;
 %}
 %shared_ptr(RDKit::TautomerQuery)
 %shared_ptr(RDKit::MolHolderBase)
@@ -52,14 +54,21 @@
 %template(UChar_Vect) std::vector<unsigned char>;
 
 %typemap(javacode) RDKit::SubstructLibrary %{
-     public static SubstructLibrary Deserialize(byte[] b) {
-     UChar_Vect vec = new UChar_Vect();
-     vec.reserve(b.length);
-     for (int size=0;size<b.length;++size) {
-       vec.add(b[size]);
-     }
-     return new SubstructLibrary(vec);
-   }
+  public static SubstructLibrary Deserialize(byte[] b) {
+    UChar_Vect vec = null;
+    try {
+      vec = new UChar_Vect();
+      vec.reserve(b.length);
+      for (int size=0;size<b.length;++size) {
+        vec.add((short)b[size]);
+      }
+      return new SubstructLibrary(vec);
+    } finally {
+      if (vec != null) {
+        vec.delete();
+      }
+    }
+  }
 %}
 
 %extend RDKit::SubstructLibrary {
@@ -68,7 +77,7 @@
     return new RDKit::SubstructLibrary(str);
   }
 
-  bool canSerialize() const {
+  static bool canSerialize() {
     return RDKit::SubstructLibraryCanSerialize();
   }
 }
@@ -95,10 +104,13 @@
 %extend RDKit::SubstructLibrary {
  %template(getMatches) getMatches<ROMol>;
  %template(getMatches) getMatches<TautomerQuery>;
+ %template(getMatches) getMatches<RDKit::GeneralizedSubstruct::ExtendedQueryMol>;
  %template(countMatches) countMatches<ROMol>;
  %template(countMatches) countMatches<TautomerQuery>;
+ %template(countMatches) countMatches<ExtendedQueryMol>;
  %template(hasMatch) hasMatch<ROMol>;
  %template(hasMatch) hasMatch<TautomerQuery>;
+ %template(hasMatch) hasMatch<ExtendedQueryMol>;
 }
 
 
@@ -107,7 +119,7 @@
      UChar_Vect vec = new UChar_Vect();
      vec.reserve(b.length);
      for (int size=0;size<b.length;++size) {
-       vec.add(b[size]);
+       vec.add((short)b[size]);
      }
      return new SubstructLibrary(vec);
    }

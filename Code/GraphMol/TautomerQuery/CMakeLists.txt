@@ -1,3 +1,6 @@
+if(NOT RDK_USE_BOOST_SERIALIZATION)
+    message("== Making TautomerQuery without boost Serialization support")
+endif()
 
 rdkit_library(TautomerQuery 
               TautomerQuery.cpp

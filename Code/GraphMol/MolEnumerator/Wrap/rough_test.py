@@ -8,10 +8,10 @@
 #  of the RDKit source tree.
 #
 
-from rdkit import RDConfig
-from rdkit import Chem
-from rdkit.Chem import rdMolEnumerator
 import unittest
+
+from rdkit import Chem, RDConfig
+from rdkit.Chem import rdMolEnumerator
 
 
 class TestCase(unittest.TestCase):

@@ -77,39 +77,47 @@
       std::string err="ChemicalReactionException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::ChemicalReactionParserException &e) {
       std::string err="ChemicalReactionParserException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::ConformerException &e) {
       std::string err="ConformerException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::MolPicklerException &e) {
       std::string err="MolPicklerException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
     catch (RDKit::MolSanitizeException &e) {
       std::string err="MolSanitizeException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
-    catch (RDKit::SmilesParseException e) {
+    catch (RDKit::SmilesParseException &e) {
       std::string err="SmilesParseException: ";
       err+=e.what();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
-    catch (KeyErrorException e) {
+    catch (KeyErrorException &e) {
       std::string err="KeyError: ";
       err+=e.key();
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, err.c_str());
+      return $null;
     }
-    catch (std::exception e) {
+    catch (std::exception &e) {
       SWIG_CSharpSetPendingException(SWIG_CSharpApplicationException, "error");
+      return $null;
     }
 }
 
@@ -150,6 +158,7 @@ typedef unsigned long long int	uintmax_t;
 
 %shared_ptr(std::exception)
 %shared_ptr(RDKit::RDProps)
+%shared_ptr(RDKit::Conformer)
 %shared_ptr(RDKit::ROMol)
 %shared_ptr(RDKit::RWMol)
 %shared_ptr(RDKit::Atom)
@@ -159,18 +168,20 @@ typedef unsigned long long int	uintmax_t;
 %shared_ptr(RDKit::QueryAtom)
 %shared_ptr(RDKit::QueryBond)
 %shared_ptr(RDKit::QueryOps)
+%shared_ptr(RDKit::MolBundle)
+%shared_ptr(RDKit::FixedMolSizeMolBundle)
 %shared_ptr(RDKit::MolSanitizeException)
 %shared_ptr(RDKit::AtomSanitizeException)
 %shared_ptr(RDKit::AtomValenceException)
 %shared_ptr(RDKit::AtomKekulizeException)
 %shared_ptr(RDKit::KekulizeException)
-%shared_ptr(RDKit::SmilesParseException)
+%shared_ptr(RDKit::SmilesParse::SmilesParseException)
 %shared_ptr(RDKit::RingInfo)
 %shared_ptr(RDKit::ChemicalReaction)
 %shared_ptr(ForceFields::ForceFieldContrib);
 %shared_ptr(ForceFields::UFF::AngleBendContrib);
 %shared_ptr(ForceFields::UFF::BondStretchContrib);
-%shared_ptr(ForceFields::UFF::DistanceConstraintContrib);
+%shared_ptr(ForceFields::DistanceConstraintContrib);
 %shared_ptr(ForceFields::UFF::vdWContrib);
 %shared_ptr(ForceFields::UFF::TorsionAngleContrib);
 %shared_ptr(ForceFields::UFF::InversionContrib);
@@ -191,6 +202,7 @@ typedef unsigned long long int	uintmax_t;
 // Conformer seems to need to come before ROMol
 %include "../Conformer.i"
 %include "../Dict.i"
+%include "../RDLogger.i"
 %include "../RDProps.i"
 %include "../StereoGroup.i"
 %include "../ROMol.i"
@@ -205,6 +217,7 @@ typedef unsigned long long int	uintmax_t;
 %include "../QueryAtom.i"
 %include "../QueryBond.i"
 %include "../QueryOps.i"
+%include "../MolBundle.i"
 %include "../MonomerInfo.i"
 %include "../PeriodicTable.i"
 %include "../SanitException.i"
@@ -232,14 +245,19 @@ typedef unsigned long long int	uintmax_t;
 %include "../MolDraw2D.i"
 %include "../FilterCatalog.i"
 %include "../Trajectory.i"
+%include "../MolStandardize.i"
 %include "../RGroupDecomposition.i"
 %include "../SubstructLibrary.i"
 %include "../ScaffoldNetwork.i"
 %include "../TautomerQuery.i"
+%include "../MolEnumerator.i"
 %include "../SubstanceGroup.i"
 %include "../MolHash.i"
 %include "../Abbreviations.i"
 %include "../Streams.i"
+%include "../GeneralizedSubstruct.i"
+%include "../RascalMCES.i"
+%include "../Queries.i"
 
 
 // Create a class to throw various sorts of errors for testing.  Required for unit tests in ErrorHandlingTests.java
@@ -303,7 +321,7 @@ typedef unsigned long long int	uintmax_t;
   double getElement(int i) {
     return (*($self))[i];
   }
-  double setElement(int i, double value) {
+  void setElement(int i, double value) {
     (*($self))[i] = value;
   }
 }
@@ -311,7 +329,7 @@ typedef unsigned long long int	uintmax_t;
   int getElement(int i) {
     return (*($self))[i];
   }
-  int setElement(int i, int value) {
+  void setElement(int i, int value) {
     (*($self))[i] = value;
   }
 }
@@ -330,4 +348,9 @@ typedef unsigned long long int	uintmax_t;
 %{
 #include <RDGeneral/versions.h>
 %}
+
+%immutable RDKit::rdkitVersion;
+%immutable RDKit::boostVersion;
+%immutable RDKit::rdkitBuild;
+
 %include <RDGeneral/versions.h>

@@ -93,7 +93,7 @@ if(RDK_BUILD_INCHI_SUPPORT)
   rdkit_test(testInchi test.cpp
     LINK_LIBRARIES
     RDInchiLib 
-    FileParsers SmilesParse Descriptors )
+    FileParsers SmilesParse )
 endif(RDK_BUILD_INCHI_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
@@ -101,11 +101,13 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   if(RDK_BUILD_INCHI_SUPPORT)
    add_custom_command(TARGET inchi_support
                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py
-                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
+                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py
+                  POST_BUILD)
   else(RDK_BUILD_INCHI_SUPPORT)
     add_custom_command(TARGET inchi_support
                   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
-                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
+                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py
+                  POST_BUILD)
   endif(RDK_BUILD_INCHI_SUPPORT)
   get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
   set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES

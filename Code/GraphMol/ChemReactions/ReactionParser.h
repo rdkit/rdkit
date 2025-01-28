@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007-2022, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2024, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
@@ -39,13 +39,17 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <utility>
 #include <boost/format.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>
+#include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 namespace RDKit {
+class ROMol;
 class ChemicalReaction;
 
 //! used to indicate an error in parsing reaction data
@@ -65,9 +69,30 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
   std::string _msg;
 };
 
+namespace v2 {
+namespace ReactionParser {
+struct RDKIT_CHEMREACTIONS_EXPORT ReactionSmartsParserParams {
+  bool sanitize = false; /**< sanitize the molecules after building them */
+  std::map<std::string, std::string>
+      replacements;          /**< allows SMILES "macros" */
+  bool allowCXSMILES = true; /**< recognize and parse CXSMILES*/
+  bool strictCXSMILES =
+      true; /**< throw an exception if the CXSMILES parsing fails */
+};
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction> ReactionFromSmarts(
+    const std::string &smarts,
+    const ReactionSmartsParserParams &params = ReactionSmartsParserParams());
+
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction> ReactionFromSmiles(
+    const std::string &smarts,
+    const ReactionSmartsParserParams &params = ReactionSmartsParserParams());
+}  // namespace ReactionParser
+}  // namespace v2
+
+inline namespace v1 {
 //---------------------------------------------------------------------------
 //! \name Reaction SMARTS/SMILES Support
-//@{
+//! @{
 
 //! Parse a string containing "Reaction SMARTS" into a ChemicalReaction
 /*!
@@ -86,23 +111,68 @@ class RDKIT_CHEMREACTIONS_EXPORT ChemicalReactionParserException
    \param allowCXSMILES     if set, any CXSMILES extensions present will be
    parsed, otherwise it will be ignored
  */
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnSmartsToChemicalReaction(
+inline ChemicalReaction *RxnSmartsToChemicalReaction(
     const std::string &text,
     std::map<std::string, std::string> *replacements = nullptr,
-    bool useSmiles = false, bool allowCXSMILES = true);
-
+    bool useSmiles = false, bool allowCXSMILES = true) {
+  v2::ReactionParser::ReactionSmartsParserParams params;
+  if (replacements) {
+    params.replacements = *replacements;
+  }
+  params.allowCXSMILES = allowCXSMILES;
+  if (useSmiles) {
+    return v2::ReactionParser::ReactionFromSmiles(text, params).release();
+  } else {
+    return v2::ReactionParser::ReactionFromSmarts(text, params).release();
+  }
+}
+}  // namespace v1
 //! returns the reaction SMARTS for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmarts(
-    const ChemicalReaction &rxn);
+    const ChemicalReaction &rxn, const SmilesWriteParams &params);
+//! \overload
+inline std::string ChemicalReactionToRxnSmarts(const ChemicalReaction &rxn) {
+  SmilesWriteParams params;
+  params.canonical = false;
+  return ChemicalReactionToRxnSmarts(rxn, params);
+}
 
 //! returns the reaction SMILES for a reaction
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnSmiles(
-    const ChemicalReaction &rxn, bool canonical = true);
-//@}
+    const ChemicalReaction &rxn,
+    const SmilesWriteParams &params = SmilesWriteParams());
+//! \overload
+inline std::string ChemicalReactionToRxnSmiles(const ChemicalReaction &rxn,
+                                               bool canonical) {
+  SmilesWriteParams params;
+  params.canonical = canonical;
+  return ChemicalReactionToRxnSmiles(rxn, params);
+}
+
+//! returns the reaction SMARTS for a reaction with CX extension
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToCXRxnSmarts(const ChemicalReaction &rxn,
+                                        const SmilesWriteParams &params, std::uint32_t flags = SmilesWrite::CXSmilesFields::CX_ALL);
+//! \overload
+inline std::string ChemicalReactionToCXRxnSmarts(const ChemicalReaction &rxn) {
+  SmilesWriteParams params;
+  params.canonical = false;
+  return ChemicalReactionToCXRxnSmarts(rxn, params);
+}
+
+//! returns the reaction SMILES for a reaction with CX extension
+RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToCXRxnSmiles(const ChemicalReaction &rxn,
+                                        const SmilesWriteParams &params, std::uint32_t flags = SmilesWrite::CXSmilesFields::CX_ALL);
+//! \overload
+inline std::string ChemicalReactionToCXRxnSmiles(const ChemicalReaction &rxn, bool canonical = true) {
+  SmilesWriteParams params;
+  params.canonical = canonical;
+  return ChemicalReactionToCXRxnSmiles(rxn, params);
+}
+//! @}
 
 //---------------------------------------------------------------------------
 //! \name Reaction Mol Support
-//@{
+//! @{
 
 //! Parse a ROMol into a ChemicalReaction, RXN role must be set before
 /*!
@@ -118,24 +188,64 @@ RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnMolToChemicalReaction(
 //! returns a ROMol with RXN roles used to describe the reaction
 RDKIT_CHEMREACTIONS_EXPORT ROMol *ChemicalReactionToRxnMol(
     const ChemicalReaction &rxn);
-//@}
+//! @}
 
 //---------------------------------------------------------------------------
 //! \name MDL rxn Support
-//@{
+//! @{
+namespace v2 {
+namespace ReactionParser {
 
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction>
+ReactionFromRxnBlock(const std::string &rxnBlock,
+                     const FileParsers::MolFileParserParams &params =
+                         FileParsers::MolFileParserParams());
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction>
+ReactionFromRxnFile(const std::string &fileName,
+                    const FileParsers::MolFileParserParams &params =
+                        FileParsers::MolFileParserParams());
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction>
+ReactionFromRxnDataStream(std::istream &rxnStream, unsigned int &line,
+                          const FileParsers::MolFileParserParams &params =
+                              FileParsers::MolFileParserParams());
+
+}  // namespace ReactionParser
+}  // namespace v2
+inline namespace v1 {
 //! Parse a text block in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnBlockToChemicalReaction(
-    const std::string &rxnBlock, bool sanitize = false, bool removeHs = false,
-    bool strictParsing = true);
+inline ChemicalReaction *RxnBlockToChemicalReaction(const std::string &rxnBlock,
+                                                    bool sanitize = false,
+                                                    bool removeHs = false,
+                                                    bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams params;
+  params.sanitize = sanitize;
+  params.removeHs = removeHs;
+  params.strictParsing = strictParsing;
+  return v2::ReactionParser::ReactionFromRxnBlock(rxnBlock, params).release();
+}
 //! Parse a file in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnFileToChemicalReaction(
-    const std::string &fileName, bool sanitize = false, bool removeHs = false,
-    bool strictParsing = true);
+inline ChemicalReaction *RxnFileToChemicalReaction(const std::string &fileName,
+                                                   bool sanitize = false,
+                                                   bool removeHs = false,
+                                                   bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams params;
+  params.sanitize = sanitize;
+  params.removeHs = removeHs;
+  params.strictParsing = strictParsing;
+  return v2::ReactionParser::ReactionFromRxnFile(fileName, params).release();
+}
 //! Parse a text stream in MDL rxn format into a ChemicalReaction
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *RxnDataStreamToChemicalReaction(
+inline ChemicalReaction *RxnDataStreamToChemicalReaction(
     std::istream &rxnStream, unsigned int &line, bool sanitize = false,
-    bool removeHs = false, bool strictParsing = true);
+    bool removeHs = false, bool strictParsing = true) {
+  v2::FileParsers::MolFileParserParams params;
+  params.sanitize = sanitize;
+  params.removeHs = removeHs;
+  params.strictParsing = strictParsing;
+  return v2::ReactionParser::ReactionFromRxnDataStream(rxnStream, line, params)
+      .release();
+}
+}  // namespace v1
 //! returns an rxn block for a reaction
 /*!
    \param rxn            chemical reaction
@@ -161,11 +271,11 @@ RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToRxnBlock(
 RDKIT_CHEMREACTIONS_EXPORT std::string ChemicalReactionToV3KRxnBlock(
     const ChemicalReaction &rxn, bool separateAgents = false);
 
-//@}
+//! @}
 
 //---------------------------------------------------------------------------
 //! \name PNG Support
-//@{
+//! @{
 
 //! Tags used for PNG metadata
 namespace PNGData {
@@ -175,34 +285,66 @@ RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnRxnTag;
 RDKIT_CHEMREACTIONS_EXPORT extern const std::string rxnPklTag;
 }  // namespace PNGData
 
+namespace v2 {
+namespace ReactionParser {
+
 //! \brief constructs a ChemicalReaction from the metadata in a PNG stream
 /*!
 
-Looks through the metadata in the PNG to find the first tag that matches one of
-the tags in \c RDKit::PNGData. A molecule is constructed from this chunk.
+Looks through the metadata in the PNG to find the first tag that matches one
+of the tags in \c RDKit::PNGData. A reaction is constructed from this chunk.
+
+Throws a \c FileParseException if no suitable tag is found.
+
+ */
+RDKIT_CHEMREACTIONS_EXPORT std::unique_ptr<ChemicalReaction>
+ReactionFromPNGStream(std::istream &pngStream);
+//! \brief constructs a ChemicalReaction from the metadata in a PNG string
+//! See \c PNGStreamToChemicalReaction() for more details
+inline std::unique_ptr<ChemicalReaction> ReactionFromPNGString(
+    const std::string &data) {
+  std::stringstream inStream(data);
+  return ReactionFromPNGStream(inStream);
+};
+//! \brief constructs a ChemicalReaction from the metadata in a PNG file
+//! See \c PNGStreamToChemicalReaction() for more details
+inline std::unique_ptr<ChemicalReaction> ReactionFromPNGFile(
+    const std::string &fname) {
+  std::ifstream inStream(fname.c_str(), std::ios::binary);
+  if (!inStream || (inStream.bad())) {
+    throw BadFileException((boost::format("Bad input file %s") % fname).str());
+  }
+  return ReactionFromPNGStream(inStream);
+};
+}  // namespace ReactionParser
+}  // namespace v2
+
+inline namespace v1 {
+//! \brief constructs a ChemicalReaction from the metadata in a PNG stream
+/*!
+
+Looks through the metadata in the PNG to find the first tag that matches one
+of the tags in \c RDKit::PNGData. A reaction is constructed from this chunk.
 
 Throws a \c FileParseException if no suitable tag is found.
 
 The caller is responsible for the returned pointer.
 
  */
-RDKIT_CHEMREACTIONS_EXPORT ChemicalReaction *PNGStreamToChemicalReaction(
-    std::istream &pngStream);
+inline ChemicalReaction *PNGStreamToChemicalReaction(std::istream &pngStream) {
+  return v2::ReactionParser::ReactionFromPNGStream(pngStream).release();
+}
 //! \brief constructs a ChemicalReaction from the metadata in a PNG string
 //! See \c PNGStreamToChemicalReaction() for more details
 inline ChemicalReaction *PNGStringToChemicalReaction(const std::string &data) {
-  std::stringstream inStream(data);
-  return PNGStreamToChemicalReaction(inStream);
-};
+  return v2::ReactionParser::ReactionFromPNGString(data).release();
+}
 //! \brief constructs a ChemicalReaction from the metadata in a PNG file
 //! See \c PNGStreamToChemicalReaction() for more details
 inline ChemicalReaction *PNGFileToChemicalReaction(const std::string &fname) {
-  std::ifstream inStream(fname.c_str(), std::ios::binary);
-  if (!inStream || (inStream.bad())) {
-    throw BadFileException((boost::format("Bad input file %s") % fname).str());
-  }
-  return PNGStreamToChemicalReaction(inStream);
-};
+  return v2::ReactionParser::ReactionFromPNGFile(fname).release();
+}
+}  // namespace v1
 
 //! \brief adds metadata for a ChemicalReaction to the data from a PNG stream.
 //! The modified PNG data is returned.
@@ -244,31 +386,48 @@ inline std::string addChemicalReactionToPNGFile(const ChemicalReaction &rxn,
   return addChemicalReactionToPNGStream(
       rxn, inStream, includePkl, includeSmiles, includeSmarts, includeRxn);
 }
-//@}
+//! @}
 
 inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmarts(const char *text,
                                                                size_t len) {
   std::string sma(text, len);
-  ChemicalReaction *ptr = nullptr;
+  std::unique_ptr<ChemicalReaction> ptr;
   try {
-    ptr = RxnSmartsToChemicalReaction(sma);
+    ptr = v2::ReactionParser::ReactionFromSmarts(sma);
   } catch (...) {
     ptr = nullptr;
   }
-  return std::unique_ptr<ChemicalReaction>(ptr);
+  return ptr;
 }
 inline std::unique_ptr<ChemicalReaction> operator"" _rxnsmiles(const char *text,
                                                                size_t len) {
   std::string sma(text, len);
-  ChemicalReaction *ptr = nullptr;
+  std::unique_ptr<ChemicalReaction> ptr;
   try {
-    ptr = RxnSmartsToChemicalReaction(sma, nullptr, true);
+    ptr = v2::ReactionParser::ReactionFromSmiles(sma);
   } catch (...) {
     ptr = nullptr;
   }
-  return std::unique_ptr<ChemicalReaction>(ptr);
+  return ptr;
 }
 
-}  // namespace RDKit
+//---------------------------------------------------------------------------
+//! \name CDXML rxn Support
+///@{
 
+//! Parse text in CDXML rxn format into a vector of ChemicalReactions
+RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+CDXMLToChemicalReactions(const std::string &rxnBlock, bool sanitize = false,
+                         bool removeHs = false);
+//! Parse a file in CDXML rxn format into a vector of ChemicalReactions
+RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+CDXMLFileToChemicalReactions(const std::string &fileName, bool sanitize = false,
+                             bool removeHs = false);
+//! Parse a text stream in CDXML rxn format into a vector of ChemicalReactions
+RDKIT_CHEMREACTIONS_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+CDXMLDataStreamToChemicalReactions(std::istream &rxnStream,
+                                   bool sanitize = false,
+                                   bool removeHs = false);
+
+}  // namespace RDKit
 #endif

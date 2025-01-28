@@ -97,7 +97,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
   void setDescription(const std::string &description);
 
   //! \name Properties
-  //@{
+  //! @{
 
   //! returns a list with the names of our \c properties
   STR_VECT getPropList() const { return d_props.keys(); }
@@ -230,7 +230,7 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
     RDUNUSED_PARAM(version);
     registerFilterMatcherTypes(ar);
 
-    ar &d_matcher;
+    ar & d_matcher;
     // we only save string based props here...
     STR_VECT keys = d_props.keys();
     std::vector<std::string> string_props;
@@ -241,12 +241,12 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
           string_props.push_back(keys[i]);
           string_props.push_back(val);
         }
-      } catch (const boost::bad_any_cast &) {
+      } catch (const std::bad_any_cast &) {
         // pass, can't serialize
         // warning, this changes properties types, see Dict.cpp
       }
     }
-    ar &string_props;
+    ar & string_props;
   }
 
   template <class Archive>
@@ -254,9 +254,9 @@ class RDKIT_FILTERCATALOG_EXPORT FilterCatalogEntry
     RDUNUSED_PARAM(version);
     registerFilterMatcherTypes(ar);
 
-    ar &d_matcher;
+    ar & d_matcher;
     std::vector<std::string> string_props;
-    ar &string_props;
+    ar & string_props;
     d_props.reset();
 
     for (size_t i = 0; i < string_props.size() / 2; ++i) {

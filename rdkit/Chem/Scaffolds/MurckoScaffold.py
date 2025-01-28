@@ -9,10 +9,12 @@
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
-murckoTransforms = [AllChem.ReactionFromSmarts('[*:1]-[!#1;D1]>>[*:1][H]'),
-                    AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]#[AD1]>>[*:1][H]'),
-                    AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]=[AD1]>>[*:1][H]'),
-                    AllChem.ReactionFromSmarts('[*:1]-[!#1;D3](=[AD1])=[AD1]>>[*:1][H]')]
+murckoTransforms = [
+  AllChem.ReactionFromSmarts('[*:1]-[!#1;D1]>>[*:1][H]'),
+  AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]#[AD1]>>[*:1][H]'),
+  AllChem.ReactionFromSmarts('[*:1]-[!#1;D2]=[AD1]>>[*:1][H]'),
+  AllChem.ReactionFromSmarts('[*:1]-[!#1;D3](=[AD1])=[AD1]>>[*:1][H]')
+]
 
 
 def MakeScaffoldGeneric(mol):
@@ -37,6 +39,7 @@ def MakeScaffoldGeneric(mol):
     if atom.GetAtomicNum() != 1:
       atom.SetAtomicNum(6)
     atom.SetIsAromatic(False)
+    atom.SetIsotope(0)
     atom.SetFormalCharge(0)
     atom.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
     atom.SetNoImplicit(0)
@@ -47,8 +50,10 @@ def MakeScaffoldGeneric(mol):
   return Chem.RemoveHs(res)
 
 
-murckoPatts = ['[!#1;D3;$([D3]-[!#1])](=[AD1])=[AD1]', '[!#1;D2;$([D2]-[!#1])]=,#[AD1]',
-               '[!#1;D1;$([D1]-[!#1;!n])]']
+murckoPatts = [
+  '[!#1;D3;$([D3]-[!#1])](=[AD1])=[AD1]', '[!#1;D2;$([D2]-[!#1])]=,#[AD1]',
+  '[!#1;D1;$([D1]-[!#1;!n])]'
+]
 murckoQ = '[' + ','.join(['$(%s)' % x for x in murckoPatts]) + ']'
 murckoQ = Chem.MolFromSmarts(murckoQ)
 murckoPatts = [Chem.MolFromSmarts(x) for x in murckoPatts]
@@ -129,8 +134,8 @@ def MurckoScaffoldSmilesFromSmiles(smiles, includeChirality=False):
 #  doctest boilerplate
 #
 def _runDoctests(verbose=None):  # pragma: nocover
-  import sys
   import doctest
+  import sys
   failed, _ = doctest.testmod(optionflags=doctest.ELLIPSIS, verbose=verbose)
   sys.exit(failed)
 

@@ -52,6 +52,20 @@ void Configuration::removeInternalEdges(std::vector<Edge *> &edges, Atom *f1,
   std::swap(edges, new_edges);
 }
 
+bool Configuration::isDuplicateOrHydrogenEdge(const Edge *edge) {
+  return edge->getBeg()->isDuplicateOrH() || edge->getEnd()->isDuplicateOrH();
+}
+
+void Configuration::removeDuplicatesAndHs(std::vector<Edge *> &edges) {
+  std::vector<Edge *> new_edges;
+  for (auto &&e : edges) {
+    if (!isDuplicateOrHydrogenEdge(e)) {
+      new_edges.push_back(std::move(e));
+    }
+  }
+  edges = std::move(new_edges);
+}
+
 void Configuration::setCarriers(std::vector<Atom *> &&carriers) {
   d_carriers = std::move(carriers);
 }
@@ -59,8 +73,9 @@ void Configuration::setCarriers(std::vector<Atom *> &&carriers) {
 Configuration::Configuration(const CIPMol &mol, Atom *focus)
     : d_foci{focus}, d_digraph{mol, focus} {};
 
-Configuration::Configuration(const CIPMol &mol, std::vector<Atom *> &&foci)
-    : d_foci{std::move(foci)}, d_digraph{mol, d_foci[0]} {}
+Configuration::Configuration(const CIPMol &mol, std::vector<Atom *> &&foci,
+                             bool atropisomerMode)
+    : d_foci{std::move(foci)}, d_digraph{mol, d_foci[0], atropisomerMode} {}
 
 Configuration::~Configuration() = default;
 

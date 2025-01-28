@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Boran Adas, Google Summer of Code
+//  Copyright (C) 2018-2022 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -47,16 +47,12 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomInvGenerator
   \brief class that holds atom-pair fingerprint specific arguments
 
  */
-template <typename OutputType>
 class RDKIT_FINGERPRINTS_EXPORT AtomPairArguments
-    : public FingerprintArguments<OutputType> {
+    : public FingerprintArguments {
  public:
-  const bool df_includeChirality;
-  const bool df_use2D;
-  const unsigned int d_minDistance;
-  const unsigned int d_maxDistance;
-
-  OutputType getResultSize() const override;
+  bool df_use2D = true;
+  unsigned int d_minDistance = 1;
+  unsigned int d_maxDistance = maxPathLen - 1;
 
   std::string infoString() const override;
 
@@ -101,12 +97,16 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairAtomEnv
   const unsigned int d_distance;
 
  public:
-  OutputType getBitId(FingerprintArguments<OutputType> *arguments,
-                      const std::vector<std::uint32_t> *atomInvariants,
-                      const std::vector<std::uint32_t> *bondInvariants,
-                      const AdditionalOutput *additionalOutput,
-                      const bool hashResults = false,
-                      const std::uint64_t fpSize = 0) const override;
+  OutputType getBitId(
+      FingerprintArguments *arguments,
+      const std::vector<std::uint32_t> *atomInvariants,
+      const std::vector<std::uint32_t> *bondInvariants,  // unused
+      AdditionalOutput *additionalOutput,                // unused
+      const bool hashResults = false,
+      const std::uint64_t fpSize = 0  // unused
+  ) const override;
+  void updateAdditionalOutput(AdditionalOutput *output,
+                              size_t bitId) const override;
 
   /*!
     \brief construct a new AtomPairAtomEnv object
@@ -128,7 +128,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
     : public AtomEnvironmentGenerator<OutputType> {
  public:
   std::vector<AtomEnvironment<OutputType> *> getEnvironments(
-      const ROMol &mol, FingerprintArguments<OutputType> *arguments,
+      const ROMol &mol, FingerprintArguments *arguments,
       const std::vector<std::uint32_t> *fromAtoms,
       const std::vector<std::uint32_t> *ignoreAtoms, const int confId,
       const AdditionalOutput *additionalOutput,
@@ -137,6 +137,7 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
       const bool hashResults = false) const override;
 
   std::string infoString() const override;
+  OutputType getResultSize() const override;
 };
 
 /*!
@@ -172,16 +173,22 @@ class RDKIT_FINGERPRINTS_EXPORT AtomPairEnvGenerator
 
  */
 template <typename OutputType>
-RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType>
-    *getAtomPairGenerator(
-        const unsigned int minDistance = 1,
-        const unsigned int maxDistance = maxPathLen - 1,
-        const bool includeChirality = false, const bool use2D = true,
-        AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
-        const bool useCountSimulation = true, const std::uint32_t fpSize = 2048,
-        const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
-        const bool ownsAtomInvGen = false);
+RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator<OutputType> *
+getAtomPairGenerator(
+    const unsigned int minDistance = 1,
+    const unsigned int maxDistance = maxPathLen - 1,
+    const bool includeChirality = false, const bool use2D = true,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    const bool useCountSimulation = true, const std::uint32_t fpSize = 2048,
+    const std::vector<std::uint32_t> countBounds = {1, 2, 4, 8},
+    const bool ownsAtomInvGen = false);
 
+//! overload
+template <typename OutputType>
+FingerprintGenerator<OutputType> *getAtomPairGenerator(
+    const AtomPairArguments &args,
+    AtomInvariantsGenerator *atomInvariantsGenerator = nullptr,
+    const bool ownsAtomInvGen = false);
 }  // namespace AtomPair
 }  // namespace RDKit
 

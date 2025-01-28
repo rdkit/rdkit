@@ -37,6 +37,11 @@
 #include <Geometry/point.h>
 %}
 
+// no point in wrapping something that can't be accessed
+// getAtomPos() and setAtomPos() are convenient accessors
+%ignore RDKit::Conformer::getPositions();
+%ignore RDKit::Conformer::getPositions() const;
+
 %typemap(javacode) RDKit::Conformer %{
   public void setSwigCMemOwn(boolean cMemoryOwn) {
     swigCMemOwn = cMemoryOwn;

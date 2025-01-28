@@ -9,10 +9,11 @@
 """basic unit testing code for the molecule boost wrapper
 
 """
-import unittest, os
+import os
 import pickle
-from rdkit import RDConfig
-from rdkit import Chem
+import unittest
+
+from rdkit import Chem, RDConfig
 
 
 class TestCase(unittest.TestCase):

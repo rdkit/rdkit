@@ -30,12 +30,6 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include <boost/version.hpp>
-#if (BOOST_VERSION / 100000) > 1 || ((BOOST_VERSION / 100) % 1000) >= 53
-#define RDK_HAVE_MULTIPREC
-#include <boost/multiprecision/cpp_int.hpp>
-#endif
-
 #include "Enumerate.h"
 #include "CartesianProduct.h"
 #include "RandomSample.h"
@@ -45,16 +39,19 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
-// Since we are exporting the classes for serialization,
-//  we should declare the archives types used here
-#ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
+#include <boost/multiprecision/cpp_int.hpp>
+#ifdef RDK_USE_BOOST_SERIALIZATION
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/export.hpp>
+#endif
 #include <RDGeneral/BoostEndInclude.h>
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+// Since we are exporting the classes for serialization,
+//  we should declare the archives types used here
 BOOST_CLASS_EXPORT(RDKit::EnumerationStrategyBase);
 BOOST_CLASS_EXPORT(RDKit::CartesianProductStrategy);
 BOOST_CLASS_EXPORT(RDKit::RandomSampleStrategy);

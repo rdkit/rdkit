@@ -29,9 +29,8 @@ SmilesWriter *getSmilesWriter(python::object &fileobj,
                               bool includeHeader = true,
                               bool isomericSmiles = true,
                               bool kekuleSmiles = false) {
-  // FIX: minor leak here
   auto *sb = new streambuf(fileobj, 't');
-  auto *ost = new streambuf::ostream(*sb);
+  auto *ost = new streambuf::ostream(sb);
   return new SmilesWriter(ost, delimiter, nameHeader, includeHeader, true,
                           isomericSmiles, kekuleSmiles);
 }
@@ -64,9 +63,9 @@ std::string swDocStr =
     "aromatic bonds for molecules that have been kekulized).\n\n";
 struct smiwriter_wrap {
   static void wrap() {
-    python::class_<SmilesWriter>("SmilesWriter",
-                                 "A class for writing molecules to text files.",
-                                 python::no_init)
+    python::class_<SmilesWriter, boost::noncopyable>(
+        "SmilesWriter", "A class for writing molecules to text files.",
+        python::no_init)
         .def("__init__",
              python::make_constructor(
                  &getSmilesWriter, python::default_call_policies(),
@@ -77,8 +76,8 @@ struct smiwriter_wrap {
                   python::arg("kekuleSmiles") = false)))
         .def(python::init<std::string, std::string, std::string, bool, bool,
                           bool>(
-            (python::arg("fileName"), python::arg("delimiter") = " ",
-             python::arg("nameHeader") = "Name",
+            (python::arg("self"), python::arg("fileName"),
+             python::arg("delimiter") = " ", python::arg("nameHeader") = "Name",
              python::arg("includeHeader") = true,
              python::arg("isomericSmiles") = true,
              python::arg("kekuleSmiles") = false),
@@ -86,7 +85,7 @@ struct smiwriter_wrap {
         .def("__enter__", &MolIOEnter<SmilesWriter>,
              python::return_internal_reference<>())
         .def("__exit__", &MolIOExit<SmilesWriter>)
-        .def("SetProps", SetSmiWriterProps,
+        .def("SetProps", SetSmiWriterProps, python::args("self", "props"),
              "Sets the properties to be written to the output file\n\n"
              "  ARGUMENTS:\n\n"
              "    - props: a list or tuple of property names\n\n")
@@ -97,13 +96,13 @@ struct smiwriter_wrap {
              "  ARGUMENTS:\n\n"
              "    - mol: the Mol to be written\n"
              "    - confId: (optional) ignored \n\n")
-        .def("flush", &SmilesWriter::flush,
+        .def("flush", &SmilesWriter::flush, python::args("self"),
              "Flushes the output file (forces the disk file to be "
              "updated).\n\n")
-        .def("close", &SmilesWriter::close,
+        .def("close", &SmilesWriter::close, python::args("self"),
              "Flushes the output file and closes it. The Writer cannot be used "
              "after this.\n\n")
-        .def("NumMols", &SmilesWriter::numMols,
+        .def("NumMols", &SmilesWriter::numMols, python::args("self"),
              "Returns the number of molecules written so far.\n\n");
   };
 };

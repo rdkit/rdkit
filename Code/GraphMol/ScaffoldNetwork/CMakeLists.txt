@@ -6,7 +6,7 @@ target_compile_definitions(ScaffoldNetwork PRIVATE RDKIT_SCAFFOLDNETWORK_BUILD)
 
 rdkit_headers(ScaffoldNetwork.h DEST GraphMol/ScaffoldNetwork)
 
-rdkit_catch_test(testScaffoldNetwork catch_main.cpp catch_tests.cpp 
+rdkit_catch_test(testScaffoldNetwork catch_tests.cpp 
 LINK_LIBRARIES ScaffoldNetwork SmilesParse )
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

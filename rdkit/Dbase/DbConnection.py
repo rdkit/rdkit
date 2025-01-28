@@ -11,8 +11,7 @@
 
 """
 
-
-from rdkit.Dbase import DbUtils, DbInfo, DbModule
+from rdkit.Dbase import DbInfo, DbModule, DbUtils
 
 
 class DbError(RuntimeError):

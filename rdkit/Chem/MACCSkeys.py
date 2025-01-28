@@ -31,9 +31,9 @@ May 2011 (gl): Update some definitions based on feedback from Andrew Dalke
 
 """
 
-from rdkit import Chem
+from rdkit import Chem, DataStructs
 from rdkit.Chem import rdMolDescriptors
-from rdkit import DataStructs
+
 # these are SMARTS patterns corresponding to the MDL MACCS keys
 smartsPatts = {
   1: ('?', 0),  # ISOTOPE
@@ -305,7 +305,8 @@ FingerprintMol = rdMolDescriptors.GetMACCSKeysFingerprint
 #  doctest boilerplate
 #
 def _test():
-  import doctest, sys
+  import doctest
+  import sys
   return doctest.testmod(sys.modules["__main__"])
 
 

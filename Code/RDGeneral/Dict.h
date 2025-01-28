@@ -42,6 +42,9 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     Pair() : key(), val() {}
     explicit Pair(std::string s) : key(std::move(s)), val() {}
     Pair(std::string s, const RDValue &v) : key(std::move(s)), val(v) {}
+    // In the case you are holding onto an rdvalue outside of a dictionary
+    //  or other container, you kust call cleanup to release non POD memory.
+    void cleanup() { RDValue::cleanup_rdvalue(val); }
   };
 
   typedef std::vector<Pair> DataType;
@@ -73,23 +76,22 @@ class RDKIT_RDGENERAL_EXPORT Dict {
       if (other._hasNonPodData) {
         _hasNonPodData = true;
       }
-      for (size_t i = 0; i < other._data.size(); ++i) {
-        const Pair &pair = other._data[i];
+      for (const auto &opair : other._data) {
         Pair *target = nullptr;
-        for (size_t i = 0; i < _data.size(); ++i) {
-          if (_data[i].key == pair.key) {
-            target = &_data[i];
+        for (auto &dpair : _data) {
+          if (dpair.key == opair.key) {
+            target = &dpair;
             break;
           }
         }
 
         if (!target) {
           // need to create blank entry and copy
-          _data.push_back(Pair(pair.key));
-          copy_rdvalue(_data.back().val, pair.val);
+          _data.push_back(Pair(opair.key));
+          copy_rdvalue(_data.back().val, opair.val);
         } else {
           // just copy
-          copy_rdvalue(target->val, pair.val);
+          copy_rdvalue(target->val, opair.val);
         }
       }
     }
@@ -173,7 +175,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
      \param what  the key to lookup
      \param res   a reference used to return the result
 
-     <B>Notes:</b>
+     <b>Notes:</b>
       - If \c res is a \c std::string, every effort will be made
         to convert the specified element to a string using the
         \c boost::lexical_cast machinery.
@@ -214,7 +216,7 @@ class RDKIT_RDGENERAL_EXPORT Dict {
      \param what  the key to lookup
      \param res   a reference used to return the result
 
-     <B>Notes:</b>
+     <b>Notes:</b>
       - If \c res is a \c std::string, every effort will be made
         to convert the specified element to a string using the
         \c boost::lexical_cast machinery.
@@ -258,6 +260,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
   */
   template <typename T>
   void setVal(const std::string &what, T &val) {
+    static_assert(!std::is_same_v<T, std::string_view>,
+                  "T cannot be string_view");
     _hasNonPodData = true;
     for (auto &&data : _data) {
       if (data.key == what) {
@@ -271,6 +275,8 @@ class RDKIT_RDGENERAL_EXPORT Dict {
 
   template <typename T>
   void setPODVal(const std::string &what, T val) {
+    static_assert(!std::is_same_v<T, std::string_view>,
+                  "T cannot be string_view");
     // don't change the hasNonPodData status
     for (auto &&data : _data) {
       if (data.key == what) {
@@ -346,5 +352,31 @@ inline std::string Dict::getVal<std::string>(const std::string &what) const {
   return res;
 }
 
+// Utility class for holding a Dict::Pair
+//  Dict::Pairs require containers for memory management
+//  This utility class covers cleanup and copying
+class PairHolder : public Dict::Pair {
+public:
+ PairHolder() : Pair() {}
+  
+  explicit PairHolder(const PairHolder &p) : Pair(p.key) {
+    copy_rdvalue(this->val, p.val);
+  }
+
+  explicit PairHolder(PairHolder&&p) : Pair(p.key) {
+    this->val = p.val;
+    p.val.type = RDTypeTag::EmptyTag;
+  }
+
+  explicit PairHolder(Dict::Pair&&p) : Pair(p.key) {
+    this->val = p.val;
+    p.val.type = RDTypeTag::EmptyTag;
+  }
+
+  ~PairHolder() {
+    RDValue::cleanup_rdvalue(this->val);
+  }
+
+};
 }  // namespace RDKit
 #endif

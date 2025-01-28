@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2007-2008 Greg Landrum
+//  Copyright (C) 2007-2024 Greg Landrum and other RDKit contributors
 //
 //  @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +18,7 @@
 #include <RDGeneral/Exceptions.h>
 #include <RDGeneral/StreamOps.h>
 #include <cstdint>
+#include <limits>
 
 const int ci_SPARSEINTVECT_VERSION =
     0x0001;  //!< version number to use in pickles
@@ -75,7 +75,7 @@ class SparseIntVect {
 #endif
   //! return the value at an index
   int getVal(IndexType idx) const {
-    if (idx < 0 || idx >= d_length) {
+    if (!checkIndex(idx)) {
       throw IndexErrorException(static_cast<int>(idx));
     }
     int res = 0;
@@ -88,7 +88,7 @@ class SparseIntVect {
 
   //! set the value at an index
   void setVal(IndexType idx, int val) {
-    if (idx < 0 || idx >= d_length) {
+    if (!checkIndex(idx)) {
       throw IndexErrorException(static_cast<int>(idx));
     }
     if (val != 0) {
@@ -409,6 +409,13 @@ class SparseIntVect {
       streamRead(ss, val);
       d_data[tVal] = val;
     }
+  }
+  bool checkIndex(IndexType idx) const {
+    if (idx < 0 || idx > d_length ||
+        (idx == d_length && d_length < std::numeric_limits<IndexType>::max())) {
+      return false;
+    }
+    return true;
   }
 };
 

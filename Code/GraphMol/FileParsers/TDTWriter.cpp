@@ -8,20 +8,24 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/BadFileException.h>
-#include <RDGeneral/FileParseException.h>
-#include <RDGeneral/RDLog.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
-
-#include "MolWriters.h"
-#include "FileParsers.h"
-
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 #include <string>
+
 #include <boost/algorithm/string.hpp>
+
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <RDGeneral/BadFileException.h>
+#include <RDGeneral/FileParseException.h>
+#include <RDGeneral/RDLog.h>
+
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+#undef RDK_BUILD_MAEPARSER_SUPPORT
+#endif
+#include "MolWriters.h"
+#include "FileParsers.h"
 
 namespace RDKit {
 TDTWriter::TDTWriter(const std::string &fileName) {

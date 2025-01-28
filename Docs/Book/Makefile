@@ -19,7 +19,7 @@ ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
 help:
-	@echo "Please use \`make <target>' where <target> is one of"
+	@echo "Please use 'make <target>' where <target> is one of"
 	@echo "  html       to make standalone HTML files"
 	@echo "  dirhtml    to make HTML files named index.html in directories"
 	@echo "  singlehtml to make a single large HTML file"
@@ -36,11 +36,7 @@ help:
 	@echo "  changes    to make an overview of all changed/added/deprecated items"
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
-
-#RSTS_FROM_MD = Overview.rst Cartridge.rst Cookbook.rst Install.rst
-
-#$(RSTS_FROM_MD): %.rst: %.md
-#	pandoc -t rst -f markdown_github -o $@ $<
+	@echo "If you do not want to build the C++ API documentation, you can do 'make <target> BUILD_CPP_DOCS=OFF'"
 
 clean:
 	-rm -rf $(BUILDDIR)/*
@@ -52,17 +48,22 @@ apidocs:
 	mkdir -p $(BUILDDIR)/html/cppapi
 	cp -r $(CPPAPIDOCSHOME)/*  $(BUILDDIR)/html/cppapi
 
-html: $(RSTS_FROM_MD) apidocs cppexamples
+BUILD_CPP_DOCS = ON
+ifeq ($(BUILD_CPP_DOCS),ON)
+  APIDOCS = apidocs
+endif
+
+html: $(APIDOCS) cppexamples
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
-dirhtml: apidocs $(RSTS_FROM_MD)
+dirhtml: $(APIDOCS)
 	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
-singlehtml: apidocs $(RSTS_FROM_MD)
+singlehtml: $(APIDOCS)
 	$(SPHINXBUILD) -b singlehtml $(ALLSPHINXOPTS) $(BUILDDIR)/singlehtml
 	@echo
 	@echo "Build finished. The HTML page is in $(BUILDDIR)/singlehtml."
@@ -77,13 +78,13 @@ json:
 	@echo
 	@echo "Build finished; now you can process the JSON files."
 
-htmlhelp: apidocs $(RSTS_FROM_MD)
+htmlhelp: $(APIDOCS)
 	$(SPHINXBUILD) -b htmlhelp $(ALLSPHINXOPTS) $(BUILDDIR)/htmlhelp
 	@echo
 	@echo "Build finished; now you can run HTML Help Workshop with the" \
 	      ".hhp project file in $(BUILDDIR)/htmlhelp."
 
-qthelp: apidocs $(RSTS_FROM_MD)
+qthelp: $(APIDOCS)
 	$(SPHINXBUILD) -b qthelp $(ALLSPHINXOPTS) $(BUILDDIR)/qthelp
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
@@ -92,7 +93,7 @@ qthelp: apidocs $(RSTS_FROM_MD)
 	@echo "To view the help file:"
 	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/RDKit.qhc"
 
-devhelp: apidocs $(RSTS_FROM_MD)
+devhelp: $(APIDOCS)
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
@@ -101,30 +102,30 @@ devhelp: apidocs $(RSTS_FROM_MD)
 	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/RDKit"
 	@echo "# devhelp"
 
-epub: apidocs $(RSTS_FROM_MD)
+epub: $(APIDOCS)
 	$(SPHINXBUILD) -b epub $(ALLSPHINXOPTS) $(BUILDDIR)/epub
 	@echo
 	@echo "Build finished. The epub file is in $(BUILDDIR)/epub."
 
-latex: apidocs $(RSTS_FROM_MD)
+latex: $(APIDOCS)
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo
 	@echo "Build finished; the LaTeX files are in $(BUILDDIR)/latex."
 	@echo "Run \`make' in that directory to run these through (pdf)latex" \
 	      "(use \`make latexpdf' here to do that automatically)."
 
-latexpdf: apidocs $(RSTS_FROM_MD)
+latexpdf: $(APIDOCS)
 	$(SPHINXBUILD) -b latex $(ALLSPHINXOPTS) $(BUILDDIR)/latex
 	@echo "Running LaTeX files through pdflatex..."
 	make -C $(BUILDDIR)/latex all-pdf
 	@echo "pdflatex finished; the PDF files are in $(BUILDDIR)/latex."
 
-text: apidocs $(RSTS_FROM_MD)
+text: $(APIDOCS)
 	$(SPHINXBUILD) -b text $(ALLSPHINXOPTS) $(BUILDDIR)/text
 	@echo
 	@echo "Build finished. The text files are in $(BUILDDIR)/text."
 
-man: apidocs $(RSTS_FROM_MD)
+man: $(APIDOCS)
 	$(SPHINXBUILD) -b man $(ALLSPHINXOPTS) $(BUILDDIR)/man
 	@echo
 	@echo "Build finished. The manual pages are in $(BUILDDIR)/man."

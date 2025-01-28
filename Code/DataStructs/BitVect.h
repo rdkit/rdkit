@@ -37,7 +37,7 @@ class RDKIT_DATASTRUCTS_EXPORT BitVect {
   //! returns the number of off bits
   virtual unsigned int getNumOffBits() const = 0;
   //! replaces the contents of \c v with indices of our on bits
-  virtual void getOnBits(IntVect& v) const = 0;
+  virtual void getOnBits(IntVect &v) const = 0;
   //! clears (sets to off) all of our bits
   virtual void clearBits() = 0;
 
@@ -52,7 +52,7 @@ class RDKIT_DATASTRUCTS_EXPORT BitVect {
          amount of error checking and it is strongly suggested that it not
          be used in client code.
    */
-  void initFromText(const char* data, const unsigned int dataLen,
+  void initFromText(const char *data, const unsigned int dataLen,
                     bool isBase64 = false, bool allowOldFormat = false);
 
   //! returns a serialized (pickled) version of this BitVect

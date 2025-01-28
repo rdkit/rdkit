@@ -15,6 +15,7 @@
 
 namespace RDKit {
 namespace MolOps {
+
 ROMol *renumberAtoms(const ROMol &mol,
                      const std::vector<unsigned int> &newOrder) {
   unsigned int nAts = mol.getNumAtoms();
@@ -53,6 +54,13 @@ ROMol *renumberAtoms(const ROMol &mol,
         }
       }
       nAtom->setProp(common_properties::_ringStereoAtoms, nAtoms, true);
+    }
+
+    unsigned int otherAtom;
+    if (nAtom->getPropIfPresent(common_properties::_ringStereoOtherAtom,
+                                otherAtom)) {
+      otherAtom = revOrder[otherAtom];
+      nAtom->setProp(common_properties::_ringStereoOtherAtom, otherAtom, true);
     }
   }
 
@@ -103,18 +111,24 @@ ROMol *renumberAtoms(const ROMol &mol,
     nsgs.reserve(mol.getStereoGroups().size());
     for (const auto &osg : mol.getStereoGroups()) {
       std::vector<Atom *> ats;
+      std::vector<Bond *> bds;
       ats.reserve(osg.getAtoms().size());
+      bds.reserve(osg.getBonds().size());
       for (const auto aptr : osg.getAtoms()) {
         ats.push_back(res->getAtomWithIdx(revOrder[aptr->getIdx()]));
       }
-      StereoGroup nsg(osg.getGroupType(), ats);
-      nsgs.push_back(nsg);
+      for (const auto bptr : osg.getBonds()) {
+        bds.push_back(
+            res->getBondWithIdx(bptr->getIdx()));  // bonds do not change order
+      }
+
+      nsgs.emplace_back(osg.getGroupType(), ats, bds, osg.getReadId());
     }
     res->setStereoGroups(std::move(nsgs));
   }
 
   return dynamic_cast<ROMol *>(res);
-}
+}  // namespace
 
 };  // end of namespace MolOps
 };  // end of namespace RDKit

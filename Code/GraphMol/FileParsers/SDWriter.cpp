@@ -7,18 +7,23 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/BadFileException.h>
-#include <RDGeneral/FileParseException.h>
-#include <RDGeneral/RDLog.h>
-
-#include "MolWriters.h"
-#include "FileParsers.h"
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
+
 #include <boost/any.hpp>
+
+#include <RDGeneral/BadFileException.h>
+#include <RDGeneral/FileParseException.h>
+#include <RDGeneral/RDLog.h>
+
+#ifdef RDK_BUILD_MAEPARSER_SUPPORT
+#undef RDK_BUILD_MAEPARSER_SUPPORT
+#endif
+#include "MolWriters.h"
+#include "FileParsers.h"
 
 namespace RDKit {
 SDWriter::SDWriter(const std::string &fileName) {
@@ -80,10 +85,24 @@ void _writePropToStream(std::ostream *dp_ostream, const ROMol &mol,
   std::string pval;
   try {
     mol.getProp(name, pval);
-  } catch (boost::bad_any_cast &) {
+  } catch (std::bad_any_cast &) {
     return;
   }
 
+  // warn and skip if we include a new line
+  if (name.find("\n") != std::string::npos) {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: Skipping property " << name
+        << " because the name includes a newline" << std::endl;
+    return;
+  }
+  if (pval.find("\r\n\r\n") != std::string::npos ||
+      pval.find("\n\n") != std::string::npos) {
+    BOOST_LOG(rdWarningLog)
+        << "WARNING: Skipping property " << name
+        << " because the value includes an illegal blank line" << std::endl;
+    return;
+  }
   // write the property header line
   (*dp_ostream) << ">  <" << name << ">  ";
   if (d_molid >= 0) {

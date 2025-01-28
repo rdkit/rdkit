@@ -7,15 +7,23 @@ which is included in the file license.txt, found at the root
 of the RDKit source tree.
 """
 
+import unittest
+
 from rdkit import Chem
 from rdkit.Chem import rdMHFPFingerprint
-import unittest
 
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
     pass
+
+  def testMHFPDistance(self):
+    s = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+    enc = rdMHFPFingerprint.MHFPEncoder(128, 42)
+    fp = enc.EncodeSmiles(s)
+    dist = enc.Distance(fp, fp)
+    self.assertEqual(dist, 0.0)
 
   def testMHFPFingerprint(self):
     s = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
@@ -40,7 +48,7 @@ class TestCase(unittest.TestCase):
 
     fp_c = enc.EncodeSmiles(t)
     dist = rdMHFPFingerprint.MHFPEncoder.Distance(fp_a, fp_c)
-    self.assertEqual(dist, 0.4609375)
+    self.assertEqual(dist, 0.5390625)
 
 
 if __name__ == "__main__":

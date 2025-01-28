@@ -11,6 +11,7 @@
 #define RGROUP_UTILS
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include "RGroupDecomp.h"
 
 #include <map>
@@ -21,6 +22,8 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL_TYPE;
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string RLABEL_CORE_INDEX;
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string SIDECHAIN_RLABELS;
 RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string done;
+RDKIT_RGROUPDECOMPOSITION_EXPORT extern const std::string
+    UNLABELED_CORE_ATTACHMENT;
 
 const unsigned int EMPTY_CORE_LABEL = -100000;
 
@@ -55,10 +58,14 @@ bool hasDummy(const RWMol &core);
 //! Returns true if the core atom is either an atom with multiple
 /// connections or an atom with a single connection that has no user
 /// defined rgroup label
-bool isAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom);
+bool isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(const Atom &atom);
 
 //! Return true if the atom has a user-defined R group label
 bool isUserRLabel(const Atom &atom);
+
+// ! Return true if the atom is a terminal dummy R group (user labelled or
+// unlabelled)
+bool isDummyRGroupAttachment(const Atom &atom);
 
 //! Returns true if the core atom is either a dummy atom with multiple
 /// connections or a dummy atom with a single connection that has no user
@@ -67,7 +74,7 @@ inline bool isAnyAtomWithMultipleNeighborsOrNotUserRLabel(const Atom &atom) {
   if (atom.getAtomicNum()) {
     return false;
   }
-  return isAtomWithMultipleNeighborsOrNotUserRLabel(atom);
+  return isAtomWithMultipleNeighborsOrNotDummyRGroupAttachment(atom);
 }
 
 //! Returns a JSON form
@@ -86,6 +93,20 @@ RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
 /// The prefix argument is added to each line in the output
 RDKIT_RGROUPDECOMPOSITION_EXPORT std::string toJSON(
     const RGroupColumns &rgr, const std::string &prefix = "");
+
+//! Relabel dummy atoms bearing an R-group mapping (as
+/// atom map number, isotope or MDLRGroup label) such that
+/// they will be displayed by the rendering code as R# rather
+/// than #*, *:#, #*:#, etc. By default, only the MDLRGroup label
+/// is retained on output; this may be configured through the
+/// outputLabels parameter.
+/// In case there are multiple potential R-group mappings,
+/// the priority on input is Atom map number > Isotope > MDLRGroup.
+/// The inputLabels parameter allows to configure which mappings
+/// are taken into consideration.
+RDKIT_RGROUPDECOMPOSITION_EXPORT void relabelMappedDummies(
+    ROMol &mol, unsigned int inputLabels = AtomMap | Isotope | MDLRGroup,
+    unsigned int outputLabels = MDLRGroup);
 
 }  // namespace RDKit
 

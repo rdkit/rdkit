@@ -33,7 +33,7 @@
 
 """
 
-from rdkit.Chem.Pharm2D import Utils, SigFactory
+from rdkit.Chem.Pharm2D import SigFactory, Utils
 from rdkit.RDLogger import logger
 
 logger = logger()
@@ -117,7 +117,7 @@ def Gen2DFingerprint(mol, sigFactory, perms=None, dMat=None, bitInfo=None):
     dMat = Chem.GetDistanceMatrix(mol, sigFactory.includeBondOrder)
 
   # generate the permutations, if required
-  if perms is None: 
+  if perms is None:
     perms = []
     for count in range(minCount, maxCount + 1):
       perms.extend(Utils.GetIndexCombinations(nFeats, count))

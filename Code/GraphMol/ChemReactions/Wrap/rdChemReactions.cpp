@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2007-2023, Novartis Institutes for BioMedical Research Inc.
 //  and other RDKit contributors
 //
 //  All rights reserved.
@@ -40,6 +40,7 @@
 #include <GraphMol/ChemReactions/ReactionRunner.h>
 #include <GraphMol/ChemReactions/PreprocessRxn.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
+#include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/Depictor/DepictUtils.h>
 #include <GraphMol/FilterCatalog/FunctionalGroupHierarchy.h>
 
@@ -67,6 +68,15 @@ void rdChemicalReactionExceptionTranslator(
 }
 
 namespace RDKit {
+std::string pyObjectToString(python::object input) {
+  python::extract<std::string> ex(input);
+  if (ex.check()) {
+    return ex();
+  }
+  std::wstring ws = python::extract<std::wstring>(input);
+  return std::string(ws.begin(), ws.end());
+}
+
 python::object ReactionToBinaryWithProps(const ChemicalReaction &self,
                                          unsigned int props) {
   std::string res;
@@ -82,7 +92,7 @@ python::object ReactionToBinary(const ChemicalReaction &self) {
 //
 // allows reactions to be pickled.
 //
-struct reaction_pickle_suite : python::pickle_suite {
+struct reaction_pickle_suite : rdkit_pickle_suite {
   static python::tuple getinitargs(const ChemicalReaction &self) {
     return python::make_tuple(ReactionToBinary(self));
   };
@@ -123,10 +133,9 @@ PyObject *RunReactants(ChemicalReaction *self, T reactants,
   return res;
 }
 
-template <typename T>
-PyObject *RunReactant(ChemicalReaction *self, T reactant,
+PyObject *RunReactant(ChemicalReaction *self, python::object reactant,
                       unsigned int reactionIdx) {
-  ROMOL_SPTR react = python::extract<ROMOL_SPTR>(reactant);
+  auto react = python::extract<ROMOL_SPTR>(reactant);
 
   std::vector<MOL_SPTR_VECT> mols;
 
@@ -150,7 +159,8 @@ PyObject *RunReactant(ChemicalReaction *self, T reactant,
   return res;
 }
 
-bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant) {
+bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant,
+                        bool removeUnmatchedAtoms) {
   auto react = static_cast<RWMol *>(reactant);
   bool res = false;
   {
@@ -158,7 +168,7 @@ bool RunReactantInPlace(ChemicalReaction *self, ROMol *reactant) {
     if (!self->isInitialized()) {
       self->initReactantMatchers();
     }
-    res = self->runReactant(*react);
+    res = self->runReactant(*react, removeUnmatchedAtoms);
   }
   return res;
 }
@@ -302,6 +312,72 @@ ChemicalReaction *ReactionFromSmarts(const char *smarts, python::dict replDict,
   return res;
 }
 
+ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
+                                      bool removeHs) {
+  ChemicalReaction *newR = nullptr;
+  try {
+    newR = MrvFileToChemicalReaction(rxnFilename, sanitize, removeHs);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return newR;
+}
+
+ChemicalReaction *ReactionFromMrvBlock(python::object imolBlock, bool sanitize,
+                                       bool removeHs) {
+  std::istringstream inStream(pyObjectToString(imolBlock));
+  ChemicalReaction *newR = nullptr;
+  try {
+    newR = MrvDataStreamToChemicalReaction(inStream, sanitize, removeHs);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  return newR;
+}
+
+python::object ReactionsFromCDXMLFile(const char *filename, bool sanitize,
+                                      bool removeHs) {
+  std::vector<std::unique_ptr<ChemicalReaction>> rxns;
+  try {
+    rxns = CDXMLFileToChemicalReactions(filename, sanitize, removeHs);
+  } catch (RDKit::BadFileException &e) {
+    PyErr_SetString(PyExc_IOError, e.what());
+    throw python::error_already_set();
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  python::list res;
+  for (auto &rxn : rxns) {
+    // take ownership of the data from the unique_ptr
+    res.append(std::shared_ptr<ChemicalReaction>(rxn.release()));
+  }
+  return python::tuple(res);
+}
+
+python::object ReactionsFromCDXMLBlock(python::object imolBlock, bool sanitize,
+                                       bool removeHs) {
+  std::istringstream inStream(pyObjectToString(imolBlock));
+  std::vector<std::unique_ptr<ChemicalReaction>> rxns;
+  try {
+    rxns = CDXMLDataStreamToChemicalReactions(inStream, sanitize, removeHs);
+  } catch (RDKit::FileParseException &e) {
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
+  } catch (...) {
+  }
+  python::list res;
+  for (auto &rxn : rxns) {
+    // take ownership of the data from the unique_ptr
+    res.append(std::shared_ptr<ChemicalReaction>(rxn.release()));
+  }
+  return python::tuple(res);
+}
+
 python::object GetReactingAtoms(const ChemicalReaction &self,
                                 bool mappedAtomsOnly) {
   python::list res;
@@ -439,6 +515,10 @@ python::object addReactionToPNGFileHelper(const ChemicalReaction &rxn,
   return retval;
 }
 
+SubstructMatchParameters *getParamsHelper(ChemicalReaction &rxn) {
+  return &rxn.getSubstructParams();
+}
+
 }  // namespace RDKit
 
 void wrap_enumeration();
@@ -454,20 +534,22 @@ BOOST_PYTHON_MODULE(rdChemReactions) {
       &rdChemicalReactionExceptionTranslator);
 
   python::enum_<RDKit::FingerprintType>("FingerprintType")
-      .value("AtomPairFP", RDKit::AtomPairFP)
-      .value("TopologicalTorsion", RDKit::TopologicalTorsion)
-      .value("MorganFP", RDKit::MorganFP)
-      .value("RDKitFP", RDKit::RDKitFP)
-      .value("PatternFP", RDKit::PatternFP);
+      .value("AtomPairFP", RDKit::FingerprintType::AtomPairFP)
+      .value("TopologicalTorsion", RDKit::FingerprintType::TopologicalTorsionFP)
+      .value("MorganFP", RDKit::FingerprintType::MorganFP)
+      .value("RDKitFP", RDKit::FingerprintType::RDKitFP)
+      .value("PatternFP", RDKit::FingerprintType::PatternFP);
   std::string docStringReactionFPParams =
       "A class for storing parameters to manipulate the calculation of "
       "fingerprints of chemical reactions.";
 
   python::class_<RDKit::ReactionFingerprintParams>(
       "ReactionFingerprintParams", docStringReactionFPParams.c_str(),
-      python::init<>("Constructor, takes no arguments"))
+      python::init<>(python::args("self"), "Constructor, takes no arguments"))
       .def(python::init<bool, double, unsigned int, int, unsigned int,
-                        RDKit::FingerprintType>())
+                        RDKit::FingerprintType>(
+          python::args("self", "includeAgents", "bitRatioAgents",
+                       "nonAgentWeight", "agentWeight", "fpSize", "fpType")))
       .def_readwrite("fpSize", &RDKit::ReactionFingerprintParams::fpSize)
       .def_readwrite("fpType", &RDKit::ReactionFingerprintParams::fpType)
       .def_readwrite("bitRatioAgents",
@@ -499,26 +581,31 @@ Sample Usage:
   bool noproxy = true;
   RegisterVectorConverter<RDKit::ROMOL_SPTR>("MOL_SPTR_VECT", noproxy);
 
-  python::class_<RDKit::ChemicalReaction>(
+  python::class_<RDKit::ChemicalReaction,
+                 std::shared_ptr<RDKit::ChemicalReaction>>(
       "ChemicalReaction", docString.c_str(),
-      python::init<>("Constructor, takes no arguments"))
-      .def(python::init<const std::string &>())
-      .def(python::init<const RDKit::ChemicalReaction &>())
+      python::init<>(python::args("self"), "Constructor, takes no arguments"))
+      .def(python::init<const std::string &>(python::args("self", "binStr")))
+      .def(python::init<const RDKit::ChemicalReaction &>(
+          python::args("self", "other")))
       .def("GetNumReactantTemplates",
            &RDKit::ChemicalReaction::getNumReactantTemplates,
+           python::args("self"),
            "returns the number of reactants this reaction expects")
       .def("GetNumProductTemplates",
            &RDKit::ChemicalReaction::getNumProductTemplates,
+           python::args("self"),
            "returns the number of products this reaction generates")
       .def("GetNumAgentTemplates",
-           &RDKit::ChemicalReaction::getNumAgentTemplates,
+           &RDKit::ChemicalReaction::getNumAgentTemplates, python::args("self"),
            "returns the number of agents this reaction expects")
       .def("AddReactantTemplate", &RDKit::ChemicalReaction::addReactantTemplate,
+           python::args("self", "mol"),
            "adds a reactant (a Molecule) to the reaction")
       .def("AddProductTemplate", &RDKit::ChemicalReaction::addProductTemplate,
-           "adds a product (a Molecule)")
+           python::args("self", "mol"), "adds a product (a Molecule)")
       .def("AddAgentTemplate", &RDKit::ChemicalReaction::addAgentTemplate,
-           "adds a agent (a Molecule)")
+           python::args("self", "mol"), "adds a agent (a Molecule)")
       .def("RemoveUnmappedReactantTemplates",
            RDKit::RemoveUnmappedReactantTemplates,
            (python::arg("self"), python::arg("thresholdUnmappedAtoms") = 0.2,
@@ -557,12 +644,12 @@ Sample Usage:
            "the products as a tuple of tuples.  If maxProducts is not zero,"
            " stop the reaction when maxProducts have been generated "
            "[default=1000]")
-      .def("RunReactant",
-           (PyObject * (*)(RDKit::ChemicalReaction *, python::object, unsigned))
-               RDKit::RunReactant,
+      .def("RunReactant", RDKit::RunReactant,
+           python::args("self", "reactant", "reactionIdx"),
            "apply the reaction to a single reactant")
       .def("RunReactantInPlace", RDKit::RunReactantInPlace,
-           (python::arg("self"), python::arg("reactant")),
+           (python::arg("self"), python::arg("reactant"),
+            python::arg("removeUnmatchedAtoms") = true),
            "apply the reaction to a single reactant in place. The reactant "
            "itself is modified. This can only be used for single reactant - "
            "single product reactions.")
@@ -570,7 +657,7 @@ Sample Usage:
            (python::arg("self"), python::arg("silent") = false),
            "initializes the reaction so that it can be used")
       .def("IsInitialized", &RDKit::ChemicalReaction::isInitialized,
-           "checks if the reaction is ready for use")
+           python::args("self"), "checks if the reaction is ready for use")
       .def("Validate", &RDKit::ValidateReaction,
            (python::arg("self"), python::arg("silent") = false),
            "checks the reaction for potential problems, returns "
@@ -603,12 +690,15 @@ Sample Usage:
            (python::arg("self"), python::arg("propertyFlags")),
            "Returns a binary string representation of the reaction.")
       .def("IsMoleculeReactant", RDKit::IsMoleculeReactantOfReaction,
+           python::args("self", "mol"),
            "returns whether or not the molecule has a substructure match to "
            "one of the reactants.")
       .def("IsMoleculeProduct", RDKit::IsMoleculeProductOfReaction,
+           python::args("self", "mol"),
            "returns whether or not the molecule has a substructure match to "
            "one of the products.")
       .def("IsMoleculeAgent", RDKit::IsMoleculeAgentOfReaction,
+           python::args("self", "mol"),
            "returns whether or not the molecule has a substructure match to "
            "one of the agents.")
       .def("GetReactingAtoms", &RDKit::GetReactingAtoms,
@@ -624,13 +714,19 @@ Sample Usage:
 
       .def("GetReactants", &RDKit::ChemicalReaction::getReactants,
            python::return_value_policy<python::reference_existing_object>(),
-           "get the reactant templates")
+           python::args("self"), "get the reactant templates")
       .def("GetProducts", &RDKit::ChemicalReaction::getProducts,
            python::return_value_policy<python::reference_existing_object>(),
-           "get the product templates")
+           python::args("self"), "get the product templates")
       .def("GetAgents", &RDKit::ChemicalReaction::getAgents,
            python::return_value_policy<python::reference_existing_object>(),
-           "get the agent templates")
+           python::args("self"), "get the agent templates")
+      .def("GetSubstructParams", RDKit::getParamsHelper,
+           python::return_value_policy<
+               python::reference_existing_object,
+               python::with_custodian_and_ward_postcall<0, 1>>(),
+           python::args("self"),
+           "get the parameter object controlling the substructure matching")
 
       // properties
       .def("SetProp", RDKit::MolSetProp<RDKit::ChemicalReaction, std::string>,
@@ -686,11 +782,13 @@ Sample Usage:
            "computed.\n"
            "                Defaults to False.\n\n")
       .def("HasProp", RDKit::MolHasProp<RDKit::ChemicalReaction>,
+           python::args("self", "key"),
            "Queries a molecule to see if a particular property has been "
            "assigned.\n\n"
            "  ARGUMENTS:\n"
            "    - key: the name of the property to check for (a string).\n")
       .def("GetProp", RDKit::GetProp<RDKit::ChemicalReaction, std::string>,
+           python::args("self", "key"),
            "Returns the value of the property.\n\n"
            "  ARGUMENTS:\n"
            "    - key: the name of the property to return (a string).\n\n"
@@ -699,6 +797,7 @@ Sample Usage:
            "    - If the property has not been set, a KeyError exception "
            "will be raised.\n")
       .def("GetDoubleProp", RDKit::GetProp<RDKit::ChemicalReaction, double>,
+           python::args("self", "key"),
            "Returns the double value of the property if possible.\n\n"
            "  ARGUMENTS:\n"
            "    - key: the name of the property to return (a string).\n\n"
@@ -707,6 +806,7 @@ Sample Usage:
            "    - If the property has not been set, a KeyError exception "
            "will be raised.\n")
       .def("GetIntProp", RDKit::GetProp<RDKit::ChemicalReaction, int>,
+           python::args("self", "key"),
            "Returns the integer value of the property if possible.\n\n"
            "  ARGUMENTS:\n"
            "    - key: the name of the property to return (a string).\n\n"
@@ -716,6 +816,7 @@ Sample Usage:
            "will be raised.\n")
       .def("GetUnsignedProp",
            RDKit::GetProp<RDKit::ChemicalReaction, unsigned int>,
+           python::args("self", "key"),
            "Returns the unsigned int value of the property if possible.\n\n"
            "  ARGUMENTS:\n"
            "    - key: the name of the property to return (a string).\n\n"
@@ -724,6 +825,7 @@ Sample Usage:
            "    - If the property has not been set, a KeyError exception "
            "will be raised.\n")
       .def("GetBoolProp", RDKit::GetProp<RDKit::ChemicalReaction, bool>,
+           python::args("self", "key"),
            "Returns the Bool value of the property if possible.\n\n"
            "  ARGUMENTS:\n"
            "    - key: the name of the property to return (a string).\n\n"
@@ -732,12 +834,14 @@ Sample Usage:
            "    - If the property has not been set, a KeyError exception "
            "will be raised.\n")
       .def("ClearProp", RDKit::MolClearProp<RDKit::ChemicalReaction>,
+           python::args("self", "key"),
            "Removes a property from the reaction.\n\n"
            "  ARGUMENTS:\n"
            "    - key: the name of the property to clear (a string).\n")
 
       .def("ClearComputedProps",
            RDKit::MolClearComputedProps<RDKit::ChemicalReaction>,
+           python::args("self"),
            "Removes all computed properties from the reaction.\n\n")
 
       .def("GetPropNames", &RDKit::ChemicalReaction::getPropList,
@@ -755,7 +859,8 @@ Sample Usage:
 
       .def("GetPropsAsDict", RDKit::GetPropsAsDict<RDKit::ChemicalReaction>,
            (python::arg("self"), python::arg("includePrivate") = false,
-            python::arg("includeComputed") = false),
+            python::arg("includeComputed") = false,
+            python::arg("autoConvertStrings") = true),
            "Returns a dictionary populated with the reaction's properties.\n"
            " n.b. Some properties are not able to be converted to python "
            "types.\n\n"
@@ -779,12 +884,53 @@ Sample Usage:
 see the documentation for rdkit.Chem.MolFromSmiles for an explanation\n\
 of the replacements argument.",
       python::return_value_policy<python::manage_new_object>());
-  python::def("ReactionToSmarts", RDKit::ChemicalReactionToRxnSmarts,
+  python::def("ReactionToSmarts",
+              (std::string(*)(const RDKit::ChemicalReaction &))
+                  RDKit::ChemicalReactionToRxnSmarts,
               (python::arg("reaction")),
               "construct a reaction SMARTS string for a ChemicalReaction");
-  python::def("ReactionToSmiles", RDKit::ChemicalReactionToRxnSmiles,
+  python::def("ReactionToSmiles",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              bool))RDKit::ChemicalReactionToRxnSmiles,
               (python::arg("reaction"), python::arg("canonical") = true),
               "construct a reaction SMILES string for a ChemicalReaction");
+  python::def("ReactionToSmarts",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              const RDKit::SmilesWriteParams &))
+                  RDKit::ChemicalReactionToRxnSmarts,
+              (python::arg("reaction"), python::arg("params")),
+              "construct a reaction SMARTS string for a ChemicalReaction");
+  python::def("ReactionToSmiles",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              const RDKit::SmilesWriteParams &))
+                  RDKit::ChemicalReactionToRxnSmiles,
+              (python::arg("reaction"), python::arg("params")),
+              "construct a reaction SMILES string for a ChemicalReaction");
+
+  python::def("ReactionToCXSmarts",
+              (std::string(*)(const RDKit::ChemicalReaction &))
+                  RDKit::ChemicalReactionToCXRxnSmarts,
+              (python::arg("reaction")),
+              "construct a reaction SMARTS string for a ChemicalReaction");
+  python::def("ReactionToCXSmiles",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              bool))RDKit::ChemicalReactionToCXRxnSmiles,
+              (python::arg("reaction"), python::arg("canonical") = true),
+              "construct a reaction SMILES string for a ChemicalReaction");
+  python::def("ReactionToCXSmarts",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              const RDKit::SmilesWriteParams &,
+                              std::uint32_t))
+                  RDKit::ChemicalReactionToCXRxnSmarts,
+              (python::arg("reaction"), python::arg("params"), python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+              "construct a reaction CXSMARTS string for a ChemicalReaction");
+  python::def("ReactionToCXSmiles",
+              (std::string(*)(const RDKit::ChemicalReaction &,
+                              const RDKit::SmilesWriteParams &,
+                              std::uint32_t))
+                  RDKit::ChemicalReactionToCXRxnSmiles,
+              (python::arg("reaction"), python::arg("params"), python::arg("flags") = RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+              "construct a reaction CXSMILES string for a ChemicalReaction");
 
   python::def(
       "ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction,
@@ -798,21 +944,73 @@ of the replacements argument.",
        python::arg("removeHs") = false, python::arg("strictParsing") = true),
       "construct a ChemicalReaction from a string in MDL rxn format",
       python::return_value_policy<python::manage_new_object>());
+
+  python::def("ReactionFromMrvFile", RDKit::ReactionFromMrvFile,
+              (python::arg("filename"), python::arg("sanitize") = false,
+               python::arg("removeHs") = false),
+              "construct a ChemicalReaction from an Marvin (mrv) rxn file",
+              python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ReactionFromMrvBlock", RDKit::ReactionFromMrvBlock,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false),
+      "construct a ChemicalReaction from a string in Marvin (mrv) format",
+      python::return_value_policy<python::manage_new_object>());
+
+  python::def(
+      "ReactionFromMrvBlock", RDKit::ReactionFromMrvBlock,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false),
+      "construct a ChemicalReaction from a string in Marvin (mrv) format",
+      python::return_value_policy<python::manage_new_object>());
+
+  python::def("MrvFileIsReaction", RDKit::MrvFileIsReaction,
+              (python::arg("filename")),
+              "returns whether or not an MRV file contains reaction data");
+
+  python::def("MrvBlockIsReaction", RDKit::MrvBlockIsReaction,
+              (python::arg("mrvData")),
+              "returns whether or not an MRV block contains reaction data");
+
+  python::def("ReactionsFromCDXMLFile", RDKit::ReactionsFromCDXMLFile,
+              (python::arg("filename"), python::arg("sanitize") = false,
+               python::arg("removeHs") = false),
+              "construct a tuple of ChemicalReactions from a CDXML rxn file");
+
+  python::def(
+      "ReactionsFromCDXMLBlock", RDKit::ReactionsFromCDXMLBlock,
+      (python::arg("rxnblock"), python::arg("sanitize") = false,
+       python::arg("removeHs") = false),
+      "construct a tuple of ChemicalReactions from a string in CDXML format");
+
   python::def("ReactionToRxnBlock", RDKit::ChemicalReactionToRxnBlock,
               (python::arg("reaction"), python::arg("separateAgents") = false,
                python::arg("forceV3000") = false),
               "construct a string in MDL rxn format for a ChemicalReaction");
+
+  python::def(
+      "ReactionToMrvBlock", RDKit::ChemicalReactionToMrvBlock,
+      (python::arg("reaction"), python::arg("prettyPrint") = false),
+      "construct a string in Marvin (MRV) rxn format for a ChemicalReaction");
+  python::def("ReactionToMrvFile", RDKit::ChemicalReactionToMrvFile,
+              (python::arg("reaction"), python::arg("filename"),
+               python::arg("prettyPrint") = false),
+              "write a Marvin (MRV) rxn file for a ChemicalReaction");
+
   python::def(
       "ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,
       (python::arg("reaction"), python::arg("separateAgents") = false),
       "construct a string in MDL v3000 rxn format for a ChemicalReaction");
 
+#ifdef RDK_USE_BOOST_IOSTREAMS
   python::def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction,
               "construct a ChemicalReaction from metadata in a PNG file",
-              python::return_value_policy<python::manage_new_object>());
+              python::return_value_policy<python::manage_new_object>(),
+              python::args("fname"));
   python::def("ReactionFromPNGString", RDKit::PNGStringToChemicalReaction,
               "construct a ChemicalReaction from an string with PNG data",
-              python::return_value_policy<python::manage_new_object>());
+              python::return_value_policy<python::manage_new_object>(),
+              python::args("data"));
   python::def(
       "ReactionMetadataToPNGFile", RDKit::addReactionToPNGFileHelper,
       (python::arg("mol"), python::arg("filename"),
@@ -827,11 +1025,12 @@ of the replacements argument.",
        python::arg("includeSmarts") = false, python::arg("includeRxn") = false),
       "Adds metadata about a reaction to the PNG string passed in."
       "The modified string is returned.");
-
+#endif
   python::def("ReactionFromMolecule", RDKit::RxnMolToChemicalReaction,
               "construct a ChemicalReaction from an molecule if the RXN role "
               "property of the molecule is set",
-              python::return_value_policy<python::manage_new_object>());
+              python::return_value_policy<python::manage_new_object>(),
+              python::args("mol"));
   python::def(
       "ReactionToMolecule", RDKit::ChemicalReactionToRxnMol,
       (python::arg("reaction")),
@@ -858,7 +1057,7 @@ of the replacements argument.",
 )DOC";
   python::def(
       "Compute2DCoordsForReaction", RDKit::Compute2DCoordsForReaction,
-      (python::arg("reaction"), python::arg("spacing") = 2.0,
+      (python::arg("reaction"), python::arg("spacing") = 1.0,
        python::arg("updateProps") = true, python::arg("canonOrient") = true,
        python::arg("nFlipsPerSample") = 0, python::arg("nSample") = 0,
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
@@ -891,6 +1090,7 @@ of the replacements argument.",
               "tests if a molecule can be classified as an agent depending on "
               "the ratio of mapped atoms and a give threshold");
   python::def("HasReactionAtomMapping", RDKit::hasReactionAtomMapping,
+              python::args("rxn"),
               "tests if a reaction obtains any atom mapping");
   python::def("HasReactionSubstructMatch", RDKit::hasReactionSubstructMatch,
               (python::arg("reaction"), python::arg("queryReaction"),
@@ -1094,6 +1294,14 @@ One unrecognized group type in a comma-separated list makes the whole thing fail
                    rdcast<unsigned int>(RDKit::RxnOps::SANITIZE_ALL),
                python::arg("params") = RDKit::RxnOps::DefaultRxnAdjustParams(),
                python::arg("catchErrors") = false),
+              docString.c_str());
+
+  docString =
+      R"DOC(Does the usual molecular sanitization on each reactant, agent, and product of the reaction)DOC";
+  python::def("SanitizeRxnAsMols", RDKit::RxnOps::sanitizeRxnAsMols,
+              (python::arg("rxn"),
+               python::arg("sanitizeOps") =
+                   rdcast<unsigned int>(RDKit::MolOps::SANITIZE_ALL)),
               docString.c_str());
 
   wrap_enumeration();

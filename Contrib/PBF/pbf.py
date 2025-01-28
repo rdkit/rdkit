@@ -7,10 +7,11 @@
 #  which is included in the file license.txt, found at the root
 #  of the RDKit source tree.
 
-from rdkit import Chem
-from rdkit.Chem import AllChem
 import numpy as np
 from numpy import linalg
+
+from rdkit import Chem
+from rdkit.Chem import AllChem
 
 
 def GetBestFitPlane(pts, weights=None):
