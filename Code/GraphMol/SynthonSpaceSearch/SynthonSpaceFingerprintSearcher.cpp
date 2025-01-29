@@ -41,7 +41,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
   std::vector<std::vector<size_t>> retSynthons;
-  std::vector<std::vector<std::tuple<size_t, double>>> fragSims(
+  std::vector<std::vector<std::pair<size_t, double>>> fragSims(
       reaction->getSynthons().size());
 
   synthonsToUse.reserve(reaction->getSynthons().size());
@@ -79,19 +79,18 @@ std::vector<std::vector<size_t>> getHitSynthons(
       // all the synthons and a dummy similarity.
       fragSims[i].resize(synthonsToUse[i].size());
       for (size_t j = 0; j < fragSims[i].size(); j++) {
-        std::get<0>(fragSims[i][j]) = j;
+        fragSims[i][j] = std::make_pair(j, 0.0);
       }
     } else {
-      std::sort(fragSims[i].begin(), fragSims[i].end(),
-                [](const auto &a, const auto &b) {
-                  return std::get<1>(a) > std::get<1>(b);
-                });
+      std::sort(
+          fragSims[i].begin(), fragSims[i].end(),
+          [](const auto &a, const auto &b) { return a.second > b.second; });
     }
     retSynthons[i].clear();
     std::transform(
         fragSims[i].begin(), fragSims[i].end(),
         std::back_inserter(retSynthons[i]),
-        [](const std::pair<size_t, double> &fs) { return std::get<0>(fs); });
+        [](const std::pair<size_t, double> &fs) { return fs.first; });
   }
   return retSynthons;
 }
