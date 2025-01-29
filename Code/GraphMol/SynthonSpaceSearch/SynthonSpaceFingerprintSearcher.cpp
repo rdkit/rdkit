@@ -68,7 +68,8 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 }  // namespace
 
 std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
-    std::vector<std::unique_ptr<ROMol>> &fragSet) const {
+    std::vector<std::unique_ptr<ROMol>> &fragSet,
+    const std::unique_ptr<SynthonSet> &reaction) const {
   std::vector<SynthonSpaceHitSet> results;
   std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs;
   fragFPs.reserve(fragSet.size());
@@ -86,64 +87,62 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     conns |= connPattern;
   }
 
-  for (const auto &[id, reaction] : getSpace().getReactions()) {
-    // It can't be a hit if the number of fragments is more than the number
-    // of synthon sets because some of the molecule won't be matched in any
-    // of the potential products.  It can be less, in which case the unused
-    // synthon set will be used completely, possibly resulting in a large
-    // number of hits.
-    if (fragSet.size() > reaction->getSynthons().size()) {
-      continue;
-    }
-    auto synthConnPatts = reaction->getSynthonConnectorPatterns();
+  // It can't be a hit if the number of fragments is more than the number
+  // of synthon sets because some of the molecule won't be matched in any
+  // of the potential products.  It can be less, in which case the unused
+  // synthon set will be used completely, possibly resulting in a large
+  // number of hits.
+  if (fragSet.size() > reaction->getSynthons().size()) {
+    return results;
+  }
+  auto synthConnPatts = reaction->getSynthonConnectorPatterns();
 
-    // Need to try all combinations of synthon orders.
-    auto synthonOrders =
-        details::permMFromN(fragSet.size(), reaction->getSynthons().size());
-    for (const auto &synthonOrder : synthonOrders) {
-      // Get all the possible permutations of connector numbers compatible with
-      // the number of synthon sets in this reaction.  So if the
-      // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-      // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-      // that might be how they're labelled in the reaction database.
-      auto connCombs = details::getConnectorPermutations(
-          fragSet, conns, reaction->getConnectors());
+  // Need to try all combinations of synthon orders.
+  auto synthonOrders =
+      details::permMFromN(fragSet.size(), reaction->getSynthons().size());
+  for (const auto &synthonOrder : synthonOrders) {
+    // Get all the possible permutations of connector numbers compatible with
+    // the number of synthon sets in this reaction.  So if the
+    // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
+    // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
+    // that might be how they're labelled in the reaction database.
+    auto connCombs = details::getConnectorPermutations(
+        fragSet, conns, reaction->getConnectors());
 
-      for (auto &connComb : connCombs) {
-        // Make sure that for this connector combination, the synthons in this
-        // order have something similar.  All query fragment connectors must
-        // match something in the corresponding synthon.  The synthon can
-        // have unused connectors.
-        auto connCombConnPatterns = details::getConnectorPatterns(connComb);
-        bool skip = false;
-        for (size_t i = 0; i < connCombConnPatterns.size(); ++i) {
-          if ((connCombConnPatterns[i] & synthConnPatts[synthonOrder[i]])
-                  .count() < connCombConnPatterns[i].count()) {
-            skip = true;
-            break;
-          }
+    for (auto &connComb : connCombs) {
+      // Make sure that for this connector combination, the synthons in this
+      // order have something similar.  All query fragment connectors must
+      // match something in the corresponding synthon.  The synthon can
+      // have unused connectors.
+      auto connCombConnPatterns = details::getConnectorPatterns(connComb);
+      bool skip = false;
+      for (size_t i = 0; i < connCombConnPatterns.size(); ++i) {
+        if ((connCombConnPatterns[i] & synthConnPatts[synthonOrder[i]])
+                .count() < connCombConnPatterns[i].count()) {
+          skip = true;
+          break;
         }
-        if (skip) {
-          continue;
-        }
+      }
+      if (skip) {
+        continue;
+      }
 
-        // It appears that for fingerprints, the isotope numbers are
-        // ignored so there's no need to worry about the connector numbers
-        // in the fingerprints.
-        auto theseSynthons = getHitSynthons(
-            fragFPs,
-            getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
-            reaction, synthonOrder);
-        if (!theseSynthons.empty()) {
-          const size_t numHits = std::accumulate(
-              theseSynthons.begin(), theseSynthons.end(), 1,
-              [](const int prevRes, const boost::dynamic_bitset<> &s2) {
-                return prevRes * s2.count();
-              });
-          if (numHits) {
-            results.push_back(
-                SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
-          }
+      // It appears that for fingerprints, the isotope numbers are
+      // ignored so there's no need to worry about the connector numbers
+      // in the fingerprints.
+      auto theseSynthons = getHitSynthons(
+          fragFPs,
+          getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
+          reaction, synthonOrder);
+      if (!theseSynthons.empty()) {
+        const size_t numHits = std::accumulate(
+            theseSynthons.begin(), theseSynthons.end(), 1,
+            [](const int prevRes, const boost::dynamic_bitset<> &s2) {
+              return prevRes * s2.count();
+            });
+        if (numHits) {
+          results.push_back(
+              SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
         }
       }
     }

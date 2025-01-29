@@ -57,11 +57,12 @@ class SynthonSpaceSearcher {
   const SynthonSpaceSearchParams &d_params;
   SynthonSpace &d_space;
 
-  // Do the search of this fragSet against the SynthonSpace in the
+  // Do the search of this fragSet against the SynthonSet in the
   // appropriate way, for example by substructure or fingerprint
   // similarity.
   virtual std::vector<SynthonSpaceHitSet> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet) const = 0;
+      std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const std::unique_ptr<SynthonSet> &reaction) const = 0;
   // Make the hit, constructed from a specific combination of
   // synthons in the SynthonSet, and verify that it matches the
   // query in the appropriate way.  There'll be 1 entry in synthNums

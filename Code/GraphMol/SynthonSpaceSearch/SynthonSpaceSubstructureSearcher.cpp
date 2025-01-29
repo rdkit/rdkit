@@ -194,7 +194,8 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 }  // namespace
 
 std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
-    std::vector<std::unique_ptr<ROMol>> &fragSet) const {
+    std::vector<std::unique_ptr<ROMol>> &fragSet,
+    const std::unique_ptr<SynthonSet> &reaction) const {
   std::vector<SynthonSpaceHitSet> results;
 
   const auto pattFPs = makePatternFPs(fragSet);
@@ -207,64 +208,62 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
   }
 
   const auto conns = details::getConnectorPattern(fragSet);
-  for (const auto &[id, reaction] : getSpace().getReactions()) {
-    // It can't be a hit if the number of fragments is more than the number
-    // of synthon sets because some of the molecule won't be matched in any
-    // of the potential products.  It can be less, in which case the unused
-    // synthon set will be used completely, possibly resulting in a large
-    // number of hits.
-    if (fragSet.size() > reaction->getSynthons().size()) {
+  // It can't be a hit if the number of fragments is more than the number
+  // of synthon sets because some of the molecule won't be matched in any
+  // of the potential products.  It can be less, in which case the unused
+  // synthon set will be used completely, possibly resulting in a large
+  // number of hits.
+  if (fragSet.size() > reaction->getSynthons().size()) {
+    return results;
+  }
+
+  // Check that all the frags have a connector region that matches something
+  // in this reaction set.  Skip if not.
+  if (connRegs.empty()) {
+    buildConnectorRegions(fragSet, connRegs, connRegFPs);
+  }
+  if (!checkConnectorRegions(reaction, connRegs, connRegFPs)) {
+    return results;
+  }
+
+  // Select only the synthons that have fingerprints that are a superset
+  // of the fragment fingerprints.
+  // Need to try all combinations of synthon orders.
+  auto synthonOrders =
+      details::permMFromN(pattFPs.size(), reaction->getSynthons().size());
+  for (const auto &so : synthonOrders) {
+    auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
+    // If none of the synthons passed the screens, move right along, nothing
+    // to see.
+    const bool skip = std::all_of(
+        passedScreens.begin(), passedScreens.end(),
+        [](const boost::dynamic_bitset<> &s) -> bool { return s.none(); });
+    if (skip) {
       continue;
     }
 
-    // Check that all the frags have a connector region that matches something
-    // in this reaction set.  Skip if not.
-    if (connRegs.empty()) {
-      buildConnectorRegions(fragSet, connRegs, connRegFPs);
-    }
-    if (!checkConnectorRegions(reaction, connRegs, connRegFPs)) {
-      continue;
-    }
+    // Get all the possible permutations of connector numbers compatible with
+    // the number of synthon sets in this reaction.  So if the
+    // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
+    // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
+    // that might be how they're labelled in the reaction database.
+    auto connCombs = details::getConnectorPermutations(
+        fragSet, conns, reaction->getConnectors());
 
-    // Select only the synthons that have fingerprints that are a superset
-    // of the fragment fingerprints.
-    // Need to try all combinations of synthon orders.
-    auto synthonOrders =
-        details::permMFromN(pattFPs.size(), reaction->getSynthons().size());
-    for (const auto &so : synthonOrders) {
-      auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
-      // If none of the synthons passed the screens, move right along, nothing
-      // to see.
-      const bool skip = std::all_of(
-          passedScreens.begin(), passedScreens.end(),
-          [](const boost::dynamic_bitset<> &s) -> bool { return s.none(); });
-      if (skip) {
-        continue;
-      }
-
-      // Get all the possible permutations of connector numbers compatible with
-      // the number of synthon sets in this reaction.  So if the
-      // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-      // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-      // that might be how they're labelled in the reaction database.
-      auto connCombs = details::getConnectorPermutations(
-          fragSet, conns, reaction->getConnectors());
-
-      // Find all synthons that match the fragments with each connector
-      // combination.
-      for (auto &connComb : connCombs) {
-        auto theseSynthons =
-            getHitSynthons(connComb, passedScreens, reaction, so);
-        if (!theseSynthons.empty()) {
-          const size_t numHits = std::accumulate(
-              theseSynthons.begin(), theseSynthons.end(), 1,
-              [](const int prevRes, const boost::dynamic_bitset<> &s2) {
-                return prevRes * s2.count();
-              });
-          if (numHits) {
-            results.push_back(
-                SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
-          }
+    // Find all synthons that match the fragments with each connector
+    // combination.
+    for (auto &connComb : connCombs) {
+      auto theseSynthons =
+          getHitSynthons(connComb, passedScreens, reaction, so);
+      if (!theseSynthons.empty()) {
+        const size_t numHits = std::accumulate(
+            theseSynthons.begin(), theseSynthons.end(), 1,
+            [](const int prevRes, const boost::dynamic_bitset<> &s2) {
+              return prevRes * s2.count();
+            });
+        if (numHits) {
+          results.push_back(
+              SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
         }
       }
     }

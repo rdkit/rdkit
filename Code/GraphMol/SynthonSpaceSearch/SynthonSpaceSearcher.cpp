@@ -64,25 +64,26 @@ SearchResults SynthonSpaceSearcher::search() {
 
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
-  std::cout << "Number of fragments: " << fragments.size() << std::endl;
-  for (auto &fragSet : fragments) {
-    timedOut = details::checkTimeOut(endTime);
-    if (timedOut) {
-      break;
-    }
-    if (ControlCHandler::getGotSignal()) {
-      break;
-    }
-    if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
-      totHits += std::accumulate(
-          theseHits.begin(), theseHits.end(), 0,
-          [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
-            return prevVal + hs.numHits;
-          });
-      allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
+  for (const auto &[id, reaction] : getSpace().getReactions()) {
+    for (auto &fragSet : fragments) {
+      timedOut = details::checkTimeOut(endTime);
+      if (timedOut) {
+        break;
+      }
+      if (ControlCHandler::getGotSignal()) {
+        break;
+      }
+      if (auto theseHits = searchFragSet(fragSet, reaction);
+          !theseHits.empty()) {
+        totHits += std::accumulate(
+            theseHits.begin(), theseHits.end(), 0,
+            [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
+              return prevVal + hs.numHits;
+            });
+        allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
+      }
     }
   }
-
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, totHits, endTime, timedOut, results);
   }
