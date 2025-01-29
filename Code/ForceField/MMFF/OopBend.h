@@ -1,7 +1,4 @@
-//
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,26 +22,30 @@ class RDKIT_FORCEFIELD_EXPORT OopBendContrib : public ForceFieldContrib {
  public:
   OopBendContrib() {}
   //! Constructor
-  /*!
-    The Wilson angle is between the vector formed by atom2-atom4
-and the angle formed by atom1-atom2-atom3
+  OopBendContrib(ForceField *owner);
+  /*! Adds an out-of-plane term to the force field contrib.
 
-    \param owner       pointer to the owning ForceField
+  The Wilson angle is between the vector formed by atom2-atom4
+  and the angle formed by atom1-atom2-atom3
+
     \param idx1        index of atom1 in the ForceField's positions
     \param idx2        index of atom2 in the ForceField's positions
     \param idx3        index of atom3 in the ForceField's positions
     \param idx4        index of atom4 in the ForceField's positions
   */
-  OopBendContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-                 unsigned int idx3, unsigned int idx4,
-                 const MMFFOop *mmffOopParams);
+  void addTerm(unsigned int idx1, unsigned int idx2,
+               unsigned int idx3, unsigned int idx4,
+               const MMFFOop *mmffOopParams);
+
   double getEnergy(double *pos) const override;
   void getGrad(double *pos, double *grad) const override;
   OopBendContrib *copy() const override { return new OopBendContrib(*this); }
 
+  void getSingleGrad(double* pos, double* grad, unsigned int termIdx) const;
+
  private:
-  int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};
-  double d_koop;
+  std::vector<int> d_at1Idxs, d_at2Idxs, d_at3Idxs, d_at4Idxs;
+  std::vector<double> d_koop;
 };
 
 namespace Utils {

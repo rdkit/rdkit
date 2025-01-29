@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2022 Paolo Tosco and other RDKit contributors
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,6 +13,7 @@
 
 #include <ForceField/Contrib.h>
 #include <tuple>
+#include <vector>
 
 namespace RDGeom {
 class Point3D;
@@ -27,21 +28,22 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
  public:
   TorsionAngleContrib() {}
   //! Constructor
+  TorsionAngleContrib(ForceField *owner);
   /*!
-    The torsion is between atom1 - atom2 - atom3 - atom4
-    (i.e the angle between bond atom1-atom2 and bond atom3-atom4
-    while looking down bond atom2-atom3)
+  Adds a torsion term to the force field contrib.
 
-    \param owner       pointer to the owning ForceField
+  The torsion is between atom1 - atom2 - atom3 - atom4
+  (i.e the angle between bond atom1-atom2 and bond atom3-atom4
+  while looking down bond atom2-atom3)
+
     \param idx1        index of atom1 in the ForceField's positions
     \param idx2        index of atom2 in the ForceField's positions
     \param idx3        index of atom3 in the ForceField's positions
     \param idx4        index of atom4 in the ForceField's positions
     \param torsionType MMFF type of the torsional bond between atoms 2 and 3
   */
-  TorsionAngleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-                      unsigned int idx3, unsigned int idx4,
-                      const MMFFTor *mmffTorParams);
+  void addTerm(unsigned int idx1, unsigned int idx2, unsigned int idx3,
+               unsigned int idx4, const MMFFTor *mmffTorParams);
   double getEnergy(double *pos) const override;
   void getGrad(double *pos, double *grad) const override;
   TorsionAngleContrib *copy() const override {
@@ -49,8 +51,13 @@ class RDKIT_FORCEFIELD_EXPORT TorsionAngleContrib : public ForceFieldContrib {
   }
 
  private:
-  int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1}, d_at4Idx{-1};
-  double d_V1, d_V2, d_V3;
+  std::vector<int16_t> d_at1Idx;
+  std::vector<int16_t> d_at2Idx;
+  std::vector<int16_t> d_at3Idx;
+  std::vector<int16_t> d_at4Idx;
+  std::vector<double> d_V1;
+  std::vector<double> d_V2;
+  std::vector<double> d_V3;
 };
 
 namespace Utils {

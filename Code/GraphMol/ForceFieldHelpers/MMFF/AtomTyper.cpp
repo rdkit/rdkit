@@ -981,7 +981,8 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
               (nbrAtom->getTotalDegree() == 1)) {
             ++nTermObondedToN;
           }
-          if (((atom->getExplicitValence() + atom->getNumImplicitHs()) >= 3) &&
+          if (((atom->getValence(Atom::ValenceType::EXPLICIT) +
+                atom->getNumImplicitHs()) >= 3) &&
               ((nbrAtom->getAtomicNum() == 15) ||
                (nbrAtom->getAtomicNum() == 16))) {
             unsigned int nObondedToSP = 0;
@@ -1015,7 +1016,8 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
         // 3 neighbors
         if (atom->getTotalDegree() == 3) {
           // total bond order >= 4
-          if ((atom->getExplicitValence() + atom->getNumImplicitHs()) >= 4) {
+          if ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+               atom->getNumImplicitHs()) >= 4) {
             bool doubleBondedCN = false;
             boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
             for (; nbrIdx != endNbrs; ++nbrIdx) {
@@ -1070,7 +1072,8 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
             }
           }
           // total bond order >= 3
-          if ((atom->getExplicitValence() + atom->getNumImplicitHs()) >= 3) {
+          if ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+               atom->getNumImplicitHs()) >= 3) {
             bool isNCOorNCS = false;
             bool isNCNplus = false;
             bool isNGDplus = false;
@@ -1324,7 +1327,8 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
         // 2 neighbors
         if (atom->getTotalDegree() == 2) {
           // total bond order = 4
-          if ((atom->getExplicitValence() + atom->getNumImplicitHs()) == 4) {
+          if ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+               atom->getNumImplicitHs()) == 4) {
             // loop over neighbors
             bool isIsonitrile = false;
             boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
@@ -1347,7 +1351,8 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
             break;
           }
           // total bond order = 3
-          if ((atom->getExplicitValence() + atom->getNumImplicitHs()) == 3) {
+          if ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+               atom->getNumImplicitHs()) == 3) {
             // loop over neighbors
             bool isNitroso = false;
             bool isImineOrAzo = false;
@@ -1382,7 +1387,8 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
             }
           }
           // total bond order >= 2
-          if ((atom->getExplicitValence() + atom->getNumImplicitHs()) >= 2) {
+          if ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+               atom->getNumImplicitHs()) >= 2) {
             // loop over neighbors
             bool isNSO = false;
             boost::tie(nbrIdx, endNbrs) = mol.getAtomNeighbors(atom);
@@ -1488,7 +1494,8 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
         }
         // 2 neighbors
         if (atom->getTotalDegree() == 2) {
-          if ((atom->getExplicitValence() + atom->getNumImplicitHs()) == 3) {
+          if ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+               atom->getNumImplicitHs()) == 3) {
             // O=+
             // Oxenium oxygen
             atomType = 51;
@@ -1626,12 +1633,13 @@ void MMFFMolProperties::setMMFFHeavyAtomType(const RingMembershipSize &rmSize,
                   (nObondedToCorNorS == 1)) {
                 // if nitrogen has 2 neighbors or, if the neighbors are 3,
                 // the total bond order on nitrogen is 3, ipso is oxide oxygen
-                isOxideOBondedToN = ((nbrAtom->getTotalDegree() == 2) ||
-                                     ((nbrAtom->getExplicitValence() +
-                                       nbrAtom->getNumImplicitHs()) == 3));
+                isOxideOBondedToN =
+                    ((nbrAtom->getTotalDegree() == 2) ||
+                     ((nbrAtom->getValence(Atom::ValenceType::EXPLICIT) +
+                       nbrAtom->getNumImplicitHs()) == 3));
                 // if the total bond order on nitrogen is 4, ipso is N-oxide
                 // oxygen
-                isNOxideO = ((nbrAtom->getExplicitValence() +
+                isNOxideO = ((nbrAtom->getValence(Atom::ValenceType::EXPLICIT) +
                               nbrAtom->getNumImplicitHs()) == 4);
               }
               // if ipso oxygen is bonded to nitrogen which is bonded

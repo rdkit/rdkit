@@ -219,7 +219,7 @@ RWMol *SLNToMol(const std::string &sln, bool sanitize, int debugParse) {
       // this triggers a sanitization, so we do not need to
       // worry about doing one here:
       try {
-        MolOps::removeHs(*res, false, false);
+        MolOps::removeHs(*res);
       } catch (...) {
         delete res;
         throw;

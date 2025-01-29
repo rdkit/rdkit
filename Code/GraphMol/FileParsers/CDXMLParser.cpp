@@ -647,7 +647,7 @@ void visit_children(
             unsigned int failedOp = 0;
             MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
             MolOps::detectBondStereochemistry(*res);
-            MolOps::removeHs(*res, false, false);
+            MolOps::removeHs(*res);
           } else {
             MolOps::sanitizeMol(*res);
             MolOps::detectBondStereochemistry(*res);
