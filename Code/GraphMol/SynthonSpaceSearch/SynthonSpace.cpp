@@ -109,6 +109,47 @@ int deduceFormat(const std::string &line) {
   }
   return -1;
 }
+
+std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
+                                         int &format,
+                                         const std::string &fileName) {
+  static const std::regex regexws("\\s+");
+  static const std::regex regexc(",+");
+
+  std::vector<std::string> nextSynthon;
+  auto nextLine = getLine(is);
+  ++lineNum;
+  if (nextLine.empty() || nextLine[0] == '#') {
+    return nextSynthon;
+  }
+  if (format == -1) {
+    format = deduceFormat(nextLine);
+    if (format == -1) {
+      throw std::runtime_error("Bad format for SynthonSpace file " + fileName);
+    }
+    return nextSynthon;
+  }
+  if (format < 3) {
+    nextSynthon = splitLine(nextLine, regexws);
+  } else {
+    nextSynthon = splitLine(nextLine, regexc);
+  }
+  if (nextSynthon.size() < 4) {
+    throw std::runtime_error("Bad format for SynthonSpace file " + fileName +
+                             " on line " + std::to_string(lineNum));
+  }
+  return nextSynthon;
+}
+int getSynthonNum(int format, const std::string &synthon) {
+  int synthonNum{std::numeric_limits<int>::max()};
+  if (format == 0 || format == 1 || format == 3 || format == 4) {
+    synthonNum = std::stoi(synthon);
+  } else if (format == 2 || format == 5) {
+    // in this case it's a string "synton_2" etc.
+    synthonNum = std::stoi(synthon.substr(7));
+  }
+  return synthonNum;
+}
 }  // namespace
 
 void SynthonSpace::readTextFile(const std::string &inFilename) {
@@ -117,36 +158,14 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
   if (!ifs.is_open() || ifs.bad()) {
     throw std::runtime_error("Couldn't open file " + d_fileName);
   }
-  static const std::regex regexws("\\s+");
-  static const std::regex regexc(",+");
 
   int format = -1;
   std::string nextLine;
   int lineNum = 1;
-  std::vector<std::string> nextSynthon;
   while (!ifs.eof()) {
-    nextLine = getLine(ifs);
-    ++lineNum;
-    if (nextLine.empty() || nextLine[0] == '#') {
+    auto nextSynthon = readSynthonLine(ifs, lineNum, format, d_fileName);
+    if (nextSynthon.empty()) {
       continue;
-    }
-    if (format == -1) {
-      format = deduceFormat(nextLine);
-      if (format == -1) {
-        throw std::runtime_error("Bad format for SynthonSpace file " +
-                                 d_fileName);
-      }
-      continue;
-    }
-    if (format < 3) {
-      nextSynthon = splitLine(nextLine, regexws);
-    } else {
-      nextSynthon = splitLine(nextLine, regexc);
-    }
-    if (nextSynthon.size() < 4) {
-      throw std::runtime_error("Bad format for SynthonSpace file " +
-                               d_fileName + " on line " +
-                               std::to_string(lineNum));
     }
     if (auto it = d_reactions.find(nextSynthon[3]); it == d_reactions.end()) {
       d_reactions.insert(std::make_pair(
@@ -154,13 +173,7 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
     }
     fixConnectors(nextSynthon[0]);
     auto &currReaction = d_reactions[nextSynthon[3]];
-    int synthonNum{std::numeric_limits<int>::max()};
-    if (format == 0 || format == 1 || format == 3 || format == 4) {
-      synthonNum = std::stoi(nextSynthon[2]);
-    } else if (format == 2 || format == 5) {
-      // in this case it's a string "synton_2" etc.
-      synthonNum = std::stoi(nextSynthon[2].substr(7));
-    }
+    auto synthonNum = getSynthonNum(format, nextSynthon[2]);
     currReaction->addSynthon(synthonNum, std::make_unique<Synthon>(Synthon(
                                              nextSynthon[0], nextSynthon[1])));
   }
@@ -184,7 +197,7 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   if (hasFingerprints()) {
     streamWrite(os, d_fpType);
   }
-  streamWrite(os, d_reactions.size());
+  streamWrite(os, static_cast<std::uint64_t>(d_reactions.size()));
   for (const auto &[reactionId, reaction] : d_reactions) {
     reaction->writeToDBStream(os);
   }
@@ -225,7 +238,7 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
     if (hasFPs) {
       streamRead(is, d_fpType, 0);
     }
-    size_t numRS;
+    std::uint64_t numRS;
     streamRead(is, numRS);
     for (size_t i = 0; i < numRS; ++i) {
       auto rs = std::make_unique<SynthonSet>();
@@ -300,6 +313,74 @@ void SynthonSpace::buildAddAndSubstractFingerprints(
   for (const auto &[id, synthSet] : d_reactions) {
     synthSet->buildAddAndSubtractFPs(fpGen);
   }
+}
+
+namespace {
+void finalizeReaction(SynthonSet *reaction,
+                      const FingerprintGenerator<std::uint64_t> *fpGen) {
+  if (reaction) {
+    reaction->removeEmptySynthonSets();
+    reaction->transferProductBondsToSynthons();
+    reaction->buildConnectorRegions();
+    reaction->assignConnectorsUsed();
+    if (fpGen) {
+      reaction->buildSynthonFingerprints(*fpGen);
+      reaction->buildAddAndSubtractFPs(*fpGen);
+    }
+  }
+}
+}  // namespace
+
+void convertTextToDBFile(const std::string &inFilename,
+                         const std::string &outFilename,
+                         const FingerprintGenerator<std::uint64_t> *fpGen) {
+  std::ifstream ifs(inFilename);
+  if (!ifs.is_open() || ifs.bad()) {
+    throw std::runtime_error("Couldn't open file " + inFilename);
+  }
+  std::ofstream os(outFilename, std::fstream::binary | std::fstream::trunc);
+  streamWrite(os, endianId);
+  streamWrite(os, versionMajor);
+  streamWrite(os, versionMinor);
+  streamWrite(os, fpGen != nullptr);
+  if (fpGen != nullptr) {
+    streamWrite(os, fpGen->infoString());
+  }
+  std::uint64_t numReacts = 0;
+  auto numReactPos = os.tellp();
+  streamWrite(os, numReacts);
+
+  int format = -1;
+  int lineNum = 1;
+  std::unique_ptr<SynthonSet> currReaction;
+  std::string oldReactionId;
+  while (!ifs.eof()) {
+    auto nextSynthon = readSynthonLine(ifs, lineNum, format, inFilename);
+    if (nextSynthon.empty()) {
+      continue;
+    }
+    fixConnectors(nextSynthon[0]);
+    auto synthonNum = getSynthonNum(format, nextSynthon[2]);
+    if (!currReaction) {
+      ++numReacts;
+      currReaction.reset(new SynthonSet(nextSynthon[3]));
+      oldReactionId = nextSynthon[3];
+    }
+    if (oldReactionId != nextSynthon[3]) {
+      finalizeReaction(currReaction.get(), fpGen);
+      currReaction->writeToDBStream(os);
+      ++numReacts;
+      currReaction.reset(new SynthonSet(nextSynthon[3]));
+      oldReactionId = nextSynthon[3];
+    }
+    currReaction->addSynthon(synthonNum, std::make_unique<Synthon>(Synthon(
+                                             nextSynthon[0], nextSynthon[1])));
+  }
+  finalizeReaction(currReaction.get(), fpGen);
+  currReaction->writeToDBStream(os);
+  os.seekp(numReactPos, std::ios::beg);
+  streamWrite(os, numReacts);
+  os.close();
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

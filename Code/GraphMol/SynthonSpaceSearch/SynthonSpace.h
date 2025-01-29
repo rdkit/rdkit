@@ -201,6 +201,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param outFilename: the name of the file to write.
    */
   void writeDBFile(const std::string &outFilename) const;
+
   /*!
    *
    * @param inFilename: the name of the file to read.
@@ -241,6 +242,19 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
 };
+
+/*!
+ * Convert the text file into the binary DB file in our format.
+ * Assumes that all synthons from a reaction are contiguous in the
+ * input file.  This uses a lot less memory than using
+ * readTextFile() followed by writeDBFile().
+ * @param inFilename name of the text file to read
+ * @param outFilename name of the binary file to write
+ * @param fpGen optional fingerprint generator
+ */
+RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
+    const std::string &inFilename, const std::string &outFilename,
+    const FingerprintGenerator<std::uint64_t> *fpGen = nullptr);
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit

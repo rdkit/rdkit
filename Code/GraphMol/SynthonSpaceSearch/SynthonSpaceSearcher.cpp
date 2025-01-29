@@ -64,6 +64,7 @@ SearchResults SynthonSpaceSearcher::search() {
 
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
+  std::cout << "Number of fragments: " << fragments.size() << std::endl;
   for (auto &fragSet : fragments) {
     timedOut = details::checkTimeOut(endTime);
     if (timedOut) {

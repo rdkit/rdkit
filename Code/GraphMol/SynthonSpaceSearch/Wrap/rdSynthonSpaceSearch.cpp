@@ -96,6 +96,16 @@ void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
+void convertTextToDBFileWrapper(const std::string &inFilename,
+                                const std::string &outFilename,
+                                python::object fpGen) {
+  const FingerprintGenerator<std::uint64_t> *fpGenCpp = nullptr;
+  if (fpGen) {
+    fpGenCpp = python::extract<FingerprintGenerator<std::uint64_t> *>(fpGen);
+  }
+  SynthonSpaceSearch::convertTextToDBFile(inFilename, outFilename, fpGenCpp);
+}
+
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::scope().attr("__doc__") =
       "Module containing implementation of SynthonSpace search of"
@@ -228,6 +238,19 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " is done automatically when the first similarity search is done, but if"
           " converting a text file to binary format it might need to be done"
           " explicitly.");
+
+  docString =
+      "Convert the text file into the binary DB file in our format."
+      "  Assumes that all synthons from a reaction are contiguous in the input file."
+      "  This uses a lot less memory than using ReadTextFile() followed by"
+      "  WriteDBFile()."
+      "- inFilename the name of the text file"
+      "- outFilename the name of the binary file"
+      "- optional fingerprint generator";
+  python::def("ConvertTextToDBFile", &RDKit::convertTextToDBFileWrapper,
+              (python::arg("inFilename"), python::arg("outFilename"),
+               python::arg("fpGen") = python::object()),
+              docString.c_str());
 }
 
 }  // namespace RDKit

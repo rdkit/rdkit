@@ -332,6 +332,48 @@ TEST_CASE("DB Writer") {
   std::remove(spaceName);
 }
 
+TEST_CASE("DB Converter") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space.txt";
+
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+
+  auto spaceName = std::tmpnam(nullptr);
+  convertTextToDBFile(libName, spaceName, fpGen.get());
+
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  CHECK(synthonspace.getNumReactions() == 1);
+  synthonspace.buildSynthonFingerprints(*fpGen);
+  synthonspace.buildAddAndSubstractFingerprints(*fpGen);
+  SynthonSpace newsynthonspace;
+  newsynthonspace.readDBFile(spaceName);
+  auto it = newsynthonspace.getReactions().find("doebner-miller-quinoline");
+  CHECK(it != newsynthonspace.getReactions().end());
+  const auto &irxn = it->second;
+  const auto &orxn =
+      synthonspace.getReactions().find("doebner-miller-quinoline")->second;
+  CHECK(irxn->getId() == orxn->getId());
+  CHECK(irxn->getConnectorRegions().size() ==
+        orxn->getConnectorRegions().size());
+  CHECK(*irxn->getConnRegFP() == *orxn->getConnRegFP());
+  CHECK(irxn->getConnectors() == orxn->getConnectors());
+  CHECK(irxn->getSynthons().size() == orxn->getSynthons().size());
+  CHECK(newsynthonspace.hasFingerprints());
+  for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
+    CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
+    for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
+      CHECK(irxn->getSynthons()[i][j]->getId() ==
+            orxn->getSynthons()[i][j]->getId());
+      CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
+    }
+  }
+  std::remove(spaceName);
+}
+
 TEST_CASE("S Biggy") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
