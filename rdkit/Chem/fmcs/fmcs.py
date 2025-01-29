@@ -580,7 +580,7 @@ def get_typed_molecule(rdmol, atom_typer, bond_typer, matchValences=Default.matc
   if matchValences:
     new_atom_smarts_types = []
     for (atom, atom_smarts_type) in zip(atoms, atom_smarts_types):
-      valence = atom.GetImplicitValence() + atom.GetExplicitValence()
+      valence = atom.GetTotalValence()
       valence_str = "v%d" % valence
       if "," in atom_smarts_type:
         atom_smarts_type += ";" + valence_str

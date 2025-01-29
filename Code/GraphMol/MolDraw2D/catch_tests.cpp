@@ -357,6 +357,7 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testOptionalAtomListBrackets_3.svg", 2945415850U},
     {"testReagentPadding_1.svg", 2106266352U},
     {"testReagentPadding_2.svg", 1006560295U},
+    {"testReactionPanels.svg", 3629304831U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10371,6 +10372,48 @@ TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
 }
 
 
+
+TEST_CASE("Github8213 - Reaction rendering ignores panels") {
+  std::string smiles =
+      "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+      "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+      "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+      "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+  bool useSmiles = false;
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+  REQUIRE(rxn);
+  MolDraw2DSVG drawer(600, 300, 300, 150, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.setOffset(300, 150);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testReactionPanels.svg");
+  outs << text;
+  outs.close();
+  const static std::regex atom0(
+      "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-0'.*</text>");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), atom0),
+                    std::sregex_iterator()));
+  CHECK(match_count == 6);
+  auto match_begin = std::sregex_iterator(text.begin(), text.end(), atom0);
+  std::smatch match = *match_begin;
+  double x1 = stod(match[1]);
+  double y1 = stod(match[2]);
+  CHECK(x1 < 300.0);
+  CHECK(y1 < 150.0);
+  ++match_begin;
+  ++match_begin;
+  ++match_begin;
+  match = *match_begin;
+  double x2 = stod(match[1]);
+  double y2 = stod(match[2]);
+  CHECK((x2 > 300.0 && x2 < 600.0));
+  CHECK((y2 > 150.0 && y2 < 300.0));
+  check_file_hash("testReactionPanels.svg");
+}
 
 TEST_CASE("Optionally increase padding round reagents in reaction drawing") {
   // No specific tests on the output, because this was an enhancement not
