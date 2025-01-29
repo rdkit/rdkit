@@ -265,23 +265,14 @@ void getBondLabels(const ROMol &mol, const RascalOptions &opts,
     } else {
       bondType = std::to_string(b->getBondType());
     }
-    if (b->getBeginAtom()->getAtomicNum() == b->getEndAtom()->getAtomicNum()) {
-      if (b->getEndAtom()->getDegree() < b->getBeginAtom()->getDegree()) {
-        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] + bondType +
-                                  atomLabels[b->getBeginAtomIdx()];
-      } else {
-        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] + bondType +
-                                  atomLabels[b->getEndAtomIdx()];
-      }
-    } else {
-      if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
-        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] + bondType +
-                                  atomLabels[b->getEndAtomIdx()];
-      } else {
-        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] + bondType +
-                                  atomLabels[b->getBeginAtomIdx()];
-      }
+    // The atom labels need to be in consistent order irrespective
+    // of input order.
+    auto lbl1 = atomLabels[b->getBeginAtomIdx()];
+    auto lbl2 = atomLabels[b->getEndAtomIdx()];
+    if (lbl1 < lbl2) {
+      std::swap(lbl1, lbl2);
     }
+    bondLabels[b->getIdx()] = lbl1 + bondType + lbl2;
   }
 }
 
