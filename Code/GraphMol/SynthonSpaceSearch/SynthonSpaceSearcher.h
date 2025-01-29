@@ -44,6 +44,14 @@ class SynthonSpaceSearcher {
 
   virtual ~SynthonSpaceSearcher() = default;
 
+  // Make the hit, constructed from a specific combination of
+  // synthons in the SynthonSet, and verify that it matches the
+  // query in the appropriate way.  There'll be 1 entry in synthNums
+  // for each synthon list in the reaction.  Returns an empty pointer
+  // if the hit isn't accepted for whatever reason.
+  std::unique_ptr<ROMol> buildAndVerifyHit(
+      const SynthonSet *reaction, const std::vector<size_t> &synthNums) const;
+
   SearchResults search();
 
   SynthonSpace &getSpace() const { return d_space; }
@@ -68,15 +76,14 @@ class SynthonSpaceSearcher {
   // for each synthon list in the reaction.  Returns an empty pointer
   // if the hit isn't accepted for whatever reason.
   std::unique_ptr<ROMol> buildAndVerifyHit(
-      const std::unique_ptr<SynthonSet> &reaction,
-      const std::vector<size_t> &synthNums,
+      const SynthonSet *reaction, const std::vector<size_t> &synthNums,
       std::set<std::string> &resultsNames) const;
   // Some of the search methods (Rascal, for example) can do a quick
   // check on whether this set of synthons can match the query without having to
   // build the full molecule from the synthons.  They will over-ride this
   // function which by default passes everything.
   virtual bool quickVerify(
-      [[maybe_unused]] const std::unique_ptr<SynthonSet> &reaction,
+      [[maybe_unused]] const SynthonSet *reaction,
       [[maybe_unused]] const std::vector<size_t> &synthNums) const {
     return true;
   }
@@ -89,17 +96,22 @@ class SynthonSpaceSearcher {
   // the hitsets, including duplicates.  Duplicates by name are not returned,
   // but duplicate SMILES from different reactions will be.  Hitsets will
   // be re-ordered on exit.
-  void buildHits(std::vector<SynthonSpaceHitSet> &hitsets, size_t totHits,
+  void buildHits(std::vector<SynthonSpaceHitSet> &hitsets,
                  const TimePoint *endTime, bool &timedOut,
                  std::vector<std::unique_ptr<ROMol>> &results) const;
   void buildAllHits(const std::vector<SynthonSpaceHitSet> &hitsets,
-                    std::set<std::string> &resultsNames,
                     const TimePoint *endTime, bool &timedOut,
                     std::vector<std::unique_ptr<ROMol>> &results) const;
-  void buildRandomHits(const std::vector<SynthonSpaceHitSet> &hitsets,
-                       size_t totHits, std::set<std::string> &resultsNames,
-                       const TimePoint *endTime, bool &timedOut,
-                       std::vector<std::unique_ptr<ROMol>> &results) const;
+  void makeHitsFromToTry(
+      const std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>>
+          &toTry,
+      const TimePoint *endTime,
+      std::vector<std::unique_ptr<ROMol>> &results) const;
+  void processToTrySet(
+      std::vector<std::tuple<const SynthonSet *, std::vector<size_t>>> &toTry,
+      const TimePoint *endTime,
+      std::vector<std::unique_ptr<ROMol>> &results) const;
+
   // get the subset of synthons for the given reaction to use for this
   // enumeration.
   std::vector<std::vector<ROMol *>> getSynthonsToUse(

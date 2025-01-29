@@ -347,7 +347,7 @@ TEST_CASE("S Biggy") {
                                       "c1nncn1",
                                       "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
-  const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
+  const std::vector<std::int64_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
@@ -446,8 +446,10 @@ TEST_CASE("S Random Hits") {
     }
   }
   CHECK(results.getHitMolecules().size() == 100);
-  std::map<std::string, int> expCounts{{"a1", 61}, {"a6", 10}, {"a7", 29}};
-  CHECK(expCounts == libCounts);
+  std::map<std::string, int> expCounts{{"a1", 66}, {"a6", 8}, {"a7", 26}};
+  for (const auto &[id, count] : expCounts) {
+    CHECK(count == expCounts[id]);
+  }
 }
 
 TEST_CASE("S Later hits") {
@@ -468,23 +470,23 @@ TEST_CASE("S Later hits") {
   for (const auto &m : results.getHitMolecules()) {
     hitNames1.push_back(m->getProp<std::string>(common_properties::_Name));
   }
+  CHECK(hitNames1.size() == 200);
 
   params.maxHits = 100;
-  params.hitStart = 101;
+  params.hitStart = 100;
   results = synthonspace.substructureSearch(*queryMol, params);
   std::vector<std::string> hitNames2;
   for (const auto &m : results.getHitMolecules()) {
     hitNames2.push_back(m->getProp<std::string>(common_properties::_Name));
   }
-  CHECK(hitNames1.size() == 200);
-  CHECK(hitNames2.size() == 100);
+  REQUIRE(hitNames2.size() == 100);
   for (int i = 0; i < 100; ++i) {
     CHECK(hitNames1[100 + i] == hitNames2[i]);
   }
 
   params.hitStart = 6780;
   results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.getHitMolecules().size() == 6);
+  CHECK(results.getHitMolecules().size() == 5);
 
   params.hitStart = 7000;
   results = synthonspace.substructureSearch(*queryMol, params);

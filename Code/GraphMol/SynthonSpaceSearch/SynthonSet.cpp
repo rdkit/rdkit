@@ -35,6 +35,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <RDGeneral/ControlCHandler.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -432,8 +433,9 @@ bool SynthonSet::hasAddAndSubtractFPs() const {
   return static_cast<bool>(d_addFP);
 }
 
-void SynthonSet::buildSynthonFingerprints(
+bool SynthonSet::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
+  ControlCHandler::reset();
   d_addFP.reset();
   d_subtractFP.reset();
 
@@ -449,13 +451,18 @@ void SynthonSet::buildSynthonFingerprints(
       d_synthonFPs[synthSetNum].emplace_back(
           fpGen.getFingerprint(*synth->getSearchMol()));
     }
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
   }
+  return true;
 }
 
-void SynthonSet::buildAddAndSubtractFPs(
+bool SynthonSet::buildAddAndSubtractFPs(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
   d_addFP.reset();
   d_subtractFP.reset();
+  ControlCHandler::reset();
   std::vector<std::vector<size_t>> synthonNums(d_synthons.size());
   std::vector<size_t> numSynthons(d_synthons.size());
   std::vector<int> naddbitcounts(fpGen.getOptions()->d_fpSize, 0);
@@ -520,6 +527,9 @@ void SynthonSet::buildAddAndSubtractFPs(
       nsubbitcounts[i]++;
     }
     stepper.step();
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
   }
 
   // This is the fraction of products that must set a bit for
@@ -541,6 +551,7 @@ void SynthonSet::buildAddAndSubtractFPs(
 
   // Take the complement of the subtract FP so it can be used directly
   *d_subtractFP = ~(*d_subtractFP);
+  return true;
 }
 
 std::string SynthonSet::buildProductName(

@@ -152,13 +152,12 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   // fragment set in different ways so keep track of what we've had to
   // avoid duplicates.
   std::set<std::string> fragSmis;
-  bool cancelled = false;
   timedOut = false;
   std::uint64_t numTries = 100;
 
   // Now do the splits.
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
-    if (timedOut || cancelled) {
+    if (timedOut || ControlCHandler::getGotSignal()) {
       break;
     }
     auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
@@ -168,7 +167,6 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     }
     for (auto &c : combs) {
       if (ControlCHandler::getGotSignal()) {
-        cancelled = true;
         break;
       }
       --numTries;

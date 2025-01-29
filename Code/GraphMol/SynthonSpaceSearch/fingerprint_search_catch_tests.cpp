@@ -149,7 +149,7 @@ TEST_CASE("FP Biggy") {
       "c12ccccc1c(N)nc(N)n2", "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
       "c1n[nH]cn1",           "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{46, 2, 0, 123, 0, 0};
-  const std::vector<size_t> maxRes{2408, 197, 0, 833, 0, 4};
+  const std::vector<std::int64_t> maxRes{2408, 197, 0, 833, 0, 4};
   SynthonSpaceSearchParams params;
   params.approxSimilarityAdjuster = 0.2;
   params.maxHits = -1;
@@ -191,8 +191,11 @@ TEST_CASE("FP Random Hits") {
   CHECK(results.getHitMolecules().size() == 100);
   std::map<std::string, int> expCounts{{"a1", 100}};
   CHECK(expCounts == libCounts);
-  CHECK(results.getHitMolecules().front()->getProp<double>("Similarity") ==
-        Catch::Approx(0.711538));
+  // Use of std::shuffle means different platforms give different results.
+  CHECK((results.getHitMolecules().front()->getProp<double>("Similarity") ==
+             Catch::Approx(0.673077) ||
+         results.getHitMolecules().front()->getProp<double>("Similarity") ==
+             Catch::Approx(0.711538)));
   CHECK(results.getHitMolecules().back()->getProp<double>("Similarity") ==
         Catch::Approx(0.5));
 }
@@ -233,6 +236,7 @@ TEST_CASE("Timeout") {
   params.similarityCutoff = 0.3;
   params.fragSimilarityAdjuster = 0.3;
   params.timeOut = 2;
+  params.numThreads = 2;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
 
@@ -284,4 +288,31 @@ TEST_CASE("FP Approx Similarity") {
   params.approxSimilarityAdjuster = 0.25;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 914);
+}
+
+TEST_CASE("FP Threads") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  SynthonSpaceSearchParams params;
+  params.maxBondSplits = 3;
+  params.maxHits = -1;
+  params.similarityCutoff = 0.5;
+  params.approxSimilarityAdjuster = 0.2;
+  params.numThreads = 2;
+  params.timeOut = 2;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
+
+  auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
+  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 66);
+
+  // Check that the hitStart option is working correctly.
+  params.hitStart = 50;
+  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 16);
 }

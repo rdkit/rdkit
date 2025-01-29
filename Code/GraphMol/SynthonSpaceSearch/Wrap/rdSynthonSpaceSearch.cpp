@@ -96,6 +96,17 @@ void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
+void buildSynthonFingerprints_helper(SynthonSpaceSearch::SynthonSpace &self,
+                                     python::object &fingerprintGenerator) {
+  const FingerprintGenerator<std::uint64_t> *fpGen =
+      python::extract<FingerprintGenerator<std::uint64_t> *>(
+          fingerprintGenerator);
+  bool ok = self.buildSynthonFingerprints(*fpGen);
+  if (!ok) {
+    throw_runtime_error("Fingerprint generation cancelled");
+  }
+}
+
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::scope().attr("__doc__") =
       "Module containing implementation of SynthonSpace search of"
@@ -127,6 +138,15 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " excessive memory use.  If the number of fragments hits this number,"
           " fragmentation stops and the search results will likely be incomplete."
           "  Default=100000.")
+      .def_readwrite(
+          "toTryChunkSize",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::toTryChunkSize,
+          "For similarity searching, especially fingerprint similarity,"
+          " there can be a very large number of possible hits to screen which"
+          " can use a lot of memory and crash the program.  It will also be"
+          " very slow.  To alleviate the memory use, the possible hits are"
+          " processed in chunks. This parameter sets the chunk size."
+          "  Default=2500000.")
       .def_readwrite(
           "hitStart", &SynthonSpaceSearch::SynthonSpaceSearchParams::hitStart,
           "The sequence number of the hit to start from.  So that you"
@@ -182,7 +202,15 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       .def_readwrite(
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
-          " timeout.  Requires an integer");
+          " timeout.  Requires an integer")
+      .def_readwrite(
+          "numThreads",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::numThreads,
+          "The number of threads to use for search.  If > 0, will use that"
+          " number.  If <= 0, will use the number of hardware"
+          " threads plus this number.  So if the number of"
+          " hardware threads is 8, and numThreads is -1, it will"
+          " use 7 threads.  Default=1.");
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
@@ -221,8 +249,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            "Does a fingerprint search in the SynthonSpace using the"
            " FingerprintGenerator passed in.")
       .def(
-          "BuildSynthonFingerprints",
-          &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,
+          "BuildSynthonFingerprints", &buildSynthonFingerprints_helper,
           (python::arg("self"), python::arg("fingerprintGenerator")),
           "Build the synthon fingerprints ready for similarity searching.  This"
           " is done automatically when the first similarity search is done, but if"
