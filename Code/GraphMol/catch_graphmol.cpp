@@ -3103,26 +3103,45 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
       {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
        "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
       {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25"},
+       "C=Cc1c(C)c2cc3c(C)c(CCC(=O)[O-])c4cc5c(CCC(=O)[O-])c(C)c6cc7c(C=C)c(C)c8cc1n2[Fe-2](n65)([n+]87)[n+]34"},
       {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)O)c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)O)=CC1=[N+]25"},
+       "C=Cc1c(C)c2cc3c(C)c(CCC(=O)O)c4cc5c(CCC(=O)O)c(C)c6cc7c(C=C)c(C)c8cc1n2[Fe-2](n65)([n+]87)[n+]34"},
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
     INFO(test_vals[i].first);
     RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
     CHECK(MolToSmiles(*m) == test_vals[i].second);
+    // make sure the metal atoms are not aromatic and have no aromatic bonds:
+    for (auto atom : m->atoms()) {
+      if (atom->getAtomicNum() == 26 || atom->getAtomicNum() == 29) {
+        CHECK(!atom->getIsAromatic());
+        for (auto bond : m->atomBonds(atom)) {
+          CHECK(!bond->getIsAromatic());
+        }
+      }
+    }
   }
+
   // make sure we can call cleanupOrganometallics() on non-sanitized molecules
   for (size_t i = 0; i < test_vals.size(); ++i) {
     INFO(test_vals[i].first);
     bool sanitize = false;
     RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, 0, sanitize));
     MolOps::cleanUpOrganometallics(*m);
+    MolOps::sanitizeMol(*m);
     CHECK(MolToSmiles(*m) == test_vals[i].second);
+    // make sure the metal atoms are not aromatic and have no aromatic bonds:
+    for (auto atom : m->atoms()) {
+      if (atom->getAtomicNum() == 26 || atom->getAtomicNum() == 29) {
+        CHECK(!atom->getIsAromatic());
+        for (auto bond : m->atomBonds(atom)) {
+          CHECK(!bond->getIsAromatic());
+        }
+      }
+    }
   }
 }
-
 TEST_CASE(
     "cleanUpOrganometallics should produce canonical output.  cf PR6292") {
   std::vector<std::pair<std::string, std::string>> test_vals{
@@ -3346,8 +3365,8 @@ M  END
     CHECK(distToTarget.lengthSq() < 0.1);
   }
 
-  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode (R)
-                                 // due to different ordering of atoms
+  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode
+                                 // (R) due to different ordering of atoms
     std::string mb = R"CTAB(testmol
   CT1066645023
 
@@ -4668,8 +4687,8 @@ M  END
           }
         }
       }
-      // if we aren't in a five-ring (where the results of kekulize are normally
-      // fixed), wedge the double bond and flatten the other one
+      // if we aren't in a five-ring (where the results of kekulize are
+      // normally fixed), wedge the double bond and flatten the other one
       if (wedgedBond && dblBond &&
           !m->getRingInfo()->isBondInRingOfSize(dblBond->getIdx(), 5) &&
           !m->getRingInfo()->isBondInRingOfSize(wedgedBond->getIdx(), 5)) {
@@ -4687,8 +4706,8 @@ M  END
           // }
           // std::cerr << "\n\nbefore kekulize:" << std::endl;
           // m->debugMol(std::cerr);
-          // kekulize again now that we wedged the bonds that were set to double
-          // before
+          // kekulize again now that we wedged the bonds that were set to
+          // double before
           MolOps::Kekulize(*m, clearAromaticFlags);
           // and make sure that those didn't end up double again:
           for (auto atm : {bnd->getBeginAtom(), bnd->getEndAtom()}) {

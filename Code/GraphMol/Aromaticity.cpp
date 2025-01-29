@@ -159,18 +159,15 @@ static void applyHuckelToFused(
     unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
     unsigned int minRingSize = 0);
 
-void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
+void markAtomsBondsArom(ROMol &mol, const INT_VECT &unon,
                         const VECT_INT_VECT &brings, const INT_VECT &ringIds,
                         std::set<unsigned int> &doneBonds,
                         const std::vector<Bond *> &bondsByIdx) {
   // first mark the atoms in the rings
-  for (auto ri : ringIds) {
-    const auto &aring = srings[ri];
-
-    // first mark the atoms in the ring
-    for (auto ai : aring) {
-      mol.getAtomWithIdx(ai)->setIsAromatic(true);
-    }
+  boost::dynamic_bitset<> activeAtoms(mol.getNumAtoms());
+  for (auto ai : unon) {
+    activeAtoms.set(ai);
+    mol.getAtomWithIdx(ai)->setIsAromatic(true);
   }
 
   // mark the bonds
@@ -193,6 +190,10 @@ void markAtomsBondsArom(ROMol &mol, const VECT_INT_VECT &srings,
     // std::cerr << " " << bci->first << "(" << bci->second << ")";
     if (bci.second == 1) {
       auto bond = bondsByIdx[bci.first];
+      if (!activeAtoms[bond->getBeginAtomIdx()] ||
+          !activeAtoms[bond->getEndAtomIdx()]) {
+        continue;
+      }
       // Bond *bond = mol.get BondWithIdx(bci->first);
       bond->setIsAromatic(true);
       switch (bond->getBondType()) {
@@ -297,7 +298,8 @@ bool ringCanBeAromatic(ROMol &, const INT_VECT &ring,
 }
 
 bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
-                 unsigned int minRingSize) {
+                 unsigned int minRingSize,
+                 const boost::dynamic_bitset<> &acands) {
   if (ring.size() < minRingSize) {
     return false;
   }
@@ -308,6 +310,11 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
   rup = 0;
   unsigned int nAnyElectronDonorType = 0;
   for (auto idx : ring) {
+    // we shouldn't be here if there are any atoms in the ring that can't be
+    // aromatic, but check anyway
+    if (!acands[idx]) {
+      return false;
+    }
     ElectronDonorType edonType = edon[idx];
     if (edonType == AnyElectronDonorType) {
       ++nAnyElectronDonorType;
@@ -448,12 +455,12 @@ void applyHuckelToFused(
       // the central atom in acepentalene was being included in the count of
       // aromatic atoms
       if (atsInRingSystem[i] == 1 || atsInRingSystem[i] == 2) {
-        unon.push_back(i);
         if (!acands[i]) {
           // std::cerr << " atom " << i << " not a candidate" << std::endl;
           nonAromaticAtomsInRing = true;
           break;
         }
+        unon.push_back(i);
       }
     }
     if (nonAromaticAtomsInRing) {
@@ -476,9 +483,9 @@ void applyHuckelToFused(
       continue;
     }
 
-    if (applyHuckel(mol, unon, edon, minRingSize)) {
+    if (applyHuckel(mol, unon, edon, minRingSize, acands)) {
       // mark the atoms and bonds in these rings to be aromatic
-      markAtomsBondsArom(mol, srings, brings, curRs, doneBonds, bondsByIdx);
+      markAtomsBondsArom(mol, unon, brings, curRs, doneBonds, bondsByIdx);
 
       // add the ring IDs to the aromatic rings found so far
       // avoid duplicates
@@ -963,13 +970,8 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
         (!numNonAromatic ||
          ((sring.size() - numNonAromatic) >= 2 && nonCandidatesInFusedRings))) {
       cRings.push_back(sring);
-      // std::cerr << "candidate " << cRings.size() - 1 << ": ";
-      // std::copy(sring.begin(), sring.end(),
-      //           std::ostream_iterator<int>(std::cerr, ", "));
-      // std::cerr << std::endl;
     }
   }
-  std::cerr << " acands: " << acands << std::endl;
   // first convert all rings to bonds ids
   VECT_INT_VECT brings;
   RingUtils::convertToBonds(cRings, brings, mol);
