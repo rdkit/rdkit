@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2022 Paolo Tosco and other RDKit contributors
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -93,83 +93,96 @@ void calcTorsionGrad(RDGeom::Point3D *r, RDGeom::Point3D *t, double *d,
 }
 }  // namespace Utils
 
-TorsionAngleContrib::TorsionAngleContrib(ForceField *owner, unsigned int idx1,
-                                         unsigned int idx2, unsigned int idx3,
-                                         unsigned int idx4,
-                                         const MMFFTor *mmffTorParams) {
+TorsionAngleContrib::TorsionAngleContrib(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
+  dp_forceField = owner;
+}
+
+void TorsionAngleContrib::addTerm(
+    unsigned int idx1, unsigned int idx2, unsigned int idx3, unsigned int idx4,
+    const ForceFields::MMFF::MMFFTor *mmffTorParams) {
   PRECONDITION((idx1 != idx2) && (idx1 != idx3) && (idx1 != idx4) &&
                    (idx2 != idx3) && (idx2 != idx4) && (idx3 != idx4),
                "degenerate points");
-  URANGE_CHECK(idx1, owner->positions().size());
-  URANGE_CHECK(idx2, owner->positions().size());
-  URANGE_CHECK(idx3, owner->positions().size());
-  URANGE_CHECK(idx4, owner->positions().size());
+  URANGE_CHECK(idx1, dp_forceField->positions().size());
+  URANGE_CHECK(idx2, dp_forceField->positions().size());
+  URANGE_CHECK(idx3, dp_forceField->positions().size());
+  URANGE_CHECK(idx4, dp_forceField->positions().size());
 
-  dp_forceField = owner;
-  d_at1Idx = idx1;
-  d_at2Idx = idx2;
-  d_at3Idx = idx3;
-  d_at4Idx = idx4;
-  d_V1 = mmffTorParams->V1;
-  d_V2 = mmffTorParams->V2;
-  d_V3 = mmffTorParams->V3;
+  d_at1Idx.push_back(idx1);
+  d_at2Idx.push_back(idx2);
+  d_at3Idx.push_back(idx3);
+  d_at4Idx.push_back(idx4);
+  d_V1.push_back(mmffTorParams->V1);
+  d_V2.push_back(mmffTorParams->V2);
+  d_V3.push_back(mmffTorParams->V3);
 }
 
 double TorsionAngleContrib::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
 
-  RDGeom::Point3D iPoint(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                         pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D jPoint(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                         pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D kPoint(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                         pos[3 * d_at3Idx + 2]);
-  RDGeom::Point3D lPoint(pos[3 * d_at4Idx], pos[3 * d_at4Idx + 1],
-                         pos[3 * d_at4Idx + 2]);
+  const int numTorsions = d_at1Idx.size();
+  double totalEnergy = 0.0;
+  for (int i = 0; i < numTorsions; ++i) {
+    const int16_t at1Idx = d_at1Idx[i];
+    const int16_t at2Idx = d_at2Idx[i];
+    const int16_t at3Idx = d_at3Idx[i];
+    const int16_t at4Idx = d_at4Idx[i];
 
-  return Utils::calcTorsionEnergy(
-      d_V1, d_V2, d_V3,
-      Utils::calcTorsionCosPhi(iPoint, jPoint, kPoint, lPoint));
+    RDGeom::Point3D iPoint(pos[3 * at1Idx], pos[3 * at1Idx + 1],
+                           pos[3 * at1Idx + 2]);
+    RDGeom::Point3D jPoint(pos[3 * at2Idx], pos[3 * at2Idx + 1],
+                           pos[3 * at2Idx + 2]);
+    RDGeom::Point3D kPoint(pos[3 * at3Idx], pos[3 * at3Idx + 1],
+                           pos[3 * at3Idx + 2]);
+    RDGeom::Point3D lPoint(pos[3 * at4Idx], pos[3 * at4Idx + 1],
+                           pos[3 * at4Idx + 2]);
+
+    totalEnergy += Utils::calcTorsionEnergy(
+        d_V1[i], d_V2[i], d_V3[i],
+        Utils::calcTorsionCosPhi(iPoint, jPoint, kPoint, lPoint));
+  }
+  return totalEnergy;
 }
 
 void TorsionAngleContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
-
-  double *g[4] = {&(grad[3 * d_at1Idx]), &(grad[3 * d_at2Idx]),
-                  &(grad[3 * d_at3Idx]), &(grad[3 * d_at4Idx])};
-
-  RDGeom::Point3D r[4];
-  RDGeom::Point3D t[2];
   double d[2];
   double cosPhi;
-  RDKit::ForceFieldsHelper::computeDihedral(
-      pos, d_at1Idx, d_at2Idx, d_at3Idx, d_at4Idx, nullptr, &cosPhi, r, t, d);
-  double sinPhiSq = 1.0 - cosPhi * cosPhi;
-  double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
-  double sin2Phi = 2.0 * sinPhi * cosPhi;
-  double sin3Phi = 3.0 * sinPhi - 4.0 * sinPhi * sinPhiSq;
-  // dE/dPhi is independent of cartesians:
-  double dE_dPhi =
-      0.5 * (-(d_V1)*sinPhi + 2.0 * d_V2 * sin2Phi - 3.0 * d_V3 * sin3Phi);
-#if 0
-      if(dE_dPhi!=dE_dPhi){
-        std::cout << "\tNaN in Torsion("<<d_at1Idx<<","<<d_at2Idx<<","<<d_at3Idx<<","<<d_at4Idx<<")"<< std::endl;
-        std::cout << "sin: " << sinPhi << std::endl;
-        std::cout << "cos: " << cosPhi << std::endl;
-      }
 
-#endif
-  // FIX: use a tolerance here
-  // this is hacky, but it's per the
-  // recommendation from Niketic and Rasmussen:
-  double sinTerm =
-      -dE_dPhi * (isDoubleZero(sinPhi) ? (1.0 / cosPhi) : (1.0 / sinPhi));
+  const int numTorsions = d_at1Idx.size();
+  for (int i = 0; i < numTorsions; ++i) {
+    const int16_t at1Idx = d_at1Idx[i];
+    const int16_t at2Idx = d_at2Idx[i];
+    const int16_t at3Idx = d_at3Idx[i];
+    const int16_t at4Idx = d_at4Idx[i];
 
-  Utils::calcTorsionGrad(r, t, d, g, sinTerm, cosPhi);
+    double *g[4] = {&(grad[3 * at1Idx]), &(grad[3 * at2Idx]),
+                    &(grad[3 * at3Idx]), &(grad[3 * at4Idx])};
+
+    RDGeom::Point3D r[4];
+    RDGeom::Point3D t[2];
+
+    RDKit::ForceFieldsHelper::computeDihedral(
+        pos, at1Idx, at2Idx, at3Idx, at4Idx, nullptr, &cosPhi, r, t, d);
+    double sinPhiSq = 1.0 - cosPhi * cosPhi;
+    double sinPhi = ((sinPhiSq > 0.0) ? sqrt(sinPhiSq) : 0.0);
+    double sin2Phi = 2.0 * sinPhi * cosPhi;
+    double sin3Phi = 3.0 * sinPhi - 4.0 * sinPhi * sinPhiSq;
+    // dE/dPhi is independent of cartesians:
+    double dE_dPhi = 0.5 * (-(d_V1[i]) * sinPhi + 2.0 * d_V2[i] * sin2Phi -
+                            3.0 * d_V3[i] * sin3Phi);
+    // FIX: use a tolerance here
+    // this is hacky, but it's per the
+    // recommendation from Niketic and Rasmussen:
+    double sinTerm =
+        -dE_dPhi * (isDoubleZero(sinPhi) ? (1.0 / cosPhi) : (1.0 / sinPhi));
+
+    Utils::calcTorsionGrad(r, t, d, g, sinTerm, cosPhi);
+  }
 }
 }  // namespace MMFF
 }  // namespace ForceFields
