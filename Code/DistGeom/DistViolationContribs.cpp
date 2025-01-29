@@ -67,11 +67,13 @@ void DistViolationContribs::getGrad(double *pos, double *grad) const {
 
   auto contrib = [&](const auto &c) {
     double d2 = distance2(c.idx1, c.idx2, pos, dp_forceField->dimension());
-    double d = sqrt(d2);
+    double d;
     double preFactor = 0.0;
     if (d2 > c.ub2) {
+      d = sqrt(d2);
       preFactor = 4. * (((d * d) / c.ub2) - 1.0) * (d / c.ub2);
     } else if (d2 < c.lb2) {
+      d = sqrt(d2);
       double l2d2 = d2 + c.lb2;
       preFactor = 8. * c.lb2 * d * (1. - 2 * c.lb2 / l2d2) / (l2d2 * l2d2);
     } else {
