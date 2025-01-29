@@ -87,12 +87,6 @@ std::vector<std::vector<size_t>> getHitSynthons(
                   return std::get<1>(a) > std::get<1>(b);
                 });
     }
-    // std::cout << i << " : ";
-    // for (const auto &sim : fragSims[i]) {
-    //   std::cout << "(" << std::get<0>(sim) << " " << std::get<1>(sim) << ")
-    //   ";
-    // }
-    // std::cout << std::endl;
     retSynthons[i].clear();
     std::transform(
         fragSims[i].begin(), fragSims[i].end(),

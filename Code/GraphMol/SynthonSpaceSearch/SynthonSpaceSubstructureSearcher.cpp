@@ -190,6 +190,17 @@ std::vector<std::vector<size_t>> getHitSynthons(
   // Fill in any synthons where they all didn't match.
   details::expandBitSet(synthonsToUse);
   details::bitSetsToVectors(synthonsToUse, retSynthons);
+
+  // Now sort the selected synthons into ascending order of number of atoms,
+  // since smaller molecules are likely to be of more interest.
+  for (size_t i = 0; i < retSynthons.size(); ++i) {
+    std::sort(
+        retSynthons[i].begin(), retSynthons[i].end(),
+        [&](const size_t a, const size_t b) {
+          return (reaction->getSynthons()[i][a]->getOrigMol()->getNumAtoms() <
+                  reaction->getSynthons()[i][b]->getOrigMol()->getNumAtoms());
+        });
+  }
   return retSynthons;
 }
 
