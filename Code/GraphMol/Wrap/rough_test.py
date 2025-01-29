@@ -270,8 +270,10 @@ class TestCase(unittest.TestCase):
 
     self.assertTrue([x.GetTotalNumHs() for x in aList] == [0, 1, 2, 2])
     self.assertTrue([x.GetNumImplicitHs() for x in aList] == [0, 1, 2, 0])
-    self.assertTrue([x.GetExplicitValence() for x in aList] == [3, 3, 2, 3])
-    self.assertTrue([x.GetImplicitValence() for x in aList] == [0, 1, 2, 0])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.EXPLICIT) for x in aList] == [3, 3, 2, 3])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.IMPLICIT) for x in aList] == [0, 1, 2, 0])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.EXPLICIT) for x in aList] == [3, 3, 2, 3])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.IMPLICIT) for x in aList] == [0, 1, 2, 0])
     self.assertTrue([x.GetFormalCharge() for x in aList] == [0, 0, 0, -1])
     self.assertTrue([x.GetNoImplicit() for x in aList] == [0, 0, 0, 1])
     self.assertTrue([x.GetNumExplicitHs() for x in aList] == [0, 0, 0, 2])
@@ -3340,7 +3342,7 @@ CAS<~>
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
     self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
-    self.assertEqual(atom.GetExplicitValence(), 0)
+    self.assertEqual(atom.GetValence(which=Chem.ValenceType.EXPLICIT), 0)
     bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
     self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
 
@@ -3349,7 +3351,7 @@ CAS<~>
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
     self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
-    self.assertEqual(atom.GetExplicitValence(), 0)
+    self.assertEqual(atom.GetValence(which=Chem.ValenceType.EXPLICIT), 0)
     bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
     self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
     # test unbinding HOHs
@@ -6718,7 +6720,7 @@ M  END
 
   def test_get_set_positions(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
-    pos = np.zeros([3,3], np.double)
+    pos = np.zeros([3, 3], np.double)
     pos[0][1] = 1
     pos[0][2] = 2
     pos[1][0] = 3
@@ -6731,7 +6733,7 @@ M  END
     m.GetConformer(0).SetPositions(pos)
     pos2 = m.GetConformer(0).GetPositions()
 
-    self.assertTrue( (pos==pos2).all())
+    self.assertTrue((pos == pos2).all())
 
 
   def test_get_set_positions_stride(self):
@@ -7791,7 +7793,10 @@ M  END
     ps.canonical = True
 
     smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
-    self.assertTrue(smi == 'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|')
+    self.assertTrue(
+      smi ==
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|'
+    )
 
     flags = Chem.CXSmilesFields.CX_COORDS | \
                         Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
@@ -7803,7 +7808,8 @@ M  END
 
     self.assertTrue(
       smi ==
-      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,&1:8|')
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,&1:8|'
+    )
     flags = Chem.CXSmilesFields.CX_COORDS | \
                         Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
                         Chem.CXSmilesFields.CX_ATOM_PROPS | \
@@ -7835,7 +7841,10 @@ M  END
     m = Chem.CanonicalizeStereoGroups(m)
     smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
     print('smi: ', smi)
-    self.assertTrue(smi == 'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|')
+    self.assertTrue(
+      smi ==
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|'
+    )
 
   def test_picklingWithAddedAttribs(self):
     m = Chem.MolFromSmiles("C")
@@ -8256,15 +8265,13 @@ M  END
     ps = Chem.SmilesWriteParams()
     ps.ignoreAtomMapNumbers = True
     self.assertEqual(Chem.MolToSmiles(mol, ps), "[NH2:1]c1ccccc1")
-    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=True),
-                     "[NH2:1]c1ccccc1")
-    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False),
-                     "c1ccc([NH2:1])cc1")
+    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=True), "[NH2:1]c1ccccc1")
+    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False), "c1ccc([NH2:1])cc1")
 
   def github7873(self):
     # this used to segfault
     Chem.MolFromSmiles("C").GetAtomWithIdx(0).SetPDBResidueInfo(None)
-    
+
   def testSplitMolByPDB(self):
     mol = Chem.MolFromSmiles("C")
     res2mol = Chem.SplitMolByPDBResidues(mol)
@@ -8273,7 +8280,7 @@ M  END
     chain2mol = Chem.SplitMolByPDBChainId(mol)
     self.assertEqual(len(chain2mol), 1)
     self.assertIn("", chain2mol)
-    
+
   def testGithub4570(self):
     # test sending None to get/set prop
     m = Chem.Mol()
@@ -8283,14 +8290,14 @@ M  END
         getattr(m, func)(None)
       except Exception as e:
         assert "Python argument types" in str(e), f"{func}: {str(e)}"
-    
+
     for func, val in [("SetProp", ""), ("SetIntProp", 1), ("SetDoubleProp", 1.0)]:
       try:
         getattr(m, func)(None, val)
       except Exception as e:
         assert "Python argument types" in str(e), f"{func}: {str(e)}"
-      
-    
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

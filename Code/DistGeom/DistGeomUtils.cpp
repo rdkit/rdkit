@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2024 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -532,11 +532,11 @@ ForceFields::ForceField *construct3DForceField(
   bool is1_4 = false;
   // double dielConst = 1.0;
   boost::uint8_t dielModel = 1;
+  auto *contrib = new ForceFields::MMFF::EleContrib(field);
+  field->contribs().emplace_back(contrib);
   for (const auto &charge : CPCI) {
-    auto *contrib = new ForceFields::MMFF::EleContrib(
-        field, charge.first.first, charge.first.second, charge.second,
-        dielModel, is1_4);
-    field->contribs().emplace_back(contrib);
+    contrib->addTerm(charge.first.first, charge.first.second, charge.second,
+                     dielModel, is1_4);
   }
 
   return field;
