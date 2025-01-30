@@ -19,6 +19,7 @@
 
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
@@ -34,6 +35,60 @@ namespace RDKit::SynthonSpaceSearch {
 constexpr int32_t versionMajor = 2;
 constexpr int32_t versionMinor = 1;
 constexpr int32_t endianId = 0xa100f;
+
+SynthonSpace::~SynthonSpace() {
+  if (d_dbis) {
+    d_dbis->close();
+  }
+}
+
+size_t SynthonSpace::getNumReactions() const {
+  if (d_lowMem) {
+    return d_reactionPos.size();
+  }
+  return d_reactions.size();
+}
+
+std::vector<std::string> SynthonSpace::getReactionNames() const {
+  std::vector<std::string> reactionNames;
+  if (d_lowMem) {
+    reactionNames.reserve(d_reactionPos.size());
+    for (const auto &reaction : d_reactionPos) {
+      reactionNames.push_back(reaction.first);
+    }
+  } else {
+    reactionNames.reserve(d_reactions.size());
+    for (const auto &reaction : d_reactions) {
+      reactionNames.push_back(reaction.first);
+    }
+  }
+  return reactionNames;
+}
+
+const std::shared_ptr<SynthonSet> SynthonSpace::getReaction(
+    std::string reactionName) {
+  // Even in lowMem mode, the reaction might be cached here.
+  if (const auto &it = d_reactions.find(reactionName);
+      it != d_reactions.end()) {
+    return it->second;
+  }
+  if (d_lowMem) {
+    if (!d_dbis && !d_fileName.empty()) {
+      openAndCheckDBFile();
+    }
+    d_reactions.clear();
+    if (const auto &it = d_reactionPos.find(reactionName);
+        it != d_reactionPos.end()) {
+      d_dbis->seekg(it->second);
+      auto rs = std::make_shared<SynthonSet>();
+      rs->readFromDBStream(*d_dbis, d_fileMajorVersion);
+      d_reactions.insert(std::make_pair(rs->getId(), rs));
+      return rs;
+    }
+  }
+  throw std::runtime_error("Could not find synthon set for reaction " +
+                           reactionName);
+}
 
 std::int64_t SynthonSpace::getNumProducts() const {
   std::int64_t totSize = 0;
@@ -154,6 +209,7 @@ int getSynthonNum(int format, const std::string &synthon) {
 
 void SynthonSpace::readTextFile(const std::string &inFilename) {
   d_fileName = inFilename;
+  d_lowMem = false;
   std::ifstream ifs(d_fileName);
   if (!ifs.is_open() || ifs.bad()) {
     throw std::runtime_error("Couldn't open file " + d_fileName);
@@ -204,50 +260,25 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   os.close();
 }
 
-void SynthonSpace::readDBFile(const std::string &inFilename) {
+void SynthonSpace::readDBFile(const std::string &inFilename, bool lowMem) {
   d_fileName = inFilename;
-
-  try {
-    std::ifstream is(d_fileName, std::fstream::binary);
-
-    int32_t endianTest;
-    streamRead(is, endianTest);
-    if (endianTest != endianId) {
-      throw std::runtime_error("Endianness mismatch in SynthonSpace file " +
-                               d_fileName);
+  d_lowMem = lowMem;
+  openAndCheckDBFile();
+  bool hasFPs;
+  streamRead(*d_dbis, hasFPs);
+  if (hasFPs) {
+    streamRead(*d_dbis, d_fpType, 0);
+  }
+  std::uint64_t numRS;
+  streamRead(*d_dbis, numRS);
+  for (size_t i = 0; i < numRS; ++i) {
+    auto reactionPos = d_dbis->tellg();
+    auto rs = std::make_shared<SynthonSet>();
+    rs->readFromDBStream(*d_dbis, d_fileMajorVersion);
+    if (!d_lowMem) {
+      d_reactions.insert(std::make_pair(rs->getId(), rs));
     }
-    int32_t majorVersion;
-    streamRead(is, majorVersion);
-    int32_t minorVersion;
-    streamRead(is, minorVersion);
-    if (majorVersion > versionMajor ||
-        (majorVersion == versionMajor && minorVersion > versionMinor)) {
-      BOOST_LOG(rdWarningLog)
-          << "Deserializing from a version number (" << majorVersion << "."
-          << minorVersion << ")"
-          << "that is higher than our version (" << versionMajor << "."
-          << versionMinor << ").\nThis probably won't work." << std::endl;
-    }
-    // version sanity checking
-    if (majorVersion > 1000 || minorVersion > 100) {
-      throw std::runtime_error("unreasonable version numbers");
-    }
-    majorVersion = 1000 * majorVersion + minorVersion * 10;
-    bool hasFPs;
-    streamRead(is, hasFPs);
-    if (hasFPs) {
-      streamRead(is, d_fpType, 0);
-    }
-    std::uint64_t numRS;
-    streamRead(is, numRS);
-    for (size_t i = 0; i < numRS; ++i) {
-      auto rs = std::make_unique<SynthonSet>();
-      rs->readFromDBStream(is, majorVersion);
-      d_reactions.insert(std::make_pair(rs->getId(), std::move(rs)));
-    }
-  } catch (std::exception &e) {
-    std::cerr << "Error : " << e.what() << " for file " << d_fileName << "\n";
-    exit(1);
+    d_reactionPos.insert(std::make_pair(rs->getId(), reactionPos));
   }
 }
 
@@ -281,12 +312,7 @@ void SynthonSpace::writeEnumeratedFile(const std::string &outFilename) const {
   os.close();
 }
 
-bool SynthonSpace::hasFingerprints() const {
-  if (d_reactions.empty()) {
-    return false;
-  }
-  return d_reactions.begin()->second->hasFingerprints();
-}
+bool SynthonSpace::hasFingerprints() const { return !d_fpType.empty(); }
 
 void SynthonSpace::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
@@ -381,6 +407,42 @@ void convertTextToDBFile(const std::string &inFilename,
   os.seekp(numReactPos, std::ios::beg);
   streamWrite(os, numReacts);
   os.close();
+}
+
+void SynthonSpace::openAndCheckDBFile() {
+  if (d_dbis) {
+    d_dbis->close();
+  }
+  d_dbis.reset(new std::ifstream);
+  try {
+    d_dbis->open(d_fileName, std::fstream::binary);
+
+    int32_t endianTest;
+    streamRead(*d_dbis, endianTest);
+    if (endianTest != endianId) {
+      throw std::runtime_error("Endianness mismatch in SynthonSpace file " +
+                               d_fileName);
+    }
+    streamRead(*d_dbis, d_fileMajorVersion);
+    int32_t minorVersion;
+    streamRead(*d_dbis, minorVersion);
+    if (d_fileMajorVersion > versionMajor ||
+        (d_fileMajorVersion == versionMajor && minorVersion > versionMinor)) {
+      BOOST_LOG(rdWarningLog)
+          << "Deserializing from a version number (" << d_fileMajorVersion
+          << "." << minorVersion << ")"
+          << "that is higher than our version (" << versionMajor << "."
+          << versionMinor << ").\nThis probably won't work." << std::endl;
+    }
+    // version sanity checking
+    if (d_fileMajorVersion > 1000 || minorVersion > 100) {
+      throw std::runtime_error("unreasonable version numbers");
+    }
+    d_fileMajorVersion = 1000 * d_fileMajorVersion + minorVersion * 10;
+  } catch (std::exception &e) {
+    std::cerr << "Error : " << e.what() << " for file " << d_fileName << "\n";
+    exit(1);
+  }
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

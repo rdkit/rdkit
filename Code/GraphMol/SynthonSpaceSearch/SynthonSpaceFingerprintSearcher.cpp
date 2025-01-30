@@ -20,6 +20,35 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params, SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space), d_fpGen(fpGen) {
+  if (getSpace().getLowMem()) {
+    if (!getSpace().hasFingerprints()) {
+      throw std::runtime_error(
+          "When running in low memory mode, you must have appropriate"
+          " fingerprints already "
+          "in the database file.");
+    }
+    if (d_fpGen.infoString() != getSpace().getSynthonFingerprintType()) {
+      throw std::runtime_error(
+          "When running in low memory mode, the search fingerprints must match"
+          " those in the database.  You are searching with " +
+          d_fpGen.infoString() + " vs " +
+          getSpace().getSynthonFingerprintType() + " in the database.");
+    }
+    // Checking for add and subtract fingerprints requires reading a reaction.
+    // That's not bad, because we'll be reading the first one anyway for the
+    // search and it will be cached.
+    auto reactionNames = getSpace().getReactionNames();
+    if (!reactionNames.empty()) {
+      auto reaction = getSpace().getReaction(reactionNames.front());
+      if (!reaction->hasAddAndSubtractFPs()) {
+        throw std::runtime_error(
+            "When running in low memory mode, you must have appropriate"
+            " fingerprints already "
+            "in the database file.");
+      }
+    }
+  }
+
   if (!getSpace().hasFingerprints() ||
       getSpace().getSynthonFingerprintType() != fpGen.infoString()) {
     getSpace().buildSynthonFingerprints(fpGen);
@@ -35,15 +64,15 @@ namespace {
 // a similarity match.
 std::vector<boost::dynamic_bitset<>> getHitSynthons(
     const std::vector<std::unique_ptr<ExplicitBitVect>> &fragFPs,
-    const double similarityCutoff, const std::unique_ptr<SynthonSet> &reaction,
+    const double similarityCutoff, const SynthonSet &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
-  synthonsToUse.reserve(reaction->getSynthons().size());
-  for (const auto &synthonSet : reaction->getSynthons()) {
+  synthonsToUse.reserve(reaction.getSynthons().size());
+  for (const auto &synthonSet : reaction.getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
   }
   for (size_t i = 0; i < synthonOrder.size(); i++) {
-    const auto &synthonFPs = reaction->getSynthonFPs()[synthonOrder[i]];
+    const auto &synthonFPs = reaction.getSynthonFPs()[synthonOrder[i]];
     bool fragMatched = false;
     for (size_t j = 0; j < synthonFPs.size(); j++) {
       if (const auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
@@ -69,7 +98,7 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 
 std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet,
-    const std::unique_ptr<SynthonSet> &reaction) const {
+    const SynthonSet &reaction) const {
   std::vector<SynthonSpaceHitSet> results;
   std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs;
   fragFPs.reserve(fragSet.size());
@@ -92,14 +121,14 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
   // of the potential products.  It can be less, in which case the unused
   // synthon set will be used completely, possibly resulting in a large
   // number of hits.
-  if (fragSet.size() > reaction->getSynthons().size()) {
+  if (fragSet.size() > reaction.getSynthons().size()) {
     return results;
   }
-  auto synthConnPatts = reaction->getSynthonConnectorPatterns();
+  auto synthConnPatts = reaction.getSynthonConnectorPatterns();
 
   // Need to try all combinations of synthon orders.
   auto synthonOrders =
-      details::permMFromN(fragSet.size(), reaction->getSynthons().size());
+      details::permMFromN(fragSet.size(), reaction.getSynthons().size());
   for (const auto &synthonOrder : synthonOrders) {
     // Get all the possible permutations of connector numbers compatible with
     // the number of synthon sets in this reaction.  So if the
@@ -107,7 +136,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
     // that might be how they're labelled in the reaction database.
     auto connCombs = details::getConnectorPermutations(
-        fragSet, conns, reaction->getConnectors());
+        fragSet, conns, reaction.getConnectors());
 
     for (auto &connComb : connCombs) {
       // Make sure that for this connector combination, the synthons in this
@@ -142,7 +171,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
             });
         if (numHits) {
           results.push_back(
-              SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
+              SynthonSpaceHitSet{reaction.getId(), theseSynthons, numHits});
         }
       }
     }
@@ -151,20 +180,19 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
 }
 
 bool SynthonSpaceFingerprintSearcher::quickVerify(
-    const std::unique_ptr<SynthonSet> &reaction,
-    const std::vector<size_t> &synthNums) const {
+    const SynthonSet &reaction, const std::vector<size_t> &synthNums) const {
   // Make an approximate fingerprint by combining the FPs for
   // these synthons, adding in the addFP and taking out the
   // subtractFP.
-  const auto &synthFPs = reaction->getSynthonFPs();
+  const auto &synthFPs = reaction.getSynthonFPs();
   ExplicitBitVect fullFP(*synthFPs[0][synthNums[0]]);
   for (unsigned int i = 1; i < synthNums.size(); ++i) {
     fullFP |= *synthFPs[i][synthNums[i]];
   }
-  fullFP |= *(reaction->getAddFP());
+  fullFP |= *(reaction.getAddFP());
   // The subtract FP has already had its bits flipped, so just do a
   // straight AND.
-  fullFP &= *(reaction->getSubtractFP());
+  fullFP &= *(reaction.getSubtractFP());
 
   double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
   return approxSim >=

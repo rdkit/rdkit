@@ -64,7 +64,8 @@ SearchResults SynthonSpaceSearcher::search() {
 
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
-  for (const auto &[id, reaction] : getSpace().getReactions()) {
+  for (const auto &id : getSpace().getReactionNames()) {
+    const auto &reaction = getSpace().getReaction(id);
     for (auto &fragSet : fragments) {
       timedOut = details::checkTimeOut(endTime);
       if (timedOut) {
@@ -73,7 +74,7 @@ SearchResults SynthonSpaceSearcher::search() {
       if (ControlCHandler::getGotSignal()) {
         break;
       }
-      if (auto theseHits = searchFragSet(fragSet, reaction);
+      if (auto theseHits = searchFragSet(fragSet, *reaction);
           !theseHits.empty()) {
         totHits += std::accumulate(
             theseHits.begin(), theseHits.end(), 0,
@@ -93,10 +94,9 @@ SearchResults SynthonSpaceSearcher::search() {
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
-    const std::unique_ptr<SynthonSet> &reaction,
-    const std::vector<size_t> &synthNums,
+    const SynthonSet &reaction, const std::vector<size_t> &synthNums,
     std::set<std::string> &resultsNames) const {
-  const auto prodName = reaction->buildProductName(synthNums);
+  const auto prodName = reaction.buildProductName(synthNums);
 
   std::unique_ptr<ROMol> prod;
   if (resultsNames.insert(prodName).second) {
@@ -106,7 +106,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     if (!quickVerify(reaction, synthNums)) {
       return prod;
     }
-    prod = reaction->buildProduct(synthNums);
+    prod = reaction.buildProduct(synthNums);
 
     // Do a final check of the whole thing.  It can happen that the
     // fragments match synthons but the final product doesn't match.
@@ -195,7 +195,7 @@ void SynthonSpaceSearcher::buildAllHits(
         }
       }
     }
-    const auto &reaction = getSpace().getReactions().find(reactionId)->second;
+    const auto &reaction = getSpace().getReaction(reactionId);
     details::Stepper stepper(numSynthons);
     std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
     while (stepper.d_currState[0] != numSynthons[0]) {
@@ -203,7 +203,7 @@ void SynthonSpaceSearcher::buildAllHits(
         theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
       }
       if (auto prod =
-              buildAndVerifyHit(reaction, theseSynthNums, resultsNames)) {
+              buildAndVerifyHit(*reaction, theseSynthNums, resultsNames)) {
         results.push_back(std::move(prod));
       }
       if (results.size() == static_cast<size_t>(d_params.maxHits)) {
@@ -303,8 +303,8 @@ void SynthonSpaceSearcher::buildRandomHits(
                                    static_cast<std::uint64_t>(totHits)) &&
          numFails < totHits * d_params.numRandomSweeps) {
     const auto &[reactionId, synths] = rhs.selectSynthComb(*d_randGen);
-    const auto &reaction = getSpace().getReactions().find(reactionId)->second;
-    if (auto prod = buildAndVerifyHit(reaction, synths, resultsNames)) {
+    const auto &reaction = getSpace().getReaction(reactionId);
+    if (auto prod = buildAndVerifyHit(*reaction, synths, resultsNames)) {
       results.push_back(std::move(prod));
     } else {
       numFails++;

@@ -160,8 +160,8 @@ TEST_CASE("S Simple query 1") {
   std::string fName(rdbase);
   SynthonSpace synthonspace;
   std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space.spc";
-  synthonspace.readDBFile(libName);
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  synthonspace.readDBFile(libName, false);
   {
     // should give 220 hits for urea-3
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
@@ -286,8 +286,9 @@ TEST_CASE("Connector Regions") {
         fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
     SynthonSpace synthonspace;
     synthonspace.readTextFile(libName);
-    const auto &rs = synthonspace.getReactions().begin();
-    CHECK(rs->second->getConnectorRegions().size() == 30);
+    const auto &rnames = synthonspace.getReactionNames();
+    const auto rs = synthonspace.getReaction(rnames.front());
+    CHECK(rs->getConnectorRegions().size() == 30);
   }
 }
 
@@ -309,11 +310,9 @@ TEST_CASE("DB Writer") {
 
   SynthonSpace newsynthonspace;
   newsynthonspace.readDBFile(spaceName);
-  auto it = newsynthonspace.getReactions().find("doebner-miller-quinoline");
-  CHECK(it != newsynthonspace.getReactions().end());
-  const auto &irxn = it->second;
-  const auto &orxn =
-      synthonspace.getReactions().find("doebner-miller-quinoline")->second;
+  std::shared_ptr<SynthonSet> irxn;
+  CHECK_NOTHROW(irxn = newsynthonspace.getReaction("doebner-miller-quinoline"));
+  const auto &orxn = synthonspace.getReaction("doebner-miller-quinoline");
   CHECK(irxn->getId() == orxn->getId());
   CHECK(irxn->getConnectorRegions().size() ==
         orxn->getConnectorRegions().size());
@@ -351,11 +350,9 @@ TEST_CASE("DB Converter") {
   synthonspace.buildAddAndSubstractFingerprints(*fpGen);
   SynthonSpace newsynthonspace;
   newsynthonspace.readDBFile(spaceName);
-  auto it = newsynthonspace.getReactions().find("doebner-miller-quinoline");
-  CHECK(it != newsynthonspace.getReactions().end());
-  const auto &irxn = it->second;
-  const auto &orxn =
-      synthonspace.getReactions().find("doebner-miller-quinoline")->second;
+  std::shared_ptr<SynthonSet> irxn;
+  CHECK_NOTHROW(irxn = newsynthonspace.getReaction("doebner-miller-quinoline"));
+  const auto &orxn = synthonspace.getReaction("doebner-miller-quinoline");
   CHECK(irxn->getId() == orxn->getId());
   CHECK(irxn->getConnectorRegions().size() ==
         orxn->getConnectorRegions().size());
@@ -393,7 +390,6 @@ TEST_CASE("S Biggy") {
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
-    std::cerr << "Query " << i << std::endl;
     auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
     auto results = synthonspace.substructureSearch(*queryMol, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
@@ -624,5 +620,27 @@ TEST_CASE("Synthon Error") {
         fName + "/Code/GraphMol/SynthonSpaceSearch/data/synthon_error.txt";
     SynthonSpace synthonspace;
     CHECK_THROWS(synthonspace.readTextFile(libName));
+  }
+}
+
+TEST_CASE("S Test LowMem") {
+  // This should behave identically to "S Simple query 1"
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  bool lowMem = true;
+  synthonspace.readDBFile(libName, lowMem);
+  {
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    auto results = synthonspace.substructureSearch(*queryMol);
+    CHECK(results.getHitMolecules().size() == 220);
+    CHECK(results.getMaxNumResults() == 220);
+  }
+  {
+    auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+    auto results = synthonspace.substructureSearch(*queryMol);
+    CHECK(results.getHitMolecules().size() == 20);
   }
 }

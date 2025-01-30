@@ -77,12 +77,12 @@ void buildConnectorRegions(
 // Return true if all the fragments have a connector region that matches
 // something in the reaction, false otherwise.
 bool checkConnectorRegions(
-    const std::unique_ptr<SynthonSet> &reaction,
+    const SynthonSet &reaction,
     const std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
     const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>>
         &connRegFPs) {
-  const auto &rxnConnRegs = reaction->getConnectorRegions();
-  const auto &rxnConnRegsFP = reaction->getConnRegFP();
+  const auto &rxnConnRegs = reaction.getConnectorRegions();
+  const auto &rxnConnRegsFP = reaction.getConnRegFP();
   MatchVectType dontCare;
   for (size_t i = 0; i < connRegFPs.size(); ++i) {
     bool connRegFound = false;
@@ -114,16 +114,15 @@ bool checkConnectorRegions(
 // returns the bitsets in the original order.
 std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
     const std::vector<std::unique_ptr<ExplicitBitVect>> &pattFPs,
-    const std::unique_ptr<SynthonSet> &reaction,
-    const std::vector<unsigned int> &synthonOrder) {
+    const SynthonSet &reaction, const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> passedFPs;
-  for (const auto &synthonSet : reaction->getSynthons()) {
+  for (const auto &synthonSet : reaction.getSynthons()) {
     passedFPs.emplace_back(synthonSet.size());
   }
 
   boost::dynamic_bitset<> fragsMatched(synthonOrder.size());
   for (size_t i = 0; i < synthonOrder.size(); ++i) {
-    const auto &synthonSet = reaction->getSynthons()[synthonOrder[i]];
+    const auto &synthonSet = reaction.getSynthons()[synthonOrder[i]];
     for (size_t j = 0; j < synthonSet.size(); ++j) {
       if (auto &synthon = synthonSet[j];
           AllProbeBitsMatch(*pattFPs[i], *synthon->getPattFP())) {
@@ -152,22 +151,21 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
 std::vector<boost::dynamic_bitset<>> getHitSynthons(
     const std::vector<std::unique_ptr<ROMol>> &molFrags,
     const std::vector<boost::dynamic_bitset<>> &passedScreens,
-    const std::unique_ptr<SynthonSet> &reaction,
-    const std::vector<unsigned int> &synthonOrder) {
+    const SynthonSet &reaction, const std::vector<unsigned int> &synthonOrder) {
   MatchVectType dontCare;
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
-  for (const auto &synthonSet : reaction->getSynthons()) {
+  for (const auto &synthonSet : reaction.getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
   }
 
   // The tests must be applied for all permutations of synthon list against
   // fragment.
   auto synthonOrders =
-      details::permMFromN(molFrags.size(), reaction->getSynthons().size());
+      details::permMFromN(molFrags.size(), reaction.getSynthons().size());
 
   // Match the fragment to the synthon set in this order.
   for (size_t i = 0; i < synthonOrder.size(); ++i) {
-    const auto &synthonsSet = reaction->getSynthons()[synthonOrder[i]];
+    const auto &synthonsSet = reaction.getSynthons()[synthonOrder[i]];
     const auto &passedScreensSet = passedScreens[synthonOrder[i]];
     bool fragMatched = false;
     for (size_t j = 0; j < synthonsSet.size(); ++j) {
@@ -195,7 +193,7 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
 
 std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet,
-    const std::unique_ptr<SynthonSet> &reaction) const {
+    const SynthonSet &reaction) const {
   std::vector<SynthonSpaceHitSet> results;
 
   const auto pattFPs = makePatternFPs(fragSet);
@@ -213,7 +211,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
   // of the potential products.  It can be less, in which case the unused
   // synthon set will be used completely, possibly resulting in a large
   // number of hits.
-  if (fragSet.size() > reaction->getSynthons().size()) {
+  if (fragSet.size() > reaction.getSynthons().size()) {
     return results;
   }
 
@@ -230,7 +228,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
   // of the fragment fingerprints.
   // Need to try all combinations of synthon orders.
   auto synthonOrders =
-      details::permMFromN(pattFPs.size(), reaction->getSynthons().size());
+      details::permMFromN(pattFPs.size(), reaction.getSynthons().size());
   for (const auto &so : synthonOrders) {
     auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
     // If none of the synthons passed the screens, move right along, nothing
@@ -248,7 +246,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
     // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
     // that might be how they're labelled in the reaction database.
     auto connCombs = details::getConnectorPermutations(
-        fragSet, conns, reaction->getConnectors());
+        fragSet, conns, reaction.getConnectors());
 
     // Find all synthons that match the fragments with each connector
     // combination.
@@ -263,7 +261,7 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
             });
         if (numHits) {
           results.push_back(
-              SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
+              SynthonSpaceHitSet{reaction.getId(), theseSynthons, numHits});
         }
       }
     }

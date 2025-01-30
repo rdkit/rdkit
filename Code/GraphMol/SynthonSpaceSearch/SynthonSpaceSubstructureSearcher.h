@@ -30,7 +30,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
  private:
   std::vector<SynthonSpaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet,
-      const std::unique_ptr<SynthonSet> &reaction) const override;
+      const SynthonSet &reaction) const override;
   bool verifyHit(const ROMol &hit) const override;
 };
 

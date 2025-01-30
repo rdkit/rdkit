@@ -285,3 +285,23 @@ TEST_CASE("FP Approx Similarity") {
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(results.getHitMolecules().size() == 914);
 }
+
+TEST_CASE("FP Binary File") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  bool lowMem = true;
+  synthonspace.readDBFile(libName, lowMem);
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  SearchResults results;
+  auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
+  CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+  CHECK(results.getHitMolecules().size() == 0);
+  CHECK(results.getMaxNumResults() == 0);
+  // Make sure it rejects the wrong sort of fingerprint.
+  fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+  CHECK_THROWS(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+}

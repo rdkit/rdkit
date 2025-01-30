@@ -111,6 +111,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  public:
   // Create the synthonspace from a file in the correct format.
   explicit SynthonSpace() = default;
+  ~SynthonSpace();
   SynthonSpace(const SynthonSpace &other) = delete;
   SynthonSpace &operator=(const SynthonSpace &other) = delete;
   // Get the number of different reactions in the SynthonSpace.
@@ -118,11 +119,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    *
    * @return int
    */
-  size_t getNumReactions() const { return d_reactions.size(); }
-  const std::map<std::string, std::unique_ptr<SynthonSet>> &getReactions()
-      const {
-    return d_reactions;
-  }
+  size_t getNumReactions() const;
+  std::vector<std::string> getReactionNames() const;
+  const std::shared_ptr<SynthonSet> getReaction(std::string reactionName);
 
   // Get the total number of products that the SynthonSpace could produce.
   /*!
@@ -131,6 +130,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   std::int64_t getNumProducts() const;
 
+  bool getLowMem() const { return d_lowMem; }
   std::string getSynthonFingerprintType() const { return d_fpType; }
 
   // Perform a substructure search with the given query molecule across
@@ -205,8 +205,11 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   /*!
    *
    * @param inFilename: the name of the file to read.
+   * @param lowMem: whether to work in low memory mode, where the
+   *                reactions are read from disk as required, or
+   *                read them all into memory at the outset.
    */
-  void readDBFile(const std::string &inFilename);
+  void readDBFile(const std::string &inFilename, bool lowMem = true);
 
   // Write a summary of the SynthonSpace to given stream.
   /*!
@@ -236,11 +239,23 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
  private:
   std::string d_fileName;
-  std::map<std::string, std::unique_ptr<SynthonSet>> d_reactions;
+  bool d_lowMem{true};
+  // In lowMem mode, we keep the positions of the reactions in
+  // the file, and read them as required.
+  std::map<std::string, std::streampos> d_reactionPos;
+  // In hiMem mode, the reactions are read in at the outset.
+  std::map<std::string, std::shared_ptr<SynthonSet>> d_reactions;
+  std::int32_t d_fileMajorVersion{-1};
+  std::unique_ptr<std::ifstream> d_dbis;
 
   // For the similarity search, this records the generator used for
   // creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
+
+  // Opens the d_fileName, assuming it's a binary DB, and checks
+  // it.  Throws an exception if the system doesn't like the
+  // endian-ness of the file.
+  void openAndCheckDBFile();
 };
 
 /*!

@@ -37,13 +37,14 @@ import unittest
 
 from pathlib import Path
 
-from rdkit import Chem
+from rdkit import Chem, rdBase
 from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator
 
 
 class TestCase(unittest.TestCase):
 
   def setUp(self):
+    print(rdBase.rdkitVersion)
     self.sssDir = Path(os.environ["RDBASE"]) / "Code" / "GraphMol" / "SynthonSpaceSearch" / "data"
 
   def testSubstructSearch(self):
@@ -67,6 +68,19 @@ class TestCase(unittest.TestCase):
     results = synthonspace.FingerprintSearch(
       Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
     self.assertEqual(10, len(results.GetHitMolecules()))
+
+  def testBinaryDB(self):
+    fName = self.sssDir / "idorsia_toy_space.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    self.assertEqual(6, synthonspace.GetNumReactions())
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = 10
+    fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
+    results = synthonspace.FingerprintSearch(
+      Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
+    self.assertEqual(10, len(results.GetHitMolecules()))
+    
 
   def testEnumerate(self):
     fName = self.sssDir / "amide_space.txt"
