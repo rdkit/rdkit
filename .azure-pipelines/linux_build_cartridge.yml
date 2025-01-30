@@ -1,11 +1,9 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get remove postgresql-14 postgresql-client-14
-    sudo apt-get remove postgresql postgresql-common postgresql-client-common libpq5
-    sudo apt purge postgresql-14 postgresql-client-14
-    sudo apt purge postgresql postgresql-common postgresql-client-common libpq5
-    sudo apt-get install -y postgresql-common postgresql-12 postgresql-server-dev-12
+    sudo apt-get install -y postgresql-14 postgresql-client-14 postgresql-server-dev-14 postgresql-common
+    echo "start postgres server"
+    sudo systemctl start postgresql.service
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
     source ${CONDA}/etc/profile.d/conda.sh
@@ -16,6 +14,10 @@ steps:
     conda create --name rdkit_build -c conda-forge cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
+<<<<<<< HEAD
+=======
+        eigen \
+>>>>>>> 2f857d58d906af071718aed706edd453a578f4fe
         cairo
     conda activate rdkit_build
 
