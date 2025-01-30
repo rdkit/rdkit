@@ -65,7 +65,7 @@ namespace {
 // Take the fragged mol fps and flag all those synthons that have a fragment as
 // a similarity match.
 std::vector<std::vector<size_t>> getHitSynthons(
-    const std::vector<std::unique_ptr<ExplicitBitVect>> &fragFPs,
+    const std::vector<ExplicitBitVect *> &fragFPs,
     const double similarityCutoff, const SynthonSet &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
@@ -125,25 +125,26 @@ std::vector<std::vector<size_t>> getHitSynthons(
 }
 }  // namespace
 
+void SynthonSpaceFingerprintSearcher::extraSearchSetup(
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
+  for (auto &fragSet : fragSets) {
+    for (auto &frag : fragSet) {
+      // For the fingerprints, ring info is required.
+      unsigned int otf;
+      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
+                  MolOps::SANITIZE_SYMMRINGS);
+
+      d_fragFPs.insert(std::make_pair(
+          frag.get(),
+          std::unique_ptr<ExplicitBitVect>(d_fpGen.getFingerprint(*frag))));
+    }
+  }
+}
+
 std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<SynthonSpaceHitSet> results;
-  std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs;
-  fragFPs.reserve(fragSet.size());
-  for (auto &frag : fragSet) {
-    // For the fingerprints, ring info is required.
-    unsigned int otf;
-    sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
-                MolOps::SANITIZE_SYMMRINGS);
-    fragFPs.emplace_back(d_fpGen.getFingerprint(*frag));
-  }
-
-  const auto connPatterns = details::getConnectorPatterns(fragSet);
-  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
-  for (auto &connPattern : connPatterns) {
-    conns |= connPattern;
-  }
 
   // It can't be a hit if the number of fragments is more than the number
   // of synthon sets because some of the molecule won't be matched in any
@@ -153,6 +154,20 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
   if (fragSet.size() > reaction.getSynthons().size()) {
     return results;
   }
+
+  std::vector<ExplicitBitVect *> fragFPs;
+  fragFPs.reserve(fragSet.size());
+  for (auto &frag : fragSet) {
+    const auto it = d_fragFPs.find(frag.get());
+    fragFPs.push_back(it->second.get());
+  }
+
+  const auto connPatterns = details::getConnectorPatterns(fragSet);
+  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
+  for (auto &connPattern : connPatterns) {
+    conns |= connPattern;
+  }
+
   auto synthConnPatts = reaction.getSynthonConnectorPatterns();
 
   // Need to try all combinations of synthon orders.

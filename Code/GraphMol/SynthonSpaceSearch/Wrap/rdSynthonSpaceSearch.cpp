@@ -103,7 +103,12 @@ void convertTextToDBFileWrapper(const std::string &inFilename,
   if (fpGen) {
     fpGenCpp = python::extract<FingerprintGenerator<std::uint64_t> *>(fpGen);
   }
-  SynthonSpaceSearch::convertTextToDBFile(inFilename, outFilename, fpGenCpp);
+  bool cancelled = false;
+  SynthonSpaceSearch::convertTextToDBFile(inFilename, outFilename, cancelled,
+                                          fpGenCpp);
+  if (cancelled) {
+    throw_runtime_error("Database conversion cancelled");
+  }
 }
 
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
@@ -222,6 +227,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            python::arg("self"),
            "Returns number of products in the SynthonSpace, with multiple"
            " counting of any duplicates.")
+      .def("GetFormattedNumProducts",
+           &SynthonSpaceSearch::SynthonSpace::getFormattedNumProducts,
+           python::arg("self"),
+           "As for GetNumProducts(), but returns a string"
+           " formatted to make it easier to read.")
       .def("Summarise", &summariseHelper, python::arg("self"),
            "Writes a summary of the SynthonSpace to stdout.")
       .def("SubstructureSearch", &substructureSearch_helper,

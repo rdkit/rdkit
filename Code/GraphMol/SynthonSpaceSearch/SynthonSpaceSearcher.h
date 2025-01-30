@@ -57,6 +57,14 @@ class SynthonSpaceSearcher {
   const SynthonSpaceSearchParams &d_params;
   SynthonSpace &d_space;
 
+  // Some of the search methods might need extra setup of the fragment
+  // sets.  The FingerprintSearcher, for example, needs fingerprints
+  // for all the fragments.  The SubstructureSearcher doesn't need
+  // anything extra.
+  virtual void extraSearchSetup(
+      [[maybe_unused]] std::vector<std::vector<std::unique_ptr<ROMol>>>
+          &fragSets) {}
+
   // Do the search of this fragSet against the SynthonSet in the
   // appropriate way, for example by substructure or fingerprint
   // similarity.

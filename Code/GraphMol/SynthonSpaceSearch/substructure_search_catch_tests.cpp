@@ -341,7 +341,8 @@ TEST_CASE("DB Converter") {
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
 
   auto spaceName = std::tmpnam(nullptr);
-  convertTextToDBFile(libName, spaceName, fpGen.get());
+  bool cancelled;
+  convertTextToDBFile(libName, spaceName, cancelled, fpGen.get());
 
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);

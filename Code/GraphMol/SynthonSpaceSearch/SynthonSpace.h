@@ -138,7 +138,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    *
    * @return std::int64_t
    */
-  std::int64_t getNumProducts() const;
+  std::uint64_t getNumProducts() const;
+  std::string getFormattedNumProducts() const;
 
   bool getLowMem() const { return d_lowMem; }
   std::string getSynthonFingerprintType() const { return d_fpType; }
@@ -255,6 +256,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   std::map<std::string, std::streampos> d_reactionPos;
   // In hiMem mode, the reactions are read in at the outset.
   std::map<std::string, std::shared_ptr<SynthonSet>> d_reactions;
+  std::uint64_t d_numProducts{0};
+
   std::int32_t d_fileMajorVersion{-1};
   std::unique_ptr<std::ifstream> d_dbis;
 
@@ -279,6 +282,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  */
 RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
     const std::string &inFilename, const std::string &outFilename,
+    bool &cancelled,
     const FingerprintGenerator<std::uint64_t> *fpGen = nullptr);
 
 }  // namespace SynthonSpaceSearch

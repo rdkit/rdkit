@@ -24,9 +24,7 @@ namespace RDKit::SynthonSpaceSearch {
 SynthonSpaceSearcher::SynthonSpaceSearcher(
     const ROMol &query, const SynthonSpaceSearchParams &params,
     SynthonSpace &space)
-    : d_query(query), d_params(params), d_space(space) {}
-
-SearchResults SynthonSpaceSearcher::search() {
+    : d_query(query), d_params(params), d_space(space) {
   if (d_params.randomSample && d_params.maxHits == -1) {
     throw std::runtime_error(
         "Random sample is incompatible with maxHits of -1.");
@@ -45,6 +43,9 @@ SearchResults SynthonSpaceSearcher::search() {
       }
     }
   }
+}
+
+SearchResults SynthonSpaceSearcher::search() {
   std::vector<std::unique_ptr<ROMol>> results;
 
   TimePoint *endTime = nullptr;
@@ -61,17 +62,28 @@ SearchResults SynthonSpaceSearcher::search() {
     return SearchResults{std::move(results), 0UL, timedOut,
                          ControlCHandler::getGotSignal()};
   }
+  std::cout << "Number of fragments: " << fragments.size() << std::endl;
+  extraSearchSetup(fragments);
 
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
+  int numTries = 100;
   for (const auto &id : getSpace().getReactionNames()) {
+    timedOut = details::checkTimeOut(endTime);
+    if (timedOut) {
+      break;
+    }
     const auto &reaction = getSpace().getReaction(id);
     for (auto &fragSet : fragments) {
-      timedOut = details::checkTimeOut(endTime);
-      if (timedOut) {
+      if (ControlCHandler::getGotSignal()) {
         break;
       }
-      if (ControlCHandler::getGotSignal()) {
+      --numTries;
+      if (!numTries) {
+        timedOut = details::checkTimeOut(endTime);
+        numTries = 100;
+      }
+      if (timedOut) {
         break;
       }
       if (auto theseHits = searchFragSet(fragSet, *reaction);
@@ -85,6 +97,7 @@ SearchResults SynthonSpaceSearcher::search() {
       }
     }
   }
+  std::cout << "Done searching, allHits size : " << allHits.size() << std::endl;
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, totHits, endTime, timedOut, results);
   }
@@ -137,6 +150,9 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
                  const std::unique_ptr<ROMol> &rhs) {
                 const auto lsim = lhs->getProp<double>("Similarity");
                 const auto rsim = rhs->getProp<double>("Similarity");
+                if (lsim == rsim) {
+                  return lhs->getNumAtoms() < rhs->getNumAtoms();
+                }
                 return lsim > rsim;
               });
   }

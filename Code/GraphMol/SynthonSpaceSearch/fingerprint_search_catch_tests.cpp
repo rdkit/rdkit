@@ -292,16 +292,57 @@ TEST_CASE("FP Binary File") {
   SynthonSpace synthonspace;
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
-  bool lowMem = true;
-  synthonspace.readDBFile(libName, lowMem);
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       RDKitFP::getRDKitFPGenerator<std::uint64_t>());
   SearchResults results;
-  auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
-  CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
-  CHECK(results.getHitMolecules().size() == 0);
-  CHECK(results.getMaxNumResults() == 0);
+  auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+  {
+    bool lowMem = false;
+    synthonspace.readDBFile(libName, lowMem);
+    CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+    CHECK(results.getHitMolecules().size() == 3);
+    CHECK(results.getMaxNumResults() == 400);
+  }
+  {
+    bool lowMem = true;
+    synthonspace.readDBFile(libName, lowMem);
+    CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+    CHECK(results.getHitMolecules().size() == 3);
+    CHECK(results.getMaxNumResults() == 400);
+  }
+
   // Make sure it rejects the wrong sort of fingerprint.
+  bool lowMem = true;
+  synthonspace.readDBFile(libName, lowMem);
   fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   CHECK_THROWS(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+}
+
+TEST_CASE("Freedom Space") {
+  std::string libName =
+      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2023-05_Freedom_synthons_rdkit.spc";
+  SynthonSpace synthonspace;
+  bool lowMem = false;
+  synthonspace.readDBFile(libName, lowMem);
+  auto m = "Cc1ccc2ccccc2c1NC(=O)c1ccc(cc1)OCCCCCCCCCCCC"_smiles;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.7;
+  params.maxHits = 1000;
+  params.fragSimilarityAdjuster = 0.1;
+  params.approxSimilarityAdjuster = 0.2;
+  SearchResults results;
+  results = synthonspace.fingerprintSearch(*m, *fpGen, params);
+  std::cout << "Number of results : " << results.getHitMolecules().size()
+            << std::endl;
+  int i = 0;
+  for (const auto &mol : results.getHitMolecules()) {
+    std::cout << MolToSmiles(*mol) << " : "
+              << mol->getProp<std::string>(common_properties::_Name) << "  "
+              << mol->getProp<double>("Similarity") << std::endl;
+    if (++i == 16) {
+      break;
+    }
+  }
 }
