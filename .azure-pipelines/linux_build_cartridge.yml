@@ -14,10 +14,7 @@ steps:
     conda create --name rdkit_build -c conda-forge cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
-<<<<<<< HEAD
-=======
         eigen \
->>>>>>> 2f857d58d906af071718aed706edd453a578f4fe
         cairo
     conda activate rdkit_build
 
