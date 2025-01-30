@@ -10463,7 +10463,7 @@ TEST_CASE("Optionally increase padding round components in reaction drawing") {
       MolDraw2DCairo drawer(900, 300, -1, -1, NO_FREETYPE);
       drawer.drawReaction(*rxn);
       drawer.finishDrawing();
-      drawer.writeDrawingText("testReagentPadding_2.png");
+      drawer.writeDrawingText("testComponentPadding_2.png");
       drawer.drawOptions().componentPadding = 0.1;
       drawer.drawOptions().bondLineWidth = 2.0;
       drawer.drawReaction(*rxn);
