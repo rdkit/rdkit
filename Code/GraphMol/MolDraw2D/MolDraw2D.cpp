@@ -1141,8 +1141,9 @@ int MolDraw2D::drawReactionPart(
     // Adjust the scale to take account of any reagent padding.  The molecules
     // will be re-centred in their panel, so don't need to fiddle with
     // offsets.
-    double widthPadding = reactBit[i]->width_ * drawOptions().reagentPadding;
-    double heightPadding = reactBit[i]->height_ * drawOptions().reagentPadding;
+    double widthPadding = reactBit[i]->width_ * drawOptions().componentPadding;
+    double heightPadding =
+        reactBit[i]->height_ * drawOptions().componentPadding;
     double newXScale =
         (reactBit[i]->width_ - 2 * widthPadding) / reactBit[i]->width_;
     double newYScale =

@@ -865,7 +865,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def_readwrite(
           "padding", &RDKit::MolDrawOptions::padding,
           "Fraction of empty space to leave around molecule.  Default=0.05.")
-      .def_readwrite("reagentPadding", &RDKit::MolDrawOptions::reagentPadding,
+      .def_readwrite("reagentPadding", &RDKit::MolDrawOptions::componentPadding,
                      "Fraction of empty space to leave around each component"
                      " of a reaction drawing.  Default=0.0.")
       .def_readwrite(

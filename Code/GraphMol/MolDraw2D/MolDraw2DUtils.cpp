@@ -225,7 +225,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(fontFile);
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
-  PT_OPT_GET(reagentPadding);
+  PT_OPT_GET(componentPadding);
   PT_OPT_GET(additionalAtomLabelPadding);
   PT_OPT_GET(noAtomLabels);
   PT_OPT_GET(bondLineWidth);

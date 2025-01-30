@@ -355,8 +355,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testOptionalAtomListBrackets_1.svg", 822046498U},
     {"testOptionalAtomListBrackets_2.svg", 3881772214U},
     {"testOptionalAtomListBrackets_3.svg", 2945415850U},
-    {"testReagentPadding_1.svg", 2106266352U},
-    {"testReagentPadding_2.svg", 1006560295U},
+    {"testComponentPadding_1.svg", 2106266352U},
+    {"testComponentPadding_2.svg", 1006560295U},
     {"testReactionPanels.svg", 3629304831U},
 };
 
@@ -10371,8 +10371,6 @@ TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
   }
 }
 
-
-
 TEST_CASE("Github8213 - Reaction rendering ignores panels") {
   std::string smiles =
       "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
@@ -10415,7 +10413,7 @@ TEST_CASE("Github8213 - Reaction rendering ignores panels") {
   check_file_hash("testReactionPanels.svg");
 }
 
-TEST_CASE("Optionally increase padding round reagents in reaction drawing") {
+TEST_CASE("Optionally increase padding round components in reaction drawing") {
   // No specific tests on the output, because this was an enhancement not
   // a bug fix.
   {
@@ -10429,14 +10427,14 @@ TEST_CASE("Optionally increase padding round reagents in reaction drawing") {
         RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
     REQUIRE(rxn);
     MolDraw2DSVG drawer(900, 300, -1, -1, NO_FREETYPE);
-    drawer.drawOptions().reagentPadding = 0.0;
+    drawer.drawOptions().componentPadding = 0.0;
     drawer.drawReaction(*rxn);
     drawer.finishDrawing();
     auto text = drawer.getDrawingText();
-    std::ofstream outs("testReagentPadding_1.svg");
+    std::ofstream outs("testComponentPadding_1.svg");
     outs << text;
     outs.close();
-    check_file_hash("testReagentPadding_1.svg");
+    check_file_hash("testComponentPadding_1.svg");
   }
   {
     std::string smiles =
@@ -10450,14 +10448,14 @@ TEST_CASE("Optionally increase padding round reagents in reaction drawing") {
     REQUIRE(rxn);
     {
       MolDraw2DSVG drawer(900, 300, -1, -1, NO_FREETYPE);
-      drawer.drawOptions().reagentPadding = 0.25;
+      drawer.drawOptions().componentPadding = 0.25;
       drawer.drawReaction(*rxn);
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
-      std::ofstream outs("testReagentPadding_2.svg");
+      std::ofstream outs("testComponentPadding_2.svg");
       outs << text;
       outs.close();
-      check_file_hash("testReagentPadding_2.svg");
+      check_file_hash("testComponentPadding_2.svg");
     }
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     // For a visual check.
@@ -10471,7 +10469,7 @@ TEST_CASE("Optionally increase padding round reagents in reaction drawing") {
       drawer.drawReaction(*rxn);
       drawer.finishDrawing();
       auto text = drawer.getDrawingText();
-      std::ofstream outs("testReagentPadding_2.png");
+      std::ofstream outs("testComponentPadding_2.png");
       outs << text;
       outs.close();
     }
