@@ -1,3 +1,123 @@
+# Release_2024.09.5
+(Changes relative to Release_2024.09.4)
+
+## Backwards incompatible changes
+- Improvements have been made to the v2 tautomer hash. The hash will now be
+  different for molecules with amides, esters, carboxylates, and related
+  structures. There's more discussion of this in PR #8173
+  (https://github.com/rdkit/rdkit/pull/8173).
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Christopher Brown, Rubén Chaves, David Cosgrove, Oleksii Dukhno, Hussein Faara,
+Richard Gowers, Tad Hurst, Gareth Jones, Eisuke Kawashima, Brian Kelley, Niels
+Maeder, Jeremy Monat, Dan Nealschneider, Yechen Qiao, Nikitas Rontsis, Ricardo
+Rodriguez, Anton Siomchen, Inwan Yoo, bbu-imdea, EvaSnow, thomp-j, heng-yin,
+knalice
+
+## New Features and Enhancements:
+  - Update SMILES parsing syntax error to include bad token position
+ (github issue #7980 from whosayn)
+  - SynthonSpace search timeout
+ (github pull #8070 from DavidACosgrove)
+  - Conformer embedding timeout
+ (github pull #8110 from nrontsis)
+  - efgs code
+ (github pull #8145 from bbu-imdea)
+  - Optimisations to fingerprint search of Synthon Space
+ (github pull #8152 from DavidACosgrove)
+  - Making SynthonSearch respond to Ctrl-C
+ (github pull #8153 from DavidACosgrove)
+  - bump the inchi version to 1.07.2
+ (github pull #8176 from greglandrum)
+  - some optimizations of triangle smoothing and the bounds matrix code
+ (github pull #8190 from greglandrum)
+  - support Ctrl-C in conformer generation
+ (github pull #8197 from greglandrum)
+  - DistViolationContribs optimization
+ (github pull #8208 from evasnow1992)
+  - Add option to omit brackets when drawing query atoms.
+ (github pull #8212 from DavidACosgrove)
+  - Optimisation of fingerprint Synthon Search
+ (github pull #8223 from DavidACosgrove)
+
+## Documentation:
+  - The Python type hint for GetMolLayers in RegistrationHash.py appears incorrect
+ (github issue #7650 from yechenqiao)
+  - Add section `How to Build RDKit Documentation Locally`
+ (github pull #8120 from bertiewooster)
+  - Expand on Explicit Valence Error - Partial Sanitization recipe
+ (github pull #8131 from bertiewooster)
+  - GetAtomsMatchingQuery: Tell where to find query options for
+ (github pull #8132 from bertiewooster)
+  - Explain how to run doctests locally
+ (github pull #8135 from bertiewooster)
+  - Update KNIME section in GettingStartedWithContributing 
+ (github pull #8174 from knalice)
+  - Update  InChi links
+ (github pull #8187 from RubenChM)
+  - Fix typo in documentation
+ (github pull #8220 from nmaeder)
+
+## Bug Fixes:
+  - rxn.RunReactants mismatch directional bonds in a heterocycle ring
+ (github issue #7944 from m-hyin)
+  - Fix for removing bad stereo indications from Atropisomer parsing
+ (github pull #7984 from tadhurst-cdd)
+  - HetAtomTautomerv2 detects tautomerism at carboxylate
+ (github issue #8090 from d-b-w)
+  - Vulnerability fixes
+ (github pull #8116 from thomp-j)
+  - symmetric ring finding not returning correct results for molecules with fragments
+ (github issue #8121 from greglandrum)
+  - Fixes two out-of-bounds bugs in the InChI wrapper
+ (github pull #8126 from greglandrum)
+  - Two out-of-bounds bugs in inchi interface
+ (github issue #8129 from chbrown)
+  - Bad radical values are now ignored for MRV generation
+ (github pull #8130 from tadhurst-cdd)
+  - INCHI-API: `add_custom_command` signature problem
+ (github issue #8138 from e-kwsm)
+  - JavaWrappers: CMake `add_custom_command` has multiple comments
+ (github issue #8139 from e-kwsm)
+  - Fix leaks in MIF wrappers
+ (github pull #8143 from ricrogz)
+  - Fix division by zero in MIF descriptors
+ (github pull #8144 from ricrogz)
+  - fix SetPositions when using strided numpy array
+ (github pull #8150 from richardjgowers)
+  - Cyanamide incorrectly matches methyl-imidazole when aromaticMatchesConjugated is set
+ (github issue #8162 from jones-gareth)
+  - Unify Mol rendering in IPython
+ (github pull #8166 from asiomchen)
+  - improve handling of esters, amides, etc. in the v2 tautomer hash
+ (github pull #8173 from greglandrum)
+  - bad conformer ID errors when drawing with unspecifiedStereoIsUnknown and prepareMolsBeforeDrawing drawoptions both set to false
+ (github issue #8177 from oleksii-dukhno-bayer)
+  - Reaction Rendering Looks odd at small scales
+ (github issue #8195 from bp-kelley)
+  - Rascal MCES missing an atom when ignoreAtomAromaticity is True
+ (github issue #8198 from DavidACosgrove)
+  - RASCAL MCES gives duplicate results with singleLargestFrag = True
+ (github issue #8200 from DavidACosgrove)
+  - Reaction products not being drawn with smooth corners
+ (github issue #8209 from DavidACosgrove)
+  - Reaction drawing ignores panels, always draws across full canvas
+ (github issue #8213 from DavidACosgrove)
+
+## Cleanup work:
+  - remove no-op macros and dead code (pt 2)
+ (github pull #8035 from whosayn)
+  - remove no-op macros and dead code (pt 4)
+ (github pull #8037 from whosayn)
+  - fix: apply modernize-use-nullptr
+ (github pull #8134 from e-kwsm)
+  - relax two tolerances for ARM64 builds
+ (github pull #8148 from tadhurst-cdd)
+
 # Release_2024.09.4
 (Changes relative to Release_2024.09.3)
 
