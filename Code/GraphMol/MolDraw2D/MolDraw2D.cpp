@@ -1138,6 +1138,18 @@ int MolDraw2D::drawReactionPart(
 
   Point2D plusPos(0.0, y_offset_ + panelHeight() / 2.0);
   for (size_t i = 0; i < reactBit.size(); ++i) {
+    // Adjust the scale to take account of any reagent padding.  The molecules
+    // will be re-centred in their panel, so don't need to fiddle with
+    // offsets.
+    double widthPadding = reactBit[i]->width_ * drawOptions().componentPadding;
+    double heightPadding =
+        reactBit[i]->height_ * drawOptions().componentPadding;
+    double newXScale =
+        (reactBit[i]->width_ - 2 * widthPadding) / reactBit[i]->width_;
+    double newYScale =
+        (reactBit[i]->height_ - 2 * heightPadding) / reactBit[i]->height_;
+    double newScale = std::min(newXScale, newYScale) * reactBit[i]->getScale();
+    reactBit[i]->setScale(newScale, newScale, true);
     ++activeMolIdx_;
     reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
     reactBit[i]->draw(*this);
