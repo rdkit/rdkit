@@ -497,18 +497,24 @@ class OriginAtomConnection {
   }
 };
 
-unsigned int getNewAtomForBond(
+void getNewAtomsForHBond(
     const Atom *atom, unsigned int otherAtomIdx,
     const std::map<OriginAtomDef, unsigned int> &originAtomMap,
-    const std::map<OriginAtomConnection, unsigned int> &attachMap) {
+    const std::map<OriginAtomConnection, std::vector<unsigned int>> &attachMap,
+    std::vector<unsigned int> &newAtoms) {
   std::string atomClass = "";
   unsigned int atomIdx = atom->getIdx();
+  newAtoms.clear();
   if (!atom->getPropIfPresent<std::string>(common_properties::molAtomClass,
                                            atomClass)) {
-    return originAtomMap.at(OriginAtomDef(atomIdx, UINT_MAX));
+    newAtoms.push_back(originAtomMap.at(OriginAtomDef(atomIdx, UINT_MAX)));
+    return;
   }
 
   // if here , it is a template atom
+  // there could be more than one atom in the template that matches the atom
+  // for instance, the hydrogen bonds to the template can result in multiple
+  // hydrogen bonds in the expanded molecule
 
   auto attchOrds = atom->getProp<std::vector<RDKit::AtomAttchOrd>>(
       common_properties::molAttachOrderTemplate);
@@ -517,14 +523,60 @@ unsigned int getNewAtomForBond(
       auto attachMapIt =
           attachMap.find(OriginAtomConnection(atomIdx, attchOrd.getLabel()));
       if (attachMapIt == attachMap.end()) {
-        return UINT_MAX;
+        return;  // error, attachment ord not found
       }
-      return originAtomMap.at(OriginAtomDef(atomIdx, attachMapIt->second));
+
+      for (auto templateAtomIdx : attachMapIt->second) {
+        newAtoms.push_back(
+            originAtomMap.at(OriginAtomDef(atomIdx, templateAtomIdx)));
+      }
+      return;
     }
   }
 
   // error attachment ord not found
-  return UINT_MAX;
+  return;
+}
+
+void getNewAtomsForBond(
+    const Atom *atom, unsigned int otherAtomIdx,
+    const std::map<OriginAtomDef, unsigned int> &originAtomMap,
+    const std::map<OriginAtomConnection, std::vector<unsigned int>> &attachMap,
+    std::vector<unsigned int> &newAtoms) {
+  std::string atomClass = "";
+  unsigned int atomIdx = atom->getIdx();
+  newAtoms.clear();
+  if (!atom->getPropIfPresent<std::string>(common_properties::molAtomClass,
+                                           atomClass)) {
+    newAtoms.push_back(originAtomMap.at(OriginAtomDef(atomIdx, UINT_MAX)));
+    return;
+  }
+
+  // if here , it is a template atom
+  // there could be more than one atom in the template that matches the atom
+  // for instance, the hydrogen bonds to the template can result in multiple
+  // hydrogen bonds in the expanded molecule
+
+  auto attchOrds = atom->getProp<std::vector<RDKit::AtomAttchOrd>>(
+      common_properties::molAttachOrderTemplate);
+  for (auto attchOrd : attchOrds) {
+    if (attchOrd.getAtomIdx() == otherAtomIdx) {
+      auto attachMapIt =
+          attachMap.find(OriginAtomConnection(atomIdx, attchOrd.getLabel()));
+      if (attachMapIt == attachMap.end()) {
+        return;  // error, attachment ord not found
+      }
+
+      for (auto templateAtomIdx : attachMapIt->second) {
+        newAtoms.push_back(
+            originAtomMap.at(OriginAtomDef(atomIdx, templateAtomIdx)));
+      }
+      return;
+    }
+  }
+
+  // error attachment ord not found
+  return;
 }
 
 void copySgroupIntoResult(
@@ -568,14 +620,190 @@ void copySgroupIntoResult(
   }
 }
 
+void addBonds(const Bond *bond, const std::vector<unsigned int> &beginAtoms,
+              const std::vector<unsigned int> &endAtoms, RWMol *resMol) {
+  auto newBond = new Bond(bond->getBondType());
+  for (unsigned int i = 0; i < beginAtoms.size(); i++) {
+    auto newBond = new Bond(bond->getBondType());
+    newBond->setBeginAtomIdx(beginAtoms[i]);
+    newBond->setEndAtomIdx(endAtoms[i]);
+    newBond->updateProps(*bond, false);
+    resMol->addBond(newBond, true);
+  }
+}
+
+void processBondInMainMol(
+    const Bond *bond,
+    const std::map<OriginAtomDef, unsigned int> &originAtomMap,
+    const std::map<OriginAtomConnection, std::vector<unsigned int>> &attachMap,
+    RWMol *resMol) {
+  std::vector<unsigned int> newBeginAtoms;
+  std::vector<unsigned int> newEndAtoms;
+
+  bool isHygrogenBond = true;
+  if (bond->getBondType() != Bond::HYDROGEN) {
+    isHygrogenBond = false;
+  }
+
+  getNewAtomsForBond(bond->getBeginAtom(), bond->getEndAtomIdx(), originAtomMap,
+                     attachMap, newBeginAtoms);
+  if (newBeginAtoms.empty()) {
+    return;
+  }
+
+  getNewAtomsForBond(bond->getEndAtom(), bond->getBeginAtomIdx(), originAtomMap,
+                     attachMap, newEndAtoms);
+  if (newEndAtoms.empty()) {
+    return;
+  }
+
+  if (!isHygrogenBond) {
+    if (newBeginAtoms.size() != 1 || newEndAtoms.size() != 1) {
+      throw FileParseException(
+          "Regular bonds should have one SAPs for conversion");
+    }
+    addBonds(bond, newBeginAtoms, newEndAtoms, resMol);
+    return;
+  }
+
+  // if here it is a hydrogen bond
+
+  // we process h-bonds in  3 possible treatments.   First we check to see if
+  // there are 3 sites on eash side and they are complimentary (the donors match
+  // acceptors and vice versa).  If so, we add the bonds. and we are done.
+
+  // If not, we check to check to see if they comply to a wobble bond
+  // configuration. There are four generally accepted wobble bonds, and we deal
+  // with these four types only.  The four known wobble bonds are:
+  // 1.  I-C
+  // 2.  I-U
+  // 3.  I-A
+  // 4.  G-U
+  // "I" stands for inosine - it has only two available hbond sites . The pair
+  // G-U has three sites on each end, but they are not complimentary.
+  // (https://en.wikipedia.org/wiki/Wobble_base_pair#:~:text=A%20wobble%20base%20pair%20is,hypoxanthine%2Dcytosine%20(I%2DC).
+
+  // For pairs that have I or something like it, the configuration must be DA,
+  // so the two atoms form the two H bonds. The other side (C,U or A) has
+  // confiuration of AAD (C), ADA (U), or DAD (A). For C-type bases and A type
+  // bases, the second and third atoms are used (AD), and for U types, the first
+  // two atoms are used (AD).
+
+  // for the GU pair, both sides have 3 atoms, but they are not complimentary.
+
+  // in any other case, we punt and add just one bond,  between the second atom
+  // on both sides even if they are NOT complemenary.  This just indicates that
+  // the sides are h-bonded somehow and keeps the overall pairing straight.
+
+  // first get the donor/acceptor state for the 3 atoms on each side
+
+  std::vector<bool> beginIsDonor;
+  std::vector<bool> endIsDonor;
+  for (auto index = 0; index < newBeginAtoms.size(); ++index) {
+    auto atom = resMol->getAtomWithIdx(newBeginAtoms[index]);
+    atom->updatePropertyCache();
+    beginIsDonor.push_back(atom->getTotalNumHs() > 0);
+  }
+
+  for (auto index = 0; index < newEndAtoms.size(); ++index) {
+    auto atom = resMol->getAtomWithIdx(newEndAtoms[index]);
+    atom->updatePropertyCache();
+    endIsDonor.push_back(atom->getTotalNumHs() > 0);
+  }
+
+  if (newBeginAtoms.size() == 3 && newEndAtoms.size() == 3) {
+    // see if the two donor flag lists are complementary
+
+    bool complimentary = true;
+    for (auto index = 0; index < 3; ++index) {
+      if (beginIsDonor[index] == endIsDonor[index]) {
+        complimentary = false;  // both are donors or both are acceptors
+        break;
+      }
+    }
+
+    if (complimentary) {
+      addBonds(bond, newBeginAtoms, newEndAtoms, resMol);
+      return;
+    }
+
+    // Check for G-U type pairs in a wobble bond configuratio
+    // first see if one has the configuration DDA  (like G)
+
+    bool foundDDA = false;
+    if (beginIsDonor[0] && beginIsDonor[1] && !beginIsDonor[2]) {
+      foundDDA = true;
+    } else if (endIsDonor[0] && endIsDonor[1] && !endIsDonor[2]) {
+      foundDDA = true;
+      std::swap(newBeginAtoms, newEndAtoms);
+      std::swap(beginIsDonor, endIsDonor);
+    }
+
+    if (foundDDA) {
+      std::vector<unsigned int> wobbleBeginAtoms;
+      std::vector<unsigned int> wobbleEndAtoms;
+
+      wobbleBeginAtoms.push_back(newBeginAtoms[1]);
+      wobbleBeginAtoms.push_back(newBeginAtoms[2]);
+
+      // see if the other side has the configuration is ADA (like U)
+      if (!endIsDonor[0] && endIsDonor[1] && !endIsDonor[2]) {
+        // ADA use the first two atoms
+        wobbleEndAtoms.push_back(newEndAtoms[0]);
+        wobbleEndAtoms.push_back(newEndAtoms[1]);
+        addBonds(bond, wobbleBeginAtoms, wobbleEndAtoms, resMol);
+        return;
+      }
+    }
+  } else if (newBeginAtoms.size() * newEndAtoms.size() ==
+             6) /* one is 2 and one is 3*/ {
+    if (newEndAtoms.size() == 2) {
+      std::swap(newBeginAtoms, newEndAtoms);
+      std::swap(beginIsDonor, endIsDonor);
+    }
+
+    // std::vector<unsigned int> wobbleBeginAtoms;
+    std::vector<unsigned int> wobbleEndAtoms;
+
+    if (beginIsDonor[0] && !beginIsDonor[1]) {  // like I (DA)
+      if (!endIsDonor[1] && endIsDonor[2]) {    // 2nd and 3rd are AD
+        // like A (DAD) or C (AAD)
+        wobbleEndAtoms.push_back(newEndAtoms[1]);
+        wobbleEndAtoms.push_back(newEndAtoms[2]);
+        addBonds(bond, newBeginAtoms, wobbleEndAtoms, resMol);
+        return;
+
+      } else if (!endIsDonor[0] && endIsDonor[1]) {
+        // like U (ADA)
+        wobbleEndAtoms.push_back(newEndAtoms[0]);
+        wobbleEndAtoms.push_back(newEndAtoms[1]);
+        addBonds(bond, newBeginAtoms, wobbleEndAtoms, resMol);
+        return;
+      }
+    }
+  }
+
+  // if here, we have no wobble bond, so just add the bond between the second
+  // atoms on both sides
+
+  std::vector<unsigned int> defaultBeginAtoms;
+  std::vector<unsigned int> defaultEndAtoms;
+
+  defaultBeginAtoms.push_back(newBeginAtoms[1]);
+  defaultEndAtoms.push_back(newEndAtoms[1]);
+  addBonds(bond, defaultBeginAtoms, defaultEndAtoms, resMol);
+  return;
+}
+
 std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     const RDKit::SCSRMol &scsrMol, const MolFromScsrParams &molFromScsrParams) {
   auto resMol = std::unique_ptr<RWMol>(new RWMol());
   auto mol = scsrMol.getMol();
-  // first get some information from the templates to be used when creating the
-  // coords for the new atoms. this is a dirty approach that simply expands the
-  // orginal macro atom coords to be big enough to hold any expanded macro atom.
-  // No attempt is made to make this look nice, or to avoid overlaps.
+  // first get some information from the templates to be used when
+  // creating the coords for the new atoms. this is a dirty approach
+  // that simply expands the orginal macro atom coords to be big
+  // enough to hold any expanded macro atom. No attempt is made to
+  // make this look nice, or to avoid overlaps.
   std::vector<RDGeom::Point3D> templateCentroids;
   double maxSize = 0.0;
 
@@ -646,7 +874,7 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
   std::map<OriginAtomDef, unsigned int> originAtomMap;
 
   // maps main atom# and attach label to template atom#
-  std::map<OriginAtomConnection, unsigned int> attachMap;
+  std::map<OriginAtomConnection, std::vector<unsigned int>> attachMap;
 
   std::vector<std::unique_ptr<SubstanceGroup>> newSgroups;
 
@@ -721,7 +949,8 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
       auto attchOrds = atom->getProp<std::vector<RDKit::AtomAttchOrd>>(
           common_properties::molAttachOrderTemplate);
 
-      // first find the sgroup that is the base for this atom's template
+      // first find the sgroup that is the base for this atom's
+      // template
 
       const SubstanceGroup *sgroup = nullptr;
       for (auto &sgroupToTest : RDKit::getSubstanceGroups(*templateMol)) {
@@ -754,27 +983,27 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
                            sgroupName, newSgroups, newConf.get(), originAtomMap,
                            coordOffset);
 
-      // find  the attachment points used by this atom and record them in
-      // attachMap.
+      // find  the attachment points used by this atom and record them
+      // in attachMap.
 
       for (auto attchOrd : attchOrds) {
-        bool foundAttachPointAtom = false;
+        attachMap[OriginAtomConnection(atomIdx, attchOrd.getLabel())] =
+            std::vector<unsigned int>();
+        auto &attachAtoms =
+            attachMap[OriginAtomConnection(atomIdx, attchOrd.getLabel())];
         for (auto attachPoint : sgroup->getAttachPoints()) {
           if (attachPoint.id == attchOrd.getLabel()) {
-            attachMap[OriginAtomConnection(atomIdx, attachPoint.id)] =
-                attachPoint.aIdx;
-            foundAttachPointAtom = true;
-            break;
+            attachAtoms.push_back(attachPoint.aIdx);
           }
         }
-        if (!foundAttachPointAtom) {
+        if (attachAtoms.size() == 0) {
           throw FileParseException("Attachment point not found");
         }
       }
 
       // if we are including atoms from leaving groups, go through the
-      // attachment points of the main sgroup. If the attach point is not
-      // found in the attachords, then find the sgroup for that
+      // attachment points of the main sgroup. If the attach point is
+      // not found in the attachords, then find the sgroup for that
       // attach point and add its atoms the molecule
 
       if (molFromScsrParams.includeLeavingGroups) {
@@ -841,8 +1070,8 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
       }
 
       // take care of stereo groups in the template
-      // abs groups are added to the list of abs atoms and bonds, so that we can
-      // add ONE abs group later
+      // abs groups are added to the list of abs atoms and bonds, so
+      // that we can add ONE abs group later
 
       for (auto &sg : templateMol->getStereoGroups()) {
         std::vector<Atom *> newGroupAtoms;
@@ -901,23 +1130,7 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
   // now deal with the bonds from the original mol.
 
   for (auto bond : scsrMol.getMol()->bonds()) {
-    auto newBeginAtomIdx = getNewAtomForBond(
-        bond->getBeginAtom(), bond->getEndAtomIdx(), originAtomMap, attachMap);
-    if (newBeginAtomIdx == UINT_MAX) {
-      continue;
-    }
-    auto newEndAtomIdx = getNewAtomForBond(
-        bond->getEndAtom(), bond->getBeginAtomIdx(), originAtomMap, attachMap);
-    if (newEndAtomIdx == UINT_MAX) {
-      continue;
-    }
-
-    auto newBond = new Bond(bond->getBondType());
-    newBond->setBeginAtomIdx(newBeginAtomIdx);
-    newBond->setEndAtomIdx(newEndAtomIdx);
-    newBond->updateProps(*bond, false);
-
-    resMol->addBond(newBond, true);
+    processBondInMainMol(bond, originAtomMap, attachMap, resMol.get());
   }
 
   // copy any attrs from the main mol
@@ -941,8 +1154,8 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
         if (newAtomPtr != originAtomMap.end()) {
           newAtoms.push_back(newAtomPtr->second);
         } else {
-          // some atoms were in templates and others were not - cannot add this
-          // sgroup
+          // some atoms were in templates and others were not - cannot
+          // add this sgroup
           newAtoms.clear();
           break;
         }
@@ -957,14 +1170,14 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     }
   }
 
-  // now that we have all substance groups from the template and from the
-  // non-template atoms, and we have all the bonds, find the Xbonds for each
-  // substance group and add them
+  // now that we have all substance groups from the template and from
+  // the non-template atoms, and we have all the bonds, find the
+  // Xbonds for each substance group and add them
 
   for (auto bond : resMol->bonds()) {
     for (auto &sg : newSgroups) {
-      // if one atom of the bond is found and the other is not in the sgroup,
-      // this is a Xbond
+      // if one atom of the bond is found and the other is not in the
+      // sgroup, this is a Xbond
       auto sgAtoms = sg->getAtoms();
       if ((std::find(sgAtoms.begin(), sgAtoms.end(), bond->getBeginAtomIdx()) ==
            sgAtoms.end()) !=
@@ -982,8 +1195,8 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
   }
   newSgroups.clear();  // just tidy cleanup
 
-  // take care of stereo groups in the main mol - for atoms that are NOT
-  // template refs
+  // take care of stereo groups in the main mol - for atoms that are
+  // NOT template refs
 
   for (auto &sg : mol->getStereoGroups()) {
     std::vector<Atom *> newGroupAtoms;
@@ -1026,8 +1239,8 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     }
   }
 
-  // make an absolute group that contains any absolute atoms or bonds from
-  // either the main mol or the template instantiations
+  // make an absolute group that contains any absolute atoms or bonds
+  // from either the main mol or the template instantiations
 
   if (!absoluteAtoms.empty() || !absoluteBonds.empty()) {
     newStereoGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,

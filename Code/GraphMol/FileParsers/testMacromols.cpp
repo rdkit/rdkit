@@ -276,6 +276,19 @@ class ScsiMolTest {
 
     if (testToRun == "" || testToRun == "scsiTests") {
       std::list<ScsiTest> scsiTests{
+          ScsiTest("KellanRNA.mol", true, 40, 45, 6, 299, 353, 295, 349),
+          ScsiTest("DnaBadPairs.mol", true, 10, 10, 7, 84, 94, 80, 90),
+          ScsiTest("wobblePairs2.mol", true, 22, 24, 7, 169, 196, 165, 192),
+
+          ScsiTest("wobblePairs.mol", true, 22, 24, 7, 169, 196, 165, 192),
+
+          ScsiTest("TrastuzumabMaxPlus3Register.mol", true, 925, 933, 21, 7606,
+                   7793, 7080, 7267),
+          ScsiTest("TrastuzumabMaxRegister.mol", true, 922, 930, 21, 7576, 7763,
+                   7053, 7240),
+          ScsiTest("DnaTest2.mol", true, 10, 10, 6, 83, 97, 79, 93),
+          ScsiTest("DnaTest3.mol", true, 22, 24, 8, 165, 194, 161, 190),
+          ScsiTest("KellanError.mol", true, 31, 30, 15, 244, 263, 236, 255),
           ScsiTest("TestRNA2_fixed.mol", true, 15, 14, 5, 106, 117, 104, 115),
           ScsiTest("Mixed.mol", true, 14, 16, 5, 51, 54, 51, 54),
           ScsiTest("CrossLink.mol", true, 8, 8, 5, 47, 48, 45, 46),
@@ -305,7 +318,6 @@ class ScsiMolTest {
 
     if (testToRun == "" || testToRun == "threeLetterCodeTest") {
       std::list<ScsiTest> scsiTests{
-          // ScsiTest("KellanError.mol", true, 31, 30, 15, 244, 263, 236, 255),
           ScsiTest("PepTla.mol", true, 4, 3, 4, 26, 25, 26, 25),
 
       };
