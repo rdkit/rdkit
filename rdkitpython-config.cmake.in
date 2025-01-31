@@ -1,6 +1,8 @@
 # Find the RDKitPython dependencies
 include(CMakeFindDependencyMacro)
 
+find_dependency(Python3 @Python3_VERSION_MAJOR@.@Python3_VERSION_MINOR@ COMPONENTS Interpreter Development.Module NumPy)
+find_dependency(Boost @Boost_VERSION_STRING@ COMPONENTS python@Python3_VERSION_MAJOR@@Python3_VERSION_MINOR@ numpy@Python3_VERSION_MAJOR@@Python3_VERSION_MINOR@)
 find_dependency(RDKit @RDKit_RELEASENAME@ REQUIRED)
 
 # Import the targets
