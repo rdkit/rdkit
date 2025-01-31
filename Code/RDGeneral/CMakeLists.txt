@@ -46,7 +46,6 @@ rdkit_headers(Exceptions.h
         export.h
         test.h
         ConcurrentQueue.h
-        enum.h
         DEST RDGeneral)
 
 if (NOT RDK_INSTALL_INTREE)
