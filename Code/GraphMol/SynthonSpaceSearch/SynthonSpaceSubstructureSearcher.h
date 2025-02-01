@@ -28,6 +28,18 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
       : SynthonSpaceSearcher(query, params, space) {}
 
  private:
+  // These are the pattern fingerprints for the fragments in this
+  // search.  They are used for screening the fragments prior to
+  // a substructure search.
+  // It's thread-safe because each search creates its own Searcher
+  // object so multiple searches in different threads will be in
+  // different Searcher objects.  The fingerprints are keyed on
+  // the address of the corresponding fragment.
+  std::map<void *, std::unique_ptr<ExplicitBitVect>> d_pattFPs;
+
+  void extraSearchSetup(
+      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
+
   std::vector<SynthonSpaceHitSet> searchFragSet(
       std::vector<std::unique_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;

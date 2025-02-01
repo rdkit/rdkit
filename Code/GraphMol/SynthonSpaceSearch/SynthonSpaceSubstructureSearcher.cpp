@@ -25,17 +25,19 @@ namespace {
 // is the most likely to screen out a matching synthon set since smaller,
 // less complex fragments are more likely to match something, so screen
 // with that first.
-std::vector<std::unique_ptr<ExplicitBitVect>> makePatternFPs(
-    std::vector<std::unique_ptr<ROMol>> &molFrags) {
-  std::vector<std::unique_ptr<ExplicitBitVect>> pattFPs;
+std::vector<ExplicitBitVect *> makePatternFPs(
+    std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const std::map<void *, std::unique_ptr<ExplicitBitVect>> &allPattFPs) {
+  std::vector<ExplicitBitVect *> pattFPs;
   pattFPs.reserve(molFrags.size());
   for (const auto &frag : molFrags) {
-    pattFPs.emplace_back(PatternFingerprintMol(*frag, 2048));
+    const auto it = allPattFPs.find(frag.get());
+    pattFPs.push_back(it->second.get());
   }
   // Sort by descending number of bits set.
   std::vector<std::pair<size_t, ExplicitBitVect *>> fps(pattFPs.size());
   for (size_t i = 0; i < pattFPs.size(); ++i) {
-    fps[i] = std::make_pair(i, pattFPs[i].get());
+    fps[i] = std::make_pair(i, pattFPs[i]);
   }
   std::sort(fps.begin(), fps.end(),
             [](const std::pair<size_t, ExplicitBitVect *> &fp1,
@@ -45,10 +47,10 @@ std::vector<std::unique_ptr<ExplicitBitVect>> makePatternFPs(
 
   // Now put molFrags in the same order.
   std::vector<std::unique_ptr<ROMol>> newFrags(molFrags.size());
-  std::vector<std::unique_ptr<ExplicitBitVect>> retFPs(molFrags.size());
+  std::vector<ExplicitBitVect *> retFPs(molFrags.size());
   for (size_t i = 0; i < fps.size(); ++i) {
     newFrags[i] = std::move(molFrags[fps[i].first]);
-    retFPs[i] = std::move(pattFPs[fps[i].first]);
+    retFPs[i] = pattFPs[fps[i].first];
   }
   molFrags = std::move(newFrags);
   return retFPs;
@@ -113,8 +115,8 @@ bool checkConnectorRegions(
 // Matches the pattFPs with the synthon sets in the order synthonOrder, but
 // returns the bitsets in the original order.
 std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
-    const std::vector<std::unique_ptr<ExplicitBitVect>> &pattFPs,
-    const SynthonSet &reaction, const std::vector<unsigned int> &synthonOrder) {
+    const std::vector<ExplicitBitVect *> &pattFPs, const SynthonSet &reaction,
+    const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> passedFPs;
   for (const auto &synthonSet : reaction.getSynthons()) {
     passedFPs.emplace_back(synthonSet.size());
@@ -204,12 +206,28 @@ std::vector<std::vector<size_t>> getHitSynthons(
 
 }  // namespace
 
+void SynthonSpaceSubstructureSearcher::extraSearchSetup(
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
+  for (auto &fragSet : fragSets) {
+    for (auto &frag : fragSet) {
+      // For the fingerprints, ring info is required.
+      unsigned int otf;
+      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
+                  MolOps::SANITIZE_SYMMRINGS);
+
+      d_pattFPs.insert(
+          std::make_pair(frag.get(), std::unique_ptr<ExplicitBitVect>(
+                                         PatternFingerprintMol(*frag, 2048))));
+    }
+  }
+}
+
 std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<SynthonSpaceHitSet> results;
 
-  const auto pattFPs = makePatternFPs(fragSet);
+  const auto pattFPs = makePatternFPs(fragSet, d_pattFPs);
   std::vector<std::vector<std::unique_ptr<ROMol>>> connRegs;
   std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> connRegFPs;
   std::vector<int> numFragConns;
