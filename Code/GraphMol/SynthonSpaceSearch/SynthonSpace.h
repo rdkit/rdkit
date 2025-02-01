@@ -227,7 +227,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    *
    * @param os: stream
    */
-  void summarise(std::ostream &os) const;
+  void summarise(std::ostream &os);
 
   // Writes the enumerated library to file in SMILES format (1 compound
   // per line, SMILES name

@@ -339,11 +339,12 @@ void SynthonSpace::readDBFile(const std::string &inFilename, bool lowMem) {
   }
 }
 
-void SynthonSpace::summarise(std::ostream &os) const {
+void SynthonSpace::summarise(std::ostream &os) {
   os << "Read from file " << d_fileName << "\n"
      << "Number of reactions : " << d_reactions.size() << "\n";
   size_t totSize = 0;
-  for (const auto &[id, rxn] : d_reactions) {
+  for (const auto &id : getReactionNames()) {
+    auto rxn = getReaction(id);
     os << "Reaction name " << id << "\n";
     size_t thisSize = 1;
     for (size_t i = 0; i < rxn->getSynthons().size(); ++i) {
