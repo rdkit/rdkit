@@ -92,7 +92,7 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
   return results;
 }
 
-void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
+void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
@@ -234,6 +234,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            " formatted to make it easier to read.")
       .def("Summarise", &summariseHelper, python::arg("self"),
            "Writes a summary of the SynthonSpace to stdout.")
+      .def("GetSynthonFingerprintType",
+           &SynthonSpaceSearch::SynthonSpace::getSynthonFingerprintType,
+           python::arg("self"),
+           "Returns the information string for the fingerprint generator"
+           " used to create this space.")
       .def("SubstructureSearch", &substructureSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("params") = python::object()),
