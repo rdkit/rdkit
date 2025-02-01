@@ -427,6 +427,14 @@ const std::vector<int> &SynthonSet::getNumConnectors() const {
   return d_numConnectors;
 }
 
+std::uint64_t SynthonSet::getNumProducts() const {
+  uint64_t thisSize = 1;
+  for (const auto &r : d_synthons) {
+    thisSize *= r.size();
+  }
+  return thisSize;
+}
+
 bool SynthonSet::hasFingerprints() const { return !d_synthonFPs.empty(); }
 bool SynthonSet::hasAddAndSubtractFPs() const {
   return static_cast<bool>(d_addFP);

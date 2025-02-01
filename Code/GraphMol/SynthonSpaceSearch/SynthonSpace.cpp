@@ -48,7 +48,7 @@ namespace RDKit::SynthonSpaceSearch {
 
 // used for serialization
 constexpr int32_t versionMajor = 2;
-constexpr int32_t versionMinor = 1;
+constexpr int32_t versionMinor = 2;
 constexpr int32_t endianId = 0xa100f;
 
 SynthonSpace::~SynthonSpace() {
@@ -248,13 +248,20 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
     reaction->transferProductBondsToSynthons();
     reaction->buildConnectorRegions();
     reaction->assignConnectorsUsed();
-    size_t thisSize = 1;
-    for (const auto &r : reaction->getSynthons()) {
-      thisSize *= r.size();
-    }
-    d_numProducts += thisSize;
+    d_numProducts += reaction->getNumProducts();
   }
 }
+
+namespace {
+void writeStreamPos(std::ostream &os, const std::streampos &pos) {
+  streamWrite(os, static_cast<std::uint64_t>(pos));
+}
+void readStreamPos(std::istream &is, std::streampos &pos) {
+  std::uint64_t tmp;
+  streamRead(is, tmp);
+  pos = static_cast<std::streampos>(tmp);
+}
+}  // namespace
 
 void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   std::ofstream os(outFilename, std::fstream::binary | std::fstream::trunc);
@@ -267,9 +274,26 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
     streamWrite(os, d_fpType);
   }
   streamWrite(os, static_cast<std::uint64_t>(d_reactions.size()));
+  streamWrite(os, d_numProducts);
+  auto whereTheRxnsStart = os.tellp();
+  // This will be updated later.
+  writeStreamPos(os, whereTheRxnsStart);
+  std::vector<std::streampos> rxnStarts;
+  std::vector<std::string> rxnNames;
+  rxnStarts.reserve(d_reactions.size());
+  rxnNames.reserve(d_reactions.size());
   for (const auto &[reactionId, reaction] : d_reactions) {
+    rxnStarts.push_back(os.tellp());
+    rxnNames.push_back(reactionId);
     reaction->writeToDBStream(os);
   }
+  auto here = os.tellp();
+  for (size_t i = 0; i < d_reactions.size(); ++i) {
+    streamWrite(os, rxnNames[i]);
+    writeStreamPos(os, rxnStarts[i]);
+  }
+  os.seekp(whereTheRxnsStart);
+  writeStreamPos(os, here);
   os.close();
 }
 
@@ -284,19 +308,34 @@ void SynthonSpace::readDBFile(const std::string &inFilename, bool lowMem) {
   }
   std::uint64_t numRS;
   streamRead(*d_dbis, numRS);
-  for (size_t i = 0; i < numRS; ++i) {
-    auto reactionPos = d_dbis->tellg();
-    auto rxn = std::make_shared<SynthonSet>();
-    rxn->readFromDBStream(*d_dbis, d_fileMajorVersion);
-    if (!d_lowMem) {
-      d_reactions.insert(std::make_pair(rxn->getId(), rxn));
+  std::streampos whereTheRxnsStart;
+  if (d_fileMajorVersion > 2010) {
+    streamRead(*d_dbis, d_numProducts);
+    readStreamPos(*d_dbis, whereTheRxnsStart);
+  }
+  std::cout << "Number of products: " << d_numProducts << std::endl;
+  std::cout << "Number of reactions: " << numRS << std::endl;
+
+  if (d_fileMajorVersion < 2020 || !d_lowMem) {
+    for (size_t i = 0; i < numRS; ++i) {
+      auto reactionPos = d_dbis->tellg();
+      auto rxn = std::make_shared<SynthonSet>();
+      rxn->readFromDBStream(*d_dbis, d_fileMajorVersion);
+      if (!d_lowMem) {
+        d_reactions.insert(std::make_pair(rxn->getId(), rxn));
+      }
+      d_reactionPos.insert(std::make_pair(rxn->getId(), reactionPos));
+      d_numProducts += rxn->getNumProducts();
     }
-    d_reactionPos.insert(std::make_pair(rxn->getId(), reactionPos));
-    size_t thisSize = 1;
-    for (const auto &r : rxn->getSynthons()) {
-      thisSize *= r.size();
+  } else {
+    d_dbis->seekg(whereTheRxnsStart);
+    for (size_t i = 0; i < numRS; ++i) {
+      std::string rxnName;
+      streamRead(*d_dbis, rxnName, 0);
+      std::streampos where;
+      readStreamPos(*d_dbis, where);
+      d_reactionPos.insert(std::make_pair(rxnName, where));
     }
-    d_numProducts += thisSize;
   }
 }
 
@@ -389,6 +428,7 @@ void SynthonSpace::openAndCheckDBFile() {
       throw std::runtime_error("unreasonable version numbers");
     }
     d_fileMajorVersion = 1000 * d_fileMajorVersion + minorVersion * 10;
+    std::cout << "file version : " << d_fileMajorVersion << std::endl;
   } catch (std::exception &e) {
     std::cerr << "Error : " << e.what() << " for file " << d_fileName << "\n";
     exit(1);
@@ -430,11 +470,20 @@ void convertTextToDBFile(const std::string &inFilename,
   std::uint64_t numReacts = 0;
   auto numReactPos = os.tellp();
   streamWrite(os, numReacts);
+  // Write a placeholder of numProducts
+  streamWrite(os, numReacts);
+  auto whereTheRxnsStart = os.tellp();
+  // This will be updated later.
+  writeStreamPos(os, whereTheRxnsStart);
+  std::vector<std::streampos> rxnStarts;
+  std::vector<std::string> rxnNames;
 
   int format = -1;
   int lineNum = 1;
   std::unique_ptr<SynthonSet> currReaction;
   std::string oldReactionId;
+  std::uint64_t numProducts = 0;
+
   while (!ifs.eof()) {
     if (ControlCHandler::getGotSignal()) {
       cancelled = true;
@@ -453,7 +502,10 @@ void convertTextToDBFile(const std::string &inFilename,
     }
     if (oldReactionId != nextSynthon[3]) {
       finalizeReaction(currReaction.get(), fpGen);
+      rxnStarts.push_back(os.tellp());
+      rxnNames.push_back(currReaction->getId());
       currReaction->writeToDBStream(os);
+      numProducts += currReaction->getNumProducts();
       ++numReacts;
       currReaction.reset(new SynthonSet(nextSynthon[3]));
       oldReactionId = nextSynthon[3];
@@ -462,9 +514,21 @@ void convertTextToDBFile(const std::string &inFilename,
                                              nextSynthon[0], nextSynthon[1])));
   }
   finalizeReaction(currReaction.get(), fpGen);
+  rxnStarts.push_back(os.tellp());
+  rxnNames.push_back(currReaction->getId());
   currReaction->writeToDBStream(os);
+  auto here = os.tellp();
+  for (size_t i = 0; i < numReacts; ++i) {
+    streamWrite(os, rxnNames[i]);
+    writeStreamPos(os, rxnStarts[i]);
+  }
   os.seekp(numReactPos, std::ios::beg);
   streamWrite(os, numReacts);
+  numProducts += currReaction->getNumProducts();
+  streamWrite(os, numProducts);
+  os.seekp(whereTheRxnsStart);
+  writeStreamPos(os, here);
+
   os.close();
 }
 

@@ -53,6 +53,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   const std::unique_ptr<ExplicitBitVect> &getAddFP() const;
   const std::unique_ptr<ExplicitBitVect> &getSubtractFP() const;
   const std::vector<int> &getNumConnectors() const;
+  std::uint64_t getNumProducts() const;
   bool hasFingerprints() const;
   bool hasAddAndSubtractFPs() const;
 
