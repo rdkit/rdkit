@@ -33,17 +33,13 @@ set(RDKit_USE_BOOST_SERIALIZATION @RDK_USE_BOOST_SERIALIZATION@)
 if (RDKit_USE_BOOST_SERIALIZATION)
     set(RDKit_USE_BOOST_COMPONENTS ${RDKit_USE_BOOST_COMPONENTS} serialization)
 endif()
-set(RDKit_USE_BOOST_STACKTRACE @RDK_USE_BOOST_STACKTRACE@)
-if (RDKit_USE_BOOST_STACKTRACE)
-    set(RDKit_USE_BOOST_COMPONENTS ${RDKit_USE_BOOST_COMPONENTS} stacktrace)
-endif()
 
 # Find the RDKit dependencies
 include(CMakeFindDependencyMacro)
 
 find_dependency(Threads REQUIRED)
 
-find_dependency(Boost @Boost_VERSION_STRING@ COMPONENTS ${RDKit_USE_BOOST_COMPONENTS})
+find_dependency(Boost @Boost_VERSION_STRING@ COMPONENTS headers ${RDKit_USE_BOOST_COMPONENTS})
 
 if(RDKit_HAS_DESCRIPTORS3D)
     find_dependency(Eigen3 REQUIRED NO_MODULE)
