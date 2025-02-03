@@ -112,7 +112,7 @@ void set_pdb_info(RDKit::RWMol& new_monomer, const std::string& monomer_label,
         res_info->setChainId(chain_id_str);
         res_info->setResidueNumber(residue_number);
         res_info->setResidueName(residue_name);
-        // to be consistent with the rdkit adapter and RDKit's own PDB writer
+        // to be consistent with RDKit's PDB writer
         res_info->setInsertionCode(" ");
 
         std::string pdb_name;

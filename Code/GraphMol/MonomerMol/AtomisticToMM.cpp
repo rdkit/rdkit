@@ -27,10 +27,12 @@ const std::string MONOMER_IDX2{"monomerIndex2"};
 const std::string REFERENCE_IDX{"referenceIndex"};
 
 // 3-letter to 1-letter amino acid code mapping
-// These are not currently in the monomer database, but some have
-// symbols that are already in the monomer database. We may need to
-// figure out how to have multiple 3-letter codes for a single symbol
-// polymer_type pair (Histidine is the best example)
+// Currently, monomer types and HELM symbol are the primary key to the monomer
+// database and only 1 PDB code is allowed for each entry. This means we can't
+// store multiple pronated states of monomers (for example, histidine) in the DB.
+// This map allows commonly seen alternate 3-letter codes to be translated into
+// HELM symbols
+// TODO: Incorporate this into the monomer database
 const std::unordered_map<std::string, char> backup_res_table({
     {"ARN", 'R'}, // Neutral-Arginine
     {"ASH", 'D'}, // Protonated Aspartic

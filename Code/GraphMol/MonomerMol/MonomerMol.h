@@ -14,7 +14,11 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
 
+// These are properties set on the atom, bond and molecule level to store HELM
+// and monomeristic information.
+// NOTE: Most of these won't be fully used until we add a HELM parser
 const std::string ANNOTATION{"ANNOTATION"};
 const std::string LINKAGE{"attachmentPoints"};
 const std::string ATOM_LABEL{"atomLabel"};

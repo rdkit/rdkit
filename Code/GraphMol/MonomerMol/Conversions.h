@@ -29,10 +29,10 @@ atomisticToMonomerMol(const RDKit::ROMol& atomistic_mol);
 /**
  * Build an atomistic molecule from a MonomerMol
  *
- * @param monomer_mol CG molecule to convert to atomistic
+ * @param monomer_mol Monomeristic molecule to convert to atomistic
  * @return Atomistic molecule
  */
 RDKIT_MONOMERMOL_EXPORT boost::shared_ptr<RDKit::RWMol>
 monomerMolToAtomsitic(const RDKit::ROMol& monomer_mol);
 
-} // RDKit
+} // namespace RDKit

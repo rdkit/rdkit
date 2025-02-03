@@ -21,7 +21,7 @@
 #include <boost/functional/hash.hpp>
 
 template <typename T>
-static bool is_dummy_obj(const T& obj)
+static bool is_dummy_obj([[maybe_unused]] const T& obj)
 {
     // placeholder from HELM parser; represents a query/repeated monomer or bond
     return false;
@@ -98,17 +98,8 @@ Chain get_polymer(const RDKit::ROMol& monomer_mol,
         }
     }
 
+    // placeholder for HELM parser
     std::string annotation{};
-    for (const auto& sg : ::RDKit::getSubstanceGroups(monomer_mol)) {
-        if ((sg.getProp<std::string>("TYPE") != "COP") ||
-            !sg.hasProp(ANNOTATION) || !sg.hasProp("ID")) {
-            continue;
-        }
-        if (sg.getProp<std::string>("ID") == polymer_id) {
-            annotation = sg.getProp<std::string>(ANNOTATION);
-            break;
-        }
-    }
     return {atoms, bonds, annotation};
 }
 
