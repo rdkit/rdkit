@@ -346,6 +346,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   void updatePropertyCache(bool strict = true);
 
   bool needsUpdatePropertyCache() const;
+  void clearPropertyCache();
 
   //! calculates and returns our explicit valence
   /*!
