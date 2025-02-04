@@ -518,16 +518,33 @@ void cleanupAtropisomerStereoGroups(ROMol &mol) {
   mol.setStereoGroups(std::move(newsgs));
 }
 
+namespace {
+// returns true if the atom's total valence is <= its default valence or if the
+// default valence is -1 This was added to prevent chiral sulfoxides next to
+// aromatic rings from being recognized as candidates for atropisomerism
+//  (see github #7983)
+bool atomIsAtropisomerCandidate(const Atom &atom) {
+  const auto dv =
+      PeriodicTable::getTable()->getDefaultValence(atom.getAtomicNum());
+
+  return dv < 0 || static_cast<int>(atom.getTotalValence()) <= dv;
+}
+}  // namespace
+
 void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf == nullptr || &(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
+  if (mol.needsUpdatePropertyCache()) {
+    mol.updatePropertyCache(false);
+  }
 
   std::set<Bond *> bondsToTry;
 
   for (auto bond : mol.bonds()) {
     if (canHaveDirection(*bond) &&
         (bond->getBondDir() == Bond::BondDir::BEGINDASH ||
-         bond->getBondDir() == Bond::BondDir::BEGINWEDGE)) {
+         bond->getBondDir() == Bond::BondDir::BEGINWEDGE) &&
+        atomIsAtropisomerCandidate(*bond->getBeginAtom())) {
       for (const auto &nbrBond : mol.atomBonds(bond->getBeginAtom())) {
         if (nbrBond == bond) {
           continue;  // a bond is NOT its own neighbor

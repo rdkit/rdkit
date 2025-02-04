@@ -1423,6 +1423,7 @@ void testNeedsUpdatePropertyCacheSDWriter() {
   {
     ROMol *m1 = SmilesToMol("c1ccccc1[NH]C(=O)", 0, false);
     TEST_ASSERT(m1);
+    m1->clearPropertyCache();
     TEST_ASSERT(m1->needsUpdatePropertyCache() == true);
     std::string mb = MolToMolBlock(*m1);
     delete m1;
