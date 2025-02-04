@@ -623,4 +623,13 @@ Volunteers needed to complete this section :)
 
 ## Contributing to the Code - KNIME
 
-Volunteers needed to complete this section :)
+RDKit is mostly used in Python and C++, but another way how people use it is in the form of KNIME nodes. KNIME is a graphical programming software, that allows to build reproducible and self-documenting data pipelines without coding, making RDKit  functionality available for folks that are not familiar or comfortable with coding. Novartis has created and is maintaining the current [RDKit Nodes Extension](https://hub.knime.com/e/XtKPF0hygwZr92X9), that covers a lot of the basic functionality of the Python library. However, RDKit is continously developed and new functionality is being added, and not all new features are translated into RDKit nodes at this stage. In case your new favorite RDKit Python function is not available as KNIME node yet, one way you can contribute is by writing and publishing new KNIME nodes to make it available to the community that is not code-savvy. 
+
+### Python-based RDKit nodes
+The majority of the existing nodes in the [RDKit Nodes Extension](https://hub.knime.com/e/XtKPF0hygwZr92X9) are written in Java, but since the v4.6 release it is possible to write KNIME nodes in pure Python. The ['Create a New Python based KNIME Extension' guide](https://docs.knime.com/latest/pure_python_node_extensions_guide/) will help you to get kickstarted to develop your own RDKit nodes. More information about the handling of chemistry data types can be found [here](https://forum.knime.com/t/announcing-the-interoperability-between-rdkit-and-python-in-knime-4-7/). Once you happy and ready to share the nodes with a broader community, please contact KNIME at _community-contributions@knime.com_ to [publish your KNIME Extension on the Community Hub](https://docs.knime.com/latest/development_contribute_extension/). 
+
+### Share workflows on the KNIME Community Hub
+You don't have to develop KNIME nodes yourself to be able to contribute. You can also upload workflows (data pipelines) on the public [KNIME Community Hub](https://hub.knime.com/) that demonstrate use cases, how to achieve certain tasks or how to use certain nodes. Users can download these workflows, track how data changes or take them as inspiration for their own tasks. If you used KNIME in publications, please also consider publishing these workflows on the KNIME Community Hub. 
+
+### Answer (and ask) questions in the KNIME Forum
+You might also consider answering questions in the [RDKit Community Extension](https://forum.knime.com/tags/c/community-extensions/38/rdkit) or [cheminformatics section](https://forum.knime.com/c/special-interest-groups/cheminformatics/) of the KNIME Forum.

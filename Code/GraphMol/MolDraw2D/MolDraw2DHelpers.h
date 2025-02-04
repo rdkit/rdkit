@@ -22,8 +22,18 @@ namespace RDKit {
 
 namespace MolDraw2D_detail {
 // for aligning the drawing of text to the passed in coords.
-enum class OrientType : unsigned char { C = 0, N, E, S, W };
-enum class TextAlignType : unsigned char { MIDDLE = 0, START, END };
+enum class OrientType : unsigned char {
+  C = 0,
+  N,
+  E,
+  S,
+  W
+};
+enum class TextAlignType : unsigned char {
+  MIDDLE = 0,
+  START,
+  END
+};
 }  // namespace MolDraw2D_detail
 
 struct DrawColour {
@@ -143,7 +153,10 @@ inline void assignBWPalette(ColourPalette &palette) {
   palette[-1] = DrawColour(0, 0, 0);
 };
 
-enum class MultiColourHighlightStyle { CIRCLEANDLINE, LASSO };
+enum class MultiColourHighlightStyle {
+  CIRCLEANDLINE,
+  LASSO
+};
 
 struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomLabelDeuteriumTritium =
@@ -194,6 +207,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                      // mean bond length
   double padding =
       0.05;  // fraction of empty space to leave around the molecule
+  double componentPadding = 0.0;  // fraction of empty space to leave around
+                                  // each component in a reaction drawing
   double additionalAtomLabelPadding = 0.0;  // additional padding to leave
                                             // around atom labels. Expressed as
                                             // a fraction of the font size.
@@ -295,6 +310,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
              // with complex query symbols A, Q, X, M, optionally followed
              // by H if hydrogen is included (except for AH, which stays *).
              // Default is true.
+  bool bracketsAroundAtomLists = true;  // If true, puts brackets round atom
+                                        // lists in query atoms.
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(

@@ -159,8 +159,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHydrogenBonds2.svg", 645414593U},
     {"testGithub3912.1.svg", 2513727029U},
     {"testGithub3912.2.svg", 3814673891U},
-    {"testGithub2976.svg", 2669316911U},
-    {"testReactionCoords.svg", 402445764U},
+    {"testGithub2976.svg", 3717916234U},
+    {"testReactionCoords.svg", 2572146469U},
     {"testAnnotationColors.svg", 2216313312U},
     {"testGithub4323_1.svg", 2536621192U},
     {"testGithub4323_2.svg", 2120846759U},
@@ -319,9 +319,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"lasso_highlights_6.svg", 2113147733U},
     {"lasso_highlights_7.svg", 514868036U},
     {"lasso_highlights_8.svg", 3231367552U},
-    {"testGithub6685_1.svg", 1835717197U},
-    {"testGithub6685_2.svg", 116380465U},
-    {"testGithub6685_3.svg", 409385402U},
+    {"testGithub6685_1.svg", 1206031802U},
+    {"testGithub6685_2.svg", 1946154328U},
+    {"testGithub6685_3.svg", 617181155U},
     {"testGithub6685_4.svg", 1239628830U},
     {"bad_lasso_1.svg", 726527516U},
     {"AtropCanon1.svg", 526339583U},
@@ -350,6 +350,14 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testHighlightHeteroAtoms_2.svg", 893937335U},
     {"testAtomAbbreviationsClash.svg", 1847939197U},
     {"testBlackAtomsUnderHighlight.svg", 3916069581U},
+    {"testSmallReactionCanvas.svg", 1288652415U},
+    {"testReactionProductSmoothCorners.svg", 1712682118U},
+    {"testOptionalAtomListBrackets_1.svg", 822046498U},
+    {"testOptionalAtomListBrackets_2.svg", 3881772214U},
+    {"testOptionalAtomListBrackets_3.svg", 2945415850U},
+    {"testComponentPadding_1.svg", 2106266352U},
+    {"testComponentPadding_2.svg", 1006560295U},
+    {"testReactionPanels.svg", 3629304831U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10182,13 +10190,15 @@ TEST_CASE("Atom abbreviations clash") {
   check_file_hash("testAtomAbbreviationsClash.svg");
 }
 
-TEST_CASE("DrawMol::getColour should not throw if the palette has no carbon color and no default color") {
+TEST_CASE(
+    "DrawMol::getColour should not throw if the palette has no carbon color and no default color") {
   auto m = "c1ccc(C2CN2)cc1"_smiles;
   MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
   drawer.drawOptions().atomColourPalette = ColourPalette();
   std::vector<int> highlightAtoms{0, 1, 2, 3, 4, 5, 6, 7, 8};
   std::vector<int> highlightBonds;
-  REQUIRE_NOTHROW(drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds));
+  REQUIRE_NOTHROW(
+      drawer.drawMolecule(*m, "", &highlightAtoms, &highlightBonds));
   drawer.finishDrawing();
   std::string text = drawer.getDrawingText();
   std::ofstream outs("testBlackAtomsUnderHighlight.svg");
@@ -10218,11 +10228,251 @@ TEST_CASE("DrawMol::getColour should not throw if the palette has no carbon colo
   check_file_hash("testBlackAtomsUnderHighlight.svg");
 }
 
-TEST_CASE("Github8177 - bad conformer if prepareMolsBeforeDrawing is false and unspecifiedStereoIsUnknown is true") {
+TEST_CASE(
+    "Github8177 - bad conformer if prepareMolsBeforeDrawing is false and unspecifiedStereoIsUnknown is true") {
   auto m = "c1cccnc1CC"_smiles;
   REQUIRE(m);
   MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
   drawer.drawOptions().prepareMolsBeforeDrawing = false;
   drawer.drawOptions().unspecifiedStereoIsUnknown = true;
   REQUIRE_NOTHROW(drawer.drawMolecule(*m));
+}
+
+TEST_CASE("Github8195 - Reaction rendering looks odd at small scales") {
+  std::string smiles =
+      "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+      "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+      "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+      "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+  bool useSmiles = false;
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+  REQUIRE(rxn);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testSmallReactionCanvas.svg");
+  outs << text;
+  outs.close();
+  std::regex path("font-size:6px");
+  size_t nOccurrences =
+      std::distance(std::sregex_token_iterator(text.begin(), text.end(), path),
+                    std::sregex_token_iterator());
+  CHECK(nOccurrences == 38);
+  check_file_hash("testSmallReactionCanvas.svg");
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+  SECTION("PNG for visual inspection") {
+    {
+      MolDraw2DCairo drawer(300, 300);
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testSmallReactionCanvas.png");
+    }
+  }
+#endif
+}
+
+TEST_CASE("Github8209 - Reaction products not having bond corners smoothed") {
+  std::string smiles =
+      "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+      "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+      "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+      "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+  bool useSmiles = false;
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+  REQUIRE(rxn);
+  MolDraw2DSVG drawer(450, 200, -1, -1, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testReactionProductSmoothCorners.svg");
+  outs << text;
+  outs.close();
+  std::regex path(
+      "<path d='M (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+) L (\\d+\\.\\d+),(\\d+\\.\\d+)' style='fill:none;stroke:#000000");
+  size_t nOccurrences =
+      std::distance(std::sregex_token_iterator(text.begin(), text.end(), path),
+                    std::sregex_token_iterator());
+  CHECK(nOccurrences == 10);
+  check_file_hash("testReactionProductSmoothCorners.svg");
+}
+
+TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
+  std::string baseName = "testOptionalAtomListBrackets";
+  auto checkTextChar = [](const std::string &svgText,
+                          const std::string &searchChar,
+                          size_t expected) -> void {
+    {
+      std::regex regex("<text .* >" + searchChar + "</text>");
+      size_t nOccurrences = std::distance(
+          std::sregex_token_iterator(svgText.begin(), svgText.end(), regex),
+          std::sregex_token_iterator());
+      CHECK(nOccurrences == expected);
+    }
+  };
+  {
+    std::string smiles =
+        "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+        "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+        "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+        "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+    bool useSmiles = false;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+    REQUIRE(rxn);
+    MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().bracketsAroundAtomLists = false;
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "_1.svg");
+    outs << text;
+    outs.close();
+    checkTextChar(text, R"(\[)", 0);
+    checkTextChar(text, R"(\])", 0);
+    check_file_hash(baseName + "_1.svg");
+  }
+  {
+    auto m = "c1ccccc1[F,Cl,Br,I,At]"_smarts;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().bracketsAroundAtomLists = false;
+    drawer.drawOptions().useComplexQueryAtomSymbols = false;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "_2.svg");
+    outs << text;
+    outs.close();
+    checkTextChar(text, R"(\[)", 0);
+    checkTextChar(text, R"(\])", 0);
+    check_file_hash(baseName + "_2.svg");
+  }
+  {
+    // Demonstrate that the complex query atom symbols aren't stuffed up by
+    // this change.
+    auto m = "c1ccccc1[F,Cl,Br,I,At]"_smarts;
+    REQUIRE(m);
+    MolDraw2DSVG drawer(600, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().bracketsAroundAtomLists = false;
+    drawer.drawOptions().useComplexQueryAtomSymbols = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs(baseName + "_3.svg");
+    outs << text;
+    outs.close();
+    checkTextChar(text, R"(\[)", 0);
+    checkTextChar(text, R"(\])", 0);
+    checkTextChar(text, "X", 1);
+    check_file_hash(baseName + "_3.svg");
+  }
+}
+
+TEST_CASE("Github8213 - Reaction rendering ignores panels") {
+  std::string smiles =
+      "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+      "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+      "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+      "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+  bool useSmiles = false;
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+  REQUIRE(rxn);
+  MolDraw2DSVG drawer(600, 300, 300, 150, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.setOffset(300, 150);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testReactionPanels.svg");
+  outs << text;
+  outs.close();
+  const static std::regex atom0(
+      "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-0'.*</text>");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), atom0),
+                    std::sregex_iterator()));
+  CHECK(match_count == 6);
+  auto match_begin = std::sregex_iterator(text.begin(), text.end(), atom0);
+  std::smatch match = *match_begin;
+  double x1 = stod(match[1]);
+  double y1 = stod(match[2]);
+  CHECK(x1 < 300.0);
+  CHECK(y1 < 150.0);
+  ++match_begin;
+  ++match_begin;
+  ++match_begin;
+  match = *match_begin;
+  double x2 = stod(match[1]);
+  double y2 = stod(match[2]);
+  CHECK((x2 > 300.0 && x2 < 600.0));
+  CHECK((y2 > 150.0 && y2 < 300.0));
+  check_file_hash("testReactionPanels.svg");
+}
+
+TEST_CASE("Optionally increase padding round components in reaction drawing") {
+  // No specific tests on the output, because this was an enhancement not
+  // a bug fix.
+  {
+    std::string smiles =
+        "[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2]"
+        "(=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1["
+        "cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])"
+        "[N:13]=[N+:14]=[N-:15]";
+    bool useSmiles = false;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+    REQUIRE(rxn);
+    MolDraw2DSVG drawer(900, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().componentPadding = 0.0;
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testComponentPadding_1.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testComponentPadding_1.svg");
+  }
+  {
+    std::string smiles =
+        "[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2]"
+        "(=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1["
+        "cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])"
+        "[N:13]=[N+:14]=[N-:15]";
+    bool useSmiles = false;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+    REQUIRE(rxn);
+    {
+      MolDraw2DSVG drawer(900, 300, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().componentPadding = 0.25;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testComponentPadding_2.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testComponentPadding_2.svg");
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    // For a visual check.
+    {
+      MolDraw2DCairo drawer(900, 300, -1, -1, NO_FREETYPE);
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testComponentPadding_2.png");
+      drawer.drawOptions().componentPadding = 0.1;
+      drawer.drawOptions().bondLineWidth = 2.0;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testComponentPadding_2.png");
+      outs << text;
+      outs.close();
+    }
+#endif
+  }
 }

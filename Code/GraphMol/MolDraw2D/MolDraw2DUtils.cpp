@@ -225,6 +225,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(fontFile);
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
+  PT_OPT_GET(componentPadding);
   PT_OPT_GET(additionalAtomLabelPadding);
   PT_OPT_GET(noAtomLabels);
   PT_OPT_GET(bondLineWidth);
@@ -256,6 +257,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(scalingFactor);
   PT_OPT_GET(drawMolsSameScale);
   PT_OPT_GET(useComplexQueryAtomSymbols);
+  PT_OPT_GET(bracketsAroundAtomLists);
 
   get_colour_option(pt, "highlightColour", opts.highlightColour);
   get_colour_option(pt, "backgroundColour", opts.backgroundColour);
