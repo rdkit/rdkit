@@ -1324,11 +1324,6 @@ TEST_CASE("Round TRIP") {
              try {
                 mols = ChemDrawToMols(iss);
              } catch (...) {
-                 std::filesystem::copy(entry.path(),
-                                       std::string("/Users/brian/devel/working/cdxml/") + entry.path().filename().string(),
-                                       std::filesystem::copy_options::overwrite_existing);
-                 std::ofstream outfile(std::string("/Users/brian/devel/working/cdxml/" + entry.path().filename().string() + ".nomol.cdxml"));
-                 outfile << cdx;
                  std::cerr << entry.path().filename().string() << std::endl;
                  std::cerr << "FAIL (cdxml-exception):" << entry.path() << std::endl;
                  failed ++;
@@ -1336,11 +1331,6 @@ TEST_CASE("Round TRIP") {
              auto smi1 = MolToSmiles(*mol);
              
              if(mols.size() == 0) {
-               std::filesystem::copy(entry.path(),
-                                     std::string("/Users/brian/devel/working/cdxml/") + entry.path().filename().string(),
-                                     std::filesystem::copy_options::overwrite_existing);
-               std::ofstream outfile(std::string("/Users/brian/devel/working/cdxml/" + entry.path().filename().string() + ".nomol.cdxml"));
-               outfile << cdx;
                std::cerr << entry.path().filename().string() << std::endl;
                std::cerr << "FAIL (nomol):" << entry.path() << std::endl;
                mol->debugMol(std::cerr);
@@ -1350,11 +1340,6 @@ TEST_CASE("Round TRIP") {
              auto smi2 = MolToSmiles(*mols[0]);
              if(smi1 != smi2) {
                //std::cerr << "**************************************************************" << std::endl;
-               std::filesystem::copy(entry.path(),
-                                     std::string("/Users/brian/devel/working/cdxml/") + entry.path().filename().string(),
-                                     std::filesystem::copy_options::overwrite_existing);
-               std::ofstream outfile(std::string("/Users/brian/devel/working/cdxml/" + entry.path().filename().string() + ".cdxml"));
-               outfile << cdx;
                std::cerr << "FAIL:" << entry.path() << " " << smi1 << " != " << smi2 << std::endl;
                failed++;
                //std::cerr << "molfile:" << smi1 << std::endl;
