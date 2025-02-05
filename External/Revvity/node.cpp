@@ -36,7 +36,7 @@ namespace RDKit {
 
 bool parse_node(
     RWMol &mol, unsigned int fragment_id, CDXNode &node,
-    std::map<unsigned int, Atom *> &ids,
+    PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
     int &missing_frag_id, int external_attachment) {
   int atom_id = node.GetObjectID();
@@ -45,7 +45,11 @@ bool parse_node(
   int num_hydrogens =
       node.m_numHydrogens == kNumHydrogenUnspecified ? 0 : node.m_numHydrogens;
   bool explicitHs = node.m_numHydrogens != kNumHydrogenUnspecified;
-  int charge = node.m_charge;
+  int charge = 0;
+  if((node.m_charge & 0x00FFFFFF) == 0)
+    charge = node.m_charge >> 24;
+  else
+    charge = node.m_charge;
   int atommap = 0;
   int mergeparent = -1;
   int rgroup_num = -1;
@@ -164,10 +168,16 @@ bool parse_node(
   }
 
   std::vector<double> atom_coords;
-  atom_coords.reserve(2);
-  atom_coords.push_back(node.m_2dPosition.x);
-  atom_coords.push_back(node.m_2dPosition.y);
-
+  if(node.KnownPosition3D()) {
+    atom_coords.reserve(3);
+    atom_coords.push_back(node.m_3dPosition.x);
+    atom_coords.push_back(node.m_3dPosition.y);
+    atom_coords.push_back(node.m_3dPosition.z);
+  } else {
+    atom_coords.reserve(2);
+    atom_coords.push_back(node.m_2dPosition.x);
+    atom_coords.push_back(node.m_2dPosition.y);
+  }
   rd_atom->setProp<std::vector<double>>(CDX_ATOM_POS, atom_coords);
   rd_atom->setProp<unsigned int>(CDX_ATOM_ID, atom_id);
 
@@ -208,12 +218,14 @@ bool parse_node(
     stereo.atoms.push_back(rd_atom);
   }
 
-  ids[atom_id] = rd_atom;  // The mol has ownership so this can't leak
+  pagedata.atom_ids[atom_id] = rd_atom;  // The mol has ownership so this can't leak
   if (node.m_nodeType == kCDXNodeType_Nickname ||
       node.m_nodeType == kCDXNodeType_Fragment) {
+    // This fragment needs to be expanded and joined to the current one
+    //  the external_id is the node's atom_id
     for (auto fragment : node.ContainedObjects()) {
       if (fragment.second->GetTag() == kCDXObj_Fragment) {
-        if (!parse_fragment(mol, (CDXFragment &)(*fragment.second), ids,
+        if (!parse_fragment(mol, (CDXFragment &)(*fragment.second), pagedata,
                             missing_frag_id, atom_id)) {
           return false;
         }

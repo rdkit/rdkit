@@ -37,10 +37,11 @@
 #include <GraphMol/QueryOps.h>
 #include <CDXStdObjects.h>
 #include "utils.h"
+#include "fragment.h"
 
 namespace RDKit {
 bool parse_bond(RWMol &mol, unsigned int fragemnt_id, CDXBond &bond,
-                std::map<unsigned int, Atom *> &ids);
+                PageData &pagedata);
 }
 
 #endif

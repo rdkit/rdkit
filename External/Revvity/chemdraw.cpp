@@ -37,6 +37,7 @@
 #include <CDXMLParser.h>
 #include <CDXStdObjects.h>
 
+#include "bracket.h"
 #include "chemdraw.h"
 #include "fragment.h"
 #include "reaction.h"
@@ -67,14 +68,7 @@ using namespace RDKit;
 // for ungrouped fragments and the grouped id for grouped fragments, so the
 // grouped_fragments holds both for ease of bookkeeping.
 void visit_children(
-    CDXObject &node, std::map<unsigned int, Atom *> &ids,
-    std::vector<std::unique_ptr<RWMol>>
-        &mols,  // All molecules found in the doc
-    std::map<unsigned int, size_t>
-        &fragment_lookup,  // fragment.id->molecule index
-    std::map<unsigned int, std::vector<int>>
-        &grouped_fragments,              // grouped.id -> [fragment.id]
-    std::vector<ReactionInfo> &schemes,  // reaction schemes found
+    CDXObject &node, PageData &pagedata,
     int &missing_frag_id,  // if we don't have a fragment id, start at -1 and
                            // decrement
     double bondLength,  // bond length of the document for assigning coordinates
@@ -89,17 +83,18 @@ void visit_children(
     CDXDatumID id = (CDXDatumID)frag.second->GetTag();
     if (id == kCDXObj_Fragment) {
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
-      if (!parse_fragment(*mol, (CDXFragment &)(*frag.second), ids,
+      if (!parse_fragment(*mol, (CDXFragment &)(*frag.second), pagedata,
                           missing_frag_id)) {
         continue;
       }
       unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
-      fragment_lookup[frag_id] = mols.size();
+      pagedata.fragment_lookup[frag_id] = pagedata.mols.size();
       if (group_id != -1) {
-        grouped_fragments[group_id].push_back(frag_id);
+        pagedata.grouped_fragments[group_id].push_back(frag_id);
       } else {
-        grouped_fragments[frag_id].push_back(frag_id);
+        pagedata.grouped_fragments[frag_id].push_back(frag_id);
       }
+      
       if (mol->hasProp(NEEDS_FUSE)) {
         mol->clearProp(NEEDS_FUSE);
         std::unique_ptr<ROMol> fused;
@@ -113,15 +108,16 @@ void visit_children(
           continue;
         }
         fused->setProp<int>(CDXML_FRAG_ID, static_cast<int>(frag_id));
-        mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
+        pagedata.mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
       } else {
-        mols.push_back(std::move(mol));
+        pagedata.mols.push_back(std::move(mol));
       }
-      RWMol *res = mols.back().get();
+      RWMol *res = pagedata.mols.back().get();
       auto conf = std::make_unique<Conformer>(res->getNumAtoms());
       conf->set3D(false);
 
       bool hasConf = false;
+      bool is3D = false;
       for (auto &atm : res->atoms()) {
         RDGeom::Point3D p{0.0, 0.0, 0.0};
 
@@ -130,11 +126,14 @@ void visit_children(
           const std::vector<double> coord =
               atm->getProp<std::vector<double>>(CDX_ATOM_POS);
 
+          p.x = coord[0];
+          p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
+          // system, so we need to reverse that
           if (coord.size() == 2) {
-            p.x = coord[0];
-            p.y = -1 * coord[1];  // CDXML uses an inverted coordinate
-            // system, so we need to reverse that
             p.z = 0.0;
+          } else {
+            p.z = coord[2];
+            is3D = true;
           }
         }
         conf->setAtomPos(atm->getIdx(), p);
@@ -143,8 +142,15 @@ void visit_children(
 
       if (hasConf) {
         scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
+        conf->set3D(is3D);
         auto confidx = res->addConformer(conf.release());
-        MolOps::assignChiralTypesFromBondDirs(*res, confidx, true);
+
+        if (is3D) {
+          res->updatePropertyCache(false);
+          MolOps::assignChiralTypesFrom3D(*res, confidx, true);
+        } else {
+          MolOps::assignChiralTypesFromBondDirs(*res, confidx, true);
+        }
         Atropisomers::detectAtropisomerChirality(*res,
                                                  &res->getConformer(confidx));
       } else {  // no Conformer
@@ -179,7 +185,7 @@ void visit_children(
           BOOST_LOG(rdWarningLog)
               << "CDXMLParser: failed sanitizing skipping fragment " << frag_id
               << std::endl;
-          mols.pop_back();
+          pagedata.mols.pop_back();
           continue;
         }
         MolOps::assignStereochemistry(*res, true, true, true);
@@ -188,7 +194,7 @@ void visit_children(
       }
     } else if (id == kCDXObj_ReactionScheme) {  // get the reaction info
       CDXReactionScheme &scheme = (CDXReactionScheme &)(*frag.second);
-      schemes.emplace_back(scheme);
+      pagedata.schemes.emplace_back(scheme);
       /*
       int scheme_id = scheme.GetObjectID();   //frag.second.template
       get<int>("<xmlattr>.id", -1); for (auto &rxnNode :
@@ -207,8 +213,10 @@ void visit_children(
     } else if (id == kCDXObj_Group) {
       CDXGroup &group = (CDXGroup &)(*frag.second);
       group_id = frag.second->GetObjectID();
-      visit_children(group, ids, mols, fragment_lookup, grouped_fragments,
-                     schemes, missing_frag_id, bondLength, params, group_id);
+      visit_children(group, pagedata, missing_frag_id, bondLength, params, group_id);
+    } else if (id == kCDXObj_BracketedGroup) {
+      CDXBracketedGroup &bracketgroup = (CDXBracketedGroup &)(*frag.second);
+      parse_bracket(bracketgroup, pagedata);
     }
   }
 }
@@ -233,14 +241,15 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     // error
     return std::vector<std::unique_ptr<RWMol>>();
   }
-  std::map<unsigned int, Atom *>
-      ids;  // id->Atom* in fragment (used for linkages)
+  PageData pagedata;
+  /*
   std::vector<std::unique_ptr<RWMol>> mols;  // All molecules found in the doc
   std::map<unsigned int, size_t>
       fragment_lookup;  // fragment.id->molecule index
   std::map<unsigned int, std::vector<int>>
       grouped_fragments;              // grouped.id -> [fragment.id]
   std::vector<ReactionInfo> schemes;  // reaction schemes found
+   */
   auto bondLength = document->m_bondLength;
 
   int missing_frag_id = -1;
@@ -248,18 +257,17 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     CDXDatumID id = (CDXDatumID)node.second->GetTag();
     switch (id) {
       case kCDXObj_Page:
-        visit_children(*node.second, ids, mols, fragment_lookup,
-                       grouped_fragments, schemes, missing_frag_id, bondLength,
+        visit_children(*node.second, pagedata, missing_frag_id, bondLength,
                        params);
         break;
       default:
         break;
     }
   }
-  for (auto &scheme : schemes) {
-    scheme.set_reaction_steps(grouped_fragments, mols);
+  for (auto &scheme : pagedata.schemes) {
+    scheme.set_reaction_steps(pagedata.grouped_fragments, pagedata.mols);
   }
-  return mols;
+  return std::move(pagedata.mols);
 }
 }  // namespace
 

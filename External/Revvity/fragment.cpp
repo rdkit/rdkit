@@ -36,7 +36,7 @@
 namespace RDKit {
 
 bool parse_fragment(RWMol &mol, CDXFragment &fragment,
-                    std::map<unsigned int, Atom *> &ids, int &missing_frag_id,
+                    PageData &pagedata, int &missing_frag_id,
                     int external_attachment) {
   int frag_id = fragment.GetObjectID();
   if (frag_id == -1) {
@@ -65,7 +65,7 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment,
     switch (id) {
       case kCDXObj_Node: {
         CDXNode &node = (CDXNode &)(*child.second);
-        if (!parse_node(mol, frag_id, node, ids, sgroups, missing_frag_id,
+        if (!parse_node(mol, frag_id, node, pagedata, sgroups, missing_frag_id,
                         external_attachment)) {
           skip_fragment = true;
         }
@@ -73,7 +73,7 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment,
       }
       case kCDXObj_Bond: {
         CDXBond &bond = (CDXBond &)(*child.second);
-        if (!parse_bond(mol, frag_id, bond, ids)) {
+        if (!parse_bond(mol, frag_id, bond, pagedata)) {
           skip_fragment = true;
           break;
         }

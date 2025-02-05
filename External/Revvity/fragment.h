@@ -36,11 +36,35 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
 #include <CDXStdObjects.h>
+#include "reaction.h"
 #include "utils.h"
 
 namespace RDKit {
+struct PageData {
+  PageData() : atom_ids(), bond_ids(), mols(), fragment_lookup(), grouped_fragments(), schemes() {}
+  
+  PageData(const PageData&) = delete;
+  
+  std::map<unsigned int, Atom *> atom_ids;
+  std::map<unsigned int, Bond *> bond_ids;
+  std::vector<std::unique_ptr<RWMol>> mols;  // All molecules found in the doc
+  std::map<unsigned int, size_t>
+      fragment_lookup;  // fragment.id->molecule index
+  std::map<unsigned int, std::vector<int>>
+      grouped_fragments;              // grouped.id -> [fragment.id]
+  std::vector<ReactionInfo> schemes;  // reaction schemes found
+};
+//! Parse a CDX fragment record
+//! params
+//! RWMol mol : molecule to parse the fragment into
+//! CDXFragment fragment : fragment to read
+//! std::map<unsigned int, Atom*> ids: atom lookup, used for bonding and fusing fragments
+//! int missing_frag_id: if the fragment id is missing, this is what to use.  n.b. may be obsolete, everything needs an id to be valid
+//! int external_attachment:: if this fragment has a external node, this it it's id, otherwise -1
+//!                   external node's are normally NickNames or  new Fragments
 bool parse_fragment(RWMol &mol, CDXFragment &fragment,
-                    std::map<unsigned int, Atom *> &ids, int &missing_frag_id,
+                    PageData &pagedata,
+                    int &missing_frag_id,
                     int external_attachment = -1);
 }
 

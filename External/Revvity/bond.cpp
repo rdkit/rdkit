@@ -30,14 +30,15 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //#include "node.h"
 #include "utils.h"
+#include "fragment.h"
 
 namespace RDKit {
 
 bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
-                std::map<unsigned int, Atom *> &ids) {
+                PageData &pagedata) {
   int bond_id = bond.GetObjectID();
-  Atom *start_atom = ids[bond.m_beginNodeID];
-  Atom *end_atom = ids[bond.m_endNodeID];
+  Atom *start_atom = pagedata.atom_ids[bond.m_beginNodeID];
+  Atom *end_atom = pagedata.atom_ids[bond.m_endNodeID];
   if ((!start_atom || !end_atom)) {
     BOOST_LOG(rdErrorLog) << "Bad bond in CDXML skipping fragment "
                           << fragment_id << "..." << std::endl;
@@ -66,6 +67,8 @@ bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
       break;
     case kCDXBondOrder_OneHalf:
       order = Bond::BondType::AROMATIC;
+      start_atom->setIsAromatic(true);
+      end_atom->setIsAromatic(true);
       break;
     case kCDXBondOrder_TwoHalf:
       order = Bond::BondType::TWOANDAHALF;
@@ -127,7 +130,7 @@ bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
 
   // The RDKit only supports one direction for wedges so
   //  normalize it
-  bool swap = false;
+  bool swap_bond_ends = false;
   switch (bond.m_display) {
     case kCDXBondDisplay_Solid:
       break;
@@ -138,14 +141,14 @@ bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
     case kCDXBondDisplay_WedgedHashBegin:
       break;
     case kCDXBondDisplay_WedgedHashEnd:
-      swap = true;
+      swap_bond_ends = true;
       break;
     case kCDXBondDisplay_Bold:
       break;
     case kCDXBondDisplay_WedgeBegin:
       break;
     case kCDXBondDisplay_WedgeEnd:
-      swap = true;
+      swap_bond_ends = true;
       break;
     case kCDXBondDisplay_Wavy:
       break;
@@ -168,7 +171,7 @@ bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
   unsigned int bondIdx = 0;
   auto startIdx = start_atom->getIdx();
   auto endIdx = end_atom->getIdx();
-  if (swap) std::swap(startIdx, endIdx);
+  if (swap_bond_ends) std::swap(startIdx, endIdx);
 
   if (qb) {
     qb->setBeginAtomIdx(startIdx);
