@@ -100,6 +100,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 
   rdkit_library(RDChemDrawLib
       bond.cpp
+      bracket.cpp
       chemdraw.cpp
       fragment.cpp
       node.cpp
