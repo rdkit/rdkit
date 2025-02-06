@@ -309,6 +309,8 @@ marcobICR, jasondbiggs, nbehrnd
 
 # Release_2024.09.2
 (Changes relative to Release_2024.09.1)
+## Backwards incompatible changes
+- The order of combinations returned by Chem.Pharm2D.Utils.GetUniqueCombinations has changed to be in numerical order. The combinations themselves are unchanged.
 
 ## Acknowledgements
 (Note: I'm no longer attempting to manually curate names. If you would like to
