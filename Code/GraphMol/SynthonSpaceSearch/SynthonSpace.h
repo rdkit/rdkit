@@ -99,24 +99,6 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                // search.  0 means no maximum.
 };
 
-// Holds the information about a set of hits.  The molecules can be built
-// by making all combinations of synthons, one taken from each synthon set.
-struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
-  SynthonSpaceHitSet() = delete;
-  SynthonSpaceHitSet(const std::string &id,
-                     const std::vector<std::vector<size_t>> &stu)
-      : reactionId(id), synthonsToUse(stu) {
-    numHits = std::accumulate(
-        synthonsToUse.begin(), synthonsToUse.end(), size_t(1),
-        [](const int prevRes, const std::vector<size_t> &s2) -> size_t {
-          return prevRes * s2.size();
-        });
-  }
-  std::string reactionId;
-  std::vector<std::vector<size_t>> synthonsToUse;
-  size_t numHits{0};
-};
-
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  public:
   // Create the synthonspace from a file in the correct format.

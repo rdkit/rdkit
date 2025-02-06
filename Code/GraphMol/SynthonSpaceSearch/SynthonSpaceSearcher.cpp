@@ -62,10 +62,10 @@ SearchResults SynthonSpaceSearcher::search() {
     return SearchResults{std::move(results), 0UL, timedOut,
                          ControlCHandler::getGotSignal()};
   }
-  std::cout << "Number of fragments: " << fragments.size() << std::endl;
+  std::cout << "Number of fragment sets: " << fragments.size() << std::endl;
   extraSearchSetup(fragments);
 
-  std::vector<SynthonSpaceHitSet> allHits;
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> allHits;
   size_t totHits = 0;
   int numTries = 100;
   for (const auto &id : getSpace().getReactionNames()) {
@@ -90,10 +90,13 @@ SearchResults SynthonSpaceSearcher::search() {
           !theseHits.empty()) {
         totHits += std::accumulate(
             theseHits.begin(), theseHits.end(), 0,
-            [](const size_t prevVal, const SynthonSpaceHitSet &hs) -> size_t {
-              return prevVal + hs.numHits;
+            [](const size_t prevVal,
+               const std::unique_ptr<SynthonSpaceHitSet> &hs) -> size_t {
+              return prevVal + hs->numHits;
             });
-        allHits.insert(allHits.end(), theseHits.begin(), theseHits.end());
+        allHits.insert(allHits.end(),
+                       std::make_move_iterator(theseHits.begin()),
+                       std::make_move_iterator(theseHits.end()));
       }
     }
   }
@@ -107,19 +110,23 @@ SearchResults SynthonSpaceSearcher::search() {
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
-    const SynthonSet &reaction, const std::vector<size_t> &synthNums,
+    const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
     std::set<std::string> &resultsNames) const {
-  const auto prodName = reaction.buildProductName(synthNums);
+  std::vector<ROMol *> synths(synthNums.size());
+  for (size_t i = 0; i < synthNums.size(); i++) {
+    synths[i] = hitset->synthonsToUse[i][synthNums[i]].get();
+  }
+  const auto prodName = details::buildProductName(hitset->reactionId, synths);
 
   std::unique_ptr<ROMol> prod;
   if (resultsNames.insert(prodName).second) {
     if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
       return prod;
     }
-    if (!quickVerify(reaction, synthNums)) {
+    if (!quickVerify(hitset, synthNums)) {
       return prod;
     }
-    prod = reaction.buildProduct(synthNums);
+    prod = details::buildProduct(synths);
 
     // Do a final check of the whole thing.  It can happen that the
     // fragments match synthons but the final product doesn't match.
@@ -160,20 +167,20 @@ void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
 }  // namespace
 
 void SynthonSpaceSearcher::buildHits(
-    std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    const TimePoint *endTime, bool &timedOut,
+    std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
+    const size_t totHits, const TimePoint *endTime, bool &timedOut,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
-  std::sort(
-      hitsets.begin(), hitsets.end(),
-      [](const SynthonSpaceHitSet &hs1, const SynthonSpaceHitSet &hs2) -> bool {
-        if (hs1.reactionId == hs2.reactionId) {
-          return hs1.numHits < hs2.numHits;
-        }
-        return hs1.reactionId < hs2.reactionId;
-      });
+  std::sort(hitsets.begin(), hitsets.end(),
+            [](const std::unique_ptr<SynthonSpaceHitSet> &hs1,
+               const std::unique_ptr<SynthonSpaceHitSet> &hs2) -> bool {
+              if (hs1->reactionId == hs2->reactionId) {
+                return hs1->numHits < hs2->numHits;
+              }
+              return hs1->reactionId < hs2->reactionId;
+            });
   // Keep track of the result names so we can weed out duplicates by
   // reaction and synthons.  Different splits may give rise to the same
   // synthon combination.  This will keep the same molecule produced via
@@ -192,25 +199,21 @@ void SynthonSpaceSearcher::buildHits(
 }
 
 void SynthonSpaceSearcher::buildAllHits(
-    const std::vector<SynthonSpaceHitSet> &hitsets,
+    const std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
     std::set<std::string> &resultsNames, const TimePoint *endTime,
     bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   std::uint64_t numTries = 100;
-  for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
+  for (const auto &hitset : hitsets) {
     std::vector<size_t> numSynthons;
-    numSynthons.reserve(synthonsToUse.size());
-    for (auto &stu : synthonsToUse) {
+    numSynthons.reserve(hitset->synthonsToUse.size());
+    for (auto &stu : hitset->synthonsToUse) {
       numSynthons.push_back(stu.size());
     }
-    const auto &reaction = getSpace().getReaction(reactionId);
     details::Stepper stepper(numSynthons);
-    std::vector<size_t> theseSynthNums(synthonsToUse.size(), 0);
+    std::vector<ROMol *> theseSynths(hitset->synthonsToUse.size(), 0);
     while (stepper.d_currState[0] != numSynthons[0]) {
-      for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
-        theseSynthNums[i] = synthonsToUse[i][stepper.d_currState[i]];
-      }
-      if (auto prod =
-              buildAndVerifyHit(*reaction, theseSynthNums, resultsNames)) {
+      if (auto prod = buildAndVerifyHit(hitset.get(), stepper.d_currState,
+                                        resultsNames)) {
         results.push_back(std::move(prod));
       }
       if (results.size() == static_cast<size_t>(d_params.maxHits)) {
@@ -241,39 +244,42 @@ struct RandomHitSelector {
   // Uses a weighted random number selector to give a random representation
   // of the hits from each reaction proportionate to the total number of hits
   // expected from each reaction.
-  RandomHitSelector(const std::vector<SynthonSpaceHitSet> &hitsets,
-                    const SynthonSpace &space)
+  RandomHitSelector(
+      const std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
+      const SynthonSpace &space)
       : d_hitsets(hitsets), d_synthSpace(space) {
     d_hitSetWeights.reserve(hitsets.size());
-    std::transform(
-        hitsets.begin(), hitsets.end(), std::back_inserter(d_hitSetWeights),
-        [](const SynthonSpaceHitSet &hs) -> size_t { return hs.numHits; });
+    std::transform(hitsets.begin(), hitsets.end(),
+                   std::back_inserter(d_hitSetWeights),
+                   [](const std::unique_ptr<SynthonSpaceHitSet> &hs) -> size_t {
+                     return hs->numHits;
+                   });
     d_hitSetSel = boost::random::discrete_distribution<size_t>(
         d_hitSetWeights.begin(), d_hitSetWeights.end());
     d_synthSels.resize(hitsets.size());
     for (size_t hi = 0; hi < hitsets.size(); ++hi) {
       d_synthSels[hi] =
           std::vector<boost::random::uniform_int_distribution<size_t>>(
-              hitsets[hi].synthonsToUse.size());
-      for (size_t i = 0; i < hitsets[hi].synthonsToUse.size(); ++i) {
+              hitsets[hi]->synthonsToUse.size());
+      for (size_t i = 0; i < hitsets[hi]->synthonsToUse.size(); ++i) {
         d_synthSels[hi][i] = boost::random::uniform_int_distribution<size_t>(
-            0, hitsets[hi].synthonsToUse[i].size() - 1);
+            0, hitsets[hi]->synthonsToUse[i].size() - 1);
       }
     }
   }
 
-  std::pair<std::string, std::vector<size_t>> selectSynthComb(
+  std::pair<size_t, std::vector<size_t>> selectSynthComb(
       boost::random::mt19937 &randGen) {
-    std::vector<size_t> synths;
     const size_t hitSetNum = d_hitSetSel(randGen);
-    for (size_t i = 0; i < d_hitsets[hitSetNum].synthonsToUse.size(); ++i) {
+    std::vector<size_t> synths(d_hitsets[hitSetNum]->synthonsToUse.size());
+    for (size_t i = 0; i < d_hitsets[hitSetNum]->synthonsToUse.size(); ++i) {
       const size_t synthNum = d_synthSels[hitSetNum][i](randGen);
-      synths.push_back(d_hitsets[hitSetNum].synthonsToUse[i][synthNum]);
+      synths[i] = synthNum;
     }
-    return std::make_pair(d_hitsets[hitSetNum].reactionId, synths);
+    return std::make_pair(hitSetNum, synths);
   }
 
-  const std::vector<SynthonSpaceHitSet> &d_hitsets;
+  const std::vector<std::unique_ptr<SynthonSpaceHitSet>> &d_hitsets;
   const SynthonSpace &d_synthSpace;
 
   std::vector<size_t> d_hitSetWeights;
@@ -284,9 +290,10 @@ struct RandomHitSelector {
 }  // namespace
 
 void SynthonSpaceSearcher::buildRandomHits(
-    const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    std::set<std::string> &resultsNames, const TimePoint *endTime,
-    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
+    const std::vector<std::unique_ptr<SynthonSpaceHitSet>> &hitsets,
+    const size_t totHits, std::set<std::string> &resultsNames,
+    const TimePoint *endTime, bool &timedOut,
+    std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
@@ -297,9 +304,9 @@ void SynthonSpaceSearcher::buildRandomHits(
   while (results.size() < std::min(static_cast<std::uint64_t>(d_params.maxHits),
                                    static_cast<std::uint64_t>(totHits)) &&
          numFails < totHits * d_params.numRandomSweeps) {
-    const auto &[reactionId, synths] = rhs.selectSynthComb(*d_randGen);
-    const auto &reaction = getSpace().getReaction(reactionId);
-    if (auto prod = buildAndVerifyHit(*reaction, synths, resultsNames)) {
+    const auto &[hitSetNum, synths] = rhs.selectSynthComb(*d_randGen);
+    if (auto prod =
+            buildAndVerifyHit(hitsets[hitSetNum].get(), synths, resultsNames)) {
       results.push_back(std::move(prod));
     } else {
       numFails++;

@@ -111,6 +111,11 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT Stepper {
   std::vector<size_t> d_sizes;
 };
 
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
+    const std::string &reactionId, const std::vector<ROMol *> &frags);
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
+    const std::vector<ROMol *> &frags);
+
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 

@@ -141,10 +141,11 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
   }
 }
 
-std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
+std::vector<std::unique_ptr<SynthonSpaceHitSet>>
+SynthonSpaceFingerprintSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
-  std::vector<SynthonSpaceHitSet> results;
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
   // It can't be a hit if the number of fragments is more than the number
   // of synthon sets because some of the molecule won't be matched in any
@@ -208,9 +209,10 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
           getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
           reaction, synthonOrder);
       if (!theseSynthons.empty()) {
-        SynthonSpaceHitSet hs{reaction.getId(), theseSynthons};
-        if (hs.numHits) {
-          results.push_back(hs);
+        std::unique_ptr<SynthonSpaceHitSet> hs(
+            new SynthonSpaceFPHitSet(reaction, theseSynthons));
+        if (hs->numHits) {
+          results.push_back(std::move(hs));
         }
       }
     }
@@ -219,19 +221,22 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
 }
 
 bool SynthonSpaceFingerprintSearcher::quickVerify(
-    const SynthonSet &reaction, const std::vector<size_t> &synthNums) const {
+    const SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &synthNums) const {
+  // The hitsets produced by the fingerprint searcher are SynthonSpaceFPHitSets,
+  // which have the synthon fps as well.
+  const auto hs = dynamic_cast<const SynthonSpaceFPHitSet *>(hitset);
   // Make an approximate fingerprint by combining the FPs for
   // these synthons, adding in the addFP and taking out the
   // subtractFP.
-  const auto &synthFPs = reaction.getSynthonFPs();
-  ExplicitBitVect fullFP(*synthFPs[0][synthNums[0]]);
+  ExplicitBitVect fullFP(*hs->synthonFPs[0][synthNums[0]]);
   for (unsigned int i = 1; i < synthNums.size(); ++i) {
-    fullFP |= *synthFPs[i][synthNums[i]];
+    fullFP |= *hs->synthonFPs[i][synthNums[i]];
   }
-  fullFP |= *(reaction.getAddFP());
+  fullFP |= *(hs->addFP);
   // The subtract FP has already had its bits flipped, so just do a
   // straight AND.
-  fullFP &= *(reaction.getSubtractFP());
+  fullFP &= *(hs->subtractFP);
 
   double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
   return approxSim >=

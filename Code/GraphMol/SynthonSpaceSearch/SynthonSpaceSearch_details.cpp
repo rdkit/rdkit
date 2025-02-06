@@ -19,6 +19,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
@@ -331,6 +332,29 @@ void bitSetsToVectors(const std::vector<boost::dynamic_bitset<>> &bitSets,
       }
     }
   }
+}
+
+std::string buildProductName(const std::string &reactionId,
+                             const std::vector<ROMol *> &frags) {
+  std::string prodName = reactionId;
+  for (const auto &frag : frags) {
+    prodName += "_" + frag->getProp<std::string>(common_properties::_Name);
+  }
+  return prodName;
+}
+
+std::unique_ptr<ROMol> buildProduct(const std::vector<ROMol *> &synths) {
+  MolzipParams mzparams;
+  mzparams.label = MolzipLabel::Isotope;
+
+  auto prodMol = std::make_unique<ROMol>(*synths.front());
+  for (size_t i = 1; i < synths.size(); ++i) {
+    prodMol.reset(combineMols(*prodMol, *synths[i]));
+  }
+  prodMol = molzip(*prodMol, mzparams);
+  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+
+  return prodMol;
 }
 
 }  // namespace RDKit::SynthonSpaceSearch::details

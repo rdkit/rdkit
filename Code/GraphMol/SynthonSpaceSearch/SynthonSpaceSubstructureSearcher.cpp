@@ -222,10 +222,11 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
   }
 }
 
-std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
+std::vector<std::unique_ptr<SynthonSpaceHitSet>>
+SynthonSpaceSubstructureSearcher::searchFragSet(
     std::vector<std::unique_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
-  std::vector<SynthonSpaceHitSet> results;
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
   const auto pattFPs = makePatternFPs(fragSet, d_pattFPs);
   std::vector<std::vector<std::unique_ptr<ROMol>>> connRegs;
@@ -285,9 +286,10 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
       auto theseSynthons =
           getHitSynthons(connComb, passedScreens, reaction, so);
       if (!theseSynthons.empty()) {
-        SynthonSpaceHitSet hs{reaction.getId(), theseSynthons};
-        if (hs.numHits) {
-          results.push_back(hs);
+        std::unique_ptr<SynthonSpaceHitSet> hs(
+            new SynthonSpaceHitSet(reaction, theseSynthons));
+        if (hs->numHits) {
+          results.push_back(std::move(hs));
         }
       }
     }

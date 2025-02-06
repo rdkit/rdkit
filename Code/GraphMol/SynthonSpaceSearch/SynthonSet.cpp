@@ -553,28 +553,19 @@ void SynthonSet::buildAddAndSubtractFPs(
 
 std::string SynthonSet::buildProductName(
     const std::vector<size_t> &synthNums) const {
-  std::string prodName = d_id;
+  std::vector<ROMol *> synths(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); ++i) {
-    prodName += "_" + d_synthons[i][synthNums[i]]->getId();
+    synths[i] = d_synthons[i][synthNums[i]]->getOrigMol().get();
   }
-  return prodName;
+  return details::buildProductName(d_id, synths);
 }
-
 std::unique_ptr<ROMol> SynthonSet::buildProduct(
     const std::vector<size_t> &synthNums) const {
-  MolzipParams mzparams;
-  mzparams.label = MolzipLabel::Isotope;
-
-  auto prodMol = std::make_unique<ROMol>(
-      *d_synthons.front()[synthNums.front()]->getOrigMol().get());
-  for (size_t i = 1; i < synthNums.size(); ++i) {
-    prodMol.reset(
-        combineMols(*prodMol, *d_synthons[i][synthNums[i]]->getOrigMol()));
+  std::vector<ROMol *> synths(synthNums.size());
+  for (size_t i = 0; i < synthNums.size(); ++i) {
+    synths[i] = d_synthons[i][synthNums[i]]->getOrigMol().get();
   }
-  prodMol = molzip(*prodMol, mzparams);
-  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
-
-  return prodMol;
+  return details::buildProduct(synths);
 }
 
 void SynthonSet::tagSynthonAtomsAndBonds() const {

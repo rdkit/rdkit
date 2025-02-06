@@ -645,3 +645,30 @@ TEST_CASE("S Test LowMem") {
     CHECK(results.getHitMolecules().size() == 20);
   }
 }
+
+TEST_CASE("S Freedom Space") {
+  std::string libName =
+      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
+  libName =
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit.spc";
+  SynthonSpace synthonspace;
+  bool lowMem = true;
+  synthonspace.readDBFile(libName, lowMem);
+  auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
+  SynthonSpaceSearchParams params;
+  params.maxHits = 1000;
+  SearchResults results;
+  results = synthonspace.substructureSearch(*m, params);
+  std::cout << "Number of results : " << results.getHitMolecules().size()
+            << std::endl;
+  int i = 0;
+  int numHits = results.getHitMolecules().size();
+  for (const auto &mol : results.getHitMolecules()) {
+    if (i < 10 || i > numHits - 10) {
+      std::cout << i << " : " << MolToSmiles(*mol) << " : "
+                << mol->getProp<std::string>(common_properties::_Name)
+                << std::endl;
+    }
+    ++i;
+  }
+}
