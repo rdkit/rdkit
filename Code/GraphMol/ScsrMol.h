@@ -46,7 +46,7 @@ class RDKIT_GRAPHMOL_EXPORT SCSRMol {
 
   unsigned int getTemplateCount() const { return p_templates.size(); }
 
-  const ROMol *getTemplate(unsigned int index) const {
+  ROMol *getTemplate(unsigned int index) const {
     return p_templates[index].get();
   };
 

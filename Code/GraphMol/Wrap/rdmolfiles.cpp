@@ -212,7 +212,7 @@ ROMol *ScsrToMol(const RDKit::SCSRMol &scsrMol,
                  RDKit::v2::FileParsers::MolFromScsrParams &molFromScsrParams) {
   ROMol *mol = nullptr;
   try {
-    mol = RDKit::v2::FileParsers::MolFromSCSRMol(scsrMol, molFromScsrParams)
+    mol = RDKit::v2::FileParsers::MolFromSCSRMol(&scsrMol, molFromScsrParams)
               .release();
 
   } catch (...) {
@@ -1850,12 +1850,23 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("CX_ALL_BUT_COORDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
 
+  python::enum_<RDKit::v2::FileParsers::ScsrBaseHbondOptions>(
+      "ScsrBaseHbondOptionsVal")
+      .value("ScsrBaseHbondOptionsIgnore",
+             RDKit::v2::FileParsers::ScsrBaseHbondOptionsIgnore)
+      .value("ScsrBaseHbondOptionsUseSapAll",
+             RDKit::v2::FileParsers::ScsrBaseHbondOptionsUseSapAll)
+      .value("ScsrBaseHbondOptionsUseSapOne",
+             RDKit::v2::FileParsers::ScsrBaseHbondOptionsUseSapOne)
+      .value("ScsrBaseHbondOptionsAuto",
+             RDKit::v2::FileParsers::ScsrBaseHbondOptionsAuto);
+
   python::enum_<RDKit::v2::FileParsers::ScsrTemplateNames>(
       "ScsrTemplateNamesVal")
       .value("ScsrTemplateNamesUseFirstName",
              RDKit::v2::FileParsers::ScsrTemplateNamesUseFirstName)
       .value("ScsrTemplateNamesUseLastName",
-             RDKit::v2::FileParsers::ScsrTemplateNamesUseLastName)
+             RDKit::v2::FileParsers::ScsrTemplateNamesUseSecondName)
       .value("ScsrTemplateNamesAsEntered",
              RDKit::v2::FileParsers::ScsrTemplateNamesAsEntered);
 
