@@ -58,6 +58,12 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
   bool ignoreAtomAromaticity = true; /* If true, atoms are matched just on
                                         atomic number; if false, will treat
                                         aromatic and aliphatic as different. */
+  int minCliqueSize = -1; /* Normally, the minimum clique size is specified
+                             via the similarityThreshold.  Sometimes it's
+                             more convenient to specify it directly.  If this
+                             is > 0, it will over-ride the
+                             similarityThreshold.  Note that this refers to
+                             the minimum number of BONDS in the MCES. */
 };
 }  // namespace RascalMCES
 }  // namespace RDKit

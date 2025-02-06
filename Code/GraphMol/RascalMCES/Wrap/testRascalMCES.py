@@ -210,6 +210,15 @@ class TestCase(unittest.TestCase):
     self.assertEqual(results[0].numFragments, 1)
     self.assertEqual(results[0].smartsString, 'NCC')
 
+  def testMinCliqueSize(self):
+    opts = rdRascalMCES.RascalOptions()
+    opts.similarityThreshold = 0.1
+    opts.minCliqueSize = 17
+    mol1 = Chem.MolFromSmiles('CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C')
+    mol2 = Chem.MolFromSmiles('CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O')
+    results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+    self.assertFalse(results)
+    
     
 if __name__ == "__main__":
   unittest.main()

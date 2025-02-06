@@ -1085,9 +1085,12 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   if (starter.d_modProd.empty()) {
     return starter;
   }
-  starter.d_lowerBound = calcLowerBound(*starter.d_mol1, *starter.d_mol2,
-                                        opts.similarityThreshold);
-
+  if (opts.minCliqueSize > 0) {
+    starter.d_lowerBound = opts.minCliqueSize;
+  } else {
+    starter.d_lowerBound = calcLowerBound(*starter.d_mol1, *starter.d_mol2,
+                                          opts.similarityThreshold);
+  }
   starter.d_partSet.reset(new PartitionSet(starter.d_modProd,
                                            starter.d_vtxPairs, bondLabels1,
                                            bondLabels2, starter.d_lowerBound));
