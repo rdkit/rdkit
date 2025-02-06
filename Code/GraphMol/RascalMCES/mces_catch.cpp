@@ -1518,7 +1518,8 @@ TEST_CASE("Duplicate Single Largest Frag") {
   }
 }
 
-TEST_CASE("Github 8246 - equivalentAtoms SMARTS not translated back in the SMARTS string") {
+TEST_CASE(
+    "Github 8246 - equivalentAtoms SMARTS not translated back in the SMARTS string") {
   auto m1 = "COC1=CC2(Oc3ccc(-c4ccc(OC)c(OC)c4)cc3C2=O)C(OC)=CC1O"_smiles;
   REQUIRE(m1);
   auto m2 = "COC1=CC2(Oc3ccc(-c4ccccc4)cc3C2=O)C(OC)=CC1O"_smiles;
@@ -1529,6 +1530,8 @@ TEST_CASE("Github 8246 - equivalentAtoms SMARTS not translated back in the SMART
   auto res = rascalMCES(*m1, *m2, opts);
   REQUIRE(!res.empty());
   std::cout << res.front().getSmarts() << std::endl;
-  CHECK(res.front().getSmarts() == "C-[O,S]-[C&R]1=&@[C&R]-&@[C&R]2(-&@[$([O,S])&R]-&@c3:c:c:c(-c4:c:c:c:c:c:4):c:c:3-&@[C&R]-&@2=[O,S])-&@[C&R](-[O,S]-C)=&@[C&R]-&@[C&R]-&@1-[O,S]");
+  CHECK(
+      res.front().getSmarts() ==
+      "C-[O,S]-[C&R]1=&@[C&R]-&@[C&R]2(-&@[$([O,S])&R]-&@c3:c:c:c(-c4:c:c:c:c:c:4):c:c:3-&@[C&R]-&@2=[O,S])-&@[C&R](-[O,S]-C)=&@[C&R]-&@[C&R]-&@1-[O,S]");
   check_smarts_ok(*m1, *m2, res.front());
 }
