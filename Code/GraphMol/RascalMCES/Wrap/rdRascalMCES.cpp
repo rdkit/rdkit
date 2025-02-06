@@ -229,7 +229,7 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      " is > 0, it will over-ride the"
                      " similarityThreshold."
                      "  Note that this refers to the"
-                     " minimum number of BONDS in the MCES. Default=-1.");
+                     " minimum number of BONDS in the MCES. Default=0.");
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of "
