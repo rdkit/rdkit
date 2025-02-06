@@ -31,7 +31,7 @@
 
 using namespace RDKit;
 using std::unique_ptr;
-/*
+
 TEST_CASE("Github #1632", "[Reaction][PDB][bug]") {
   SECTION("basics") {
     bool sanitize = true;
@@ -2228,7 +2228,7 @@ TEST_CASE("Structural fingerprints values") {
     CHECK(TanimotoSimilarity(*fp1, *fp2) == 0.4);
   }
 }
-*/
+
 TEST_CASE(
     "Github #6015: react_idx property") {
   SECTION("Ensure that atoms are marked with their reactant idx") {
