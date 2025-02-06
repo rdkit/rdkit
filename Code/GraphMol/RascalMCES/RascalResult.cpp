@@ -784,7 +784,7 @@ void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
     }
   }
 
-  // Convert the equivalent atoms from wierd atomic numbers to the
+  // Convert the equivalent atoms from weird atomic numbers to the
   // original SMARTS pattern
   std::vector<std::string> classSmarts;
   boost::split(classSmarts, equivalentAtoms, boost::is_any_of(" "));
@@ -799,8 +799,20 @@ void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
     auto atNumStr = std::to_string(atNum);
     std::regex a1(R"(\[#)" + atNumStr + R"(&[Aa]\])");
     smarts = std::regex_replace(smarts, a1, smt);
+
+    // If it's a plain atomic number, it's safe to do a straight
+    // replacement with the smt.
     std::regex a2(R"(\[#)" + atNumStr + R"(\])");
     smarts = std::regex_replace(smarts, a2, smt);
+
+    // There may also be other bits of SMARTS after the &[Aa] that we need
+    // to keep.  Most likely this is &R from the option ringMatchesRingOnly
+    // In this case, wrap the smt into a recursive SMARTS so that
+    // any logical operators are protected from whatever comes after.
+    std::regex a3(R"(#)" + atNumStr + R"(&[Aa])");
+    std::string replaceWith("$(" + smt + ")");
+    smarts = std::regex_replace(smarts, a3, replaceWith);
+
     ++atNum;
   }
 }
