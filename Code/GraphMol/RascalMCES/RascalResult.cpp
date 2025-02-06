@@ -806,7 +806,7 @@ void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
     smarts = std::regex_replace(smarts, a2, smt);
 
     // There may also be other bits of SMARTS after the &[Aa] that we need
-    // to keep.  Most likely this is &R from the option ringMatchesRingOnly
+    // to keep.  Most likely this is &R from the option ringMatchesRingOnly.
     // In this case, wrap the smt into a recursive SMARTS so that
     // any logical operators are protected from whatever comes after.
     std::regex a3(R"(#)" + atNumStr + R"(&[Aa])");
