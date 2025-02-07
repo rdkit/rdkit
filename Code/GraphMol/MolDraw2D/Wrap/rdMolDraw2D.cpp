@@ -487,8 +487,7 @@ void setAtomNoteColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
 python::object getAtomNoteColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.atomNoteColour);
 }
-python::object setBondNoteColour(RDKit::MolDrawOptions &self,
-                                 python::tuple tpl) {
+void setBondNoteColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.bondNoteColour = pyTupleToDrawColour(tpl);
 }
 python::object getBondNoteColour(const RDKit::MolDrawOptions &self) {
