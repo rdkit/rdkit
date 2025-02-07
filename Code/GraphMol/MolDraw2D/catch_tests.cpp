@@ -3475,6 +3475,7 @@ TEST_CASE("support annotation colors", "[drawing]") {
     MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
     drawer.drawOptions().annotationColour = DrawColour{0, 0, 1, 1};
     drawer.drawOptions().addAtomIndices = true;
+    m->setProp("molNote", "foo");
     drawer.drawMolecule(*m, "blue annotations");
     drawer.finishDrawing();
     std::ofstream outs("testAnnotationColors.svg");
@@ -3482,7 +3483,9 @@ TEST_CASE("support annotation colors", "[drawing]") {
     outs << txt;
     outs.close();
     check_file_hash("testAnnotationColors.svg");
-    CHECK(txt.find("fill:#0000FF' >2<") != std::string::npos);
+    CHECK(txt.find("fill:#0000FF' >f<") != std::string::npos);
+    // the general annotation colour change does not affect atom annotations:
+    CHECK(txt.find("fill:#000000' >2<") != std::string::npos);
   }
 }
 

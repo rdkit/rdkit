@@ -19,6 +19,7 @@ GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h, respectively.
 with the underlying types. This may require existing C++ code using those
 functions to be updated accordingly.
 - HasPropWithValueQueryBase used RDKit::Dict::Pair to return data used for serializing object in a molecule  pickle.  This has been changed to RDKit::PairHolder which automatically manages memory.
+- The colors of annotations on atoms and bonds are now controlled by the drawing options `atomNoteColour` and `bondNoteColour` instead of the general `annotationColour`.
 
 ## New Features and Enhancements:
 
