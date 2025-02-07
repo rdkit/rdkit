@@ -34,11 +34,15 @@ macro(rdkit_library)
     ${ARGN})
   CAR(RDKLIB_NAME ${RDKLIB_DEFAULT_ARGS})
   CDR(RDKLIB_SOURCES ${RDKLIB_DEFAULT_ARGS})
-  # select the export name for the installed library
+  # select the export and component name for the installed library
   set(exportName ${RDKit_EXPORTED_TARGETS})
+  set(sharedLibComponent runtime)
+  set(staticLibComponent dev)
   foreach(linkLib ${RDKLIB_LINK_LIBRARIES})
     if("${linkLib}" STREQUAL "rdkit_py_base")
       set(exportName ${RDKitPython_EXPORTED_TARGETS})
+      set(sharedLibComponent python)
+      set(staticLibComponent python)
       break()
     endif()
   endforeach()
@@ -48,7 +52,7 @@ macro(rdkit_library)
     if(RDK_INSTALL_DEV_COMPONENT)
       INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${exportName}
               DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-              COMPONENT dev )
+              COMPONENT ${staticLibComponent})
     endif(RDK_INSTALL_DEV_COMPONENT)
   else()
     # we're going to always build in shared mode since we
@@ -59,7 +63,7 @@ macro(rdkit_library)
     target_link_libraries(${RDKLIB_NAME} PUBLIC rdkit_base)
     INSTALL(TARGETS ${RDKLIB_NAME} EXPORT ${exportName}
             DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-            COMPONENT runtime )
+            COMPONENT ${sharedLibComponent})
     if(RDK_INSTALL_STATIC_LIBS)
       add_library(${RDKLIB_NAME}_static ${RDKLIB_SOURCES})
 
@@ -112,7 +116,7 @@ macro(rdkit_library)
       if(RDK_INSTALL_DEV_COMPONENT)
         INSTALL(TARGETS ${RDKLIB_NAME}_static EXPORT ${exportName}
                 DESTINATION ${RDKit_LibDir}/${RDKLIB_DEST}
-                COMPONENT dev )
+                COMPONENT ${staticLibComponent})
       endif(RDK_INSTALL_DEV_COMPONENT)
       set_target_properties(${RDKLIB_NAME}_static PROPERTIES
                             OUTPUT_NAME "RDKit${RDKLIB_NAME}_static")
