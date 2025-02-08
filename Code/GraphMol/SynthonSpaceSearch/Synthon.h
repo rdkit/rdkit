@@ -36,8 +36,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   const std::unique_ptr<ROMol> &getOrigMol() const;
   const std::unique_ptr<ROMol> &getSearchMol() const;
   const std::unique_ptr<ExplicitBitVect> &getPattFP() const;
+  const std::unique_ptr<ExplicitBitVect> &getFP() const;
   const std::vector<std::shared_ptr<ROMol>> &getConnRegions() const;
   void setSearchMol(std::unique_ptr<RWMol> mol);
+  void setFP(std::unique_ptr<ExplicitBitVect> fp);
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
@@ -57,12 +59,17 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   // doesn't always work with product building.
   std::unique_ptr<ROMol> dp_origMol{nullptr};
   std::unique_ptr<ROMol> dp_searchMol{nullptr};
+  // The pattern fingerprint, used for substructure search screening.
   std::unique_ptr<ExplicitBitVect> dp_pattFP{nullptr};
+  // The fingerprint of the dp_searchMol, used in fingerprint similarity
+  // searching.  Its type is known by the SynthonSpace that holds the
+  // Synthon.
+  std::unique_ptr<ExplicitBitVect> dp_FP{nullptr};
   // SMILES strings of any connector regions.  Normally there will only
   // be 1 or 2.  These are derived from the search mol.
   std::vector<std::shared_ptr<ROMol>> d_connRegions;
 
-  // One the search molecule has been added, get the connector regions,
+  // Once the search molecule has been added, get the connector regions,
   // connector fingerprint etc.
   void finishInitialization();
 };

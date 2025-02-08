@@ -36,6 +36,7 @@ Synthon::Synthon(const Synthon &other)
       dp_origMol(std::make_unique<ROMol>(*other.dp_origMol)),
       dp_searchMol(std::make_unique<ROMol>(*other.dp_searchMol)),
       dp_pattFP(std::make_unique<ExplicitBitVect>(*other.dp_pattFP)),
+      dp_FP(std::make_unique<ExplicitBitVect>(*other.dp_FP)),
       d_connRegions(other.d_connRegions) {}
 
 Synthon &Synthon::operator=(const Synthon &other) {
@@ -58,6 +59,11 @@ Synthon &Synthon::operator=(const Synthon &other) {
   } else {
     dp_pattFP.reset();
   }
+  if (other.dp_FP) {
+    dp_FP = std::make_unique<ExplicitBitVect>(*other.dp_FP);
+  } else {
+    dp_FP.reset();
+  }
   if (!other.d_connRegions.empty()) {
     d_connRegions.clear();
     std::transform(
@@ -79,6 +85,7 @@ const std::unique_ptr<ROMol> &Synthon::getSearchMol() const {
 const std::unique_ptr<ExplicitBitVect> &Synthon::getPattFP() const {
   return dp_pattFP;
 }
+const std::unique_ptr<ExplicitBitVect> &Synthon::getFP() const { return dp_FP; }
 
 const std::vector<std::shared_ptr<ROMol>> &Synthon::getConnRegions() const {
   return d_connRegions;
@@ -87,6 +94,9 @@ const std::vector<std::shared_ptr<ROMol>> &Synthon::getConnRegions() const {
 void Synthon::setSearchMol(std::unique_ptr<RWMol> mol) {
   dp_searchMol = std::move(mol);
   finishInitialization();
+}
+void Synthon::setFP(std::unique_ptr<ExplicitBitVect> fp) {
+  dp_FP = std::move(fp);
 }
 
 void Synthon::writeToDBStream(std::ostream &os) const {

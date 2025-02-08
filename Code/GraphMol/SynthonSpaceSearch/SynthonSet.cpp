@@ -43,7 +43,6 @@ const std::vector<std::shared_ptr<ROMol>> &SynthonSet::getConnectorRegions()
     const {
   return d_connectorRegions;
 }
-
 const std::unique_ptr<ExplicitBitVect> &SynthonSet::getConnRegFP() const {
   return d_connRegFP;
 }
@@ -52,11 +51,6 @@ const std::unique_ptr<ExplicitBitVect> &SynthonSet::getAddFP() const {
 }
 const std::unique_ptr<ExplicitBitVect> &SynthonSet::getSubtractFP() const {
   return d_subtractFP;
-}
-
-const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
-SynthonSet::getSynthonFPs() const {
-  return d_synthonFPs;
 }
 
 namespace {
@@ -441,7 +435,13 @@ std::uint64_t SynthonSet::getNumProducts() const {
   return thisSize;
 }
 
-bool SynthonSet::hasFingerprints() const { return !d_synthonFPs.empty(); }
+bool SynthonSet::hasFingerprints() const {
+  if (d_synthons.empty()) {
+    return false;
+  }
+  return static_cast<bool>(d_synthons.front().front().second->getFP());
+}
+
 bool SynthonSet::hasAddAndSubtractFPs() const {
   return static_cast<bool>(d_addFP);
 }
@@ -452,25 +452,22 @@ void SynthonSet::buildSynthonFingerprints(
   d_subtractFP.reset();
 
   // The synthons should have had transferProductBondsToSynthons
-  // applied to them by now.
-  d_synthonFPs.clear();
+  // applied to them by now, so that they have a searchMol.
 
-  d_synthonFPs.reserve(d_synthons.size());
   for (size_t synthSetNum = 0; synthSetNum < d_synthons.size(); ++synthSetNum) {
-    d_synthonFPs.emplace_back();
-    d_synthonFPs.back().reserve(d_synthons[synthSetNum].size());
     for (const auto &synth : d_synthons[synthSetNum]) {
       if (ControlCHandler::getGotSignal()) {
         return;
       }
-      d_synthonFPs[synthSetNum].emplace_back(
-          fpGen.getFingerprint(*synth.second->getSearchMol()));
+      synth.second->setFP(std::unique_ptr<ExplicitBitVect>(
+          fpGen.getFingerprint(*synth.second->getSearchMol())));
     }
   }
 }
 
 void SynthonSet::buildAddAndSubtractFPs(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
+  PRECONDITION(hasFingerprints(), "No fingerprints for synthons.");
   d_addFP.reset();
   d_subtractFP.reset();
   std::vector<std::vector<size_t>> synthonNums(d_synthons.size());
@@ -519,9 +516,9 @@ void SynthonSet::buildAddAndSubtractFPs(
     }
     auto prod = buildProduct(theseSynthNums);
     std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
-    ExplicitBitVect approxFP(*d_synthonFPs[0][theseSynthNums[0]]);
-    for (size_t j = 1; j < d_synthonFPs.size(); ++j) {
-      approxFP |= *d_synthonFPs[j][theseSynthNums[j]];
+    ExplicitBitVect approxFP(*d_synthons[0][theseSynthNums[0]].second->getFP());
+    for (size_t j = 1; j < d_synthons.size(); ++j) {
+      approxFP |= *d_synthons[j][theseSynthNums[j]].second->getFP();
     }
     // addFP is what's in the productFP and not in approxFP
     // and subtractFP is vice versa.  The former captures the bits of

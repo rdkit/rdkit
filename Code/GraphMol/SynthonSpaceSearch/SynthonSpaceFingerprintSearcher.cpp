@@ -72,10 +72,11 @@ std::vector<std::vector<size_t>> getHitSynthons(
     synthonsToUse.emplace_back(synthonSet.size());
   }
   for (size_t i = 0; i < synthonOrder.size(); i++) {
-    const auto &synthonFPs = reaction.getSynthonFPs()[synthonOrder[i]];
+    const auto &synthons = reaction.getSynthons()[synthonOrder[i]];
     bool fragMatched = false;
-    for (size_t j = 0; j < synthonFPs.size(); j++) {
-      if (const auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
+    for (size_t j = 0; j < synthons.size(); j++) {
+      if (const auto sim =
+              TanimotoSimilarity(*fragFPs[i], *synthons[j].second->getFP());
           sim >= similarityCutoff) {
         synthonsToUse[synthonOrder[i]][j] = true;
         fragSims[synthonOrder[i]].emplace_back(j, sim);

@@ -66,9 +66,10 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceFPHitSet
     for (size_t i = 0; i < stu.size(); ++i) {
       synthonFPs.emplace_back();
       synthonFPs[i].reserve(stu[i].size());
-      const auto &sfps = reaction.getSynthonFPs();
+      const auto &sfps = reaction.getSynthons();
       for (size_t j = 0; j < stu[i].size(); ++j) {
-        synthonFPs[i].emplace_back(new ExplicitBitVect(*sfps[i][stu[i][j]]));
+        synthonFPs[i].emplace_back(
+            new ExplicitBitVect(*sfps[i][stu[i][j]].second->getFP()));
       }
     }
     addFP.reset(new ExplicitBitVect(*reaction.getAddFP()));

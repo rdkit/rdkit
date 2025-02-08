@@ -14,10 +14,11 @@
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -332,7 +333,8 @@ TEST_CASE("DB Writer") {
     CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
       CHECK(irxn->getSynthons()[i][j].first == orxn->getSynthons()[i][j].first);
-      CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
+      CHECK(*irxn->getSynthons()[i][j].second->getFP() ==
+            *orxn->getSynthons()[i][j].second->getFP());
     }
   }
   std::remove(spaceName);
@@ -372,7 +374,8 @@ TEST_CASE("DB Converter") {
     CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
       CHECK(irxn->getSynthons()[i][j].first == orxn->getSynthons()[i][j].first);
-      CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
+      CHECK(*irxn->getSynthons()[i][j].second->getFP() ==
+            *orxn->getSynthons()[i][j].second->getFP());
     }
   }
   std::remove(spaceName);

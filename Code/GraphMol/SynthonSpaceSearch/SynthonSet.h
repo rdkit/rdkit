@@ -57,8 +57,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   bool hasFingerprints() const;
   bool hasAddAndSubtractFPs() const;
 
-  const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &
-  getSynthonFPs() const;
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
   void readFromDBStream(std::istream &is, std::uint32_t version);
@@ -139,11 +137,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
-
-  // The fingerprints for the synthons for use with a fingerprint similarity
-  // search. They are not properties of the Synthons because they are not
-  // generated directly from them, as explained in buildSynthonFingerprints.
-  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_synthonFPs;
 
   // Tag each atom and bond in each synthon with its index and the synthon
   // set number it came from.
