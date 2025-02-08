@@ -105,7 +105,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  public:
   // Create the synthonspace from a file in the correct format.
   explicit SynthonSpace() = default;
-  ~SynthonSpace();
+  ~SynthonSpace() = default;
   SynthonSpace(const SynthonSpace &other) = delete;
   SynthonSpace &operator=(const SynthonSpace &other) = delete;
   // Get the number of different reactions in the SynthonSpace.
@@ -125,7 +125,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   std::uint64_t getNumProducts() const;
   std::string getFormattedNumProducts() const;
 
-  bool getLowMem() const { return d_lowMem; }
   std::string getSynthonFingerprintType() const { return d_fpType; }
 
   // Perform a substructure search with the given query molecule across
@@ -201,11 +200,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   /*!
    *
    * @param inFilename: the name of the file to read.
-   * @param lowMem: whether to work in low memory mode, where the
-   *                reactions are read from disk as required, or
-   *                read them all into memory at the outset.
    */
-  void readDBFile(const std::string &inFilename, bool lowMem = true);
+  void readDBFile(const std::string &inFilename);
 
   // Write a summary of the SynthonSpace to given stream.
   /*!
@@ -233,35 +229,25 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   void buildAddAndSubstractFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
 
+  // Take the SMILES for a Synthon and if it's not in
+  // d_synthonPool make it and add it.  If it is in the pool,
+  // just look it up.  Either way, return a pointer to the
+  // Synthon.
+  Synthon *addSynthonToPool(const std::string &smiles);
+
  private:
   std::string d_fileName;
-  bool d_lowMem{true};
-  // In lowMem mode, we keep the positions of the reactions in
-  // the file, and read them as required.
-  std::map<std::string, std::streampos> d_reactionPos;
   // In hiMem mode, the reactions are read in at the outset.
   std::map<std::string, std::shared_ptr<SynthonSet>> d_reactions;
   std::uint64_t d_numProducts{0};
 
   std::int32_t d_fileMajorVersion{-1};
-  std::unique_ptr<std::ifstream> d_dbis;
 
   std::map<std::string, std::unique_ptr<Synthon>> d_synthonPool;
 
   // For the similarity search, this records the generator used for
   // creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
-
-  // Opens the d_fileName, assuming it's a binary DB, and checks
-  // it.  Throws an exception if the system doesn't like the
-  // endian-ness of the file.
-  void openAndCheckDBFile();
-
-  // Take the SMILES for a Synthon and if it's not in
-  // d_synthonPool make it and add it.  If it is in the pool,
-  // just look it up.  Either way, return a pointer to the
-  // Synthon.
-  Synthon *addSynthonToPool(const std::string &smiles);
 };
 
 /*!

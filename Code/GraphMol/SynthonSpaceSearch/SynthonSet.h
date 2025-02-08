@@ -27,6 +27,7 @@ class ROMol;
 
 namespace SynthonSpaceSearch {
 class Synthon;
+class SynthonSpace;
 struct SynthonSpaceSearchParams;
 
 // This class holds all the synthons for a particular reaction.
@@ -59,7 +60,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
-  void readFromDBStream(std::istream &is, std::uint32_t version);
+  void readFromDBStream(std::istream &is, SynthonSpace &space,
+                        std::uint32_t version);
   // write the enumerated molecules to the stream in SMILES format.
   void enumerateToStream(std::ostream &os) const;
 

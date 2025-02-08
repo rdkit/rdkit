@@ -165,7 +165,7 @@ TEST_CASE("S Simple query 1") {
   SynthonSpace synthonspace;
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
-  synthonspace.readDBFile(libName, false);
+  synthonspace.readDBFile(libName);
   {
     // should give 220 hits for urea-3
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
@@ -358,8 +358,10 @@ TEST_CASE("DB Converter") {
   CHECK(synthonspace.getNumReactions() == 1);
   synthonspace.buildSynthonFingerprints(*fpGen);
   synthonspace.buildAddAndSubstractFingerprints(*fpGen);
+
   SynthonSpace newsynthonspace;
   newsynthonspace.readDBFile(spaceName);
+
   std::shared_ptr<SynthonSet> irxn;
   CHECK_NOTHROW(irxn = newsynthonspace.getReaction("doebner-miller-quinoline"));
   const auto &orxn = synthonspace.getReaction("doebner-miller-quinoline");
@@ -413,52 +415,6 @@ TEST_CASE("S Biggy") {
     }
   }
 }
-
-#if 0
-// The whole FreedomSpace synthon library is maybe a bit big for the
-// repo, even in text format.
-TEST_CASE("FreedomSpace", "[FreedomSpace]") {
-  std::string libName =
-      "/Users/david/Projects/FreedomSpace/2023-05_Freedom_synthons.spc";
-  SynthonSpace synthonspace;
-  const auto rstart{std::chrono::steady_clock::now()};
-  synthonspace.readDBFile(libName);
-  const auto rend{std::chrono::steady_clock::now()};
-  const std::chrono::duration<double> elapsed_seconds{rend - rstart};
-  BOOST_LOG(rdInfoLog)<< "Time to read synthonspace : " << elapsed_seconds.count()
-            << std::endl;
-
-  SECTION("WholeMol") {
-    const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
-                                        "c1ccccc1NC(=O)C1CCN1",
-                                        "c12ccccc1c(N)nc(N)n2",
-                                        "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
-                                        "c1nncn1",
-                                        "C(=O)NC(CC)C(=O)N(CC)C"};
-    const std::vector<size_t> numRes{1000, 1000, 1000, 108, 1000, 1000};
-    for (size_t i = 0; i < smis.size(); ++i) {
-      auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
-      const auto start{std::chrono::steady_clock::now()};
-      auto results = synthonspace.substructureSearch(*queryMol);
-      const auto end{std::chrono::steady_clock::now()};
-      const std::chrono::duration<double> elapsed_seconds{end - start};
-      BOOST_LOG(rdInfoLog)<< "Elapsed time : " << elapsed_seconds.count() << std::endl;
-      BOOST_LOG(rdInfoLog)<< "Number of hits : " << results.getHitMolecules().size()
-                << std::endl;
-      std::string outFile =
-          std::string("/Users/david/Projects/FreedomSpace/synthonspace_hits_") +
-          std::to_string(i) + ".smi";
-      std::ofstream of(outFile);
-      for (const auto &r : results.getHitMolecules()) {
-        of << MolToSmiles(*r) << " " << r->getProp<std::string>(common_properties::_Name)
-           << std::endl;
-      }
-      CHECK(results.getHitMolecules().size() == numRes[i]);
-      BOOST_LOG(rdInfoLog)<< results.getMaxNumResults() << std::endl;
-    }
-  }
-}
-#endif
 
 TEST_CASE("S Small query") {
   REQUIRE(rdbase);
@@ -656,8 +612,7 @@ TEST_CASE("S Test LowMem") {
   SynthonSpace synthonspace;
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
-  bool lowMem = true;
-  synthonspace.readDBFile(libName, lowMem);
+  synthonspace.readDBFile(libName);
   {
     auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
@@ -677,8 +632,7 @@ TEST_CASE("S Freedom Space") {
   libName =
       "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_2_rdkit.spc";
   SynthonSpace synthonspace;
-  bool lowMem = false;
-  synthonspace.readDBFile(libName, lowMem);
+  synthonspace.readDBFile(libName);
   auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
   SynthonSpaceSearchParams params;
   params.maxHits = 1000;

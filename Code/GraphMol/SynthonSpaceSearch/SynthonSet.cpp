@@ -67,9 +67,8 @@ void writeBitSet(std::ostream &os, const boost::dynamic_bitset<> &bitset) {
 }  // namespace
 
 void SynthonSet::writeToDBStream(std::ostream &os) const {
-#if 0
   streamWrite(os, d_id);
-  streamWrite(os, getConnectorRegions().size());
+  streamWrite(os, static_cast<std::uint64_t>(getConnectorRegions().size()));
   for (const auto &cr : getConnectorRegions()) {
     MolPickler::pickleMol(*cr, os, PicklerOps::AllProps);
   }
@@ -77,16 +76,17 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   streamWrite(os, connRegFPstr);
 
   writeBitSet(os, d_connectors);
-  streamWrite(os, d_synthConnPatts.size());
+  streamWrite(os, static_cast<std::uint64_t>(d_synthConnPatts.size()));
   for (const auto &scp : d_synthConnPatts) {
     writeBitSet(os, scp);
   }
 
-  streamWrite(os, d_synthons.size());
+  streamWrite(os, static_cast<std::uint64_t>(d_synthons.size()));
   for (const auto &rs : d_synthons) {
-    streamWrite(os, rs.size());
-    for (const auto &r : rs) {
-      r->writeToDBStream(os);
+    streamWrite(os, static_cast<std::uint64_t>(rs.size()));
+    for (const auto &[id, synthon] : rs) {
+      streamWrite(os, id);
+      streamWrite(os, synthon->getSmiles());
     }
   }
 
@@ -97,15 +97,10 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   } else {
     streamWrite(os, false);
   }
-
-  streamWrite(os, d_synthonFPs.size());
-  for (const auto &fpv : d_synthonFPs) {
-    streamWrite(os, fpv.size());
-    for (const auto &fp : fpv) {
-      streamWrite(os, fp->toString());
-    }
+  streamWrite(os, static_cast<std::uint64_t>(d_numConnectors.size()));
+  for (const auto &c : d_numConnectors) {
+    streamWrite(os, c);
   }
-#endif
 }
 
 namespace {
@@ -121,13 +116,14 @@ void readBitSet(std::istream &is, boost::dynamic_bitset<> &bitset) {
 }
 }  // namespace
 
-void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t version) {
-#if 0
+void SynthonSet::readFromDBStream(std::istream &is, SynthonSpace &space,
+                                  std::uint32_t version) {
+  PRECONDITION(version >= 3000, "Binary database version no longer supported.");
   streamRead(is, d_id, 0);
-  size_t numConnRegs;
+  std::uint64_t numConnRegs;
   streamRead(is, numConnRegs);
   d_connectorRegions.resize(numConnRegs);
-  for (size_t i = 0; i < numConnRegs; ++i) {
+  for (std::uint64_t i = 0; i < numConnRegs; ++i) {
     d_connectorRegions[i] = std::make_unique<ROMol>();
     MolPickler::molFromPickle(is, *d_connectorRegions[i]);
   }
@@ -135,62 +131,48 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t version) {
   streamRead(is, pickle, 0);
   d_connRegFP = std::make_unique<ExplicitBitVect>(pickle);
   readBitSet(is, d_connectors);
-  if (version >= 2010) {
-    size_t numSynthConnPatts;
-    streamRead(is, numSynthConnPatts);
-    d_synthConnPatts.resize(numSynthConnPatts);
-    for (size_t i = 0; i < numSynthConnPatts; ++i) {
-      boost::dynamic_bitset<> synthConnPatt;
-      readBitSet(is, synthConnPatt);
-      d_synthConnPatts[i] = synthConnPatt;
-    }
+  std::uint64_t numSynthConnPatts;
+  streamRead(is, numSynthConnPatts);
+  d_synthConnPatts.resize(numSynthConnPatts);
+  for (std::uint64_t i = 0; i < numSynthConnPatts; ++i) {
+    boost::dynamic_bitset<> synthConnPatt;
+    readBitSet(is, synthConnPatt);
+    d_synthConnPatts[i] = synthConnPatt;
   }
 
-  size_t numRS;
+  std::uint64_t numRS;
   streamRead(is, numRS);
   d_synthons.clear();
-  for (size_t i = 0; i < numRS; ++i) {
-    size_t numR;
+  for (std::uint64_t i = 0; i < numRS; ++i) {
+    std::uint64_t numR;
     streamRead(is, numR);
     d_synthons.emplace_back();
     d_synthons[i].resize(numR);
-    for (size_t j = 0; j < numR; ++j) {
-      d_synthons[i][j] = std::make_unique<Synthon>();
-      d_synthons[i][j]->readFromDBStream(is);
+    for (std::uint64_t j = 0; j < numR; ++j) {
+      std::string synthonName;
+      streamRead(is, synthonName, 0);
+      std::string smiles;
+      streamRead(is, smiles, 0);
+      auto synth = space.addSynthonToPool(smiles);
+      d_synthons[i][j] = std::pair(synthonName, synth);
     }
   }
 
-  if (version >= 2010) {
-    bool haveAddFP;
-    streamRead(is, haveAddFP);
-    if (haveAddFP) {
-      std::string fString;
-      streamRead(is, fString, 0);
-      d_addFP = std::make_unique<ExplicitBitVect>(fString);
-      streamRead(is, fString, 0);
-      d_subtractFP = std::make_unique<ExplicitBitVect>(fString);
-    }
+  bool haveAddFP;
+  streamRead(is, haveAddFP);
+  if (haveAddFP) {
+    std::string fString;
+    streamRead(is, fString, 0);
+    d_addFP = std::make_unique<ExplicitBitVect>(fString);
+    streamRead(is, fString, 0);
+    d_subtractFP = std::make_unique<ExplicitBitVect>(fString);
   }
-
-  size_t numFS;
-  streamRead(is, numFS);
-  d_synthonFPs.clear();
-  for (size_t i = 0; i < numFS; ++i) {
-    size_t numF;
-    streamRead(is, numF);
-    d_synthonFPs.emplace_back();
-    d_synthonFPs[i].resize(numF);
-    for (size_t j = 0; j < numF; ++j) {
-      std::string fString;
-      streamRead(is, fString, 0);
-      d_synthonFPs[i][j] = std::make_unique<ExplicitBitVect>(fString);
-    }
+  std::uint64_t numConns;
+  streamRead(is, numConns);
+  d_numConnectors.resize(numConns);
+  for (unsigned int i = 0; i < numConns; ++i) {
+    streamRead(is, d_numConnectors[i]);
   }
-  // So that d_synthConnPatts is filled in.
-  if (version < 2010) {
-    assignConnectorsUsed();
-  }
-#endif
 }
 
 void SynthonSet::enumerateToStream(std::ostream &os) const {

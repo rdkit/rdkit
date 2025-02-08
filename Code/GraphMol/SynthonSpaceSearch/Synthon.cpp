@@ -105,9 +105,15 @@ void Synthon::writeToDBStream(std::ostream &os) const {
   MolPickler::pickleMol(*dp_searchMol, os, PicklerOps::AllProps);
   const auto pattFPstr = getPattFP()->toString();
   streamWrite(os, pattFPstr);
-  streamWrite(os, getConnRegions().size());
+  streamWrite(os, static_cast<std::uint64_t>(getConnRegions().size()));
   for (const auto &cr : getConnRegions()) {
     MolPickler::pickleMol(*cr, os, PicklerOps::AllProps);
+  }
+  if (dp_FP) {
+    streamWrite(os, true);
+    streamWrite(os, dp_FP->toString());
+  } else {
+    streamWrite(os, false);
   }
 }
 
@@ -126,6 +132,13 @@ void Synthon::readFromDBStream(std::istream &is) {
   for (size_t i = 0; i < numConnRegs; ++i) {
     d_connRegions[i] = std::make_shared<ROMol>();
     MolPickler::molFromPickle(is, *d_connRegions[i]);
+  }
+  bool haveFP = false;
+  streamRead(is, haveFP);
+  if (haveFP) {
+    std::string pickle;
+    streamRead(is, pickle, 0);
+    dp_FP = std::make_unique<ExplicitBitVect>(pickle);
   }
 }
 

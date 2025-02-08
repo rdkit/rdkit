@@ -303,23 +303,20 @@ TEST_CASE("FP Binary File") {
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   {
-    bool lowMem = false;
-    synthonspace.readDBFile(libName, lowMem);
+    synthonspace.readDBFile(libName);
     CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
     CHECK(results.getHitMolecules().size() == 3);
     CHECK(results.getMaxNumResults() == 400);
   }
   {
-    bool lowMem = true;
-    synthonspace.readDBFile(libName, lowMem);
+    synthonspace.readDBFile(libName);
     CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
     CHECK(results.getHitMolecules().size() == 3);
     CHECK(results.getMaxNumResults() == 400);
   }
 
   // Make sure it rejects the wrong sort of fingerprint.
-  bool lowMem = true;
-  synthonspace.readDBFile(libName, lowMem);
+  synthonspace.readDBFile(libName);
   fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   CHECK_THROWS(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
 }
@@ -333,8 +330,7 @@ TEST_CASE("FP Freedom Space") {
       "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit.spc";
   for (const auto &l : std::vector<std::string>{libName}) {
     SynthonSpace synthonspace;
-    bool lowMem = true;
-    synthonspace.readDBFile(l, lowMem);
+    synthonspace.readDBFile(l);
     auto m = "Cc1ccc2ccccc2c1NC(=O)c1ccc(cc1)OCCCCCCCCCCCC"_smiles;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
         RDKitFP::getRDKitFPGenerator<std::uint64_t>());

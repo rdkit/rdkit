@@ -97,13 +97,13 @@ void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
 }
 
 void convertTextToDBFile_helper(const std::string &inFilename,
-                                const std::string &outFilename, bool &cancelled,
+                                const std::string &outFilename,
                                 python::object fpGen) {
   const FingerprintGenerator<std::uint64_t> *fpGenCpp = nullptr;
   if (fpGen) {
     fpGenCpp = python::extract<FingerprintGenerator<std::uint64_t> *>(fpGen);
   }
-  cancelled = false;
+  bool cancelled = false;
   SynthonSpaceSearch::convertTextToDBFile(inFilename, outFilename, cancelled,
                                           fpGenCpp);
   if (cancelled) {
@@ -206,12 +206,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            (python::arg("self"), python::arg("inFile")),
            "Reads text file of the sort used by ChemSpace/Enamine.")
       .def("ReadDBFile", &SynthonSpaceSearch::SynthonSpace::readDBFile,
-           (python::arg("self"), python::arg("inFile"),
-            python::arg("lowMem") = true),
-           "Reads binary database file.  If lowMem is False, reads whole"
-           "database into memory.  If True (the default), reads reactions off"
-           " disk as required, which is marginally slower but can deal with"
-           " much larger databases.")
+           (python::arg("self"), python::arg("inFile")),
+           "Reads binary database file.")
       .def("WriteDBFile", &SynthonSpaceSearch::SynthonSpace::writeDBFile,
            (python::arg("self"), python::arg("outFile")),
            "Writes binary database file.")

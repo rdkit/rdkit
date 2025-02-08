@@ -23,35 +23,6 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params, SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space), d_fpGen(fpGen) {
-  if (getSpace().getLowMem()) {
-    if (!getSpace().hasFingerprints()) {
-      throw std::runtime_error(
-          "When running in low memory mode, you must have appropriate"
-          " fingerprints already "
-          "in the database file.");
-    }
-    if (d_fpGen.infoString() != getSpace().getSynthonFingerprintType()) {
-      throw std::runtime_error(
-          "When running in low memory mode, the search fingerprints must match"
-          " those in the database.  You are searching with " +
-          d_fpGen.infoString() + " vs " +
-          getSpace().getSynthonFingerprintType() + " in the database.");
-    }
-    // Checking for add and subtract fingerprints requires reading a reaction.
-    // That's not bad, because we'll be reading the first one anyway for the
-    // search and it will be cached.
-    auto reactionNames = getSpace().getReactionNames();
-    if (!reactionNames.empty()) {
-      auto reaction = getSpace().getReaction(reactionNames.front());
-      if (!reaction->hasAddAndSubtractFPs()) {
-        throw std::runtime_error(
-            "When running in low memory mode, you must have appropriate"
-            " fingerprints already "
-            "in the database file.");
-      }
-    }
-  }
-
   d_queryFP = std::unique_ptr<ExplicitBitVect>(d_fpGen.getFingerprint(query));
 }
 
