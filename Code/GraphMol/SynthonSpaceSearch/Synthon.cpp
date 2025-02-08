@@ -93,6 +93,15 @@ const std::vector<std::shared_ptr<ROMol>> &Synthon::getConnRegions() const {
 
 void Synthon::setSearchMol(std::unique_ptr<RWMol> mol) {
   dp_searchMol = std::move(mol);
+  // There are probably extraneous props on the atoms and bonds
+  for (auto &atom : dp_searchMol->atoms()) {
+    atom->clearProp("molNum");
+    atom->clearProp("idx");
+  }
+  for (auto &bond : dp_searchMol->bonds()) {
+    bond->clearProp("molNum");
+    bond->clearProp("idx");
+  }
   finishInitialization();
 }
 void Synthon::setFP(std::unique_ptr<ExplicitBitVect> fp) {
@@ -139,20 +148,6 @@ void Synthon::readFromDBStream(std::istream &is) {
     std::string pickle;
     streamRead(is, pickle, 0);
     dp_FP = std::make_unique<ExplicitBitVect>(pickle);
-  }
-}
-
-void Synthon::tagAtomsAndBonds(const int molNum) const {
-  if (!dp_origMol) {
-    return;
-  }
-  for (const auto &atom : dp_origMol->atoms()) {
-    atom->setProp<int>("molNum", molNum);
-    atom->setProp<int>("idx", atom->getIdx());
-  }
-  for (const auto &bond : dp_origMol->bonds()) {
-    bond->setProp<int>("molNum", molNum);
-    bond->setProp<int>("idx", bond->getIdx());
   }
 }
 

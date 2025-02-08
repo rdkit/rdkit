@@ -204,10 +204,9 @@ namespace {
 // of synthon are assumed to be a single molecule, and each product is
 // a molecule made from the corresponding member of longVecNum and the first
 // element of the other vectors.
-
 std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
-    const std::vector<std::vector<ROMol *>> &synthons, const size_t longVecNum,
-    const SynthonSet &reaction) {
+    const std::vector<std::vector<std::unique_ptr<RWMol>>> &synthons,
+    const size_t longVecNum, const SynthonSet &reaction) {
   std::vector<std::unique_ptr<ROMol>> sampleMolecules;
   sampleMolecules.reserve(synthons[longVecNum].size());
 
@@ -273,34 +272,34 @@ void SynthonSet::transferProductBondsToSynthons() {
   // Properties of the atoms and bonds are mapped back from the products
   // onto the synthons.  This way, when a query molecule is split up, the
   // fragments should be consistent with those of the corresponding synthons.
-  tagSynthonAtomsAndBonds();
 
-  std::vector<std::vector<ROMol *>> synthonMolCopies(d_synthons.size());
+  // Synthons are shared, so we need to copy the molecules into a new
+  // set that we can fiddle with without upsetting anything else.
+  std::vector<std::vector<std::unique_ptr<RWMol>>> synthonMolCopies(
+      d_synthons.size());
   for (size_t i = 0; i < d_synthons.size(); ++i) {
     synthonMolCopies[i].reserve(d_synthons[i].size());
     for (size_t j = 0; j < d_synthons[i].size(); ++j) {
       synthonMolCopies[i].emplace_back(
-          d_synthons[i][j].second->getOrigMol().get());
+          new RWMol(*d_synthons[i][j].second->getOrigMol().get()));
+      for (auto &atom : synthonMolCopies[i][j]->atoms()) {
+        atom->setProp<int>("molNum", i);
+        atom->setProp<int>("idx", atom->getIdx());
+      }
+      for (auto &bond : synthonMolCopies[i][j]->bonds()) {
+        bond->setProp<int>("molNum", i);
+        bond->setProp<int>("idx", bond->getIdx());
+      }
     }
   }
 
   // Now build sets of sample molecules using each synthon set in turn.
   for (size_t synthSetNum = 0; synthSetNum < d_synthons.size(); ++synthSetNum) {
-    std::vector<boost::dynamic_bitset<>> synthsToUse(d_synthons.size());
-    for (size_t j = 0; j < d_synthons.size(); ++j) {
-      if (j == synthSetNum) {
-        synthsToUse[j] = boost::dynamic_bitset<>(d_synthons[j].size());
-        synthsToUse[j].set();
-      } else {
-        synthsToUse[j] = boost::dynamic_bitset<>(d_synthons[j].size());
-        synthsToUse[j][0] = true;
-      }
-    }
     auto sampleMols =
         buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
-      auto synthCp = std::make_unique<RWMol>(
-          *d_synthons[synthSetNum][j].second->getOrigMol());
+      std::unique_ptr<RWMol> synthCp(
+          new RWMol(*synthonMolCopies[synthSetNum][j]));
       // transfer the aromaticity of the atom in the sample molecule to the
       // corresponding atom in the synthon copy
       for (const auto &atom : sampleMols[j]->atoms()) {
@@ -558,14 +557,6 @@ std::unique_ptr<ROMol> SynthonSet::buildProduct(
     synths[i] = d_synthons[i][synthNums[i]].second->getOrigMol().get();
   }
   return details::buildProduct(synths);
-}
-
-void SynthonSet::tagSynthonAtomsAndBonds() const {
-  for (size_t i = 0; i < d_synthons.size(); ++i) {
-    for (auto &syn : d_synthons[i]) {
-      syn.second->tagAtomsAndBonds(static_cast<int>(i));
-    }
-  }
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

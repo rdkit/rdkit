@@ -101,7 +101,6 @@ SearchResults SynthonSpaceSearcher::search() {
       }
     }
   }
-  std::cout << "Done searching, allHits size : " << allHits.size() << std::endl;
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, totHits, endTime, timedOut, results);
   }
@@ -119,7 +118,8 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     synths[i] = hitset->synthonsToUse[i][synthNums[i]].second.get();
     synthNames[i] = hitset->synthonsToUse[i][synthNums[i]].first;
   }
-  const auto prodName = details::buildProductName(hitset->reactionId, synthNames);
+  const auto prodName =
+      details::buildProductName(hitset->reactionId, synthNames);
 
   std::unique_ptr<ROMol> prod;
   if (resultsNames.insert(prodName).second) {

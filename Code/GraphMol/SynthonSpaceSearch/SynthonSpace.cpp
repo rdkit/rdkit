@@ -216,7 +216,6 @@ void SynthonSpace::readTextFile(const std::string &inFilename,
     auto newSynth = addSynthonToPool(nextSynthon[0]);
     currReaction->addSynthon(synthonNum, newSynth, nextSynthon[1]);
   }
-
   // Do some final processing.
   for (auto &[id, reaction] : d_reactions) {
     reaction->removeEmptySynthonSets();
@@ -301,8 +300,6 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
     std::uint64_t numRS;
     streamRead(is, numRS);
     streamRead(is, d_numProducts);
-    std::cout << "Number of products: " << d_numProducts << std::endl;
-    std::cout << "Number of reactions: " << numRS << std::endl;
     std::uint64_t numSynthons;
     streamRead(is, numSynthons);
     for (std::uint64_t i = 0; i < numSynthons; i++) {
@@ -328,6 +325,7 @@ void SynthonSpace::summarise(std::ostream &os) {
   os << "Read from file " << d_fileName << "\n"
      << "Number of reactions : " << d_reactions.size() << "\n";
   size_t totSize = 0;
+  int synthCounts[MAX_CONNECTOR_NUM + 1]{0, 0, 0, 0, 0};
   for (const auto &id : getReactionNames()) {
     auto rxn = getReaction(id);
     os << "Reaction name " << id << "\n";
@@ -339,9 +337,15 @@ void SynthonSpace::summarise(std::ostream &os) {
       thisSize *= rxn->getSynthons()[i].size();
     }
     totSize += thisSize;
+    synthCounts[rxn->getSynthons().size()]++;
   }
   os << "Approximate number of molecules in SynthonSpace : " << totSize
      << std::endl;
+  os << "Number of unique synthons : " << d_synthonPool.size() << std::endl;
+  for (unsigned int i = 0; i < MAX_CONNECTOR_NUM; ++i) {
+    os << "Number of " << i << " molecule reactions : " << synthCounts[i]
+       << std::endl;
+  }
 }
 
 void SynthonSpace::writeEnumeratedFile(const std::string &outFilename) const {
