@@ -79,7 +79,8 @@ TEST_CASE("Enumerate") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   auto testName = std::tmpnam(nullptr);
   BOOST_LOG(rdInfoLog) << "Enumerating to " << testName << std::endl;
   synthonspace.writeEnumeratedFile(testName);
@@ -123,7 +124,8 @@ TEST_CASE("S Amide 1") {
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   SynthonSpaceSearchParams params;
   params.maxBondSplits = 2;
   auto results = synthonspace.substructureSearch(*queryMol, params);
@@ -149,7 +151,8 @@ TEST_CASE("S Urea 1") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_space.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   auto results = synthonspace.substructureSearch(*queryMol);
   CHECK(results.getHitMolecules().size() == 2);
@@ -185,7 +188,8 @@ TEST_CASE("S Triazole") {
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space_enum.smi";
 
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
 
   auto queryMol = "OCc1ncnn1"_smarts;
   REQUIRE(queryMol);
@@ -215,7 +219,8 @@ TEST_CASE("S Quinoline") {
       "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space_enum.smi";
 
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   {
     auto queryMol = "c1ccccn1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
@@ -242,7 +247,8 @@ TEST_CASE("S Substructure in 1 reagent") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   {
     auto queryMol = "N1CCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
@@ -285,7 +291,8 @@ TEST_CASE("Connector Regions") {
     std::string libName =
         fName + "/Code/GraphMol/SynthonSpaceSearch/data/urea_3.txt";
     SynthonSpace synthonspace;
-    synthonspace.readTextFile(libName);
+    bool cancelled = false;
+    synthonspace.readTextFile(libName, cancelled);
     const auto &rnames = synthonspace.getReactionNames();
     const auto rs = synthonspace.getReaction(rnames.front());
     CHECK(rs->getConnectorRegions().size() == 30);
@@ -298,7 +305,8 @@ TEST_CASE("DB Writer") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   CHECK(synthonspace.getNumReactions() == 1);
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
@@ -323,8 +331,7 @@ TEST_CASE("DB Writer") {
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
-      CHECK(irxn->getSynthons()[i][j]->getId() ==
-            orxn->getSynthons()[i][j]->getId());
+      CHECK(irxn->getSynthons()[i][j].first == orxn->getSynthons()[i][j].first);
       CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
     }
   }
@@ -345,7 +352,7 @@ TEST_CASE("DB Converter") {
   convertTextToDBFile(libName, spaceName, cancelled, fpGen.get());
 
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  synthonspace.readTextFile(libName, cancelled);
   CHECK(synthonspace.getNumReactions() == 1);
   synthonspace.buildSynthonFingerprints(*fpGen);
   synthonspace.buildAddAndSubstractFingerprints(*fpGen);
@@ -364,8 +371,7 @@ TEST_CASE("DB Converter") {
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
-      CHECK(irxn->getSynthons()[i][j]->getId() ==
-            orxn->getSynthons()[i][j]->getId());
+      CHECK(irxn->getSynthons()[i][j].first == orxn->getSynthons()[i][j].first);
       CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
     }
   }
@@ -378,8 +384,8 @@ TEST_CASE("S Biggy") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
-
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
                                       "c1ccccc1NC(=O)C1CCN1",
                                       "c12ccccc1c(N)nc(N)n2",
@@ -395,6 +401,13 @@ TEST_CASE("S Biggy") {
     auto results = synthonspace.substructureSearch(*queryMol, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
     CHECK(results.getMaxNumResults() == maxRes[i]);
+    std::ofstream ofs("new_hits.txt");
+    for (size_t i = 0; i < results.getHitMolecules().size(); ++i) {
+      ofs << i << " : " << MolToSmiles(*results.getHitMolecules()[i]) << "  "
+          << results.getHitMolecules()[i]->getProp<std::string>(
+                 common_properties::_Name)
+          << std::endl;
+    }
   }
 }
 
@@ -451,7 +464,8 @@ TEST_CASE("S Small query") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   auto queryMol = "C=CC"_smiles;
   auto results = synthonspace.substructureSearch(*queryMol);
   // The number of results is immaterial, it just matters that the search
@@ -465,7 +479,8 @@ TEST_CASE("S Random Hits") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
   SynthonSpaceSearchParams params;
@@ -496,7 +511,8 @@ TEST_CASE("S Later hits") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
   SynthonSpaceSearchParams params;
@@ -537,7 +553,8 @@ TEST_CASE("S Complex query") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
 
   auto queryMol = v2::SmilesParse::MolFromSmarts(
       "[$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
@@ -558,7 +575,8 @@ TEST_CASE("S Map numbers in connectors") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/map_numbers.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smarts;
   REQUIRE(queryMol);
@@ -585,7 +603,8 @@ TEST_CASE("Greg Space Failure") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/gregs_space_fail.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
 
   auto queryMol =
       "Cc1nn(C)c(C)c1-c1nc(Cn2cc(CNC(C)C(=O)NC3CCCC3)nn2)no1"_smarts;
@@ -603,7 +622,8 @@ TEST_CASE("DOS File") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_dos.txt";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   CHECK(synthonspace.getNumProducts() == 12);
 }
 
@@ -614,13 +634,15 @@ TEST_CASE("Synthon Error") {
     std::string libName =
         fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_error.txt";
     SynthonSpace synthonspace;
-    CHECK_THROWS(synthonspace.readTextFile(libName));
+    bool cancelled = false;
+    CHECK_THROWS(synthonspace.readTextFile(libName, cancelled));
   }
   {
     std::string libName =
         fName + "/Code/GraphMol/SynthonSpaceSearch/data/synthon_error.txt";
     SynthonSpace synthonspace;
-    CHECK_THROWS(synthonspace.readTextFile(libName));
+    bool cancelled = false;
+    CHECK_THROWS(synthonspace.readTextFile(libName, cancelled));
   }
 }
 
@@ -650,9 +672,9 @@ TEST_CASE("S Freedom Space") {
   std::string libName =
       "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
   libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit.spc";
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_2_rdkit.spc";
   SynthonSpace synthonspace;
-  bool lowMem = true;
+  bool lowMem = false;
   synthonspace.readDBFile(libName, lowMem);
   auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
   SynthonSpaceSearchParams params;

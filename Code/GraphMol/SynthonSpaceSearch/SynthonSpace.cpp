@@ -113,6 +113,7 @@ std::string SynthonSpace::getFormattedNumProducts() const {
 SearchResults SynthonSpace::substructureSearch(
     const ROMol &query, const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  ControlCHandler::reset();
   SynthonSpaceSubstructureSearcher ssss(query, params, *this);
   return ssss.search();
 }
@@ -120,6 +121,7 @@ SearchResults SynthonSpace::substructureSearch(
 SearchResults SynthonSpace::fingerprintSearch(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params) {
+  ControlCHandler::reset();
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
   return ssss.search();
@@ -215,7 +217,8 @@ int getSynthonNum(int format, const std::string &synthon) {
 }
 }  // namespace
 
-void SynthonSpace::readTextFile(const std::string &inFilename) {
+void SynthonSpace::readTextFile(const std::string &inFilename,
+                                bool &cancelled) {
   d_fileName = inFilename;
   d_lowMem = false;
   std::ifstream ifs(d_fileName);
@@ -226,7 +229,13 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
   int format = -1;
   std::string nextLine;
   int lineNum = 1;
+  ControlCHandler::reset();
+
   while (!ifs.eof()) {
+    if (ControlCHandler::getGotSignal()) {
+      cancelled = true;
+      return;
+    }
     auto nextSynthon = readSynthonLine(ifs, lineNum, format, d_fileName);
     if (nextSynthon.empty()) {
       continue;
@@ -238,8 +247,8 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
     fixConnectors(nextSynthon[0]);
     auto &currReaction = d_reactions[nextSynthon[3]];
     auto synthonNum = getSynthonNum(format, nextSynthon[2]);
-    currReaction->addSynthon(synthonNum, std::make_unique<Synthon>(Synthon(
-                                             nextSynthon[0], nextSynthon[1])));
+    auto newSynth = addSynthonToPool(nextSynthon[0]);
+    currReaction->addSynthon(synthonNum, newSynth, nextSynthon[1]);
   }
 
   // Do some final processing.
@@ -380,6 +389,9 @@ void SynthonSpace::buildSynthonFingerprints(
         << "Building the fingerprints may take some time." << std::endl;
     d_fpType = fpType;
     for (const auto &[id, synthSet] : d_reactions) {
+      if (ControlCHandler::getGotSignal()) {
+        return;
+      }
       synthSet->buildSynthonFingerprints(fpGen);
     }
   }
@@ -395,6 +407,9 @@ bool SynthonSpace::hasAddAndSubstractFingerprints() const {
 void SynthonSpace::buildAddAndSubstractFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
   for (const auto &[id, synthSet] : d_reactions) {
+    if (ControlCHandler::getGotSignal()) {
+      return;
+    }
     synthSet->buildAddAndSubtractFPs(fpGen);
   }
 }
@@ -436,101 +451,41 @@ void SynthonSpace::openAndCheckDBFile() {
   }
 }
 
-namespace {
-void finalizeReaction(SynthonSet *reaction,
-                      const FingerprintGenerator<std::uint64_t> *fpGen) {
-  if (reaction) {
-    reaction->removeEmptySynthonSets();
-    reaction->transferProductBondsToSynthons();
-    reaction->buildConnectorRegions();
-    reaction->assignConnectorsUsed();
-    if (fpGen) {
-      reaction->buildSynthonFingerprints(*fpGen);
-      reaction->buildAddAndSubtractFPs(*fpGen);
-    }
+Synthon *SynthonSpace::addSynthonToPool(const std::string &smiles) {
+  Synthon *newSynth = nullptr;
+  if (auto it = d_synthonPool.find(smiles); it == d_synthonPool.end()) {
+    auto [new_it, success] = d_synthonPool.insert(
+        std::make_pair(smiles, std::make_unique<Synthon>(Synthon(smiles))));
+    newSynth = new_it->second.get();
+  } else {
+    newSynth = it->second.get();
   }
+  return newSynth;
 }
-}  // namespace
 
 void convertTextToDBFile(const std::string &inFilename,
                          const std::string &outFilename, bool &cancelled,
                          const FingerprintGenerator<std::uint64_t> *fpGen) {
-  std::ifstream ifs(inFilename);
+  SynthonSpace synthSpace;
   cancelled = false;
-  if (!ifs.is_open() || ifs.bad()) {
-    throw std::runtime_error("Couldn't open file " + inFilename);
+  synthSpace.readTextFile(inFilename, cancelled);
+  if (ControlCHandler::getGotSignal()) {
+    cancelled = true;
+    return;
   }
-  std::ofstream os(outFilename, std::fstream::binary | std::fstream::trunc);
-  streamWrite(os, endianId);
-  streamWrite(os, versionMajor);
-  streamWrite(os, versionMinor);
-  streamWrite(os, fpGen != nullptr);
-  if (fpGen != nullptr) {
-    streamWrite(os, fpGen->infoString());
-  }
-  std::uint64_t numReacts = 0;
-  auto numReactPos = os.tellp();
-  streamWrite(os, numReacts);
-  // Write a placeholder of numProducts
-  streamWrite(os, numReacts);
-  auto whereTheRxnsStart = os.tellp();
-  // This will be updated later.
-  writeStreamPos(os, whereTheRxnsStart);
-  std::vector<std::streampos> rxnStarts;
-  std::vector<std::string> rxnNames;
-
-  int format = -1;
-  int lineNum = 1;
-  std::unique_ptr<SynthonSet> currReaction;
-  std::string oldReactionId;
-  std::uint64_t numProducts = 0;
-
-  while (!ifs.eof()) {
+  if (fpGen) {
+    synthSpace.buildSynthonFingerprints(*fpGen);
     if (ControlCHandler::getGotSignal()) {
       cancelled = true;
-      break;
+      return;
     }
-    auto nextSynthon = readSynthonLine(ifs, lineNum, format, inFilename);
-    if (nextSynthon.empty()) {
-      continue;
+    synthSpace.buildAddAndSubstractFingerprints(*fpGen);
+    if (ControlCHandler::getGotSignal()) {
+      cancelled = true;
+      return;
     }
-    fixConnectors(nextSynthon[0]);
-    auto synthonNum = getSynthonNum(format, nextSynthon[2]);
-    if (!currReaction) {
-      ++numReacts;
-      currReaction.reset(new SynthonSet(nextSynthon[3]));
-      oldReactionId = nextSynthon[3];
-    }
-    if (oldReactionId != nextSynthon[3]) {
-      finalizeReaction(currReaction.get(), fpGen);
-      rxnStarts.push_back(os.tellp());
-      rxnNames.push_back(currReaction->getId());
-      currReaction->writeToDBStream(os);
-      numProducts += currReaction->getNumProducts();
-      ++numReacts;
-      currReaction.reset(new SynthonSet(nextSynthon[3]));
-      oldReactionId = nextSynthon[3];
-    }
-    currReaction->addSynthon(synthonNum, std::make_unique<Synthon>(Synthon(
-                                             nextSynthon[0], nextSynthon[1])));
   }
-  finalizeReaction(currReaction.get(), fpGen);
-  rxnStarts.push_back(os.tellp());
-  rxnNames.push_back(currReaction->getId());
-  currReaction->writeToDBStream(os);
-  auto here = os.tellp();
-  for (size_t i = 0; i < numReacts; ++i) {
-    streamWrite(os, rxnNames[i]);
-    writeStreamPos(os, rxnStarts[i]);
-  }
-  os.seekp(numReactPos, std::ios::beg);
-  streamWrite(os, numReacts);
-  numProducts += currReaction->getNumProducts();
-  streamWrite(os, numProducts);
-  os.seekp(whereTheRxnsStart);
-  writeStreamPos(os, here);
-
-  os.close();
+  synthSpace.writeDBFile(outFilename);
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

@@ -99,6 +99,8 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                // search.  0 means no maximum.
 };
 
+class Synthon;
+
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  public:
   // Create the synthonspace from a file in the correct format.
@@ -185,8 +187,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * Throws a std::runtime_error if it doesn't think the format is correct,
    * which it does by checking that the first line is as above and subsequent
    * lines have appropriate number of fields.
+   * If it receives a SIGINT, returns cancelled=true.
    */
-  void readTextFile(const std::string &inFilename);
+  void readTextFile(const std::string &inFilename, bool &cancelled);
 
   // Writes to/reads from a binary DB File in our format.
   /*!
@@ -243,6 +246,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   std::int32_t d_fileMajorVersion{-1};
   std::unique_ptr<std::ifstream> d_dbis;
 
+  std::map<std::string, std::unique_ptr<Synthon>> d_synthonPool;
+
   // For the similarity search, this records the generator used for
   // creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
@@ -251,6 +256,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // it.  Throws an exception if the system doesn't like the
   // endian-ness of the file.
   void openAndCheckDBFile();
+
+  // Take the SMILES for a Synthon and if it's not in
+  // d_synthonPool make it and add it.  If it is in the pool,
+  // just look it up.  Either way, return a pointer to the
+  // Synthon.
+  Synthon *addSynthonToPool(const std::string &smiles);
 };
 
 /*!
@@ -260,6 +271,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  * readTextFile() followed by writeDBFile().
  * @param inFilename name of the text file to read
  * @param outFilename name of the binary file to write
+ * @param cancelled whether it received a SIGINT
  * @param fpGen optional fingerprint generator
  */
 RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(

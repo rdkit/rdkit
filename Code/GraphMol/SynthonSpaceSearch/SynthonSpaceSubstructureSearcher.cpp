@@ -127,7 +127,7 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
     const auto &synthonSet = reaction.getSynthons()[synthonOrder[i]];
     for (size_t j = 0; j < synthonSet.size(); ++j) {
       if (auto &synthon = synthonSet[j];
-          AllProbeBitsMatch(*pattFPs[i], *synthon->getPattFP())) {
+          AllProbeBitsMatch(*pattFPs[i], *synthon.second->getPattFP())) {
         passedFPs[synthonOrder[i]][j] = true;
         fragsMatched[i] = true;
       }
@@ -173,8 +173,8 @@ std::vector<std::vector<size_t>> getHitSynthons(
     bool fragMatched = false;
     for (size_t j = 0; j < synthonsSet.size(); ++j) {
       if (passedScreensSet[j]) {
-        if (auto &synthon = synthonsSet[j];
-            SubstructMatch(*synthon->getSearchMol(), *molFrags[i], dontCare)) {
+        if (auto &synthon = synthonsSet[j]; SubstructMatch(
+                *synthon.second->getSearchMol(), *molFrags[i], dontCare)) {
           synthonsToUse[synthonOrder[i]][j] = true;
           fragMatched = true;
         }
@@ -197,8 +197,8 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const auto &synthonsi = reaction.getSynthons()[i];
     std::sort(retSynthons[i].begin(), retSynthons[i].end(),
               [&](const size_t a, const size_t b) {
-                return (synthonsi[a]->getOrigMol()->getNumAtoms() <
-                        synthonsi[b]->getOrigMol()->getNumAtoms());
+                return (synthonsi[a].second->getOrigMol()->getNumAtoms() <
+                        synthonsi[b].second->getOrigMol()->getNumAtoms());
               });
   }
   return retSynthons;

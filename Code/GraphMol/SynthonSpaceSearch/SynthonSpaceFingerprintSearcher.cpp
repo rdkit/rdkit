@@ -15,6 +15,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceFingerprintSearcher.h>
+#include <RDGeneral/ControlCHandler.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -51,13 +52,6 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     }
   }
 
-  if (!getSpace().hasFingerprints() ||
-      getSpace().getSynthonFingerprintType() != fpGen.infoString()) {
-    getSpace().buildSynthonFingerprints(fpGen);
-  }
-  if (!getSpace().hasAddAndSubstractFingerprints()) {
-    getSpace().buildAddAndSubstractFingerprints(fpGen);
-  }
   d_queryFP = std::unique_ptr<ExplicitBitVect>(d_fpGen.getFingerprint(query));
 }
 
@@ -127,8 +121,24 @@ std::vector<std::vector<size_t>> getHitSynthons(
 
 void SynthonSpaceFingerprintSearcher::extraSearchSetup(
     std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
+  if (!getSpace().hasFingerprints() ||
+      getSpace().getSynthonFingerprintType() != d_fpGen.infoString()) {
+    getSpace().buildSynthonFingerprints(d_fpGen);
+  }
+  if (ControlCHandler::getGotSignal()) {
+    return;
+  }
+  if (!getSpace().hasAddAndSubstractFingerprints()) {
+    getSpace().buildAddAndSubstractFingerprints(d_fpGen);
+  }
+  if (ControlCHandler::getGotSignal()) {
+    return;
+  }
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
+      if (ControlCHandler::getGotSignal()) {
+        return;
+      }
       // For the fingerprints, ring info is required.
       unsigned int otf;
       sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,

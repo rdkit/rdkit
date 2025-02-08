@@ -18,8 +18,7 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
-Synthon::Synthon(const std::string &smi, const std::string &id)
-    : d_smiles(smi), d_id(id) {
+Synthon::Synthon(const std::string &smi) : d_smiles(smi) {
   v2::SmilesParse::SmilesParserParams params;
   params.sanitize = false;
   dp_origMol = v2::SmilesParse::MolFromSmiles(d_smiles, params);
@@ -28,15 +27,12 @@ Synthon::Synthon(const std::string &smi, const std::string &id)
     // the people who made the SynthonSpace know what they're doing.
     // Therefore, it's probably a corrupted or incorrect file, so
     // bring it all down.
-    throw ValueErrorException("Unparsable synthon SMILES " + d_smiles +
-                              " with ID " + d_id);
+    throw ValueErrorException("Unparsable synthon SMILES " + d_smiles);
   }
-  dp_origMol->setProp<std::string>(common_properties::_Name, d_id);
 }
 
 Synthon::Synthon(const Synthon &other)
     : d_smiles(other.d_smiles),
-      d_id(other.d_id),
       dp_origMol(std::make_unique<ROMol>(*other.dp_origMol)),
       dp_searchMol(std::make_unique<ROMol>(*other.dp_searchMol)),
       dp_pattFP(std::make_unique<ExplicitBitVect>(*other.dp_pattFP)),
@@ -47,7 +43,6 @@ Synthon &Synthon::operator=(const Synthon &other) {
     return *this;
   }
   d_smiles = other.d_smiles;
-  d_id = other.d_id;
   if (other.dp_origMol) {
     dp_origMol = std::make_unique<ROMol>(*other.dp_origMol);
   } else {
@@ -96,7 +91,6 @@ void Synthon::setSearchMol(std::unique_ptr<RWMol> mol) {
 
 void Synthon::writeToDBStream(std::ostream &os) const {
   streamWrite(os, d_smiles);
-  streamWrite(os, d_id);
   MolPickler::pickleMol(*dp_origMol, os, PicklerOps::AllProps);
   MolPickler::pickleMol(*dp_searchMol, os, PicklerOps::AllProps);
   const auto pattFPstr = getPattFP()->toString();
@@ -109,7 +103,6 @@ void Synthon::writeToDBStream(std::ostream &os) const {
 
 void Synthon::readFromDBStream(std::istream &is) {
   streamRead(is, d_smiles, 0);
-  streamRead(is, d_id, 0);
   dp_origMol = std::make_unique<ROMol>();
   MolPickler::molFromPickle(is, *dp_origMol);
   dp_searchMol = std::make_unique<ROMol>();

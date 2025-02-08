@@ -96,14 +96,14 @@ void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
 }
 
-void convertTextToDBFileWrapper(const std::string &inFilename,
-                                const std::string &outFilename,
+void convertTextToDBFile_helper(const std::string &inFilename,
+                                const std::string &outFilename, bool &cancelled,
                                 python::object fpGen) {
   const FingerprintGenerator<std::uint64_t> *fpGenCpp = nullptr;
   if (fpGen) {
     fpGenCpp = python::extract<FingerprintGenerator<std::uint64_t> *>(fpGen);
   }
-  bool cancelled = false;
+  cancelled = false;
   SynthonSpaceSearch::convertTextToDBFile(inFilename, outFilename, cancelled,
                                           fpGenCpp);
   if (cancelled) {
@@ -266,7 +266,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       "- inFilename the name of the text file"
       "- outFilename the name of the binary file"
       "- optional fingerprint generator";
-  python::def("ConvertTextToDBFile", &RDKit::convertTextToDBFileWrapper,
+  python::def("ConvertTextToDBFile", &RDKit::convertTextToDBFile_helper,
               (python::arg("inFilename"), python::arg("outFilename"),
                python::arg("fpGen") = python::object()),
               docString.c_str());

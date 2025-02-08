@@ -26,14 +26,13 @@ namespace SynthonSpaceSearch {
 class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
  public:
   Synthon() = default;
-  Synthon(const std::string &smi, const std::string &id);
+  Synthon(const std::string &smi);
   Synthon(const Synthon &other);
   Synthon(Synthon &&other) = default;
   Synthon &operator=(const Synthon &other);
   Synthon &operator=(Synthon &&other) = default;
 
   const std::string &getSmiles() const { return d_smiles; }
-  const std::string &getId() const { return d_id; }
   const std::unique_ptr<ROMol> &getOrigMol() const;
   const std::unique_ptr<ROMol> &getSearchMol() const;
   const std::unique_ptr<ExplicitBitVect> &getPattFP() const;
@@ -50,7 +49,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
 
  private:
   std::string d_smiles;
-  std::string d_id;
 
   // Keep 2 copies of the molecule.  The first is as passed in, which
   // will be used for building products.  The second will have its

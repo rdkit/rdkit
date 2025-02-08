@@ -335,10 +335,10 @@ void bitSetsToVectors(const std::vector<boost::dynamic_bitset<>> &bitSets,
 }
 
 std::string buildProductName(const std::string &reactionId,
-                             const std::vector<ROMol *> &frags) {
+                             const std::vector<std::string> &fragIds) {
   std::string prodName = reactionId;
-  for (const auto &frag : frags) {
-    prodName += "_" + frag->getProp<std::string>(common_properties::_Name);
+  for (const auto &fragId : fragIds) {
+    prodName += "_" + fragId;
   }
   return prodName;
 }
@@ -357,4 +357,16 @@ std::unique_ptr<ROMol> buildProduct(const std::vector<ROMol *> &synths) {
   return prodMol;
 }
 
+std::unique_ptr<ExplicitBitVect> foldExplicitBitVect(
+    const ExplicitBitVect &bitVect, unsigned int targetNumBits) {
+  PRECONDITION(!(bitVect.getNumBits() % targetNumBits),
+               "ExplicitBitVect must be a multiple of targetNumBits");
+  std::unique_ptr<ExplicitBitVect> outVect(new ExplicitBitVect(targetNumBits));
+  for (unsigned int i = 0; i < bitVect.getNumBits(); ++i) {
+    if (outVect->getBit(i % targetNumBits) || bitVect.getBit(i)) {
+      outVect->setBit(i % targetNumBits);
+    }
+  }
+  return outVect;
+}
 }  // namespace RDKit::SynthonSpaceSearch::details

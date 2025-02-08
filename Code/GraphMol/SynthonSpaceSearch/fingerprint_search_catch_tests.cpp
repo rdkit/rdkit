@@ -92,7 +92,8 @@ TEST_CASE("FP Small tests") {
 
   for (size_t i = 0; i < libNames.size(); i++) {
     SynthonSpace synthonspace;
-    synthonspace.readTextFile(libNames[i]);
+    bool cancelled = false;
+    synthonspace.readTextFile(libNames[i], cancelled);
     SynthonSpaceSearchParams params;
     params.maxBondSplits = 3;
     params.randomSeed = 1;
@@ -137,7 +138,8 @@ TEST_CASE("FP Biggy") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
 
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
@@ -167,7 +169,8 @@ TEST_CASE("FP Random Hits") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
 
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
   SynthonSpaceSearchParams params;
@@ -203,7 +206,8 @@ TEST_CASE("Other Fingerprints") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   SynthonSpaceSearchParams params;
   params.maxBondSplits = 3;
   params.maxHits = 100;
@@ -226,7 +230,8 @@ TEST_CASE("Timeout") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   SynthonSpaceSearchParams params;
   params.maxBondSplits = 3;
   params.maxHits = -1;
@@ -255,7 +260,8 @@ TEST_CASE("FP Approx Similarity") {
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
   SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName);
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
   SynthonSpaceSearchParams params;
   // The addFP and subtractFP are built from a random selection of
   // products so do occasionally vary, so use a fixed seed.

@@ -38,8 +38,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   SynthonSet(SynthonSet &&rhs) = delete;
 
   const std::string &getId() const { return d_id; }
-  const std::vector<std::vector<std::unique_ptr<Synthon>>> &getSynthons()
-      const {
+  const std::vector<std::vector<std::pair<std::string, Synthon *>>> &
+  getSynthons() const {
     return d_synthons;
   }
   const boost::dynamic_bitset<> &getConnectors() const { return d_connectors; }
@@ -66,7 +66,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   void enumerateToStream(std::ostream &os) const;
 
   // SynthonSet takes control of the newSynthon and manages it.
-  void addSynthon(int synthonSetNum, std::unique_ptr<Synthon> newSynthon);
+  void addSynthon(int synthonSetNum, Synthon *newSynthon,
+                  const std::string &synthonId);
 
   // Sometimes the synthon sets are numbered from 1 in the text file,
   // in which case there'll be an empty set 0.
@@ -106,8 +107,12 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
  private:
   std::string d_id;
   // The lists of synthons.  A product of the reaction is created by
-  // combining 1 synthon from each of the outer vectors.
-  std::vector<std::vector<std::unique_ptr<Synthon>>> d_synthons;
+  // combining 1 synthon from each of the outer vectors.  The actual
+  // Synthon objects are held in the SynthonSpace which manages all
+  // the memory.  In different reactions/SynthonSets the same Synthon
+  // can have different IDs, so we need to keep the ID here rather
+  // than in the Synthon, whose primary key is its SMILES string.
+  std::vector<std::vector<std::pair<std::string, Synthon *>>> d_synthons;
   // 4 bits showing which connectors are present in all the
   // synthon sets.
   boost::dynamic_bitset<> d_connectors;

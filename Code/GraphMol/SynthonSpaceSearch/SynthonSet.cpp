@@ -35,6 +35,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <RDGeneral/ControlCHandler.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -72,6 +73,7 @@ void writeBitSet(std::ostream &os, const boost::dynamic_bitset<> &bitset) {
 }  // namespace
 
 void SynthonSet::writeToDBStream(std::ostream &os) const {
+#if 0
   streamWrite(os, d_id);
   streamWrite(os, getConnectorRegions().size());
   for (const auto &cr : getConnectorRegions()) {
@@ -109,6 +111,7 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
       streamWrite(os, fp->toString());
     }
   }
+#endif
 }
 
 namespace {
@@ -125,6 +128,7 @@ void readBitSet(std::istream &is, boost::dynamic_bitset<> &bitset) {
 }  // namespace
 
 void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t version) {
+#if 0
   streamRead(is, d_id, 0);
   size_t numConnRegs;
   streamRead(is, numConnRegs);
@@ -192,6 +196,7 @@ void SynthonSet::readFromDBStream(std::istream &is, std::uint32_t version) {
   if (version < 2010) {
     assignConnectorsUsed();
   }
+#endif
 }
 
 void SynthonSet::enumerateToStream(std::ostream &os) const {
@@ -208,12 +213,12 @@ void SynthonSet::enumerateToStream(std::ostream &os) const {
   }
 }
 
-void SynthonSet::addSynthon(const int synthonSetNum,
-                            std::unique_ptr<Synthon> newSynthon) {
+void SynthonSet::addSynthon(const int synthonSetNum, Synthon *newSynthon,
+                            const std::string &synthonId) {
   if (static_cast<size_t>(synthonSetNum) >= d_synthons.size()) {
     d_synthons.resize(synthonSetNum + 1);
   }
-  d_synthons[synthonSetNum].emplace_back(std::move(newSynthon));
+  d_synthons[synthonSetNum].push_back(std::make_pair(synthonId, newSynthon));
 }
 
 namespace {
@@ -253,11 +258,11 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
       for (size_t j = 0; j < synthons.size(); ++j) {
         std::string sep = j ? " and " : " ";
         if (j == longVecNum) {
-          msg += sep + synths[j][i]->getId() + " (" +
-                 synths[j][i]->getSmiles() + ")";
+          msg += sep + synths[j][i].first + " (" +
+                 synths[j][i].second->getSmiles() + ")";
         } else {
-          msg += sep + synths[j].front()->getId() + " (" +
-                 synths[j].front()->getSmiles() + ")";
+          msg += sep + synths[j].front().first + " (" +
+                 synths[j].front().second->getSmiles() + ")";
         }
       }
       msg += "\n" + std::string(e.what()) + "\n";
@@ -298,7 +303,8 @@ void SynthonSet::transferProductBondsToSynthons() {
   for (size_t i = 0; i < d_synthons.size(); ++i) {
     synthonMolCopies[i].reserve(d_synthons[i].size());
     for (size_t j = 0; j < d_synthons[i].size(); ++j) {
-      synthonMolCopies[i].emplace_back(d_synthons[i][j]->getOrigMol().get());
+      synthonMolCopies[i].emplace_back(
+          d_synthons[i][j].second->getOrigMol().get());
     }
   }
 
@@ -317,8 +323,8 @@ void SynthonSet::transferProductBondsToSynthons() {
     auto sampleMols =
         buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
-      auto synthCp =
-          std::make_unique<RWMol>(*d_synthons[synthSetNum][j]->getOrigMol());
+      auto synthCp = std::make_unique<RWMol>(
+          *d_synthons[synthSetNum][j].second->getOrigMol());
       // transfer the aromaticity of the atom in the sample molecule to the
       // corresponding atom in the synthon copy
       for (const auto &atom : sampleMols[j]->atoms()) {
@@ -351,7 +357,7 @@ void SynthonSet::transferProductBondsToSynthons() {
           }
         }
       }
-      d_synthons[synthSetNum][j]->setSearchMol(std::move(synthCp));
+      d_synthons[synthSetNum][j].second->setSearchMol(std::move(synthCp));
     }
   }
 }
@@ -359,7 +365,7 @@ void SynthonSet::transferProductBondsToSynthons() {
 void SynthonSet::removeEmptySynthonSets() {
   d_synthons.erase(
       std::remove_if(d_synthons.begin(), d_synthons.end(),
-                     [](const std::vector<std::unique_ptr<Synthon>> &r)
+                     [](const std::vector<std::pair<std::string, Synthon *>> &r)
                          -> bool { return r.empty(); }),
       d_synthons.end());
 }
@@ -368,7 +374,7 @@ void SynthonSet::buildConnectorRegions() {
   std::set<std::string> smis;
   for (const auto &rset : d_synthons) {
     for (const auto &r : rset) {
-      for (const auto &cr : r->getConnRegions()) {
+      for (const auto &cr : r.second->getConnRegions()) {
         if (auto smi = MolToSmiles(*cr); smis.insert(smi).second) {
           d_connectorRegions.push_back(cr);
         }
@@ -390,7 +396,7 @@ void SynthonSet::buildConnectorRegions() {
   // one of each.
   for (const auto &synthonSet : d_synthons) {
     d_numConnectors.push_back(
-        details::countConnections(*synthonSet.front()->getOrigMol()));
+        details::countConnections(*synthonSet.front().second->getOrigMol()));
   }
 }
 
@@ -414,8 +420,8 @@ void SynthonSet::assignConnectorsUsed() {
     d_synthConnPatts.back().resize(MAX_CONNECTOR_NUM + 1, false);
     const auto &reag = synthSet.front();
     for (size_t i = 0; i < MAX_CONNECTOR_NUM; ++i) {
-      if (std::regex_search(reag->getSmiles(), connRegexs[2 * i]) ||
-          std::regex_search(reag->getSmiles(), connRegexs[2 * i + 1])) {
+      if (std::regex_search(reag.second->getSmiles(), connRegexs[2 * i]) ||
+          std::regex_search(reag.second->getSmiles(), connRegexs[2 * i + 1])) {
         d_connectors.set(i + 1);
         d_synthConnPatts.back().set(i + 1);
       }
@@ -454,8 +460,11 @@ void SynthonSet::buildSynthonFingerprints(
     d_synthonFPs.emplace_back();
     d_synthonFPs.back().reserve(d_synthons[synthSetNum].size());
     for (const auto &synth : d_synthons[synthSetNum]) {
+      if (ControlCHandler::getGotSignal()) {
+        return;
+      }
       d_synthonFPs[synthSetNum].emplace_back(
-          fpGen.getFingerprint(*synth->getSearchMol()));
+          fpGen.getFingerprint(*synth.second->getSearchMol()));
     }
   }
 }
@@ -471,19 +480,20 @@ void SynthonSet::buildAddAndSubtractFPs(
   size_t totSamples = 1;
   // Sample the synthons evenly across their size ranges.
   for (size_t i = 0; i < d_synthons.size(); ++i) {
-    std::vector<std::tuple<size_t, Synthon *>> sortedSynthons(
-        d_synthons[i].size());
+    std::vector<std::pair<size_t, std::pair<std::string, Synthon *>>>
+        sortedSynthons(d_synthons[i].size());
     for (size_t j = 0; j < d_synthons[i].size(); ++j) {
-      sortedSynthons[j] = std::make_tuple(j, d_synthons[i][j].get());
+      sortedSynthons[j] = std::make_pair(j, d_synthons[i][j]);
     }
     std::sort(sortedSynthons.begin(), sortedSynthons.end(),
-              [](const std::tuple<size_t, Synthon *> &a,
-                 const std::tuple<size_t, Synthon *> &b) -> bool {
-                auto as = std::get<1>(a);
-                auto bs = std::get<1>(b);
+              [](const std::pair<size_t, std::pair<std::string, Synthon *>> &a,
+                 const std::pair<size_t, std::pair<std::string, Synthon *>> &b)
+                  -> bool {
+                auto as = a.second.second;
+                auto bs = b.second.second;
                 if (as->getOrigMol()->getNumAtoms() ==
                     bs->getOrigMol()->getNumAtoms()) {
-                  return as->getId() < bs->getId();
+                  return a.second.first < b.second.first;
                 }
                 return as->getOrigMol()->getNumAtoms() <
                        bs->getOrigMol()->getNumAtoms();
@@ -501,6 +511,9 @@ void SynthonSet::buildAddAndSubtractFPs(
   details::Stepper stepper(numSynthons);
   std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
   while (stepper.d_currState[0] != numSynthons[0]) {
+    if (ControlCHandler::getGotSignal()) {
+      return;
+    }
     for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
       theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
     }
@@ -553,9 +566,9 @@ void SynthonSet::buildAddAndSubtractFPs(
 
 std::string SynthonSet::buildProductName(
     const std::vector<size_t> &synthNums) const {
-  std::vector<ROMol *> synths(synthNums.size());
+  std::vector<std::string> synths(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); ++i) {
-    synths[i] = d_synthons[i][synthNums[i]]->getOrigMol().get();
+    synths[i] = d_synthons[i][synthNums[i]].first;
   }
   return details::buildProductName(d_id, synths);
 }
@@ -563,7 +576,7 @@ std::unique_ptr<ROMol> SynthonSet::buildProduct(
     const std::vector<size_t> &synthNums) const {
   std::vector<ROMol *> synths(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); ++i) {
-    synths[i] = d_synthons[i][synthNums[i]]->getOrigMol().get();
+    synths[i] = d_synthons[i][synthNums[i]].second->getOrigMol().get();
   }
   return details::buildProduct(synths);
 }
@@ -571,7 +584,7 @@ std::unique_ptr<ROMol> SynthonSet::buildProduct(
 void SynthonSet::tagSynthonAtomsAndBonds() const {
   for (size_t i = 0; i < d_synthons.size(); ++i) {
     for (auto &syn : d_synthons[i]) {
-      syn->tagAtomsAndBonds(static_cast<int>(i));
+      syn.second->tagAtomsAndBonds(static_cast<int>(i));
     }
   }
 }

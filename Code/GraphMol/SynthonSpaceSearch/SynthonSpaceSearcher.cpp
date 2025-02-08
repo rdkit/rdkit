@@ -54,7 +54,6 @@ SearchResults SynthonSpaceSearcher::search() {
     endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
     endTime = &endTimePt;
   }
-  ControlCHandler::reset();
   bool timedOut = false;
   auto fragments = details::splitMolecule(
       d_query, d_params.maxBondSplits, d_params.maxNumFrags, endTime, timedOut);
@@ -64,7 +63,9 @@ SearchResults SynthonSpaceSearcher::search() {
   }
   std::cout << "Number of fragment sets: " << fragments.size() << std::endl;
   extraSearchSetup(fragments);
-
+  if (ControlCHandler::getGotSignal()) {
+    return SearchResults{std::move(results), 0UL, timedOut, true};
+  }
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> allHits;
   size_t totHits = 0;
   int numTries = 100;
@@ -113,10 +114,12 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
     std::set<std::string> &resultsNames) const {
   std::vector<ROMol *> synths(synthNums.size());
+  std::vector<std::string> synthNames(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); i++) {
-    synths[i] = hitset->synthonsToUse[i][synthNums[i]].get();
+    synths[i] = hitset->synthonsToUse[i][synthNums[i]].second.get();
+    synthNames[i] = hitset->synthonsToUse[i][synthNums[i]].first;
   }
-  const auto prodName = details::buildProductName(hitset->reactionId, synths);
+  const auto prodName = details::buildProductName(hitset->reactionId, synthNames);
 
   std::unique_ptr<ROMol> prod;
   if (resultsNames.insert(prodName).second) {
