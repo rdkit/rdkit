@@ -355,6 +355,9 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testOptionalAtomListBrackets_1.svg", 822046498U},
     {"testOptionalAtomListBrackets_2.svg", 3881772214U},
     {"testOptionalAtomListBrackets_3.svg", 2945415850U},
+    {"testComponentPadding_1.svg", 2106266352U},
+    {"testComponentPadding_2.svg", 1006560295U},
+    {"testReactionPanels.svg", 3629304831U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10368,3 +10371,108 @@ TEST_CASE("Optional brackets round atom lists in queries and reactions.") {
   }
 }
 
+TEST_CASE("Github8213 - Reaction rendering ignores panels") {
+  std::string smiles =
+      "[#6]1-[#6]=[#6]-[#6]=[#6]-[#6]=1-[#6:1](=[#8])-[#8]."
+      "[#1:7]-[#7:4](-[#1,#6:5])-[#1,#6:6]>>"
+      "[#6]1(-[#6:1](-[#7:4](-[#1,#6:5])-[#1,#6:6])"
+      "=[#8])-[#6]=[#6]-[#6]=[#6]-[#6]=1";
+  bool useSmiles = false;
+  std::unique_ptr<ChemicalReaction> rxn(
+      RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+  REQUIRE(rxn);
+  MolDraw2DSVG drawer(600, 300, 300, 150, NO_FREETYPE);
+  drawer.drawReaction(*rxn);
+  drawer.setOffset(300, 150);
+  drawer.drawReaction(*rxn);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testReactionPanels.svg");
+  outs << text;
+  outs.close();
+  const static std::regex atom0(
+      "<text x='(\\d+\\.\\d+)' y='(\\d+\\.\\d+)' class='atom-0'.*</text>");
+  std::ptrdiff_t const match_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), atom0),
+                    std::sregex_iterator()));
+  CHECK(match_count == 6);
+  auto match_begin = std::sregex_iterator(text.begin(), text.end(), atom0);
+  std::smatch match = *match_begin;
+  double x1 = stod(match[1]);
+  double y1 = stod(match[2]);
+  CHECK(x1 < 300.0);
+  CHECK(y1 < 150.0);
+  ++match_begin;
+  ++match_begin;
+  ++match_begin;
+  match = *match_begin;
+  double x2 = stod(match[1]);
+  double y2 = stod(match[2]);
+  CHECK((x2 > 300.0 && x2 < 600.0));
+  CHECK((y2 > 150.0 && y2 < 300.0));
+  check_file_hash("testReactionPanels.svg");
+}
+
+TEST_CASE("Optionally increase padding round components in reaction drawing") {
+  // No specific tests on the output, because this was an enhancement not
+  // a bug fix.
+  {
+    std::string smiles =
+        "[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2]"
+        "(=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1["
+        "cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])"
+        "[N:13]=[N+:14]=[N-:15]";
+    bool useSmiles = false;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+    REQUIRE(rxn);
+    MolDraw2DSVG drawer(900, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().componentPadding = 0.0;
+    drawer.drawReaction(*rxn);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testComponentPadding_1.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testComponentPadding_1.svg");
+  }
+  {
+    std::string smiles =
+        "[cH:5]1[cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2]"
+        "(=[O:1])O.[N-:13]=[N+:14]=[N-:15]>C(Cl)Cl.C(=O)(C(=O)Cl)Cl>[cH:5]1["
+        "cH:6][c:7]2[cH:8][n:9][cH:10][cH:11][c:12]2[c:3]([cH:4]1)[C:2](=[O:1])"
+        "[N:13]=[N+:14]=[N-:15]";
+    bool useSmiles = false;
+    std::unique_ptr<ChemicalReaction> rxn(
+        RxnSmartsToChemicalReaction(smiles, nullptr, useSmiles));
+    REQUIRE(rxn);
+    {
+      MolDraw2DSVG drawer(900, 300, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().componentPadding = 0.25;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testComponentPadding_2.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("testComponentPadding_2.svg");
+    }
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+    // For a visual check.
+    {
+      MolDraw2DCairo drawer(900, 300, -1, -1, NO_FREETYPE);
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      drawer.writeDrawingText("testComponentPadding_2.png");
+      drawer.drawOptions().componentPadding = 0.1;
+      drawer.drawOptions().bondLineWidth = 2.0;
+      drawer.drawReaction(*rxn);
+      drawer.finishDrawing();
+      auto text = drawer.getDrawingText();
+      std::ofstream outs("testComponentPadding_2.png");
+      outs << text;
+      outs.close();
+    }
+#endif
+  }
+}

@@ -1379,6 +1379,10 @@ TEST_CASE("Equivalent bonds") {
 }
 
 TEST_CASE("Atom aromaticity match") {
+  // The first 2 tests give the results they do because the flag
+  // says to ignore _atom_ aromaticity, but it still takes into
+  // account _bond_ aromaticity.  It's so that the C-N bond
+  // matches in both cases in the first test.
   {
     auto m1 = "c1ccccc1NCC"_smiles;
     REQUIRE(m1);
@@ -1441,4 +1445,75 @@ TEST_CASE("Empty results bug") {
   opts.returnEmptyMCES = true;
   auto res = rascalMCES(*m1, *m2, opts);
   REQUIRE(!res.empty());
+}
+
+TEST_CASE("Order of atoms in bond labels must be consistent - Github 8198.") {
+  {
+    auto m1 = "c1ccccc1C"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1ccccc1C2CC2"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    opts.similarityThreshold = 0.1;
+    opts.ignoreAtomAromaticity = false;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    CHECK(res.front().getAtomMatches().size() == 7);
+    CHECK(res.front().getBondMatches().size() == 7);
+    CHECK(res.front().getSmarts() == "c1:c:c:c:c:c:1-C");
+    check_smarts_ok(*m1, *m2, res.front());
+  }
+  {
+    auto m1 = "Cc1ccc(C2=NN(C(N)=S)C(c3ccc(F)cc3)C2)cc1C"_smiles;
+    REQUIRE(m1);
+    auto m2 = "CC(=O)N1N=C(c2ccc(C)c(C)c2)CC1c1ccc(F)cc1"_smiles;
+    REQUIRE(m2);
+
+    RascalOptions opts;
+    opts.similarityThreshold = 0.1;
+    opts.ignoreAtomAromaticity = false;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    CHECK(res.front().getAtomMatches().size() == 21);
+    CHECK(res.front().getBondMatches().size() == 23);
+    CHECK(res.front().getSmarts() ==
+          "Cc1:c:c:c(-C2=NN(-C)-C(-c3:c:c:c(-F):c:c:3)-C2):c:c:1-C");
+    check_smarts_ok(*m1, *m2, res.front());
+  }
+}
+
+TEST_CASE("Duplicate Single Largest Frag") {
+  {
+    auto m1 = "c1ccc2c(c1)c(ncn2)CNCc3ccc(cc3)Cl"_smiles;
+    REQUIRE(m1);
+    auto m2 = "c1ccc2c(c1)c(ncn2)CCCc3ccc(cc3)Cl"_smiles;
+    REQUIRE(m2);
+    RascalOptions opts;
+    opts.singleLargestFrag = true;
+    opts.allBestMCESs = true;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    CHECK(res.front().getAtomMatches().size() == 11);
+    CHECK(res.front().getBondMatches().size() == 12);
+  }
+  {
+    // Without the fix, there were 156 results sets, with different breaks
+    // in the long chain giving different numbers of atoms in the largest
+    // fragment.
+    auto m1 = "CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "CN(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1"_smiles;
+    REQUIRE(m2);
+    RascalOptions opts;
+    opts.singleLargestFrag = true;
+    opts.allBestMCESs = true;
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(!res.empty());
+    CHECK(res.size() == 4);
+    CHECK(res.front().getAtomMatches().size() == 23);
+    CHECK(res.front().getBondMatches().size() == 23);
+    CHECK(res.back().getAtomMatches().size() == 23);
+    CHECK(res.back().getBondMatches().size() == 23);
+  }
 }

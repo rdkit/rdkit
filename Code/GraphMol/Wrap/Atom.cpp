@@ -104,7 +104,7 @@ std::string AtomGetSmarts(const Atom *atom, bool doKekule, bool allHsExplicit,
 }
 
 void SetAtomMonomerInfo(Atom *atom, const AtomMonomerInfo *info) {
-  if(!info) {
+  if (!info) {
     atom->setMonomerInfo(nullptr);
   } else {
     atom->setMonomerInfo(info->copy());
@@ -116,12 +116,12 @@ AtomMonomerInfo *AtomGetMonomerInfo(Atom *atom) {
 }
 
 void AtomSetPDBResidueInfo(Atom *atom, const AtomMonomerInfo *info) {
-  if(!info) {
+  if (!info) {
     // This clears out the monomer info
     atom->setMonomerInfo(nullptr);
     return;
   }
-  
+
   if (info->getMonomerType() != AtomMonomerInfo::PDBRESIDUE) {
     throw_value_error("MonomerInfo is not a PDB Residue");
   }
@@ -139,6 +139,17 @@ AtomPDBResidueInfo *AtomGetPDBResidueInfo(Atom *atom) {
   return (AtomPDBResidueInfo *)res;
 }
 
+namespace {
+int getExplicitValenceHelper(const Atom *atom) {
+  RDLog::deprecationWarning("please use GetValence(which=)");
+  return atom->getValence(Atom::ValenceType::EXPLICIT);
+};
+int getImplicitValenceHelper(const Atom *atom) {
+  RDLog::deprecationWarning("please use GetValence(getExplicit=False)");
+  return atom->getValence(Atom::ValenceType::IMPLICIT);
+};
+}  // namespace
+
 struct MDLDummy {};
 struct DaylightDummy {};
 
@@ -150,6 +161,10 @@ Note that, though it is possible to create one, having an Atom on its own\n\
 (i.e not associated with a molecule) is not particularly useful.\n";
 struct atom_wrapper {
   static void wrap() {
+#if defined(__GNUC__) or defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     python::class_<Atom>(
         "Atom", atomClassDoc.c_str(),
         python::init<std::string>(python::args("self", "what")))
@@ -199,13 +214,17 @@ struct atom_wrapper {
              "      Defaults to 0.\n")
         .def("GetNumImplicitHs", &Atom::getNumImplicitHs, python::args("self"),
              "Returns the total number of implicit Hs on the atom.\n")
-
-        .def("GetExplicitValence", &Atom::getExplicitValence,
-             python::args("self"),
-             "Returns the explicit valence of the atom.\n")
-        .def("GetImplicitValence", &Atom::getImplicitValence,
-             python::args("self"),
-             "Returns the number of implicit Hs on the atom.\n")
+        .def(
+            "GetExplicitValence", &getExplicitValenceHelper,
+            python::args("self"),
+            "DEPRECATED, please use GetValence(Chem.ValenceType,EXPLICIT) instead.\nReturns the explicit valence of the atom.\n")
+        .def(
+            "GetImplicitValence", &getImplicitValenceHelper,
+            python::args("self"),
+            "DEPRECATED, please use getValence(Chem.ValenceType,IMPLICIT) instead.\nReturns the number of implicit Hs on the atom.\n")
+        .def("GetValence", &Atom::getValence,
+             (python::args("self"), python::args("which")),
+             "Returns the valence (explicit or implicit) of the atom.\n")
         .def("GetTotalValence", &Atom::getTotalValence, python::args("self"),
              "Returns the total valence (explicit + implicit) of the atom.\n\n")
         .def("HasValenceViolation", &Atom::hasValenceViolation,
@@ -455,6 +474,9 @@ struct atom_wrapper {
              (python::arg("self"), python::arg("mapno"),
               python::arg("strict") = false),
              "Sets the atoms map number, a value of 0 clears the atom map");
+#if defined(__GNUC__) or defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
     python::enum_<Atom::HybridizationType>("HybridizationType")
         .value("UNSPECIFIED", Atom::UNSPECIFIED)
@@ -477,14 +499,17 @@ struct atom_wrapper {
         .value("CHI_TRIGONALBIPYRAMIDAL", Atom::CHI_TRIGONALBIPYRAMIDAL)
         .value("CHI_OCTAHEDRAL", Atom::CHI_OCTAHEDRAL)
         .export_values();
-    ;
+
+    python::enum_<Atom::ValenceType>("ValenceType")
+        .value("IMPLICIT", Atom::ValenceType::IMPLICIT)
+        .value("EXPLICIT", Atom::ValenceType::EXPLICIT)
+        .export_values();
 
     python::enum_<Queries::CompositeQueryType>("CompositeQueryType")
         .value("COMPOSITE_AND", Queries::COMPOSITE_AND)
         .value("COMPOSITE_OR", Queries::COMPOSITE_OR)
         .value("COMPOSITE_XOR", Queries::COMPOSITE_XOR)
         .export_values();
-    ;
 
     atomClassDoc =
         "The class to store QueryAtoms.\n\

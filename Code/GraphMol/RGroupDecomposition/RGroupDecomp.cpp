@@ -654,11 +654,9 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
 #endif
   if (data->params.removeHydrogensPostMatch) {
     RDLog::LogStateSetter blocker;
-    constexpr bool implicitOnly = false;
-    constexpr bool updateExplicitCount = false;
+    const MolOps::RemoveHsParameters rhp;
     constexpr bool sanitize = false;
-    MolOps::removeHs(*coreWithMatches, implicitOnly, updateExplicitCount,
-                     sanitize);
+    MolOps::removeHs(*coreWithMatches, rhp, sanitize);
     coreWithMatches->updatePropertyCache(false);
   }
 

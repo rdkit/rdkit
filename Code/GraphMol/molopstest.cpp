@@ -7,6 +7,7 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -534,7 +535,6 @@ void test5() {
   CHECK_INVARIANT(count == 2, "");
   delete m;
 }
-
 
 void test8() {
   BOOST_LOG(rdInfoLog) << "-----------------------\n Testing Hydrogen Ops"
@@ -2453,7 +2453,8 @@ void testHsAndAromaticity() {
   TEST_ASSERT(mol);
   // std::cerr << mol->getAtomWithIdx(0)->getHybridization() << std::endl;
   TEST_ASSERT(mol->getAtomWithIdx(0)->getHybridization() == Atom::SP3);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getImplicitValence() == 0);
+  TEST_ASSERT(mol->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) ==
+              0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumImplicitHs() == 0);
   TEST_ASSERT(mol->getAtomWithIdx(0)->getNumRadicalElectrons() == 1);
   TEST_ASSERT(!mol->getAtomWithIdx(0)->getIsAromatic());
@@ -3497,7 +3498,13 @@ void testSFNetIssue2196817() {
   {
     ROMOL_SPTR m = "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4N51"_smiles;
     for (const auto a : m->atoms()) {
-      TEST_ASSERT(a->getIsAromatic());
+      if (a->getAtomicNum() > 0 || a->getIdx() == 15 || a->getIdx() == 18) {
+        TEST_ASSERT(a->getIsAromatic());
+      } else if (a->getIdx() == 16 || a->getIdx() == 17) {
+        TEST_ASSERT(!a->getIsAromatic());
+      } else {
+        TEST_ASSERT(0);
+      }
     }
     unsigned int nNonAromaticBonds = 0;
     for (const auto b : m->bonds()) {
@@ -3996,8 +4003,10 @@ void testSFNetIssue3480481() {
     RWMol *m = MolFileToMol(pathName + "Issue3480481.mol");
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getIsAromatic() == true);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 4);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) ==
+                4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) ==
+                0);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == -1);
     delete m;
   }
@@ -4107,8 +4116,8 @@ void testSFNetIssue3525076() {
 void testBasicCanon() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing canonicalization basics" << std::endl;
-// these are all cases that were problematic at one time or another during
-// the canonicalization rewrite.
+  // these are all cases that were problematic at one time or another during
+  // the canonicalization rewrite.
   {
     std::string smi = "FC1C(=C/Cl)\\C1";
     RWMol *m = SmilesToMol(smi);
@@ -7125,21 +7134,22 @@ void testGithubIssue868() {
   }
 
   // test atom type query merging
-  for (int aromatic =0; aromatic<2; ++aromatic) {
+  for (int aromatic = 0; aromatic < 2; ++aromatic) {
     sstrm.str("");
     TEST_ASSERT(sstrm.str() == "");
     RWMol m;
     QueryAtom *qa = new QueryAtom();
     qa->setQuery(makeAtomTypeQuery(1, aromatic));
-    qa->expandQuery(makeAtomNumQuery(6), Queries::CompositeQueryType::COMPOSITE_OR);
+    qa->expandQuery(makeAtomNumQuery(6),
+                    Queries::CompositeQueryType::COMPOSITE_OR);
     m.addAtom(qa, true, true);
     MolOps::mergeQueryHs(m);
     TEST_ASSERT(sstrm.str().find("merging explicit H queries involved in "
-				 "ORs is not supported") != std::string::npos);
+                                 "ORs is not supported") != std::string::npos);
     TEST_ASSERT(sstrm.str().find("This query will not be merged") !=
-		std::string::npos);
+                std::string::npos);
   }
-   
+
   {
     sstrm.str("");
     TEST_ASSERT(sstrm.str() == "");
@@ -8493,11 +8503,11 @@ void testHasQueryHs() {
               has_only_query_hs);
 
   auto github7687 = "[#1,#6,#7]"_smarts;
-  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687) == has_unmergeable_hs );
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687) == has_unmergeable_hs);
   auto github7687b = "[1;#7,#1,#6]"_smarts;
-  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687b) == has_unmergeable_hs );
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687b) == has_unmergeable_hs);
   auto github7687c = "[1&#7,#1,#6]"_smarts;
-  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687c) == has_unmergeable_hs );
+  TEST_ASSERT(RDKit::MolOps::hasQueryHs(*github7687c) == has_unmergeable_hs);
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
