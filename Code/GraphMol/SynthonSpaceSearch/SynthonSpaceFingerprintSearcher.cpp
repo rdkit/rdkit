@@ -118,6 +118,7 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
   // which may not be the same as the number of bits in this
   // FP generator.
   const auto numBits = getSpace().getFPSize();
+  std::cout << "numBits = " << numBits << std::endl;
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
       if (ControlCHandler::getGotSignal()) {
@@ -130,15 +131,10 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
 
       std::unique_ptr<ExplicitBitVect> fullFP(
           new ExplicitBitVect(*d_fpGen.getFingerprint(*frag)));
-      auto foldedFP = details::foldExplicitBitVect(*fullFP, numBits);
       d_fragFPs.insert(std::make_pair(
-          frag.get(), std::unique_ptr<ExplicitBitVect>(std::move(foldedFP))));
+          frag.get(), std::unique_ptr<ExplicitBitVect>(std::move(fullFP))));
     }
   }
-
-  // Make the possibly shorter version of the query fingerprint that will
-  // be used in quickVerify.
-  d_foldedQueryFP = details::foldExplicitBitVect(*d_queryFP, numBits);
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
@@ -210,7 +206,7 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
           reaction, synthonOrder);
       if (!theseSynthons.empty()) {
         std::unique_ptr<SynthonSpaceHitSet> hs(
-            new SynthonSpaceFPHitSet(reaction, theseSynthons));
+            new SynthonSpaceFPHitSet(reaction, theseSynthons, fragSet));
         if (hs->numHits) {
           results.push_back(std::move(hs));
         }
@@ -238,7 +234,7 @@ bool SynthonSpaceFingerprintSearcher::quickVerify(
   // straight AND.
   fullFP &= *(hs->subtractFP);
 
-  double approxSim = TanimotoSimilarity(fullFP, *d_foldedQueryFP);
+  double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
   return approxSim >=
          getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }

@@ -151,7 +151,7 @@ TEST_CASE("FP Biggy") {
       "c12ccccc1c(N)nc(N)n2", "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
       "c1n[nH]cn1",           "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{46, 2, 0, 123, 0, 0};
-  const std::vector<size_t> maxRes{2989, 197, 0, 833, 0, 4};
+  const std::vector<size_t> maxRes{2408, 197, 0, 833, 0, 4};
   SynthonSpaceSearchParams params;
   params.approxSimilarityAdjuster = 0.2;
   params.maxHits = -1;
@@ -274,21 +274,22 @@ TEST_CASE("FP Approx Similarity") {
       RDKitFP::getRDKitFPGenerator<std::uint64_t>(3));
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
 
-  // Use a low fragSimilarityAdjuster so the test doesn't take
-  // too long.
-  params.fragSimilarityAdjuster = 0.05;
-
-  // No similarity adjuster gives slightly fewer hits than with
-  // a larger one.
-  params.approxSimilarityAdjuster = 0.0;
+  // With RDKit fingerprints, 0.05 gives a reasonable compromise
+  // between speed and hits missed.
+  params.approxSimilarityAdjuster = 0.05;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 922);
-  CHECK(results.getMaxNumResults() == 41881);
+  CHECK(results.getHitMolecules().size() == 482);
+  CHECK(results.getMaxNumResults() == 1466);
+
+  // A tighter adjuster misses more hits.
+  params.approxSimilarityAdjuster = 0.01;
+  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 124);
 
   // This is the actual number of hits achievable.
   params.approxSimilarityAdjuster = 0.25;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 927);
+  CHECK(results.getHitMolecules().size() == 914);
 }
 
 TEST_CASE("FP Binary File") {
@@ -326,18 +327,19 @@ TEST_CASE("FP Freedom Space") {
   // std::string libName2 =
   // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
   std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit.spc";
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
   for (const auto &l : std::vector<std::string>{libName}) {
     SynthonSpace synthonspace;
     synthonspace.readDBFile(l);
-    auto m = "Cc1ccc2ccccc2c1NC(=O)c1ccc(cc1)OCCCCCCCCCCCC"_smiles;
+    auto m =
+        "C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C"_smiles;
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
         RDKitFP::getRDKitFPGenerator<std::uint64_t>());
     SynthonSpaceSearchParams params;
-    params.similarityCutoff = 0.7;
+    params.similarityCutoff = 0.5;
     params.maxHits = 1000;
-    params.fragSimilarityAdjuster = 0.1;
-    params.approxSimilarityAdjuster = 0.2;
+    params.fragSimilarityAdjuster = 0.01;
+    params.approxSimilarityAdjuster = 0.05;
     SearchResults results;
     results = synthonspace.fingerprintSearch(*m, *fpGen, params);
     std::cout << "Number of results : " << results.getHitMolecules().size()

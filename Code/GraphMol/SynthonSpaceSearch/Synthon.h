@@ -23,7 +23,9 @@ class RWMol;
 namespace SynthonSpaceSearch {
 
 static constexpr unsigned int PATT_FP_NUM_BITS = 1024;
-static constexpr unsigned int FP_NUM_BITS = 1024;
+// With RDKit fingerprints, 2048 seems to work much better than
+// 1024, and the difference in database size is not significant.
+static constexpr unsigned int FP_NUM_BITS = 2048;
 
 // This class holds a Synthon that will be part of a SynthonSet.
 class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {

@@ -343,7 +343,7 @@ std::string buildProductName(const std::string &reactionId,
   return prodName;
 }
 
-std::unique_ptr<ROMol> buildProduct(const std::vector<ROMol *> &synths) {
+std::unique_ptr<ROMol> buildProduct(const std::vector<const ROMol *> &synths) {
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
 
@@ -355,18 +355,5 @@ std::unique_ptr<ROMol> buildProduct(const std::vector<ROMol *> &synths) {
   MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
 
   return prodMol;
-}
-
-std::unique_ptr<ExplicitBitVect> foldExplicitBitVect(
-    const ExplicitBitVect &bitVect, unsigned int targetNumBits) {
-  PRECONDITION(!(bitVect.getNumBits() % targetNumBits),
-               "ExplicitBitVect must be a multiple of targetNumBits");
-  std::unique_ptr<ExplicitBitVect> outVect(new ExplicitBitVect(targetNumBits));
-  for (unsigned int i = 0; i < bitVect.getNumBits(); ++i) {
-    if (outVect->getBit(i % targetNumBits) || bitVect.getBit(i)) {
-      outVect->setBit(i % targetNumBits);
-    }
-  }
-  return outVect;
 }
 }  // namespace RDKit::SynthonSpaceSearch::details

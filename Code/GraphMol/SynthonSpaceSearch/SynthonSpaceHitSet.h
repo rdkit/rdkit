@@ -27,7 +27,8 @@ namespace RDKit::SynthonSpaceSearch {
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   SynthonSpaceHitSet() = delete;
   SynthonSpaceHitSet(const SynthonSet &reaction,
-                     const std::vector<std::vector<size_t>> &stu)
+                     const std::vector<std::vector<size_t>> &stu,
+                     const std::vector<std::unique_ptr<ROMol>> &fragSet)
       : reactionId(reaction.getId()) {
     synthonsToUse.reserve(stu.size());
     const auto &synthons = reaction.getSynthons();
@@ -35,10 +36,14 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
       synthonsToUse.emplace_back();
       synthonsToUse[i].reserve(stu[i].size());
       for (size_t j = 0; j < stu[i].size(); ++j) {
-        synthonsToUse[i].emplace_back(std::make_pair(
-            synthons[i][stu[i][j]].first,
-            new ROMol(*synthons[i][stu[i][j]].second->getOrigMol())));
+        synthonsToUse[i].emplace_back(
+            std::make_pair(synthons[i][stu[i][j]].first,
+                           synthons[i][stu[i][j]].second->getOrigMol().get()));
       }
+    }
+    frags.reserve(fragSet.size());
+    for (size_t i = 0; i < fragSet.size(); ++i) {
+      frags.push_back(fragSet[i].get());
     }
     numHits = std::accumulate(
         stu.begin(), stu.end(), size_t(1),
@@ -49,8 +54,8 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   virtual ~SynthonSpaceHitSet() = default;
 
   std::string reactionId;
-  std::vector<std::vector<std::pair<std::string, std::unique_ptr<ROMol>>>>
-      synthonsToUse;
+  std::vector<const ROMol *> frags;
+  std::vector<std::vector<std::pair<std::string, const ROMol *>>> synthonsToUse;
   size_t numHits{0};
 };
 
@@ -60,8 +65,9 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceFPHitSet
     : SynthonSpaceHitSet {
   SynthonSpaceFPHitSet() = delete;
   SynthonSpaceFPHitSet(const SynthonSet &reaction,
-                       const std::vector<std::vector<size_t>> &stu)
-      : SynthonSpaceHitSet(reaction, stu) {
+                       const std::vector<std::vector<size_t>> &stu,
+                       const std::vector<std::unique_ptr<ROMol>> &fragSet)
+      : SynthonSpaceHitSet(reaction, stu, fragSet) {
     synthonFPs.reserve(stu.size());
     for (size_t i = 0; i < stu.size(); ++i) {
       synthonFPs.emplace_back();

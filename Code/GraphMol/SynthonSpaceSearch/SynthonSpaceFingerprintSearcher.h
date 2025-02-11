@@ -28,7 +28,6 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
 
  private:
   std::unique_ptr<ExplicitBitVect> d_queryFP;
-  std::unique_ptr<ExplicitBitVect> d_foldedQueryFP;
 
   const FingerprintGenerator<std::uint64_t> &d_fpGen;
   // These are the fingerprints for the fragments in this search.

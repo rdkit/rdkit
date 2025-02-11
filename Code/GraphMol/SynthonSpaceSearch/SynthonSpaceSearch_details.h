@@ -115,9 +115,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT Stepper {
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
     const std::string &reactionId, const std::vector<std::string> &fragIds);
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
-    const std::vector<ROMol *> &frags);
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ExplicitBitVect>
-foldExplicitBitVect(const ExplicitBitVect &bitVect, unsigned int targetNumBits);
+    const std::vector<const ROMol *> &frags);
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 

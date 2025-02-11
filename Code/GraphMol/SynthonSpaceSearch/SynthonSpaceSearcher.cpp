@@ -112,10 +112,10 @@ SearchResults SynthonSpaceSearcher::search() {
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
     std::set<std::string> &resultsNames) const {
-  std::vector<ROMol *> synths(synthNums.size());
+  std::vector<const ROMol *> synths(synthNums.size());
   std::vector<std::string> synthNames(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); i++) {
-    synths[i] = hitset->synthonsToUse[i][synthNums[i]].second.get();
+    synths[i] = hitset->synthonsToUse[i][synthNums[i]].second;
     synthNames[i] = hitset->synthonsToUse[i][synthNums[i]].first;
   }
   const auto prodName =

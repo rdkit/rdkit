@@ -288,7 +288,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
           getHitSynthons(connComb, passedScreens, reaction, so);
       if (!theseSynthons.empty()) {
         std::unique_ptr<SynthonSpaceHitSet> hs(
-            new SynthonSpaceHitSet(reaction, theseSynthons));
+            new SynthonSpaceHitSet(reaction, theseSynthons, fragSet));
         if (hs->numHits) {
           results.push_back(std::move(hs));
         }

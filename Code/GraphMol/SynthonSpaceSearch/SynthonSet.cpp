@@ -497,7 +497,6 @@ void SynthonSet::buildAddAndSubtractFPs(
     }
     auto prod = buildProduct(theseSynthNums);
     std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
-    auto foldedProdFP = details::foldExplicitBitVect(*prodFP, numBits);
     ExplicitBitVect approxFP(*d_synthons[0][theseSynthNums[0]].second->getFP());
     for (size_t j = 1; j < d_synthons.size(); ++j) {
       approxFP |= *d_synthons[j][theseSynthNums[j]].second->getFP();
@@ -507,14 +506,14 @@ void SynthonSet::buildAddAndSubtractFPs(
     // the molecule formed by the joining the fragments, the latter
     // the bits connecting the dummy atoms.
     std::unique_ptr<ExplicitBitVect> addFP(
-        new ExplicitBitVect(*foldedProdFP & ~approxFP));
+        new ExplicitBitVect(*prodFP & ~approxFP));
     IntVect v;
     addFP->getOnBits(v);
     for (auto i : v) {
       naddbitcounts[i]++;
     }
     std::unique_ptr<ExplicitBitVect> subtractFP(
-        new ExplicitBitVect(approxFP & ~(*foldedProdFP)));
+        new ExplicitBitVect(approxFP & ~(*prodFP)));
     subtractFP->getOnBits(v);
     for (auto i : v) {
       nsubbitcounts[i]++;
@@ -552,7 +551,7 @@ std::string SynthonSet::buildProductName(
 }
 std::unique_ptr<ROMol> SynthonSet::buildProduct(
     const std::vector<size_t> &synthNums) const {
-  std::vector<ROMol *> synths(synthNums.size());
+  std::vector<const ROMol *> synths(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); ++i) {
     synths[i] = d_synthons[i][synthNums[i]].second->getOrigMol().get();
   }

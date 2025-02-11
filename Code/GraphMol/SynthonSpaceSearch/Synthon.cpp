@@ -106,7 +106,7 @@ void Synthon::setSearchMol(std::unique_ptr<RWMol> mol) {
   finishInitialization();
 }
 void Synthon::setFP(std::unique_ptr<ExplicitBitVect> fp) {
-  dp_FP = details::foldExplicitBitVect(*fp, FP_NUM_BITS);
+  dp_FP = std::move(fp);
 }
 
 void Synthon::writeToDBStream(std::ostream &os) const {
