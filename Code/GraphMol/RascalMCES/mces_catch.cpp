@@ -1517,3 +1517,36 @@ TEST_CASE("Duplicate Single Largest Frag") {
     CHECK(res.back().getBondMatches().size() == 23);
   }
 }
+
+TEST_CASE("Github8255 - incorrect MCES with singleLargestFrag=true") {
+  RascalOptions opts;
+  opts.singleLargestFrag = true;
+  opts.allBestMCESs = true;
+  opts.ignoreAtomAromaticity = true;
+  opts.ringMatchesRingOnly = true;
+  opts.completeAromaticRings = false;
+  {
+    auto m1 = "Cc1ccc(cn1)-c1ccc(cn1)-c1ccc2ccccc2n1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "Cc1ccc(cn1)-c1ccc(cn1)-c1cc2ccccc2[nH]1"_smiles;
+    REQUIRE(m2);
+    auto res = rascalMCES(*m1, *m2, opts);
+    CHECK(res.size() == 3);
+    for (auto &r : res) {
+      CHECK(r.getAtomMatches().size() == 20);
+      CHECK(r.getBondMatches().size() == 21);
+    }
+  }
+  {
+    auto m1 = "Cc1ncc(cc1)c2ncc(cc2)c3ccc4c(c3)cn[nH]4"_smiles;
+    REQUIRE(m1);
+    auto m2 = "Cc1ncc(cc1)c2ncc(cc2)c3ccc4c(c3)nccn4"_smiles;
+    REQUIRE(m2);
+    auto res = rascalMCES(*m1, *m2, opts);
+    CHECK(res.size() == 2);
+    for (auto &r : res) {
+      CHECK(r.getAtomMatches().size() == 20);
+      CHECK(r.getBondMatches().size() == 22);
+    }
+  }
+}

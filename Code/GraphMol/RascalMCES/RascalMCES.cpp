@@ -1131,9 +1131,9 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
     std::sort(results.begin(), results.end(),
               [](const RascalResult &r1, const RascalResult &r2) -> bool {
                 if (r1.getAtomMatches() == r2.getAtomMatches()) {
-                  return (r1.getBondMatches() < r2.getBondMatches());
+                  return (r1.getBondMatches() > r2.getBondMatches());
                 }
-                return (r1.getAtomMatches() < r2.getAtomMatches());
+                return (r1.getAtomMatches() > r2.getAtomMatches());
               });
 
     // the singleLargestFrag method throws bits of solutions out, so there may
@@ -1165,7 +1165,6 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
       results.erase(results.begin() + j, results.end());
     }
   }
-  std::sort(results.begin(), results.end(), details::resultCompare);
   return results;
 }
 
