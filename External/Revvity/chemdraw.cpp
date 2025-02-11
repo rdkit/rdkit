@@ -51,6 +51,7 @@
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Atropisomers.h>
+#include <boost/algorithm/string.hpp>
 
 // #define DEBUG 1
 namespace {
@@ -141,7 +142,9 @@ void visit_children(
       }
 
       if (hasConf) {
-        scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
+        if(!is3D) {
+          scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
+        }
         conf->set3D(is3D);
         auto confidx = res->addConformer(conf.release());
 
@@ -221,35 +224,37 @@ void visit_children(
   }
 }
 
-std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
-    std::istream &inStream, const ChemDrawParserParams &params) {
-  CDXMLParser parser;
-  // populate tree structure pt
-  std::string data = std::string(std::istreambuf_iterator<char>(inStream),
-                                 std::istreambuf_iterator<char>());
-  const bool HaveAllXml = true;
-  if (XML_STATUS_OK != parser.XML_Parse(data.c_str(),
-                                        static_cast<int>(data.size()),
-                                        HaveAllXml)) {
-    auto error = XML_GetErrorCode(parser);
-    BOOST_LOG(rdErrorLog) << "Failed parsing XML with error code " << error;
-    throw FileParseException("Bad Input File");
-  }
+std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream, CDXFormat format) {
+  if(format == CDXFormat::CDXML) {
+    CDXMLParser parser;
+    // populate tree structure pt
+    std::string data = std::string(std::istreambuf_iterator<char>(inStream),
+                                   std::istreambuf_iterator<char>());
+    const bool HaveAllXml = true;
+    if (XML_STATUS_OK != parser.XML_Parse(data.c_str(),
+                                          static_cast<int>(data.size()),
+                                          HaveAllXml)) {
+      auto error = XML_GetErrorCode(parser);
+      BOOST_LOG(rdErrorLog) << "Failed parsing XML with error code " << error;
+      throw FileParseException("Bad Input File");
+    }
 
-  std::unique_ptr<CDXDocument> document = parser.ReleaseDocument();
+    return parser.ReleaseDocument();
+  } else {
+    throw FileParseException("Can't handle cdx yet");
+    return std::unique_ptr<CDXDocument>();
+  }
+}
+
+// may raise FileParseException
+std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
+    std::istream &inStream, const ChemDrawParserParams &params) {
+  std::unique_ptr<CDXDocument> document = streamToCDXDocument(inStream, CDXFormat::CDXML);
   if (!document) {
     // error
     return std::vector<std::unique_ptr<RWMol>>();
   }
   PageData pagedata;
-  /*
-  std::vector<std::unique_ptr<RWMol>> mols;  // All molecules found in the doc
-  std::map<unsigned int, size_t>
-      fragment_lookup;  // fragment.id->molecule index
-  std::map<unsigned int, std::vector<int>>
-      grouped_fragments;              // grouped.id -> [fragment.id]
-  std::vector<ReactionInfo> schemes;  // reaction schemes found
-   */
   auto bondLength = document->m_bondLength;
 
   int missing_frag_id = -1;
@@ -272,9 +277,26 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
 }  // namespace
 
 namespace RDKit {
+std::unique_ptr<CDXDocument> ChemDrawToDocument(std::istream &inStream, CDXFormat format) {
+  return streamToCDXDocument(inStream, format);
+}
+
+std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
+  std::fstream chemdrawfile(filename);
+  std::string ext = std::filesystem::path(filename).extension();
+  boost::algorithm::to_lower(ext);
+  if (ext == ".cdxml")
+    return streamToCDXDocument(chemdrawfile, CDXFormat::CDXML);
+  else if (ext == ".cdx") {
+    return streamToCDXDocument(chemdrawfile, CDXFormat::CDX);
+  }
+  std::string msg = std::string("Unknoen filetype ") + (std::string)std::filesystem::path(filename).extension();
+  throw FileParseException(msg.c_str());
+}
+
 std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(
     std::istream &inStream, const ChemDrawParserParams &params) {
-  auto chemdrawmols = MolsFromCDXMLDataStream(inStream, params);
+  auto chemdrawmols = molsFromCDXMLDataStream(inStream, params);
   std::vector<std::unique_ptr<ROMol>> mols;
   mols.reserve(chemdrawmols.size());
   for (auto &mol : chemdrawmols) {
@@ -289,12 +311,12 @@ std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(
   CDXMLParser parser;
   std::vector<std::unique_ptr<ROMol>> mols;
 
-  std::fstream chemdrawfile(filename);
+  std::fstream chemdrawfile(filename); // FIX ME CHECK CDX versus CDXML
   if (!chemdrawfile) {
     throw BadFileException(filename + " does not exist");
     return mols;
   }
-  auto chemdrawmols = MolsFromCDXMLDataStream(chemdrawfile, params);
+  auto chemdrawmols = molsFromCDXMLDataStream(chemdrawfile, params);
 
   mols.reserve(chemdrawmols.size());
   for (auto &mol : chemdrawmols) {
