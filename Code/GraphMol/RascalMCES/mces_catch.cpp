@@ -37,9 +37,10 @@ using namespace RDKit::RascalMCES::details;
 void check_smarts_ok(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                      const RascalResult &res) {
   auto qmol = v2::SmilesParse::MolFromSmarts(res.getSmarts());
+  REQUIRE(qmol);
   RDKit::MatchVectType dont_care;
-  REQUIRE(RDKit::SubstructMatch(mol1, *qmol, dont_care));
-  REQUIRE(RDKit::SubstructMatch(mol2, *qmol, dont_care));
+  CHECK(RDKit::SubstructMatch(mol1, *qmol, dont_care));
+  CHECK(RDKit::SubstructMatch(mol2, *qmol, dont_care));
 }
 
 void check_expected_bonds(
@@ -47,7 +48,7 @@ void check_expected_bonds(
     const std::vector<std::vector<std::pair<int, int>>> &exp_bond_matches) {
   auto found_it = std::find(exp_bond_matches.begin(), exp_bond_matches.end(),
                             res.getBondMatches());
-  REQUIRE(found_it != exp_bond_matches.end());
+  CHECK(found_it != exp_bond_matches.end());
 }
 
 TEST_CASE("Very small test", "[basics]") {
@@ -1529,9 +1530,8 @@ TEST_CASE(
   opts.ringMatchesRingOnly = true;
   auto res = rascalMCES(*m1, *m2, opts);
   REQUIRE(!res.empty());
-  std::cout << res.front().getSmarts() << std::endl;
   CHECK(
       res.front().getSmarts() ==
-      "C-[O,S]-[C&R]1=&@[C&R]-&@[C&R]2(-&@[$([O,S])&R]-&@c3:c:c:c(-c4:c:c:c:c:c:4):c:c:3-&@[C&R]-&@2=[O,S])-&@[C&R](-[O,S]-C)=&@[C&R]-&@[C&R]-&@1-[O,S]");
+      "C-[O,S]-[C&R]1=&@[C&R]-&@[C&R]2(-&@[O,S;R]-&@c3:c:c:c(-c4:c:c:c:c:c:4):c:c:3-&@[C&R]-&@2=[O,S])-&@[C&R](-[O,S]-C)=&@[C&R]-&@[C&R]-&@1-[O,S]");
   check_smarts_ok(*m1, *m2, res.front());
 }
