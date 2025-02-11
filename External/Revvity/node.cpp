@@ -80,14 +80,16 @@ bool parse_node(
     }
     case kCDXNodeType_ExternalConnectionPoint: {
       if (external_attachment <= 0) {
-        BOOST_LOG(rdErrorLog)
-            << "External Connection Point is not set skipping fragment";
-        return false;
-        break;
+        // sometimes this is a dummy atom, but I don't know when.
+        if(node.m_externalConnectionType == kCDXExternalConnection_Diamond) {
+          elemno = 0;
+        }
+        atommap = atom_id;
+      } else {
+        elemno = 0;
+        atommap = external_attachment;
+        mergeparent = external_attachment;
       }
-      elemno = 0;
-      atommap = external_attachment;
-      mergeparent = external_attachment;
       break;
     }
     case kCDXNodeType_GenericNickname: {
@@ -106,7 +108,9 @@ bool parse_node(
             }
           }
           case 'A':
-          case 'Q': {
+          case 'Q':
+          case 'X':
+          case 'M': {
             elemno = 0;
             query_label = node.m_genericNickname;
           } break;
@@ -191,6 +195,12 @@ bool parse_node(
       rd_atom = addquery(makeAAtomQuery(), query_label, mol, idx);
     } else if (query_label == "Q") {
       rd_atom = addquery(makeQAtomQuery(), query_label, mol, idx);
+    } else if (query_label == "M") {
+      rd_atom = addquery(makeMAtomQuery(), query_label, mol, idx);
+    } else if (query_label == "MH") {
+      rd_atom = addquery(makeMHAtomQuery(), query_label, mol, idx);
+    } else if (query_label == "X") {
+      rd_atom = addquery(makeXAtomQuery(), query_label, mol, idx);
     } else if (query_label == "ElementList") {
       if (!elementlist.size()) {
         BOOST_LOG(rdWarningLog)
@@ -205,6 +215,9 @@ bool parse_node(
         rd_atom = addquery(q, query_label, mol, idx);
         rd_atom->setAtomicNum(elementlist.front());
       }
+    } else if (query_label.size()) {
+      std::cerr << "Unhandled generic nickname: "
+                << query_label << std::endl;
     } else {
       rd_atom->setProp(common_properties::atomLabel, query_label);
     }
