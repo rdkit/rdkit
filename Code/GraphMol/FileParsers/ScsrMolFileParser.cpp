@@ -706,13 +706,13 @@ class MolFromSCSRMolConverter {
       newBeginAtom =
           getNewAtomForBond(bond->getBeginAtom(), bond->getEndAtomIdx());
       if (newBeginAtom == UINT_MAX) {
-        return;
+        throw FileParseException("Error getting new atom for bond");
       }
 
       newEndAtom =
           getNewAtomForBond(bond->getEndAtom(), bond->getBeginAtomIdx());
       if (newEndAtom == UINT_MAX) {
-        return;
+        throw FileParseException("Error getting new atom for bond");
       }
 
       addBond(bond->getBondType(), newBeginAtom, newEndAtom);
@@ -793,13 +793,13 @@ class MolFromSCSRMolConverter {
                                  beginHatomConnections);
 
       if (beginHatomConnections.empty()) {
-        return;
+        throw FileParseException("No Attach Point for bond");
       }
 
       getNewAtomsForHydrogenBond(bond->getEndAtom(), bond->getBeginAtomIdx(),
                                  endHatomConnections);
       if (endHatomConnections.empty()) {
-        return;
+        throw FileParseException("No Attach Point for bond");
       }
     } else if (molFromScsrParams.scsrBaseHbondOptions ==
                ScsrBaseHbondOptions::ScsrBaseHbondOptionsAuto) {

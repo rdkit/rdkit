@@ -14,6 +14,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileWriters.h>
+#include <GraphMol/ScsrMol.h>
 #include "CDXMLParser.h"
 #include <string>
 #include <string_view>

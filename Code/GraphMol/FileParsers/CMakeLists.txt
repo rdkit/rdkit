@@ -48,9 +48,6 @@ rdkit_test(fileParsersTest1 test1.cpp
 rdkit_test(testAtropisomers testAtropisomers.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
 
-rdkit_test(testMacromols testMacromols.cpp
-    LINK_LIBRARIES FileParsers SubstructMatch)
-
 rdkit_catch_test(testSquiggleDoubleBonds testSquiggleDoubleBonds.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
 
@@ -77,6 +74,9 @@ rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(macromolsCatchTest macromols_catch.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp
