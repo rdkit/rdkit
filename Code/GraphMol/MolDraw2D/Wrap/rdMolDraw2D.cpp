@@ -862,8 +862,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset for the extra lines in a multiple bond as a fraction of mean"
           " bond length")
-      .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
-                     "fraction of empty space to leave around molecule")
+      .def_readwrite(
+          "padding", &RDKit::MolDrawOptions::padding,
+          "Fraction of empty space to leave around molecule.  Default=0.05.")
+      .def_readwrite("reagentPadding", &RDKit::MolDrawOptions::componentPadding,
+                     "Fraction of empty space to leave around each component"
+                     " of a reaction drawing.  Default=0.0.")
       .def_readwrite(
           "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
           "if positive, this overrides the default line width for bonds")
