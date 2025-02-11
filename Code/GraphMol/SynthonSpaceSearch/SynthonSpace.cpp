@@ -72,6 +72,35 @@ const std::shared_ptr<SynthonSet> SynthonSpace::getReaction(
                            reactionName);
 }
 
+unsigned int SynthonSpace::getPatternFPSize() const {
+  PRECONDITION(d_reactions.size(), "No synthon sets available.");
+  for (const auto &[id, reaction] : d_reactions) {
+    if (!reaction->getSynthons().empty()) {
+      return reaction->getSynthons()
+          .front()
+          .front()
+          .second->getPattFP()
+          ->getNumBits();
+    }
+  }
+  throw std::runtime_error(
+      "Could not find pattern fingerprint for any synthon.");
+}
+
+unsigned int SynthonSpace::getFPSize() const {
+  PRECONDITION(d_reactions.size(), "No synthon sets available.");
+  for (const auto &[id, reaction] : d_reactions) {
+    if (!reaction->getSynthons().empty()) {
+      return reaction->getSynthons()
+          .front()
+          .front()
+          .second->getFP()
+          ->getNumBits();
+    }
+  }
+  throw std::runtime_error("Could not find fingerprint for any synthon.");
+}
+
 std::uint64_t SynthonSpace::getNumProducts() const { return d_numProducts; }
 std::string SynthonSpace::getFormattedNumProducts() const {
   return formatLargeInt(d_numProducts);
@@ -343,8 +372,10 @@ void SynthonSpace::summarise(std::ostream &os) {
      << std::endl;
   os << "Number of unique synthons : " << d_synthonPool.size() << std::endl;
   for (unsigned int i = 0; i < MAX_CONNECTOR_NUM; ++i) {
-    os << "Number of " << i << " molecule reactions : " << synthCounts[i]
-       << std::endl;
+    if (synthCounts[i] > 0) {
+      os << "Number of " << i << " molecule reactions : " << synthCounts[i]
+         << std::endl;
+    }
   }
 }
 
@@ -386,11 +417,12 @@ bool SynthonSpace::hasAddAndSubstractFingerprints() const {
 
 void SynthonSpace::buildAddAndSubstractFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
+  auto numBits = getFPSize();
   for (const auto &[id, synthSet] : d_reactions) {
     if (ControlCHandler::getGotSignal()) {
       return;
     }
-    synthSet->buildAddAndSubtractFPs(fpGen);
+    synthSet->buildAddAndSubtractFPs(fpGen, numBits);
   }
 }
 

@@ -13,6 +13,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -105,7 +106,7 @@ void Synthon::setSearchMol(std::unique_ptr<RWMol> mol) {
   finishInitialization();
 }
 void Synthon::setFP(std::unique_ptr<ExplicitBitVect> fp) {
-  dp_FP = std::move(fp);
+  dp_FP = details::foldExplicitBitVect(*fp, FP_NUM_BITS);
 }
 
 void Synthon::writeToDBStream(std::ostream &os) const {
@@ -152,7 +153,7 @@ void Synthon::readFromDBStream(std::istream &is) {
 }
 
 void Synthon::finishInitialization() {
-  dp_pattFP.reset(PatternFingerprintMol(*dp_searchMol, 2048));
+  dp_pattFP.reset(PatternFingerprintMol(*dp_searchMol, PATT_FP_NUM_BITS));
   d_connRegions.clear();
   if (const auto cr = getConnRegion(*dp_searchMol); cr) {
     std::vector<std::unique_ptr<ROMol>> tmpFrags;

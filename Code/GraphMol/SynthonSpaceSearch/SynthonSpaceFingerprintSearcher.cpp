@@ -23,6 +23,14 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params, SynthonSpace &space)
     : SynthonSpaceSearcher(query, params, space), d_fpGen(fpGen) {
+  if (getSpace().hasFingerprints() &&
+      d_fpGen.infoString() != getSpace().getSynthonFingerprintType()) {
+    throw std::runtime_error(
+        "The search fingerprints must match"
+        " those in the database.  You are searching with " +
+        d_fpGen.infoString() + " vs " + getSpace().getSynthonFingerprintType() +
+        " in the database.");
+  }
   d_queryFP = std::unique_ptr<ExplicitBitVect>(d_fpGen.getFingerprint(query));
 }
 
@@ -106,6 +114,10 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
   if (ControlCHandler::getGotSignal()) {
     return;
   }
+  // Get the number of bits used to create the Synthon fingerprints,
+  // which may not be the same as the number of bits in this
+  // FP generator.
+  const auto numBits = getSpace().getFPSize();
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
       if (ControlCHandler::getGotSignal()) {
@@ -116,11 +128,17 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
       sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                   MolOps::SANITIZE_SYMMRINGS);
 
+      std::unique_ptr<ExplicitBitVect> fullFP(
+          new ExplicitBitVect(*d_fpGen.getFingerprint(*frag)));
+      auto foldedFP = details::foldExplicitBitVect(*fullFP, numBits);
       d_fragFPs.insert(std::make_pair(
-          frag.get(),
-          std::unique_ptr<ExplicitBitVect>(d_fpGen.getFingerprint(*frag))));
+          frag.get(), std::unique_ptr<ExplicitBitVect>(std::move(foldedFP))));
     }
   }
+
+  // Make the possibly shorter version of the query fingerprint that will
+  // be used in quickVerify.
+  d_foldedQueryFP = details::foldExplicitBitVect(*d_queryFP, numBits);
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
@@ -220,12 +238,13 @@ bool SynthonSpaceFingerprintSearcher::quickVerify(
   // straight AND.
   fullFP &= *(hs->subtractFP);
 
-  double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
+  double approxSim = TanimotoSimilarity(fullFP, *d_foldedQueryFP);
   return approxSim >=
          getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }
 
 bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
+  // This uses the full-length fingerprint for query and hit.
   const std::unique_ptr<ExplicitBitVect> fp(d_fpGen.getFingerprint(hit));
   if (const auto sim = TanimotoSimilarity(*fp, *d_queryFP);
       sim >= getParams().similarityCutoff) {

@@ -208,6 +208,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
 
 void SynthonSpaceSubstructureSearcher::extraSearchSetup(
     std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
+  const auto pattFPSize = getSpace().getPatternFPSize();
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
       // For the fingerprints, ring info is required.
@@ -215,9 +216,9 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
       sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                   MolOps::SANITIZE_SYMMRINGS);
 
-      d_pattFPs.insert(
-          std::make_pair(frag.get(), std::unique_ptr<ExplicitBitVect>(
-                                         PatternFingerprintMol(*frag, 2048))));
+      d_pattFPs.insert(std::make_pair(
+          frag.get(), std::unique_ptr<ExplicitBitVect>(
+                          PatternFingerprintMol(*frag, pattFPSize))));
     }
   }
 }

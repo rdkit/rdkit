@@ -447,14 +447,14 @@ void SynthonSet::buildSynthonFingerprints(
 }
 
 void SynthonSet::buildAddAndSubtractFPs(
-    const FingerprintGenerator<std::uint64_t> &fpGen) {
+    const FingerprintGenerator<std::uint64_t> &fpGen, unsigned int numBits) {
   PRECONDITION(hasFingerprints(), "No fingerprints for synthons.");
   d_addFP.reset();
   d_subtractFP.reset();
   std::vector<std::vector<size_t>> synthonNums(d_synthons.size());
   std::vector<size_t> numSynthons(d_synthons.size());
-  std::vector<int> naddbitcounts(fpGen.getOptions()->d_fpSize, 0);
-  std::vector<int> nsubbitcounts(fpGen.getOptions()->d_fpSize, 0);
+  std::vector<int> naddbitcounts(numBits, 0);
+  std::vector<int> nsubbitcounts(numBits, 0);
   size_t totSamples = 1;
   // Sample the synthons evenly across their size ranges.
   for (size_t i = 0; i < d_synthons.size(); ++i) {
@@ -497,6 +497,7 @@ void SynthonSet::buildAddAndSubtractFPs(
     }
     auto prod = buildProduct(theseSynthNums);
     std::unique_ptr<ExplicitBitVect> prodFP(fpGen.getFingerprint(*prod));
+    auto foldedProdFP = details::foldExplicitBitVect(*prodFP, numBits);
     ExplicitBitVect approxFP(*d_synthons[0][theseSynthNums[0]].second->getFP());
     for (size_t j = 1; j < d_synthons.size(); ++j) {
       approxFP |= *d_synthons[j][theseSynthNums[j]].second->getFP();
@@ -506,14 +507,14 @@ void SynthonSet::buildAddAndSubtractFPs(
     // the molecule formed by the joining the fragments, the latter
     // the bits connecting the dummy atoms.
     std::unique_ptr<ExplicitBitVect> addFP(
-        new ExplicitBitVect(*prodFP & ~approxFP));
+        new ExplicitBitVect(*foldedProdFP & ~approxFP));
     IntVect v;
     addFP->getOnBits(v);
     for (auto i : v) {
       naddbitcounts[i]++;
     }
     std::unique_ptr<ExplicitBitVect> subtractFP(
-        new ExplicitBitVect(approxFP & ~(*prodFP)));
+        new ExplicitBitVect(approxFP & ~(*foldedProdFP)));
     subtractFP->getOnBits(v);
     for (auto i : v) {
       nsubbitcounts[i]++;
@@ -524,14 +525,13 @@ void SynthonSet::buildAddAndSubtractFPs(
   // This is the fraction of products that must set a bit for
   // it to be included.  Arrived at by empirical means.
   double frac = 0.75;
-  d_addFP = std::make_unique<ExplicitBitVect>(fpGen.getOptions()->d_fpSize);
+  d_addFP = std::make_unique<ExplicitBitVect>(numBits);
   for (size_t i = 0; i < naddbitcounts.size(); ++i) {
     if (naddbitcounts[i] > int(totSamples * frac)) {
       d_addFP->setBit(i);
     }
   }
-  d_subtractFP =
-      std::make_unique<ExplicitBitVect>(fpGen.getOptions()->d_fpSize);
+  d_subtractFP = std::make_unique<ExplicitBitVect>(numBits);
   for (size_t i = 0; i < nsubbitcounts.size(); ++i) {
     if (nsubbitcounts[i] > int(totSamples * frac)) {
       d_subtractFP->setBit(i);

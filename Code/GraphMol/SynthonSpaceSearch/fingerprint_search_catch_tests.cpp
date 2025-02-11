@@ -151,7 +151,7 @@ TEST_CASE("FP Biggy") {
       "c12ccccc1c(N)nc(N)n2", "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
       "c1n[nH]cn1",           "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{46, 2, 0, 123, 0, 0};
-  const std::vector<size_t> maxRes{2408, 197, 0, 833, 0, 4};
+  const std::vector<size_t> maxRes{2989, 197, 0, 833, 0, 4};
   SynthonSpaceSearchParams params;
   params.approxSimilarityAdjuster = 0.2;
   params.maxHits = -1;
@@ -274,22 +274,21 @@ TEST_CASE("FP Approx Similarity") {
       RDKitFP::getRDKitFPGenerator<std::uint64_t>(3));
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
 
-  // With RDKit fingerprints, 0.05 gives a reasonable compromise
-  // between speed and hits missed.
-  params.approxSimilarityAdjuster = 0.05;
-  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 482);
-  CHECK(results.getMaxNumResults() == 1466);
+  // Use a low fragSimilarityAdjuster so the test doesn't take
+  // too long.
+  params.fragSimilarityAdjuster = 0.05;
 
-  // A tighter adjuster misses more hits.
-  params.approxSimilarityAdjuster = 0.01;
-  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 124);
+  // No similarity adjuster gives slightly fewer hits than with
+  // a larger one.
+  params.approxSimilarityAdjuster = 0.0;
+  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 922);
+  CHECK(results.getMaxNumResults() == 41881);
 
   // This is the actual number of hits achievable.
   params.approxSimilarityAdjuster = 0.25;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 914);
+  CHECK(results.getHitMolecules().size() == 927);
 }
 
 TEST_CASE("FP Binary File") {

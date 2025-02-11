@@ -630,11 +630,11 @@ TEST_CASE("S Freedom Space") {
   std::string libName =
       "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
   libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1.txt";
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
   SynthonSpace synthonspace;
   bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
-  synthonspace.summarise(std::cout);
+  synthonspace.readDBFile(libName);
+  // synthonspace.summarise(std::cout);
 
   auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
   SynthonSpaceSearchParams params;

@@ -92,7 +92,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   void buildSynthonFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
-  void buildAddAndSubtractFPs(const FingerprintGenerator<std::uint64_t> &fpGen);
+  void buildAddAndSubtractFPs(const FingerprintGenerator<std::uint64_t> &fpGen,
+                              unsigned int numBits);
 
   // Return the molecules for synthons for which the bits are true.
   // Obviously requires that reqSynths is the same dimensions as

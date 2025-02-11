@@ -15,6 +15,7 @@
 #include <vector>
 
 #include <RDGeneral/export.h>
+#include <DataStructs/ExplicitBitVect.h>
 
 using Clock = std::chrono::steady_clock;
 using TimePoint = std::chrono::time_point<Clock>;
@@ -115,7 +116,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
     const std::string &reactionId, const std::vector<std::string> &fragIds);
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
     const std::vector<ROMol *> &frags);
-
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ExplicitBitVect>
+foldExplicitBitVect(const ExplicitBitVect &bitVect, unsigned int targetNumBits);
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 
