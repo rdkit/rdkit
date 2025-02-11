@@ -121,6 +121,12 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   rdkit_catch_test(chemdrawCatchTest test.cpp
         LINK_LIBRARIES RDChemDrawLib SubstructMatch FileParsers SmilesParse ChemTransforms GraphMol)
 
+  rdkit_catch_test(chemdraw3DCatchTest test_3d.cpp
+        LINK_LIBRARIES RDChemDrawLib SubstructMatch FileParsers SmilesParse ChemTransforms GraphMol)
+
+  rdkit_catch_test(chemdraw6KCatchTest test_6k.cpp
+        LINK_LIBRARIES RDChemDrawLib SubstructMatch FileParsers SmilesParse ChemTransforms GraphMol)
+
 endif(RDK_BUILD_CHEMDRAW_SUPPORT)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)
