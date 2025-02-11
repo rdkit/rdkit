@@ -381,6 +381,8 @@ TEST_CASE("DB Converter") {
     }
   }
   std::remove(spaceName);
+  // Check it behaves gracefully with a missing file
+  CHECK_THROWS(synthonspace.readDBFile(spaceName));
 }
 
 TEST_CASE("S Biggy") {
@@ -602,27 +604,6 @@ TEST_CASE("Synthon Error") {
     SynthonSpace synthonspace;
     bool cancelled = false;
     CHECK_THROWS(synthonspace.readTextFile(libName, cancelled));
-  }
-}
-
-TEST_CASE("S Test LowMem") {
-  // This should behave identically to "S Simple query 1"
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  SynthonSpace synthonspace;
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
-  synthonspace.readDBFile(libName);
-  {
-    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-    auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.getHitMolecules().size() == 220);
-    CHECK(results.getMaxNumResults() == 220);
-  }
-  {
-    auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-    auto results = synthonspace.substructureSearch(*queryMol);
-    CHECK(results.getHitMolecules().size() == 20);
   }
 }
 

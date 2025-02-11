@@ -291,63 +291,60 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
 
 void SynthonSpace::readDBFile(const std::string &inFilename) {
   d_fileName = inFilename;
-  try {
-    std::ifstream is(inFilename, std::fstream::binary);
-    int32_t endianTest;
-    streamRead(is, endianTest);
-    if (endianTest != endianId) {
-      throw std::runtime_error("Endianness mismatch in SynthonSpace file " +
-                               d_fileName);
-    }
-    streamRead(is, d_fileMajorVersion);
-    int32_t minorVersion;
-    streamRead(is, minorVersion);
-    if (d_fileMajorVersion > versionMajor ||
-        (d_fileMajorVersion == versionMajor && minorVersion > versionMinor)) {
-      BOOST_LOG(rdWarningLog)
-          << "Deserializing from a version number (" << d_fileMajorVersion
-          << "." << minorVersion << ")"
-          << "that is higher than our version (" << versionMajor << "."
-          << versionMinor << ").\nThis probably won't work." << std::endl;
-    }
-    // version sanity checking
-    if (d_fileMajorVersion > 1000 || minorVersion > 100) {
-      throw std::runtime_error("unreasonable version numbers");
-    }
-    d_fileMajorVersion = 1000 * d_fileMajorVersion + minorVersion * 10;
-    if (d_fileMajorVersion < 3000) {
-      throw std::runtime_error(
-          "This binary file version is no longer supported."
-          "  Please re-build with a recent version of the RDKit.");
-    }
-
-    bool hasFPs;
-    streamRead(is, hasFPs);
-    if (hasFPs) {
-      streamRead(is, d_fpType, 0);
-    }
-    std::uint64_t numRS;
-    streamRead(is, numRS);
-    streamRead(is, d_numProducts);
-    std::uint64_t numSynthons;
-    streamRead(is, numSynthons);
-    for (std::uint64_t i = 0; i < numSynthons; i++) {
-      auto synthon = std::make_unique<Synthon>();
-      synthon->readFromDBStream(is);
-      d_synthonPool.insert(
-          std::make_pair(synthon->getSmiles(), std::move(synthon)));
-    }
-    for (std::uint64_t i = 0; i < numRS; ++i) {
-      auto reaction = std::make_shared<SynthonSet>();
-      reaction->readFromDBStream(is, *this, d_fileMajorVersion);
-      d_reactions.insert(std::make_pair(reaction->getId(), reaction));
-    }
-    is.close();
-  } catch (std::exception &e) {
-    std::cerr << "Error : \"" << e.what() << "\" for file " << d_fileName
-              << "\n";
-    exit(1);
+  std::ifstream is(inFilename, std::fstream::binary);
+  if (!is.is_open() || is.bad()) {
+    throw std::runtime_error("Couldn't open file " + d_fileName);
   }
+  int32_t endianTest;
+  streamRead(is, endianTest);
+  if (endianTest != endianId) {
+    throw std::runtime_error("Endianness mismatch in SynthonSpace file " +
+                             d_fileName);
+  }
+  streamRead(is, d_fileMajorVersion);
+  int32_t minorVersion;
+  streamRead(is, minorVersion);
+  if (d_fileMajorVersion > versionMajor ||
+      (d_fileMajorVersion == versionMajor && minorVersion > versionMinor)) {
+    BOOST_LOG(rdWarningLog)
+        << "Deserializing from a version number (" << d_fileMajorVersion << "."
+        << minorVersion << ")"
+        << "that is higher than our version (" << versionMajor << "."
+        << versionMinor << ").\nThis probably won't work." << std::endl;
+  }
+  // version sanity checking
+  if (d_fileMajorVersion > 1000 || minorVersion > 100) {
+    throw std::runtime_error("unreasonable version numbers");
+  }
+  d_fileMajorVersion = 1000 * d_fileMajorVersion + minorVersion * 10;
+  if (d_fileMajorVersion < 3000) {
+    throw std::runtime_error(
+        "This binary file version is no longer supported."
+        "  Please re-build with a recent version of the RDKit.");
+  }
+
+  bool hasFPs;
+  streamRead(is, hasFPs);
+  if (hasFPs) {
+    streamRead(is, d_fpType, 0);
+  }
+  std::uint64_t numRS;
+  streamRead(is, numRS);
+  streamRead(is, d_numProducts);
+  std::uint64_t numSynthons;
+  streamRead(is, numSynthons);
+  for (std::uint64_t i = 0; i < numSynthons; i++) {
+    auto synthon = std::make_unique<Synthon>();
+    synthon->readFromDBStream(is);
+    d_synthonPool.insert(
+        std::make_pair(synthon->getSmiles(), std::move(synthon)));
+  }
+  for (std::uint64_t i = 0; i < numRS; ++i) {
+    auto reaction = std::make_shared<SynthonSet>();
+    reaction->readFromDBStream(is, *this, d_fileMajorVersion);
+    d_reactions.insert(std::make_pair(reaction->getId(), reaction));
+  }
+  is.close();
 }
 
 void SynthonSpace::summarise(std::ostream &os) {
