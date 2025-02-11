@@ -138,7 +138,7 @@ const std::unordered_map<std::string, std::string> three_character_codes({
     {"XXX", "X"} // Unknown
 });
 
-MonomerDatabase::MonomerDatabase(std::string_view database_path)
+MonomerDatabase::MonomerDatabase([[maybe_unused]] std::string_view database_path)
 {
     // TODO: integration with database
     return;
@@ -152,7 +152,7 @@ MonomerDatabase::~MonomerDatabase()
 
 [[nodiscard]] MonomerDatabase::monomer_smiles_t
 MonomerDatabase::get_monomer_smiles(std::string monomer_id,
-                                        ChainType monomer_type)
+                                        [[maybe_unused]] ChainType monomer_type)
 {
     // currently everything is a peptide
     if (monomer_to_smiles.find(monomer_id) != monomer_to_smiles.end()) {
