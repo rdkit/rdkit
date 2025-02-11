@@ -99,7 +99,7 @@ std::string MolToChemDraw(const ROMol &mol, CDXFormat format) {
     dist += (pos1 - pos2).length();
   }
   dist/=trmol.getNumBonds();
-  double scale = target_bond_length/dist;
+  double scale = is3D ? 1. : target_bond_length/dist;
   
   auto wedgeBonds = Chirality::pickBondsToWedge(trmol, nullptr, conf);
 
