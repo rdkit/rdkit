@@ -54,6 +54,8 @@ bool parse_node(
   int mergeparent = -1;
   int rgroup_num = -1;
   int isotope = node.m_isotope;
+  
+  bool checkForRGroup = false;
   std::string query_label;
   std::vector<int16_t> elementlist;
 
@@ -96,16 +98,10 @@ bool parse_node(
       if (node.m_genericNickname.size()) {
         switch (node.m_genericNickname[0]) {
           case 'R': {
-            for (auto &child : node.ContainedObjects()) {
-              if (child.second->GetTag() == kCDXObj_Text) {
-                const std::string &text =
-                    ((CDXText *)child.second)->GetText().str();
-
-                // std::string &legacyText =
-                // (CDXText*)(child.second)->m_legacyText;
-                rgroup_num = text.size() > 1 ? stoi(text.substr(1)) : 0;
-              }
-            }
+            checkForRGroup = true;
+            elemno = 0;
+            query_label = node.m_genericNickname;
+            break;
           }
           case 'A':
           case 'Q':
@@ -139,6 +135,27 @@ bool parse_node(
       break;
     case kCDXNodeType_Monomer:
       break;
+  }
+
+  for (auto &child : node.ContainedObjects()) {
+    if (child.second->GetTag() == kCDXObj_Text) {
+      const std::string &text =
+          ((CDXText *)child.second)->GetText().str();
+      if(text.size() > 0 && text[0] == 'R') {
+        try {
+          if (checkForRGroup)
+            rgroup_num = text.size() > 1 ? stoi(text.substr(1)) : 0;
+          else
+            isotope = text.size() > 1 ? stoi(text.substr(1)) : 0;
+         } catch (const std::invalid_argument& e) {
+           if (rgroup_num)
+             BOOST_LOG(rdWarningLog) << "RGroupError: Invalid argument - Cannot convert '" << text << "' to an integer." << std::endl;
+         } catch (const std::out_of_range& e) {
+           if (rgroup_num)
+             BOOST_LOG(rdWarningLog) << "RGroupError: Out of range - The number '" << text << "' is too large or too small." << std::endl;
+         }
+      }
+    }
   }
 
   StereoGroupType grouptype = StereoGroupType::STEREO_ABSOLUTE;
@@ -223,6 +240,22 @@ bool parse_node(
     }
   }
 
+  switch(node.m_radical) {
+    case kCDXRadical_None:
+      break;
+    case kCDXRadical_Singlet:
+      rd_atom->setNumRadicalElectrons(2);
+      break;
+    case kCDXRadical_Doublet: {
+      rd_atom->setNumRadicalElectrons(1);
+      break;
+      }
+    case kCDXRadical_Triplet: {
+      rd_atom->setNumRadicalElectrons(2);
+      break;
+      }
+  }
+  
   if (node.m_enhancedStereoGroupNum > 0) {
     auto key = std::make_pair(node.m_enhancedStereoGroupNum, grouptype);
     auto &stereo = sgroups[key];
