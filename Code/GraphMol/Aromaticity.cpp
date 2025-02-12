@@ -492,7 +492,7 @@ void applyHuckelToFused(
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }  // end while(1)
+  }    // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
@@ -696,10 +696,11 @@ ElectronDonorType getAtomDonorTypeArom(
 namespace RDKit {
 namespace MolOps {
 bool isBondOrderQuery(const Bond *bond) {
-  if (bond->getBondType() == Bond::BondType::UNSPECIFIED && bond->hasQuery()) {
-    auto label =
-        dynamic_cast<const QueryBond *>(bond)->getQuery()->getTypeLabel();
-    if (label == "BondOrder") {
+  if (bond->hasQuery()) {
+    auto q = dynamic_cast<const QueryBond *>(bond)->getQuery();
+    // complex bond type queries are also bond order queries!
+    if (q->getTypeLabel() == "BondOrder" ||
+        QueryOps::hasComplexBondTypeQuery(*q)) {
       return true;
     }
   }
@@ -721,7 +722,11 @@ int countAtomElec(const Atom *at) {
   const auto &mol = at->getOwningMol();
   for (const auto bond : mol.atomBonds(at)) {
     // don't count bonds that aren't actually contributing to the valence here:
-    if (!isBondOrderQuery(bond) && !std::lround(bond->getValenceContrib(at))) {
+    // if the bond is "real" (not undefined or zero), it always contributes to
+    // valence/degree, and in case the bond is a query bond with no order, we
+    // still need to check if the query is a bond query
+    if (!static_cast<Bond *>(bond)->getValenceContrib(at) &&
+        !isBondOrderQuery(bond)) {
       --degree;
     }
   }
