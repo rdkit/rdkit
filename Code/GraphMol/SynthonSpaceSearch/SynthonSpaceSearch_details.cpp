@@ -336,10 +336,14 @@ void bitSetsToVectors(const std::vector<boost::dynamic_bitset<>> &bitSets,
 
 std::string buildProductName(const std::string &reactionId,
                              const std::vector<std::string> &fragIds) {
-  std::string prodName = reactionId;
+  std::string prodName = "";
   for (const auto &fragId : fragIds) {
-    prodName += "_" + fragId;
+    if (prodName != "") {
+      prodName += ";";
+    }
+    prodName += fragId;
   }
+  prodName += ";" + reactionId;
   return prodName;
 }
 
