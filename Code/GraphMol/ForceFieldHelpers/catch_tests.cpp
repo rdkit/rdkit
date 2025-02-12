@@ -17,6 +17,7 @@
 #include <GraphMol/ForceFieldHelpers/UFF/UFF.h>
 #include <ForceField/MMFF/Params.h>
 #include <ForceField/MMFF/BondStretch.h>
+#include <GraphMol/MolTransforms/MolTransforms.h>
 
 #include "FFConvenience.h"
 
@@ -110,19 +111,12 @@ M  END)CTAB";
   auto mol = v2::FileParsers::MolFromMolBlock(mb, params);
   REQUIRE(mol);
   auto &conf = mol->getConformer();
-  std::cerr << "START: " << (conf.getAtomPos(7) - conf.getAtomPos(8)).length()
-            << std::endl;
-  // UFF minimize
-  // auto [done, energy] = UFF::UFFOptimizeMolecule(*mol);
-  // std::cerr << "WOT: " << done << " " << energy << std::endl;
-  auto ff = UFF::constructForceField(*mol);
+  std::unique_ptr<ForceFields::ForceField> ff{UFF::constructForceField(*mol)};
   ff->initialize();
-  std::cerr << "WOT:\n" << ff->calcEnergy() << std::endl;
   auto needsMore = ff->minimize(200);
-  std::cerr << "needsMore: " << needsMore << std::endl;
-  std::cerr << "WOT2:\n" << ff->calcEnergy() << std::endl;
-  delete ff;
-  std::cerr << "END: " << (conf.getAtomPos(7) - conf.getAtomPos(8)).length()
-            << std::endl;
-  std::cerr << MolToV3KMolBlock(*mol) << std::endl;
+  CHECK(!needsMore);
+  CHECK((conf.getAtomPos(7) - conf.getAtomPos(8)).length() > 1.80);
+  CHECK(MolTransforms::getAngleDeg(conf, 1, 3, 8) > 110);
+  CHECK(MolTransforms::getAngleDeg(conf, 1, 3, 7) > 110);
+  CHECK(MolTransforms::getAngleDeg(conf, 7, 3, 8) > 110);
 }

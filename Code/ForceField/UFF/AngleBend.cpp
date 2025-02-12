@@ -19,6 +19,10 @@
 namespace ForceFields {
 namespace UFF {
 
+namespace {
+constexpr double angleCorrectionThreshold = 0.8660;
+}
+
 namespace Utils {
 double calcAngleForceConstant(double theta0, double bondOrder12,
                               double bondOrder23, const AtomicParams *at1Params,
@@ -147,9 +151,8 @@ double AngleBendContrib::getEnergy(double *pos) const {
   //   angle is less than approx theta0,
   // For the sake of efficiency, we only add the penalty if the angle is less
   // than 30 degrees
-  if (d_order && d_order < 5 && cosTheta > 0.0) {
+  if (d_order && d_order < 5 && cosTheta > angleCorrectionThreshold) {
     auto theta = acos(cosTheta);
-
     res += exp(-20.0 * (theta - d_theta0 + 0.25));
   }
 
@@ -192,10 +195,11 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
   //   the angle is less than approx theta0
   // For the sake of efficiency, we only add the penalty if the angle is less
   // than 30 degrees
-  auto theta = acos(cosTheta);
-  if (d_order && d_order < 5 && cosTheta > 0.0) {
-    auto corr = 20.0 * exp(-20.0 * (theta - d_theta0 + 0.25));
-    dE_dTheta -= corr;
+  if (d_order && d_order < 5 && cosTheta > angleCorrectionThreshold) {
+    auto theta = acos(cosTheta);
+
+    auto corr = -20.0 * exp(-20.0 * (theta - d_theta0 + 0.25));
+    dE_dTheta += corr;
   }
 
   Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
