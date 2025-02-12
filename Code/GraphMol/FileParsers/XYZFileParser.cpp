@@ -8,7 +8,9 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "FileParsers.h"
 #include "FileParserUtils.h"
