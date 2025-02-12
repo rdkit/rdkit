@@ -20,7 +20,7 @@ namespace ForceFields {
 namespace UFF {
 
 namespace {
-constexpr double angleCorrectionThreshold = 0.8660;
+constexpr double ANGLE_CORRECTION_THRESHOLD = 0.8660;
 }
 
 namespace Utils {
@@ -151,7 +151,7 @@ double AngleBendContrib::getEnergy(double *pos) const {
   //   angle is less than approx theta0,
   // For the sake of efficiency, we only add the penalty if the angle is less
   // than 30 degrees
-  if (d_order && d_order < 5 && cosTheta > angleCorrectionThreshold) {
+  if (d_order && d_order < 5 && cosTheta > ANGLE_CORRECTION_THRESHOLD) {
     auto theta = acos(cosTheta);
     res += exp(-20.0 * (theta - d_theta0 + 0.25));
   }
@@ -195,7 +195,7 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
   //   the angle is less than approx theta0
   // For the sake of efficiency, we only add the penalty if the angle is less
   // than 30 degrees
-  if (d_order && d_order < 5 && cosTheta > angleCorrectionThreshold) {
+  if (d_order && d_order < 5 && cosTheta > ANGLE_CORRECTION_THRESHOLD) {
     auto theta = acos(cosTheta);
 
     auto corr = -20.0 * exp(-20.0 * (theta - d_theta0 + 0.25));
