@@ -680,7 +680,7 @@ TEST_CASE("ring matches ring", "[basics]") {
   REQUIRE(res.front().getBondMatches().size() == 9);
   REQUIRE_THAT(res.front().getSimilarity(),
                Catch::Matchers::WithinAbs(0.1863, 0.0001));
-  REQUIRE(res.front().getSmarts() == "C(-C=O)-c1:c:c:c:c:c:1");
+  REQUIRE(res.front().getSmarts() == "c1:c:c:c:c:c:1-CC=O");
   check_smarts_ok(*m1, *m2, res.front());
 }
 
@@ -717,7 +717,6 @@ TEST_CASE("multiple cliques returned") {
 
   RascalOptions opts;
   opts.similarityThreshold = 0.5;
-  opts.allBestMCESs = true;
 
   for (auto &test : tests) {
     opts.allBestMCESs = true;
@@ -725,9 +724,10 @@ TEST_CASE("multiple cliques returned") {
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
 
     auto res = rascalMCES(*m1, *m2, opts);
-    REQUIRE(res.size() == std::get<2>(test));
-    REQUIRE(res.front().getBondMatches().size() == std::get<3>(test));
-    REQUIRE(res.front().getBondMatches() == std::get<4>(test));
+    REQUIRE(!res.empty());
+    CHECK(res.size() == std::get<2>(test));
+    CHECK(res.front().getBondMatches().size() == std::get<3>(test));
+    CHECK(res.front().getBondMatches() == std::get<4>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
     opts.allBestMCESs = false;
@@ -735,7 +735,7 @@ TEST_CASE("multiple cliques returned") {
     REQUIRE(res.size() == 1);
     // The clique won't necessarily be the best-scoring one, but it should be
     // the same size.
-    REQUIRE(res.front().getBondMatches().size() == std::get<4>(test).size());
+    CHECK(res.front().getBondMatches().size() == std::get<4>(test).size());
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
