@@ -36,6 +36,10 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   // different Searcher objects.  The fingerprints are keyed on
   // the address of the corresponding fragment.
   std::map<void *, std::unique_ptr<ExplicitBitVect>> d_pattFPs;
+  // Likewise, the connector regions and connector region
+  // fingerprints.
+  std::map<void *, std::vector<std::unique_ptr<ROMol>>> d_connRegs;
+  std::map<void *, std::vector<std::unique_ptr<ExplicitBitVect>>> d_connRegFPs;
 
   void extraSearchSetup(
       std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
@@ -44,6 +48,11 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
       std::vector<std::unique_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
   bool verifyHit(const ROMol &hit) const override;
+
+  void getConnectorRegions(
+      const std::vector<std::unique_ptr<ROMol>> &molFrags,
+      std::vector<std::vector<ROMol *>> &connRegs,
+      std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const;
 };
 
 }  // namespace RDKit::SynthonSpaceSearch

@@ -54,6 +54,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   virtual ~SynthonSpaceHitSet() = default;
 
   std::string reactionId;
+  // The fragments that this hitset is derived from, useful for debugging.
   std::vector<const ROMol *> frags;
   std::vector<std::vector<std::pair<std::string, const ROMol *>>> synthonsToUse;
   size_t numHits{0};

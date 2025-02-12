@@ -56,33 +56,12 @@ std::vector<ExplicitBitVect *> makePatternFPs(
   return retFPs;
 }
 
-void buildConnectorRegions(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
-    std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> &connRegFPs) {
-  for (const auto &frag : molFrags) {
-    auto fragConnRegs = getConnRegion(*frag);
-    if (!fragConnRegs) {
-      // There were no connector atoms.
-      continue;
-    }
-    std::vector<std::unique_ptr<ROMol>> splitConnRegs;
-    MolOps::getMolFrags(*fragConnRegs, splitConnRegs, false);
-    connRegFPs.emplace_back();
-    for (auto &cr : splitConnRegs) {
-      connRegFPs.back().emplace_back(PatternFingerprintMol(*cr));
-    }
-    connRegs.push_back(std::move(splitConnRegs));
-  }
-}
-
 // Return true if all the fragments have a connector region that matches
 // something in the reaction, false otherwise.
 bool checkConnectorRegions(
     const SynthonSet &reaction,
-    const std::vector<std::vector<std::unique_ptr<ROMol>>> &connRegs,
-    const std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>>
-        &connRegFPs) {
+    const std::vector<std::vector<ROMol *>> &connRegs,
+    const std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) {
   const auto &rxnConnRegs = reaction.getConnectorRegions();
   const auto &rxnConnRegsFP = reaction.getConnRegFP();
   MatchVectType dontCare;
@@ -92,6 +71,8 @@ bool checkConnectorRegions(
       if (AllProbeBitsMatch(*connRegFPs[i][j], *rxnConnRegsFP)) {
         for (const auto &rxncr : rxnConnRegs) {
           if (SubstructMatch(*rxncr, *connRegs[i][j], dontCare)) {
+            std::cout << MolToSmiles(*rxncr) << " matched "
+                      << MolToSmiles(*connRegs[i][j]) << std::endl;
             connRegFound = true;
             break;
           }
@@ -219,6 +200,18 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
       d_pattFPs.insert(std::make_pair(
           frag.get(), std::unique_ptr<ExplicitBitVect>(
                           PatternFingerprintMol(*frag, pattFPSize))));
+
+      if (auto fragConnRegs = getConnRegion(*frag); fragConnRegs) {
+        std::vector<std::unique_ptr<ROMol>> splitConnRegs;
+        MolOps::getMolFrags(*fragConnRegs, splitConnRegs, false);
+        std::vector<std::unique_ptr<ExplicitBitVect>> connRegFPs;
+        connRegFPs.reserve(splitConnRegs.size());
+        for (auto &cr : splitConnRegs) {
+          connRegFPs.emplace_back(PatternFingerprintMol(*cr));
+        }
+        d_connRegs.insert(std::make_pair(frag.get(), std::move(splitConnRegs)));
+        d_connRegFPs.insert(std::make_pair(frag.get(), std::move(connRegFPs)));
+      }
     }
   }
 }
@@ -230,8 +223,8 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
   const auto pattFPs = makePatternFPs(fragSet, d_pattFPs);
-  std::vector<std::vector<std::unique_ptr<ROMol>>> connRegs;
-  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> connRegFPs;
+  std::vector<std::vector<ROMol *>> connRegs;
+  std::vector<std::vector<ExplicitBitVect *>> connRegFPs;
   std::vector<int> numFragConns;
   numFragConns.reserve(fragSet.size());
   for (const auto &frag : fragSet) {
@@ -250,9 +243,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
 
   // Check that all the frags have a connector region that matches something
   // in this reaction set.  Skip if not.
-  if (connRegs.empty()) {
-    buildConnectorRegions(fragSet, connRegs, connRegFPs);
-  }
+  getConnectorRegions(fragSet, connRegs, connRegFPs);
   if (!checkConnectorRegions(reaction, connRegs, connRegFPs)) {
     return results;
   }
@@ -301,6 +292,31 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
 bool SynthonSpaceSubstructureSearcher::verifyHit(const ROMol &hit) const {
   MatchVectType dontCare;
   return SubstructMatch(hit, getQuery(), dontCare);
+}
+
+void SynthonSpaceSubstructureSearcher::getConnectorRegions(
+    const std::vector<std::unique_ptr<ROMol>> &molFrags,
+    std::vector<std::vector<ROMol *>> &connRegs,
+    std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const {
+  for (const auto &frag : molFrags) {
+    if (const auto it = d_connRegs.find(frag.get()); it != d_connRegs.end()) {
+      connRegs.push_back(std::vector<ROMol *>());
+      std::transform(
+          it->second.begin(), it->second.end(),
+          std::back_inserter(connRegs.back()),
+          [](const std::unique_ptr<ROMol> &m) -> ROMol * { return m.get(); });
+    }
+    if (const auto it = d_connRegFPs.find(frag.get());
+        it != d_connRegFPs.end()) {
+      connRegFPs.push_back(std::vector<ExplicitBitVect *>());
+      std::transform(
+          it->second.begin(), it->second.end(),
+          std::back_inserter(connRegFPs.back()),
+          [](const std::unique_ptr<ExplicitBitVect> &v) -> ExplicitBitVect * {
+            return v.get();
+          });
+    }
+  }
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

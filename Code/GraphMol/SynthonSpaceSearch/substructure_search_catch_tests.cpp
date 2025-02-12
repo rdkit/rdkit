@@ -452,8 +452,8 @@ TEST_CASE("S Random Hits") {
   auto results = synthonspace.substructureSearch(*queryMol, params);
   std::map<std::string, int> libCounts;
   for (const auto &m : results.getHitMolecules()) {
-    std::string lib(
-        m->getProp<std::string>(common_properties::_Name).substr(0, 2));
+    auto molName = m->getProp<std::string>(common_properties::_Name);
+    std::string lib(molName.substr(molName.length() - 2));
     if (const auto &c = libCounts.find(lib); c == libCounts.end()) {
       libCounts.insert(std::make_pair(lib, 1));
     } else {
@@ -544,10 +544,10 @@ TEST_CASE("S Map numbers in connectors") {
   auto results = synthonspace.substructureSearch(*queryMol);
   // These were missing before map numbers were accommodated.
   std::set<std::string> missNames{
-      "a7_67468_30577_29389",  "a7_67468_249279_29389", "a7_67468_24773_29389",
-      "a7_67468_29593_29389",  "a7_67468_308698_29389", "a7_67468_56491_29389",
-      "a7_67468_265474_29389", "a7_67468_15535_29389",  "a7_67468_44908_29389",
-      "a7_67468_59597_29389",  "a7_67468_45686_29389"};
+      "67468;30577;29389;a7",  "67468;249279;29389;a7", "67468;24773;29389;a7",
+      "67468;29593;29389;a7",  "67468;308698;29389;a7", "67468;56491;29389;a7",
+      "67468;265474;29389;a7", "67468;15535;29389;a7",  "67468;44908;29389;a7",
+      "67468;59597;29389;a7",  "67468;45686;29389;a7"};
   std::set<std::string> hitNames;
   for (const auto &hm : results.getHitMolecules()) {
     hitNames.insert(hm->getProp<std::string>(common_properties::_Name));
@@ -611,11 +611,9 @@ TEST_CASE("S Freedom Space") {
   std::string libName =
       "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
   libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
   synthonspace.readDBFile(libName);
-  // synthonspace.summarise(std::cout);
 
   auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
   SynthonSpaceSearchParams params;

@@ -327,7 +327,7 @@ TEST_CASE("FP Freedom Space") {
   // std::string libName2 =
   // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
   std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
   for (const auto &l : std::vector<std::string>{libName}) {
     SynthonSpace synthonspace;
     synthonspace.readDBFile(l);
@@ -336,7 +336,7 @@ TEST_CASE("FP Freedom Space") {
     std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
         RDKitFP::getRDKitFPGenerator<std::uint64_t>());
     SynthonSpaceSearchParams params;
-    params.similarityCutoff = 0.5;
+    params.similarityCutoff = 0.4;
     params.maxHits = 1000;
     params.fragSimilarityAdjuster = 0.01;
     params.approxSimilarityAdjuster = 0.05;
@@ -346,12 +346,12 @@ TEST_CASE("FP Freedom Space") {
               << std::endl;
     int i = 0;
     for (const auto &mol : results.getHitMolecules()) {
-      std::cout << i++ << " : " << MolToSmiles(*mol) << " : "
-                << mol->getProp<std::string>(common_properties::_Name) << "  "
-                << mol->getProp<double>("Similarity") << std::endl;
-      if (fabs(1.0 - mol->getProp<double>("Similarity")) > 1e-6) {
-        break;
+      if (i < 10 || i > params.maxHits - 10) {
+        std::cout << i << " : " << MolToSmiles(*mol) << " : "
+                  << mol->getProp<std::string>(common_properties::_Name) << "  "
+                  << mol->getProp<double>("Similarity") << std::endl;
       }
+      ++i;
     }
   }
 }
