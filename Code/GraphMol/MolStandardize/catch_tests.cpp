@@ -481,7 +481,9 @@ M  END
     m->updatePropertyCache();
     MolOps::fastFindRings(*m);
     MolOps::setBondStereoFromDirections(*m);
-    MolOps::removeHs(*m, false, false, false);
+    MolOps::RemoveHsParameters rhp;
+    bool sanitize = false;
+    MolOps::removeHs(*m, rhp, sanitize);
     std::unique_ptr<RWMol> res((RWMol *)nrml.normalize(*m));
     REQUIRE(res);
     MolOps::sanitizeMol(*res);
@@ -1729,5 +1731,27 @@ M  END)CTAB";
     CHECK(res[0].find(
               "INFO: [ValenceValidation] Explicit valence for atom # 0 Br") ==
           0);
+  }
+}
+
+TEST_CASE("Custom Scoring Functions") {
+  SECTION("basics") {
+    auto mol = "CC\\C=C(/O)[C@@H](C)C(C)=O"_smiles;
+    REQUIRE(MolStandardize::TautomerScoringFunctions::scoreRings(*mol) == 0);
+    REQUIRE(MolStandardize::TautomerScoringFunctions::scoreHeteroHs(*mol) == 0);
+    REQUIRE(MolStandardize::TautomerScoringFunctions::scoreSubstructs(*mol) ==
+            6);
+
+    auto terms = MolStandardize::TautomerScoringFunctions::
+        getDefaultTautomerScoreSubstructs();
+    REQUIRE(terms.size() == 12);
+  }
+
+  SECTION("Override default tautomer scoring functions") {
+    auto mol = "CC\\C=C(/O)[C@@H](C)C(C)=O"_smiles;
+    std::vector<MolStandardize::TautomerScoringFunctions::SubstructTerm> terms =
+        {{"C=O", "[#6]=,:[#8]", 1000}};
+    REQUIRE(MolStandardize::TautomerScoringFunctions::scoreSubstructs(
+                *mol, terms) == 1000);
   }
 }

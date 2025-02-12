@@ -410,7 +410,19 @@ std::string getBondSmartsSimple(const Bond *bond,
   } else if (descrip == "BondInRing") {
     res += "@";
   } else if (descrip == "SingleOrAromaticBond") {
-    // don't need to do anything here... :-)
+    auto dir = bond->getBondDir();
+    switch(dir) {
+      case Bond::ENDDOWNRIGHT: {
+        res += "\\";
+        break;
+      }
+      case Bond::ENDUPRIGHT: {
+        res += "/";
+        break;
+      }
+      default:
+        break;
+    }
   } else if (descrip == "SingleOrDoubleBond") {
     res += "-,=";
   } else if (descrip == "DoubleOrAromaticBond") {

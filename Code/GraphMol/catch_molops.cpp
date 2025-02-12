@@ -14,6 +14,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/test_fixtures.h>
 
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
@@ -209,5 +210,76 @@ TEST_CASE("getMolFormula") {
     CHECK(formula == "C2[13C]2H10DBO2");
     formula = MolOps::getMolFormula(*mol, true, false);
     CHECK(formula == "C2[13C]2H10[2H]BO2");
+  }
+}
+
+TEST_CASE(
+    "github #8121: symmetric ring finding not returning correct results for molecules with fragments") {
+  auto twoCubanes = "C12C3C4C1C5C2C3C45.C12C3C4C1C5C2C3C45"_smiles;
+  REQUIRE(twoCubanes);
+  auto rinfo = twoCubanes->getRingInfo();
+  CHECK(rinfo->numRings() == 12);
+}
+
+TEST_CASE("check division by zero in setTerminalAtomCoords") {
+  SECTION("degree 4") {
+    auto m = R"CTAB(
+  Mrv2311 11162401483D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0 0 0 0
+M  V30 2 F -0.7971 -0.9945 1.275 0
+M  V30 3 F 0.7971 0.9945 -1.275 0
+M  V30 4 F -1.2069 -0.1568 -0.8768 0
+M  V30 5 Cl 1.1223 1.1513 0.8154 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 1 1 4
+M  V30 4 1 1 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(m);
+
+    CHECK_NOTHROW(MolOps::setTerminalAtomCoords(*m, 4, 0));
+  }
+  SECTION("degree 2, aligned 2nd neighbors") {
+    // This looks like a weird mol, but it's an intermediate
+    // state in AddHs.
+    auto mb = R"CTAB(
+  Mrv1908 06032010402D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -19.8317 16.5 0 1 CHG=-1
+M  V30 2 N -18.2917 16.5 0 2 CHG=1
+M  V30 3 N -16.7517 16.5 0 3
+M  V30 4 H 0 0 0 3
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 3 2 3
+M  V30 3 1 1 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+
+    v2::FileParsers::MolFileParserParams p;
+    p.removeHs = false;
+
+    auto m = v2::FileParsers::MolFromMolBlock(mb, p);
+    REQUIRE(m);
+    REQUIRE(m->getNumAtoms() == 4);
+
+    CHECK_NOTHROW(MolOps::setTerminalAtomCoords(*m, 3, 0));
   }
 }

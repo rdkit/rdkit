@@ -117,6 +117,8 @@ RDKIT_RDKITCFFI_EXPORT char *get_avalon_fp_as_bytes(const char *pkl,
 // modification
 RDKIT_RDKITCFFI_EXPORT short add_hs(char **pkl, size_t *pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short remove_all_hs(char **pkl, size_t *pkl_sz);
+RDKIT_RDKITCFFI_EXPORT short remove_hs(char **pkl, size_t *pkl_sz,
+                                       const char *details_json);
 
 // standardization
 RDKIT_RDKITCFFI_EXPORT short cleanup(char **pkl, size_t *pkl_sz,
@@ -136,7 +138,7 @@ RDKIT_RDKITCFFI_EXPORT short fragment_parent(char **pkl, size_t *pkl_sz,
 
 // coordinates
 RDKIT_RDKITCFFI_EXPORT void prefer_coordgen(short val);
-RDKIT_RDKITCFFI_EXPORT short has_coords(char *mol_pkl, size_t mol_pkl_sz);
+RDKIT_RDKITCFFI_EXPORT short has_coords(const char *mol_pkl, size_t mol_pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short set_2d_coords(char **pkl, size_t *pkl_sz);
 RDKIT_RDKITCFFI_EXPORT short set_3d_coords(char **pkl, size_t *pkl_sz,
                                            const char *params_json);
@@ -150,8 +152,10 @@ RDKIT_RDKITCFFI_EXPORT short set_2d_coords_aligned(char **pkl, size_t *pkl_sz,
 RDKIT_RDKITCFFI_EXPORT void free_ptr(char *ptr);
 
 RDKIT_RDKITCFFI_EXPORT char *version();
-RDKIT_RDKITCFFI_EXPORT void enable_logging();
-RDKIT_RDKITCFFI_EXPORT void disable_logging();
+RDKIT_RDKITCFFI_EXPORT short enable_logging();
+RDKIT_RDKITCFFI_EXPORT short enable_logger(const char *log_name);
+RDKIT_RDKITCFFI_EXPORT short disable_logging();
+RDKIT_RDKITCFFI_EXPORT short disable_logger(const char *log_name);
 
 // chirality
 RDKIT_RDKITCFFI_EXPORT short use_legacy_stereo_perception(short value);
@@ -163,6 +167,23 @@ RDKIT_RDKITCFFI_EXPORT void *set_log_capture(const char *log_name);
 RDKIT_RDKITCFFI_EXPORT short destroy_log_handle(void **log_handle);
 RDKIT_RDKITCFFI_EXPORT char *get_log_buffer(void *log_handle);
 RDKIT_RDKITCFFI_EXPORT short clear_log_buffer(void *log_handle);
+
+// props
+RDKIT_RDKITCFFI_EXPORT short has_prop(const char *mol_pkl, size_t mol_pkl_sz,
+                                      const char *key);
+RDKIT_RDKITCFFI_EXPORT char **get_prop_list(const char *mol_pkl,
+                                            size_t mol_pkl_sz,
+                                            short includePrivate,
+                                            short includeComputed);
+RDKIT_RDKITCFFI_EXPORT void set_prop(char **mol_pkl, size_t *mol_pkl_sz,
+                                     const char *key, const char *val,
+                                     short computed);
+RDKIT_RDKITCFFI_EXPORT char *get_prop(const char *mol_pkl, size_t mol_pkl_sz,
+                                      const char *key);
+RDKIT_RDKITCFFI_EXPORT short clear_prop(char **mol_pkl, size_t *mol_pkl_sz,
+                                        const char *key);
+RDKIT_RDKITCFFI_EXPORT void keep_props(char **mol_pkl, size_t *mol_pkl_sz,
+                                       const char *details_json);
 
 #ifdef __cplusplus
 }

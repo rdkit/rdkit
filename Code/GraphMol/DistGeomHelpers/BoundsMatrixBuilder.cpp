@@ -569,7 +569,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
                                 unsigned int aid4) {
   auto stype = bnd->getStereo();
-  if (stype > Bond::STEREOANY) {
+  if (stype > Bond::STEREOANY && bnd->getStereoAtoms().size() >= 2) {
     const auto &stAtoms = bnd->getStereoAtoms();
     if ((static_cast<unsigned int>(stAtoms[0]) != aid1) ^
         (static_cast<unsigned int>(stAtoms[1]) != aid4)) {
@@ -1060,26 +1060,6 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
       }
       break;
     case Bond::SINGLE:
-
-// Commenting out the following if block to fix issue 235, we may want to later
-// provide
-// the user with an option to invoke this special case
-#if 0
-        if ( (_checkNhChChNh(atm1, atm2, atm3, atm4)) ||
-             ((bnd1->getBondType() == Bond::DOUBLE) && (bnd3->getBondType() == Bond::DOUBLE) ) ) {
-          // this is either
-          //  1. [!#1]~$ch!@$ch~[!#1] situation where ch = [CH2,NX3H1,OX2] or
-          //  2. *=*-*=* situation
-          // Both case cases we use 180 deg for torsion
-          du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          dl = du;
-          dl -= GEN_DIST_TOL;
-          du += GEN_DIST_TOL;
-          path14.type = Path14Configuration::TRANS;
-          accumData.transPaths[static_cast<unsigned long>(bid1)*nb*nb + bid2*nb + bid3] = 1;
-          accumData.transPaths[static_cast<unsigned long>(bid3)*nb*nb + bid2*nb + bid1] = 1;
-        } else
-#endif
       if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16)) {
         // this is *S-S* situation
         // FIX: this cannot be right is sulfur has more than two coordinated
@@ -1448,27 +1428,6 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
       }
       break;
     case Bond::SINGLE:
-
-// Commenting out the following if block to fix issue 235, we may want to later
-// provide
-// the user with an option to invoke this special case
-#if 0
-        if ( (_checkNhChChNh(atm1, atm2, atm3, atm4)) ||
-             ((bnd1->getBondType() == Bond::DOUBLE) && (bnd3->getBondType() == Bond::DOUBLE) ) ) {
-          // this is either
-          //  1. [!#1]~$ch!@$ch~[!#1] situation where ch = [CH2,NX3H1,OX2] or
-          //  2. *=*-*=* situation
-          // Both case cases we use 180 deg for torsion
-          du = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
-          dl = du;
-          dl -= GEN_DIST_TOL;
-          du += GEN_DIST_TOL;
-          path14.type = Path14Configuration::TRANS;
-          accumData.transPaths[static_cast<unsigned long>(bid1)*nb*nb + bid2*nb + bid3] = 1;
-          accumData.transPaths[static_cast<unsigned long>(bid3)*nb*nb + bid2*nb + bid1] = 1;
-        } else
-#endif
-
       if ((atm2->getAtomicNum() == 16) && (atm3->getAtomicNum() == 16)) {
         // this is *S-S* situation
         // FIX: this cannot be right is sulfur has more than two coordinated

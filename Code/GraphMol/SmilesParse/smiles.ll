@@ -30,6 +30,12 @@
 
 using namespace RDKit;
 
+// This will be called every time we construct a token an will allow us to track
+// the position of the current token.
+#undef YY_USER_ACTION
+#define YY_USER_ACTION current_token_position += yyleng;
+
+
 #define YY_FATAL_ERROR(msg) smiles_lexer_error(msg)
 
 void smiles_lexer_error(const char *msg) {

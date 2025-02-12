@@ -357,7 +357,7 @@ void adjustHs(RWMol &mol) {
   //  valence of everything has been calculated.
   //
   for (auto atom : mol.atoms()) {
-    int origImplicitV = atom->getImplicitValence();
+    int origImplicitV = atom->getValence(Atom::ValenceType::IMPLICIT);
     atom->calcExplicitValence(false);
     int origExplicitV = atom->getNumExplicitHs();
 
@@ -981,66 +981,6 @@ template RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
     std::map<unsigned int, std::unique_ptr<ROMol>> &molFrags,
     bool sanitizeFrags, const std::vector<unsigned int> *, bool);
 
-#if 0
-    void findSpanningTree(const ROMol &mol,INT_VECT &mst){
-      //
-      //  The BGL provides Prim's and Kruskal's algorithms for finding
-      //  the MST of a graph.  Prim's is O(n2) (n=# of atoms) while
-      //  Kruskal's is O(e log e) (e=# of bonds).  For molecules, where
-      //  e << n2, Kruskal's should be a win.
-      //
-      const MolGraph *mgraph = &mol.getTopology();
-      MolGraph *molGraph = const_cast<MolGraph *> (mgraph);
-
-      std::vector<MolGraph::edge_descriptor> treeEdges;
-      treeEdges.reserve(boost::num_vertices(*molGraph));
-
-      boost::property_map < MolGraph, edge_wght_t >::type w = boost::get(edge_wght_t(), *molGraph);
-      boost::property_map < MolGraph, edge_bond_t>::type bps = boost::get(edge_bond_t(), *molGraph);
-      boost::graph_traits < MolGraph >::edge_iterator e, e_end;
-      Bond* bnd;
-      for (boost::tie(e, e_end) = boost::edges(*molGraph); e != e_end; ++e) {
-        bnd = bps[*e];
-
-        if(!bnd->getIsAromatic()){
-          w[*e] = (bnd->getBondTypeAsDouble());
-        } else {
-          w[*e] = 3.0/2.0;
-        }
-      }
-
-      // FIX: this is a hack due to problems with MSVC++
-#if 1
-      typedef boost::graph_traits<MolGraph>::vertices_size_type size_type;
-      typedef boost::graph_traits<MolGraph>::vertex_descriptor vertex_t;
-      typedef boost::property_map<MolGraph,boost::vertex_index_t>::type index_map_t;
-      boost::graph_traits<MolGraph>::vertices_size_type
-        n = boost::num_vertices(*molGraph);
-      std::vector<size_type> rank_map(n);
-      std::vector<vertex_t> pred_map(n);
-
-      boost::detail::kruskal_mst_impl
-        (*molGraph, std::back_inserter(treeEdges),
-         boost::make_iterator_property_map(rank_map.begin(),
-                                           boost::get(boost::vertex_index, *molGraph),
-                                           rank_map[0]),
-         boost::make_iterator_property_map(pred_map.begin(),
-                                           boost::get(boost::vertex_index, *molGraph),
-                                           pred_map[0]),
-         w);
-
-#else
-      boost::kruskal_minimum_spanning_tree(*molGraph,std::back_inserter(treeEdges),
-                                           w, *molGraph);
-      //boost::weight_map(static_cast<boost::property_map<MolGraph,edge_wght_t>::const_type>(boost::get(edge_wght_t(),*molGraph))));
-#endif
-      mst.resize(0);
-      for(std::vector<MolGraph::edge_descriptor>::iterator edgeIt=treeEdges.begin();
-          edgeIt!=treeEdges.end();edgeIt++){
-        mst.push_back(mol[*edgeIt]->getIdx());
-      }
-    }
-#endif
 int getFormalCharge(const ROMol &mol) {
   int accum = 0;
   for (ROMol::ConstAtomIterator atomIt = mol.beginAtoms();

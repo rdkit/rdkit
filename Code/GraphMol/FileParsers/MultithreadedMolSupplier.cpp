@@ -9,6 +9,9 @@
 //  of the RDKit source tree.
 //
 #include "MultithreadedMolSupplier.h"
+
+#include <RDGeneral/RDLog.h>
+
 namespace RDKit {
 
 namespace v2 {
@@ -34,7 +37,12 @@ void MultithreadedMolSupplier::reader() {
   unsigned int lineNum, index;
   while (extractNextRecord(record, lineNum, index)) {
     if (readCallback) {
-      record = readCallback(record, index);
+      try {
+        record = readCallback(record, index);
+      } catch (std::exception &e) {
+        BOOST_LOG(rdErrorLog)
+            << "Read callback exception: " << e.what() << std::endl;
+      }
     }
     auto r = std::make_tuple(record, lineNum, index);
     d_inputQueue->push(r);
@@ -79,7 +87,11 @@ std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
     d_lastRecordId = std::get<2>(r);
     std::unique_ptr<RWMol> res{std::get<0>(r)};
     if (res && nextCallback) {
-      nextCallback(*res, *this);
+      try {
+        nextCallback(*res, *this);
+      } catch (...) {
+        // Ignore exception and proceed with mol as is.
+      }
     }
     return res;
   }

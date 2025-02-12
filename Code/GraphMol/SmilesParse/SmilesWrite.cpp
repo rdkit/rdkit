@@ -33,69 +33,6 @@
 
 namespace RDKit {
 
-void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
-                                     const char *details_json) {
-  if (details_json && strlen(details_json)) {
-    boost::property_tree::ptree pt;
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::read_json(ss, pt);
-    params.doIsomericSmiles =
-        pt.get("doIsomericSmiles", params.doIsomericSmiles);
-    params.doKekule = pt.get("doKekule", params.doKekule);
-    params.rootedAtAtom = pt.get("rootedAtAtom", params.rootedAtAtom);
-    params.canonical = pt.get("canonical", params.canonical);
-    params.allBondsExplicit =
-        pt.get("allBondsExplicit", params.allBondsExplicit);
-    params.allHsExplicit = pt.get("allHsExplicit", params.allHsExplicit);
-    params.doRandom = pt.get("doRandom", params.doRandom);
-  }
-}
-
-void updateSmilesWriteParamsFromJSON(SmilesWriteParams &params,
-                                     const std::string &details_json) {
-  updateSmilesWriteParamsFromJSON(params, details_json.c_str());
-}
-
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
-                                  const char *details_json) {
-  static const auto cxSmilesFieldsKeyValuePairs = CXSMILESFIELDS_ITEMS_MAP;
-  static const auto restoreBondDirOptionKeyValuePairs =
-      RESTOREBONDDIROPTION_ITEMS_MAP;
-  if (details_json && strlen(details_json)) {
-    boost::property_tree::ptree pt;
-    std::istringstream ss;
-    ss.str(details_json);
-    boost::property_tree::read_json(ss, pt);
-    auto cxSmilesFieldsFromJson =
-        static_cast<std::underlying_type<SmilesWrite::CXSmilesFields>::type>(
-            SmilesWrite::CXSmilesFields::CX_NONE);
-    for (const auto &keyValuePair : cxSmilesFieldsKeyValuePairs) {
-      cxSmilesFieldsFromJson |= (pt.get(keyValuePair.first, false)
-                                     ? keyValuePair.second
-                                     : SmilesWrite::CXSmilesFields::CX_NONE);
-    }
-    if (cxSmilesFieldsFromJson) {
-      cxSmilesFields =
-          static_cast<SmilesWrite::CXSmilesFields>(cxSmilesFieldsFromJson);
-    }
-    std::string restoreBondDirOption;
-    restoreBondDirOption = pt.get("restoreBondDirOption", restoreBondDirOption);
-    auto it = restoreBondDirOptionKeyValuePairs.find(restoreBondDirOption);
-    if (it != restoreBondDirOptionKeyValuePairs.end()) {
-      restoreBondDirs = it->second;
-    }
-  }
-}
-
-void updateCXSmilesFieldsFromJSON(SmilesWrite::CXSmilesFields &cxSmilesFields,
-                                  RestoreBondDirOption &restoreBondDirs,
-                                  const std::string &details_json) {
-  updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs,
-                               details_json.c_str());
-}
-
 namespace SmilesWrite {
 const int atomicSmiles[] = {0, 5, 6, 7, 8, 9, 15, 16, 17, 35, 53, -1};
 bool inOrganicSubset(int atomicNumber) {
@@ -534,7 +471,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
   PRECONDITION(
       params.rootedAtAtom < 0 ||
           static_cast<unsigned int>(params.rootedAtAtom) < mol.getNumAtoms(),
-      "rootedAtomAtom must be less than the number of atoms");
+      "rootedAtAtom must be less than the number of atoms");
+
   int rootedAtAtom = params.rootedAtAtom;
   std::vector<std::vector<int>> fragsMolAtomMapping;
   auto mols =
@@ -627,13 +565,6 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
         }
       }
     }
-
-#if 0
-    std::cout << "----------------------------" << std::endl;
-    std::cout << "MolToSmiles:" << std::endl;
-    tmol->debugMol(std::cout);
-    std::cout << "----------------------------" << std::endl;
-#endif
 
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
@@ -776,12 +707,24 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params) {
   return SmilesWrite::detail::MolToSmiles(mol, params, doingCXSmiles);
 }
 
-std::string MolToCXSmiles(const ROMol &romol, const SmilesWriteParams &params,
+std::string MolToCXSmiles(const ROMol &romol,
+                          const SmilesWriteParams &paramsInput,
                           std::uint32_t flags,
                           RestoreBondDirOption restoreBondDirs) {
   RWMol trwmol(romol);
 
   bool doingCXSmiles = true;
+  SmilesWriteParams params = paramsInput;
+
+  // if kekule is to be done, and the bond attrs (wedging) is to be done, we
+  // have to do the kekuleization here.  Otherwise, kekule happens in the
+  // fragment construction, and the wedges are done on the origin, possiibly
+  // aromatic mol. THis can put wedge bonds on double bonds, which is not valid.
+
+  if (params.doKekule) {
+    MolOps::Kekulize(trwmol);
+    params.doKekule = false;
+  }
 
   auto res = SmilesWrite::detail::MolToSmiles(trwmol, params, doingCXSmiles);
   if (res.empty()) {
@@ -886,6 +829,10 @@ std::string MolFragmentToSmiles(const ROMol &mol,
       bondsInPlay.set(bidx);
     }
   } else {
+    PRECONDITION(
+        params.rootedAtAtom < 0 || MolOps::getMolFrags(mol).size() == 1,
+        "rootedAtAtom can only be used with molecules that have a single fragment");
+
     for (auto aidx : atomsToUse) {
       for (const auto &bndi : boost::make_iterator_range(
                mol.getAtomBonds(mol.getAtomWithIdx(aidx)))) {

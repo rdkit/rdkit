@@ -155,7 +155,6 @@ void testRoundTrip() {
   TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
   m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#if 1
   smi = MolToSmiles(*m, true);
   BOOST_LOG(rdInfoLog) << "smiout: " << smi << std::endl;
   TEST_ASSERT(smi == "N[C@H](O)I");
@@ -169,7 +168,6 @@ void testRoundTrip() {
   TEST_ASSERT(cip == "R");
   smi2 = MolToSmiles(*m, true);
   TEST_ASSERT(smi == smi2);
-#endif
 
   BOOST_LOG(rdInfoLog) << " >>>>>>>>>>>>> mol file <<<<<<<<<<<<<< "
                        << std::endl;
@@ -183,7 +181,6 @@ void testRoundTrip() {
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#if 1
   smi = MolToSmiles(*m, true);
   delete m;
   m = SmilesToMol(smi);
@@ -195,7 +192,6 @@ void testRoundTrip() {
   TEST_ASSERT(cip == "R");
   smi2 = MolToSmiles(*m, true);
   TEST_ASSERT(smi == smi2);
-#endif
 
   delete m;
   fName =
@@ -207,7 +203,6 @@ void testRoundTrip() {
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#if 1
   smi = MolToSmiles(*m, true);
   delete m;
   m = SmilesToMol(smi);
@@ -219,7 +214,6 @@ void testRoundTrip() {
   TEST_ASSERT(cip == "R");
   smi2 = MolToSmiles(*m, true);
   TEST_ASSERT(smi == smi2);
-#endif
 
   delete m;
   fName =
@@ -231,7 +225,6 @@ void testRoundTrip() {
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#if 1
   smi = MolToSmiles(*m, true);
   delete m;
   m = SmilesToMol(smi);
@@ -243,7 +236,6 @@ void testRoundTrip() {
   TEST_ASSERT(cip == "R");
   smi2 = MolToSmiles(*m, true);
   TEST_ASSERT(smi == smi2);
-#endif
 
   delete m;
   fName =
@@ -255,7 +247,6 @@ void testRoundTrip() {
   TEST_ASSERT(m->getAtomWithIdx(1)->hasProp(common_properties::_CIPCode));
   m->getAtomWithIdx(1)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#if 1
   smi = MolToSmiles(*m, true);
   delete m;
   m = SmilesToMol(smi);
@@ -267,7 +258,6 @@ void testRoundTrip() {
   TEST_ASSERT(cip == "R");
   smi2 = MolToSmiles(*m, true);
   TEST_ASSERT(smi == smi2);
-#endif
 
   delete m;
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -614,15 +604,14 @@ void testChiralityCleanup() {
   ps.sanitize = false;
   auto mol = v2::SmilesParse::MolFromSmiles(smi, ps);
 
-  bool implicitOnly = false;
-  bool updateExplicitCount = false;
+  MolOps::RemoveHsParameters rhp;
   bool sanitize = false;
-  MolOps::removeHs(*mol, implicitOnly, updateExplicitCount, sanitize);
+  MolOps::removeHs(*mol, rhp, sanitize);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
 
   smi = "F[C@+](C)(Cl)(Br)I";
   mol.reset(v2::SmilesParse::MolFromSmiles(smi, ps).release());
-  MolOps::removeHs(*mol, implicitOnly, updateExplicitCount, sanitize);
+  MolOps::removeHs(*mol, rhp, sanitize);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
 
   // The remaining examples are for github #1614 :
@@ -893,14 +882,6 @@ void testRingStereochemistry() {
     TEST_ASSERT(smi1 == "B[C@H]1CC[C@H](C)CC1");
 
     delete m;
-#if 0
-    smi="B[C@@H]1CC[C@@H](C)CC1";
-    m = SmilesToMol(smi);
-    std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
-    TEST_ASSERT(smi2==smi);
-    delete m;
-#endif
   }
 
   {
@@ -911,14 +892,6 @@ void testRingStereochemistry() {
     BOOST_LOG(rdInfoLog) << " : " << smi << " " << smi1 << std::endl;
     TEST_ASSERT(smi1 == smi);
     delete m;
-#if 0
-    smi="C1[C@H](B)CC[C@@H](C)C1";
-    m = SmilesToMol(smi);
-    std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
-    TEST_ASSERT(smi2==smi1);
-    delete m;
-#endif
   }
 
   {
@@ -928,14 +901,6 @@ void testRingStereochemistry() {
     BOOST_LOG(rdInfoLog) << " : " << smi << " " << smi1 << std::endl;
     TEST_ASSERT(smi1 == "C[C@H]1CC[C@H](F)CC1");
     delete m;
-#if 0
-    smi="C[C@@H]1CC[C@@H](F)CC1";
-    m = SmilesToMol(smi);
-    std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
-    TEST_ASSERT(smi2==smi1);
-    delete m;
-#endif
   }
 
   {
@@ -943,14 +908,6 @@ void testRingStereochemistry() {
     RWMol *m = SmilesToMol(smi);
     std::string smi1 = MolToSmiles(*m, true);
     delete m;
-#if 0
-    smi="F[C@@H]1CC[C@@H](C)CC1";
-    m = SmilesToMol(smi);
-    std::string smi2=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi2<<" "<<smi1<<std::endl;
-    TEST_ASSERT(smi2==smi1);
-    delete m;
-#endif
   }
 
   {
@@ -1005,30 +962,6 @@ void testRingStereochemistry() {
     TEST_ASSERT(smi2 != smi1);
     delete m;
   }
-
-#if 0
-  // FIX : these tests do not pass
-  {
-    std::string smi = "C[C@H]1CC[C@H](C)CC1";
-    RWMol *m = SmilesToMol(smi);
-    std::string smi1=MolToSmiles(*m,true);
-    BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
-    TEST_ASSERT(smi1==smi);
-    delete m;
-  }
-
-  {
-    std::string smi = "C1[C@@H](C)CC[C@H](C)C1";
-    RWMol *m = SmilesToMol(smi);
-    m->debugMol(std::cerr);
-    std::string smi1=MolToSmiles(*m,true);
-    smi = "C[C@H]1CC[C@H](C)CC1";
-    BOOST_LOG(rdInfoLog)<<" : "<<smi<<" "<<smi1<<std::endl;
-    m->debugMol(std::cerr);
-    TEST_ASSERT(smi1==smi);
-    delete m;
-  }
-#endif
 
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -1124,7 +1057,6 @@ void testIterativeChirality() {
 
 // unless otherwise noted, the R/S and Z/E assignments here
 // match Marvin and ChemDraw.
-#if 1
   {  // atom-chirality -> atom-chirality
     std::string cip;
 
@@ -1205,7 +1137,6 @@ void testIterativeChirality() {
 
     TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
 
-#if 1  // this fails due to sf.net bug 1896935
     std::string smi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(smi1);
@@ -1213,7 +1144,6 @@ void testIterativeChirality() {
     std::string smi2 = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
-#endif
 
     delete m;
   }
@@ -1236,7 +1166,6 @@ void testIterativeChirality() {
 
     TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
 
-#if 1  // this fails due to sf.net bug 1896935
     std::string smi1 = MolToSmiles(*m, true);
     delete m;
     m = SmilesToMol(smi1);
@@ -1244,7 +1173,6 @@ void testIterativeChirality() {
     std::string smi2 = MolToSmiles(*m, true);
     BOOST_LOG(rdInfoLog) << " : " << smi1 << " " << smi2 << std::endl;
     TEST_ASSERT(smi1 == smi2);
-#endif
     delete m;
   }
 
@@ -1260,27 +1188,6 @@ void testIterativeChirality() {
     TEST_ASSERT(!m->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
     TEST_ASSERT(!m->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
 
-#if 0  // this fails due to sf.net bug 1896935
-    std::cerr<<"m pre -----"<<std::endl;
-    m->debugMol(std::cerr);
-    std::cerr<<"-----"<<std::endl;
-    std::string smi1=MolToSmiles(*m,true);
-    std::cerr<<"m post -----"<<std::endl;
-    m->debugMol(std::cerr);
-    std::cerr<<"-----"<<std::endl;
-    delete m;
-    m = SmilesToMol(smi1);
-    TEST_ASSERT(m);
-    std::cerr<<"m2 pre -----"<<std::endl;
-    m->debugMol(std::cerr);
-    std::cerr<<"-----"<<std::endl;
-    std::string smi2=MolToSmiles(*m,true);
-    std::cerr<<"m post -----"<<std::endl;
-    m->debugMol(std::cerr);
-    std::cerr<<"-----"<<std::endl;
-    BOOST_LOG(rdInfoLog)<<" : "<<smi1<<" "<<smi2<<std::endl;
-    TEST_ASSERT(smi1==smi2);
-#endif
     delete m;
   }
 
@@ -1512,7 +1419,6 @@ void testIterativeChirality() {
 
     delete m;
   }
-#endif
 
   {  // bond stereochemistry -> bond stereochemistry
     std::string cip;
@@ -1794,14 +1700,6 @@ void testIssue2705543() {
     MolOps::assignChiralTypesFrom3D(*m);
     MolOps::assignStereochemistry(*m, true);
 
-#if 0
-    for(unsigned int i=0;i<m->getNumAtoms();++i){
-      if(m->getAtomWithIdx(i)->hasProp(common_properties::_CIPCode)){
-        m->getAtomWithIdx(i)->getProp(common_properties::_CIPCode,cip);
-        std::cerr<<"  >> "<<i<<" "<<cip<<std::endl;
-      }
-    }
-#endif
     TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
     TEST_ASSERT(m->getAtomWithIdx(0)->getChiralTag() ==
                 Atom::CHI_TETRAHEDRAL_CCW);
@@ -3208,9 +3106,7 @@ void testGithub7115() {
 
 int main() {
   RDLog::InitLogs();
-  // boost::logging::enable_logs("rdApp.debug");
 
-#if 1
   testSmiles1();
   testMol1();
   testMol2();
@@ -3236,7 +3132,6 @@ int main() {
   testDoubleBondStereoInRings();
   testIssue1735();
   testStereoGroupUpdating();
-#endif
   testClearDirsOnDoubleBondsWithoutStereo();
   testAssignChiralTypesFromMolParity();
   testIncorrectBondDirsOnWedging();

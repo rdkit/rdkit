@@ -18,6 +18,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesJSONParsers.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
@@ -30,6 +31,10 @@
 #ifdef RDK_BUILD_MINIMAL_LIB_MCS
 #include <GraphMol/FMCS/FMCS.h>
 #endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MOLZIP
+#include <GraphMol/ChemTransforms/MolFragmenterJSONParser.h>
+#endif
+
 #include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolInterchange/MolInterchange.h>
@@ -39,6 +44,9 @@
 #include <Geometry/Transform3D.h>
 #include <DataStructs/BitOps.h>
 #include <DataStructs/ExplicitBitVect.h>
+#ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
+#include <GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h>
+#endif
 
 #ifdef RDK_BUILD_INCHI_SUPPORT
 #include <INCHI-API/inchi.h>
@@ -53,8 +61,10 @@ namespace rj = rapidjson;
 using namespace RDKit;
 
 namespace {
+#ifdef RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY
 static const char *NO_SUPPORT_FOR_PATTERN_FPS =
     "This SubstructLibrary was built without support for pattern fps";
+#endif
 
 std::string mappingToJsonArray(const ROMol &mol) {
   std::vector<unsigned int> atomMapping;
@@ -83,6 +93,18 @@ std::string mappingToJsonArray(const ROMol &mol) {
   std::string res = buffer.GetString();
   return res;
 }
+
+void remove_hs_common(RWMol &mol, const std::string &details_json) {
+  if (details_json.empty()) {
+    MolOps::removeAllHs(mol);
+  } else {
+    MolOps::RemoveHsParameters ps;
+    bool sanitize = true;
+    MinimalLib::updateRemoveHsParametersFromJSON(ps, sanitize,
+                                                 details_json.c_str());
+    MolOps::removeHs(mol, ps, sanitize);
+  }
+}
 }  // end of anonymous namespace
 
 std::string JSMolBase::get_smiles() const { return MolToSmiles(get()); }
@@ -95,11 +117,11 @@ std::string JSMolBase::get_cxsmiles() const { return MolToCXSmiles(get()); }
 std::string JSMolBase::get_cxsmiles(const std::string &details) const {
   SmilesWriteParams params;
   updateSmilesWriteParamsFromJSON(params, details);
-  SmilesWrite::CXSmilesFields cxSmilesFields =
-      SmilesWrite::CXSmilesFields::CX_ALL;
-  RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear;
+  std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+  unsigned int restoreBondDirs = RestoreBondDirOptionClear;
   updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, details);
-  return MolToCXSmiles(get(), params, cxSmilesFields, restoreBondDirs);
+  return MolToCXSmiles(get(), params, cxSmilesFields,
+                       static_cast<RestoreBondDirOption>(restoreBondDirs));
 }
 std::string JSMolBase::get_smarts() const { return MolToSmarts(get()); }
 std::string JSMolBase::get_smarts(const std::string &details) const {
@@ -139,10 +161,11 @@ std::string JSMolBase::get_json() const {
   return MolInterchange::MolToJSONData(get());
 }
 
-std::string JSMolBase::get_pickle() const {
+std::string JSMolBase::get_pickle(const std::string &details) const {
+  unsigned int propFlags = PicklerOps::AllProps ^ PicklerOps::ComputedProps;
+  MinimalLib::updatePropertyPickleOptionsFromJSON(propFlags, details.c_str());
   std::string pickle;
-  MolPickler::pickleMol(get(), pickle,
-                        PicklerOps::AllProps ^ PicklerOps::ComputedProps);
+  MolPickler::pickleMol(get(), pickle, propFlags);
   return pickle;
 }
 
@@ -426,9 +449,9 @@ bool JSMolBase::clear_prop(const std::string &key) {
   return res;
 }
 
-std::string JSMolBase::remove_hs() const {
+std::string JSMolBase::remove_hs(const std::string &details_json) const {
   RWMol molCopy(get());
-  MolOps::removeAllHs(molCopy);
+  remove_hs_common(molCopy, details_json);
 
   bool includeStereo = true;
   int confId = -1;
@@ -436,8 +459,8 @@ std::string JSMolBase::remove_hs() const {
   return MolToMolBlock(molCopy, includeStereo, confId, kekulize);
 }
 
-bool JSMolBase::remove_hs_in_place() {
-  MolOps::removeAllHs(get());
+bool JSMolBase::remove_hs_in_place(const std::string &details_json) {
+  remove_hs_common(get(), details_json);
   MolOps::assignStereochemistry(get(), true, true);
   return true;
 }
@@ -900,10 +923,10 @@ JSMolBase *get_mcs_as_mol(const JSMolList &molList,
 }
 #endif
 
-RDKit::MinimalLib::LogHandle::LoggingFlag
-    RDKit::MinimalLib::LogHandle::d_loggingNeedsInit = true;
+std::unique_ptr<MinimalLib::LoggerStateSingletons>
+    MinimalLib::LoggerStateSingletons::d_instance;
 
-JSLog::JSLog(RDKit::MinimalLib::LogHandle *logHandle) : d_logHandle(logHandle) {
+JSLog::JSLog(MinimalLib::LogHandle *logHandle) : d_logHandle(logHandle) {
   assert(d_logHandle);
 }
 
@@ -914,17 +937,22 @@ std::string JSLog::get_buffer() const { return d_logHandle->getBuffer(); }
 void JSLog::clear_buffer() const { d_logHandle->clearBuffer(); }
 
 JSLog *set_log_tee(const std::string &log_name) {
-  auto logHandle = RDKit::MinimalLib::LogHandle::setLogTee(log_name.c_str());
+  auto logHandle = MinimalLib::LogHandle::setLogTee(log_name.c_str());
   return logHandle ? new JSLog(logHandle) : nullptr;
 }
 
 JSLog *set_log_capture(const std::string &log_name) {
-  auto logHandle =
-      RDKit::MinimalLib::LogHandle::setLogCapture(log_name.c_str());
+  auto logHandle = MinimalLib::LogHandle::setLogCapture(log_name.c_str());
   return logHandle ? new JSLog(logHandle) : nullptr;
 }
 
-void enable_logging() { RDKit::MinimalLib::LogHandle::enableLogging(); }
+bool enable_logging(const std::string &logName) {
+  return MinimalLib::LogHandle::enableLogging(logName.c_str());
+}
+
+bool disable_logging(const std::string &logName) {
+  return MinimalLib::LogHandle::disableLogging(logName.c_str());
+}
 
 void disable_logging() { RDKit::MinimalLib::LogHandle::disableLogging(); }
 
@@ -985,5 +1013,14 @@ JSRGroupDecomposition::getRGroupsAsRows() const {
         return transformedMap;
       });
   return res;
+}
+#endif
+#ifdef RDK_BUILD_MINIMAL_LIB_MOLZIP
+JSMolBase *molzip(const JSMolBase &a, const JSMolBase &b,
+                  const std::string &details_json) {
+  MolzipParams params;
+  parseMolzipParametersJSON(params, details_json.c_str());
+  auto out = molzip(a.get(), b.get(), params);
+  return new JSMol(new RDKit::RWMol(*out));
 }
 #endif

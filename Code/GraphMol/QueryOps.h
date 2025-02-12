@@ -118,10 +118,10 @@ static inline int queryAtomHasImplicitH(Atom const *at) {
   return int(at->getTotalNumHs(false) > 0);
 };
 static inline int queryAtomImplicitValence(Atom const *at) {
-  return at->getImplicitValence();
+  return at->getValence(Atom::ValenceType::IMPLICIT);
 };
 static inline int queryAtomExplicitValence(Atom const *at) {
-  return at->getExplicitValence() - at->getNumExplicitHs();
+  return at->getValence(Atom::ValenceType::EXPLICIT) - at->getNumExplicitHs();
 };
 static inline int queryAtomTotalValence(Atom const *at) {
   return at->getTotalValence();
@@ -866,7 +866,7 @@ class HasPropWithValueQueryBase {
  public:
   HasPropWithValueQueryBase() = default;
   virtual ~HasPropWithValueQueryBase() = default;
-  virtual Dict::Pair getPair() const = 0;
+  virtual PairHolder getPair() const = 0;
   virtual double getTolerance() const = 0;
 };
 
@@ -886,7 +886,9 @@ class HasPropWithValueQuery
     this->setDataFunc(0);
   }
 
-  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+  PairHolder getPair() const override {
+    return PairHolder(Dict::Pair(propname, val));
+  }
 
   double getTolerance() const override { return tolerance; }
 
@@ -968,7 +970,9 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     this->setDataFunc(nullptr);
   }
 
-  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+  PairHolder getPair() const override {
+    return PairHolder(Dict::Pair(propname, val));
+  }
 
   double getTolerance() const override { return 0.0; }
 
@@ -1040,7 +1044,9 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     this->setDataFunc(nullptr);
   }
 
-  Dict::Pair getPair() const override { return Dict::Pair(propname, val); }
+  PairHolder getPair() const override {
+    return PairHolder(Dict::Pair(propname, val));
+  }
 
   double getTolerance() const override { return tol; }
 

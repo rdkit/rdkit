@@ -1,6 +1,3 @@
-#line 1 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
-
-#line 3 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -800,8 +797,6 @@ static const flex_int16_t yy_chk[358] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "smiles.ll"
-#line 9 "smiles.ll"
 
 // $Id$
 //
@@ -825,6 +820,11 @@ static const flex_int16_t yy_chk[358] =
 #include "smiles.tab.hpp"
 
 using namespace RDKit;
+
+// This will be called every time we construct a token an will allow us to track
+// the position of the current token.
+#undef YY_USER_ACTION
+#define YY_USER_ACTION current_token_position += yyleng;
 
 #define YY_FATAL_ERROR(msg) smiles_lexer_error(msg)
 
@@ -859,7 +859,6 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
   n = _yybytes_len + 2;
   memcpy(buf, yybytes+start, _yybytes_len);
 
-
   buf[_yybytes_len] = buf[_yybytes_len+1] = YY_END_OF_BUFFER_CHAR;
 
   b = yysmiles__scan_buffer(buf,n ,yyscanner);
@@ -871,14 +870,10 @@ size_t setup_smiles_string(const std::string &text,yyscan_t yyscanner){
    */
   b->yy_is_our_buffer = 1;
 
-
   POSTCONDITION(b,"invalid buffer");
   return start;
 
 }
-#line 879 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
-
-#line 881 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 #define INITIAL 0
 #define IN_ATOM_STATE 1
@@ -1153,20 +1148,13 @@ YY_DECL
 		}
 
 	{
-#line 86 "smiles.ll"
 
-
-
-#line 90 "smiles.ll"
   if (start_token)
     {
       int t = start_token;
       start_token = 0;
       return t;
     }
-
-
-#line 1169 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1221,674 +1209,540 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 98 "smiles.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_TETRAHEDRAL; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 99 "smiles.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_ALLENE; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 100 "smiles.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_SQUAREPLANAR; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 101 "smiles.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 102 "smiles.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_OCTAHEDRAL; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 104 "smiles.ll"
 { return AT_TOKEN; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 107 "smiles.ll"
 { yylval->atom = new Atom(2); return ATOM_TOKEN; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 108 "smiles.ll"
 { yylval->atom = new Atom(3); return ATOM_TOKEN; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 109 "smiles.ll"
 { yylval->atom = new Atom(4); return ATOM_TOKEN; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 110 "smiles.ll"
 { yylval->atom = new Atom(10); return ATOM_TOKEN; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 111 "smiles.ll"
 { yylval->atom = new Atom(11); return ATOM_TOKEN; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 112 "smiles.ll"
 { yylval->atom = new Atom(12); return ATOM_TOKEN; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 113 "smiles.ll"
 { yylval->atom = new Atom(13); return ATOM_TOKEN; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 114 "smiles.ll"
 { yylval->atom = new Atom(14); return ATOM_TOKEN; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 115 "smiles.ll"
 { yylval->atom = new Atom(18); return ATOM_TOKEN; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 116 "smiles.ll"
 { yylval->atom = new Atom(19); return ATOM_TOKEN; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 117 "smiles.ll"
 { yylval->atom = new Atom(20); return ATOM_TOKEN; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 118 "smiles.ll"
 { yylval->atom = new Atom(21); return ATOM_TOKEN; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 119 "smiles.ll"
 { yylval->atom = new Atom(22); return ATOM_TOKEN; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 120 "smiles.ll"
 { yylval->atom = new Atom(23); return ATOM_TOKEN; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 121 "smiles.ll"
 { yylval->atom = new Atom(24); return ATOM_TOKEN; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 122 "smiles.ll"
 { yylval->atom = new Atom(25); return ATOM_TOKEN; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 123 "smiles.ll"
 { yylval->atom = new Atom(26); return ATOM_TOKEN; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 124 "smiles.ll"
 { yylval->atom = new Atom(27); return ATOM_TOKEN; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 125 "smiles.ll"
 { yylval->atom = new Atom(28); return ATOM_TOKEN; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 126 "smiles.ll"
 { yylval->atom = new Atom(29); return ATOM_TOKEN; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 127 "smiles.ll"
 { yylval->atom = new Atom(30); return ATOM_TOKEN; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 128 "smiles.ll"
 { yylval->atom = new Atom(31); return ATOM_TOKEN; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 129 "smiles.ll"
 { yylval->atom = new Atom(32); return ATOM_TOKEN; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 130 "smiles.ll"
 { yylval->atom = new Atom(33); return ATOM_TOKEN; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 131 "smiles.ll"
 { yylval->atom = new Atom(34); return ATOM_TOKEN; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 132 "smiles.ll"
 { yylval->atom = new Atom(36); return ATOM_TOKEN; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 133 "smiles.ll"
 { yylval->atom = new Atom(37); return ATOM_TOKEN; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 134 "smiles.ll"
 { yylval->atom = new Atom(38); return ATOM_TOKEN; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 135 "smiles.ll"
 { yylval->atom = new Atom(39); return ATOM_TOKEN; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 136 "smiles.ll"
 { yylval->atom = new Atom(40); return ATOM_TOKEN; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 137 "smiles.ll"
 { yylval->atom = new Atom(41); return ATOM_TOKEN; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 138 "smiles.ll"
 { yylval->atom = new Atom(42); return ATOM_TOKEN; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 139 "smiles.ll"
 { yylval->atom = new Atom(43); return ATOM_TOKEN; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 140 "smiles.ll"
 { yylval->atom = new Atom(44); return ATOM_TOKEN; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 141 "smiles.ll"
 { yylval->atom = new Atom(45); return ATOM_TOKEN; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 142 "smiles.ll"
 { yylval->atom = new Atom(46); return ATOM_TOKEN; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 143 "smiles.ll"
 { yylval->atom = new Atom(47); return ATOM_TOKEN; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 144 "smiles.ll"
 { yylval->atom = new Atom(48); return ATOM_TOKEN; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 145 "smiles.ll"
 { yylval->atom = new Atom(49); return ATOM_TOKEN; }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 146 "smiles.ll"
 { yylval->atom = new Atom(50); return ATOM_TOKEN; }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 147 "smiles.ll"
 { yylval->atom = new Atom(51); return ATOM_TOKEN; }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 148 "smiles.ll"
 { yylval->atom = new Atom(52); return ATOM_TOKEN; }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 149 "smiles.ll"
 { yylval->atom = new Atom(54); return ATOM_TOKEN; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 150 "smiles.ll"
 { yylval->atom = new Atom(55); return ATOM_TOKEN; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 151 "smiles.ll"
 { yylval->atom = new Atom(56); return ATOM_TOKEN; }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 152 "smiles.ll"
 { yylval->atom = new Atom(57); return ATOM_TOKEN; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 153 "smiles.ll"
 { yylval->atom = new Atom(58); return ATOM_TOKEN; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 154 "smiles.ll"
 { yylval->atom = new Atom(59); return ATOM_TOKEN; }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 155 "smiles.ll"
 { yylval->atom = new Atom(60); return ATOM_TOKEN; }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 156 "smiles.ll"
 { yylval->atom = new Atom(61); return ATOM_TOKEN; }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 157 "smiles.ll"
 { yylval->atom = new Atom(62); return ATOM_TOKEN; }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 158 "smiles.ll"
 { yylval->atom = new Atom(63); return ATOM_TOKEN; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 159 "smiles.ll"
 { yylval->atom = new Atom(64); return ATOM_TOKEN; }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 160 "smiles.ll"
 { yylval->atom = new Atom(65); return ATOM_TOKEN; }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 161 "smiles.ll"
 { yylval->atom = new Atom(66); return ATOM_TOKEN; }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 162 "smiles.ll"
 { yylval->atom = new Atom(67); return ATOM_TOKEN; }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 163 "smiles.ll"
 { yylval->atom = new Atom(68); return ATOM_TOKEN; }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 164 "smiles.ll"
 { yylval->atom = new Atom(69); return ATOM_TOKEN; }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 165 "smiles.ll"
 { yylval->atom = new Atom(70); return ATOM_TOKEN; }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 166 "smiles.ll"
 { yylval->atom = new Atom(71); return ATOM_TOKEN; }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 167 "smiles.ll"
 { yylval->atom = new Atom(72); return ATOM_TOKEN; }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 168 "smiles.ll"
 { yylval->atom = new Atom(73); return ATOM_TOKEN; }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 169 "smiles.ll"
 { yylval->atom = new Atom(74); return ATOM_TOKEN; }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 170 "smiles.ll"
 { yylval->atom = new Atom(75); return ATOM_TOKEN; }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 171 "smiles.ll"
 { yylval->atom = new Atom(76); return ATOM_TOKEN; }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 172 "smiles.ll"
 { yylval->atom = new Atom(77); return ATOM_TOKEN; }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 173 "smiles.ll"
 { yylval->atom = new Atom(78); return ATOM_TOKEN; }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 174 "smiles.ll"
 { yylval->atom = new Atom(79); return ATOM_TOKEN; }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 175 "smiles.ll"
 { yylval->atom = new Atom(80); return ATOM_TOKEN; }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 176 "smiles.ll"
 { yylval->atom = new Atom(81); return ATOM_TOKEN; }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 177 "smiles.ll"
 { yylval->atom = new Atom(82); return ATOM_TOKEN; }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 178 "smiles.ll"
 { yylval->atom = new Atom(83); return ATOM_TOKEN; }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 179 "smiles.ll"
 { yylval->atom = new Atom(84); return ATOM_TOKEN; }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 180 "smiles.ll"
 { yylval->atom = new Atom(85); return ATOM_TOKEN; }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 181 "smiles.ll"
 { yylval->atom = new Atom(86); return ATOM_TOKEN; }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 182 "smiles.ll"
 { yylval->atom = new Atom(87); return ATOM_TOKEN; }
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 183 "smiles.ll"
 { yylval->atom = new Atom(88); return ATOM_TOKEN; }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 184 "smiles.ll"
 { yylval->atom = new Atom(89); return ATOM_TOKEN; }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 185 "smiles.ll"
 { yylval->atom = new Atom(90); return ATOM_TOKEN; }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 186 "smiles.ll"
 { yylval->atom = new Atom(91); return ATOM_TOKEN; }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 187 "smiles.ll"
 { yylval->atom = new Atom(92); return ATOM_TOKEN; }
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 188 "smiles.ll"
 { yylval->atom = new Atom(93); return ATOM_TOKEN; }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 189 "smiles.ll"
 { yylval->atom = new Atom(94); return ATOM_TOKEN; }
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 190 "smiles.ll"
 { yylval->atom = new Atom(95); return ATOM_TOKEN; }
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 191 "smiles.ll"
 { yylval->atom = new Atom(96); return ATOM_TOKEN; }
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 192 "smiles.ll"
 { yylval->atom = new Atom(97); return ATOM_TOKEN; }
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 193 "smiles.ll"
 { yylval->atom = new Atom(98); return ATOM_TOKEN; }
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 194 "smiles.ll"
 { yylval->atom = new Atom(99); return ATOM_TOKEN; }
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 195 "smiles.ll"
 { yylval->atom = new Atom(100); return ATOM_TOKEN; }
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 196 "smiles.ll"
 { yylval->atom = new Atom(101); return ATOM_TOKEN; }
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 197 "smiles.ll"
 { yylval->atom = new Atom(102); return ATOM_TOKEN; }
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 198 "smiles.ll"
 { yylval->atom = new Atom(103); return ATOM_TOKEN; }
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 199 "smiles.ll"
 { yylval->atom = new Atom(104); return ATOM_TOKEN; }
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 200 "smiles.ll"
 { yylval->atom = new Atom(105); return ATOM_TOKEN; }
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 201 "smiles.ll"
 { yylval->atom = new Atom(106); return ATOM_TOKEN; }
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 202 "smiles.ll"
 { yylval->atom = new Atom(107); return ATOM_TOKEN; }
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 203 "smiles.ll"
 { yylval->atom = new Atom(108); return ATOM_TOKEN; }
 	YY_BREAK
 case 104:
 YY_RULE_SETUP
-#line 204 "smiles.ll"
 { yylval->atom = new Atom(109); return ATOM_TOKEN; }
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 205 "smiles.ll"
 { yylval->atom = new Atom(110); return ATOM_TOKEN; }
 	YY_BREAK
 case 106:
 YY_RULE_SETUP
-#line 206 "smiles.ll"
 { yylval->atom = new Atom(111); return ATOM_TOKEN; }
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 207 "smiles.ll"
 { yylval->atom = new Atom(112); return ATOM_TOKEN; }
 	YY_BREAK
 case 108:
 YY_RULE_SETUP
-#line 208 "smiles.ll"
 { yylval->atom = new Atom(113); return ATOM_TOKEN; }
 	YY_BREAK
 case 109:
 YY_RULE_SETUP
-#line 209 "smiles.ll"
 { yylval->atom = new Atom(114); return ATOM_TOKEN; }
 	YY_BREAK
 case 110:
 YY_RULE_SETUP
-#line 210 "smiles.ll"
 { yylval->atom = new Atom(115); return ATOM_TOKEN; }
 	YY_BREAK
 case 111:
 YY_RULE_SETUP
-#line 211 "smiles.ll"
 { yylval->atom = new Atom(116); return ATOM_TOKEN; }
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 212 "smiles.ll"
 { yylval->atom = new Atom(117); return ATOM_TOKEN; }
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 213 "smiles.ll"
 { yylval->atom = new Atom(118); return ATOM_TOKEN; }
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 215 "smiles.ll"
 { yylval->atom = new Atom(110); return ATOM_TOKEN; }
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 216 "smiles.ll"
 { yylval->atom = new Atom(111); return ATOM_TOKEN; }
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 217 "smiles.ll"
 { yylval->atom = new Atom(112); return ATOM_TOKEN; }
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 218 "smiles.ll"
 { yylval->atom = new Atom(113); return ATOM_TOKEN; }
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 219 "smiles.ll"
 { yylval->atom = new Atom(114); return ATOM_TOKEN; }
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 220 "smiles.ll"
 { yylval->atom = new Atom(115); return ATOM_TOKEN; }
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 221 "smiles.ll"
 { yylval->atom = new Atom(116); return ATOM_TOKEN; }
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 222 "smiles.ll"
 { yylval->atom = new Atom(117); return ATOM_TOKEN; }
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 223 "smiles.ll"
 { yylval->atom = new Atom(118); return ATOM_TOKEN; }
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 225 "smiles.ll"
 { yylval->atom = new Atom(5);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 226 "smiles.ll"
 { yylval->atom = new Atom(6);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 227 "smiles.ll"
 { yylval->atom = new Atom(7);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 228 "smiles.ll"
 { yylval->atom = new Atom(8);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 229 "smiles.ll"
 { yylval->atom = new Atom(15);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 230 "smiles.ll"
 { yylval->atom = new Atom(16);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 231 "smiles.ll"
 { yylval->atom = new Atom(9);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 232 "smiles.ll"
 { yylval->atom = new Atom(17);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 233 "smiles.ll"
 { yylval->atom = new Atom(35);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 234 "smiles.ll"
 { yylval->atom = new Atom(53);return ORGANIC_ATOM_TOKEN; }
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 236 "smiles.ll"
 {
 				return H_TOKEN;
 			}
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 240 "smiles.ll"
 {	yylval->atom = new Atom ( 5 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1896,7 +1750,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 244 "smiles.ll"
 {	yylval->atom = new Atom ( 6 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1904,7 +1757,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 248 "smiles.ll"
 {	yylval->atom = new Atom( 7 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1912,7 +1764,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 252 "smiles.ll"
 {	yylval->atom = new Atom( 8 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1920,7 +1771,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 256 "smiles.ll"
 {	yylval->atom = new Atom( 15 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1928,7 +1778,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 260 "smiles.ll"
 {	yylval->atom = new Atom( 16 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1936,7 +1785,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 265 "smiles.ll"
 {	yylval->atom = new Atom( 14 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1944,7 +1792,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 269 "smiles.ll"
 {	yylval->atom = new Atom( 33 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1952,7 +1799,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 273 "smiles.ll"
 {	yylval->atom = new Atom( 34 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1960,7 +1806,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 277 "smiles.ll"
 {	yylval->atom = new Atom( 52 );
 			yylval->atom->setIsAromatic(true);
 				return AROMATIC_ATOM_TOKEN;
@@ -1968,7 +1813,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 282 "smiles.ll"
 {   yylval->atom = new Atom( 0 );
 		            yylval->atom->setProp(common_properties::dummyLabel,
                                                         std::string("*"));
@@ -1979,12 +1823,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 290 "smiles.ll"
 { return COLON_TOKEN; }
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 292 "smiles.ll"
 { return HASH_TOKEN; }
 	YY_BREAK
 
@@ -1993,126 +1835,103 @@ YY_RULE_SETUP
 
 case 147:
 YY_RULE_SETUP
-#line 299 "smiles.ll"
 { yylval->atom = new Atom(104); return ATOM_TOKEN; }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 300 "smiles.ll"
 { yylval->atom = new Atom(105); return ATOM_TOKEN; }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 301 "smiles.ll"
 { yylval->atom = new Atom(106); return ATOM_TOKEN; }
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 302 "smiles.ll"
 { yylval->atom = new Atom(107); return ATOM_TOKEN; }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 303 "smiles.ll"
 { yylval->atom = new Atom(108); return ATOM_TOKEN; }
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 304 "smiles.ll"
 { yylval->atom = new Atom(109); return ATOM_TOKEN; }
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 305 "smiles.ll"
 { yylval->atom = new Atom(110); return ATOM_TOKEN; }
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 306 "smiles.ll"
 { yylval->atom = new Atom(111); return ATOM_TOKEN; }
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 307 "smiles.ll"
 { yylval->atom = new Atom(112); return ATOM_TOKEN; }
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 308 "smiles.ll"
 { yylval->atom = new Atom(113); return ATOM_TOKEN; }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 309 "smiles.ll"
 { yylval->atom = new Atom(114); return ATOM_TOKEN; }
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 310 "smiles.ll"
 { yylval->atom = new Atom(115); return ATOM_TOKEN; }
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 311 "smiles.ll"
 { yylval->atom = new Atom(116); return ATOM_TOKEN; }
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 312 "smiles.ll"
 { yylval->atom = new Atom(117); return ATOM_TOKEN; }
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 313 "smiles.ll"
 { yylval->atom = new Atom(118); return ATOM_TOKEN; }
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 315 "smiles.ll"
 { yylval->bond = new Bond(Bond::DOUBLE);
 	  return BOND_TOKEN; }
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 317 "smiles.ll"
 { yylval->bond = new Bond(Bond::TRIPLE);
 	  return BOND_TOKEN; }
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 319 "smiles.ll"
 { yylval->bond = new Bond(Bond::AROMATIC);
 	  yylval->bond->setIsAromatic(true);
 	  return BOND_TOKEN; }
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 322 "smiles.ll"
 { yylval->bond = new Bond(Bond::QUADRUPLE);
 	  return BOND_TOKEN; }
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 324 "smiles.ll"
 { yylval->bond = new Bond(Bond::DATIVER);
 	  return BOND_TOKEN; }
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 326 "smiles.ll"
 { yylval->bond = new Bond(Bond::DATIVEL);
 	  return BOND_TOKEN; }
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 328 "smiles.ll"
 { yylval->bond = new QueryBond();
 	  yylval->bond->setQuery(makeBondNullQuery());
 	  return BOND_TOKEN;  }
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 332 "smiles.ll"
 { yylval->bond = new Bond(Bond::UNSPECIFIED);
 	yylval->bond->setProp(RDKit::common_properties::_unspecifiedOrder,1);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
@@ -2120,7 +1939,6 @@ YY_RULE_SETUP
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 337 "smiles.ll"
 { yylval->bond = new Bond(Bond::UNSPECIFIED);
 	yylval->bond->setProp(RDKit::common_properties::_unspecifiedOrder,1);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
@@ -2128,76 +1946,61 @@ YY_RULE_SETUP
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 342 "smiles.ll"
 { return MINUS_TOKEN; }
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 344 "smiles.ll"
 { return PLUS_TOKEN; }
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 346 "smiles.ll"
 { return GROUP_OPEN_TOKEN; }
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-#line 347 "smiles.ll"
 { return GROUP_CLOSE_TOKEN; }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 350 "smiles.ll"
 { BEGIN IN_ATOM_STATE; return ATOM_OPEN_TOKEN; }
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 351 "smiles.ll"
 { BEGIN INITIAL; return ATOM_CLOSE_TOKEN; }
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 353 "smiles.ll"
 { return SEPARATOR_TOKEN; }
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 355 "smiles.ll"
 { return PERCENT_TOKEN; }
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 357 "smiles.ll"
 { yylval->ival = 0; return ZERO_TOKEN; }
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 358 "smiles.ll"
 { yylval->ival = yytext[0] - '0'; return NONZERO_DIGIT_TOKEN; }
 	YY_BREAK
 case 181:
 /* rule 181 can match eol */
 YY_RULE_SETUP
-#line 362 "smiles.ll"
 return 0;
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(IN_ATOM_STATE):
-#line 364 "smiles.ll"
 { return EOS_TOKEN; }
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 365 "smiles.ll"
 return yytext[0];
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 367 "smiles.ll"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 2200 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmiles.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2412,7 +2215,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 				}
 			else
 				/* Can't grow it, we don't own it. */
-				b->yy_ch_buf = NULL;
+				b->yy_ch_buf = nullptr;
 
 			if ( ! b->yy_ch_buf )
 				YY_FATAL_ERROR(
@@ -2757,7 +2560,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
 		return;
 
 	if ( b == YY_CURRENT_BUFFER ) /* Not sure if we should pop here. */
-		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
+		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) nullptr;
 
 	if ( b->yy_is_our_buffer )
 		yyfree( (void *) b->yy_ch_buf , yyscanner );
@@ -2831,7 +2634,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
 void yypush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-	if (new_buffer == NULL)
+	if (new_buffer == nullptr)
 		return;
 
 	yyensure_buffer_stack(yyscanner);
@@ -2866,7 +2669,7 @@ void yypop_buffer_state (yyscan_t yyscanner)
 		return;
 
 	yy_delete_buffer(YY_CURRENT_BUFFER , yyscanner);
-	YY_CURRENT_BUFFER_LVALUE = NULL;
+	YY_CURRENT_BUFFER_LVALUE = nullptr;
 	if (yyg->yy_buffer_stack_top > 0)
 		--yyg->yy_buffer_stack_top;
 
@@ -2937,7 +2740,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscann
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
 		/* They forgot to leave room for the EOB's. */
-		return NULL;
+		return nullptr;
 
 	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state ) , yyscanner );
 	if ( ! b )
@@ -2946,7 +2749,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscann
 	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
-	b->yy_input_file = NULL;
+	b->yy_input_file = nullptr;
 	b->yy_n_chars = b->yy_buf_size;
 	b->yy_is_interactive = 0;
 	b->yy_at_bol = 1;
@@ -3204,14 +3007,14 @@ void yyset_lval (YYSTYPE *  yylval_param , yyscan_t yyscanner)
  */
 int yylex_init(yyscan_t* ptr_yy_globals)
 {
-    if (ptr_yy_globals == NULL){
+    if (ptr_yy_globals == nullptr){
         errno = EINVAL;
         return 1;
     }
 
-    *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), NULL );
+    *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), nullptr );
 
-    if (*ptr_yy_globals == NULL){
+    if (*ptr_yy_globals == nullptr){
         errno = ENOMEM;
         return 1;
     }
@@ -3235,14 +3038,14 @@ int yylex_init_extra( YY_EXTRA_TYPE yy_user_defined, yyscan_t* ptr_yy_globals )
 
     yyset_extra (yy_user_defined, &dummy_yyguts);
 
-    if (ptr_yy_globals == NULL){
+    if (ptr_yy_globals == nullptr){
         errno = EINVAL;
         return 1;
     }
 
     *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
 
-    if (*ptr_yy_globals == NULL){
+    if (*ptr_yy_globals == nullptr){
         errno = ENOMEM;
         return 1;
     }
@@ -3263,24 +3066,24 @@ static int yy_init_globals (yyscan_t yyscanner)
      * This function is called from yylex_destroy(), so don't allocate here.
      */
 
-    yyg->yy_buffer_stack = NULL;
+    yyg->yy_buffer_stack = nullptr;
     yyg->yy_buffer_stack_top = 0;
     yyg->yy_buffer_stack_max = 0;
-    yyg->yy_c_buf_p = NULL;
+    yyg->yy_c_buf_p = nullptr;
     yyg->yy_init = 0;
     yyg->yy_start = 0;
 
     yyg->yy_start_stack_ptr = 0;
     yyg->yy_start_stack_depth = 0;
-    yyg->yy_start_stack =  NULL;
+    yyg->yy_start_stack =  nullptr;
 
 /* Defined in main.c */
 #ifdef YY_STDINIT
     yyin = stdin;
     yyout = stdout;
 #else
-    yyin = NULL;
-    yyout = NULL;
+    yyin = nullptr;
+    yyout = nullptr;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
@@ -3297,17 +3100,17 @@ int yylex_destroy  (yyscan_t yyscanner)
     /* Pop the buffer stack, destroying each element. */
 	while(YY_CURRENT_BUFFER){
 		yy_delete_buffer( YY_CURRENT_BUFFER , yyscanner );
-		YY_CURRENT_BUFFER_LVALUE = NULL;
+		YY_CURRENT_BUFFER_LVALUE = nullptr;
 		yypop_buffer_state(yyscanner);
 	}
 
 	/* Destroy the stack itself. */
 	yyfree(yyg->yy_buffer_stack , yyscanner);
-	yyg->yy_buffer_stack = NULL;
+	yyg->yy_buffer_stack = nullptr;
 
     /* Destroy the start condition stack. */
         yyfree( yyg->yy_start_stack , yyscanner );
-        yyg->yy_start_stack = NULL;
+        yyg->yy_start_stack = nullptr;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
      * yylex() is called, initialization will occur. */
@@ -3315,7 +3118,7 @@ int yylex_destroy  (yyscan_t yyscanner)
 
     /* Destroy the main struct (reentrant only). */
     yyfree ( yyscanner , yyscanner );
-    yyscanner = NULL;
+    yyscanner = nullptr;
     return 0;
 }
 
@@ -3376,9 +3179,6 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 }
 
 #define YYTABLES_NAME "yytables"
-
-#line 367 "smiles.ll"
-
 
 #undef yysmiles_wrap
 int yysmiles_wrap( void ) { return 1; }

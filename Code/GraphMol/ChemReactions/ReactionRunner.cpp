@@ -819,7 +819,8 @@ void checkProductChirality(Atom::ChiralType reactantChirality,
 
 void setReactantAtomPropertiesToProduct(Atom *productAtom,
                                         const Atom &reactantAtom,
-                                        bool setImplicitProperties) {
+                                        bool setImplicitProperties,
+					unsigned int reactantId) {
   // which properties need to be set from the reactant?
   if (productAtom->getAtomicNum() <= 0 ||
       productAtom->hasProp(common_properties::_MolFileAtomQuery)) {
@@ -838,8 +839,6 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
     if (productAtom->hasProp(common_properties::_MolFileRLabel)) {
       productAtom->clearProp(common_properties::_MolFileRLabel);
     }
-    productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
-                                       reactantAtom.getIdx());
     productAtom->setProp(WAS_DUMMY, true);
   } else {
     // remove bookkeeping labels (if present)
@@ -849,6 +848,8 @@ void setReactantAtomPropertiesToProduct(Atom *productAtom,
   }
   productAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
                                      reactantAtom.getIdx());
+  productAtom->setProp<unsigned int>(common_properties::reactantIdx,
+				     reactantId);
   if (setImplicitProperties) {
     updateImplicitAtomProperties(productAtom, &reactantAtom);
   }
@@ -905,7 +906,7 @@ void addMissingProductBonds(const Bond &origB, RWMOL_SPTR product,
 void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
                            unsigned prodNeighborIdx, RWMOL_SPTR product,
                            const ROMol &reactant,
-                           ReactantProductAtomMapping *mapping) {
+                           ReactantProductAtomMapping *mapping, unsigned int reactantId) {
   Atom *newAtom = nullptr;
   if (!reactAtom.hasQuery()) {
     newAtom = new Atom(reactAtom);
@@ -915,6 +916,8 @@ void addMissingProductAtom(const Atom &reactAtom, unsigned reactNeighborIdx,
   unsigned reactAtomIdx = reactAtom.getIdx();
   newAtom->setProp<unsigned int>(common_properties::reactantAtomIdx,
                                  reactAtomIdx);
+  newAtom->setProp<unsigned int>(common_properties::reactantIdx,
+                                 reactantId);
   unsigned productIdx = product->addAtom(newAtom, false, true);
   mapping->reactProdAtomMap[reactAtomIdx].push_back(productIdx);
   mapping->prodReactAtomMap[productIdx] = reactAtomIdx;
@@ -939,7 +942,7 @@ void addReactantNeighborsToProduct(
     const ROMol &reactant, const Atom &reactantAtom, RWMOL_SPTR product,
     boost::dynamic_bitset<> &visitedAtoms,
     std::vector<const Atom *> &chiralAtomsToCheck,
-    ReactantProductAtomMapping *mapping) {
+    ReactantProductAtomMapping *mapping, unsigned int reactantId) {
   std::list<const Atom *> atomStack;
   atomStack.push_back(&reactantAtom);
 
@@ -1048,7 +1051,7 @@ void addReactantNeighborsToProduct(
           const Atom *neighbor = reactant.getAtomWithIdx(*nbrIdx);
           for (unsigned int i : lReactantAtomProductIndex) {
             addMissingProductAtom(*neighbor, lreactIdx, i, product, reactant,
-                                  mapping);
+                                  mapping, reactantId);
           }
           // update the stack:
           atomStack.push_back(neighbor);
@@ -1255,15 +1258,14 @@ void copyEnhancedStereoGroups(const ROMol &reactant, RWMOL_SPTR product,
   for (const auto &sg : reactant.getStereoGroups()) {
     std::vector<Atom *> atoms;
     std::vector<Bond *> bonds;
-    for (auto &&reactantAtom : sg.getAtoms()) {
+    for (const auto &reactantAtom : sg.getAtoms()) {
       auto productAtoms = mapping.reactProdAtomMap.find(reactantAtom->getIdx());
       if (productAtoms == mapping.reactProdAtomMap.end()) {
         continue;
       }
 
-      for (auto &&productAtomIdx : productAtoms->second) {
+      for (auto &productAtomIdx : productAtoms->second) {
         auto productAtom = product->getAtomWithIdx(productAtomIdx);
-
         // If chirality destroyed by the reaction, skip the atom
         if (productAtom->getChiralTag() == Atom::CHI_UNSPECIFIED) {
           continue;
@@ -1324,7 +1326,8 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
                               const ROMOL_SPTR reactantSptr,
                               const MatchVectType &match,
                               const ROMOL_SPTR reactantTemplate,
-                              Conformer *productConf) {
+                              Conformer *productConf,
+			      unsigned int reactantId) {
   // start by looping over all matches and marking the reactant atoms that
   // have already been "added" by virtue of being in the product. We'll also
   // mark "skipped" atoms: those that are in the match, but not in this
@@ -1364,7 +1367,7 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
         unsigned productAtomIdx = mapping->reactProdAtomMap[reactantAtomIdx][i];
         Atom *productAtom = product->getAtomWithIdx(productAtomIdx);
         setReactantAtomPropertiesToProduct(productAtom, *reactantAtom,
-                                           rxn.getImplicitPropertiesFlag());
+                                           rxn.getImplicitPropertiesFlag(), reactantId);
         if (reactantAtom->hasQuery()) {
           // finally: if the reactant atom is a query we should copy over the
           // query information. We need to replace the atom to do this
@@ -1376,7 +1379,7 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
       }
       // now traverse:
       addReactantNeighborsToProduct(*reactant, *reactantAtom, product,
-                                    visitedAtoms, chiralAtomsToCheck, mapping);
+                                    visitedAtoms, chiralAtomsToCheck, mapping, reactantId);
 
       // now that we've added all the reactant's neighbors, check to see if
       // it is chiral in the reactant but is not in the reaction. If so
@@ -1408,6 +1411,76 @@ void addReactantAtomsAndBonds(const ChemicalReaction &rxn, RWMOL_SPTR product,
 
   delete (mapping);
 }  // end of addReactantAtomsAndBonds
+
+namespace {
+void copyTemplateStereoGroupsToMol(const ROMol &templateMol,
+                                   RWMOL_SPTR product) {
+  const auto &stereoGroups = templateMol.getStereoGroups();
+  if (stereoGroups.empty()) {
+    return;
+  }
+
+  boost::dynamic_bitset<> atomsInTemplateStereoGroups(product->getNumAtoms());
+  std::vector<StereoGroup> newStereoGroups;
+  for (const auto &sg : stereoGroups) {
+    bool keepIt = true;
+    std::vector<Atom *> atoms;
+    for (const auto &atom : sg.getAtoms()) {
+      if (auto mapNum = atom->getAtomMapNum()) {
+        for (auto productAtom : product->atoms()) {
+          int oldMapNum = 0;
+          if (productAtom->getPropIfPresent(common_properties::reactionMapNum,
+                                            oldMapNum) &&
+              oldMapNum == mapNum) {
+            atoms.push_back(productAtom);
+            atomsInTemplateStereoGroups.set(productAtom->getIdx());
+          }
+        }
+      } else {
+        keepIt = false;
+        break;
+      }
+    }
+    if (keepIt && !atoms.empty()) {
+      std::vector<Bond *> bonds;
+      newStereoGroups.emplace_back(sg.getGroupType(), std::move(atoms),
+                                   std::move(bonds), sg.getReadId());
+    }
+  }
+  if (!newStereoGroups.empty()) {
+    // remove any stereo groups that are already present in the product (these
+    // were copied over from the reactant in copyEnhancedStereoGroups()) and
+    // that overlap with the added ones
+    for (const auto &productSG : product->getStereoGroups()) {
+      unsigned int nOverlappingAtoms = 0;
+      for (const auto atom : productSG.getAtoms()) {
+        if (atomsInTemplateStereoGroups[atom->getIdx()]) {
+          ++nOverlappingAtoms;
+        }
+      }
+      if (!nOverlappingAtoms) {
+        // no overlapping atoms, we can just keep the stereogroup.
+        newStereoGroups.push_back(productSG);
+      } else if (nOverlappingAtoms < productSG.getAtoms().size()) {
+        // some of the atoms in the stereo group are not already there
+        // in the product, we need to split the stereo group
+        std::vector<Atom *> newAtoms;
+        for (const auto atom : productSG.getAtoms()) {
+          if (!atomsInTemplateStereoGroups[atom->getIdx()]) {
+            newAtoms.push_back(atom);
+          }
+        }
+        std::vector<Bond *> newBonds;
+        newStereoGroups.emplace_back(productSG.getGroupType(),
+                                     std::move(newAtoms), std::move(newBonds),
+                                     productSG.getReadId());
+      }
+      // else: all atoms in the stereo group are already there, we can skip it
+    }
+    product->setStereoGroups(std::move(newStereoGroups));
+  }
+}
+}  // namespace
 
 MOL_SPTR_VECT
 generateOneProductSet(const ChemicalReaction &rxn,
@@ -1456,7 +1529,7 @@ generateOneProductSet(const ChemicalReaction &rxn,
     for (auto iter = rxn.beginReactantTemplates();
          iter != rxn.endReactantTemplates(); ++iter, reactantId++) {
       addReactantAtomsAndBonds(rxn, product, reactants.at(reactantId),
-                               reactantsMatch.at(reactantId), *iter, conf);
+                               reactantsMatch.at(reactantId), *iter, conf, reactantId);
     }
 
     if (doConfs) {
@@ -1467,6 +1540,11 @@ generateOneProductSet(const ChemicalReaction &rxn,
     // lost, add it back.
     if (doBondDirs) {
       MolOps::setDoubleBondNeighborDirections(*product);
+    }
+
+    // if the product template has stereo groups, copy them over now
+    if (!(*pTemplIt)->getStereoGroups().empty()) {
+      copyTemplateStereoGroupsToMol(**pTemplIt, product);
     }
 
     res[prodId] = product;

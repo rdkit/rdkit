@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
+#include <GraphMol/SmilesParse/SmilesJSONParsers.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
@@ -55,6 +56,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include "cffiwrapper.h"
 
 namespace rj = rapidjson;
 
@@ -68,25 +70,33 @@ using namespace RDKit;
 namespace {
 char *str_to_c(const std::string &str, size_t *len = nullptr) {
   if (len) {
-    *len = str.size();
+    *len = 0;
   }
   char *res;
   res = (char *)malloc(str.size() + 1);
-  memcpy((void *)res, (const void *)str.c_str(), str.size());
-  res[str.size()] = 0;
+  if (res) {
+    if (len) {
+      *len = str.size();
+    }
+    memcpy(res, str.c_str(), str.size());
+    res[str.size()] = '\0';
+  }
   return res;
 }
 char *str_to_c(const char *str) {
   char *res;
   res = (char *)malloc(strlen(str) + 1);
-  strcpy(res, str);
+  if (res) {
+    strcpy(res, str);
+  }
   return res;
 }
 }  // namespace
 
-void mol_to_pkl(const ROMol &mol, char **mol_pkl, size_t *mol_pkl_sz) {
-  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
-                           PicklerOps::PropertyPickleOptions::ComputedProps;
+void mol_to_pkl(
+    const ROMol &mol, char **mol_pkl, size_t *mol_pkl_sz,
+    unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
+                             PicklerOps::PropertyPickleOptions::ComputedProps) {
   std::string pkl;
   MolPickler::pickleMol(mol, pkl, propFlags);
   free(*mol_pkl);
@@ -130,11 +140,11 @@ std::string cxsmiles_helper(const char *pkl, size_t pkl_sz,
   }
   auto params = smiles_helper(details_json);
   auto mol = mol_from_pkl(pkl, pkl_sz);
-  SmilesWrite::CXSmilesFields cxSmilesFields =
-      SmilesWrite::CXSmilesFields::CX_ALL;
-  RestoreBondDirOption restoreBondDirs = RestoreBondDirOptionClear;
+  std::uint32_t cxSmilesFields = SmilesWrite::CXSmilesFields::CX_ALL;
+  unsigned int restoreBondDirs = RestoreBondDirOptionClear;
   updateCXSmilesFieldsFromJSON(cxSmilesFields, restoreBondDirs, details_json);
-  return MolToCXSmiles(mol, params, cxSmilesFields, restoreBondDirs);
+  return MolToCXSmiles(mol, params, cxSmilesFields,
+                       static_cast<RestoreBondDirOption>(restoreBondDirs));
 }
 }  // namespace
 extern "C" char *get_smiles(const char *pkl, size_t pkl_sz,
@@ -268,9 +278,9 @@ extern "C" char *get_mol(const char *input, size_t *pkl_sz,
     *pkl_sz = 0;
     return nullptr;
   }
-  static const unsigned int propFlags =
-      PicklerOps::PropertyPickleOptions::AllProps ^
-      PicklerOps::PropertyPickleOptions::ComputedProps;
+  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
+                           PicklerOps::PropertyPickleOptions::ComputedProps;
+  MinimalLib::updatePropertyPickleOptionsFromJSON(propFlags, details_json);
   std::string pkl;
   MolPickler::pickleMol(*mol, pkl, propFlags);
   return str_to_c(pkl, pkl_sz);
@@ -657,7 +667,7 @@ extern "C" void prefer_coordgen(short val) {
 #endif
 };
 
-extern "C" short has_coords(char *mol_pkl, size_t mol_pkl_sz) {
+extern "C" short has_coords(const char *mol_pkl, size_t mol_pkl_sz) {
   short res = 0;
   if (mol_pkl && mol_pkl_sz) {
     auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
@@ -764,6 +774,21 @@ extern "C" short remove_all_hs(char **mol_pkl, size_t *mol_pkl_sz) {
   return 1;
 }
 
+extern "C" short remove_hs(char **mol_pkl, size_t *mol_pkl_sz,
+                           const char *details_json) {
+  if (!mol_pkl || !mol_pkl_sz || !*mol_pkl || !*mol_pkl_sz) {
+    return 0;
+  }
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
+  MolOps::RemoveHsParameters ps;
+  bool sanitize = true;
+  MinimalLib::updateRemoveHsParametersFromJSON(ps, sanitize, details_json);
+  MolOps::removeHs(mol, ps, sanitize);
+
+  mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
+  return 1;
+}
+
 // standardization
 namespace {
 template <typename T>
@@ -832,12 +857,22 @@ extern "C" short allow_non_tetrahedral_chirality(short value) {
   return was;
 }
 
-MinimalLib::LogHandle::LoggingFlag MinimalLib::LogHandle::d_loggingNeedsInit =
-    true;
+std::unique_ptr<MinimalLib::LoggerStateSingletons>
+    MinimalLib::LoggerStateSingletons::d_instance;
 
-extern "C" void enable_logging() { MinimalLib::LogHandle::enableLogging(); }
+extern "C" short enable_logging() {
+  return MinimalLib::LogHandle::enableLogging();
+}
+extern "C" short enable_logger(const char *log_name) {
+  return MinimalLib::LogHandle::enableLogging(log_name);
+}
 
-extern "C" void disable_logging() { MinimalLib::LogHandle::disableLogging(); }
+extern "C" short disable_logging() {
+  return MinimalLib::LogHandle::disableLogging();
+}
+extern "C" short disable_logger(const char *log_name) {
+  return MinimalLib::LogHandle::disableLogging(log_name);
+}
 
 extern "C" void *set_log_tee(const char *log_name) {
   return MinimalLib::LogHandle::setLogTee(log_name);
@@ -864,12 +899,83 @@ extern "C" char *get_log_buffer(void *log_handle) {
              : nullptr;
 }
 
-extern "C" bool clear_log_buffer(void *log_handle) {
+extern "C" short clear_log_buffer(void *log_handle) {
   if (log_handle) {
     reinterpret_cast<MinimalLib::LogHandle *>(log_handle)->clearBuffer();
     return 1;
   }
   return 0;
+}
+
+extern "C" short has_prop(const char *mol_pkl, size_t mol_pkl_sz,
+                          const char *key) {
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
+  return mol.hasProp(key);
+}
+
+extern "C" char **get_prop_list(const char *mol_pkl, size_t mol_pkl_sz,
+                                short includePrivate, short includeComputed) {
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
+  auto propList = mol.getPropList(includePrivate, includeComputed);
+  std::string propNames;
+  for (const auto &prop : propList) {
+    propNames += prop + ",";
+  }
+  auto resLen = sizeof(char *) * (propList.size() + 1);
+  char **res = (char **)malloc(resLen);
+  if (!res) {
+    return nullptr;
+  }
+  memset(res, 0, resLen);
+  for (size_t i = 0; i < propList.size(); ++i) {
+    res[i] = strdup(propList.at(i).c_str());
+    if (!res[i]) {
+      while (i--) {
+        free(res[i]);
+      }
+      return nullptr;
+    }
+  }
+  return res;
+}
+
+extern "C" void set_prop(char **mol_pkl, size_t *mol_pkl_sz, const char *key,
+                         const char *val, short computed) {
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
+  std::string valAsString(val);
+  mol.setProp(key, valAsString, computed);
+  mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
+}
+
+extern "C" char *get_prop(const char *mol_pkl, size_t mol_pkl_sz,
+                          const char *key) {
+  auto mol = mol_from_pkl(mol_pkl, mol_pkl_sz);
+  if (!mol.hasProp(key)) {
+    return nullptr;
+  }
+  std::string val;
+  mol.getProp(key, val);
+  return strdup(val.c_str());
+}
+
+extern "C" short clear_prop(char **mol_pkl, size_t *mol_pkl_sz,
+                            const char *key) {
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
+  short res = mol.hasProp(key);
+  if (res) {
+    mol.clearProp(key);
+    mol_to_pkl(mol, mol_pkl, mol_pkl_sz);
+  }
+  return res;
+}
+
+extern "C" void keep_props(char **mol_pkl, size_t *mol_pkl_sz,
+                           const char *details_json) {
+  auto mol = mol_from_pkl(*mol_pkl, *mol_pkl_sz);
+  unsigned int propFlags = PicklerOps::PropertyPickleOptions::AllProps ^
+                           PicklerOps::PropertyPickleOptions::ComputedProps;
+  MinimalLib::updatePropertyPickleOptionsFromJSON(propFlags, details_json);
+  mol_to_pkl(mol, mol_pkl, mol_pkl_sz, propFlags);
 }
 
 #if (defined(__GNUC__) || defined(__GNUG__))

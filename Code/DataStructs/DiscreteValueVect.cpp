@@ -272,18 +272,6 @@ DiscreteValueVect &DiscreteValueVect::operator-=(
   return *this;
 }
 
-#if 0
-  DiscreteValueVect DiscreteValueVect::operator~() const {
-    DiscreteValueVect ans(d_type,d_length);
-    unsigned int maxVal = (1<<d_bitsPerVal) - 1;
-    for(unsigned int i=0;i<d_length;++i){
-      unsigned int v1=getVal(i);
-      ans.setVal(i,maxVal-v1);
-    }
-    return(ans);
-  };
-#endif
-
 DiscreteValueVect operator+(const DiscreteValueVect &p1,
                             const DiscreteValueVect &p2) {
   DiscreteValueVect res(p1);

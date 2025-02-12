@@ -185,19 +185,6 @@ def _bivariate_normal(X, Y, sigmax=1.0, sigmay=1.0, mux=0.0, muy=0.0, sigmaxy=0.
 
 def calcAtomGaussians(mol, a=0.03, step=0.02, weights=None):
   """
-useful things to do with these:
-fig.axes[0].imshow(z,cmap=cm.gray,interpolation='bilinear',origin='lower',extent=(0,1,0,1))
-fig.axes[0].contour(x,y,z,20,colors='k')
-
-fig=Draw.MolToMPL(m);
-contribs=Crippen.rdMolDescriptors._CalcCrippenContribs(m)
-logps,mrs=zip(*contribs)
-x,y,z=Draw.calcAtomGaussians(m,0.03,step=0.01,weights=logps)
-fig.axes[0].imshow(z,cmap=cm.jet,interpolation='bilinear',origin='lower',extent=(0,1,0,1))
-fig.axes[0].contour(x,y,z,20,colors='k',alpha=0.5)
-fig.savefig('coumlogps.colored.png',bbox_inches='tight')
-
-
   """
   x = numpy.arange(0, 1, step)
   y = numpy.arange(0, 1, step)
@@ -236,10 +223,7 @@ def shouldKekulize(mol, kekulize):
 
 
 def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **kwargs):
-  try:
-    with rdBase.BlockLogs():
-      mol.GetAtomWithIdx(0).GetExplicitValence()
-  except RuntimeError:
+  if mol.NeedsUpdatePropertyCache():
     mol.UpdatePropertyCache(False)
 
   kekulize = shouldKekulize(mol, kwargs.get('kekulize', True))
@@ -273,10 +257,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs):
-  try:
-    with rdBase.BlockLogs():
-      mol.GetAtomWithIdx(0).GetExplicitValence()
-  except RuntimeError:
+  if mol.NeedsUpdatePropertyCache():
     mol.UpdatePropertyCache(False)
 
   kekulize = shouldKekulize(mol, kekulize)
@@ -440,27 +421,28 @@ def MolsMatrixToGridImage(molsMatrix, subImgSize=(200, 200), legendsMatrix=None,
                           useSVG=False, returnPNG=False, **kwargs):
   r"""Creates a mol grid image from a nested data structure (where each data substructure represents a row),
   padding rows as needed so all rows are the length of the longest row
-          ARGUMENTS:
+
+      ARGUMENTS:
 
         - molsMatrix: A two-deep nested data structure of RDKit molecules to draw,
-         iterable of iterables (for example list of lists) of RDKit molecules
+          iterable of iterables (for example list of lists) of RDKit molecules
 
         - subImgSize: The size of a cell in the drawing; passed through to MolsToGridImage (default (200, 200))
 
         - legendsMatrix: A two-deep nested data structure of strings to label molecules with,
-         iterable of iterables (for example list of lists) of strings (default None)
+          iterable of iterables (for example list of lists) of strings (default None)
 
         - highlightAtomListsMatrix: A three-deep nested data structure of integers of atoms to highlight,
-         iterable of iterables (for example list of lists) of integers (default None)
+          iterable of iterables (for example list of lists) of integers (default None)
 
         - highlightBondListsMatrix: A three-deep nested data structure of integers of bonds to highlight,
-         iterable of iterables (for example list of lists) of integers (default None)
+          iterable of iterables (for example list of lists) of integers (default None)
 
         - useSVG: Whether to return an SVG (if true) or PNG (if false);
-         passed through to MolsToGridImage (default false)
+          passed through to MolsToGridImage (default false)
 
         - returnPNG: Whether to return PNG data (if true) or a PIL object for a PNG image file (if false);
-         has no effect if useSVG is true; passed through to MolsToGridImage (default false)
+          has no effect if useSVG is true; passed through to MolsToGridImage (default false)
 
         - kwargs: Any other keyword arguments are passed to MolsToGridImage
 

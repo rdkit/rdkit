@@ -699,6 +699,25 @@ void testGithub6900() {
   std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
   RDKit::MMPA::fragmentMol(*mol, res, 3);
 }
+
+void testMorganCodeHashChargeShift() {
+  auto m = "Cc1ccccc1"_smiles;
+  TEST_ASSERT(m);
+
+  auto at = m->getAtomWithIdx(0);
+  std::vector<unsigned long long> hashes;
+  for (auto charge : {-2, -1, 0, 1, 2}) {
+    at->setFormalCharge(charge);
+    hashes.push_back(MMPA::detail::computeMorganCodeHash(*m));
+  }
+
+  for (unsigned i = 0; i < hashes.size() - 1; ++i) {
+    for (unsigned j = i + 1; j < hashes.size(); ++j) {
+      TEST_ASSERT(hashes[i] != hashes[j]);
+    }
+  }
+}
+
 int main() {
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
@@ -720,6 +739,8 @@ int main() {
   // /*
   test2();
   test3();
+
+  testMorganCodeHashChargeShift();
 
   //    test4();
   // */

@@ -19,6 +19,8 @@
 #include <boost/dynamic_bitset.hpp>
 #include <boost/range/iterator_range.hpp>
 
+constexpr double sq_dist_zero_tol = 1.e-4;
+
 namespace RDKit {
 
 // Local utility functionality:
@@ -161,7 +163,7 @@ RDGeom::Point3D pickBisector(const RDGeom::Point3D &nbr1Vect,
                              const RDGeom::Point3D &nbr2Vect,
                              const RDGeom::Point3D &nbr3Vect) {
   auto dirVect = nbr2Vect + nbr3Vect;
-  if (dirVect.lengthSq() < 1e-4) {
+  if (dirVect.lengthSq() < sq_dist_zero_tol) {
     // nbr2Vect and nbr3Vect are anti-parallel (was #3854)
     dirVect = nbr2Vect;
     std::swap(dirVect.x, dirVect.y);
@@ -230,7 +232,7 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         RDGeom::Point3D nbr1Pos = (*cfi)->getAtomPos(nbr1->getIdx());
         // get a normalized vector pointing away from the neighbor:
         nbr1Vect = nbr1Pos - otherPos;
-        if (nbr1Vect.lengthSq() < 1e-4) {
+        if (nbr1Vect.lengthSq() < sq_dist_zero_tol) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -272,7 +274,14 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
                 nbr2 = getAtomNeighborNot(&mol, nbr1, otherAtom);
                 nbr2Vect =
                     nbr1Pos.directionVector((*cfi)->getAtomPos(nbr2->getIdx()));
-                perpVect = nbr2Vect.crossProduct(nbr1Vect);
+                auto crossProd = nbr2Vect.crossProduct(nbr1Vect);
+
+                // if nbr1 and nbr2 are aligned, the perpendicular will be null,
+                // and we'll just keep the default calculated above. Otherwise
+                // we use the cross product
+                if (crossProd.lengthSq() >= sq_dist_zero_tol) {
+                  perpVect = crossProd;
+                }
               }
             }
             perpVect.normalize();
@@ -320,7 +329,8 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         otherPos = (*cfi)->getAtomPos(otherIdx);
         nbr1Vect = otherPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = otherPos - (*cfi)->getAtomPos(nbr2->getIdx());
-        if (nbr1Vect.lengthSq() < 1e-4 || nbr2Vect.lengthSq() < 1e-4) {
+        if (nbr1Vect.lengthSq() < sq_dist_zero_tol ||
+            nbr2Vect.lengthSq() < sq_dist_zero_tol) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -330,6 +340,11 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         nbr2Vect.normalize();
         dirVect = nbr1Vect + nbr2Vect;
 
+        if (dirVect.lengthSq() < sq_dist_zero_tol) {
+          // nbr1Vect and nbr2Vect are non-null, but they may
+          // still cancel each other out
+          continue;
+        }
         dirVect.normalize();
         if ((*cfi)->is3D()) {
           switch (otherAtom->getHybridization()) {
@@ -400,8 +415,9 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
         nbr1Vect = otherPos - (*cfi)->getAtomPos(nbr1->getIdx());
         nbr2Vect = otherPos - (*cfi)->getAtomPos(nbr2->getIdx());
         nbr3Vect = otherPos - (*cfi)->getAtomPos(nbr3->getIdx());
-        if (nbr1Vect.lengthSq() < 1e-4 || nbr2Vect.lengthSq() < 1e-4 ||
-            nbr3Vect.lengthSq() < 1e-4) {
+        if (nbr1Vect.lengthSq() < sq_dist_zero_tol ||
+            nbr2Vect.lengthSq() < sq_dist_zero_tol ||
+            nbr3Vect.lengthSq() < sq_dist_zero_tol) {
           // no difference, which likely indicates that we have redundant atoms.
           // just put it on top of the heavy atom. This was #678
           (*cfi)->setAtomPos(idx, otherPos);
@@ -420,6 +436,23 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
               0.1) {
             // compute the normal:
             dirVect = nbr1Vect.crossProduct(nbr2Vect);
+
+            // Each of the nbr vectors is non-null, but there might be pairs
+            // that cancel each other out. Try to find a direction from atoms
+            // that do not overlap.
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              // This definition of dirVect reverses the parity around otherIdx
+              // the change of sign restores it
+              dirVect = nbr1Vect.crossProduct(nbr3Vect) * -1;
+            }
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              dirVect = nbr2Vect.crossProduct(nbr3Vect);
+            }
+            // We couldn't find a good direction
+            if (dirVect.lengthSq() < sq_dist_zero_tol) {
+              continue;
+            }
+
             std::string cipCode;
             if (otherAtom->getPropIfPresent(common_properties::_CIPCode,
                                             cipCode)) {
@@ -1034,8 +1067,11 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
   auto *res = new RWMol(mol);
+  RemoveHsParameters ps;
+  ps.removeNonimplicit = !implicitOnly;
+  ps.updateExplicitCount = updateExplicitCount;
   try {
-    removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
+    removeHs(*res, ps, sanitize);
   } catch (const MolSanitizeException &) {
     delete res;
     throw;
@@ -1078,6 +1114,31 @@ enum class HydrogenType {
   QueryHydrogen
 };
 
+template <class Q>
+std::pair<bool, bool> queryHasHs(Q queryAtom, bool inor = false) {
+  for (auto childit = queryAtom->beginChildren();
+       childit != queryAtom->endChildren(); ++childit) {
+    QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = *childit;
+    if (query->getDescription() == "AtomOr") {
+      return queryHasHs(query, true);
+    } else if (query->getDescription() == "AtomAtomicNum") {
+      if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
+          !query->getNegation()) {
+        return std::make_pair(true, inor);
+      }
+    } else if (query->getDescription() == "AtomType") {
+      auto val = static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal();
+      // 1001 == aromtic hydrogen (not a thing, really)
+      // 1 == aliphatic hydrogen
+      if ((val == 1001 || val == 1) && !query->getNegation()) {
+        return std::make_pair(true, inor);
+      }
+    }
+  }
+  return std::make_pair(false, inor);
+  ;
+}
+
 HydrogenType isQueryH(const Atom *atom) {
   PRECONDITION(atom, "bogus atom");
   if (atom->getAtomicNum() == 1) {
@@ -1100,44 +1161,27 @@ HydrogenType isQueryH(const Atom *atom) {
     return HydrogenType::NotAHydrogen;
   }
 
-  bool hasHQuery = false, hasOr = false;
   if (atom->hasQuery()) {
+    std::pair<bool, bool> res = std::make_pair(false, false);
     if (atom->getQuery()->getDescription() == "AtomOr") {
-      hasOr = true;
+      res = queryHasHs(atom->getQuery(), true);
+    } else if (atom->getQuery()->getDescription() == "AtomAnd") {
+      res = queryHasHs(atom->getQuery(), false);
     }
-    std::list<QueryAtom::QUERYATOM_QUERY::CHILD_TYPE> childStack(
-        atom->getQuery()->beginChildren(), atom->getQuery()->endChildren());
-    // the logic gets too complicated if there's an OR in the children, so
-    // just punt on those (with a warning)
-    while (!(hasHQuery && hasOr) && childStack.size()) {
-      QueryAtom::QUERYATOM_QUERY::CHILD_TYPE query = childStack.front();
-      childStack.pop_front();
-      if (query->getDescription() == "AtomOr") {
-        hasOr = true;
-      } else if (query->getDescription() == "AtomAtomicNum") {
-        if (static_cast<ATOM_EQUALS_QUERY *>(query.get())->getVal() == 1 &&
-            !query->getNegation()) {
-          hasHQuery = true;
-        }
+    if (res.first) {     // hasH
+      if (res.second) {  // inOr
+        BOOST_LOG(rdWarningLog)
+            << "WARNING: merging explicit H queries involved "
+               "in ORs is not supported. This query will not "
+               "be merged"
+            << std::endl;
+        return HydrogenType::UnMergableQueryHydrogen;
       } else {
-        QueryAtom::QUERYATOM_QUERY::CHILD_VECT_CI child1;
-        for (child1 = query->beginChildren(); child1 != query->endChildren();
-             ++child1) {
-          childStack.push_back(*child1);
-        }
+        return HydrogenType::QueryHydrogen;
       }
     }
-    // std::cerr<<"   !!!1 "<<atom->getIdx()<<" "<<hasHQuery<<"
-    // "<<hasOr<<std::endl;
-    if (hasHQuery && hasOr) {
-      BOOST_LOG(rdWarningLog) << "WARNING: merging explicit H queries involved "
-                                 "in ORs is not supported. This query will not "
-                                 "be merged"
-                              << std::endl;
-      return HydrogenType::UnMergableQueryHydrogen;
-    }
   }
-  return hasHQuery ? HydrogenType::QueryHydrogen : HydrogenType::NotAHydrogen;
+  return HydrogenType::NotAHydrogen;
 }
 }  // namespace
 

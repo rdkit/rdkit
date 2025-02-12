@@ -24,9 +24,9 @@ import org.junit.*;
             "M  V30 BEGIN CTAB"
 		);
 
-	    assertEquals(result.getStage(), PipelineStage.PARSING_INPUT);
+	    assertEquals(PipelineStage.swigToEnum((int)result.getStage()), PipelineStage.PARSING_INPUT);
         assertFalse(result.getStatus() == PipelineStatus.NO_EVENT);
-        assertTrue((result.getStatus() & PipelineStatus.INPUT_ERROR) != PipelineStatus.NO_EVENT);
+        assertTrue(PipelineStatus.swigToEnum(result.getStatus().swigValue() & PipelineStatus.INPUT_ERROR.swigValue()) != PipelineStatus.NO_EVENT);
 
 		result.delete();
 		pipeline.delete();
@@ -53,10 +53,10 @@ import org.junit.*;
             "M  END"
 		);
 
-	    assertEquals(result.getStage(), PipelineStage.COMPLETED);
+	    assertEquals(PipelineStage.swigToEnum((int)result.getStage()), PipelineStage.COMPLETED);
         assertFalse(result.getStatus() == PipelineStatus.NO_EVENT);
-        assertTrue((result.getStatus() & PipelineStatus.VALIDATION_ERROR) != PipelineStatus.NO_EVENT);
-        assertTrue((result.getStatus() & PipelineStatus.FEATURES_VALIDATION_ERROR) != PipelineStatus.NO_EVENT);
+        assertTrue(PipelineStatus.swigToEnum(result.getStatus().swigValue() & PipelineStatus.VALIDATION_ERROR.swigValue()) != PipelineStatus.NO_EVENT);
+        assertTrue(PipelineStatus.swigToEnum(result.getStatus().swigValue() & PipelineStatus.FEATURES_VALIDATION_ERROR.swigValue()) != PipelineStatus.NO_EVENT);
 
 		result.delete();
 		pipeline.delete();

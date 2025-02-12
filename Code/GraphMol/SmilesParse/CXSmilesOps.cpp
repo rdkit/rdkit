@@ -692,6 +692,7 @@ template <typename Iterator>
 void parse_data_sgroup_attr(Iterator &first, Iterator last,
                             SubstanceGroup &sgroup, bool keepSGroup,
                             std::string fieldName, bool fieldIsArray = false) {
+  PRECONDITION(first < last, "parse_data_sgroup_attr: first >= last");
   if (first != last && *first != '|') {
     std::string data = read_text_to(first, last, ":");
     ++first;
@@ -735,7 +736,6 @@ bool parse_data_sgroup(Iterator &first, Iterator last, RDKit::RWMol &mol,
     }
   }
   ++first;
-
   parse_data_sgroup_attr(first, last, sgroup, keepSGroup, "FIELDNAME");
 
   // FIX:
@@ -2371,15 +2371,83 @@ void appendToCXExtension(const std::string &addition, std::string &base) {
 }
 
 }  // namespace
+
+void checkCXFeatures(const ROMol &mol) {
+  std::string lns;
+  if (mol.getPropIfPresent(common_properties::molFileLinkNodes, lns)) {
+    BOOST_LOG(rdWarningLog)
+        << "CX Extensions: mol has link nodes which are not currently supported"
+        << std::endl;
+  }
+  const auto &sgs = getSubstanceGroups(mol);
+  auto parent_check =
+      std::any_of(sgs.cbegin(), sgs.cend(), [&](const SubstanceGroup &sg) {
+        if (sg.hasProp("PARENT")) {
+          return true;
+        }
+        return false;
+      });
+  if (parent_check) {
+    BOOST_LOG(rdWarningLog)
+        << "CX Extensions: Substance group hierarchy is not always preserved."
+        << std::endl;
+  }
+}
+
+std::string getCXExtensions(const std::vector<ROMol *> &mols,
+                            std::uint32_t flags) {
+  for (const auto &mol : mols) {
+    checkCXFeatures(*mol);
+    if (!mol->hasProp(RDKit::common_properties::_smilesAtomOutputOrder) ||
+        !mol->hasProp(RDKit::common_properties::_smilesBondOutputOrder)) {
+      throw ValueErrorException(
+          "Input molecule does not have the required "
+          "smiles ordering properties set");
+    }
+  }
+  RDKit::RWMol rwmol;
+
+  std::vector<unsigned int> atomOrdering;
+  std::vector<unsigned int> bondOrdering;
+
+  for (const auto &mol : mols) {
+    const auto at_count = rwmol.getNumAtoms();
+    const auto bond_count = rwmol.getNumBonds();
+
+    std::vector<unsigned int> prevAtomOrdering;
+    std::vector<unsigned int> prevBondOrdering;
+
+    rwmol.insertMol(*mol);
+
+    mol->getProp(RDKit::common_properties::_smilesAtomOutputOrder,
+                 prevAtomOrdering);
+    mol->getProp(RDKit::common_properties::_smilesBondOutputOrder,
+                 prevBondOrdering);
+    for (auto i : prevAtomOrdering) {
+      atomOrdering.push_back(i + at_count);
+    }
+    for (auto i : prevBondOrdering) {
+      bondOrdering.push_back(i + bond_count);
+    }
+  }
+
+  rwmol.setProp(RDKit::common_properties::_smilesAtomOutputOrder, atomOrdering,
+                true);
+  rwmol.setProp(RDKit::common_properties::_smilesBondOutputOrder, bondOrdering,
+                true);
+
+  return getCXExtensions(rwmol, flags);
+}
+
 std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   std::string res = "|";
-  // we will need atom and bond orderings. Get them now:
   const std::vector<unsigned int> &atomOrder =
       mol.getProp<std::vector<unsigned int>>(
           common_properties::_smilesAtomOutputOrder);
   const std::vector<unsigned int> &bondOrder =
       mol.getProp<std::vector<unsigned int>>(
           common_properties::_smilesBondOutputOrder);
+
   bool needLabels = false;
   bool needValues = false;
   for (auto idx : atomOrder) {
@@ -2432,7 +2500,7 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   }
 
   const Conformer *conf = nullptr;
-  if (mol.getNumConformers()) {
+  if (mol.getNumConformers() && (flags & SmilesWrite::CX_COORDS)) {
     conf = &mol.getConformer();
   }
 
@@ -2453,15 +2521,9 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   // do the CX_BOND_ATROPISOMER only if CX_BOND_CFG s not done.  CX_BOND_CFG
   // includes the atropisomer wedging
   else if (flags & SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER) {
-    bool includeCoords = flags & SmilesWrite::CXSmilesFields::CX_COORDS &&
-                         mol.getNumConformers();
-    if (includeCoords) {
-      Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
-    } else {
-      Atropisomers::wedgeBondsFromAtropisomers(mol, nullptr, wedgeBonds);
-    }
+    Atropisomers::wedgeBondsFromAtropisomers(mol, conf, wedgeBonds);
     const auto cfgblock = get_bond_config_block(
-        mol, atomOrder, bondOrder, includeCoords, wedgeBonds, true);
+        mol, atomOrder, bondOrder, conf != nullptr, wedgeBonds, true);
     appendToCXExtension(cfgblock, res);
   }
 

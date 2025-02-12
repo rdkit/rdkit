@@ -31,7 +31,6 @@ void testPass() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing patterns which should parse." << std::endl;
   string smis[] = {
-#if 1
       "C", "CC", "C-C", "C=C", "[CH2+]C[CH+2]", "C1CC=1", "C=1CC1", "Ccc",
       "C=C-O", "C1CC1", "C1NC1", "C1=CC1", "C1CCC1", "CC(C)CC", "CC(=O)O",
       "C1C(=O)C1", "C1C(N)C1", "CC(O)C", "OC=CCC", "CC([O-])O", "C1CC2C1CC2",
@@ -61,7 +60,6 @@ void testPass() {
       "[D{-3}]", "[D{1-}]", "[z{1-3}]", "[Z{1-3}]",
       "[2H,13C]",  // github #1719
       "[+{0-3}]",
-#endif
       "[-{0-3}]", "[-{0-3},C]",
       "[-{0-3},D{1-3}]",       // github #2709
       "C%(1000)CCC%(1000)",    // github #2909
@@ -433,7 +431,6 @@ void testProblems() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing former problems" << std::endl;
 
-#if 1
   _checkMatches("[$(C(=O)O)]", "CC(=O)OC", 1, 1);
 
   _checkMatches("[$(C(=O)[O,N])]", "CC(=O)OC", 1, 1);
@@ -478,7 +475,6 @@ void testProblems() {
   _checkNoMatches("[O]-[!$(*=O)]", "CC(=O)O");
 
 // BOOST_LOG(rdInfoLog) << "-*-*-*-*-*-*-*-*-" << std::endl;
-#endif
   _checkNoMatches("[$([O]-[!$(*=O)])]", "CC(=O)O");
 
   // ISSUE 78
@@ -838,53 +834,6 @@ void testIssue254() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-void testIssue255() {
-  ROMol *matcher1;
-  std::string sma;
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing Issue 255: Core leaks in smarts parsing.  "
-                          "Watch memory consumption."
-                       << std::endl;
-
-  for (int i = 0; i < 10000; i++) {
-#if 1
-    sma = "CC";
-    matcher1 = SmartsToMol(sma);
-    TEST_ASSERT(matcher1);
-    delete matcher1;
-
-    sma = "C-C";
-    matcher1 = SmartsToMol(sma);
-    TEST_ASSERT(matcher1);
-    delete matcher1;
-
-    sma = "C=C";
-    matcher1 = SmartsToMol(sma);
-    TEST_ASSERT(matcher1);
-    delete matcher1;
-
-    sma = "C=,#C";
-    matcher1 = SmartsToMol(sma);
-    TEST_ASSERT(matcher1);
-    delete matcher1;
-#endif
-    sma = "C-1CC-1";
-    // matcher1 = SmartsToMol(sma);
-    matcher1 = SmilesToMol(sma);
-    TEST_ASSERT(matcher1);
-    delete matcher1;
-#if 1
-
-    sma = "C-1CC1";
-    matcher1 = SmartsToMol(sma);
-    TEST_ASSERT(matcher1);
-    delete matcher1;
-#endif
-  }
-
-  BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
-}
-
 void testIssue330() {
   ROMol *matcher1;
   std::string sma, wsma;
@@ -987,7 +936,6 @@ void testAtomMap() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
-#if 1
 void testIssue1804420() {
   ROMol *matcher1;
   std::string sma;
@@ -1025,7 +973,6 @@ void testIssue1804420() {
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
-#endif
 
 void testSmartsSmiles() {
   RWMol *mol;
@@ -1220,6 +1167,16 @@ void testSmartsStereochem() {
   _checkMatches("C/C=C/C", "C/C=C/C", 1, 4);
   _checkMatches("C/C=C/C", "C\\C=C\\C", 1, 4);
   _checkMatches("C/C=C/C", "C/C=C\\C", 1, 4);
+  
+  // directional bonds are set to be a direction \ /
+  //  and a query - SingleOrAromatic, make sure that this
+  //  is their current representation
+  auto m1 = "C/C=C\\C"_smarts;
+  TEST_ASSERT(m1->getBondWithIdx(0)->hasQuery());
+  TEST_ASSERT(m1->getBondWithIdx(0)->getQuery()->getDescription() == "SingleOrAromaticBond");
+
+  auto m2 = "O=c1/c(=C/c2ccccc2)sc2n1-N-C-N-N=2"_smarts;
+  TEST_ASSERT(MolToSmarts(*m2) == "O=c1/c(=C/c2ccccc2)sc2n1-N-C-N-N=2");
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -2796,7 +2753,6 @@ int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-#if 1
   testPass();
   testFail();
   testMatches();
@@ -2810,8 +2766,6 @@ int main(int argc, char *argv[]) {
   testProblems();
   testIssue196();
   testIssue254();
-  // testIssue255(); // this is a slow one and doesn't really actually test much
-  // without someone watching memory consumption
   testIssue330();
   testIssue351();
   testAtomMap();
@@ -2847,7 +2801,6 @@ int main(int argc, char *argv[]) {
   testGithub2565();
   testSmartsStereoBonds();
   testGithub6730();
-#endif
   testRingBondCrash();
   return 0;
 }

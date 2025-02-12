@@ -4221,7 +4221,8 @@ void testGithub164() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
     TEST_ASSERT(m->getNumBonds() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) ==
+                2);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -4962,7 +4963,8 @@ void testGithub1029() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3268);
     TEST_ASSERT(m->getNumBonds() == 3302);
-    TEST_ASSERT(m->getAtomWithIdx(121)->getExplicitValence() == 4);
+    TEST_ASSERT(
+        m->getAtomWithIdx(121)->getValence(Atom::ValenceType::EXPLICIT) == 4);
     TEST_ASSERT(m->getAtomWithIdx(121)->getFormalCharge() == 1);
 
     delete m;
@@ -4974,7 +4976,8 @@ void testGithub1029() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1533);
     TEST_ASSERT(m->getNumBonds() == 1545);
-    TEST_ASSERT(m->getAtomWithIdx(123)->getExplicitValence() == 4);
+    TEST_ASSERT(
+        m->getAtomWithIdx(123)->getValence(Atom::ValenceType::EXPLICIT) == 4);
     TEST_ASSERT(m->getAtomWithIdx(123)->getFormalCharge() == 1);
 
     delete m;

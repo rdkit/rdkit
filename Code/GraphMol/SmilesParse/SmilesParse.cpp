@@ -46,6 +46,8 @@
 // show up very quickly in the tests.
 #include "smarts.tab.hpp"
 #include <list>
+#include <utility>
+#include <vector>
 
 int yysmiles_lex_init(void **);
 int yysmiles_lex_destroy(void *);
@@ -117,17 +119,21 @@ int smarts_parse(const std::string &inp, std::vector<RDKit::RWMol *> &molVect) {
 int smiles_parse_helper(const std::string &inp,
                         std::vector<RDKit::RWMol *> &molVect, Atom *&atom,
                         Bond *&bond, int start_tok) {
-  std::list<unsigned int> branchPoints;
+  std::vector<std::pair<unsigned int, unsigned int>> branchPoints;
   void *scanner;
   int res = 1;  // initialize with fail code
   unsigned numAtomsParsed = 0;
   unsigned numBondsParsed = 0;
   TEST_ASSERT(!yysmiles_lex_init(&scanner));
+  size_t ltrim = 0;
   try {
-    size_t ltrim = setup_smiles_string(inp, scanner);
+    ltrim = setup_smiles_string(inp, scanner);
+    // NOTE: This variable will be used to point to the location of the
+    // offending token if we encounter a syntax error
+    unsigned int current_token_position = 0;
     res = yysmiles_parse(inp.c_str() + ltrim, &molVect, atom, bond,
-                         numAtomsParsed, numBondsParsed, &branchPoints, scanner,
-                         start_tok);
+                         numAtomsParsed, numBondsParsed, branchPoints, scanner,
+                         start_tok, current_token_position);
   } catch (...) {
     yysmiles_lex_destroy(scanner);
     throw;
@@ -141,7 +147,17 @@ int smiles_parse_helper(const std::string &inp,
   }
 
   if (!branchPoints.empty()) {
-    throw SmilesParseException("extra open parentheses");
+    auto input_smiles = inp.c_str() + ltrim;
+    // If there are multiple unclosed brackets, we want to report them all at
+    // once. e.g. CC(CC(CC
+    for (auto [_, open_bracket_position] : branchPoints) {
+      SmilesParseOps::detail::printSyntaxErrorMessage(
+          input_smiles, "extra open parentheses", open_bracket_position);
+    }
+
+    std::stringstream errout;
+    errout << "Failed parsing SMILES '" << inp << "'";
+    throw SmilesParseException(errout.str());
   }
   return res;
 }
@@ -469,9 +485,9 @@ std::unique_ptr<RWMol> MolFromSmiles(const std::string &smiles,
 
   if (res && (params.sanitize || params.removeHs)) {
     if (params.removeHs) {
-      bool implicitOnly = false, updateExplicitCount = true;
-      MolOps::removeHs(*res, implicitOnly, updateExplicitCount,
-                       params.sanitize);
+      MolOps::RemoveHsParameters rhp;
+      rhp.updateExplicitCount = true;
+      MolOps::removeHs(*res, rhp, params.sanitize);
     } else if (params.sanitize) {
       MolOps::sanitizeMol(*res);
     }

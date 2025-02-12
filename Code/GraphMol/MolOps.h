@@ -19,6 +19,7 @@
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <RDGeneral/types.h>
+#include <RDGeneral/BetterEnums.h>
 #include "SanitException.h"
 #include <RDGeneral/FileParseException.h>
 
@@ -238,7 +239,7 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
 //! returns a copy of a molecule with hydrogens removed
 /*!
     \param mol          the molecule to remove Hs from
-    \param implicitOnly (optional) if this \c true, only implicit Hs will be
+    \param implicitOnly if this \c true, only implicit Hs will be
    removed
     \param updateExplicitCount  (optional) If this is \c true, when explicit Hs
    are removed
@@ -267,14 +268,14 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
 */
-
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
-                                      bool implicitOnly = false,
+[[deprecated("Please use the version with RemoveHsParameters")]]
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly,
                                       bool updateExplicitCount = false,
                                       bool sanitize = true);
 //! \overload
 /// modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly = false,
+[[deprecated("Please use the version with RemoveHsParameters")]]
+RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly,
                                     bool updateExplicitCount = false,
                                     bool sanitize = true);
 struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
@@ -307,15 +308,17 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
       false; /**<  remove Hs which are bonded to atoms with specified
                 non-tetrahedral stereochemistry */
 };
+
 //! \overload
 /// modifies the molecule in place
-RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, const RemoveHsParameters &ps,
-                                    bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT void removeHs(
+    RWMol &mol, const RemoveHsParameters &ps = RemoveHsParameters(),
+    bool sanitize = true);
 //! \overload
 /// The caller owns the pointer this returns
-RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol,
-                                      const RemoveHsParameters &ps,
-                                      bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(
+    const ROMol &mol, const RemoveHsParameters &ps = RemoveHsParameters(),
+    bool sanitize = true);
 
 //! removes all Hs from a molecule
 RDKIT_GRAPHMOL_EXPORT void removeAllHs(RWMol &mol, bool sanitize = true);
@@ -491,7 +494,8 @@ RDKIT_GRAPHMOL_EXPORT ROMol *renumberAtoms(
 //! \name Sanitization
 /// {
 
-typedef enum {
+// clang-format off
+BETTER_ENUM(SanitizeFlags, unsigned int,
   SANITIZE_NONE = 0x0,
   SANITIZE_CLEANUP = 0x1,
   SANITIZE_PROPERTIES = 0x2,
@@ -506,7 +510,8 @@ typedef enum {
   SANITIZE_CLEANUP_ORGANOMETALLICS = 0x400,
   SANITIZE_CLEANUPATROPISOMERS = 0x800,
   SANITIZE_ALL = 0xFFFFFFF
-} SanitizeFlags;
+);
+// clang-format on
 
 //! \brief carries out a collection of tasks for cleaning up a molecule and
 //! ensuring that it makes "chemical sense"
@@ -543,9 +548,9 @@ typedef enum {
       this function to a ROMol, so that new atoms and bonds cannot be added to
       the molecule and screw up the sanitizing that has been done here
 */
-RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol,
-                                       unsigned int &operationThatFailed,
-                                       unsigned int sanitizeOps = SANITIZE_ALL);
+RDKIT_GRAPHMOL_EXPORT void sanitizeMol(
+    RWMol &mol, unsigned int &operationThatFailed,
+    unsigned int sanitizeOps = SanitizeFlags::SANITIZE_ALL);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
 
@@ -573,7 +578,7 @@ RDKIT_GRAPHMOL_EXPORT void sanitizeMol(RWMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT
 std::vector<std::unique_ptr<MolSanitizeException>> detectChemistryProblems(
-    const ROMol &mol, unsigned int sanitizeOps = SANITIZE_ALL);
+    const ROMol &mol, unsigned int sanitizeOps = SanitizeFlags::SANITIZE_ALL);
 
 //! Possible aromaticity models
 /*!
@@ -583,6 +588,7 @@ Book)
 - \c AROMATICITY_SIMPLE only considers 5- and 6-membered simple rings (it
 does not consider the outer envelope of fused rings)
 - \c AROMATICITY_MDL
+- \c AROMATICIT_MMFF94 the aromaticity model used by the MMFF94 force field
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
 typedef enum {
@@ -594,6 +600,7 @@ typedef enum {
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
 } AromaticityModel;
 
+//! sets the aromaticity model for a molecule to MMFF94
 RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);
 
 //! Sets up the aromaticity for a molecule
@@ -702,7 +709,7 @@ RDKIT_GRAPHMOL_EXPORT void adjustHs(RWMol &mol);
 
    <b>Notes:</b>
      - this does not modify query bonds which have bond type queries (like
-   those which come from SMARTS) or rings containing them.
+       those which come from SMARTS) or rings containing them.
      - even if \c markAtomsBonds is \c false the \c BondType for all modified
        aromatic bonds will be changed from \c RDKit::Bond::AROMATIC to \c
        RDKit::Bond::SINGLE or RDKit::Bond::DOUBLE during Kekulization.
@@ -857,6 +864,7 @@ RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
   \param force           forces calculation of the matrix, even if already
   computed
   \param propNamePrefix  used to set the cached property name
+  \param bondsToUse      used to limit which bonds are considered
 
   \return the adjacency matrix.
 
@@ -949,6 +957,7 @@ RDKIT_GRAPHMOL_EXPORT double *getDistanceMat(
 RDKIT_GRAPHMOL_EXPORT double *get3DDistanceMat(
     const ROMol &mol, int confId = -1, bool useAtomWts = false,
     bool force = false, const char *propNamePrefix = nullptr);
+
 //! Find the shortest path between two atoms
 /*!
   Uses the Bellman-Ford algorithm
@@ -1006,12 +1015,12 @@ class Hybridizations {
 //! removes bogus chirality markers (e.g. tetrahedral flags on non-sp3 centers):
 RDKIT_GRAPHMOL_EXPORT void cleanupChirality(RWMol &mol);
 
-//! \overload
-RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
 //! removes bogus atropisomeric markers (e.g. those without sp2 begin and end
 //! atoms):
 RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &mol,
                                                Hybridizations &hybridizations);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomers(RWMol &);
 
 //! \brief Uses a conformer to assign ChiralTypes to a molecule's atoms
 /*!
@@ -1064,14 +1073,16 @@ RDKIT_GRAPHMOL_EXPORT void detectBondStereochemistry(ROMol &mol,
 //! Sets bond directions based on double bond stereochemistry
 RDKIT_GRAPHMOL_EXPORT void setDoubleBondNeighborDirections(
     ROMol &mol, const Conformer *conf = nullptr);
-//! removes directions from single bonds. Wiggly bonds will have the property
-//! _UnknownStereo set on them
+//! removes directions from single bonds. The property _UnknownStereo will be
+//! set on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearSingleBondDirFlags(ROMol &mol,
                                                    bool onlyWedgeFlags = false);
 
-//! removes directions from all bonds. Wiggly bonds and cross bonds will have
-//! the property _UnknownStereo set on them
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearAllBondDirFlags(ROMol &mol);
+//! removes directions from all bonds. The property _UnknownStereo will be set
+//! on wiggly bonds
 RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
                                          bool onlyWedgeFlags = false);
 

@@ -357,7 +357,8 @@ molecule before generating the conformer. This is essential to get good structur
     4 11  1  0
     4 12  1  0
   M  END
-<BLANKLINE>
+  <BLANKLINE>
+
 
 If we don't want the Hs in our later analysis, they are easy to remove:
 
@@ -3530,6 +3531,8 @@ List of Available Descriptors
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 |NumAmideBonds                                        |                                                            | C++      |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
+|NumHeterocycles                                      |                                                            | C++      |
++-----------------------------------------------------+------------------------------------------------------------+----------+
 |Num{Aromatic,Saturated,Aliphatic}Rings               |                                                            | C++      |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 |Num{Aromatic,Saturated,Aliphatic}{Hetero,Carbo}cycles|                                                            | C++      |
@@ -3545,6 +3548,10 @@ List of Available Descriptors
 |NumBridgeheadAtoms                                   |Number of bridgehead atoms                                  | C++      |
 |                                                     |(atoms shared between rings that share                      |          |
 |                                                     |at least two bonds)                                         |          |
++-----------------------------------------------------+------------------------------------------------------------+----------+
+|NumAtomStereoCenters                                 |                                                            | C++      |
++-----------------------------------------------------+------------------------------------------------------------+----------+
+|NumAtomUnspecifiedStereoCenters                      |                                                            | C++      |
 +-----------------------------------------------------+------------------------------------------------------------+----------+
 |TPSA                                                 |*J. Med. Chem.*                                             | C++      |
 |                                                     |**43**:3714\-7,                                             |          |

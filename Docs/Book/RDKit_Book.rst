@@ -438,7 +438,8 @@ SMARTS Reference
 escape special characters. This is a wart from the documentation system we are using.
 Please ignore those characters.
 
-**Atoms**
+Atoms
+^^^^^
 
 =========  ==========================================  ===============  ======  =========
 Primitive                  Property                    "Default value"  Range?    Notes
@@ -470,8 +471,8 @@ Z          "number of aliphatic heteroatom neighbors"  >0               Y       
 =========  ==========================================  ===============  ======  =========
 
 
-
-**Bonds**
+Bonds
+^^^^^
 
 =========  ====================  ===================
 Primitive        Property               Notes
@@ -489,6 +490,44 @@ Primitive        Property               Notes
 <-         "dative left"         extension
 =========  ====================  ===================
 
+Hs in SMARTS
+^^^^^^^^^^^^
+
+Hs in SMARTS are interpreted as hydrogen atoms if the equivalent atom expression would also be a valid SMILES; otherwise they are interpreted as a query for any atom with a single attached hydrogen.
+
+Some examples:
+
+======  ==============
+SMARTS  Interpretation
+======  ==============  
+[H]     [#1]
+[H+]    [#1+]
+[H,Cl]  [\*H1,Cl]
+[HH]    [\*H1;\*H1]
+======  ==============
+
+This is somewhat confusing, but is consistent with the Daylight documentation (https://www.daylight.com/dayhtml/doc/theory/theory.smirks.html):
+  
+  Hence, a single change to SMARTS interpretation, for expressions of the form:
+  [<weight>H<charge><map>]. In SMARTS, these expressions now are interpreted as
+  a hydrogen atom, rather than as any atom with one hydrogen attached. All other
+  SMARTS hydrogen expressions retain their pre-4.51 meanings.
+
+It's always possible to see the RDKit's interpretation of a SMARTS using the ``DescribeQuery()`` function::
+
+  >>> print(Chem.AtomFromSmarts('[H,Cl]').DescribeQuery())
+  AtomOr
+    AtomHCount 1 = val
+    AtomType 17 = val
+
+  >>> print(Chem.AtomFromSmarts('[2H+]').DescribeQuery())
+  AtomAnd
+    AtomAnd
+      AtomAtomicNum 1 = val
+      AtomIsotope 2 = val
+    AtomFormalCharge 1 = val
+
+The safest (and clearest) way to incorporate H atoms into your queries is to use the atomic number primitive `[#1]` instead of `[H]`.
 
 Mol/SDF Support and Extensions
 ==============================
@@ -1662,9 +1701,9 @@ Here are the steps involved, in order.
       example is the nitrogen atom in pyrrole.
 
   13. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
-     all atoms. This generates exceptions for atoms in higher-than-allowed
-     valence states. This step is required to catch some edge cases where input 
-     atoms with non-physical valences are accepted if they are flagged as aromatic.
+      all atoms. This generates exceptions for atoms in higher-than-allowed
+      valence states. This step is required to catch some edge cases where input 
+      atoms with non-physical valences are accepted if they are flagged as aromatic.
 
 
 The individual steps can be toggled on or off when calling
@@ -2117,6 +2156,7 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   Stereo Groups can be canonicalized.
 
 .. doctest ::
+  
   >>> m = Chem.MolFromSmiles('CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,o1:11,o2:14|')
   >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.NeverInclude)
   >>> Chem.MolToCXSmiles(mOut)
