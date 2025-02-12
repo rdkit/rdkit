@@ -61,18 +61,22 @@ std::vector<ExplicitBitVect *> makePatternFPs(
 bool checkConnectorRegions(
     const SynthonSet &reaction,
     const std::vector<std::vector<ROMol *>> &connRegs,
+    const std::vector<std::vector<const std::string *>> connRegSmis,
     const std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) {
   const auto &rxnConnRegs = reaction.getConnectorRegions();
+  const auto &rxnConnRegSmis = reaction.getConnectorRegionSmiles();
   const auto &rxnConnRegsFP = reaction.getConnRegFP();
   MatchVectType dontCare;
   for (size_t i = 0; i < connRegFPs.size(); ++i) {
     bool connRegFound = false;
     for (size_t j = 0; j < connRegFPs[i].size(); ++j) {
       if (AllProbeBitsMatch(*connRegFPs[i][j], *rxnConnRegsFP)) {
-        for (const auto &rxncr : rxnConnRegs) {
-          if (SubstructMatch(*rxncr, *connRegs[i][j], dontCare)) {
-            std::cout << MolToSmiles(*rxncr) << " matched "
-                      << MolToSmiles(*connRegs[i][j]) << std::endl;
+        for (size_t k = 0; k < rxnConnRegs.size(); ++k) {
+          if (rxnConnRegSmis[k] == *connRegSmis[i][j]) {
+            connRegFound = true;
+            break;
+          }
+          if (SubstructMatch(*rxnConnRegs[k], *connRegs[i][j], dontCare)) {
             connRegFound = true;
             break;
           }
@@ -206,10 +210,16 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
         MolOps::getMolFrags(*fragConnRegs, splitConnRegs, false);
         std::vector<std::unique_ptr<ExplicitBitVect>> connRegFPs;
         connRegFPs.reserve(splitConnRegs.size());
+        std::vector<std::string> connRegSmis;
+        connRegSmis.reserve(splitConnRegs.size());
+        connRegFPs.reserve(splitConnRegs.size());
         for (auto &cr : splitConnRegs) {
           connRegFPs.emplace_back(PatternFingerprintMol(*cr));
+          connRegSmis.emplace_back(MolToSmiles(*cr));
         }
         d_connRegs.insert(std::make_pair(frag.get(), std::move(splitConnRegs)));
+        d_connRegSmis.insert(
+            std::make_pair(frag.get(), std::move(connRegSmis)));
         d_connRegFPs.insert(std::make_pair(frag.get(), std::move(connRegFPs)));
       }
     }
@@ -223,8 +233,6 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
   const auto pattFPs = makePatternFPs(fragSet, d_pattFPs);
-  std::vector<std::vector<ROMol *>> connRegs;
-  std::vector<std::vector<ExplicitBitVect *>> connRegFPs;
   std::vector<int> numFragConns;
   numFragConns.reserve(fragSet.size());
   for (const auto &frag : fragSet) {
@@ -243,8 +251,11 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
 
   // Check that all the frags have a connector region that matches something
   // in this reaction set.  Skip if not.
-  getConnectorRegions(fragSet, connRegs, connRegFPs);
-  if (!checkConnectorRegions(reaction, connRegs, connRegFPs)) {
+  std::vector<std::vector<ROMol *>> connRegs;
+  std::vector<std::vector<const std::string *>> connRegSmis;
+  std::vector<std::vector<ExplicitBitVect *>> connRegFPs;
+  getConnectorRegions(fragSet, connRegs, connRegSmis, connRegFPs);
+  if (!checkConnectorRegions(reaction, connRegs, connRegSmis, connRegFPs)) {
     return results;
   }
 
@@ -297,6 +308,7 @@ bool SynthonSpaceSubstructureSearcher::verifyHit(const ROMol &hit) const {
 void SynthonSpaceSubstructureSearcher::getConnectorRegions(
     const std::vector<std::unique_ptr<ROMol>> &molFrags,
     std::vector<std::vector<ROMol *>> &connRegs,
+    std::vector<std::vector<const std::string *>> &connRegSmis,
     std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const {
   for (const auto &frag : molFrags) {
     if (const auto it = d_connRegs.find(frag.get()); it != d_connRegs.end()) {
@@ -305,6 +317,14 @@ void SynthonSpaceSubstructureSearcher::getConnectorRegions(
           it->second.begin(), it->second.end(),
           std::back_inserter(connRegs.back()),
           [](const std::unique_ptr<ROMol> &m) -> ROMol * { return m.get(); });
+    }
+    if (const auto &it = d_connRegSmis.find(frag.get());
+        it != d_connRegSmis.end()) {
+      connRegSmis.push_back(std::vector<const std::string *>());
+      std::transform(
+          it->second.begin(), it->second.end(),
+          std::back_inserter(connRegSmis.back()),
+          [](const std::string &s) -> const std::string * { return &s; });
     }
     if (const auto it = d_connRegFPs.find(frag.get());
         it != d_connRegFPs.end()) {

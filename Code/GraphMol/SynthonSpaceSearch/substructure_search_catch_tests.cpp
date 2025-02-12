@@ -616,6 +616,7 @@ TEST_CASE("S Freedom Space") {
   synthonspace.readDBFile(libName);
 
   auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
+  // auto m = "CC(=O)Nc1cc(Nc2nccc(-c3cnc4ccccc34)n2)ccc1N(C)C"_smarts;
   SynthonSpaceSearchParams params;
   params.maxHits = 1000;
   SearchResults results;

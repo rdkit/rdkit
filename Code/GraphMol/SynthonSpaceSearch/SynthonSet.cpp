@@ -43,6 +43,9 @@ const std::vector<std::shared_ptr<ROMol>> &SynthonSet::getConnectorRegions()
     const {
   return d_connectorRegions;
 }
+const std::vector<std::string> &SynthonSet::getConnectorRegionSmiles() const {
+  return d_connRegSmis;
+}
 const std::unique_ptr<ExplicitBitVect> &SynthonSet::getConnRegFP() const {
   return d_connRegFP;
 }
@@ -123,9 +126,11 @@ void SynthonSet::readFromDBStream(std::istream &is, SynthonSpace &space,
   std::uint64_t numConnRegs;
   streamRead(is, numConnRegs);
   d_connectorRegions.resize(numConnRegs);
+  d_connRegSmis.resize(numConnRegs);
   for (std::uint64_t i = 0; i < numConnRegs; ++i) {
     d_connectorRegions[i] = std::make_unique<ROMol>();
     MolPickler::molFromPickle(is, *d_connectorRegions[i]);
+    d_connRegSmis[i] = MolToSmiles(*d_connectorRegions[i]);
   }
   std::string pickle;
   streamRead(is, pickle, 0);
@@ -352,6 +357,7 @@ void SynthonSet::buildConnectorRegions() {
       for (const auto &cr : r.second->getConnRegions()) {
         if (auto smi = MolToSmiles(*cr); smis.insert(smi).second) {
           d_connectorRegions.push_back(cr);
+          d_connRegSmis.push_back(smi);
         }
       }
     }

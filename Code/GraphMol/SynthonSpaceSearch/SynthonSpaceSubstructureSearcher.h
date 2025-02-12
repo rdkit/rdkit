@@ -39,6 +39,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   // Likewise, the connector regions and connector region
   // fingerprints.
   std::map<void *, std::vector<std::unique_ptr<ROMol>>> d_connRegs;
+  std::map<void *, std::vector<std::string>> d_connRegSmis;
   std::map<void *, std::vector<std::unique_ptr<ExplicitBitVect>>> d_connRegFPs;
 
   void extraSearchSetup(
@@ -52,6 +53,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   void getConnectorRegions(
       const std::vector<std::unique_ptr<ROMol>> &molFrags,
       std::vector<std::vector<ROMol *>> &connRegs,
+      std::vector<std::vector<const std::string *>> &connRegSmis,
       std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const;
 };
 
