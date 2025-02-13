@@ -114,11 +114,7 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
   if (ControlCHandler::getGotSignal()) {
     return;
   }
-  // Get the number of bits used to create the Synthon fingerprints,
-  // which may not be the same as the number of bits in this
-  // FP generator.
-  const auto numBits = getSpace().getFPSize();
-  std::cout << "numBits = " << numBits << std::endl;
+
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
       if (ControlCHandler::getGotSignal()) {
@@ -152,6 +148,10 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
     return results;
   }
 
+  // for (auto &f : fragSet) {
+  //   std::cout << MolToSmiles(*f) << " ";
+  // }
+  // std::cout << std::endl;
   std::vector<ExplicitBitVect *> fragFPs;
   fragFPs.reserve(fragSet.size());
   for (auto &frag : fragSet) {
@@ -160,35 +160,30 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
   }
 
   const auto connPatterns = details::getConnectorPatterns(fragSet);
-  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
-  for (auto &connPattern : connPatterns) {
-    conns |= connPattern;
-  }
-
   auto synthConnPatts = reaction.getSynthonConnectorPatterns();
+
+  // Get all the possible permutations of connector numbers compatible with
+  // the number of synthon sets in this reaction.  So if the
+  // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
+  // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
+  // that might be how they're labelled in the reaction database.
+  auto connCombConnPatterns =
+      details::getConnectorPermutations(connPatterns, reaction.getConnectors());
 
   // Need to try all combinations of synthon orders.
   auto synthonOrders =
       details::permMFromN(fragSet.size(), reaction.getSynthons().size());
-  for (const auto &synthonOrder : synthonOrders) {
-    // Get all the possible permutations of connector numbers compatible with
-    // the number of synthon sets in this reaction.  So if the
-    // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-    // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-    // that might be how they're labelled in the reaction database.
-    auto connCombs = details::getConnectorPermutations(
-        fragSet, conns, reaction.getConnectors());
 
-    for (auto &connComb : connCombs) {
+  for (const auto &synthonOrder : synthonOrders) {
+    for (auto &connCombPatt : connCombConnPatterns) {
       // Make sure that for this connector combination, the synthons in this
       // order have something similar.  All query fragment connectors must
       // match something in the corresponding synthon.  The synthon can
       // have unused connectors.
-      auto connCombConnPatterns = details::getConnectorPatterns(connComb);
       bool skip = false;
-      for (size_t i = 0; i < connCombConnPatterns.size(); ++i) {
-        if ((connCombConnPatterns[i] & synthConnPatts[synthonOrder[i]])
-                .count() < connCombConnPatterns[i].count()) {
+      for (size_t i = 0; i < connCombPatt.size(); ++i) {
+        if ((connCombPatt[i] & synthConnPatts[synthonOrder[i]]).count() <
+            connCombPatt[i].count()) {
           skip = true;
           break;
         }

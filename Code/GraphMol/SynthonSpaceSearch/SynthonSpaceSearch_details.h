@@ -69,6 +69,13 @@ getConnectorPermutations(const std::vector<std::unique_ptr<ROMol>> &molFrags,
                          const boost::dynamic_bitset<> &fragConns,
                          const boost::dynamic_bitset<> &reactionConns);
 
+// As above, but just returns the bitsets for the connector permutations,
+// not the molecules.
+RDKIT_SYNTHONSPACESEARCH_EXPORT
+std::vector<std::vector<boost::dynamic_bitset<>>> getConnectorPermutations(
+    const std::vector<boost::dynamic_bitset<>> &fragConnPatts,
+    const boost::dynamic_bitset<> &reactionConns);
+
 // If all bits in one of the bitsets is unset, it means that nothing matched
 // that synthon.  If at least one of the bitsets has a set bit, all products
 // incorporating the synthon with no bits set must match the query so

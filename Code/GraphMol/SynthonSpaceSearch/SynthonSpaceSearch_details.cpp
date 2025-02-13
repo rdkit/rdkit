@@ -262,21 +262,23 @@ boost::dynamic_bitset<> getConnectorPattern(
   return conns;
 }
 
+namespace {
+std::vector<int> bitsToInts(const boost::dynamic_bitset<> &bits) {
+  std::vector<int> ints;
+  for (size_t i = 0; i < bits.size(); ++i) {
+    if (bits[i]) {
+      ints.push_back(static_cast<int>(i));
+    }
+  }
+  return ints;
+}
+}  // namespace
+
 std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
     const std::vector<std::unique_ptr<ROMol>> &molFrags,
     const boost::dynamic_bitset<> &fragConns,
     const boost::dynamic_bitset<> &reactionConns) {
   std::vector<std::vector<std::unique_ptr<ROMol>>> connPerms;
-  auto bitsToInts =
-      [](const boost::dynamic_bitset<> &bits) -> std::vector<int> {
-    std::vector<int> ints;
-    for (size_t i = 0; i < bits.size(); ++i) {
-      if (bits[i]) {
-        ints.push_back(static_cast<int>(i));
-      }
-    }
-    return ints;
-  };
   const auto numFragConns = fragConns.count();
   auto rConns = bitsToInts(reactionConns);
   const auto perms = permMFromN(numFragConns, reactionConns.count());
@@ -306,6 +308,33 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
   }
 
   return connPerms;
+}
+
+std::vector<std::vector<boost::dynamic_bitset<>>> getConnectorPermutations(
+    const std::vector<boost::dynamic_bitset<>> &fragConnPatts,
+    const boost::dynamic_bitset<> &reactionConns) {
+  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
+  for (auto &fragConnPatt : fragConnPatts) {
+    conns |= fragConnPatt;
+  }
+
+  const auto numFragConns = conns.count();
+  auto rConns = bitsToInts(reactionConns);
+  const auto perms = permMFromN(numFragConns, reactionConns.count());
+  std::vector<std::vector<boost::dynamic_bitset<>>> retBitsets;
+  for (const auto &perm : perms) {
+    retBitsets.emplace_back();
+    for (const auto &fragConnPatt : fragConnPatts) {
+      boost::dynamic_bitset<> bs(MAX_CONNECTOR_NUM + 1);
+      for (size_t i = 0; i < perm.size(); ++i) {
+        if (fragConnPatt[i + 1]) {
+          bs.set(perm[i] + 1);
+        }
+      }
+      retBitsets.back().push_back(bs);
+    }
+  }
+  return retBitsets;
 }
 
 void expandBitSet(std::vector<boost::dynamic_bitset<>> &bitSets) {
