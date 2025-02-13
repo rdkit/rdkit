@@ -492,8 +492,8 @@ void makeModularProduct(const ROMol &mol1,
     return;
   }
   if (vtxPairs.size() > opts.maxBondMatchPairs) {
-    std::cerr << "Too many matching bond pairs (" << vtxPairs.size()
-              << ") so can't continue." << std::endl;
+    BOOST_LOG(rdErrorLog) << "Too many matching bond pairs (" << vtxPairs.size()
+                          << ") so can't continue." << std::endl;
     modProd.clear();
     return;
   }
@@ -1124,7 +1124,7 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
   try {
     explorePartitions(starter, startTime, tmpOpts, maxCliques);
   } catch (TimedOutException &e) {
-    std::cout << e.what() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
     maxCliques = e.d_cliques;
     timedOut = true;
   }
