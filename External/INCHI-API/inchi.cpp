@@ -1843,7 +1843,7 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
     if (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
         atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
       atom->calcImplicitValence();
-      if (auto tval = atom->getTotalValence(); tval < 3 || tval > 4) {
+      if (auto tval = atom->getTotalDegree(); tval < 3 || tval > 4) {
         BOOST_LOG(rdWarningLog)
             << "tetrahedral chirality on atom with <3 or >4 neighbors will be ignored."
             << std::endl;
