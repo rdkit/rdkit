@@ -5,10 +5,13 @@
 # cd Code/MinimalLib/docker
 #
 # 2. build the JS and WASM libraries
-#    (the build-arg arguments are all optional)
+#    (the build-arg arguments are all optional; in the following
+#     example we select the more performant, though still experimental,
+#     native WASM exception handling):
 # docker build -t rdkit-minimallib --network=host \
 #  --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
-#  --build-arg "RDKIT_BRANCH=mybranch" .
+#  --build-arg "RDKIT_BRANCH=mybranch" \
+#  --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions".
 #
 # 3. create a temporary container and copy built libraries
 #    from the container to your local filesystem, then destroy
@@ -22,6 +25,7 @@
 ARG RDKIT_GIT_URL="https://github.com/rdkit/rdkit.git"
 ARG RDKIT_BRANCH="master"
 ARG EMSDK_VERSION="latest"
+ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
 ARG BOOST_MAJOR_VERSION="1"
 ARG BOOST_MINOR_VERSION="87"
 ARG BOOST_PATCH_VERSION="0"
@@ -31,6 +35,7 @@ FROM debian:bookworm as build-stage
 ARG RDKIT_GIT_URL
 ARG RDKIT_BRANCH
 ARG EMSDK_VERSION
+ARG EXCEPTION_HANDLING
 ARG BOOST_MAJOR_VERSION
 ARG BOOST_MINOR_VERSION
 ARG BOOST_PATCH_VERSION
@@ -79,7 +84,7 @@ WORKDIR /src/freetype-${FREETYPE_VERSION}
 RUN mkdir build
 WORKDIR /src/freetype-${FREETYPE_VERSION}/build
 RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DWITH_ZLIB=OFF -DWITH_BZip2=OFF -DWITH_PNG=OFF \
-  -DCMAKE_C_FLAGS="-fwasm-exceptions" -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions" \
+  -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING}" -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING}" \
   -DCMAKE_INSTALL_PREFIX=/opt/freetype ..
 RUN make -j2 && make -j2 install
 
@@ -101,9 +106,9 @@ RUN emcmake cmake -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
   -DRDK_BUILD_SLN_SUPPORT=OFF -DRDK_USE_BOOST_IOSTREAMS=OFF \
   -DFREETYPE_INCLUDE_DIRS=/opt/freetype/include/freetype2 \
   -DFREETYPE_LIBRARY=/opt/freetype/lib/libfreetype.a \
-  -DCMAKE_CXX_FLAGS="-O3 -DNDEBUG -fwasm-exceptions" \
-  -DCMAKE_C_FLAGS="-O3 -DNDEBUG -DCOMPILE_ANSI_ONLY" \
-  -DCMAKE_EXE_LINKER_FLAGS="-fwasm-exceptions -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_NAME=\"'initRDKitModule'\"" ..
+  -DCMAKE_CXX_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG" \
+  -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING} -O3 -DNDEBUG -DCOMPILE_ANSI_ONLY" \
+  -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING} -s STACK_OVERFLOW_CHECK=1 -s USE_PTHREADS=0 -s ALLOW_MEMORY_GROWTH=1 -s MAXIMUM_MEMORY=4GB -s MODULARIZE=1 -s EXPORT_NAME=\"'initRDKitModule'\"" ..
 
 # "patch" to make the InChI code work with emscripten:
 RUN cp /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c /src/rdkit/External/INCHI-API/src/INCHI_BASE/src/util.c.bak && \
