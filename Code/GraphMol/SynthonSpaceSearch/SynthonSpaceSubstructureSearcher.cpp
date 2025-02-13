@@ -259,6 +259,14 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     return results;
   }
 
+  // Get all the possible permutations of connector numbers compatible with
+  // the number of synthon sets in this reaction.  So if the
+  // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
+  // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
+  // that might be how they're labelled in the reaction database.
+  auto connCombs = details::getConnectorPermutations(fragSet, conns,
+                                                     reaction.getConnectors());
+
   // Select only the synthons that have fingerprints that are a superset
   // of the fragment fingerprints.
   // Need to try all combinations of synthon orders.
@@ -274,14 +282,6 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     if (skip) {
       continue;
     }
-
-    // Get all the possible permutations of connector numbers compatible with
-    // the number of synthon sets in this reaction.  So if the
-    // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
-    // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
-    // that might be how they're labelled in the reaction database.
-    auto connCombs = details::getConnectorPermutations(
-        fragSet, conns, reaction.getConnectors());
 
     // Find all synthons that match the fragments with each connector
     // combination.
