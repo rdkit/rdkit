@@ -1604,6 +1604,52 @@ M  END)CTAB"_ctab;
   }
 }
 
+void testMolFileGithub8265() {
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
+  BOOST_LOG(rdInfoLog) << "Running testMolFileGithub8265()\n";
+  auto m = "C"_smiles;
+  auto conf = new Conformer(1);
+  m->addConformer(conf);
+  
+  for( int i=0; i<2; ++i) {
+    RDGeom::Point3D pos{0., 0., 0.};
+   
+    try {
+      pos[i] = 1000000.;
+      conf->setAtomPos(0, pos);
+      auto mbV2K = MolToMolBlock(*m);
+      TEST_ASSERT(0);
+    } catch (ValueErrorException &) {
+      // ok!
+    }
+    
+    {
+      pos[i] = 999999.;
+      conf->setAtomPos(0, pos);
+      auto mbV2k = MolToMolBlock(*m);
+      MolBlockToMol(mbV2k);
+    }
+
+    try {
+      pos[i] = -100000.;
+      conf->setAtomPos(0, pos);
+      auto mbV2k = MolToMolBlock(*m);
+      TEST_ASSERT(0);
+    } catch (ValueErrorException &) {
+      // ok!
+    }
+
+    {
+      pos[i] = -99999.;
+      conf->setAtomPos(0, pos);
+      auto mbV2k = MolToMolBlock(*m);
+      MolBlockToMol(mbV2k);
+    }
+  }
+  BOOST_LOG(rdInfoLog) << "Finished\n";
+  BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -1758,4 +1804,6 @@ int main() {
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n";
   testRGPMolFileWriterV2KV3K();
   BOOST_LOG(rdInfoLog) << "-----------------------------------------\n\n";
+  
+  testMolFileGithub8265();
 }

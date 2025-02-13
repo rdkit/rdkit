@@ -595,6 +595,8 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
   }
 }
 
+const double MAX_V2000_COORD = 1000000.;
+const double MIN_V2000_COORD = -100000.;
 const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
                                      boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
@@ -605,6 +607,12 @@ const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
   GetMolFileAtomProperties(atom, conf, totValence, atomMapNumber, parityFlag, x,
                            y, z);
 
+  if( (x >= MAX_V2000_COORD || x <= MIN_V2000_COORD) ||
+      (y >= MAX_V2000_COORD || y <= MIN_V2000_COORD) ||
+      (z >= MAX_V2000_COORD || z <= MIN_V2000_COORD) ) {
+    throw ValueErrorException("MolFile coordinates must be in (-100000, 1000000)");
+  }
+  
   int massDiff, chg, stereoCare, hCount, rxnComponentType, rxnComponentNumber,
       inversionFlag, exactChangeFlag;
   massDiff = 0;
