@@ -183,8 +183,8 @@ TEST_CASE("FP Random Hits") {
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   std::map<std::string, int> libCounts;
   for (const auto &m : results.getHitMolecules()) {
-    std::string lib(
-        m->getProp<std::string>(common_properties::_Name).substr(0, 2));
+    std::string molName = m->getProp<std::string>(common_properties::_Name);
+    std::string lib(molName.substr(molName.length() - 2));
     if (const auto &c = libCounts.find(lib); c == libCounts.end()) {
       libCounts.insert(std::make_pair(lib, 1));
     } else {
@@ -308,12 +308,6 @@ TEST_CASE("FP Binary File") {
     CHECK(results.getHitMolecules().size() == 3);
     CHECK(results.getMaxNumResults() == 400);
   }
-  {
-    synthonspace.readDBFile(libName);
-    CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
-    CHECK(results.getHitMolecules().size() == 3);
-    CHECK(results.getMaxNumResults() == 400);
-  }
 
   // Make sure it rejects the wrong sort of fingerprint.
   synthonspace.readDBFile(libName);
@@ -326,8 +320,10 @@ TEST_CASE("FP Freedom Space") {
   // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";
   // std::string libName2 =
   // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
+  // std::string libName =
+  //     "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
   std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
   for (const auto &l : std::vector<std::string>{libName}) {
     SynthonSpace synthonspace;
     synthonspace.readDBFile(l);
@@ -343,6 +339,8 @@ TEST_CASE("FP Freedom Space") {
     SearchResults results;
     results = synthonspace.fingerprintSearch(*m, *fpGen, params);
     std::cout << "Number of results : " << results.getHitMolecules().size()
+              << std::endl;
+    std::cout << "Max number of results : " << results.getMaxNumResults()
               << std::endl;
     int i = 0;
     for (const auto &mol : results.getHitMolecules()) {
