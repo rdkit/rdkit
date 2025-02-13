@@ -11,9 +11,8 @@ jobs:
   variables:
     python: python=3.13
     boost_version: 1.85.0
-    compiler: gxx_linux-64
-    cc: gcc-10
-    cxx: g++-10
+    cc: gcc-14
+    cxx: g++-14
     number_of_cores: nproc
     python_name: python313
   steps:
