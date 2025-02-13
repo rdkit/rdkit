@@ -54,6 +54,18 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const auto &synthons = reaction.getSynthons()[synthonOrder[i]];
     bool fragMatched = false;
     for (size_t j = 0; j < synthons.size(); j++) {
+      // There's a simple calculation for the maximum possible Tanimoto
+      // Coefficient that these 2 fingerprints can achieve.
+      double maxSim =
+          fragFPs[i]->getNumOnBits() <
+                  synthons[j].second->getFP()->getNumOnBits()
+              ? double(fragFPs[i]->getNumOnBits()) /
+                    synthons[j].second->getFP()->getNumOnBits()
+              : double(synthons[j].second->getFP()->getNumOnBits()) /
+                    fragFPs[i]->getNumOnBits();
+      if (maxSim < similarityCutoff) {
+        continue;
+      }
       if (const auto sim =
               TanimotoSimilarity(*fragFPs[i], *synthons[j].second->getFP());
           sim >= similarityCutoff) {
@@ -124,11 +136,16 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
       unsigned int otf;
       sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                   MolOps::SANITIZE_SYMMRINGS);
-
-      std::unique_ptr<ExplicitBitVect> fullFP(
-          new ExplicitBitVect(*d_fpGen.getFingerprint(*frag)));
-      d_fragFPs.insert(std::make_pair(
-          frag.get(), std::unique_ptr<ExplicitBitVect>(std::move(fullFP))));
+      std::string fragSmi = MolToSmiles(*frag);
+      if (const auto it = d_fragFPPool.find(fragSmi);
+          it == d_fragFPPool.end()) {
+        std::unique_ptr<ExplicitBitVect> fullFP(
+            new ExplicitBitVect(*d_fpGen.getFingerprint(*frag)));
+        d_fragFPs.insert({frag.get(), fullFP.get()});
+        d_fragFPPool.insert({fragSmi, std::move(fullFP)});
+      } else {
+        d_fragFPs.insert({frag.get(), it->second.get()});
+      }
     }
   }
 }
@@ -156,7 +173,7 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
   fragFPs.reserve(fragSet.size());
   for (auto &frag : fragSet) {
     const auto it = d_fragFPs.find(frag.get());
-    fragFPs.push_back(it->second.get());
+    fragFPs.push_back(it->second);
   }
 
   const auto connPatterns = details::getConnectorPatterns(fragSet);
