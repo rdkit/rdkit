@@ -815,3 +815,16 @@ TEST_CASE(
     // clang-format on
   }
 }
+
+TEST_CASE(
+    "Github #8256: PR #8192 breaks AdjustQueryProperties / aromatizeIfPossible for some molecules") {
+  SECTION("between aromatic atoms") {
+    auto mol =
+        R"SMARTS([#6]1=[#6]-[#6]=[#6]-[#6]=[#6]-1/[#7](=[#7]\[#8])-*)SMARTS"_smarts;
+    REQUIRE(mol);
+    auto ps = MolOps::AdjustQueryParameters::noAdjustments();
+    ps.aromatizeIfPossible = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(MolToSmiles(*mol) == "*/N(=N/O)c1ccccc1");
+  }
+}

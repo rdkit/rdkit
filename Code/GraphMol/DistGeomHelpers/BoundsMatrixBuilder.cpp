@@ -569,7 +569,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
                                 unsigned int aid4) {
   auto stype = bnd->getStereo();
-  if (stype > Bond::STEREOANY) {
+  if (stype > Bond::STEREOANY && bnd->getStereoAtoms().size() >= 2) {
     const auto &stAtoms = bnd->getStereoAtoms();
     if ((static_cast<unsigned int>(stAtoms[0]) != aid1) ^
         (static_cast<unsigned int>(stAtoms[1]) != aid4)) {
