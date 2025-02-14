@@ -595,8 +595,8 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
   }
 }
 
-const double MAX_V2000_COORD = 1000000.;
-const double MIN_V2000_COORD = -100000.;
+constexpr double MAX_V2000_COORD = 1000000.;
+constexpr double MIN_V2000_COORD = -100000.;
 const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
                                      boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
