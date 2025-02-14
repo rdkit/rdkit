@@ -24,9 +24,6 @@ SCSRMol::SCSRMol(const SCSRMol &other) {
     p_templates.push_back(std::make_unique<RWMol>(*oneTemplate));
   }
 }
-SCSRMol &SCSRMol::operator=(const SCSRMol &) {
-  throw RDKit::FileParseException("Assignment not allowed for SCSRMol");
-};
 
 SCSRMol::SCSRMol(SCSRMol &&other) noexcept {
   p_mol = std::move(other.p_mol);
@@ -41,5 +38,7 @@ SCSRMol &SCSRMol::operator=(SCSRMol &&other) noexcept {
   }
   return *this;
 }
+
+void SCSRMol::destroyScsr() { p_templates.clear(); }
 
 }  // namespace RDKit

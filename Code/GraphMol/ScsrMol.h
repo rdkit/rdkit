@@ -35,9 +35,13 @@ class RDKIT_GRAPHMOL_EXPORT SCSRMol {
  public:
   SCSRMol();
   SCSRMol(const SCSRMol &other);
-  SCSRMol &operator=(const SCSRMol &);
+  // SCSRMol &operator=(const SCSRMol &);
   SCSRMol(SCSRMol &&other) noexcept;
   SCSRMol &operator=(SCSRMol &&other) noexcept;
+
+  SCSRMol &operator=(const SCSRMol &) = delete;  // disable assignment
+  virtual void destroyScsr();
+  virtual ~SCSRMol() { destroyScsr(); }
 
   void addTemplate(std::unique_ptr<ROMol> templateMol) {
     PRECONDITION(templateMol, "bad template molecule");
