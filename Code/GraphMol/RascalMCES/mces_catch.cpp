@@ -1535,3 +1535,20 @@ TEST_CASE(
       "C-[O,S]-[C&R]1=&@[C&R]-&@[C&R]2(-&@[O,S;R]-&@c3:c:c:c(-c4:c:c:c:c:c:4):c:c:3-&@[C&R]-&@2=[O,S])-&@[C&R](-[O,S]-C)=&@[C&R]-&@[C&R]-&@1-[O,S]");
   check_smarts_ok(*m1, *m2, res.front());
 }
+
+TEST_CASE("Specify minimum clique size directly.") {
+  auto m1 = "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C"_smiles;
+  REQUIRE(m1);
+  auto m2 = "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O"_smiles;
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  opts.similarityThreshold = 0.6;
+  opts.minCliqueSize = 15;
+  auto res1 = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res1.size() == 1);
+  CHECK(res1.front().getBondMatches().size() == 16);
+  opts.minCliqueSize = 17;
+  auto res2 = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res2.empty());
+}
