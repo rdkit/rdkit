@@ -654,31 +654,54 @@ void flagRingStereo(ROMol &mol,
       if (!knownAtoms[aidx] && (!possibleAtoms || !possibleAtoms->test(aidx))) {
         continue;
       }
-      if (!ringIsOddSized) {
-        // find the index of the atom on the opposite side of the even-sized
-        // ring
-        auto oppositeIdx = aring[(ai + halfSize) % sz];
-        bool toAtomOppositePossible = false;
-        auto oppositeAtom = mol.getAtomWithIdx(oppositeIdx);
-        for (auto bond : mol.atomBonds(oppositeAtom)) {
-          auto bidx = bond->getIdx();
-          if ((knownBonds[bidx] ||
-               (possibleBonds && possibleBonds->test(bidx))) &&
-              std::find(bring.begin(), bring.end(), bidx) == bring.end()) {
-            toAtomOppositePossible = true;
-            break;
-          }
-        }
 
-        if (knownAtoms[oppositeIdx] ||
-            (possibleAtoms && possibleAtoms->test(oppositeIdx)) ||
-            toAtomOppositePossible) {
-          nHere += 1 + toAtomOppositePossible;
-          possibleAtomsInRing.set(aidx);
-          possibleAtomsInRing.set(oppositeIdx);
-          mol.getAtomWithIdx(aidx)->setProp(
-              common_properties::_ringStereoOtherAtom, oppositeIdx);
-          continue;
+      for (unsigned int ringDivisor : {2, 3}) {
+        // for (unsigned int ringDivisor : {3}) {
+        bool ringIsMultipleOfDivisor = ((sz % ringDivisor) == 0);
+        auto incrementSize = sz / ringDivisor;
+
+        if (ringIsMultipleOfDivisor) {
+          // find the two indices of the atoms 1/3 the way around the ring
+
+          unsigned int otherFoundByBondCount = 0;
+          unsigned int otherFoundByAtomCount = 0;
+          for (unsigned int indexIncrement = incrementSize; indexIncrement < sz;
+               indexIncrement += incrementSize) {
+            auto otherIdx = aring[(ai + indexIncrement) % sz];
+            auto otherAtom = mol.getAtomWithIdx(otherIdx);
+
+            for (auto bond : mol.atomBonds(otherAtom)) {
+              auto bidx = bond->getIdx();
+              if ((knownBonds[bidx] ||
+                   (possibleBonds && possibleBonds->test(bidx))) &&
+                  std::find(bring.begin(), bring.end(), bidx) == bring.end()) {
+                otherFoundByBondCount++;
+                break;
+              }
+            }
+            if (otherFoundByBondCount == 0) {
+              if (knownAtoms[otherIdx] ||
+                  (possibleAtoms && possibleAtoms->test(otherIdx))) {
+                otherFoundByAtomCount++;
+              }
+            }
+          }
+
+          if (otherFoundByBondCount == ringDivisor - 1 ||
+              otherFoundByAtomCount == ringDivisor - 1) {
+            nHere += 1 + otherFoundByBondCount;
+            for (unsigned int indexIncrement = 0; indexIncrement < sz;
+                 indexIncrement += incrementSize) {
+              possibleAtomsInRing.set(aring[(ai + indexIncrement) % sz]);
+            }
+            if (ringDivisor == 2) {
+              mol.getAtomWithIdx(aidx)->setProp(
+                  common_properties::_ringStereoOtherAtom,
+                  aring[(ai + incrementSize) % sz]);
+            }
+
+            continue;
+          }
         }
       }
 
