@@ -481,7 +481,18 @@ python::object getAnnotationColour(const RDKit::MolDrawOptions &self) {
 void setAnnotationColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.annotationColour = pyTupleToDrawColour(tpl);
 }
-
+void setAtomNoteColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.atomNoteColour = pyTupleToDrawColour(tpl);
+}
+python::object getAtomNoteColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.atomNoteColour);
+}
+void setBondNoteColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.bondNoteColour = pyTupleToDrawColour(tpl);
+}
+python::object getBondNoteColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.bondNoteColour);
+}
 python::object getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.variableAttachmentColour);
 }
@@ -790,6 +801,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("setAnnotationColour", &RDKit::setAnnotationColour,
            python::args("self", "tpl"),
            "method for setting the annotation colour")
+      .def("setAtomNoteColour", &RDKit::setAtomNoteColour,
+           python::args("self", "tpl"),
+           "method for setting the atom note colour")
+      .def("getAtomNoteColour", &RDKit::getAtomNoteColour, python::args("self"),
+           "method returning the atom note colour")
+      .def("setBondNoteColour", &RDKit::setBondNoteColour,
+           python::args("self", "tpl"),
+           "method for setting the bond note colour")
+      .def("getBondNoteColour", &RDKit::getBondNoteColour, python::args("self"),
+           "method returning the bond note colour")
       .def("getLegendColour", &RDKit::getLegendColour, python::args("self"),
            "method returning the legend colour")
       .def("setLegendColour", &RDKit::setLegendColour,
@@ -1437,9 +1458,10 @@ https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_draw
               (python::arg("mol"), python::arg("confId") = -1),
               "Calculate the mean bond length for the molecule.");
   python::def("SetDarkMode",
-              (void (*)(RDKit::MolDrawOptions &))&RDKit::setDarkMode,
+              (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDrawOptions object");
-  python::def("SetDarkMode", (void (*)(RDKit::MolDraw2D &))&RDKit::setDarkMode,
+  python::def("SetDarkMode",
+              (void (*)(RDKit::MolDraw2D &)) & RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDraw2D object");
   python::def("SetMonochromeMode", RDKit::setMonochromeMode_helper1,
               (python::arg("options"), python::arg("fgColour"),

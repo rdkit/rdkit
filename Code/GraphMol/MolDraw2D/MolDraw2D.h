@@ -547,7 +547,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 inline void setDarkMode(MolDrawOptions &opts) {
   assignDarkModePalette(opts.atomColourPalette);
   opts.backgroundColour = DrawColour{0.0, 0.0, 0.0, 1.0};
-  opts.annotationColour = DrawColour{0.9, 0.9, 0.9, 1.0};
+  opts.atomNoteColour = opts.annotationColour = DrawColour{0.9, 0.9, 0.9, 1.0};
   opts.legendColour = DrawColour{0.9, 0.9, 0.9, 1.0};
   opts.symbolColour = DrawColour{0.9, 0.9, 0.9, 1.0};
   opts.variableAttachmentColour = DrawColour{0.3, 0.3, 0.3, 1.0};
@@ -558,7 +558,7 @@ inline void setMonochromeMode(MolDrawOptions &opts, const DrawColour &fgColour,
   opts.atomColourPalette.clear();
   opts.atomColourPalette[-1] = fgColour;
   opts.backgroundColour = bgColour;
-  opts.annotationColour = fgColour;
+  opts.atomNoteColour = opts.bondNoteColour = opts.annotationColour = fgColour;
   opts.legendColour = fgColour;
   opts.symbolColour = fgColour;
   opts.variableAttachmentColour = fgColour;
