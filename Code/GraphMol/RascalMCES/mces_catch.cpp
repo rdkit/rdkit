@@ -37,9 +37,10 @@ using namespace RDKit::RascalMCES::details;
 void check_smarts_ok(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                      const RascalResult &res) {
   auto qmol = v2::SmilesParse::MolFromSmarts(res.getSmarts());
+  REQUIRE(qmol);
   RDKit::MatchVectType dont_care;
-  REQUIRE(RDKit::SubstructMatch(mol1, *qmol, dont_care));
-  REQUIRE(RDKit::SubstructMatch(mol2, *qmol, dont_care));
+  CHECK(RDKit::SubstructMatch(mol1, *qmol, dont_care));
+  CHECK(RDKit::SubstructMatch(mol2, *qmol, dont_care));
 }
 
 void check_expected_bonds(
@@ -47,7 +48,7 @@ void check_expected_bonds(
     const std::vector<std::vector<std::pair<int, int>>> &exp_bond_matches) {
   auto found_it = std::find(exp_bond_matches.begin(), exp_bond_matches.end(),
                             res.getBondMatches());
-  REQUIRE(found_it != exp_bond_matches.end());
+  CHECK(found_it != exp_bond_matches.end());
 }
 
 TEST_CASE("Very small test", "[basics]") {
@@ -1516,6 +1517,40 @@ TEST_CASE("Duplicate Single Largest Frag") {
     CHECK(res.back().getAtomMatches().size() == 23);
     CHECK(res.back().getBondMatches().size() == 23);
   }
+}
+
+TEST_CASE(
+    "Github 8246 - equivalentAtoms SMARTS not translated back in the SMARTS string") {
+  auto m1 = "COC1=CC2(Oc3ccc(-c4ccc(OC)c(OC)c4)cc3C2=O)C(OC)=CC1O"_smiles;
+  REQUIRE(m1);
+  auto m2 = "COC1=CC2(Oc3ccc(-c4ccccc4)cc3C2=O)C(OC)=CC1O"_smiles;
+  REQUIRE(m2);
+  RascalOptions opts;
+  opts.equivalentAtoms = "[O,S]";
+  opts.ringMatchesRingOnly = true;
+  auto res = rascalMCES(*m1, *m2, opts);
+  REQUIRE(!res.empty());
+  CHECK(
+      res.front().getSmarts() ==
+      "C-[O,S]-[C&R]1=&@[C&R]-&@[C&R]2(-&@[O,S;R]-&@c3:c:c:c(-c4:c:c:c:c:c:4):c:c:3-&@[C&R]-&@2=[O,S])-&@[C&R](-[O,S]-C)=&@[C&R]-&@[C&R]-&@1-[O,S]");
+  check_smarts_ok(*m1, *m2, res.front());
+}
+
+TEST_CASE("Specify minimum clique size directly.") {
+  auto m1 = "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C"_smiles;
+  REQUIRE(m1);
+  auto m2 = "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O"_smiles;
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  opts.similarityThreshold = 0.6;
+  opts.minCliqueSize = 15;
+  auto res1 = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res1.size() == 1);
+  CHECK(res1.front().getBondMatches().size() == 16);
+  opts.minCliqueSize = 17;
+  auto res2 = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res2.empty());
 }
 
 TEST_CASE("Github8255 - incorrect MCES with singleLargestFrag=true") {

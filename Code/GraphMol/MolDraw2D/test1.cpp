@@ -4040,7 +4040,7 @@ void test20Annotate() {
     TEST_ASSERT(text.find("<text x='260.3' y='232.0' class='note' "
                           "style='font-size:20px;font-style:normal;font-weight:"
                           "normal;fill-opacity:1;stroke:none;font-family:sans-"
-                          "serif;text-anchor:start;fill:#000000' >E</text>") !=
+                          "serif;text-anchor:start;fill:#7F7FFF' >E</text>") !=
                 std::string::npos);
 #endif
     check_file_hash("test20_2.svg");

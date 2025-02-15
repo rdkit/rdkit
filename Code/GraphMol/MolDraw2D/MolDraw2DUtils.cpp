@@ -265,6 +265,8 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   get_colour_option(pt, "legendColour", opts.legendColour);
   get_colour_option(pt, "symbolColour", opts.symbolColour);
   get_colour_option(pt, "annotationColour", opts.annotationColour);
+  get_colour_option(pt, "atomNoteColour", opts.atomNoteColour);
+  get_colour_option(pt, "bondNoteColour", opts.bondNoteColour);
   get_colour_option(pt, "variableAttachmentColour",
                     opts.variableAttachmentColour);
   get_colour_palette_option(pt, "atomColourPalette", opts.atomColourPalette);

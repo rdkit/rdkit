@@ -358,6 +358,10 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testComponentPadding_1.svg", 2106266352U},
     {"testComponentPadding_2.svg", 1006560295U},
     {"testReactionPanels.svg", 3629304831U},
+    {"testAtomAndBondLabels_1.svg", 288825710U},
+    {"testAtomAndBondLabels_2.svg", 3501435082U},
+    {"testAtomAndBondLabels_3.svg", 3056536314U},
+    {"testAtomAndBondLabels_4.svg", 229616498U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -3471,6 +3475,7 @@ TEST_CASE("support annotation colors", "[drawing]") {
     MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
     drawer.drawOptions().annotationColour = DrawColour{0, 0, 1, 1};
     drawer.drawOptions().addAtomIndices = true;
+    m->setProp("molNote", "foo");
     drawer.drawMolecule(*m, "blue annotations");
     drawer.finishDrawing();
     std::ofstream outs("testAnnotationColors.svg");
@@ -3478,7 +3483,9 @@ TEST_CASE("support annotation colors", "[drawing]") {
     outs << txt;
     outs.close();
     check_file_hash("testAnnotationColors.svg");
-    CHECK(txt.find("fill:#0000FF' >2<") != std::string::npos);
+    CHECK(txt.find("fill:#0000FF' >f<") != std::string::npos);
+    // the general annotation colour change does not affect atom annotations:
+    CHECK(txt.find("fill:#000000' >2<") != std::string::npos);
   }
 }
 
@@ -10474,5 +10481,78 @@ TEST_CASE("Optionally increase padding round components in reaction drawing") {
       outs.close();
     }
 #endif
+  }
+}
+
+TEST_CASE("atom and bond label colors") {
+  auto m = "c1ncccc1CCCc1ccccc1"_smiles;
+  REQUIRE(m);
+
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAtomAndBondLabels_1.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testAtomAndBondLabels_1.svg");
+    CHECK(text.find("fill:#000000' >1</text>") != std::string::npos);
+    CHECK(text.find("fill:#7F7FFF' >1</text>") != std::string::npos);
+  }
+
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    drawer.drawOptions().bondNoteColour = DrawColour(0, 0, 1.);
+    drawer.drawOptions().atomNoteColour = DrawColour(1., 0, 1.);
+
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAtomAndBondLabels_2.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testAtomAndBondLabels_2.svg");
+    CHECK(text.find("fill:#FF00FF' >1</text>") != std::string::npos);
+    CHECK(text.find("fill:#0000FF' >1</text>") != std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    setDarkMode(drawer.drawOptions());
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAtomAndBondLabels_3.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testAtomAndBondLabels_3.svg");
+    CHECK(text.find("fill:#E5E5E5' >1</text>") != std::string::npos);
+    CHECK(text.find("fill:#7F7FFF' >1</text>") != std::string::npos);
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().addAtomIndices = true;
+    drawer.drawOptions().addBondIndices = true;
+    setMonochromeMode(drawer.drawOptions(), DrawColour(0.1, 0.1, 0.1),
+                      DrawColour(0.9, 0.9, 0.9));
+    drawer.drawMolecule(*m);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testAtomAndBondLabels_4.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testAtomAndBondLabels_4.svg");
+    CHECK(text.find("fill:#191919' >1</text>") != std::string::npos);
+    // check for a second occurrence of the same text since atoms and bonds are
+    // the same color
+    CHECK(text.find("fill:#191919' >1</text>",
+                    text.find("fill:#191919' >1</text>") + 1) !=
+          std::string::npos);
   }
 }
