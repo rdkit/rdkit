@@ -324,6 +324,7 @@ UENO, M., bzoracler, esiaero
 
 ## Backwards incompatible changes
 - HasPropWithValueQueryBase used RDKit::Dict::Pair to return data used for serializing object in a molecule  pickle.  This has been changed to RDKit::PairHolder which automatically manages memory.
+- The colors of annotations on atoms and bonds are now controlled by the drawing options `atomNoteColour` and `bondNoteColour` instead of the general `annotationColour`.
 
 ## New Features and Enhancements:
   - Fix canonicalization of stereogroups
