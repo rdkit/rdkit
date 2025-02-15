@@ -681,7 +681,7 @@ TEST_CASE("ring matches ring", "[basics]") {
   REQUIRE(res.front().getBondMatches().size() == 9);
   REQUIRE_THAT(res.front().getSimilarity(),
                Catch::Matchers::WithinAbs(0.1863, 0.0001));
-  REQUIRE(res.front().getSmarts() == "C(-C=O)-c1:c:c:c:c:c:1");
+  REQUIRE(res.front().getSmarts() == "c1:c:c:c:c:c:1-CC=O");
   check_smarts_ok(*m1, *m2, res.front());
 }
 
@@ -718,7 +718,6 @@ TEST_CASE("multiple cliques returned") {
 
   RascalOptions opts;
   opts.similarityThreshold = 0.5;
-  opts.allBestMCESs = true;
 
   for (auto &test : tests) {
     opts.allBestMCESs = true;
@@ -726,9 +725,10 @@ TEST_CASE("multiple cliques returned") {
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
 
     auto res = rascalMCES(*m1, *m2, opts);
-    REQUIRE(res.size() == std::get<2>(test));
-    REQUIRE(res.front().getBondMatches().size() == std::get<3>(test));
-    REQUIRE(res.front().getBondMatches() == std::get<4>(test));
+    REQUIRE(!res.empty());
+    CHECK(res.size() == std::get<2>(test));
+    CHECK(res.front().getBondMatches().size() == std::get<3>(test));
+    CHECK(res.front().getBondMatches() == std::get<4>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
     opts.allBestMCESs = false;
@@ -736,7 +736,7 @@ TEST_CASE("multiple cliques returned") {
     REQUIRE(res.size() == 1);
     // The clique won't necessarily be the best-scoring one, but it should be
     // the same size.
-    REQUIRE(res.front().getBondMatches().size() == std::get<4>(test).size());
+    CHECK(res.front().getBondMatches().size() == std::get<4>(test).size());
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
@@ -1551,4 +1551,37 @@ TEST_CASE("Specify minimum clique size directly.") {
   opts.minCliqueSize = 17;
   auto res2 = rascalMCES(*m1, *m2, opts);
   REQUIRE(res2.empty());
+}
+
+TEST_CASE("Github8255 - incorrect MCES with singleLargestFrag=true") {
+  RascalOptions opts;
+  opts.singleLargestFrag = true;
+  opts.allBestMCESs = true;
+  opts.ignoreAtomAromaticity = true;
+  opts.ringMatchesRingOnly = true;
+  opts.completeAromaticRings = false;
+  {
+    auto m1 = "Cc1ccc(cn1)-c1ccc(cn1)-c1ccc2ccccc2n1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "Cc1ccc(cn1)-c1ccc(cn1)-c1cc2ccccc2[nH]1"_smiles;
+    REQUIRE(m2);
+    auto res = rascalMCES(*m1, *m2, opts);
+    CHECK(res.size() == 3);
+    for (auto &r : res) {
+      CHECK(r.getAtomMatches().size() == 20);
+      CHECK(r.getBondMatches().size() == 21);
+    }
+  }
+  {
+    auto m1 = "Cc1ncc(cc1)c2ncc(cc2)c3ccc4c(c3)cn[nH]4"_smiles;
+    REQUIRE(m1);
+    auto m2 = "Cc1ncc(cc1)c2ncc(cc2)c3ccc4c(c3)nccn4"_smiles;
+    REQUIRE(m2);
+    auto res = rascalMCES(*m1, *m2, opts);
+    CHECK(res.size() == 2);
+    for (auto &r : res) {
+      CHECK(r.getAtomMatches().size() == 20);
+      CHECK(r.getBondMatches().size() == 22);
+    }
+  }
 }
