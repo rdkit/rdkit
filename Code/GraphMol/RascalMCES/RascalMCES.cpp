@@ -1129,15 +1129,21 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
                      opts.maxFragSeparation, opts.exactConnectionsMatch,
                      opts.equivalentAtoms, opts.ignoreBondOrders));
   }
-
   if (opts.singleLargestFrag) {
-    std::sort(results.begin(), results.end(),
-              [](const RascalResult &r1, const RascalResult &r2) -> bool {
-                if (r1.getAtomMatches() == r2.getAtomMatches()) {
-                  return (r1.getBondMatches() < r2.getBondMatches());
-                }
-                return (r1.getAtomMatches() < r2.getAtomMatches());
-              });
+    std::sort(
+        results.begin(), results.end(),
+        [](const RascalResult &r1, const RascalResult &r2) -> bool {
+          if (r1.getAtomMatches().size() == r2.getAtomMatches().size()) {
+            if (r1.getBondMatches().size() == r2.getBondMatches().size()) {
+              if (r1.getAtomMatches() == r2.getAtomMatches()) {
+                return (r1.getBondMatches() < r2.getBondMatches());
+              }
+              return r1.getAtomMatches() < r2.getAtomMatches();
+            }
+            return r1.getBondMatches().size() > r2.getBondMatches().size();
+          }
+          return (r1.getAtomMatches().size() > r2.getAtomMatches().size());
+        });
 
     // the singleLargestFrag method throws bits of solutions out, so there may
     // now be duplicates and results that are different sizes.
@@ -1167,8 +1173,11 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
       }
       results.erase(results.begin() + j, results.end());
     }
+  } else {
+    // If 2 cliques are the same size, this sort puts the one with the smaller
+    // number of fragments first, which may have fewer atoms.
+    std::sort(results.begin(), results.end(), details::resultCompare);
   }
-  std::sort(results.begin(), results.end(), details::resultCompare);
   return results;
 }
 
