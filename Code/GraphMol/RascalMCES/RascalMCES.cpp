@@ -1126,10 +1126,6 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
                      opts.maxFragSeparation, opts.exactConnectionsMatch,
                      opts.equivalentAtoms, opts.ignoreBondOrders));
   }
-  // If 2 cliques are the same size, this sort puts the one with the smaller
-  // number of fragments first, which may have fewer atoms.
-  std::sort(results.begin(), results.end(), details::resultCompare);
-
   if (opts.singleLargestFrag) {
     std::sort(
         results.begin(), results.end(),
@@ -1174,6 +1170,10 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
       }
       results.erase(results.begin() + j, results.end());
     }
+  } else {
+    // If 2 cliques are the same size, this sort puts the one with the smaller
+    // number of fragments first, which may have fewer atoms.
+    std::sort(results.begin(), results.end(), details::resultCompare);
   }
   return results;
 }
