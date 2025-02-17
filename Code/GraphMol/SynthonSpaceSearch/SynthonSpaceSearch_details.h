@@ -61,7 +61,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT boost::dynamic_bitset<> getConnectorPattern(
 // 2, return all permutations of 2 from 3.  It's ok if the fragged mol doesn't
 // have all the connections in the reaction, although this may well result in
 // a lot of hits.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
+RDKIT_SYNTHONSPACESEARCH_EXPORT
+std::vector<std::vector<std::vector<std::pair<Atom *, unsigned int>>>>
 getConnectorPermutations(const std::vector<std::unique_ptr<ROMol>> &molFrags,
                          const boost::dynamic_bitset<> &fragConns,
                          const boost::dynamic_bitset<> &reactionConns);

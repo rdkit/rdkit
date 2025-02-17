@@ -451,13 +451,6 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     }
   }
 
-  std::cout << "total number of frag sets : " << fragments.size() << std::endl;
-  for (const auto &frags : fragments) {
-    for (const auto &f : frags) {
-      std::cout << MolToSmiles(*f) << ".";
-    }
-    std::cout << std::endl;
-  }
   return fragments;
 }
 
@@ -508,31 +501,30 @@ std::vector<int> bitsToInts(const boost::dynamic_bitset<> &bits) {
 }
 }  // namespace
 
-std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags,
-    const boost::dynamic_bitset<> &fragConns,
-    const boost::dynamic_bitset<> &reactionConns) {
-  std::vector<std::vector<std::unique_ptr<ROMol>>> connPerms;
+std::vector<std::vector<std::vector<std::pair<Atom *, unsigned int>>>>
+getConnectorPermutations(const std::vector<std::unique_ptr<ROMol>> &molFrags,
+                         const boost::dynamic_bitset<> &fragConns,
+                         const boost::dynamic_bitset<> &reactionConns) {
   const auto numFragConns = fragConns.count();
   auto rConns = bitsToInts(reactionConns);
   const auto perms = permMFromN(numFragConns, reactionConns.count());
 
+  std::vector<std::vector<std::vector<std::pair<Atom *, unsigned int>>>>
+      fragConnPerms;
+  fragConnPerms.reserve(perms.size());
+
   for (const auto &perm : perms) {
-    connPerms.emplace_back();
+    fragConnPerms.emplace_back();
     // Copy the fragments and set the isotope numbers according to this
     // permutation.
     for (const auto &f : molFrags) {
-      connPerms.back().emplace_back(new RWMol(*f));
+      fragConnPerms.back().emplace_back();
       boost::dynamic_bitset<> atomDone(f->getNumAtoms());
-      for (const auto atom : connPerms.back().back()->atoms()) {
+      for (const auto atom : f->atoms()) {
         if (!atom->getAtomicNum()) {
           for (size_t i = 0; i < perm.size(); ++i) {
             if (!atomDone[atom->getIdx()] && atom->getIsotope() == i + 1) {
-              atom->setIsotope(perm[i] + 1);
-              if (atom->hasQuery()) {
-                atom->setQuery(makeAtomTypeQuery(0, false));
-                atom->expandQuery(makeAtomIsotopeQuery(perm[i] + 1));
-              }
+              fragConnPerms.back().back().emplace_back(atom, perm[i] + 1);
               atomDone[atom->getIdx()] = true;
             }
           }
@@ -541,7 +533,7 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
     }
   }
 
-  return connPerms;
+  return fragConnPerms;
 }
 
 std::vector<std::vector<boost::dynamic_bitset<>>> getConnectorPermutations(

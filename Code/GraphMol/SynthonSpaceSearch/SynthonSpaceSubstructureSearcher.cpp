@@ -264,7 +264,14 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
   // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
   // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
   // that might be how they're labelled in the reaction database.
-  auto connCombs = details::getConnectorPermutations(fragSet, conns,
+
+  // Need to copy fragSet into a working set, then apply the results to
+  // the working copy below.
+  std::vector<std::unique_ptr<ROMol>> fragSetCp(fragSet.size());
+  for (unsigned int i = 0; i < fragSet.size(); ++i) {
+    fragSetCp[i] = std::make_unique<ROMol>(*fragSet[i]);
+  }
+  auto connCombs = details::getConnectorPermutations(fragSetCp, conns,
                                                      reaction.getConnectors());
 
   // Select only the synthons that have fingerprints that are a superset
@@ -285,9 +292,18 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
 
     // Find all synthons that match the fragments with each connector
     // combination.
-    for (auto &connComb : connCombs) {
+    for (const auto &connComb : connCombs) {
+      for (size_t i = 0; i < connComb.size(); ++i) {
+        for (auto &c : connComb[i]) {
+          c.first->setIsotope(c.second);
+          if (c.first->hasQuery()) {
+            c.first->setQuery(makeAtomTypeQuery(0, false));
+            c.first->expandQuery(makeAtomIsotopeQuery(c.second));
+          }
+        }
+      }
       auto theseSynthons =
-          getHitSynthons(connComb, passedScreens, reaction, so);
+          getHitSynthons(fragSetCp, passedScreens, reaction, so);
       if (!theseSynthons.empty()) {
         std::unique_ptr<SynthonSpaceHitSet> hs(
             new SynthonSpaceHitSet(reaction, theseSynthons, fragSet));
