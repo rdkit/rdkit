@@ -127,6 +127,10 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
     return;
   }
 
+  // Slightly convoluted way of doing it to prepared for multi-threading.
+  // Make a map of the unique SMILES strings for the fragments, keeping
+  // track of them in the vector.
+  std::map<std::string, std::vector<ROMol *>> fragSmiToFrag;
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
       if (ControlCHandler::getGotSignal()) {
@@ -137,16 +141,34 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
       sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                   MolOps::SANITIZE_SYMMRINGS);
       std::string fragSmi = MolToSmiles(*frag);
-      if (const auto it = d_fragFPPool.find(fragSmi);
-          it == d_fragFPPool.end()) {
-        std::unique_ptr<ExplicitBitVect> fullFP(
-            new ExplicitBitVect(*d_fpGen.getFingerprint(*frag)));
-        d_fragFPs.insert({frag.get(), fullFP.get()});
-        d_fragFPPool.insert({fragSmi, std::move(fullFP)});
+      if (auto it = fragSmiToFrag.find(fragSmi); it == fragSmiToFrag.end()) {
+        fragSmiToFrag.emplace(fragSmi, std::vector<ROMol *>(1, frag.get()));
       } else {
-        d_fragFPs.insert({frag.get(), it->second.get()});
+        it->second.emplace_back(frag.get());
       }
     }
+  }
+
+  // Now generate the fingerprints for the fragments.  This is the
+  // time-consuming bit that will be threaded.
+  std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs(fragSmiToFrag.size());
+  unsigned int fragNum = 0;
+  for (auto &[fragSmi, frags] : fragSmiToFrag) {
+    if (ControlCHandler::getGotSignal()) {
+      return;
+    }
+    fragFPs[fragNum++] = std::make_unique<ExplicitBitVect>(
+        *d_fpGen.getFingerprint(*frags.front()));
+  }
+
+  // Now transfer them to the pools.
+  fragNum = 0;
+  for (auto &[fragSmi, frags] : fragSmiToFrag) {
+    for (auto &frag : frags) {
+      d_fragFPs.emplace(frag, fragFPs[fragNum].get());
+    }
+    d_fragFPPool.insert({fragSmi, std::move(fragFPs[fragNum])});
+    ++fragNum;
   }
 }
 
