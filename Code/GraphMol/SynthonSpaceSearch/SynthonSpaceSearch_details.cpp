@@ -226,13 +226,6 @@ std::vector<std::vector<const Bond *>> getRingBlocks(
       }
     }
   }
-  std::cout << "ringBlocks size: " << ringBlocks.size() << std::endl;
-  for (const auto &rb : ringBlocks) {
-    for (auto bond : rb) {
-      std::cout << bond->getIdx() << " ";
-    }
-    std::cout << std::endl;
-  }
   return ringBlocks;
 }
 
@@ -331,105 +324,17 @@ void findBondPairsThatFragment(
   }
 }
 
-void makeFragmentPairs(
-    const ROMol &mol, const std::vector<int> &nonRingBonds,
-    const std::vector<std::pair<int, int>> &ringBondPairs,
-    std::map<std::string, std::vector<std::shared_ptr<ROMol>>> &fragSmis,
-    unsigned int dummyStart,
-    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments) {
-  // Make a map of the original bond indices to the actual indices
-  // in this fragment
-  // std::cout << "makeFragmentPairs for " << MolToSmiles(mol) << std::endl;
-  std::map<unsigned int, unsigned int> fragBonds;
-  for (const auto bond : mol.bonds()) {
-    // Bonds to dummy atoms won't have an origIdx.
-    if (bond->hasProp("origIdx")) {
-      fragBonds.insert(
-          std::make_pair(bond->getProp<int>("origIdx"), bond->getIdx()));
-    }
-  }
-
-  auto addFragmentation = [&](const std::unique_ptr<ROMol> &fragMol,
-                              unsigned int ds) {
-    std::string fragSmi(MolToSmiles(*fragMol));
-    if (auto it = fragSmis.find(fragSmi); it != fragSmis.end()) {
-      fragments.emplace_back(it->second);
-    } else {
-      std::vector<std::unique_ptr<ROMol>> frags;
-      MolOps::getMolFrags(*fragMol, frags, false);
-      if (frags.size() > 2) {
-        std::cout << "not splitting " << MolToSmiles(mol) << " gives "
-                  << frags.size() << " frags" << std::endl;
-        return;
-      }
-      fragments.emplace_back();
-      std::transform(
-          frags.begin(), frags.end(), std::back_inserter(fragments.back()),
-          [&](std::unique_ptr<ROMol> &frag) -> std::shared_ptr<ROMol> {
-            frag->setProp<unsigned int>("dummyStart", ds);
-            return std::shared_ptr<ROMol>(frag.release());
-          });
-      fragSmis.insert({fragSmi, fragments.back()});
-    }
-  };
-
-  ++dummyStart;
-  std::vector<std::pair<unsigned int, unsigned int>> dummyLabels{
-      1, {dummyStart, dummyStart}};
-  for (auto bondIdx : nonRingBonds) {
-    if (auto it = fragBonds.find(bondIdx); it != fragBonds.end()) {
-      std::unique_ptr<ROMol> fragMol(MolFragmenter::fragmentOnBonds(
-          mol, std::vector<unsigned int>{it->second}, true, &dummyLabels));
-      addFragmentation(fragMol, dummyStart);
-    }
-  }
-
-  dummyLabels.push_back(std::make_pair(dummyStart + 1, dummyStart + 1));
-  for (const auto &bondPairIdxs : ringBondPairs) {
-    auto it1 = fragBonds.find(bondPairIdxs.first);
-    if (it1 == fragBonds.end()) {
-      continue;
-    }
-    auto it2 = fragBonds.find(bondPairIdxs.second);
-    if (it2 == fragBonds.end()) {
-      continue;
-    }
-    std::unique_ptr<ROMol> fragMol(MolFragmenter::fragmentOnBonds(
-        mol, std::vector<unsigned int>{it1->second, it2->second}, true,
-        &dummyLabels));
-    addFragmentation(fragMol, dummyStart + 1);
-  }
-}
-
-unsigned int maxDummyStart(
-    const std::vector<std::shared_ptr<ROMol>> &fragments) {
-  unsigned int maxDS = 0;
-  for (const auto &frag : fragments) {
-    unsigned int dummyStart = frag->getProp<unsigned int>("dummyStart");
-    if (dummyStart > maxDS) {
-      maxDS = dummyStart;
-    }
-  }
-  return maxDS;
-}
-
 void makeFragments(
     const ROMol &mol, const std::vector<unsigned int> &splitBonds,
     const std::vector<std::pair<unsigned int, unsigned int>> &dummyLabels,
     unsigned int maxBondSplits, const boost::dynamic_bitset<> &ringBonds,
     std::set<std::string> &fragSmis,
     std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments) {
-  std::cout << "splitting on ";
-  for (unsigned int i = 0; i < splitBonds.size(); ++i) {
-    std::cout << splitBonds[i] << " ";
-  }
-  std::cout << std::endl;
   // first, see how many fragments we're going to get. The ring bonds
   // are paired so they will split the same ring.
   int numRingBonds = 0;
   int numNonRingBonds = 0;
   for (auto i : splitBonds) {
-    std::cout << i << " " << ringBonds[i] << std::endl;
     if (ringBonds[i]) {
       numRingBonds++;
     } else {
@@ -437,9 +342,6 @@ void makeFragments(
     }
   }
   unsigned int numFragsPoss = 1 + numNonRingBonds + (numRingBonds / 2);
-  std::cout << "num frags poss : " << numFragsPoss << " : " << numNonRingBonds
-            << " and " << numRingBonds << " vs " << maxBondSplits << " : "
-            << MolToSmiles(mol) << std::endl;
   if (numFragsPoss > maxBondSplits) {
     return;
   }
@@ -458,34 +360,6 @@ void makeFragments(
           });
     }
   }
-}
-
-void addSplitBond(
-    const std::pair<unsigned int, unsigned int> &bondPair,
-    std::vector<unsigned int> &splitBonds,
-    std::vector<std::pair<unsigned int, unsigned int>> &dummyLabels) {
-  splitBonds.emplace_back(bondPair.first);
-  splitBonds.emplace_back(bondPair.second);
-  std::sort(splitBonds.begin(), splitBonds.end());
-  splitBonds.erase(std::unique(splitBonds.begin(), splitBonds.end()),
-                   splitBonds.end());
-  dummyLabels.clear();
-  for (unsigned int i = 0; i < static_cast<unsigned int>(splitBonds.size());
-       ++i) {
-    dummyLabels.emplace_back(std::make_pair(i + 1, i + 1));
-  }
-  // std::cout << "splitBonds: " << splitBonds.size() << " :: ";
-  // for (unsigned int i = 0; i < static_cast<unsigned int>(splitBonds.size());
-  //      ++i) {
-  //   std::cout << splitBonds[i] << " ";
-  // }
-  // std::cout << std::endl;
-  // std::cout << "dummyLabels: " << dummyLabels.size() << " :: ";
-  // for (unsigned int i = 0; i < static_cast<unsigned int>(dummyLabels.size());
-  //      ++i) {
-  //   std::cout << dummyLabels[i].first << "," << dummyLabels[i].second << " ";
-  // }
-  // std::cout << std::endl;
 }
 
 // Build all combinations of maxBondSplits sets of bondPairs into splitBonds,
@@ -521,14 +395,6 @@ void buildSplitBonds(
   std::sort(splitBonds.begin(), splitBonds.end());
   splitBonds.erase(std::unique(splitBonds.begin(), splitBonds.end()),
                    splitBonds.end());
-  std::cout << "bonds to split with : " << splitBonds.size() << std::endl;
-  for (const auto &sb : splitBonds) {
-    std::cout << sb.size() << " :: ";
-    for (auto s : sb) {
-      std::cout << s << " ";
-    }
-    std::cout << std::endl;
-  }
 }
 }  // namespace
 
@@ -556,10 +422,6 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
       bondPairs.push_back({b->getIdx(), b->getIdx()});
     }
   }
-  std::cout << "Number of splitters : " << bondPairs.size() << std::endl;
-  for (const auto &pair : bondPairs) {
-    std::cout << pair.first << " -> " << pair.second << std::endl;
-  }
   std::vector<std::vector<std::shared_ptr<ROMol>>> fragments;
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
   // lots of hits but it is necessary if, for example, the query is a match
@@ -583,92 +445,6 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
                   fragments);
   }
 
-#if 0
-  // To make maxBondSplits fragments, we need to do maxBondSplits-1 splits.
-  for (size_t i = 0; i < bondPairs.size(); i++) {
-    std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
-    std::vector<unsigned int> splitBonds;
-    addSplitBond(bondPairs[i], splitBonds, dummyLabels);
-    makeFragments(query, splitBonds, dummyLabels, maxBondSplits, ringBonds,
-                  fragSmis, fragments);
-    if (fragments.size() > maxNumFragSets) {
-      BOOST_LOG(rdWarningLog)
-          << "Maximum number of fragments reached." << std::endl;
-      break;
-    }
-    for (size_t j = 0; j < bondPairs.size(); j++) {
-      splitBonds.clear();
-      addSplitBond(bondPairs[i], splitBonds, dummyLabels);
-      addSplitBond(bondPairs[j], splitBonds, dummyLabels);
-      makeFragments(query, splitBonds, dummyLabels, maxBondSplits, ringBonds,
-                    fragSmis, fragments);
-      if (fragments.size() > maxNumFragSets) {
-        BOOST_LOG(rdWarningLog)
-            << "Maximum number of fragments reached." << std::endl;
-        break;
-      }
-      for (size_t k = 0; k < bondPairs.size(); k++) {
-        splitBonds.clear();
-        addSplitBond(bondPairs[i], splitBonds, dummyLabels);
-        addSplitBond(bondPairs[j], splitBonds, dummyLabels);
-        addSplitBond(bondPairs[k], splitBonds, dummyLabels);
-        makeFragments(query, splitBonds, dummyLabels, maxBondSplits, ringBonds,
-                      fragSmis, fragments);
-        if (fragments.size() > maxNumFragSets) {
-          BOOST_LOG(rdWarningLog)
-              << "Maximum number of fragments reached." << std::endl;
-          break;
-        }
-      }
-    }
-  }
-#endif
-#if 0
-  // To make all fragment pairs, use all pairs of nonRingBonds and all
-  // ringBondPairs
-  for (size_t splitNum = 1; splitNum < static_cast<size_t>(maxBondSplits);
-       ++splitNum) {
-    std::vector<std::vector<std::shared_ptr<ROMol>>> newFrags;
-    for (auto &frags : fragments) {
-      unsigned int dummyStart = maxDummyStart(frags);
-      if (frags.size() != splitNum ||
-          frags.size() == static_cast<size_t>(maxBondSplits)) {
-        continue;
-      }
-      for (size_t i = 0; i < frags.size(); ++i) {
-        // split frag i and make a new load of fragments with the products
-        // of the split and the existing ones
-        std::vector<std::vector<std::shared_ptr<ROMol>>> iNewFrags;
-        makeFragmentPairs(*frags[i], nonRingBonds, ringBondPairs, fragSmis,
-                          dummyStart, iNewFrags);
-        for (const auto &iNewFrag : iNewFrags) {
-          newFrags.emplace_back();
-          for (size_t j = 0; j < frags.size(); ++j) {
-            if (j != i) {
-              newFrags.back().emplace_back(frags[j]);
-            } else {
-              newFrags.back().insert(newFrags.back().end(), iNewFrag.begin(),
-                                     iNewFrag.end());
-            }
-          }
-          if (newFrags.back().size() == 4) {
-            std::cout << "BAWOOGA" << std::endl;
-          }
-        }
-      }
-    }
-    fragments.insert(fragments.end(), newFrags.begin(), newFrags.end());
-  }
-  std::set<std::string> allSmis;
-  std::sort(fragments.begin(), fragments.end());
-  fragments.erase(std::unique(fragments.begin(), fragments.end()),
-                  fragments.end());
-  std::sort(fragments.begin(), fragments.end(),
-            [](const std::vector<std::shared_ptr<ROMol>> &a,
-               const std::vector<std::shared_ptr<ROMol>> &b) -> bool {
-              return a.size() < b.size();
-            });
-#endif
   std::cout << "total number of frag sets : " << fragments.size() << std::endl;
   for (const auto &frags : fragments) {
     for (const auto &f : frags) {
