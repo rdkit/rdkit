@@ -318,7 +318,7 @@ void fragmentOnSomeBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
     std::vector<std::vector<unsigned int>> *nCutsPerAtom) {
-  PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
+  PRECONDITION((!dummyLabels || dummyLabels->size() >= bondIndices.size()),
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");
@@ -440,7 +440,7 @@ ROMol *fragmentOnBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
     std::vector<unsigned int> *nCutsPerAtom) {
-  PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
+  PRECONDITION((!dummyLabels || dummyLabels->size() >= bondIndices.size()),
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");
