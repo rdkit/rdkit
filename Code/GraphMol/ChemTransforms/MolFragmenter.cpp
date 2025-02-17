@@ -304,10 +304,10 @@ void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs) {
 }
 
 namespace {
-boost::uint64_t nextBitCombo(boost::uint64_t v) {
+std::uint64_t nextBitCombo(std::uint64_t v) {
   // code from:
   // http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
-  boost::uint64_t t = (v | (v - 1)) + 1;
+  std::uint64_t t = (v | (v - 1)) + 1;
   return t | ((((t & -t) / (v & -v)) >> 1) - 1);
 }
 }  // namespace
@@ -329,8 +329,8 @@ void fragmentOnSomeBonds(
     return;
   }
 
-  boost::uint64_t state = (0x1L << maxToCut) - 1;
-  boost::uint64_t stop = 0x1L << bondIndices.size();
+  std::uint64_t state = (0x1L << maxToCut) - 1;
+  std::uint64_t stop = 0x1L << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabelsHere = nullptr;
   if (dummyLabels) {
