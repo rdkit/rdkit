@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 
+#include <GraphMol/MolBundle.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -65,29 +66,28 @@ bool checkConnectorRegions(
     const std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) {
   const auto &rxnConnRegs = reaction.getConnectorRegions();
   const auto &rxnConnRegSmis = reaction.getConnectorRegionSmiles();
-  const auto &rxnConnRegsFP = reaction.getConnRegFP();
+  const auto &rxnConnRegFPs = reaction.getConnRegFPs();
   MatchVectType dontCare;
   for (size_t i = 0; i < connRegFPs.size(); ++i) {
     bool connRegFound = false;
     for (size_t j = 0; j < connRegFPs[i].size(); ++j) {
-      if (AllProbeBitsMatch(*connRegFPs[i][j], *rxnConnRegsFP)) {
-        for (size_t k = 0; k < rxnConnRegs.size(); ++k) {
-          if (rxnConnRegSmis[k] == *connRegSmis[i][j]) {
-            connRegFound = true;
-            break;
-          }
-          if (SubstructMatch(*rxnConnRegs[k], *connRegs[i][j], dontCare)) {
-            connRegFound = true;
-            break;
-          }
+      for (size_t k = 0; k < rxnConnRegs.size(); ++k) {
+        if (rxnConnRegSmis[k] == *connRegSmis[i][j]) {
+          connRegFound = true;
+          break;
+        }
+        if (AllProbeBitsMatch(*connRegFPs[i][j], *rxnConnRegFPs[k]) &&
+            SubstructMatch(*rxnConnRegs[k], *connRegs[i][j], dontCare)) {
+          connRegFound = true;
+          break;
         }
       }
       if (connRegFound) {
         break;
       }
     }
-    if (!connRegFound) {
-      return false;
+    if (connRegFound) {
+      break;
     }
   }
   return true;
@@ -214,7 +214,7 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
         connRegSmis.reserve(splitConnRegs.size());
         connRegFPs.reserve(splitConnRegs.size());
         for (auto &cr : splitConnRegs) {
-          connRegFPs.emplace_back(PatternFingerprintMol(*cr));
+          connRegFPs.emplace_back(PatternFingerprintMol(*cr, PATT_FP_NUM_BITS));
           connRegSmis.emplace_back(MolToSmiles(*cr));
         }
         d_connRegs.insert(std::make_pair(frag.get(), std::move(splitConnRegs)));

@@ -46,8 +46,9 @@ const std::vector<std::shared_ptr<ROMol>> &SynthonSet::getConnectorRegions()
 const std::vector<std::string> &SynthonSet::getConnectorRegionSmiles() const {
   return d_connRegSmis;
 }
-const std::unique_ptr<ExplicitBitVect> &SynthonSet::getConnRegFP() const {
-  return d_connRegFP;
+const std::vector<std::unique_ptr<ExplicitBitVect>> &SynthonSet::getConnRegFPs()
+    const {
+  return d_connRegFPs;
 }
 const std::unique_ptr<ExplicitBitVect> &SynthonSet::getAddFP() const {
   return d_addFP;
@@ -75,8 +76,11 @@ void SynthonSet::writeToDBStream(std::ostream &os) const {
   for (const auto &cr : getConnectorRegions()) {
     MolPickler::pickleMol(*cr, os, PicklerOps::AllProps);
   }
-  auto connRegFPstr = getConnRegFP()->toString();
-  streamWrite(os, connRegFPstr);
+  streamWrite(os, static_cast<std::uint64_t>(getConnRegFPs().size()));
+  for (const auto &fp : getConnRegFPs()) {
+    auto connRegFPstr = fp->toString();
+    streamWrite(os, connRegFPstr);
+  }
 
   writeBitSet(os, d_connectors);
   streamWrite(os, static_cast<std::uint64_t>(d_synthConnPatts.size()));
@@ -132,9 +136,13 @@ void SynthonSet::readFromDBStream(std::istream &is, SynthonSpace &space,
     MolPickler::molFromPickle(is, *d_connectorRegions[i]);
     d_connRegSmis[i] = MolToSmiles(*d_connectorRegions[i]);
   }
-  std::string pickle;
-  streamRead(is, pickle, 0);
-  d_connRegFP = std::make_unique<ExplicitBitVect>(pickle);
+  std::uint64_t numConnRegFPs;
+  streamRead(is, numConnRegFPs);
+  for (std::uint64_t i = 0; i < numConnRegFPs; ++i) {
+    std::string pickle;
+    streamRead(is, pickle, 0);
+    d_connRegFPs.push_back(std::make_unique<ExplicitBitVect>(pickle));
+  }
   readBitSet(is, d_connectors);
   std::uint64_t numSynthConnPatts;
   streamRead(is, numSynthConnPatts);
@@ -363,14 +371,12 @@ void SynthonSet::buildConnectorRegions() {
     }
   }
   if (!getConnectorRegions().empty()) {
-    d_connRegFP.reset(PatternFingerprintMol(*getConnectorRegions().front()));
-    for (size_t i = 1; i < getConnectorRegions().size(); ++i) {
+    d_connRegFPs.reserve(d_connectorRegions.size());
+    for (const auto &connReg : getConnectorRegions()) {
       std::unique_ptr<ExplicitBitVect> fp(
-          PatternFingerprintMol(*getConnectorRegions()[i]));
-      *d_connRegFP |= *fp;
+          PatternFingerprintMol(*connReg, PATT_FP_NUM_BITS));
+      d_connRegFPs.push_back(std::move(fp));
     }
-  } else {
-    d_connRegFP = std::make_unique<ExplicitBitVect>(2048);
   }
   // It should be the case that all synthons in a synthon set
   // have the same number of connections, so just do the 1st

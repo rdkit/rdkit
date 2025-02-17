@@ -50,7 +50,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   }
   const std::vector<std::shared_ptr<ROMol>> &getConnectorRegions() const;
   const std::vector<std::string> &getConnectorRegionSmiles() const;
-  const std::unique_ptr<ExplicitBitVect> &getConnRegFP() const;
+  const std::vector<std::unique_ptr<ExplicitBitVect>> &getConnRegFPs() const;
   const std::unique_ptr<ExplicitBitVect> &getAddFP() const;
   const std::unique_ptr<ExplicitBitVect> &getSubtractFP() const;
   const std::vector<int> &getNumConnectors() const;
@@ -128,9 +128,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // the fragment won't have a match in this SynthonSet.
   std::vector<std::shared_ptr<ROMol>> d_connectorRegions;
   std::vector<std::string> d_connRegSmis;
-  // The fingerprint of the connector regions.  Fingerprints for all
-  // connector regions are folded into the same fingerprint.
-  std::unique_ptr<ExplicitBitVect> d_connRegFP;
+  // The fingerprints of the connector regions.
+  std::vector<std::unique_ptr<ExplicitBitVect>> d_connRegFPs;
 
   // When doing an approximate FP similarity by ORing together
   // the synthonFPs, adding d_addFP and subtracting d_subtractFP
