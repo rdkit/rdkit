@@ -43,15 +43,15 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   std::map<void *, std::vector<std::unique_ptr<ExplicitBitVect>>> d_connRegFPs;
 
   void extraSearchSetup(
-      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets) override;
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet,
+      std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
   bool verifyHit(const ROMol &hit) const override;
 
   void getConnectorRegions(
-      const std::vector<std::unique_ptr<ROMol>> &molFrags,
+      const std::vector<std::shared_ptr<ROMol>> &molFrags,
       std::vector<std::vector<ROMol *>> &connRegs,
       std::vector<std::vector<const std::string *>> &connRegSmis,
       std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const;

@@ -63,14 +63,14 @@ class SynthonSpaceSearcher {
   // for all the fragments.  The SubstructureSearcher doesn't need
   // anything extra.
   virtual void extraSearchSetup(
-      [[maybe_unused]] std::vector<std::vector<std::unique_ptr<ROMol>>>
+      [[maybe_unused]] std::vector<std::vector<std::shared_ptr<ROMol>>>
           &fragSets) {}
 
   // Do the search of this fragSet against the SynthonSet in the
   // appropriate way, for example by substructure or fingerprint
   // similarity.
   virtual std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet,
+      std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const = 0;
   // Make the hit, constructed from a specific combination of
   // synthons in the SynthonSet, and verify that it matches the

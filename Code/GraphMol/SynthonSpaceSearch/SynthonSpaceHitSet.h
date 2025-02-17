@@ -28,7 +28,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   SynthonSpaceHitSet() = delete;
   SynthonSpaceHitSet(const SynthonSet &reaction,
                      const std::vector<std::vector<size_t>> &stu,
-                     const std::vector<std::unique_ptr<ROMol>> &fragSet)
+                     const std::vector<std::shared_ptr<ROMol>> &fragSet)
       : reactionId(reaction.getId()) {
     synthonsToUse.reserve(stu.size());
     const auto &synthons = reaction.getSynthons();
@@ -67,7 +67,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceFPHitSet
   SynthonSpaceFPHitSet() = delete;
   SynthonSpaceFPHitSet(const SynthonSet &reaction,
                        const std::vector<std::vector<size_t>> &stu,
-                       const std::vector<std::unique_ptr<ROMol>> &fragSet)
+                       const std::vector<std::shared_ptr<ROMol>> &fragSet)
       : SynthonSpaceHitSet(reaction, stu, fragSet) {
     synthonFPs.reserve(stu.size());
     for (size_t i = 0; i < stu.size(); ++i) {

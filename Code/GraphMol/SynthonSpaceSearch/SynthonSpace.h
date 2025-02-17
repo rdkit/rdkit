@@ -42,14 +42,14 @@ const std::vector<std::string> CONNECTOR_SYMBOLS{"[U]", "[Np]", "[Pu]", "[Am]"};
 constexpr unsigned int MAX_CONNECTOR_NUM{4};
 
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
-  int maxBondSplits{MAX_CONNECTOR_NUM};  // The maximum number of bonds to break
-                                         // in the query. It should be no more
-                                         // than the maximum number of connector
-                                         // types in the SynthonSpace.  At
-                                         // present this is 4.  Specifying more
-                                         // than that will not matter as it will
-                                         // be reduced to 4.  Likewise, values
-                                         // lower than 1 will be increased to 1.
+  int maxBondSplits{3};  // The maximum number of fragments to
+                         // break the query into. It should be no more
+                         // than the maximum number of connector
+                         // types in the SynthonSpace.  At
+                         // present this is 4.  Specifying more
+                         // than that will not matter as it will
+                         // be reduced to 4.  Likewise, values
+                         // lower than 1 will be increased to 1.
   std::uint64_t maxNumFrags{
       100000};  // The maximum number of fragments the query can
                 // be broken into.  Big molecules will create huge

@@ -43,10 +43,10 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
   std::map<void *, ExplicitBitVect *> d_fragFPs;
 
   void extraSearchSetup(
-      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
+      std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets) override;
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet,
+      std::vector<std::shared_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const override;
   bool quickVerify(const SynthonSpaceHitSet *hitset,
                    const std::vector<size_t> &synthNums) const override;

@@ -33,30 +33,27 @@ combMFromN(unsigned int m, unsigned int n);
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<unsigned int>>
 permMFromN(unsigned int m, unsigned int n);
 RDKIT_SYNTHONSPACESEARCH_EXPORT void fixAromaticRingSplits(
-    std::vector<std::unique_ptr<ROMol>> &molFrags);
+    std::vector<std::shared_ptr<ROMol>> &molFrags);
 
-// Split the molecule into fragments.  maxBondSplits gives the maximum number
-// of bonds to be used in each split.  There will a vector of vectors of
-// molecules, 1 inner vector for each split i.e. maxBondSplits in total, the
-// first with 1 split, the 2nd with 2 etc.  Each inner vector contains the
-// fragments from a split molecule.  The maxBondSplits will be constrained to
-// between 1 and 4 inclusive, so if it is supplied outside that range, it will
-// be altered.  Also, you can't split a molecule on 3 bonds if it only contains
-// 2.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
-splitMolecule(const ROMol &query, unsigned int maxBondSplits,
-              std::uint64_t maxNumFrags, TimePoint *endTime, bool &timedOut);
+// Split the molecule into fragments.  maxNumFrags gives the maximum number
+// of fragments to be produced in each set.  There will a vector of vectors of
+// molecules.  Each inner vector contains the fragments from a split molecule.
+// The maxNumFrags will be constrained to the maximum number of synthons in
+// the search space as there's no point making more fragments than that.
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::shared_ptr<ROMol>>>
+splitMolecule(const ROMol &query, unsigned int maxNumFrags,
+              std::uint64_t maxNumFragSets, TimePoint *endTime, bool &timedOut);
 // Counts the number of [1*], [2*]...[4*] in the string.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &frag);
 
 // Return a bitset for each fragment giving the connector patterns
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<boost::dynamic_bitset<>>
-getConnectorPatterns(const std::vector<std::unique_ptr<ROMol>> &fragSet);
+getConnectorPatterns(const std::vector<std::shared_ptr<ROMol>> &fragSet);
 
 // Return a bitset giving the different connector types in this
 // molecule.
 RDKIT_SYNTHONSPACESEARCH_EXPORT boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<std::unique_ptr<ROMol>> &fragSet);
+    const std::vector<std::shared_ptr<ROMol>> &fragSet);
 
 // Return copies of the mol fragments will all permutations of the connectors
 // in the reaction onto the connectors in the fragments.
@@ -65,7 +62,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT boost::dynamic_bitset<> getConnectorPattern(
 // have all the connections in the reaction, although this may well result in
 // a lot of hits.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
-getConnectorPermutations(const std::vector<std::unique_ptr<ROMol>> &molFrags,
+getConnectorPermutations(const std::vector<std::shared_ptr<ROMol>> &molFrags,
                          const boost::dynamic_bitset<> &fragConns,
                          const boost::dynamic_bitset<> &reactionConns);
 
