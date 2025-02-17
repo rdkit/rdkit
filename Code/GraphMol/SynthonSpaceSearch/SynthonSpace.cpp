@@ -252,6 +252,9 @@ void SynthonSpace::readTextFile(const std::string &inFilename,
     reaction->buildConnectorRegions();
     reaction->assignConnectorsUsed();
     d_numProducts += reaction->getNumProducts();
+    if (reaction->getSynthons().size() > d_maxNumSynthons) {
+      d_maxNumSynthons = reaction->getSynthons().size();
+    }
   }
 }
 
@@ -343,6 +346,9 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
     auto reaction = std::make_shared<SynthonSet>();
     reaction->readFromDBStream(is, *this, d_fileMajorVersion);
     d_reactions.insert(std::make_pair(reaction->getId(), reaction));
+    if (reaction->getSynthons().size() > d_maxNumSynthons) {
+      d_maxNumSynthons = reaction->getSynthons().size();
+    }
   }
   is.close();
 }

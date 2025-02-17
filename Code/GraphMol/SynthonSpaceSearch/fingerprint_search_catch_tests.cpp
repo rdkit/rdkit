@@ -98,7 +98,6 @@ TEST_CASE("FP Small tests") {
     bool cancelled = false;
     synthonspace.readTextFile(libNames[i], cancelled);
     SynthonSpaceSearchParams params;
-    params.maxBondSplits = 3;
     params.randomSeed = 1;
     params.approxSimilarityAdjuster = 0.2;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
@@ -177,7 +176,6 @@ TEST_CASE("FP Random Hits") {
 
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 4;
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
@@ -212,7 +210,6 @@ TEST_CASE("Other Fingerprints") {
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 3;
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
@@ -236,7 +233,6 @@ TEST_CASE("Timeout") {
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 3;
   params.maxHits = -1;
   params.similarityCutoff = 0.3;
   params.fragSimilarityAdjuster = 0.3;

@@ -42,21 +42,13 @@ const std::vector<std::string> CONNECTOR_SYMBOLS{"[U]", "[Np]", "[Pu]", "[Am]"};
 constexpr unsigned int MAX_CONNECTOR_NUM{4};
 
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
-  int maxBondSplits{3};  // The maximum number of fragments to
-                         // break the query into. It should be no more
-                         // than the maximum number of connector
-                         // types in the SynthonSpace.  At
-                         // present this is 4.  Specifying more
-                         // than that will not matter as it will
-                         // be reduced to 4.  Likewise, values
-                         // lower than 1 will be increased to 1.
-  std::uint64_t maxNumFrags{
-      100000};  // The maximum number of fragments the query can
+  std::uint64_t maxNumFragSets{
+      100000};  // The maximum number of fragment sets the query can
                 // be broken into.  Big molecules will create huge
-                // numbers of fragments that may cause excessive
-                // memory use.  If the number of fragments hits this number,
-                // fragmentation stops and the search results will likely be
-                // incomplete.
+                // numbers of fragment sets that may cause excessive
+                // memory use.  If the number of fragment sets hits this
+                // number, fragmentation stops and the search results
+                // will likely be incomplete.
   std::int64_t maxHits{1000};  // The maximum number of hits to return.  Use
                                // -1 for no maximum.
   std::int64_t hitStart{0};    // Sequence number of hit to start from.  So that
@@ -103,17 +95,23 @@ class Synthon;
 
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
  public:
-  // Create the synthonspace from a file in the correct format.
   explicit SynthonSpace() = default;
   ~SynthonSpace() = default;
   SynthonSpace(const SynthonSpace &other) = delete;
   SynthonSpace &operator=(const SynthonSpace &other) = delete;
-  // Get the number of different reactions in the SynthonSpace.
   /*!
+   * Get the number of different reactions in the SynthonSpace.
    *
    * @return int
    */
   size_t getNumReactions() const;
+  /*!
+   * Get a list of the names of all the reactions in the SynthonSpace.
+   *
+   * @return
+   */
+
+  unsigned int getMaxNumSynthons() const { return d_maxNumSynthons; }
   std::vector<std::string> getReactionNames() const;
   const std::shared_ptr<SynthonSet> getReaction(std::string reactionName);
   // The Synthons have a PatternFingerprint for screening in substructure
@@ -123,12 +121,17 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // Likewise for the fingerprints used for similarity searching
   unsigned int getFPSize() const;
 
-  // Get the total number of products that the SynthonSpace could produce.
   /*!
+   * Get the total number of products that the SynthonSpace could produce.
    *
    * @return std::int64_t
    */
   std::uint64_t getNumProducts() const;
+  // Get the total number of products, formatted nicely in a string.
+  /*!
+   *
+   * @return std::string
+   */
   std::string getFormattedNumProducts() const;
 
   std::string getSynthonFingerprintType() const { return d_fpType; }
@@ -245,6 +248,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   std::string d_fileName;
   // In hiMem mode, the reactions are read in at the outset.
   std::map<std::string, std::shared_ptr<SynthonSet>> d_reactions;
+  // Keep the value of the maximum number of synthons used by
+  // any of the reactions.  There's no point fragmenting any
+  // query into more than this number of fragments.
+  unsigned int d_maxNumSynthons{0};
   std::uint64_t d_numProducts{0};
 
   std::int32_t d_fileMajorVersion{-1};

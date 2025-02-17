@@ -329,7 +329,7 @@ void makeFragments(
     const std::vector<std::pair<unsigned int, unsigned int>> &dummyLabels,
     unsigned int maxBondSplits, const boost::dynamic_bitset<> &ringBonds,
     std::set<std::string> &fragSmis,
-    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragments) {
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
   // first, see how many fragments we're going to get. The ring bonds
   // are paired so they will split the same ring.
   int numRingBonds = 0;
@@ -351,13 +351,7 @@ void makeFragments(
   if (fragSmis.insert(fragSmi).second) {
     std::vector<std::unique_ptr<ROMol>> molFrags;
     if (MolOps::getMolFrags(*fragMol, molFrags, false) <= maxBondSplits) {
-      fragments.emplace_back();
-      std::transform(
-          molFrags.begin(), molFrags.end(),
-          std::back_inserter(fragments.back()),
-          [&](std::unique_ptr<ROMol> &frag) -> std::shared_ptr<ROMol> {
-            return std::shared_ptr<ROMol>(frag.release());
-          });
+      fragments.emplace_back(std::move(molFrags));
     }
   }
 }
@@ -398,7 +392,7 @@ void buildSplitBonds(
 }
 }  // namespace
 
-std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
+std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxNumFrags, std::uint64_t maxNumFragSets,
     TimePoint *endTime, bool &timedOut) {
   if (maxNumFrags < 1) {
@@ -422,7 +416,7 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
       bondPairs.push_back({b->getIdx(), b->getIdx()});
     }
   }
-  std::vector<std::vector<std::shared_ptr<ROMol>>> fragments;
+  std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
   // lots of hits but it is necessary if, for example, the query is a match
   // for a single synthon set.
@@ -440,9 +434,21 @@ std::vector<std::vector<std::shared_ptr<ROMol>>> splitMolecule(
     dummyLabels.emplace_back(i, i);
   }
 
+  int numTries = 100;
   for (const auto &sb : splitBonds) {
     makeFragments(query, sb, dummyLabels, maxNumFrags, ringBonds, fragSmis,
                   fragments);
+    if (fragSmis.size() > maxNumFragSets) {
+      break;
+    }
+    --numTries;
+    if (!numTries) {
+      numTries = 100;
+      timedOut = checkTimeOut(endTime);
+      if (timedOut) {
+        break;
+      }
+    }
   }
 
   std::cout << "total number of frag sets : " << fragments.size() << std::endl;
@@ -467,7 +473,7 @@ int countConnections(const ROMol &mol) {
 }
 
 std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
-    const std::vector<std::shared_ptr<ROMol>> &mols) {
+    const std::vector<std::unique_ptr<ROMol>> &mols) {
   std::vector<boost::dynamic_bitset<>> connPatterns(
       mols.size(), boost::dynamic_bitset<>(MAX_CONNECTOR_NUM + 1));
   for (size_t i = 0; i < mols.size(); i++) {
@@ -481,7 +487,7 @@ std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
 }
 
 boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<std::shared_ptr<ROMol>> &fragSet) {
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
   boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
   const auto connPatterns = getConnectorPatterns(fragSet);
   for (const auto &cp : connPatterns) {
@@ -503,7 +509,7 @@ std::vector<int> bitsToInts(const boost::dynamic_bitset<> &bits) {
 }  // namespace
 
 std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
-    const std::vector<std::shared_ptr<ROMol>> &molFrags,
+    const std::vector<std::unique_ptr<ROMol>> &molFrags,
     const boost::dynamic_bitset<> &fragConns,
     const boost::dynamic_bitset<> &reactionConns) {
   std::vector<std::vector<std::unique_ptr<ROMol>>> connPerms;

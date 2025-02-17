@@ -55,8 +55,9 @@ SearchResults SynthonSpaceSearcher::search() {
     endTime = &endTimePt;
   }
   bool timedOut = false;
-  auto fragments = details::splitMolecule(
-      d_query, d_params.maxBondSplits, d_params.maxNumFrags, endTime, timedOut);
+  auto fragments =
+      details::splitMolecule(d_query, getSpace().getMaxNumSynthons(),
+                             d_params.maxNumFragSets, endTime, timedOut);
   if (timedOut || ControlCHandler::getGotSignal()) {
     return SearchResults{std::move(results), 0UL, timedOut,
                          ControlCHandler::getGotSignal()};

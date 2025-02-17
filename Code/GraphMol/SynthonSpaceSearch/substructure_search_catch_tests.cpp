@@ -60,12 +60,13 @@ TEST_CASE("Test splits 1") {
     auto fragments = splitMolecule(*mol, 3, 100000, nullptr, timedOut);
     CHECK(fragments.size() ==
           std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
-    // The first fragment set should just be the molecule itself.
+    // The first fragment set should just be the molecule itself.  There
+    // shouldn't be any 4 fragment sets, but check.
     for (size_t j = 0; j < 4; ++j) {
       const auto numFragSets = std::accumulate(
           fragments.begin(), fragments.end(), static_cast<size_t>(0),
           [&](size_t prevRes,
-              const std::vector<std::shared_ptr<ROMol>> &frags) {
+              const std::vector<std::unique_ptr<ROMol>> &frags) {
             if (frags.size() == j + 1) {
               return prevRes + 1;
             }
@@ -132,7 +133,6 @@ TEST_CASE("S Amide 1") {
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 2;
   auto results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 2);
   std::set<std::string> resSmi;
@@ -425,7 +425,8 @@ TEST_CASE("S Biggy") {
 TEST_CASE("S Small query") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
-  // Making sure it works when the query has fewer bonds than maxBondSplits.
+  // Making sure it works when the query has fewer bonds than the maximum
+  // number of synthons.
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space.txt";
   SynthonSpace synthonspace;
@@ -449,7 +450,6 @@ TEST_CASE("S Random Hits") {
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 2;
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
@@ -481,7 +481,6 @@ TEST_CASE("S Later hits") {
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 2;
   params.maxHits = 200;
   auto results = synthonspace.substructureSearch(*queryMol, params);
   std::vector<std::string> hitNames1;
@@ -525,7 +524,6 @@ TEST_CASE("S Complex query") {
       "[$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
   REQUIRE(queryMol);
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 2;
   params.maxHits = 1000;
   auto results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 1000);
@@ -570,12 +568,13 @@ TEST_CASE("Greg Space Failure") {
   SynthonSpace synthonspace;
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
+  std::cout << "max num synthons : " << synthonspace.getMaxNumSynthons()
+            << std::endl;
 
   auto queryMol =
       "Cc1nn(C)c(C)c1-c1nc(Cn2cc(CNC(C)C(=O)NC3CCCC3)nn2)no1"_smarts;
   REQUIRE(queryMol);
   SynthonSpaceSearchParams params;
-  params.maxBondSplits = 2;
 
   auto results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 1);

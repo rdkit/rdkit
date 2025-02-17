@@ -124,19 +124,13 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::class_<SynthonSpaceSearch::SynthonSpaceSearchParams,
                  boost::noncopyable>("SynthonSpaceSearchParams",
                                      docString.c_str())
-      .def_readwrite(
-          "maxBondSplits",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxBondSplits,
-          "The maximum number of bonds to break in the query."
-          "  It should be between 1 and 4 and will be constrained to be so."
-          "  Default=4.")
       .def_readwrite("maxHits",
                      &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHits,
                      "The maximum number of hits to return.  Default=1000."
                      "Use -1 for no maximum.")
       .def_readwrite(
           "maxNumFrags",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxNumFrags,
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxNumFragSets,
           "The maximum number of fragments the query can be broken into."
           "  Big molecules will create huge numbers of fragments that may cause"
           " excessive memory use.  If the number of fragments hits this number,"

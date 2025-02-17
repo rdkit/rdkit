@@ -26,7 +26,7 @@ namespace {
 // less complex fragments are more likely to match something, so screen
 // with that first.
 std::vector<ExplicitBitVect *> makePatternFPs(
-    std::vector<std::shared_ptr<ROMol>> &molFrags,
+    std::vector<std::unique_ptr<ROMol>> &molFrags,
     const std::map<void *, std::unique_ptr<ExplicitBitVect>> &allPattFPs) {
   std::vector<ExplicitBitVect *> pattFPs;
   pattFPs.reserve(molFrags.size());
@@ -46,7 +46,7 @@ std::vector<ExplicitBitVect *> makePatternFPs(
             });
 
   // Now put molFrags in the same order.
-  std::vector<std::shared_ptr<ROMol>> newFrags(molFrags.size());
+  std::vector<std::unique_ptr<ROMol>> newFrags(molFrags.size());
   std::vector<ExplicitBitVect *> retFPs(molFrags.size());
   for (size_t i = 0; i < fps.size(); ++i) {
     newFrags[i] = std::move(molFrags[fps[i].first]);
@@ -192,7 +192,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
 }  // namespace
 
 void SynthonSpaceSubstructureSearcher::extraSearchSetup(
-    std::vector<std::vector<std::shared_ptr<ROMol>>> &fragSets) {
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
   const auto pattFPSize = getSpace().getPatternFPSize();
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
@@ -228,7 +228,7 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceSubstructureSearcher::searchFragSet(
-    std::vector<std::shared_ptr<ROMol>> &fragSet,
+    std::vector<std::unique_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
@@ -306,7 +306,7 @@ bool SynthonSpaceSubstructureSearcher::verifyHit(const ROMol &hit) const {
 }
 
 void SynthonSpaceSubstructureSearcher::getConnectorRegions(
-    const std::vector<std::shared_ptr<ROMol>> &molFrags,
+    const std::vector<std::unique_ptr<ROMol>> &molFrags,
     std::vector<std::vector<ROMol *>> &connRegs,
     std::vector<std::vector<const std::string *>> &connRegSmis,
     std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const {
