@@ -16,8 +16,10 @@
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
+#include <boost/python/converter/registry.hpp>
 
 namespace RDKit::SynthonSpaceSearch {
 
@@ -62,7 +64,6 @@ SearchResults SynthonSpaceSearcher::search() {
     return SearchResults{std::move(results), 0UL, timedOut,
                          ControlCHandler::getGotSignal()};
   }
-  std::cout << "Number of fragment sets: " << fragments.size() << std::endl;
   extraSearchSetup(fragments);
   if (ControlCHandler::getGotSignal()) {
     return SearchResults{std::move(results), 0UL, timedOut, true};

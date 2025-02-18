@@ -117,6 +117,24 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT Stepper {
   std::vector<size_t> d_sizes;
 };
 
+// Return a molecule containing the portions of the molecule starting at
+// each dummy atom and going out up to 3 bonds.  There may be more than
+// 1 fragment if there are dummy atoms more than 3 bonds apart, and there
+// may be fragments with more than 1 dummy atom if their fragments fall
+// within 3 bonds of each other.  E.g. the molecule [1*]CN(C[2*])Cc1ccccc1
+// will give [1*]CN(C)C[1*].  The 2 dummy atoms are 4 bonds apart, but the
+// fragments overlap.  All dummy atoms given isotope 1 whatever they had
+// before.
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> getConnRegion(
+    const ROMol &mol);
+
+// Take any query atoms out of the molecule, replacing them with the
+// nearest thing possible.  Probably this will just be the atomic
+// number.  It doesn't change dummy atoms that have an isotope as
+// these will be connectors. Returns true if it did something,
+// false if the molecule was left unchanged.
+RDKIT_SYNTHONSPACESEARCH_EXPORT bool removeQueryAtoms(RWMol &mol);
+
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
     const std::string &reactionId, const std::vector<std::string> &fragIds);
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(

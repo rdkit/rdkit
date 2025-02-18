@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 
 #include <algorithm>
+#include <chrono>
 #include <cstdio>
 #include <fstream>
 
@@ -329,50 +330,10 @@ TEST_CASE("DB Writer") {
   CHECK(irxn->getId() == orxn->getId());
   CHECK(irxn->getConnectorRegions().size() ==
         orxn->getConnectorRegions().size());
-  CHECK(*irxn->getConnRegFP() == *orxn->getConnRegFP());
-  CHECK(irxn->getConnectors() == orxn->getConnectors());
-  CHECK(irxn->getSynthons().size() == orxn->getSynthons().size());
-  CHECK(newsynthonspace.hasFingerprints());
-  for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
-    CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
-    for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {
-      CHECK(irxn->getSynthons()[i][j].first == orxn->getSynthons()[i][j].first);
-      CHECK(*irxn->getSynthons()[i][j].second->getFP() ==
-            *orxn->getSynthons()[i][j].second->getFP());
-    }
+  CHECK(irxn->getConnRegFPs().size() == orxn->getConnRegFPs().size());
+  for (size_t i = 0; i < irxn->getConnRegFPs().size(); ++i) {
+    CHECK(*irxn->getConnRegFPs()[i] == *orxn->getConnRegFPs()[i]);
   }
-  std::remove(spaceName);
-}
-
-TEST_CASE("DB Converter") {
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/doebner_miller_space.txt";
-
-  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
-      MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
-
-  auto spaceName = std::tmpnam(nullptr);
-  bool cancelled;
-  convertTextToDBFile(libName, spaceName, cancelled, fpGen.get());
-
-  SynthonSpace synthonspace;
-  synthonspace.readTextFile(libName, cancelled);
-  CHECK(synthonspace.getNumReactions() == 1);
-  synthonspace.buildSynthonFingerprints(*fpGen);
-  synthonspace.buildAddAndSubstractFingerprints(*fpGen);
-
-  SynthonSpace newsynthonspace;
-  newsynthonspace.readDBFile(spaceName);
-
-  std::shared_ptr<SynthonSet> irxn;
-  CHECK_NOTHROW(irxn = newsynthonspace.getReaction("doebner-miller-quinoline"));
-  const auto &orxn = synthonspace.getReaction("doebner-miller-quinoline");
-  CHECK(irxn->getId() == orxn->getId());
-  CHECK(irxn->getConnectorRegions().size() ==
-        orxn->getConnectorRegions().size());
-  CHECK(*irxn->getConnRegFP() == *orxn->getConnRegFP());
   CHECK(irxn->getConnectors() == orxn->getConnectors());
   CHECK(irxn->getSynthons().size() == orxn->getSynthons().size());
   CHECK(newsynthonspace.hasFingerprints());
@@ -524,10 +485,12 @@ TEST_CASE("S Complex query") {
       "[$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
   REQUIRE(queryMol);
   SynthonSpaceSearchParams params;
-  params.maxHits = 1000;
+  params.maxHits = -1;
   auto results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.getHitMolecules().size() == 1000);
-  CHECK(results.getMaxNumResults() == 3257);
+  CHECK(results.getHitMolecules().size() == 7649);
+  // The screenout is poor for a complex query, so a lot of things
+  // will be identified as possible that aren't.
+  CHECK(results.getMaxNumResults() == 33294);
 }
 
 TEST_CASE("S Map numbers in connectors") {
@@ -568,8 +531,6 @@ TEST_CASE("Greg Space Failure") {
   SynthonSpace synthonspace;
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
-  std::cout << "max num synthons : " << synthonspace.getMaxNumSynthons()
-            << std::endl;
 
   auto queryMol =
       "Cc1nn(C)c(C)c1-c1nc(Cn2cc(CNC(C)C(=O)NC3CCCC3)nn2)no1"_smarts;
@@ -610,26 +571,61 @@ TEST_CASE("Synthon Error") {
   }
 }
 
+TEST_CASE("Amino Acid") {
+  // The issue here was that the SMARTS pattern should match just one synthon
+  // in the "library" but doesn't because the connector is on the nitrogen
+  // of the amino acid which says !$(N-[!#6;!#1]) i.e. the nitrogen can
+  // only attached to a carbon or hydrogen, and in the synthon it's
+  // attached to a dummy atom.
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amino_acid.txt";
+  SynthonSpace synthonspace;
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+
+  auto queryMol =
+      "[$(C-[C;!$(C=[!#6])]-[N;!H0;!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])](=O)([O;H,-])"_smarts;
+  REQUIRE(queryMol);
+  SynthonSpaceSearchParams params;
+  auto results = synthonspace.substructureSearch(*queryMol, params);
+  CHECK(results.getHitMolecules().size() == 1);
+}
+
 TEST_CASE("S Freedom Space") {
   std::string libName =
       "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
   libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3010.spc";
+  libName =
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit_1024.spc";
   SynthonSpace synthonspace;
   synthonspace.readDBFile(libName);
 
-  auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
+  // auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
   // auto m = "CC(=O)Nc1cc(Nc2nccc(-c3cnc4ccccc34)n2)ccc1N(C)C"_smarts;
+  // auto m = "cC(=O)[NH1]c1cc([O;R])c([N;R])cc1"_smarts;
+  auto m =
+      "[$(C-[C;!$(C=[!#6])]-[N;!H0;!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])](=O)([O;H,-])"_smarts;
   SynthonSpaceSearchParams params;
-  params.maxHits = 1000;
+  params.maxHits = -1;
   SearchResults results;
+  using Time = std::chrono::steady_clock;
+  Time::time_point t0 = Time::now();
   results = synthonspace.substructureSearch(*m, params);
+  Time::time_point t1 = Time::now();
+  std::cout << "time to run : "
+            << std::chrono::duration<double, std::milli>(t1 - t0).count()
+            << " ms" << std::endl;
   std::cout << "Number of results : " << results.getHitMolecules().size()
+            << std::endl;
+  std::cout << "Number of possible results : " << results.getMaxNumResults()
             << std::endl;
   int i = 0;
   int numHits = results.getHitMolecules().size();
   for (const auto &mol : results.getHitMolecules()) {
-    if (i < 10 || i > numHits - 10) {
+    if (i < 10 || i > numHits - 5) {
       std::cout << i << " : " << MolToSmiles(*mol) << " : "
                 << mol->getProp<std::string>(common_properties::_Name)
                 << std::endl;

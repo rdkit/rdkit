@@ -22,6 +22,7 @@
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -589,6 +590,71 @@ void bitSetsToVectors(const std::vector<boost::dynamic_bitset<>> &bitSets,
   }
 }
 
+bool removeQueryAtoms(RWMol &mol) {
+  bool didSomething = false;
+  // std::cout << "remove query atoms for " << MolToSmarts(mol) << std::endl;
+  for (Atom *atom : mol.atoms()) {
+    if ((atom->getAtomicNum() || !atom->getIsotope()) && atom->hasQuery() &&
+        atom->getQuery()->getDescription() != "AtomType") {
+      // std::cout << atom->getIdx() << " :: " << atom->getAtomicNum() << " : "
+      // << atom->getIsotope()
+      // << " :: " << atom->getQuery()->getDescription() << std::endl;
+      std::unique_ptr<QueryAtom> qat;
+      if (atom->getAtomicNum()) {
+        qat.reset(new QueryAtom(atom->getAtomicNum()));
+      } else {
+        qat.reset(new QueryAtom());
+        qat->setQuery(makeAAtomQuery());
+      }
+      mol.replaceAtom(atom->getIdx(), qat.get());
+      didSomething = true;
+    }
+  }
+  // std::cout << "final remove query atoms for " << MolToSmarts(mol) <<
+  // std::endl;
+  return didSomething;
+}
+
+std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
+  boost::dynamic_bitset<> inFrag(mol.getNumAtoms());
+  for (const auto a : mol.atoms()) {
+    if (!a->getAtomicNum() && a->getIsotope()) {
+      inFrag[a->getIdx()] = true;
+      for (const auto &n1 : mol.atomNeighbors(a)) {
+        inFrag[n1->getIdx()] = true;
+        for (const auto &n2 : mol.atomNeighbors(n1)) {
+          inFrag[n2->getIdx()] = true;
+          for (const auto &n3 : mol.atomNeighbors(n2)) {
+            inFrag[n3->getIdx()] = true;
+          }
+        }
+      }
+    }
+  }
+  if (!inFrag.count()) {
+    return std::unique_ptr<RWMol>();
+  }
+
+  std::unique_ptr<RWMol> molCp(new RWMol(mol));
+  molCp->beginBatchEdit();
+  for (const auto aCp : molCp->atoms()) {
+    if (!inFrag[aCp->getIdx()]) {
+      molCp->removeAtom(aCp);
+    } else {
+      if (!aCp->getAtomicNum()) {
+        if (aCp->getIsotope()) {
+          aCp->setIsotope(1);
+          if (aCp->hasQuery()) {
+            aCp->expandQuery(makeAtomIsotopeQuery(1), Queries::COMPOSITE_OR);
+          }
+        }
+      }
+    }
+  }
+  molCp->commitBatchEdit();
+  return molCp;
+}
+
 std::string buildProductName(const std::string &reactionId,
                              const std::vector<std::string> &fragIds) {
   std::string prodName = "";
@@ -615,4 +681,5 @@ std::unique_ptr<ROMol> buildProduct(const std::vector<const ROMol *> &synths) {
 
   return prodMol;
 }
+
 }  // namespace RDKit::SynthonSpaceSearch::details

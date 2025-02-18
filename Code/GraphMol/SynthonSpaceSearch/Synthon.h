@@ -75,16 +75,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   void finishInitialization();
 };
 
-// Return a molecule containing the portions of the molecule starting at
-// each dummy atom and going out up to 3 bonds.  There may be more than
-// 1 fragment if there are dummy atoms more than 3 bonds apart, and there
-// may be fragments with more than 1 dummy atom if their fragments fall
-// within 3 bonds of each other.  E.g. the molecule [1*]CN(C[2*])Cc1ccccc1
-// will give [1*]CN(C)C[1*].  The 2 dummy atoms are 4 bonds apart, but the
-// fragments overlap.  All dummy atoms given isotope 1 whatever they had before.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> getConnRegion(
-    const ROMol &mol);
-
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit
 

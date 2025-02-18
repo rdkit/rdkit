@@ -11,10 +11,12 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 namespace RDKit::SynthonSpaceSearch {
@@ -155,51 +157,13 @@ void Synthon::readFromDBStream(std::istream &is) {
 void Synthon::finishInitialization() {
   dp_pattFP.reset(PatternFingerprintMol(*dp_searchMol, PATT_FP_NUM_BITS));
   d_connRegions.clear();
-  if (const auto cr = getConnRegion(*dp_searchMol); cr) {
+  if (const auto cr = details::getConnRegion(*dp_searchMol); cr) {
     std::vector<std::unique_ptr<ROMol>> tmpFrags;
     MolOps::getMolFrags(*cr, tmpFrags, false);
     for (auto &f : tmpFrags) {
       d_connRegions.push_back(std::shared_ptr<ROMol>(f.release()));
     }
   }
-}
-
-std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
-  boost::dynamic_bitset<> inFrag(mol.getNumAtoms());
-  for (const auto a : mol.atoms()) {
-    if (!a->getAtomicNum() && a->getIsotope()) {
-      inFrag[a->getIdx()] = true;
-      for (const auto &n1 : mol.atomNeighbors(a)) {
-        inFrag[n1->getIdx()] = true;
-        for (const auto &n2 : mol.atomNeighbors(n1)) {
-          inFrag[n2->getIdx()] = true;
-          for (const auto &n3 : mol.atomNeighbors(n2)) {
-            inFrag[n3->getIdx()] = true;
-          }
-        }
-      }
-    }
-  }
-  if (!inFrag.count()) {
-    return std::unique_ptr<RWMol>();
-  }
-
-  std::unique_ptr<RWMol> molCp(new RWMol(mol));
-  molCp->beginBatchEdit();
-  for (const auto aCp : molCp->atoms()) {
-    if (!inFrag[aCp->getIdx()]) {
-      molCp->removeAtom(aCp);
-    } else {
-      if (!aCp->getAtomicNum()) {
-        aCp->setIsotope(1);
-        if (aCp->hasQuery()) {
-          aCp->expandQuery(makeAtomIsotopeQuery(1), Queries::COMPOSITE_OR);
-        }
-      }
-    }
-  }
-  molCp->commitBatchEdit();
-  return molCp;
 }
 
 }  // namespace RDKit::SynthonSpaceSearch
