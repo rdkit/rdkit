@@ -76,7 +76,9 @@ bool checkConnectorRegions(
           connRegFound = true;
           break;
         }
-        if (AllProbeBitsMatch(*connRegFPs[i][j], *rxnConnRegFPs[k]) &&
+        if (connRegFPs[i][j]->getNumOnBits() <=
+                rxnConnRegFPs[k]->getNumOnBits() &&
+            AllProbeBitsMatch(*connRegFPs[i][j], *rxnConnRegFPs[k]) &&
             SubstructMatch(*rxnConnRegs[k], *connRegs[i][j], dontCare)) {
           connRegFound = true;
           break;
@@ -86,8 +88,8 @@ bool checkConnectorRegions(
         break;
       }
     }
-    if (connRegFound) {
-      break;
+    if (!connRegFound) {
+      return false;
     }
   }
   return true;
@@ -106,13 +108,14 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
   for (const auto &synthonSet : reaction.getSynthons()) {
     passedFPs.emplace_back(synthonSet.size());
   }
-
   boost::dynamic_bitset<> fragsMatched(synthonOrder.size());
   for (size_t i = 0; i < synthonOrder.size(); ++i) {
     const auto &synthonSet = reaction.getSynthons()[synthonOrder[i]];
+
     for (size_t j = 0; j < synthonSet.size(); ++j) {
-      if (auto &synthon = synthonSet[j];
-          AllProbeBitsMatch(*pattFPs[i], *synthon.second->getPattFP())) {
+      if (auto &synthon = synthonSet[j].second;
+          pattFPs[i]->getNumOnBits() <= synthon->getPattFP()->getNumOnBits() &&
+          AllProbeBitsMatch(*pattFPs[i], *synthon->getPattFP())) {
         passedFPs[synthonOrder[i]][j] = true;
         fragsMatched[i] = true;
       }
