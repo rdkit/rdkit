@@ -592,13 +592,9 @@ void bitSetsToVectors(const std::vector<boost::dynamic_bitset<>> &bitSets,
 
 bool removeQueryAtoms(RWMol &mol) {
   bool didSomething = false;
-  // std::cout << "remove query atoms for " << MolToSmarts(mol) << std::endl;
   for (Atom *atom : mol.atoms()) {
     if ((atom->getAtomicNum() || !atom->getIsotope()) && atom->hasQuery() &&
         atom->getQuery()->getDescription() != "AtomType") {
-      // std::cout << atom->getIdx() << " :: " << atom->getAtomicNum() << " : "
-      // << atom->getIsotope()
-      // << " :: " << atom->getQuery()->getDescription() << std::endl;
       std::unique_ptr<QueryAtom> qat;
       if (atom->getAtomicNum()) {
         qat.reset(new QueryAtom(atom->getAtomicNum()));
@@ -610,8 +606,6 @@ bool removeQueryAtoms(RWMol &mol) {
       didSomething = true;
     }
   }
-  // std::cout << "final remove query atoms for " << MolToSmarts(mol) <<
-  // std::endl;
   return didSomething;
 }
 
