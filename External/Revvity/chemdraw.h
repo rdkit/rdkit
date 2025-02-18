@@ -32,8 +32,10 @@
 
 #include <RDGeneral/export.h>
 #include <GraphMol/RDKitBase.h>
-#include <CDXStdObjects.h>
 #include <string>
+
+#include "chemdraw/CDXStdObjects.h"
+
 
 namespace RDKit {
 struct RDKIT_FILEPARSERS_EXPORT ChemDrawParserParams {
@@ -46,8 +48,11 @@ enum CDXFormat {
   CDXML = 2
 };
 
-std::unique_ptr<CDXDocument> ChemDrawToDocument(std::istream &inStream, CDXFormat format);
-std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename);
+std::unique_ptr<CDXDocument> RDKIT_CHEMDRAW_EXPORT
+ChemDrawToDocument(std::istream &inStream, CDXFormat format);
+  
+std::unique_ptr<CDXDocument> RDKIT_CHEMDRAW_EXPORT
+ChemDrawToDocument(const std::string &filename);
 
 std::vector<std::unique_ptr<ROMol>> RDKIT_CHEMDRAW_EXPORT
 ChemDrawToMols(std::istream &inStream,

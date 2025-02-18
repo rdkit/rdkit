@@ -34,8 +34,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <CDXMLParser.h>
-#include <CDXStdObjects.h>
+#include "chemdraw/CDXMLParser.h"
+#include "chemdraw/CDXStdObjects.h"
 
 #include "bracket.h"
 #include "chemdraw.h"
@@ -52,6 +52,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Atropisomers.h>
 #include <boost/algorithm/string.hpp>
+#include <filesystem>
 
 // #define DEBUG 1
 namespace {
@@ -283,14 +284,14 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(std::istream &inStream, CDXForma
 
 std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
   std::fstream chemdrawfile(filename);
-  std::string ext = std::filesystem::path(filename).extension();
+  std::string ext = std::filesystem::path(filename).extension().string();
   boost::algorithm::to_lower(ext);
   if (ext == ".cdxml")
     return streamToCDXDocument(chemdrawfile, CDXFormat::CDXML);
   else if (ext == ".cdx") {
     return streamToCDXDocument(chemdrawfile, CDXFormat::CDX);
   }
-  std::string msg = std::string("Unknoen filetype ") + (std::string)std::filesystem::path(filename).extension();
+  std::string msg = std::string("Unknoen filetype ") + (std::string)std::filesystem::path(filename).extension().string();
   throw FileParseException(msg.c_str());
 }
 

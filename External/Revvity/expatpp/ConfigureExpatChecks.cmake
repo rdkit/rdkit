@@ -58,5 +58,6 @@ else(HAVE_SYS_TYPES_H)
     set(SIZE_T "unsigned")
 endif(HAVE_SYS_TYPES_H)
 
-configure_file(expat_config.h.cmake lib/expat_config.h)
+configure_file(expatpp-code-r6-trunk/expat/expat_config.h.cmake
+               expatpp-code-r6-trunk/expat/lib/expat_config.h)
 add_definitions(-DHAVE_EXPAT_CONFIG_H)

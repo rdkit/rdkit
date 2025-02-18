@@ -1,5 +1,6 @@
 // TEMPORARY PLACE HOLDER
 #include <memory>
+#include <mutex>
 
 namespace cs {
   typedef std::mutex CriticalSection;

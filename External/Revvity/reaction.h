@@ -33,7 +33,7 @@
 #define CHEMDRAW_REACTION_H
 
 #include <GraphMol/RDKitBase.h>
-#include <CDXStdObjects.h>
+#include "chemdraw/CDXStdObjects.h"
 #include <map>
 #include <vector>
 

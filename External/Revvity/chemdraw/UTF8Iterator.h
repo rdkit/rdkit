@@ -22,7 +22,7 @@ public:
 
     // Checks if the iterator has reached the end of the string
     bool AtEnd() const {
-        return pos >= data.size();
+        return pos > data.size();
     }
 
     // Post-increment operator: advances to the next character

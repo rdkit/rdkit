@@ -35,7 +35,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryOps.h>
-#include <CDXStdObjects.h>
+#include "chemdraw/CDXStdObjects.h"
 #include "utils.h"
 #include "fragment.h"
 

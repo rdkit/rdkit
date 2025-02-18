@@ -33,7 +33,7 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/Depictor/RDDepictor.h>
-#include <CDXStdObjects.h>
+#include "chemdraw/CDXStdObjects.h"
 #include <GraphMol/Depictor/RDDepictor.h>
 
 namespace RDKit {

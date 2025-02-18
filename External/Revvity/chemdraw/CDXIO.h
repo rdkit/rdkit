@@ -13,7 +13,7 @@
 // turn off warnings about unreferenced formal parameter
 #pragma warning (disable:4100)
 
-//#include "CoreChemistryAPI.h"
+#include "CoreChemistryAPI.h"
 //#include "cs_univDefs.h"
 #include "CDXConstants.h"
 
@@ -30,6 +30,7 @@
 #include <sstream>
 #include <set>
 #include <functional>
+#include <map>
 
 using std::ostringstream;
 using std::istringstream;
@@ -76,7 +77,6 @@ typedef enum
 	kEOLIndexCRLF
 } EOLIndex;
 
-#define CORE_CHEMISTRY_API
 CORE_CHEMISTRY_API extern void SetTextEOL(EOLIndex index);
 CORE_CHEMISTRY_API extern void SetTextEOL(const std::string &s);
 CORE_CHEMISTRY_API extern std::string GetTextEOL();

@@ -36,7 +36,7 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/QueryOps.h>
-#include <CDXStdObjects.h>
+#include "chemdraw/CDXStdObjects.h"
 
 namespace RDKit {
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;

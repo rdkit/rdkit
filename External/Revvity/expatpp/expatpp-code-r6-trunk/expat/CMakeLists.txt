@@ -52,6 +52,7 @@ set(expat_SRCS
 )
 
 if(WIN32 AND BUILD_shared)
+    message("== Building shared")
     set(expat_SRCS ${expat_SRCS} lib/libexpat.def)
 endif(WIN32 AND BUILD_shared)
 

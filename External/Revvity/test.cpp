@@ -1319,13 +1319,13 @@ TEST_CASE("Round TRIP") {
     RDLog::LogStateSetter blocker;
     for (const auto & entry : std::filesystem::recursive_directory_iterator(code_path)) {
       if (entry.is_regular_file() && entry.path().extension() == ".mol") {
-        if(exceptions.find(entry.path().filename()) != exceptions.end()) {
+        if(exceptions.find(entry.path().filename().string()) != exceptions.end()) {
           std::cerr << "Skipping exception: " << entry.path() << std::endl;
           continue;
         }
         RWMol *mol = nullptr;
         try {
-          mol = MolFileToMol(entry.path());
+          mol = MolFileToMol(entry.path().string());
         } catch (...) {
           continue;
         }
