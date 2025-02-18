@@ -12,6 +12,8 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
+#include <GraphMol/FileParsers/FileWriters.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
@@ -196,6 +198,8 @@ std::vector<std::vector<size_t>> getHitSynthons(
 
 void SynthonSpaceSubstructureSearcher::extraSearchSetup(
     std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
+  bool saidSomething = false;
+
   const auto pattFPSize = getSpace().getPatternFPSize();
   for (auto &fragSet : fragSets) {
     for (auto &frag : fragSet) {
@@ -204,11 +208,17 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
       sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
                   MolOps::SANITIZE_SYMMRINGS);
 
+      if (details::removeQueryAtoms(*static_cast<RWMol *>(frag.get())) &&
+          !saidSomething) {
+        saidSomething = true;
+        BOOST_LOG(rdWarningLog) << "Complex queries can be slow." << std::endl;
+      }
+
       d_pattFPs.insert(std::make_pair(
           frag.get(), std::unique_ptr<ExplicitBitVect>(
                           PatternFingerprintMol(*frag, pattFPSize))));
 
-      if (auto fragConnRegs = getConnRegion(*frag); fragConnRegs) {
+      if (auto fragConnRegs = details::getConnRegion(*frag); fragConnRegs) {
         std::vector<std::unique_ptr<ROMol>> splitConnRegs;
         MolOps::getMolFrags(*fragConnRegs, splitConnRegs, false);
         std::vector<std::unique_ptr<ExplicitBitVect>> connRegFPs;
@@ -316,6 +326,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
       }
     }
   }
+
   return results;
 }
 
