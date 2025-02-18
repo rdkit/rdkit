@@ -111,6 +111,18 @@ void convertTextToDBFile_helper(const std::string &inFilename,
   }
 }
 
+void readTextFile_helper(SynthonSpaceSearch::SynthonSpace &self,
+                         const std::string &inFilename) {
+  bool cancelled = false;
+  {
+    NOGIL gil;
+    self.readTextFile(inFilename, cancelled);
+  }
+  if (cancelled) {
+    throw_runtime_error("Database read cancelled.");
+  }
+}
+
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::scope().attr("__doc__") =
       "Module containing implementation of SynthonSpace search of"
@@ -196,7 +208,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
       "SynthonSpace", docString.c_str(), python::init<>())
-      .def("ReadTextFile", &SynthonSpaceSearch::SynthonSpace::readTextFile,
+      .def("ReadTextFile", &readTextFile_helper,
            (python::arg("self"), python::arg("inFile")),
            "Reads text file of the sort used by ChemSpace/Enamine.")
       .def("ReadDBFile", &SynthonSpaceSearch::SynthonSpace::readDBFile,
