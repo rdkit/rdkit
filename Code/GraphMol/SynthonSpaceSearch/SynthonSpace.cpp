@@ -279,16 +279,41 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   if (hasFingerprints()) {
     streamWrite(os, d_fpType);
   }
+  streamWrite(os, static_cast<std::uint64_t>(d_synthonPool.size()));
   streamWrite(os, static_cast<std::uint64_t>(d_reactions.size()));
   streamWrite(os, d_numProducts);
 
-  streamWrite(os, static_cast<std::uint64_t>(d_synthonPool.size()));
+  // In case we ever want to do random access file reading, save the
+  // positions of the synthons and reactions.  Put dummy positions
+  // in for now then overwrite at the end.
+  std::vector<std::uint64_t> synthonPos(d_synthonPool.size(), std::uint64_t(0));
+  std::vector<std::uint64_t> reactionPos(d_reactions.size(), std::uint64_t(0));
+  std::streampos synthonPoolStart = os.tellp();
+  for (const auto p : synthonPos) {
+    streamWrite(os, p);
+  }
+  for (const auto p : reactionPos) {
+    streamWrite(os, p);
+  }
+  size_t synthonNum = 0;
   for (auto &[smiles, synthon] : d_synthonPool) {
+    synthonPos[synthonNum++] = os.tellp();
     synthon->writeToDBStream(os);
   }
+  size_t reactionNum = 0;
   for (auto &[id, reaction] : d_reactions) {
+    reactionPos[reactionNum++] = os.tellp();
     reaction->writeToDBStream(os);
   }
+  // Now write the positions properly
+  os.seekp(synthonPoolStart);
+  for (const auto p : synthonPos) {
+    streamWrite(os, p);
+  }
+  for (const auto p : reactionPos) {
+    streamWrite(os, p);
+  }
+
   os.close();
 }
 
@@ -331,18 +356,28 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
   if (hasFPs) {
     streamRead(is, d_fpType, 0);
   }
-  std::uint64_t numRS;
-  streamRead(is, numRS);
-  streamRead(is, d_numProducts);
   std::uint64_t numSynthons;
+  std::uint64_t numReactions;
   streamRead(is, numSynthons);
+  streamRead(is, numReactions);
+  streamRead(is, d_numProducts);
+  // synthonPos and reactionPos not used at the moment.
+  std::vector<std::uint64_t> synthonPos(numSynthons, std::uint64_t(0));
+  for (std::uint64_t i = 0; i < numSynthons; i++) {
+    streamRead(is, synthonPos[i]);
+  }
+  std::vector<std::uint64_t> reactionPos(numReactions, std::uint64_t(0));
+  for (std::uint64_t i = 0; i < numReactions; i++) {
+    streamRead(is, reactionPos[i]);
+  }
+
   for (std::uint64_t i = 0; i < numSynthons; i++) {
     auto synthon = std::make_unique<Synthon>();
     synthon->readFromDBStream(is);
     d_synthonPool.insert(
         std::make_pair(synthon->getSmiles(), std::move(synthon)));
   }
-  for (std::uint64_t i = 0; i < numRS; ++i) {
+  for (std::uint64_t i = 0; i < numReactions; ++i) {
     auto reaction = std::make_shared<SynthonSet>();
     reaction->readFromDBStream(is, *this, d_fileMajorVersion);
     d_reactions.insert(std::make_pair(reaction->getId(), reaction));
