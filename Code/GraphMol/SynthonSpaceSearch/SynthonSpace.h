@@ -110,8 +110,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    *
    * @return
    */
-
-  unsigned int getMaxNumSynthons() const { return d_maxNumSynthons; }
   std::vector<std::string> getReactionNames() const;
   const std::shared_ptr<SynthonSet> getReaction(std::string reactionName);
   // The Synthons have a PatternFingerprint for screening in substructure
@@ -127,19 +125,26 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @return std::int64_t
    */
   std::uint64_t getNumProducts() const;
-  // Get the total number of products, formatted nicely in a string.
   /*!
+   * Get the total number of products, formatted nicely in a string.
    *
    * @return std::string
    */
   std::string getFormattedNumProducts() const;
 
+  /*!
+   * Get the info string for the fingerprint generator used to
+   * generate the stored fingerprints, so the user can query with
+   * the same type.
+   *
+   * @return
+   */
   std::string getSynthonFingerprintType() const { return d_fpType; }
 
-  // Perform a substructure search with the given query molecule across
-  // the synthonspace library.  Duplicate SMILES strings produced by different
-  // reactions will be returned.
   /*!
+   * Perform a substructure search with the given query molecule across
+   * the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.
    *
    * @param query : query molecule
    * @param params : (optional) settings for the search
@@ -149,11 +154,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
-  // Perform a fingerprint similarity search with the given query molecule
-  // across the synthonspace library.  Duplicate SMILES strings produced by
-  // different reactions will be returned.
   /*!
-   *
+   * Perform a fingerprint similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.
    * @param query : query molecule
    * @param fpGen: a FingerprintGenerator object that will provide the
    *               fingerprints for the similarity calculation
@@ -199,32 +203,39 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   void readTextFile(const std::string &inFilename, bool &cancelled);
 
-  // Writes to/reads from a binary DB File in our format.
   /*!
+   * Writes to a binary DB File in our format.
    *
    * @param outFilename: the name of the file to write.
    */
   void writeDBFile(const std::string &outFilename) const;
 
   /*!
+   * Reads from a binary DB File in our format.
    *
    * @param inFilename: the name of the file to read.
    */
   void readDBFile(const std::string &inFilename);
 
-  // Write a summary of the SynthonSpace to given stream.
   /*!
+   * Write a summary of the SynthonSpace to given stream.
    *
    * @param os: stream
    */
   void summarise(std::ostream &os);
 
-  // Writes the enumerated library to file in SMILES format (1 compound
-  // per line, SMILES name
   /*!
-  @param outFilename: name of the file to write
+   * Writes the enumerated library to file in SMILES format
+   * (1 compound per line, SMILES name)
+   *
+   * @param outFilename: name of the file to write
    */
   void writeEnumeratedFile(const std::string &outFilename) const;
+
+  // Below here are functions that have to be in the
+  // public interface, but aren't intended to be used
+  // by the users.
+  unsigned int getMaxNumSynthons() const { return d_maxNumSynthons; }
 
   bool hasFingerprints() const;
   // Create the fingerprints for the synthons ready for fingerprint searches.
@@ -246,16 +257,22 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
  private:
   std::string d_fileName;
-  // In hiMem mode, the reactions are read in at the outset.
+  // The reactions, keyed on their IDs.
   std::map<std::string, std::shared_ptr<SynthonSet>> d_reactions;
-  // Keep the value of the maximum number of synthons used by
+  // Keep the value of the maximum number of synthon sets used by
   // any of the reactions.  There's no point fragmenting any
-  // query into more than this number of fragments.
+  // query into more than this number of fragments.  Shouldn't
+  // ever be higher than 4 at present.
   unsigned int d_maxNumSynthons{0};
   std::uint64_t d_numProducts{0};
 
+  // This is actually 1000 * major version + 10 * minor version
+  // and hence the full version number.
   std::int32_t d_fileMajorVersion{-1};
 
+  // The pool of all synthons, keyed on SMILES string.  Synthons
+  // are frequently re-used in different reactions, so this means
+  // they're only stored once.
   std::map<std::string, std::unique_ptr<Synthon>> d_synthonPool;
 
   // For the similarity search, this records the generator used for

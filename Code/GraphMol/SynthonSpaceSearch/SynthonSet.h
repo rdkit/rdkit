@@ -30,7 +30,9 @@ class Synthon;
 class SynthonSpace;
 struct SynthonSpaceSearchParams;
 
-// This class holds all the synthons for a particular reaction.
+// This class holds pointers to all the synthons for a particular
+// reaction.  The synthons themselves are in a pool in the
+// SynthonSpace.
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
  public:
   SynthonSet() = default;
@@ -65,7 +67,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // write the enumerated molecules to the stream in SMILES format.
   void enumerateToStream(std::ostream &os) const;
 
-  // SynthonSet takes control of the newSynthon and manages it.
+  // This stores the pointer to the Synthon, but doesn't manage
+  // it and should never delete it.
   void addSynthon(int synthonSetNum, Synthon *newSynthon,
                   const std::string &synthonId);
 
@@ -114,7 +117,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // can have different IDs, so we need to keep the ID here rather
   // than in the Synthon, whose primary key is its SMILES string.
   std::vector<std::vector<std::pair<std::string, Synthon *>>> d_synthons;
-  // 4 bits showing which connectors are present in all the
+  // MAX_CONNECTOR_NUM+1 bits showing which connectors are present in all the
   // synthon sets.
   boost::dynamic_bitset<> d_connectors;
   // and the connector patterns for each synthon set.
@@ -122,10 +125,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   // The connector regions of a molecule are the pieces of up to 3 bonds from
   // a connector atom into the molecule.  We keep a vector of all the ones
-  // present in the synthons in the set, plus a fingerprint of all their
-  // fingerprints folded into 1.  If a query fragment doesn't have a
-  // connector region in common with any of the synthons it can be assumed that
-  // the fragment won't have a match in this SynthonSet.
+  // present in the synthons in the set, plus a fingerprint for each.
+  // If a query fragment doesn't have a connector region in common with
+  // any of the synthons it can be assumed that the fragment won't have
+  // a match in this SynthonSet.
   std::vector<std::shared_ptr<ROMol>> d_connectorRegions;
   std::vector<std::string> d_connRegSmis;
   // The fingerprints of the connector regions.
@@ -140,10 +143,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   // The number of connectors in the synthons in each synthon set.
   std::vector<int> d_numConnectors;
-
-  // Tag each atom and bond in each synthon with its index and the synthon
-  // set number it came from.
-  void tagSynthonAtomsAndBonds() const;
 };
 
 }  // namespace SynthonSpaceSearch

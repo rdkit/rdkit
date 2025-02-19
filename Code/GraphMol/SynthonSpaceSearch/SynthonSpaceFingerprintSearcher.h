@@ -19,6 +19,7 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
+// Concrete class that does the search by fingerprint similarity.
 class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
  public:
   SynthonSpaceFingerprintSearcher() = delete;

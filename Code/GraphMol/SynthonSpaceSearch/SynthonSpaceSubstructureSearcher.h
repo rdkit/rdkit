@@ -19,6 +19,8 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
+// Concrete class that does substructure searching using a query
+// molecule.
 class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
  public:
   SynthonSpaceSubstructureSearcher() = delete;

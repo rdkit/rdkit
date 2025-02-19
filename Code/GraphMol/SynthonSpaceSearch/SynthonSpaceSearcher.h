@@ -32,6 +32,7 @@ class ROMol;
 
 namespace SynthonSpaceSearch {
 
+// Abstract base class for searching the SynthonSpace.
 class SynthonSpaceSearcher {
  public:
   SynthonSpaceSearcher() = delete;
@@ -60,8 +61,8 @@ class SynthonSpaceSearcher {
 
   // Some of the search methods might need extra setup of the fragment
   // sets.  The FingerprintSearcher, for example, needs fingerprints
-  // for all the fragments.  The SubstructureSearcher doesn't need
-  // anything extra.
+  // for all the fragments.  The SubstructureSearcher needs connector
+  // regions and information about them.
   virtual void extraSearchSetup(
       [[maybe_unused]] std::vector<std::vector<std::unique_ptr<ROMol>>>
           &fragSets) {}
@@ -73,14 +74,14 @@ class SynthonSpaceSearcher {
       std::vector<std::unique_ptr<ROMol>> &fragSet,
       const SynthonSet &reaction) const = 0;
   // Make the hit, constructed from a specific combination of
-  // synthons in the SynthonSet, and verify that it matches the
+  // synthons in the hitset, and verify that it matches the
   // query in the appropriate way.  There'll be 1 entry in synthNums
-  // for each synthon list in the reaction.  Returns an empty pointer
+  // for each synthon list in the hitset.  Returns an empty pointer
   // if the hit isn't accepted for whatever reason.
   std::unique_ptr<ROMol> buildAndVerifyHit(
       const SynthonSpaceHitSet *hitset, const std::vector<size_t> &synthNums,
       std::set<std::string> &resultsNames) const;
-  // Some of the search methods (Rascal, for example) can do a quick
+  // Some of the search methods (fingerprints, for example) can do a quick
   // check on whether this set of synthons can match the query without having to
   // build the full molecule from the synthons.  They will over-ride this
   // function which by default passes everything.
@@ -89,11 +90,12 @@ class SynthonSpaceSearcher {
       [[maybe_unused]] const std::vector<size_t> &synthNums) const {
     return true;
   }
+  // Checks that the given molecule is definitely a hit according to
+  // the derived class' criteria.
   virtual bool verifyHit(const ROMol &mol) const = 0;
 
-  // Build the molecules from the synthons identified in reagentsToUse.
-  // There should be bitset in reagentsToUse for each reagent set.
-  // If not, it will fail.  Checks that all the results produced match the
+  // Build the molecules from the synthons identified in hitsets.
+  // Checks that all the results produced match the
   // query.  totHits is the maximum number of hits that are possible from
   // the hitsets, including duplicates.  Duplicates by name are not returned,
   // but duplicate SMILES from different reactions will be.  Hitsets will

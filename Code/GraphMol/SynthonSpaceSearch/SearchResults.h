@@ -15,6 +15,10 @@
 #include <GraphMol/ROMol.h>
 
 namespace RDKit::SynthonSpaceSearch {
+
+// A class holding a set of results from a search.  Contains the hit
+// molecules and information about how the search progressed, whether
+// it timed out etc.
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
  public:
   explicit SearchResults() : d_maxNumResults(0) {}
@@ -37,8 +41,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
    */
   size_t getMaxNumResults() const { return d_maxNumResults; }
   /*!
-   * Returns the hits from the search. Not necessarily all those possible,
-   * just the maximum number requested.
+   * Returns the hit molecules s from the search. Not necessarily all
+   * those possible, just the maximum number requested.
    *
    * @return std::vector<std::unique_ptr<ROMol>>
    */
