@@ -7,13 +7,6 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-// This file contains an implementation of synthonspace substructure search
-// similar to that described in
-// 'Fast Substructure Search in Combinatorial Library Spaces',
-// Thomas Liphardt and Thomas Sander,
-// J. Chem. Inf. Model. 2023, 63, 16, 5133–5141
-// https://doi.org/10.1021/acs.jcim.3c00290
-//
 // The algorithm allows the substructure searching of a very large library
 // of structures that is described in synthon format (such as Enamine REAL)
 // without enumerating the individual structures during the search process.
@@ -561,6 +554,7 @@ std::string SynthonSet::buildProductName(
   }
   return details::buildProductName(d_id, synths);
 }
+
 std::unique_ptr<ROMol> SynthonSet::buildProduct(
     const std::vector<size_t> &synthNums) const {
   std::vector<const ROMol *> synths(synthNums.size());

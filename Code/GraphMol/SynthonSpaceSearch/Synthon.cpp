@@ -107,6 +107,7 @@ void Synthon::setSearchMol(std::unique_ptr<RWMol> mol) {
   }
   finishInitialization();
 }
+
 void Synthon::setFP(std::unique_ptr<ExplicitBitVect> fp) {
   dp_FP = std::move(fp);
 }

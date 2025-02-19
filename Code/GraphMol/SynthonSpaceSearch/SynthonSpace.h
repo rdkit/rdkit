@@ -7,6 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+// This file and others here contain an implementation of
+// synthonspace substructure search similar to that described in
+// 'Fast Substructure Search in Combinatorial Library Spaces',
+// Thomas Liphardt and Thomas Sander,
+// J. Chem. Inf. Model. 2023, 63, 16, 5133–5141
+// https://doi.org/10.1021/acs.jcim.3c00290
+
 #ifndef RDKIT_SYNTHONSPACE_H
 #define RDKIT_SYNTHONSPACE_H
 
@@ -282,9 +289,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
 /*!
  * Convert the text file into the binary DB file in our format.
- * Assumes that all synthons from a reaction are contiguous in the
- * input file.  This uses a lot less memory than using
- * readTextFile() followed by writeDBFile().
+ * Equivalent to readTextFile() followed by writeDBFile().
+ * If a fingerprint generator is provided, fingerprints will
+ * be created for all the synthons, which can be time-consuming.
  * @param inFilename name of the text file to read
  * @param outFilename name of the binary file to write
  * @param cancelled whether it received a SIGINT

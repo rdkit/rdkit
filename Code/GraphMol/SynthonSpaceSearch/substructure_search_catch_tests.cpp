@@ -44,7 +44,6 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
   return subsLib;
 }
 
-#if 1
 TEST_CASE("Test splits 1") {
   const std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
                                         "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1",
@@ -52,9 +51,6 @@ TEST_CASE("Test splits 1") {
   std::vector<std::vector<size_t>> expCounts{
       {1, 47, 1020, 0}, {1, 37, 562, 0}, {1, 29, 397, 0}};
   for (size_t i = 0; i < smiles.size(); ++i) {
-    if (i != 2) {
-      continue;
-    }
     auto mol = v2::SmilesParse::MolFromSmiles(smiles[i]);
     REQUIRE(mol);
     bool timedOut = false;
@@ -77,7 +73,6 @@ TEST_CASE("Test splits 1") {
     }
   }
 }
-#endif
 
 TEST_CASE("Enumerate") {
   REQUIRE(rdbase);
@@ -373,13 +368,6 @@ TEST_CASE("S Biggy") {
     auto results = synthonspace.substructureSearch(*queryMol, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
     CHECK(results.getMaxNumResults() == maxRes[i]);
-    std::ofstream ofs("new_hits.txt");
-    for (size_t i = 0; i < results.getHitMolecules().size(); ++i) {
-      ofs << i << " : " << MolToSmiles(*results.getHitMolecules()[i]) << "  "
-          << results.getHitMolecules()[i]->getProp<std::string>(
-                 common_properties::_Name)
-          << std::endl;
-    }
   }
 }
 
@@ -575,7 +563,7 @@ TEST_CASE("Amino Acid") {
   // The issue here was that the SMARTS pattern should match just one synthon
   // in the "library" but doesn't because the connector is on the nitrogen
   // of the amino acid which says !$(N-[!#6;!#1]) i.e. the nitrogen can
-  // only attached to a carbon or hydrogen, and in the synthon it's
+  // only be attached to a carbon or hydrogen, and in the synthon it's
   // attached to a dummy atom.
   REQUIRE(rdbase);
   std::string fName(rdbase);
@@ -591,45 +579,4 @@ TEST_CASE("Amino Acid") {
   SynthonSpaceSearchParams params;
   auto results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 1);
-}
-
-TEST_CASE("S Freedom Space") {
-  std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
-  libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3010.spc";
-  libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit_1024.spc";
-  SynthonSpace synthonspace;
-  synthonspace.readDBFile(libName);
-
-  // auto m = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smarts;
-  // auto m = "CC(=O)Nc1cc(Nc2nccc(-c3cnc4ccccc34)n2)ccc1N(C)C"_smarts;
-  // auto m = "cC(=O)[NH1]c1cc([O;R])c([N;R])cc1"_smarts;
-  auto m =
-      "[$(C-[C;!$(C=[!#6])]-[N;!H0;!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])](=O)([O;H,-])"_smarts;
-  SynthonSpaceSearchParams params;
-  params.maxHits = -1;
-  SearchResults results;
-  using Time = std::chrono::steady_clock;
-  Time::time_point t0 = Time::now();
-  results = synthonspace.substructureSearch(*m, params);
-  Time::time_point t1 = Time::now();
-  std::cout << "time to run : "
-            << std::chrono::duration<double, std::milli>(t1 - t0).count()
-            << " ms" << std::endl;
-  std::cout << "Number of results : " << results.getHitMolecules().size()
-            << std::endl;
-  std::cout << "Number of possible results : " << results.getMaxNumResults()
-            << std::endl;
-  int i = 0;
-  int numHits = results.getHitMolecules().size();
-  for (const auto &mol : results.getHitMolecules()) {
-    if (i < 10 || i > numHits - 5) {
-      std::cout << i << " : " << MolToSmiles(*mol) << " : "
-                << mol->getProp<std::string>(common_properties::_Name)
-                << std::endl;
-    }
-    ++i;
-  }
 }

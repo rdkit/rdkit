@@ -215,7 +215,7 @@ void SynthonSpaceSearcher::buildAllHits(
       numSynthons.push_back(stu.size());
     }
     details::Stepper stepper(numSynthons);
-    std::vector<ROMol *> theseSynths(hitset->synthonsToUse.size(), 0);
+    std::vector<ROMol *> theseSynths(hitset->synthonsToUse.size(), nullptr);
     while (stepper.d_currState[0] != numSynthons[0]) {
       if (auto prod = buildAndVerifyHit(hitset.get(), stepper.d_currState,
                                         resultsNames)) {
@@ -274,7 +274,7 @@ struct RandomHitSelector {
   }
 
   std::pair<size_t, std::vector<size_t>> selectSynthComb(
-      boost::random::mt19937 &randGen) {
+      boost::random::mt19937 &randGen) const {
     const size_t hitSetNum = d_hitSetSel(randGen);
     std::vector<size_t> synths(d_hitsets[hitSetNum]->synthonsToUse.size());
     for (size_t i = 0; i < d_hitsets[hitSetNum]->synthonsToUse.size(); ++i) {
@@ -302,7 +302,7 @@ void SynthonSpaceSearcher::buildRandomHits(
   if (hitsets.empty()) {
     return;
   }
-  auto rhs = RandomHitSelector(hitsets, d_space);
+  const auto rhs = RandomHitSelector(hitsets, d_space);
 
   std::uint64_t numFails = 0;
   std::uint64_t numTries = 100;

@@ -30,6 +30,7 @@
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/StreamOps.h>
 
+// Stuff for formatting integers with spaces every 3 digits.
 template <class Char>
 class MyFacet : public std::numpunct<Char> {
  public:
@@ -201,6 +202,7 @@ std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
   }
   return nextSynthon;
 }
+
 int getSynthonNum(int format, const std::string &synthon) {
   int synthonNum{std::numeric_limits<int>::max()};
   if (format == 0 || format == 1 || format == 3 || format == 4) {
@@ -257,17 +259,6 @@ void SynthonSpace::readTextFile(const std::string &inFilename,
     }
   }
 }
-
-namespace {
-void writeStreamPos(std::ostream &os, const std::streampos &pos) {
-  streamWrite(os, static_cast<std::uint64_t>(pos));
-}
-void readStreamPos(std::istream &is, std::streampos &pos) {
-  std::uint64_t tmp;
-  streamRead(is, tmp);
-  pos = static_cast<std::streampos>(tmp);
-}
-}  // namespace
 
 void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   std::ofstream os(outFilename, std::fstream::binary | std::fstream::trunc);
@@ -391,23 +382,19 @@ void SynthonSpace::readDBFile(const std::string &inFilename) {
 void SynthonSpace::summarise(std::ostream &os) {
   os << "Read from file " << d_fileName << "\n"
      << "Number of reactions : " << d_reactions.size() << "\n";
-  size_t totSize = 0;
   int synthCounts[MAX_CONNECTOR_NUM + 1]{0, 0, 0, 0, 0};
   for (const auto &id : getReactionNames()) {
     auto rxn = getReaction(id);
     os << "Reaction name " << id << "\n";
-    size_t thisSize = 1;
     for (size_t i = 0; i < rxn->getSynthons().size(); ++i) {
       os << "  Synthon set " << i << " has " << rxn->getSynthons()[i].size()
          << " synthons"
          << "\n";
-      thisSize *= rxn->getSynthons()[i].size();
     }
-    totSize += thisSize;
     synthCounts[rxn->getSynthons().size()]++;
   }
-  os << "Approximate number of molecules in SynthonSpace : " << totSize
-     << std::endl;
+  os << "Approximate number of molecules in SynthonSpace : "
+     << getFormattedNumProducts() << std::endl;
   os << "Number of unique synthons : " << d_synthonPool.size() << std::endl;
   for (unsigned int i = 0; i < MAX_CONNECTOR_NUM; ++i) {
     if (synthCounts[i] > 0) {

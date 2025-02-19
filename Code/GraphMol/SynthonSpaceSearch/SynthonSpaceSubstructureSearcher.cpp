@@ -64,7 +64,7 @@ std::vector<ExplicitBitVect *> makePatternFPs(
 bool checkConnectorRegions(
     const SynthonSet &reaction,
     const std::vector<std::vector<ROMol *>> &connRegs,
-    const std::vector<std::vector<const std::string *>> connRegSmis,
+    const std::vector<std::vector<const std::string *>> &connRegSmis,
     const std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) {
   const auto &rxnConnRegs = reaction.getConnectorRegions();
   const auto &rxnConnRegSmis = reaction.getConnectorRegionSmiles();
@@ -163,8 +163,8 @@ std::vector<std::vector<size_t>> getHitSynthons(
     bool fragMatched = false;
     for (size_t j = 0; j < synthonsSet.size(); ++j) {
       if (passedScreensSet[j]) {
-        if (auto &synthon = synthonsSet[j]; SubstructMatch(
-                *synthon.second->getSearchMol(), *molFrags[i], dontCare)) {
+        if (const auto &[id, synthon] = synthonsSet[j];
+            SubstructMatch(*synthon->getSearchMol(), *molFrags[i], dontCare)) {
           synthonsToUse[synthonOrder[i]][j] = true;
           fragMatched = true;
         }
@@ -187,8 +187,8 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const auto &synthonsi = reaction.getSynthons()[i];
     std::sort(retSynthons[i].begin(), retSynthons[i].end(),
               [&](const size_t a, const size_t b) {
-                return (synthonsi[a].second->getOrigMol()->getNumAtoms() <
-                        synthonsi[b].second->getOrigMol()->getNumAtoms());
+                return synthonsi[a].second->getOrigMol()->getNumAtoms() <
+                       synthonsi[b].second->getOrigMol()->getNumAtoms();
               });
   }
   return retSynthons;
@@ -284,13 +284,13 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
   for (unsigned int i = 0; i < fragSet.size(); ++i) {
     fragSetCp[i] = std::make_unique<ROMol>(*fragSet[i]);
   }
-  auto connCombs = details::getConnectorPermutations(fragSetCp, conns,
-                                                     reaction.getConnectors());
+  const auto connCombs = details::getConnectorPermutations(
+      fragSetCp, conns, reaction.getConnectors());
 
   // Select only the synthons that have fingerprints that are a superset
   // of the fragment fingerprints.
   // Need to try all combinations of synthon orders.
-  auto synthonOrders =
+  const auto synthonOrders =
       details::permMFromN(pattFPs.size(), reaction.getSynthons().size());
   for (const auto &so : synthonOrders) {
     auto passedScreens = screenSynthonsWithFPs(pattFPs, reaction, so);
@@ -307,11 +307,11 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     // combination.
     for (const auto &connComb : connCombs) {
       for (size_t i = 0; i < connComb.size(); ++i) {
-        for (auto &c : connComb[i]) {
-          c.first->setIsotope(c.second);
-          if (c.first->hasQuery()) {
-            c.first->setQuery(makeAtomTypeQuery(0, false));
-            c.first->expandQuery(makeAtomIsotopeQuery(c.second));
+        for (const auto &[atom, isotopeNum] : connComb[i]) {
+          atom->setIsotope(isotopeNum);
+          if (atom->hasQuery()) {
+            atom->setQuery(makeAtomTypeQuery(0, false));
+            atom->expandQuery(makeAtomIsotopeQuery(isotopeNum));
           }
         }
       }

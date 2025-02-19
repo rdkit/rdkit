@@ -91,9 +91,6 @@ TEST_CASE("FP Small tests") {
   std::vector<size_t> expNumHits{2, 3, 4};
 
   for (size_t i = 0; i < libNames.size(); i++) {
-    if (i != 2) {
-      continue;
-    }
     SynthonSpace synthonspace;
     bool cancelled = false;
     synthonspace.readTextFile(libNames[i], cancelled);
@@ -312,43 +309,4 @@ TEST_CASE("FP Binary File") {
   synthonspace.readDBFile(libName);
   fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   CHECK_THROWS(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
-}
-
-TEST_CASE("FP Freedom Space") {
-  // std::string libName =
-  // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";
-  // std::string libName2 =
-  // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
-  // std::string libName =
-  // "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
-  std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
-  for (const auto &l : std::vector<std::string>{libName}) {
-    SynthonSpace synthonspace;
-    synthonspace.readDBFile(l);
-    auto m =
-        "C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C"_smiles;
-    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
-        RDKitFP::getRDKitFPGenerator<std::uint64_t>());
-    SynthonSpaceSearchParams params;
-    params.similarityCutoff = 0.4;
-    params.maxHits = 1000;
-    params.fragSimilarityAdjuster = 0.01;
-    params.approxSimilarityAdjuster = 0.05;
-    SearchResults results;
-    results = synthonspace.fingerprintSearch(*m, *fpGen, params);
-    std::cout << "Number of results : " << results.getHitMolecules().size()
-              << std::endl;
-    std::cout << "Max number of results : " << results.getMaxNumResults()
-              << std::endl;
-    int i = 0;
-    for (const auto &mol : results.getHitMolecules()) {
-      if (i < 10 || i > params.maxHits - 10) {
-        std::cout << i << " : " << MolToSmiles(*mol) << " : "
-                  << mol->getProp<std::string>(common_properties::_Name) << "  "
-                  << mol->getProp<double>("Similarity") << std::endl;
-      }
-      ++i;
-    }
-  }
 }

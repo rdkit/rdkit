@@ -56,12 +56,13 @@ std::vector<std::vector<size_t>> getHitSynthons(
     for (size_t j = 0; j < synthons.size(); j++) {
       // There's a simple calculation for the maximum possible Tanimoto
       // Coefficient that these 2 fingerprints can achieve.
-      double maxSim =
+      const double maxSim =
           fragFPs[i]->getNumOnBits() <
                   synthons[j].second->getFP()->getNumOnBits()
-              ? double(fragFPs[i]->getNumOnBits()) /
+              ? static_cast<double>(fragFPs[i]->getNumOnBits()) /
                     synthons[j].second->getFP()->getNumOnBits()
-              : double(synthons[j].second->getFP()->getNumOnBits()) /
+              : static_cast<double>(
+                    synthons[j].second->getFP()->getNumOnBits()) /
                     fragFPs[i]->getNumOnBits();
       if (maxSim < similarityCutoff) {
         continue;
@@ -127,7 +128,7 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
     return;
   }
 
-  // Slightly convoluted way of doing it to prepared for multi-threading.
+  // Slightly convoluted way of doing it to prepare for multi-threading.
   // Make a map of the unique SMILES strings for the fragments, keeping
   // track of them in the vector.
   std::map<std::string, std::vector<ROMol *>> fragSmiToFrag;
@@ -187,10 +188,6 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
     return results;
   }
 
-  // for (auto &f : fragSet) {
-  //   std::cout << MolToSmiles(*f) << " ";
-  // }
-  // std::cout << std::endl;
   std::vector<ExplicitBitVect *> fragFPs;
   fragFPs.reserve(fragSet.size());
   for (auto &frag : fragSet) {
@@ -199,18 +196,18 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
   }
 
   const auto connPatterns = details::getConnectorPatterns(fragSet);
-  auto synthConnPatts = reaction.getSynthonConnectorPatterns();
+  const auto synthConnPatts = reaction.getSynthonConnectorPatterns();
 
   // Get all the possible permutations of connector numbers compatible with
   // the number of synthon sets in this reaction.  So if the
   // fragmented molecule is C[1*].N[2*] and there are 3 synthon sets
   // we also try C[2*].N[1*], C[2*].N[3*] and C[3*].N[2*] because
   // that might be how they're labelled in the reaction database.
-  auto connCombConnPatterns =
+  const auto connCombConnPatterns =
       details::getConnectorPermutations(connPatterns, reaction.getConnectors());
 
   // Need to try all combinations of synthon orders.
-  auto synthonOrders =
+  const auto synthonOrders =
       details::permMFromN(fragSet.size(), reaction.getSynthons().size());
 
   for (const auto &synthonOrder : synthonOrders) {
@@ -263,18 +260,16 @@ bool SynthonSpaceFingerprintSearcher::quickVerify(
   for (unsigned int i = 1; i < synthNums.size(); ++i) {
     fullFP |= *hs->synthonFPs[i][synthNums[i]];
   }
-  fullFP |= *(hs->addFP);
+  fullFP |= *hs->addFP;
   // The subtract FP has already had its bits flipped, so just do a
   // straight AND.
-  fullFP &= *(hs->subtractFP);
+  fullFP &= *hs->subtractFP;
 
-  double approxSim = TanimotoSimilarity(fullFP, *d_queryFP);
-  return approxSim >=
+  return TanimotoSimilarity(fullFP, *d_queryFP) >=
          getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }
 
 bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
-  // This uses the full-length fingerprint for query and hit.
   const std::unique_ptr<ExplicitBitVect> fp(d_fpGen.getFingerprint(hit));
   if (const auto sim = TanimotoSimilarity(*fp, *d_queryFP);
       sim >= getParams().similarityCutoff) {

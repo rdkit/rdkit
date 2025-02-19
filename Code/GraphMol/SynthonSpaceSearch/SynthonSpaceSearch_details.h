@@ -42,9 +42,10 @@ permMFromN(unsigned int m, unsigned int n);
 // by a simple atom query.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxNumFrags,
-              std::uint64_t maxNumFragSets, TimePoint *endTime, bool &timedOut);
+              const std::uint64_t maxNumFragSets, const TimePoint *endTime,
+              bool &timedOut);
 // Counts the number of [1*], [2*]...[4*] in the string.
-RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &frag);
+RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &mol);
 
 // Return a bitset for each fragment giving the connector patterns
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<boost::dynamic_bitset<>>
@@ -145,7 +146,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
 // Zip the fragments together to make a molecule.  Assumes the connection
 // points are marking by isotope numbers on dummy atoms.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
-    const std::vector<const ROMol *> &frags);
+    const std::vector<const ROMol *> &synthons);
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 
