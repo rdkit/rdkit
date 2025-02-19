@@ -1614,35 +1614,51 @@ void testMolFileGithub8265() {
   for( int i=0; i<2; ++i) {
     RDGeom::Point3D pos{0., 0., 0.};
    
-    try {
-      pos[i] = 1000000.;
+    // Make sure se switch to V3000 then coords are out of bounds
+    //  and that we stay with V2K otherwise.
+    {
+      pos[i] = 100000.;
       conf->setAtomPos(0, pos);
       auto mbV2K = MolToMolBlock(*m);
-      TEST_ASSERT(0);
-    } catch (ValueErrorException &) {
-      // ok!
+      TEST_ASSERT(mbV2K.find("M  V30") != std::string::npos);
+      MolBlockToMol(mbV2K);
+      try {
+        MolToV2KMolBlock(*m);
+        TEST_ASSERT(0);
+      } catch(ValueErrorException &e) {
+        TEST_ASSERT(std::string("V2000 format does not support atom positions <= -10000 or >= 100000")
+                    == e.what());
+      }
     }
     
     {
-      pos[i] = 999999.;
+      pos[i] = 99999.;
       conf->setAtomPos(0, pos);
       auto mbV2k = MolToMolBlock(*m);
+      TEST_ASSERT(mbV2k.find("M  V30") == std::string::npos);
       MolBlockToMol(mbV2k);
     }
 
-    try {
-      pos[i] = -100000.;
+    {
+      pos[i] = -10000.;
       conf->setAtomPos(0, pos);
       auto mbV2k = MolToMolBlock(*m);
-      TEST_ASSERT(0);
-    } catch (ValueErrorException &) {
-      // ok!
+      TEST_ASSERT(mbV2k.find("M  V30") != std::string::npos);
+      MolBlockToMol(mbV2k);
+      try {
+        MolToV2KMolBlock(*m);
+        TEST_ASSERT(0);
+      } catch(ValueErrorException &e) {
+        TEST_ASSERT(std::string("V2000 format does not support atom positions <= -10000 or >= 100000")
+                    == e.what());
+      }
     }
 
     {
-      pos[i] = -99999.;
+      pos[i] = -9999.;
       conf->setAtomPos(0, pos);
       auto mbV2k = MolToMolBlock(*m);
+      TEST_ASSERT(mbV2k.find("M  V30") == std::string::npos);
       MolBlockToMol(mbV2k);
     }
   }

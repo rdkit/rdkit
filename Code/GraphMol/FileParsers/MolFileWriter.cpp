@@ -51,6 +51,9 @@ namespace RDKit {
 //*************************************
 
 namespace {
+// V2000 atom coordinate limits
+constexpr double MAX_V2000_COORD = 100000.;
+constexpr double MIN_V2000_COORD = -10000.;
 
 int getQueryBondTopology(const Bond *bond) {
   PRECONDITION(bond, "no bond");
@@ -583,6 +586,7 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
       parityFlag = getAtomParityFlag(atom, conf);
     }
   }
+  
   if (hasNonDefaultValence(atom)) {
     if (atom->getTotalDegree() == 0) {
       // Specify zero valence for elements/metals without neighbors
@@ -595,8 +599,6 @@ void GetMolFileAtomProperties(const Atom *atom, const Conformer *conf,
   }
 }
 
-constexpr double MAX_V2000_COORD = 1000000.;
-constexpr double MIN_V2000_COORD = -100000.;
 const std::string GetMolFileAtomLine(const Atom *atom, const Conformer *conf,
                                      boost::dynamic_bitset<> &queryListAtoms) {
   PRECONDITION(atom, "");
@@ -1270,6 +1272,25 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
     conf = &(tmol.getConformer(confId));
   }
 
+  bool coordMagnitudeTooLargeForV2K = false;
+  if(conf) {
+    for(auto &pos : conf->getPositions()) {
+      if( (pos.x >= MAX_V2000_COORD || pos.x <= MIN_V2000_COORD) ||
+	        (pos.y >= MAX_V2000_COORD || pos.y <= MIN_V2000_COORD) ||
+	        (pos.z >= MAX_V2000_COORD || pos.z <= MIN_V2000_COORD) ) {
+	          coordMagnitudeTooLargeForV2K = true;
+      }
+    }
+  }
+
+  if (whichFormat == MolFileFormat::V2000 && coordMagnitudeTooLargeForV2K) {
+    throw ValueErrorException(
+			      "V2000 format does not support atom positions <= " +
+			      std::to_string((int)MIN_V2000_COORD) +
+			      " or >= " + std::to_string((int)MAX_V2000_COORD) );
+  }
+
+  
   std::string text;
   if (tmol.getPropIfPresent(common_properties::_Name, text)) {
     res += text;
@@ -1311,7 +1332,7 @@ std::string outputMolToMolBlock(const RWMol &tmol, int confId,
   if (whichFormat == MolFileFormat::V3000) {
     isV3000 = true;
   } else if (whichFormat == MolFileFormat::unspecified &&
-             (hasDative || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
+             (coordMagnitudeTooLargeForV2K || hasDative || nAtoms > 999 || nBonds > 999 || nSGroups > 999 ||
               !tmol.getStereoGroups().empty())) {
     isV3000 = true;
   }
