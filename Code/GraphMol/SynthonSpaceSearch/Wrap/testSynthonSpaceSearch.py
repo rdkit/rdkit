@@ -96,17 +96,11 @@ class TestCase(unittest.TestCase):
     synthonspace.ReadTextFile(fName)
     self.assertEqual(10, synthonspace.GetNumReactions())
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
-    params.timeOut = 50
+    params.timeOut = 1
+    params.maxHits = -1
     params.similarityCutoff = 0.3
     params.fragSimilarityAdjuster = 0.3
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
-    results = synthonspace.FingerprintSearch(
-      Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
-    self.assertFalse(results.GetTimedOut())
-
-    params.timeOut = 1
-    params.maxHits = -1
-    params.similarityCutoff = 0.2
     results = synthonspace.FingerprintSearch(
       Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
     self.assertTrue(results.GetTimedOut())

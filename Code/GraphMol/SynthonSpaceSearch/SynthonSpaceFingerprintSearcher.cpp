@@ -158,8 +158,7 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
     if (ControlCHandler::getGotSignal()) {
       return;
     }
-    fragFPs[fragNum++] = std::make_unique<ExplicitBitVect>(
-        *d_fpGen.getFingerprint(*frags.front()));
+    fragFPs[fragNum++].reset(d_fpGen.getFingerprint(*frags.front()));
   }
 
   // Now transfer them to the pools.
