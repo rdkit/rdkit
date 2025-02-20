@@ -6,6 +6,7 @@
 	#define assert ASSERT
 #else
 	#include <string>
+        #include <string.h>
 	using namespace std;
 	#include <assert.h>
 #endif
