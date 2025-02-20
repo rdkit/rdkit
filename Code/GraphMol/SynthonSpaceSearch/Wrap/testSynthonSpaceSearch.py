@@ -70,16 +70,17 @@ class TestCase(unittest.TestCase):
     self.assertEqual(10, len(results.GetHitMolecules()))
 
   def testBinaryDB(self):
-    fName = self.sssDir / "idorsia_toy_space.spc"
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadDBFile(fName)
     self.assertEqual(6, synthonspace.GetNumReactions())
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
-    params.maxHits = 10
+    params.maxHits = -1
+    params.similarityCutoff = 0.45
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
     results = synthonspace.FingerprintSearch(
-      Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
-    self.assertEqual(10, len(results.GetHitMolecules()))
+      Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"), fpgen, params)
+    self.assertEqual(280, len(results.GetHitMolecules()))
     
 
   def testEnumerate(self):
@@ -104,6 +105,8 @@ class TestCase(unittest.TestCase):
     self.assertFalse(results.GetTimedOut())
 
     params.timeOut = 1
+    params.maxHits = -1
+    params.similarityCutoff = 0.2
     results = synthonspace.FingerprintSearch(
       Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
     self.assertTrue(results.GetTimedOut())
