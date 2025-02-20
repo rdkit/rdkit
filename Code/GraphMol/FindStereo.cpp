@@ -656,7 +656,6 @@ void flagRingStereo(ROMol &mol,
       }
 
       for (unsigned int ringDivisor : {2, 3}) {
-        // for (unsigned int ringDivisor : {3}) {
         bool ringIsMultipleOfDivisor = ((sz % ringDivisor) == 0);
         auto incrementSize = sz / ringDivisor;
 

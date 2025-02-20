@@ -3045,9 +3045,7 @@ TEST_CASE("trimethylcyclohexane") {
   SECTION("Basic") {
     UseLegacyStereoPerceptionFixture useLegacy(false);
 
-    // auto smi = "C[C@H]1C[C@@H](C)C[C@@H](C)C1 |o1:1,o2:6,o3:3|";
     auto smi = "C[C@H]1C[C@@H](C)C[C@@H](C)C1";
-    // auto smi = "C[C@H]1CC[C@@H](C)CC1";
     RDKit::v2::SmilesParse::SmilesParserParams smilesParserParams;
     auto m1 = RDKit::v2::SmilesParse::MolFromSmiles(smi, smilesParserParams);
     auto smiOut = RDKit::MolToCXSmiles(*m1);
