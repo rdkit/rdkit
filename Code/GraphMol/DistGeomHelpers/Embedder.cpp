@@ -837,16 +837,19 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     embedParams.basinThresh = 1e8;
   }
 
+  std::unique_ptr<RDKit::rng_type> generator;
+  std::unique_ptr<RDKit::uniform_double> distrib;
+  std::unique_ptr<RDKit::double_source_type> rngMgr;
+
   RDKit::double_source_type *rng = nullptr;
-  RDKit::rng_type *generator = nullptr;
-  RDKit::uniform_double *distrib = nullptr;
   CHECK_INVARIANT(seed >= -1,
                   "random seed must either be positive, zero, or negative one");
   if (seed > -1) {
-    generator = new RDKit::rng_type(42u);
+    generator.reset(new RDKit::rng_type(42u));
     generator->seed(seed);
-    distrib = new RDKit::uniform_double(0.0, 1.0);
-    rng = new RDKit::double_source_type(*generator, *distrib);
+    distrib.reset(new RDKit::uniform_double(0.0, 1.0));
+    rngMgr.reset(new RDKit::double_source_type(*generator, *distrib));
+    rng = rngMgr.get();
   } else {
     rng = &RDKit::getDoubleRandomSource();
   }
@@ -987,11 +990,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
 
   }  // while
-  if (seed > -1) {
-    delete rng;
-    delete generator;
-    delete distrib;
-  }
+
   return gotCoords;
 }
 
