@@ -37,9 +37,10 @@ using namespace RDKit::RascalMCES::details;
 void check_smarts_ok(const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
                      const RascalResult &res) {
   auto qmol = v2::SmilesParse::MolFromSmarts(res.getSmarts());
+  REQUIRE(qmol);
   RDKit::MatchVectType dont_care;
-  REQUIRE(RDKit::SubstructMatch(mol1, *qmol, dont_care));
-  REQUIRE(RDKit::SubstructMatch(mol2, *qmol, dont_care));
+  CHECK(RDKit::SubstructMatch(mol1, *qmol, dont_care));
+  CHECK(RDKit::SubstructMatch(mol2, *qmol, dont_care));
 }
 
 void check_expected_bonds(
@@ -47,7 +48,7 @@ void check_expected_bonds(
     const std::vector<std::vector<std::pair<int, int>>> &exp_bond_matches) {
   auto found_it = std::find(exp_bond_matches.begin(), exp_bond_matches.end(),
                             res.getBondMatches());
-  REQUIRE(found_it != exp_bond_matches.end());
+  CHECK(found_it != exp_bond_matches.end());
 }
 
 TEST_CASE("Very small test", "[basics]") {
@@ -680,7 +681,7 @@ TEST_CASE("ring matches ring", "[basics]") {
   REQUIRE(res.front().getBondMatches().size() == 9);
   REQUIRE_THAT(res.front().getSimilarity(),
                Catch::Matchers::WithinAbs(0.1863, 0.0001));
-  REQUIRE(res.front().getSmarts() == "C(-C=O)-c1:c:c:c:c:c:1");
+  REQUIRE(res.front().getSmarts() == "c1:c:c:c:c:c:1-CC=O");
   check_smarts_ok(*m1, *m2, res.front());
 }
 
@@ -717,7 +718,6 @@ TEST_CASE("multiple cliques returned") {
 
   RascalOptions opts;
   opts.similarityThreshold = 0.5;
-  opts.allBestMCESs = true;
 
   for (auto &test : tests) {
     opts.allBestMCESs = true;
@@ -725,9 +725,10 @@ TEST_CASE("multiple cliques returned") {
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
 
     auto res = rascalMCES(*m1, *m2, opts);
-    REQUIRE(res.size() == std::get<2>(test));
-    REQUIRE(res.front().getBondMatches().size() == std::get<3>(test));
-    REQUIRE(res.front().getBondMatches() == std::get<4>(test));
+    REQUIRE(!res.empty());
+    CHECK(res.size() == std::get<2>(test));
+    CHECK(res.front().getBondMatches().size() == std::get<3>(test));
+    CHECK(res.front().getBondMatches() == std::get<4>(test));
     check_smarts_ok(*m1, *m2, res.front());
 
     opts.allBestMCESs = false;
@@ -735,7 +736,7 @@ TEST_CASE("multiple cliques returned") {
     REQUIRE(res.size() == 1);
     // The clique won't necessarily be the best-scoring one, but it should be
     // the same size.
-    REQUIRE(res.front().getBondMatches().size() == std::get<4>(test).size());
+    CHECK(res.front().getBondMatches().size() == std::get<4>(test).size());
     check_smarts_ok(*m1, *m2, res.front());
   }
 }
@@ -1515,5 +1516,72 @@ TEST_CASE("Duplicate Single Largest Frag") {
     CHECK(res.front().getBondMatches().size() == 23);
     CHECK(res.back().getAtomMatches().size() == 23);
     CHECK(res.back().getBondMatches().size() == 23);
+  }
+}
+
+TEST_CASE(
+    "Github 8246 - equivalentAtoms SMARTS not translated back in the SMARTS string") {
+  auto m1 = "COC1=CC2(Oc3ccc(-c4ccc(OC)c(OC)c4)cc3C2=O)C(OC)=CC1O"_smiles;
+  REQUIRE(m1);
+  auto m2 = "COC1=CC2(Oc3ccc(-c4ccccc4)cc3C2=O)C(OC)=CC1O"_smiles;
+  REQUIRE(m2);
+  RascalOptions opts;
+  opts.equivalentAtoms = "[O,S]";
+  opts.ringMatchesRingOnly = true;
+  auto res = rascalMCES(*m1, *m2, opts);
+  REQUIRE(!res.empty());
+  CHECK(
+      res.front().getSmarts() ==
+      "C-[O,S]-[C&R]1=&@[C&R]-&@[C&R]2(-&@[O,S;R]-&@c3:c:c:c(-c4:c:c:c:c:c:4):c:c:3-&@[C&R]-&@2=[O,S])-&@[C&R](-[O,S]-C)=&@[C&R]-&@[C&R]-&@1-[O,S]");
+  check_smarts_ok(*m1, *m2, res.front());
+}
+
+TEST_CASE("Specify minimum clique size directly.") {
+  auto m1 = "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C"_smiles;
+  REQUIRE(m1);
+  auto m2 = "CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O"_smiles;
+  REQUIRE(m2);
+
+  RascalOptions opts;
+  opts.similarityThreshold = 0.6;
+  opts.minCliqueSize = 15;
+  auto res1 = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res1.size() == 1);
+  CHECK(res1.front().getBondMatches().size() == 16);
+  opts.minCliqueSize = 17;
+  auto res2 = rascalMCES(*m1, *m2, opts);
+  REQUIRE(res2.empty());
+}
+
+TEST_CASE("Github8255 - incorrect MCES with singleLargestFrag=true") {
+  RascalOptions opts;
+  opts.singleLargestFrag = true;
+  opts.allBestMCESs = true;
+  opts.ignoreAtomAromaticity = true;
+  opts.ringMatchesRingOnly = true;
+  opts.completeAromaticRings = false;
+  {
+    auto m1 = "Cc1ccc(cn1)-c1ccc(cn1)-c1ccc2ccccc2n1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "Cc1ccc(cn1)-c1ccc(cn1)-c1cc2ccccc2[nH]1"_smiles;
+    REQUIRE(m2);
+    auto res = rascalMCES(*m1, *m2, opts);
+    CHECK(res.size() == 3);
+    for (auto &r : res) {
+      CHECK(r.getAtomMatches().size() == 20);
+      CHECK(r.getBondMatches().size() == 21);
+    }
+  }
+  {
+    auto m1 = "Cc1ncc(cc1)c2ncc(cc2)c3ccc4c(c3)cn[nH]4"_smiles;
+    REQUIRE(m1);
+    auto m2 = "Cc1ncc(cc1)c2ncc(cc2)c3ccc4c(c3)nccn4"_smiles;
+    REQUIRE(m2);
+    auto res = rascalMCES(*m1, *m2, opts);
+    CHECK(res.size() == 2);
+    for (auto &r : res) {
+      CHECK(r.getAtomMatches().size() == 20);
+      CHECK(r.getBondMatches().size() == 22);
+    }
   }
 }

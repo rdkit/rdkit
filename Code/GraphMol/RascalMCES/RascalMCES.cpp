@@ -483,8 +483,8 @@ void makeModularProduct(const ROMol &mol1,
     return;
   }
   if (vtxPairs.size() > opts.maxBondMatchPairs) {
-    std::cerr << "Too many matching bond pairs (" << vtxPairs.size()
-              << ") so can't continue." << std::endl;
+    BOOST_LOG(rdErrorLog) << "Too many matching bond pairs (" << vtxPairs.size()
+                          << ") so can't continue." << std::endl;
     modProd.clear();
     return;
   }
@@ -1076,9 +1076,12 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   if (starter.d_modProd.empty()) {
     return starter;
   }
-  starter.d_lowerBound = calcLowerBound(*starter.d_mol1, *starter.d_mol2,
-                                        opts.similarityThreshold);
-
+  if (opts.minCliqueSize > 0) {
+    starter.d_lowerBound = opts.minCliqueSize;
+  } else {
+    starter.d_lowerBound = calcLowerBound(*starter.d_mol1, *starter.d_mol2,
+                                          opts.similarityThreshold);
+  }
   starter.d_partSet.reset(new PartitionSet(starter.d_modProd,
                                            starter.d_vtxPairs, bondLabels1,
                                            bondLabels2, starter.d_lowerBound));
@@ -1112,7 +1115,7 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
   try {
     explorePartitions(starter, startTime, tmpOpts, maxCliques);
   } catch (TimedOutException &e) {
-    std::cout << e.what() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
     maxCliques = e.d_cliques;
     timedOut = true;
   }
@@ -1126,15 +1129,21 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
                      opts.maxFragSeparation, opts.exactConnectionsMatch,
                      opts.equivalentAtoms, opts.ignoreBondOrders));
   }
-
   if (opts.singleLargestFrag) {
-    std::sort(results.begin(), results.end(),
-              [](const RascalResult &r1, const RascalResult &r2) -> bool {
-                if (r1.getAtomMatches() == r2.getAtomMatches()) {
-                  return (r1.getBondMatches() < r2.getBondMatches());
-                }
-                return (r1.getAtomMatches() < r2.getAtomMatches());
-              });
+    std::sort(
+        results.begin(), results.end(),
+        [](const RascalResult &r1, const RascalResult &r2) -> bool {
+          if (r1.getAtomMatches().size() == r2.getAtomMatches().size()) {
+            if (r1.getBondMatches().size() == r2.getBondMatches().size()) {
+              if (r1.getAtomMatches() == r2.getAtomMatches()) {
+                return (r1.getBondMatches() < r2.getBondMatches());
+              }
+              return r1.getAtomMatches() < r2.getAtomMatches();
+            }
+            return r1.getBondMatches().size() > r2.getBondMatches().size();
+          }
+          return (r1.getAtomMatches().size() > r2.getAtomMatches().size());
+        });
 
     // the singleLargestFrag method throws bits of solutions out, so there may
     // now be duplicates and results that are different sizes.
@@ -1164,8 +1173,11 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
       }
       results.erase(results.begin() + j, results.end());
     }
+  } else {
+    // If 2 cliques are the same size, this sort puts the one with the smaller
+    // number of fragments first, which may have fewer atoms.
+    std::sort(results.begin(), results.end(), details::resultCompare);
   }
-  std::sort(results.begin(), results.end(), details::resultCompare);
   return results;
 }
 
