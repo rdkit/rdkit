@@ -26,12 +26,13 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <RDGeneral/StreamOps.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
 // used for serialization
 constexpr int32_t versionMajor = 2;
-constexpr int32_t versionMinor = 0;
+constexpr int32_t versionMinor = 1;
 constexpr int32_t endianId = 0xa100f;
 
 std::int64_t SynthonSpace::getNumProducts() const {
@@ -123,7 +124,8 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
   std::string nextLine;
   int lineNum = 1;
   std::vector<std::string> nextSynthon;
-  while (getline(ifs, nextLine)) {
+  while (!ifs.eof()) {
+    nextLine = getLine(ifs);
     ++lineNum;
     if (nextLine.empty() || nextLine[0] == '#') {
       continue;
@@ -183,8 +185,8 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
     streamWrite(os, d_fpType);
   }
   streamWrite(os, d_reactions.size());
-  for (const auto &[fst, snd] : d_reactions) {
-    snd->writeToDBStream(os);
+  for (const auto &[reactionId, reaction] : d_reactions) {
+    reaction->writeToDBStream(os);
   }
   os.close();
 }
@@ -275,14 +277,28 @@ bool SynthonSpace::hasFingerprints() const {
 
 void SynthonSpace::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
-  BOOST_LOG(rdWarningLog) << "Building the fingerprints may take some time."
-                          << std::endl;
   if (const auto fpType = fpGen.infoString();
       fpType != d_fpType || !hasFingerprints()) {
+    BOOST_LOG(rdWarningLog)
+        << "Building the fingerprints may take some time." << std::endl;
     d_fpType = fpType;
     for (const auto &[id, synthSet] : d_reactions) {
       synthSet->buildSynthonFingerprints(fpGen);
     }
+  }
+}
+
+bool SynthonSpace::hasAddAndSubstractFingerprints() const {
+  if (d_reactions.empty()) {
+    return false;
+  }
+  return d_reactions.begin()->second->hasAddAndSubtractFPs();
+}
+
+void SynthonSpace::buildAddAndSubstractFingerprints(
+    const FingerprintGenerator<std::uint64_t> &fpGen) {
+  for (const auto &[id, synthSet] : d_reactions) {
+    synthSet->buildAddAndSubtractFPs(fpGen);
   }
 }
 

@@ -46,12 +46,13 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
 TEST_CASE("Test splits 1") {
   const std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
                                         "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1"};
-  std::vector<std::vector<size_t>> expCounts{{1, 51, 345, 20},
-                                             {1, 38, 298, 56}};
+  std::vector<std::vector<size_t>> expCounts{{1, 47, 345, 20},
+                                             {1, 37, 262, 41}};
   for (size_t i = 0; i < smiles.size(); ++i) {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles[i]);
     REQUIRE(mol);
-    auto fragments = splitMolecule(*mol, 3);
+    bool timedOut = false;
+    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, timedOut);
     CHECK(fragments.size() ==
           std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.
@@ -80,7 +81,7 @@ TEST_CASE("Enumerate") {
   SynthonSpace synthonspace;
   synthonspace.readTextFile(libName);
   auto testName = std::tmpnam(nullptr);
-  std::cout << "enumerating to " << testName << std::endl;
+  BOOST_LOG(rdInfoLog) << "Enumerating to " << testName << std::endl;
   synthonspace.writeEnumeratedFile(testName);
 
   std::string enumLibName =
@@ -301,10 +302,13 @@ TEST_CASE("DB Writer") {
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   synthonspace.buildSynthonFingerprints(*fpGen);
-  synthonspace.writeDBFile("doebner_miller_space.spc");
+
+  auto spaceName = std::tmpnam(nullptr);
+
+  synthonspace.writeDBFile(spaceName);
 
   SynthonSpace newsynthonspace;
-  newsynthonspace.readDBFile("doebner_miller_space.spc");
+  newsynthonspace.readDBFile(spaceName);
   auto it = newsynthonspace.getReactions().find("doebner-miller-quinoline");
   CHECK(it != newsynthonspace.getReactions().end());
   const auto &irxn = it->second;
@@ -325,6 +329,7 @@ TEST_CASE("DB Writer") {
       CHECK(*irxn->getSynthonFPs()[i][j] == *orxn->getSynthonFPs()[i][j]);
     }
   }
+  std::remove(spaceName);
 }
 
 TEST_CASE("S Biggy") {
@@ -346,6 +351,7 @@ TEST_CASE("S Biggy") {
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   for (size_t i = 0; i < smis.size(); ++i) {
+    std::cerr << "Query " << i << std::endl;
     auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
     auto results = synthonspace.substructureSearch(*queryMol, params);
     CHECK(results.getHitMolecules().size() == numRes[i]);
@@ -364,7 +370,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
   synthonspace.readDBFile(libName);
   const auto rend{std::chrono::steady_clock::now()};
   const std::chrono::duration<double> elapsed_seconds{rend - rstart};
-  std::cout << "Time to read synthonspace : " << elapsed_seconds.count()
+  BOOST_LOG(rdInfoLog)<< "Time to read synthonspace : " << elapsed_seconds.count()
             << std::endl;
 
   SECTION("WholeMol") {
@@ -381,8 +387,8 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
       auto results = synthonspace.substructureSearch(*queryMol);
       const auto end{std::chrono::steady_clock::now()};
       const std::chrono::duration<double> elapsed_seconds{end - start};
-      std::cout << "Elapsed time : " << elapsed_seconds.count() << std::endl;
-      std::cout << "Number of hits : " << results.getHitMolecules().size()
+      BOOST_LOG(rdInfoLog)<< "Elapsed time : " << elapsed_seconds.count() << std::endl;
+      BOOST_LOG(rdInfoLog)<< "Number of hits : " << results.getHitMolecules().size()
                 << std::endl;
       std::string outFile =
           std::string("/Users/david/Projects/FreedomSpace/synthonspace_hits_") +
@@ -393,7 +399,7 @@ TEST_CASE("FreedomSpace", "[FreedomSpace]") {
            << std::endl;
       }
       CHECK(results.getHitMolecules().size() == numRes[i]);
-      std::cout << results.getMaxNumResults() << std::endl;
+      BOOST_LOG(rdInfoLog)<< results.getMaxNumResults() << std::endl;
     }
   }
 }
@@ -550,4 +556,31 @@ TEST_CASE("Greg Space Failure") {
 
   auto results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 1);
+}
+
+TEST_CASE("DOS File") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_dos.txt";
+  SynthonSpace synthonspace;
+  synthonspace.readTextFile(libName);
+  CHECK(synthonspace.getNumProducts() == 12);
+}
+
+TEST_CASE("Synthon Error") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  {
+    std::string libName =
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/amide_space_error.txt";
+    SynthonSpace synthonspace;
+    CHECK_THROWS(synthonspace.readTextFile(libName));
+  }
+  {
+    std::string libName =
+        fName + "/Code/GraphMol/SynthonSpaceSearch/data/synthon_error.txt";
+    SynthonSpace synthonspace;
+    CHECK_THROWS(synthonspace.readTextFile(libName));
+  }
 }

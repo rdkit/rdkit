@@ -335,11 +335,16 @@ struct mol_wrapper {
             "hardware. negative values are added to the number of concurrent"
             "threads supported by the hardware.")
         .def_readwrite(
+            "bondProperties", &RDKit::SubstructMatchParameters::bondProperties,
+            "bond properties that must be equivalent in order to match.")
+        .def_readwrite(
             "atomProperties", &RDKit::SubstructMatchParameters::atomProperties,
             "atom properties that must be equivalent in order to match.")
         .def_readwrite(
-            "bondProperties", &RDKit::SubstructMatchParameters::bondProperties,
-            "bond properties that must be equivalent in order to match.")
+            "specifiedStereoQueryMatchesUnspecified",
+            &RDKit::SubstructMatchParameters::
+                specifiedStereoQueryMatchesUnspecified,
+            "If set, query atoms and bonds with specified stereochemistry will match atoms and bonds with unspecified stereochemistry.")
         .def("setExtraFinalCheck", setSubstructMatchFinalCheck,
              python::with_custodian_and_ward<1, 2>(),
              python::args("self", "func"),
@@ -800,7 +805,8 @@ struct mol_wrapper {
                  python::with_custodian_and_ward_postcall<0, 1>>(),
              python::args("self", "qa"),
              "Returns a read-only sequence containing all of the atoms in a "
-             "molecule that match the query atom.\n")
+             "molecule that match the query atom. "
+             "Atom query options are defined in the rdkit.Chem.rdqueries module.\n")
 
         // enable pickle support
         .def_pickle(mol_pickle_suite())

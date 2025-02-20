@@ -1652,7 +1652,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
     try {
       if (sanitize) {
         if (removeHs) {
-          MolOps::removeHs(*m, false, false);
+          MolOps::removeHs(*m);
         } else {
           MolOps::sanitizeMol(*m);
         }
@@ -1760,7 +1760,7 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
   unsigned int nBonds = m->getNumBonds();
 
   // Make array of inchi_atom (storage space)
-  auto *inchiAtoms = new inchi_Atom[nAtoms];
+  std::unique_ptr<inchi_Atom[]> inchiAtoms(new inchi_Atom[nAtoms]);
   // and a vector for stereo0D
   std::vector<inchi_Stereo0D> stereo0DEntries;
 
@@ -1840,11 +1840,14 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
     }
 
     // convert tetrahedral chirality info to Stereo0D
-    if (atom->getChiralTag() != Atom::CHI_UNSPECIFIED ||
-        atom->hasProp("molParity")) {
-      // we ignore the molParity if the number of neighbors are below 3
+    if (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+        atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
       atom->calcImplicitValence();
-      if (atom->getNumImplicitHs() + atom->getDegree() < 3) {
+      if (auto tval = atom->getTotalDegree(); tval < 3 || tval > 4) {
+        BOOST_LOG(rdWarningLog)
+            << "tetrahedral chirality on atom with <3 or >4 neighbors will be ignored."
+            << std::endl;
+
         continue;
       }
       inchi_Stereo0D stereo0D;
@@ -1865,7 +1868,6 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
       // std::cerr<<" at: "<<atom->getIdx();
       for (const auto &p : neighbors) {
         stereo0D.neighbor[nid++] = p.second;
-        // std::cerr<<" "<<p.second;
       }
       if (nid == 3) {
         // std::cerr<<" nid==3, reorder";
@@ -1917,7 +1919,8 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
           // For want of a better idea, detect this pattern
           // and flip the stereochem:
           // if(atom->getAtomicNum()==16 &&
-          //    atom->getDegree()==3 && atom->getExplicitValence()==4){
+          //    atom->getDegree()==3 &&
+          //    atom->getValence(Atom::ValenceType::EXPLICIT)==4){
           //   if(stereo0D.parity==INCHI_PARITY_EVEN){
           //     stereo0D.parity=INCHI_PARITY_ODD;
           //   } else if(stereo0D.parity==INCHI_PARITY_ODD){
@@ -1964,6 +1967,13 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
 
     // neighbor
     unsigned int idx = inchiAtoms[atomIndex1].num_bonds;
+    // The InChI code has a max number of neighbors allowed:
+    if (idx >= MAXVAL) {
+      BOOST_LOG(rdErrorLog)
+          << " atom " << atomIndex1 << " has too many bonds: " << idx
+          << ". The InChI library supports at most " << MAXVAL << std::endl;
+      return "";
+    }
     inchiAtoms[atomIndex1].neighbor[idx] = atomIndex2;
 
     // bond type
@@ -2038,24 +2048,23 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
   }
 
   // create stereo0D
-  inchi_Stereo0D *stereo0Ds;
+  std::unique_ptr<inchi_Stereo0D[]> stereo0Ds;
   if (stereo0DEntries.size()) {
-    stereo0Ds = new inchi_Stereo0D[stereo0DEntries.size()];
+    stereo0Ds.reset(new inchi_Stereo0D[stereo0DEntries.size()]);
     for (unsigned int i = 0; i < stereo0DEntries.size(); i++) {
       stereo0Ds[i] = stereo0DEntries[i];
     }
-  } else {
-    stereo0Ds = nullptr;
   }
 
   // create input
   inchi_Input input;
-  input.atom = inchiAtoms;
-  input.stereo0D = stereo0Ds;
+  input.atom = inchiAtoms.get();
+  input.stereo0D = stereo0Ds.get();
+  std::unique_ptr<char[]> _options;
   if (options) {
-    char *_options = new char[strlen(options) + 1];
-    fixOptionSymbol(options, _options);
-    input.szOptions = _options;
+    _options.reset(new char[strlen(options) + 1]);
+    fixOptionSymbol(options, _options.get());
+    input.szOptions = _options.get();
   } else {
     input.szOptions = nullptr;
   }
@@ -2087,14 +2096,6 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
 
     // clean up
     FreeINCHI(&output);
-  }
-  if (input.szOptions) {
-    delete[] input.szOptions;
-  }
-
-  delete[] inchiAtoms;
-  if (stereo0Ds) {
-    delete[] stereo0Ds;
   }
 
   return inchi;
@@ -2143,7 +2144,9 @@ std::string InchiToInchiKey(const std::string &inchi) {
   char inchiKey[29];
   char xtra1[65], xtra2[65];
   int ret = 0;
-  { ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2); }
+  {
+    ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
+  }
   std::string error;
   switch (ret) {
     case INCHIKEY_OK:

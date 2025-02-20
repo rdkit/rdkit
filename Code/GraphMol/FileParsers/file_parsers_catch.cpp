@@ -31,6 +31,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/MonomerInfo.h>
+#include <GraphMol/test_fixtures.h>
 #include <RDGeneral/FileParseException.h>
 #include <boost/algorithm/string.hpp>
 
@@ -1646,7 +1647,7 @@ M  END)CTAB";
     REQUIRE(mol);
     mol->updatePropertyCache();
     CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
-    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 0);
+    CHECK(mol->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 0);
     CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 0);
     auto outBlock = MolToMolBlock(*mol);
     REQUIRE(outBlock.find("0  0 15") != std::string::npos);
@@ -1668,7 +1669,7 @@ M  END)CTAB";
     REQUIRE(mol);
     mol->updatePropertyCache();
     CHECK(mol->getAtomWithIdx(0)->getNoImplicit());
-    CHECK(mol->getAtomWithIdx(0)->getExplicitValence() == 5);
+    CHECK(mol->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 5);
     CHECK(mol->getAtomWithIdx(0)->getTotalValence() == 5);
     auto outBlock = MolToMolBlock(*mol);
     REQUIRE(outBlock.find("0  0  5") != std::string::npos);
@@ -7435,5 +7436,129 @@ TEST_CASE(
     CHECK(ctab.find("VAL=4") == std::string::npos);
     CHECK(ctab.find("CHG=-1") != std::string::npos);
     CHECK(ctab.find("VAL=1") == std::string::npos);
+  }
+}
+
+TEST_CASE("Github #8060: crash with a bad mol block") {
+  SECTION("as reported") {
+    std::string molblock = R"CTAB(
+
+
+ 11 20  0  0  0  0  0  0  0  0999 V2000
+    0.7752    1.4699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0024    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2976    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2528    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5479    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2952    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2504    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5455    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7728    3.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7752    2.4009    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  1  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  6  1  0  0  0  0
+ 11  1  1  0  0  0  0
+ 11  2  1  0  0  0  0
+ 11  3  1  0  0  0  0
+ 11  4  1  0  0  0  0
+ 11  5  1  0  0  0  0
+ 11  6  1  0  0  0  0
+ 11  7  1  0  0  0  0
+ 11  8  1  0  0  0  0
+ 11  9  1  0  0  0  0
+ 11 10  1  0  0  0  0
+M  END)CTAB";
+    auto m = v2::FileParsers::MolFromMolBlock(molblock);
+    REQUIRE(m);
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+      auto m = v2::FileParsers::MolFromMolBlock(molblock);
+      REQUIRE(m);
+    }
+  }
+  SECTION("catch expected exception") {
+    // the molecule is really stupid
+    std::string molblock = R"CTAB(
+
+
+ 21 40  0  0  0  0  0  0  0  0999 V2000
+    0.7752    1.4699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0024    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2976    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2528    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5479    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2952    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2504    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5455    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7728    3.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7752    1.4699    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0024    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2976    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2528    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5479    0.9086    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2952    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2504    4.8170    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5455    3.9085    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7728    3.3471    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.7752    2.4009    0.0000 Fe  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  1  0  0  0  0
+  4  5  1  0  0  0  0
+  5  1  1  0  0  0  0
+  6  7  1  0  0  0  0
+  7  8  1  0  0  0  0
+  8  9  1  0  0  0  0
+  9 10  1  0  0  0  0
+ 10  6  1  0  0  0  0
+ 11 12  1  0  0  0  0
+ 12 13  1  0  0  0  0
+ 13 14  1  0  0  0  0
+ 14 15  1  0  0  0  0
+ 15 11  1  0  0  0  0
+ 16 17  1  0  0  0  0
+ 17 18  1  0  0  0  0
+ 18 19  1  0  0  0  0
+ 19 20  1  0  0  0  0
+ 20 16  1  0  0  0  0
+ 21  1  1  0  0  0  0
+ 21  2  1  0  0  0  0
+ 21  3  1  0  0  0  0
+ 21  4  1  0  0  0  0
+ 21  5  1  0  0  0  0
+ 21  6  1  0  0  0  0
+ 21  7  1  0  0  0  0
+ 21  8  1  0  0  0  0
+ 21  9  1  0  0  0  0
+ 21 10  1  0  0  0  0
+ 21 11  1  0  0  0  0
+ 21 12  1  0  0  0  0
+ 21 13  1  0  0  0  0
+ 21 14  1  0  0  0  0
+ 21 15  1  0  0  0  0
+ 21 16  1  0  0  0  0
+ 21 17  1  0  0  0  0
+ 21 18  1  0  0  0  0
+ 21 19  1  0  0  0  0
+ 21 20  1  0  0  0  0
+M  END)CTAB";
+    REQUIRE_THROWS_AS(v2::FileParsers::MolFromMolBlock(molblock),
+                      std::out_of_range);
+    {
+      UseLegacyStereoPerceptionFixture reset_stereo_perception{false};
+      auto m = v2::FileParsers::MolFromMolBlock(molblock);
+      REQUIRE(m);
+    }
   }
 }

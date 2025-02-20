@@ -1,6 +1,5 @@
-# $Id$
 #
-#  Copyright (C) 2003-2006  Rationa Discovery LLC
+#  Copyright (C) 2003-2024 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -25,11 +24,11 @@ class TestCase(unittest.TestCase):
   def test1Implicit(self):
     " testing ImplicitValence "
     a = self.m.GetAtoms()[0]
-    iV = a.GetImplicitValence()
+    iV = a.GetValence(which=Chem.ValenceType.IMPLICIT)
     assert iV == 3
-    assert self.m.GetAtomWithIdx(1).GetImplicitValence() == 0
-    assert self.m.GetAtomWithIdx(2).GetImplicitValence() == 0
-    assert self.m.GetAtomWithIdx(3).GetImplicitValence() == 2
+    assert self.m.GetAtomWithIdx(1).GetValence(which=Chem.ValenceType.IMPLICIT) == 0
+    assert self.m.GetAtomWithIdx(2).GetValence(which=Chem.ValenceType.IMPLICIT) == 0
+    assert self.m.GetAtomWithIdx(3).GetValence(which=Chem.ValenceType.IMPLICIT) == 2
 
   def test2BondIter(self):
     " testing bond iteration "
@@ -52,8 +51,8 @@ class TestCase(unittest.TestCase):
     assert a.GetAtomicNum() == 6
     assert a.GetFormalCharge() == 0
     assert a.GetDegree() == 3
-    assert a.GetImplicitValence() == 0
-    assert a.GetExplicitValence() == 4
+    assert a.GetValence(which=Chem.ValenceType.IMPLICIT) == 0
+    assert a.GetValence(which=Chem.ValenceType.EXPLICIT) == 4
 
   def test5Setters(self):
     " testing setting atomic props "
@@ -62,13 +61,7 @@ class TestCase(unittest.TestCase):
     assert a.GetAtomicNum() == 6
     a.SetFormalCharge(1)
     assert a.GetFormalCharge() == 1
-    try:
-      a.GetImplicitValence()
-    except RuntimeError:
-      ok = 1
-    else:
-      ok = 0
-    assert ok
+    assert a.GetValence(which=Chem.ValenceType.IMPLICIT) == 0
 
 
 if __name__ == '__main__':

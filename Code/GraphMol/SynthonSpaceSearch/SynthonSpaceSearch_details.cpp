@@ -8,8 +8,6 @@
 //  of the RDKit source tree.
 //
 
-#include "SynthonSpace.h"
-
 #include <algorithm>
 #include <list>
 #include <regex>
@@ -17,14 +15,24 @@
 
 #include <boost/dynamic_bitset.hpp>
 
+#include <RDGeneral/ControlCHandler.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 
 namespace RDKit::SynthonSpaceSearch::details {
+
+bool checkTimeOut(const TimePoint *endTime) {
+  if (endTime != nullptr && Clock::now() > *endTime) {
+    BOOST_LOG(rdWarningLog) << "Timed out.\n";
+    return true;
+  }
+  return false;
+}
 
 // get a vector of vectors of unsigned ints that are all combinations of
 // M items chosen from N e.g. all combinations of 3 bonds from a
@@ -115,7 +123,8 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
 }
 
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
-    const ROMol &query, unsigned int maxBondSplits) {
+    const ROMol &query, unsigned int maxBondSplits, std::uint64_t maxNumFrags,
+    TimePoint *endTime, bool &timedOut) {
   if (maxBondSplits < 1) {
     maxBondSplits = 1;
   }
@@ -139,14 +148,38 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   fragments.emplace_back();
   fragments.back().emplace_back(new ROMol(query));
 
+  // Now do the splits.  Symmetrical molecules can give rise to the same
+  // fragment set in different ways so keep track of what we've had to
+  // avoid duplicates.
+  std::set<std::string> fragSmis;
+  bool cancelled = false;
+  timedOut = false;
+  std::uint64_t numTries = 100;
+
   // Now do the splits.
   for (unsigned int i = 1; i <= maxBondSplits; ++i) {
+    if (timedOut || cancelled) {
+      break;
+    }
     auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
     std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
     for (unsigned int j = 1; j <= i; ++j) {
       dummyLabels.emplace_back(j, j);
     }
     for (auto &c : combs) {
+      if (ControlCHandler::getGotSignal()) {
+        cancelled = true;
+        break;
+      }
+      --numTries;
+      if (!numTries) {
+        numTries = 100;
+        timedOut = checkTimeOut(endTime);
+        if (timedOut) {
+          break;
+        }
+      }
+
       // don't break just 1 ring bond, as it can't create 2 fragments.  It
       // could be better than this, by checking that any number of ring
       // bonds are all in the same ring system.  Maybe look at that
@@ -174,8 +207,20 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
         continue;
       }
       if (checkConnectorsInDifferentFrags(molFrags, i)) {
+        std::string fragSmi(MolToSmiles(*fragMol));
+        if (!fragSmis.insert(fragSmi).second) {
+          continue;
+        }
         fragments.emplace_back(std::move(molFrags));
+        if (fragments.size() > maxNumFrags) {
+          BOOST_LOG(rdWarningLog)
+              << "Maximum number of fragments reached." << std::endl;
+          break;
+        }
       }
+    }
+    if (fragments.size() > maxNumFrags) {
+      break;
     }
   }
   return fragments;
@@ -270,6 +315,19 @@ void expandBitSet(std::vector<boost::dynamic_bitset<>> &bitSets) {
     for (auto &bs : bitSets) {
       if (!bs.count()) {
         bs.set();
+      }
+    }
+  }
+}
+
+void bitSetsToVectors(const std::vector<boost::dynamic_bitset<>> &bitSets,
+                      std::vector<std::vector<size_t>> &outVecs) {
+  outVecs.resize(bitSets.size());
+  for (size_t i = 0; i < bitSets.size(); ++i) {
+    outVecs[i].reserve(bitSets[i].count());
+    for (size_t j = 0; j < bitSets[i].size(); j++) {
+      if (bitSets[i][j]) {
+        outVecs[i].push_back(j);
       }
     }
   }

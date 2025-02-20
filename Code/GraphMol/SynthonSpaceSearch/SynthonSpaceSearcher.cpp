@@ -11,6 +11,7 @@
 #include <random>
 #include <boost/random/discrete_distribution.hpp>
 
+#include <RDGeneral/ControlCHandler.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/Descriptor.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
@@ -19,6 +20,11 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
 
 namespace RDKit::SynthonSpaceSearch {
+
+SynthonSpaceSearcher::SynthonSpaceSearcher(
+    const ROMol &query, const SynthonSpaceSearchParams &params,
+    SynthonSpace &space)
+    : d_query(query), d_params(params), d_space(space) {}
 
 SearchResults SynthonSpaceSearcher::search() {
   if (d_params.randomSample && d_params.maxHits == -1) {
@@ -41,10 +47,31 @@ SearchResults SynthonSpaceSearcher::search() {
   }
   std::vector<std::unique_ptr<ROMol>> results;
 
-  auto fragments = details::splitMolecule(d_query, d_params.maxBondSplits);
+  TimePoint *endTime = nullptr;
+  TimePoint endTimePt;
+  if (d_params.timeOut > 0) {
+    endTimePt = Clock::now() + std::chrono::seconds(d_params.timeOut);
+    endTime = &endTimePt;
+  }
+  ControlCHandler::reset();
+  bool timedOut = false;
+  auto fragments = details::splitMolecule(
+      d_query, d_params.maxBondSplits, d_params.maxNumFrags, endTime, timedOut);
+  if (timedOut || ControlCHandler::getGotSignal()) {
+    return SearchResults{std::move(results), 0UL, timedOut,
+                         ControlCHandler::getGotSignal()};
+  }
+
   std::vector<SynthonSpaceHitSet> allHits;
   size_t totHits = 0;
   for (auto &fragSet : fragments) {
+    timedOut = details::checkTimeOut(endTime);
+    if (timedOut) {
+      break;
+    }
+    if (ControlCHandler::getGotSignal()) {
+      break;
+    }
     if (auto theseHits = searchFragSet(fragSet); !theseHits.empty()) {
       totHits += std::accumulate(
           theseHits.begin(), theseHits.end(), 0,
@@ -55,10 +82,12 @@ SearchResults SynthonSpaceSearcher::search() {
     }
   }
 
-  if (d_params.buildHits) {
-    buildHits(allHits, totHits, results);
+  if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
+    buildHits(allHits, totHits, endTime, timedOut, results);
   }
-  return SearchResults{std::move(results), totHits};
+
+  return SearchResults{std::move(results), totHits, timedOut,
+                       ControlCHandler::getGotSignal()};
 }
 
 std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
@@ -70,6 +99,9 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   std::unique_ptr<ROMol> prod;
   if (resultsNames.insert(prodName).second) {
     if (resultsNames.size() < static_cast<size_t>(d_params.hitStart)) {
+      return prod;
+    }
+    if (!quickVerify(reaction, synthNums)) {
       return prod;
     }
     prod = reaction->buildProduct(synthNums);
@@ -95,8 +127,23 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   return prod;
 }
 
+namespace {
+void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
+  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
+    std::sort(hits.begin(), hits.end(),
+              [](const std::unique_ptr<ROMol> &lhs,
+                 const std::unique_ptr<ROMol> &rhs) {
+                const auto lsim = lhs->getProp<double>("Similarity");
+                const auto rsim = rhs->getProp<double>("Similarity");
+                return lsim > rsim;
+              });
+  }
+}
+}  // namespace
+
 void SynthonSpaceSearcher::buildHits(
     std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
+    const TimePoint *endTime, bool &timedOut,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
@@ -119,64 +166,56 @@ void SynthonSpaceSearcher::buildHits(
   std::set<std::string> resultsNames;
 
   if (d_params.randomSample) {
-    buildRandomHits(hitsets, totHits, resultsNames, results);
+    buildRandomHits(hitsets, totHits, resultsNames, endTime, timedOut, results);
   } else {
-    buildAllHits(hitsets, resultsNames, results);
+    buildAllHits(hitsets, resultsNames, endTime, timedOut, results);
   }
+  sortHits(results);
 }
-
-namespace {
-void sortHits(std::vector<std::unique_ptr<ROMol>> &hits) {
-  if (!hits.empty() && hits.front()->hasProp("Similarity")) {
-    std::sort(hits.begin(), hits.end(),
-              [](const std::unique_ptr<ROMol> &lhs,
-                 const std::unique_ptr<ROMol> &rhs) {
-                const auto lsim = lhs->getProp<double>("Similarity");
-                const auto rsim = rhs->getProp<double>("Similarity");
-                return lsim > rsim;
-              });
-  }
-}
-}  // namespace
 
 void SynthonSpaceSearcher::buildAllHits(
     const std::vector<SynthonSpaceHitSet> &hitsets,
-    std::set<std::string> &resultsNames,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::set<std::string> &resultsNames, const TimePoint *endTime,
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
+  std::uint64_t numTries = 100;
   for (const auto &[reactionId, synthonsToUse, numHits] : hitsets) {
-    std::vector<std::vector<size_t>> synthonNums;
-    synthonNums.reserve(synthonsToUse.size());
     std::vector<size_t> numSynthons;
     numSynthons.reserve(synthonsToUse.size());
     for (auto &stu : synthonsToUse) {
-      numSynthons.push_back(stu.count());
-      synthonNums.emplace_back();
-      synthonNums.back().reserve(stu.count());
-      for (size_t j = 0; j < stu.size(); ++j) {
-        if (stu[j]) {
-          synthonNums.back().push_back(j);
-        }
-      }
+      numSynthons.push_back(stu.size());
     }
     const auto &reaction = getSpace().getReactions().find(reactionId)->second;
     details::Stepper stepper(numSynthons);
-    std::vector<size_t> theseSynthNums(synthonNums.size(), 0);
+    std::vector<size_t> theseSynthNums(synthonsToUse.size(), 0);
     while (stepper.d_currState[0] != numSynthons[0]) {
       for (size_t i = 0; i < stepper.d_currState.size(); ++i) {
-        theseSynthNums[i] = synthonNums[i][stepper.d_currState[i]];
+        theseSynthNums[i] = synthonsToUse[i][stepper.d_currState[i]];
       }
       if (auto prod =
               buildAndVerifyHit(reaction, theseSynthNums, resultsNames)) {
         results.push_back(std::move(prod));
       }
       if (results.size() == static_cast<size_t>(d_params.maxHits)) {
-        sortHits(results);
         return;
       }
       stepper.step();
+      // Don't check the time every go, as it's quite expensive.
+      --numTries;
+      if (!numTries) {
+        numTries = 100;
+        timedOut = details::checkTimeOut(endTime);
+        if (timedOut) {
+          break;
+        }
+      }
+      if (ControlCHandler::getGotSignal()) {
+        break;
+      }
+    }
+    if (timedOut || ControlCHandler::getGotSignal()) {
+      break;
     }
   }
-  sortHits(results);
 }
 
 namespace {
@@ -194,24 +233,13 @@ struct RandomHitSelector {
     d_hitSetSel = boost::random::discrete_distribution<size_t>(
         d_hitSetWeights.begin(), d_hitSetWeights.end());
     d_synthSels.resize(hitsets.size());
-    d_synthons.resize(hitsets.size());
     for (size_t hi = 0; hi < hitsets.size(); ++hi) {
-      const SynthonSpaceHitSet &hs = hitsets[hi];
-      d_synthons[hi] =
-          std::vector<std::vector<size_t>>(hs.synthonsToUse.size());
       d_synthSels[hi] =
           std::vector<boost::random::uniform_int_distribution<size_t>>(
-              hs.synthonsToUse.size());
-      d_synthons[hi].resize(hs.synthonsToUse.size());
-      for (size_t i = 0; i < hs.synthonsToUse.size(); ++i) {
-        d_synthons[hi][i].reserve(hs.synthonsToUse[i].count());
+              hitsets[hi].synthonsToUse.size());
+      for (size_t i = 0; i < hitsets[hi].synthonsToUse.size(); ++i) {
         d_synthSels[hi][i] = boost::random::uniform_int_distribution<size_t>(
-            0, hs.synthonsToUse[i].count() - 1);
-        for (size_t j = 0; j < hs.synthonsToUse[i].size(); ++j) {
-          if (hs.synthonsToUse[i][j]) {
-            d_synthons[hi][i].push_back(j);
-          }
-        }
+            0, hitsets[hi].synthonsToUse[i].size() - 1);
       }
     }
   }
@@ -222,7 +250,7 @@ struct RandomHitSelector {
     const size_t hitSetNum = d_hitSetSel(randGen);
     for (size_t i = 0; i < d_hitsets[hitSetNum].synthonsToUse.size(); ++i) {
       const size_t synthNum = d_synthSels[hitSetNum][i](randGen);
-      synths.push_back(d_synthons[hitSetNum][i][synthNum]);
+      synths.push_back(d_hitsets[hitSetNum].synthonsToUse[i][synthNum]);
     }
     return std::make_pair(d_hitsets[hitSetNum].reactionId, synths);
   }
@@ -232,7 +260,6 @@ struct RandomHitSelector {
 
   std::vector<size_t> d_hitSetWeights;
   boost::random::discrete_distribution<size_t> d_hitSetSel;
-  std::vector<std::vector<std::vector<size_t>>> d_synthons;
   std::vector<std::vector<boost::random::uniform_int_distribution<size_t>>>
       d_synthSels;
 };
@@ -240,14 +267,15 @@ struct RandomHitSelector {
 
 void SynthonSpaceSearcher::buildRandomHits(
     const std::vector<SynthonSpaceHitSet> &hitsets, const size_t totHits,
-    std::set<std::string> &resultsNames,
-    std::vector<std::unique_ptr<ROMol>> &results) const {
+    std::set<std::string> &resultsNames, const TimePoint *endTime,
+    bool &timedOut, std::vector<std::unique_ptr<ROMol>> &results) const {
   if (hitsets.empty()) {
     return;
   }
   auto rhs = RandomHitSelector(hitsets, d_space);
 
-  uint64_t numFails = 0;
+  std::uint64_t numFails = 0;
+  std::uint64_t numTries = 100;
   while (results.size() < std::min(static_cast<std::uint64_t>(d_params.maxHits),
                                    static_cast<std::uint64_t>(totHits)) &&
          numFails < totHits * d_params.numRandomSweeps) {
@@ -258,8 +286,19 @@ void SynthonSpaceSearcher::buildRandomHits(
     } else {
       numFails++;
     }
+    // Don't check the time every go, as it's quite expensive.
+    --numTries;
+    if (!numTries) {
+      numTries = 100;
+      timedOut = details::checkTimeOut(endTime);
+      if (timedOut) {
+        break;
+      }
+    }
+    if (ControlCHandler::getGotSignal()) {
+      break;
+    }
   }
-  sortHits(results);
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

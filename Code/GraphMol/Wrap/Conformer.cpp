@@ -82,19 +82,28 @@ void SetPos(Conformer *conf, np::ndarray const &array) {
     python::throw_error_already_set();
   }
 
-  const auto *data = reinterpret_cast<double *>(array.get_data());
+  // pointer to start of contiguous data block that numpy holds
+  // this isn't necessarily in pure C order
+  const auto *dataptr = array.get_data();
+  // the number of *bytes* to skip to jump to next row in data array
+  int stride_atom = array.strides(0);
+  // the number of *bytes* to skip to move between x, y, z in a row
+  int stride_dim = array.strides(1);
+  // i.e. stride_atom/dim would be 24 & 8 in a contiguous 3D input,
+  // but numpy will play with this when doing slicing/transposing etc
+
   RDGeom::POINT3D_VECT &pos = conf->getPositions();
   if (array.shape(1) == 2) {
     for (size_t i = 0; i < conf->getNumAtoms(); ++i) {
-      pos[i].x = data[i * 2];
-      pos[i].y = data[i * 2 + 1];
+      pos[i].x = * reinterpret_cast<const double *>(dataptr + i * stride_atom);
+      pos[i].y = * reinterpret_cast<const double *>(dataptr + i * stride_atom + stride_dim);
       pos[i].z = 0.0;
     }
   } else {
     for (size_t i = 0; i < conf->getNumAtoms(); ++i) {
-      pos[i].x = data[i * 3];
-      pos[i].y = data[i * 3 + 1];
-      pos[i].z = data[i * 3 + 2];
+      pos[i].x = * reinterpret_cast<const double *>(dataptr + i * stride_atom);
+      pos[i].y = * reinterpret_cast<const double *>(dataptr + i * stride_atom + stride_dim);
+      pos[i].z = * reinterpret_cast<const double *>(dataptr + i * stride_atom + 2 * stride_dim);
     }
   }
 }

@@ -5,7 +5,7 @@ trigger:
 
 jobs:
 - job: Ubuntu_x64
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-20.04
   variables:
@@ -19,7 +19,7 @@ jobs:
   steps:
   - template: .azure-pipelines/linux_build.yml
 - job: Ubuntu_x64_py311
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   pool:
     vmImage: ubuntu-latest
   variables:
@@ -58,7 +58,7 @@ jobs:
   steps:
   - template: .azure-pipelines/mac_build_java.yml
 - job: Windows_VS2022_x64
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   pool:
     vmImage: windows-2019
   variables:
@@ -68,7 +68,7 @@ jobs:
   steps:
   - template: .azure-pipelines/vs_build.yml
 - job: Windows_VS2022_x64_dll
-  timeoutInMinutes: 90
+  timeoutInMinutes: 120
   pool:
     vmImage: windows-2019
   variables:

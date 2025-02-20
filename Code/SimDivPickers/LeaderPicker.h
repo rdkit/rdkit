@@ -216,14 +216,14 @@ struct LeaderPickerState {
     // InitializeThreads
     if (nt > 1) {
       nthreads = nt;
-      pthread_barrier_init(&wait, NULL, nthreads + 1);
-      pthread_barrier_init(&done, NULL, nthreads + 1);
+      pthread_barrier_init(&wait, nullptr, nthreads + 1);
+      pthread_barrier_init(&done, nullptr, nthreads + 1);
 
       threads.resize(nt);
       for (unsigned int i = 0; i < nthreads; i++) {
         threads[i].id = i;
         threads[i].stat = this;
-        pthread_create(&threads[i].tid, NULL, LeaderPickerWork<T>,
+        pthread_create(&threads[i].tid, nullptr, LeaderPickerWork<T>,
                        (void *)&threads[i]);
       }
     } else {
@@ -236,7 +236,7 @@ struct LeaderPickerState {
       thread_op = 1;
       pthread_barrier_wait(&wait);
       for (unsigned int i = 0; i < nthreads; i++) {
-        pthread_join(threads[i].tid, 0);
+        pthread_join(threads[i].tid, nullptr);
       }
       pthread_barrier_destroy(&wait);
       pthread_barrier_destroy(&done);
@@ -339,7 +339,7 @@ void *LeaderPickerWork(void *arg) {
   for (;;) {
     pthread_barrier_wait(&stat->wait);
     if (stat->thread_op) {
-      return (void *)0;
+      return (void *)nullptr;
     }
     stat->compact_job(thread->id);
     pthread_barrier_wait(&stat->done);

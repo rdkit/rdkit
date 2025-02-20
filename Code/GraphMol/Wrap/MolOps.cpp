@@ -1324,6 +1324,10 @@ struct molops_wrapper {
       will not be removed\n\
     - Hs that are not connected to anything else will not be removed\n\
 \n ";
+#if defined(__GNUC__) or defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
     python::def("RemoveHs",
                 (ROMol * (*)(const ROMol &, bool, bool, bool)) MolOps::removeHs,
                 (python::arg("mol"), python::arg("implicitOnly") = false,
@@ -1331,6 +1335,9 @@ struct molops_wrapper {
                  python::arg("sanitize") = true),
                 docString.c_str(),
                 python::return_value_policy<python::manage_new_object>());
+#if defined(__GNUC__) or defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
     // ------------------------------------------------------------------------
     docString = R"DOC(Parameters controlling which Hs are removed.)DOC";

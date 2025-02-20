@@ -73,11 +73,11 @@ void UniformGrid3D::initGrid(
 
 UniformGrid3D::UniformGrid3D(const std::string &pkl) {
   dp_storage = nullptr;
-  this->initFromText(pkl.c_str(), pkl.size());
+  initFromText(pkl.c_str(), pkl.size());
 }
 UniformGrid3D::UniformGrid3D(const char *pkl, const unsigned int len) {
   dp_storage = nullptr;
-  this->initFromText(pkl, len);
+  initFromText(pkl, len);
 }
 
 UniformGrid3D::~UniformGrid3D() {
@@ -181,7 +181,7 @@ bool UniformGrid3D::compareParams(const UniformGrid3D &other) const {
 void UniformGrid3D::setSphereOccupancy(const Point3D &center, double radius,
                                        double stepSize, int maxNumLayers,
                                        bool ignoreOutOfBound) {
-  int ptIndex = this->getGridPointIndex(center);
+  int ptIndex = getGridPointIndex(center);
   if (ptIndex == -1) {
     if (ignoreOutOfBound) {
       return;
