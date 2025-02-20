@@ -73,16 +73,6 @@ RUN ./emsdk install ${EMSDK_VERSION} && \
 RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
 SHELL ["/bin/bash", "-c", "-l"]
 
-
-COPY Code /src/rdkit/Code
-COPY External /src/rdkit/External
-COPY CMakeLists.txt license.txt *.in *.md *.cmake /src/rdkit
-ENV RDBASE=/src/rdkit
-
-
-
-
-
 WORKDIR /src
 RUN wget -q https://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz && \
   tar xzf freetype-${FREETYPE_VERSION}.tar.gz
@@ -93,6 +83,11 @@ RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DWITH_ZLIB=OFF -DWITH_BZip2=OFF -D
   -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING}" -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING}" \
   -DCMAKE_INSTALL_PREFIX=/opt/freetype ..
 RUN make -j2 && make -j2 install
+
+COPY Code /src/rdkit/Code
+COPY External /src/rdkit/External
+COPY CMakeLists.txt license.txt *.in *.md *.cmake /src/rdkit
+ENV RDBASE=/src/rdkit
 
 WORKDIR $RDBASE
 RUN mkdir build
