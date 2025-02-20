@@ -19,7 +19,6 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearcher.h>
-#include <boost/python/converter/registry.hpp>
 
 namespace RDKit::SynthonSpaceSearch {
 
