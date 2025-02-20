@@ -510,8 +510,7 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                      "the tolerance to be used during the distance-geometry "
                      "force field minimization")
       .def_readwrite("basinThresh", &PyEmbedParameters::basinThresh,
-                     "set the basin threshold for the DGeom force field. "
-                     "This shouldn't be changed in client code!")
+                     "set the basin threshold for the DGeom force field.")
       .def_readwrite("ignoreSmoothingFailures",
                      &PyEmbedParameters::ignoreSmoothingFailures,
                      "try and embed the molecule if if triangle smoothing of "
