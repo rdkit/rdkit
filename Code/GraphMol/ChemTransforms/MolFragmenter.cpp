@@ -997,7 +997,7 @@ std::unique_ptr<ROMol> molzip(
       auto molno = get_label(atom, params);
       if (molno != NOLABEL) {
         auto attached_atom = get_other_atom(atom);
-        auto attached_molno = get_label(attached_atom, params);
+        auto attached_molno = attached_atom ? get_label(attached_atom, params) : NOLABEL;
         if (attached_molno != NOLABEL) {
           // we have a linker bond
           //  [*:1][*:2].[*:1]C.[*:2]S links C and S and drops all dummies
