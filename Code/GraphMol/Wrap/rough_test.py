@@ -8297,6 +8297,16 @@ M  END
       except Exception as e:
         assert "Python argument types" in str(e), f"{func}: {str(e)}"
 
+  def testClearPropertyCache(self):
+    m = Chem.MolFromSmiles("CC")
+    self.assertFalse(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertFalse(atom.NeedsUpdatePropertyCache())
+    m.ClearPropertyCache()
+    self.assertTrue(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertTrue(atom.NeedsUpdatePropertyCache())
+    
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

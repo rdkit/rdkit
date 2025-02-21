@@ -6000,3 +6000,9 @@ TEST_CASE(
     CHECK(m->getBondWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
   }
 }
+
+TEST_CASE("aromatic N and atropisomers") {
+  auto m = "Cc1ccc(F)n1C1=C(O)C=CC=C1C |wU:6.5|"_smiles;
+  REQUIRE(m);
+  CHECK(m->getBondWithIdx(6)->getStereo() == Bond::BondStereo::STEREOATROPCW);
+}
