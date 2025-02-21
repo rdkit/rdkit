@@ -9,7 +9,13 @@ jobs:
   pool:
     vmImage: ubuntu-latest
   steps:
-  - template: .azure-pipelines/linux_minimal_build.yml
+  - task: Docker@2
+    displayName: 'Build MinimalLib JS bindings'
+    inputs:
+      command: build
+      Dockerfile: './Code/MinimalLib/docker/Dockerfile_CI'
+      tags: 'latest'
+  
 
 # - job: Ubuntu_x64
 #   timeoutInMinutes: 120
