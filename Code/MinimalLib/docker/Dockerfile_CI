@@ -84,6 +84,7 @@ RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DWITH_ZLIB=OFF -DWITH_BZip2=OFF -D
   -DCMAKE_INSTALL_PREFIX=/opt/freetype ..
 RUN make -j2 && make -j2 install
 
+WORKDIR /
 COPY Code /src/rdkit/Code
 COPY External /src/rdkit/External
 COPY CMakeLists.txt license.txt *.in *.md *.cmake /src/rdkit
