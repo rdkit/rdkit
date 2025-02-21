@@ -382,6 +382,9 @@ void applyHuckelToFused(
     boost::dynamic_bitset<> fusedBonds(mol.getNumBonds());
     for (auto ridx : fused) {
       for (auto bidx : brings[ridx]) {
+        if (!fusedBonds[bidx]) {
+          std::cerr << "   " << bidx << std::endl;
+        }
         fusedBonds[bidx] = true;
       }
     }
@@ -390,6 +393,12 @@ void applyHuckelToFused(
 
   std::set<unsigned int> doneBonds;
   while (1) {
+    // std::cerr << "loop: " << pos << " " << curSize << " " << nRingBonds << "
+    // "
+    //           << doneBonds.size() << std::endl;
+    if (curSize > 4) {
+      break;
+    }
     if (pos == -1) {
       // If a ring system has more than 300 rings and a ring combination search
       // larger than 2 is reached, the calculation becomes exponentially longer,
@@ -419,6 +428,10 @@ void applyHuckelToFused(
     } else {
       pos = nextCombination(comb, nrings);
     }
+    // std::cerr << "    new pos: " << pos << " ";
+    // std::copy(comb.begin(), comb.end(),
+    //           std::ostream_iterator<int>(std::cerr, " "));
+    // std::cerr << std::endl;
 
     if (pos == -1) {
       continue;
@@ -496,6 +509,11 @@ void applyHuckelToFused(
       // avoid duplicates
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
+      std::cerr << "  KEEP! ";
+      std::copy(curRs.begin(), curRs.end(),
+                std::ostream_iterator<int>(std::cerr, " "));
+      std::cerr << std::endl;
+
     }  // end check huckel rule
   }  // end while(1)
   narom += rdcast<int>(aromRings.size());

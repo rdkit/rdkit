@@ -298,6 +298,6 @@ TEST_CASE("slow massively conjugated systems") {
         "[C@H]12[C@@H]3c4c5c6c1c1c7c2c2c8c3c3c4c4c9c5c5c6c6c1c1c%10c7c7c2c2c8c8c3c3c4c4c9c9c5c5c6c1c1c6c%10c7c7c2c2c8c3c3c4c4c9c5c1c1c6c7c2c3c41";
     auto mol = v2::SmilesParse::MolFromSmiles(smiles);
     REQUIRE(mol);
-    mol->debugMol(std::cerr);
+    // mol->debugMol(std::cerr);
   }
 }
