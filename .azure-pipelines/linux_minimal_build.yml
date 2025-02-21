@@ -1,4 +1,0 @@
-steps:
-- bash: |
-    docker build -f ./Code/MinimalLib/docker/Dockerfile_CI .
-  displayName: build MinimalLib JS bindings
