@@ -14,6 +14,7 @@ jobs:
     inputs:
       command: build
       Dockerfile: './Code/MinimalLib/docker/Dockerfile_CI'
+      buildContext: '.'
       tags: 'latest'
   
 
