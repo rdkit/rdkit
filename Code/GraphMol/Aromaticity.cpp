@@ -57,10 +57,10 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
 }
 
 bool checkFused(const INT_VECT &rids, const INT_INT_VECT_MAP &ringNeighs) {
-  // std::cerr << "checkFused ";
-  // std::copy(rids.begin(), rids.end(),
-  //           std::ostream_iterator<int>(std::cerr, " "));
-  // std::cerr << std::endl;
+  std::cerr << "checkFused ";
+  std::copy(rids.begin(), rids.end(),
+            std::ostream_iterator<int>(std::cerr, " "));
+  std::cerr << std::endl;
   auto nrings = ringNeighs.size();
   static boost::dynamic_bitset<> done;
   if (done.size() < nrings) {
