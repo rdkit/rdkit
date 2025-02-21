@@ -283,3 +283,18 @@ M  END
     CHECK_NOTHROW(MolOps::setTerminalAtomCoords(*m, 3, 0));
   }
 }
+
+TEST_CASE("slow massively conjugated systems") {
+  // SECTION("simple") {
+  //   std::string smiles = "C1=C2C3=CC4=C5C3=C3C2=C2C1=CC=CC2=CC3=CC5=CC=C4";
+  //   auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+  //   REQUIRE(mol);
+  //   mol->debugMol(std::cerr);
+  // }
+  SECTION("chained C60") {
+    std::string smiles =
+        "C(C#C[C@H]1[C@]23c4c5c6c7c8c9c(c%10c%11c2c2c4c4c%12c5c5c6c6c8c8c%13c9c9c%10c%10c%11c%11c2c2c4c4c%12c%12c5c5c6c8c6c8c%13c9c9c%10c%10c%11c2c2c4c4c%12c5c6c5c8c9c%10c2c45)[C@]713)#C[C@H]1[C@]23c4c5c6c7c8c9c(c%10c%11c2c2c4c4c%12c5c5c6c6c8c8c%13c9c9c%10c%10c%11c%11c2c2c4c4c%12c%12c5c5c6c8c6c8c%13c9c9c%10c%10c%11c2c2c4c4c%12c5c6c5c8c9c%10c2c45)[C@]713";
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+  }
+}

@@ -42,6 +42,7 @@ using namespace RDKit;
 
 void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
                     boost::dynamic_bitset<> &done, int depth) {
+  // std::cerr << "pickFusedRings " << curr << std::endl;
   auto pos = neighMap.find(curr);
   PRECONDITION(pos != neighMap.end(), "bad argument");
   done[curr] = 1;
@@ -55,24 +56,28 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
   }
 }
 
-bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
-  auto nrings = rdcast<int>(ringNeighs.size());
-  boost::dynamic_bitset<> done(nrings);
-  int rid;
-  INT_VECT fused;
+bool checkFused(const INT_VECT &rids, const INT_INT_VECT_MAP &ringNeighs) {
+  // std::cerr << "checkFused ";
+  // std::copy(rids.begin(), rids.end(),
+  //           std::ostream_iterator<int>(std::cerr, " "));
+  // std::cerr << std::endl;
+  auto nrings = ringNeighs.size();
+  static boost::dynamic_bitset<> done;
+  if (done.size() < nrings) {
+    done.resize(nrings);
+  }
+  done.set();
 
-  // mark all rings in the system other than those in rids as done
-  for (const auto &nci : ringNeighs) {
-    rid = nci.first;
-    if (std::find(rids.begin(), rids.end(), rid) == rids.end()) {
-      done[rid] = 1;
-    }
+  // mark all rings in this system as not done
+  for (auto rid : rids) {
+    done[rid] = 0;
   }
 
   // then pick a fused system from the remaining (i.e. rids)
   // If the rings in rids are fused we should get back all of them
   // in fused
   // if we get a smaller number in fused then rids are not fused
+  INT_VECT fused;
   pickFusedRings(rids.front(), ringNeighs, fused, done);
 
   CHECK_INVARIANT(fused.size() <= rids.size(), "");
@@ -492,7 +497,7 @@ void applyHuckelToFused(
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }    // end while(1)
+  }  // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
