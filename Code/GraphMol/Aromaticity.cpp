@@ -56,16 +56,31 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
   }
 }
 
-bool checkFused(const INT_VECT &rids, const INT_INT_VECT_MAP &ringNeighs) {
-  // std::cerr << "checkFused ";
-  // std::copy(rids.begin(), rids.end(),
-  //           std::ostream_iterator<int>(std::cerr, " "));
-  // std::cerr << std::endl;
-  auto nrings = ringNeighs.size();
-  static boost::dynamic_bitset<> done;
-  if (done.size() < nrings) {
-    done.resize(nrings);
+bool allAromatic(const INT_VECT &rids,
+                 const boost::dynamic_bitset<> &isAromatic) {
+  for (auto rid : rids) {
+    if (!isAromatic[rid]) {
+      return false;
+    }
   }
+  return true;
+}
+
+size_t countFusedRings(int curr, const INT_INT_VECT_MAP &neighMap,
+                       boost::dynamic_bitset<> &done) {
+  size_t res = 1;
+  done[curr] = 1;
+  const auto &nbrs = neighMap.at(curr);
+  for (auto nbr : nbrs) {
+    if (!done[nbr]) {
+      res += countFusedRings(nbr, neighMap, done);
+    }
+  }
+  return res;
+}
+
+bool checkFused(const INT_VECT &rids, const INT_INT_VECT_MAP &ringNeighs,
+                boost::dynamic_bitset<> &done) {
   done.set();
 
   // mark all rings in this system as not done
@@ -77,11 +92,9 @@ bool checkFused(const INT_VECT &rids, const INT_INT_VECT_MAP &ringNeighs) {
   // If the rings in rids are fused we should get back all of them
   // in fused
   // if we get a smaller number in fused then rids are not fused
-  INT_VECT fused;
-  pickFusedRings(rids.front(), ringNeighs, fused, done);
-
-  CHECK_INVARIANT(fused.size() <= rids.size(), "");
-  return (fused.size() == rids.size());
+  auto cnt = countFusedRings(rids.front(), ringNeighs, done);
+  CHECK_INVARIANT(cnt <= rids.size(), "");
+  return (cnt == rids.size());
 }
 
 void makeRingNeighborMap(const VECT_INT_VECT &brings,
@@ -370,6 +383,7 @@ void applyHuckelToFused(
 
   std::unordered_set<int> aromRings;
   auto nrings = rdcast<unsigned int>(fused.size());
+  boost::dynamic_bitset<> isAromatic(nrings);
   INT_VECT curRs;
   curRs.push_back(fused.front());
   int pos = -1;
@@ -382,9 +396,6 @@ void applyHuckelToFused(
     boost::dynamic_bitset<> fusedBonds(mol.getNumBonds());
     for (auto ridx : fused) {
       for (auto bidx : brings[ridx]) {
-        if (!fusedBonds[bidx]) {
-          std::cerr << "   " << bidx << std::endl;
-        }
         fusedBonds[bidx] = true;
       }
     }
@@ -392,13 +403,11 @@ void applyHuckelToFused(
   }
 
   std::set<unsigned int> doneBonds;
+  boost::dynamic_bitset<> doneRings(ringNeighs.size());
   while (1) {
     // std::cerr << "loop: " << pos << " " << curSize << " " << nRingBonds << "
     // "
     //           << doneBonds.size() << std::endl;
-    if (curSize > 4) {
-      break;
-    }
     if (pos == -1) {
       // If a ring system has more than 300 rings and a ring combination search
       // larger than 2 is reached, the calculation becomes exponentially longer,
@@ -441,8 +450,10 @@ void applyHuckelToFused(
     std::transform(comb.begin(), comb.end(), std::back_inserter(curRs),
                    [&fused](const int i) { return fused[i]; });
 
-    // check if the picked subsystem is fused
-    if (ringNeighs.size() && !RingUtils::checkFused(curRs, ringNeighs)) {
+    // check if the picked subsystem is not already all aromatic and is fused
+    if (ringNeighs.size() &&
+        (RingUtils::allAromatic(curRs, isAromatic) ||
+         !RingUtils::checkFused(curRs, ringNeighs, doneRings))) {
       continue;
     }
     std::vector<unsigned int> ringAdjacencies(
@@ -509,10 +520,13 @@ void applyHuckelToFused(
       // avoid duplicates
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
-      std::cerr << "  KEEP! ";
-      std::copy(curRs.begin(), curRs.end(),
-                std::ostream_iterator<int>(std::cerr, " "));
-      std::cerr << std::endl;
+      for (auto ridx : curRs) {
+        isAromatic.set(ridx);
+      }
+      // std::cerr << "  KEEP! ";
+      // std::copy(curRs.begin(), curRs.end(),
+      //           std::ostream_iterator<int>(std::cerr, " "));
+      // std::cerr << std::endl;
 
     }  // end check huckel rule
   }  // end while(1)
