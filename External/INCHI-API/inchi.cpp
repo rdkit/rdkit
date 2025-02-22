@@ -1367,6 +1367,7 @@ RWMol *InchiToMol(const std::string &inchi, ExtraInchiReturnValues &rv,
             BOOST_LOG(rdErrorLog) << "illegal bond type ("
                                   << (unsigned int)inchiAtom->bond_type[b]
                                   << ") in InChI" << std::endl;
+            FreeStructFromINCHI(&inchiOutput);
             delete m;
             return nullptr;
           }
