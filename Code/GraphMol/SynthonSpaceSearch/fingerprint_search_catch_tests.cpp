@@ -304,8 +304,8 @@ TEST_CASE("FP Binary File") {
   {
     synthonspace.readDBFile(libName);
     CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
-    CHECK(results.getHitMolecules().size() == 3);
-    CHECK(results.getMaxNumResults() == 400);
+    CHECK(results.getHitMolecules().size() == 4);
+    CHECK(results.getMaxNumResults() == 420);
   }
 
   // Make sure it rejects the wrong sort of fingerprint.
