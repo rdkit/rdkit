@@ -91,6 +91,9 @@ TEST_CASE("FP Small tests") {
   std::vector<size_t> expNumHits{2, 3, 4};
 
   for (size_t i = 0; i < libNames.size(); i++) {
+    // if (i != 1) {
+    //   continue;
+    // }
     SynthonSpace synthonspace;
     bool cancelled = false;
     synthonspace.readTextFile(libNames[i], cancelled);
@@ -309,4 +312,24 @@ TEST_CASE("FP Binary File") {
   synthonspace.readDBFile(libName);
   fpGen.reset(MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
   CHECK_THROWS(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+}
+
+TEST_CASE("Missing exact match") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/missing_hit.txt";
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  SearchResults results;
+  auto queryMol =
+      "N#Cc1ccc(C(=O)Cn2cc(-c3cn[nH]c3-c3nc4ccccc4[nH]3)nn2)s1"_smiles;
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+  synthonspace.buildSynthonFingerprints(*fpGen);
+  synthonspace.buildAddAndSubstractFingerprints(*fpGen);
+  CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+  CHECK(results.getHitMolecules().size() == 1);
+  CHECK(results.getHitMolecules()[0]->getProp<double>("Similarity") == 1.0);
 }

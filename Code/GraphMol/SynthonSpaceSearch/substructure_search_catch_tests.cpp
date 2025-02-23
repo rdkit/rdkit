@@ -296,7 +296,7 @@ TEST_CASE("Connector Regions") {
     synthonspace.readTextFile(libName, cancelled);
     const auto &rnames = synthonspace.getReactionNames();
     const auto rs = synthonspace.getReaction(rnames.front());
-    CHECK(rs->getConnectorRegions().size() == 30);
+    CHECK(rs->getConnectorRegions().size() == 32);
   }
 }
 

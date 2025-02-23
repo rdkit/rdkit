@@ -24,8 +24,7 @@ namespace SynthonSpaceSearch {
 
 // These are the numbers of bits used in the internal fingerprints.
 // The user is not restricted to these numbers for the search.
-inline static constexpr unsigned int PATT_FP_NUM_BITS =
-    1024;
+inline static constexpr unsigned int PATT_FP_NUM_BITS = 1024;
 
 // This class holds a Synthon that will be part of a SynthonSet.
 class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
@@ -43,7 +42,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   const std::unique_ptr<ExplicitBitVect> &getPattFP() const;
   const std::unique_ptr<ExplicitBitVect> &getFP() const;
   const std::vector<std::shared_ptr<ROMol>> &getConnRegions() const;
-  void setSearchMol(std::unique_ptr<RWMol> mol);
+  void setSearchMol(std::unique_ptr<ROMol> mol);
   void setFP(std::unique_ptr<ExplicitBitVect> fp);
 
   // Writes to/reads from a binary stream.

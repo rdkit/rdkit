@@ -27,6 +27,8 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/ControlCHandler.h>
 
@@ -253,31 +255,14 @@ std::vector<std::unique_ptr<ROMol>> buildSampleMolecules(
   }
   return sampleMolecules;
 }
-
-// transfer information for bonds created by molzip
-void fixSynthonAtomAndBond(const Atom *sampleMolAtom, const Bond *bond,
-                           RWMol &synthCp) {
-  PRECONDITION(sampleMolAtom, "No atom passed in.");
-  PRECONDITION(bond, "No bond passed in.");
-  const auto synthAt =
-      synthCp.getAtomWithIdx(sampleMolAtom->getProp<int>("idx"));
-  for (const auto nbor : synthCp.atomNeighbors(synthAt)) {
-    if (!nbor->getAtomicNum() && nbor->getIsotope() <= MAX_CONNECTOR_NUM) {
-      nbor->setIsAromatic(sampleMolAtom->getIsAromatic());
-      const auto synthBond =
-          synthCp.getBondBetweenAtoms(synthAt->getIdx(), nbor->getIdx());
-      synthBond->setIsAromatic(bond->getIsAromatic());
-      synthBond->setBondType(bond->getBondType());
-    }
-  }
-}
 }  // namespace
 
-void SynthonSet::transferProductBondsToSynthons() {
-  // Each synthon is built into a product and the atoms and bonds tracked.
-  // Properties of the atoms and bonds are mapped back from the products
-  // onto the synthons.  This way, when a query molecule is split up, the
-  // fragments should be consistent with those of the corresponding synthons.
+void SynthonSet::makeSynthonSearchMols() {
+  // Each synthon is built into a product and then split on the
+  // newly formed bonds.  The fragment from the original synthon of
+  // interest is then stored as the synthon searchMol.  This way,
+  // when a query molecule is split up, the fragments should be
+  // consistent with those of the corresponding synthons.
 
   // Synthons are shared, so we need to copy the molecules into a new
   // set that we can fiddle with without upsetting anything else.
@@ -299,46 +284,45 @@ void SynthonSet::transferProductBondsToSynthons() {
     }
   }
 
+  std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
+  for (unsigned int i = 1; i <= MAX_CONNECTOR_NUM; ++i) {
+    dummyLabels.emplace_back(i, i);
+  }
+
   // Now build sets of sample molecules using each synthon set in turn.
   for (size_t synthSetNum = 0; synthSetNum < d_synthons.size(); ++synthSetNum) {
     auto sampleMols =
         buildSampleMolecules(synthonMolCopies, synthSetNum, *this);
     for (size_t j = 0; j < sampleMols.size(); ++j) {
-      std::unique_ptr<RWMol> synthCp(
-          new RWMol(*synthonMolCopies[synthSetNum][j]));
-      // transfer the aromaticity of the atom in the sample molecule to the
-      // corresponding atom in the synthon copy
-      for (const auto &atom : sampleMols[j]->atoms()) {
-        if (const int molNum = atom->getProp<int>("molNum");
-            static_cast<size_t>(molNum) == synthSetNum) {
-          const int atIdx = atom->getProp<int>("idx");
-          synthCp->getAtomWithIdx(atIdx)->setIsAromatic(atom->getIsAromatic());
-        }
-      }
-      // likewise for the bonds, but not all bonds will have the tags,
-      // because some are formed by molzip.
+      std::vector<unsigned int> splitBonds;
       for (const auto &bond : sampleMols[j]->bonds()) {
-        if (bond->hasProp("molNum")) {
-          if (const int molNum = bond->getProp<int>("molNum");
-              static_cast<size_t>(molNum) == synthSetNum) {
-            const int bondIdx = bond->getProp<int>("idx");
-            const auto sbond = synthCp->getBondWithIdx(bondIdx);
-            sbond->setIsAromatic(bond->getIsAromatic());
-            sbond->setBondType(bond->getBondType());
-          }
-        } else {
-          // it came from molzip, so in the synth, one end atom corresponds to
-          // an atom in sampleMol and the other end was a dummy.
-          if (static_cast<size_t>(bond->getBeginAtom()->getProp<int>(
-                  "molNum")) == synthSetNum) {
-            fixSynthonAtomAndBond(bond->getBeginAtom(), bond, *synthCp);
-          } else if (static_cast<size_t>(bond->getEndAtom()->getProp<int>(
-                         "molNum")) == synthSetNum) {
-            fixSynthonAtomAndBond(bond->getEndAtom(), bond, *synthCp);
-          }
+        if (!bond->hasProp("molNum")) {
+          splitBonds.push_back(bond->getIdx());
         }
       }
-      d_synthons[synthSetNum][j].second->setSearchMol(std::move(synthCp));
+
+      const std::unique_ptr<ROMol> fragMol(MolFragmenter::fragmentOnBonds(
+          *sampleMols[j], splitBonds, true, &dummyLabels));
+      std::vector<std::unique_ptr<ROMol>> molFrags;
+      MolOps::getMolFrags(*fragMol, molFrags, false);
+      int fragWeWant = -1;
+      for (size_t i = 0; i < molFrags.size(); ++i) {
+        for (const auto &atom : molFrags[i]->atoms()) {
+          if (atom->hasProp("molNum") &&
+              atom->getProp<unsigned int>("molNum") == synthSetNum) {
+            fragWeWant = i;
+            break;
+          }
+        }
+        if (fragWeWant != -1) {
+          break;
+        }
+      }
+      unsigned int otf;
+      sanitizeMol(*static_cast<RWMol *>(molFrags[fragWeWant].get()), otf,
+                  MolOps::SANITIZE_SYMMRINGS);
+      d_synthons[synthSetNum][j].second->setSearchMol(
+          std::move(molFrags[fragWeWant]));
     }
   }
 }

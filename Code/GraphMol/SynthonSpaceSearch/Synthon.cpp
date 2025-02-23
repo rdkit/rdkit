@@ -94,7 +94,7 @@ const std::vector<std::shared_ptr<ROMol>> &Synthon::getConnRegions() const {
   return d_connRegions;
 }
 
-void Synthon::setSearchMol(std::unique_ptr<RWMol> mol) {
+void Synthon::setSearchMol(std::unique_ptr<ROMol> mol) {
   dp_searchMol = std::move(mol);
   // There are probably extraneous props on the atoms and bonds
   for (auto &atom : dp_searchMol->atoms()) {

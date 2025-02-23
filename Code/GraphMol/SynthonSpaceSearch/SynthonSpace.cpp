@@ -250,7 +250,7 @@ void SynthonSpace::readTextFile(const std::string &inFilename,
   // Do some final processing.
   for (auto &[id, reaction] : d_reactions) {
     reaction->removeEmptySynthonSets();
-    reaction->transferProductBondsToSynthons();
+    reaction->makeSynthonSearchMols();
     reaction->buildConnectorRegions();
     reaction->assignConnectorsUsed();
     d_numProducts += reaction->getNumProducts();

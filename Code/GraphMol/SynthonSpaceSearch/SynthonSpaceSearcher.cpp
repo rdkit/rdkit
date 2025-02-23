@@ -63,6 +63,7 @@ SearchResults SynthonSpaceSearcher::search() {
     return SearchResults{std::move(results), 0UL, timedOut,
                          ControlCHandler::getGotSignal()};
   }
+
   extraSearchSetup(fragments);
   if (ControlCHandler::getGotSignal()) {
     return SearchResults{std::move(results), 0UL, timedOut, true};
