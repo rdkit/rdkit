@@ -362,6 +362,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"testAtomAndBondLabels_2.svg", 3501435082U},
     {"testAtomAndBondLabels_3.svg", 3056536314U},
     {"testAtomAndBondLabels_4.svg", 229616498U},
+    {"testStandardColoursHighlightedAtoms_1.svg", 4265528904U},
+    {"testStandardColoursHighlightedAtoms_2.svg", 2285000572U},
 };
 
 // These PNG hashes aren't completely reliable due to floating point cruft,
@@ -10554,5 +10556,56 @@ TEST_CASE("atom and bond label colors") {
     CHECK(text.find("fill:#191919' >1</text>",
                     text.find("fill:#191919' >1</text>") + 1) !=
           std::string::npos);
+  }
+}
+
+TEST_CASE("standard colours for highlighted atoms") {
+  auto m = "N#Cc1cc(Cl)cc(c1)Oc1c(=O)n(ccc1C(F)(F)F)Cc1n[nH]c(=O)n1C"_smiles;
+  REQUIRE(m);
+  std::vector<int> highlightAtoms{22, 23, 24, 25, 26, 27, 28};
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawMolecule(*m, &highlightAtoms);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testStandardColoursHighlightedAtoms_1.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testStandardColoursHighlightedAtoms_1.svg");
+    const static std::regex atoms(
+        "<text x=.*class='atom-2[3-7]'.*#000000' >[ONH]</text>");
+    std::ptrdiff_t const match_count(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), atoms),
+                      std::sregex_iterator()));
+    CHECK(match_count == 5);
+  }
+  {
+    MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+    drawer.drawOptions().standardColoursForHighlightedAtoms = true;
+    drawer.drawMolecule(*m, &highlightAtoms);
+    drawer.finishDrawing();
+    auto text = drawer.getDrawingText();
+    std::ofstream outs("testStandardColoursHighlightedAtoms_2.svg");
+    outs << text;
+    outs.close();
+    check_file_hash("testStandardColoursHighlightedAtoms_2.svg");
+    const static std::regex ns(
+        "<text x=.*class='atom-2[3-7]'.*#0000FF' >N</text>");
+    std::ptrdiff_t const match_count_ns(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), ns),
+                      std::sregex_iterator()));
+    CHECK(match_count_ns == 3);
+    const static std::regex os(
+        "<text x=.*class='atom-2[3-7]'.*#FF0000' >O</text>");
+    std::ptrdiff_t const match_count_os(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), os),
+                      std::sregex_iterator()));
+    CHECK(match_count_os == 1);
+    const static std::regex hs(
+        "<text x=.*class='atom-2[3-7]'.*#0000FF' >H</text>");
+    std::ptrdiff_t const match_count_hs(
+        std::distance(std::sregex_iterator(text.begin(), text.end(), hs),
+                      std::sregex_iterator()));
+    CHECK(match_count_hs == 1);
   }
 }

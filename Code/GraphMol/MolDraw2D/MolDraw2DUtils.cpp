@@ -258,6 +258,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(drawMolsSameScale);
   PT_OPT_GET(useComplexQueryAtomSymbols);
   PT_OPT_GET(bracketsAroundAtomLists);
+  PT_OPT_GET(standardColoursForHighlightedAtoms);
 
   get_colour_option(pt, "highlightColour", opts.highlightColour);
   get_colour_option(pt, "backgroundColour", opts.backgroundColour);
