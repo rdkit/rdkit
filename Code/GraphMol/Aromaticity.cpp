@@ -383,7 +383,7 @@ void applyHuckelToFused(
 
   std::unordered_set<int> aromRings;
   auto nrings = rdcast<unsigned int>(fused.size());
-  boost::dynamic_bitset<> isAromatic(nrings);
+  boost::dynamic_bitset<> isAromatic(ringNeighs.size());
   INT_VECT curRs;
   curRs.push_back(fused.front());
   int pos = -1;
@@ -520,13 +520,11 @@ void applyHuckelToFused(
       // avoid duplicates
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
-      for (auto ridx : curRs) {
-        isAromatic.set(ridx);
+      if (!ringNeighs.empty() && curSize == 1) {
+        for (auto ridx : curRs) {
+          isAromatic.set(ridx);
+        }
       }
-      // std::cerr << "  KEEP! ";
-      // std::copy(curRs.begin(), curRs.end(),
-      //           std::ostream_iterator<int>(std::cerr, " "));
-      // std::cerr << std::endl;
 
     }  // end check huckel rule
   }  // end while(1)

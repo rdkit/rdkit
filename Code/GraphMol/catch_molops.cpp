@@ -285,18 +285,25 @@ M  END
 }
 
 TEST_CASE("slow massively conjugated systems") {
-  // SECTION("simple") {
-  //   std::string smiles = "C1=C2C3=CC4=C5C3=C3C2=C2C1=CC=CC2=CC3=CC5=CC=C4";
-  //   auto mol = v2::SmilesParse::MolFromSmiles(smiles);
-  //   REQUIRE(mol);
-  //   mol->debugMol(std::cerr);
-  // }
   SECTION("chained C60") {
-    // std::string smiles =
-    //     "C(C#C[C@H]1[C@]23c4c5c6c7c8c9c(c%10c%11c2c2c4c4c%12c5c5c6c6c8c8c%13c9c9c%10c%10c%11c%11c2c2c4c4c%12c%12c5c5c6c8c6c8c%13c9c9c%10c%10c%11c2c2c4c4c%12c5c6c5c8c9c%10c2c45)[C@]713)#C[C@H]1[C@]23c4c5c6c7c8c9c(c%10c%11c2c2c4c4c%12c5c5c6c6c8c8c%13c9c9c%10c%10c%11c%11c2c2c4c4c%12c%12c5c5c6c8c6c8c%13c9c9c%10c%10c%11c2c2c4c4c%12c5c6c5c8c9c%10c2c45)[C@]713";
     std::string smiles =
-        "[C@H]12[C@@H]3c4c5c6c1c1c7c2c2c8c3c3c4c4c9c5c5c6c6c1c1c%10c7c7c2c2c8c8c3c3c4c4c9c9c5c5c6c1c1c6c%10c7c7c2c2c8c3c3c4c4c9c5c1c1c6c7c2c3c41";
+        "C(C#C[C@H]1[C@]23c4c5c6c7c8c9c(c%10c%11c2c2c4c4c%12c5c5c6c6c8c8c%13c9c9c%10c%10c%11c%11c2c2c4c4c%12c%12c5c5c6c8c6c8c%13c9c9c%10c%10c%11c2c2c4c4c%12c5c6c5c8c9c%10c2c45)[C@]713)#C[C@H]1[C@]23c4c5c6c7c8c9c(c%10c%11c2c2c4c4c%12c5c5c6c6c8c8c%13c9c9c%10c%10c%11c%11c2c2c4c4c%12c%12c5c5c6c8c6c8c%13c9c9c%10c%10c%11c2c2c4c4c%12c5c6c5c8c9c%10c2c45)[C@]713";
+    auto start = std::chrono::high_resolution_clock::now();
     auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "MolFromSmiles took " << duration.count() << " seconds."
+              << std::endl;
+    REQUIRE(mol);
+    // mol->debugMol(std::cerr);
+  }
+  SECTION("nanotube") {
+    auto start = std::chrono::high_resolution_clock::now();
+    auto mol = v2::FileParsers::MolFromMolFile("/home/glandrum/nanotube.mol");
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "MolFromSmiles took " << duration.count() << " seconds."
+              << std::endl;
     REQUIRE(mol);
     // mol->debugMol(std::cerr);
   }
