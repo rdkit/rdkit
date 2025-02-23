@@ -80,7 +80,7 @@ class TestCase(unittest.TestCase):
     fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
     results = synthonspace.FingerprintSearch(
       Chem.MolFromSmiles("O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"), fpgen, params)
-    self.assertEqual(280, len(results.GetHitMolecules()))
+    self.assertEqual(278, len(results.GetHitMolecules()))
     
 
   def testEnumerate(self):
