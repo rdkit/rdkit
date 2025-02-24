@@ -316,6 +316,9 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
              // Default is true.
   bool bracketsAroundAtomLists = true;  // If true, puts brackets round atom
                                         // lists in query atoms.
+  bool standardColoursForHighlightedAtoms =
+      false;  // If true, highlighted hetero atoms are drawn in standard colours
+              // rather than black.
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(
