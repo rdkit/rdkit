@@ -6454,14 +6454,9 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer][bug]") {
   SECTION("No atoms") {
     ROMol m;
-
-    auto oss = new std::ostringstream;
-    MaeWriter w(oss);
-    w.write(m);
-    w.flush();
-
-    CHECK(oss->str().empty());
+    CHECK_THROWS_AS(RDKit::MaeWriter::getText(m), FileParseException);
   }
+
   SECTION("No bonds") {
     auto m = "C"_smiles;
     REQUIRE(m);
@@ -6477,34 +6472,23 @@ TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer][bug]") {
     CHECK(mae.find("m_atom[1]") != std::string::npos);
     CHECK(mae.find("m_bond[") == std::string::npos);
   }
-  SECTION("Not kekulizable bonds") {
-    bool debug = false;
-    bool sanitize = false;
-    std::unique_ptr<ROMol> m(SmilesToMol(
-        "c1cncc1", debug, sanitize));  // This SMILES is intentionally bad!
-    REQUIRE(m);
 
-    m->getBondWithIdx(0)->setBondType(Bond::AROMATIC);
+  SECTION("Not kekulizable mols") {
+    v2::SmilesParse::SmilesParserParams p;
+    p.sanitize = false;
+    auto mol = v2::SmilesParse::MolFromSmiles("c1ccnc1", p);
+    REQUIRE(mol);
 
-    auto oss = new std::ostringstream;
-    MaeWriter w(oss);
-    w.write(*m);
-    w.flush();
-
-    CHECK(oss->str().empty());
+    CHECK_THROWS_AS(RDKit::MaeWriter::getText(*mol), KekulizeException);
   }
+
   SECTION("Unsupported bonds") {
     auto m = "CC"_smiles;
     REQUIRE(m);
 
     m->getBondWithIdx(0)->setBondType(Bond::DATIVEONE);
 
-    auto oss = new std::ostringstream;
-    MaeWriter w(oss);
-    w.write(*m);
-    w.flush();
-
-    CHECK(oss->str().empty());
+    CHECK_THROWS_AS(RDKit::MaeWriter::getText(*m), FileParseException);
   }
 }
 
@@ -7156,7 +7140,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit) {};
+        newSgroupCount(newSgroupCountInit){};
 };
 
 void testFragmentation(const FragTest &fragTest) {
