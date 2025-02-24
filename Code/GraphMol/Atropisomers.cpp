@@ -521,7 +521,6 @@ void cleanupAtropisomerStereoGroups(ROMol &mol) {
 void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
   PRECONDITION(conf == nullptr || &(conf->getOwningMol()) == &mol,
                "conformer does not belong to molecule");
-
   std::set<Bond *> bondsToTry;
 
   for (auto bond : mol.bonds()) {
@@ -550,7 +549,11 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
         bondToTry->getBeginAtom()->getTotalDegree() < 2 ||
         bondToTry->getEndAtom()->getTotalDegree() < 2 ||
         bondToTry->getBeginAtom()->getTotalDegree() > 3 ||
-        bondToTry->getEndAtom()->getTotalDegree() > 3) {
+        bondToTry->getEndAtom()->getTotalDegree() > 3 ||
+        bondToTry->getBeginAtom()->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED ||
+        bondToTry->getEndAtom()->getChiralTag() !=
+            Atom::ChiralType::CHI_UNSPECIFIED) {
       continue;
     }
 

@@ -4887,3 +4887,17 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
     CHECK(was_deleted == true);
   }
 }
+
+TEST_CASE("clearPropertyCache") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  CHECK(!m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(!atom->needsUpdatePropertyCache());
+  }
+  m->clearPropertyCache();
+  CHECK(m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(atom->needsUpdatePropertyCache());
+  }
+}
