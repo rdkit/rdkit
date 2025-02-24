@@ -900,7 +900,9 @@ int mmff94AromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
         break;
       }
     }
-    if (isAromRing) narom++;
+    if (isAromRing) {
+      narom++;
+    }
   }
 
   return narom;
