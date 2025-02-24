@@ -289,6 +289,12 @@ class ScsiMolTest {
 TEST_CASE("scsiTests", "scsiTests") {
   SECTION("basics") {
     std::list<ScsiMolTest::ScsiTest> scsiTests{
+        ScsiMolTest::ScsiTest("DnaBadPairs_NoCh.mol", true, true,
+                              ScsrBaseHbondOptionsAuto, 10, 10, 7, 84, 94, 80,
+                              90),
+        ScsiMolTest::ScsiTest("DnaBadPairs.mol", true, true,
+                              ScsrBaseHbondOptionsUseSapAll, 10, 10, 7, 84, 94,
+                              80, 90),
         ScsiMolTest::ScsiTest("DnaTest.mol", true, false,
                               ScsrBaseHbondOptionsUseSapAll, 34, 38, 7, 254,
                               300, 250, 296),
@@ -301,9 +307,6 @@ TEST_CASE("scsiTests", "scsiTests") {
         ScsiMolTest::ScsiTest("KellanRNA.mol", true, true,
                               ScsrBaseHbondOptionsUseSapAll, 40, 45, 6, 299,
                               353, 295, 349),
-        ScsiMolTest::ScsiTest("DnaBadPairs.mol", true, true,
-                              ScsrBaseHbondOptionsUseSapAll, 10, 10, 7, 84, 94,
-                              80, 90),
         ScsiMolTest::ScsiTest("DnaTest2.mol", true, true,
                               ScsrBaseHbondOptionsUseSapAll, 10, 10, 6, 83, 97,
                               79, 93),

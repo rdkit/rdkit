@@ -1204,7 +1204,11 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "scsrTemplateNames",
           &RDKit::v2::FileParsers::MolFromScsrParams::scsrTemplateNames,
-          "If True, the first template name in the Sgroup is used as the Sgroup label");
+          "If True, the first template name in the Sgroup is used as the Sgroup label")
+      .def_readwrite(
+          "scsrBaseHbondOptions",
+          &RDKit::v2::FileParsers::MolFromScsrParams::scsrBaseHbondOptions,
+          "One of ScsrBaseHbondOptionsIgnore, ScsrBaseHbondOptionsUseSapAll(default) , ScsrBaseHbondOptionsUseSapOne, ScsrBaseHbondOptionsAuto");
 
   docString =
       "Construct a molecule (mol) from an SCSR Mol.  The templates are represented by\n\
