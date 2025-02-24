@@ -1017,6 +1017,11 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
                      &RDKit::MolDrawOptions::bracketsAroundAtomLists,
                      "Whether to put brackets round atom lists in query atoms."
                      "  Default is true.")
+      .def_readwrite(
+          "standardColoursForHighlightedAtoms",
+          &RDKit::MolDrawOptions::standardColoursForHighlightedAtoms,
+          "If true, highlighted hetero atoms are drawn in standard colours"
+              " rather than black.  Default=False")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            python::args("self"),
            "method for getting the colour of variable attachment points")
@@ -1458,10 +1463,9 @@ https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_draw
               (python::arg("mol"), python::arg("confId") = -1),
               "Calculate the mean bond length for the molecule.");
   python::def("SetDarkMode",
-              (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
+              (void (*)(RDKit::MolDrawOptions &))&RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDrawOptions object");
-  python::def("SetDarkMode",
-              (void (*)(RDKit::MolDraw2D &)) & RDKit::setDarkMode,
+  python::def("SetDarkMode", (void (*)(RDKit::MolDraw2D &))&RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDraw2D object");
   python::def("SetMonochromeMode", RDKit::setMonochromeMode_helper1,
               (python::arg("options"), python::arg("fgColour"),
