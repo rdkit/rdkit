@@ -324,8 +324,11 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrDataStream(
     }
 
     if (templateMol) {
+      auto tempParams = params;
+      tempParams.sanitize = false;
+      tempParams.removeHs = false;
       FileParserUtils::finishMolProcessing(templateMol, chiralityPossible,
-                                           params);
+                                           tempParams);
     }
 
     tempStr = FileParserUtils::getV3000Line(&inStream, line);
@@ -813,6 +816,12 @@ class MolFromSCSRMolConverter {
     }
     unsigned int mainBeginAtomIdx = bond->getBeginAtomIdx();
     unsigned int mainEndAtomIdx = bond->getEndAtomIdx();
+
+    if (beginHatomConnections.empty() || endHatomConnections.empty()) {
+      // no hydrogen bond sites found, so just add the bond between the
+      // first atoms on both sides
+      return;  // no hydrogen bond sites found, so skip the bond
+    }
     if (beginHatomConnections.size() == 3 && endHatomConnections.size() == 3) {
       // see if the two donor flag lists are
       // complementary
