@@ -335,6 +335,12 @@ bool SubstanceGroupChecks::isValidConnectType(const std::string &type) {
                    type) != SubstanceGroupChecks::sGroupConnectTypes.end();
 }
 
+bool SubstanceGroupChecks::isValidClass(const std::string &sgroupClass) {
+  return std::find(SubstanceGroupChecks::sGroupClasses.begin(),
+                   SubstanceGroupChecks::sGroupClasses.end(),
+                   sgroupClass) != SubstanceGroupChecks::sGroupClasses.end();
+}
+
 bool SubstanceGroupChecks::isSubstanceGroupIdFree(const ROMol &mol,
                                                   unsigned int id) {
   auto match_sgroup = [id](const SubstanceGroup &sg) {
