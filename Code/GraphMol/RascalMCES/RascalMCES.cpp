@@ -331,14 +331,15 @@ void makeLineGraph(const ROMol &mol, std::vector<std::vector<int>> &adjMatrix) {
 
 // make sure that mol1_bond in mol1 and mol2_bond in mol2 are, if aromatic, in
 // at least one ring that is the same.
-bool checkAromaticRings(const ROMol &mol1,
+bool checkRings(const ROMol &mol1,
                         std::vector<std::string> &mol1RingSmiles,
                         int mol1BondIdx, const ROMol &mol2,
                         std::vector<std::string> &mol2RingSmiles,
-                        int mol2BondIdx) {
+                        int mol2BondIdx,
+                        bool aromaticRingsMatchOnly) {
   auto mol1Bond = mol1.getBondWithIdx(mol1BondIdx);
   auto mol2Bond = mol2.getBondWithIdx(mol2BondIdx);
-  if (!mol1Bond->getIsAromatic() || !mol2Bond->getIsAromatic()) {
+  if (aromaticRingsMatchOnly && (!mol1Bond->getIsAromatic() || !mol2Bond->getIsAromatic())) {
     return true;
   }
 
@@ -445,9 +446,12 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
   for (auto i = 0u; i < vtxLabels1.size(); ++i) {
     for (auto j = 0u; j < vtxLabels2.size(); ++j) {
       if (vtxLabels1[i] == vtxLabels2[j]) {
-        if (opts.completeAromaticRings &&
-            !checkAromaticRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles,
-                                j)) {
+        // opts.completeRingsOnly automatically implies opts.completeAromaticRings
+        if (opts.completeRingsOnly &&
+            !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j, false)) {
+          continue;
+        } else if (opts.completeAromaticRings &&
+            !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j, true)) {
           continue;
         }
         if (opts.ringMatchesRingOnly &&

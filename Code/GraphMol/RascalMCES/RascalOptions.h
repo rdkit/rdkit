@@ -24,6 +24,9 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
       true;  // if true, partial aromatic rings won't be returned
   bool ringMatchesRingOnly =
       false;  // if true, ring bonds won't match non-ring bonds
+  bool completeRingsOnly =
+      false;  // if true, only complete rings will be returned. Implies completeAromaticRings
+              // and ringMatchesRingOnly.
   bool exactConnectionsMatch =
       false; /* if true, atoms will only match atoms if they have the same
                 number of explicit connections.  E.g. the central atom of
