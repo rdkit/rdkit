@@ -224,7 +224,7 @@ int bondTypeToOrder(const Bond &bond) {
     case Bond::BondType::DATIVE:
       return 0;
     default:
-      throw FileParseException(
+      throw ValueErrorException(
           "Bond " + std::to_string(bond.getIdx()) +
           " has a type that is not supported by maeparser.");
   }
@@ -492,7 +492,7 @@ void mapBonds(const ROMol &mol, const STR_VECT &propNames,
 std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol &mol, int confId,
                                              const STR_VECT &propNames) {
   if (mol.getNumAtoms() == 0) {
-    throw FileParseException(
+    throw ValueErrorException(
         "molecules without atoms cannot be exported to Maestro files.\n");
   }
 

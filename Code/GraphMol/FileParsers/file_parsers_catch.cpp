@@ -6454,7 +6454,7 @@ TEST_CASE("MaeWriter basic testing", "[mae][MaeWriter][writer]") {
 TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer][bug]") {
   SECTION("No atoms") {
     ROMol m;
-    CHECK_THROWS_AS(RDKit::MaeWriter::getText(m), FileParseException);
+    CHECK_THROWS_AS(RDKit::MaeWriter::getText(m), ValueErrorException);
   }
 
   SECTION("No bonds") {
@@ -6488,7 +6488,7 @@ TEST_CASE("MaeWriter edge case testing", "[mae][MaeWriter][writer][bug]") {
 
     m->getBondWithIdx(0)->setBondType(Bond::DATIVEONE);
 
-    CHECK_THROWS_AS(RDKit::MaeWriter::getText(*m), FileParseException);
+    CHECK_THROWS_AS(RDKit::MaeWriter::getText(*m), ValueErrorException);
   }
 }
 
