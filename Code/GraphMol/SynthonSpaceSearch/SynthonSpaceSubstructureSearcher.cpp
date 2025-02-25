@@ -218,7 +218,7 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
           frag.get(), std::unique_ptr<ExplicitBitVect>(
                           PatternFingerprintMol(*frag, pattFPSize))));
 
-      if (auto fragConnRegs = details::getConnRegion(*frag); fragConnRegs) {
+      if (auto fragConnRegs = details::buildConnRegion(*frag); fragConnRegs) {
         std::vector<std::unique_ptr<ROMol>> splitConnRegs;
         MolOps::getMolFrags(*fragConnRegs, splitConnRegs, false);
         std::vector<std::unique_ptr<ExplicitBitVect>> connRegFPs;

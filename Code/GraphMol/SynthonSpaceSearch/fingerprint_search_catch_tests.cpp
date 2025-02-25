@@ -328,8 +328,46 @@ TEST_CASE("Missing exact match") {
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
   synthonspace.buildSynthonFingerprints(*fpGen);
-  synthonspace.buildAddAndSubstractFingerprints(*fpGen);
   CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
   CHECK(results.getHitMolecules().size() == 1);
   CHECK(results.getHitMolecules()[0]->getProp<double>("Similarity") == 1.0);
 }
+
+#if 0
+// Whilst the code is still under active development, it's convenient to have this
+// in here.  It can come out later.
+TEST_CASE("FP Freedom Space") {
+  // std::string libName =
+  // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";
+  // std::string libName2 =
+  // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
+  std::string libName =
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
+  // libName =
+  // "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(libName);
+  auto m =
+      "C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C"_smiles;
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.4;
+  params.maxHits = 1000;
+  params.fragSimilarityAdjuster = 0.01;
+  params.approxSimilarityAdjuster = 0.05;
+  SearchResults results;
+  results = synthonspace.fingerprintSearch(*m, *fpGen, params);
+  std::cout << "Number of results : " << results.getHitMolecules().size()
+            << std::endl;
+  int i = 0;
+  for (const auto &mol : results.getHitMolecules()) {
+    if (i < 10 || i > params.maxHits - 10) {
+      std::cout << i << " : " << MolToSmiles(*mol) << " : "
+                << mol->getProp<std::string>(common_properties::_Name) << "  "
+                << mol->getProp<double>("Similarity") << std::endl;
+    }
+    ++i;
+  }
+}
+#endif

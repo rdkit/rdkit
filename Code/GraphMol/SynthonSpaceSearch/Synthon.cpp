@@ -158,7 +158,7 @@ void Synthon::readFromDBStream(std::istream &is) {
 void Synthon::finishInitialization() {
   dp_pattFP.reset(PatternFingerprintMol(*dp_searchMol, PATT_FP_NUM_BITS));
   d_connRegions.clear();
-  if (const auto cr = details::getConnRegion(*dp_searchMol); cr) {
+  if (const auto cr = details::buildConnRegion(*dp_searchMol); cr) {
     std::vector<std::unique_ptr<ROMol>> tmpFrags;
     MolOps::getMolFrags(*cr, tmpFrags, false);
     for (auto &f : tmpFrags) {

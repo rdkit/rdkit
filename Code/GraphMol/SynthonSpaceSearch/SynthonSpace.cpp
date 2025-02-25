@@ -424,11 +424,20 @@ void SynthonSpace::buildSynthonFingerprints(
     BOOST_LOG(rdWarningLog)
         << "Building the fingerprints may take some time." << std::endl;
     d_fpType = fpType;
+    unsigned int numBits = 0;
     for (const auto &[id, synthSet] : d_reactions) {
       if (ControlCHandler::getGotSignal()) {
         return;
       }
       synthSet->buildSynthonFingerprints(fpGen);
+      if (!numBits) {
+        numBits = synthSet->getSynthons()
+                      .front()
+                      .front()
+                      .second->getFP()
+                      ->getNumBits();
+      }
+      synthSet->buildAddAndSubtractFPs(fpGen, numBits);
     }
   }
 }
@@ -438,17 +447,6 @@ bool SynthonSpace::hasAddAndSubstractFingerprints() const {
     return false;
   }
   return d_reactions.begin()->second->hasAddAndSubtractFPs();
-}
-
-void SynthonSpace::buildAddAndSubstractFingerprints(
-    const FingerprintGenerator<std::uint64_t> &fpGen) {
-  auto numBits = getFPSize();
-  for (const auto &[id, synthSet] : d_reactions) {
-    if (ControlCHandler::getGotSignal()) {
-      return;
-    }
-    synthSet->buildAddAndSubtractFPs(fpGen, numBits);
-  }
 }
 
 Synthon *SynthonSpace::addSynthonToPool(const std::string &smiles) {
@@ -475,11 +473,6 @@ void convertTextToDBFile(const std::string &inFilename,
   }
   if (fpGen) {
     synthSpace.buildSynthonFingerprints(*fpGen);
-    if (ControlCHandler::getGotSignal()) {
-      cancelled = true;
-      return;
-    }
-    synthSpace.buildAddAndSubstractFingerprints(*fpGen);
     if (ControlCHandler::getGotSignal()) {
       cancelled = true;
       return;

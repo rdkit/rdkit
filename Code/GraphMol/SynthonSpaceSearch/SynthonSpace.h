@@ -101,6 +101,10 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
 class Synthon;
 
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
+  friend class SynthonSet;
+  friend class SynthonSpaceSearcher;
+  friend class SynthonSpaceFingerprintSearcher;
+
  public:
   explicit SynthonSpace() = default;
   ~SynthonSpace() = default;
@@ -239,22 +243,21 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   void writeEnumeratedFile(const std::string &outFilename) const;
 
-  // Below here are functions that have to be in the
-  // public interface, but aren't intended to be used
-  // by the users.
-  unsigned int getMaxNumSynthons() const { return d_maxNumSynthons; }
-
-  bool hasFingerprints() const;
-  // Create the fingerprints for the synthons ready for fingerprint searches.
-  // Will be done by the fingerprint search if not done ahead of time.
+  /*!
+   * Create the fingerprints for the synthons ready for fingerprint searches.
+   * Will be done by the fingerprint search if not done ahead of time.
+   *
+   * @param fpGen: a fingerprint generator of the appropriate type
+   */
   void buildSynthonFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
 
+ protected:
+  unsigned int getMaxNumSynthons() const { return d_maxNumSynthons; }
+
+  bool hasFingerprints() const;
+
   bool hasAddAndSubstractFingerprints() const;
-  // Create the add and substract fingerprints for the SynthonSets.
-  // Will be done by the fingerprint search if not done ahead of time.
-  void buildAddAndSubstractFingerprints(
-      const FingerprintGenerator<std::uint64_t> &fpGen);
 
   // Take the SMILES for a Synthon and if it's not in
   // d_synthonPool make it and add it.  If it is in the pool,
