@@ -226,6 +226,7 @@ RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetAtoms;
 RDKIT_RDGENERAL_EXPORT extern const std::string _rgroupTargetBonds;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactantAtomIdx;
 RDKIT_RDGENERAL_EXPORT extern const std::string reactionMapNum;
+RDKIT_RDGENERAL_EXPORT extern const std::string reactantIdx;
 
 // SLN
 RDKIT_RDGENERAL_EXPORT extern const std::string

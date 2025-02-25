@@ -304,10 +304,10 @@ void constructBRICSBondTypes(std::vector<FragmenterBondType> &defs) {
 }
 
 namespace {
-boost::uint64_t nextBitCombo(boost::uint64_t v) {
+std::uint64_t nextBitCombo(std::uint64_t v) {
   // code from:
   // http://graphics.stanford.edu/~seander/bithacks.html#NextBitPermutation
-  boost::uint64_t t = (v | (v - 1)) + 1;
+  std::uint64_t t = (v | (v - 1)) + 1;
   return t | ((((t & -t) / (v & -v)) >> 1) - 1);
 }
 }  // namespace
@@ -318,7 +318,7 @@ void fragmentOnSomeBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
     std::vector<std::vector<unsigned int>> *nCutsPerAtom) {
-  PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
+  PRECONDITION((!dummyLabels || dummyLabels->size() >= bondIndices.size()),
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");
@@ -329,8 +329,8 @@ void fragmentOnSomeBonds(
     return;
   }
 
-  boost::uint64_t state = (0x1L << maxToCut) - 1;
-  boost::uint64_t stop = 0x1L << bondIndices.size();
+  std::uint64_t state = (0x1L << maxToCut) - 1;
+  std::uint64_t stop = 0x1L << bondIndices.size();
   std::vector<unsigned int> fragmentHere(maxToCut);
   std::vector<std::pair<unsigned int, unsigned int>> *dummyLabelsHere = nullptr;
   if (dummyLabels) {
@@ -389,15 +389,10 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
       }
     }
   } else {
-    ROMol::OEDGE_ITER beg, end;
-    boost::tie(beg, end) = mol.getAtomBonds(oAt);
-    while (beg != end) {
-      const Bond *obond = mol[*beg];
-      ++beg;
-      if (obond == bond) {
-        continue;
+    for (auto obond : mol.atomBonds(oAt)) {
+      if (obond != bond) {
+        newOrder.push_back(obond->getIdx());
       }
-      newOrder.push_back(obond->getIdx());
     }
   }
   newOrder.push_back(bond->getIdx());
@@ -422,9 +417,7 @@ std::vector<std::pair<Bond *, std::vector<int>>> getNbrBondStereo(
   const auto bgn = bnd->getBeginAtom();
   const auto end = bnd->getEndAtom();
   for (const auto *atom : {bgn, end}) {
-    ROMol::OEDGE_ITER a1, a2;
-    for (boost::tie(a1, a2) = mol.getAtomBonds(atom); a1 != a2; ++a1) {
-      Bond *obnd = mol[*a1];
+    for (auto obnd : mol.atomBonds(atom)) {
       if (obnd->getIdx() != bnd->getIdx() && !obnd->getStereoAtoms().empty()) {
         res.emplace_back(obnd, obnd->getStereoAtoms());
       }
@@ -440,7 +433,7 @@ ROMol *fragmentOnBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> *dummyLabels,
     const std::vector<Bond::BondType> *bondTypes,
     std::vector<unsigned int> *nCutsPerAtom) {
-  PRECONDITION((!dummyLabels || dummyLabels->size() == bondIndices.size()),
+  PRECONDITION((!dummyLabels || dummyLabels->size() >= bondIndices.size()),
                "bad dummyLabel vector");
   PRECONDITION((!bondTypes || bondTypes->size() == bondIndices.size()),
                "bad bondType vector");

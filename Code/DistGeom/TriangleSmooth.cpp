@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,61 +15,52 @@ bool triangleSmoothBounds(BoundsMatPtr boundsMat, double tol) {
   return triangleSmoothBounds(boundsMat.get(), tol);
 }
 bool triangleSmoothBounds(BoundsMatrix *boundsMat, double tol) {
-  int npt = boundsMat->numRows();
-  int i, j, k;
-  double Uik, Lik, Ukj, sumUikUkj, diffLikUjk, diffLjkUik;
-
-  for (k = 0; k < npt; k++) {
-    for (i = 0; i < npt - 1; i++) {
+  auto npt = boundsMat->numRows();
+  for (auto k = 0u; k < npt; k++) {
+    for (auto i = 0u; i < npt - 1; i++) {
       if (i == k) {
         continue;
       }
-      Uik = boundsMat->getUpperBound(i, k);
-      Lik = boundsMat->getLowerBound(i, k);
-      for (j = i + 1; j < npt; j++) {
+      auto ii = i;
+      auto ik = k;
+      if (ii > ik) {
+        std::swap(ii, ik);
+      }
+
+      const auto Uik = boundsMat->getValUnchecked(ii, ik);  // upper bound
+      const auto Lik = boundsMat->getValUnchecked(ik, ii);  // lower bound
+      for (auto j = i + 1; j < npt; j++) {
         if (j == k) {
           continue;
         }
-        Ukj = boundsMat->getUpperBound(k, j);
-        sumUikUkj = Uik + Ukj;
-        if (boundsMat->getUpperBound(i, j) > sumUikUkj) {
-          boundsMat->setUpperBound(i, j, sumUikUkj);
+        auto jj = j;
+        auto jk = k;
+        if (jj > jk) {
+          std::swap(jj, jk);
+        }
+        const auto Ukj = boundsMat->getValUnchecked(jj, jk);  // upper bound
+        const auto sumUikUkj = Uik + Ukj;
+        if (boundsMat->getValUnchecked(i, j) > sumUikUkj) {
+          // adjust the upper bound
+          boundsMat->setValUnchecked(i, j, sumUikUkj);
         }
 
-        diffLikUjk = Lik - Ukj;
-        diffLjkUik = boundsMat->getLowerBound(j, k) - Uik;
-        if (boundsMat->getLowerBound(i, j) < diffLikUjk) {
-          boundsMat->setLowerBound(i, j, diffLikUjk);
-        } else if (boundsMat->getLowerBound(i, j) < diffLjkUik) {
-          boundsMat->setLowerBound(i, j, diffLjkUik);
+        const auto diffLikUjk = Lik - Ukj;
+        const auto diffLjkUik = boundsMat->getValUnchecked(jk, jj) - Uik;
+        if (boundsMat->getValUnchecked(j, i) < diffLikUjk) {
+          // adjust the lower bound
+          boundsMat->setValUnchecked(j, i, diffLikUjk);
+        } else if (boundsMat->getValUnchecked(j, i) < diffLjkUik) {
+          // adjust the lower bound
+          boundsMat->setValUnchecked(j, i, diffLjkUik);
         }
-        double lBound = boundsMat->getLowerBound(i, j);
-        double uBound = boundsMat->getUpperBound(i, j);
-        // std::cerr << "     smooth: " << i << "-" << j << "(" << k
-        //           << "): " << boundsMat->getLowerBound(i, j) << " "
-        //           << boundsMat->getUpperBound(i, j) << " lik: " << Lik
-        //           << " uik: " << Uik
-        //           << " lkj: " << boundsMat->getLowerBound(j, k)
-        //           << " ukj: " << Ukj << "\n";
-
+        const auto lBound = boundsMat->getValUnchecked(j, i);
+        const auto uBound = boundsMat->getValUnchecked(i, j);
         if (tol > 0. && (lBound - uBound) / lBound > 0. &&
             (lBound - uBound) / lBound < tol) {
-          boundsMat->setUpperBound(i, j, lBound);
-          uBound = lBound;
-        }
-        if (lBound - uBound > 0.) {
-          // std::cerr << std::endl;
-          // for (unsigned int ii = 0; ii < npt; ++ii) {
-          //   for (unsigned int jj = 0; jj < npt; ++jj) {
-          //     std::cerr << " " << std::setprecision(3)
-          //               << boundsMat->getVal(ii, jj);
-          //   }
-          //   std::cerr << std::endl;
-          // }
-          // std::cerr << std::endl;
-          // std::cerr << " Fail: " << i << "-" << j << ": "
-          //           << boundsMat->getLowerBound(i, j) << " "
-          //           << boundsMat->getUpperBound(i, j) << "\n";
+          // adjust the upper bound
+          boundsMat->setValUnchecked(i, j, lBound);
+        } else if (lBound - uBound > 0.) {
           return false;
         }
       }

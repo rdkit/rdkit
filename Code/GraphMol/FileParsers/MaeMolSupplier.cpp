@@ -467,7 +467,7 @@ void build_mol(RWMol &mol, mae::Block &structure_block, bool sanitize,
       unsigned int failedOp = 0;
       MolOps::sanitizeMol(mol, failedOp, MolOps::SANITIZE_CLEANUP);
       MolOps::detectBondStereochemistry(mol);
-      MolOps::removeHs(mol, false, false);
+      MolOps::removeHs(mol);
     } else {
       MolOps::sanitizeMol(mol);
       MolOps::detectBondStereochemistry(mol, replaceExistingTags);

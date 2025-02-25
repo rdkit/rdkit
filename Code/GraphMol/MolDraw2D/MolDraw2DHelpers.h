@@ -22,8 +22,18 @@ namespace RDKit {
 
 namespace MolDraw2D_detail {
 // for aligning the drawing of text to the passed in coords.
-enum class OrientType : unsigned char { C = 0, N, E, S, W };
-enum class TextAlignType : unsigned char { MIDDLE = 0, START, END };
+enum class OrientType : unsigned char {
+  C = 0,
+  N,
+  E,
+  S,
+  W
+};
+enum class TextAlignType : unsigned char {
+  MIDDLE = 0,
+  START,
+  END
+};
 }  // namespace MolDraw2D_detail
 
 struct DrawColour {
@@ -143,7 +153,10 @@ inline void assignBWPalette(ColourPalette &palette) {
   palette[-1] = DrawColour(0, 0, 0);
 };
 
-enum class MultiColourHighlightStyle { CIRCLEANDLINE, LASSO };
+enum class MultiColourHighlightStyle {
+  CIRCLEANDLINE,
+  LASSO
+};
 
 struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
   bool atomLabelDeuteriumTritium =
@@ -194,6 +207,8 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
                                      // mean bond length
   double padding =
       0.05;  // fraction of empty space to leave around the molecule
+  double componentPadding = 0.0;  // fraction of empty space to leave around
+                                  // each component in a reaction drawing
   double additionalAtomLabelPadding = 0.0;  // additional padding to leave
                                             // around atom labels. Expressed as
                                             // a fraction of the font size.
@@ -206,7 +221,11 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
       1.0};  // color to be used for the symbols and arrows in reactions
   DrawColour annotationColour{0.0, 0.0, 0.0,
                               1.0};  // color to be used for annotations
-  double bondLineWidth = 2.0;        // default line width when drawing bonds
+  DrawColour atomNoteColour{
+      0.0, 0.0, 0.0, 1.0};  // color to be used for atom indices and notes
+  DrawColour bondNoteColour{
+      0.5, 0.5, 1.0, 1.0};      // color to be used for bond indices and notes
+  double bondLineWidth = 2.0;   // default line width when drawing bonds
   bool scaleBondWidth = false;  // whether to apply scale() to the bond width
   bool scaleHighlightBondWidth = true;   // likewise with bond highlights.
   int highlightBondWidthMultiplier = 8;  // what to multiply standard bond width
@@ -295,6 +314,11 @@ struct RDKIT_MOLDRAW2D_EXPORT MolDrawOptions {
              // with complex query symbols A, Q, X, M, optionally followed
              // by H if hydrogen is included (except for AH, which stays *).
              // Default is true.
+  bool bracketsAroundAtomLists = true;  // If true, puts brackets round atom
+                                        // lists in query atoms.
+  bool standardColoursForHighlightedAtoms =
+      false;  // If true, highlighted hetero atoms are drawn in standard colours
+              // rather than black.
 
   MolDrawOptions() {
     highlightColourPalette.emplace_back(

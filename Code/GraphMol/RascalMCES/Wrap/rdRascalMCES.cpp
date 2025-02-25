@@ -220,7 +220,16 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
                      &RDKit::RascalMCES::RascalOptions::ignoreAtomAromaticity,
                      "If True, matches atoms solely on atomic number."
                      "  If False, will treat aromatic and aliphatic atoms"
-                     " as different.  Default=True.");
+                     " as different.  Default=True.")
+      .def_readwrite("minCliqueSize",
+                     &RDKit::RascalMCES::RascalOptions::minCliqueSize,
+                     "Normally, the minimum clique size is specified"
+                     " via the similarityThreshold.  Sometimes it's"
+                     " more convenient to specify it directly.  If this"
+                     " is > 0, it will over-ride the"
+                     " similarityThreshold."
+                     "  Note that this refers to the"
+                     " minimum number of BONDS in the MCES. Default=0.");
 
   docString =
       "Find one or more MCESs between the 2 molecules given.  Returns a list of "

@@ -1,5 +1,9 @@
 # Release_2025.03.1
 (Changes relative to Release_2024.09.1)
+## Backwards incompatible changes
+- The order of combinations returned by Chem.Pharm2D.Utils.GetUniqueCombinations has changed to be in numerical order. The combinations themselves are unchanged.
+- The MaeWriter class will now throw when attempting to write an empty Mol or when there are errors during the writing (e.g. kekulization errors). Previous behavior
+was to log an error and return an empty string.
 
 ## Acknowledgements
 (Note: I'm no longer attempting to manually curate names. If you would like to
@@ -10,6 +14,7 @@ GitHub)
 ## Highlights
 
 ## Backwards incompatible changes
+- The functions getImplicitValence(), getNumImplicitHs(), getDegree(), and getTotalDegree(), now return 0 for atoms that are not associated with molecules (previously they threw exceptions)
 - SMILES and RGroupDecomp JSON parsers were moved to their own translation units.
 This will require C++ code using those JSON parsers to be added #include directives
 for GraphMol/SmilesParse/SmilesJSONParsers.h and
@@ -17,8 +22,8 @@ GraphMol/RGroupDecomposition/RGroupDecompJSONParsers.h, respectively.
 - Replaced enums in the signatures of MolToCXSmiles and updateCXSmilesFieldsFromJSON
 with the underlying types. This may require existing C++ code using those
 functions to be updated accordingly.
-
 - HasPropWithValueQueryBase used RDKit::Dict::Pair to return data used for serializing object in a molecule  pickle.  This has been changed to RDKit::PairHolder which automatically manages memory.
+- The colors of annotations on atoms and bonds are now controlled by the drawing options `atomNoteColour` and `bondNoteColour` instead of the general `annotationColour`.
 
 ## New Features and Enhancements:
 
@@ -34,6 +39,7 @@ functions to be updated accordingly.
 
 
 ## Deprecated code (to be removed in a future release):
+- The functions Atom::getImplicitValence() and Atom::getExplicitValence() are deprecated, please use Atom::getValence(Atom::ValenceType::IMPLICIT) or Atom::getValence(Atom::ValenceType::EXPLICIT) instead
 
 # Release_2024.09.1
 (Changes relative to Release_2024.03.1)
