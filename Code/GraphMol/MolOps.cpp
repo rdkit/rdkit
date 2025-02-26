@@ -214,7 +214,7 @@ bool isHypervalentNonMetal(Atom *atom) {
   // FileParsers/file_parsers_catch.cpp.
   const auto &otherValens =
       PeriodicTable::getTable()->getValenceList(effAtomicNum);
-  if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+  if (otherValens.back() > 0 && ev > otherValens.back()) {
     return true;
   }
 

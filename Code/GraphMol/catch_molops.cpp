@@ -283,3 +283,31 @@ M  END
     CHECK_NOTHROW(MolOps::setTerminalAtomCoords(*m, 3, 0));
   }
 }
+
+TEST_CASE("cleanuporganometallics and carbon") {
+  std::vector<std::pair<std::string,
+                        std::vector<std::pair<unsigned int, unsigned int>>>>
+      data = {
+          {"C=[CH2][Fe]", {{1, 2}}},  // this is a silly example, but it's the
+                                      // simplest one I could think of
+          {"[CH2]1=[CH2]2.[Fe]12", {{1, 2}, {0, 2}}},
+          {"[CH2]1=[CH]2-[CH2-]3.[Fe]123", {{1, 3}, {0, 3}, {2, 3}}},
+          {"[CH]12=[CH]3[CH]4=[CH]5[CH-]16.[Fe]23456",
+           {{0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}}},
+          {"[Fe]12.[CH2]1=[CH2]2",
+           {{1, 0}, {2, 0}}},  // reverse the original atom order
+
+      };
+  for (const auto &pr : data) {
+    INFO(pr.first);
+    auto mol = SmilesToMol(pr.first);
+    REQUIRE(mol);
+    for (const auto &pair : pr.second) {
+      REQUIRE(mol->getBondBetweenAtoms(pair.first, pair.second) != nullptr);
+      CHECK(mol->getBondBetweenAtoms(pair.first, pair.second)
+                ->getBeginAtomIdx() == pair.first);
+      CHECK(mol->getBondBetweenAtoms(pair.first, pair.second)->getBondType() ==
+            Bond::BondType::DATIVE);
+    }
+  }
+}
