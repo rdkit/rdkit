@@ -8,12 +8,12 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <random>
 #include <regex>
 #include <set>
-#include <shared_mutex>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -35,8 +35,6 @@
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
-
-std::shared_mutex SHARED_MUTEX;
 
 // Stuff for formatting integers with spaces every 3 digits.
 template <class Char>
@@ -73,7 +71,13 @@ std::vector<std::string> SynthonSpace::getReactionNames() const {
 
 const std::shared_ptr<SynthonSet> SynthonSpace::getReaction(
     std::string reactionName) {
-  if (const auto &it = d_reactions.find(reactionName);
+  std::pair<std::string, std::shared_ptr<SynthonSet>> tmp =
+      std::make_pair(reactionName, std::shared_ptr<SynthonSet>());
+  if (const auto &it = std::lower_bound(
+          d_reactions.begin(), d_reactions.end(), tmp,
+          [](const std::pair<std::string, std::shared_ptr<SynthonSet>> &p1,
+             const std::pair<std::string, std::shared_ptr<SynthonSet>> &p2)
+              -> bool { return p1.first < p2.first; });
       it != d_reactions.end()) {
     return it->second;
   }
@@ -246,12 +250,8 @@ void SynthonSpace::readTextFile(const std::string &inFilename,
     if (nextSynthon.empty()) {
       continue;
     }
-    if (auto it = d_reactions.find(nextSynthon[3]); it == d_reactions.end()) {
-      d_reactions.insert(std::make_pair(
-          nextSynthon[3], std::make_unique<SynthonSet>(nextSynthon[3])));
-    }
+    auto currReaction = addReactionToPool(nextSynthon[3]);
     fixConnectors(nextSynthon[0]);
-    auto &currReaction = d_reactions[nextSynthon[3]];
     auto synthonNum = getSynthonNum(format, nextSynthon[2]);
     auto newSynth = addSynthonToPool(nextSynthon[0]);
     currReaction->addSynthon(synthonNum, newSynth, nextSynthon[1]);
@@ -320,9 +320,10 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
 namespace {
 // Read the given synthons into array.  synthons is expected to be
 // large enough to accept everything.
-void readSynthons(const size_t startNum, size_t endNum, const char *fileMap,
-                  const std::vector<std::uint64_t> &synthonPos,
-                  std::vector<std::unique_ptr<Synthon>> &synthons) {
+void readSynthons(
+    const size_t startNum, size_t endNum, const char *fileMap,
+    const std::vector<std::uint64_t> &synthonPos,
+    std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> &synthons) {
   if (endNum > synthons.size()) {
     endNum = synthons.size();
   }
@@ -330,16 +331,19 @@ void readSynthons(const size_t startNum, size_t endNum, const char *fileMap,
     std::string view(fileMap + synthonPos[i],
                      synthonPos[i + 1] - synthonPos[i]);
     std::istringstream is(view, std::ios::binary);
-    synthons[i] = std::make_unique<Synthon>();
-    synthons[i]->readFromDBStream(is);
+    auto tmp =
+        std::make_pair(std::string(), std::unique_ptr<Synthon>(new Synthon));
+    tmp.second->readFromDBStream(is);
+    tmp.first = tmp.second->getSmiles();
+    synthons[i] = std::move(tmp);
   }
 }
 
-void threadedReadSynthons(const char *fileMap,
-                          const std::vector<std::uint64_t> &synthonPos,
-                          unsigned int numThreads,
-                          std::vector<std::unique_ptr<Synthon>> &synthons) {
-  std::cout << "reading on " << numThreads << " threads" << std::endl;
+void threadedReadSynthons(
+    const char *fileMap, const std::vector<std::uint64_t> &synthonPos,
+    unsigned int numThreads,
+    std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> &synthons) {
+  std::cout << "reading synthons on " << numThreads << " threads" << std::endl;
   size_t eachThread = 1 + (synthonPos.size() / numThreads);
   size_t start = 0;
   std::vector<std::thread> threads;
@@ -353,10 +357,12 @@ void threadedReadSynthons(const char *fileMap,
   }
 }
 
-void readReactions(const size_t startNum, size_t endNum, const char *fileMap,
-                   const std::vector<std::uint64_t> &reactionPos,
-                   const SynthonSpace &space, std::uint32_t version,
-                   std::vector<std::shared_ptr<SynthonSet>> &reactions) {
+void readReactions(
+    const size_t startNum, size_t endNum, const char *fileMap,
+    const std::vector<std::uint64_t> &reactionPos, const SynthonSpace &space,
+    std::uint32_t version,
+    std::vector<std::pair<std::string, std::shared_ptr<SynthonSet>>>
+        &reactions) {
   if (endNum > reactions.size()) {
     endNum = reactions.size();
   }
@@ -364,10 +370,32 @@ void readReactions(const size_t startNum, size_t endNum, const char *fileMap,
     std::string view(fileMap + reactionPos[i],
                      reactionPos[i + 1] - reactionPos[i]);
     std::istringstream is(view, std::ios::binary);
-    reactions[i] = std::make_shared<SynthonSet>();
-    reactions[i]->readFromDBStream(is, space, version);
+    reactions[i] =
+        std::make_pair(std::string(), std::make_shared<SynthonSet>());
+    reactions[i].second->readFromDBStream(is, space, version);
+    reactions[i].first = reactions[i].second->getId();
   }
 }
+
+void threadedReadReactions(
+    const char *fileMap, const std::vector<std::uint64_t> &reactionPos,
+    unsigned int numThreads, const SynthonSpace &space, std::uint32_t version,
+    std::vector<std::pair<std::string, std::shared_ptr<SynthonSet>>>
+        &reactions) {
+  std::cout << "reading reactions on " << numThreads << " threads" << std::endl;
+  size_t eachThread = 1 + (reactionPos.size() / numThreads);
+  size_t start = 0;
+  std::vector<std::thread> threads;
+  for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
+    threads.push_back(std::thread(
+        readReactions, start, start + eachThread, fileMap,
+        std::ref(reactionPos), std::ref(space), version, std::ref(reactions)));
+  }
+  for (auto &t : threads) {
+    t.join();
+  }
+}
+
 }  // namespace
 
 void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
@@ -432,34 +460,56 @@ void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
   // put the end of the last synthon and reaction into their respective arrays,
   synthonPos.push_back(reactionPos[0]);
   reactionPos.push_back(mapSize);
-  std::vector<std::unique_ptr<Synthon>> synthons(numSynthons);
+  d_synthonPool.resize(numSynthons);
 #if RDK_BUILD_THREADSAFE_SSS
   if (numThreadsToUse > 1) {
-    threadedReadSynthons(fileMap, synthonPos, numThreadsToUse, synthons);
+    threadedReadSynthons(fileMap, synthonPos, numThreadsToUse, d_synthonPool);
   } else {
-    readSynthons(0, numSynthons, fileMap, synthonPos, synthons);
+    readSynthons(0, numSynthons, fileMap, synthonPos, d_synthonPool);
   }
 #else
-  readSynthons(0, numSynthons, fileMap, synthonPos, synthons);
+  readSynthons(0, numSynthons, fileMap, synthonPos, d_synthonPool);
 #endif
-
-  // now copy the synthons into the pool.
-  for (std::uint64_t i = 0; i < numSynthons; i++) {
-    d_synthonPool.insert(
-        std::make_pair(synthons[i]->getSmiles(), std::move(synthons[i])));
+  if (!std::is_sorted(
+          d_synthonPool.begin(), d_synthonPool.end(),
+          [](const std::pair<std::string, std::unique_ptr<Synthon>> &p1,
+             const std::pair<std::string, std::unique_ptr<Synthon>> &p2)
+              -> bool { return p1.first < p2.first; })) {
+    std::sort(
+        d_synthonPool.begin(), d_synthonPool.end(),
+        [](const std::pair<std::string, std::unique_ptr<Synthon>> &p1,
+           const std::pair<std::string, std::unique_ptr<Synthon>> &p2) -> bool {
+          return p1.first < p2.first;
+        });
   }
-  synthons.clear();
-
-  std::vector<std::shared_ptr<SynthonSet>> reactions(numReactions);
+  d_reactions.resize(numReactions);
+#if RDK_BUILD_THREADSAFE_SSS
+  if (numThreadsToUse > 1) {
+    threadedReadReactions(fileMap, reactionPos, numThreadsToUse, *this,
+                          d_fileMajorVersion, d_reactions);
+  } else {
+    readReactions(0, numReactions, fileMap, reactionPos, *this,
+                  d_fileMajorVersion, d_reactions);
+  }
+#else
   readReactions(0, numReactions, fileMap, reactionPos, *this,
-                d_fileMajorVersion, reactions);
-  for (std::uint64_t i = 0; i < numReactions; ++i) {
-    d_reactions.insert(std::make_pair(reactions[i]->getId(), reactions[i]));
-    if (reactions[i]->getSynthons().size() > d_maxNumSynthons) {
-      d_maxNumSynthons = reactions[i]->getSynthons().size();
+                d_fileMajorVersion, d_reactions);
+#endif
+  if (!std::is_sorted(
+          d_reactions.begin(), d_reactions.end(),
+          [](const std::pair<std::string, std::shared_ptr<SynthonSet>> &p1,
+             const std::pair<std::string, std::shared_ptr<SynthonSet>> &p2)
+              -> bool { return p1.first < p2.first; })) {
+    std::sort(d_reactions.begin(), d_reactions.end(),
+              [](const std::pair<std::string, std::shared_ptr<SynthonSet>> &p1,
+                 const std::pair<std::string, std::shared_ptr<SynthonSet>> &p2)
+                  -> bool { return p1.first < p2.first; });
+  }
+  for (const auto &[id, reaction] : d_reactions) {
+    if (reaction->getSynthons().size() > d_maxNumSynthons) {
+      d_maxNumSynthons = reaction->getSynthons().size();
     }
   }
-  reactions.clear();
   details::unmapMemory(fileMap, mapSize);
 }
 
@@ -536,20 +586,51 @@ void SynthonSpace::buildAddAndSubstractFingerprints(
 }
 
 Synthon *SynthonSpace::addSynthonToPool(const std::string &smiles) {
-  Synthon *newSynth = nullptr;
-  if (auto it = d_synthonPool.find(smiles); it == d_synthonPool.end()) {
-    auto [new_it, success] = d_synthonPool.insert(
-        std::make_pair(smiles, std::make_unique<Synthon>(Synthon(smiles))));
-    newSynth = new_it->second.get();
+  // Clearly this is going to be inefficient, but it won't be done
+  // except when reading a Text file which should only be done
+  // occasionally, when converting a new database to binary.
+  auto tmp = std::make_pair(smiles, std::unique_ptr<Synthon>());
+  if (auto it = std::lower_bound(
+          d_synthonPool.begin(), d_synthonPool.end(), tmp,
+          [](const std::pair<std::string, std::unique_ptr<Synthon>> &p1,
+             const std::pair<std::string, std::unique_ptr<Synthon>> &p2)
+              -> bool { return p1.first < p2.first; });
+      it != d_synthonPool.end() && it->first == smiles) {
+    return it->second.get();
   } else {
-    newSynth = it->second.get();
+    tmp.second.reset(new Synthon(smiles));
+    auto retVal = tmp.second.get();
+    d_synthonPool.insert(it, std::move(tmp));
+    return retVal;
   }
-  return newSynth;
+}
+
+std::shared_ptr<SynthonSet> SynthonSpace::addReactionToPool(
+    const std::string &reactionName) {
+  std::pair<std::string, std::shared_ptr<SynthonSet>> tmp =
+      std::make_pair(reactionName, std::shared_ptr<SynthonSet>());
+  if (const auto &it = std::lower_bound(
+          d_reactions.begin(), d_reactions.end(), tmp,
+          [](const std::pair<std::string, std::shared_ptr<SynthonSet>> &p1,
+             const std::pair<std::string, std::shared_ptr<SynthonSet>> &p2)
+              -> bool { return p1.first < p2.first; });
+      it != d_reactions.end() && it->first == reactionName) {
+    return it->second;
+  } else {
+    tmp.second.reset(new SynthonSet(reactionName));
+    d_reactions.insert(it, tmp);
+    return tmp.second;
+  }
 }
 
 Synthon *SynthonSpace::getSynthonFromPool(const std::string &smiles) const {
-  std::shared_lock lock(SHARED_MUTEX);
-  if (auto it = d_synthonPool.find(smiles); it != d_synthonPool.end()) {
+  auto tmp = std::make_pair(smiles, std::unique_ptr<Synthon>());
+  if (auto it = std::lower_bound(
+          d_synthonPool.begin(), d_synthonPool.end(), tmp,
+          [](const std::pair<std::string, std::unique_ptr<Synthon>> &p1,
+             const std::pair<std::string, std::unique_ptr<Synthon>> &p2)
+              -> bool { return p1.first < p2.first; });
+      it != d_synthonPool.end()) {
     return it->second.get();
   }
   return nullptr;

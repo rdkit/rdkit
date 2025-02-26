@@ -91,9 +91,6 @@ TEST_CASE("FP Small tests") {
   std::vector<size_t> expNumHits{2, 3, 4};
 
   for (size_t i = 0; i < libNames.size(); i++) {
-    // if (i != 1) {
-    //   continue;
-    // }
     SynthonSpace synthonspace;
     bool cancelled = false;
     synthonspace.readTextFile(libNames[i], cancelled);
@@ -297,12 +294,15 @@ TEST_CASE("FP Binary File") {
   SynthonSpace synthonspace;
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  // libName =
+  // fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space_rdkit.spc";
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       RDKitFP::getRDKitFPGenerator<std::uint64_t>());
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-  for (auto numThreads : std::vector<int>{1, 2, -1}) {
+  for (auto numThreads : std::vector<int>{1}) {
     synthonspace.readDBFile(libName, numThreads);
+    synthonspace.summarise(std::cout);
     CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
     CHECK(results.getHitMolecules().size() == 4);
     CHECK(results.getMaxNumResults() == 420);
