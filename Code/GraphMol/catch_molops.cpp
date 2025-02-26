@@ -285,29 +285,55 @@ M  END
 }
 
 TEST_CASE("cleanuporganometallics and carbon") {
-  std::vector<std::pair<std::string,
-                        std::vector<std::pair<unsigned int, unsigned int>>>>
-      data = {
-          {"C=[CH2][Fe]", {{1, 2}}},  // this is a silly example, but it's the
-                                      // simplest one I could think of
-          {"[CH2]1=[CH2]2.[Fe]12", {{1, 2}, {0, 2}}},
-          {"[CH2]1=[CH]2-[CH2-]3.[Fe]123", {{1, 3}, {0, 3}, {2, 3}}},
-          {"[CH]12=[CH]3[CH]4=[CH]5[CH-]16.[Fe]23456",
-           {{0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}}},
-          {"[Fe]12.[CH2]1=[CH2]2",
-           {{1, 0}, {2, 0}}},  // reverse the original atom order
-
-      };
-  for (const auto &pr : data) {
-    INFO(pr.first);
-    auto mol = SmilesToMol(pr.first);
-    REQUIRE(mol);
-    for (const auto &pair : pr.second) {
-      REQUIRE(mol->getBondBetweenAtoms(pair.first, pair.second) != nullptr);
-      CHECK(mol->getBondBetweenAtoms(pair.first, pair.second)
-                ->getBeginAtomIdx() == pair.first);
-      CHECK(mol->getBondBetweenAtoms(pair.first, pair.second)->getBondType() ==
+  SECTION("basics") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        data = {
+            {"C=[CH2][Fe]", {{1, 2}}},  // this is a silly example, but it's the
+                                        // simplest one I could think of
+            {"[CH2]1=[CH2]2.[Fe]12", {{1, 2}, {0, 2}}},
+            {"[CH2]1=[CH]2-[CH2-]3.[Fe]123", {{1, 3}, {0, 3}, {2, 3}}},
+            {"[CH]12=[CH]3[CH]4=[CH]5[CH-]16.[Fe]23456",
+             {{0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}}},
+            {"[Fe]12.[CH2]1=[CH2]2",
+             {{1, 0}, {2, 0}}},  // reverse the original atom order
+            {"[CH]12=[CH]3[CH]4=[CH]5[CH]6=[CH]17.[Fe]234567",
+             {{0, 6}, {1, 6}, {2, 6}, {3, 6}, {4, 6}, {5, 6}}},
+            {"[cH]12[cH]3[cH]4[cH]5[cH]6[cH]17.[Fe]234567",
+             {{0, 6}, {1, 6}, {2, 6}, {3, 6}, {4, 6}, {5, 6}}},
+            {"[cH]12[cH]3[cH]4[cH]5[nH]16.[Fe]23456",
+             {{0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}}},
+            {"[CH]12=[CH]3[CH]4=[CH]5[NH]16.[Fe]23456",
+             {{0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}}},
+        };
+    for (const auto &pr : data) {
+      INFO(pr.first);
+      auto mol = v2::SmilesParse::MolFromSmiles(pr.first);
+      REQUIRE(mol);
+      for (const auto &pair : pr.second) {
+        REQUIRE(mol->getBondBetweenAtoms(pair.first, pair.second) != nullptr);
+        CHECK(mol->getBondBetweenAtoms(pair.first, pair.second)
+                  ->getBeginAtomIdx() == pair.first);
+        CHECK(
+            mol->getBondBetweenAtoms(pair.first, pair.second)->getBondType() ==
             Bond::BondType::DATIVE);
+      }
+    }
+  }
+  SECTION("no dative bonds") {
+    std::vector<std::string> smileses = {
+        "C=[CH][Fe]",
+        "[CH]1=[CH]2.[Fe]12",
+        "[CH]1=[C]2-[CH-]3.[Fe]123",
+        "[C]12=[C]3[C]4=[C]5[C-]16.[Fe]23456",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(mol);
+      for (const auto bond : mol->bonds()) {
+        CHECK(bond->getBondType() != Bond::BondType::DATIVE);
+      }
     }
   }
 }
