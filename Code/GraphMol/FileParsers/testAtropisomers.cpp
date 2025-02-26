@@ -568,8 +568,6 @@ void testLookForAtropisomersInSDdfFiles(std::string fileName,
 }
 
 int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
   RDLog::InitLogs();
   boost::logging::enable_logs("rdApp.info");
   BOOST_LOG(rdInfoLog) << " ---- Running with POSIX locale ----- " << std::endl;
