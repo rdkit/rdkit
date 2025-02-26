@@ -1838,6 +1838,8 @@ GASTEIGER
     CHECK(mol->getNumAtoms() == 2);
   }
   SECTION("_mol2 failure") {
+    // this one checks that the C-Na bond is not automatically converted
+    // to dative when parsing Mol2 files
     auto mol = R"DATA(@<TRIPOS>MOLECULE
 UNK
 6 5 0 0 0
