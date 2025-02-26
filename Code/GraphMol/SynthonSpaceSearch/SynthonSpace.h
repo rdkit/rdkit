@@ -136,12 +136,6 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @return std::int64_t
    */
   std::uint64_t getNumProducts() const;
-  /*!
-   * Get the total number of products, formatted nicely in a string.
-   *
-   * @return std::string
-   */
-  std::string getFormattedNumProducts() const;
 
   /*!
    * Get the info string for the fingerprint generator used to
@@ -304,6 +298,14 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
     const std::string &inFilename, const std::string &outFilename,
     bool &cancelled,
     const FingerprintGenerator<std::uint64_t> *fpGen = nullptr);
+
+/*!
+ * Format an integer with spaces every 3 digits for ease
+ * of reading.
+ *
+ * @return std::string
+ */
+std::string formattedIntegerString(std::int64_t value);
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit
