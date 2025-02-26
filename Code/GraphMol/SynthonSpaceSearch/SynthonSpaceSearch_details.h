@@ -147,6 +147,12 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
 // points are marking by isotope numbers on dummy atoms.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons);
+
+// Create an mmap or Windows equivalent of the file
+RDKIT_SYNTHONSPACESEARCH_EXPORT void *createReadOnlyMemoryMapping(
+    const std::string &filePath, size_t &size);
+RDKIT_SYNTHONSPACESEARCH_EXPORT void unmapMemory(void *mappedMemory,
+                                                 size_t size);
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 

@@ -118,7 +118,7 @@ void readBitSet(std::istream &is, boost::dynamic_bitset<> &bitset) {
 }
 }  // namespace
 
-void SynthonSet::readFromDBStream(std::istream &is, SynthonSpace &space,
+void SynthonSet::readFromDBStream(std::istream &is, const SynthonSpace &space,
                                   std::uint32_t version) {
   PRECONDITION(version >= 3000, "Binary database version no longer supported.");
   streamRead(is, d_id, 0);
@@ -161,8 +161,14 @@ void SynthonSet::readFromDBStream(std::istream &is, SynthonSpace &space,
       streamRead(is, synthonName, 0);
       std::string smiles;
       streamRead(is, smiles, 0);
-      auto synth = space.addSynthonToPool(smiles);
-      d_synthons[i][j] = std::pair(synthonName, synth);
+      // The synthons should be in the pool by now.
+      if (auto synth = space.getSynthonFromPool(smiles); synth == nullptr) {
+        std::cout << "smiles " << smiles << " not in pool" << std::endl;
+        throw std::runtime_error("Database file " + space.getInputFileName() +
+                                 " appears corrupted.");
+      } else {
+        d_synthons[i][j] = std::pair(synthonName, synth);
+      }
     }
   }
 

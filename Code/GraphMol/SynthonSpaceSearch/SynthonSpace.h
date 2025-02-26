@@ -126,6 +126,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // Likewise for the fingerprints used for similarity searching
   unsigned int getFPSize() const;
 
+  std::string getInputFileName() const;
+
   /*!
    * Get the total number of products that the SynthonSpace could produce.
    *
@@ -221,8 +223,11 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * Reads from a binary DB File in our format.
    *
    * @param inFilename: the name of the file to read.
+   * @param numThreads: number of threads to use in reading.  If negative,
+   *                    adds the number to the number of hardware threads
+   *                    available.
    */
-  void readDBFile(const std::string &inFilename);
+  void readDBFile(const std::string &inFilename, int numThreads = 1);
 
   /*!
    * Write a summary of the SynthonSpace to given stream.
@@ -261,6 +266,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // just look it up.  Either way, return a pointer to the
   // Synthon.
   Synthon *addSynthonToPool(const std::string &smiles);
+  Synthon *getSynthonFromPool(const std::string &smiles) const;
 
  private:
   std::string d_fileName;

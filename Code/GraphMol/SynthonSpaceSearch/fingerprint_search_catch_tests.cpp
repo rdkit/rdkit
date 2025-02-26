@@ -301,8 +301,8 @@ TEST_CASE("FP Binary File") {
       RDKitFP::getRDKitFPGenerator<std::uint64_t>());
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-  {
-    synthonspace.readDBFile(libName);
+  for (auto numThreads : std::vector<int>{1, 2, -1}) {
+    synthonspace.readDBFile(libName, numThreads);
     CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
     CHECK(results.getHitMolecules().size() == 4);
     CHECK(results.getMaxNumResults() == 420);
@@ -332,4 +332,26 @@ TEST_CASE("Missing exact match") {
   CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
   CHECK(results.getHitMolecules().size() == 1);
   CHECK(results.getHitMolecules()[0]->getProp<double>("Similarity") == 1.0);
+}
+
+TEST_CASE("FP Binary File2") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  synthonspace.readDBFile(libName, -1);
+  CHECK(synthonspace.getNumReactions() == 1008);
+  CHECK(synthonspace.getNumProducts() == 70575407790);
+  std::cout << synthonspace.getNumReactions() << std::endl;
+  std::cout << synthonspace.getNumProducts() << std::endl;
+#if 0
+  SearchResults results;
+  auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+  CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+  CHECK(results.getHitMolecules().size() == 211);
+  CHECK(results.getMaxNumResults() == 1397664);
+#endif
 }
