@@ -271,19 +271,20 @@ TEST_CASE("Connector Regions") {
   SECTION("Single tests") {
     auto m1 = "[1*]CN(C[2*])Cc1ccccc1"_smiles;
     REQUIRE(m1);
-    CHECK(MolToSmiles(*getConnRegion(*m1)) == "[1*]CN(C)C[1*]");
+    CHECK(MolToSmiles(*buildConnRegion(*m1)) == "[1*]CN(C)C[1*]");
 
     auto m2 = "[1*]CN(C[2*])Cc1ccc(CN(C[3*])C[1*])cc1"_smiles;
     REQUIRE(m2);
-    CHECK(MolToSmiles(*getConnRegion(*m2)) == "[1*]CN(C)C[1*].[1*]CN(C)C[1*]");
+    CHECK(MolToSmiles(*buildConnRegion(*m2)) ==
+          "[1*]CN(C)C[1*].[1*]CN(C)C[1*]");
 
     auto m3 = "[2*]C"_smiles;
     REQUIRE(m3);
-    CHECK(MolToSmiles(*getConnRegion(*m3)) == "[1*]C");
+    CHECK(MolToSmiles(*buildConnRegion(*m3)) == "[1*]C");
 
     auto m4 = "[1*]c1cnccc1"_smiles;
     REQUIRE(m4);
-    CHECK(MolToSmiles(*getConnRegion(*m4)) == "[1*]c(cc)cn");
+    CHECK(MolToSmiles(*buildConnRegion(*m4)) == "[1*]c(cc)cn");
   }
 
   SECTION("Built from file") {
@@ -331,7 +332,6 @@ TEST_CASE("DB Writer") {
   }
   CHECK(irxn->getConnectors() == orxn->getConnectors());
   CHECK(irxn->getSynthons().size() == orxn->getSynthons().size());
-  CHECK(newsynthonspace.hasFingerprints());
   for (size_t i = 0; i < irxn->getSynthons().size(); ++i) {
     CHECK(irxn->getSynthons()[i].size() == orxn->getSynthons()[i].size());
     for (size_t j = 0; j < irxn->getSynthons().size(); ++j) {

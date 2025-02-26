@@ -36,21 +36,6 @@
 #include <RDGeneral/RDThreads.h>
 #include <RDGeneral/StreamOps.h>
 
-// Stuff for formatting integers with spaces every 3 digits.
-template <class Char>
-class MyFacet : public std::numpunct<Char> {
- public:
-  std::string do_grouping() const { return "\3"; }
-  Char do_thousands_sep() const { return ' '; }
-};
-
-std::string formatLargeInt(std::int64_t n) {
-  std::ostringstream oss;
-  oss.imbue(std::locale(oss.getloc(), new MyFacet<char>));
-  oss << n;
-  return oss.str();
-}
-
 namespace RDKit::SynthonSpaceSearch {
 
 // used for serialization
@@ -115,9 +100,7 @@ unsigned int SynthonSpace::getFPSize() const {
 }
 
 std::uint64_t SynthonSpace::getNumProducts() const { return d_numProducts; }
-std::string SynthonSpace::getFormattedNumProducts() const {
-  return formatLargeInt(d_numProducts);
-}
+
 std::string SynthonSpace::getInputFileName() const { return d_fileName; }
 
 SearchResults SynthonSpace::substructureSearch(
@@ -528,7 +511,7 @@ void SynthonSpace::summarise(std::ostream &os) {
     synthCounts[rxn->getSynthons().size()]++;
   }
   os << "Approximate number of molecules in SynthonSpace : "
-     << getFormattedNumProducts() << std::endl;
+     << formattedIntegerString(getNumProducts()) << std::endl;
   os << "Number of unique synthons : " << d_synthonPool.size() << std::endl;
   for (unsigned int i = 0; i < MAX_CONNECTOR_NUM; ++i) {
     if (synthCounts[i] > 0) {
@@ -558,11 +541,20 @@ void SynthonSpace::buildSynthonFingerprints(
     BOOST_LOG(rdWarningLog)
         << "Building the fingerprints may take some time." << std::endl;
     d_fpType = fpType;
+    unsigned int numBits = 0;
     for (const auto &[id, synthSet] : d_reactions) {
       if (ControlCHandler::getGotSignal()) {
         return;
       }
       synthSet->buildSynthonFingerprints(fpGen);
+      if (!numBits) {
+        numBits = synthSet->getSynthons()
+                      .front()
+                      .front()
+                      .second->getFP()
+                      ->getNumBits();
+      }
+      synthSet->buildAddAndSubtractFPs(fpGen, numBits);
     }
   }
 }
@@ -572,17 +564,6 @@ bool SynthonSpace::hasAddAndSubstractFingerprints() const {
     return false;
   }
   return d_reactions.begin()->second->hasAddAndSubtractFPs();
-}
-
-void SynthonSpace::buildAddAndSubstractFingerprints(
-    const FingerprintGenerator<std::uint64_t> &fpGen) {
-  auto numBits = getFPSize();
-  for (const auto &[id, synthSet] : d_reactions) {
-    if (ControlCHandler::getGotSignal()) {
-      return;
-    }
-    synthSet->buildAddAndSubtractFPs(fpGen, numBits);
-  }
 }
 
 Synthon *SynthonSpace::addSynthonToPool(const std::string &smiles) {
@@ -652,13 +633,25 @@ void convertTextToDBFile(const std::string &inFilename,
       cancelled = true;
       return;
     }
-    synthSpace.buildAddAndSubstractFingerprints(*fpGen);
-    if (ControlCHandler::getGotSignal()) {
-      cancelled = true;
-      return;
-    }
   }
   synthSpace.writeDBFile(outFilename);
+}
+
+namespace {
+// Stuff for formatting integers with spaces every 3 digits.
+template <class Char>
+class MyFacet : public std::numpunct<Char> {
+ public:
+  std::string do_grouping() const { return "\3"; }
+  Char do_thousands_sep() const { return ' '; }
+};
+}  // namespace
+
+std::string formattedIntegerString(std::int64_t value) {
+  std::ostringstream oss;
+  oss.imbue(std::locale(oss.getloc(), new MyFacet<char>));
+  oss << value;
+  return oss.str();
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

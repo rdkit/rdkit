@@ -28,30 +28,12 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   SynthonSpaceHitSet() = delete;
   SynthonSpaceHitSet(const SynthonSet &reaction,
                      const std::vector<std::vector<size_t>> &stu,
-                     const std::vector<std::unique_ptr<ROMol>> &fragSet)
-      : reactionId(reaction.getId()) {
-    synthonsToUse.reserve(stu.size());
-    const auto &synthons = reaction.getSynthons();
-    for (size_t i = 0; i < stu.size(); ++i) {
-      synthonsToUse.emplace_back();
-      synthonsToUse[i].reserve(stu[i].size());
-      for (size_t j = 0; j < stu[i].size(); ++j) {
-        synthonsToUse[i].emplace_back(
-            std::make_pair(synthons[i][stu[i][j]].first,
-                           synthons[i][stu[i][j]].second->getOrigMol().get()));
-      }
-    }
-    frags.reserve(fragSet.size());
-    for (size_t i = 0; i < fragSet.size(); ++i) {
-      frags.push_back(fragSet[i].get());
-    }
-    numHits = std::accumulate(
-        stu.begin(), stu.end(), size_t(1),
-        [](const int prevRes, const std::vector<size_t> &s2) -> size_t {
-          return prevRes * s2.size();
-        });
-  }
+                     const std::vector<std::unique_ptr<ROMol>> &fragSet);
+  SynthonSpaceHitSet(const SynthonSpaceHitSet &lhs) = delete;
+  SynthonSpaceHitSet(SynthonSpaceHitSet &&lhs) = delete;
   virtual ~SynthonSpaceHitSet() = default;
+  SynthonSpaceHitSet &operator=(const SynthonSpaceHitSet &rhs) = delete;
+  SynthonSpaceHitSet &operator=(SynthonSpaceHitSet &&rhs) = delete;
 
   std::string reactionId;
   // The fragments that this hitset is derived from, useful for debugging.
@@ -61,31 +43,23 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
 };
 
 // This sub-class holds results from a SynthonSpaceFingerprintSearch.
-// It needs the synthon fingerprints as well.
+// It needs pointers to the synthon fingerprints as well.
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceFPHitSet
     : SynthonSpaceHitSet {
   SynthonSpaceFPHitSet() = delete;
   SynthonSpaceFPHitSet(const SynthonSet &reaction,
                        const std::vector<std::vector<size_t>> &stu,
-                       const std::vector<std::unique_ptr<ROMol>> &fragSet)
-      : SynthonSpaceHitSet(reaction, stu, fragSet) {
-    synthonFPs.reserve(stu.size());
-    for (size_t i = 0; i < stu.size(); ++i) {
-      synthonFPs.emplace_back();
-      synthonFPs[i].reserve(stu[i].size());
-      const auto &sfps = reaction.getSynthons();
-      for (size_t j = 0; j < stu[i].size(); ++j) {
-        synthonFPs[i].emplace_back(
-            new ExplicitBitVect(*sfps[i][stu[i][j]].second->getFP()));
-      }
-    }
-    addFP.reset(new ExplicitBitVect(*reaction.getAddFP()));
-    subtractFP.reset(new ExplicitBitVect(*reaction.getSubtractFP()));
-  }
+                       const std::vector<std::unique_ptr<ROMol>> &fragSet);
+  SynthonSpaceFPHitSet(const SynthonSpaceFPHitSet &lhs) = delete;
+  SynthonSpaceFPHitSet(SynthonSpaceFPHitSet &&lhs) = delete;
+  ~SynthonSpaceFPHitSet() = default;
+  SynthonSpaceFPHitSet &operator=(const SynthonSpaceFPHitSet &rhs) = delete;
+  SynthonSpaceFPHitSet &operator=(SynthonSpaceFPHitSet &&rhs) = delete;
 
-  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> synthonFPs;
-  std::unique_ptr<ExplicitBitVect> addFP;
-  std::unique_ptr<ExplicitBitVect> subtractFP;
+  std::vector<std::vector<ExplicitBitVect *>> synthonFPs;
+  ExplicitBitVect *addFP;
+  ExplicitBitVect *subtractFP;
 };
+
 }  // namespace RDKit::SynthonSpaceSearch
 #endif  // SYNTHONSPACEHITSET_H

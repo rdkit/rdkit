@@ -127,7 +127,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT Stepper {
 // will give [1*]CN(C)C[1*].  The 2 dummy atoms are 4 bonds apart, but the
 // fragments overlap.  All dummy atoms given isotope 1 whatever they had
 // before.
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> getConnRegion(
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildConnRegion(
     const ROMol &mol);
 
 // Take any query atoms out of the molecule, replacing them with the

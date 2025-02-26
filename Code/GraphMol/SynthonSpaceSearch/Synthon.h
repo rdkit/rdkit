@@ -24,7 +24,7 @@ namespace SynthonSpaceSearch {
 
 // These are the numbers of bits used in the internal fingerprints.
 // The user is not restricted to these numbers for the search.
-inline static constexpr unsigned int PATT_FP_NUM_BITS = 1024;
+inline constexpr unsigned int PATT_FP_NUM_BITS = 1024;
 
 // This class holds a Synthon that will be part of a SynthonSet.
 class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {

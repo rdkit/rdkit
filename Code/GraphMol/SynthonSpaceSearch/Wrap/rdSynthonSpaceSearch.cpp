@@ -229,11 +229,6 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            python::arg("self"),
            "Returns number of products in the SynthonSpace, with multiple"
            " counting of any duplicates.")
-      .def("GetFormattedNumProducts",
-           &SynthonSpaceSearch::SynthonSpace::getFormattedNumProducts,
-           python::arg("self"),
-           "As for GetNumProducts(), but returns a string"
-           " formatted to make it easier to read.")
       .def("Summarise", &summariseHelper, python::arg("self"),
            "Writes a summary of the SynthonSpace to stdout.")
       .def("GetSynthonFingerprintType",
@@ -272,6 +267,12 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
               (python::arg("inFilename"), python::arg("outFilename"),
                python::arg("fpGen") = python::object()),
               docString.c_str());
+
+  docString =
+      "Format an integer with spaces every 3 digits for ease of reading";
+  python::def("FormattedIntegerString",
+              &RDKit::SynthonSpaceSearch::formattedIntegerString,
+              python::arg("value"), docString.c_str());
 }
 
 }  // namespace RDKit

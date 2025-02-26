@@ -122,12 +122,6 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
   if (ControlCHandler::getGotSignal()) {
     return;
   }
-  if (!getSpace().hasAddAndSubstractFingerprints()) {
-    getSpace().buildAddAndSubstractFingerprints(d_fpGen);
-  }
-  if (ControlCHandler::getGotSignal()) {
-    return;
-  }
 
   // Slightly convoluted way of doing it to prepare for multi-threading.
   // Make a map of the unique SMILES strings for the fragments, keeping

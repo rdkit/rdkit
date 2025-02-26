@@ -620,7 +620,7 @@ bool removeQueryAtoms(RWMol &mol) {
   return didSomething;
 }
 
-std::unique_ptr<ROMol> getConnRegion(const ROMol &mol) {
+std::unique_ptr<ROMol> buildConnRegion(const ROMol &mol) {
   boost::dynamic_bitset<> inFrag(mol.getNumAtoms());
   for (const auto a : mol.atoms()) {
     if (!a->getAtomicNum() && a->getIsotope()) {
