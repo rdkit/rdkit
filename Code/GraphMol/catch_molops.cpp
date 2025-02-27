@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
 
 using namespace RDKit;
 
@@ -292,19 +293,27 @@ TEST_CASE("slow massively conjugated systems") {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles);
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
-    std::cout << "MolFromSmiles took " << duration.count() << " seconds."
-              << std::endl;
     REQUIRE(mol);
-    // mol->debugMol(std::cerr);
+    CHECK(duration.count() < 10);  // currently about 0.1s for me, go super
+                                   // conservative in case of CI
   }
   SECTION("nanotube") {
     auto start = std::chrono::high_resolution_clock::now();
     auto mol = v2::FileParsers::MolFromMolFile("/home/glandrum/nanotube.mol");
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
-    std::cout << "MolFromSmiles took " << duration.count() << " seconds."
-              << std::endl;
     REQUIRE(mol);
-    // mol->debugMol(std::cerr);
+    CHECK(duration.count() < 10);  // currently about 0.1s for me, go super
+                                   // conservative in case of CI
+  }
+  SECTION("sequence") {
+    auto start = std::chrono::high_resolution_clock::now();
+    std::unique_ptr<RWMol> mol{SequenceToMol(
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")};
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    REQUIRE(mol);
+    CHECK(duration.count() < 1);  // currently about 0.007s for me, go super
+                                  // conservative in case of CI
   }
 }
