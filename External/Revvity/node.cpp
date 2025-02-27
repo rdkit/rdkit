@@ -55,8 +55,7 @@ bool parse_node(
   int rgroup_num = -1;
   int isotope = node.m_isotope;
   
-  bool checkForRGroup = false;
-  bool hasBondOrdering = false;
+  bool checkForRGroup = false;;
   std::string query_label;
   std::vector<int16_t> elementlist;
 
@@ -83,11 +82,6 @@ bool parse_node(
     case kCDXNodeType_Fragment: {
       elemno = 0;
       atommap = atom_id;
-      if (node.m_bondOrdering->size()) {
-        // This node may be completely replaced by the fragment
-        // i.e. [*:1]C[*:1].C[*:1]C => CCC
-        hasBondOrdering = true; // might not need
-      }
       break;
     }
     case kCDXNodeType_ExternalConnectionPoint: {
@@ -195,13 +189,12 @@ bool parse_node(
   }
   set_fuse_label(rd_atom, atommap);
   if (node.m_bondOrdering) {
+    // This node may be completely replaced by the fragment
+    // i.e. [*:1]C[*:1].C[*:1]C => CCC
     rd_atom->setProp<
         std::vector<int>>(CDX_BOND_ORDERING, *node.m_bondOrdering);
   }
-  if (mergeparent > 0) {
-    rd_atom->setProp<int>("MergeParent", mergeparent);
-  }
-
+ 
   std::vector<double> atom_coords;
   if(node.KnownPosition3D()) {
     atom_coords.reserve(3);
