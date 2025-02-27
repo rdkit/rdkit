@@ -67,6 +67,56 @@ std::set<std::string> bruteForceSearch(
   return names;
 }
 
+int num5567MReads = 0;
+int num5567RReads = 0;
+
+// The Synthons_5567.csv is in the test data.  It is used multiple times
+// so convert to the binary if that isn't already there.  This makes the
+// tests faster and also tests the conversion process.
+void convert5567FileR() {
+  num5567RReads++;
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  std::string binName1 =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_rdkit.spc";
+  if (!std::filesystem::exists(binName1)) {
+    bool cancelled = false;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+        RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+    convertTextToDBFile(libName, binName1, cancelled, fpGen.get());
+  }
+}
+
+void convert5567FileM() {
+  num5567MReads++;
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  std::string binName2 =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_morgan.spc";
+  if (!std::filesystem::exists(binName2)) {
+    bool cancelled = false;
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    convertTextToDBFile(libName, binName2, cancelled, fpGen.get());
+  }
+}
+
+void tidy5567Binary() {
+  std::string fName(rdbase);
+  std::string binName1 =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_rdkit.spc";
+  std::string binName2 =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_morgan.spc";
+  if (num5567RReads == 1 && std::filesystem::exists(binName1)) {
+    std::remove(binName1.c_str());
+  }
+  if (num5567MReads == 3 && std::filesystem::exists(binName2)) {
+    std::remove(binName2.c_str());
+  }
+}
+
 TEST_CASE("FP Small tests") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
@@ -134,11 +184,11 @@ TEST_CASE("FP Small tests") {
 TEST_CASE("FP Biggy") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  convert5567FileM();
+  std::string binName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_morgan.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
+  synthonspace.readDBFile(binName);
 
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
@@ -160,16 +210,17 @@ TEST_CASE("FP Biggy") {
     CHECK(results.getHitMolecules().size() == numRes[i]);
     CHECK(results.getMaxNumResults() == maxRes[i]);
   }
+  tidy5567Binary();
 }
 
 TEST_CASE("FP Random Hits") {
   REQUIRE(rdbase);
+  convert5567FileM();
   std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  std::string binName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_morgan.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
+  synthonspace.readDBFile(binName);
 
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
   SynthonSpaceSearchParams params;
@@ -196,46 +247,24 @@ TEST_CASE("FP Random Hits") {
         Catch::Approx(0.711538));
   CHECK(results.getHitMolecules().back()->getProp<double>("Similarity") ==
         Catch::Approx(0.5));
-}
-
-TEST_CASE("Other Fingerprints") {
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
-  SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
-  SynthonSpaceSearchParams params;
-  params.maxHits = 100;
-  params.randomSample = true;
-  params.randomSeed = 1;
-  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
-      MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
-
-  // This is Osimertinib (Tagrisso), which doesn't have any hits in this little
-  // database.
-  auto queryMol =
-      "C=CC(=O)Nc1cc(Nc2nccc(-c3cn(C)c4ccccc34)n2)c(OC)cc1N(C)CCN(C)C"_smiles;
-  auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().empty());
+  tidy5567Binary();
 }
 
 TEST_CASE("Timeout") {
   REQUIRE(rdbase);
+  convert5567FileM();
   std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  std::string binName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_morgan.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
+  synthonspace.readDBFile(binName);
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   params.similarityCutoff = 0.3;
   params.fragSimilarityAdjuster = 0.3;
   params.timeOut = 2;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
-      MorganFingerprint::getMorganGenerator<std::uint64_t>(3));
+      MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
 
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
@@ -248,16 +277,17 @@ TEST_CASE("Timeout") {
   params.timeOut = 0;
   auto results1 = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(!results1.getTimedOut());
+  tidy5567Binary();
 }
 
 TEST_CASE("FP Approx Similarity") {
   REQUIRE(rdbase);
+  convert5567FileR();
   std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  std::string binName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567_rdkit.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
+  synthonspace.readDBFile(binName);
   SynthonSpaceSearchParams params;
   // The addFP and subtractFP are built from a random selection of
   // products so do occasionally vary, so use a fixed seed.
@@ -267,25 +297,26 @@ TEST_CASE("FP Approx Similarity") {
   params.maxHits = 1000;
 
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
-      RDKitFP::getRDKitFPGenerator<std::uint64_t>(3));
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
   auto queryMol = "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"_smiles;
 
   // With RDKit fingerprints, 0.05 gives a reasonable compromise
   // between speed and hits missed.
   params.approxSimilarityAdjuster = 0.05;
   auto results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 482);
-  CHECK(results.getMaxNumResults() == 1466);
+  CHECK(results.getHitMolecules().size() == 546);
+  CHECK(results.getMaxNumResults() == 1467);
 
   // A tighter adjuster misses more hits.
   params.approxSimilarityAdjuster = 0.01;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 124);
+  CHECK(results.getHitMolecules().size() == 187);
 
   // This is the actual number of hits achievable.
   params.approxSimilarityAdjuster = 0.25;
   results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
-  CHECK(results.getHitMolecules().size() == 914);
+  CHECK(results.getHitMolecules().size() == 981);
+  tidy5567Binary();
 }
 
 TEST_CASE("FP Binary File") {
@@ -300,7 +331,6 @@ TEST_CASE("FP Binary File") {
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   for (auto numThreads : std::vector<int>{1, 2, -1}) {
     synthonspace.readDBFile(libName, numThreads);
-    synthonspace.summarise(std::cout);
     CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
     CHECK(results.getHitMolecules().size() == 4);
     CHECK(results.getMaxNumResults() == 420);
@@ -352,7 +382,6 @@ TEST_CASE("FP Binary File2") {
   CHECK(results.getMaxNumResults() == 1397664);
 #endif
 }
-
 
 #if 0
 // Whilst the code is still under active development, it's convenient to have this

@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdio>
+#include <filesystem>
 #include <fstream>
 
 #include <GraphMol/Fingerprints/MorganGenerator.h>
@@ -42,6 +43,34 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
     subsLib->addMol(*suppl.next());
   }
   return subsLib;
+}
+
+int num5567Reads = 0;
+
+// The Synthons_5567.csv is in the test data.  It is used multiple times
+// so convert to the binary if that isn't already there.  This makes the
+// tests faster and also tests the conversion process.
+void convert5567File() {
+  num5567Reads++;
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+  std::string binName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
+  if (!std::filesystem::exists(binName)) {
+    bool cancelled = false;
+    convertTextToDBFile(libName, binName, cancelled);
+  }
+}
+
+void tidy5567Binary() {
+  std::string fName(rdbase);
+  std::string binName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
+  if (num5567Reads == 4 && std::filesystem::exists(binName)) {
+    std::cout << "removing " << binName << std::endl;
+    std::remove(binName.c_str());
+  }
 }
 
 TEST_CASE("Test splits 1") {
@@ -348,11 +377,11 @@ TEST_CASE("DB Writer") {
 TEST_CASE("S Biggy") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
+  convert5567File();
   std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
+  synthonspace.readDBFile(libName);
   const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
                                       "c1ccccc1NC(=O)C1CCN1",
                                       "c12ccccc1c(N)nc(N)n2",
@@ -369,6 +398,7 @@ TEST_CASE("S Biggy") {
     CHECK(results.getHitMolecules().size() == numRes[i]);
     CHECK(results.getMaxNumResults() == maxRes[i]);
   }
+  tidy5567Binary();
 }
 
 TEST_CASE("S Small query") {
@@ -392,10 +422,10 @@ TEST_CASE("S Random Hits") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
   std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
+  convert5567File();
+  synthonspace.readDBFile(libName);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
   SynthonSpaceSearchParams params;
@@ -416,6 +446,7 @@ TEST_CASE("S Random Hits") {
   CHECK(results.getHitMolecules().size() == 100);
   std::map<std::string, int> expCounts{{"a1", 61}, {"a6", 10}, {"a7", 29}};
   CHECK(expCounts == libCounts);
+  tidy5567Binary();
 }
 
 TEST_CASE("S Later hits") {
@@ -423,10 +454,10 @@ TEST_CASE("S Later hits") {
   std::string fName(rdbase);
   // Test use of params.hitStart
   std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
+  convert5567File();
+  synthonspace.readDBFile(libName);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
   SynthonSpaceSearchParams params;
@@ -457,6 +488,7 @@ TEST_CASE("S Later hits") {
   params.hitStart = 7000;
   results = synthonspace.substructureSearch(*queryMol, params);
   CHECK(results.getHitMolecules().empty());
+  tidy5567Binary();
 }
 
 TEST_CASE("S Complex query") {
@@ -464,10 +496,10 @@ TEST_CASE("S Complex query") {
   std::string fName(rdbase);
   // Just to demonstrate that a complex query works.
   std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
   SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
+  convert5567File();
+  synthonspace.readDBFile(libName);
 
   auto queryMol = v2::SmilesParse::MolFromSmarts(
       "[$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
@@ -479,6 +511,7 @@ TEST_CASE("S Complex query") {
   // The screenout is poor for a complex query, so a lot of things
   // will be identified as possible that aren't.
   CHECK(results.getMaxNumResults() == 33294);
+  tidy5567Binary();
 }
 
 TEST_CASE("S Map numbers in connectors") {
