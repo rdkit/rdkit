@@ -58,6 +58,7 @@
 namespace {
 using namespace RDKit;
 
+
 // The parsing of fragments needed to be moved to a recursive function since
 // they may be embedded further in the document, i.e. a group may hold multiple
 //  fragments
@@ -101,6 +102,7 @@ void visit_children(
         mol->clearProp(NEEDS_FUSE);
         std::unique_ptr<ROMol> fused;
         try {
+          replaceFragments(*mol);
           fused = molzip(*mol, molzip_params);
         } catch (Invar::Invariant &) {
           BOOST_LOG(rdWarningLog) << "Failed fusion of fragment skipping... "

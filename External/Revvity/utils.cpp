@@ -79,4 +79,90 @@ void set_fuse_label(Atom *atm, unsigned int idx) {
   }
 }
 
+struct FragmentReplacement {
+    // R = Replacement
+    // F = Fragment
+    // C = Conneciton
+    //                    C R C F     F
+    //                    N=*=C.*=CCC=*
+    //  label               1   1     1
+    //  has bond ordering  
+    // 
+    //  goal replace the atom R with the connections     
+  unsigned int label = 0;
+  Atom *replacement_atom = nullptr;
+
+  std::vector<Atom *> replacement_connection_atoms;
+  std::vector<Atom *> fragment_atoms;
+
+  bool replace(RWMol& mol) {
+    if (!replacement_atom) return true;
+
+    auto &bond_ordering =
+        replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
+    
+    // Find the connecting atoms and and do the replacement
+    size_t i = 0;  
+    for (auto bond : mol.atomBonds(replacement_atom)) {
+        // find the position of the attachement bonds in the bond ordering
+      auto bond_id = bond->getProp<unsigned int>(CDX_BOND_ID);
+      auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
+      if (it == bond_ordering.end()) return false;
+
+      auto pos = std::distance(bond_ordering.begin(), it);
+
+      auto &xatom = fragment_atoms[pos];
+
+      for (auto &xbond : mol.atomBonds(xatom)) {
+          // xatom is the fragment dummy atom
+          // xbond is the fragment bond
+        if (bond->getBeginAtom() == replacement_atom) {
+          mol.addBond(xbond->getOtherAtom(xatom), bond->getEndAtom(),
+                      bond->getBondType());
+        } else {
+          mol.addBond(bond->getBeginAtom(), xbond->getOtherAtom(xatom),
+                      bond->getBondType());
+        }
+        
+      }
+    }
+
+    mol.removeAtom(replacement_atom);
+    for (auto &atom : fragment_atoms) {
+      mol.removeAtom(atom);
+    }
+    return true;
+  }
+};
+
+
+    // Replace fragments that are not possible with molzip
+bool replaceFragments(RWMol &mol) {
+  // Anything with a single atom that is supposed to be replaced via a fragment
+  // is here
+  std::map<int, FragmentReplacement> replacements;
+
+  for (auto &atom : mol.atoms()) {
+    auto label = get_fuse_label(atom);
+    if (label) {
+      if (atom->hasProp(CDX_BOND_ORDERING)) {
+        auto &frag = replacements[label];
+        frag.label = label;
+        frag.replacement_atom = atom;
+      } else {
+        // The is the fragment attachment atoms that need to
+        //  be attached to the ones connected to the atom being replaced
+        auto &frag = replacements[label];
+        frag.fragment_atoms.push_back(atom);
+      }
+    }
+  }
+  mol.beginBatchEdit();
+  for (auto &replacement : replacements) {
+    replacement.second.replace(mol);
+  }
+  mol.commitBatchEdit();
+  return true;
+}
+
 }  // namespace RDKit
