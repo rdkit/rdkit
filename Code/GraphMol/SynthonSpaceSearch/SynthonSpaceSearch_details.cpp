@@ -677,4 +677,29 @@ std::unique_ptr<ROMol> buildProduct(
   return prodMol;
 }
 
+std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+    bool &cancelled) {
+  std::map<std::string, std::vector<ROMol *>> fragSmiToFrag;
+  for (auto &fragSet : fragSets) {
+    for (auto &frag : fragSet) {
+      if (ControlCHandler::getGotSignal()) {
+        cancelled = true;
+        return fragSmiToFrag;
+      }
+      // For the fingerprints, ring info is required.
+      unsigned int otf;
+      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
+                  MolOps::SANITIZE_SYMMRINGS);
+      std::string fragSmi = MolToSmiles(*frag);
+      if (auto it = fragSmiToFrag.find(fragSmi); it == fragSmiToFrag.end()) {
+        fragSmiToFrag.emplace(fragSmi, std::vector<ROMol *>(1, frag.get()));
+      } else {
+        it->second.emplace_back(frag.get());
+      }
+    }
+  }
+  return fragSmiToFrag;
+}
+
 }  // namespace RDKit::SynthonSpaceSearch::details

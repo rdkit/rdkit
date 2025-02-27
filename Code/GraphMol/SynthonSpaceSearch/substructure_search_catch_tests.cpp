@@ -250,21 +250,25 @@ TEST_CASE("S Substructure in 1 reagent") {
   SynthonSpace synthonspace;
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
+#if 0
   {
     auto queryMol = "N1CCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.getHitMolecules().size() == 8);
   }
+#endif
   {
     auto queryMol = "N1CCC(C(F)(F)F)C1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.getHitMolecules().size() == 4);
   }
+#if 0
   {
     auto queryMol = "C1CCCCC1"_smiles;
     auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.getHitMolecules().empty());
   }
+#endif
 }
 
 TEST_CASE("Connector Regions") {

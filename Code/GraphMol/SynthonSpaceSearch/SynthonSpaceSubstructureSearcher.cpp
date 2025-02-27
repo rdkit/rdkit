@@ -17,25 +17,31 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
+#include <RDGeneral/ControlCHandler.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
 namespace {
 
-// Make pattern fps for the fragments and re-order fps and fragments into
-// descending order of number of bits set in the fp (the "largest fragment
-// heuristic").  The FP with the largest number of bits
+// Collect the pattern fps for the fragments and re-order fps and
+// fragments into descending order of number of bits set in the fp (the
+// "largest fragment heuristic").  The FP with the largest number of bits
 // is the most likely to screen out a matching synthon set since smaller,
 // less complex fragments are more likely to match something, so screen
 // with that first.
-std::vector<ExplicitBitVect *> makePatternFPs(
+std::vector<ExplicitBitVect *> gatherPatternFPs(
     std::vector<std::unique_ptr<ROMol>> &molFrags,
-    const std::map<void *, std::unique_ptr<ExplicitBitVect>> &allPattFPs) {
+    const std::vector<std::pair<void *, ExplicitBitVect *>> &allPattFPs) {
   std::vector<ExplicitBitVect *> pattFPs;
   pattFPs.reserve(molFrags.size());
   for (const auto &frag : molFrags) {
-    const auto it = allPattFPs.find(frag.get());
-    pattFPs.push_back(it->second.get());
+    std::pair<void *, ExplicitBitVect *> tmp(frag.get(), nullptr);
+    const auto it =
+        std::lower_bound(allPattFPs.begin(), allPattFPs.end(), tmp,
+                         [](const auto &p1, const auto &p2) -> bool {
+                           return p1.first > p2.first;
+                         });
+    pattFPs.push_back(it->second);
   }
   // Sort by descending number of bits set.
   std::vector<std::pair<size_t, ExplicitBitVect *>> fps(pattFPs.size());
@@ -198,45 +204,79 @@ std::vector<std::vector<size_t>> getHitSynthons(
 
 void SynthonSpaceSubstructureSearcher::extraSearchSetup(
     std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) {
-  bool saidSomething = false;
-
+  bool cancelled = false;
+  auto fragSmiToFrag = details::mapFragsBySmiles(fragSets, cancelled);
+  if (cancelled) {
+    return;
+  }
+  // Now generate the pattern fingerprints for the fragments.
   const auto pattFPSize = getSpace().getPatternFPSize();
-  for (auto &fragSet : fragSets) {
-    for (auto &frag : fragSet) {
-      // For the fingerprints, ring info is required.
-      unsigned int otf;
-      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
-                  MolOps::SANITIZE_SYMMRINGS);
+  d_pattFPsPool.resize(fragSmiToFrag.size());
+  d_connRegsPool.resize(fragSmiToFrag.size());
+  d_connRegSmisPool.resize(fragSmiToFrag.size());
+  d_connRegFPsPool.resize(fragSmiToFrag.size());
+  unsigned int fragNum = 0;
+  bool saidSomething = false;
+  for (auto &[fragSmi, frags] : fragSmiToFrag) {
+    if (ControlCHandler::getGotSignal()) {
+      return;
+    }
+    // For the fingerprints, ring info is required.
+    unsigned int otf;
+    sanitizeMol(*static_cast<RWMol *>(frags.front()), otf,
+                MolOps::SANITIZE_SYMMRINGS);
+    if (details::removeQueryAtoms(*static_cast<RWMol *>(frags.front())) &&
+        !saidSomething) {
+      saidSomething = true;
+      BOOST_LOG(rdWarningLog) << "Complex queries can be slow." << std::endl;
+    }
 
-      if (details::removeQueryAtoms(*static_cast<RWMol *>(frag.get())) &&
-          !saidSomething) {
-        saidSomething = true;
-        BOOST_LOG(rdWarningLog) << "Complex queries can be slow." << std::endl;
-      }
-
-      d_pattFPs.insert(std::make_pair(
-          frag.get(), std::unique_ptr<ExplicitBitVect>(
-                          PatternFingerprintMol(*frag, pattFPSize))));
-
-      if (auto fragConnRegs = details::buildConnRegion(*frag); fragConnRegs) {
-        std::vector<std::unique_ptr<ROMol>> splitConnRegs;
-        MolOps::getMolFrags(*fragConnRegs, splitConnRegs, false);
-        std::vector<std::unique_ptr<ExplicitBitVect>> connRegFPs;
-        connRegFPs.reserve(splitConnRegs.size());
-        std::vector<std::string> connRegSmis;
-        connRegSmis.reserve(splitConnRegs.size());
-        connRegFPs.reserve(splitConnRegs.size());
-        for (auto &cr : splitConnRegs) {
-          connRegFPs.emplace_back(PatternFingerprintMol(*cr, PATT_FP_NUM_BITS));
-          connRegSmis.emplace_back(MolToSmiles(*cr));
-        }
-        d_connRegs.insert(std::make_pair(frag.get(), std::move(splitConnRegs)));
-        d_connRegSmis.insert(
-            std::make_pair(frag.get(), std::move(connRegSmis)));
-        d_connRegFPs.insert(std::make_pair(frag.get(), std::move(connRegFPs)));
+    d_pattFPsPool[fragNum] = std::unique_ptr<ExplicitBitVect>(
+        PatternFingerprintMol(*frags.front(), pattFPSize));
+    if (auto fragConnRegs = details::buildConnRegion(*frags.front());
+        fragConnRegs) {
+      MolOps::getMolFrags(*fragConnRegs, d_connRegsPool[fragNum], false);
+      d_connRegSmisPool[fragNum].reserve(d_connRegsPool[fragNum].size());
+      d_connRegFPsPool[fragNum].reserve(d_connRegsPool[fragNum].size());
+      for (auto &cr : d_connRegsPool[fragNum]) {
+        d_connRegFPsPool[fragNum].emplace_back(
+            PatternFingerprintMol(*cr, PATT_FP_NUM_BITS));
+        d_connRegSmisPool[fragNum].emplace_back(MolToSmiles(*cr));
       }
     }
+    fragNum++;
   }
+  // Now use the pooled info to populate the vectors for each fragSet.
+  fragNum = 0;
+  d_pattFPs.reserve(fragSmiToFrag.size());
+  d_connRegs.reserve(fragSmiToFrag.size());
+  d_connRegSmis.reserve(fragSmiToFrag.size());
+  d_connRegFPs.reserve(fragSmiToFrag.size());
+  for (auto &[fragSmi, frags] : fragSmiToFrag) {
+    for (auto &frag : frags) {
+      d_pattFPs.emplace_back(frag, d_pattFPsPool[fragNum].get());
+      d_connRegs.emplace_back(frag, &d_connRegsPool[fragNum]);
+      d_connRegSmis.emplace_back(frag, &d_connRegSmisPool[fragNum]);
+      d_connRegFPs.emplace_back(frag, &d_connRegFPsPool[fragNum]);
+    }
+    ++fragNum;
+  }
+  std::sort(d_pattFPs.begin(), d_pattFPs.end(),
+            [](const auto &p1, const auto &p2) -> bool {
+              return p1.first > p2.first;
+            });
+  std::sort(d_connRegs.begin(), d_connRegs.end(),
+            [](const auto &p1, const auto &p2) -> bool {
+              return p1.first > p2.first;
+            });
+  std::sort(d_connRegSmis.begin(), d_connRegSmis.end(),
+            [](const auto &p1, const auto &p2) -> bool {
+              return p1.first > p2.first;
+            });
+  std::sort(d_connRegFPs.begin(), d_connRegFPs.end(),
+            [](const auto &p1, const auto &p2) -> bool {
+              return p1.first > p2.first;
+            });
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
@@ -245,7 +285,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
-  const auto pattFPs = makePatternFPs(fragSet, d_pattFPs);
+  const auto pattFPs = gatherPatternFPs(fragSet, d_pattFPs);
   std::vector<int> numFragConns;
   numFragConns.reserve(fragSet.size());
   for (const auto &frag : fragSet) {
@@ -341,26 +381,42 @@ void SynthonSpaceSubstructureSearcher::getConnectorRegions(
     std::vector<std::vector<const std::string *>> &connRegSmis,
     std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const {
   for (const auto &frag : molFrags) {
-    if (const auto it = d_connRegs.find(frag.get()); it != d_connRegs.end()) {
+    std::pair<void *, void *> tmp(frag.get(), nullptr);
+    const auto it1 =
+        std::lower_bound(d_connRegs.begin(), d_connRegs.end(), tmp,
+                         [](const auto &p1, const auto &p2) -> bool {
+                           return p1.first > p2.first;
+                         });
+    if (it1->first == tmp.first && !it1->second->empty()) {
       connRegs.push_back(std::vector<ROMol *>());
       std::transform(
-          it->second.begin(), it->second.end(),
+          it1->second->begin(), it1->second->end(),
           std::back_inserter(connRegs.back()),
           [](const std::unique_ptr<ROMol> &m) -> ROMol * { return m.get(); });
     }
-    if (const auto &it = d_connRegSmis.find(frag.get());
-        it != d_connRegSmis.end()) {
+
+    const auto it2 =
+        std::lower_bound(d_connRegSmis.begin(), d_connRegSmis.end(), tmp,
+                         [](const auto &p1, const auto &p2) -> bool {
+                           return p1.first > p2.first;
+                         });
+    if (it2->first == tmp.first && !it2->second->empty()) {
       connRegSmis.push_back(std::vector<const std::string *>());
       std::transform(
-          it->second.begin(), it->second.end(),
+          it2->second->begin(), it2->second->end(),
           std::back_inserter(connRegSmis.back()),
           [](const std::string &s) -> const std::string * { return &s; });
     }
-    if (const auto it = d_connRegFPs.find(frag.get());
-        it != d_connRegFPs.end()) {
+
+    const auto it3 =
+        std::lower_bound(d_connRegFPs.begin(), d_connRegFPs.end(), tmp,
+                         [](const auto &p1, const auto &p2) -> bool {
+                           return p1.first > p2.first;
+                         });
+    if (it3->first == tmp.first && !it3->second->empty()) {
       connRegFPs.push_back(std::vector<ExplicitBitVect *>());
       std::transform(
-          it->second.begin(), it->second.end(),
+          it3->second->begin(), it3->second->end(),
           std::back_inserter(connRegFPs.back()),
           [](const std::unique_ptr<ExplicitBitVect> &v) -> ExplicitBitVect * {
             return v.get();

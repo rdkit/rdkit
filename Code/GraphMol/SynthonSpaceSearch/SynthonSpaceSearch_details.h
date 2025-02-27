@@ -147,6 +147,13 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
 // points are marking by isotope numbers on dummy atoms.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons);
+
+// Make a map that has all the fragments with the same SMILES
+// in a vector keyed by that SMILES.
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::map<std::string, std::vector<ROMol *>>
+mapFragsBySmiles(std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+                 bool &cancelled);
+
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 

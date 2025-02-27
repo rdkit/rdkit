@@ -126,45 +126,36 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
   // Slightly convoluted way of doing it to prepare for multi-threading.
   // Make a map of the unique SMILES strings for the fragments, keeping
   // track of them in the vector.
-  std::map<std::string, std::vector<ROMol *>> fragSmiToFrag;
-  for (auto &fragSet : fragSets) {
-    for (auto &frag : fragSet) {
-      if (ControlCHandler::getGotSignal()) {
-        return;
-      }
-      // For the fingerprints, ring info is required.
-      unsigned int otf;
-      sanitizeMol(*static_cast<RWMol *>(frag.get()), otf,
-                  MolOps::SANITIZE_SYMMRINGS);
-      std::string fragSmi = MolToSmiles(*frag);
-      if (auto it = fragSmiToFrag.find(fragSmi); it == fragSmiToFrag.end()) {
-        fragSmiToFrag.emplace(fragSmi, std::vector<ROMol *>(1, frag.get()));
-      } else {
-        it->second.emplace_back(frag.get());
-      }
-    }
+  bool cancelled = false;
+  auto fragSmiToFrag = details::mapFragsBySmiles(fragSets, cancelled);
+  if (cancelled) {
+    return;
   }
 
   // Now generate the fingerprints for the fragments.  This is the
   // time-consuming bit that will be threaded.
-  std::vector<std::unique_ptr<ExplicitBitVect>> fragFPs(fragSmiToFrag.size());
+  d_fragFPPool.resize(fragSmiToFrag.size());
   unsigned int fragNum = 0;
   for (auto &[fragSmi, frags] : fragSmiToFrag) {
     if (ControlCHandler::getGotSignal()) {
       return;
     }
-    fragFPs[fragNum++].reset(d_fpGen.getFingerprint(*frags.front()));
+    d_fragFPPool[fragNum++].reset(d_fpGen.getFingerprint(*frags.front()));
   }
 
-  // Now transfer them to the pools.
+  // Now use the pooled fps to populate the vectors for each fragSet.
   fragNum = 0;
+  d_fragFPs.reserve(fragSmiToFrag.size());
   for (auto &[fragSmi, frags] : fragSmiToFrag) {
     for (auto &frag : frags) {
-      d_fragFPs.emplace(frag, fragFPs[fragNum].get());
+      d_fragFPs.emplace_back(frag, d_fragFPPool[fragNum].get());
     }
-    d_fragFPPool.insert({fragSmi, std::move(fragFPs[fragNum])});
     ++fragNum;
   }
+  std::sort(d_fragFPs.begin(), d_fragFPs.end(),
+            [](const auto &p1, const auto &p2) -> bool {
+              return p1.first > p2.first;
+            });
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
@@ -185,7 +176,12 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
   std::vector<ExplicitBitVect *> fragFPs;
   fragFPs.reserve(fragSet.size());
   for (auto &frag : fragSet) {
-    const auto it = d_fragFPs.find(frag.get());
+    std::pair<void *, ExplicitBitVect *> tmp{frag.get(), nullptr};
+    const auto it =
+        std::lower_bound(d_fragFPs.begin(), d_fragFPs.end(), tmp,
+                         [](const auto &p1, const auto &p2) -> bool {
+                           return p1.first > p2.first;
+                         });
     fragFPs.push_back(it->second);
   }
 

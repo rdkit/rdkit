@@ -91,8 +91,8 @@ TEST_CASE("FP Small tests") {
   std::vector<size_t> expNumHits{2, 3, 4};
 
   for (size_t i = 0; i < libNames.size(); i++) {
-    // if (i != 1) {
-    //   continue;
+    // if (i != 2) {
+    // continue;
     // }
     SynthonSpace synthonspace;
     bool cancelled = false;

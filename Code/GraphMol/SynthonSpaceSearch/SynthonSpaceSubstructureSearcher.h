@@ -32,17 +32,23 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
  private:
   // These are the pattern fingerprints for the fragments in this
   // search.  They are used for screening the fragments prior to
-  // a substructure search.
-  // It's thread-safe because each search creates its own Searcher
-  // object so multiple searches in different threads will be in
-  // different Searcher objects.  The fingerprints are keyed on
-  // the address of the corresponding fragment.
-  std::map<void *, std::unique_ptr<ExplicitBitVect>> d_pattFPs;
+  // a substructure search.  The pool contains the unique pattern
+  // fingerprints for all the unique fragments (based on SMILES) in
+  // the query fragment set.
+  std::vector<std::unique_ptr<ExplicitBitVect>> d_pattFPsPool;
+  std::vector<std::pair<void *, ExplicitBitVect *>> d_pattFPs;
+
   // Likewise, the connector regions and connector region
   // fingerprints.
-  std::map<void *, std::vector<std::unique_ptr<ROMol>>> d_connRegs;
-  std::map<void *, std::vector<std::string>> d_connRegSmis;
-  std::map<void *, std::vector<std::unique_ptr<ExplicitBitVect>>> d_connRegFPs;
+  std::vector<std::vector<std::unique_ptr<ROMol>>> d_connRegsPool;
+  std::vector<std::pair<void *, std::vector<std::unique_ptr<ROMol>> *>>
+      d_connRegs;
+  std::vector<std::vector<std::string>> d_connRegSmisPool;
+  std::vector<std::pair<void *, std::vector<std::string> *>> d_connRegSmis;
+  std::vector<std::vector<std::unique_ptr<ExplicitBitVect>>> d_connRegFPsPool;
+  std::vector<
+      std::pair<void *, std::vector<std::unique_ptr<ExplicitBitVect>> *>>
+      d_connRegFPs;
 
   void extraSearchSetup(
       std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;

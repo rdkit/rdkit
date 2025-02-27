@@ -32,16 +32,14 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
 
   const FingerprintGenerator<std::uint64_t> &d_fpGen;
   // These are the fingerprints for the fragments in this search.
-  // It's thread-safe because each search creates its own Searcher
-  // object so multiple searches in different threads will be in
-  // different Searcher objects.  The fingerprints in d_fragFPPool
-  // are keyed on the SMILES of the corresponding fragment, and
-  // then the addresses of these are keyed in d_fragFPs on the
+  // The fingerprint in d_fragFPs are keyed on the addresses of the
   // corresponding fragment.  There are usually multiple fragments
   // with the same SMILES and this way the fingerprints are
   // generated the minimum number of times.
-  std::map<std::string, std::unique_ptr<ExplicitBitVect>> d_fragFPPool;
-  std::map<void *, ExplicitBitVect *> d_fragFPs;
+  // d_fragFPPool is never read, it is just used as a repository
+  // for the fragFPs for the lifetime of the search.
+  std::vector<std::unique_ptr<ExplicitBitVect>> d_fragFPPool;
+  std::vector<std::pair<void *, ExplicitBitVect *>> d_fragFPs;
 
   void extraSearchSetup(
       std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
