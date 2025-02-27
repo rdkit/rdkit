@@ -187,7 +187,7 @@ bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
     bnd->getBeginAtom()->setIsAromatic(true);
     bnd->getEndAtom()->setIsAromatic(true);
   }
-  bnd->setProp(CDX_BOND_ID, bondIdx);
+  bnd->setProp(CDX_BOND_ID, bond.GetObjectID());
 
   switch (bond.m_display) {
     case kCDXBondDisplay_WedgedHashBegin:
