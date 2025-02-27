@@ -275,6 +275,8 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
   for (auto &scheme : pagedata.schemes) {
     scheme.set_reaction_steps(pagedata.grouped_fragments, pagedata.mols);
   }
+  pagedata.clearCDXProps();
+
   return std::move(pagedata.mols);
 }
 }  // namespace
