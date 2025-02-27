@@ -7,6 +7,13 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+// This file and others here contain an implementation of
+// synthonspace substructure search similar to that described in
+// 'Fast Substructure Search in Combinatorial Library Spaces',
+// Thomas Liphardt and Thomas Sander,
+// J. Chem. Inf. Model. 2023, 63, 16, 5133–5141
+// https://doi.org/10.1021/acs.jcim.3c00290
+
 #ifndef RDKIT_SYNTHONSPACE_H
 #define RDKIT_SYNTHONSPACE_H
 
@@ -42,21 +49,13 @@ const std::vector<std::string> CONNECTOR_SYMBOLS{"[U]", "[Np]", "[Pu]", "[Am]"};
 constexpr unsigned int MAX_CONNECTOR_NUM{4};
 
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
-  int maxBondSplits{MAX_CONNECTOR_NUM};  // The maximum number of bonds to break
-                                         // in the query. It should be no more
-                                         // than the maximum number of connector
-                                         // types in the SynthonSpace.  At
-                                         // present this is 4.  Specifying more
-                                         // than that will not matter as it will
-                                         // be reduced to 4.  Likewise, values
-                                         // lower than 1 will be increased to 1.
-  std::uint64_t maxNumFrags{
-      100000};  // The maximum number of fragments the query can
+  std::uint64_t maxNumFragSets{
+      100000};  // The maximum number of fragment sets the query can
                 // be broken into.  Big molecules will create huge
-                // numbers of fragments that may cause excessive
-                // memory use.  If the number of fragments hits this number,
-                // fragmentation stops and the search results will likely be
-                // incomplete.
+                // numbers of fragment sets that may cause excessive
+                // memory use.  If the number of fragment sets hits this
+                // number, fragmentation stops and the search results
+                // will likely be incomplete.
   std::int64_t maxHits{1000};  // The maximum number of hits to return.  Use
                                // -1 for no maximum.
   std::int64_t hitStart{0};    // Sequence number of hit to start from.  So that
@@ -99,54 +98,58 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                // search.  0 means no maximum.
 };
 
-// Holds the information about a set of hits.  The molecules can be built
-// by making all combinations of synthons, one taken from each synthon set.
-struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
-  SynthonSpaceHitSet() = delete;
-  SynthonSpaceHitSet(const std::string &id,
-                     const std::vector<std::vector<size_t>> &stu)
-      : reactionId(id), synthonsToUse(stu) {
-    numHits = std::accumulate(
-        synthonsToUse.begin(), synthonsToUse.end(), size_t(1),
-        [](const int prevRes, const std::vector<size_t> &s2) -> size_t {
-          return prevRes * s2.size();
-        });
-  }
-  std::string reactionId;
-  std::vector<std::vector<size_t>> synthonsToUse;
-  size_t numHits{0};
-};
+class Synthon;
 
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
+  friend class SynthonSet;
+  friend class SynthonSpaceSearcher;
+  friend class SynthonSpaceFingerprintSearcher;
+
  public:
-  // Create the synthonspace from a file in the correct format.
   explicit SynthonSpace() = default;
+  ~SynthonSpace() = default;
   SynthonSpace(const SynthonSpace &other) = delete;
   SynthonSpace &operator=(const SynthonSpace &other) = delete;
-  // Get the number of different reactions in the SynthonSpace.
   /*!
+   * Get the number of different reactions in the SynthonSpace.
    *
    * @return int
    */
-  size_t getNumReactions() const { return d_reactions.size(); }
-  const std::map<std::string, std::unique_ptr<SynthonSet>> &getReactions()
-      const {
-    return d_reactions;
-  }
-
-  // Get the total number of products that the SynthonSpace could produce.
+  size_t getNumReactions() const;
   /*!
+   * Get a list of the names of all the reactions in the SynthonSpace.
+   *
+   * @return
+   */
+  std::vector<std::string> getReactionNames() const;
+  const std::shared_ptr<SynthonSet> getReaction(std::string reactionName);
+  // The Synthons have a PatternFingerprint for screening in substructure
+  // searches.  It's important that the screening process creates ones
+  // of the same size, so this finds out what size that is.
+  unsigned int getPatternFPSize() const;
+  // Likewise for the fingerprints used for similarity searching
+  unsigned int getFPSize() const;
+
+  /*!
+   * Get the total number of products that the SynthonSpace could produce.
    *
    * @return std::int64_t
    */
-  std::int64_t getNumProducts() const;
+  std::uint64_t getNumProducts() const;
 
+  /*!
+   * Get the info string for the fingerprint generator used to
+   * generate the stored fingerprints, so the user can query with
+   * the same type.
+   *
+   * @return
+   */
   std::string getSynthonFingerprintType() const { return d_fpType; }
 
-  // Perform a substructure search with the given query molecule across
-  // the synthonspace library.  Duplicate SMILES strings produced by different
-  // reactions will be returned.
   /*!
+   * Perform a substructure search with the given query molecule across
+   * the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.
    *
    * @param query : query molecule
    * @param params : (optional) settings for the search
@@ -156,11 +159,10 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
       const ROMol &query,
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
-  // Perform a fingerprint similarity search with the given query molecule
-  // across the synthonspace library.  Duplicate SMILES strings produced by
-  // different reactions will be returned.
   /*!
-   *
+   * Perform a fingerprint similarity search with the given query molecule
+   * across the synthonspace library.  Duplicate SMILES strings produced by
+   * different reactions will be returned.
    * @param query : query molecule
    * @param fpGen: a FingerprintGenerator object that will provide the
    *               fingerprints for the similarity calculation
@@ -202,55 +204,108 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * Throws a std::runtime_error if it doesn't think the format is correct,
    * which it does by checking that the first line is as above and subsequent
    * lines have appropriate number of fields.
+   * If it receives a SIGINT, returns cancelled=true.
    */
-  void readTextFile(const std::string &inFilename);
+  void readTextFile(const std::string &inFilename, bool &cancelled);
 
-  // Writes to/reads from a binary DB File in our format.
   /*!
+   * Writes to a binary DB File in our format.
    *
    * @param outFilename: the name of the file to write.
    */
   void writeDBFile(const std::string &outFilename) const;
+
   /*!
+   * Reads from a binary DB File in our format.
    *
    * @param inFilename: the name of the file to read.
    */
   void readDBFile(const std::string &inFilename);
 
-  // Write a summary of the SynthonSpace to given stream.
   /*!
+   * Write a summary of the SynthonSpace to given stream.
    *
    * @param os: stream
    */
-  void summarise(std::ostream &os) const;
+  void summarise(std::ostream &os);
 
-  // Writes the enumerated library to file in SMILES format (1 compound
-  // per line, SMILES name
   /*!
-  @param outFilename: name of the file to write
+   * Writes the enumerated library to file in SMILES format
+   * (1 compound per line, SMILES name)
+   *
+   * @param outFilename: name of the file to write
    */
   void writeEnumeratedFile(const std::string &outFilename) const;
 
-  bool hasFingerprints() const;
-  // Create the fingerprints for the synthons ready for fingerprint searches.
-  // Will be done by the fingerprint search if not done ahead of time.
+  /*!
+   * Create the fingerprints for the synthons ready for fingerprint searches.
+   * Will be done by the fingerprint search if not done ahead of time.
+   *
+   * @param fpGen: a fingerprint generator of the appropriate type
+   */
   void buildSynthonFingerprints(
       const FingerprintGenerator<std::uint64_t> &fpGen);
 
+ protected:
+  unsigned int getMaxNumSynthons() const { return d_maxNumSynthons; }
+
+  bool hasFingerprints() const;
+
   bool hasAddAndSubstractFingerprints() const;
-  // Create the add and substract fingerprints for the SynthonSets.
-  // Will be done by the fingerprint search if not done ahead of time.
-  void buildAddAndSubstractFingerprints(
-      const FingerprintGenerator<std::uint64_t> &fpGen);
+
+  // Take the SMILES for a Synthon and if it's not in
+  // d_synthonPool make it and add it.  If it is in the pool,
+  // just look it up.  Either way, return a pointer to the
+  // Synthon.
+  Synthon *addSynthonToPool(const std::string &smiles);
 
  private:
   std::string d_fileName;
-  std::map<std::string, std::unique_ptr<SynthonSet>> d_reactions;
+  // The reactions, keyed on their IDs.
+  std::map<std::string, std::shared_ptr<SynthonSet>> d_reactions;
+  // Keep the value of the maximum number of synthon sets used by
+  // any of the reactions.  There's no point fragmenting any
+  // query into more than this number of fragments.  Shouldn't
+  // ever be higher than 4 at present.
+  unsigned int d_maxNumSynthons{0};
+  std::uint64_t d_numProducts{0};
+
+  // This is actually 1000 * major version + 10 * minor version
+  // and hence the full version number.
+  std::int32_t d_fileMajorVersion{-1};
+
+  // The pool of all synthons, keyed on SMILES string.  Synthons
+  // are frequently re-used in different reactions, so this means
+  // they're only stored once.
+  std::map<std::string, std::unique_ptr<Synthon>> d_synthonPool;
 
   // For the similarity search, this records the generator used for
   // creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
 };
+
+/*!
+ * Convert the text file into the binary DB file in our format.
+ * Equivalent to readTextFile() followed by writeDBFile().
+ * If a fingerprint generator is provided, fingerprints will
+ * be created for all the synthons, which can be time-consuming.
+ * @param inFilename name of the text file to read
+ * @param outFilename name of the binary file to write
+ * @param cancelled whether it received a SIGINT
+ * @param fpGen optional fingerprint generator
+ */
+RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
+    const std::string &inFilename, const std::string &outFilename,
+    bool &cancelled,
+    const FingerprintGenerator<std::uint64_t> *fpGen = nullptr);
+
+/*!
+ * Format an integer with spaces every 3 digits for ease
+ * of reading.
+ *
+ * @return std::string
+ */
+std::string formattedIntegerString(std::int64_t value);
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit
