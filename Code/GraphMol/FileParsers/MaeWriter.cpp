@@ -212,12 +212,6 @@ void setPropertyValue(mae::IndexedBlock &block, const std::string &propName,
   property->set(idx, value);
 }
 
-class UnsupportedBondException : public std::runtime_error {
- public:
-  UnsupportedBondException(const char *msg) : std::runtime_error(msg) {}
-  UnsupportedBondException(const std::string &msg) : std::runtime_error(msg) {}
-};
-
 int bondTypeToOrder(const Bond &bond) {
   switch (bond.getBondType()) {
     case Bond::BondType::SINGLE:
@@ -230,7 +224,7 @@ int bondTypeToOrder(const Bond &bond) {
     case Bond::BondType::DATIVE:
       return 0;
     default:
-      throw UnsupportedBondException(
+      throw ValueErrorException(
           "Bond " + std::to_string(bond.getIdx()) +
           " has a type that is not supported by maeparser.");
   }
@@ -498,17 +492,13 @@ void mapBonds(const ROMol &mol, const STR_VECT &propNames,
 std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol &mol, int confId,
                                              const STR_VECT &propNames) {
   if (mol.getNumAtoms() == 0) {
-    BOOST_LOG(rdErrorLog)
-        << "ERROR: molecules without atoms cannot be exported to Maestro files.\n";
-    return nullptr;
+    throw ValueErrorException(
+        "molecules without atoms cannot be exported to Maestro files.\n");
   }
 
   RWMol tmpMol(mol);
-  if (!MolOps::KekulizeIfPossible(tmpMol)) {
-    BOOST_LOG(rdErrorLog)
-        << "ERROR: the mol cannot be kekulized, and will not be written to the output file.\n";
-    return nullptr;
-  }
+  MolOps::Kekulize(tmpMol);
+
   if (mol.getNumConformers() == 0) {
     // make sure there's at least one conformer we can write
     RDDepict::compute2DCoords(tmpMol);
@@ -523,15 +513,7 @@ std::shared_ptr<mae::Block> _MolToMaeCtBlock(const ROMol &mol, int confId,
   mapAtoms(tmpMol, propNames, confId, *indexedBlockMap);
 
   if (mol.getNumBonds() > 0) {
-    try {
-      mapBonds(tmpMol, propNames, *indexedBlockMap);
-
-    } catch (const UnsupportedBondException &exc) {
-      BOOST_LOG(rdErrorLog)
-          << "ERROR: " << exc.what()
-          << " The mol will not be written to the output file.\n";
-      return nullptr;
-    }
+    mapBonds(tmpMol, propNames, *indexedBlockMap);
   }
 
   stBlock->setIndexedBlockMap(indexedBlockMap);
@@ -608,23 +590,19 @@ void MaeWriter::write(const ROMol &mol, int confId) {
 
   auto block = _MolToMaeCtBlock(mol, confId, d_props);
 
-  if (block != nullptr) {
-    if (!dp_writer) {
-      open();
-    }
-
-    block->write(*dp_ostream);
-    ++d_molid;
+  if (!dp_writer) {
+    open();
   }
+
+  block->write(*dp_ostream);
+  ++d_molid;
 }
 
 std::string MaeWriter::getText(const ROMol &mol, int confId,
                                const STR_VECT &propNames) {
   std::stringstream sstr;
   auto block = _MolToMaeCtBlock(mol, confId, propNames);
-  if (block != nullptr) {
-    block->write(sstr);
-  }
+  block->write(sstr);
 
   return sstr.str();
 }
