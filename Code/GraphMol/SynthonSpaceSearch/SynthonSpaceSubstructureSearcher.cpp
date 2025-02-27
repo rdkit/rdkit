@@ -389,10 +389,9 @@ void SynthonSpaceSubstructureSearcher::getConnectorRegions(
                          });
     if (it1->first == tmp.first && !it1->second->empty()) {
       connRegs.push_back(std::vector<ROMol *>());
-      std::transform(
-          it1->second->begin(), it1->second->end(),
-          std::back_inserter(connRegs.back()),
-          [](const std::unique_ptr<ROMol> &m) -> ROMol * { return m.get(); });
+      std::transform(it1->second->begin(), it1->second->end(),
+                     std::back_inserter(connRegs.back()),
+                     [](const auto &m) -> ROMol * { return m.get(); });
     }
 
     const auto it2 =
@@ -402,10 +401,9 @@ void SynthonSpaceSubstructureSearcher::getConnectorRegions(
                          });
     if (it2->first == tmp.first && !it2->second->empty()) {
       connRegSmis.push_back(std::vector<const std::string *>());
-      std::transform(
-          it2->second->begin(), it2->second->end(),
-          std::back_inserter(connRegSmis.back()),
-          [](const std::string &s) -> const std::string * { return &s; });
+      std::transform(it2->second->begin(), it2->second->end(),
+                     std::back_inserter(connRegSmis.back()),
+                     [](const auto &s) -> const std::string * { return &s; });
     }
 
     const auto it3 =
@@ -418,9 +416,7 @@ void SynthonSpaceSubstructureSearcher::getConnectorRegions(
       std::transform(
           it3->second->begin(), it3->second->end(),
           std::back_inserter(connRegFPs.back()),
-          [](const std::unique_ptr<ExplicitBitVect> &v) -> ExplicitBitVect * {
-            return v.get();
-          });
+          [](const auto &v) -> ExplicitBitVect * { return v.get(); });
     }
   }
 }

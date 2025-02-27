@@ -107,7 +107,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
     std::transform(
         fragSims[i].begin(), fragSims[i].end(),
         std::back_inserter(retSynthons[i]),
-        [](const std::pair<size_t, double> &fs) { return fs.first; });
+        [](const auto &fs) { return fs.first; });
   }
   return retSynthons;
 }

@@ -256,9 +256,7 @@ struct RandomHitSelector {
     d_hitSetWeights.reserve(hitsets.size());
     std::transform(hitsets.begin(), hitsets.end(),
                    std::back_inserter(d_hitSetWeights),
-                   [](const std::unique_ptr<SynthonSpaceHitSet> &hs) -> size_t {
-                     return hs->numHits;
-                   });
+                   [](const auto &hs) -> size_t { return hs->numHits; });
     d_hitSetSel = boost::random::discrete_distribution<size_t>(
         d_hitSetWeights.begin(), d_hitSetWeights.end());
     d_synthSels.resize(hitsets.size());
