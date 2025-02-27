@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <fstream>
 
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
