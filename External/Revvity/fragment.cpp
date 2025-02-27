@@ -44,6 +44,8 @@ const char * sequenceTypeToName(CDXSeqType seqtype) {
       case kCDXSeqType_DNA : return "DNA";
       case kCDXSeqType_RNA : return "RNA";
       case kCDXSeqType_Biopolymer : return "Biopolymer";
+      default:
+        return "";
     }
 }
 }
