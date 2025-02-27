@@ -446,15 +446,16 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
   for (auto i = 0u; i < vtxLabels1.size(); ++i) {
     for (auto j = 0u; j < vtxLabels2.size(); ++j) {
       if (vtxLabels1[i] == vtxLabels2[j]) {
-        // opts.completeRingsOnly automatically implies opts.completeAromaticRings
-        if (opts.completeRingsOnly &&
+        // completeSmallestRings automatically implies completeAromaticRings and 
+        // ringMatchesRingsOnly
+        if (opts.completeSmallestRings &&
             !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j, false)) {
           continue;
         } else if (opts.completeAromaticRings &&
             !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j, true)) {
           continue;
         }
-        if (opts.ringMatchesRingOnly &&
+        if (!opts.completeSmallestRings && opts.ringMatchesRingOnly &&
             !checkRingMatchesRing(mol1, i, mol2, j)) {
           continue;
         }

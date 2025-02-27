@@ -175,10 +175,10 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
           "If True (default), partial aromatic rings won't be returned.")
       .def_readwrite("ringMatchesRingOnly",
                      &RDKit::RascalMCES::RascalOptions::ringMatchesRingOnly,
-                     "If True (default is False), ring bonds will only match ring bonds.")
-      .def_readwrite("completeRingsOnly",
-                     &RDKit::RascalMCES::RascalOptions::completeRingsOnly,
-                     "If True (default if False), only complete rings will be returned. Implies completeAromaticRings and ringMatchesRingOnly..")
+                     "If True (default is False), ring bonds won't match non-ring bonds.")
+      .def_readwrite("completeSmallestRings",
+                     &RDKit::RascalMCES::RascalOptions::completeSmallestRings,
+                     "If True (default is False), only complete rings present in both input molecule's RingInfo will be returned. Implies completeAromaticRings and ringMatchesRingOnly.")
       .def_readwrite(
           "exactConnectionsMatch",
           &RDKit::RascalMCES::RascalOptions::exactConnectionsMatch,

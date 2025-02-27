@@ -218,6 +218,22 @@ class TestCase(unittest.TestCase):
     mol2 = Chem.MolFromSmiles('CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O')
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertFalse(results)
+
+  def testCompleteSmallestRings(self):
+    opts = rdRascalMCES.RascalOptions()
+    opts.completeSmallestRings = True
+    opts.similarityThreshold = 0.1
+    mol1 = Chem.MolFromSmiles("CNC1CCC(C)CC1C")
+    mol2 = Chem.MolFromSmiles("CNC1CCC2CCCCCCCCCCCC1C2")
+    results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+    self.assertEqual(results[0].numFragments, 1)
+    self.assertEqual(results[0].smartsString, 'CNC1CCCCC1')
+
+    # Default option; allows partial ring return
+    opts.completeSmallestRings = False
+    results = rdRascalMCES.FindMCES(mol1, mol2, opts)
+    self.assertEqual(results[0].numFragments, 1)
+    self.assertEqual(results[0].smartsString, 'CNC1CCC(-C)-CC1C')
     
     
 if __name__ == "__main__":
