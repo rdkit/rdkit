@@ -56,6 +56,7 @@ bool parse_node(
   int isotope = node.m_isotope;
   
   bool checkForRGroup = false;
+  bool hasBondOrdering = false;
   std::string query_label;
   std::vector<int16_t> elementlist;
 
@@ -74,10 +75,19 @@ bool parse_node(
       }
       break;
     }
-    case kCDXNodeType_Nickname:
+    case kCDXNodeType_Nickname: {
+      elemno = 0;
+      atommap = atom_id;
+      break;
+    }
     case kCDXNodeType_Fragment: {
       elemno = 0;
       atommap = atom_id;
+      if (node.m_bondOrdering->size()) {
+        // This node may be completely replaced by the fragment
+        // i.e. [*:1]C[*:1].C[*:1]C => CCC
+        hasBondOrdering = true; // might not need
+      }
       break;
     }
     case kCDXNodeType_ExternalConnectionPoint: {
@@ -184,6 +194,10 @@ bool parse_node(
     rd_atom->setAtomMapNum(rgroup_num);
   }
   set_fuse_label(rd_atom, atommap);
+  if (node.m_bondOrdering) {
+    rd_atom->setProp<
+        std::vector<int>>(CDX_BOND_ORDERING, *node.m_bondOrdering);
+  }
   if (mergeparent > 0) {
     rd_atom->setProp<int>("MergeParent", mergeparent);
   }
