@@ -298,8 +298,11 @@ TEST_CASE("slow massively conjugated systems") {
                                    // conservative in case of CI
   }
   SECTION("nanotube") {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/nanotube.mol";
+
     auto start = std::chrono::high_resolution_clock::now();
-    auto mol = v2::FileParsers::MolFromMolFile("/home/glandrum/nanotube.mol");
+    auto mol = v2::FileParsers::MolFromMolFile(pathName);
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> duration = end - start;
     REQUIRE(mol);

@@ -207,12 +207,9 @@ void markAtomsBondsArom(ROMol &mol, const INT_VECT &unon,
     }
   }
   // now mark bonds that have a count of 1 to be aromatic;
-  // std::cerr << "bring:";
   for (const auto &bci : bndCntr) {
-    // std::cerr << " " << bci->first << "(" << bci->second << ")";
     if (bci.second == 1) {
       auto bond = bondsByIdx[bci.first];
-      // Bond *bond = mol.get BondWithIdx(bci->first);
       bond->setIsAromatic(true);
       switch (bond->getBondType()) {
         case Bond::SINGLE:
@@ -345,8 +342,6 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
     getMinMaxAtomElecs(edonType, atlw, atup);
     rlw += atlw;
     rup += atup;
-    // std::cerr << "  atom: " << idx << ": " << atlw << "-" << atup <<
-    // std::endl;
   }
 
   if (rup >= 6) {
@@ -406,11 +401,7 @@ void applyHuckelToFused(
   boost::dynamic_bitset<> activeAtoms(
       mol.getNumAtoms());  // used in markAtomBonds
   INT_VECT atsInRingSystem(mol.getNumAtoms(), 0);
-  size_t nIters = 0;
   while (1) {
-    // std::cerr << "loop: " << pos << " " << curSize << " " << nRingBonds << "
-    // "
-    //           << doneBonds.size() << std::endl;
     if (pos == -1) {
       // If a ring system has more than 300 rings and a ring combination search
       // larger than 2 is reached, the calculation becomes exponentially longer,
@@ -440,11 +431,6 @@ void applyHuckelToFused(
     } else {
       pos = nextCombination(comb, nrings);
     }
-    // std::cerr << "    new pos: " << pos << " ";
-    // std::copy(comb.begin(), comb.end(),
-    //           std::ostream_iterator<int>(std::cerr, " "));
-    // std::cerr << std::endl;
-
     if (pos == -1) {
       continue;
     }
@@ -459,7 +445,6 @@ void applyHuckelToFused(
          !RingUtils::checkFused(curRs, ringNeighs, doneRings))) {
       continue;
     }
-    ++nIters;
     std::unordered_map<unsigned int, std::unordered_set<unsigned int>>
         ringAdjacencies;
     // check aromaticity on the current fused system
@@ -484,7 +469,6 @@ void applyHuckelToFused(
       // aromatic atoms
       if (atsInRingSystem[i] == 1 || atsInRingSystem[i] == 2) {
         if (!acands[i]) {
-          // std::cerr << " atom " << i << " not a candidate" << std::endl;
           nonAromaticAtomsInRing = true;
           break;
         }
@@ -540,7 +524,6 @@ void applyHuckelToFused(
     }  // end check huckel rule
   }  // end while(1)
   narom += rdcast<int>(aromRings.size());
-  // std::cerr << "ITER COUNT: " << nIters << std::endl;
 }
 
 bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
