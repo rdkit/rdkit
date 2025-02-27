@@ -17,6 +17,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/FileParsers/SequenceParsers.h>
 
 using namespace RDKit;
 
@@ -281,5 +282,41 @@ M  END
     REQUIRE(m->getNumAtoms() == 4);
 
     CHECK_NOTHROW(MolOps::setTerminalAtomCoords(*m, 3, 0));
+  }
+}
+
+TEST_CASE("slow massively conjugated systems") {
+  SECTION("chained C60") {
+    std::string smiles =
+        "C(C#C[C@H]1[C@]23c4c5c6c7c8c9c(c%10c%11c2c2c4c4c%12c5c5c6c6c8c8c%13c9c9c%10c%10c%11c%11c2c2c4c4c%12c%12c5c5c6c8c6c8c%13c9c9c%10c%10c%11c2c2c4c4c%12c5c6c5c8c9c%10c2c45)[C@]713)#C[C@H]1[C@]23c4c5c6c7c8c9c(c%10c%11c2c2c4c4c%12c5c5c6c6c8c8c%13c9c9c%10c%10c%11c%11c2c2c4c4c%12c%12c5c5c6c8c6c8c%13c9c9c%10c%10c%11c2c2c4c4c%12c5c6c5c8c9c%10c2c45)[C@]713";
+    auto start = std::chrono::high_resolution_clock::now();
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    REQUIRE(mol);
+    CHECK(duration.count() < 10);  // currently about 0.1s for me, go super
+                                   // conservative in case of CI
+  }
+  SECTION("nanotube") {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/nanotube.mol";
+
+    auto start = std::chrono::high_resolution_clock::now();
+    auto mol = v2::FileParsers::MolFromMolFile(pathName);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    REQUIRE(mol);
+    CHECK(duration.count() < 10);  // currently about 0.1s for me, go super
+                                   // conservative in case of CI
+  }
+  SECTION("sequence") {
+    auto start = std::chrono::high_resolution_clock::now();
+    std::unique_ptr<RWMol> mol{SequenceToMol(
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW")};
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    REQUIRE(mol);
+    CHECK(duration.count() < 1);  // currently about 0.007s for me, go super
+                                  // conservative in case of CI
   }
 }
