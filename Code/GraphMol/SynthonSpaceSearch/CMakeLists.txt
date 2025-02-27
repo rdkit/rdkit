@@ -2,7 +2,8 @@
 rdkit_library(SynthonSpaceSearch
         SynthonSpaceSearch_details.cpp SynthonSpace.cpp SynthonSet.cpp Synthon.cpp
         SynthonSpaceSearcher.cpp SynthonSpaceSubstructureSearcher.cpp SynthonSpaceFingerprintSearcher.cpp
-        SynthonSpaceHitSet.cpp LINK_LIBRARIES SmilesParse FileParsers ChemTransforms Fingerprints SubstructMatch GraphMol)
+        SynthonSpaceHitSet.cpp MemoryMappedFileReader.cpp
+        LINK_LIBRARIES SmilesParse FileParsers ChemTransforms Fingerprints SubstructMatch GraphMol)
 target_compile_definitions(SynthonSpaceSearch PRIVATE RDKIT_SYNTHONSPACESEARCH_BUILD)
 
 rdkit_headers(SynthonSpace.h SynthonSet.h Synthon.h SearchResults.h

@@ -326,7 +326,6 @@ void threadedReadSynthons(
     const char *fileMap, const std::vector<std::uint64_t> &synthonPos,
     unsigned int numThreads,
     std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> &synthons) {
-  std::cout << "reading synthons on " << numThreads << " threads" << std::endl;
   size_t eachThread = 1 + (synthonPos.size() / numThreads);
   size_t start = 0;
   std::vector<std::thread> threads;
@@ -365,7 +364,6 @@ void threadedReadReactions(
     unsigned int numThreads, const SynthonSpace &space, std::uint32_t version,
     std::vector<std::pair<std::string, std::shared_ptr<SynthonSet>>>
         &reactions) {
-  std::cout << "reading reactions on " << numThreads << " threads" << std::endl;
   size_t eachThread = 1 + (reactionPos.size() / numThreads);
   size_t start = 0;
   std::vector<std::thread> threads;
