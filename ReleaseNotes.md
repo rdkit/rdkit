@@ -1,3 +1,72 @@
+# Release_2024.09.6
+(Changes relative to Release_2024.09.5)
+
+## Backwards incompatible changes
+- The colors of annotations on atoms and bonds in drawings are now controlled by
+  the drawing options `atomNoteColour` and `bondNoteColour` instead of the
+  general `annotationColour`.
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Andrey Alekseenko, Martin Buttenschoen, David Cosgrove, Tad Hurst, Gareth Jones,
+Brian Kelley, Niels Maeder, Jeremy Monat, Jan Oboril, Yakov
+Pechersky, Ricardo Rodriguez, Wonseok Shin, Paolo Tosco, Mike
+Trzaska, Riccardo Vianello, JessJKitty, laurenreid1,
+
+## New Features and Enhancements:
+  - export the targets with a python dependency to a different config file
+ (github pull #7914 from rvianello)
+  - Option to put padding round elements of reaction.
+ (github pull #8216 from DavidACosgrove)
+  - Add property to track reactant index in reaction products
+ (github issue #8222 from bp-kelley)
+  - Rascal: Add option to specify minimum clique size directly.
+ (github pull #8248 from DavidACosgrove)
+  - MolDraw2D: add separate colors for atom and bond annotations
+ (github pull #8249 from greglandrum)
+  - Restore functionality of the MinimalLib Dockerfile and improve exception handling performance
+ (github pull #8267 from ptosco)
+  - Option to preserve default text colors when highlighting atoms.
+ (github issue #8271 from JessJKitty)
+  - Tweak mol fragmenter
+ (github pull #8277 from DavidACosgrove)
+  - Expose basinThresh to the python layer
+ (github pull #8283 from nmaeder)
+  - bump InChI version to 1.07.3
+ (github pull #8300 from greglandrum)
+
+## Bug Fixes:
+  - UFF optimization leads to overlapping atoms
+ (github issue #7901 from oboril)
+  - Generating inchi for chiral phosphates raises a warning
+ (github issue #8238 from pechersky)
+  - Chiral phosphates no longer generate distinct inchi
+ (github issue #8239 from pechersky)
+  - RascalMCES.FindMCES Produces Incorrect SMARTS Output
+ (github issue #8246 from gratus907)
+  - Segmentation fault in EmbedMultipleConfs
+ (github issue #8250 from maabuu)
+  - Rascal - Missing atoms in MCESs
+ (github issue #8255 from laurenreid1)
+  - PR #8192 breaks AdjustQueryProperties / aromatizeIfPossible for some molecules.
+ (github issue #8256 from ricrogz)
+  - MolBlocks should fail to write when given coordinates that are too large
+ (github issue #8265 from bp-kelley)
+  - trimethylcyclohexane chirality error
+ (github pull #8272 from tadhurst-cdd)
+  - Some mem fixes.
+ (github pull #8276 from ricrogz)
+  - Fix buffer size in pickersCLI.cpp
+ (github pull #8282 from al42and)
+  - Another mem leak fix to the InChI conversion
+ (github pull #8291 from ricrogz)
+  - Fix memory leaks in MolStandardize SWIG Wrapper
+ (github pull #8298 from jones-gareth)
+
+
 # Release_2024.09.5
 (Changes relative to Release_2024.09.4)
 
@@ -324,7 +393,6 @@ UENO, M., bzoracler, esiaero
 
 ## Backwards incompatible changes
 - HasPropWithValueQueryBase used RDKit::Dict::Pair to return data used for serializing object in a molecule  pickle.  This has been changed to RDKit::PairHolder which automatically manages memory.
-- The colors of annotations on atoms and bonds are now controlled by the drawing options `atomNoteColour` and `bondNoteColour` instead of the general `annotationColour`.
 
 ## New Features and Enhancements:
   - Fix canonicalization of stereogroups
