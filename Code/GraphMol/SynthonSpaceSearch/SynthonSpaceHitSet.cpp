@@ -26,10 +26,12 @@ SynthonSpaceHitSet::SynthonSpaceHitSet(
                          synthons[i][stu[i][j]].second->getOrigMol().get()));
     }
   }
+
   frags.reserve(fragSet.size());
-  for (size_t i = 0; i < fragSet.size(); ++i) {
-    frags.push_back(fragSet[i].get());
-  }
+  std::transform(
+      fragSet.begin(), fragSet.end(), std::back_inserter(frags),
+      [](const std::unique_ptr<ROMol> &f) -> ROMol * { return f.get(); });
+
   numHits = std::accumulate(
       stu.begin(), stu.end(), size_t(1),
       [](const int prevRes, const std::vector<size_t> &s2) -> size_t {
@@ -54,4 +56,4 @@ SynthonSpaceFPHitSet::SynthonSpaceFPHitSet(
   subtractFP = reaction.getSubtractFP().get();
 }
 
-}
+}  // namespace RDKit::SynthonSpaceSearch

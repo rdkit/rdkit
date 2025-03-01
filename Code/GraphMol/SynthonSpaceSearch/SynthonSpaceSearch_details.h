@@ -14,6 +14,7 @@
 #include <chrono>
 #include <vector>
 
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <RDGeneral/export.h>
 #include <DataStructs/ExplicitBitVect.h>
 
@@ -143,6 +144,9 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT bool removeQueryAtoms(RWMol &mol);
 // by the reaction name.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
     const std::string &reactionId, const std::vector<std::string> &fragIds);
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::string buildProductName(
+    const RDKit::SynthonSpaceSearch::SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &fragNums);
 // Zip the fragments together to make a molecule.  Assumes the connection
 // points are marking by isotope numbers on dummy atoms.
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::unique_ptr<ROMol> buildProduct(

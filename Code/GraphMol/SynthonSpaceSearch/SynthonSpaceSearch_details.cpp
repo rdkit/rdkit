@@ -24,6 +24,7 @@
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <boost/fusion/container/vector/vector.hpp>
@@ -659,6 +660,20 @@ std::string buildProductName(const std::string &reactionId,
     prodName += fragId;
   }
   prodName += ";" + reactionId;
+  return prodName;
+}
+
+std::string buildProductName(
+    const RDKit::SynthonSpaceSearch::SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &fragNums) {
+  std::string prodName = "";
+  for (size_t i = 0; i < fragNums.size(); ++i) {
+    if (prodName != "") {
+      prodName += ";";
+    }
+    prodName += hitset->synthonsToUse[i][fragNums[i]].first;
+  }
+  prodName += ";" + hitset->reactionId;
   return prodName;
 }
 

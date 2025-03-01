@@ -49,6 +49,8 @@ const std::vector<std::string> CONNECTOR_SYMBOLS{"[U]", "[Np]", "[Pu]", "[Am]"};
 constexpr unsigned int MAX_CONNECTOR_NUM{4};
 
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
+  std::int64_t maxHits{1000};  // The maximum number of hits to return.
+                               // Use -1 for no maximum.
   std::uint64_t maxNumFragSets{
       100000};  // The maximum number of fragment sets the query can
                 // be broken into.  Big molecules will create huge
@@ -56,15 +58,22 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                 // memory use.  If the number of fragment sets hits this
                 // number, fragmentation stops and the search results
                 // will likely be incomplete.
-  std::int64_t maxHits{1000};  // The maximum number of hits to return.  Use
-                               // -1 for no maximum.
-  std::int64_t hitStart{0};    // Sequence number of hit to start from.  So that
-                               // you can return the next N hits of a search
-                               // having already obtained N-1.
-  bool randomSample{false};    // If true, returns a random sample of the hit
-                               // hits, up to maxHits in number.
-  int randomSeed{-1};    // Seed for random-number generator.  -1 means use
-                         // a random seed (std::random_device).
+  std::int64_t toTryChunkSize{2500000};  // For similarity searching, especially
+  // fingerprint similarity, there can be a
+  // very large number of possible hits to
+  // screen which can use a lot of memory and
+  // crash the program.  It will also be very
+  // slow.  To alleviate the memory use, the
+  // possible hits are processed in chunks.
+  // This parameter sets the chunk size.
+
+  std::int64_t hitStart{0};  // Sequence number of hit to start from.  So that
+                             // you can return the next N hits of a search
+                             // having already obtained N-1.
+  bool randomSample{false};  // If true, returns a random sample of the hit
+                             // hits, up to maxHits in number.
+  int randomSeed{-1};        // Seed for random-number generator.  -1 means use
+                             // a random seed (std::random_device).
   bool buildHits{true};  // If false, reports the maximum number of hits that
                          // the search could produce, but doesn't return them.
   int numRandomSweeps{10};  // The random sampling doesn't always produce the
@@ -96,6 +105,11 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // produce long run times.
   std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
                                // search.  0 means no maximum.
+  int numThreads = 1;  // The number of threads to use.  If > 0, will use that
+  // number.  If <= 0, will use the number of hardware
+  // threads plus this number.  So if the number of
+  // hardware threads is 8, and numThreads is -1, it will
+  // use 7 threads.
 };
 
 class Synthon;
