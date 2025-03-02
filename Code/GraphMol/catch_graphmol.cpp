@@ -4887,3 +4887,26 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
     CHECK(was_deleted == true);
   }
 }
+
+TEST_CASE("Github #8304: addHs should ignore queries") {
+  SECTION("queryAtoms") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    MolOps::addHs(*m1);
+    CHECK(m1->getNumAtoms() == 8);
+    auto m2 = "CC"_smarts;
+    REQUIRE(m2);
+    m2->updatePropertyCache(false);
+    MolOps::addHs(*m2);
+    CHECK(m2->getNumAtoms() == 2);
+  }
+  SECTION("queryBonds") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    auto qb = v2::SmilesParse::BondFromSmarts("!@");
+    REQUIRE(qb);
+    m1->replaceBond(0, qb.get());
+    MolOps::addHs(*m1);
+    CHECK(m1->getNumAtoms() == 2);
+  }
+}

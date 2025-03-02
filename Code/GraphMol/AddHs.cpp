@@ -516,6 +516,19 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
   }
 }
 
+namespace {
+bool isQueryAtom(const RWMol &mol, const Atom &atom) {
+  if (atom.hasQuery()) {
+    return true;
+  }
+  for (const auto bnd : mol.atomBonds(&atom)) {
+    if (bnd->hasQuery()) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
 void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
            const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
   // when we hit each atom, clear its computed properties
@@ -528,9 +541,20 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // pre-allocate the necessary space on the conformations of the molecule
   // for their coordinates
   unsigned int numAddHyds = 0;
+  boost::dynamic_bitset<> onAtoms(mol.getNumAtoms());
+  if (onlyOnAtoms) {
+    for (auto atIdx : *onlyOnAtoms) {
+      onAtoms.set(atIdx);
+    }
+  } else {
+    onAtoms.set();
+  }
   for (auto at : mol.atoms()) {
-    if (!onlyOnAtoms || std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
-                                  at->getIdx()) != onlyOnAtoms->end()) {
+    if (onAtoms[at->getIdx()]) {
+      if (isQueryAtom(mol, *at)) {
+        onAtoms.set(at->getIdx(), 0);
+        continue;
+      }
       numAddHyds += at->getNumExplicitHs();
       if (!explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
@@ -548,8 +572,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
 
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    if (onlyOnAtoms && std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
-                                 aidx) == onlyOnAtoms->end()) {
+    if (!onAtoms[aidx]) {
       continue;
     }
 
