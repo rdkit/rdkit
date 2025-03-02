@@ -11,8 +11,10 @@
 #include <regex>
 #include <set>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>

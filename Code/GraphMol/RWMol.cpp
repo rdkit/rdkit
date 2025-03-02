@@ -8,7 +8,9 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/tokenizer.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 // our stuff
 #include <RDGeneral/Invariant.h>
