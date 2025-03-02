@@ -828,3 +828,34 @@ TEST_CASE(
     CHECK(MolToSmiles(*mol) == "*/N(=N/O)c1ccccc1");
   }
 }
+
+TEST_CASE("makeAtomsGeneric and other operations") {
+  SECTION("makeAtomsGeneric and adjustDegree") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.makeAtomsGeneric = true;
+    ps.adjustDegree = true;
+    ps.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
+    auto q = "CN"_smiles;
+    REQUIRE(q);
+    MolOps::adjustQueryProperties(*q, &ps);
+    std::vector<std::pair<std::string, bool>> examples = {
+        {"CC", true},
+        {"CN", true},
+        {"CCC", false},
+        {"CNC", false},
+    };
+    for (const auto &tpl : examples) {
+      auto smi = tpl.first;
+      auto shouldMatch = tpl.second;
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      if (shouldMatch) {
+        CHECK(!SubstructMatch(*m, *q).empty());
+      } else {
+        CHECK(SubstructMatch(*m, *q).empty());
+      }
+    }
+  }
+}

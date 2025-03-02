@@ -3891,7 +3891,7 @@ CAS<~>
     qps = Chem.AdjustQueryParameters()
     qps.makeAtomsGeneric = True
     am = Chem.AdjustQueryProperties(m, qps)
-    self.assertEqual(Chem.MolToSmarts(am), '*1-*-*-*-1-*-*')
+    self.assertEqual(Chem.MolToSmarts(am), '[D2]1-[D2]-[D2]-[D3]-1-*-*')
     qps.makeAtomsGenericFlags = Chem.ADJUST_IGNORERINGS
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1-*-*')
@@ -3915,7 +3915,7 @@ CAS<~>
     qps = Chem.AdjustQueryParameters()
     qps.makeAtomsGeneric = True
     am = Chem.AdjustQueryProperties(m, qps)
-    self.assertEqual(Chem.MolFragmentToSmarts(am, [0, 1, 2]), '*-*-*')
+    self.assertEqual(Chem.MolFragmentToSmarts(am, [3, 4, 5]), '[D3]-*-*')
 
   def testAdjustQueryPropertiesgithubIssue1474(self):
     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
@@ -6735,13 +6735,12 @@ M  END
 
     self.assertTrue((pos == pos2).all())
 
-
   def test_get_set_positions_stride(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
     # to check stride walking in SetPositions
     # allocate a double size array, then slice every other element
     # numpy will mess with the striding to create the view onto the double size array
-    pos = np.zeros([6,3], np.double)[::2]
+    pos = np.zeros([6, 3], np.double)[::2]
     pos[0][1] = 1
     pos[0][2] = 2
     pos[1][0] = 3
@@ -6754,8 +6753,7 @@ M  END
     m.GetConformer(0).SetPositions(pos)
     pos2 = m.GetConformer(0).GetPositions()
 
-    self.assertTrue( (pos==pos2).all())
-
+    self.assertTrue((pos == pos2).all())
 
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
