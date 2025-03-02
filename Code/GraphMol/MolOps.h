@@ -192,9 +192,10 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFragsWithQuery(
 
 struct RDKIT_GRAPHMOL_EXPORT AddHsParameters {
   bool explicitOnly = false;   /**< only add explicit Hs */
-  bool addCoords = false;      /**< add coordinates to the Hs */
+  bool addCoords = false;      /**< add coordinates for the Hs */
   bool addResidueInfo = false; /**< add residue info to the Hs */
-  bool skipQueries = false;    /**< do not add Hs to query atoms */
+  bool skipQueries =
+      false; /**< do not add Hs to query atoms or atoms with query bonds */
 };
 //! adds Hs to a molecule as explicit Atoms
 /*!
