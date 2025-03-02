@@ -529,8 +529,8 @@ bool isQueryAtom(const RWMol &mol, const Atom &atom) {
   return false;
 }
 }  // namespace
-void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
-           const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
+void addHs(RWMol &mol, const AddHsParameters &params,
+           const UINT_VECT *onlyOnAtoms) {
   // when we hit each atom, clear its computed properties
   // NOTE: it is essential that we not clear the ring info in the
   // molecule's computed properties.  We don't want to have to
@@ -551,12 +551,12 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   }
   for (auto at : mol.atoms()) {
     if (onAtoms[at->getIdx()]) {
-      if (isQueryAtom(mol, *at)) {
+      if (params.skipQueries && isQueryAtom(mol, *at)) {
         onAtoms.set(at->getIdx(), 0);
         continue;
       }
       numAddHyds += at->getNumExplicitHs();
-      if (!explicitOnly) {
+      if (!params.explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
       }
     }
@@ -592,7 +592,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
       mol.addBond(aidx, newIdx, Bond::SINGLE);
       auto hAtom = mol.getAtomWithIdx(newIdx);
       hAtom->updatePropertyCache();
-      if (addCoords) {
+      if (params.addCoords) {
         setTerminalAtomCoords(mol, newIdx, aidx);
       }
       if (isoH != isoHs.end()) {
@@ -603,7 +603,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     // clear the local property
     newAt->setNumExplicitHs(0);
 
-    if (!explicitOnly) {
+    if (!params.explicitOnly) {
       // take care of implicits
       for (unsigned int i = 0; i < mol.getAtomWithIdx(aidx)->getNumImplicitHs();
            i++) {
@@ -614,7 +614,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
         auto hAtom = mol.getAtomWithIdx(newIdx);
         hAtom->setProp(common_properties::isImplicit, 1);
         hAtom->updatePropertyCache();
-        if (addCoords) {
+        if (params.addCoords) {
           setTerminalAtomCoords(mol, newIdx, aidx);
         }
         if (isoH != isoHs.end()) {
@@ -632,17 +632,10 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     }
   }
   // take care of AtomPDBResidueInfo for Hs if root atom has it
-  if (addResidueInfo) {
+  if (params.addResidueInfo) {
     AssignHsResidueInfo(mol);
   }
 }
-
-ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
-             const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
-  auto *res = new RWMol(mol);
-  addHs(*res, explicitOnly, addCoords, onlyOnAtoms, addResidueInfo);
-  return static_cast<ROMol *>(res);
-};
 
 namespace {
 // returns whether or not an adjustment was made, in case we want that info
