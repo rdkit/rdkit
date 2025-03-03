@@ -622,7 +622,7 @@ class MolFromSCSRMolConverter {
           hydrogenBondConnections.emplace_back(templateMol, templateAtomIdx,
                                                isDonor);
           if (molFromSCSRParams.scsrBaseHbondOptions ==
-              SCSRBaseHbondOptions::SCSRBaseHbondOptionsUseSapOne) {
+              SCSRBaseHbondOptions::UseSapOne) {
             return;
           }
         }
@@ -727,10 +727,10 @@ class MolFromSCSRMolConverter {
     // the processing of H-bonds is contorlled by the SCSRBaseHbondOptions
     // member of the SCSRMolFileParserParams parameter.  The options are:
 
-    //  SCSRBaseHbondOptionsIgnore - if this is selected, all H-bonds are
+    //  Ignore - if this is selected, all H-bonds are
     //  ignored and not processed.
 
-    // SCSRBaseHbondOptionsUseSapAll = 1,  // if this is selected, all SAPs
+    // UseSapAll = 1,  // if this is selected, all SAPs
     // for the hbond are used.  They must be defined in the template in the
     // correct order, which starts with the first atom nearest the Al
     // connection, and continues sequentially
@@ -765,14 +765,14 @@ class MolFromSCSRMolConverter {
     // indicates that the sides are h-bonded somehow and keeps the overall
     // pairing straight.
 
-    // SCSRBaseHbondOptionsUseSapOne
+    // UseSapOne
     // if this is selected, use only one SAP hbond per base
     // If multiple SAPs are defined, use the first
     // even if it is not the best
     //(this just maintains the relationship between
     // the to base pairs)
 
-    // SCSRBaseHbondOptionsAuto
+    // Auto
     // For bases that are C,G,A,T,U,In (and
     // derivatives) use the standard Watson-Crick
     // Hbonding.  No SAPs need to be defined, and if
@@ -784,13 +784,13 @@ class MolFromSCSRMolConverter {
     std::vector<HydrogenBondConnection> endHatomConnections;
 
     if (molFromSCSRParams.scsrBaseHbondOptions ==
-        SCSRBaseHbondOptions::SCSRBaseHbondOptionsIgnore) {
+        SCSRBaseHbondOptions::Ignore) {
       return;
     }
     if (molFromSCSRParams.scsrBaseHbondOptions ==
-            SCSRBaseHbondOptions::SCSRBaseHbondOptionsUseSapAll ||
+            SCSRBaseHbondOptions::UseSapAll ||
         molFromSCSRParams.scsrBaseHbondOptions ==
-            SCSRBaseHbondOptions::SCSRBaseHbondOptionsUseSapOne) {
+            SCSRBaseHbondOptions::UseSapOne) {
       // get the hydrogen bond sites from the template SAPs
       getNewAtomsForHydrogenBond(bond->getBeginAtom(), bond->getEndAtomIdx(),
                                  beginHatomConnections);
@@ -805,7 +805,7 @@ class MolFromSCSRMolConverter {
         throw FileParseException("No Attach Point for bond");
       }
     } else if (molFromSCSRParams.scsrBaseHbondOptions ==
-               SCSRBaseHbondOptions::SCSRBaseHbondOptionsAuto) {
+               SCSRBaseHbondOptions::Auto) {
       // get the hbond sites from the map already created for each
       // base template
       auto templateIdx = atomIdxToTemplateIdx[bond->getBeginAtomIdx()];
@@ -1001,8 +1001,7 @@ class MolFromSCSRMolConverter {
     // if we are perceiving the H-bonding locations for base templates, do that
     // here
 
-    if (molFromSCSRParams.scsrBaseHbondOptions ==
-        SCSRBaseHbondOptions::SCSRBaseHbondOptionsAuto) {
+    if (molFromSCSRParams.scsrBaseHbondOptions == SCSRBaseHbondOptions::Auto) {
       for (unsigned int templateIdx = 0;
            templateIdx < scsrMol->getTemplateCount(); ++templateIdx) {
         auto templateMol = scsrMol->getTemplate(templateIdx);
@@ -1117,13 +1116,13 @@ class MolFromSCSRMolConverter {
                         dummyLabel) != templateNames.end()) {
             templateFound = true;
             switch (molFromSCSRParams.scsrTemplateNames) {
-              case SCSRTemplateNames::SCSRTemplateNamesUseFirstName:
+              case SCSRTemplateNames::UseFirstName:
                 templateNameToUse = templateNames[0];
                 break;
-              case SCSRTemplateNames::SCSRTemplateNamesUseSecondName:
+              case SCSRTemplateNames::UseSecondName:
                 templateNameToUse = templateNames.back();
                 break;
-              case SCSRTemplateNames::SCSRTemplateNamesAsEntered:
+              case SCSRTemplateNames::AsEntered:
                 templateNameToUse = dummyLabel;
                 break;
             }

@@ -38,8 +38,8 @@ class TestCase(unittest.TestCase):
 
     molFromSCSRParams = Chem.MolFromSCSRParams()
     molFromSCSRParams.includeLeavingGroups = True
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNamesVal.SCSRTemplateNamesAsEntered
-    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptionsVal.SCSRBaseHbondOptionsIgnore
+    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.AsEntered
+    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Ignore
 
     mol = Chem.SCSRToMol(scsr, molFromSCSRParams)
 
@@ -64,8 +64,8 @@ class TestCase(unittest.TestCase):
 
     molFromSCSRParams = Chem.MolFromSCSRParams()
     molFromSCSRParams.includeLeavingGroups = True
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNamesVal.SCSRTemplateNamesAsEntered
-    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptionsVal.SCSRBaseHbondOptionsAuto
+    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.AsEntered
+    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Auto
 
     mol = Chem.SCSRToMol(scsr, molFromSCSRParams)
 
@@ -74,7 +74,7 @@ class TestCase(unittest.TestCase):
     sgs = Chem.GetMolSubstanceGroups(mol)
     self.assertTrue(len(sgs) == 38)
 
-    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptionsVal.SCSRBaseHbondOptionsIgnore
+    molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Ignore
     mol = Chem.SCSRToMol(scsr, molFromSCSRParams)
 
     self.assertTrue(mol.GetNumAtoms() == 254)
@@ -99,7 +99,7 @@ class TestCase(unittest.TestCase):
 
     molFromSCSRParams = Chem.MolFromSCSRParams()
     molFromSCSRParams.includeLeavingGroups = True
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNamesVal.SCSRTemplateNamesAsEntered
+    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.AsEntered
 
     mol = Chem.SCSRToMol(scsr, molFromSCSRParams)
 
@@ -110,7 +110,7 @@ class TestCase(unittest.TestCase):
     sgs[0].GetProp('LABEL')
     self.assertEqual(sgs[0].GetProp('LABEL'), 'Ala_4')
 
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNamesVal.SCSRTemplateNamesUseFirstName
+    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.UseFirstName
 
     mol = Chem.SCSRToMol(scsr, molFromSCSRParams)
 
@@ -120,7 +120,7 @@ class TestCase(unittest.TestCase):
 
     self.assertEqual(sgs[0].GetProp('LABEL'), 'Ala_4')
 
-    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNamesVal.SCSRTemplateNamesUseLastName
+    molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.UseSecondName
 
     mol = Chem.SCSRToMol(scsr, molFromSCSRParams)
 

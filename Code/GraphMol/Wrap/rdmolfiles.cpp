@@ -1208,7 +1208,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "scsrBaseHbondOptions",
           &RDKit::v2::FileParsers::MolFromSCSRParams::scsrBaseHbondOptions,
-          "One of SCSRBaseHbondOptionsIgnore, SCSRBaseHbondOptionsUseSapAll(default) , SCSRBaseHbondOptionsUseSapOne, SCSRBaseHbondOptionsAuto");
+          "One of Ignore, UseSapAll(default) , UseSapOne, Auto");
 
   docString =
       "Construct a molecule (mol) from an SCSR Mol.  The templates are represented by\n\
@@ -1855,31 +1855,20 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
 
   python::enum_<RDKit::v2::FileParsers::SCSRBaseHbondOptions>(
-      "SCSRBaseHbondOptionsVal")
-      .value("SCSRBaseHbondOptionsIgnore",
-             RDKit::v2::FileParsers::SCSRBaseHbondOptions::
-                 SCSRBaseHbondOptionsIgnore)
-      .value("SCSRBaseHbondOptionsUseSapAll",
-             RDKit::v2::FileParsers::SCSRBaseHbondOptions::
-                 SCSRBaseHbondOptionsUseSapAll)
-      .value("SCSRBaseHbondOptionsUseSapOne",
-             RDKit::v2::FileParsers::SCSRBaseHbondOptions::
-                 SCSRBaseHbondOptionsUseSapOne)
-      .value("SCSRBaseHbondOptionsAuto",
-             RDKit::v2::FileParsers::SCSRBaseHbondOptions::
-                 SCSRBaseHbondOptionsAuto);
+      "SCSRBaseHbondOptions")
+      .value("Ignore", RDKit::v2::FileParsers::SCSRBaseHbondOptions::Ignore)
+      .value("UseSapAll",
+             RDKit::v2::FileParsers::SCSRBaseHbondOptions::UseSapAll)
+      .value("UseSapOne",
+             RDKit::v2::FileParsers::SCSRBaseHbondOptions::UseSapOne)
+      .value("Auto", RDKit::v2::FileParsers::SCSRBaseHbondOptions::Auto);
 
-  python::enum_<RDKit::v2::FileParsers::SCSRTemplateNames>(
-      "SCSRTemplateNamesVal")
-      .value("SCSRTemplateNamesUseFirstName",
-             RDKit::v2::FileParsers::SCSRTemplateNames::
-                 SCSRTemplateNamesUseFirstName)
-      .value("SCSRTemplateNamesUseLastName",
-             RDKit::v2::FileParsers::SCSRTemplateNames::
-                 SCSRTemplateNamesUseSecondName)
-      .value("SCSRTemplateNamesAsEntered",
-             RDKit::v2::FileParsers::SCSRTemplateNames::
-                 SCSRTemplateNamesAsEntered);
+  python::enum_<RDKit::v2::FileParsers::SCSRTemplateNames>("SCSRTemplateNames")
+      .value("UseFirstName",
+             RDKit::v2::FileParsers::SCSRTemplateNames::UseFirstName)
+      .value("UseSecondName",
+             RDKit::v2::FileParsers::SCSRTemplateNames::UseSecondName)
+      .value("AsEntered", RDKit::v2::FileParsers::SCSRTemplateNames::AsEntered);
 
   python::enum_<RDKit::RestoreBondDirOption>("RestoreBondDirOption")
       .value("RestoreBondDirOptionClear",
