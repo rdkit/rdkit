@@ -336,4 +336,83 @@ TEST_CASE("cleanuporganometallics and carbon") {
       }
     }
   }
+  SECTION("github #8312") {
+    std::string mb = R"CTAB(
+  ChemDraw03012503262D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 21 24 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1.822529 0.405221 0.000000 0 VAL=5
+M  V30 2 C -1.822529 -0.419779 0.000000 0 VAL=5
+M  V30 3 C -1.239167 -1.003142 0.000000 0
+M  V30 4 C -0.414167 -1.003142 0.000000 0
+M  V30 5 C 0.169196 -0.419779 0.000000 0 VAL=5
+M  V30 6 C 0.169196 0.405221 0.000000 0 VAL=5
+M  V30 7 C -0.414167 0.988584 0.000000 0
+M  V30 8 C -1.239167 0.988584 0.000000 0
+M  V30 9 Pt 1.335541 -0.028481 0.000000 0 VAL=6
+M  V30 10 C 1.697726 0.712766 0.000000 0
+M  V30 11 C 1.796387 -0.712766 0.000000 0
+M  V30 12 H 2.520757 0.769729 0.000000 0
+M  V30 13 H 1.236879 1.397051 0.000000 0
+M  V30 14 H 2.059910 1.454013 0.000000 0
+M  V30 15 H 2.619419 -0.655803 0.000000 0
+M  V30 16 H 1.434203 -1.454013 0.000000 0
+M  V30 17 H 2.257234 -1.397051 0.000000 0
+M  V30 18 H -2.619419 0.618747 0.000000 0
+M  V30 19 H -2.619419 -0.633305 0.000000 0
+M  V30 20 H 0.382722 1.202110 0.000000 0
+M  V30 21 H 0.581696 -1.134250 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 8 1 8 1
+M  V30 9 1 9 10
+M  V30 10 1 9 11
+M  V30 11 1 10 12
+M  V30 12 1 10 13
+M  V30 13 1 10 14
+M  V30 14 1 11 15
+M  V30 15 1 11 16
+M  V30 16 1 11 17
+M  V30 17 1 9 6
+M  V30 18 1 9 5
+M  V30 19 1 9 1
+M  V30 20 1 9 2
+M  V30 21 1 1 18
+M  V30 22 1 2 19
+M  V30 23 1 6 20
+M  V30 24 1 5 21
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB";
+    auto mol = v2::FileParsers::MolFromMolBlock(mb);
+    REQUIRE(mol);
+    REQUIRE(mol->getBondBetweenAtoms(5, 8));
+    CHECK(mol->getBondBetweenAtoms(5, 8)->getBondType() ==
+          Bond::BondType::DATIVE);
+    REQUIRE(mol->getBondBetweenAtoms(4, 8));
+    CHECK(mol->getBondBetweenAtoms(4, 8)->getBondType() ==
+          Bond::BondType::DATIVE);
+    REQUIRE(mol->getBondBetweenAtoms(0, 8));
+    CHECK(mol->getBondBetweenAtoms(0, 8)->getBondType() ==
+          Bond::BondType::DATIVE);
+    REQUIRE(mol->getBondBetweenAtoms(1, 8));
+    CHECK(mol->getBondBetweenAtoms(1, 8)->getBondType() ==
+          Bond::BondType::DATIVE);
+    REQUIRE(mol->getBondBetweenAtoms(9, 8));
+    CHECK(mol->getBondBetweenAtoms(9, 8)->getBondType() ==
+          Bond::BondType::SINGLE);
+    REQUIRE(mol->getBondBetweenAtoms(10, 8));
+    CHECK(mol->getBondBetweenAtoms(10, 8)->getBondType() ==
+          Bond::BondType::SINGLE);
+  }
 }
