@@ -225,7 +225,7 @@ RETURNS NULL ON NULL INPUT;
 CREATE CAST (text as mol) WITH FUNCTION mol_from_smiles(text) AS IMPLICIT;
 CREATE CAST (varchar as mol) WITH FUNCTION mol_from_smiles(text) AS IMPLICIT;
 
-CREATE OR REPLACE FUNCTION mol_from_ctab(cstring,bool default false)
+CREATE OR REPLACE FUNCTION mol_from_ctab(cstring,bool default false, bool default true, bool default true)
 RETURNS mol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -340,7 +340,7 @@ PARALLEL SAFE
 AS 'MODULE_PATHNAME', 'mol_from_smarts'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION qmol_from_ctab(cstring,bool default false)
+CREATE OR REPLACE FUNCTION qmol_from_ctab(cstring,bool default false, bool default false, bool default true)
 RETURNS qmol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
