@@ -171,7 +171,7 @@ ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-RDKit::SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
+RDKit::SCSRMol *SCSRFromSCSRBlock(python::object imolBlock, bool sanitize,
                                   bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   unsigned int line = 0;
@@ -181,7 +181,7 @@ RDKit::SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    scsrMol = SCSRMolFromScsrDataStream(inStream, line, params).release();
+    scsrMol = SCSRMolFromSCSRDataStream(inStream, line, params).release();
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -189,7 +189,7 @@ RDKit::SCSRMol *ScsrFromScsrBlock(python::object imolBlock, bool sanitize,
   return static_cast<RDKit::SCSRMol *>(scsrMol);
 }
 
-RDKit::SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
+RDKit::SCSRMol *SCSRFromSCSRFile(const std::string &molFilename, bool sanitize,
                                  bool removeHs) {
   RDKit::SCSRMol *scsrMol = nullptr;
   try {
@@ -197,7 +197,7 @@ RDKit::SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    scsrMol = SCSRMolFromScsrFile(molFilename, params).release();
+    scsrMol = SCSRMolFromSCSRFile(molFilename, params).release();
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -208,11 +208,11 @@ RDKit::SCSRMol *ScsrFromScsrFile(const std::string &molFilename, bool sanitize,
   return static_cast<RDKit::SCSRMol *>(scsrMol);
 }
 
-ROMol *ScsrToMol(const RDKit::SCSRMol &scsrMol,
-                 RDKit::v2::FileParsers::MolFromScsrParams &molFromScsrParams) {
+ROMol *SCSRToMol(const RDKit::SCSRMol &scsrMol,
+                 RDKit::v2::FileParsers::MolFromSCSRParams &molFromSCSRParams) {
   ROMol *mol = nullptr;
   try {
-    mol = RDKit::v2::FileParsers::MolFromSCSRMol(&scsrMol, molFromScsrParams)
+    mol = RDKit::v2::FileParsers::MolFromSCSRMol(&scsrMol, molFromSCSRParams)
               .release();
 
   } catch (...) {
@@ -1167,7 +1167,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n\
     a Mol object, None on failure.\n\
 \n";
-  python::def("ScsrFromScsrFile", RDKit::ScsrFromScsrFile,
+  python::def("SCSRFromSCSRFile", RDKit::SCSRFromSCSRFile,
               (python::arg("molFileName"), python::arg("sanitize") = true,
                python::arg("removeHs") = true),
               docString.c_str(),
@@ -1188,38 +1188,38 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
 \n RETURNS :\n\
 \n a Mol object, None on failure.\n\
 \n ";
-  python::def("ScsrFromScsrBlock", RDKit::ScsrFromScsrBlock,
+  python::def("SCSRFromSCSRBlock", RDKit::SCSRFromSCSRBlock,
               (python::arg("molBlock"), python::arg("sanitize") = true,
                python::arg("removeHs") = true),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
-  python::class_<RDKit::v2::FileParsers::MolFromScsrParams, boost::noncopyable>(
-      "MolFromScsrParams",
+  python::class_<RDKit::v2::FileParsers::MolFromSCSRParams, boost::noncopyable>(
+      "MolFromSCSRParams",
       "Parameters controlling conversion of an SCSRMol to a Mol")
       .def_readwrite(
           "includeLeavingGroups",
-          &RDKit::v2::FileParsers::MolFromScsrParams::includeLeavingGroups,
+          &RDKit::v2::FileParsers::MolFromSCSRParams::includeLeavingGroups,
           "include leaving groups atoms if not substited at that position")
       .def_readwrite(
           "scsrTemplateNames",
-          &RDKit::v2::FileParsers::MolFromScsrParams::scsrTemplateNames,
+          &RDKit::v2::FileParsers::MolFromSCSRParams::scsrTemplateNames,
           "If True, the first template name in the Sgroup is used as the Sgroup label")
       .def_readwrite(
           "scsrBaseHbondOptions",
-          &RDKit::v2::FileParsers::MolFromScsrParams::scsrBaseHbondOptions,
-          "One of ScsrBaseHbondOptionsIgnore, ScsrBaseHbondOptionsUseSapAll(default) , ScsrBaseHbondOptionsUseSapOne, ScsrBaseHbondOptionsAuto");
+          &RDKit::v2::FileParsers::MolFromSCSRParams::scsrBaseHbondOptions,
+          "One of SCSRBaseHbondOptionsIgnore, SCSRBaseHbondOptionsUseSapAll(default) , SCSRBaseHbondOptionsUseSapOne, SCSRBaseHbondOptionsAuto");
 
   docString =
       "Construct a molecule (mol) from an SCSR Mol.  The templates are represented by\n\
       SUP SGROUPS\n\n ARGUMENTS :\n\
 \n - scsrMol : SCSRMol to be converted.\n\
-\n - molFromScsrParams : MolFromScsrParams to control conversion\n\
+\n - molFromSCSRParams : MolFromSCSRParams to control conversion\n\
 \n RETURNS :\n\
 \n a Mol object, None on failure.\n\
 \n ";
-  python::def("ScsrToMol", ScsrToMol,
-              (python::arg("scsrMol"), python::arg("molFromScsrParams")),
+  python::def("SCSRToMol", SCSRToMol,
+              (python::arg("scsrMol"), python::arg("molFromSCSRParams")),
               docString.c_str(),
               python::return_value_policy<python::manage_new_object>());
 
@@ -1854,25 +1854,25 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .value("CX_ALL_BUT_COORDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
 
-  python::enum_<RDKit::v2::FileParsers::ScsrBaseHbondOptions>(
-      "ScsrBaseHbondOptionsVal")
-      .value("ScsrBaseHbondOptionsIgnore",
-             RDKit::v2::FileParsers::ScsrBaseHbondOptionsIgnore)
-      .value("ScsrBaseHbondOptionsUseSapAll",
-             RDKit::v2::FileParsers::ScsrBaseHbondOptionsUseSapAll)
-      .value("ScsrBaseHbondOptionsUseSapOne",
-             RDKit::v2::FileParsers::ScsrBaseHbondOptionsUseSapOne)
-      .value("ScsrBaseHbondOptionsAuto",
-             RDKit::v2::FileParsers::ScsrBaseHbondOptionsAuto);
+  python::enum_<RDKit::v2::FileParsers::SCSRBaseHbondOptions>(
+      "SCSRBaseHbondOptionsVal")
+      .value("SCSRBaseHbondOptionsIgnore",
+             RDKit::v2::FileParsers::SCSRBaseHbondOptionsIgnore)
+      .value("SCSRBaseHbondOptionsUseSapAll",
+             RDKit::v2::FileParsers::SCSRBaseHbondOptionsUseSapAll)
+      .value("SCSRBaseHbondOptionsUseSapOne",
+             RDKit::v2::FileParsers::SCSRBaseHbondOptionsUseSapOne)
+      .value("SCSRBaseHbondOptionsAuto",
+             RDKit::v2::FileParsers::SCSRBaseHbondOptionsAuto);
 
-  python::enum_<RDKit::v2::FileParsers::ScsrTemplateNames>(
-      "ScsrTemplateNamesVal")
-      .value("ScsrTemplateNamesUseFirstName",
-             RDKit::v2::FileParsers::ScsrTemplateNamesUseFirstName)
-      .value("ScsrTemplateNamesUseLastName",
-             RDKit::v2::FileParsers::ScsrTemplateNamesUseSecondName)
-      .value("ScsrTemplateNamesAsEntered",
-             RDKit::v2::FileParsers::ScsrTemplateNamesAsEntered);
+  python::enum_<RDKit::v2::FileParsers::SCSRTemplateNames>(
+      "SCSRTemplateNamesVal")
+      .value("SCSRTemplateNamesUseFirstName",
+             RDKit::v2::FileParsers::SCSRTemplateNamesUseFirstName)
+      .value("SCSRTemplateNamesUseLastName",
+             RDKit::v2::FileParsers::SCSRTemplateNamesUseSecondName)
+      .value("SCSRTemplateNamesAsEntered",
+             RDKit::v2::FileParsers::SCSRTemplateNamesAsEntered);
 
   python::enum_<RDKit::RestoreBondDirOption>("RestoreBondDirOption")
       .value("RestoreBondDirOptionClear",

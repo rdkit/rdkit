@@ -8,7 +8,7 @@ rdkit_library(GraphMol
         Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
         NontetrahedralStereo.cpp Atropisomers.cpp
-        WedgeBonds.cpp MolProps.cpp ScsrMol.cpp
+        WedgeBonds.cpp MolProps.cpp SCSRMol.cpp
         SHARED
         LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
@@ -43,7 +43,7 @@ rdkit_headers(Atom.h
         Rings.h
         ROMol.h
         RWMol.h
-        ScsrMol.h
+        SCSRMol.h
         SanitException.h
         SubstanceGroup.h
         StereoGroup.h

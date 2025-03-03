@@ -21,7 +21,7 @@
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/RDKitBase.h>
-#include <GraphMol/ScsrMol.h>
+#include <GraphMol/SCSRMol.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDBoost/Wrap.h>
@@ -156,7 +156,7 @@ int getTemplateCount(const RDKit::SCSRMol &scsr) {
   return scsr.getTemplateCount();
 }
 
-ROMol *getScsrMol(RDKit::SCSRMol &scsr) { return scsr.getMol(); }
+ROMol *getSCSRMol(RDKit::SCSRMol &scsr) { return scsr.getMol(); }
 
 const ROMol *getTemplate(RDKit::SCSRMol &scsr, unsigned int idx) {
   if (idx >= scsr.getTemplateCount()) {
@@ -859,7 +859,7 @@ struct mol_wrapper {
         .def("GetNumTemplates", getTemplateCount, ((python::arg("self"))),
              "Returns the number of tempaltes in the SCSR mol.\n\n")
 
-        .def("GetMol", getScsrMol,
+        .def("GetMol", getSCSRMol,
              python::return_internal_reference<
                  1, python::with_custodian_and_ward_postcall<0, 1>>(),
              python::args("self"), "Returns a the main Mol.\n\n")
