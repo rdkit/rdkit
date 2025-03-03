@@ -39,7 +39,7 @@ else(EXISTS ${CUSTOM_INCHI_PATH}/src/INCHI_BASE/src/ichican2.c)
   else (INCHI_FOUND)
     # system InChI is missing, download it
     if(NOT DEFINED INCHI_URL)
-      set(INCHI_URL "https://github.com/IUPAC-InChI/InChI/releases/download/v1.07.2/INCHI-1-SRC.zip")
+      set(INCHI_URL "https://github.com/IUPAC-InChI/InChI/releases/download/v1.07.3/INCHI-1-SRC.zip")
     endif()
     if(NOT DEFINED INCHI_MD5SUM)
       set(INCHI_MD5SUM "f2efa0c58cef32915686c04d7055b4e9")
