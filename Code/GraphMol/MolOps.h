@@ -239,9 +239,9 @@ inline ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
                     const UINT_VECT *onlyOnAtoms = nullptr,
                     bool addResidueInfo = false) {
   AddHsParameters ps{explicitOnly, addCoords, addResidueInfo};
-  RWMol *res = new RWMol(mol);
-  addHs(*res, ps, onlyOnAtoms);
-  return static_cast<ROMol *>(res);
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
+  addHs(res.get(), ps, onlyOnAtoms);
+  return static_cast<ROMol *>(res.release());
 }
 //! \overload
 /// modifies the molecule in place
