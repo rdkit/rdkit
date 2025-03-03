@@ -363,7 +363,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
   QueryBond qbTmpl;
 
   std::vector<int> origAtomicNums;
-  origAtomicNums.reserve(mol.GetNumAtoms());
+  origAtomicNums.reserve(mol.getNumAtoms());
   for (const auto atom : mol.atoms()) {
     origAtomicNums.push_back(atom->getAtomicNum());
   }
