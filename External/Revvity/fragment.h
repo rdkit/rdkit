@@ -53,6 +53,19 @@ struct PageData {
   std::map<unsigned int, std::vector<int>>
       grouped_fragments;              // grouped.id -> [fragment.id]
   std::vector<ReactionInfo> schemes;  // reaction schemes found
+
+  void clearCDXProps() {
+    for (auto &mol : mols) {
+      for (auto atom : mol->atoms()) {
+        atom->clearProp(CDX_ATOM_ID);
+        atom->clearProp(CDX_BOND_ORDERING);
+        atom->clearProp(CDX_CIP);
+      }
+      for (auto bond : mol->bonds()) {
+        bond->clearProp(CDX_BOND_ID);
+      }
+    }
+  }
 };
 //! Parse a CDX fragment record
 //! params
