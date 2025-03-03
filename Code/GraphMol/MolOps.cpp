@@ -213,7 +213,7 @@ bool isHypervalentNonMetal(Atom *atom) {
   //  We have a special case in here for aromatic atoms where the explicit
   //  valence matches the max allowed and the degree is 4. This is there for
   //  cases like cyclopentadienyl - metal systems. We need this special case
-  //  because the explicit on the C atoms there ends up being 4
+  //  because the explicit valence on the C atoms there ends up being 4
   const auto &otherValens =
       PeriodicTable::getTable()->getValenceList(effAtomicNum);
   auto maxV = otherValens.back();
