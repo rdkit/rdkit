@@ -45,6 +45,7 @@
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include "chemdraw/CDXStdObjects.h"
+#include <filesystem>
 
 using namespace RDKit;
 namespace {
@@ -57,7 +58,7 @@ std::string replace(std::string& istr, const std::string& from, const std::strin
   return str;
 }
 
-bool hasNonPolymerFragment(CDXDocument &document) {
+bool hasNonSupportedFeatures(CDXDocument &document) {
   for (auto node : document.ContainedObjects()) {
     CDXDatumID id = (CDXDatumID)node.second->GetTag();
     switch (id) {
@@ -66,23 +67,32 @@ bool hasNonPolymerFragment(CDXDocument &document) {
           CDXDatumID id = (CDXDatumID)frag.second->GetTag();
           if (id == kCDXObj_Fragment) {
             CDXFragment &fragment = (CDXFragment &)(*frag.second);
-            if(fragment.m_sequenceType == kCDXSeqType_Unknown)
-              return true;
-          }
+            if (fragment.m_sequenceType == kCDXSeqType_Unknown) return true;
+          } else if (id == kCDXObj_BracketAttachment) {
+            return true;
           }
         }
+        break;
+      case kCDXObj_ObjectTag: {
+        CDXObject &object = *((CDXObject *)node.second);
+        id = (CDXDatumID)object.GetTag();
+        break;
+      }
+      default:
+        break;
+    }
     }
   return false;
 }
 
-bool hasNonPolymerFragment(const std::string &fname) {
+bool hasNonSupportedFeatures(const std::string &fname) {
   auto doc = ChemDrawToDocument(fname);
-  return hasNonPolymerFragment(*doc);
+  return hasNonSupportedFeatures(*doc);
 }
 
 TEST_CASE("Round TRIP") {
   std::string path = std::string(getenv("RDBASE")) + "External/Revvity/test_data/CDXML6K/";
-
+  
   SECTION("round trip") {
     int failed = 0;
     int saniFailed = 0;
@@ -107,19 +117,17 @@ TEST_CASE("Round TRIP") {
       }
       std::filesystem::create_directory(p);
     }
-    
+
     for (const auto & entry : std::filesystem::recursive_directory_iterator(cdxpath)) {
       if (entry.is_regular_file()) {
-        std::string fname = entry.path().filename();
-        //if (fname != "INDMUMLL1117_2025-01-24-17-25-54_22.cdxml") {
-        //  continue;
-        //}
-        //if(fname != "INDMUMLL1117_2025-01-24-17-28-09_11375.cdxml") continue;
-        //if(fname != "INDMUMLL1117_2024-04-12-15-02-47_26.cdxml") continue;
-        if(fname != "INDMUMLL1117_2025-01-24-17-23-13_257.cdxml") continue;
-        
+        std::string fname = entry.path().filename().string();
+        // issue here - graphite nanotube
+        if (fname == "INDMUMLL1117_2025-01-24-17-28-02_10946.cdxml") continue;// nanotube takes forever
+        //if (fname != "INDMUMLL1117_2025-01-24-17-26-45_4997.cdxml") continue;
+        //_sleep(5 * 1000);
         auto molfname = molpath + replace(fname, ".cdxml", ".mol");
         auto smifname = smipath + replace(fname, ".cdxml", ".smi");
+        // if chemscript couldn't make an output, ignore it
         if (!std::filesystem::exists(molfname) || !std::filesystem::exists(smifname)) {
           continue;
         }
@@ -128,17 +136,17 @@ TEST_CASE("Round TRIP") {
         std::vector<std::unique_ptr<ROMol>> mols;
         bool santizationFailure = false;
         try {
-          mols = ChemDrawToMols(entry.path());
+          mols = ChemDrawToMols(entry.path().string());
           if(mols.size() == 0) {
             ChemDrawParserParams params;
             params.sanitize = false;
-            mols = ChemDrawToMols(entry.path(), params);
+            mols = ChemDrawToMols(entry.path().string(), params);
             santizationFailure = true;
           }
           if(!mols.size()) {
-            if(hasNonPolymerFragment(entry.path())) {
-              std::cerr << "[NOMOL]: " << entry.path() << std::endl;
-              std::filesystem::copy(entry.path(), nomolpath + (std::string)entry.path().filename());
+            if (hasNonSupportedFeatures(entry.path().string())) {
+              std::cerr << "[NOMOL (Unsupported)]: " << entry.path().string() << std::endl;
+              std::filesystem::copy(entry.path().string(), nomolpath + entry.path().filename().string());
               nomol++;
             } else {
               skippedBiopolymer++;
@@ -146,14 +154,15 @@ TEST_CASE("Round TRIP") {
             continue;
           }
         } catch (...) {
-            std::cerr << "[BADPARSE]: " << entry.path() << std::endl;
-            std::filesystem::copy(entry.path(), badparsepath + (std::string)entry.path().filename());
+            std::cerr << "[BADPARSE]: " << entry.path().string() << std::endl;
+            std::filesystem::copy(entry.path(), badparsepath + entry.path().filename().string());
             badparse++;
             continue;
         }
-        RWMol *mol = nullptr;
+        std::unique_ptr<RWMol> mol;
+        //= nullptr;
         try {
-          mol = MolFileToMol(molfname);
+          mol.reset(MolFileToMol(molfname));
         } catch (...) {
           continue;
         }
@@ -181,7 +190,7 @@ TEST_CASE("Round TRIP") {
         
         auto rdkit_smi = MolToSmiles(*m);
         auto mol_smi = MolToSmiles(*mol);
-        delete mol;
+        
         if(mol_smi != rdkit_smi) {
           // Do we match chemscripts smiles output at least?
           if(rdkit_smi == smiles) {
@@ -189,18 +198,18 @@ TEST_CASE("Round TRIP") {
             continue;
           }
           
-          if(!hasNonPolymerFragment(entry.path())) {
-            continue; // biopolymers not supported yet
+          if (hasNonSupportedFeatures(entry.path().string())) {
+            continue; // has unsupported features
           }
           if (santizationFailure)
           {
             std::cerr << "[SANI]: " << entry.path() << std::endl;
-            std::filesystem::copy(entry.path(), sanitizationpath + (std::string)entry.path().filename());
+            std::filesystem::copy(entry.path(), sanitizationpath + entry.path().filename().string());
             saniFailed++;
           }
           else {
             std::cerr << "[FAIL]: " << entry.path() << std::endl;
-            std::filesystem::copy(entry.path(), failpath + (std::string)entry.path().filename());
+            std::filesystem::copy(entry.path(), failpath + entry.path().filename().string());
             failed++;
           }
           std::cerr << "rdkit:               " << rdkit_smi << std::endl;
