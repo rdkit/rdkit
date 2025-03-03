@@ -38,21 +38,6 @@ class ROMol;
 class RWMol;
 class AtomMonomerInfo;
 
-// class for ATTCHORD of the form  ATTCHORD=(4 1 Al 3 Br)
-class RDKIT_GRAPHMOL_EXPORT AtomAttchOrd {
- private:
-  unsigned int d_id = 0;
-  std::string d_lbl;
-
- public:
-  AtomAttchOrd(unsigned int id, const std::string &lbl)
-      : d_id(id - 1), d_lbl(lbl) {}
-
-  unsigned int getAtomIdx() const { return d_id; }
-
-  std::string getLabel() const { return d_lbl; }
-};
-
 //! The class for representing atoms
 /*!
 
