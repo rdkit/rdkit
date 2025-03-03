@@ -2404,11 +2404,12 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         for (unsigned int i = 1; i < itemCount; i += 2) {
           unsigned int idx = FileParserUtils::toInt(splitToken[i]);
           // check for uniqueness
-          for (auto attachOrd : attchOrds) {
+          for (const auto &attachOrd : attchOrds) {
             if (idx == attachOrd.getAtomIdx() + 1 ||
                 splitToken[i + 1] == attachOrd.getLabel()) {
               errout << "Invalid ATTCHORD value: '" << val << "' for atom "
                      << atom->getIdx() + 1 << " on line " << line << std::endl;
+
               throw FileParseException(errout.str());
             }
           }
