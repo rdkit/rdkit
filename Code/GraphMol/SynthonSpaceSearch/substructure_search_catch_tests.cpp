@@ -447,8 +447,12 @@ TEST_CASE("S Random Hits") {
     }
   }
   CHECK(results.getHitMolecules().size() == 100);
-  std::map<std::string, int> expCounts{{"a1", 58}, {"a6", 4}, {"a7", 38}};
-  CHECK(expCounts == libCounts);
+  // std::shuffle gives different results on macOS, Linux and Windows.
+  std::map<std::string, int> expCountsM{{"a1", 58}, {"a6", 4}, {"a7", 38}};
+  std::map<std::string, int> expCountsL{{"a1", 64}, {"a6", 4}, {"a7", 32}};
+  std::map<std::string, int> expCountsW{{"a1", 67}, {"a6", 6}, {"a7", 27}};
+  CHECK((expCountsM == libCounts || expCountsL == libCounts ||
+         expCountsW == libCounts));
   tidy5567Binary();
 }
 
