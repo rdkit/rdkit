@@ -29,6 +29,10 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
                                    SynthonSpace &space)
       : SynthonSpaceSearcher(query, params, space) {}
 
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
+      const std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const SynthonSet &reaction) const override;
+
  private:
   // These are the pattern fingerprints for the fragments in this
   // search.  They are used for screening the fragments prior to
@@ -53,13 +57,10 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   void extraSearchSetup(
       std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
 
-  std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet,
-      const SynthonSet &reaction) const override;
   bool verifyHit(const ROMol &hit) const override;
 
   void getConnectorRegions(
-      const std::vector<std::unique_ptr<ROMol>> &molFrags,
+      const std::vector<ROMol *> &molFrags,
       std::vector<std::vector<ROMol *>> &connRegs,
       std::vector<std::vector<const std::string *>> &connRegSmis,
       std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const;

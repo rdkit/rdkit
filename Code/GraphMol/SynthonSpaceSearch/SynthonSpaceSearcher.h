@@ -53,6 +53,13 @@ class SynthonSpaceSearcher {
   const ROMol &getQuery() const { return d_query; }
   const SynthonSpaceSearchParams &getParams() const { return d_params; }
 
+  // Do the search of this fragSet against the SynthonSet in the
+  // appropriate way, for example by substructure or fingerprint
+  // similarity.
+  virtual std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
+      const std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const SynthonSet &reaction) const = 0;
+
   // Make the hit, constructed from a specific combination of
   // synthons in the hitset, and verify that it matches the
   // query in the appropriate way.  There'll be 1 entry in synthNums
@@ -77,12 +84,10 @@ class SynthonSpaceSearcher {
       [[maybe_unused]] std::vector<std::vector<std::unique_ptr<ROMol>>>
           &fragSets) {}
 
-  // Do the search of this fragSet against the SynthonSet in the
-  // appropriate way, for example by substructure or fingerprint
-  // similarity.
-  virtual std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet,
-      const SynthonSet &reaction) const = 0;
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> doTheSearch(
+      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+      const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits);
+
   // Some of the search methods (fingerprints, for example) can do a quick
   // check on whether this set of synthons can match the query without having to
   // build the full molecule from the synthons.  They will over-ride this

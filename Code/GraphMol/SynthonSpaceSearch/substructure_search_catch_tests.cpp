@@ -392,11 +392,14 @@ TEST_CASE("S Biggy") {
   const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
-  for (size_t i = 0; i < smis.size(); ++i) {
-    auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
-    auto results = synthonspace.substructureSearch(*queryMol, params);
-    CHECK(results.getHitMolecules().size() == numRes[i]);
-    CHECK(results.getMaxNumResults() == maxRes[i]);
+  for (auto numThreads : std::vector<int>{1, 2, -1}) {
+    params.numThreads = numThreads;
+    for (size_t i = 0; i < smis.size(); ++i) {
+      auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
+      auto results = synthonspace.substructureSearch(*queryMol, params);
+      CHECK(results.getHitMolecules().size() == numRes[i]);
+      CHECK(results.getMaxNumResults() == maxRes[i]);
+    }
   }
   tidy5567Binary();
 }

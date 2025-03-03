@@ -70,41 +70,9 @@ SearchResults SynthonSpaceSearcher::search() {
   if (ControlCHandler::getGotSignal()) {
     return SearchResults{std::move(results), 0UL, timedOut, true};
   }
-  std::vector<std::unique_ptr<SynthonSpaceHitSet>> allHits;
-  size_t totHits = 0;
-  int numTries = 100;
-  for (const auto &id : getSpace().getReactionNames()) {
-    timedOut = details::checkTimeOut(endTime);
-    if (timedOut) {
-      break;
-    }
-    const auto &reaction = getSpace().getReaction(id);
-    for (auto &fragSet : fragments) {
-      if (ControlCHandler::getGotSignal()) {
-        break;
-      }
-      --numTries;
-      if (!numTries) {
-        timedOut = details::checkTimeOut(endTime);
-        numTries = 100;
-      }
-      if (timedOut) {
-        break;
-      }
-      if (auto theseHits = searchFragSet(fragSet, *reaction);
-          !theseHits.empty()) {
-        totHits += std::accumulate(
-            theseHits.begin(), theseHits.end(), 0,
-            [](const size_t prevVal,
-               const std::unique_ptr<SynthonSpaceHitSet> &hs) -> size_t {
-              return prevVal + hs->numHits;
-            });
-        allHits.insert(allHits.end(),
-                       std::make_move_iterator(theseHits.begin()),
-                       std::make_move_iterator(theseHits.end()));
-      }
-    }
-  }
+
+  std::uint64_t totHits = 0;
+  auto allHits = doTheSearch(fragments, endTime, timedOut, totHits);
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, endTime, timedOut, results);
   }
@@ -149,6 +117,118 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
     prod->setProp<std::string>(common_properties::_Name, prodName);
   }
   return prod;
+}
+
+namespace {
+std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchReaction(
+    SynthonSpaceSearcher *searcher, const SynthonSet &reaction,
+    const TimePoint *endTime,
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> hits;
+
+  int numTries = 100;
+  bool timedOut = false;
+  for (auto &fragSet : fragments) {
+    if (ControlCHandler::getGotSignal()) {
+      break;
+    }
+    --numTries;
+    if (!numTries) {
+      timedOut = details::checkTimeOut(endTime);
+      numTries = 100;
+    }
+    if (timedOut) {
+      break;
+    }
+    if (auto theseHits = searcher->searchFragSet(fragSet, reaction);
+        !theseHits.empty()) {
+      hits.insert(hits.end(), std::make_move_iterator(theseHits.begin()),
+                  std::make_move_iterator(theseHits.end()));
+    }
+  }
+
+  return hits;
+}
+
+void processReactions(
+    SynthonSpaceSearcher *searcher,
+    const std::vector<std::string> &reactionNames,
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments,
+    const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentReaction,
+    std::int64_t lastReaction,
+    std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>>
+        &reactionHits) {
+  bool timedOut = false;
+
+  while (true) {
+    std::int64_t thisR = ++mostRecentReaction;
+    // std::cout << thisR << " vs " << lastReaction << std::endl;
+    if (thisR > lastReaction) {
+      break;
+    }
+    timedOut = details::checkTimeOut(endTime);
+    if (timedOut) {
+      break;
+    }
+    const auto &reaction =
+        searcher->getSpace().getReaction(reactionNames[thisR]);
+    auto theseHits = searchReaction(searcher, *reaction, endTime, fragments);
+    reactionHits[thisR] = std::move(theseHits);
+    timedOut = details::checkTimeOut(endTime);
+    if (timedOut) {
+      break;
+    }
+  }
+}
+}  // namespace
+
+std::vector<std::unique_ptr<SynthonSpaceHitSet>>
+SynthonSpaceSearcher::doTheSearch(
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
+    const TimePoint *endTime, bool &timedOut, std::uint64_t &totHits) {
+  auto reactionNames = getSpace().getReactionNames();
+  std::vector<std::vector<std::unique_ptr<SynthonSpaceHitSet>>> reactionHits(
+      reactionNames.size());
+
+  std::int64_t lastReaction = reactionNames.size() - 1;
+  std::atomic<std::int64_t> mostRecentReaction = -1;
+#if RDK_BUILD_THREADSAFE_SSS
+  if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
+      numThreads > 1) {
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0U;
+         i < std::min(static_cast<size_t>(numThreads), reactionNames.size());
+         ++i) {
+      threads.push_back(std::thread(processReactions, this,
+                                    std::ref(reactionNames), std::ref(fragSets),
+                                    endTime, std::ref(mostRecentReaction),
+                                    lastReaction, std::ref(reactionHits)));
+    }
+    for (auto &t : threads) {
+      t.join();
+    }
+  } else {
+    processReactions(this, reactionNames, fragSets, endTime, mostRecentReaction,
+                     lastReaction, reactionHits);
+  }
+#else
+  processReactions(this, reactionNames, fragments, endTime, mostRecentReaction,
+                   lastReaction, reactionHits);
+#endif
+
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> allHits;
+  totHits = 0;
+  for (size_t i = 0; i < reactionHits.size(); ++i) {
+    totHits += std::accumulate(
+        reactionHits[i].begin(), reactionHits[i].end(), 0,
+        [](const size_t prevVal, const std::unique_ptr<SynthonSpaceHitSet> &hs)
+            -> size_t { return prevVal + hs->numHits; });
+    allHits.insert(allHits.end(),
+                   std::make_move_iterator(reactionHits[i].begin()),
+                   std::make_move_iterator(reactionHits[i].end()));
+  }
+  timedOut = details::checkTimeOut(endTime);
+  return allHits;
 }
 
 namespace {
@@ -356,14 +436,17 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
     const TimePoint *endTime,
     std::vector<std::unique_ptr<ROMol>> &results) const {
   results.resize(toTry.size());
-  std::cout << "numThreads : " << d_params.numThreads << " goes to "
-            << getNumThreadsToUse(d_params.numThreads) << std::endl;
 #if RDK_BUILD_THREADSAFE_SSS
+  // This assumes that each chunk of the toTry list will take roughly the
+  // same amount of time to process.  To a first approximation, that's
+  // probably reasonable.  Some entries in toTry will fail quickVerify
+  // so the more time-consuming construction of the hit and final
+  // check in verifyHit won't be needed, so the chunks won't take exactly
+  // equal time. It can always be re-visited if the threads run for very
+  // different lengths of time in an average search.
   if (const auto numThreads = getNumThreadsToUse(d_params.numThreads);
       numThreads > 1) {
     const size_t eachThread = 1 + toTry.size() / numThreads;
-    std::cout << "building " << eachThread << " on each of " << numThreads
-              << " threads\n";
     size_t start = 0;
     std::vector<std::thread> threads;
     for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
@@ -375,7 +458,6 @@ void SynthonSpaceSearcher::makeHitsFromToTry(
       t.join();
     }
   } else {
-    std::cout << " doing singlethread" << std::endl;
     processPartHitsFromDetails(toTry, endTime, results, this, 0, toTry.size());
   }
 #else

@@ -332,7 +332,9 @@ TEST_CASE("FP Binary File") {
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   SynthonSpaceSearchParams params;
 
-  for (auto numThreads : std::vector<int>{1, 2, -1}) {
+  for (auto numThreads :
+       std::vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}) {
+    std::cout << "Number of threads " << numThreads << std::endl;
     synthonspace.readDBFile(libName);
     params.numThreads = numThreads;
     CHECK_NOTHROW(
@@ -378,26 +380,29 @@ TEST_CASE("FP Binary File2") {
   CHECK(synthonspace.getNumReactions() == 1008);
   CHECK(synthonspace.getNumProducts() == 70575407790);
   std::cout << synthonspace.getNumReactions() << std::endl;
-  std::cout << synthonspace.getNumProducts() << std::endl;
-#if 0
+  std::cout << SynthonSpaceSearch::formattedIntegerString(
+                   synthonspace.getNumProducts())
+            << std::endl;
+#if 1
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-  CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+  SynthonSpaceSearchParams params;
+  params.numThreads = -1;
+  CHECK_NOTHROW(results =
+                    synthonspace.fingerprintSearch(*queryMol, *fpGen, params));
   CHECK(results.getHitMolecules().size() == 211);
   CHECK(results.getMaxNumResults() == 1397664);
 #endif
 }
 
-#if 0
-// Whilst the code is still under active development, it's convenient to have this
-// in here.  It can come out later.
+#if 1
+// Whilst the code is still under active development, it's convenient to have
+// this in here.  It can come out later.
 TEST_CASE("FP Freedom Space") {
-  // std::string libName =
-  // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";
-  // std::string libName2 =
-  // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit_new.spc";
   std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
+      "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";
+  // std::string libName =
+  // "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
   // libName =
   // "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/random_real_1_rdkit.spc";
   SynthonSpace synthonspace;
@@ -411,6 +416,7 @@ TEST_CASE("FP Freedom Space") {
   params.maxHits = 1000;
   params.fragSimilarityAdjuster = 0.01;
   params.approxSimilarityAdjuster = 0.05;
+  params.numThreads = -1;
   SearchResults results;
   results = synthonspace.fingerprintSearch(*m, *fpGen, params);
   std::cout << "Number of results : " << results.getHitMolecules().size()

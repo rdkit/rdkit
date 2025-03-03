@@ -104,10 +104,9 @@ std::vector<std::vector<size_t>> getHitSynthons(
           [](const auto &a, const auto &b) { return a.second > b.second; });
     }
     retSynthons[i].clear();
-    std::transform(
-        fragSims[i].begin(), fragSims[i].end(),
-        std::back_inserter(retSynthons[i]),
-        [](const auto &fs) { return fs.first; });
+    std::transform(fragSims[i].begin(), fragSims[i].end(),
+                   std::back_inserter(retSynthons[i]),
+                   [](const auto &fs) { return fs.first; });
   }
   return retSynthons;
 }
@@ -160,7 +159,7 @@ void SynthonSpaceFingerprintSearcher::extraSearchSetup(
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
 SynthonSpaceFingerprintSearcher::searchFragSet(
-    std::vector<std::unique_ptr<ROMol>> &fragSet,
+    const std::vector<std::unique_ptr<ROMol>> &fragSet,
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
@@ -185,7 +184,12 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
     fragFPs.push_back(it->second);
   }
 
-  const auto connPatterns = details::getConnectorPatterns(fragSet);
+  std::vector<ROMol *> orderedFrags;
+  orderedFrags.reserve(fragSet.size());
+  std::transform(fragSet.begin(), fragSet.end(),
+                 std::back_inserter(orderedFrags),
+                 [](const auto &f) -> ROMol * { return f.get(); });
+  const auto connPatterns = details::getConnectorPatterns(orderedFrags);
   const auto synthConnPatts = reaction.getSynthonConnectorPatterns();
 
   // Get all the possible permutations of connector numbers compatible with

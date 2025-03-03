@@ -468,7 +468,7 @@ int countConnections(const ROMol &mol) {
 }
 
 std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
-    const std::vector<std::unique_ptr<ROMol>> &mols) {
+    const std::vector<ROMol *> &mols) {
   std::vector<boost::dynamic_bitset<>> connPatterns(
       mols.size(), boost::dynamic_bitset<>(MAX_CONNECTOR_NUM + 1));
   for (size_t i = 0; i < mols.size(); i++) {
@@ -482,7 +482,7 @@ std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
 }
 
 boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
+    const std::vector<ROMol *> &fragSet) {
   boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
   const auto connPatterns = getConnectorPatterns(fragSet);
   for (const auto &cp : connPatterns) {
