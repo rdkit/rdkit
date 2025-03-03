@@ -53,6 +53,7 @@ const std::string CDX_ATOM_POS("CDX_ATOM_POS");
 const std::string CDX_ATOM_ID("CDX_ATOM_ID");
 const std::string CDX_BOND_ID("CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDX_BOND_ORDERING");
+const std::string CDX_CIP("CDX_CIP");
 
 // Convert a ChemDrawNode to a string
 std::string NodeType(CDXNodeType nodetype);
@@ -68,6 +69,7 @@ void scaleBonds(const ROMol &mol, Conformer &conf, double targetBondLength,
 unsigned int get_fuse_label(Atom *atm);
 void set_fuse_label(Atom *atm, unsigned int idx);
 
+// Replace fragments that are not possible with molzip
 bool replaceFragments(RWMol &mol);
 
 // Add a Query to a molecule
@@ -94,6 +96,9 @@ struct StereoGroupInfo {
   std::vector<Atom *> atoms;
 };
 
+// check to see if we have a tetrahedral flag and ChemDraw CIP set but no
+//  stereo assigned, if so check the bond ordering for CW and CCW
+void checkChemDrawTetrahedralGeometries(RWMol &mol);
 }  // namespace RDKit
 
 #endif

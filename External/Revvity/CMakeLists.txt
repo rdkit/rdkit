@@ -127,7 +127,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       writer.cpp
       # ${EXPAT_SRC}
       SHARED LINK_LIBRARIES ChemDraw expat
-          ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
+          CIPLabeler ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
 
   if(MSVC)
       target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD XML_USE_MSC_EXTENSIONS)
@@ -149,15 +149,28 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   add_definitions(-DRDK_BUILD_CHEMDRAW_SUPPORT)
 
   rdkit_catch_test(chemdrawCatchTest test.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse ChemTransforms GraphMol)
-      
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+
+  rdkit_catch_test(chemdrawChiralCatchTest test-chiral.cpp
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+
   rdkit_catch_test(chemdraw3DCatchTest test_3d.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdraw6KCatchTest test_6k.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+
+if(MSVC)
+  # The nanotubes blow up the smiles writer stack so increase it
+  target_compile_definitions(chemdraw6KCatchTest PRIVATE STACK=4194304)
+endif(MSVC)
 
   target_include_directories(chemdrawCatchTest PRIVATE
+                     ${CMAKE_CURRENT_SOURCE_DIR}/expat/
+		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
+                     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
+
+  target_include_directories(chemdrawChiralCatchTest PRIVATE
                      ${CMAKE_CURRENT_SOURCE_DIR}/expat/
 		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
                      ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)

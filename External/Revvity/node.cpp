@@ -194,7 +194,23 @@ bool parse_node(
     rd_atom->setProp<
         std::vector<int>>(CDX_BOND_ORDERING, *node.m_bondOrdering);
   }
- 
+  if (node.m_geometry == kCDXAtomGeometry_Tetrahedral) {
+    //std::cerr << "tetrahedral" << std::endl;
+    // if we have a cip type we can interpret, set it, otherwise don't
+
+    switch (node.m_CIP) {
+      case kCDXCIPAtom_R:
+      case kCDXCIPAtom_r:
+      case kCDXCIPAtom_S:
+      case kCDXCIPAtom_s:
+        rd_atom->setProp<CDXAtomCIPType>(CDX_CIP, node.m_CIP);
+        break;
+      default:
+        rd_atom->setProp<CDXAtomCIPType>(CDX_CIP, kCDXCIPAtom_Undetermined);
+        break;
+    }
+  }
+
   std::vector<double> atom_coords;
   if(node.KnownPosition3D()) {
     atom_coords.reserve(3);

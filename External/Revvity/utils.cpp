@@ -1,4 +1,7 @@
 #include "utils.h"
+#include <GraphMol/Chirality.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 namespace RDKit {
 
@@ -136,7 +139,7 @@ struct FragmentReplacement {
 };
 
 
-    // Replace fragments that are not possible with molzip
+// Replace fragments that are not possible with molzip
 bool replaceFragments(RWMol &mol) {
   // Anything with a single atom that is supposed to be replaced via a fragment
   // is here
@@ -165,4 +168,86 @@ bool replaceFragments(RWMol &mol) {
   return true;
 }
 
+void checkChemDrawTetrahedralGeometries(RWMol &mol) {
+  bool setStereo = false;
+  for (auto atom : mol.atoms()) {
+    // only deal with unspecified chiralities
+    if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+      atom->clearProp(CDX_CIP);
+      continue;
+    }
+
+    CDXAtomCIPType cip;
+    if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip)) {
+      Atom::ChiralType chiral_type;
+      switch (cip) {
+        case kCDXCIPAtom_R:
+        case kCDXCIPAtom_r:
+          std::cerr << "r" << std::endl;
+          chiral_type = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
+          //atom->setChiralTag(chiral_type);
+          atom->setProp(common_properties::_CIPCode, "r");
+          atom->setProp<bool>(common_properties::_ChiralityPossible, true);
+          setStereo = true;
+          break;
+        case kCDXCIPAtom_S:
+        case kCDXCIPAtom_s:
+          std::cerr << "s" << std::endl;
+          chiral_type = Atom::ChiralType::CHI_TETRAHEDRAL_CW;
+          //atom->setChiralTag(chiral_type);
+          atom->setProp(common_properties::_CIPCode, "s");
+          atom->setProp<bool>(common_properties::_ChiralityPossible, true);
+          setStereo = true;
+          break;
+        default:
+          continue;  // nothing to do
+      }
+    }
+  }
+  // Now that we have chirality set, let's check the CIP codes and reset if necessary
+  //  This is an expensive way of doing this, but we only have stereo->cip not
+  //  cip->stereo implemented currently
+  if (setStereo) {
+    boost::dynamic_bitset<> atoms(mol.getNumAtoms());
+    while (1) {
+      CIPLabeler::assignCIPLabels(mol);
+      bool swap = false;
+      for (auto atom : mol.atoms()) {
+        if (atoms[atom->getIdx()]) continue;
+        CDXAtomCIPType cip;
+        std::string rdkit_cip;
+        if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip) &&
+            atom->getPropIfPresent<std::string>(common_properties::_CIPCode,
+                                                rdkit_cip)) {
+          atoms[atom->getIdx()] = true;
+          std::cerr << atom->getIdx() << "rdkit_cip: " << rdkit_cip << " "
+                    << (int)cip << std::endl;
+          swap = ((rdkit_cip == "R" && cip != kCDXCIPAtom_R) ||
+                  (rdkit_cip == "r" && cip != kCDXCIPAtom_r) ||
+                  (rdkit_cip == "S" && cip != kCDXCIPAtom_S) ||
+                  (rdkit_cip == "s" && cip != kCDXCIPAtom_s));
+          if (swap) {
+            std::cerr << "swap" << std::endl;
+            switch (atom->getChiralTag()) {
+              case Atom::ChiralType::CHI_TETRAHEDRAL_CW: {
+                atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+                break;
+              }
+              case Atom::ChiralType::CHI_TETRAHEDRAL_CCW: {
+                atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+                break;
+              }
+            }
+            std::cerr << MolToSmiles(mol) << std::endl;
+          } else {
+            break;
+          }
+        }
+      }
+      if (!swap) {
+        break;
+      }
+    }
+  }
+}
 }  // namespace RDKit
