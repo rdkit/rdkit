@@ -54,7 +54,7 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool expandAttachmentPoints =
       false; /**< toggle conversion of attachment points into dummy atoms */
 };
-typedef enum {
+enum class SCSRTemplateNames {
   SCSRTemplateNamesAsEntered =
       0,  //<! use the name of the temlate as entered in the SCSR Mol
   SCSRTemplateNamesUseFirstName = 1,  //<!Use the first name in the template
@@ -62,9 +62,9 @@ typedef enum {
   SCSRTemplateNamesUseSecondName =
       2  //<!use the second name in the tempate def (
          // For AA, the 1 letter code)
-} SCSRTemplateNames;
+};
 
-typedef enum {
+enum class SCSRBaseHbondOptions {
   SCSRBaseHbondOptionsIgnore =
       0,  //<! Do not include base Hbonds in expanded output
   SCSRBaseHbondOptionsUseSapAll = 1,  //<!use all hbonds defined in SAPs
@@ -79,15 +79,17 @@ typedef enum {
                                 // derivatives) use the standard Watson-Crick
                                 // Hbonding.  No SAPs need to be defined, and if
                                 // defined, they are ignored.
-} SCSRBaseHbondOptions;
+};
 
 struct RDKIT_FILEPARSERS_EXPORT MolFromSCSRParams {
   bool includeLeavingGroups =
       true; /**< when true, leaving groups on atoms that are not exo-bonded are
                 retained.  When false, no leaving groups are retained */
-  SCSRTemplateNames scsrTemplateNames = SCSRTemplateNamesAsEntered;
+  SCSRTemplateNames scsrTemplateNames =
+      SCSRTemplateNames::SCSRTemplateNamesAsEntered;
 
-  SCSRBaseHbondOptions scsrBaseHbondOptions = SCSRBaseHbondOptionsUseSapAll;
+  SCSRBaseHbondOptions scsrBaseHbondOptions =
+      SCSRBaseHbondOptions::SCSRBaseHbondOptionsUseSapAll;
 };
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolDataStream(
     std::istream &inStream, unsigned int &line,

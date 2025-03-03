@@ -1117,13 +1117,13 @@ class MolFromSCSRMolConverter {
                         dummyLabel) != templateNames.end()) {
             templateFound = true;
             switch (molFromSCSRParams.scsrTemplateNames) {
-              case SCSRTemplateNamesUseFirstName:
+              case SCSRTemplateNames::SCSRTemplateNamesUseFirstName:
                 templateNameToUse = templateNames[0];
                 break;
-              case SCSRTemplateNamesUseSecondName:
+              case SCSRTemplateNames::SCSRTemplateNamesUseSecondName:
                 templateNameToUse = templateNames.back();
                 break;
-              case SCSRTemplateNamesAsEntered:
+              case SCSRTemplateNames::SCSRTemplateNamesAsEntered:
                 templateNameToUse = dummyLabel;
                 break;
             }
