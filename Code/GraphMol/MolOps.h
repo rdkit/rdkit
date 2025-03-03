@@ -257,9 +257,11 @@ inline void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false,
 //! coordinates based on the geometry of the neighbor.
 /*!
     NOTE: this sets appropriate coordinates in all of the molecule's
-   conformers. \param mol       the molecule the atoms belong to \param idx
-   index of the terminal atom whose coordinates are set \param otherIdx  index
-   of the bonded neighbor atom
+   conformers.
+
+   \param mol       the molecule the atoms belong to
+   \param idx index of the terminal atom whose coordinates are set
+   \param otherIdx  index of the bonded neighbor atom
 */
 
 RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
@@ -272,8 +274,9 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
    removed
     \param updateExplicitCount  (optional) If this is \c true, when explicit
    Hs are removed from the graph, the heavy atom to which they are bound will
-   have its counter of explicit Hs increased. \param sanitize:  (optional) If
-   this is \c true, the final molecule will be sanitized
+   have its counter of explicit Hs increased.
+    \param sanitize:  (optional) If this is \c true, the final molecule will be
+   sanitized
 
     \return the new molecule
 
