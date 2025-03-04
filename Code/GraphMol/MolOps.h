@@ -240,7 +240,7 @@ inline ROMol *addHs(const ROMol &mol, bool explicitOnly = false,
                     bool addResidueInfo = false) {
   AddHsParameters ps{explicitOnly, addCoords, addResidueInfo};
   std::unique_ptr<RWMol> res{new RWMol(mol)};
-  addHs(res.get(), ps, onlyOnAtoms);
+  addHs(*res, ps, onlyOnAtoms);
   return static_cast<ROMol *>(res.release());
 }
 //! \overload
