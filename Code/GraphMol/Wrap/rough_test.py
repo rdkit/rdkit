@@ -489,6 +489,23 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m.GetAtomWithIdx(2).GetDegree(), 4)
     self.assertEqual(m.GetAtomWithIdx(1).GetDegree(), 2)
 
+    # AddHsParameters
+    params = Chem.AddHsParameters()
+    params.skipQueries = True
+    m = Chem.MolFromSmiles('CC')
+    self.assertIsNotNone(m)
+    nm = Chem.AddHs(m)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+    nm = Chem.AddHs(m, params)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+
+    m = Chem.MolFromSmarts('[CH3][CH3]')
+    self.assertIsNotNone(m)
+    nm = Chem.AddHs(m)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+    nm = Chem.AddHs(m, params)
+    self.assertEqual(nm.GetNumAtoms(), 2)
+
   def test15Neighbors(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
     self.assertTrue(m.GetNumAtoms() == 4)
