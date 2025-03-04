@@ -14,7 +14,7 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileWriters.h>
-#include <GraphMol/ScsrMol.h>
+#include <GraphMol/SCSRMol.h>
 #include "CDXMLParser.h"
 #include <string>
 #include <string_view>
@@ -54,40 +54,36 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
   bool expandAttachmentPoints =
       false; /**< toggle conversion of attachment points into dummy atoms */
 };
-typedef enum {
-  ScsrTemplateNamesAsEntered =
-      0,  //<! use the name of the temlate as entered in the SCSR Mol
-  ScsrTemplateNamesUseFirstName = 1,  //<!Use the first name in the template
-                                      // def (For AA, the 3 letter code
-  ScsrTemplateNamesUseSecondName =
-      2  //<!use the second name in the tempate def (
-         // For AA, the 1 letter code)
-} ScsrTemplateNames;
+enum class SCSRTemplateNames {
+  AsEntered,     //<! use the name of the temlate as entered in the SCSR Mol
+  UseFirstName,  //<!Use the first name in the template
+                 // def (For AA, the 3 letter code
+  UseSecondName  //<!use the second name in the tempate def (
+                 // For AA, the 1 letter code)
+};
 
-typedef enum {
-  ScsrBaseHbondOptionsIgnore =
-      0,  //<! Do not include base Hbonds in expanded output
-  ScsrBaseHbondOptionsUseSapAll = 1,  //<!use all hbonds defined in SAPs
-                                      // can be more than one per base
-  ScsrBaseHbondOptionsUseSapOne =
-      2,                        //<!use only one SAP hbond per base
-                                // If multiple SAPs are defined, use the first
-                                // even if it is not the best
-                                //(this just maintains the relationship between
-                                // the to base pairs)
-  ScsrBaseHbondOptionsAuto = 3  //<!For bases that are C,G,A,T,U,In (and
-                                // derivatives) use the standard Watson-Crick
-                                // Hbonding.  No SAPs need to be defined, and if
-                                // defined, they are ignored.
-} ScsrBaseHbondOptions;
+enum class SCSRBaseHbondOptions {
+  Ignore,     //<! Do not include base Hbonds in expanded output
+  UseSapAll,  //<!use all hbonds defined in SAPs
+              // can be more than one per base
+  UseSapOne,  //<!use only one SAP hbond per base
+              // If multiple SAPs are defined, use the first
+              // even if it is not the best
+              //(this just maintains the relationship between
+              // the to base pairs)
+  Auto        //<!For bases that are C,G,A,T,U,In (and
+              // derivatives) use the standard Watson-Crick
+              // Hbonding.  No SAPs need to be defined, and if
+              // defined, they are ignored.
+};
 
-struct RDKIT_FILEPARSERS_EXPORT MolFromScsrParams {
+struct RDKIT_FILEPARSERS_EXPORT MolFromSCSRParams {
   bool includeLeavingGroups =
       true; /**< when true, leaving groups on atoms that are not exo-bonded are
                 retained.  When false, no leaving groups are retained */
-  ScsrTemplateNames scsrTemplateNames = ScsrTemplateNamesAsEntered;
+  SCSRTemplateNames scsrTemplateNames = SCSRTemplateNames::AsEntered;
 
-  ScsrBaseHbondOptions scsrBaseHbondOptions = ScsrBaseHbondOptionsUseSapAll;
+  SCSRBaseHbondOptions scsrBaseHbondOptions = SCSRBaseHbondOptions::UseSapAll;
 };
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolDataStream(
     std::istream &inStream, unsigned int &line,
@@ -100,18 +96,18 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolFile(
     const MolFileParserParams &params = MolFileParserParams());
 
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol>
-SCSRMolFromScsrDataStream(
+SCSRMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const MolFileParserParams &params = MolFileParserParams());
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrBlock(
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
     const std::string &molBlock,
     const MolFileParserParams &params = MolFileParserParams());
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrFile(
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
     const std::string &fName,
     const MolFileParserParams &params = MolFileParserParams());
 RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromSCSRMol(
     const RDKit::SCSRMol *scsrMol,
-    const MolFromScsrParams &params = MolFromScsrParams());
+    const MolFromSCSRParams &params = MolFromSCSRParams());
 
 }  // namespace FileParsers
 }  // namespace v2

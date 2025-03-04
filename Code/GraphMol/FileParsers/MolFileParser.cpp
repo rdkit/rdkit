@@ -2400,19 +2400,19 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
                  << atom->getIdx() + 1 << " on line " << line << std::endl;
           throw FileParseException(errout.str());
         }
-        std::vector<AtomAttchOrd> attchOrds;
+        std::vector<std::pair<unsigned int, std::string>> attchOrds;
         for (unsigned int i = 1; i < itemCount; i += 2) {
           unsigned int idx = FileParserUtils::toInt(splitToken[i]);
           // check for uniqueness
-          for (auto attachOrd : attchOrds) {
-            if (idx == attachOrd.getAtomIdx() + 1 ||
-                splitToken[i + 1] == attachOrd.getLabel()) {
+          for (const auto &[aidx, lbl] : attchOrds) {
+            if (idx == aidx + 1 || splitToken[i + 1] == lbl) {
               errout << "Invalid ATTCHORD value: '" << val << "' for atom "
                      << atom->getIdx() + 1 << " on line " << line << std::endl;
+
               throw FileParseException(errout.str());
             }
           }
-          attchOrds.emplace_back(idx, splitToken[i + 1]);
+          attchOrds.emplace_back(idx - 1, splitToken[i + 1]);
         }
         atom->setProp(common_properties::molAttachOrderTemplate, attchOrds);
       } else {

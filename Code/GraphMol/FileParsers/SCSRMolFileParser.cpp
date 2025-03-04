@@ -29,7 +29,7 @@ namespace FileParsers {
 //  Read a SCVSR molecule from a stream
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrDataStream(
+std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::string tempStr;
@@ -363,7 +363,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrDataStream(
 
     std::string dummyLabel = "";
     std::string atomClass = "";
-    std::vector<RDKit::AtomAttchOrd> attchOrds;
+    std::vector<std::pair<unsigned int, std::string>> attchOrds;
     if (atom->hasProp(common_properties::dummyLabel)) {
       dummyLabel = atom->getProp<std::string>(common_properties::dummyLabel);
     }
@@ -371,8 +371,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrDataStream(
       atomClass = atom->getProp<std::string>(common_properties::molAtomClass);
     }
     if (atom->hasProp(common_properties::molAttachOrderTemplate)) {
-      attchOrds = atom->getProp<std::vector<RDKit::AtomAttchOrd>>(
-          common_properties::molAttachOrderTemplate);
+      atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
     }
     if (dummyLabel != "" && atomClass != "" && attchOrds.size() > 0) {
       // find the template that matches the class and label
@@ -390,12 +389,12 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrDataStream(
             if (templateName == dummyLabel) {
               // now check the ATTCHORD entries
 
-              for (auto attchOrd : attchOrds) {
+              for (const auto &[idx, lbl] : attchOrds) {
                 for (auto sgroup : RDKit::getSubstanceGroups(*templateMol)) {
                   if (sgroup.getProp<std::string>("TYPE") == "SUP" &&
                       sgroup.getProp<std::string>("CLASS") == atomClass) {
                     for (auto sap : sgroup.getAttachPoints()) {
-                      if (sap.id == attchOrd.getLabel()) {
+                      if (sap.id == lbl) {
                         templateFound = true;
                         break;
                       }
@@ -434,12 +433,12 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrDataStream(
 //  Read a molecule from a string
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrBlock(
+std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
   unsigned int line = 0;
-  return SCSRMolFromScsrDataStream(inStream, line, params);
+  return SCSRMolFromSCSRDataStream(inStream, line, params);
 }
 
 //------------------------------------------------
@@ -447,7 +446,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrBlock(
 //  Read a molecule from a file
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrFile(
+std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
     const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
@@ -457,7 +456,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromScsrFile(
   }
   if (!inStream.eof()) {
     unsigned int line = 0;
-    return SCSRMolFromScsrDataStream(inStream, line, params);
+    return SCSRMolFromSCSRDataStream(inStream, line, params);
   } else {
     return std::unique_ptr<RDKit::SCSRMol>();
   }
@@ -543,7 +542,7 @@ class MolFromSCSRMolConverter {
   const RDKit::SCSRMol *scsrMol;
   std::unique_ptr<RWMol> resMol;
   const ROMol *mol;
-  const MolFromScsrParams molFromScsrParams;
+  const MolFromSCSRParams molFromSCSRParams;
 
   std::map<unsigned int, std::vector<HydrogenBondConnection>>
       hBondSitesForTemplate;
@@ -570,13 +569,11 @@ class MolFromSCSRMolConverter {
     // if here , it is a template atom
     // this routine is NOT called for H-bonds, so there is only one atom to
     // attach
-
-    auto attchOrds = atom->getProp<std::vector<RDKit::AtomAttchOrd>>(
-        common_properties::molAttachOrderTemplate);
-    for (auto attchOrd : attchOrds) {
-      if (attchOrd.getAtomIdx() == otherAtomIdx) {
-        auto attachMapIt =
-            attachMap.find(OriginAtomConnection(atomIdx, attchOrd.getLabel()));
+    std::vector<std::pair<unsigned int, std::string>> attchOrds;
+    atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
+    for (const auto &[idx, lbl] : attchOrds) {
+      if (idx == otherAtomIdx) {
+        auto attachMapIt = attachMap.find(OriginAtomConnection(atomIdx, lbl));
         if (attachMapIt == attachMap.end() || attachMapIt->second.empty()) {
           throw FileParseException("Attachment ord not found");
         }
@@ -605,12 +602,11 @@ class MolFromSCSRMolConverter {
     // for instance, the hydrogen bonds to the template can result in multiple
     // hydrogen bonds in the expanded molecule
 
-    auto attchOrds = atom->getProp<std::vector<RDKit::AtomAttchOrd>>(
-        common_properties::molAttachOrderTemplate);
-    for (auto attchOrd : attchOrds) {
-      if (attchOrd.getAtomIdx() == otherAtomIdx) {
-        auto attachMapIt =
-            attachMap.find(OriginAtomConnection(atomIdx, attchOrd.getLabel()));
+    std::vector<std::pair<unsigned int, std::string>> attchOrds;
+    atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
+    for (const auto &[idx, lbl] : attchOrds) {
+      if (idx == otherAtomIdx) {
+        auto attachMapIt = attachMap.find(OriginAtomConnection(atomIdx, lbl));
         if (attachMapIt == attachMap.end()) {
           return;  // error, attachment ord not found
         }
@@ -621,8 +617,8 @@ class MolFromSCSRMolConverter {
           auto isDonor = templateAtom->getTotalNumHs() > 0;
           hydrogenBondConnections.emplace_back(templateMol, templateAtomIdx,
                                                isDonor);
-          if (molFromScsrParams.scsrBaseHbondOptions ==
-              ScsrBaseHbondOptions::ScsrBaseHbondOptionsUseSapOne) {
+          if (molFromSCSRParams.scsrBaseHbondOptions ==
+              SCSRBaseHbondOptions::UseSapOne) {
             return;
           }
         }
@@ -724,13 +720,13 @@ class MolFromSCSRMolConverter {
 
     // if here it is a hydrogen bond
 
-    // the processing of H-bonds is contorlled by the ScsrBaseHbondOptions
-    // member of the ScsrMolFileParserParams parameter.  The options are:
+    // the processing of H-bonds is contorlled by the SCSRBaseHbondOptions
+    // member of the SCSRMolFileParserParams parameter.  The options are:
 
-    //  ScsrBaseHbondOptionsIgnore - if this is selected, all H-bonds are
+    //  Ignore - if this is selected, all H-bonds are
     //  ignored and not processed.
 
-    // ScsrBaseHbondOptionsUseSapAll = 1,  // if this is selected, all SAPs
+    // UseSapAll = 1,  // if this is selected, all SAPs
     // for the hbond are used.  They must be defined in the template in the
     // correct order, which starts with the first atom nearest the Al
     // connection, and continues sequentially
@@ -765,14 +761,14 @@ class MolFromSCSRMolConverter {
     // indicates that the sides are h-bonded somehow and keeps the overall
     // pairing straight.
 
-    // ScsrBaseHbondOptionsUseSapOne
+    // UseSapOne
     // if this is selected, use only one SAP hbond per base
     // If multiple SAPs are defined, use the first
     // even if it is not the best
     //(this just maintains the relationship between
     // the to base pairs)
 
-    // ScsrBaseHbondOptionsAuto
+    // Auto
     // For bases that are C,G,A,T,U,In (and
     // derivatives) use the standard Watson-Crick
     // Hbonding.  No SAPs need to be defined, and if
@@ -783,14 +779,14 @@ class MolFromSCSRMolConverter {
     std::vector<HydrogenBondConnection> beginHatomConnections;
     std::vector<HydrogenBondConnection> endHatomConnections;
 
-    if (molFromScsrParams.scsrBaseHbondOptions ==
-        ScsrBaseHbondOptions::ScsrBaseHbondOptionsIgnore) {
+    if (molFromSCSRParams.scsrBaseHbondOptions ==
+        SCSRBaseHbondOptions::Ignore) {
       return;
     }
-    if (molFromScsrParams.scsrBaseHbondOptions ==
-            ScsrBaseHbondOptions::ScsrBaseHbondOptionsUseSapAll ||
-        molFromScsrParams.scsrBaseHbondOptions ==
-            ScsrBaseHbondOptions::ScsrBaseHbondOptionsUseSapOne) {
+    if (molFromSCSRParams.scsrBaseHbondOptions ==
+            SCSRBaseHbondOptions::UseSapAll ||
+        molFromSCSRParams.scsrBaseHbondOptions ==
+            SCSRBaseHbondOptions::UseSapOne) {
       // get the hydrogen bond sites from the template SAPs
       getNewAtomsForHydrogenBond(bond->getBeginAtom(), bond->getEndAtomIdx(),
                                  beginHatomConnections);
@@ -804,8 +800,8 @@ class MolFromSCSRMolConverter {
       if (endHatomConnections.empty()) {
         throw FileParseException("No Attach Point for bond");
       }
-    } else if (molFromScsrParams.scsrBaseHbondOptions ==
-               ScsrBaseHbondOptions::ScsrBaseHbondOptionsAuto) {
+    } else if (molFromSCSRParams.scsrBaseHbondOptions ==
+               SCSRBaseHbondOptions::Auto) {
       // get the hbond sites from the map already created for each
       // base template
       auto templateIdx = atomIdxToTemplateIdx[bond->getBeginAtomIdx()];
@@ -926,8 +922,8 @@ class MolFromSCSRMolConverter {
 
  public:
   MolFromSCSRMolConverter(const RDKit::SCSRMol *scsrMolInit,
-                          const MolFromScsrParams &molFromScsrParamsInit)
-      : scsrMol(scsrMolInit), molFromScsrParams(molFromScsrParamsInit) {}
+                          const MolFromSCSRParams &molFromSCSRParamsInit)
+      : scsrMol(scsrMolInit), molFromSCSRParams(molFromSCSRParamsInit) {}
 
   std::unique_ptr<RDKit::RWMol> convert() {
     resMol.reset(new RWMol());
@@ -1001,8 +997,7 @@ class MolFromSCSRMolConverter {
     // if we are perceiving the H-bonding locations for base templates, do that
     // here
 
-    if (molFromScsrParams.scsrBaseHbondOptions ==
-        ScsrBaseHbondOptions::ScsrBaseHbondOptionsAuto) {
+    if (molFromSCSRParams.scsrBaseHbondOptions == SCSRBaseHbondOptions::Auto) {
       for (unsigned int templateIdx = 0;
            templateIdx < scsrMol->getTemplateCount(); ++templateIdx) {
         auto templateMol = scsrMol->getTemplate(templateIdx);
@@ -1116,14 +1111,14 @@ class MolFromSCSRMolConverter {
               std::find(templateNames.begin(), templateNames.end(),
                         dummyLabel) != templateNames.end()) {
             templateFound = true;
-            switch (molFromScsrParams.scsrTemplateNames) {
-              case ScsrTemplateNamesUseFirstName:
+            switch (molFromSCSRParams.scsrTemplateNames) {
+              case SCSRTemplateNames::UseFirstName:
                 templateNameToUse = templateNames[0];
                 break;
-              case ScsrTemplateNamesUseSecondName:
+              case SCSRTemplateNames::UseSecondName:
                 templateNameToUse = templateNames.back();
                 break;
-              case ScsrTemplateNamesAsEntered:
+              case SCSRTemplateNames::AsEntered:
                 templateNameToUse = dummyLabel;
                 break;
             }
@@ -1139,8 +1134,8 @@ class MolFromSCSRMolConverter {
         }
 
         atomIdxToTemplateIdx[atomIdx] = templateIdx;
-        auto attchOrds = atom->getProp<std::vector<RDKit::AtomAttchOrd>>(
-            common_properties::molAttachOrderTemplate);
+        std::vector<std::pair<unsigned int, std::string>> attchOrds;
+        atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
 
         // first find the sgroup that is the base for this atom's
         // template
@@ -1178,13 +1173,12 @@ class MolFromSCSRMolConverter {
         // find  the attachment points used by this atom and record them
         // in attachMap.
 
-        for (auto attchOrd : attchOrds) {
-          attachMap[OriginAtomConnection(atomIdx, attchOrd.getLabel())] =
+        for (const auto &[idx, lbl] : attchOrds) {
+          attachMap[OriginAtomConnection(atomIdx, lbl)] =
               std::vector<unsigned int>();
-          auto &attachAtoms =
-              attachMap[OriginAtomConnection(atomIdx, attchOrd.getLabel())];
+          auto &attachAtoms = attachMap[OriginAtomConnection(atomIdx, lbl)];
           for (auto attachPoint : sgroup->getAttachPoints()) {
-            if (attachPoint.id == attchOrd.getLabel()) {
+            if (attachPoint.id == lbl) {
               attachAtoms.push_back(attachPoint.aIdx);
             }
           }
@@ -1198,7 +1192,7 @@ class MolFromSCSRMolConverter {
         // not found in the attachords, then find the sgroup for that
         // attach point and add its atoms the molecule
 
-        if (molFromScsrParams.includeLeavingGroups) {
+        if (molFromSCSRParams.includeLeavingGroups) {
           for (auto attachPoint : sgroup->getAttachPoints()) {
             if (attachMap.find(OriginAtomConnection(atomIdx, attachPoint.id)) ==
                 attachMap.end()) {
@@ -1451,8 +1445,8 @@ class MolFromSCSRMolConverter {
 };
 
 std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
-    const RDKit::SCSRMol *scsrMol, const MolFromScsrParams &molFromScsrParams) {
-  MolFromSCSRMolConverter converter(scsrMol, molFromScsrParams);
+    const RDKit::SCSRMol *scsrMol, const MolFromSCSRParams &molFromSCSRParams) {
+  MolFromSCSRMolConverter converter(scsrMol, molFromSCSRParams);
   return converter.convert();
 }
 

@@ -12,7 +12,7 @@
 
 // our stuff
 #include "RWMol.h"
-#include "ScsrMol.h"
+#include "SCSRMol.h"
 #include <RDGeneral/FileParseException.h>
 
 namespace RDKit {
@@ -39,6 +39,6 @@ SCSRMol &SCSRMol::operator=(SCSRMol &&other) noexcept {
   return *this;
 }
 
-void SCSRMol::destroyScsr() { p_templates.clear(); }
+void SCSRMol::destroySCSR() { p_templates.clear(); }
 
 }  // namespace RDKit

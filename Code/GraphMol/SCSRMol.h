@@ -40,8 +40,8 @@ class RDKIT_GRAPHMOL_EXPORT SCSRMol {
   SCSRMol &operator=(SCSRMol &&other) noexcept;
 
   SCSRMol &operator=(const SCSRMol &) = delete;  // disable assignment
-  virtual void destroyScsr();
-  virtual ~SCSRMol() { destroyScsr(); }
+  virtual void destroySCSR();
+  virtual ~SCSRMol() { destroySCSR(); }
 
   void addTemplate(std::unique_ptr<ROMol> templateMol) {
     PRECONDITION(templateMol, "bad template molecule");
