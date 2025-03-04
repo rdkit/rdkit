@@ -4892,3 +4892,58 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
     CHECK(was_deleted == true);
   }
 }
+
+TEST_CASE("Github #8304: addHs should ignore queries") {
+  SECTION("queryAtoms") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    MolOps::addHs(*m1);
+    CHECK(m1->getNumAtoms() == 8);
+    std::vector<std::tuple<std::string, unsigned int, unsigned int>> data = {
+        {"CC", 2, 2},
+        {"[CH3]C", 5, 2},
+        {"[CH3][CH3]", 8, 2},
+    };
+    for (const auto &[sma, def, noq] : data) {
+      INFO(sma);
+      auto m2 = v2::SmilesParse::MolFromSmarts(sma);
+      REQUIRE(m2);
+      m2->updatePropertyCache(false);
+      // by default we addHs:
+      {
+        RWMol m3(*m2);
+        MolOps::addHs(m3);
+        CHECK(m3.getNumAtoms() == def);
+      }
+      // but we can change that:
+      MolOps::AddHsParameters ps;
+      ps.skipQueries = true;
+      {
+        RWMol m3(*m2);
+        MolOps::addHs(m3, ps);
+        CHECK(m3.getNumAtoms() == noq);
+      }
+    }
+  }
+  SECTION("queryBonds make their atoms queries") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    auto qb = v2::SmilesParse::BondFromSmarts("!@");
+    REQUIRE(qb);
+    m1->replaceBond(0, qb.get());
+    // by default we addHs:
+    {
+      RWMol m2(*m1);
+      MolOps::addHs(m2);
+      CHECK(m2.getNumAtoms() == 8);
+    }
+    // but we can change that:
+    MolOps::AddHsParameters ps;
+    ps.skipQueries = true;
+    {
+      RWMol m2(*m1);
+      MolOps::addHs(m2, ps);
+      CHECK(m2.getNumAtoms() == 2);
+    }
+  }
+}

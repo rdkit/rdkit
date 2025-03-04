@@ -296,15 +296,21 @@ void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
   addRecursiveQueries(mol, replacements, propName);
 }
 
-ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
-             python::object onlyOnAtoms, bool addResidueInfo) {
+ROMol *addHs2(const ROMol &orig, MolOps::AddHsParameters params,
+              python::object onlyOnAtoms) {
   std::unique_ptr<std::vector<unsigned int>> onlyOn;
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
-  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get(),
-                             addResidueInfo);
-  return res;
+  auto res = std::make_unique<RWMol>(orig);
+  MolOps::addHs(*res, params, onlyOn.get());
+  return static_cast<ROMol *>(res.release());
+}
+
+ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
+             python::object onlyOnAtoms, bool addResidueInfo) {
+  MolOps::AddHsParameters params{explicitOnly, addCoords, addResidueInfo};
+  return addHs2(orig, params, onlyOnAtoms);
 }
 
 VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds) {
@@ -1253,6 +1259,50 @@ struct molops_wrapper {
     python::def("FindRingFamilies", MolOps::findRingFamilies,
                 python::args("mol"), "generate Unique Ring Families");
 #endif
+
+    // ------------------------------------------------------------------------
+    docString = R"DOC(Parameters controlling H addition.)DOC";
+    python::class_<MolOps::AddHsParameters>("AddHsParameters",
+                                            docString.c_str())
+        .def_readwrite("explicitOnly", &MolOps::AddHsParameters::explicitOnly,
+                       "only add explict Hs")
+        .def_readwrite("addCoords", &MolOps::AddHsParameters::addCoords,
+                       "add coordinates for the Hs")
+        .def_readwrite("addResidueInfo",
+                       &MolOps::AddHsParameters::addResidueInfo,
+                       "add residue info to the Hs")
+        .def_readwrite(
+            "skipQueries", &MolOps::AddHsParameters::skipQueries,
+            "do not add Hs to query atoms or atoms with query bonds");
+
+    // ------------------------------------------------------------------------
+    docString =
+        R"DOC(Adds hydrogens to the graph of a molecule.
+
+  ARGUMENTS:
+
+    - mol: the molecule to be modified
+
+    - params: AddHsParameters object controlling the addition.
+
+    - onlyOnAtoms: (optional) if this sequence is provided, only these atoms will be
+      considered to have Hs added to them
+
+  RETURNS: a new molecule with added Hs
+
+  NOTES:
+
+    - The original molecule is *not* modified.
+
+    - Much of the code assumes that Hs are not included in the molecular
+      topology, so be *very* careful with the molecule that comes back from
+      this function.\n)DOC";
+    python::def("AddHs", addHs2,
+                (python::arg("mol"), python::arg("params"),
+                 python::arg("onlyOnAtoms") = python::object()),
+                docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
+
     // ------------------------------------------------------------------------
     docString =
         "Adds hydrogens to the graph of a molecule.\n\
