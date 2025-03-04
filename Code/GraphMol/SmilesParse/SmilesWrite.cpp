@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2002-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <GraphMol/new_canon.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Atropisomers.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -132,6 +133,16 @@ bool atomNeedsBracket(const Atom *atom, const std::string &atString,
   }
   if (nonStandard) {
     return true;
+  }
+
+  // check for bonds to a metal
+  if (atom->hasOwningMol()) {
+    for (const auto bond : atom->getOwningMol().atomBonds(atom)) {
+      auto oatom = bond->getOtherAtom(atom);
+      if (QueryOps::isMetal(*oatom)) {
+        return true;
+      }
+    }
   }
 
   return false;

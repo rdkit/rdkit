@@ -3145,8 +3145,10 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
 TEST_CASE(
     "cleanUpOrganometallics should produce canonical output.  cf PR6292") {
   std::vector<std::pair<std::string, std::string>> test_vals{
-      {"F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl", "F[Pd]1(Cl)<-Cl[Pd](Cl)(Cl)<-Cl1"},
-      {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br", "F[Pt]1(Br)<-Cl[Pt](F)(F)<-[35Cl]1"},
+      {"F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl",
+       "[F][Pd]1([Cl])<-[Cl][Pd]([Cl])([Cl])<-[Cl]1"},
+      {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br",
+       "[F][Pt]1([Br])<-[Cl][Pt]([F])([F])<-[35Cl]1"},
   };
 
   for (size_t j = 0; j < test_vals.size(); ++j) {
