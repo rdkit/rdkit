@@ -1496,14 +1496,14 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
     REQUIRE(m);
     auto smi = MolToCXSmiles(*m);
-    CHECK(smi == "N[Fe][NH3] |C:2.1|");
+    CHECK(smi == "[NH2][Fe][NH3] |C:2.1|");
 
     // disable the dative bond output
     SmilesWriteParams ps;
     smi = MolToCXSmiles(*m, ps,
                         SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS ^
                             SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS);
-    CHECK(smi == "N[Fe][NH3]");
+    CHECK(smi == "[NH2][Fe][NH3]");
   }
   SECTION("basics, SMARTS output") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;

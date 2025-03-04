@@ -4897,7 +4897,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CCC(=O)O->[Cu]");
+    TEST_ASSERT(smiles == "CCC(=O)[OH]->[Cu]");
 
     delete m;
   }
@@ -4911,7 +4911,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(9)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CCC(=O)O->[Cu]<-OC(O)CC");
+    TEST_ASSERT(smiles == "CCC(=O)[OH]->[Cu]<-[OH]C(O)CC");
 
     delete m;
   }
@@ -4924,7 +4924,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CC(C)->[Mg](Cl)Cl");
+    TEST_ASSERT(smiles == "C[CH2](C)->[Mg]([Cl])[Cl]");
 
     delete m;
   }

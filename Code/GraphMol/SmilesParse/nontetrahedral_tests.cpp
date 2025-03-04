@@ -96,9 +96,9 @@ TEST_CASE("non-canonical non-tetrahedral output") {
   SECTION("no reordering") {
     // clang-format off
     std::vector<std::string> data = {
-        "C[Pt@SP1](F)(O)Cl",        "C[Pt@SP2](F)(O)Cl",
-        "C[Pt@TB1](F)(O)(N)Cl",     "C[Pt@TB2](F)(O)(N)Cl",
-        "C[Pt@OH1](F)(O)(N)(Br)Cl", "C[Pt@OH2](F)(O)(N)(Br)Cl",
+        "[CH3][Pt@SP1]([F])([OH])[Cl]",        "[CH3][Pt@SP2]([F])([OH])[Cl]",
+        "[CH3][Pt@TB1]([F])([OH])([NH2])[Cl]",     "[CH3][Pt@TB2]([F])([OH])([NH2])[Cl]",
+        "[CH3][Pt@OH1]([F])([OH])([NH2])([Br])[Cl]", "[CH3][Pt@OH2]([F])([OH])([NH2])([Br])[Cl]",
     };
     // clang-format on
     for (const auto &smi : data) {
@@ -114,10 +114,10 @@ TEST_CASE("non-canonical non-tetrahedral output") {
   SECTION("reordering") {
     // clang-format off
     std::vector<std::pair<std::string,std::string>> data = {
-        {"F[Pt@SP1](C)(O)Cl","C[Pt@SP3](O)(F)Cl",},
-        {"F[Pt@SP2](C)(O)Cl","C[Pt@SP1](O)(F)Cl"},
+        {"F[Pt@SP1](C)(O)Cl","[CH3][Pt@SP3]([OH])([F])[Cl]",},
+        {"F[Pt@SP2](C)(O)Cl","[CH3][Pt@SP1]([OH])([F])[Cl]"},
         {"S[As@TB1](F)(Cl)(Br)N","N[As@TB6](F)(S)(Cl)Br"},
-        {"C[Pt@OH1](F)(O)(N)(Br)Cl","C[Pt@OH16](N)(O)(F)(Cl)Br"},
+        {"C[Pt@OH1](F)(O)(N)(Br)Cl","[CH3][Pt@OH16]([NH2])([OH])([F])([Cl])[Br]"},
     };
     // clang-format on
     for (const auto &pr : data) {
@@ -257,8 +257,9 @@ TEST_CASE("hasNonTetrahedralStereo") {
 
 TEST_CASE("zero permutation is in SMILES") {
   Chirality::setAllowNontetrahedralChirality(true);
-  std::vector<std::string> smis = {"CC[Pt@SP](C)(O)F", "C[Pt@TB](N)(F)(Cl)Br",
-                                   "C[Pt@OH](N)(F)(Cl)(Br)I"};
+  std::vector<std::string> smis = {"C[CH2][Pt@SP]([CH3])([OH])[F]",
+                                   "[CH3][Pt@TB]([NH2])([F])([Cl])[Br]",
+                                   "[CH3][Pt@OH]([NH2])([F])([Cl])([Br])[I]"};
   for (auto smi : smis) {
     std::unique_ptr<RWMol> m{SmilesToMol(smi)};
     REQUIRE(m);
@@ -292,6 +293,6 @@ TEST_CASE("do not read from/write to SMILES when disabled") {
     m->getAtomWithIdx(2)->setChiralTag(Atom::ChiralType::CHI_SQUAREPLANAR);
     m->getAtomWithIdx(2)->setProp(common_properties::_chiralPermutation, 1);
     auto smi = MolToSmiles(*m);
-    CHECK(smi == "CC[Pt](C)(O)F");
+    CHECK(smi == "C[CH2][Pt]([CH3])([OH])[F]");
   }
 }

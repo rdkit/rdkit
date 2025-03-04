@@ -185,13 +185,8 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
   }
 }
 
-bool isMetal(const Atom *atom) {
-  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
-  return q->Match(atom);
-}
-
 bool isHypervalentNonMetal(Atom *atom) {
-  if (isMetal(atom)) {
+  if (QueryOps::isMetal(*atom)) {
     return false;
   }
   atom->updatePropertyCache(false);
@@ -261,7 +256,7 @@ void metalBondCleanup(RWMol &mol, Atom *atom,
     // see if there are any metals bonded to it by a single bond
     for (auto bond : mol.atomBonds(atom)) {
       if (bond->getBondType() == Bond::BondType::SINGLE &&
-          isMetal(bond->getOtherAtom(atom))) {
+          QueryOps::isMetal(*bond->getOtherAtom(atom))) {
         metals.push_back(bond->getOtherAtom(atom));
       }
     }
@@ -317,7 +312,7 @@ void cleanUpOrganometallics(RWMol &mol) {
       // see if there are any metals bonded to it by a single bond
       for (auto bond : mol.atomBonds(atom)) {
         if (bond->getBondType() == Bond::BondType::SINGLE &&
-            isMetal(bond->getOtherAtom(atom))) {
+            QueryOps::isMetal(*bond->getOtherAtom(atom))) {
           needsFixing = true;
           break;
         }

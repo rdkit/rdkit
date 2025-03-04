@@ -696,12 +696,12 @@ public class Chemv2Tests extends GraphMolTest {
             RDKFuncs.setAllowNontetrahedralChirality(true);
             m = RWMol.MolFromMolBlock(ctab);
             assertTrue(m != null);
-            assertEquals(m.MolToSmiles(), "F[Pt@SP3](F)(Cl)Cl");
+            assertEquals(m.MolToSmiles(), "[F][Pt@SP3]([F])([Cl])[Cl]");
             m.delete();
             RDKFuncs.setAllowNontetrahedralChirality(false);
             m = RWMol.MolFromMolBlock(ctab);
             assertTrue(m != null);
-            assertEquals(m.MolToSmiles(), "F[Pt](F)(Cl)Cl");
+            assertEquals(m.MolToSmiles(), "[F][Pt]([F])([Cl])[Cl]");
             m.delete();
             RDKFuncs.setAllowNontetrahedralChirality(allowNonTetrahedralChirality);
         } finally {
