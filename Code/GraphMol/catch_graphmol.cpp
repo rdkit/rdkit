@@ -3101,16 +3101,19 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
   // Counting from 1, 4th mol is one that gave other problems during testing.
   std::vector<std::pair<std::string, std::string>> test_vals{
       {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4[n]3[Fe]35<-[N]2=C1C=c1c(C)c(CCC(=O)O)c([n]13)=CC1=[N]->5C(=C4)C(C)=C1CCC(=O)O"},
       {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
-       "C=Cc1c(C)c2cc3c(C)c(CCC(=O)[O-])c4cc5c(CCC(=O)[O-])c(C)c6cc7c(C=C)c(C)c8cc1n2[Fe-2](n65)([n+]87)[n+]34"},
+       "C=Cc1c(C)c2cc3c(C)c(CCC(=O)[O-])c4cc5c(CCC(=O)[O-])c(C)c6cc7c(C=C)c(C)c8cc1[n]2[Fe-2]([n]65)([n+]87)[n+]34"},
       {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
-       "C=Cc1c(C)c2cc3c(C)c(CCC(=O)O)c4cc5c(CCC(=O)O)c(C)c6cc7c(C=C)c(C)c8cc1n2[Fe-2](n65)([n+]87)[n+]34"},
+       "C=Cc1c(C)c2cc3c(C)c(CCC(=O)O)c4cc5c(CCC(=O)O)c(C)c6cc7c(C=C)c(C)c8cc1[n]2[Fe-2]([n]65)([n+]87)[n+]34"},
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
     INFO(test_vals[i].first);
     RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
+    // std::cerr << "   " << (MolToSmiles(*m) == test_vals[i].second) <<
+    // std::endl; std::cerr << " {\"" << test_vals[i].first << "\"},\n"
+    //           << "   \"" << MolToSmiles(*m) << "\"}," << std::endl;
     CHECK(MolToSmiles(*m) == test_vals[i].second);
     // make sure the metal atoms are not aromatic and have no aromatic bonds:
     for (auto atom : m->atoms()) {

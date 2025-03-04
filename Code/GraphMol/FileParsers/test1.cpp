@@ -4924,7 +4924,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "C[CH2](C)->[Mg](Cl)Cl");
+    TEST_ASSERT(smiles == "C[CH2](C)->[Mg]([Cl])[Cl]");
 
     delete m;
   }
