@@ -88,6 +88,55 @@ std::string getAtomChiralityInfo(const Atom *atom) {
   }
   return atString;
 }
+
+// -----
+// figure out if we need to put a bracket around the atom,
+// the conditions for this are:
+//   - not in the organic subset
+//   - formal charge specified
+//   - chirality present and writing isomeric smiles
+//   - non-default isotope and writing isomeric smiles
+//   - atom-map information present
+//   - the atom has a nonstandard valence
+//   - bonded to a metal
+bool atomNeedsBracket(const Atom *atom, const std::string &atString,
+                      const SmilesWriteParams &params) {
+  PRECONDITION(atom, "null atom");
+  auto num = atom->getAtomicNum();
+  if (!inOrganicSubset(num)) {
+    return true;
+  }
+
+  if (atom->getFormalCharge()) {
+    return true;
+  }
+  if (params.doIsomericSmiles && (atom->getIsotope() || !atString.empty())) {
+    return true;
+  }
+  if (atom->hasProp(common_properties::molAtomMapNumber)) {
+    return true;
+  }
+
+  const INT_VECT &defaultVs = PeriodicTable::getTable()->getValenceList(num);
+  int totalValence = atom->getTotalValence();
+  bool nonStandard = false;
+  if (atom->getNumRadicalElectrons()) {
+    nonStandard = true;
+  } else if ((num == 7 || num == 15) && atom->getIsAromatic() &&
+             atom->getNumExplicitHs()) {
+    // another type of "nonstandard" valence is an aromatic N or P with
+    // explicit Hs indicated:
+    nonStandard = true;
+  } else {
+    nonStandard = (totalValence != defaultVs.front() && atom->getTotalNumHs());
+  }
+  if (nonStandard) {
+    return true;
+  }
+
+  return false;
+}
+
 }  // namespace
 
 std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
@@ -97,7 +146,6 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
   int num = atom->getAtomicNum();
   int isotope = atom->getIsotope();
 
-  bool needsBracket = false;
   std::string symb;
   bool hasCustomSymbol =
       atom->getPropIfPresent(common_properties::smilesSymbol, symb);
@@ -113,41 +161,9 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
       atString = getAtomChiralityInfo(atom);
     }
   }
-  if (!params.allHsExplicit && inOrganicSubset(num)) {
-    // it's a member of the organic subset
-
-    // -----
-    // figure out if we need to put a bracket around the atom,
-    // the conditions for this are:
-    //   - formal charge specified
-    //   - the atom has a nonstandard valence
-    //   - chirality present and writing isomeric smiles
-    //   - non-default isotope and writing isomeric smiles
-    //   - atom-map information present
-    const INT_VECT &defaultVs = PeriodicTable::getTable()->getValenceList(num);
-    int totalValence = atom->getTotalValence();
-    bool nonStandard = false;
-
-    if (hasCustomSymbol || atom->getNumRadicalElectrons()) {
-      nonStandard = true;
-    } else if ((num == 7 || num == 15) && atom->getIsAromatic() &&
-               atom->getNumExplicitHs()) {
-      // another type of "nonstandard" valence is an aromatic N or P with
-      // explicit Hs indicated:
-      nonStandard = true;
-    } else {
-      nonStandard =
-          (totalValence != defaultVs.front() && atom->getTotalNumHs());
-    }
-
-    if (fc || nonStandard ||
-        atom->hasProp(common_properties::molAtomMapNumber)) {
-      needsBracket = true;
-    } else if (params.doIsomericSmiles && (isotope || atString != "")) {
-      needsBracket = true;
-    }
-  } else {
-    needsBracket = true;
+  bool needsBracket = true;
+  if (!hasCustomSymbol && !params.allHsExplicit) {
+    needsBracket = atomNeedsBracket(atom, atString, params);
   }
   if (needsBracket) {
     res += "[";
