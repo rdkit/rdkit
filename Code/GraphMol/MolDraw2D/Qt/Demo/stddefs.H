@@ -150,15 +150,16 @@ template <class T> inline T angle( const T vec1[3] , T len1 ,
   T theta = fabs( asin( sin_theta ) );
 
   // find the appropriate quadrant - if both positive, nothing to do
-  if( sin_theta > 0.0 && cos_theta < 0.0 )
+  if( sin_theta > 0.0 && cos_theta < 0.0 ) {
     // 2nd quadrant - subtract from 180
     theta = M_PI - theta;
-  else if( sin_theta < 0.0 && cos_theta < 0.0 )
+  } else if( sin_theta < 0.0 && cos_theta < 0.0 ) {
     // 3rd quadrant, add 180
     theta += M_PI;
-  else if( sin_theta < 0.0 && cos_theta > 0.0 )
+  } else if( sin_theta < 0.0 && cos_theta > 0.0 ) {
     // 4th quadrant, subtract from 360
     theta = 2 * M_PI - theta;
+  }
 
   return theta;
 
@@ -275,10 +276,11 @@ template <class T , class U> inline void translate( U coords[3] ,
 inline bool touch_file( const std::string filename ) {
 
   std::ofstream tf( filename.c_str() );
-  if( tf && tf.good() )
+  if( tf && tf.good() ) {
     return true;
-  else
+  } else {
     return false;
+  }
 
 }
 
@@ -287,8 +289,9 @@ inline bool touch_file( const std::string filename ) {
 template <class T> inline void vec_print( const T *vec ,
                                           bool add_new_line = true ) {
   std::cout << vec[0] << " , " << vec[1] << " , " << vec[2];
-  if( add_new_line )
+  if( add_new_line ) {
     std::cout << std::endl;
+  }
 
 }
 
@@ -360,13 +363,14 @@ template <class T> inline void calc_normal_to_2D_vec( T bond[2] ,
 // deleted in two steps : delete [] t[0]; delete [] t;
 template <class T> inline void make_square_matrix( T **&t , int mat_size ) {
 
-  if( mat_size <= 0 )
+  if( mat_size <= 0 ) {
     t = 0;
-  else {
+  } else {
     t = new T *[mat_size];
     t[0] = new T[mat_size * mat_size];
-    for( int i = 1 ; i < mat_size ; ++i )
+    for( int i = 1 ; i < mat_size ; ++i ) {
       t[i] = t[i-1] + mat_size;
+    }
   }
 
 }
@@ -385,13 +389,15 @@ template <class T> inline void destroy_square_matrix( T **&t ) {
 // make and destroy 2D matrix - more general case of above.
 template <class T> inline T** make_2d_matrix( int num_x , int num_y ) {
 
-  if( num_x <= 0 || num_y <= 0 )
+  if( num_x <= 0 || num_y <= 0 ) {
     return 0;
+  }
 
   T **ret_mat = new T*[num_x];
   ret_mat[0] = new T[num_x * num_y];
-  for( int i = 1 ; i < num_x ; ++i )
+  for( int i = 1 ; i < num_x ; ++i ) {
     ret_mat[i] = ret_mat[i-1] + num_y;
+  }
 
   return ret_mat;
 
@@ -412,21 +418,24 @@ template <class T> inline void destroy_2d_matrix( T **&in_mat ) {
 template <class T> inline T*** make_3d_matrix( int num_x , int num_y ,
                                                int num_z ) {
 
-  if( num_x <= 0 || num_y <= 0 || num_z <= 0 )
+  if( num_x <= 0 || num_y <= 0 || num_z <= 0 ) {
     return 0;
+  }
 
   T ***ret_mat = new T**[num_x];
   ret_mat[0] = new T*[num_x * num_y];
   ret_mat[0][0] = new T[num_x * num_y * num_z];
 
-  for( int j = 1 ; j < num_y ; ++j )
+  for( int j = 1 ; j < num_y ; ++j ) {
     ret_mat[0][j] = ret_mat[0][j-1] + num_z;
+  }
 
   for( int i = 1 ; i < num_x ; ++i ) {
     ret_mat[i] = ret_mat[i-1] + num_y;
     ret_mat[i][0] = ret_mat[i-1][0] + num_y * num_z;
-    for( int j = 1 ; j < num_y ; ++j )
+    for( int j = 1 ; j < num_y ; ++j ) {
       ret_mat[i][j] = ret_mat[i][j-1] + num_z;
+    }
   }
 
   return ret_mat;
@@ -436,8 +445,9 @@ template <class T> inline T*** make_3d_matrix( int num_x , int num_y ,
 //***************************************************************************
 template <class T> inline void destroy_3d_matrix( T ***&in_mat ) {
 
-  if( !in_mat )
+  if( !in_mat ) {
     return;
+  }
 
   delete [] in_mat[0][0];
   delete [] in_mat[0];
@@ -453,8 +463,9 @@ inline double fac( int n ) {
 
   double fac = 1.0;
   if( n < 30 ) {
-    for( int i = 1 ; i <= n ; ++i )
+    for( int i = 1 ; i <= n ; ++i ) {
 	fac *= i;
+    }
   } else {
     // uses Gosper's approximation, more accurate than Stirling's
     double fltn = double( n );
