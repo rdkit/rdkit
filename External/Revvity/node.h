@@ -42,8 +42,7 @@
 
 namespace RDKit {
 bool parse_node(
-    RWMol &mol, unsigned int fragment_id, CDXNode &node,
-    PageData &pagedata,
+    RWMol &mol, unsigned int fragment_id, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
     int &missing_frag_id, int external_attachment);
 }

@@ -35,28 +35,38 @@
 
 namespace RDKit {
 namespace {
-const char * sequenceTypeToName(CDXSeqType seqtype) {
-  switch(seqtype) {
-      case kCDXSeqType_Unknown : return "Unknown";
-      case kCDXSeqType_Peptide: return "Peptide (Helm)";      // HELM peptides
-      case kCDXSeqType_Peptide1 : return "Peptide1 (Single Letter Amino Acid)";      // Single letter amino acids (Legacy biopolymer support)
-      case kCDXSeqType_Peptide3 : return "Peptide3 (Three letter amino acid)";      // Three letter amino acids (Legacy biopolymer support)
-      case kCDXSeqType_DNA : return "DNA";
-      case kCDXSeqType_RNA : return "RNA";
-      case kCDXSeqType_Biopolymer : return "Biopolymer";
-      default:
-        return "";
-    }
+const char *sequenceTypeToName(CDXSeqType seqtype) {
+  switch (seqtype) {
+    case kCDXSeqType_Unknown:
+      return "Unknown";
+    case kCDXSeqType_Peptide:
+      return "Peptide (Helm)";  // HELM peptides
+    case kCDXSeqType_Peptide1:
+      return "Peptide1 (Single Letter Amino Acid)";  // Single letter amino
+                                                     // acids (Legacy biopolymer
+                                                     // support)
+    case kCDXSeqType_Peptide3:
+      return "Peptide3 (Three letter amino acid)";  // Three letter amino acids
+                                                    // (Legacy biopolymer
+                                                    // support)
+    case kCDXSeqType_DNA:
+      return "DNA";
+    case kCDXSeqType_RNA:
+      return "RNA";
+    case kCDXSeqType_Biopolymer:
+      return "Biopolymer";
+    default:
+      return "";
+  }
 }
-}
-bool parse_fragment(RWMol &mol, CDXFragment &fragment,
-                    PageData &pagedata, int &missing_frag_id,
-                    int external_attachment) {
+}  // namespace
+bool parse_fragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
+                    int &missing_frag_id, int external_attachment) {
   int frag_id = fragment.GetObjectID();
-  if(fragment.m_sequenceType != kCDXSeqType_Unknown) {
+  if (fragment.m_sequenceType != kCDXSeqType_Unknown) {
     BOOST_LOG(rdWarningLog)
-    << "Unhandled chemdraw sequence type " << sequenceTypeToName(fragment.m_sequenceType)
-    << std::endl;
+        << "Unhandled chemdraw sequence type "
+        << sequenceTypeToName(fragment.m_sequenceType) << std::endl;
     return false;
   }
   if (frag_id == -1) {

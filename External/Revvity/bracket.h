@@ -40,8 +40,7 @@
 #include "fragment.h"
 
 namespace RDKit {
-bool parse_bracket(CDXBracketedGroup &bracket,
-		   PageData &pagedata);
+bool parse_bracket(CDXBracketedGroup &bracket, PageData &pagedata);
 }
 
 #endif

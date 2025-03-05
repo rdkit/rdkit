@@ -35,8 +35,7 @@
 namespace RDKit {
 
 bool parse_node(
-    RWMol &mol, unsigned int fragment_id, CDXNode &node,
-    PageData &pagedata,
+    RWMol &mol, unsigned int fragment_id, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
     int &missing_frag_id, int external_attachment) {
   int atom_id = node.GetObjectID();
@@ -46,7 +45,7 @@ bool parse_node(
       node.m_numHydrogens == kNumHydrogenUnspecified ? 0 : node.m_numHydrogens;
   bool explicitHs = node.m_numHydrogens != kNumHydrogenUnspecified;
   int charge = 0;
-  if((node.m_charge & 0x00FFFFFF) == 0)
+  if ((node.m_charge & 0x00FFFFFF) == 0)
     charge = node.m_charge >> 24;
   else
     charge = node.m_charge;
@@ -54,8 +53,9 @@ bool parse_node(
   int mergeparent = -1;
   int rgroup_num = -1;
   int isotope = node.m_isotope;
-  
-  bool checkForRGroup = false;;
+
+  bool checkForRGroup = false;
+  ;
   std::string query_label;
   std::vector<int16_t> elementlist;
 
@@ -87,7 +87,7 @@ bool parse_node(
     case kCDXNodeType_ExternalConnectionPoint: {
       if (external_attachment <= 0) {
         // sometimes this is a dummy atom, but I don't know when.
-        if(node.m_externalConnectionType == kCDXExternalConnection_Diamond) {
+        if (node.m_externalConnectionType == kCDXExternalConnection_Diamond) {
           elemno = 0;
         }
         atommap = atom_id;
@@ -143,21 +143,24 @@ bool parse_node(
 
   for (auto &child : node.ContainedObjects()) {
     if (child.second->GetTag() == kCDXObj_Text) {
-      const std::string &text =
-          ((CDXText *)child.second)->GetText().str();
-      if(text.size() > 0 && text[0] == 'R') {
+      const std::string &text = ((CDXText *)child.second)->GetText().str();
+      if (text.size() > 0 && text[0] == 'R') {
         try {
           if (checkForRGroup)
             rgroup_num = text.size() > 1 ? stoi(text.substr(1)) : 0;
           else
             isotope = text.size() > 1 ? stoi(text.substr(1)) : 0;
-         } catch (const std::invalid_argument& e) {
-           if (rgroup_num)
-             BOOST_LOG(rdWarningLog) << "RGroupError: Invalid argument - Cannot convert '" << text << "' to an integer." << std::endl;
-         } catch (const std::out_of_range& e) {
-           if (rgroup_num)
-             BOOST_LOG(rdWarningLog) << "RGroupError: Out of range - The number '" << text << "' is too large or too small." << std::endl;
-         }
+        } catch (const std::invalid_argument &e) {
+          if (rgroup_num)
+            BOOST_LOG(rdWarningLog)
+                << "RGroupError: Invalid argument - Cannot convert '" << text
+                << "' to an integer." << std::endl;
+        } catch (const std::out_of_range &e) {
+          if (rgroup_num)
+            BOOST_LOG(rdWarningLog)
+                << "RGroupError: Out of range - The number '" << text
+                << "' is too large or too small." << std::endl;
+        }
       }
     }
   }
@@ -191,12 +194,11 @@ bool parse_node(
   if (node.m_bondOrdering) {
     // This node may be completely replaced by the fragment
     // i.e. [*:1]C[*:1].C[*:1]C => CCC
-    rd_atom->setProp<
-        std::vector<int>>(CDX_BOND_ORDERING, *node.m_bondOrdering);
+    rd_atom->setProp<std::vector<int>>(CDX_BOND_ORDERING, *node.m_bondOrdering);
   }
   if (node.m_geometry == kCDXAtomGeometry_Tetrahedral) {
-    //std::cerr << "tetrahedral" << std::endl;
-    // if we have a cip type we can interpret, set it, otherwise don't
+    // std::cerr << "tetrahedral" << std::endl;
+    //  if we have a cip type we can interpret, set it, otherwise don't
 
     switch (node.m_CIP) {
       case kCDXCIPAtom_R:
@@ -212,7 +214,7 @@ bool parse_node(
   }
 
   std::vector<double> atom_coords;
-  if(node.KnownPosition3D()) {
+  if (node.KnownPosition3D()) {
     atom_coords.reserve(3);
     atom_coords.push_back(node.m_3dPosition.x);
     atom_coords.push_back(node.m_3dPosition.y);
@@ -256,14 +258,13 @@ bool parse_node(
         rd_atom->setAtomicNum(elementlist.front());
       }
     } else if (query_label.size()) {
-      std::cerr << "Unhandled generic nickname: "
-                << query_label << std::endl;
+      std::cerr << "Unhandled generic nickname: " << query_label << std::endl;
     } else {
       rd_atom->setProp(common_properties::atomLabel, query_label);
     }
   }
 
-  switch(node.m_radical) {
+  switch (node.m_radical) {
     case kCDXRadical_None:
       break;
     case kCDXRadical_Singlet:
@@ -272,13 +273,13 @@ bool parse_node(
     case kCDXRadical_Doublet: {
       rd_atom->setNumRadicalElectrons(1);
       break;
-      }
+    }
     case kCDXRadical_Triplet: {
       rd_atom->setNumRadicalElectrons(2);
       break;
-      }
+    }
   }
-  
+
   if (node.m_enhancedStereoGroupNum > 0) {
     auto key = std::make_pair(node.m_enhancedStereoGroupNum, grouptype);
     auto &stereo = sgroups[key];
@@ -287,7 +288,8 @@ bool parse_node(
     stereo.atoms.push_back(rd_atom);
   }
 
-  pagedata.atom_ids[atom_id] = rd_atom;  // The mol has ownership so this can't leak
+  pagedata.atom_ids[atom_id] =
+      rd_atom;  // The mol has ownership so this can't leak
   if (node.m_nodeType == kCDXNodeType_Nickname ||
       node.m_nodeType == kCDXNodeType_Fragment) {
     // This fragment needs to be expanded and joined to the current one

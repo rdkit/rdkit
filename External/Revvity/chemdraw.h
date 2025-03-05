@@ -36,7 +36,6 @@
 
 #include "chemdraw/CDXStdObjects.h"
 
-
 namespace RDKit {
 struct RDKIT_FILEPARSERS_EXPORT ChemDrawParserParams {
   bool sanitize = true;
@@ -50,7 +49,7 @@ enum CDXFormat {
 
 std::unique_ptr<CDXDocument> RDKIT_CHEMDRAW_EXPORT
 ChemDrawToDocument(std::istream &inStream, CDXFormat format);
-  
+
 std::unique_ptr<CDXDocument> RDKIT_CHEMDRAW_EXPORT
 ChemDrawToDocument(const std::string &filename);
 

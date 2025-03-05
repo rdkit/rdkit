@@ -34,27 +34,27 @@
 
 namespace RDKit {
 
-bool parse_bracket(CDXBracketedGroup &bracket,
-		   PageData &pagedata) {
-  
+bool parse_bracket(CDXBracketedGroup &bracket, PageData &pagedata) {
   // Get the contained atoms/bonds in the bracket
-  for(auto &attachment: bracket.ContainedObjects()) {
+  for (auto &attachment : bracket.ContainedObjects()) {
     CDXDatumID childid = (CDXDatumID)attachment.second->GetTag();
     if (childid == kCDXObj_BracketAttachment) {
-      CDXBracketAttachment &bracketattachment = (CDXBracketAttachment &)(*attachment.second);
-      for(auto &bracketdata : bracketattachment.ContainedObjects()) {
+      CDXBracketAttachment &bracketattachment =
+          (CDXBracketAttachment &)(*attachment.second);
+      for (auto &bracketdata : bracketattachment.ContainedObjects()) {
         CDXDatumID bracketid = (CDXDatumID)bracketdata.second->GetTag();
         if (bracketid == kCDXObj_CrossingBond) {
-          CDXCrossingBond &crossingbond = (CDXCrossingBond &)(*attachment.second);
-          crossingbond.m_bondID; // bond that crosses brackets
-          crossingbond.m_innerAtomID; // atom within brackets
+          CDXCrossingBond &crossingbond =
+              (CDXCrossingBond &)(*attachment.second);
+          crossingbond.m_bondID;       // bond that crosses brackets
+          crossingbond.m_innerAtomID;  // atom within brackets
         }
       }
     }
   }
-  
-  //SubstanceGroup sgroup;
-  switch(bracket.m_usage) {
+
+  // SubstanceGroup sgroup;
+  switch (bracket.m_usage) {
     case kCDXBracketUsage_Unspecified:
       break;
     case kCDXBracketUsage_Anypolymer:
@@ -82,13 +82,16 @@ bool parse_bracket(CDXBracketedGroup &bracket,
       break;
     case kCDXBracketUsage_Modification:
       break;
-    case kCDXBracketUsage_Monomer: // repeat head-to-tail, head-to-head (check flip)
+    case kCDXBracketUsage_Monomer:  // repeat head-to-tail, head-to-head (check
+                                    // flip)
       break;
     case kCDXBracketUsage_MultipleGroup:
       break;
     case kCDXBracketUsage_MultipleGroupOverride:
       break;
-    case kCDXBracketUsage_SRU: // Structural repeating unit, repeat pattern head-to-tail (default) head-to-head (check flip?)
+    case kCDXBracketUsage_SRU:  // Structural repeating unit, repeat pattern
+                                // head-to-tail (default) head-to-head (check
+                                // flip?)
       break;
     case kCDXBracketUsage_Unused1:
       break;

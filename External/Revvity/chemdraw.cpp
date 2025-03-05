@@ -58,7 +58,6 @@
 namespace {
 using namespace RDKit;
 
-
 // The parsing of fragments needed to be moved to a recursive function since
 // they may be embedded further in the document, i.e. a group may hold multiple
 //  fragments
@@ -97,7 +96,7 @@ void visit_children(
       } else {
         pagedata.grouped_fragments[frag_id].push_back(frag_id);
       }
-      
+
       if (mol->hasProp(NEEDS_FUSE)) {
         mol->clearProp(NEEDS_FUSE);
         std::unique_ptr<ROMol> fused;
@@ -145,7 +144,7 @@ void visit_children(
       }
 
       if (hasConf) {
-        if(!is3D) {
+        if (!is3D) {
           scaleBonds(*res, *conf, RDKIT_DEPICT_BONDLENGTH, bondLength);
         }
         conf->set3D(is3D);
@@ -188,7 +187,7 @@ void visit_children(
             MolOps::sanitizeMol(*res);
             MolOps::detectBondStereochemistry(*res);
           }
-          
+
         } catch (...) {
           BOOST_LOG(rdWarningLog)
               << "CDXMLParser: failed sanitizing skipping fragment " << frag_id
@@ -224,7 +223,8 @@ void visit_children(
     } else if (id == kCDXObj_Group) {
       CDXGroup &group = (CDXGroup &)(*frag.second);
       group_id = frag.second->GetObjectID();
-      visit_children(group, pagedata, missing_frag_id, bondLength, params, group_id);
+      visit_children(group, pagedata, missing_frag_id, bondLength, params,
+                     group_id);
     } else if (id == kCDXObj_BracketedGroup) {
       CDXBracketedGroup &bracketgroup = (CDXBracketedGroup &)(*frag.second);
       parse_bracket(bracketgroup, pagedata);
@@ -232,8 +232,9 @@ void visit_children(
   }
 }
 
-std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream, CDXFormat format) {
-  if(format == CDXFormat::CDXML) {
+std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
+                                                 CDXFormat format) {
+  if (format == CDXFormat::CDXML) {
     CDXMLParser parser;
     // populate tree structure pt
     std::string data = std::string(std::istreambuf_iterator<char>(inStream),
@@ -257,7 +258,8 @@ std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream, CDXForm
 // may raise FileParseException
 std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     std::istream &inStream, const ChemDrawParserParams &params) {
-  std::unique_ptr<CDXDocument> document = streamToCDXDocument(inStream, CDXFormat::CDXML);
+  std::unique_ptr<CDXDocument> document =
+      streamToCDXDocument(inStream, CDXFormat::CDXML);
   if (!document) {
     // error
     return std::vector<std::unique_ptr<RWMol>>();
@@ -287,7 +289,8 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
 }  // namespace
 
 namespace RDKit {
-std::unique_ptr<CDXDocument> ChemDrawToDocument(std::istream &inStream, CDXFormat format) {
+std::unique_ptr<CDXDocument> ChemDrawToDocument(std::istream &inStream,
+                                                CDXFormat format) {
   return streamToCDXDocument(inStream, format);
 }
 
@@ -300,7 +303,9 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
   else if (ext == ".cdx") {
     return streamToCDXDocument(chemdrawfile, CDXFormat::CDX);
   }
-  std::string msg = std::string("Unknoen filetype ") + (std::string)std::filesystem::path(filename).extension().string();
+  std::string msg =
+      std::string("Unknoen filetype ") +
+      (std::string)std::filesystem::path(filename).extension().string();
   throw FileParseException(msg.c_str());
 }
 
@@ -321,7 +326,7 @@ std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(
   CDXMLParser parser;
   std::vector<std::unique_ptr<ROMol>> mols;
 
-  std::fstream chemdrawfile(filename); // FIX ME CHECK CDX versus CDXML
+  std::fstream chemdrawfile(filename);  // FIX ME CHECK CDX versus CDXML
   if (!chemdrawfile) {
     throw BadFileException(filename + " does not exist");
     return mols;
