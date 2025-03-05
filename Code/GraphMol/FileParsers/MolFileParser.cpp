@@ -2211,6 +2211,12 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
                          const T &tokens, unsigned int &line,
                          bool strictParsing) {
   PRECONDITION(mol, "bad molecule");
+  // Check if atom is initialized before proceeding
+  if (!atom) {
+    std::ostringstream errout;
+    errout << "Null atom pointer encountered on line " << line << std::endl;
+    throw FileParseException(errout.str());
+  }
   PRECONDITION(atom, "bad atom");
   std::ostringstream errout;
   while (token != tokens.end()) {
