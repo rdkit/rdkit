@@ -49,11 +49,11 @@
 
 using namespace RDKit;
 namespace {
-std::string replace(std::string& istr, const std::string& from, const std::string& to) {
+std::string replace(std::string &istr, const std::string &from,
+                    const std::string &to) {
   std::string str(istr);
   size_t start_pos = str.find(from);
-  if(start_pos == std::string::npos)
-    return str;
+  if (start_pos == std::string::npos) return str;
   str.replace(start_pos, from.length(), to);
   return str;
 }
@@ -81,7 +81,7 @@ bool hasNonSupportedFeatures(CDXDocument &document) {
       default:
         break;
     }
-    }
+  }
   return false;
 }
 
@@ -91,8 +91,9 @@ bool hasNonSupportedFeatures(const std::string &fname) {
 }
 
 TEST_CASE("Round TRIP") {
-  std::string path = std::string(getenv("RDBASE")) + "External/Revvity/test_data/CDXML6K/";
-  
+  std::string path =
+      std::string(getenv("RDBASE")) + "External/Revvity/test_data/CDXML6K/";
+
   SECTION("round trip") {
     int failed = 0;
     int saniFailed = 0;
@@ -106,29 +107,32 @@ TEST_CASE("Round TRIP") {
     std::string cdxpath = path + "CDXML/";
     std::string molpath = path + "mol/";
     std::string smipath = path + "smiles/";
-    
+
     std::string failpath = path + "FAILED/";
     std::string nomolpath = path + "NOMOL/";
     std::string badparsepath = path + "BADPARSE/";
     std::string sanitizationpath = path + "SANI/";
     for (auto p : {failpath, nomolpath, badparsepath, sanitizationpath}) {
-      if(std::filesystem::exists(p)) {
+      if (std::filesystem::exists(p)) {
         std::filesystem::remove_all(p);
       }
       std::filesystem::create_directory(p);
     }
 
-    for (const auto & entry : std::filesystem::recursive_directory_iterator(cdxpath)) {
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(cdxpath)) {
       if (entry.is_regular_file()) {
         std::string fname = entry.path().filename().string();
         // issue here - graphite nanotube
-        if (fname == "INDMUMLL1117_2025-01-24-17-28-02_10946.cdxml") continue;// nanotube takes forever
-        //if (fname != "INDMUMLL1117_2025-01-24-17-26-45_4997.cdxml") continue;
+        if (fname == "INDMUMLL1117_2025-01-24-17-28-02_10946.cdxml")
+          continue;  // nanotube takes forever
+        // if (fname != "INDMUMLL1117_2025-01-24-17-26-45_4997.cdxml") continue;
         //_sleep(5 * 1000);
         auto molfname = molpath + replace(fname, ".cdxml", ".mol");
         auto smifname = smipath + replace(fname, ".cdxml", ".smi");
         // if chemscript couldn't make an output, ignore it
-        if (!std::filesystem::exists(molfname) || !std::filesystem::exists(smifname)) {
+        if (!std::filesystem::exists(molfname) ||
+            !std::filesystem::exists(smifname)) {
           continue;
         }
         total++;
@@ -137,16 +141,19 @@ TEST_CASE("Round TRIP") {
         bool santizationFailure = false;
         try {
           mols = ChemDrawToMols(entry.path().string());
-          if(mols.size() == 0) {
+          if (mols.size() == 0) {
             ChemDrawParserParams params;
             params.sanitize = false;
             mols = ChemDrawToMols(entry.path().string(), params);
             santizationFailure = true;
           }
-          if(!mols.size()) {
+          if (!mols.size()) {
             if (hasNonSupportedFeatures(entry.path().string())) {
-              std::cerr << "[NOMOL (Unsupported)]: " << entry.path().string() << std::endl;
-              std::filesystem::copy(entry.path().string(), nomolpath + entry.path().filename().string());
+              std::cerr << "[NOMOL (Unsupported)]: " << entry.path().string()
+                        << std::endl;
+              std::filesystem::copy(
+                  entry.path().string(),
+                  nomolpath + entry.path().filename().string());
               nomol++;
             } else {
               skippedBiopolymer++;
@@ -154,10 +161,11 @@ TEST_CASE("Round TRIP") {
             continue;
           }
         } catch (...) {
-            std::cerr << "[BADPARSE]: " << entry.path().string() << std::endl;
-            std::filesystem::copy(entry.path(), badparsepath + entry.path().filename().string());
-            badparse++;
-            continue;
+          std::cerr << "[BADPARSE]: " << entry.path().string() << std::endl;
+          std::filesystem::copy(
+              entry.path(), badparsepath + entry.path().filename().string());
+          badparse++;
+          continue;
         }
         std::unique_ptr<RWMol> mol;
         //= nullptr;
@@ -166,15 +174,16 @@ TEST_CASE("Round TRIP") {
         } catch (...) {
           continue;
         }
-        //REQUIRE(mols.size());
-        std::ifstream  ifs(smifname);
+        // REQUIRE(mols.size());
+        std::ifstream ifs(smifname);
         std::string smiles_in;
         ifs >> smiles_in;
         std::string smiles;
         {
           try {
             auto smimol = SmilesToMol(smiles_in);
-            if(!smimol) smiles = smiles_in;
+            if (!smimol)
+              smiles = smiles_in;
             else {
               smiles = MolToSmiles(*smimol);
               delete smimol;
@@ -184,32 +193,33 @@ TEST_CASE("Round TRIP") {
           }
         }
         std::unique_ptr<ROMol> m = std::make_unique<ROMol>(*mols[0]);
-        for(size_t i=1; i<mols.size(); i++) {
+        for (size_t i = 1; i < mols.size(); i++) {
           m.reset(combineMols(*m, *mols[i]));
         }
-        
+
         auto rdkit_smi = MolToSmiles(*m);
         auto mol_smi = MolToSmiles(*mol);
-        
-        if(mol_smi != rdkit_smi) {
+
+        if (mol_smi != rdkit_smi) {
           // Do we match chemscripts smiles output at least?
-          if(rdkit_smi == smiles) {
+          if (rdkit_smi == smiles) {
             smimatches++;
             continue;
           }
-          
+
           if (hasNonSupportedFeatures(entry.path().string())) {
-            continue; // has unsupported features
+            continue;  // has unsupported features
           }
-          if (santizationFailure)
-          {
+          if (santizationFailure) {
             std::cerr << "[SANI]: " << entry.path() << std::endl;
-            std::filesystem::copy(entry.path(), sanitizationpath + entry.path().filename().string());
+            std::filesystem::copy(
+                entry.path(),
+                sanitizationpath + entry.path().filename().string());
             saniFailed++;
-          }
-          else {
+          } else {
             std::cerr << "[FAIL]: " << entry.path() << std::endl;
-            std::filesystem::copy(entry.path(), failpath + entry.path().filename().string());
+            std::filesystem::copy(entry.path(),
+                                  failpath + entry.path().filename().string());
             failed++;
           }
           std::cerr << "rdkit:               " << rdkit_smi << std::endl;
@@ -217,19 +227,19 @@ TEST_CASE("Round TRIP") {
           std::cerr << "chemscript (smiles): " << smiles << std::endl;
           std::cerr << molfname << std::endl;
           std::cerr << smifname << std::endl;
-        }
-        else {
+        } else {
           success++;
         }
       }
     }
     std::cerr << "Success:" << success + smimatches << std::endl;
-    std::cerr << "Chemscript smiles matches not chemscript mol: " << smimatches << std::endl;
+    std::cerr << "Chemscript smiles matches not chemscript mol: " << smimatches
+              << std::endl;
     std::cerr << "Failed:" << failed << std::endl;
     std::cerr << "Sanitization:" << saniFailed << std::endl;
     std::cerr << "Nomol:" << nomol << std::endl;
-    std::cerr << "Badparse:" << badparse <<  std::endl;
+    std::cerr << "Badparse:" << badparse << std::endl;
     REQUIRE(failed == 0);
   }
 }
-}
+}  // namespace

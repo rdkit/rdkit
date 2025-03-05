@@ -48,29 +48,32 @@ using namespace RDKit;
 
 TEST_CASE("Round TRIP") {
   std::string path =
-  std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/";
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/";
   std::string code_path = std::string(getenv("RDBASE"));
-  
+
   SECTION("3D structs") {
-    auto fname = code_path + "/Code/GraphMol/FileParsers/test_data/Issue3514824.mol";
+    auto fname =
+        code_path + "/Code/GraphMol/FileParsers/test_data/Issue3514824.mol";
     auto mol = MolFileToMol(fname);
     REQUIRE(mol);
     auto &conf = mol->getConformer(0);
-    for(auto bond: mol->bonds()) {
+    for (auto bond : mol->bonds()) {
       auto p1 = conf.getAtomPos(bond->getBeginAtomIdx());
       auto p2 = conf.getAtomPos(bond->getEndAtomIdx());
-      auto length = (p1-p2).length();
-      std::cerr << bond->getIdx() << " : " << length << std::endl;;
+      auto length = (p1 - p2).length();
+      std::cerr << bond->getIdx() << " : " << length << std::endl;
+      ;
     }
     std::cerr << "----------" << std::endl;
     {
-      auto fname2 = code_path + "/Code/GraphMol/FileParsers/test_data/Issue3514824.cdxml";
+      auto fname2 =
+          code_path + "/Code/GraphMol/FileParsers/test_data/Issue3514824.cdxml";
       auto mols = ChemDrawToMols(fname2);
       auto &conf2 = mols[0]->getConformer(0);
-      for(auto bond: mols[0]->bonds()) {
+      for (auto bond : mols[0]->bonds()) {
         auto p1 = conf2.getAtomPos(bond->getBeginAtomIdx());
         auto p2 = conf2.getAtomPos(bond->getEndAtomIdx());
-        auto length = (p1-p2).length();
+        auto length = (p1 - p2).length();
         std::cerr << bond->getIdx() << " : " << length << std::endl;
       }
     }
@@ -81,10 +84,10 @@ TEST_CASE("Round TRIP") {
       cdxin << cdx;
       auto mols = ChemDrawToMols(cdxin);
       auto &conf2 = mols[0]->getConformer(0);
-      for(auto bond: mols[0]->bonds()) {
+      for (auto bond : mols[0]->bonds()) {
         auto p1 = conf2.getAtomPos(bond->getBeginAtomIdx());
         auto p2 = conf2.getAtomPos(bond->getEndAtomIdx());
-        auto length = (p1-p2).length();
+        auto length = (p1 - p2).length();
         std::cerr << bond->getIdx() << " : " << length << std::endl;
       }
       CHECK(0);

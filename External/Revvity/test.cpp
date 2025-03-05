@@ -48,7 +48,6 @@
 
 using namespace RDKit;
 
-
 TEST_CASE("CDXML", "[unittest]") {
   std::string cdxmlbase =
       std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
@@ -74,7 +73,6 @@ void check_smiles_and_roundtrip(const RWMol &m, const std::string &expected) {
   std::unique_ptr<RWMol> mol(MolBlockToMol(MolToMolBlock(m)));
   CHECK(MolToSmiles(*mol) == expected);
 }
-
 
 TEST_CASE("CDXML") {
   std::string cdxmlbase =
@@ -1241,21 +1239,18 @@ TEST_CASE("Synthesis-workshop") {
     auto fname = cdxmlbase + "chemdraw_template1.cdxml";
     auto mols = ChemDrawToMols(fname);
     std::vector<std::string> expected = {
-      "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
-      "[B]",
-      "*",
-      "[C]",
-      "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
-      // this is may or may not be correct, but the structure is drawn incorrectly.
-      //There's a test below which fixes this
-      "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
-      "Cc1ccc2ccc(=O)ccn12",
-      "Cc1cccn1[C@H](C)C=O",
-      "Cc1ccc2ccc([O-])cc[n+]1-2",
-      "Cc1ccc2ccc(=O)ccn12",
-      "Cc1cccn1[C@H](C)C(C#N)O[Si](C)(C)C",
-      "CC1CCC2(O)C3(OC4(O)C[C@]2(C)C2(O)[C@H](OC(=O)c5ccc[nH]5)C(O)(C(C)C)C4(C)C32O)C1O",
-      "C=C(C)[C@H]1CC(=O)CC2=C(C1)[C@H]1C(=O)O[C@H]3C[C@@](C)(O)[C@@H](C2=O)[C@@H]13"};
+        "CCC/C=C/C=C/C(=O)O[C@H]1/C(=C/C(=O)OC)C[C@H]2C[C@H]([C@@H](C)O)OC(=O)C[C@H](O)C[C@@H]3C[C@H](OC(C)=O)C(C)(C)[C@](O)(C[C@@H]4C/C(=C/C(=O)OC)C[C@H](/C=C/C(C)(C)[C@]1(O)O2)O4)O3",
+        "[B]", "*", "[C]",
+        "Cc1ccc2n1[C@@H]1[C@@H]3O[C@]([C@H](C)O)(C=C2)[C@H]1c1ccc(C)n1[C@@H]3C",
+        // this is may or may not be correct, but the structure is drawn
+        // incorrectly.
+        // There's a test below which fixes this
+        "Cc1ccc2n1[C@H](C)C(=O)[C@@H]1[C@H]2C(=O)C=Cc2ccc(C)n21",
+        "Cc1ccc2ccc(=O)ccn12", "Cc1cccn1[C@H](C)C=O",
+        "Cc1ccc2ccc([O-])cc[n+]1-2", "Cc1ccc2ccc(=O)ccn12",
+        "Cc1cccn1[C@H](C)C(C#N)O[Si](C)(C)C",
+        "CC1CCC2(O)C3(OC4(O)C[C@]2(C)C2(O)[C@H](OC(=O)c5ccc[nH]5)C(O)(C(C)C)C4(C)C32O)C1O",
+        "C=C(C)[C@H]1CC(=O)CC2=C(C1)[C@H]1C(=O)O[C@H]3C[C@@](C)(O)[C@@H](C2=O)[C@@H]13"};
     CHECK(mols.size() == expected.size());
     int i = 0;
     for (auto &mol : mols) {
@@ -1290,14 +1285,14 @@ TEST_CASE("Brackets") {
   }
 }
 
-TEST_CASE("Enhanced Steremchem") {
+TEST_CASE("Enhanced Stereochem") {
   SECTION("Round Trip") {
     auto mol = "F[C@H](Cl)Br |o1:1|"_smiles;
     CHECK(MolToCXSmiles(*mol) == "F[C@H](Cl)Br |o1:1|");
     auto cdx = MolToChemDraw(*mol);
     std::stringstream iss(cdx);
     auto mols = ChemDrawToMols(iss);
-    
+
     SmilesWriteParams ps;
     auto cxsmi = MolToCXSmiles(*mols[0], ps,
                                SmilesWrite::CXSmilesFields::CX_ALL ^
@@ -1306,20 +1301,26 @@ TEST_CASE("Enhanced Steremchem") {
   }
 }
 
-
 TEST_CASE("Round TRIP") {
   std::string path =
-  std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/";
+      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/";
   std::string code_path = std::string(getenv("RDBASE"));
-  
+
   SECTION("round trip") {
-    std::set<std::string> exceptions = {"stereo3d_unknown.mol" ,"mrv-sma.mol", "github2040_1.mol"};
+    std::set<std::string> exceptions = {"stereo3d_unknown.mol", "mrv-sma.mol",
+                                        "github2040_1.mol"};
     int failed = 0;
     int total = 0;
     RDLog::LogStateSetter blocker;
-    for (const auto & entry : std::filesystem::recursive_directory_iterator(code_path)) {
-      if (entry.is_regular_file() && entry.path().extension() == ".mol") {
-        if(exceptions.find(entry.path().filename().string()) != exceptions.end()) {
+    for (const auto &entry :
+         std::filesystem::recursive_directory_iterator(code_path)) {
+      if (entry.path().string().find("Revvity") != std::string::npos)
+        continue;  // Skip Revvity directory
+      if (entry.path().string().find("build") != std::string::npos) continue;
+      if (entry.is_regular_file() &&
+          entry.path().extension().string() == ".mol") {
+        if (exceptions.find(entry.path().filename().string()) !=
+            exceptions.end()) {
           std::cerr << "Skipping exception: " << entry.path() << std::endl;
           continue;
         }
@@ -1329,16 +1330,16 @@ TEST_CASE("Round TRIP") {
         } catch (...) {
           continue;
         }
-        if(mol) {
+        if (mol) {
           // CDX doesn't support atom map numbers apparently
           total++;
-          for(auto atom: mol->atoms()) {
+          for (auto atom : mol->atoms()) {
             atom->setAtomMapNum(0);
           }
           // CDXML doesn't support ZERO bonds
           bool haszerobond = false;
-          for(auto bond: mol->bonds()) {
-            if(bond->getBondType() == Bond::BondType::ZERO) {
+          for (auto bond : mol->bonds()) {
+            if (bond->getBondType() == Bond::BondType::ZERO) {
               haszerobond = true;
               break;
             }
@@ -1347,9 +1348,18 @@ TEST_CASE("Round TRIP") {
             delete mol;
             continue;
           }
-          
-          //std::cerr << entry.path() << std::endl;
-          auto cdx = MolToChemDraw(*mol);
+
+          // std::cerr << entry.path() << std::endl;
+          std::string cdx;
+          try {
+            cdx = MolToChemDraw(*mol);
+          } catch (...) {
+            std::cerr << entry.path().filename().string() << std::endl;
+            std::cerr << "FAIL (cdxml-write-exception):" << entry.path()
+                      << std::endl;
+            failed++;
+            continue;
+          }
           std::vector<std::unique_ptr<ROMol>> mols;
           std::stringstream iss(cdx);
           try {
@@ -1357,34 +1367,59 @@ TEST_CASE("Round TRIP") {
           } catch (...) {
             std::cerr << entry.path().filename().string() << std::endl;
             std::cerr << "FAIL (cdxml-exception):" << entry.path() << std::endl;
-            failed ++;
+            failed++;
           }
           auto smi1 = MolToSmiles(*mol);
-          
-          if(mols.size() == 0) {
+
+          if (mols.size() == 0) {
             std::cerr << entry.path().filename().string() << std::endl;
             std::cerr << "FAIL (nomol):" << entry.path() << std::endl;
             mol->debugMol(std::cerr);
-            failed ++;
+            failed++;
             continue;
           }
           auto smi2 = MolToSmiles(*mols[0]);
-          if(smi1 != smi2) {
-            //std::cerr << "**************************************************************" << std::endl;
-            std::cerr << "FAIL:" << entry.path() << " " << smi1 << " != " << smi2 << std::endl;
+          if (smi1 != smi2) {
+            // std::cerr <<
+            // "**************************************************************"
+            // << std::endl;
+            std::cerr << "FAIL:" << entry.path() << " " << smi1
+                      << " != " << smi2 << std::endl;
             failed++;
-            //std::cerr << "molfile:" << smi1 << std::endl;
-            //std::cerr << "cdx    :" << smi2 << std::endl;
-            //std::cerr << cdx << std::endl;
+            // std::cerr << "molfile:" << smi1 << std::endl;
+            // std::cerr << "cdx    :" << smi2 << std::endl;
+            // std::cerr << cdx << std::endl;
           } else {
-            //std::cerr << "PASS:" << entry.path() << std::endl;
+            // std::cerr << "PASS:" << entry.path() << std::endl;
           }
-          //CHECK(smi1 == smi2);
+          // CHECK(smi1 == smi2);
           delete mol;
         }
       }
     }
     std::cerr << "Failed:" << failed << " out of " << total << std::endl;
     REQUIRE(failed == 0);
+  }
+}
+
+TEST_CASE("Fragments") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "External/Revvity/test_data/";
+  SECTION("Single Atom Replacements") {
+    auto fname = path + "atom-to-fragment.cdxml";
+    auto mols = ChemDrawToMols(fname);
+    REQUIRE(mols.size());
+    REQUIRE("CC=C=C(C)C" == MolToSmiles(*mols[0]));
+  }
+}
+
+TEST_CASE("Geometry") {
+  std::string path =
+      std::string(getenv("RDBASE")) + "External/Revvity/test_data/";
+  SECTION("Single Atom Replacements") {
+    auto fname = path + "geometry-tetrahedral.cdxml";
+    auto mols = ChemDrawToMols(fname);
+    REQUIRE(mols.size());
+    REQUIRE("[C@H]1(C2)[C@@H]2C1" == MolToSmiles(*mols[0]));
   }
 }
