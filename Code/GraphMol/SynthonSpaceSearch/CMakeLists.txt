@@ -14,6 +14,8 @@ rdkit_catch_test(testSynthonSpaceSubstructureSearch substructure_search_catch_te
         LINK_LIBRARIES SubstructMatch SubstructLibrary SynthonSpaceSearch)
 rdkit_catch_test(testSynthonSpaceFingerprintSearch fingerprint_search_catch_tests.cpp
         LINK_LIBRARIES SubstructMatch SubstructLibrary SynthonSpaceSearch)
+rdkit_catch_test(testSynthonSpaceLONG_TEST LONG_TEST_catch_tests.cpp
+        LINK_LIBRARIES SubstructMatch SubstructLibrary SynthonSpaceSearch)
 
 if (RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)

@@ -45,34 +45,6 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
   return subsLib;
 }
 
-int num5567Reads = 0;
-
-// The Synthons_5567.csv is in the test data.  It is used multiple times
-// so convert to the binary if that isn't already there.  This makes the
-// tests faster and also tests the conversion process.
-void convert5567File() {
-  num5567Reads++;
-  std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
-  std::string binName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
-  if (!std::filesystem::exists(binName)) {
-    bool cancelled = false;
-    convertTextToDBFile(libName, binName, cancelled);
-  }
-}
-
-void tidy5567Binary() {
-  std::string fName(rdbase);
-  std::string binName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
-  if (num5567Reads == 4 && std::filesystem::exists(binName)) {
-    std::cout << "removing " << binName << std::endl;
-    std::remove(binName.c_str());
-  }
-}
-
 TEST_CASE("Test splits 1") {
   const std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
                                         "CC(C)OCc1nnc(N2CC(C)CC2)n1C1CCCC1",
@@ -374,36 +346,6 @@ TEST_CASE("DB Writer") {
   CHECK_THROWS(synthonspace.readDBFile(spaceName));
 }
 
-TEST_CASE("S Biggy") {
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  convert5567File();
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
-  SynthonSpace synthonspace;
-  synthonspace.readDBFile(libName);
-  const std::vector<std::string> smis{"c1ccccc1C(=O)N1CCCC1",
-                                      "c1ccccc1NC(=O)C1CCN1",
-                                      "c12ccccc1c(N)nc(N)n2",
-                                      "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
-                                      "c1nncn1",
-                                      "C(=O)NC(CC)C(=O)N(CC)C"};
-  const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
-  const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
-  SynthonSpaceSearchParams params;
-  params.maxHits = -1;
-  for (auto numThreads : std::vector<int>{1, 2, -1}) {
-    params.numThreads = numThreads;
-    for (size_t i = 0; i < smis.size(); ++i) {
-      auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
-      auto results = synthonspace.substructureSearch(*queryMol, params);
-      CHECK(results.getHitMolecules().size() == numRes[i]);
-      CHECK(results.getMaxNumResults() == maxRes[i]);
-    }
-  }
-  tidy5567Binary();
-}
-
 TEST_CASE("S Small query") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
@@ -419,106 +361,6 @@ TEST_CASE("S Small query") {
   // The number of results is immaterial, it just matters that the search
   // finished.
   CHECK(results.getHitMolecules().empty());
-}
-
-TEST_CASE("S Random Hits") {
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
-  SynthonSpace synthonspace;
-  convert5567File();
-  synthonspace.readDBFile(libName);
-
-  auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-  SynthonSpaceSearchParams params;
-  params.maxHits = 100;
-  params.randomSample = true;
-  params.randomSeed = 1;
-  auto results = synthonspace.substructureSearch(*queryMol, params);
-  std::map<std::string, int> libCounts;
-  for (const auto &m : results.getHitMolecules()) {
-    auto molName = m->getProp<std::string>(common_properties::_Name);
-    std::string lib(molName.substr(molName.length() - 2));
-    if (const auto &c = libCounts.find(lib); c == libCounts.end()) {
-      libCounts.insert(std::make_pair(lib, 1));
-    } else {
-      c->second++;
-    }
-  }
-  CHECK(results.getHitMolecules().size() == 100);
-  // std::shuffle gives different results on macOS, Linux and Windows.
-  std::map<std::string, int> expCountsM{{"a1", 58}, {"a6", 4}, {"a7", 38}};
-  std::map<std::string, int> expCountsL{{"a1", 64}, {"a6", 4}, {"a7", 32}};
-  std::map<std::string, int> expCountsW{{"a1", 67}, {"a6", 6}, {"a7", 27}};
-  CHECK((expCountsM == libCounts || expCountsL == libCounts ||
-         expCountsW == libCounts));
-  tidy5567Binary();
-}
-
-TEST_CASE("S Later hits") {
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  // Test use of params.hitStart
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
-  SynthonSpace synthonspace;
-  convert5567File();
-  synthonspace.readDBFile(libName);
-
-  auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
-  SynthonSpaceSearchParams params;
-  params.maxHits = 200;
-  auto results = synthonspace.substructureSearch(*queryMol, params);
-  std::vector<std::string> hitNames1;
-  for (const auto &m : results.getHitMolecules()) {
-    hitNames1.push_back(m->getProp<std::string>(common_properties::_Name));
-  }
-
-  params.maxHits = 100;
-  params.hitStart = 100;
-  results = synthonspace.substructureSearch(*queryMol, params);
-  std::vector<std::string> hitNames2;
-  for (const auto &m : results.getHitMolecules()) {
-    hitNames2.push_back(m->getProp<std::string>(common_properties::_Name));
-  }
-  CHECK(hitNames1.size() == 200);
-  CHECK(hitNames2.size() == 100);
-  for (int i = 0; i < 100; ++i) {
-    CHECK(hitNames1[100 + i] == hitNames2[i]);
-  }
-
-  params.hitStart = 6780;
-  results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.getHitMolecules().size() == 5);
-
-  params.hitStart = 7000;
-  results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.getHitMolecules().empty());
-  tidy5567Binary();
-}
-
-TEST_CASE("S Complex query") {
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  // Just to demonstrate that a complex query works.
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
-  SynthonSpace synthonspace;
-  convert5567File();
-  synthonspace.readDBFile(libName);
-
-  auto queryMol = v2::SmilesParse::MolFromSmarts(
-      "[$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
-  REQUIRE(queryMol);
-  SynthonSpaceSearchParams params;
-  params.maxHits = -1;
-  auto results = synthonspace.substructureSearch(*queryMol, params);
-  CHECK(results.getHitMolecules().size() == 7649);
-  // The screenout is poor for a complex query, so a lot of things
-  // will be identified as possible that aren't.
-  CHECK(results.getMaxNumResults() == 33294);
-  tidy5567Binary();
 }
 
 TEST_CASE("S Map numbers in connectors") {
