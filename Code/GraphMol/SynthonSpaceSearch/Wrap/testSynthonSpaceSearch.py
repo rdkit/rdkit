@@ -44,32 +44,18 @@ from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator
 class TestCase(unittest.TestCase):
 
   def setUp(self):
-    print(rdBase.rdkitVersion)
     self.sssDir = Path(os.environ["RDBASE"]) / "Code" / "GraphMol" / "SynthonSpaceSearch" / "data"
 
   def testSubstructSearch(self):
-    fName = self.sssDir / "Syntons_5567.csv"
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
-    synthonspace.ReadTextFile(fName)
-    self.assertEqual(10, synthonspace.GetNumReactions())
+    synthonspace.ReadDBFile(fName)
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.maxHits = 10
     results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"), params)
     self.assertEqual(10, len(results.GetHitMolecules()))
 
   def testFingerprintSearch(self):
-    fName = self.sssDir / "Syntons_5567.csv"
-    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
-    synthonspace.ReadTextFile(fName)
-    self.assertEqual(10, synthonspace.GetNumReactions())
-    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
-    params.maxHits = 10
-    fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048, useBondOrder=True)
-    results = synthonspace.FingerprintSearch(
-      Chem.MolFromSmiles("c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1"), fpgen, params)
-    self.assertEqual(10, len(results.GetHitMolecules()))
-
-  def testBinaryDB(self):
     fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadDBFile(fName)
@@ -91,10 +77,9 @@ class TestCase(unittest.TestCase):
       synthonspace.WriteEnumeratedFile(tmp.name)
 
   def testTimeOut(self):
-    fName = self.sssDir / "Syntons_5567.csv"
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
-    synthonspace.ReadTextFile(fName)
-    self.assertEqual(10, synthonspace.GetNumReactions())
+    synthonspace.ReadDBFile(fName)
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.timeOut = 1
     params.maxHits = -1
