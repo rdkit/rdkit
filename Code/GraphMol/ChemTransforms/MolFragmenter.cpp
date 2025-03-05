@@ -703,14 +703,18 @@ int num_swaps_to_interconvert(std::vector<unsigned int> &orders) {
 
 // Simple bookkeeping class to bond attachments and handle stereo
 struct ZipBond {
-  Atom *a = nullptr;        // atom being bonded
-  Atom *a_dummy = nullptr;  // Labelled atom, i.e. [*:1]-C  will bond the C to something
-  Atom *b = nullptr;        // atom being bonded
-  Atom *b_dummy = nullptr;  // Labelled atom, i.e. [*:1]-O will bond the O to something
-  Atom *a_link = nullptr;   // Link bonds have six atoms, [*:a][*b].[*:a]C.[*:b]D, four dummies and two atoms
+  Atom *a = nullptr;  // atom being bonded
+  Atom *a_dummy =
+      nullptr;  // Labelled atom, i.e. [*:1]-C  will bond the C to something
+  Atom *b = nullptr;  // atom being bonded
+  Atom *b_dummy =
+      nullptr;  // Labelled atom, i.e. [*:1]-O will bond the O to something
+  Atom *a_link =
+      nullptr;  // Link bonds have six atoms, [*:a][*b].[*:a]C.[*:b]D, four
+                // dummies and two atoms
   Atom *b_link = nullptr;
-  bool isLinker = false;    // is this a straight linker bond
-  Bond::BondType linkerBondType; // The linker bond type
+  bool isLinker = false;          // is this a straight linker bond
+  Bond::BondType linkerBondType;  // The linker bond type
 
   // Backup the original chirality mark_chirality must be called first
   //  as it checks the datastructure for validity;
@@ -736,7 +740,7 @@ struct ZipBond {
     // Fragment on bonds allows multiple links to the same atom
     // i.e. C.[1C].[1C]
     //  otherwise throw an invariant error
-    
+
     CHECK_INVARIANT(
         params.label == MolzipLabel::FragmentOnBonds ||
             !a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx()),
@@ -745,19 +749,22 @@ struct ZipBond {
     if (!a->getOwningMol().getBondBetweenAtoms(a->getIdx(), b->getIdx())) {
       CHECK_INVARIANT(&a->getOwningMol() == &newmol,
                       "Owning mol is not the combined molecule!!");
-      if(isLinker) {
-        // This is the easy bit, just link a and b, and schedule a_dummy and b_dummy
+      if (isLinker) {
+        // This is the easy bit, just link a and b, and schedule a_dummy and
+        // b_dummy
         //  for deletion
-        CHECK_INVARIANT(a && b && a_dummy && b_dummy && a_link && b_link,
-                        "molzip: Link Bond is missing one or more labelled atoms");
+        CHECK_INVARIANT(
+            a && b && a_dummy && b_dummy && a_link && b_link,
+            "molzip: Link Bond is missing one or more labelled atoms");
         newmol.addBond(a, b, linkerBondType);
         a_link->setProp("__molzip_used", true);
         b_link->setProp("__molzip_used", true);
       } else {
         auto bnd = newmol.getBondBetweenAtoms(a->getIdx(), a_dummy->getIdx());
-        CHECK_INVARIANT(bnd != nullptr,
-                        "molzip: begin atom and specified dummy atom connection "
-                        "are not bonded.")
+        CHECK_INVARIANT(
+            bnd != nullptr,
+            "molzip: begin atom and specified dummy atom connection "
+            "are not bonded.")
         auto bond_type_a = bnd->getBondType();
         auto bond_dir_a = bnd->getBondDir();
         auto a_is_start = bnd->getBeginAtom() == a;
@@ -786,8 +793,8 @@ struct ZipBond {
         if (bond_dir_a != Bond::BondDir::NONE &&
             bond_dir_b != Bond::BondDir::NONE) {
           // are we consistent between the two bond orders check for the case of
-          // fragment on bonds where a<* and b>* or a>* and b<* when < is either a
-          // hash or wedge bond but not both.
+          // fragment on bonds where a<* and b>* or a>* and b<* when < is either
+          // a hash or wedge bond but not both.
           bool consistent_directions = false;
           if (bond_dir_a == bond_dir_b) {
             if ((a_is_start != b_is_start)) {
@@ -949,13 +956,13 @@ std::unique_ptr<ROMol> molzip(
 
   std::map<unsigned int, ZipBond> mappings;
   std::map<Atom *, std::vector<const ZipBond *>> mappings_by_atom;
-  
+
   // Linker bonds resolve to the same zip bond by using the
   //  lowest label.  I.e.
   //   [*:1][*:2] sets the link bond to label 1
   //    so this sets linkerBonds[1] == linkerBonds[2] = the same ZipBond
   std::map<unsigned int, ZipBond *> linkerBonds;
-  
+
   std::vector<Atom *> deletions;
   if (params.label == MolzipLabel::FragmentOnBonds) {
     for (auto *atom : newmol->atoms()) {
@@ -992,32 +999,36 @@ std::unique_ptr<ROMol> molzip(
         }
       }
     }
-  } else { // Non Fragment By Bonds attaching
+  } else {  // Non Fragment By Bonds attaching
     for (auto *atom : newmol->atoms()) {
       auto molno = get_label(atom, params);
       if (molno != NOLABEL) {
         auto attached_atom = get_other_atom(atom);
-        auto attached_molno = attached_atom ? get_label(attached_atom, params) : NOLABEL;
+        auto attached_molno =
+            attached_atom ? get_label(attached_atom, params) : NOLABEL;
         if (attached_molno != NOLABEL) {
           // we have a linker bond
           //  [*:1][*:2].[*:1]C.[*:2]S links C and S and drops all dummies
           //   Note:  the linker bond MUST come first here
           // Get the min molno and use this to assign the bonds to link
-          if(molno > attached_molno) {
+          if (molno > attached_molno) {
             std::swap(molno, attached_molno);
             std::swap(atom, attached_atom);
           }
-          
-          auto link_bond = atom->getOwningMol().getBondBetweenAtoms(atom->getIdx(), attached_atom->getIdx());
-          CHECK_INVARIANT(link_bond, ("molzip: link bond with labels: " +
-                                      std::to_string(molno) + "," + std::to_string(attached_molno) +
-                                      " is missing"));
+
+          auto link_bond = atom->getOwningMol().getBondBetweenAtoms(
+              atom->getIdx(), attached_atom->getIdx());
+          CHECK_INVARIANT(
+              link_bond,
+              ("molzip: link bond with labels: " + std::to_string(molno) + "," +
+               std::to_string(attached_molno) + " is missing"));
           auto bondType = link_bond->getBondType();
           if (mappings.find(molno) == mappings.end()) {
             auto &bond = mappings[molno];
-            CHECK_INVARIANT(linkerBonds.find(attached_molno) == linkerBonds.end(),
-                            ("molzip: Linker attachment point with label: " +
-                             std::to_string(attached_molno) + " found before linker bond"));
+            CHECK_INVARIANT(
+                linkerBonds.find(attached_molno) == linkerBonds.end(),
+                ("molzip: Linker attachment point with label: " +
+                 std::to_string(attached_molno) + " found before linker bond"));
             linkerBonds[attached_molno] = &bond;
             bond.isLinker = true;
             bond.linkerBondType = bondType;
@@ -1026,23 +1037,28 @@ std::unique_ptr<ROMol> molzip(
             deletions.push_back(atom);
             deletions.push_back(attached_atom);
           } else {
-            // we'll find this bond twice, so let's make sure it is setup correctly
+            // we'll find this bond twice, so let's make sure it is setup
+            // correctly
             auto &bond = mappings[molno];
-            CHECK_INVARIANT(bondType = bond.linkerBondType,
-                            ( "molzip: LINKER bond with labels: " +
-                              std::to_string(molno) + "," + std::to_string(attached_molno) +
-                             " has inconsistent bond types"));
-            CHECK_INVARIANT(bond.isLinker, ("molzip: LINKER bond with labels: " +
-                                            std::to_string(molno) + "," + std::to_string(attached_molno) +
-                                            " found but not encountered first in the molecules to be zipped."));
-            CHECK_INVARIANT((bond.a_link == atom && bond.b_link == attached_atom) ||
-                            (bond.b_link == atom && bond.a_link == attached_atom), 
-                            ("molzip: Linker Bond with labels " +
-                             std::to_string(molno) + "," + std::to_string(attached_molno) +
-                             " not setup correctly"));
+            CHECK_INVARIANT(
+                bondType = bond.linkerBondType,
+                ("molzip: LINKER bond with labels: " + std::to_string(molno) +
+                 "," + std::to_string(attached_molno) +
+                 " has inconsistent bond types"));
+            CHECK_INVARIANT(
+                bond.isLinker,
+                ("molzip: LINKER bond with labels: " + std::to_string(molno) +
+                 "," + std::to_string(attached_molno) +
+                 " found but not encountered first in the molecules to be zipped."));
+            CHECK_INVARIANT(
+                (bond.a_link == atom && bond.b_link == attached_atom) ||
+                    (bond.b_link == atom && bond.a_link == attached_atom),
+                ("molzip: Linker Bond with labels " + std::to_string(molno) +
+                 "," + std::to_string(attached_molno) +
+                 " not setup correctly"));
           }
-        }
-        else if (mappings.find(molno) == mappings.end() && linkerBonds.find(molno) == linkerBonds.end()) {
+        } else if (mappings.find(molno) == mappings.end() &&
+                   linkerBonds.find(molno) == linkerBonds.end()) {
           // Normal linkage C[*:1].S[*:1] links C and S
           // LinkBond [*:1][*:2].C[*:1].S[*:2] links C and S
           auto &bond = mappings[molno];
@@ -1053,12 +1069,15 @@ std::unique_ptr<ROMol> molzip(
           bond.a = attached_atom;
           bond.a_dummy = atom;
         } else {
-          auto &bond = linkerBonds.find(molno) == linkerBonds.end() ? mappings[molno] : *linkerBonds[molno];
-          if(bond.isLinker) {
-            CHECK_INVARIANT(!bond.a || !bond.b,
-                            "molzip: Linker bond has multiple attachments for label: " +
-                            std::to_string(molno));
-            if(bond.a) {
+          auto &bond = linkerBonds.find(molno) == linkerBonds.end()
+                           ? mappings[molno]
+                           : *linkerBonds[molno];
+          if (bond.isLinker) {
+            CHECK_INVARIANT(
+                !bond.a || !bond.b,
+                "molzip: Linker bond has multiple attachments for label: " +
+                    std::to_string(molno));
+            if (bond.a) {
               bond.b = attached_atom;
               bond.b_dummy = atom;
               deletions.push_back(bond.b_dummy);
@@ -1076,11 +1095,11 @@ std::unique_ptr<ROMol> molzip(
                 !bond.b,
                 "molzip: bond info already exists for end atom with label:" +
                     std::to_string(molno));
-          
+
             bond.b = attached_atom;
             bond.b_dummy = atom;
           }
-          
+
           mappings_by_atom[bond.a].push_back(&bond);
           if (attachmentMapping) {
             if (int otherIndex, dummyIndex;
@@ -1099,20 +1118,20 @@ std::unique_ptr<ROMol> molzip(
       }
     }
   }
-  
+
   // Mark the existing chirality so we can try and restore it later
   for (auto &kv : mappings_by_atom) {
     for (auto &bond : kv.second) {
       bond->mark_chirality();
     }
   }
-  
+
   // Make all the bonds
   for (auto &kv : mappings) {
     kv.second.bond(*newmol, params);
   }
   newmol->beginBatchEdit();
-  
+
   // Remove the used atoms
   for (auto &atom : deletions) {
     if (atom->hasProp("__molzip_used")) {
