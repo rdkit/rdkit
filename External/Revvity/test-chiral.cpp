@@ -48,17 +48,26 @@
 
 using namespace RDKit;
 
-
 TEST_CASE("Geometry") {
   std::string path =
       std::string(getenv("RDBASE")) + "External/Revvity/test_data/";
-  SECTION("Single Atom Replacements") {
+  SECTION("R/S Tetrahedral") {
     //_sleep(5 * 1000);
-    auto fname = path + "geometry-tetrahedral.cdxml";
-    auto mols = ChemDrawToMols(fname);
-    REQUIRE(mols.size()); // [C@H]1(C2)[C@@H]2C1
-    auto mol = "[C@H]1(C2)[C@@H]2C1"_smiles;
-    auto smi = MolToSmiles(*mol);
-    REQUIRE(smi == MolToSmiles(*mols[0]));
+    {
+      auto fname = path + "geometry-tetrahedral.cdxml";
+      auto mols = ChemDrawToMols(fname);
+      REQUIRE(mols.size());  // [C@H]1(C2)[C@@H]2C1
+      auto mol = "[C@H]1(C2)[C@@H]2C1"_smiles;
+      auto smi = MolToSmiles(*mol);
+      REQUIRE(smi == MolToSmiles(*mols[0]));
+    }
+    {
+      auto fname = path + "geometry-tetrahedral-2.cdxml";
+      auto mols = ChemDrawToMols(fname);
+      REQUIRE(mols.size());  // [C@H]1(C2)[C@@H]2C1
+      auto mol = "[C@H]1(C2)[C@@H]2C1"_smiles;
+      auto smi = MolToSmiles(*mol);
+      REQUIRE(smi == MolToSmiles(*mols[0]));
+    }
   }
 }
