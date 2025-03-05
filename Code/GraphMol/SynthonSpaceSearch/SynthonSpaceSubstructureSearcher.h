@@ -60,7 +60,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   bool verifyHit(const ROMol &hit) const override;
 
   void getConnectorRegions(
-      const std::vector<ROMol *> &molFrags,
+      const std::vector<std::unique_ptr<ROMol>> &molFrags,
       std::vector<std::vector<ROMol *>> &connRegs,
       std::vector<std::vector<const std::string *>> &connRegSmis,
       std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const;

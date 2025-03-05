@@ -12,6 +12,7 @@
 #include <list>
 #include <memory>
 #include <regex>
+#include <thread>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
@@ -27,8 +28,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceHitSet.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
-#include <boost/fusion/container/vector/vector.hpp>
-#include <boost/serialization/shared_ptr.hpp>
+#include <RDGeneral/RDThreads.h>
 
 namespace RDKit::SynthonSpaceSearch::details {
 
@@ -325,36 +325,170 @@ void findBondPairsThatFragment(
   }
 }
 
-void makeFragments(
-    const ROMol &mol, const std::vector<unsigned int> &splitBonds,
+void makeFragmentsForMol(
+    const ROMol &mol, const std::vector<std::vector<unsigned int>> &splitBonds,
+    size_t splitBondNum,
     const std::vector<std::pair<unsigned int, unsigned int>> &dummyLabels,
-    const unsigned int maxBondSplits, const boost::dynamic_bitset<> &ringBonds,
-    std::set<std::string> &fragSmis,
-    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
+    const unsigned int maxNumFrags, const boost::dynamic_bitset<> &ringBonds,
+    std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &fragments) {
   // first, see how many fragments we're going to get. The ring bonds
   // are paired so they will split the same ring.
   int numRingBonds = 0;
   int numNonRingBonds = 0;
-  for (const auto i : splitBonds) {
-    if (ringBonds[i]) {
+  for (const auto sb : splitBonds[splitBondNum]) {
+    if (ringBonds[sb]) {
       numRingBonds++;
     } else {
       numNonRingBonds++;
     }
   }
   if (const unsigned int numFragsPoss = 1 + numNonRingBonds + numRingBonds / 2;
-      numFragsPoss > maxBondSplits) {
+      numFragsPoss > maxNumFrags) {
     return;
   }
-  const std::unique_ptr<ROMol> fragMol(
-      MolFragmenter::fragmentOnBonds(mol, splitBonds, true, &dummyLabels));
-  if (const std::string fragSmi(MolToSmiles(*fragMol));
-      fragSmis.insert(fragSmi).second) {
-    if (std::vector<std::unique_ptr<ROMol>> molFrags;
-        MolOps::getMolFrags(*fragMol, molFrags, false) <= maxBondSplits) {
-      fragments.emplace_back(std::move(molFrags));
+  auto fragMol = MolFragmenter::fragmentOnBonds(mol, splitBonds[splitBondNum],
+                                                true, &dummyLabels);
+  const std::string fragSmi(MolToSmiles(*fragMol));
+  fragments[splitBondNum] =
+      std::pair<std::string, std::unique_ptr<ROMol>>(fragSmi, fragMol);
+}
+
+void doPartInitialFragmentation(
+    const ROMol &mol, const std::vector<std::vector<unsigned int>> &splitBonds,
+    const unsigned int maxNumFrags, const boost::dynamic_bitset<> &ringBonds,
+    const TimePoint *endTime, std::atomic<std::int64_t> &mostRecentRingBond,
+    std::int64_t lastRingBond,
+    const std::vector<std::pair<unsigned int, unsigned int>> &dummyLabels,
+    std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags) {
+  int numTries = 100;
+  bool timedOut = false;
+  while (true) {
+    std::int64_t thisRB = ++mostRecentRingBond;
+    // std::cout << "ring bond " << thisRB << " of " << lastRingBond << " and "
+    // << tmpFrags.size() << std::endl;
+    if (thisRB > lastRingBond) {
+      break;
+    }
+    makeFragmentsForMol(mol, splitBonds, thisRB, dummyLabels, maxNumFrags,
+                        ringBonds, tmpFrags);
+    --numTries;
+    if (!numTries) {
+      numTries = 100;
+      timedOut = checkTimeOut(endTime);
+      if (timedOut) {
+        break;
+      }
     }
   }
+}
+
+void doInitialFragmentation(
+    const ROMol &mol, const std::vector<std::vector<unsigned int>> &splitBonds,
+    const unsigned int maxNumFrags, const boost::dynamic_bitset<> &ringBonds,
+    const int numThreads, const TimePoint *endTime, bool &timedOut,
+    std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags) {
+  std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
+  for (unsigned int i = 1; i <= MAX_CONNECTOR_NUM; ++i) {
+    dummyLabels.emplace_back(i, i);
+  }
+
+  // Now do the splits.  Symmetrical molecules can give rise to the same
+  // fragment set in different ways so keep track of what we've had to
+  // avoid duplicates.
+  std::int64_t lastRingBond = splitBonds.size() - 1;
+  std::atomic<std::int64_t> mostRecentRingBond = -1;
+#if RDK_BUILD_THREADSAFE_SSS
+  if (const auto numThreadsToUse = getNumThreadsToUse(numThreads);
+      numThreads > 1) {
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0U;
+         i <
+         std::min(static_cast<std::int64_t>(numThreadsToUse), lastRingBond + 1);
+         ++i) {
+      threads.push_back(std::thread(doPartInitialFragmentation, std::ref(mol),
+                                    std::ref(splitBonds), maxNumFrags,
+                                    std::ref(ringBonds), endTime,
+                                    std::ref(mostRecentRingBond), lastRingBond,
+                                    std::ref(dummyLabels), std::ref(tmpFrags)));
+    }
+    for (auto &t : threads) {
+      t.join();
+    }
+  } else {
+    doPartInitialFragmentation(mol, splitBonds, maxNumFrags, ringBonds, endTime,
+                               std::ref(mostRecentRingBond), lastRingBond,
+                               dummyLabels, tmpFrags);
+  }
+#else
+  doPartInitialFragmentation(mol, splitBonds, maxNumFrags, ringBonds, endTime,
+                             std::ref(mostRecentRingBond), lastSplitBond,
+                             dummyLabels, tmpFrags);
+#endif
+  timedOut = details::checkTimeOut(endTime);
+}
+
+void doPartFinalFragmentation(
+    const std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags,
+    unsigned int maxNumFrags, const TimePoint *endTime,
+    std::atomic<std::int64_t> &mostRecentFrag, std::int64_t lastFrag,
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
+  int numTries = 100;
+  bool timedOut = false;
+  while (true) {
+    std::int64_t thisFrag = ++mostRecentFrag;
+    // std::cout << "frag " << thisFrag << " of " << lastFrag << " and "
+    // << tmpFrags.size() << std::endl;
+    if (thisFrag > lastFrag) {
+      break;
+    }
+    if (std::vector<std::unique_ptr<ROMol>> molFrags;
+        MolOps::getMolFrags(*tmpFrags[thisFrag].second, molFrags, false) <=
+        maxNumFrags) {
+      // The first fragment was made from the whole query and is already in
+      // fragments.
+      fragments[thisFrag + 1] = std::move(molFrags);
+    }
+    --numTries;
+    if (!numTries) {
+      numTries = 100;
+      timedOut = checkTimeOut(endTime);
+      if (timedOut) {
+        break;
+      }
+    }
+  }
+}
+
+void doFinalFragmentation(
+    const std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags,
+    unsigned int maxNumFrags, int numThreads, const TimePoint *endTime,
+    bool &timedOut,
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
+  std::int64_t lastFrag = tmpFrags.size() - 1;
+  std::atomic<std::int64_t> mostRecentFrag = -1;
+#if RDK_BUILD_THREADSAFE_SSS
+  if (const auto numThreadsToUse = getNumThreadsToUse(numThreads);
+      numThreads > 1) {
+    std::vector<std::thread> threads;
+    for (unsigned int i = 0U;
+         i < std::min(static_cast<std::int64_t>(numThreadsToUse), lastFrag + 1);
+         ++i) {
+      threads.push_back(std::thread(
+          doPartFinalFragmentation, std::ref(tmpFrags), maxNumFrags, endTime,
+          std::ref(mostRecentFrag), lastFrag, std::ref(fragments)));
+    }
+    for (auto &t : threads) {
+      t.join();
+    }
+  } else {
+    doPartFinalFragmentation(tmpFrags, maxNumFrags, endTime, mostRecentFrag,
+                             lastFrag, fragments);
+  }
+#else
+  doPartFinalFragmentation(tmpFrags, maxNumFrags, endTime, mostRecentFrag,
+                           lastFrag, fragments);
+#endif
+  timedOut = details::checkTimeOut(endTime);
 }
 
 // Build all combinations of maxBondSplits sets of bondPairs into splitBonds,
@@ -396,7 +530,7 @@ void buildSplitBonds(
 std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
     const ROMol &query, unsigned int maxNumFrags,
     const std::uint64_t maxNumFragSets, const TimePoint *endTime,
-    bool &timedOut) {
+    const int numThreads, bool &timedOut) {
   if (maxNumFrags < 1) {
     maxNumFrags = 1;
   }
@@ -418,41 +552,49 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
       bondPairs.push_back({b->getIdx(), b->getIdx()});
     }
   }
+
+  std::vector<std::vector<unsigned int>> splitBonds;
+  buildSplitBonds(bondPairs, maxNumFrags, splitBonds);
+  std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> tmpFrags(
+      splitBonds.size());
+
+  // First split leaves the fragments in the same molecule, and returns
+  // the SMILES for it.
+  doInitialFragmentation(query, splitBonds, maxNumFrags, ringBonds, numThreads,
+                         endTime, timedOut, tmpFrags);
   std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
+  if (timedOut || ControlCHandler::getGotSignal()) {
+    return fragments;
+  }
+
+  // Keep unique SMILES onlyu
+  std::sort(tmpFrags.begin(), tmpFrags.end(),
+            [](const auto &lhs, const auto &rhs) -> bool {
+              return lhs.first < rhs.first;
+            });
+  tmpFrags.erase(std::unique(tmpFrags.begin(), tmpFrags.end(),
+                             [](const auto &lhs, const auto &rhs) -> bool {
+                               return lhs.first == rhs.first;
+                             }),
+                 tmpFrags.end());
+  if (tmpFrags.size() > maxNumFragSets) {
+    tmpFrags.erase(tmpFrags.begin() + maxNumFragSets, tmpFrags.end());
+  }
+
   // Keep the molecule itself (i.e. 0 splits).  It will probably produce
   // lots of hits but it is necessary if, for example, the query is a match
   // for a single synthon set.
+  fragments.resize(tmpFrags.size() + 1);
   fragments.emplace_back();
   fragments.back().emplace_back(new ROMol(query));
+  // And now split the molecules into the final fragments.
+  doFinalFragmentation(tmpFrags, maxNumFrags, numThreads, endTime, timedOut,
+                       fragments);
 
-  // Now do the splits.  Symmetrical molecules can give rise to the same
-  // fragment set in different ways so keep track of what we've had to
-  // avoid duplicates.
-  std::set<std::string> fragSmis;
-  std::vector<std::vector<unsigned int>> splitBonds;
-  buildSplitBonds(bondPairs, maxNumFrags, splitBonds);
-  std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
-  for (unsigned int i = 1; i <= MAX_CONNECTOR_NUM; ++i) {
-    dummyLabels.emplace_back(i, i);
-  }
-
-  int numTries = 100;
-  for (const auto &sb : splitBonds) {
-    makeFragments(query, sb, dummyLabels, maxNumFrags, ringBonds, fragSmis,
-                  fragments);
-    if (fragSmis.size() > maxNumFragSets) {
-      break;
-    }
-    --numTries;
-    if (!numTries) {
-      numTries = 100;
-      timedOut = checkTimeOut(endTime);
-      if (timedOut) {
-        break;
-      }
-    }
-  }
-
+  fragments.erase(
+      std::remove_if(fragments.begin(), fragments.end(),
+                     [](const auto &fs) -> bool { return fs.empty(); }),
+      fragments.end());
   return fragments;
 }
 
@@ -468,7 +610,7 @@ int countConnections(const ROMol &mol) {
 }
 
 std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
-    const std::vector<ROMol *> &mols) {
+    const std::vector<std::unique_ptr<ROMol>> &mols) {
   std::vector<boost::dynamic_bitset<>> connPatterns(
       mols.size(), boost::dynamic_bitset<>(MAX_CONNECTOR_NUM + 1));
   for (size_t i = 0; i < mols.size(); i++) {
@@ -482,7 +624,7 @@ std::vector<boost::dynamic_bitset<>> getConnectorPatterns(
 }
 
 boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<ROMol *> &fragSet) {
+    const std::vector<std::unique_ptr<ROMol>> &fragSet) {
   boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
   const auto connPatterns = getConnectorPatterns(fragSet);
   for (const auto &cp : connPatterns) {

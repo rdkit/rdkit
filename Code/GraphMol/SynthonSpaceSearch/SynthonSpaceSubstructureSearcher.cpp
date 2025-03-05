@@ -23,16 +23,14 @@ namespace RDKit::SynthonSpaceSearch {
 
 namespace {
 
-// Collect the pattern fps for the fragments and re-order fps and
-// fragments into descending order of number of bits set in the fp (the
-// "largest fragment heuristic").  The FP with the largest number of bits
-// is the most likely to screen out a matching synthon set since smaller,
-// less complex fragments are more likely to match something, so screen
-// with that first.
-std::vector<ExplicitBitVect *> gatherPatternFPs(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags,
-    const std::vector<std::pair<void *, ExplicitBitVect *>> &allPattFPs,
-    std::vector<ROMol *> &orderedFrags) {
+// Re-order fragments into descending order of number of bits set in the
+// pattern fp (the "largest fragment heuristic").  The FP with the
+// largest number of bits is the most likely to screen out a matching
+// synthon set since smaller, less complex fragments are more likely
+// to match something, so screen with that first.
+void reorderFragments(
+    std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const std::vector<std::pair<void *, ExplicitBitVect *>> &allPattFPs) {
   std::vector<ExplicitBitVect *> pattFPs;
   pattFPs.reserve(molFrags.size());
   for (const auto &frag : molFrags) {
@@ -56,13 +54,29 @@ std::vector<ExplicitBitVect *> gatherPatternFPs(
             });
 
   // Now put orderedFrags in the same order.
-  orderedFrags.resize(fps.size());
-  std::vector<ExplicitBitVect *> retFPs(molFrags.size());
+  std::vector<std::unique_ptr<ROMol>> newFrags(molFrags.size());
   for (size_t i = 0; i < fps.size(); ++i) {
-    orderedFrags[i] = molFrags[fps[i].first].get();
-    retFPs[i] = pattFPs[fps[i].first];
+    newFrags[i] = std::move(molFrags[fps[i].first]);
   }
-  return retFPs;
+  molFrags = std::move(newFrags);
+}
+
+// Collect the pattern fps for the fragments.
+std::vector<ExplicitBitVect *> gatherPatternFPs(
+    const std::vector<std::unique_ptr<ROMol>> &molFrags,
+    const std::vector<std::pair<void *, ExplicitBitVect *>> &allPattFPs) {
+  std::vector<ExplicitBitVect *> pattFPs;
+  pattFPs.reserve(molFrags.size());
+  for (const auto &frag : molFrags) {
+    std::pair<void *, ExplicitBitVect *> tmp(frag.get(), nullptr);
+    const auto it =
+        std::lower_bound(allPattFPs.begin(), allPattFPs.end(), tmp,
+                         [](const auto &p1, const auto &p2) -> bool {
+                           return p1.first > p2.first;
+                         });
+    pattFPs.push_back(it->second);
+  }
+  return pattFPs;
 }
 
 // Return true if all the fragments have a connector region that matches
@@ -187,8 +201,8 @@ std::vector<std::vector<size_t>> getHitSynthons(
   details::expandBitSet(synthonsToUse);
   details::bitSetsToVectors(synthonsToUse, retSynthons);
 
-  // Now sort the selected synthons into ascending order of number of atoms,
-  // since smaller molecules are likely to be of more interest.
+  // Now sort the selected synthons into ascending order of number of
+  // atoms, since smaller molecules are likely to be of more interest.
   for (size_t i = 0; i < retSynthons.size(); ++i) {
     const auto &synthonsi = reaction.getSynthons()[i];
     std::sort(retSynthons[i].begin(), retSynthons[i].end(),
@@ -221,16 +235,29 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
     if (ControlCHandler::getGotSignal()) {
       return;
     }
-    // For the fingerprints, ring info is required.
-    unsigned int otf;
-    sanitizeMol(*static_cast<RWMol *>(frags.front()), otf,
-                MolOps::SANITIZE_SYMMRINGS);
-    if (details::removeQueryAtoms(*static_cast<RWMol *>(frags.front())) &&
-        !saidSomething) {
-      saidSomething = true;
-      BOOST_LOG(rdWarningLog) << "Complex queries can be slow." << std::endl;
-    }
+    // For the fingerprints, ring info is required, and this needs to be
+    // done for every copy of the fragment. We also need to fix any
+    // query atoms.
+    for (const auto &frag : frags) {
+      unsigned int otf;
+      sanitizeMol(*static_cast<RWMol *>(frag), otf, MolOps::SANITIZE_SYMMRINGS);
 
+      // Query atoms may define the environment of the fragment (via recursive
+      // SMARTS, for example) that a potentially matching synthon may not have,
+      // so they need to be made more generic.  For example, if the query is
+      // [$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1
+      // and it's split into [$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)[1*]
+      // that won't match the synthon [1*]c([*3])C(=O)[2*] even though the
+      // synthon could be built into a ring that matches the query if it is
+      // combined with a synthon such as [*1]ccccc[*3].  The downside is that
+      // the fragment will become less discriminating leading to more false
+      // positives in the initial screenout, hence the warning.
+      if (details::removeQueryAtoms(*static_cast<RWMol *>(frag)) &&
+          !saidSomething) {
+        saidSomething = true;
+        BOOST_LOG(rdWarningLog) << "Complex queries can be slow." << std::endl;
+      }
+    }
     d_pattFPsPool[fragNum] = std::unique_ptr<ExplicitBitVect>(
         PatternFingerprintMol(*frags.front(), pattFPSize));
     if (auto fragConnRegs = details::buildConnRegion(*frags.front());
@@ -277,6 +304,11 @@ void SynthonSpaceSubstructureSearcher::extraSearchSetup(
             [](const auto &p1, const auto &p2) -> bool {
               return p1.first > p2.first;
             });
+
+  // Now apply the largest fragment heuristic to the fragments
+  for (auto &fs : fragSets) {
+    reorderFragments(fs, d_pattFPs);
+  }
 }
 
 std::vector<std::unique_ptr<SynthonSpaceHitSet>>
@@ -285,15 +317,14 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
     const SynthonSet &reaction) const {
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> results;
 
-  std::vector<ROMol *> orderedFrags;
-  const auto pattFPs = gatherPatternFPs(fragSet, d_pattFPs, orderedFrags);
+  const auto pattFPs = gatherPatternFPs(fragSet, d_pattFPs);
   std::vector<int> numFragConns;
   numFragConns.reserve(fragSet.size());
-  for (const auto &frag : orderedFrags) {
+  for (const auto &frag : fragSet) {
     numFragConns.push_back(details::countConnections(*frag));
   }
 
-  const auto conns = details::getConnectorPattern(orderedFrags);
+  const auto conns = details::getConnectorPattern(fragSet);
   // It can't be a hit if the number of fragments is more than the number
   // of synthon sets because some of the molecule won't be matched in any
   // of the potential products.  It can be less, in which case the unused
@@ -308,7 +339,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
   std::vector<std::vector<ROMol *>> connRegs;
   std::vector<std::vector<const std::string *>> connRegSmis;
   std::vector<std::vector<ExplicitBitVect *>> connRegFPs;
-  getConnectorRegions(orderedFrags, connRegs, connRegSmis, connRegFPs);
+  getConnectorRegions(fragSet, connRegs, connRegSmis, connRegFPs);
   if (!checkConnectorRegions(reaction, connRegs, connRegSmis, connRegFPs)) {
     return results;
   }
@@ -321,9 +352,9 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
 
   // Need to copy orderedFrags into a working set, then apply the results to
   // the working copy below.
-  std::vector<std::unique_ptr<ROMol>> fragSetCp(orderedFrags.size());
-  for (unsigned int i = 0; i < orderedFrags.size(); ++i) {
-    fragSetCp[i] = std::make_unique<ROMol>(*orderedFrags[i]);
+  std::vector<std::unique_ptr<ROMol>> fragSetCp(fragSet.size());
+  for (unsigned int i = 0; i < fragSet.size(); ++i) {
+    fragSetCp[i] = std::make_unique<ROMol>(*fragSet[i]);
   }
   const auto connCombs = details::getConnectorPermutations(
       fragSetCp, conns, reaction.getConnectors());
@@ -377,12 +408,12 @@ bool SynthonSpaceSubstructureSearcher::verifyHit(const ROMol &hit) const {
 }
 
 void SynthonSpaceSubstructureSearcher::getConnectorRegions(
-    const std::vector<ROMol *> &molFrags,
+    const std::vector<std::unique_ptr<ROMol>> &molFrags,
     std::vector<std::vector<ROMol *>> &connRegs,
     std::vector<std::vector<const std::string *>> &connRegSmis,
     std::vector<std::vector<ExplicitBitVect *>> &connRegFPs) const {
   for (const auto &frag : molFrags) {
-    std::pair<void *, void *> tmp(frag, nullptr);
+    std::pair<void *, void *> tmp(frag.get(), nullptr);
     const auto it1 =
         std::lower_bound(d_connRegs.begin(), d_connRegs.end(), tmp,
                          [](const auto &p1, const auto &p2) -> bool {

@@ -44,18 +44,18 @@ permMFromN(unsigned int m, unsigned int n);
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<std::vector<std::unique_ptr<ROMol>>>
 splitMolecule(const ROMol &query, unsigned int maxNumFrags,
               const std::uint64_t maxNumFragSets, const TimePoint *endTime,
-              bool &timedOut);
+              const int numThreads, bool &timedOut);
 // Counts the number of [1*], [2*]...[4*] in the string.
 RDKIT_SYNTHONSPACESEARCH_EXPORT int countConnections(const ROMol &mol);
 
 // Return a bitset for each fragment giving the connector patterns
 RDKIT_SYNTHONSPACESEARCH_EXPORT std::vector<boost::dynamic_bitset<>>
-getConnectorPatterns(const std::vector<ROMol *> &fragSet);
+getConnectorPatterns(const std::vector<std::unique_ptr<ROMol>> &fragSet);
 
 // Return a bitset giving the different connector types in this
 // molecule.
 RDKIT_SYNTHONSPACESEARCH_EXPORT boost::dynamic_bitset<> getConnectorPattern(
-    const std::vector<ROMol *> &fragSet);
+    const std::vector<std::unique_ptr<ROMol>> &fragSet);
 
 // Gets the permutations of connector numbers and the atoms they should
 // be applied to in the molFrags.

@@ -83,7 +83,7 @@ TEST_CASE("Test splits 1") {
     auto mol = v2::SmilesParse::MolFromSmiles(smiles[i]);
     REQUIRE(mol);
     bool timedOut = false;
-    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, timedOut);
+    auto fragments = splitMolecule(*mol, 3, 100000, nullptr, 1, timedOut);
     CHECK(fragments.size() ==
           std::accumulate(expCounts[i].begin(), expCounts[i].end(), size_t(0)));
     // The first fragment set should just be the molecule itself.  There

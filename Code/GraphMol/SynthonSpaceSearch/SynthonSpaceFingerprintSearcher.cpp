@@ -184,12 +184,7 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
     fragFPs.push_back(it->second);
   }
 
-  std::vector<ROMol *> orderedFrags;
-  orderedFrags.reserve(fragSet.size());
-  std::transform(fragSet.begin(), fragSet.end(),
-                 std::back_inserter(orderedFrags),
-                 [](const auto &f) -> ROMol * { return f.get(); });
-  const auto connPatterns = details::getConnectorPatterns(orderedFrags);
+  const auto connPatterns = details::getConnectorPatterns(fragSet);
   const auto synthConnPatts = reaction.getSynthonConnectorPatterns();
 
   // Get all the possible permutations of connector numbers compatible with
