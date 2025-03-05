@@ -329,8 +329,9 @@ void makeLineGraph(const ROMol &mol, std::vector<std::vector<int>> &adjMatrix) {
   }
 }
 
-// make sure that mol1_bond in mol1 and mol2_bond in mol2 are, if aromatic, in
-// at least one ring that is the same.
+// make sure that mol1_bond in mol1 and mol2_bond in mol2 are, in at least one
+// ring that is the same. If aromaticRingsMatchOnly is true, then only aromatic
+// bonds are considered.
 bool checkRings(const ROMol &mol1,
                         std::vector<std::string> &mol1RingSmiles,
                         int mol1BondIdx, const ROMol &mol2,
