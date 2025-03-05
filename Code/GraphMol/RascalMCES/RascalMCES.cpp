@@ -344,6 +344,10 @@ bool checkRings(const ROMol &mol1,
     return true;
   }
 
+  if (mol1Bond->getIsAromatic() != mol2Bond->getIsAromatic() || mol1Bond->getBondType() != mol2Bond->getBondType()) {
+    return false;
+  }
+
   // If neither bond was in a ring, but they were marked aromatic, then
   // the two mols are fragments so it's ok to match these bonds.
   const auto &mol1BondRings = mol1.getRingInfo()->bondRings();
