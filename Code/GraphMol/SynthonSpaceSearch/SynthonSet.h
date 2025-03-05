@@ -62,7 +62,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
-  void readFromDBStream(std::istream &is, SynthonSpace &space,
+  void readFromDBStream(std::istream &is, const SynthonSpace &space,
                         std::uint32_t version);
   // write the enumerated molecules to the stream in SMILES format.
   void enumerateToStream(std::ostream &os) const;

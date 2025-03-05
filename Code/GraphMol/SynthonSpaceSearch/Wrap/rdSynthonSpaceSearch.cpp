@@ -220,8 +220,10 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            (python::arg("self"), python::arg("inFile")),
            "Reads text file of the sort used by ChemSpace/Enamine.")
       .def("ReadDBFile", &SynthonSpaceSearch::SynthonSpace::readDBFile,
-           (python::arg("self"), python::arg("inFile")),
-           "Reads binary database file.")
+           (python::arg("self"), python::arg("inFile"),
+            python::arg("numThreads") = 1),
+           "Reads binary database file.  Takes optional number of threads,"
+           "default=1.")
       .def("WriteDBFile", &SynthonSpaceSearch::SynthonSpace::writeDBFile,
            (python::arg("self"), python::arg("outFile")),
            "Writes binary database file.")

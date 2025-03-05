@@ -330,15 +330,9 @@ TEST_CASE("FP Binary File") {
       RDKitFP::getRDKitFPGenerator<std::uint64_t>());
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-  SynthonSpaceSearchParams params;
-
-  for (auto numThreads :
-       std::vector<int>{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}) {
-    std::cout << "Number of threads " << numThreads << std::endl;
-    synthonspace.readDBFile(libName);
-    params.numThreads = numThreads;
-    CHECK_NOTHROW(
-        results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params));
+  for (auto numThreads : std::vector<int>{1, 2, -1}) {
+    synthonspace.readDBFile(libName, numThreads);
+    CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
     CHECK(results.getHitMolecules().size() == 4);
     CHECK(results.getMaxNumResults() == 420);
   }
@@ -376,28 +370,23 @@ TEST_CASE("FP Binary File2") {
       "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
       RDKitFP::getRDKitFPGenerator<std::uint64_t>());
-  synthonspace.readDBFile(libName);
+  synthonspace.readDBFile(libName, -1);
   CHECK(synthonspace.getNumReactions() == 1008);
   CHECK(synthonspace.getNumProducts() == 70575407790);
   std::cout << synthonspace.getNumReactions() << std::endl;
-  std::cout << SynthonSpaceSearch::formattedIntegerString(
-                   synthonspace.getNumProducts())
-            << std::endl;
-#if 1
+  std::cout << synthonspace.getNumProducts() << std::endl;
+#if 0
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
-  SynthonSpaceSearchParams params;
-  params.numThreads = -1;
-  CHECK_NOTHROW(results =
-                    synthonspace.fingerprintSearch(*queryMol, *fpGen, params));
+  CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
   CHECK(results.getHitMolecules().size() == 211);
   CHECK(results.getMaxNumResults() == 1397664);
 #endif
 }
 
-#if 1
-// Whilst the code is still under active development, it's convenient to have
-// this in here.  It can come out later.
+#if 0
+// Whilst the code is still under active development, it's convenient to have this
+// in here.  It can come out later.
 TEST_CASE("FP Freedom Space") {
   std::string libName =
       "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";

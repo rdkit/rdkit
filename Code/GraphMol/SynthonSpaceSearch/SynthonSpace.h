@@ -144,6 +144,8 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // Likewise for the fingerprints used for similarity searching
   unsigned int getFPSize() const;
 
+  std::string getInputFileName() const;
+
   /*!
    * Get the total number of products that the SynthonSpace could produce.
    *
@@ -233,8 +235,11 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * Reads from a binary DB File in our format.
    *
    * @param inFilename: the name of the file to read.
+   * @param numThreads: number of threads to use in reading.  If negative,
+   *                    adds the number to the number of hardware threads
+   *                    available.
    */
-  void readDBFile(const std::string &inFilename);
+  void readDBFile(const std::string &inFilename, int numThreads = 1);
 
   /*!
    * Write a summary of the SynthonSpace to given stream.
@@ -272,11 +277,17 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // just look it up.  Either way, return a pointer to the
   // Synthon.
   Synthon *addSynthonToPool(const std::string &smiles);
+  std::shared_ptr<SynthonSet> addReactionToPool(
+      const std::string &reactionName);
+
+  // Just do the lookup, and return nullptr if not found.
+  Synthon *getSynthonFromPool(const std::string &smiles) const;
 
  private:
   std::string d_fileName;
-  // The reactions, keyed on their IDs.
-  std::map<std::string, std::shared_ptr<SynthonSet>> d_reactions;
+  // The reactions, keyed on their IDs as the first value
+  // in the pair.
+  std::vector<std::pair<std::string, std::shared_ptr<SynthonSet>>> d_reactions;
   // Keep the value of the maximum number of synthon sets used by
   // any of the reactions.  There's no point fragmenting any
   // query into more than this number of fragments.  Shouldn't
@@ -290,8 +301,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
 
   // The pool of all synthons, keyed on SMILES string.  Synthons
   // are frequently re-used in different reactions, so this means
-  // they're only stored once.
-  std::map<std::string, std::unique_ptr<Synthon>> d_synthonPool;
+  // they're only stored once.  They will be sorted and searched
+  // for via first, which is its SMILES string.
+  std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> d_synthonPool;
 
   // For the similarity search, this records the generator used for
   // creating synthon fingerprints that are read from a binary file.

@@ -9,6 +9,8 @@
 //
 
 #include <algorithm>
+#include <fstream>
+#include <iostream>
 #include <list>
 #include <memory>
 #include <regex>

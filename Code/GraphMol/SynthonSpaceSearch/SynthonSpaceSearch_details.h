@@ -158,6 +158,11 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::map<std::string, std::vector<ROMol *>>
 mapFragsBySmiles(std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
                  bool &cancelled);
 
+// Create an mmap or Windows equivalent of the file
+RDKIT_SYNTHONSPACESEARCH_EXPORT void *createReadOnlyMemoryMapping(
+    const std::string &filePath, size_t &size);
+RDKIT_SYNTHONSPACESEARCH_EXPORT void unmapMemory(void *mappedMemory,
+                                                 size_t size);
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 
