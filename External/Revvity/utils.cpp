@@ -1,8 +1,10 @@
 #include "utils.h"
-#include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
-#include <GraphMol/SmilesParse/SmilesWrite.h>
 
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/FileParsers/FileWriters.h>
 namespace RDKit {
 
 std::string NodeType(CDXNodeType nodetype) {
@@ -83,31 +85,31 @@ void set_fuse_label(Atom *atm, unsigned int idx) {
 }
 
 struct FragmentReplacement {
-    // R = Replacement
-    // F = Fragment
-    // C = Conneciton
-    //                    C R C F     F
-    //                    N=*=C.*=CCC=*
-    //  label               1   1     1
-    //  has bond ordering  
-    // 
-    //  goal replace the atom R with the connections     
+  // R = Replacement
+  // F = Fragment
+  // C = Conneciton
+  //                    C R C F     F
+  //                    N=*=C.*=CCC=*
+  //  label               1   1     1
+  //  has bond ordering
+  //
+  //  goal replace the atom R with the connections
   unsigned int label = 0;
   Atom *replacement_atom = nullptr;
 
   std::vector<Atom *> replacement_connection_atoms;
   std::vector<Atom *> fragment_atoms;
 
-  bool replace(RWMol& mol) {
+  bool replace(RWMol &mol) {
     if (!replacement_atom) return true;
 
     auto &bond_ordering =
         replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
-    
+
     // Find the connecting atoms and and do the replacement
-    size_t i = 0;  
+    size_t i = 0;
     for (auto bond : mol.atomBonds(replacement_atom)) {
-        // find the position of the attachement bonds in the bond ordering
+      // find the position of the attachement bonds in the bond ordering
       auto bond_id = bond->getProp<unsigned int>(CDX_BOND_ID);
       auto it = std::find(bond_ordering.begin(), bond_ordering.end(), bond_id);
       if (it == bond_ordering.end()) return false;
@@ -117,8 +119,8 @@ struct FragmentReplacement {
       auto &xatom = fragment_atoms[pos];
 
       for (auto &xbond : mol.atomBonds(xatom)) {
-          // xatom is the fragment dummy atom
-          // xbond is the fragment bond
+        // xatom is the fragment dummy atom
+        // xbond is the fragment bond
         if (bond->getBeginAtom() == replacement_atom) {
           mol.addBond(xbond->getOtherAtom(xatom), bond->getEndAtom(),
                       bond->getBondType());
@@ -126,7 +128,6 @@ struct FragmentReplacement {
           mol.addBond(bond->getBeginAtom(), xbond->getOtherAtom(xatom),
                       bond->getBondType());
         }
-        
       }
     }
 
@@ -137,7 +138,6 @@ struct FragmentReplacement {
     return true;
   }
 };
-
 
 // Replace fragments that are not possible with molzip
 bool replaceFragments(RWMol &mol) {
@@ -169,7 +169,8 @@ bool replaceFragments(RWMol &mol) {
 }
 
 void checkChemDrawTetrahedralGeometries(RWMol &mol) {
-  bool setStereo = false;
+  std::vector<std::pair<char, Atom *>> unsetTetrahedralAtoms;
+
   for (auto atom : mol.atoms()) {
     // only deal with unspecified chiralities
     if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
@@ -180,74 +181,61 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
     CDXAtomCIPType cip;
     if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip)) {
       Atom::ChiralType chiral_type;
+      // assign, possibly wrong, initial stereo.
+      // note: we can probably deduce this through CDX_BOND_ORDERING, but
+      //  I currenlty don't understand that well enough.
       switch (cip) {
         case kCDXCIPAtom_R:
+          atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          unsetTetrahedralAtoms.push_back(std::make_pair('R', atom));
         case kCDXCIPAtom_r:
-          std::cerr << "r" << std::endl;
-          chiral_type = Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
-          //atom->setChiralTag(chiral_type);
-          atom->setProp(common_properties::_CIPCode, "r");
-          atom->setProp<bool>(common_properties::_ChiralityPossible, true);
-          setStereo = true;
+          atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          unsetTetrahedralAtoms.push_back(std::make_pair('r', atom));
           break;
         case kCDXCIPAtom_S:
+          atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          unsetTetrahedralAtoms.push_back(std::make_pair('S', atom));
         case kCDXCIPAtom_s:
-          std::cerr << "s" << std::endl;
-          chiral_type = Atom::ChiralType::CHI_TETRAHEDRAL_CW;
-          //atom->setChiralTag(chiral_type);
-          atom->setProp(common_properties::_CIPCode, "s");
-          atom->setProp<bool>(common_properties::_ChiralityPossible, true);
-          setStereo = true;
+          atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+          unsetTetrahedralAtoms.push_back(std::make_pair('s', atom));
           break;
         default:
-          continue;  // nothing to do
+          break;
       }
     }
   }
-  // Now that we have chirality set, let's check the CIP codes and reset if necessary
+
+  // Now that we have missing chiralities, let's check the CIP codes and reset
+  // if necessary.
   //  This is an expensive way of doing this, but we only have stereo->cip not
   //  cip->stereo implemented currently
-  if (setStereo) {
-    boost::dynamic_bitset<> atoms(mol.getNumAtoms());
-    while (1) {
-      CIPLabeler::assignCIPLabels(mol);
-      bool swap = false;
-      for (auto atom : mol.atoms()) {
-        if (atoms[atom->getIdx()]) continue;
-        CDXAtomCIPType cip;
-        std::string rdkit_cip;
-        if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip) &&
-            atom->getPropIfPresent<std::string>(common_properties::_CIPCode,
-                                                rdkit_cip)) {
-          atoms[atom->getIdx()] = true;
-          std::cerr << atom->getIdx() << "rdkit_cip: " << rdkit_cip << " "
-                    << (int)cip << std::endl;
-          swap = ((rdkit_cip == "R" && cip != kCDXCIPAtom_R) ||
-                  (rdkit_cip == "r" && cip != kCDXCIPAtom_r) ||
-                  (rdkit_cip == "S" && cip != kCDXCIPAtom_S) ||
-                  (rdkit_cip == "s" && cip != kCDXCIPAtom_s));
-          if (swap) {
-            std::cerr << "swap" << std::endl;
-            switch (atom->getChiralTag()) {
-              case Atom::ChiralType::CHI_TETRAHEDRAL_CW: {
-                atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
-                break;
-              }
-              case Atom::ChiralType::CHI_TETRAHEDRAL_CCW: {
-                atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-                break;
-              }
-            }
-            std::cerr << MolToSmiles(mol) << std::endl;
-          } else {
-            break;
-          }
+  bool changed = false;
+
+  for (auto cipatom : unsetTetrahedralAtoms) {
+    CIPLabeler::assignCIPLabels(mol);
+    std::string cipcode;
+    if (cipatom.second->getPropIfPresent<std::string>(
+            common_properties::_CIPCode, cipcode)) {
+      if (cipcode.size() && cipcode[0] != cipatom.first) {
+        // need to swap
+        if (cipatom.second->getChiralTag() ==
+            Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
+          cipatom.second->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+          cipatom.second->updatePropertyCache();
+          changed = true;
+        } else if (cipatom.second->getChiralTag() ==
+                   Atom::ChiralType::CHI_TETRAHEDRAL_CCW) {
+          cipatom.second->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+          cipatom.second->updatePropertyCache();
+          changed = true;
         }
       }
-      if (!swap) {
-        break;
-      }
     }
+  }
+  if (changed) {
+    const bool cleanIt = true;
+    const bool force = true;
+    MolOps::assignStereochemistry(mol, cleanIt, force);
   }
 }
 }  // namespace RDKit
