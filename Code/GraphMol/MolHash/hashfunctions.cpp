@@ -21,6 +21,8 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #include "nmmolhash.h"
 #include "mf.h"
@@ -378,14 +380,50 @@ std::string MesomerHash(RWMol *mol, bool netq, bool useCXSmiles,
   return result;
 }
 
+namespace details {
+
+constexpr std::uint64_t bondFlagCarboxyl =
+    1;  //*< bond involved in in carboxyl, amide, etc.
+std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
+  // FIX: oversimplified, but should work for now
+  static std::vector<std::string> patterns{
+      "[C;!$(C-C(=[NH])-[NH2])]-[C;!$(C(-C)(=[NH])-[NH2])](=[O,N,S])-[O,N,S]",  //< one side of the "amide", with an ugly exclusion for amidine
+      "[C;!$(C=[O,N,S])]-[O,N,S]-C=[O,N,S]",  //< the other side
+      "[OH0,SH0]-C=[O,N,S]",                  //< "esters" and "carboxyls"
+      "[C]-[c](:[o,n,s]):[o,n,s]",  //< a limited version of handling this for
+                                    // aromatic systems
+  };
+  static std::vector<std::unique_ptr<RDKit::RWMol>> queries;
+  if (queries.empty()) {
+    for (const auto &pattern : patterns) {
+      queries.emplace_back(SmartsToMol(pattern));
+    }
+  }
+
+  std::vector<std::uint64_t> bondFlags(mol.getNumBonds(), 0);
+  for (const auto &qry : queries) {
+    auto matches = SubstructMatch(mol, *qry);
+    for (const auto &match : matches) {
+      const auto bnd =
+          mol.getBondBetweenAtoms(match[0].second, match[1].second);
+      bondFlags[bnd->getIdx()] |= bondFlagCarboxyl;
+    }
+  }
+  return bondFlags;
+}
+
+}  // namespace details
+
 namespace {
 // candidate atoms are either unsaturated or have implicit Hs
 // NOTE that being aromatic is not sufficient. The molecule
 //  Cn1cccc1 is a good example of this:
 //    - it should not be a tautomeric system
 //    - the N is not unsaturated, but it is aromatic
-bool isCandidateAtom(const Atom *aptr) {
-  return aptr->getTotalNumHs() || queryAtomUnsaturated(aptr);
+bool isCandidateAtom(const Atom *aptr,
+                     const std::vector<std::uint64_t> &atomFlags) {
+  return !atomFlags[aptr->getIdx()] &&
+         (aptr->getTotalNumHs() || queryAtomUnsaturated(aptr));
 }
 
 // atomic number > 1, not carbon
@@ -403,18 +441,26 @@ bool isUnsaturatedBond(const Bond *bptr) {
 }
 
 // potential tautomeric bonds are unsaturated and both atoms are candidates
-bool isPossibleTautomericBond(const Bond *bptr) {
-  return isUnsaturatedBond(bptr) && isCandidateAtom(bptr->getBeginAtom()) &&
-         isCandidateAtom(bptr->getEndAtom());
+bool isPossibleTautomericBond(const Bond *bptr,
+                              const std::vector<std::uint64_t> &atomFlags,
+                              const std::vector<std::uint64_t> &bondFlags) {
+  return !bondFlags[bptr->getIdx()] && isUnsaturatedBond(bptr) &&
+         isCandidateAtom(bptr->getBeginAtom(), atomFlags) &&
+         isCandidateAtom(bptr->getEndAtom(), atomFlags);
 }
 
 // a bond is a possible starting bond if it involves a candidate hetereoatom
 // (definition above) and an unsaturated atom
-bool isPossibleStartingBond(const Bond *bptr) {
+bool isPossibleStartingBond(const Bond *bptr,
+                            const std::vector<std::uint64_t> &atomFlags,
+                            const std::vector<std::uint64_t> &bondFlags) {
+  if (bondFlags[bptr->getIdx()]) {
+    return false;
+  }
   auto heteroBeg = isHeteroAtom(bptr->getBeginAtom()) &&
-                   isCandidateAtom(bptr->getBeginAtom());
-  auto heteroEnd =
-      isHeteroAtom(bptr->getEndAtom()) && isCandidateAtom(bptr->getEndAtom());
+                   isCandidateAtom(bptr->getBeginAtom(), atomFlags);
+  auto heteroEnd = isHeteroAtom(bptr->getEndAtom()) &&
+                   isCandidateAtom(bptr->getEndAtom(), atomFlags);
   // at least one atom has to be an eligible heteroatom:
   if (!heteroBeg && !heteroEnd) {
     return false;
@@ -425,7 +471,8 @@ bool isPossibleStartingBond(const Bond *bptr) {
   auto unsatBeg = queryAtomUnsaturated(bptr->getBeginAtom());
   auto unsatEnd = queryAtomUnsaturated(bptr->getEndAtom());
 
-  // both we need a heteroatom on one side and an unsaturated atom on the other:
+  // both we need a heteroatom on one side and an unsaturated atom on the
+  // other:
   if (!((heteroBeg && unsatEnd) || (heteroEnd && unsatBeg))) {
     return false;
   }
@@ -448,11 +495,14 @@ bool hasStartBond(const Atom *aptr, const boost::dynamic_bitset<> &startBonds) {
 // doesn't have a start bond
 bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
                       const Bond *nbrBond,
-                      const boost::dynamic_bitset<> &startBonds) {
-  return (
-      (!isCandidateAtom(otherAtom) && !hasStartBond(otherAtom, startBonds)) ||
-      (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
-       !hasStartBond(atom, startBonds)));
+                      const boost::dynamic_bitset<> &startBonds,
+                      const std::vector<std::uint64_t> &atomFlags,
+                      const std::vector<std::uint64_t> &bondFlags) {
+  return (bondFlags[nbrBond->getIdx()] ||
+          ((!isCandidateAtom(otherAtom, atomFlags) &&
+            !hasStartBond(otherAtom, startBonds)) ||
+           (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
+            !hasStartBond(atom, startBonds))));
 }
 }  // namespace
 
@@ -463,12 +513,18 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   unsigned int hcount = 0;
   int charge = 0;
 
+  // we aren't current doing anything with atomFlags, but we have added them in
+  // analogy to the bondFlags as a kind of future proofing.
+  std::vector<std::uint64_t> atomFlags(mol->getNumAtoms(), 0);
+  auto bondFlags = details::getBondFlags(*mol);
+
   boost::dynamic_bitset<> bondsToModify(mol->getNumBonds());
   boost::dynamic_bitset<> bondsConsidered(mol->getNumBonds());
 
   boost::dynamic_bitset<> startBonds(mol->getNumBonds());
   for (const auto bnd : mol->bonds()) {
-    startBonds.set(bnd->getIdx(), isPossibleStartingBond(bnd));
+    startBonds.set(bnd->getIdx(),
+                   isPossibleStartingBond(bnd, atomFlags, bondFlags));
   }
 #ifdef VERBOSE_HASH
   std::cerr << " START BONDS: " << startBonds << std::endl;
@@ -526,8 +582,10 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         }
 
         // if both bonds are not eligible, then we can skip this neighbor
-        if (skipNeighborBond(atm, oatom, nbrBond, startBonds) &&
-            skipNeighborBond(oatom, atm, nbrBond, startBonds)) {
+        if (skipNeighborBond(atm, oatom, nbrBond, startBonds, atomFlags,
+                             bondFlags) &&
+            skipNeighborBond(oatom, atm, nbrBond, startBonds, atomFlags,
+                             bondFlags)) {
           continue;
         }
 
@@ -591,8 +649,10 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                     << hasStartBond(atm, startBonds) << std::endl;
 #endif
           if (bondsConsidered[nbrBnd->getIdx()] ||
-              (skipNeighborBond(atm, oatom, nbrBnd, startBonds) &&
-               skipNeighborBond(oatom, atm, nbrBnd, startBonds))) {
+              (skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
+                                bondFlags) &&
+               skipNeighborBond(oatom, atm, nbrBnd, startBonds, atomFlags,
+                                bondFlags))) {
             // we won't add this bond for further traversal, but if both atoms
             // are already in this system, then we should add the bond to the
             // system

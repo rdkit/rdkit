@@ -539,7 +539,7 @@ void BasicPDBCleanup(RWMol &mol) {
     // correct four-valent neutral N -> N+
     // This was github #1029
     if (atom->getAtomicNum() == 7 && atom->getFormalCharge() == 0 &&
-        atom->getExplicitValence() == 4) {
+        atom->getValence(Atom::ValenceType::EXPLICIT) == 4) {
       atom->setFormalCharge(1);
     }
     ++atBegin;
@@ -656,7 +656,7 @@ std::unique_ptr<RWMol> parsePdbBlock(const char *str, bool sanitize,
 
   if (sanitize) {
     if (removeHs) {
-      MolOps::removeHs(*mol, false, false);
+      MolOps::removeHs(*mol);
     } else {
       MolOps::sanitizeMol(*mol);
     }

@@ -440,22 +440,6 @@ class RDKIT_RDGEOMETRYLIB_EXPORT PointND : public Point {
 
   Point *copy() const override { return new PointND(*this); }
 
-#if 0
-	template <typename T>
-    PointND(const T &vals){
-      RDNumeric::Vector<double> *nvec = new RDNumeric::Vector<double>(vals.size(), 0.0);
-      dp_storage.reset(nvec);
-      unsigned int idx=0;
-      typename T::const_iterator it;
-      for(it=vals.begin();
-          it!=vals.end();
-          ++it){
-        nvec->setVal(idx,*it);
-        ++idx;
-      };
-    };
-#endif
-
   ~PointND() override = default;
 
   inline double operator[](unsigned int i) const override {

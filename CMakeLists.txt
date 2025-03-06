@@ -305,8 +305,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   #-------
   # pull in python:
   find_package(Python3 COMPONENTS Interpreter Development.Module NumPy)
-  target_include_directories(rdkit_base INTERFACE ${Python3_INCLUDE_DIRS})
-  target_include_directories(rdkit_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
+  target_include_directories(rdkit_py_base INTERFACE ${Python3_INCLUDE_DIRS})
+  target_include_directories(rdkit_py_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
 
   # determine linkage of python
   execute_process(
@@ -380,7 +380,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif()
 
 
-  install(TARGETS rdkit_py_base EXPORT ${RDKit_EXPORTED_TARGETS}
+  install(TARGETS rdkit_py_base EXPORT ${RDKitPython_EXPORTED_TARGETS}
           COMPONENT dev )
 
   # check to see if we can find nbval,
@@ -604,6 +604,9 @@ if(RDK_BUILD_CONTRIB)
 endif(RDK_BUILD_CONTRIB)
 
 # export the project targets (to be included in the cmake package configuration)
+include(CMakePackageConfigHelpers)
+
+# first manage the targets for the base C++ toolkit
 install(
   EXPORT ${RDKit_EXPORTED_TARGETS}
   FILE ${RDKit_EXPORTED_TARGETS}.cmake
@@ -612,7 +615,6 @@ install(
 )
 
 # create and install package configuration and version files
-include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   "${RDKit_BINARY_DIR}/rdkit-config-version.cmake"
   VERSION ${RDKit_RELEASENAME}
@@ -627,6 +629,31 @@ install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config.cmake
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkit)
+
+# then manage the targets for the python bindings
+if(RDK_BUILD_PYTHON_WRAPPERS)
+  install(
+    EXPORT ${RDKitPython_EXPORTED_TARGETS}
+    FILE ${RDKitPython_EXPORTED_TARGETS}.cmake
+    NAMESPACE RDKit::
+    DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
+  )
+
+  write_basic_package_version_file(
+    "${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake"
+    VERSION ${RDKit_RELEASENAME}
+    COMPATIBILITY AnyNewerVersion
+  )
+
+  configure_file (
+    ${RDKit_SOURCE_DIR}/rdkitpython-config.cmake.in
+    ${RDKit_BINARY_DIR}/rdkitpython-config.cmake @ONLY)
+
+  install(FILES
+    ${RDKit_BINARY_DIR}/rdkitpython-config.cmake
+    ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
+    DESTINATION ${RDKit_LibDir}/cmake/rdkitpython)
+endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 # Memory testing setup
 FIND_PROGRAM(MEMORYCHECK_COMMAND valgrind)

@@ -784,7 +784,7 @@ void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
     }
   }
 
-  // Convert the equivalent atoms from wierd atomic numbers to the
+  // Convert the equivalent atoms from weird atomic numbers to the
   // original SMARTS pattern
   std::vector<std::string> classSmarts;
   boost::split(classSmarts, equivalentAtoms, boost::is_any_of(" "));
@@ -799,8 +799,20 @@ void cleanSmarts(std::string &smarts, const std::string &equivalentAtoms) {
     auto atNumStr = std::to_string(atNum);
     std::regex a1(R"(\[#)" + atNumStr + R"(&[Aa]\])");
     smarts = std::regex_replace(smarts, a1, smt);
+
+    // If it's a plain atomic number, it's safe to do a straight
+    // replacement with the smt.
     std::regex a2(R"(\[#)" + atNumStr + R"(\])");
     smarts = std::regex_replace(smarts, a2, smt);
+
+    // If the ringMatchesRingOnly option has been used, there may
+    // be [#110&A&R] or [#110&a&R] or [#110&R].  In these cases
+    // it needs to end ;R] but again without the &A or &a.  The
+    // SMARTS has to match to a single atom, so must end with
+    // a ]. e.g. [O,S] or [c,$(o1cccc1),$(n1cccc1)]
+    std::regex a3(R"(\[#)" + atNumStr + R"((?:&[Aa])*&R)");
+    std::string replaceWith(smt.substr(0, smt.length() - 1) + ";R");
+    smarts = std::regex_replace(smarts, a3, replaceWith);
     ++atNum;
   }
 }

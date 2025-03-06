@@ -77,6 +77,10 @@ getConnectorPermutations(const std::vector<std::unique_ptr<ROMol>> &molFrags,
 RDKIT_SYNTHONSPACESEARCH_EXPORT void expandBitSet(
     std::vector<boost::dynamic_bitset<>> &bitSets);
 
+RDKIT_SYNTHONSPACESEARCH_EXPORT void bitSetsToVectors(
+    const std::vector<boost::dynamic_bitset<>> &bitSets,
+    std::vector<std::vector<size_t>> &outVecs);
+
 // class to step through all combinations of lists of different sizes.
 // returns (0,0,0), (0,0,1), (0,1,0) etc.
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT Stepper {

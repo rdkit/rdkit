@@ -8,6 +8,8 @@
 //  of the RDKit source tree.
 //
 
+#include <algorithm>
+
 #include <DataStructs/BitOps.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -33,11 +35,15 @@ SynthonSpaceFingerprintSearcher::SynthonSpaceFingerprintSearcher(
 namespace {
 // Take the fragged mol fps and flag all those synthons that have a fragment as
 // a similarity match.
-std::vector<boost::dynamic_bitset<>> getHitSynthons(
+std::vector<std::vector<size_t>> getHitSynthons(
     const std::vector<std::unique_ptr<ExplicitBitVect>> &fragFPs,
     const double similarityCutoff, const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
+  std::vector<std::vector<size_t>> retSynthons;
+  std::vector<std::vector<std::pair<size_t, double>>> fragSims(
+      reaction->getSynthons().size());
+
   synthonsToUse.reserve(reaction->getSynthons().size());
   for (const auto &synthonSet : reaction->getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
@@ -49,21 +55,44 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
       if (const auto sim = TanimotoSimilarity(*fragFPs[i], *synthonFPs[j]);
           sim >= similarityCutoff) {
         synthonsToUse[synthonOrder[i]][j] = true;
+        fragSims[synthonOrder[i]].emplace_back(j, sim);
         fragMatched = true;
       }
     }
     if (!fragMatched) {
       // No synthons matched this fragment, so the whole fragment set is a
       // bust.
-      synthonsToUse.clear();
-      return synthonsToUse;
+      return retSynthons;
     }
   }
 
   // Fill in any synthons where they all didn't match because there were
   // fewer fragments than synthons.
   details::expandBitSet(synthonsToUse);
-  return synthonsToUse;
+  details::bitSetsToVectors(synthonsToUse, retSynthons);
+
+  // Now order the synthons in descending order of their similarity to
+  // the corresponding fragFP.
+  for (size_t i = 0; i < fragFPs.size(); i++) {
+    if (fragSims[i].empty()) {
+      // This one will have been filled in by expandBitSet so we need to use
+      // all the synthons and a dummy similarity.
+      fragSims[i].resize(synthonsToUse[i].size());
+      for (size_t j = 0; j < fragSims[i].size(); j++) {
+        fragSims[i][j] = std::make_pair(j, 0.0);
+      }
+    } else {
+      std::sort(
+          fragSims[i].begin(), fragSims[i].end(),
+          [](const auto &a, const auto &b) { return a.second > b.second; });
+    }
+    retSynthons[i].clear();
+    std::transform(
+        fragSims[i].begin(), fragSims[i].end(),
+        std::back_inserter(retSynthons[i]),
+        [](const std::pair<size_t, double> &fs) { return fs.first; });
+  }
+  return retSynthons;
 }
 }  // namespace
 
@@ -135,14 +164,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceFingerprintSearcher::searchFragSet(
             getParams().similarityCutoff - getParams().fragSimilarityAdjuster,
             reaction, synthonOrder);
         if (!theseSynthons.empty()) {
-          const size_t numHits = std::accumulate(
-              theseSynthons.begin(), theseSynthons.end(), 1,
-              [](const int prevRes, const boost::dynamic_bitset<> &s2) {
-                return prevRes * s2.count();
-              });
-          if (numHits) {
-            results.push_back(
-                SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
+          SynthonSpaceHitSet hs{reaction->getId(), theseSynthons};
+          if (hs.numHits) {
+            results.push_back(hs);
           }
         }
       }

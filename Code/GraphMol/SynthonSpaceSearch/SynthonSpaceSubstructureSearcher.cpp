@@ -149,13 +149,14 @@ std::vector<boost::dynamic_bitset<>> screenSynthonsWithFPs(
 // Take the fragged mol and flag all those synthons that have a fragment as
 // a substructure match.  Only do this for those synthons that have already
 // passed previous screening, and are flagged as such in passedScreens.
-std::vector<boost::dynamic_bitset<>> getHitSynthons(
+std::vector<std::vector<size_t>> getHitSynthons(
     const std::vector<std::unique_ptr<ROMol>> &molFrags,
     const std::vector<boost::dynamic_bitset<>> &passedScreens,
     const std::unique_ptr<SynthonSet> &reaction,
     const std::vector<unsigned int> &synthonOrder) {
   MatchVectType dontCare;
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
+  std::vector<std::vector<size_t>> retSynthons;
   for (const auto &synthonSet : reaction->getSynthons()) {
     synthonsToUse.emplace_back(synthonSet.size());
   }
@@ -182,13 +183,25 @@ std::vector<boost::dynamic_bitset<>> getHitSynthons(
     // if the fragment didn't match anything, the whole thing's a bust.
     if (!fragMatched) {
       synthonsToUse.clear();
-      return synthonsToUse;
+      return retSynthons;
     }
   }
 
   // Fill in any synthons where they all didn't match.
   details::expandBitSet(synthonsToUse);
-  return synthonsToUse;
+  details::bitSetsToVectors(synthonsToUse, retSynthons);
+
+  // Now sort the selected synthons into ascending order of number of atoms,
+  // since smaller molecules are likely to be of more interest.
+  for (size_t i = 0; i < retSynthons.size(); ++i) {
+    const auto &synthonsi = reaction->getSynthons()[i];
+    std::sort(retSynthons[i].begin(), retSynthons[i].end(),
+              [&](const size_t a, const size_t b) {
+                return (synthonsi[a]->getOrigMol()->getNumAtoms() <
+                        synthonsi[b]->getOrigMol()->getNumAtoms());
+              });
+  }
+  return retSynthons;
 }
 
 }  // namespace
@@ -256,14 +269,9 @@ std::vector<SynthonSpaceHitSet> SynthonSpaceSubstructureSearcher::searchFragSet(
         auto theseSynthons =
             getHitSynthons(connComb, passedScreens, reaction, so);
         if (!theseSynthons.empty()) {
-          const size_t numHits = std::accumulate(
-              theseSynthons.begin(), theseSynthons.end(), 1,
-              [](const int prevRes, const boost::dynamic_bitset<> &s2) {
-                return prevRes * s2.count();
-              });
-          if (numHits) {
-            results.push_back(
-                SynthonSpaceHitSet{reaction->getId(), theseSynthons, numHits});
+          SynthonSpaceHitSet hs{reaction->getId(), theseSynthons};
+          if (hs.numHits) {
+            results.push_back(hs);
           }
         }
       }
