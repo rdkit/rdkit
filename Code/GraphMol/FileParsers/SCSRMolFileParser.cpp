@@ -13,6 +13,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SCSRMol.h>
 
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
@@ -29,7 +30,7 @@ namespace FileParsers {
 //  Read a SCVSR molecule from a stream
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
+static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::string tempStr;
@@ -433,7 +434,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
 //  Read a molecule from a string
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
+static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
@@ -446,7 +447,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
 //  Read a molecule from a file
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
+static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
     const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
@@ -1444,10 +1445,32 @@ class MolFromSCSRMolConverter {
   }
 };
 
-std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
+static std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     const RDKit::SCSRMol *scsrMol, const MolFromSCSRParams &molFromSCSRParams) {
   MolFromSCSRMolConverter converter(scsrMol, molFromSCSRParams);
   return converter.convert();
+}
+
+std::unique_ptr<RDKit::RWMol> MolFromSCSRDataStream(
+    std::istream &inStream, unsigned int &line,
+    const MolFileParserParams &molFileParserParams,
+    const MolFromSCSRParams &molFromSCSRParams) {
+  auto scsr = SCSRMolFromSCSRDataStream(inStream, line, molFileParserParams);
+  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
+}
+
+std::unique_ptr<RDKit::RWMol> MolFromSCSRBlock(
+    const std::string &molBlock, const MolFileParserParams &molFileParserParams,
+    const MolFromSCSRParams &molFromSCSRParams) {
+  auto scsr = SCSRMolFromSCSRBlock(molBlock, molFileParserParams);
+  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
+}
+
+std::unique_ptr<RDKit::RWMol> MolFromSCSRFile(
+    const std::string &fName, const MolFileParserParams &molFileParserParams,
+    const MolFromSCSRParams &molFromSCSRParams) {
+  auto scsr = SCSRMolFromSCSRFile(fName, molFileParserParams);
+  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
 }
 
 }  // namespace FileParsers

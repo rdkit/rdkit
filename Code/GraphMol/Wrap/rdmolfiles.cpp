@@ -181,10 +181,8 @@ RDKit::ROMol *MolFromSCSRBlock(
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    auto scsrMol = SCSRMolFromSCSRDataStream(inStream, line, params);
-
-    auto mol = RDKit::v2::FileParsers::MolFromSCSRMol(scsrMol.get(),
-                                                      molFromSCSRParams);
+    auto mol = RDKit::v2::FileParsers::MolFromSCSRDataStream(
+        inStream, line, params, molFromSCSRParams);
 
     return static_cast<ROMol *>(mol.release());
 
@@ -203,9 +201,8 @@ RDKit::ROMol *MolFromSCSRFile(
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    auto scsrMol = SCSRMolFromSCSRFile(molFilename, params);
-    auto mol = RDKit::v2::FileParsers::MolFromSCSRMol(scsrMol.get(),
-                                                      molFromSCSRParams);
+    auto mol = RDKit::v2::FileParsers::MolFromSCSRFile(molFilename, params,
+                                                       molFromSCSRParams);
 
     return static_cast<ROMol *>(mol.release());
 
