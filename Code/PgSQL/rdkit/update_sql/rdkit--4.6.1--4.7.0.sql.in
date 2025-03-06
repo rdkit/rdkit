@@ -1,6 +1,6 @@
 DROP FUNCTION mol_from_ctab(cstring,bool);
 
-CREATE OR REPLACE FUNCTION mol_from_ctab(cstring,bool default false, bool default true, bool default true)
+CREATE OR REPLACE FUNCTION mol_from_ctab(ctab cstring,keep_conformer bool default false, sanitize bool default true, remove_hs bool default true)
 RETURNS mol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -8,7 +8,7 @@ LANGUAGE C STRICT IMMUTABLE;
 
 DROP FUNCTION qmol_from_ctab(cstring,bool);
 
-CREATE OR REPLACE FUNCTION qmol_from_ctab(cstring,bool default false, bool default false, bool default true)
+CREATE OR REPLACE FUNCTION qmol_from_ctab(ctab cstring,keep_conformer bool default false, sanitize bool default true, remove_hs bool default true)
 RETURNS qmol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
