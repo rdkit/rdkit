@@ -25,6 +25,17 @@ set(EXPAT_SRC
 )
 
 rdkit_library(expat ${EXPAT_SRC})
+target_include_directories(expat
+     PRIVATE
+       ${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/src_pp
+     PUBLIC
+       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/expat/lib>
+       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/src_pp>
+
+       $<INSTALL_INTERFACE:include/expat>
+       )
+       
+
 if(MSVC)
   message("== expat exporting all symbols ")
   target_compile_definitions(expat PRIVATE "XMLIMPORT=__declspec(dllexport)")

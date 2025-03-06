@@ -17,13 +17,6 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     # Fix bug in the expat 2.1.0 CMakeFile on windows
     add_subdirectory(expatpp)
     
-    target_include_directories(expat PRIVATE
-                        ${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/
-                        ${CMAKE_CURRENT_SOURCE_DIR}/expat/
-			${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
-                        ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp
-			)
-
     #
     # ChemDraw library for reading/writing documents
     rdkit_library(ChemDraw
@@ -89,13 +82,6 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 
     target_compile_definitions(ChemDraw PRIVATE RDKIT_CHEMDRAW_BUILD)
     
-    # make sure we can find the include directories
-    target_include_directories(ChemDraw PRIVATE
-                        ${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/
-                        ${CMAKE_CURRENT_SOURCE_DIR}/expat/
-			${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
-                        ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp
-			)
 
     # export all the symbols for ChemDraw on MSVC
     if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
@@ -150,12 +136,6 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD)
   endif()
 
-  target_include_directories(RDChemDrawLib PRIVATE
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expat/
-		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
-
-
   rdkit_headers(chemdraw.h DEST GraphMol)
   if(RDK_BUILD_PYTHON_WRAPPERS)
     #add_subdirectory(Wrap)
@@ -184,31 +164,5 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
   endif(MSVC)
 
-  # we need to find expat.h and expatpp.h and include them...
-  #  this should really be part of the expat library, but I haven't figured that out yet
-  target_include_directories(chemdrawCatchTest PRIVATE
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expat/
-		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
-
-  target_include_directories(chemdrawChiralCatchTest PRIVATE
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expat/
-		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
-
-  target_include_directories(chemdrawReactionsCatchTest PRIVATE
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expat/
-		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
-
-  target_include_directories(chemdraw3DCatchTest PRIVATE
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expat/
-		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
-
-  target_include_directories(chemdraw6KCatchTest PRIVATE
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expat/
-		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
-                     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
 endif(RDK_BUILD_CHEMDRAW_SUPPORT)
 
