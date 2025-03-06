@@ -340,7 +340,7 @@ PARALLEL SAFE
 AS 'MODULE_PATHNAME', 'mol_from_smarts'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION qmol_from_ctab(ctab cstring,keep_conformer bool default false, sanitize bool default true, remove_hs bool default true)
+CREATE OR REPLACE FUNCTION qmol_from_ctab(ctab cstring,keep_conformer bool default false, merge_hs bool default true)
 RETURNS qmol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
