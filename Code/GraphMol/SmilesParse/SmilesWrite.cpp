@@ -574,6 +574,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       }
     }
 
+    rootedAtAtom = fragsRootedAtAtom[fragIdx];
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively
