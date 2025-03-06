@@ -77,7 +77,7 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
     frag_id = missing_frag_id;
     missing_frag_id--;
   }
-  mol.setProp(CDXML_FRAG_ID, frag_id);
+  mol.setProp(CDX_FRAG_ID, frag_id);
 
   // for atom in frag
   std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> sgroups;

@@ -89,7 +89,7 @@ void visit_children(
                           missing_frag_id)) {
         continue;
       }
-      unsigned int frag_id = mol->getProp<int>(CDXML_FRAG_ID);
+      unsigned int frag_id = mol->getProp<int>(CDX_FRAG_ID);
       pagedata.fragment_lookup[frag_id] = pagedata.mols.size();
       if (group_id != -1) {
         pagedata.grouped_fragments[group_id].push_back(frag_id);
@@ -110,7 +110,7 @@ void visit_children(
           // mols.push_back(std::move(mol));
           continue;
         }
-        fused->setProp<int>(CDXML_FRAG_ID, static_cast<int>(frag_id));
+        fused->setProp<int>(CDX_FRAG_ID, static_cast<int>(frag_id));
         pagedata.mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
       } else {
         pagedata.mols.push_back(std::move(mol));
@@ -309,22 +309,22 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
   throw FileParseException(msg.c_str());
 }
 
-std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(
+std::vector<std::unique_ptr<RWMol>> ChemDrawToMols(
     std::istream &inStream, const ChemDrawParserParams &params) {
   auto chemdrawmols = molsFromCDXMLDataStream(inStream, params);
-  std::vector<std::unique_ptr<ROMol>> mols;
+  std::vector<std::unique_ptr<RWMol>> mols;
   mols.reserve(chemdrawmols.size());
   for (auto &mol : chemdrawmols) {
-    ROMol *m = (ROMol *)mol.release();
-    mols.push_back(std::unique_ptr<ROMol>(m));
+    RWMol *m = (RWMol *)mol.release();
+    mols.push_back(std::unique_ptr<RWMol>(m));
   }
   return mols;
 }
 
-std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(
+std::vector<std::unique_ptr<RWMol>> ChemDrawToMols(
     const std::string &filename, const ChemDrawParserParams &params) {
   CDXMLParser parser;
-  std::vector<std::unique_ptr<ROMol>> mols;
+  std::vector<std::unique_ptr<RWMol>> mols;
 
   std::fstream chemdrawfile(filename);  // FIX ME CHECK CDX versus CDXML
   if (!chemdrawfile) {
@@ -335,8 +335,8 @@ std::vector<std::unique_ptr<ROMol>> ChemDrawToMols(
 
   mols.reserve(chemdrawmols.size());
   for (auto &mol : chemdrawmols) {
-    ROMol *m = (ROMol *)mol.release();
-    mols.push_back(std::unique_ptr<ROMol>(m));
+    RWMol *m = (RWMol *)mol.release();
+    mols.push_back(std::unique_ptr<RWMol>(m));
   }
   return mols;
 }

@@ -32,6 +32,7 @@
 
 #include <RDGeneral/export.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/ChemReactions/Reaction.h>
 #include <string>
 
 #include "chemdraw/CDXStdObjects.h"
@@ -53,15 +54,33 @@ ChemDrawToDocument(std::istream &inStream, CDXFormat format);
 std::unique_ptr<CDXDocument> RDKIT_CHEMDRAW_EXPORT
 ChemDrawToDocument(const std::string &filename);
 
-std::vector<std::unique_ptr<ROMol>> RDKIT_CHEMDRAW_EXPORT
+std::vector<std::unique_ptr<RWMol>> RDKIT_CHEMDRAW_EXPORT
 ChemDrawToMols(std::istream &inStream,
                const ChemDrawParserParams &params = ChemDrawParserParams());
 
-std::vector<std::unique_ptr<ROMol>> RDKIT_CHEMDRAW_EXPORT
+std::vector<std::unique_ptr<RWMol>> RDKIT_CHEMDRAW_EXPORT
 ChemDrawToMols(const std::string &filename,
                const ChemDrawParserParams &params = ChemDrawParserParams());
 
 std::string RDKIT_CHEMDRAW_EXPORT
 MolToChemDraw(const ROMol &mol, CDXFormat format = CDXFormat::CDXML);
+
+//---------------------------------------------------------------------------
+//! \name Chemdraw rxn Support
+///@{
+
+//! Parse text in ChemDraw rxn format into a vector of ChemicalReactions
+RDKIT_CHEMDRAW_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+ChemDrawToChemicalReactions(const std::string &rxnBlock, bool sanitize = false,
+			    bool removeHs = false);
+//! Parse a file in ChemDraw rxn format into a vector of ChemicalReactions
+RDKIT_CHEMDRAW_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+ChemDrawFileToChemicalReactions(const std::string &fileName, bool sanitize = false,
+				bool removeHs = false);
+//! Parse a text stream in ChemDraw rxn format into a vector of ChemicalReactions
+RDKIT_CHEMDRAW_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+ChemDrawDataStreamToChemicalReactions(std::istream &rxnStream,
+				      bool sanitize = false,
+				      bool removeHs = false);
 
 }  // namespace RDKit

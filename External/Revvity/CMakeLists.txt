@@ -1,6 +1,14 @@
 add_custom_target(chemdraw_support ALL)
 include(CMakePrintHelpers)
 
+# The ChemDraw Library requires expat and expatpp to run.
+#  this has an include expat.h and expatpp.h that needs to be included
+#  Currently this is an OLD version of expatpp from source forge is used
+#  and included in this directory.
+# 
+#  For builds, we currently need a target_include_directories
+#  and will need to be fixed in the future
+
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/CDXIO.h)
     # Build expat
@@ -16,7 +24,8 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
                         ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp
 			)
 
-
+    #
+    # ChemDraw library for reading/writing documents
     rdkit_library(ChemDraw
         chemdraw/Base64Converter.cpp
         chemdraw/CDXAnnotation.cpp
@@ -79,6 +88,8 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 	)
 
     target_compile_definitions(ChemDraw PRIVATE RDKIT_CHEMDRAW_BUILD)
+    
+    # make sure we can find the include directories
     target_include_directories(ChemDraw PRIVATE
                         ${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/
                         ${CMAKE_CURRENT_SOURCE_DIR}/expat/
@@ -86,6 +97,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
                         ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp
 			)
 
+    # export all the symbols for ChemDraw on MSVC
     if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
         message("== ChemDraw exporting all symbols")
         set_target_properties(ChemDraw PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
@@ -98,6 +110,8 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     endif()
       
     install(TARGETS ChemDraw DESTINATION ${RDKit_LibDir})
+
+    # get the big endiand flags
     test_big_endian(WORDS_BIGENDIAN)
     #/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
     if(WORDS_BIGENDIAN)
@@ -116,6 +130,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat-overflow=0 -Wformat=0 -Wno-format-security")
   endif()
 
+  # finally the RDKit library!
   rdkit_library(RDChemDrawLib
       bond.cpp
       bracket.cpp
@@ -127,7 +142,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       writer.cpp
       # ${EXPAT_SRC}
       SHARED LINK_LIBRARIES ChemDraw expat
-          CIPLabeler ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
+          CIPLabeler ChemTransforms ChemReactions GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
 
   if(MSVC)
       target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD XML_USE_MSC_EXTENSIONS)
@@ -148,29 +163,40 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 
   add_definitions(-DRDK_BUILD_CHEMDRAW_SUPPORT)
 
+  # all the tests
   rdkit_catch_test(chemdrawCatchTest test.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdrawChiralCatchTest test-chiral.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+
+  rdkit_catch_test(chemdrawReactionsCatchTest test-reactions.cpp
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdraw3DCatchTest test_3d.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdraw6KCatchTest test_6k.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
-if(MSVC)
-  # The nanotubes blow up the smiles writer stack so increase it
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
-endif(MSVC)
+  if(MSVC)
+    # The nanotubes blow up the smiles writer stack on MSVC so increase it
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
+  endif(MSVC)
 
+  # we need to find expat.h and expatpp.h and include them...
+  #  this should really be part of the expat library, but I haven't figured that out yet
   target_include_directories(chemdrawCatchTest PRIVATE
                      ${CMAKE_CURRENT_SOURCE_DIR}/expat/
 		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
                      ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
 
   target_include_directories(chemdrawChiralCatchTest PRIVATE
+                     ${CMAKE_CURRENT_SOURCE_DIR}/expat/
+		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
+                     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
+
+  target_include_directories(chemdrawReactionsCatchTest PRIVATE
                      ${CMAKE_CURRENT_SOURCE_DIR}/expat/
 		     ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/expat/lib
                      ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
@@ -186,18 +212,3 @@ endif(MSVC)
                      ${CMAKE_CURRENT_SOURCE_DIR}/expatpp/expatpp-code-r6-trunk/src_pp/)
 endif(RDK_BUILD_CHEMDRAW_SUPPORT)
 
-if(RDK_BUILD_PYTHON_WRAPPERS)
-  # we need an inchi.py... copy in the appropriate one
-#  if(RDK_BUILD_CHEMDRAW_SUPPORT)
-#   add_custom_command(TARGET inchi_support
-#                  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/inchi.py
-#                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
-#  else(RDK_BUILD_CHEMDRAW_SUPPORT)
-#    add_custom_command(TARGET inchi_support
-#                  COMMAND ${C*MAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/python/noinchi.py
-#                     ${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py)
-#  endif(RDK_BUILD_CHEMDRAW_SUPPORT)
-#  get_directory_property(extra_clean_files ADDITIONAL_MAKE_CLEAN_FILES)
-#  set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES
-#          "${extra_clean_files};${CMAKE_SOURCE_DIR}/rdkit/Chem/inchi.py")
-endif(RDK_BUILD_PYTHON_WRAPPERS)

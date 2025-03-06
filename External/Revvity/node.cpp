@@ -304,7 +304,7 @@ bool parse_node(
         // might need to reset to OUR frag_id since parse_fragment will
         // set
         //  it to the fragments
-        mol.setProp(CDXML_FRAG_ID, fragment_id);
+        mol.setProp(CDX_FRAG_ID, fragment_id);
       }
     }
   }

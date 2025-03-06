@@ -40,6 +40,8 @@
 namespace RDKit {
 
 struct ReactionStepInfo {
+  // Holds the current reaction step information so that we can convert
+  // chemdraw molecules into rdkit reactions
   unsigned int scheme_id;
   unsigned int step_id;
   std::vector<int> ReactionStepProducts;
@@ -62,6 +64,9 @@ struct ReactionStepInfo {
 };
 
 class ReactionInfo {
+  // Holds the information form the CDX data so that we can convert
+  //  the molecules in the file to RDKit Reactions
+
   std::vector<ReactionStepInfo> steps;
   unsigned int scheme_id;
 

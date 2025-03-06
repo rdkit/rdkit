@@ -41,8 +41,8 @@
 namespace RDKit {
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 const std::string NEEDS_FUSE("CDX_NEEDS_FUSE");
-const std::string CDXML_FRAG_ID("CDX_FRAG_ID");
-const std::string CDXML_GROUP_ID("CDX_GROUP_ID");
+const std::string CDX_FRAG_ID("CDX_FRAG_ID");
+const std::string CDX_GROUP_ID("CDX_GROUP_ID");
 const std::string FUSE_LABEL("CDX_NODE_ID");
 const std::string CDX_SCHEME_ID("CDX_SCHEME_ID");
 const std::string CDX_STEP_ID("CDX_STEP_ID");
@@ -54,6 +54,7 @@ const std::string CDX_ATOM_ID("CDX_ATOM_ID");
 const std::string CDX_BOND_ID("CDX_BOND_ID");
 const std::string CDX_BOND_ORDERING("CDX_BOND_ORDERING");
 const std::string CDX_CIP("CDX_CIP");
+const std::string CDX_IMPLICIT_HYDROGEN_STEREO("CDX_ATOM_STEREO");
 
 // Convert a ChemDrawNode to a string
 std::string NodeType(CDXNodeType nodetype);
