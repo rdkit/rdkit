@@ -503,40 +503,25 @@ class MolFromSCSRMolConverter {
     }
   };
 
-  class HydrogenBondConnection {
-   private:
-    ROMol *_templateMol;
-    unsigned int _templateAtomIdx;
-    bool _isDonor;
+  struct HydrogenBondConnection {
+    unsigned int d_templateAtomIdx;
+    bool df_isDonor;
 
-   public:
-    HydrogenBondConnection(ROMol *templateMol, unsigned int templateAtomIdx,
-                           bool isDonor)
-        : _templateMol(templateMol),
-          _templateAtomIdx(templateAtomIdx),
-          _isDonor(isDonor) {}
-
-    ROMol *getTemplateMol() const { return _templateMol; }
-    unsigned int getTemplateAtomIdx() const { return _templateAtomIdx; }
-    bool isDonor() const { return _isDonor; }
+    HydrogenBondConnection(unsigned int templateAtomIdx, bool isDonor)
+        : d_templateAtomIdx(templateAtomIdx), df_isDonor(isDonor) {}
   };
 
-  class HbondQueryData {
-   private:
-    std::string _smarts;
-    std::string _name;
-    std::vector<HydrogenBondConnection> _hBondConnections;
-
-   public:
-    HbondQueryData(std::string smarts, std::string name,
+  struct HbondQueryData {
+    std::string d_smarts;
+    std::string d_name;
+    std::vector<HydrogenBondConnection> d_hBondConnections;
+    std::shared_ptr<ROMol> dp_mol;
+    HbondQueryData(const std::string &smarts, const std::string &name,
                    std::vector<HydrogenBondConnection> hBondConnections)
-        : _smarts(smarts), _name(name), _hBondConnections(hBondConnections) {}
-
-    std::string getSmarts() const { return _smarts; }
-    std::vector<HydrogenBondConnection> getHBondConnections() const {
-      return _hBondConnections;
-    }
-    std::string getName() const { return _name; }
+        : d_smarts(smarts),
+          d_name(name),
+          d_hBondConnections(hBondConnections),
+          dp_mol{SmartsToMol(smarts)} {}
   };
 
   const RDKit::SCSRMol *scsrMol;
@@ -615,8 +600,7 @@ class MolFromSCSRMolConverter {
           auto templateAtom = templateMol->getAtomWithIdx(templateAtomIdx);
           templateAtom->updatePropertyCache();
           auto isDonor = templateAtom->getTotalNumHs() > 0;
-          hydrogenBondConnections.emplace_back(templateMol, templateAtomIdx,
-                                               isDonor);
+          hydrogenBondConnections.emplace_back(templateAtomIdx, isDonor);
           if (molFromSCSRParams.scsrBaseHbondOptions ==
               SCSRBaseHbondOptions::UseSapOne) {
             return;
@@ -691,9 +675,9 @@ class MolFromSCSRMolConverter {
     for (unsigned int i = 0; i < beginAtoms.size(); i++) {
       addBond(bondType,
               originAtomMap[OriginAtomDef(mainBeginAtomIdx,
-                                          beginAtoms[i].getTemplateAtomIdx())],
+                                          beginAtoms[i].d_templateAtomIdx)],
               originAtomMap[OriginAtomDef(mainEndAtomIdx,
-                                          endAtoms[i].getTemplateAtomIdx())]);
+                                          endAtoms[i].d_templateAtomIdx)]);
     }
   }
 
@@ -825,8 +809,8 @@ class MolFromSCSRMolConverter {
       bool complimentary = true;
       for (auto index = 0; index < 3; ++index) {
         // .second is the bool for donors
-        if (beginHatomConnections[index].isDonor() ==
-            endHatomConnections[index].isDonor()) {
+        if (beginHatomConnections[index].df_isDonor ==
+            endHatomConnections[index].df_isDonor) {
           complimentary = false;  // both are donors or both are
                                   // acceptors
           break;
@@ -844,13 +828,13 @@ class MolFromSCSRMolConverter {
       // configuration DDA  (like G)
 
       bool foundDDA = false;
-      if (beginHatomConnections[0].isDonor() &&
-          beginHatomConnections[1].isDonor() &&
-          !beginHatomConnections[2].isDonor()) {
+      if (beginHatomConnections[0].df_isDonor &&
+          beginHatomConnections[1].df_isDonor &&
+          !beginHatomConnections[2].df_isDonor) {
         foundDDA = true;
-      } else if (endHatomConnections[0].isDonor() &&
-                 endHatomConnections[1].isDonor() &&
-                 !endHatomConnections[2].isDonor()) {
+      } else if (endHatomConnections[0].df_isDonor &&
+                 endHatomConnections[1].df_isDonor &&
+                 !endHatomConnections[2].df_isDonor) {
         foundDDA = true;
         std::swap(beginHatomConnections, endHatomConnections);
         std::swap(mainBeginAtomIdx, mainEndAtomIdx);
@@ -865,9 +849,9 @@ class MolFromSCSRMolConverter {
 
         // see if the other side has the
         // configuration  ADA (like U)
-        if (!endHatomConnections[0].isDonor() &&
-            endHatomConnections[1].isDonor() &&
-            !endHatomConnections[2].isDonor()) {
+        if (!endHatomConnections[0].df_isDonor &&
+            endHatomConnections[1].df_isDonor &&
+            !endHatomConnections[2].df_isDonor) {
           // ADA use the first two atoms
           wobbleEndAtoms.push_back(endHatomConnections[0]);
           wobbleEndAtoms.push_back(endHatomConnections[1]);
@@ -885,10 +869,10 @@ class MolFromSCSRMolConverter {
       }
 
       std::vector<HydrogenBondConnection> wobbleEndAtoms;
-      if (beginHatomConnections[0].isDonor() &&
-          !beginHatomConnections[1].isDonor()) {  // like I (DA)
-        if (!endHatomConnections[1].isDonor() &&
-            endHatomConnections[2].isDonor()) {  // 2nd and 3rd are AD
+      if (beginHatomConnections[0].df_isDonor &&
+          !beginHatomConnections[1].df_isDonor) {  // like I (DA)
+        if (!endHatomConnections[1].df_isDonor &&
+            endHatomConnections[2].df_isDonor) {  // 2nd and 3rd are AD
           // like A (DAD) or C (AAD)
           wobbleEndAtoms.push_back(endHatomConnections[1]);
           wobbleEndAtoms.push_back(endHatomConnections[2]);
@@ -896,8 +880,8 @@ class MolFromSCSRMolConverter {
                    beginHatomConnections, wobbleEndAtoms);
           return;
 
-        } else if (!endHatomConnections[0].isDonor() &&
-                   endHatomConnections[1].isDonor()) {
+        } else if (!endHatomConnections[0].df_isDonor &&
+                   endHatomConnections[1].df_isDonor) {
           // like U (ADA)
           wobbleEndAtoms.push_back(endHatomConnections[0]);
           wobbleEndAtoms.push_back(endHatomConnections[1]);
@@ -911,12 +895,11 @@ class MolFromSCSRMolConverter {
     // if here, we have no wobble bond, so just add
     // the bond between the first atoms on both sides
 
-    addBond(
-        bond->getBondType(),
-        originAtomMap[OriginAtomDef(
-            mainBeginAtomIdx, beginHatomConnections[0].getTemplateAtomIdx())],
-        originAtomMap[OriginAtomDef(
-            mainEndAtomIdx, endHatomConnections[0].getTemplateAtomIdx())]);
+    addBond(bond->getBondType(),
+            originAtomMap[OriginAtomDef(
+                mainBeginAtomIdx, beginHatomConnections[0].d_templateAtomIdx)],
+            originAtomMap[OriginAtomDef(
+                mainEndAtomIdx, endHatomConnections[0].d_templateAtomIdx)]);
     return;
   }
 
@@ -998,6 +981,27 @@ class MolFromSCSRMolConverter {
     // here
 
     if (molFromSCSRParams.scsrBaseHbondOptions == SCSRBaseHbondOptions::Auto) {
+      static const std::vector<HbondQueryData> hbondQueries = {
+          {"[NH]1C=NC2=C1N=C([NH2])[NH]C2=O",
+           "Guanine",
+           {HydrogenBondConnection(7, true), HydrogenBondConnection(8, true),
+            HydrogenBondConnection(10, false)}},
+          {"[NH]1C=NC2=C1N=[CH]N=C2[NH2]",
+           "Adenine",
+           {HydrogenBondConnection(6, true), HydrogenBondConnection(7, false),
+            HydrogenBondConnection(9, true)}},
+          {"[NH]1C=CC([NH2])=NC1=O",
+           "Cytosine",
+           {HydrogenBondConnection(7, false), HydrogenBondConnection(5, false),
+            HydrogenBondConnection(4, true)}},
+          {"[NH]1C=CC(=O)[NH]C1=O",
+           "Thyamine-Uracil",
+           {HydrogenBondConnection(7, false), HydrogenBondConnection(5, true),
+            HydrogenBondConnection(4, false)}},
+          {"[NH]1C=NC2=C1N=C[NH]C2=O",
+           "Inosine",
+           {HydrogenBondConnection(7, true),
+            HydrogenBondConnection(9, false)}}};
       for (unsigned int templateIdx = 0;
            templateIdx < scsrMol->getTemplateCount(); ++templateIdx) {
         auto templateMol = scsrMol->getTemplate(templateIdx);
@@ -1008,48 +1012,20 @@ class MolFromSCSRMolConverter {
           continue;
         }
 
-        std::vector<HbondQueryData> hbondQueries = {
-            {"[NH]1C=NC2=C1N=C([NH2])[NH]C2=O",
-             "Guanine",
-             {HydrogenBondConnection(templateMol, 7, true),
-              HydrogenBondConnection(templateMol, 8, true),
-              HydrogenBondConnection(templateMol, 10, false)}},
-            {"[NH]1C=NC2=C1N=[CH]N=C2[NH2]",
-             "Adenine",
-             {HydrogenBondConnection(templateMol, 6, true),
-              HydrogenBondConnection(templateMol, 7, false),
-              HydrogenBondConnection(templateMol, 9, true)}},
-            {"[NH]1C=CC([NH2])=NC1=O",
-             "Cytosine",
-             {HydrogenBondConnection(templateMol, 7, false),
-              HydrogenBondConnection(templateMol, 5, false),
-              HydrogenBondConnection(templateMol, 4, true)}},
-            {"[NH]1C=CC(=O)[NH]C1=O",
-             "Thyamine-Uracil",
-             {HydrogenBondConnection(templateMol, 7, false),
-              HydrogenBondConnection(templateMol, 5, true),
-              HydrogenBondConnection(templateMol, 4, false)}},
-            {"[NH]1C=NC2=C1N=C[NH]C2=O",
-             "Inosine",
-             {HydrogenBondConnection(templateMol, 7, true),
-              HydrogenBondConnection(templateMol, 9, false)}}};
-
         hBondSitesForTemplate[templateIdx] =
             std::vector<HydrogenBondConnection>();
-        for (auto querySmi : hbondQueries) {
-          auto query = RDKit::SmartsToMol(querySmi.getSmarts(), 0, false);
+        for (const auto &querySmi : hbondQueries) {
           RDKit::SubstructMatchParameters params;
-          // query->updatePropertyCache();
-          auto match = SubstructMatch(*templateMol, *query, params);
+          auto match = SubstructMatch(*templateMol, *querySmi.dp_mol, params);
 
-          if (match.size() == 0) {
+          if (match.empty()) {
             continue;
           }
 
-          for (auto hbondData : querySmi.getHBondConnections()) {
+          for (const auto &hbondData : querySmi.d_hBondConnections) {
             hBondSitesForTemplate[templateIdx].emplace_back(
-                templateMol, match[0][hbondData.getTemplateAtomIdx()].second,
-                hbondData.isDonor());
+                match[0][hbondData.d_templateAtomIdx].second,
+                hbondData.df_isDonor);
           }
 
           break;  // only take the first match
