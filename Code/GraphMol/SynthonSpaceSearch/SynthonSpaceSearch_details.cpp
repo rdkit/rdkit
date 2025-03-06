@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <list>
+#include <memory>
 #include <regex>
 #include <vector>
 
@@ -19,10 +20,14 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/ChemTransforms/MolFragmenter.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
+#include <boost/fusion/container/vector/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 
 namespace RDKit::SynthonSpaceSearch::details {
 
@@ -90,6 +95,41 @@ bool checkConnectorsInDifferentFrags(
   return true;
 }
 
+bool checkConnectorsInDifferentFrags(const ROMol &mol,
+                                     const VECT_INT_VECT &fragIdxs,
+                                     const int numSplits) {
+  int dummyAtoms[2 * MAX_CONNECTOR_NUM + 2] = {};
+  for (const auto &atom : mol.atoms()) {
+    if (!atom->getAtomicNum()) {
+      if (const auto dummy = atom->getIsotope(); dummy <= MAX_CONNECTOR_NUM) {
+        if (const int pos = 2 * dummy; dummyAtoms[pos]) {
+          dummyAtoms[pos + 1] = atom->getIdx() + 1;
+        } else {
+          dummyAtoms[pos] = atom->getIdx() + 1;
+        }
+      }
+    }
+  }
+  for (const auto &fragIdx : fragIdxs) {
+    for (int j = 0; j < numSplits; ++j) {
+      if (dummyAtoms[2 * j]) {
+        const int d1 = dummyAtoms[2 * j] - 1;
+        const int d2 = dummyAtoms[2 * j + 1] - 1;
+        int dummyCount = 0;
+        for (const auto fi : fragIdx) {
+          if (fi == d1 || fi == d2) {
+            if (dummyCount) {
+              return false;
+            }
+            ++dummyCount;
+          }
+        }
+      }
+    }
+  }
+  return true;
+}
+
 // Traverse the bonds from aromBond and return all the ones that are aromatic.
 std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
                                                      const Bond *aromBond) {
@@ -122,23 +162,259 @@ std::vector<const Bond *> getContiguousAromaticBonds(const ROMol &mol,
   return aromBonds;
 }
 
-std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
-    const ROMol &query, unsigned int maxBondSplits, std::uint64_t maxNumFrags,
-    TimePoint *endTime, bool &timedOut) {
-  if (maxBondSplits < 1) {
-    maxBondSplits = 1;
-  }
-  maxBondSplits =
-      std::min({maxBondSplits, MAX_CONNECTOR_NUM, query.getNumBonds()});
-  const auto ringInfo = query.getRingInfo();
+namespace {
+boost::dynamic_bitset<> flagRingBonds(const ROMol &mol) {
+  const auto ringInfo = mol.getRingInfo();
   if (!ringInfo->isInitialized()) {
     // Query molecules don't seem to have the ring info generated on creation.
-    MolOps::findSSSR(query);
+    MolOps::findSSSR(mol);
   }
-  boost::dynamic_bitset<> ringBonds(query.getNumBonds());
+  boost::dynamic_bitset<> ringBonds(mol.getNumBonds());
   for (const auto &r : ringInfo->bondRings()) {
     for (const auto b : r) {
       ringBonds.set(b);
+    }
+  }
+  return ringBonds;
+}
+
+void addBondsToList(const ROMol &mol, const Atom *atom,
+                    boost::dynamic_bitset<> &ringBonds,
+                    boost::dynamic_bitset<> &doneAtoms,
+                    std::list<const Atom *> &atoms,
+                    std::vector<const Bond *> &ringBlock) {
+  for (const auto nbond : mol.atomBonds(atom)) {
+    if (ringBonds[nbond->getIdx()]) {
+      ringBonds.set(nbond->getIdx(), false);
+      ringBlock.push_back(nbond);
+      if (const Atom *otherAtom = nbond->getOtherAtom(atom);
+          !doneAtoms[otherAtom->getIdx()]) {
+        atoms.push_back(otherAtom);
+        doneAtoms.set(otherAtom->getIdx(), true);
+      }
+    }
+  }
+}
+
+// Get all the contiguous ring blocks, e.g. in c1ccccc1Oc1cccc2[nH]ccc12
+// get the benzene and indole as separate pieces.  Pass ringBonds by
+// value as it gets changed and we'll be needing it again later.
+std::vector<std::vector<const Bond *>> getRingBlocks(
+    const ROMol &mol, boost::dynamic_bitset<> ringBonds) {
+  std::vector<std::vector<const Bond *>> ringBlocks;
+  while (ringBonds.count()) {
+    for (const auto bond : mol.bonds()) {
+      if (ringBonds[bond->getIdx()]) {
+        ringBlocks.emplace_back(std::vector<const Bond *>{bond});
+        ringBonds.set(bond->getIdx(), false);
+        boost::dynamic_bitset<> doneAtoms(mol.getNumAtoms());
+        std::list<const Atom *> toDo;
+        addBondsToList(mol, bond->getBeginAtom(), ringBonds, doneAtoms, toDo,
+                       ringBlocks.back());
+        addBondsToList(mol, bond->getEndAtom(), ringBonds, doneAtoms, toDo,
+                       ringBlocks.back());
+        while (!toDo.empty()) {
+          const auto nextAtom = toDo.front();
+          toDo.pop_front();
+          addBondsToList(mol, nextAtom, ringBonds, doneAtoms, toDo,
+                         ringBlocks.back());
+        }
+        std::sort(ringBlocks.back().begin(), ringBlocks.back().end(),
+                  [](const Bond *b1, const Bond *b2) -> bool {
+                    return b1->getIdx() < b2->getIdx();
+                  });
+      }
+    }
+  }
+  return ringBlocks;
+}
+
+bool bondPairFragmentsBlock(
+    const size_t bondi, const size_t bondj, const unsigned int numAtoms,
+    const std::vector<const Bond *> &ringBlock,
+    std::vector<boost::dynamic_bitset<>> &ringAdjTable) {
+  const Bond *bi = ringBlock[bondi];
+  const Bond *bj = ringBlock[bondj];
+
+  // Temporarily break the 2 bonds
+  ringAdjTable[bi->getBeginAtomIdx()][bi->getEndAtomIdx()] = false;
+  ringAdjTable[bi->getEndAtomIdx()][bi->getBeginAtomIdx()] = false;
+  ringAdjTable[bj->getBeginAtomIdx()][bj->getEndAtomIdx()] = false;
+  ringAdjTable[bj->getEndAtomIdx()][bj->getBeginAtomIdx()] = false;
+
+  std::list<size_t> atoms(1, ringBlock[bondi]->getBeginAtomIdx());
+  std::list<size_t> toDo(1, ringBlock[bondi]->getBeginAtomIdx());
+  boost::dynamic_bitset<> doneAtom(ringAdjTable.size());
+  doneAtom[ringBlock[bondi]->getBeginAtomIdx()] = true;
+  while (!toDo.empty()) {
+    const auto nextAtom = toDo.front();
+    toDo.pop_front();
+    const auto &theseConns = ringAdjTable[nextAtom];
+    for (size_t i = 0; i < ringAdjTable.size(); i++) {
+      if (theseConns[i] && !doneAtom[i]) {
+        doneAtom[i] = true;
+        toDo.push_back(i);
+        atoms.push_back(i);
+      }
+    }
+  }
+
+  ringAdjTable[bi->getBeginAtomIdx()][bi->getEndAtomIdx()] = true;
+  ringAdjTable[bi->getEndAtomIdx()][bi->getBeginAtomIdx()] = true;
+  ringAdjTable[bj->getBeginAtomIdx()][bj->getEndAtomIdx()] = true;
+  ringAdjTable[bj->getEndAtomIdx()][bj->getBeginAtomIdx()] = true;
+
+  return atoms.size() < numAtoms;
+}
+
+void makeRingAtomAdjTable(const ROMol &mol,
+                          const boost::dynamic_bitset<> &ringBonds,
+                          std::vector<boost::dynamic_bitset<>> &ringAdjTable) {
+  ringAdjTable = std::vector<boost::dynamic_bitset<>>(
+      mol.getNumAtoms(), boost::dynamic_bitset<>(mol.getNumAtoms()));
+  for (const auto bond : mol.bonds()) {
+    if (ringBonds[bond->getIdx()]) {
+      ringAdjTable[bond->getBeginAtomIdx()][bond->getEndAtomIdx()] = true;
+      ringAdjTable[bond->getEndAtomIdx()][bond->getBeginAtomIdx()] = true;
+    }
+  }
+}
+
+// Take out any pairs of ring bonds that don't fragment the molecule.  These
+// will be in fused ring systems where one of the bonds is in 1 sub-ring,
+// one is in the other.
+void findBondPairsThatFragment(
+    const ROMol &mol, const boost::dynamic_bitset<> &ringBonds,
+    const std::vector<std::vector<const Bond *>> &ringBlocks,
+    std::vector<std::pair<unsigned int, unsigned int>> &ringBondPairs) {
+  std::vector<boost::dynamic_bitset<>> ringAdjTable;
+  makeRingAtomAdjTable(mol, ringBonds, ringAdjTable);
+  // If all the atoms in the bond are 2 connected, it's a simple ring so
+  // nothing to do.
+  for (const auto &ringBlock : ringBlocks) {
+    bool ok = true;
+    boost::dynamic_bitset<> blockAtoms(mol.getNumAtoms());
+    for (const auto bond : ringBlock) {
+      blockAtoms[bond->getBeginAtomIdx()] = true;
+      blockAtoms[bond->getEndAtomIdx()] = true;
+      if (ringAdjTable[bond->getBeginAtomIdx()].count() > 2 ||
+          ringAdjTable[bond->getEndAtomIdx()].count() > 2) {
+        ok = false;
+      }
+    }
+    if (ok) {
+      for (size_t i = 0; i < ringBlock.size() - 1; ++i) {
+        for (size_t j = i + 1; j < ringBlock.size(); ++j) {
+          ringBondPairs.emplace_back(
+              std::make_pair(ringBlock[i]->getIdx(), ringBlock[j]->getIdx()));
+        }
+      }
+    } else {
+      // Need to check if each pair makes 2 fragments before adding.
+      const unsigned int numAtoms = blockAtoms.count();
+      for (size_t i = 0; i < ringBlock.size() - 1; ++i) {
+        for (size_t j = i + 1; j < ringBlock.size(); ++j) {
+          if (bondPairFragmentsBlock(i, j, numAtoms, ringBlock, ringAdjTable)) {
+            ringBondPairs.emplace_back(
+                std::make_pair(ringBlock[i]->getIdx(), ringBlock[j]->getIdx()));
+          }
+        }
+      }
+    }
+  }
+}
+
+void makeFragments(
+    const ROMol &mol, const std::vector<unsigned int> &splitBonds,
+    const std::vector<std::pair<unsigned int, unsigned int>> &dummyLabels,
+    const unsigned int maxBondSplits, const boost::dynamic_bitset<> &ringBonds,
+    std::set<std::string> &fragSmis,
+    std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
+  // first, see how many fragments we're going to get. The ring bonds
+  // are paired so they will split the same ring.
+  int numRingBonds = 0;
+  int numNonRingBonds = 0;
+  for (const auto i : splitBonds) {
+    if (ringBonds[i]) {
+      numRingBonds++;
+    } else {
+      numNonRingBonds++;
+    }
+  }
+  if (const unsigned int numFragsPoss = 1 + numNonRingBonds + numRingBonds / 2;
+      numFragsPoss > maxBondSplits) {
+    return;
+  }
+  const std::unique_ptr<ROMol> fragMol(
+      MolFragmenter::fragmentOnBonds(mol, splitBonds, true, &dummyLabels));
+  if (const std::string fragSmi(MolToSmiles(*fragMol));
+      fragSmis.insert(fragSmi).second) {
+    if (std::vector<std::unique_ptr<ROMol>> molFrags;
+        MolOps::getMolFrags(*fragMol, molFrags, false) <= maxBondSplits) {
+      fragments.emplace_back(std::move(molFrags));
+    }
+  }
+}
+
+// Build all combinations of maxBondSplits sets of bondPairs into splitBonds,
+// removing any duplicate bonds.
+void buildSplitBonds(
+    const std::vector<std::pair<unsigned int, unsigned int>> &bondPairs,
+    const unsigned int maxBondSplits,
+    std::vector<std::vector<unsigned int>> &splitBonds) {
+  std::vector<unsigned int> nextSplits;
+  splitBonds.reserve(maxBondSplits * maxBondSplits * bondPairs.size());
+  for (unsigned int i = 1; i < maxBondSplits; ++i) {
+    auto combs = combMFromN(i, static_cast<int>(bondPairs.size()));
+    for (const auto &comb : combs) {
+      nextSplits.clear();
+      for (const auto c : comb) {
+        nextSplits.push_back(bondPairs[c].first);
+        nextSplits.push_back(bondPairs[c].second);
+      }
+      std::sort(nextSplits.begin(), nextSplits.end());
+      nextSplits.erase(std::unique(nextSplits.begin(), nextSplits.end()),
+                       nextSplits.end());
+      // Each split will need a connector num, so any split set that will
+      // produce one higher than the SynthonSpace has been set up for is
+      // a bust.  Splitting 3 rings each once will produce 4 fragments
+      // and 6 broken bonds, for example.
+      if (nextSplits.size() > MAX_CONNECTOR_NUM) {
+        continue;
+      }
+      nextSplits.shrink_to_fit();
+      splitBonds.push_back(nextSplits);
+    }
+  }
+  std::sort(splitBonds.begin(), splitBonds.end());
+  splitBonds.erase(std::unique(splitBonds.begin(), splitBonds.end()),
+                   splitBonds.end());
+}
+}  // namespace
+
+std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
+    const ROMol &query, unsigned int maxNumFrags,
+    const std::uint64_t maxNumFragSets, const TimePoint *endTime,
+    bool &timedOut) {
+  if (maxNumFrags < 1) {
+    maxNumFrags = 1;
+  }
+  maxNumFrags = std::min({maxNumFrags, MAX_CONNECTOR_NUM, query.getNumBonds()});
+
+  auto ringBonds = flagRingBonds(query);
+
+  // Now get all contiguous ring blocks
+  const auto ringBlocks = getRingBlocks(query, ringBonds);
+
+  // Collect all the bond pairs that can fragment the molecule.
+  std::vector<std::pair<unsigned int, unsigned int>> bondPairs;
+  findBondPairsThatFragment(query, ringBonds, ringBlocks, bondPairs);
+  // And all the non-ring bonds, which clearly can all make 2 fragments
+  // when broken.  Put them in as pairs of the same value, for ease of
+  // processing below.
+  for (const auto b : query.bonds()) {
+    if (!ringBonds[b->getIdx()]) {
+      bondPairs.push_back({b->getIdx(), b->getIdx()});
     }
   }
   std::vector<std::vector<std::unique_ptr<ROMol>>> fragments;
@@ -152,77 +428,30 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   // fragment set in different ways so keep track of what we've had to
   // avoid duplicates.
   std::set<std::string> fragSmis;
-  bool cancelled = false;
-  timedOut = false;
-  std::uint64_t numTries = 100;
+  std::vector<std::vector<unsigned int>> splitBonds;
+  buildSplitBonds(bondPairs, maxNumFrags, splitBonds);
+  std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
+  for (unsigned int i = 1; i <= MAX_CONNECTOR_NUM; ++i) {
+    dummyLabels.emplace_back(i, i);
+  }
 
-  // Now do the splits.
-  for (unsigned int i = 1; i <= maxBondSplits; ++i) {
-    if (timedOut || cancelled) {
+  int numTries = 100;
+  for (const auto &sb : splitBonds) {
+    makeFragments(query, sb, dummyLabels, maxNumFrags, ringBonds, fragSmis,
+                  fragments);
+    if (fragSmis.size() > maxNumFragSets) {
       break;
     }
-    auto combs = combMFromN(i, static_cast<int>(query.getNumBonds()));
-    std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
-    for (unsigned int j = 1; j <= i; ++j) {
-      dummyLabels.emplace_back(j, j);
-    }
-    for (auto &c : combs) {
-      if (ControlCHandler::getGotSignal()) {
-        cancelled = true;
+    --numTries;
+    if (!numTries) {
+      numTries = 100;
+      timedOut = checkTimeOut(endTime);
+      if (timedOut) {
         break;
       }
-      --numTries;
-      if (!numTries) {
-        numTries = 100;
-        timedOut = checkTimeOut(endTime);
-        if (timedOut) {
-          break;
-        }
-      }
-
-      // don't break just 1 ring bond, as it can't create 2 fragments.  It
-      // could be better than this, by checking that any number of ring
-      // bonds are all in the same ring system.  Maybe look at that
-      // if necessary for performance.  Triazoles can be created from 3
-      // synthons, so breaking 3 ring bonds is ok.  This will still pass
-      // through cases that break 2 ring bonds in separate ring systems,
-      // such as a bond in each of the 2 phenyl rings in c1ccccc1c2ccccc2,
-      // but they will be caught below.
-      const auto numRingBonds = std::reduce(
-          c.begin(), c.end(), 0, [&](const int prevRes, const int bondNum) {
-            if (ringBonds[bondNum]) {
-              return prevRes + 1;
-            }
-            return prevRes;
-          });
-      if (numRingBonds == 1) {
-        continue;
-      }
-      std::unique_ptr<ROMol> fragMol(
-          MolFragmenter::fragmentOnBonds(query, c, true, &dummyLabels));
-      std::vector<std::unique_ptr<ROMol>> molFrags;
-      // Must have been a ring-opening.
-      if (const auto numFrags = MolOps::getMolFrags(*fragMol, molFrags, false);
-          numFrags == 1) {
-        continue;
-      }
-      if (checkConnectorsInDifferentFrags(molFrags, i)) {
-        std::string fragSmi(MolToSmiles(*fragMol));
-        if (!fragSmis.insert(fragSmi).second) {
-          continue;
-        }
-        fragments.emplace_back(std::move(molFrags));
-        if (fragments.size() > maxNumFrags) {
-          BOOST_LOG(rdWarningLog)
-              << "Maximum number of fragments reached." << std::endl;
-          break;
-        }
-      }
-    }
-    if (fragments.size() > maxNumFrags) {
-      break;
     }
   }
+
   return fragments;
 }
 
@@ -261,41 +490,42 @@ boost::dynamic_bitset<> getConnectorPattern(
   return conns;
 }
 
-std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
-    const std::vector<std::unique_ptr<ROMol>> &molFrags,
-    const boost::dynamic_bitset<> &fragConns,
-    const boost::dynamic_bitset<> &reactionConns) {
-  std::vector<std::vector<std::unique_ptr<ROMol>>> connPerms;
-  auto bitsToInts =
-      [](const boost::dynamic_bitset<> &bits) -> std::vector<int> {
-    std::vector<int> ints;
-    for (size_t i = 0; i < bits.size(); ++i) {
-      if (bits[i]) {
-        ints.push_back(static_cast<int>(i));
-      }
+namespace {
+std::vector<int> bitsToInts(const boost::dynamic_bitset<> &bits) {
+  std::vector<int> ints;
+  for (size_t i = 0; i < bits.size(); ++i) {
+    if (bits[i]) {
+      ints.push_back(static_cast<int>(i));
     }
-    return ints;
-  };
+  }
+  return ints;
+}
+}  // namespace
+
+std::vector<std::vector<std::vector<std::pair<Atom *, unsigned int>>>>
+getConnectorPermutations(const std::vector<std::unique_ptr<ROMol>> &molFrags,
+                         const boost::dynamic_bitset<> &fragConns,
+                         const boost::dynamic_bitset<> &reactionConns) {
   const auto numFragConns = fragConns.count();
   auto rConns = bitsToInts(reactionConns);
   const auto perms = permMFromN(numFragConns, reactionConns.count());
 
+  std::vector<std::vector<std::vector<std::pair<Atom *, unsigned int>>>>
+      fragConnPerms;
+  fragConnPerms.reserve(perms.size());
+
   for (const auto &perm : perms) {
-    connPerms.emplace_back();
+    fragConnPerms.emplace_back();
     // Copy the fragments and set the isotope numbers according to this
     // permutation.
     for (const auto &f : molFrags) {
-      connPerms.back().emplace_back(new RWMol(*f));
+      fragConnPerms.back().emplace_back();
       boost::dynamic_bitset<> atomDone(f->getNumAtoms());
-      for (const auto atom : connPerms.back().back()->atoms()) {
+      for (const auto atom : f->atoms()) {
         if (!atom->getAtomicNum()) {
           for (size_t i = 0; i < perm.size(); ++i) {
             if (!atomDone[atom->getIdx()] && atom->getIsotope() == i + 1) {
-              atom->setIsotope(perm[i] + 1);
-              if (atom->hasQuery()) {
-                atom->setQuery(makeAtomTypeQuery(0, false));
-                atom->expandQuery(makeAtomIsotopeQuery(perm[i] + 1));
-              }
+              fragConnPerms.back().back().emplace_back(atom, perm[i] + 1);
               atomDone[atom->getIdx()] = true;
             }
           }
@@ -304,7 +534,34 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> getConnectorPermutations(
     }
   }
 
-  return connPerms;
+  return fragConnPerms;
+}
+
+std::vector<std::vector<boost::dynamic_bitset<>>> getConnectorPermutations(
+    const std::vector<boost::dynamic_bitset<>> &fragConnPatts,
+    const boost::dynamic_bitset<> &reactionConns) {
+  boost::dynamic_bitset<> conns(MAX_CONNECTOR_NUM + 1);
+  for (auto &fragConnPatt : fragConnPatts) {
+    conns |= fragConnPatt;
+  }
+
+  const auto numFragConns = conns.count();
+  auto rConns = bitsToInts(reactionConns);
+  const auto perms = permMFromN(numFragConns, reactionConns.count());
+  std::vector<std::vector<boost::dynamic_bitset<>>> retBitsets;
+  for (const auto &perm : perms) {
+    retBitsets.emplace_back();
+    for (const auto &fragConnPatt : fragConnPatts) {
+      boost::dynamic_bitset<> bs(MAX_CONNECTOR_NUM + 1);
+      for (size_t i = 0; i < perm.size(); ++i) {
+        if (fragConnPatt[i + 1]) {
+          bs.set(perm[i] + 1);
+        }
+      }
+      retBitsets.back().push_back(bs);
+    }
+  }
+  return retBitsets;
 }
 
 void expandBitSet(std::vector<boost::dynamic_bitset<>> &bitSets) {
@@ -331,6 +588,93 @@ void bitSetsToVectors(const std::vector<boost::dynamic_bitset<>> &bitSets,
       }
     }
   }
+}
+
+bool removeQueryAtoms(RWMol &mol) {
+  bool didSomething = false;
+  for (const Atom *atom : mol.atoms()) {
+    if ((atom->getAtomicNum() || !atom->getIsotope()) && atom->hasQuery() &&
+        atom->getQuery()->getDescription() != "AtomType") {
+      std::unique_ptr<QueryAtom> qat;
+      if (atom->getAtomicNum()) {
+        qat.reset(new QueryAtom(atom->getAtomicNum()));
+      } else {
+        qat.reset(new QueryAtom());
+        qat->setQuery(makeAAtomQuery());
+      }
+      mol.replaceAtom(atom->getIdx(), qat.get());
+      didSomething = true;
+    }
+  }
+  return didSomething;
+}
+
+std::unique_ptr<ROMol> buildConnRegion(const ROMol &mol) {
+  boost::dynamic_bitset<> inFrag(mol.getNumAtoms());
+  for (const auto a : mol.atoms()) {
+    if (!a->getAtomicNum() && a->getIsotope()) {
+      inFrag[a->getIdx()] = true;
+      for (const auto &n1 : mol.atomNeighbors(a)) {
+        inFrag[n1->getIdx()] = true;
+        for (const auto &n2 : mol.atomNeighbors(n1)) {
+          inFrag[n2->getIdx()] = true;
+          for (const auto &n3 : mol.atomNeighbors(n2)) {
+            inFrag[n3->getIdx()] = true;
+          }
+        }
+      }
+    }
+  }
+  if (!inFrag.count()) {
+    return std::unique_ptr<RWMol>();
+  }
+
+  std::unique_ptr<RWMol> molCp(new RWMol(mol));
+  molCp->beginBatchEdit();
+  for (const auto aCp : molCp->atoms()) {
+    if (!inFrag[aCp->getIdx()]) {
+      molCp->removeAtom(aCp);
+    } else {
+      if (!aCp->getAtomicNum()) {
+        if (aCp->getIsotope()) {
+          aCp->setIsotope(1);
+          if (aCp->hasQuery()) {
+            aCp->expandQuery(makeAtomIsotopeQuery(1), Queries::COMPOSITE_OR);
+          }
+        }
+      }
+    }
+  }
+  molCp->commitBatchEdit();
+  return molCp;
+}
+
+std::string buildProductName(const std::string &reactionId,
+                             const std::vector<std::string> &fragIds) {
+  std::string prodName = "";
+  for (const auto &fragId : fragIds) {
+    if (prodName != "") {
+      prodName += ";";
+    }
+    prodName += fragId;
+  }
+  prodName += ";" + reactionId;
+  return prodName;
+}
+
+std::unique_ptr<ROMol> buildProduct(
+    const std::vector<const ROMol *> &synthons) {
+  MolzipParams mzparams;
+  mzparams.label = MolzipLabel::Isotope;
+
+  auto prodMol = std::make_unique<ROMol>(*synthons.front());
+  for (size_t i = 1; i < synthons.size(); ++i) {
+    prodMol.reset(combineMols(*prodMol, *synthons[i]));
+  }
+  prodMol = molzip(*prodMol, mzparams);
+  MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
+
+  return prodMol;
 }
 
 }  // namespace RDKit::SynthonSpaceSearch::details

@@ -19,6 +19,7 @@
 
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
+#include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
@@ -26,30 +27,72 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSubstructureSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/StreamOps.h>
 
 namespace RDKit::SynthonSpaceSearch {
 
 // used for serialization
-constexpr int32_t versionMajor = 2;
-constexpr int32_t versionMinor = 1;
+constexpr int32_t versionMajor = 3;
+constexpr int32_t versionMinor = 0;
 constexpr int32_t endianId = 0xa100f;
 
-std::int64_t SynthonSpace::getNumProducts() const {
-  std::int64_t totSize = 0;
-  for (const auto &[id, rxn] : d_reactions) {
-    size_t thisSize = 1;
-    for (const auto &r : rxn->getSynthons()) {
-      thisSize *= r.size();
-    }
-    totSize += thisSize;
+size_t SynthonSpace::getNumReactions() const { return d_reactions.size(); }
+
+std::vector<std::string> SynthonSpace::getReactionNames() const {
+  std::vector<std::string> reactionNames;
+  reactionNames.reserve(d_reactions.size());
+  for (const auto &reaction : d_reactions) {
+    reactionNames.push_back(reaction.first);
   }
-  return totSize;
+  return reactionNames;
 }
+
+const std::shared_ptr<SynthonSet> SynthonSpace::getReaction(
+    std::string reactionName) {
+  if (const auto &it = d_reactions.find(reactionName);
+      it != d_reactions.end()) {
+    return it->second;
+  }
+  throw std::runtime_error("Could not find synthon set for reaction " +
+                           reactionName);
+}
+
+unsigned int SynthonSpace::getPatternFPSize() const {
+  PRECONDITION(d_reactions.size(), "No synthon sets available.");
+  for (const auto &[id, reaction] : d_reactions) {
+    if (!reaction->getSynthons().empty()) {
+      return reaction->getSynthons()
+          .front()
+          .front()
+          .second->getPattFP()
+          ->getNumBits();
+    }
+  }
+  throw std::runtime_error(
+      "Could not find pattern fingerprint for any synthon.");
+}
+
+unsigned int SynthonSpace::getFPSize() const {
+  PRECONDITION(d_reactions.size(), "No synthon sets available.");
+  for (const auto &[id, reaction] : d_reactions) {
+    if (!reaction->getSynthons().empty()) {
+      return reaction->getSynthons()
+          .front()
+          .front()
+          .second->getFP()
+          ->getNumBits();
+    }
+  }
+  throw std::runtime_error("Could not find fingerprint for any synthon.");
+}
+
+std::uint64_t SynthonSpace::getNumProducts() const { return d_numProducts; }
 
 SearchResults SynthonSpace::substructureSearch(
     const ROMol &query, const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
+  ControlCHandler::reset();
   SynthonSpaceSubstructureSearcher ssss(query, params, *this);
   return ssss.search();
 }
@@ -57,6 +100,7 @@ SearchResults SynthonSpace::substructureSearch(
 SearchResults SynthonSpace::fingerprintSearch(
     const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
     const SynthonSpaceSearchParams &params) {
+  ControlCHandler::reset();
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   SynthonSpaceFingerprintSearcher ssss(query, fpGen, params, *this);
   return ssss.search();
@@ -109,44 +153,71 @@ int deduceFormat(const std::string &line) {
   }
   return -1;
 }
+
+std::vector<std::string> readSynthonLine(std::istream &is, int &lineNum,
+                                         int &format,
+                                         const std::string &fileName) {
+  static const std::regex regexws("\\s+");
+  static const std::regex regexc(",+");
+
+  std::vector<std::string> nextSynthon;
+  auto nextLine = getLine(is);
+  ++lineNum;
+  if (nextLine.empty() || nextLine[0] == '#') {
+    return nextSynthon;
+  }
+  if (format == -1) {
+    format = deduceFormat(nextLine);
+    if (format == -1) {
+      throw std::runtime_error("Bad format for SynthonSpace file " + fileName);
+    }
+    return nextSynthon;
+  }
+  if (format < 3) {
+    nextSynthon = splitLine(nextLine, regexws);
+  } else {
+    nextSynthon = splitLine(nextLine, regexc);
+  }
+  if (nextSynthon.size() < 4) {
+    throw std::runtime_error("Bad format for SynthonSpace file " + fileName +
+                             " on line " + std::to_string(lineNum));
+  }
+  return nextSynthon;
+}
+
+int getSynthonNum(int format, const std::string &synthon) {
+  int synthonNum{std::numeric_limits<int>::max()};
+  if (format == 0 || format == 1 || format == 3 || format == 4) {
+    synthonNum = std::stoi(synthon);
+  } else if (format == 2 || format == 5) {
+    // in this case it's a string "synton_2" etc.
+    synthonNum = std::stoi(synthon.substr(7));
+  }
+  return synthonNum;
+}
 }  // namespace
 
-void SynthonSpace::readTextFile(const std::string &inFilename) {
+void SynthonSpace::readTextFile(const std::string &inFilename,
+                                bool &cancelled) {
   d_fileName = inFilename;
   std::ifstream ifs(d_fileName);
   if (!ifs.is_open() || ifs.bad()) {
     throw std::runtime_error("Couldn't open file " + d_fileName);
   }
-  static const std::regex regexws("\\s+");
-  static const std::regex regexc(",+");
 
   int format = -1;
   std::string nextLine;
   int lineNum = 1;
-  std::vector<std::string> nextSynthon;
+  ControlCHandler::reset();
+
   while (!ifs.eof()) {
-    nextLine = getLine(ifs);
-    ++lineNum;
-    if (nextLine.empty() || nextLine[0] == '#') {
+    if (ControlCHandler::getGotSignal()) {
+      cancelled = true;
+      return;
+    }
+    auto nextSynthon = readSynthonLine(ifs, lineNum, format, d_fileName);
+    if (nextSynthon.empty()) {
       continue;
-    }
-    if (format == -1) {
-      format = deduceFormat(nextLine);
-      if (format == -1) {
-        throw std::runtime_error("Bad format for SynthonSpace file " +
-                                 d_fileName);
-      }
-      continue;
-    }
-    if (format < 3) {
-      nextSynthon = splitLine(nextLine, regexws);
-    } else {
-      nextSynthon = splitLine(nextLine, regexc);
-    }
-    if (nextSynthon.size() < 4) {
-      throw std::runtime_error("Bad format for SynthonSpace file " +
-                               d_fileName + " on line " +
-                               std::to_string(lineNum));
     }
     if (auto it = d_reactions.find(nextSynthon[3]); it == d_reactions.end()) {
       d_reactions.insert(std::make_pair(
@@ -154,23 +225,20 @@ void SynthonSpace::readTextFile(const std::string &inFilename) {
     }
     fixConnectors(nextSynthon[0]);
     auto &currReaction = d_reactions[nextSynthon[3]];
-    int synthonNum{std::numeric_limits<int>::max()};
-    if (format == 0 || format == 1 || format == 3 || format == 4) {
-      synthonNum = std::stoi(nextSynthon[2]);
-    } else if (format == 2 || format == 5) {
-      // in this case it's a string "synton_2" etc.
-      synthonNum = std::stoi(nextSynthon[2].substr(7));
-    }
-    currReaction->addSynthon(synthonNum, std::make_unique<Synthon>(Synthon(
-                                             nextSynthon[0], nextSynthon[1])));
+    auto synthonNum = getSynthonNum(format, nextSynthon[2]);
+    auto newSynth = addSynthonToPool(nextSynthon[0]);
+    currReaction->addSynthon(synthonNum, newSynth, nextSynthon[1]);
   }
-
   // Do some final processing.
   for (auto &[id, reaction] : d_reactions) {
     reaction->removeEmptySynthonSets();
-    reaction->transferProductBondsToSynthons();
+    reaction->makeSynthonSearchMols();
     reaction->buildConnectorRegions();
     reaction->assignConnectorsUsed();
+    d_numProducts += reaction->getNumProducts();
+    if (reaction->getSynthons().size() > d_maxNumSynthons) {
+      d_maxNumSynthons = reaction->getSynthons().size();
+    }
   }
 }
 
@@ -184,77 +252,138 @@ void SynthonSpace::writeDBFile(const std::string &outFilename) const {
   if (hasFingerprints()) {
     streamWrite(os, d_fpType);
   }
-  streamWrite(os, d_reactions.size());
-  for (const auto &[reactionId, reaction] : d_reactions) {
+  streamWrite(os, static_cast<std::uint64_t>(d_synthonPool.size()));
+  streamWrite(os, static_cast<std::uint64_t>(d_reactions.size()));
+  streamWrite(os, d_numProducts);
+
+  // In case we ever want to do random access file reading, save the
+  // positions of the synthons and reactions.  Put dummy positions
+  // in for now then overwrite at the end.
+  std::vector<std::uint64_t> synthonPos(d_synthonPool.size(), std::uint64_t(0));
+  std::vector<std::uint64_t> reactionPos(d_reactions.size(), std::uint64_t(0));
+  std::streampos synthonPoolStart = os.tellp();
+  for (const auto p : synthonPos) {
+    streamWrite(os, p);
+  }
+  for (const auto p : reactionPos) {
+    streamWrite(os, p);
+  }
+  size_t synthonNum = 0;
+  for (auto &[smiles, synthon] : d_synthonPool) {
+    synthonPos[synthonNum++] = os.tellp();
+    synthon->writeToDBStream(os);
+  }
+  size_t reactionNum = 0;
+  for (auto &[id, reaction] : d_reactions) {
+    reactionPos[reactionNum++] = os.tellp();
     reaction->writeToDBStream(os);
   }
+  // Now write the positions properly
+  os.seekp(synthonPoolStart);
+  for (const auto p : synthonPos) {
+    streamWrite(os, p);
+  }
+  for (const auto p : reactionPos) {
+    streamWrite(os, p);
+  }
+
   os.close();
 }
 
 void SynthonSpace::readDBFile(const std::string &inFilename) {
   d_fileName = inFilename;
-
-  try {
-    std::ifstream is(d_fileName, std::fstream::binary);
-
-    int32_t endianTest;
-    streamRead(is, endianTest);
-    if (endianTest != endianId) {
-      throw std::runtime_error("Endianness mismatch in SynthonSpace file " +
-                               d_fileName);
-    }
-    int32_t majorVersion;
-    streamRead(is, majorVersion);
-    int32_t minorVersion;
-    streamRead(is, minorVersion);
-    if (majorVersion > versionMajor ||
-        (majorVersion == versionMajor && minorVersion > versionMinor)) {
-      BOOST_LOG(rdWarningLog)
-          << "Deserializing from a version number (" << majorVersion << "."
-          << minorVersion << ")"
-          << "that is higher than our version (" << versionMajor << "."
-          << versionMinor << ").\nThis probably won't work." << std::endl;
-    }
-    // version sanity checking
-    if (majorVersion > 1000 || minorVersion > 100) {
-      throw std::runtime_error("unreasonable version numbers");
-    }
-    majorVersion = 1000 * majorVersion + minorVersion * 10;
-    bool hasFPs;
-    streamRead(is, hasFPs);
-    if (hasFPs) {
-      streamRead(is, d_fpType, 0);
-    }
-    size_t numRS;
-    streamRead(is, numRS);
-    for (size_t i = 0; i < numRS; ++i) {
-      auto rs = std::make_unique<SynthonSet>();
-      rs->readFromDBStream(is, majorVersion);
-      d_reactions.insert(std::make_pair(rs->getId(), std::move(rs)));
-    }
-  } catch (std::exception &e) {
-    std::cerr << "Error : " << e.what() << " for file " << d_fileName << "\n";
-    exit(1);
+  std::ifstream is(inFilename, std::fstream::binary);
+  if (!is.is_open() || is.bad()) {
+    throw std::runtime_error("Couldn't open file " + d_fileName);
   }
+  int32_t endianTest;
+  streamRead(is, endianTest);
+  if (endianTest != endianId) {
+    throw std::runtime_error("Endianness mismatch in SynthonSpace file " +
+                             d_fileName);
+  }
+  streamRead(is, d_fileMajorVersion);
+  int32_t minorVersion;
+  streamRead(is, minorVersion);
+  if (d_fileMajorVersion > versionMajor ||
+      (d_fileMajorVersion == versionMajor && minorVersion > versionMinor)) {
+    BOOST_LOG(rdWarningLog)
+        << "Deserializing from a version number (" << d_fileMajorVersion << "."
+        << minorVersion << ")"
+        << "that is higher than our version (" << versionMajor << "."
+        << versionMinor << ").\nThis probably won't work." << std::endl;
+  }
+  // version sanity checking
+  if (d_fileMajorVersion > 1000 || minorVersion > 100) {
+    throw std::runtime_error("unreasonable version numbers");
+  }
+  d_fileMajorVersion = 1000 * d_fileMajorVersion + minorVersion * 10;
+  if (d_fileMajorVersion < 3000) {
+    throw std::runtime_error(
+        "This binary file version is no longer supported."
+        "  Please re-build with a recent version of the RDKit.");
+  }
+
+  bool hasFPs;
+  streamRead(is, hasFPs);
+  if (hasFPs) {
+    streamRead(is, d_fpType, 0);
+  }
+  std::uint64_t numSynthons;
+  std::uint64_t numReactions;
+  streamRead(is, numSynthons);
+  streamRead(is, numReactions);
+  streamRead(is, d_numProducts);
+  // synthonPos and reactionPos not used at the moment.
+  std::vector<std::uint64_t> synthonPos(numSynthons, std::uint64_t(0));
+  for (std::uint64_t i = 0; i < numSynthons; i++) {
+    streamRead(is, synthonPos[i]);
+  }
+  std::vector<std::uint64_t> reactionPos(numReactions, std::uint64_t(0));
+  for (std::uint64_t i = 0; i < numReactions; i++) {
+    streamRead(is, reactionPos[i]);
+  }
+
+  for (std::uint64_t i = 0; i < numSynthons; i++) {
+    auto synthon = std::make_unique<Synthon>();
+    synthon->readFromDBStream(is);
+    d_synthonPool.insert(
+        std::make_pair(synthon->getSmiles(), std::move(synthon)));
+  }
+  for (std::uint64_t i = 0; i < numReactions; ++i) {
+    auto reaction = std::make_shared<SynthonSet>();
+    reaction->readFromDBStream(is, *this, d_fileMajorVersion);
+    d_reactions.insert(std::make_pair(reaction->getId(), reaction));
+    if (reaction->getSynthons().size() > d_maxNumSynthons) {
+      d_maxNumSynthons = reaction->getSynthons().size();
+    }
+  }
+  is.close();
 }
 
-void SynthonSpace::summarise(std::ostream &os) const {
+void SynthonSpace::summarise(std::ostream &os) {
   os << "Read from file " << d_fileName << "\n"
      << "Number of reactions : " << d_reactions.size() << "\n";
-  size_t totSize = 0;
-  for (const auto &[id, rxn] : d_reactions) {
+  int synthCounts[MAX_CONNECTOR_NUM + 1]{0, 0, 0, 0, 0};
+  for (const auto &id : getReactionNames()) {
+    auto rxn = getReaction(id);
     os << "Reaction name " << id << "\n";
-    size_t thisSize = 1;
     for (size_t i = 0; i < rxn->getSynthons().size(); ++i) {
       os << "  Synthon set " << i << " has " << rxn->getSynthons()[i].size()
          << " synthons"
          << "\n";
-      thisSize *= rxn->getSynthons()[i].size();
     }
-    totSize += thisSize;
+    synthCounts[rxn->getSynthons().size()]++;
   }
-  os << "Approximate number of molecules in SynthonSpace : " << totSize
-     << std::endl;
+  os << "Approximate number of molecules in SynthonSpace : "
+     << formattedIntegerString(getNumProducts()) << std::endl;
+  os << "Number of unique synthons : " << d_synthonPool.size() << std::endl;
+  for (unsigned int i = 0; i < MAX_CONNECTOR_NUM; ++i) {
+    if (synthCounts[i] > 0) {
+      os << "Number of " << i << " molecule reactions : " << synthCounts[i]
+         << std::endl;
+    }
+  }
 }
 
 void SynthonSpace::writeEnumeratedFile(const std::string &outFilename) const {
@@ -268,12 +397,7 @@ void SynthonSpace::writeEnumeratedFile(const std::string &outFilename) const {
   os.close();
 }
 
-bool SynthonSpace::hasFingerprints() const {
-  if (d_reactions.empty()) {
-    return false;
-  }
-  return d_reactions.begin()->second->hasFingerprints();
-}
+bool SynthonSpace::hasFingerprints() const { return !d_fpType.empty(); }
 
 void SynthonSpace::buildSynthonFingerprints(
     const FingerprintGenerator<std::uint64_t> &fpGen) {
@@ -282,8 +406,20 @@ void SynthonSpace::buildSynthonFingerprints(
     BOOST_LOG(rdWarningLog)
         << "Building the fingerprints may take some time." << std::endl;
     d_fpType = fpType;
+    unsigned int numBits = 0;
     for (const auto &[id, synthSet] : d_reactions) {
+      if (ControlCHandler::getGotSignal()) {
+        return;
+      }
       synthSet->buildSynthonFingerprints(fpGen);
+      if (!numBits) {
+        numBits = synthSet->getSynthons()
+                      .front()
+                      .front()
+                      .second->getFP()
+                      ->getNumBits();
+      }
+      synthSet->buildAddAndSubtractFPs(fpGen, numBits);
     }
   }
 }
@@ -295,11 +431,53 @@ bool SynthonSpace::hasAddAndSubstractFingerprints() const {
   return d_reactions.begin()->second->hasAddAndSubtractFPs();
 }
 
-void SynthonSpace::buildAddAndSubstractFingerprints(
-    const FingerprintGenerator<std::uint64_t> &fpGen) {
-  for (const auto &[id, synthSet] : d_reactions) {
-    synthSet->buildAddAndSubtractFPs(fpGen);
+Synthon *SynthonSpace::addSynthonToPool(const std::string &smiles) {
+  Synthon *newSynth = nullptr;
+  if (auto it = d_synthonPool.find(smiles); it == d_synthonPool.end()) {
+    auto [new_it, success] = d_synthonPool.insert(
+        std::make_pair(smiles, std::make_unique<Synthon>(Synthon(smiles))));
+    newSynth = new_it->second.get();
+  } else {
+    newSynth = it->second.get();
   }
+  return newSynth;
+}
+
+void convertTextToDBFile(const std::string &inFilename,
+                         const std::string &outFilename, bool &cancelled,
+                         const FingerprintGenerator<std::uint64_t> *fpGen) {
+  SynthonSpace synthSpace;
+  cancelled = false;
+  synthSpace.readTextFile(inFilename, cancelled);
+  if (ControlCHandler::getGotSignal()) {
+    cancelled = true;
+    return;
+  }
+  if (fpGen) {
+    synthSpace.buildSynthonFingerprints(*fpGen);
+    if (ControlCHandler::getGotSignal()) {
+      cancelled = true;
+      return;
+    }
+  }
+  synthSpace.writeDBFile(outFilename);
+}
+
+namespace {
+// Stuff for formatting integers with spaces every 3 digits.
+template <class Char>
+class MyFacet : public std::numpunct<Char> {
+ public:
+  std::string do_grouping() const { return "\3"; }
+  Char do_thousands_sep() const { return ' '; }
+};
+}  // namespace
+
+std::string formattedIntegerString(std::int64_t value) {
+  std::ostringstream oss;
+  oss.imbue(std::locale(oss.getloc(), new MyFacet<char>));
+  oss << value;
+  return oss.str();
 }
 
 }  // namespace RDKit::SynthonSpaceSearch

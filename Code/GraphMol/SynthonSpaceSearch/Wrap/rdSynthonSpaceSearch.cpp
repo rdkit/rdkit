@@ -92,8 +92,35 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
   return results;
 }
 
-void summariseHelper(const SynthonSpaceSearch::SynthonSpace &self) {
+void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
   self.summarise(std::cout);
+}
+
+void convertTextToDBFile_helper(const std::string &inFilename,
+                                const std::string &outFilename,
+                                python::object fpGen) {
+  const FingerprintGenerator<std::uint64_t> *fpGenCpp = nullptr;
+  if (fpGen) {
+    fpGenCpp = python::extract<FingerprintGenerator<std::uint64_t> *>(fpGen);
+  }
+  bool cancelled = false;
+  SynthonSpaceSearch::convertTextToDBFile(inFilename, outFilename, cancelled,
+                                          fpGenCpp);
+  if (cancelled) {
+    throw_runtime_error("Database conversion cancelled");
+  }
+}
+
+void readTextFile_helper(SynthonSpaceSearch::SynthonSpace &self,
+                         const std::string &inFilename) {
+  bool cancelled = false;
+  {
+    NOGIL gil;
+    self.readTextFile(inFilename, cancelled);
+  }
+  if (cancelled) {
+    throw_runtime_error("Database read cancelled.");
+  }
 }
 
 BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
@@ -109,19 +136,13 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::class_<SynthonSpaceSearch::SynthonSpaceSearchParams,
                  boost::noncopyable>("SynthonSpaceSearchParams",
                                      docString.c_str())
-      .def_readwrite(
-          "maxBondSplits",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxBondSplits,
-          "The maximum number of bonds to break in the query."
-          "  It should be between 1 and 4 and will be constrained to be so."
-          "  Default=4.")
       .def_readwrite("maxHits",
                      &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHits,
                      "The maximum number of hits to return.  Default=1000."
                      "Use -1 for no maximum.")
       .def_readwrite(
           "maxNumFrags",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxNumFrags,
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxNumFragSets,
           "The maximum number of fragments the query can be broken into."
           "  Big molecules will create huge numbers of fragments that may cause"
           " excessive memory use.  If the number of fragments hits this number,"
@@ -187,7 +208,7 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
       "SynthonSpace", docString.c_str(), python::init<>())
-      .def("ReadTextFile", &SynthonSpaceSearch::SynthonSpace::readTextFile,
+      .def("ReadTextFile", &readTextFile_helper,
            (python::arg("self"), python::arg("inFile")),
            "Reads text file of the sort used by ChemSpace/Enamine.")
       .def("ReadDBFile", &SynthonSpaceSearch::SynthonSpace::readDBFile,
@@ -210,6 +231,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            " counting of any duplicates.")
       .def("Summarise", &summariseHelper, python::arg("self"),
            "Writes a summary of the SynthonSpace to stdout.")
+      .def("GetSynthonFingerprintType",
+           &SynthonSpaceSearch::SynthonSpace::getSynthonFingerprintType,
+           python::arg("self"),
+           "Returns the information string for the fingerprint generator"
+           " used to create this space.")
       .def("SubstructureSearch", &substructureSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("params") = python::object()),
@@ -228,6 +254,25 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " is done automatically when the first similarity search is done, but if"
           " converting a text file to binary format it might need to be done"
           " explicitly.");
+
+  docString =
+      "Convert the text file into the binary DB file in our format."
+      "  Assumes that all synthons from a reaction are contiguous in the input file."
+      "  This uses a lot less memory than using ReadTextFile() followed by"
+      "  WriteDBFile()."
+      "- inFilename the name of the text file"
+      "- outFilename the name of the binary file"
+      "- optional fingerprint generator";
+  python::def("ConvertTextToDBFile", &RDKit::convertTextToDBFile_helper,
+              (python::arg("inFilename"), python::arg("outFilename"),
+               python::arg("fpGen") = python::object()),
+              docString.c_str());
+
+  docString =
+      "Format an integer with spaces every 3 digits for ease of reading";
+  python::def("FormattedIntegerString",
+              &RDKit::SynthonSpaceSearch::formattedIntegerString,
+              python::arg("value"), docString.c_str());
 }
 
 }  // namespace RDKit
