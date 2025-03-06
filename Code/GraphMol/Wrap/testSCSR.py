@@ -35,11 +35,18 @@ class TestCase(unittest.TestCase):
     molFromSCSRParams.scsrTemplateNames = Chem.SCSRTemplateNames.AsEntered
     molFromSCSRParams.scsrBaseHbondOptions = Chem.SCSRBaseHbondOptions.Ignore
 
-    mol = Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams)
+    for mol in (Chem.MolFromSCSRBlock(scsrBlock, False, False, molFromSCSRParams),
+                Chem.MolFromSCSRFile(ofile, False, False, molFromSCSRParams)):
 
-    self.assertTrue(mol.GetNumAtoms() == 30)
-    sgs = Chem.GetMolSubstanceGroups(mol)
-    self.assertTrue(len(sgs) == 6)
+      self.assertTrue(mol.GetNumAtoms() == 30)
+      sgs = Chem.GetMolSubstanceGroups(mol)
+      self.assertEqual(len(sgs), 6)
+
+    # check defaults:
+    for mol in (Chem.MolFromSCSRBlock(scsrBlock), Chem.MolFromSCSRFile(ofile)):
+      self.assertTrue(mol.GetNumAtoms() == 30)
+      sgs = Chem.GetMolSubstanceGroups(mol)
+      self.assertEqual(len(sgs), 6)
 
   def testSCSRRna(self):
     """Test the SCSR system with and RNA double strand"""
