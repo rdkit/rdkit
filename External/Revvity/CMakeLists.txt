@@ -117,6 +117,9 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   endif()
 
   # finally the RDKit library!
+  set(RDChemDrawLib_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+        CACHE STRING "RDChemDrawLib Include File" FORCE)
+
   rdkit_library(RDChemDrawLib
       bond.cpp
       bracket.cpp
@@ -136,33 +139,43 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD)
   endif()
 
+  install(TARGETS RDChemDrawLib DESTINATION ${RDKit_LibDir})
+  set(RDK_CHEMDRAW_LIBS RDChemDrawLib CACHE STRING "the external libraries" FORCE)
+
   rdkit_headers(chemdraw.h DEST GraphMol)
-  if(RDK_BUILD_PYTHON_WRAPPERS)
-    #add_subdirectory(Wrap)
-  endif(RDK_BUILD_PYTHON_WRAPPERS)
 
   add_definitions(-DRDK_BUILD_CHEMDRAW_SUPPORT)
 
   # all the tests
   rdkit_catch_test(chemdrawCatchTest test.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
+	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdrawChiralCatchTest test-chiral.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
+	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdrawReactionsCatchTest test-reactions.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
+	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdraw3DCatchTest test_3d.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
+	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdraw6KCatchTest test_6k.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
+        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
+	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   if(MSVC)
     # The nanotubes blow up the smiles writer stack on MSVC so increase it
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
   endif(MSVC)
+
+  if(RDK_BUILD_PYTHON_WRAPPERS)
+    add_subdirectory(Wrap)
+  endif(RDK_BUILD_PYTHON_WRAPPERS)
+
 
 endif(RDK_BUILD_CHEMDRAW_SUPPORT)
 
