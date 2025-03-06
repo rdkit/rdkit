@@ -194,7 +194,8 @@ bool isHypervalentNonMetal(Atom *atom) {
   if (isMetal(atom)) {
     return false;
   }
-  auto ev = atom->calcExplicitValence(false);
+  atom->updatePropertyCache(false);
+  int ev = atom->getValence(Atom::ValenceType::EXPLICIT);
   // Check the explicit valence of the non-metal against the allowed
   // valences of the atom, adjusted by its formal charge.  This means that
   // N+ is treated the same as C, O+ the same as N.  This allows for,
@@ -207,14 +208,17 @@ bool isHypervalentNonMetal(Atom *atom) {
   if (effAtomicNum <= 0) {
     return false;
   }
-  // atom is a non-metal, so if its atomic number is > 2, it should
-  // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
-  // dative, so the molecule is later flagged as having bad valence.
-  // [CH4]-[Na] being a case in point, line 1800 of
-  // FileParsers/file_parsers_catch.cpp.
+  // atom is a non-metal. If its explicit valence is greater than the
+  // maximum allowed valence then it is hypervalent.
+  //  We have a special case in here for aromatic atoms where the explicit
+  //  valence matches the max allowed and the degree is 4. This is there for
+  //  cases like cyclopentadienyl - metal systems. We need this special case
+  //  because the explicit valence on the C atoms there ends up being 4
   const auto &otherValens =
       PeriodicTable::getTable()->getValenceList(effAtomicNum);
-  if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+  auto maxV = otherValens.back();
+  if (maxV > 0 && (ev > maxV || (ev == maxV && atom->getIsAromatic() &&
+                                 atom->getTotalDegree() == 4))) {
     return true;
   }
 
