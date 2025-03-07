@@ -103,7 +103,7 @@ struct FragmentReplacement {
   bool replace(RWMol &mol) {
     if (!replacement_atom) return true;
 
-    auto &bond_ordering =
+    auto bond_ordering =
         replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
 
     // Find the connecting atoms and and do the replacement
