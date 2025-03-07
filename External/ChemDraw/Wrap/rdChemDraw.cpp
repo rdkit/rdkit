@@ -31,7 +31,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#include <Revvity/chemdraw.h>
+#include <ChemDraw/chemdraw.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Wrap/props.hpp>
 #include <RDBoost/python.h>
