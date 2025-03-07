@@ -91,8 +91,12 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     
     if(MSVC)
       ADD_DEFINITIONS("-DTARGET_API_LIB -D_WINDOWS -DTARGET_OS_WIN32 -DHAVE_EXPAT_CONFIG_H")
+      # we don't really control chemdraw source code, so suppress warnings	
+      target_compile_options(ChemDraw PRIVATE "/W0")
     else()
       ADD_DEFINITIONS("-DTARGET_API_LIB -D__linux -DHAVE_EXPAT_CONFIG_H")
+      # we don't really control chemdraw source code, so suppress warnings
+      target_compile_options(ChemDraw PRIVATE -w)
     endif()
       
     install(TARGETS ChemDraw DESTINATION ${RDKit_LibDir})
