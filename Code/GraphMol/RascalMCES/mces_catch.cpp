@@ -685,6 +685,34 @@ TEST_CASE("ring matches ring", "[basics]") {
   check_smarts_ok(*m1, *m2, res.front());
 }
 
+TEST_CASE("complete smallest rings") {
+  RascalOptions opts;
+  opts.completeSmallestRings = true;
+  opts.similarityThreshold = 0.1;
+
+  auto m1 = "CNC1CCC(C)CC1C"_smiles;
+  REQUIRE(m1);
+  auto m2 = "CNC1CCC2CCCCCCCCCCCC1C2"_smiles;
+  REQUIRE(m2);
+
+  {
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    REQUIRE(res.front().getNumFrags() == 1);
+    REQUIRE(res.front().getSmarts() == "CNC1CCCCC1");
+  }
+
+  // Default option; allows partial ring return
+  opts.completeSmallestRings = false;
+  {
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.size() == 1);
+    REQUIRE(res.front().getNumFrags() == 1);
+    REQUIRE(res.front().getSmarts() == "CNC1CCC(-C)-CC1C");
+  }
+}
+
+
 TEST_CASE("multiple cliques returned") {
   std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int,
                          std::vector<std::pair<int, int>>>>

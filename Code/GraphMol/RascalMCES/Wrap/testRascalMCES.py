@@ -218,7 +218,7 @@ class TestCase(unittest.TestCase):
     mol2 = Chem.MolFromSmiles('CC12CCC3C(C1CCC2O)CCC4=C3C=CC(=C4)O')
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertFalse(results)
-    
+
     
 if __name__ == "__main__":
   unittest.main()
