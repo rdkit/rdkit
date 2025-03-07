@@ -10088,7 +10088,7 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
     REQUIRE_THROWS_AS(
         drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
                                           atomRads, bondMults),
-        Invar::Invariant);
+        ValueErrorException);
   }
   {
     MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
@@ -10099,7 +10099,7 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
     REQUIRE_THROWS_AS(
         drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
                                           atomRads, bondMults),
-        Invar::Invariant);
+        ValueErrorException);
   }
   {
     MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
@@ -10119,7 +10119,7 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
     REQUIRE_THROWS_AS(
         drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
                                           atomRads, bondMults),
-        Invar::Invariant);
+        ValueErrorException);
   }
 }
 
