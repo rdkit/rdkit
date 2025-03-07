@@ -68,7 +68,7 @@ bool hasNonSupportedFeatures(CDXDocument &document) {
           if (id == kCDXObj_Fragment) {
             CDXFragment &fragment = (CDXFragment &)(*frag.second);
             if (fragment.m_sequenceType == kCDXSeqType_Unknown) return true;
-          } else if (id == kCDXObj_BracketAttachment) {
+          } else if (id == kCDXObj_BracketAttachment || id == kCDXObj_BracketedGroup) {
             return true;
           }
         }
@@ -102,7 +102,7 @@ TEST_CASE("Round TRIP") {
     int total = 0;
     int success = 0;
     int smimatches = 0;
-    int skippedBiopolymer = 0;
+    int nonSupported = 0;
     RDLog::LogStateSetter blocker;
     std::string cdxpath = path + "CDXML/";
     std::string molpath = path + "mol/";
@@ -126,8 +126,8 @@ TEST_CASE("Round TRIP") {
         // issue here - graphite nanotube
         if (fname == "INDMUMLL1117_2025-01-24-17-28-02_10946.cdxml")
           continue;  // nanotube takes forever
-        // if (fname != "INDMUMLL1117_2025-01-24-17-26-45_4997.cdxml") continue;
-        //_sleep(5 * 1000);
+        
+        //_sleep(10 * 1000);
         auto molfname = molpath + replace(fname, ".cdxml", ".mol");
         auto smifname = smipath + replace(fname, ".cdxml", ".smi");
         // if chemscript couldn't make an output, ignore it
@@ -137,7 +137,7 @@ TEST_CASE("Round TRIP") {
         }
         total++;
         // Read the cdxml
-        std::vector<std::unique_ptr<ROMol>> mols;
+        std::vector<std::unique_ptr<RWMol>> mols;
         bool santizationFailure = false;
         try {
           mols = ChemDrawToMols(entry.path().string());
@@ -155,9 +155,7 @@ TEST_CASE("Round TRIP") {
                   entry.path().string(),
                   nomolpath + entry.path().filename().string());
               nomol++;
-            } else {
-              skippedBiopolymer++;
-            }
+            } 
             continue;
           }
         } catch (...) {
@@ -208,6 +206,7 @@ TEST_CASE("Round TRIP") {
           }
 
           if (hasNonSupportedFeatures(entry.path().string())) {
+            nonSupported++;
             continue;  // has unsupported features
           }
           if (santizationFailure) {
@@ -233,6 +232,8 @@ TEST_CASE("Round TRIP") {
       }
     }
     std::cerr << "Success:" << success + smimatches << std::endl;
+    std::cerr << "skipped (non supported features):" << nonSupported
+              << std::endl;
     std::cerr << "Chemscript smiles matches not chemscript mol: " << smimatches
               << std::endl;
     std::cerr << "Failed:" << failed << std::endl;
