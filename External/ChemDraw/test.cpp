@@ -479,7 +479,7 @@ TEST_CASE("CDXML Advanced") {
     int i = 0;
     SmilesWriteParams wp;
     for (auto &mol : mols) {
-      auto tomol = std::unique_ptr<ROMol>(mol.release());
+      auto tomol = std::unique_ptr<ROMol>((ROMol*)mol.release());
       tomol.get()->clearConformers();
       RDKit::canonicalizeStereoGroups(tomol);
 
@@ -1360,7 +1360,7 @@ TEST_CASE("Round TRIP") {
             failed++;
             continue;
           }
-          std::vector<std::unique_ptr<ROMol>> mols;
+          std::vector<std::unique_ptr<RWMol>> mols;
           std::stringstream iss(cdx);
           try {
             mols = ChemDrawToMols(iss);
