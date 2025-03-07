@@ -4,6 +4,14 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 
+#ifdef __linux
+// conda-clang can set this, the linux version works just
+//  fine now, so unset mac specific stuff
+# ifdef TARGET_OS_MAC
+#  define TARGET_OS_MAC 0
+# endif
+#endif
+
 #ifdef RDKIT_CHEMDRAW_BUILD
 #define CORE_CHEMISTRY_API RDKIT_EXPORT_API
 #else
