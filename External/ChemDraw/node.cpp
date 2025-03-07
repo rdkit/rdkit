@@ -191,6 +191,17 @@ bool parse_node(
     rd_atom->setAtomMapNum(rgroup_num);
   }
   set_fuse_label(rd_atom, atommap);
+  switch (node.m_hStereo) {
+    case kCDXProp_Atom_HDot:  // this atom has an implicit hydrogen with a
+                              // wedged bond
+      rd_atom->setProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO, 'w');
+      break;
+    case kCDXProp_Atom_HDash:  // this atom has an implicit hydrogen with a
+                               // hashed bond
+      rd_atom->setProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO, 'h');
+      break;
+  }
+  
   if (node.m_bondOrdering) {
     // This node may be completely replaced by the fragment
     // i.e. [*:1]C[*:1].C[*:1]C => CCC

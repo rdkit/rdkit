@@ -167,9 +167,76 @@ bool replaceFragments(RWMol &mol) {
   mol.commitBatchEdit();
   return true;
 }
+namespace {
+Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
+  if (center_atom->hasProp(CDX_BOND_ORDERING)) {
+    std::vector<int> &bond_ordering =
+        center_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
+    if (bond_ordering.size() < 3) {
+      return Atom::ChiralType::CHI_UNSPECIFIED;
+    }
+    std::vector<Atom *> atoms;
 
+    std::vector<std::pair<double, unsigned int>> angles;
+    auto center = conf.getAtomPos(center_atom->getIdx());
+
+    for (auto cdx_id : bond_ordering) {
+      if (cdx_id == 0) {
+        continue;
+      }
+
+      for (auto bond : mol.atomBonds(center_atom)) {
+        int bond_id;
+        if (bond->getPropIfPresent<int>(CDX_BOND_ID, bond_id)) {
+        } else {
+          return Atom::ChiralType::CHI_UNSPECIFIED;
+        }
+        if (bond_id == cdx_id) {
+          auto atom = bond->getOtherAtom(center_atom);
+          if (!atom) {
+            // something went really wrong
+            return Atom::ChiralType::CHI_UNSPECIFIED;
+          }
+          auto pos = conf.getAtomPos(atom->getIdx()) - center;
+          double angle = atan2(pos.x, pos.y);
+          angles.push_back(std::make_pair(angle, bond->getIdx()));
+        }
+      }
+    }
+
+    std::sort(angles.begin(), angles.end());
+
+    // angles are now sorted in a clockwise rotation
+    INT_LIST bonds;
+    for (auto &angle : angles) {
+      bonds.push_back(angle.second);
+    }
+    auto nswaps = center_atom->getPerturbationOrder(bonds);
+    if (bonds.size() == 3 && center_atom->getTotalNumHs() == 1) {
+      ++nswaps;
+    }
+    // This is supports the HDot and HDash available in chemdraw
+    //  one is an implicit wedged hydrogen and one is a dashed hydrogen
+    if (center_atom->hasProp(CDX_IMPLICIT_HYDROGEN_STEREO) &&
+        center_atom->getProp<char>(CDX_IMPLICIT_HYDROGEN_STEREO) == 'w')
+      nswaps++;
+
+    if (nswaps % 2) {
+      return Atom::ChiralType::CHI_TETRAHEDRAL_CW;
+    }
+    return Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
+  }
+  
+  return Atom::ChiralType::CHI_UNSPECIFIED;
+}
+}  // namespace
 void checkChemDrawTetrahedralGeometries(RWMol &mol) {
   std::vector<std::pair<char, Atom *>> unsetTetrahedralAtoms;
+  Conformer *conf = nullptr;
+  if (mol.getNumConformers()) {
+    conf = &mol.getConformer();
+  }
+  bool chiralityChanged = false;
 
   for (auto atom : mol.atoms()) {
     // only deal with unspecified chiralities
@@ -177,30 +244,38 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
       atom->clearProp(CDX_CIP);
       continue;
     }
-
-    CDXAtomCIPType cip;
-    if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip)) {
-      Atom::ChiralType chiral_type;
-      // assign, possibly wrong, initial stereo.
-      // note: we can probably deduce this through CDX_BOND_ORDERING, but
-      //  I currenlty don't understand that well enough.
-      switch (cip) {
-        case kCDXCIPAtom_R:
-          atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-          unsetTetrahedralAtoms.push_back(std::make_pair('R', atom));
-        case kCDXCIPAtom_r:
-          atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-          unsetTetrahedralAtoms.push_back(std::make_pair('r', atom));
-          break;
-        case kCDXCIPAtom_S:
-          atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
-          unsetTetrahedralAtoms.push_back(std::make_pair('S', atom));
-        case kCDXCIPAtom_s:
-          atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
-          unsetTetrahedralAtoms.push_back(std::make_pair('s', atom));
-          break;
-        default:
-          break;
+    if (conf && !conf->is3D()) {
+      atom->setChiralTag(getChirality(mol, atom, *conf));
+      if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
+        chiralityChanged = true;
+      }
+    } else {
+      CDXAtomCIPType cip;
+      if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip)) {
+        Atom::ChiralType chiral_type;
+        // assign, possibly wrong, initial stereo.
+        // note: we can probably deduce this through CDX_BOND_ORDERING, but
+        //  I currenlty don't understand that well enough.
+        switch (cip) {
+          case kCDXCIPAtom_R:
+            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+            unsetTetrahedralAtoms.push_back(std::make_pair('R', atom));
+            break;
+          case kCDXCIPAtom_r:
+            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+            unsetTetrahedralAtoms.push_back(std::make_pair('r', atom));
+            break;
+          case kCDXCIPAtom_S:
+            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+            unsetTetrahedralAtoms.push_back(std::make_pair('S', atom));
+            break;
+          case kCDXCIPAtom_s:
+            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+            unsetTetrahedralAtoms.push_back(std::make_pair('s', atom));
+            break;
+          default:
+            break;
+        }
       }
     }
   }
@@ -209,7 +284,7 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
   // if necessary.
   //  This is an expensive way of doing this, but we only have stereo->cip not
   //  cip->stereo implemented currently
-  bool changed = false;
+
 
   for (auto cipatom : unsetTetrahedralAtoms) {
     CIPLabeler::assignCIPLabels(mol);
@@ -222,17 +297,17 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
             Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
           cipatom.second->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
           cipatom.second->updatePropertyCache();
-          changed = true;
+          chiralityChanged = true;
         } else if (cipatom.second->getChiralTag() ==
                    Atom::ChiralType::CHI_TETRAHEDRAL_CCW) {
           cipatom.second->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
           cipatom.second->updatePropertyCache();
-          changed = true;
+          chiralityChanged = true;
         }
       }
     }
   }
-  if (changed) {
+  if (chiralityChanged) {
     const bool cleanIt = true;
     const bool force = true;
     MolOps::assignStereochemistry(mol, cleanIt, force);
