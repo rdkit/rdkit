@@ -10609,3 +10609,22 @@ TEST_CASE("standard colours for highlighted atoms") {
     CHECK(match_count_hs == 1);
   }
 }
+
+TEST_CASE("drawString() uses drawColour") {
+  auto m = "CCC"_smiles;
+  REQUIRE(m);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawMolecule(*m);
+  drawer.drawString("default Z", RDGeom::Point2D(100, 20), true);
+  drawer.setColour(DrawColour(0.3, 0.3, 1.0));
+  drawer.drawString("blue X", RDGeom::Point2D(100, 200), true);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testDrawTextColour.svg");
+  outs << text;
+  outs.close();
+  // The default color:
+  CHECK(text.find("#000000' >Z</text>") != std::string::npos);
+  // The blue color:
+  CHECK(text.find("#4C4CFF' >X</text>") != std::string::npos);
+}
