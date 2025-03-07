@@ -14,7 +14,6 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
-#include <iostream>
 
 namespace RDKit {
 
