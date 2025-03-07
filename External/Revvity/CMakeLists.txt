@@ -169,7 +169,11 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 
   if(MSVC)
     # The nanotubes blow up the smiles writer stack on MSVC so increase it
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
+    set_target_properties(chemdraw6KCatchTest PROPERTIES LINK_FLAGS
+                   "/STACK:4194304")
+
+    # this sets everything I think
+    # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
   endif(MSVC)
 
   if(RDK_BUILD_PYTHON_WRAPPERS)
