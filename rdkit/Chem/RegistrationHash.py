@@ -26,7 +26,7 @@ import hashlib
 import json
 import logging
 import re
-from typing import Iterable, Optional
+from typing import Dict, Iterable, Optional
 
 from rdkit import Chem
 from rdkit.Chem import rdMolHash
@@ -115,7 +115,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
                  escape: Optional[str] = None, cxflag=DEFAULT_CXFLAG,
-                 enable_tautomer_hash_v2=False) -> set(HashLayer):
+                 enable_tautomer_hash_v2=False) -> Dict[HashLayer, str]:
   """
     Generate layers of data about that could be used to identify a molecule
 

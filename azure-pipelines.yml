@@ -4,6 +4,18 @@ trigger:
 - dev/*
 
 jobs:
+- job: Ubuntu_x64_minimallib_build
+  timeoutInMinutes: 120
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - task: Docker@2
+    displayName: 'Build MinimalLib JS bindings'
+    inputs:
+      command: build
+      Dockerfile: './Code/MinimalLib/docker/Dockerfile_CI'
+      buildContext: '.'
+      tags: 'latest' 
 - job: Ubuntu_x64
   timeoutInMinutes: 120
   pool:

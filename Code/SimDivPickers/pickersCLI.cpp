@@ -13,13 +13,8 @@
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <DataStructs/BitOps.h>
 
-#if 0
-#include <SimDivPickers/MaxMinPicker.h>
-#include <SimDivPickers/LeaderPicker.h>
-#else
 #include "MaxMinPicker.h"
 #include "LeaderPicker.h"
-#endif
 
 std::vector<RDKit::ROMol *> mols;
 std::vector<ExplicitBitVect *> fps;
@@ -39,7 +34,7 @@ static unsigned int LoadDatabase(FILE *fp) {
   char buffer[32768];
   unsigned int result = 0;
 
-  while (fgets(buffer, 327666, fp)) {
+  while (fgets(buffer, sizeof(buffer), fp)) {
     if (buffer[0] == '#' || buffer[0] == ' ' || buffer[0] == '\t') continue;
     char *ptr = buffer;
     while (*ptr && *ptr != ' ' && *ptr != '\t') ptr++;
@@ -58,13 +53,6 @@ static unsigned int LoadDatabase(FILE *fp) {
     }
 
     if (mol) {
-#if 0
-      if (*ptr) {
-        static std::string key("_Name");
-        mol->setProp(key,std::string(ptr));
-      }
-      mols.push_back(mol);
-#endif
       ExplicitBitVect *fp;
       fp = RDKit::MorganFingerprints::getFingerprintAsBitVect(*mol, 2, 2048);
       fps.push_back(fp);
@@ -185,23 +173,14 @@ int main(int argc, char *argv[]) {
   RDPickers::LeaderPicker ldpicker(threshold, 4);
 
   gettimeofday(&beg, (struct timezone *)0);
-#if 0
-  RDKit::INT_VECT iv = mmpicker.lazyPick(MyDist,poolsize,picksize+newpicks,
-                                         firstPicks,seed,threshold);
-#else
   RDKit::INT_VECT iv = ldpicker.lazyPick(MyDist, poolsize, picksize + newpicks,
                                          firstPicks, threshold, 16);
-#endif
   gettimeofday(&end, (struct timezone *)0);
   elapsed = (end.tv_sec + 0.000001 * end.tv_usec) -
             (beg.tv_sec + 0.000001 * beg.tv_usec);
   fprintf(stderr, "Elapsed time: %g secs\n", elapsed);
 
   unsigned int count = (unsigned int)iv.size();
-#if 0
-  for (unsigned int j=0; j<count; j++)
-    printf("%d\n",iv[j]);
-#endif
   for (unsigned int i = 0; i < std::min(iv.size(), (size_t)10); ++i) {
     for (unsigned int j = 0; j < i; ++j) {
       std::cerr << iv[i] << " " << iv[j] << ": " << MyDist(iv[i], iv[j])

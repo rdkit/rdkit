@@ -48,12 +48,6 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
   res.push_back(curr);
 
   const auto &neighs = pos->second;
-#if 0
-    std::cerr<<"depth: "<<depth<<" ring: "<<curr<<" size: "<<res.size()<<" neighs: "<<neighs.size()<<std::endl;
-    std::cerr<<"   ";
-    std::copy(neighs.begin(),neighs.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr<<"\n";
-#endif
   for (int neigh : neighs) {
     if (!done[neigh]) {
       pickFusedRings(neigh, neighMap, res, done, depth + 1);
@@ -112,13 +106,6 @@ void makeRingNeighborMap(const VECT_INT_VECT &brings,
       }
     }
   }
-#if 0
-    for (i = 0; i < nrings; i++) {
-      std::cerr<<"**************\n    "<<i<<"\n*************\n";
-      std::copy(neighMap[i].begin(),neighMap[i].end(),std::ostream_iterator<int>(std::cerr," "));
-      std::cerr<<"\n";
-    }
-#endif
 }
 
 }  // end of namespace RingUtils
@@ -277,13 +264,13 @@ bool incidentCyclicMultipleBond(const Atom *at) {
 bool incidentMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   const auto &mol = at->getOwningMol();
-  int deg = at->getDegree() + at->getNumExplicitHs();
+  auto deg = at->getDegree() + at->getNumExplicitHs();
   for (const auto bond : mol.atomBonds(at)) {
     if (!std::lround(bond->getValenceContrib(at))) {
       --deg;
     }
   }
-  return at->getExplicitValence() != deg;
+  return at->getValence(Atom::ValenceType::EXPLICIT) != deg;
 }
 
 bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
@@ -319,11 +306,6 @@ bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
   } else if (rup == 2) {
     aromatic = true;
   }
-#if 0
-    std::cerr <<" ring: ";
-    std::copy(ring.begin(),ring.end(),std::ostream_iterator<int>(std::cerr," "));
-    std::cerr <<" rlw: "<<rlw<<" rup: "<<rup<<" aromatic? "<<aromatic<<std::endl;
-#endif
   return aromatic;
 }
 
@@ -433,7 +415,7 @@ void applyHuckelToFused(
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }  // end while(1)
+  }    // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
@@ -489,7 +471,8 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   // than one double or triple bond. This is to handle
   // the situation:
   //   C1=C=NC=N1 (sf.net bug 1934360)
-  int nUnsaturations = at->getExplicitValence() - at->getDegree();
+  int nUnsaturations =
+      at->getValence(Atom::ValenceType::EXPLICIT) - at->getDegree();
   if (nUnsaturations > 1) {
     unsigned int nMult = 0;
     const auto &mol = at->getOwningMol();
@@ -615,10 +598,11 @@ ElectronDonorType getAtomDonorTypeArom(
 namespace RDKit {
 namespace MolOps {
 bool isBondOrderQuery(const Bond *bond) {
-  if (bond->getBondType() == Bond::BondType::UNSPECIFIED && bond->hasQuery()) {
-    auto label =
-        dynamic_cast<const QueryBond *>(bond)->getQuery()->getTypeLabel();
-    if (label == "BondOrder") {
+  if (bond->hasQuery()) {
+    auto q = dynamic_cast<const QueryBond *>(bond)->getQuery();
+    // complex bond type queries are also bond order queries!
+    if (q->getTypeLabel() == "BondOrder" ||
+        QueryOps::hasComplexBondTypeQuery(*q)) {
       return true;
     }
   }
@@ -640,7 +624,11 @@ int countAtomElec(const Atom *at) {
   const auto &mol = at->getOwningMol();
   for (const auto bond : mol.atomBonds(at)) {
     // don't count bonds that aren't actually contributing to the valence here:
-    if (!isBondOrderQuery(bond) && !std::lround(bond->getValenceContrib(at))) {
+    // if the bond is "real" (not undefined or zero), it always contributes to
+    // valence/degree, and in case the bond is a query bond with no order, we
+    // still need to check if the query is a bond query
+    if (!static_cast<Bond *>(bond)->getValenceContrib(at) &&
+        !isBondOrderQuery(bond)) {
       --degree;
     }
   }
@@ -667,7 +655,8 @@ int countAtomElec(const Atom *at) {
     // we detect this using the total unsaturation, because we
     // know that there aren't multiple unsaturations (detected
     // above in isAtomCandForArom())
-    int nUnsaturations = at->getExplicitValence() - at->getDegree();
+    int nUnsaturations =
+        at->getValence(Atom::ValenceType::EXPLICIT) - at->getDegree();
     if (nUnsaturations > 1) {
       res = 1;
     }
@@ -988,8 +977,8 @@ void setMMFFAromaticity(RWMol &mol) {
           // if not, move on
           if ((atom->getAtomicNum() != 6) &&
               (!((atom->getAtomicNum() == 7) &&
-                 ((atom->getExplicitValence() + atom->getNumImplicitHs()) ==
-                  4)))) {
+                 ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+                   atom->getNumImplicitHs()) == 4)))) {
             continue;
           }
           // loop over neighbors

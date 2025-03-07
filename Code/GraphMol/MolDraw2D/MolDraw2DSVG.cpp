@@ -324,8 +324,8 @@ void MolDraw2DSVG::clearDrawing() {
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
   d_os << "<rect";
   d_os << " style='opacity:1.0;fill:" << col << ";stroke:none'";
-  d_os << " width='" << MolDraw2D_detail::formatDouble(width()) << "' height='"
-       << MolDraw2D_detail::formatDouble(height()) << "'";
+  d_os << " width='" << MolDraw2D_detail::formatDouble(panelWidth())
+       << "' height='" << MolDraw2D_detail::formatDouble(panelHeight()) << "'";
   d_os << " x='" << MolDraw2D_detail::formatDouble(offset().x) << "' y='"
        << MolDraw2D_detail::formatDouble(offset().y) << "'";
   d_os << "> </rect>\n";

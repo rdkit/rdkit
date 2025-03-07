@@ -2301,8 +2301,8 @@ TEST_CASE("ring bond stereochemistry in CXSMILES") {
         {"C1CCCCC=CCCC1 |c:5|", "C1=C\\CCCCCCCC/1 |c:0|"},
         {"C1CCCC/C=C/CCC1 |c:5|", "C1=C\\CCCCCCCC/1 |c:0|"},
         {"C1=CCCCCCCCC1 |ctu:0|", "C1=CCCCCCCCC1 |ctu:0|"},
-        {"C=CCCCCCCCC |ctu:0|",
-         "C=CCCCCCCCC"}  // we don't write the markers for non-ring bonds
+        {"C=CCCCCCCCC |ctu:0|", "C=CCCCCCCCC"}
+        // we don't write the markers for non-ring bonds
     };
     for (const auto &[smi, val] : tests) {
       std::unique_ptr<RWMol> m{SmilesToMol(smi)};
@@ -2993,45 +2993,71 @@ TEST_CASE("Ignore atom map numbers") {
 }
 
 TEST_CASE("Github #7340", "[Reaction][CX][CXSmiles]") {
-  SECTION("Test getCXExtensions with a Vector"){
+  SECTION("Test getCXExtensions with a Vector") {
     // Create the MOL_SPTR_VECT to hold the molecular pointers
-    const auto mols = {  
-      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles, 
-      "C1CCCCC1 |$;label2;$|"_smiles, 
-      "CC(=O)O |$;label1;$|"_smiles, 
-      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles, 
-    }; 
-    
+    const auto mols = {
+        "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles,
+        "C1CCCCC1 |$;label2;$|"_smiles,
+        "CC(=O)O |$;label1;$|"_smiles,
+        "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles,
+    };
+
     std::vector<ROMol *> mol_vect;
     mol_vect.reserve(mols.size());
-    for (const auto& mol : mols) {
-        mol_vect.push_back(mol.get());
+    for (const auto &mol : mols) {
+      mol_vect.push_back(mol.get());
     }
 
     // Write to smiles to populate atom and bond output order properties
-    for (const auto& entry : mol_vect) {
+    for (const auto &entry : mol_vect) {
       MolToSmiles(*entry);
     }
 
-    std::string cxExt = SmilesWrite::getCXExtensions(mol_vect, RDKit::SmilesWrite::CXSmilesFields::CX_ALL);
+    std::string cxExt = SmilesWrite::getCXExtensions(
+        mol_vect, RDKit::SmilesWrite::CXSmilesFields::CX_ALL);
 
-    CHECK(cxExt == "|(0,1.5,;1.5,1.5,;1.5,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,),$_R1;;;;;label2;;;;;;label1;;;star_e;;star_e$,Sg:n:15::ht:::|");
+    CHECK(
+        cxExt ==
+        "|(0,1.5,;1.5,1.5,;1.5,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,;0,0,),$_R1;;;;;label2;;;;;;label1;;;star_e;;star_e$,Sg:n:15::ht:::|");
   }
 
-  SECTION("Expects an error"){
-    const auto mols = {  
-      "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles, 
-      "C1CCCCC1 |$;label2;$|"_smiles, 
-      "CC(=O)O |$;label1;$|"_smiles,
-      "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles, 
-    };  
+  SECTION("Expects an error") {
+    const auto mols = {
+        "CCO* |$;;;_R1$(0,0,0;1.5,0,0;1.5,1.5,0;0,1.5,0)|"_smiles,
+        "C1CCCCC1 |$;label2;$|"_smiles,
+        "CC(=O)O |$;label1;$|"_smiles,
+        "*-C-* |$star_e;;star_e$,Sg:n:1::ht|"_smiles,
+    };
 
     std::vector<ROMol *> mol_vect;
     mol_vect.reserve(mols.size());
-    for (const auto& mol : mols) {
-        mol_vect.push_back(mol.get());
+    for (const auto &mol : mols) {
+      mol_vect.push_back(mol.get());
     }
 
-    CHECK_THROWS_AS(SmilesWrite::getCXExtensions(mol_vect, RDKit::SmilesWrite::CXSmilesFields::CX_ALL), ValueErrorException);
+    CHECK_THROWS_AS(SmilesWrite::getCXExtensions(
+                        mol_vect, RDKit::SmilesWrite::CXSmilesFields::CX_ALL),
+                    ValueErrorException);
+  }
+}
+
+TEST_CASE("trimethylcyclohexane") {
+  SECTION("Basic") {
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+
+    auto smi = "C[C@H]1C[C@@H](C)C[C@@H](C)C1";
+    RDKit::v2::SmilesParse::SmilesParserParams smilesParserParams;
+    auto m1 = RDKit::v2::SmilesParse::MolFromSmiles(smi, smilesParserParams);
+    auto smiOut = RDKit::MolToCXSmiles(*m1);
+    CHECK(smiOut == "C[C@@H]1C[C@H](C)C[C@H](C)C1");
+  }
+  SECTION("WithEnhancedStereo") {
+    UseLegacyStereoPerceptionFixture useLegacy(false);
+
+    auto smi = "C[C@H]1C[C@@H](C)C[C@@H](C)C1 |o1:1,o2:6,o3:3|";
+    RDKit::v2::SmilesParse::SmilesParserParams smilesParserParams;
+    auto m1 = RDKit::v2::SmilesParse::MolFromSmiles(smi, smilesParserParams);
+    auto smiOut = RDKit::MolToCXSmiles(*m1);
+    CHECK(smiOut == "C[C@H]1C[C@H](C)C[C@H](C)C1 |o1:1,o2:3,o3:6|");
   }
 }

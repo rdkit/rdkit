@@ -28,6 +28,12 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#ifdef RDK_TEST_MULTITHREADED
+#include <csignal>
+#include <thread>
+#include <chrono>
+#endif
+
 using namespace RDKit;
 
 TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
@@ -1033,4 +1039,79 @@ TEST_CASE("github #8001: RMS pruning misses conformers") {
   ps.pruneRmsThresh = 1.0;
   cids = DGeomHelpers::EmbedMultipleConfs(*mol, 200, ps);
   CHECK(cids.size() == 4);
+}
+
+#ifdef RDK_TEST_MULTITHREADED
+
+using namespace std::chrono_literals;
+TEST_CASE("test interrupt") {
+  auto mol = "OCCCCCCCCCCCCCCCCCCCCCC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 1;
+  ps.numThreads = 8;
+  std::vector<int> cids;
+  // one thread for conformer generation
+  std::thread cgThread(
+      [&]() { cids = DGeomHelpers::EmbedMultipleConfs(*mol, 1000, ps); });
+  // another thread to raise SIGINT
+  std::thread interruptThread([]() {
+    // sleep for a bit to make sure the conformer generation has made some
+    // progress
+    std::this_thread::sleep_for(500ms);
+    std::raise(SIGINT);
+  });
+  cgThread.join();
+  interruptThread.join();
+  CHECK(cids.empty());
+}
+
+#endif
+
+TEST_CASE("github #8250: Seg fault in EmbedMultipleConfs") {
+  auto mol = R"CTAB(segmentation_fault
+     RDKit          3D
+
+ 14 16  0  0  1  0  0  0  0  0999 V2000
+   -2.6383   -1.3457   -2.3147 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -2.6416    0.2493   -2.4783 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -1.4682    0.5200    0.1489 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1790   -1.5540   -0.8344 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7790    3.4105   -1.7076 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0867    2.1687   -1.5159 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -2.2251   -0.8303   -3.3823 N   0  0  0  0  0  2  0  0  0  0  0  0
+   -1.3466    1.1554   -2.5476 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6987   -0.4961   -0.2729 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2293   -2.6650   -2.6584 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3198   -2.6432   -0.3452 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3334    1.7234   -0.1738 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1653   -0.2280    0.9964 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7484    0.9579   -2.1397 O   0  0  0  0  0  1  0  0  0  0  0  0
+  1 10  1  6
+  1  4  1  0
+  2  1  1  0
+  2 14  1  6
+  3  9  1  0
+  3 13  1  1
+  4 11  2  0
+  4  9  1  0
+  6  5  1  6
+ 12  6  1  0
+  7  2  1  0
+  7  1  1  0
+  8  2  1  0
+  8  6  1  0
+  9 13  1  0
+ 12  3  1  0
+M  RAD  2   7   2  14   2
+M  END)CTAB"_ctab;
+  REQUIRE(mol);
+  mol->debugMol(std::cerr);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 0xf00d;
+  // with the bug, this would segfault
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
+  CHECK(cids.size() == 10);
 }

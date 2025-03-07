@@ -481,7 +481,18 @@ python::object getAnnotationColour(const RDKit::MolDrawOptions &self) {
 void setAnnotationColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.annotationColour = pyTupleToDrawColour(tpl);
 }
-
+void setAtomNoteColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.atomNoteColour = pyTupleToDrawColour(tpl);
+}
+python::object getAtomNoteColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.atomNoteColour);
+}
+void setBondNoteColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.bondNoteColour = pyTupleToDrawColour(tpl);
+}
+python::object getBondNoteColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.bondNoteColour);
+}
 python::object getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.variableAttachmentColour);
 }
@@ -790,6 +801,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("setAnnotationColour", &RDKit::setAnnotationColour,
            python::args("self", "tpl"),
            "method for setting the annotation colour")
+      .def("setAtomNoteColour", &RDKit::setAtomNoteColour,
+           python::args("self", "tpl"),
+           "method for setting the atom note colour")
+      .def("getAtomNoteColour", &RDKit::getAtomNoteColour, python::args("self"),
+           "method returning the atom note colour")
+      .def("setBondNoteColour", &RDKit::setBondNoteColour,
+           python::args("self", "tpl"),
+           "method for setting the bond note colour")
+      .def("getBondNoteColour", &RDKit::getBondNoteColour, python::args("self"),
+           "method returning the bond note colour")
       .def("getLegendColour", &RDKit::getLegendColour, python::args("self"),
            "method returning the legend colour")
       .def("setLegendColour", &RDKit::setLegendColour,
@@ -862,8 +883,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset for the extra lines in a multiple bond as a fraction of mean"
           " bond length")
-      .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
-                     "fraction of empty space to leave around molecule")
+      .def_readwrite(
+          "padding", &RDKit::MolDrawOptions::padding,
+          "Fraction of empty space to leave around molecule.  Default=0.05.")
+      .def_readwrite("reagentPadding", &RDKit::MolDrawOptions::componentPadding,
+                     "Fraction of empty space to leave around each component"
+                     " of a reaction drawing.  Default=0.0.")
       .def_readwrite(
           "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
           "if positive, this overrides the default line width for bonds")
@@ -988,6 +1013,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "with complex query symbols A, Q, X, M, optionally followed "
           "by H if hydrogen is included (except for AH, which stays *). "
           "Default is true")
+      .def_readwrite("bracketsAroundAtomLists",
+                     &RDKit::MolDrawOptions::bracketsAroundAtomLists,
+                     "Whether to put brackets round atom lists in query atoms."
+                     "  Default is true.")
+      .def_readwrite(
+          "standardColoursForHighlightedAtoms",
+          &RDKit::MolDrawOptions::standardColoursForHighlightedAtoms,
+          "If true, highlighted hetero atoms are drawn in standard colours"
+              " rather than black.  Default=False")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            python::args("self"),
            "method for getting the colour of variable attachment points")
@@ -1429,10 +1463,9 @@ https://en.wikipedia.org/wiki/Wikipedia:Manual_of_Style/Chemistry/Structure_draw
               (python::arg("mol"), python::arg("confId") = -1),
               "Calculate the mean bond length for the molecule.");
   python::def("SetDarkMode",
-              (void (*)(RDKit::MolDrawOptions &)) & RDKit::setDarkMode,
+              (void (*)(RDKit::MolDrawOptions &))&RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDrawOptions object");
-  python::def("SetDarkMode",
-              (void (*)(RDKit::MolDraw2D &)) & RDKit::setDarkMode,
+  python::def("SetDarkMode", (void (*)(RDKit::MolDraw2D &))&RDKit::setDarkMode,
               python::args("d2d"), "set dark mode for a MolDraw2D object");
   python::def("SetMonochromeMode", RDKit::setMonochromeMode_helper1,
               (python::arg("options"), python::arg("fgColour"),
