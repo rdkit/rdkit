@@ -305,9 +305,9 @@ int testMolSup() {
     std::shared_ptr<ROMol> nmol;
     nmol.reset(maesup.next());
     const Atom *atom = nmol->getAtomWithIdx(0);
-    TEST_ASSERT(atom->getResidueName() == "ARG ");
-    TEST_ASSERT(atom->getChainId() == "A");
-    TEST_ASSERT(atom->getResidueNumber() == 5);
+    TEST_ASSERT(getResidueName(atom) == "ARG ");
+    TEST_ASSERT(getChainId(atom) == "A");
+    TEST_ASSERT(getResidueNumber(atom) == 5);
   }
 #endif
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT

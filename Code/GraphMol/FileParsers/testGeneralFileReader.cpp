@@ -224,9 +224,9 @@ void testMae() {
 
   std::shared_ptr<ROMol> nmol2(cmaesup->next());
   const Atom *atom = nmol2->getAtomWithIdx(0);
-  TEST_ASSERT(atom->getResidueName() == "ARG ");
-  TEST_ASSERT(atom->getChainId() == "A");
-  TEST_ASSERT(atom->getResidueNumber() == 5);
+  TEST_ASSERT(getResidueName(atom) == "ARG ");
+  TEST_ASSERT(getChainId(atom) == "A");
+  TEST_ASSERT(getResidueNumber(atom) == 5);
 #endif
 #endif
 }

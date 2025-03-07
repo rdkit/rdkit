@@ -385,39 +385,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
     return mapno;
   }
 
-  //! Get the residue name of the atom. If no residue name exists, an empty
-  //! string is returned
-  std::string getResidueName() const;
-
-  //! Set the residue name of the atom.
-  void setResidueName(const std::string &residue_name);
-
-  //! Get the residue number of the atom. If no residue number exists, 0
-  //! is returned
-  int getResidueNumber() const;
-
-  //! Set the residue number of the atom.
-  void setResidueNumber(int residue_number);
-
-  //! Get the residue chain id of the atom. If no chain id exists, an empty
-  //! string is returned
-  std::string getChainId() const;
-
-  //! Set the residue chain id of the atom.
-  void setChainId(const std::string &chain_id);
-
-  //! Get the residue insertion code of the atom. If no insertion code exists,
-  //! an empty string is returned
-  std::string getInsertionCode() const;
-
-  //! Set the residue insertion code of the atom.
-  void setInsertionCode(const std::string &insertion_code);
-
  protected:
-  //! Get the residue information on the atom
-  const AtomPDBResidueInfo *getPDBResidueInfo() const;
-  AtomPDBResidueInfo *getPDBResidueInfo();
-
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
   //! sets our owning molecule
@@ -473,9 +441,41 @@ RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
 RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
 //! returns the number of pi electrons on the atom
 RDKIT_GRAPHMOL_EXPORT unsigned int numPiElectrons(const Atom &atom);
+
+//! Get the residue name of the atom. If no residue name exists, an empty
+//! string is returned
+RDKIT_GRAPHMOL_EXPORT std::string getResidueName(const Atom *atom);
+
+//! Set the residue name of the atom.
+RDKIT_GRAPHMOL_EXPORT void setResidueName(Atom *atom,
+                                          const std::string &residue_name);
+
+//! Get the residue number of the atom. If no residue number exists, 0
+//! is returned
+RDKIT_GRAPHMOL_EXPORT int getResidueNumber(const Atom *atom);
+
+//! Set the residue number of the atom.
+RDKIT_GRAPHMOL_EXPORT void setResidueNumber(Atom *atom, int residue_number);
+
+//! Get the residue chain id of the atom. If no chain id exists, an empty
+//! string is returned
+RDKIT_GRAPHMOL_EXPORT std::string getChainId(const Atom *atom);
+
+//! Set the residue chain id of the atom.
+RDKIT_GRAPHMOL_EXPORT void setChainId(Atom *atom, const std::string &chain_id);
+
+//! Get the residue insertion code of the atom. If no insertion code exists,
+//! an empty string is returned
+RDKIT_GRAPHMOL_EXPORT std::string getInsertionCode(const Atom *atom);
+
+//! Set the residue insertion code of the atom.
+RDKIT_GRAPHMOL_EXPORT void setInsertionCode(Atom *atom,
+                                            const std::string &insertion_code);
+
 };  // namespace RDKit
 
 //! allows Atom objects to be dumped to streams
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &target,
                                                const RDKit::Atom &at);
+
 #endif

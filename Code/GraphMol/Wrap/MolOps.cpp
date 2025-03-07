@@ -190,11 +190,9 @@ ROMol *renumberAtomsHelper(const ROMol &mol, python::object &pyNewOrder) {
 
 namespace {
 std::string getResidue(const ROMol &, const Atom *at) {
-  return at->getResidueName();
+  return getResidueName(at);
 }
-std::string getChainId(const ROMol &, const Atom *at) {
-  return at->getChainId();
-}
+std::string getChainId(const ROMol &, const Atom *at) { return getChainId(at); }
 }  // namespace
 python::dict splitMolByPDBResidues(const ROMol &mol, python::object pyWhiteList,
                                    bool negateList) {
