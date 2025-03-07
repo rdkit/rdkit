@@ -14,7 +14,7 @@ namespace RDKit::SynthonSpaceSearch {
 SynthonSpaceHitSet::SynthonSpaceHitSet(
     const SynthonSet &reaction, const std::vector<std::vector<size_t>> &stu,
     const std::vector<std::unique_ptr<ROMol>> &fragSet)
-    : reactionId(reaction.getId()) {
+    : d_reaction(&reaction) {
   synthonsToUse.reserve(stu.size());
   const auto &synthons = reaction.getSynthons();
   for (size_t i = 0; i < stu.size(); ++i) {

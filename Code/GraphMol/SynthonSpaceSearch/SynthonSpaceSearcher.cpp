@@ -112,7 +112,7 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   }
   if (prod) {
     const auto prodName =
-        details::buildProductName(hitset->reactionId, synthNames);
+        details::buildProductName(hitset->d_reaction->getId(), synthNames);
     prod->setProp<std::string>(common_properties::_Name, prodName);
   }
   return prod;
@@ -305,10 +305,10 @@ void SynthonSpaceSearcher::buildHits(
   } else {
     std::sort(hitsets.begin(), hitsets.end(),
               [](const auto &hs1, const auto &hs2) -> bool {
-                if (hs1->reactionId == hs2->reactionId) {
+                if (hs1->d_reaction->getId() == hs2->d_reaction->getId()) {
                   return hs1->numHits < hs2->numHits;
                 }
-                return hs1->reactionId < hs2->reactionId;
+                return hs1->d_reaction->getId() < hs2->d_reaction->getId();
               });
   }
   buildAllHits(hitsets, endTime, timedOut, results);
@@ -337,7 +337,7 @@ void SynthonSpaceSearcher::buildAllHits(
     }
     details::Stepper stepper(numSynthons);
 
-    const auto &reaction = getSpace().getReaction(hitset->reactionId);
+    const auto &reaction = getSpace().getReaction(hitset->d_reaction->getId());
     std::vector<size_t> theseSynthNums(reaction->getSynthons().size(), 0);
     // process the synthons
     while (stepper.d_currState[0] != numSynthons[0]) {

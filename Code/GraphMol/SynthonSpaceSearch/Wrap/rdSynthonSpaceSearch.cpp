@@ -14,6 +14,7 @@
 #include <RDBoost/Wrap.h>
 
 #include <GraphMol/ROMol.h>
+#include <GraphMol/RascalMCES/RascalOptions.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 
 namespace python = boost::python;
@@ -90,6 +91,22 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper(
     throw_runtime_error("FingerprintSearch cancelled");
   }
   return results;
+}
+
+SynthonSpaceSearch::SearchResults rascalSearch_helper(
+    SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
+    const python::object &py_rascalOptions, const python::object &py_params) {
+  RascalMCES::RascalOptions rascalOptions;
+  rascalOptions = python::extract<RascalMCES::RascalOptions>(py_rascalOptions);
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+  {
+    NOGIL gil;
+    return self.rascalSearch(query, rascalOptions, params);
+  }
 }
 
 void summariseHelper(SynthonSpaceSearch::SynthonSpace &self) {
@@ -256,6 +273,13 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
             python::arg("params") = python::object()),
            "Does a fingerprint search in the SynthonSpace using the"
            " FingerprintGenerator passed in.")
+      .def("RascalSearch", &rascalSearch_helper,
+           (python::arg("self"), python::arg("query"),
+            python::arg("rascalOptions"),
+            python::arg("params") = python::object()),
+           "Does a search using the Rascal similarity score.  The similarity"
+           " threshold used is provided by rascalOptions, and the one in"
+           " params is ignored.")
       .def(
           "BuildSynthonFingerprints",
           &SynthonSpaceSearch::SynthonSpace::buildSynthonFingerprints,

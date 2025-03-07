@@ -192,7 +192,6 @@ std::vector<std::vector<size_t>> getHitSynthons(
     }
     // if the fragment didn't match anything, the whole thing's a bust.
     if (!fragMatched) {
-      synthonsToUse.clear();
       return retSynthons;
     }
   }

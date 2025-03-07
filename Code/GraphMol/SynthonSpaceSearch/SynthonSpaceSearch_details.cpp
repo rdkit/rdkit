@@ -817,7 +817,7 @@ std::string buildProductName(
     }
     prodName += hitset->synthonsToUse[i][fragNums[i]].first;
   }
-  prodName += ";" + hitset->reactionId;
+  prodName += ";" + hitset->d_reaction->getId();
   return prodName;
 }
 

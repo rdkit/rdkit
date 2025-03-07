@@ -121,7 +121,9 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSet {
   // MAX_CONNECTOR_NUM+1 bits showing which connectors are present in all the
   // synthon sets.
   boost::dynamic_bitset<> d_connectors;
-  // and the connector patterns for each synthon set.
+  // And the connector patterns for each synthon set. If synthon set 0
+  // has connectors 1 and 3, then d_synthConnPatts[0] will have bits
+  // 1 and 3 set.
   std::vector<boost::dynamic_bitset<>> d_synthConnPatts;
 
   // The connector regions of a molecule are the pieces of up to 3 bonds from
