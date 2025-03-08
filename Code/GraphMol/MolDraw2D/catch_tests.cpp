@@ -10151,7 +10151,7 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
     REQUIRE_THROWS_AS(
         drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
                                           atomRads, bondMults),
-        Invar::Invariant);
+        ValueErrorException);
   }
   {
     MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
@@ -10162,7 +10162,7 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
     REQUIRE_THROWS_AS(
         drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
                                           atomRads, bondMults),
-        Invar::Invariant);
+        ValueErrorException);
   }
   {
     MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
@@ -10182,7 +10182,7 @@ TEST_CASE("idx out of bounds should not cause a segfault") {
     REQUIRE_THROWS_AS(
         drawer.drawMoleculeWithHighlights(*m, "nocrash", atomCols, bondCols,
                                           atomRads, bondMults),
-        Invar::Invariant);
+        ValueErrorException);
   }
 }
 
@@ -10671,4 +10671,23 @@ TEST_CASE("standard colours for highlighted atoms") {
                       std::sregex_iterator()));
     CHECK(match_count_hs == 1);
   }
+}
+
+TEST_CASE("drawString() uses drawColour") {
+  auto m = "CCC"_smiles;
+  REQUIRE(m);
+  MolDraw2DSVG drawer(300, 300, -1, -1, NO_FREETYPE);
+  drawer.drawMolecule(*m);
+  drawer.drawString("default Z", RDGeom::Point2D(100, 20), true);
+  drawer.setColour(DrawColour(0.3, 0.3, 1.0));
+  drawer.drawString("blue X", RDGeom::Point2D(100, 200), true);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testDrawTextColour.svg");
+  outs << text;
+  outs.close();
+  // The default color:
+  CHECK(text.find("#000000' >Z</text>") != std::string::npos);
+  // The blue color:
+  CHECK(text.find("#4C4CFF' >X</text>") != std::string::npos);
 }
