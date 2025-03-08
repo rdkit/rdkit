@@ -34,6 +34,8 @@
 
 namespace RDKit {
 
+// This is currently unimplemented waiting on full bracket support in the rdkit
+//  or support for expansion inside the RDChemDrawLib
 bool parse_bracket(CDXBracketedGroup &bracket, PageData &pagedata) {
   // Get the contained atoms/bonds in the bracket
   for (auto &attachment : bracket.ContainedObjects()) {
@@ -44,10 +46,10 @@ bool parse_bracket(CDXBracketedGroup &bracket, PageData &pagedata) {
       for (auto &bracketdata : bracketattachment.ContainedObjects()) {
         CDXDatumID bracketid = (CDXDatumID)bracketdata.second->GetTag();
         if (bracketid == kCDXObj_CrossingBond) {
-          CDXCrossingBond &crossingbond =
-              (CDXCrossingBond &)(*attachment.second);
-          crossingbond.m_bondID;       // bond that crosses brackets
-          crossingbond.m_innerAtomID;  // atom within brackets
+          //CDXCrossingBond &crossingbond =
+          //    (CDXCrossingBond &)(*attachment.second);
+          // XX unimplmented crossingbond.m_bondID;       // bond that crosses brackets
+          // XX unimplmented crossingbond.m_innerAtomID;  // atom within brackets
         }
       }
     }
