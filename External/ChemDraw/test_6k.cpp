@@ -92,9 +92,13 @@ bool hasNonSupportedFeatures(const std::string &fname) {
 
 TEST_CASE("Round TRIP") {
   std::string path =
-      std::string(getenv("RDBASE")) + "External/Revvity/test_data/CDXML6K/";
+      std::string(getenv("RDBASE")) + "/External/ChemDraw/test_data/CDXML6K/";
 
   SECTION("round trip") {
+    // if we can't find the CDXML6K path, then don't run the test
+    if(!std::filesystem::exists(path)) {
+      return;
+    }
     int failed = 0;
     int saniFailed = 0;
     int nomol = 0;
