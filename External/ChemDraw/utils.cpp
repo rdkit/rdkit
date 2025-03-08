@@ -107,7 +107,6 @@ struct FragmentReplacement {
         replacement_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
 
     // Find the connecting atoms and and do the replacement
-    size_t i = 0;
     for (auto bond : mol.atomBonds(replacement_atom)) {
       // find the position of the attachement bonds in the bond ordering
       auto bond_id = bond->getProp<unsigned int>(CDX_BOND_ID);
@@ -170,7 +169,7 @@ bool replaceFragments(RWMol &mol) {
 namespace {
 Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
   if (center_atom->hasProp(CDX_BOND_ORDERING)) {
-    std::vector<int> &bond_ordering =
+    std::vector<int> bond_ordering =
         center_atom->getProp<std::vector<int>>(CDX_BOND_ORDERING);
     if (bond_ordering.size() < 3) {
       return Atom::ChiralType::CHI_UNSPECIFIED;
@@ -222,9 +221,9 @@ Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
       nswaps++;
 
     if (nswaps % 2) {
-      return Atom::ChiralType::CHI_TETRAHEDRAL_CW;
+      return Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
     }
-    return Atom::ChiralType::CHI_TETRAHEDRAL_CCW;
+    return Atom::ChiralType::CHI_TETRAHEDRAL_CW;
   }
   
   return Atom::ChiralType::CHI_UNSPECIFIED;
@@ -249,42 +248,41 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
       if (atom->getChiralTag() != Atom::ChiralType::CHI_UNSPECIFIED) {
         chiralityChanged = true;
       }
-    } else {
+    }
+    // If we have a cip code, might as well check it too
       CDXAtomCIPType cip;
       if (atom->getPropIfPresent<CDXAtomCIPType>(CDX_CIP, cip)) {
-        Atom::ChiralType chiral_type;
         // assign, possibly wrong, initial stereo.
         // note: we can probably deduce this through CDX_BOND_ORDERING, but
         //  I currenlty don't understand that well enough.
         switch (cip) {
           case kCDXCIPAtom_R:
-            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+            if(!chiralityChanged) atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
             unsetTetrahedralAtoms.push_back(std::make_pair('R', atom));
             break;
           case kCDXCIPAtom_r:
-            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+            if(!chiralityChanged) atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
             unsetTetrahedralAtoms.push_back(std::make_pair('r', atom));
             break;
           case kCDXCIPAtom_S:
-            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
+            if(!chiralityChanged) atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CW);
             unsetTetrahedralAtoms.push_back(std::make_pair('S', atom));
             break;
           case kCDXCIPAtom_s:
-            atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+            if(!chiralityChanged) atom->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
             unsetTetrahedralAtoms.push_back(std::make_pair('s', atom));
             break;
           default:
             break;
         }
       }
-    }
+    
   }
 
   // Now that we have missing chiralities, let's check the CIP codes and reset
   // if necessary.
   //  This is an expensive way of doing this, but we only have stereo->cip not
   //  cip->stereo implemented currently
-
 
   for (auto cipatom : unsetTetrahedralAtoms) {
     CIPLabeler::assignCIPLabels(mol);
