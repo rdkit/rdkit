@@ -30,7 +30,10 @@
 // CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
+#ifndef UTF8_ITERATOR_H
+#define UTF8_ITERATOR_H
+
 #include <string>
 #include <stdexcept>
 #include <cstdint>
@@ -43,8 +46,17 @@
 class UTF8Iterator {
 public:
     UTF8Iterator(const std::string& str)
-        : data(str), pos(0), currentCodePoint(DecodeNext()) {}
+      : data(str), pos(0), currentCodePoint(DecodeNext()) {}
 
+    size_t      GetUTF8Length() const {
+      UTF8Iterator iter(data);
+      int count = 0;
+      for(; !iter.AtEnd(); iter++, count++) {}
+      return count;
+    }
+
+    size_t GetByteIndex() const { return pos; }
+  
     // Returns the current Unicode code point without advancing the iterator
     uint32_t GetCharacter() const {
         if (AtEnd())
@@ -64,6 +76,13 @@ public:
             currentCodePoint = DecodeNext();
         return temp; // Return old state
     }
+  
+    UTF8Iterator& operator++() {
+        if (!AtEnd())
+            currentCodePoint = DecodeNext();
+        return *this;
+    }
+    
 
 private:
     const std::string& data;
@@ -103,3 +122,4 @@ private:
         return codePoint;
     }
 };
+#endif
