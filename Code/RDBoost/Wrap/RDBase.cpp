@@ -71,7 +71,7 @@ struct PyLogStream : std::ostream, std::streambuf {
     }
   }
 
-  ~PyLogStream() {
+  ~PyLogStream() override {
 #if PY_VERSION_HEX < 0x30d0000
     if (!_Py_IsFinalizing()) {
 #else
