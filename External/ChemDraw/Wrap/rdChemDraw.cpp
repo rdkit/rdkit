@@ -195,4 +195,13 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
        python::arg("removeHs") = false),
       "construct a tuple of ChemicalReactions from a string in ChemDraw format");
 
+
+  python::enum_<CDXFormat>("CDXFormat")
+    .value("CDX", CDXFormat::CDX)
+    .value("CDXML", CDXFormat::CDXML);
+
+    python::def(
+	"MolToChemDraw", RDKit::MolToChemDraw,
+	(python::arg("mol"), python::arg("format")=CDXFormat::CDXML),
+	 "Convert a molecule into a chemdraw string using the specified format");
 }
