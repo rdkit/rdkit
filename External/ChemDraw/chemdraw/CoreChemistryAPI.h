@@ -4,6 +4,9 @@
 #include <boost/lexical_cast.hpp>
 #include <string>
 
+// Modified By Glysade to setup exports propertly for the RDKit
+//  Build System.
+
 #ifdef __linux
 // conda-clang can set this, the linux version works just
 //  fine now, so unset mac specific stuff

@@ -1,4 +1,4 @@
-// TEMPORARY PLACE HOLDER
+// Modified by Glysade Extracts only the used math functions
 
 // BSD 3-Clause License
 // 
@@ -34,7 +34,6 @@
 #include <math.h>
 
 namespace cs {
-  double Round(double v) {
-    return round(v);
-  }
+inline int		Round (const double& arg)	{ return (arg > 0) ? (int)(arg + 0.5) : (int)(arg - 0.5); }
+inline double	Round (const double& arg, double numDecimals)	{ return Round(arg * std::pow(10, numDecimals)) / std::pow(10, numDecimals); }
 }

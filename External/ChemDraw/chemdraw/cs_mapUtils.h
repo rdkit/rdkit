@@ -1,8 +1,8 @@
-// TEMPORARY PLACE HOLDER
+// Reimplementation of missing csInitMap
 
 // BSD 3-Clause License
 // 
-// Copyright (c) 1986-2025, CambridgeSoft Corp, Revvity Inc and others.
+// Copyright (c) 2025, Glysade Inc
 // 
 // All rights reserved.
 // 
