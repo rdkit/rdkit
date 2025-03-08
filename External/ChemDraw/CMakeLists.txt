@@ -96,7 +96,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     else()
       ADD_DEFINITIONS("-DTARGET_API_LIB -D__linux -DHAVE_EXPAT_CONFIG_H")
       # we don't really control chemdraw source code, so suppress warnings
-      target_compile_options(ChemDraw PRIVATE -w)
+      target_compile_options(ChemDraw PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined)
     endif()
       
     install(TARGETS ChemDraw DESTINATION ${RDKit_LibDir})
