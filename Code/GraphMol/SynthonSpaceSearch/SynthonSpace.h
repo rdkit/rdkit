@@ -34,6 +34,8 @@
 
 #include <RDGeneral/export.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
+#include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSet.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 
@@ -178,6 +180,21 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   SearchResults substructureSearch(
       const ROMol &query,
+      const SubstructMatchParameters &matchParams = SubstructMatchParameters(),
+      const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
+
+  /*!
+   * Perform a substructure search with the given generalized query
+   * molecule across the synthonspace library.  Duplicate SMILES strings
+   * produced by different reactions will be returned.
+   *
+   * @param query : query molecule
+   * @param params : (optional) settings for the search
+   * @return : the hits as a SearchResults object.
+   */
+  SearchResults substructureSearch(
+      const GeneralizedSubstruct::ExtendedQueryMol &query,
+      const SubstructMatchParameters &matchParams = SubstructMatchParameters(),
       const SynthonSpaceSearchParams &params = SynthonSpaceSearchParams());
 
   /*!
@@ -332,6 +349,17 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
   // For the similarity search, this records the generator used for
   // creating synthon fingerprints that are read from a binary file.
   std::string d_fpType;
+
+  SearchResults extendedSearch(const MolBundle &query,
+                               const SubstructMatchParameters &matchParams,
+                               const SynthonSpaceSearchParams &params);
+  SearchResults extendedSearch(
+      const GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T &query,
+      const SubstructMatchParameters &matchParams,
+      const SynthonSpaceSearchParams &params);
+  SearchResults extendedSearch(const TautomerQuery &query,
+                               const SubstructMatchParameters &matchParams,
+                               const SynthonSpaceSearchParams &params);
 };
 
 /*!

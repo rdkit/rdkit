@@ -89,7 +89,6 @@ bool checkConnectorRegions(
   const auto &rxnConnRegs = reaction.getConnectorRegions();
   const auto &rxnConnRegSmis = reaction.getConnectorRegionSmiles();
   const auto &rxnConnRegFPs = reaction.getConnRegFPs();
-  MatchVectType dontCare;
   for (size_t i = 0; i < connRegFPs.size(); ++i) {
     bool connRegFound = false;
     for (size_t j = 0; j < connRegFPs[i].size(); ++j) {
@@ -101,7 +100,7 @@ bool checkConnectorRegions(
         if (connRegFPs[i][j]->getNumOnBits() <=
                 rxnConnRegFPs[k]->getNumOnBits() &&
             AllProbeBitsMatch(*connRegFPs[i][j], *rxnConnRegFPs[k]) &&
-            SubstructMatch(*rxnConnRegs[k], *connRegs[i][j], dontCare)) {
+            !SubstructMatch(*rxnConnRegs[k], *connRegs[i][j]).empty()) {
           connRegFound = true;
           break;
         }
@@ -164,7 +163,6 @@ std::vector<std::vector<size_t>> getHitSynthons(
     const std::vector<std::unique_ptr<ROMol>> &molFrags,
     const std::vector<boost::dynamic_bitset<>> &passedScreens,
     const SynthonSet &reaction, const std::vector<unsigned int> &synthonOrder) {
-  MatchVectType dontCare;
   std::vector<boost::dynamic_bitset<>> synthonsToUse;
   std::vector<std::vector<size_t>> retSynthons;
   for (const auto &synthonSet : reaction.getSynthons()) {
@@ -184,7 +182,7 @@ std::vector<std::vector<size_t>> getHitSynthons(
     for (size_t j = 0; j < synthonsSet.size(); ++j) {
       if (passedScreensSet[j]) {
         if (const auto &[id, synthon] = synthonsSet[j];
-            SubstructMatch(*synthon->getSearchMol(), *molFrags[i], dontCare)) {
+            !SubstructMatch(*synthon->getSearchMol(), *molFrags[i]).empty()) {
           synthonsToUse[synthonOrder[i]][j] = true;
           fragMatched = true;
         }
@@ -402,8 +400,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
 }
 
 bool SynthonSpaceSubstructureSearcher::verifyHit(const ROMol &hit) const {
-  MatchVectType dontCare;
-  return SubstructMatch(hit, getQuery(), dontCare);
+  return !SubstructMatch(hit, getQuery(), d_matchParams).empty();
 }
 
 void SynthonSpaceSubstructureSearcher::getConnectorRegions(

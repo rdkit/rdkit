@@ -38,7 +38,8 @@ import unittest
 from pathlib import Path
 
 from rdkit import Chem, rdBase
-from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator, rdRascalMCES
+from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator,
+                        rdRascalMCES, rdGeneralizedSubstruct)
 
 
 class TestCase(unittest.TestCase):
@@ -52,7 +53,12 @@ class TestCase(unittest.TestCase):
     synthonspace.ReadDBFile(fName)
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.maxHits = 10
-    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"), params)
+    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"), params=params)
+    self.assertEqual(10, len(results.GetHitMolecules()))
+    smParams = Chem.SubstructMatchParameters()
+    results = synthonspace.SubstructureSearch(Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1"),
+                                              substructMatchParams=smParams,
+                                              params=params)
     self.assertEqual(10, len(results.GetHitMolecules()))
 
   def testFingerprintSearch(self):
@@ -100,7 +106,6 @@ class TestCase(unittest.TestCase):
     self.assertRaises(RuntimeError, synthonspace.ReadTextFile, fName)
 
   def testRascalSearch(self):
-    print("rascal")
     fName = self.sssDir / "Syntons_5567.csv"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadTextFile(fName)
@@ -112,6 +117,16 @@ class TestCase(unittest.TestCase):
                                              rascalOpts, params)
     self.assertEqual(10, len(results.GetHitMolecules()))
 
-
+  def testExtendedSubsructureSearch(self):
+    fName = self.sssDir / "extended_query.csv"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadTextFile(fName)
+    self.assertEqual(5, synthonspace.GetNumReactions())
+    m = Chem.MolFromSmarts('[#6]-*.c1nc2cccnc2n1 |m:1:3.10|')
+    xqry = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
+    results = synthonspace.SubstructureSearch(xqry)
+    self.assertEqual(12, len(results.GetHitMolecules()))
+  
+    
 if __name__ == "__main__":
   unittest.main()

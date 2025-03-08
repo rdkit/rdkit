@@ -25,9 +25,11 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
  public:
   SynthonSpaceSubstructureSearcher() = delete;
   SynthonSpaceSubstructureSearcher(const ROMol &query,
+                                   const SubstructMatchParameters &matchParams,
                                    const SynthonSpaceSearchParams &params,
                                    SynthonSpace &space)
-      : SynthonSpaceSearcher(query, params, space) {}
+      : SynthonSpaceSearcher(query, params, space),
+        d_matchParams(matchParams) {}
 
   std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
       const std::vector<std::unique_ptr<ROMol>> &fragSet,
@@ -41,6 +43,7 @@ class SynthonSpaceSubstructureSearcher : public SynthonSpaceSearcher {
   // the query fragment set.
   std::vector<std::unique_ptr<ExplicitBitVect>> d_pattFPsPool;
   std::vector<std::pair<void *, ExplicitBitVect *>> d_pattFPs;
+  SubstructMatchParameters d_matchParams;
 
   // Likewise, the connector regions and connector region
   // fingerprints.

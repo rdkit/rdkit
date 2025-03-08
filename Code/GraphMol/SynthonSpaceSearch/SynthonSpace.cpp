@@ -26,6 +26,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceFingerprintSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceRascalSearcher.h>
@@ -105,11 +106,52 @@ std::uint64_t SynthonSpace::getNumProducts() const { return d_numProducts; }
 std::string SynthonSpace::getInputFileName() const { return d_fileName; }
 
 SearchResults SynthonSpace::substructureSearch(
-    const ROMol &query, const SynthonSpaceSearchParams &params) {
+    const ROMol &query, const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params) {
   PRECONDITION(query.getNumAtoms() != 0, "Search query must contain atoms.");
   ControlCHandler::reset();
-  SynthonSpaceSubstructureSearcher ssss(query, params, *this);
+  SynthonSpaceSubstructureSearcher ssss(query, matchParams, params, *this);
   return ssss.search();
+}
+
+SearchResults SynthonSpace::substructureSearch(
+    const GeneralizedSubstruct::ExtendedQueryMol &query,
+    const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params) {
+  SearchResults results;
+  if (std::holds_alternative<GeneralizedSubstruct::ExtendedQueryMol::RWMol_T>(
+          query.xqmol)) {
+    results = substructureSearch(
+        *std::get<GeneralizedSubstruct::ExtendedQueryMol::RWMol_T>(query.xqmol),
+        matchParams, params);
+#ifdef RDK_USE_BOOST_SERIALIZATION
+  } else if (std::holds_alternative<
+                 GeneralizedSubstruct::ExtendedQueryMol::MolBundle_T>(
+                 query.xqmol)) {
+    results = extendedSearch(
+        *std::get<GeneralizedSubstruct::ExtendedQueryMol::MolBundle_T>(
+            query.xqmol),
+        matchParams, params);
+  } else if (std::holds_alternative<
+                 GeneralizedSubstruct::ExtendedQueryMol::TautomerQuery_T>(
+                 query.xqmol)) {
+    results = extendedSearch(
+        *std::get<GeneralizedSubstruct::ExtendedQueryMol::TautomerQuery_T>(
+            query.xqmol),
+        matchParams, params);
+  } else if (std::holds_alternative<
+                 GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T>(
+                 query.xqmol)) {
+    results = extendedSearch(
+        std::get<GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T>(
+            query.xqmol),
+        matchParams, params);
+  }
+#endif
+  else {
+    UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
+  }
+  return results;
 }
 
 SearchResults SynthonSpace::fingerprintSearch(
@@ -458,7 +500,7 @@ void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
     readSynthons(0, numSynthons, fileMap, synthonPos, d_synthonPool);
   }
 #else
-  readSynthons(0, numSynthons, fileMap, synthonPos, d_synthonPool);
+    readSynthons(0, numSynthons, fileMap, synthonPos, d_synthonPool);
 #endif
   if (!std::is_sorted(
           d_synthonPool.begin(), d_synthonPool.end(),
@@ -482,8 +524,8 @@ void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
                   d_fileMajorVersion, d_reactions);
   }
 #else
-  readReactions(0, numReactions, fileMap, reactionPos, *this,
-                d_fileMajorVersion, d_reactions);
+    readReactions(0, numReactions, fileMap, reactionPos, *this,
+                  d_fileMajorVersion, d_reactions);
 #endif
   if (!std::is_sorted(
           d_reactions.begin(), d_reactions.end(),
@@ -622,6 +664,40 @@ Synthon *SynthonSpace::getSynthonFromPool(const std::string &smiles) const {
     return it->second.get();
   }
   return nullptr;
+}
+
+SearchResults SynthonSpace::extendedSearch(
+    const MolBundle &query, const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params) {
+  SearchResults results;
+  for (unsigned int i = 0; i < query.size(); ++i) {
+    auto theseResults = substructureSearch(*query[i], matchParams, params);
+    results.mergeResults(theseResults);
+  }
+  return results;
+}
+
+SearchResults SynthonSpace::extendedSearch(
+    const GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T &query,
+    const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params) {
+  SearchResults results;
+  for (const auto &tq : *query) {
+    auto theseResults = extendedSearch(*tq, matchParams, params);
+    results.mergeResults(theseResults);
+  }
+  return results;
+}
+
+SearchResults SynthonSpace::extendedSearch(
+    const TautomerQuery &query, const SubstructMatchParameters &matchParams,
+    const SynthonSpaceSearchParams &params) {
+  SearchResults results;
+  for (const auto &tq : query.getTautomers()) {
+    auto theseResults = substructureSearch(*tq, matchParams, params);
+    results.mergeResults(theseResults);
+  }
+  return results;
 }
 
 void convertTextToDBFile(const std::string &inFilename,

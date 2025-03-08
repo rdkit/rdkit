@@ -15,6 +15,8 @@
 
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
+#include <GraphMol/GeneralizedSubstruct/XQMol.h>
+#include <GraphMol/GenericGroups/GenericGroups.h>
 #include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
@@ -22,6 +24,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <catch2/catch_all.hpp>
@@ -44,6 +47,22 @@ std::unique_ptr<SubstructLibrary> loadSubstructLibrary(
   }
   return subsLib;
 }
+
+std::map<std::string, std::string> loadLibrary(const std::string inFilename) {
+  v2::FileParsers::SmilesMolSupplierParams params;
+  params.titleLine = false;
+  v2::FileParsers::SmilesMolSupplier suppl(inFilename, params);
+  std::map<std::string, std::string> smiles;
+  while (!suppl.atEnd()) {
+    auto mol = suppl.next();
+    if (mol) {
+      smiles.insert(
+          std::make_pair(mol->getProp<std::string>(common_properties::_Name),
+                         std::string(MolToSmiles(*mol))));
+    }
+  }
+  return smiles;
+};
 
 TEST_CASE("Test splits 1") {
   const std::vector<std::string> smiles{"c1ccccc1CN1CCN(CC1)C(-O)c1ncc(F)cc1",
@@ -91,22 +110,6 @@ TEST_CASE("Enumerate") {
   std::string enumLibName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/triazole_space_enum.smi";
 
-  auto loadLibrary =
-      [](const std::string inFilename) -> std::map<std::string, std::string> {
-    v2::FileParsers::SmilesMolSupplierParams params;
-    params.titleLine = false;
-    v2::FileParsers::SmilesMolSupplier suppl(inFilename, params);
-    std::map<std::string, std::string> smiles;
-    while (!suppl.atEnd()) {
-      auto mol = suppl.next();
-      if (mol) {
-        smiles.insert(
-            std::make_pair(mol->getProp<std::string>(common_properties::_Name),
-                           std::string(MolToSmiles(*mol))));
-      }
-    }
-    return smiles;
-  };
   auto newSmiles = loadLibrary(testName);
   auto oldSmiles = loadLibrary(enumLibName);
   REQUIRE(newSmiles.size() == oldSmiles.size());
@@ -129,8 +132,10 @@ TEST_CASE("S Amide 1") {
   SynthonSpace synthonspace;
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
+  SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
-  auto results = synthonspace.substructureSearch(*queryMol, params);
+  auto results =
+      synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().size() == 2);
   std::set<std::string> resSmi;
   for (const auto &r : results.getHitMolecules()) {
@@ -405,9 +410,11 @@ TEST_CASE("Greg Space Failure") {
   auto queryMol =
       "Cc1nn(C)c(C)c1-c1nc(Cn2cc(CNC(C)C(=O)NC3CCCC3)nn2)no1"_smarts;
   REQUIRE(queryMol);
-  SynthonSpaceSearchParams params;
 
-  auto results = synthonspace.substructureSearch(*queryMol, params);
+  SubstructMatchParameters matchParams;
+  SynthonSpaceSearchParams params;
+  auto results =
+      synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().size() == 1);
 }
 
@@ -458,7 +465,135 @@ TEST_CASE("Amino Acid") {
   auto queryMol =
       "[$(C-[C;!$(C=[!#6])]-[N;!H0;!$(N-[!#6;!#1]);!$(N-C=[O,N,S])])](=O)([O;H,-])"_smarts;
   REQUIRE(queryMol);
+  SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
-  auto results = synthonspace.substructureSearch(*queryMol, params);
+  auto results =
+      synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().size() == 1);
+}
+
+TEST_CASE("Extended Query") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/extended_query.csv";
+  std::string enumName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/extended_query_enum.smi";
+  SynthonSpace synthonspace;
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+
+  {
+    auto queryMol =
+        v2::SmilesParse::MolFromSmarts("[#6]-*.c1nc2cccnc2n1 |m:1:3.10|");
+    REQUIRE(queryMol);
+    auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+    auto results = synthonspace.substructureSearch(xrq);
+    CHECK(results.getHitMolecules().size() == 12);
+
+    MolOps::AdjustQueryParameters aqps;
+    aqps.adjustHeavyDegree = true;
+    aqps.adjustHeavyDegreeFlags =
+        MolOps::AdjustQueryWhichFlags::ADJUST_IGNORECHAINS;
+    auto xrq1 = GeneralizedSubstruct::createExtendedQueryMol(*queryMol, true,
+                                                             true, true, aqps);
+    auto results1 = synthonspace.substructureSearch(xrq1);
+    CHECK(results1.getHitMolecules().size() == 5);
+  }
+
+  {
+    auto queryMol = R"CTAB(
+  Mrv2401 02062512582D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 13 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.4167 7.8733 0 0
+M  V30 2 C -3.7503 7.1033 0 0
+M  V30 3 C -3.7503 5.5632 0 0
+M  V30 4 N -2.4167 4.7932 0 0
+M  V30 5 C -1.083 5.5632 0 0
+M  V30 6 C -1.083 7.1033 0 0
+M  V30 7 C 0.3973 7.5278 0 0
+M  V30 8 N 0.3104 5.0376 0 0
+M  V30 9 C 1.2585 6.251 0 0
+M  V30 10 C 2.7975 6.1973 0 0
+M  V30 11 N 3.6136 7.5032 0 0
+M  V30 12 * -2.4167 9.4133 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 6
+M  V30 8 1 5 8
+M  V30 9 1 8 9
+M  V30 10 2 7 9
+M  V30 11 1 9 10
+M  V30 12 1 10 11
+M  V30 13 1 1 12
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 10 9 10 11
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(1 12) SAP=(3 12 1 1) XBONDS=(1 13) LABEL=ARY ESTATE=E
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(queryMol);
+    GenericGroups::setGenericQueriesFromProperties(*queryMol);
+    auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+    auto results = synthonspace.substructureSearch(xrq);
+    CHECK(results.getHitMolecules().size() == 2);
+  }
+
+  {
+    auto queryMol = R"CTAB(qry
+  Mrv2305 09052314502D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 13 13 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -4.75 1.9567 0 0
+M  V30 2 C -6.0837 1.1867 0 0
+M  V30 3 C -6.0837 -0.3534 0 0
+M  V30 4 C -4.75 -1.1234 0 0
+M  V30 5 C -3.4163 -0.3534 0 0
+M  V30 6 C -3.4163 1.1867 0 0
+M  V30 7 N -1.9692 1.7134 0 0
+M  V30 8 N -1.8822 -0.7768 0 0
+M  V30 9 C -1.0211 0.4999 0 0
+M  V30 10 C 0.5179 0.5536 0 0
+M  V30 11 N 1.2409 1.9133 0 0
+M  V30 12 * -5.6391 -0.0967 0 0
+M  V30 13 C -5.6391 -2.4067 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 8 9
+M  V30 8 1 7 6
+M  V30 9 1 5 8
+M  V30 10 2 7 9
+M  V30 11 1 9 10
+M  V30 12 1 10 11
+M  V30 13 1 12 13 ENDPTS=(3 4 3 2) ATTACH=ANY
+M  V30 END BOND
+M  V30 LINKNODE 1 2 2 10 9 10 11
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(queryMol);
+    GenericGroups::setGenericQueriesFromProperties(*queryMol);
+    auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+    auto results = synthonspace.substructureSearch(xrq);
+    CHECK(results.getHitMolecules().size() == 12);
+  }
 }

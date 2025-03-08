@@ -21,6 +21,7 @@
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <boost/parameter/aux_/pp_impl/match.hpp>
 
 #include <catch2/catch_all.hpp>
 
@@ -94,7 +95,7 @@ void tidy5567Binary() {
     std::remove(binName2.c_str());
   }
   std::string binName3 =
-    fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.spc";
   if (num5567NReads == 4 && std::filesystem::exists(binName3)) {
     std::cout << "removing " << binName3 << std::endl;
     std::remove(binName3.c_str());
@@ -117,13 +118,15 @@ TEST_CASE("S Biggy") {
                                       "C(=O)NC(CC)C(=O)N(CC)C"};
   const std::vector<size_t> numRes{6785, 4544, 48892, 1, 29147, 5651};
   const std::vector<size_t> maxRes{6785, 4544, 48893, 1, 29312, 5869};
+  SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
   for (auto numThreads : std::vector<int>{1, 2, -1}) {
     params.numThreads = numThreads;
     for (size_t i = 0; i < smis.size(); ++i) {
       auto queryMol = v2::SmilesParse::MolFromSmarts(smis[i]);
-      auto results = synthonspace.substructureSearch(*queryMol, params);
+      auto results =
+          synthonspace.substructureSearch(*queryMol, matchParams, params);
       CHECK(results.getHitMolecules().size() == numRes[i]);
       CHECK(results.getMaxNumResults() == maxRes[i]);
     }
@@ -141,11 +144,13 @@ TEST_CASE("S Random Hits") {
   synthonspace.readDBFile(libName);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+  SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
   params.maxHits = 100;
   params.randomSample = true;
   params.randomSeed = 1;
-  auto results = synthonspace.substructureSearch(*queryMol, params);
+  auto results =
+      synthonspace.substructureSearch(*queryMol, matchParams, params);
   std::map<std::string, int> libCounts;
   for (const auto &m : results.getHitMolecules()) {
     auto molName = m->getProp<std::string>(common_properties::_Name);
@@ -177,9 +182,11 @@ TEST_CASE("S Later hits") {
   synthonspace.readDBFile(libName);
 
   auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+  SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
   params.maxHits = 200;
-  auto results = synthonspace.substructureSearch(*queryMol, params);
+  auto results =
+      synthonspace.substructureSearch(*queryMol, matchParams, params);
   std::vector<std::string> hitNames1;
   for (const auto &m : results.getHitMolecules()) {
     hitNames1.push_back(m->getProp<std::string>(common_properties::_Name));
@@ -187,7 +194,7 @@ TEST_CASE("S Later hits") {
 
   params.maxHits = 100;
   params.hitStart = 100;
-  results = synthonspace.substructureSearch(*queryMol, params);
+  results = synthonspace.substructureSearch(*queryMol, matchParams, params);
   std::vector<std::string> hitNames2;
   for (const auto &m : results.getHitMolecules()) {
     hitNames2.push_back(m->getProp<std::string>(common_properties::_Name));
@@ -199,11 +206,11 @@ TEST_CASE("S Later hits") {
   }
 
   params.hitStart = 6780;
-  results = synthonspace.substructureSearch(*queryMol, params);
+  results = synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().size() == 5);
 
   params.hitStart = 7000;
-  results = synthonspace.substructureSearch(*queryMol, params);
+  results = synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().empty());
   tidy5567Binary();
 }
@@ -221,9 +228,11 @@ TEST_CASE("S Complex query") {
   auto queryMol = v2::SmilesParse::MolFromSmarts(
       "[$(c1ccccc1),$(c1ccncc1),$(c1cnccc1)]C(=O)N1[C&!$(CC(=O))]CCC1");
   REQUIRE(queryMol);
+  SubstructMatchParameters matchParams;
   SynthonSpaceSearchParams params;
   params.maxHits = -1;
-  auto results = synthonspace.substructureSearch(*queryMol, params);
+  auto results =
+      synthonspace.substructureSearch(*queryMol, matchParams, params);
   CHECK(results.getHitMolecules().size() == 7649);
   // The screenout is poor for a complex query, so a lot of things
   // will be identified as possible that aren't.

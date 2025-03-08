@@ -61,29 +61,21 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
    */
   bool getCancelled() const { return d_cancelled; }
 
+  // Merge other into this, keeping only molecules with unique
+  // names and destroying contents of other on exit.
+  void mergeResults(SearchResults &other);
+
  private:
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
+  // Only used when merging in another set, so will be
+  // filled in then if needed, empty otherwise.
+  std::set<std::string> d_molNames;
+
   size_t d_maxNumResults;
   bool d_timedOut{false};
   bool d_cancelled{false};
 };
 
-inline SearchResults::SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols,
-                                    const size_t maxNumRes, bool timedOut,
-                                    bool cancelled)
-    : d_maxNumResults(maxNumRes), d_timedOut(timedOut), d_cancelled(cancelled) {
-  d_hitMolecules = std::move(mols);
-  mols.clear();
-}
-
-inline SearchResults::SearchResults(const SearchResults &other)
-    : d_maxNumResults(other.d_maxNumResults),
-      d_timedOut(other.d_timedOut),
-      d_cancelled(other.d_cancelled) {
-  for (const auto &hm : other.d_hitMolecules) {
-    d_hitMolecules.emplace_back(new ROMol(*hm));
-  }
-}
 }  // namespace RDKit::SynthonSpaceSearch
 
 #endif  // RDKIT_SYNTHONSPACE_SEARCHRESULTS_H

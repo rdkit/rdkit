@@ -51,9 +51,38 @@ struct SearchResults_wrapper {
   }
 };
 
-SynthonSpaceSearch::SearchResults substructureSearch_helper(
+SynthonSpaceSearch::SearchResults substructureSearch_helper1(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
-    const python::object &py_params) {
+    const python::object &py_smParams, const python::object &py_params) {
+  SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  SubstructMatchParameters smParams;
+  if (!py_smParams.is_none()) {
+    smParams = python::extract<SubstructMatchParameters>(py_smParams);
+  }
+  if (!py_params.is_none()) {
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
+  }
+
+  SynthonSpaceSearch::SearchResults results;
+  {
+    NOGIL gil;
+    results = self.substructureSearch(query, smParams, params);
+  }
+  if (results.getCancelled()) {
+    throw_runtime_error("SubstructureSearch cancelled");
+  }
+  return results;
+}
+
+SynthonSpaceSearch::SearchResults substructureSearch_helper2(
+    SynthonSpaceSearch::SynthonSpace &self,
+    const GeneralizedSubstruct::ExtendedQueryMol &query,
+    const python::object &py_smParams, const python::object &py_params) {
+  SubstructMatchParameters smParams;
+  if (!py_smParams.is_none()) {
+    smParams = python::extract<SubstructMatchParameters>(py_smParams);
+  }
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
   if (!py_params.is_none()) {
     params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
@@ -62,7 +91,7 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper(
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(query, params);
+    results = self.substructureSearch(query, smParams, params);
   }
   if (results.getCancelled()) {
     throw_runtime_error("SubstructureSearch cancelled");
@@ -263,10 +292,17 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
            python::arg("self"),
            "Returns the information string for the fingerprint generator"
            " used to create this space.")
-      .def("SubstructureSearch", &substructureSearch_helper,
+      .def("SubstructureSearch", &substructureSearch_helper1,
            (python::arg("self"), python::arg("query"),
+            python::arg("substructMatchParams") = python::object(),
             python::arg("params") = python::object()),
            "Does a substructure search in the SynthonSpace.")
+      .def("SubstructureSearch", &substructureSearch_helper2,
+           (python::arg("self"), python::arg("query"),
+            python::arg("substructMatchParams") = python::object(),
+            python::arg("params") = python::object()),
+           "Does a substructure search in the SynthonSpace using an"
+           " extended query.")
       .def("FingerprintSearch", &fingerprintSearch_helper,
            (python::arg("self"), python::arg("query"),
             python::arg("fingerprintGenerator"),
