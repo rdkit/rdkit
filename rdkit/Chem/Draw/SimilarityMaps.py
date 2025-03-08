@@ -129,7 +129,9 @@ def GetStandardizedWeights(weights):
 
 def GetSimilarityMapFromWeights(mol, weights, draw2d, colorMap=None, scale=-1, size=(250, 250),
                                 sigma=None, coordScale=1.5, step=0.01, colors='k', contourLines=10,
-                                alpha=0.5, **kwargs):
+                                alpha=0.5, gridResolution=0.1, extraGridPadding=0.5,
+                                useFillThreshold=False, fillThreshold=0.01,
+                                fillThresholdIsFraction=True, **kwargs):
   """
     Generates the similarity map for a molecule given the atomic weights.
 
@@ -148,6 +150,11 @@ def GetSimilarityMapFromWeights(mol, weights, draw2d, colorMap=None, scale=-1, s
       contourLines -- if integer number N: N contour lines are drawn
                       if list(numbers): contour lines at these numbers are drawn
       alpha -- the alpha blending value for the contour lines
+      gridResolution -- the resolution of the grid
+      extraGridPadding -- the extra padding of the grid
+      useFillThreshold -- use a magnitude threshold to determine if a grid box is filled
+      fillThreshold -- the magnitude threshold for filling grid boxes
+      fillThresholdIsFraction -- if True, the fillThreshold is a fraction of the data range
       kwargs -- additional arguments for drawing
     """
   if mol.GetNumAtoms() < 2:
@@ -178,8 +185,11 @@ def GetSimilarityMapFromWeights(mol, weights, draw2d, colorMap=None, scale=-1, s
   draw2d.ClearDrawing()
   ps = Draw.ContourParams()
   ps.fillGrid = True
-  ps.gridResolution = 0.1
-  ps.extraGridPadding = 0.5
+  ps.gridResolution = gridResolution
+  ps.extraGridPadding = extraGridPadding
+  ps.useFillThreshold = useFillThreshold
+  ps.fillThreshold = fillThreshold
+  ps.fillThresholdIsFraction = fillThresholdIsFraction
 
   if colorMap is not None:
     if cm is not None and isinstance(colorMap, type(cm.Blues)):
