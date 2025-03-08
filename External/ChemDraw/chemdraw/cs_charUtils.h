@@ -30,10 +30,30 @@
 // CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
+#ifndef CS_CHAR_UTILS_H
+#define CS_CHAR_UTILS_H
+
+#include "CoreChemistryAPI.h"
 
 namespace cs {
   inline bool IsChargeSign(char s) {
     return s == '-'; // XXX need a lot more logic here....
   }
+
+// Modern symbols - these use UTF-8 where possible to fully encode characters
+CORE_CHEMISTRY_API extern const char* kSymbolDegree;
+CORE_CHEMISTRY_API extern const char* kSymbolEllipsis;
+CORE_CHEMISTRY_API extern const char* kSymbolEnDash;
+CORE_CHEMISTRY_API extern const char* kSymbolEmDash;
+CORE_CHEMISTRY_API extern const char* kSymbolPlusMinus;
+CORE_CHEMISTRY_API extern const char* kSymbolBullet;
+CORE_CHEMISTRY_API extern const char* kSymbolCenterDot;
+CORE_CHEMISTRY_API extern const char* kSymbolReg;
+CORE_CHEMISTRY_API extern const char* kSymbolCopyright;
+CORE_CHEMISTRY_API extern const char* kSymbolAngstrom;
+CORE_CHEMISTRY_API extern const char* kSymbolMicro;
+CORE_CHEMISTRY_API extern const char* kSymbolCent;
+CORE_CHEMISTRY_API extern const char* kSymbolPound;
 }
+#endif
