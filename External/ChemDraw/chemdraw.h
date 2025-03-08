@@ -29,13 +29,17 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+#ifndef RDKIT_CHEMDRAW_H
+#define RDKIT_CHEMDRAW_H
 
 #include <RDGeneral/export.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <string>
 
+#include "ChemDrawStartInclude.h"
 #include "chemdraw/CDXStdObjects.h"
+#include "ChemDrawEndInclude.h"
 
 namespace RDKit {
 struct RDKIT_FILEPARSERS_EXPORT ChemDrawParserParams {
@@ -84,3 +88,4 @@ ChemDrawDataStreamToChemicalReactions(std::istream &rxnStream,
 				      bool removeHs = false);
 
 }  // namespace RDKit
+#endif

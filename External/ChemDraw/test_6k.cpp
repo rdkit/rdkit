@@ -44,7 +44,11 @@
 #include <boost/algorithm/string.hpp>
 #include <RDGeneral/BadFileException.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
+
+#include "ChemDrawStartInclude.h"
 #include "chemdraw/CDXStdObjects.h"
+#include "ChemDrawEndInclude.h"
+
 #include <filesystem>
 
 using namespace RDKit;

@@ -34,8 +34,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#include "ChemDrawStartInclude.h"
 #include "chemdraw/CDXMLParser.h"
 #include "chemdraw/CDXStdObjects.h"
+#include "ChemDrawEndInclude.h"
 
 #include "bracket.h"
 #include "chemdraw.h"

@@ -33,8 +33,11 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+
+#include "ChemDrawStartInclude.h"
 #include "chemdraw/CDXStdObjects.h"
-#include <GraphMol/Depictor/RDDepictor.h>
+#include "ChemDrawEndInclude.h"
+
 
 namespace RDKit {
 const double DEFAULT_CDX_BOND_LENGTH = 14.4;
