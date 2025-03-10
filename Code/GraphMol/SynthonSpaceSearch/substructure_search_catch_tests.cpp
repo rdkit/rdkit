@@ -610,4 +610,56 @@ M  END)CTAB"_ctab;
     auto results1 = synthonspace.substructureSearch(xrq, mparams, params);
     CHECK(results1.getHitMolecules().size() == 5);
   }
+
+  {
+    // Generic query check.
+    auto queryMol = R"CTAB(
+  Mrv2401 02062512582D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 12 13 1 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -2.4167 7.8733 0 0
+M  V30 2 C -3.7503 7.1033 0 0
+M  V30 3 C -3.7503 5.5632 0 0
+M  V30 4 N -2.4167 4.7932 0 0
+M  V30 5 C -1.083 5.5632 0 0
+M  V30 6 C -1.083 7.1033 0 0
+M  V30 7 N 0.3973 7.5278 0 0
+M  V30 8 N 0.3104 5.0376 0 0
+M  V30 9 C 1.2585 6.251 0 0
+M  V30 10 C 2.7975 6.1973 0 0
+M  V30 11 N 3.6136 7.5032 0 0
+M  V30 12 * -2.4167 9.4133 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 2 4 5
+M  V30 5 1 5 6
+M  V30 6 2 1 6
+M  V30 7 1 7 6
+M  V30 8 1 5 8
+M  V30 9 1 8 9
+M  V30 10 2 7 9
+M  V30 11 1 9 10
+M  V30 12 1 10 11
+M  V30 13 1 1 12
+M  V30 END BOND
+M  V30 LINKNODE 1 3 2 10 9 10 11
+M  V30 BEGIN SGROUP
+M  V30 1 SUP 0 ATOMS=(1 12) SAP=(3 12 1 1) XBONDS=(1 13) LABEL=ARY ESTATE=E
+M  V30 END SGROUP
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(queryMol);
+    GenericGroups::setGenericQueriesFromProperties(*queryMol);
+    auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+    SubstructMatchParameters mparams;
+    mparams.useGenericMatchers = true;
+    auto results1 = synthonspace.substructureSearch(xrq, mparams);
+    CHECK(results1.getHitMolecules().size() == 2);
+  }
 }

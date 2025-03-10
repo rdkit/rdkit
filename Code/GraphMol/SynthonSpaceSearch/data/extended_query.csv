@@ -32,3 +32,6 @@ c12CCNc2cc([1*])cc1	8-2	0	react_6
 [1*]CCN	7-2	1	react_6
 [1*]CCCCN	7-3	1	react_6
 [1*]O	7-4	1	react_6
+[1*]c1ccnc2[nH]c(C3CCNCC3)nc12	8-1	0	react_7
+[1*]c1ccnc2[nH]c(C3CC(NC(=O)C)CC3)nc12	8-2	0	react_7
+[1*]c1ccc(F)cc1OC	9-1	1	react_7

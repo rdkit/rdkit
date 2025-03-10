@@ -121,7 +121,7 @@ class TestCase(unittest.TestCase):
     fName = self.sssDir / "extended_query.csv"
     synthonspace = rdSynthonSpaceSearch.SynthonSpace()
     synthonspace.ReadTextFile(fName)
-    self.assertEqual(6, synthonspace.GetNumReactions())
+    self.assertEqual(7, synthonspace.GetNumReactions())
     m = Chem.MolFromSmarts('[#6]-*.c1nc2cccnc2n1 |m:1:3.10|')
     xqry = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
     results = synthonspace.SubstructureSearch(xqry)
