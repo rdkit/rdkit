@@ -378,6 +378,9 @@ TEST_CASE("FP Approx Similarity") {
   tidy5567Binary();
 }
 
+#if 0
+// Whilst the code is still under active development, it's convenient to have this
+// in here.  It can come out later.
 TEST_CASE("FP Binary File2") {
   REQUIRE(rdbase);
   std::string fName(rdbase);
@@ -391,14 +394,13 @@ TEST_CASE("FP Binary File2") {
   CHECK(synthonspace.getNumProducts() == 70575407790);
   std::cout << synthonspace.getNumReactions() << std::endl;
   std::cout << synthonspace.getNumProducts() << std::endl;
-#if 0
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
   CHECK(results.getHitMolecules().size() == 211);
   CHECK(results.getMaxNumResults() == 1397664);
-#endif
 }
+#endif
 
 #if 0
 // Whilst the code is still under active development, it's convenient to have this
