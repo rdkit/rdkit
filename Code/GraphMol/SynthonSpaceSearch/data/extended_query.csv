@@ -26,3 +26,9 @@ CC[1*]	2-2	1	react_5
 [2*]CCN	7-2	2	react_5
 [2*]CCCCN	7-3	2	react_5
 [2*]O	7-4	2	react_5
+c12CCCNc2cc([1*])cc1	8-1	0	react_6
+c12CCNc2cc([1*])cc1	8-2	0	react_6
+[1*]CN	7-1	1	react_6
+[1*]CCN	7-2	1	react_6
+[1*]CCCCN	7-3	1	react_6
+[1*]O	7-4	1	react_6

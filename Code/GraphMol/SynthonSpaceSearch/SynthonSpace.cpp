@@ -118,31 +118,30 @@ SearchResults SynthonSpace::substructureSearch(
     const GeneralizedSubstruct::ExtendedQueryMol &query,
     const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {
-  SearchResults results;
   if (std::holds_alternative<GeneralizedSubstruct::ExtendedQueryMol::RWMol_T>(
           query.xqmol)) {
-    results = substructureSearch(
+    return substructureSearch(
         *std::get<GeneralizedSubstruct::ExtendedQueryMol::RWMol_T>(query.xqmol),
         matchParams, params);
 #ifdef RDK_USE_BOOST_SERIALIZATION
   } else if (std::holds_alternative<
                  GeneralizedSubstruct::ExtendedQueryMol::MolBundle_T>(
                  query.xqmol)) {
-    results = extendedSearch(
+    return extendedSearch(
         *std::get<GeneralizedSubstruct::ExtendedQueryMol::MolBundle_T>(
             query.xqmol),
         matchParams, params);
   } else if (std::holds_alternative<
                  GeneralizedSubstruct::ExtendedQueryMol::TautomerQuery_T>(
                  query.xqmol)) {
-    results = extendedSearch(
+    return extendedSearch(
         *std::get<GeneralizedSubstruct::ExtendedQueryMol::TautomerQuery_T>(
             query.xqmol),
         matchParams, params);
   } else if (std::holds_alternative<
                  GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T>(
                  query.xqmol)) {
-    results = extendedSearch(
+    return extendedSearch(
         std::get<GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T>(
             query.xqmol),
         matchParams, params);
@@ -151,7 +150,7 @@ SearchResults SynthonSpace::substructureSearch(
   else {
     UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
   }
-  return results;
+  return SearchResults();
 }
 
 SearchResults SynthonSpace::fingerprintSearch(
@@ -670,8 +669,12 @@ SearchResults SynthonSpace::extendedSearch(
     const MolBundle &query, const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {
   SearchResults results;
+  SynthonSpaceSearchParams tmpParams(params);
   for (unsigned int i = 0; i < query.size(); ++i) {
-    auto theseResults = substructureSearch(*query[i], matchParams, params);
+    auto theseResults = substructureSearch(*query[i], matchParams, tmpParams);
+    if (tmpParams.maxHits != -1) {
+      tmpParams.maxHits -= theseResults.getHitMolecules().size();
+    }
     results.mergeResults(theseResults);
   }
   return results;
@@ -682,8 +685,12 @@ SearchResults SynthonSpace::extendedSearch(
     const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {
   SearchResults results;
+  SynthonSpaceSearchParams tmpParams(params);
   for (const auto &tq : *query) {
     auto theseResults = extendedSearch(*tq, matchParams, params);
+    if (tmpParams.maxHits != -1) {
+      tmpParams.maxHits -= theseResults.getHitMolecules().size();
+    }
     results.mergeResults(theseResults);
   }
   return results;
@@ -693,8 +700,12 @@ SearchResults SynthonSpace::extendedSearch(
     const TautomerQuery &query, const SubstructMatchParameters &matchParams,
     const SynthonSpaceSearchParams &params) {
   SearchResults results;
+  SynthonSpaceSearchParams tmpParams(params);
   for (const auto &tq : query.getTautomers()) {
     auto theseResults = substructureSearch(*tq, matchParams, params);
+    if (tmpParams.maxHits != -1) {
+      tmpParams.maxHits -= theseResults.getHitMolecules().size();
+    }
     results.mergeResults(theseResults);
   }
   return results;

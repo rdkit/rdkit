@@ -477,8 +477,6 @@ TEST_CASE("Extended Query") {
   std::string fName(rdbase);
   std::string libName =
       fName + "/Code/GraphMol/SynthonSpaceSearch/data/extended_query.csv";
-  std::string enumName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/extended_query_enum.smi";
   SynthonSpace synthonspace;
   bool cancelled = false;
   synthonspace.readTextFile(libName, cancelled);
@@ -595,5 +593,21 @@ M  END)CTAB"_ctab;
     auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
     auto results = synthonspace.substructureSearch(xrq);
     CHECK(results.getHitMolecules().size() == 12);
+  }
+
+  {
+    // Check maxHits is working correctly.
+    auto queryMol = v2::SmilesParse::MolFromSmarts(
+        "[#6]-1-[#6]-c2ccccc2-[#7]-1 |LN:1:1.2|");
+    REQUIRE(queryMol);
+    auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+    auto results = synthonspace.substructureSearch(xrq);
+    CHECK(results.getHitMolecules().size() == 8);
+
+    SynthonSpaceSearch::SynthonSpaceSearchParams params;
+    params.maxHits = 5;
+    SubstructMatchParameters mparams;
+    auto results1 = synthonspace.substructureSearch(xrq, mparams, params);
+    CHECK(results1.getHitMolecules().size() == 5);
   }
 }
