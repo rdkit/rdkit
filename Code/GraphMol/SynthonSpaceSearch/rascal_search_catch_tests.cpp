@@ -142,33 +142,3 @@ TEST_CASE("Rascal Biggy") {
     CHECK(results.getMaxNumResults() == maxRes[i]);
   }
 }
-
-TEST_CASE("Rascal Freedom Space") {
-  // std::string libName =
-  // "/Users/david/Projects/SynthonSpaceTests/FreedomSpace/2024-09_Freedom_synthons_rdkit.spc";
-  std::string libName =
-      "/Users/david/Projects/SynthonSpaceTests/REAL/2024-09_RID-4-Cozchemix/2024-09_REAL_synthons_rdkit_3000.spc";
-  SynthonSpace synthonspace;
-  synthonspace.readDBFile(libName, 4);
-  std::cout << SynthonSpaceSearch::formattedIntegerString(
-                   synthonspace.getNumProducts())
-            << " from " << synthonspace.getNumReactions() << " reactions"
-            << std::endl;
-  auto qmol = "Cc1cc(-n2ncc(=O)[nH]c2=O)ccc1C(=O)c1ccccc1Cl"_smiles;
-  auto qmol1 = "O=C(c1ccc(-c2ccc(F)cc2F)cc1)N1CCC2(C1)OCCO2"_smiles;
-  SynthonSpaceSearchParams params;
-  params.maxHits = 10;
-  params.randomSample = false;
-  params.timeOut = 0;
-  params.numThreads = -1;
-  RascalOptions rascalOptions;
-  rascalOptions.similarityThreshold = 0.6;
-
-  auto results = synthonspace.rascalSearch(*qmol1, rascalOptions, params);
-  auto &hits = results.getHitMolecules();
-  std::cout << hits.size() << " vs " << results.getMaxNumResults() << std::endl;
-  for (const auto &h : hits) {
-    std::cout << MolToSmiles(*h) << " "
-              << h->getProp<std::string>(common_properties::_Name) << std::endl;
-  }
-}
