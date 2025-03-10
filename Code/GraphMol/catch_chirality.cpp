@@ -6068,6 +6068,50 @@ M  END)CTAB"_ctab;
     CHECK(sgs[0].getAtoms().size() == 1);
     CHECK(sgs[0].getAtoms().at(0)->getIdx() == 16);
   }
+  SECTION("making sure sulfoxides do not trigger atropisomerism") {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 10 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 1.892852 4.651432 0.000000 0
+M  V30 2 C 3.199931 3.915535 0.000000 0
+M  V30 3 C 3.216171 2.415622 0.000000 0
+M  V30 4 C 1.925330 1.651602 0.000000 0
+M  V30 5 C 0.618251 2.387492 0.000000 0
+M  V30 6 C 0.602011 3.887408 0.000000 0
+M  V30 7 S -0.705072 4.623298 0.000000 0
+M  V30 8 C -0.672591 1.623472 0.000000 0
+M  V30 9 O -0.721314 6.123210 0.000000 0
+M  V30 10 C -1.995913 3.859276 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 2 1 2
+M  V30 2 1 2 3
+M  V30 3 2 3 4
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 1 CFG=1
+M  V30 7 1 6 7
+M  V30 8 1 5 8
+M  V30 9 2 7 9
+M  V30 10 1 7 10 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 7)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(6)->getChiralTag() !=
+          Atom::ChiralType::CHI_UNSPECIFIED);
+    CHECK(m->getBondBetweenAtoms(5, 6)->getStereo() ==
+          Bond::BondStereo::STEREONONE);
+  }
   SECTION("examples from #8323") {
     std::string pathName = getenv("RDBASE");
     pathName += "/Code/GraphMol/test_data/Github8323.sdf";
