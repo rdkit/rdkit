@@ -210,6 +210,11 @@ Atom::ChiralType getChirality(ROMol &mol, Atom *center_atom, Conformer &conf) {
     for (auto &angle : angles) {
       bonds.push_back(angle.second);
     }
+    
+    if(bonds.size() < 3) {
+      return Atom::ChiralType::CHI_UNSPECIFIED;
+    }
+    
     auto nswaps = center_atom->getPerturbationOrder(bonds);
     if (bonds.size() == 3 && center_atom->getTotalNumHs() == 1) {
       ++nswaps;
@@ -285,7 +290,12 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
   //  cip->stereo implemented currently
 
   for (auto cipatom : unsetTetrahedralAtoms) {
-    CIPLabeler::assignCIPLabels(mol);
+    try {
+       CIPLabeler::assignCIPLabels(mol);
+      } catch (...) {
+        // can throw std::runtime error?
+        break;
+      }
     std::string cipcode;
     if (cipatom.second->getPropIfPresent<std::string>(
             common_properties::_CIPCode, cipcode)) {
