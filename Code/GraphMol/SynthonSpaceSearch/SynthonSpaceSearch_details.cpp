@@ -387,7 +387,8 @@ void doPartInitialFragmentation(
 void doInitialFragmentation(
     const ROMol &mol, const std::vector<std::vector<unsigned int>> &splitBonds,
     const unsigned int maxNumFrags, const boost::dynamic_bitset<> &ringBonds,
-    const int numThreads, const TimePoint *endTime, bool &timedOut,
+    [[maybe_unused]] const int numThreads, const TimePoint *endTime,
+    bool &timedOut,
     std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags) {
   std::vector<std::pair<unsigned int, unsigned int>> dummyLabels;
   for (unsigned int i = 1; i <= MAX_CONNECTOR_NUM; ++i) {
@@ -423,7 +424,7 @@ void doInitialFragmentation(
   }
 #else
   doPartInitialFragmentation(mol, splitBonds, maxNumFrags, ringBonds, endTime,
-                             std::ref(mostRecentRingBond), lastSplitBond,
+                             std::ref(mostRecentRingBond), lastRingBond,
                              dummyLabels, tmpFrags);
 #endif
   timedOut = details::checkTimeOut(endTime);
@@ -463,8 +464,8 @@ void doPartFinalFragmentation(
 
 void doFinalFragmentation(
     const std::vector<std::pair<std::string, std::unique_ptr<ROMol>>> &tmpFrags,
-    unsigned int maxNumFrags, int numThreads, const TimePoint *endTime,
-    bool &timedOut,
+    unsigned int maxNumFrags, [[maybe_unused]] int numThreads,
+    const TimePoint *endTime, bool &timedOut,
     std::vector<std::vector<std::unique_ptr<ROMol>>> &fragments) {
   std::int64_t lastFrag = tmpFrags.size() - 1;
   std::atomic<std::int64_t> mostRecentFrag = -1;
