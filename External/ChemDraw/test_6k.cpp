@@ -62,7 +62,17 @@ std::string replace(std::string &istr, const std::string &from,
   return str;
 }
 
-bool hasNonSupportedFeatures(CDXDocument &document) {
+bool hasNonSupportedFeatures(CDXDocument &document, const std::string &fname) {
+  // check for monomers
+  std::ifstream ifs(fname);
+  std::stringstream xml;
+  xml << ifs.rdbuf();
+  // We should be able to figure this out from the node but...
+  if(xml.str().find("monomerAttachmentStructure_") != std::string::npos ||
+     xml.str().find("Name=\"monomerAttachments") != std::string::npos) {
+    return true;
+  }
+
   for (auto node : document.ContainedObjects()) {
     CDXDatumID id = (CDXDatumID)node.second->GetTag();
     switch (id) {
@@ -80,6 +90,7 @@ bool hasNonSupportedFeatures(CDXDocument &document) {
       case kCDXObj_ObjectTag: {
         CDXObject &object = *((CDXObject *)node.second);
         id = (CDXDatumID)object.GetTag();
+	// Check for monomers
         break;
       }
       default:
@@ -91,7 +102,7 @@ bool hasNonSupportedFeatures(CDXDocument &document) {
 
 bool hasNonSupportedFeatures(const std::string &fname) {
   auto doc = ChemDrawToDocument(fname);
-  return hasNonSupportedFeatures(*doc);
+  return hasNonSupportedFeatures(*doc, fname);
 }
 
 TEST_CASE("Round TRIP") {
@@ -106,11 +117,14 @@ TEST_CASE("Round TRIP") {
     int failed = 0;
     int saniFailed = 0;
     int total = 0;
+    int parseable = 0;
     int nomol = 0;
     int badparse = 0;
     int success = 0;
     int smimatches = 0;
     int nonSupported = 0;
+    int no_mol_in_doc = 0;
+    int bad_chemdraw_mol = 0;
     RDLog::LogStateSetter blocker;
     std::string cdxpath = path + "CDXML/";
     std::string molpath = path + "mol/";
@@ -176,45 +190,21 @@ TEST_CASE("Round TRIP") {
         auto molfname = molpath + replace(fname, ".cdxml", ".mol");
         auto smifname = smipath + replace(fname, ".cdxml", ".smi");
         // if chemscript couldn't make an output, ignore it
+	total++;
+
         if (!std::filesystem::exists(molfname) ||
             !std::filesystem::exists(smifname)) {
+	  no_mol_in_doc++;
           continue;
         }
-        total++;
-        // Read the cdxml
-        std::vector<std::unique_ptr<RWMol>> mols;
-        bool santizationFailure = false;
-        try {
-          mols = ChemDrawToMols(entry.path().string());
-          if (mols.size() == 0) {
-            ChemDrawParserParams params;
-            params.sanitize = false;
-            mols = ChemDrawToMols(entry.path().string(), params);
-            santizationFailure = true;
-          }
-          if (!mols.size()) {
-            if (hasNonSupportedFeatures(entry.path().string())) {
-              std::cerr << "[NOMOL (Unsupported)]: " << entry.path().string()
-                        << std::endl;
-              std::filesystem::copy(
-                  entry.path().string(),
-                  nomolpath + entry.path().filename().string());
-              nomol++;
-            } 
-            continue;
-          }
-        } catch (...) {
-          std::cerr << "[BADPARSE]: " << entry.path().string() << std::endl;
-          std::filesystem::copy(
-              entry.path(), badparsepath + entry.path().filename().string());
-          badparse++;
-          continue;
-        }
+	
+	// Get the ChemScript mol and smiles
         std::unique_ptr<RWMol> mol;
         //= nullptr;
         try {
           mol.reset(MolFileToMol(molfname));
         } catch (...) {
+	  bad_chemdraw_mol++;
           continue;
         }
         // REQUIRE(mols.size());
@@ -234,6 +224,45 @@ TEST_CASE("Round TRIP") {
           } catch (...) {
             smiles = smiles_in;
           }
+        }
+	
+	parseable++;
+        // Read the cdxml
+        std::vector<std::unique_ptr<RWMol>> mols;
+        bool santizationFailure = false;
+        try {
+          mols = ChemDrawToMols(entry.path().string());
+          if (mols.size() == 0) {
+            ChemDrawParserParams params;
+            params.sanitize = false;
+            mols = ChemDrawToMols(entry.path().string(), params);
+            santizationFailure = true;
+          }
+          if (!mols.size()) {
+	    if (smiles.size() == 0) {
+	      // At least we match the chemscript non-mol
+	      success++;
+	    }
+            else if (hasNonSupportedFeatures(entry.path().string())) {
+              //std::cerr << "[NOMOL (Unsupported)]: " << entry.path().string()
+              //          << std::endl;
+              nonSupported++;
+            } else {
+	      std::cerr << "[NOMOL]: " << entry.path().string()
+                        << std::endl;
+              std::filesystem::copy(
+                  entry.path().string(),
+                  nomolpath + entry.path().filename().string());
+	      nomol++;
+	    }
+            continue;
+          }
+        } catch (...) {
+          std::cerr << "[BADPARSE]: " << entry.path().string() << std::endl;
+          std::filesystem::copy(
+              entry.path(), badparsepath + entry.path().filename().string());
+          badparse++;
+          continue;
         }
         std::unique_ptr<ROMol> m = std::make_unique<ROMol>(*mols[0]);
         for (size_t i = 1; i < mols.size(); i++) {
@@ -280,8 +309,11 @@ TEST_CASE("Round TRIP") {
       }
     }
     std::cerr << "Total:" << total << std::endl;
+    std::cerr << "Parseable (has chemscript output):" << total << std::endl;
     std::cerr << "Success:" << success + smimatches << std::endl;
     std::cerr << "skipped (non supported features):" << nonSupported
+              << std::endl;
+    std::cerr << "skipped (no mol in doc):" << no_mol_in_doc
               << std::endl;
     std::cerr << "Chemscript smiles matches not chemscript mol: " << smimatches
               << std::endl;
@@ -289,6 +321,7 @@ TEST_CASE("Round TRIP") {
     std::cerr << "Sanitization:" << saniFailed << std::endl;
     std::cerr << "Nomol:" << nomol << std::endl;
     std::cerr << "Badparse:" << badparse << std::endl;
+    std::cerr << "Bad ChemDraw Mol:" << bad_chemdraw_mol << std::endl;
     REQUIRE(failed == 0);
   }
 }
