@@ -6068,4 +6068,19 @@ M  END)CTAB"_ctab;
     CHECK(sgs[0].getAtoms().size() == 1);
     CHECK(sgs[0].getAtoms().at(0)->getIdx() == 16);
   }
+  SECTION("examples from #8323") {
+    std::string pathName = getenv("RDBASE");
+    pathName += "/Code/GraphMol/test_data/Github8323.sdf";
+    SDMolSupplier suppl(pathName);
+    while (!suppl.atEnd()) {
+      auto mol = suppl.next();
+      REQUIRE(mol);
+      auto &sgs = mol->getStereoGroups();
+      REQUIRE(sgs.size() == 1);
+      REQUIRE(mol->hasProp("StereoGroupOnAtom"));
+      auto aid = std::stoul(mol->getProp<std::string>("StereoGroupOnAtom"));
+      CHECK(sgs[0].getAtoms().size() == 1);
+      CHECK(sgs[0].getAtoms().at(0)->getIdx() == aid);
+    }
+  }
 }
