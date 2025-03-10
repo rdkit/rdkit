@@ -6000,3 +6000,72 @@ TEST_CASE(
     CHECK(m->getBondWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
   }
 }
+
+TEST_CASE("Github issue #7983: stereogroup lost on chiral sulfoxide") {
+  SECTION("basics") {
+    auto m = R"CTAB(
+  Mrv2317 02032512242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 21 22 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -4.001 -2.31 0 0
+M  V30 2 C -2.6674 -3.08 0 0
+M  V30 3 C -1.3337 -2.31 0 0
+M  V30 4 C 0 -3.08 0 0
+M  V30 5 C 0 -4.6198 0 0
+M  V30 6 N 1.3337 -5.3898 0 0
+M  V30 7 C 2.6674 -4.6198 0 0
+M  V30 8 O 2.6674 -3.08 0 0
+M  V30 9 O 4.001 -5.3898 0 0
+M  V30 10 C 5.3345 -4.6198 0 0
+M  V30 11 C 6.6682 -5.3898 0 0
+M  V30 12 C 8.0019 -4.6198 0 0
+M  V30 13 C 9.3356 -5.3898 0 0
+M  V30 14 C 9.3356 -6.9298 0 0
+M  V30 15 C 8.0019 -7.6998 0 0
+M  V30 16 C 6.6682 -6.9298 0 0
+M  V30 17 S 5.3345 -7.6998 0 0 CFG=2
+M  V30 18 C 4.001 -6.9298 0 0
+M  V30 19 O 5.3345 -9.2398 0 0
+M  V30 20 C -1.3337 -5.3898 0 0
+M  V30 21 C -2.6674 -4.6198 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 4 2 3
+M  V30 3 4 3 4
+M  V30 4 4 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 2 7 8
+M  V30 8 1 7 9
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 4 11 12
+M  V30 12 4 12 13
+M  V30 13 4 13 14
+M  V30 14 4 14 15
+M  V30 15 4 15 16
+M  V30 16 4 11 16
+M  V30 17 1 17 16
+M  V30 18 2 17 19
+M  V30 19 4 5 20
+M  V30 20 4 20 21
+M  V30 21 4 2 21
+M  V30 22 1 17 18 CFG=1
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+M  V30 MDLV30/STEABS ATOMS=(1 17)
+M  V30 END COLLECTION
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    auto &sgs = m->getStereoGroups();
+    REQUIRE(sgs.size() == 1);
+    CHECK(sgs[0].getGroupType() == StereoGroupType::STEREO_ABSOLUTE);
+    CHECK(sgs[0].getAtoms().size() == 1);
+    CHECK(sgs[0].getAtoms().at(0)->getIdx() == 16);
+  }
+}

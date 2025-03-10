@@ -537,7 +537,6 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
     }
   }
 
-  bool foundAtrop = false;
   for (auto bondToTry : bondsToTry) {
     if (bondToTry->getBeginAtom()->needsUpdatePropertyCache()) {
       bondToTry->getBeginAtom()->updatePropertyCache(false);
@@ -554,13 +553,7 @@ void detectAtropisomerChirality(ROMol &mol, const Conformer *conf) {
       continue;
     }
 
-    if (DetectAtropisomerChiralityOneBond(bondToTry, mol, conf)) {
-      foundAtrop = true;
-    }
-  }
-
-  if (foundAtrop) {
-    cleanupAtropisomerStereoGroups(mol);
+    DetectAtropisomerChiralityOneBond(bondToTry, mol, conf);
   }
 }
 void getAllAtomIdsForStereoGroup(
