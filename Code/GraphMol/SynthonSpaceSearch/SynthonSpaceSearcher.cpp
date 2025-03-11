@@ -211,7 +211,7 @@ SynthonSpaceSearcher::doTheSearch(
                      lastReaction, reactionHits);
   }
 #else
-  processReactions(this, reactionNames, fragments, endTime, mostRecentReaction,
+  processReactions(this, reactionNames, fragSets, endTime, mostRecentReaction,
                    lastReaction, reactionHits);
 #endif
 
