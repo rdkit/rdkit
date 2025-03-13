@@ -19,6 +19,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/Atropisomers.h>
+#include <GraphMol/SmilesParse/SmilesWrite.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
@@ -32,13 +33,9 @@ using namespace RDKit;
 class ScsiMolTest {
  public:
  public:
-  std::string testToRun;
-  bool generateExpectedFiles;
+  bool generateExpectedFiles = false;
 
-  ScsiMolTest() {
-    testToRun = "";
-    generateExpectedFiles = false;
-  }
+  ScsiMolTest() {}
 
   class ScsiTest {
    public:
@@ -132,30 +129,44 @@ class ScsiMolTest {
 
       CHECK(GetExpectedValue(expectedMolName) == outMolStr);
     }
+
+    {
+      std::string expectedSmiName = fName + ".expected.cxsmi";
+      auto smiOut = MolToCXSmiles(*mol);
+
+      generateNewExpectedFilesIfSoSpecified(fName + ".NEW.cxsmi", smiOut);
+
+      // CHECK(GetExpectedValue(expectedSmiName) == smiOut);
+    }
+
     // now make the expanded mol in "query" mode - not including any leaving
     // groups
 
     molFromSCSRParams.includeLeavingGroups = false;
-    std::unique_ptr<RDKit::RWMol> molFromStream;
+    std::unique_ptr<RDKit::RWMol> molNoLeavingGroups;
     if (scsiTest->scsrExpandResult) {
-      REQUIRE_NOTHROW(molFromStream =
+      REQUIRE_NOTHROW(molNoLeavingGroups =
                           MolFromSCSRFile(fName, pp, molFromSCSRParams));
     } else {
-      REQUIRE_THROWS(molFromStream =
+      REQUIRE_THROWS(molNoLeavingGroups =
                          MolFromSCSRFile(fName, pp, molFromSCSRParams));
       return;
     }
+
+    CHECK(molNoLeavingGroups != nullptr);
+    CHECK(molNoLeavingGroups->getNumAtoms() == scsiTest->totalQueryAtomCount);
+    CHECK(molNoLeavingGroups->getNumBonds() == scsiTest->totalQueryBondCount);
 
     {
       std::string expectedMolName = fName + ".expected2.sdf";
       std::string outMolStr = "";
       try {
-        outMolStr = MolToMolBlock(*molFromStream, true, 0, true, true);
+        outMolStr = MolToMolBlock(*molNoLeavingGroups, true, 0, true, true);
       } catch (const RDKit::KekulizeException &) {
         outMolStr = "";
       }
       if (outMolStr == "") {
-        outMolStr = MolToMolBlock(*molFromStream, true, 0, false,
+        outMolStr = MolToMolBlock(*molNoLeavingGroups, true, 0, false,
                                   true);  // try without kekule'ing
       }
 
@@ -257,6 +268,8 @@ class ScsiMolTest {
 TEST_CASE("scsiTests", "scsiTests") {
   SECTION("basics") {
     std::list<ScsiMolTest::ScsiTest> scsiTests{
+        ScsiMolTest::ScsiTest("ModifiedPeptide2.mol", true,
+                              SCSRBaseHbondOptions::Auto, 438, 444, 407, 413),
         ScsiMolTest::ScsiTest("DnaBadPairs_NoCh.mol", true,
                               SCSRBaseHbondOptions::Auto, 84, 94, 80, 90),
         ScsiMolTest::ScsiTest("DnaBadPairs.mol", true,

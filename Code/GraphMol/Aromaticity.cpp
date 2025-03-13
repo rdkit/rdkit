@@ -763,6 +763,35 @@ int countAtomElec(const Atom *at) {
   return res;
 }
 
+static bool molHasHydrogenBond(const ROMol &mol) {
+  for (const auto &bond : mol.bonds()) {
+    if (bond->getBondType() == Bond::HYDROGEN) {
+      return true;
+    }
+  }
+  return false;
+}
+
+static bool ringHasHydrogenBond(const INT_VECT &ring, const ROMol &mol) {
+  const auto rsiz = rdcast<unsigned int>(ring.size());
+
+  for (unsigned int i = 0; i < (rsiz - 1); i++) {
+    const Bond *bnd = mol.getBondBetweenAtoms(ring[i], ring[i + 1]);
+    if (!bnd) {
+      throw ValueErrorException("expected bond not found");
+    }
+    if (bnd->getBondType() == Bond::HYDROGEN) {
+      return true;
+    }
+  }
+  // bond from last to first atom
+  const Bond *bnd = mol.getBondBetweenAtoms(ring[rsiz - 1], ring[0]);
+  if (bnd->getBondType() == Bond::HYDROGEN) {
+    return true;
+  }
+  return false;
+}
+
 namespace {
 int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   int narom = 0;
@@ -777,9 +806,15 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
+  bool HBondFlag = molHasHydrogenBond(mol);
   for (auto &sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
+
+    if (HBondFlag && ringHasHydrogenBond(sring, mol)) {
+      continue;
+    }
+
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
 
@@ -922,11 +957,16 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
   VECT_EDON_TYPE edon(natoms);
 
   VECT_INT_VECT cRings;  // holder for rings that are candidates for aromaticity
+  bool HBondFlag = molHasHydrogenBond(mol);
   for (auto &sring : srings) {
     size_t ringSz = sring.size();
     // test ring size:
     if ((minRingSize && ringSz < minRingSize) ||
         (maxRingSize && ringSz > maxRingSize)) {
+      continue;
+    }
+
+    if (HBondFlag && ringHasHydrogenBond(sring, mol)) {
       continue;
     }
 
