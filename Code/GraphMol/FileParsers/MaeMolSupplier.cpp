@@ -241,10 +241,6 @@ bool is_ignored_property(const std::string &prop) {
 
 //! Copy over the structure properties, including stereochemistry.
 void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
-  // these will allow us to track if we encounter invalid stereochemistry
-  // data
-  bool has_valid_chirality_labels = true;
-
   for (const auto &[prop_name, value] : ct_block.getProperties<std::string>()) {
     if (is_ignored_property(prop_name)) {
       continue;
@@ -258,7 +254,6 @@ void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
       if (parseChiralityLabel(mol, value) == ChiralityLabelStatus::INVALID) {
         BOOST_LOG(rdWarningLog)
             << "Ignoring invalid chirality label: '" << value << "'\n";
-        has_valid_chirality_labels = false;
       }
 
     } else if (prop_name.find(mae::CT_EZ_PROP_PREFIX) == 0) {
@@ -267,12 +262,6 @@ void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
       auto propName = strip_prefix_from_mae_property(prop_name);
       mol.setProp(propName, value);
     }
-  }
-
-  // We can't rely on the input stereochemistry, so we should clear previously
-  // set stereochemistry info
-  if (!has_valid_chirality_labels) {
-    MolOps::removeStereochemistry(mol);
   }
 
   for (const auto &prop : ct_block.getProperties<double>()) {
