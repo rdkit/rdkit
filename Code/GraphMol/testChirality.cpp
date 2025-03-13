@@ -604,15 +604,14 @@ void testChiralityCleanup() {
   ps.sanitize = false;
   auto mol = v2::SmilesParse::MolFromSmiles(smi, ps);
 
-  bool implicitOnly = false;
-  bool updateExplicitCount = false;
+  MolOps::RemoveHsParameters rhp;
   bool sanitize = false;
-  MolOps::removeHs(*mol, implicitOnly, updateExplicitCount, sanitize);
+  MolOps::removeHs(*mol, rhp, sanitize);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
 
   smi = "F[C@+](C)(Cl)(Br)I";
   mol.reset(v2::SmilesParse::MolFromSmiles(smi, ps).release());
-  MolOps::removeHs(*mol, implicitOnly, updateExplicitCount, sanitize);
+  MolOps::removeHs(*mol, rhp, sanitize);
   TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
 
   // The remaining examples are for github #1614 :

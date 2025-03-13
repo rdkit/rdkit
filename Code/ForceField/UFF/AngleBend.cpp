@@ -19,6 +19,10 @@
 namespace ForceFields {
 namespace UFF {
 
+namespace {
+constexpr double ANGLE_CORRECTION_THRESHOLD = 0.8660;
+}
+
 namespace Utils {
 double calcAngleForceConstant(double theta0, double bondOrder12,
                               double bondOrder23, const AtomicParams *at1Params,
@@ -81,20 +85,20 @@ AngleBendContrib::AngleBendContrib(ForceField *owner, unsigned int idx1,
   URANGE_CHECK(idx3, owner->positions().size());
   // the following is a hack to get decent geometries
   // with 3- and 4-membered rings incorporating sp2 atoms
-  double theta0 = at2Params->theta0;
+  d_theta0 = at2Params->theta0;
   if (order >= 30) {
     switch (order) {
       case 30:
-        theta0 = 150.0 / 180.0 * M_PI;
+        d_theta0 = 150.0 / 180.0 * M_PI;
         break;
       case 35:
-        theta0 = 60.0 / 180.0 * M_PI;
+        d_theta0 = 60.0 / 180.0 * M_PI;
         break;
       case 40:
-        theta0 = 135.0 / 180.0 * M_PI;
+        d_theta0 = 135.0 / 180.0 * M_PI;
         break;
       case 45:
-        theta0 = 90.0 / 180.0 * M_PI;
+        d_theta0 = 90.0 / 180.0 * M_PI;
         break;
     }
     order = 0;
@@ -106,10 +110,10 @@ AngleBendContrib::AngleBendContrib(ForceField *owner, unsigned int idx1,
   d_at3Idx = idx3;
   d_order = order;
   d_forceConstant = Utils::calcAngleForceConstant(
-      theta0, bondOrder12, bondOrder23, at1Params, at2Params, at3Params);
+      d_theta0, bondOrder12, bondOrder23, at1Params, at2Params, at3Params);
   if (order == 0) {
-    double sinTheta0 = sin(theta0);
-    double cosTheta0 = cos(theta0);
+    double sinTheta0 = sin(d_theta0);
+    double cosTheta0 = cos(d_theta0);
     d_C2 = 1. / (4. * std::max(sinTheta0 * sinTheta0, 1e-8));
     d_C1 = -4. * d_C2 * cosTheta0;
     d_C0 = d_C2 * (2. * cosTheta0 * cosTheta0 + 1.);
@@ -139,6 +143,19 @@ double AngleBendContrib::getEnergy(double *pos) const {
   double angleTerm = getEnergyTerm(cosTheta, sinThetaSq);
   double res = d_forceConstant * angleTerm;
 
+  // The original UFF does not include any penalty for angles that are zero
+  // degrees.
+  //   This can lead to overlapping 1-3 atoms (e.g.e Github #7901), which is
+  //   obviously bad. We add an empiricial penalty for angles close to zero
+  //   borrowed from OpenBabel such that the energy goes up exponentially if the
+  //   angle is less than approx theta0,
+  // For the sake of efficiency, we only add the penalty if the angle is less
+  // than 30 degrees
+  if (d_order && d_order < 5 && cosTheta > ANGLE_CORRECTION_THRESHOLD) {
+    auto theta = acos(cosTheta);
+    res += exp(-20.0 * (theta - d_theta0 + 0.25));
+  }
+
   return res;
 }
 
@@ -164,14 +181,26 @@ void AngleBendContrib::getGrad(double *pos, double *grad) const {
   double sinThetaSq = 1.0 - cosTheta * cosTheta;
   double sinTheta = std::max(sqrt(sinThetaSq), 1.0e-8);
 
-  // std::cerr << "GRAD: " << cosTheta << " (" << acos(cosTheta)<< "), ";
-  // std::cerr << sinTheta << " (" << asin(sinTheta)<< ")" << std::endl;
-
   // use the chain rule:
   // dE/dx = dE/dTheta * dTheta/dx
 
   // dE/dTheta is independent of cartesians:
   double dE_dTheta = getThetaDeriv(cosTheta, sinTheta);
+
+  // The original UFF does not include any penalty for angles that are zero
+  // degrees.
+  //   This can lead to overlapping 1-3 atoms (e.g.e Github #7901), which is
+  //   obviously bad. We add an empiricial penalty for angles close to zero
+  //   borrowed from OpenBabel such that the energy goes up exponentially if
+  //   the angle is less than approx theta0
+  // For the sake of efficiency, we only add the penalty if the angle is less
+  // than 30 degrees
+  if (d_order && d_order < 5 && cosTheta > ANGLE_CORRECTION_THRESHOLD) {
+    auto theta = acos(cosTheta);
+
+    auto corr = -20.0 * exp(-20.0 * (theta - d_theta0 + 0.25));
+    dE_dTheta += corr;
+  }
 
   Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
 }

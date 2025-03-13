@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2024 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2024-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,14 +17,16 @@
 namespace DistGeom {
 
 struct DistViolationContribsParams {
-  unsigned int idx1{0};  //!< index of end1 in the ForceField's positions
-  unsigned int idx2{0};  //!< index of end2 in the ForceField's positions
-  double ub{1000.0};     //!< upper bound on the distance
-  double lb{0.0};        //!< lower bound on the distance
-  double weight{1.0};    //!< used to adjust relative contribution weights
+  unsigned int idx1{0};   //!< index of end1 in the ForceField's positions
+  unsigned int idx2{0};   //!< index of end2 in the ForceField's positions
+  double ub{1000.0};      //!< upper bound on the distance
+  double lb{0.0};         //!< lower bound on the distance
+  double ub2{1000000.0};  //!< squared upper bound on the distance
+  double lb2{0.0};        //!< squared lower bound on the distance
+  double weight{1.0};     //!< used to adjust relative contribution weights
   DistViolationContribsParams(unsigned int i1, unsigned int i2, double u,
                               double l, double w = 1.0)
-      : idx1(i1), idx2(i2), ub(u), lb(l), weight(w) {};
+      : idx1(i1), idx2(i2), ub(u), lb(l), ub2(u * u), lb2(l * l), weight(w) {};
 };
 //! A term to capture all violations of the upper and lower bounds by
 //! distance between two points

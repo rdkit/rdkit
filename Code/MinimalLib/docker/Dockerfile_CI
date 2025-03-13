@@ -22,8 +22,6 @@
 # docker rm rdkit-minimallib-container
 
 
-ARG RDKIT_GIT_URL="https://github.com/rdkit/rdkit.git"
-ARG RDKIT_BRANCH="master"
 ARG EMSDK_VERSION="latest"
 ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
 ARG BOOST_MAJOR_VERSION="1"
@@ -31,9 +29,7 @@ ARG BOOST_MINOR_VERSION="87"
 ARG BOOST_PATCH_VERSION="0"
 ARG FREETYPE_VERSION="2.13.3"
 
-FROM debian:bookworm as build-stage
-ARG RDKIT_GIT_URL
-ARG RDKIT_BRANCH
+FROM debian:bookworm AS build-stage
 ARG EMSDK_VERSION
 ARG EXCEPTION_HANDLING
 ARG BOOST_MAJOR_VERSION
@@ -56,6 +52,9 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
 
 ENV LANG C
 
+WORKDIR /opt
+RUN git clone https://github.com/emscripten-core/emsdk.git
+
 WORKDIR /src
 ARG BOOST_DOT_VERSION="${BOOST_MAJOR_VERSION}.${BOOST_MINOR_VERSION}.${BOOST_PATCH_VERSION}"
 ARG BOOST_UNDERSCORE_VERSION="${BOOST_MAJOR_VERSION}_${BOOST_MINOR_VERSION}_${BOOST_PATCH_VERSION}"
@@ -64,9 +63,6 @@ RUN wget -q https://archives.boost.io/release/${BOOST_DOT_VERSION}/source/boost_
 WORKDIR /src/boost_${BOOST_UNDERSCORE_VERSION}
 RUN ./bootstrap.sh --prefix=/opt/boost --with-libraries=system && \
   ./b2 install
-
-WORKDIR /opt
-RUN git clone https://github.com/emscripten-core/emsdk.git
 
 WORKDIR /opt/emsdk
 RUN ./emsdk install ${EMSDK_VERSION} && \
@@ -88,12 +84,13 @@ RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DWITH_ZLIB=OFF -DWITH_BZip2=OFF -D
   -DCMAKE_INSTALL_PREFIX=/opt/freetype ..
 RUN make -j2 && make -j2 install
 
-WORKDIR /src
+WORKDIR /
+COPY Code /src/rdkit/Code
+COPY External /src/rdkit/External
+COPY CMakeLists.txt license.txt *.in *.md *.cmake /src/rdkit
 ENV RDBASE=/src/rdkit
-RUN git clone ${RDKIT_GIT_URL}
+
 WORKDIR $RDBASE
-RUN git fetch --all --tags && \
-  git checkout ${RDKIT_BRANCH}
 RUN mkdir build
 WORKDIR $RDBASE/build
 RUN emcmake cmake -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
@@ -128,9 +125,9 @@ RUN make -j2 RDKit_minimal && \
 WORKDIR /src/rdkit/Code/MinimalLib/tests
 RUN /opt/emsdk/node/*/bin/node tests.js
 
-# Copy js and wasm rdkit files to use in browser
-# This feature requires the BuildKit backend
-# https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
-FROM scratch as export-stage
-COPY --from=build-stage /src/rdkit/Code/MinimalLib/demo /
-COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /
+# # Copy js and wasm rdkit files to use in browser
+# # This feature requires the BuildKit backend
+# # https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
+# FROM scratch AS export-stage
+# COPY --from=build-stage /src/rdkit/Code/MinimalLib/demo /
+# COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /
