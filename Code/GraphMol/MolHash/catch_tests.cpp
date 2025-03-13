@@ -990,4 +990,18 @@ M  END)CTAB"_ctab;
     // make sure the chirality wasn't destroyed
     CHECK(hsh1.find("@") != std::string::npos);
   }
+  SECTION("tests for the same issue from #8320 report") {
+    std::vector<std::string> smileses = {
+        "CC(=O)N[C@H](C)S(N)(=O)=O",
+        "O=P(O)(O)[C@@H](O)c1cccc2ccccc12",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh.find("@") != std::string::npos);
+    }
+  }
 }
