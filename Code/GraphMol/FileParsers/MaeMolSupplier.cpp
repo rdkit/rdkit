@@ -38,6 +38,12 @@ namespace v2 {
 namespace FileParsers {
 namespace {
 
+// Flag for parsing chirality labels
+enum class [[nodiscard]] ChiralityLabelStatus{VALID, INVALID};
+
+// Flag for parsing stereo bond labels
+enum class [[nodiscard]] StereoBondLabelStatus{VALID, INVALID};
+
 class PDBInfo {
  public:
   PDBInfo(const mae::IndexedBlock &atom_block) {
@@ -128,16 +134,19 @@ bool streamIsGoodOrExhausted(std::istream *stream) {
   return stream->good() || (stream->eof() && stream->fail() && !stream->bad());
 }
 
-void parseChiralityLabel(RWMol &mol, const std::string &stereo_prop) {
+ChiralityLabelStatus parseChiralityLabel(RWMol &mol,
+                                         const std::string &stereo_prop) {
   boost::char_separator<char> sep{"_"};
   boost::tokenizer<boost::char_separator<char>> tokenizer{stereo_prop, sep};
 
   auto tItr = tokenizer.begin();
 
   const int chiral_idx = FileParserUtils::toInt(*tItr) - 1;
-  Atom *chiral_atom = mol.getAtomWithIdx(chiral_idx);
-  CHECK_INVARIANT(chiral_atom != nullptr, "bad prop value");
+  if (chiral_idx < 0 || chiral_idx >= static_cast<int>(mol.getNumAtoms())) {
+    return ChiralityLabelStatus::INVALID;
+  }
 
+  auto chiral_atom = mol.getAtomWithIdx(chiral_idx);
   unsigned nSwaps = 2;
   const char rotation_direction = (++tItr)->back();
   switch (rotation_direction) {
@@ -148,21 +157,24 @@ void parseChiralityLabel(RWMol &mol, const std::string &stereo_prop) {
       nSwaps = 1;
       break;
     case '?':  // Undefined
-      return;
+      return ChiralityLabelStatus::VALID;
     default:
-      break;
+      return ChiralityLabelStatus::INVALID;
   }
-  CHECK_INVARIANT(nSwaps < 2, "bad prop value");
 
   INT_LIST bond_indexes;
   for (++tItr; tItr != tokenizer.end(); ++tItr) {
     const int nbr_idx = FileParserUtils::toInt(*tItr) - 1;
-    const Bond *bnd = mol.getBondBetweenAtoms(chiral_idx, nbr_idx);
-    CHECK_INVARIANT(bnd, "bad chiral bond");
-    bond_indexes.push_back(bnd->getIdx());
+    if (auto bond = mol.getBondBetweenAtoms(chiral_idx, nbr_idx); bond) {
+      bond_indexes.push_back(bond->getIdx());
+    } else {
+      return ChiralityLabelStatus::INVALID;
+    }
   }
-  CHECK_INVARIANT(bond_indexes.size() == chiral_atom->getDegree(),
-                  "bad prop value");
+
+  if (bond_indexes.size() != chiral_atom->getDegree()) {
+    return ChiralityLabelStatus::INVALID;
+  }
 
   nSwaps += chiral_atom->getPerturbationOrder(bond_indexes);
   switch (nSwaps % 2) {
@@ -173,9 +185,11 @@ void parseChiralityLabel(RWMol &mol, const std::string &stereo_prop) {
       chiral_atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
       break;
   }
+  return ChiralityLabelStatus::VALID;
 }
 
-void parseStereoBondLabel(RWMol &mol, const std::string &stereo_prop) {
+StereoBondLabelStatus parseStereoBondLabel(RWMol &mol,
+                                           const std::string &stereo_prop) {
   boost::char_separator<char> sep{"_"};
   boost::tokenizer<boost::char_separator<char>> tokenizer{stereo_prop, sep};
 
@@ -191,19 +205,24 @@ void parseStereoBondLabel(RWMol &mol, const std::string &stereo_prop) {
       atom_indexes.push_back(FileParserUtils::toInt(t) - 1);
     }
   }
-  CHECK_INVARIANT(type != Bond::STEREONONE, "bad prop value");
+
+  if (type == Bond::STEREONONE) {
+    return StereoBondLabelStatus::INVALID;
+  }
 
   // We currently don't support allenes or allene-likes
   if (atom_indexes.size() != 4) {
-    return;
+    return StereoBondLabelStatus::VALID;
   }
 
-  auto *bond = mol.getBondBetweenAtoms(atom_indexes[1], atom_indexes[2]);
-  CHECK_INVARIANT(bond, "bad stereo bond");
-  CHECK_INVARIANT(bond->getBondType() == Bond::DOUBLE, "bad stereo bond");
+  auto bond = mol.getBondBetweenAtoms(atom_indexes[1], atom_indexes[2]);
+  if (!bond || bond->getBondType() != Bond::DOUBLE) {
+    return StereoBondLabelStatus::INVALID;
+  }
 
   bond->setStereoAtoms(atom_indexes[0], atom_indexes[3]);
   bond->setStereo(type);
+  return StereoBondLabelStatus::VALID;
 }
 
 std::string strip_prefix_from_mae_property(const std::string &propName) {
@@ -231,23 +250,44 @@ bool is_ignored_property(const std::string &prop) {
 
 //! Copy over the structure properties, including stereochemistry.
 void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
-  for (const auto &prop : ct_block.getProperties<std::string>()) {
-    if (is_ignored_property(prop.first)) {
+  // these will allow us to track if we encounter invalid stereochemistry
+  // data
+  bool has_valid_chirality_labels = true;
+  bool has_valid_stereo_bond_labels = true;
+
+  for (const auto &[prop_name, value] : ct_block.getProperties<std::string>()) {
+    if (is_ignored_property(prop_name)) {
       continue;
     }
 
-    if (prop.first == mae::CT_TITLE) {
-      mol.setProp(common_properties::_Name, prop.second);
-    } else if (prop.first.find(mae::CT_CHIRALITY_PROP_PREFIX) == 0 ||
-               prop.first.find(mae::CT_PSEUDOCHIRALITY_PROP_PREFIX) == 0) {
-      parseChiralityLabel(mol, prop.second);
-    } else if (prop.first.find(mae::CT_EZ_PROP_PREFIX) == 0) {
-      parseStereoBondLabel(mol, prop.second);
+    if (prop_name == mae::CT_TITLE) {
+      mol.setProp(common_properties::_Name, value);
+    } else if (prop_name.find(mae::CT_CHIRALITY_PROP_PREFIX) == 0 ||
+               prop_name.find(mae::CT_PSEUDOCHIRALITY_PROP_PREFIX) == 0) {
+      // Not stopping if we see a "bad" label since the log can be helpful
+      if (parseChiralityLabel(mol, value) == ChiralityLabelStatus::INVALID) {
+        BOOST_LOG(rdWarningLog)
+            << "Ignoring invalid chirality label: '" << value << "'\n";
+        has_valid_chirality_labels &= false;
+      }
+
+    } else if (prop_name.find(mae::CT_EZ_PROP_PREFIX) == 0) {
+      // We should stop parsing stereo bond labels if we see on "bad" label
+      has_valid_stereo_bond_labels =
+          has_valid_stereo_bond_labels &&
+          (parseStereoBondLabel(mol, value) == StereoBondLabelStatus::VALID);
     } else {
-      auto propName = strip_prefix_from_mae_property(prop.first);
-      mol.setProp(propName, prop.second);
+      auto propName = strip_prefix_from_mae_property(prop_name);
+      mol.setProp(propName, value);
     }
   }
+
+  // We can't rely on the input stereochemistry, so we should clear previously
+  // set stereochemistry info
+  if (!(has_valid_chirality_labels && has_valid_stereo_bond_labels)) {
+    MolOps::removeStereochemistry(mol);
+  }
+
   for (const auto &prop : ct_block.getProperties<double>()) {
     if (is_ignored_property(prop.first)) {
       continue;
