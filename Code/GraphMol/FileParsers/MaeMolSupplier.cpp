@@ -258,7 +258,7 @@ void set_mol_properties(RWMol &mol, const mae::Block &ct_block) {
       if (parseChiralityLabel(mol, value) == ChiralityLabelStatus::INVALID) {
         BOOST_LOG(rdWarningLog)
             << "Ignoring invalid chirality label: '" << value << "'\n";
-        has_valid_chirality_labels &= false;
+        has_valid_chirality_labels = false;
       }
 
     } else if (prop_name.find(mae::CT_EZ_PROP_PREFIX) == 0) {
