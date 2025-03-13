@@ -307,14 +307,6 @@ int testMolSup() {
     TEST_ASSERT(info->getResidueNumber() == 5);
   }
 
-  {  // WIP
-    fname = rdbase + "/epik_states_6.maegz";
-    auto *strm = new gzstream(fname);
-    MaeMolSupplier maesup(strm);
-
-    std::shared_ptr<ROMol> nmol;
-    nmol.reset(maesup.next());
-  }
 #endif
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
   return 1;
