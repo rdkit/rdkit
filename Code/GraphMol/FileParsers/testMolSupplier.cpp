@@ -2901,12 +2901,6 @@ void testParsingInvalidChiralityLabels() {
 #endif
 }
 
-void testParsingInvalidStereoBondLabels() {
-#ifdef RDK_BUILD_MAEPARSER_SUPPORT
-  // FIXME: Add tests
-#endif
-}
-
 int main() {
   RDLog::InitLogs();
 
@@ -3101,12 +3095,7 @@ int main() {
 
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
   testParsingInvalidChiralityLabels();
-  BOOST_LOG(rdErrorLog) << "Finished: testParsingInvalidStereoBondLabels()\n";
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
-
-  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n";
-  testParsingInvalidStereoBondLabels();
-  BOOST_LOG(rdErrorLog) << "Finished: testParsingInvalidStereoBondLabels()\n";
+  BOOST_LOG(rdErrorLog) << "Finished: testParsingInvalidChiralityLabels()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   return 0;
