@@ -15,12 +15,13 @@
 #include <cstdio>
 #include <deque>
 
-#define VERBOSE_HASH 1
+// #define VERBOSE_HASH 1
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 
@@ -504,6 +505,20 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
            (!isUnsaturatedBond(nbrBond) && !nbrBond->getIsConjugated() &&
             !hasStartBond(atom, startBonds))));
 }
+
+unsigned int getNumConjugatedNeighbors(const Atom *atom) {
+  unsigned int res = 0;
+  for (auto nbr : atom->getOwningMol().atomNeighbors(atom)) {
+    for (auto nbrBond : atom->getOwningMol().atomBonds(nbr)) {
+      if (nbrBond->getIsConjugated()) {
+        ++res;
+        break;
+      }
+    }
+  }
+  return res;
+}
+
 }  // namespace
 
 std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
@@ -521,11 +536,16 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   boost::dynamic_bitset<> bondsToModify(mol->getNumBonds());
   boost::dynamic_bitset<> bondsConsidered(mol->getNumBonds());
 
+  std::vector<unsigned int> numConjugatedNeighbors(mol->getNumAtoms(), 0);
+  for (const auto atm : mol->atoms()) {
+    numConjugatedNeighbors[atm->getIdx()] = getNumConjugatedNeighbors(atm);
+  }
   boost::dynamic_bitset<> startBonds(mol->getNumBonds());
   for (const auto bnd : mol->bonds()) {
     startBonds.set(bnd->getIdx(),
                    isPossibleStartingBond(bnd, atomFlags, bondFlags));
   }
+
 #ifdef VERBOSE_HASH
   std::cerr << " START BONDS: " << startBonds << std::endl;
 #endif
@@ -652,10 +672,11 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
           // the logic here prevents the first bond in CNC=C from being included
           // in the tautomeric system. So we get: [CH3]-[N]:[C] instead of
           // [C]:[N]:[C]
-          // if (startBonds[bnd->getIdx()] && isHeteroAtom(atm) &&
-          //     !isUnsaturatedBond(nbrBnd)) {
-          //   continue;
-          // }
+          if (startBonds[bnd->getIdx()] && isHeteroAtom(atm) &&
+              !isUnsaturatedBond(nbrBnd) &&
+              numConjugatedNeighbors[oatom->getIdx()] < 2) {
+            continue;
+          }
           if (bondsConsidered[nbrBnd->getIdx()] ||
               (skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
                                 bondFlags) &&
