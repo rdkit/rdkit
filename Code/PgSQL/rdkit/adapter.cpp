@@ -272,18 +272,27 @@ extern "C" CROMol parseMolBlob(char *data, int len) {
 }
 
 extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
-                               bool asQuery) {
+                               bool asQuery, bool sanitize, bool removeHs) {
   RWMol *mol = nullptr;
 
   try {
     if (!asQuery) {
-      mol = MolBlockToMol(data);
+      mol = MolBlockToMol(data, sanitize, removeHs);
+      if (mol && !sanitize) {
+        mol->updatePropertyCache(false);
+        unsigned int failedOp;
+        unsigned int ops = MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_PROPERTIES ^
+                           MolOps::SANITIZE_KEKULIZE;
+        MolOps::sanitizeMol(*mol, failedOp, ops);
+      }
     } else {
       mol = MolBlockToMol(data, false, false);
       if (mol != nullptr) {
         mol->updatePropertyCache(false);
         MolOps::setAromaticity(*mol);
-        MolOps::mergeQueryHs(*mol);
+        if (removeHs) {
+          MolOps::mergeQueryHs(*mol);
+        }
       }
     }
   } catch (...) {

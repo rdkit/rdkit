@@ -126,7 +126,7 @@ char *makeMolBlob(CROMol data, int *len);
 CROMol parseMolText(char *data, bool asSmarts, bool warnOnFail, bool asQuery,
                     bool sanitize);
 CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
-                    bool asQuery);
+                    bool asQuery, bool sanitize, bool removeHs);
 char *makeMolText(CROMol data, int *len, bool asSmarts, bool cxSmiles,
                   bool isomeric);
 char *makeCtabText(CROMol data, int *len, bool createDepictionIfMissing,
