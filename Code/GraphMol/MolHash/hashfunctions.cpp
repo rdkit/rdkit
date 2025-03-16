@@ -15,7 +15,7 @@
 #include <cstdio>
 #include <deque>
 
-// #define VERBOSE_HASH 1
+#define VERBOSE_HASH 1
 
 #include <string>
 #include <GraphMol/RDKitBase.h>

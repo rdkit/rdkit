@@ -1005,3 +1005,22 @@ M  END)CTAB"_ctab;
     }
   }
 }
+
+TEST_CASE("new examples") {
+  {
+    auto m = "O=C1NCCC1"_smiles;
+    REQUIRE(m);
+    auto hsh =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh == "[O]:[C]1:[N]:[C]-[C]-[C]:1_0_0");
+  }
+
+  {
+    auto m = "O=C1CCCC1"_smiles;
+    REQUIRE(m);
+    std::cerr << "----------------------------------" << std::endl;
+    auto hsh =
+        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh == "[O]:[C]1:[N]:[C]-[C]-[C]:1_0_0");
+  }
+}
