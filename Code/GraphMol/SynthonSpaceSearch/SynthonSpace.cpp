@@ -501,7 +501,7 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
                  d_synthonPool);
   }
 #else
-    readSynthons(0, numSynthons, fileMap, synthonPos, d_synthonPool);
+    readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos, d_synthonPool);
 #endif
   if (!std::is_sorted(
           d_synthonPool.begin(), d_synthonPool.end(),
@@ -525,7 +525,7 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
                   d_fileMajorVersion, d_reactions);
   }
 #else
-    readReactions(0, numReactions, fileMap, reactionPos, *this,
+    readReactions(0, numReactions, fileMap.d_mappedMemory, reactionPos, *this,
                   d_fileMajorVersion, d_reactions);
 #endif
   if (!std::is_sorted(
