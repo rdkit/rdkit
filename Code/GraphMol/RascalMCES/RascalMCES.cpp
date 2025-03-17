@@ -344,7 +344,7 @@ bool checkRings(const ROMol &mol1,
     return true;
   }
 
-  if (mol1Bond->getIsAromatic() != mol2Bond->getIsAromatic() || mol1Bond->getBondType() != mol2Bond->getBondType()) {
+  if (if (mol1Bond->getBondType() != mol2Bond->getBondType())) {
     return false;
   }
 
