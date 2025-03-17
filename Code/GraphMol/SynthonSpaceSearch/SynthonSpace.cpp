@@ -430,8 +430,8 @@ void threadedReadReactions(
 
 }  // namespace
 
-void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
-  unsigned int numThreadsToUse = getNumThreadsToUse(numThreads);
+void SynthonSpace::readDBFile(const std::string &inFilename,
+                              [[maybe_unused]] int numThreads) {
   d_fileName = inFilename;
   std::ifstream is(inFilename, std::fstream::binary);
   if (!is.is_open() || is.bad()) {
@@ -492,6 +492,7 @@ void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
   reactionPos.push_back(fileMap.d_size);
   d_synthonPool.resize(numSynthons);
 #if RDK_BUILD_THREADSAFE_SSS
+  unsigned int numThreadsToUse = getNumThreadsToUse(numThreads);
   if (numThreadsToUse > 1) {
     threadedReadSynthons(fileMap.d_mappedMemory, synthonPos, numThreadsToUse,
                          d_synthonPool);
