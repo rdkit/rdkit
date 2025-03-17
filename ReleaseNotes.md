@@ -2,6 +2,10 @@
 (Changes relative to Release_2024.09.1)
 ## Backwards incompatible changes
 - The order of combinations returned by Chem.Pharm2D.Utils.GetUniqueCombinations has changed to be in numerical order. The combinations themselves are unchanged.
+- The MaeWriter class will now throw when attempting to write an empty Mol or when there are errors during the writing (e.g. kekulization errors). Previous behavior
+was to log an error and return an empty string.
+- AdjustQueryProperties now no longer ignores additional atom adjustments when makeAtomsGeneric is enabled.
+
 
 ## Acknowledgements
 (Note: I'm no longer attempting to manually curate names. If you would like to

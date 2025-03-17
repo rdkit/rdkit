@@ -266,14 +266,13 @@ std::string MolToPDBBody(const ROMol &mol, const Conformer *conf,
 }
 
 std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
-  ROMol mol(imol);
-  auto &trwmol = static_cast<RWMol &>(mol);
-  MolOps::Kekulize(trwmol);
+  RWMol rwmol(imol);
+  MolOps::Kekulize(rwmol);
   Utils::LocaleSwitcher ls;
 
   std::string res;
   std::string name;
-  if (mol.getPropIfPresent(common_properties::_Name, name)) {
+  if (rwmol.getPropIfPresent(common_properties::_Name, name)) {
     if (!name.empty()) {
       res += "COMPND    ";
       res += name;
@@ -286,26 +285,27 @@ std::string MolToPDBBlock(const ROMol &imol, int confId, unsigned int flavor) {
   unsigned int conect_count = 0;
 
   const Conformer *conf;
-  if (confId < 0 && mol.getNumConformers() > 1) {
-    int count = mol.getNumConformers();
+  if (confId < 0 && rwmol.getNumConformers() > 1) {
+    int count = rwmol.getNumConformers();
     for (confId = 0; confId < count; confId++) {
-      conf = &(mol.getConformer(confId));
+      conf = &(rwmol.getConformer(confId));
       std::stringstream ss;
       ss << "MODEL     ";
       ss << std::setw(4) << (confId + 1);
       ss << "\n";
       res += ss.str();
       res +=
-          MolToPDBBody(mol, conf, flavor, atm_count, ter_count, conect_count);
+          MolToPDBBody(rwmol, conf, flavor, atm_count, ter_count, conect_count);
       res += "ENDMDL\n";
     }
   } else {
-    if (confId < 0 && mol.getNumConformers() == 0) {
+    if (confId < 0 && rwmol.getNumConformers() == 0) {
       conf = nullptr;
     } else {
-      conf = &(mol.getConformer(confId));
+      conf = &(rwmol.getConformer(confId));
     }
-    res += MolToPDBBody(mol, conf, flavor, atm_count, ter_count, conect_count);
+    res +=
+        MolToPDBBody(rwmol, conf, flavor, atm_count, ter_count, conect_count);
   }
 
   if (flavor & 16) {

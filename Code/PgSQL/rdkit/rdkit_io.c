@@ -112,10 +112,15 @@ PG_FUNCTION_INFO_V1(mol_from_ctab);
 Datum mol_from_ctab(PG_FUNCTION_ARGS) {
   char *data = PG_GETARG_CSTRING(0);
   bool keepConformer = PG_GETARG_BOOL(1);
+  bool sanitize =  PG_GETARG_BOOL(2);
+  bool removeHs =  PG_GETARG_BOOL(3);
   CROMol mol;
   Mol *res;
 
-  mol = parseMolCTAB(data, keepConformer, true, false);
+  
+  bool warnOnFail =  true;
+  bool asQuery =  false;
+  mol = parseMolCTAB(data, keepConformer, warnOnFail, asQuery, sanitize, removeHs);
   if (!mol) {
     PG_RETURN_NULL();
   }
@@ -130,10 +135,14 @@ PG_FUNCTION_INFO_V1(qmol_from_ctab);
 Datum qmol_from_ctab(PG_FUNCTION_ARGS) {
   char *data = PG_GETARG_CSTRING(0);
   bool keepConformer = PG_GETARG_BOOL(1);
+  bool removeHs =  PG_GETARG_BOOL(2);
   CROMol mol;
   Mol *res;
 
-  mol = parseMolCTAB(data, keepConformer, true, true);
+  bool warnOnFail =  true;
+  bool asQuery =  true;
+  bool sanitize = false;
+  mol = parseMolCTAB(data, keepConformer, warnOnFail, asQuery, sanitize, removeHs);
   if (!mol) {
     PG_RETURN_NULL();
   }
