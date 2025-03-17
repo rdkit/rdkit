@@ -142,9 +142,12 @@ TEST_CASE("FP Binary File") {
       RDKitFP::getRDKitFPGenerator<std::uint64_t>());
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
+  SynthonSpaceSearchParams params;
   for (auto numThreads : std::vector<int>{1, 2, -1}) {
     synthonspace.readDBFile(libName, numThreads);
-    CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
+    params.numThreads = numThreads;
+    CHECK_NOTHROW(
+        results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params));
     CHECK(results.getHitMolecules().size() == 4);
     CHECK(results.getMaxNumResults() == 420);
   }

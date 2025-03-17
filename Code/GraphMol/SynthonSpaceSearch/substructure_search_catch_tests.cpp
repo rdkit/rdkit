@@ -184,6 +184,17 @@ TEST_CASE("S Simple query 1") {
     auto results = synthonspace.substructureSearch(*queryMol);
     CHECK(results.getHitMolecules().size() == 20);
   }
+  {
+    // Test for multiple threads.
+    auto queryMol = "c1ccccc1C(=O)N1CCCC1"_smiles;
+    SynthonSpaceSearchParams params;
+    params.numThreads = -1;
+    SubstructMatchParameters matchParams;
+    auto results =
+        synthonspace.substructureSearch(*queryMol, matchParams, params);
+    CHECK(results.getHitMolecules().size() == 220);
+    CHECK(results.getMaxNumResults() == 220);
+  }
 }
 
 TEST_CASE("S Triazole") {

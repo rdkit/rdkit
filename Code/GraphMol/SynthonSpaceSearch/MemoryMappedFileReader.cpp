@@ -1,5 +1,5 @@
 //
-// Copyright (C) David Cosgrove 2024.
+// Copyright (C) David Cosgrove 2025.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -7,6 +7,9 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+
+#include <GraphMol/SynthonSpaceSearch/MemoryMappedFileReader.h>
+#include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
 
 #include <iostream>
 #include <string>
@@ -27,86 +30,78 @@ namespace RDKit::SynthonSpaceSearch::details {
 // This code is a lightly modified version of something provided by
 // ChatGPT in response to the prompt:
 // "in c++ can I use the same code for mmap on windows and linux?"
-// ChatGPT assures me there are no license implications in using it, although
-// that brings Mandy Rice-Davies to mind.
+// ChatGPT assures me there are no license implications in using it.
 // Accessed 26/2/2025.
-void *createReadOnlyMemoryMapping(const std::string &filePath, size_t &size) {
+MemoryMappedFileReader::MemoryMappedFileReader(const std::string &filePath) {
 #ifdef _WIN32
   HANDLE hFile = CreateFile(filePath.c_str(), GENERIC_READ, 0, NULL,
                             OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
   if (hFile == INVALID_HANDLE_VALUE) {
-    BOOST_LOG(rdErrorLog) << "Error opening file.\n";
-    return nullptr;
+    throw(std::runtime_error("Error opening file " + filePath + "."));
   }
 
   // Get file size
   LARGE_INTEGER fileSize;
   if (!GetFileSizeEx(hFile, &fileSize)) {
-    BOOST_LOG(rdErrorLog) << "Error getting file size.\n";
     CloseHandle(hFile);
-    return nullptr;
+    throw(std::runtime_error("Error reading file " + filePath + "."));
   }
-  size = static_cast<size_t>(fileSize.QuadPart);
+  d_size = static_cast<size_t>(fileSize.QuadPart);
 
   // Create a file mapping
   HANDLE hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
   if (hMapping == NULL) {
-    BOOST_LOG(rdErrorLog) << "Error creating file mapping.\n";
     CloseHandle(hFile);
-    return nullptr;
+    throw(std::runtime_error("Error reading file " + filePath + "."));
   }
 
   // Map the file into memory
-  void *mappedMemory = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0);
-  if (mappedMemory == NULL) {
-    BOOST_LOG(rdErrorLog) << "Error mapping view of file.\n";
+  d_mappedMemory =
+      static_cast<char *>(MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, 0));
+  if (d_mappedMemory == NULL) {
     CloseHandle(hMapping);
     CloseHandle(hFile);
-    return nullptr;
+    throw(std::runtime_error("Error reading file " + filePath + "."));
   }
 
   CloseHandle(hMapping);  // Handle is no longer needed once mapped
   CloseHandle(hFile);     // File handle is no longer needed
-
-  return mappedMemory;
-
 #else
   int fd = open(filePath.c_str(), O_RDWR);
   if (fd == -1) {
     BOOST_LOG(rdErrorLog) << "Error opening file.\n";
-    return nullptr;
+    throw(std::runtime_error("Error opening file " + filePath + "."));
   }
 
   // Get file size
   struct stat fileStat;
   if (fstat(fd, &fileStat) == -1) {
-    BOOST_LOG(rdErrorLog) << "Error getting file size.\n";
     close(fd);
-    return nullptr;
+    throw(std::runtime_error("Error reading file " + filePath + "."));
   }
-  size = static_cast<size_t>(fileStat.st_size);
+  d_size = static_cast<size_t>(fileStat.st_size);
 
   // Memory map the file
-  void *mappedMemory = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, 0);
-  if (mappedMemory == MAP_FAILED) {
+  d_mappedMemory =
+      static_cast<char *>(mmap(NULL, d_size, PROT_READ, MAP_SHARED, fd, 0));
+  if (d_mappedMemory == MAP_FAILED) {
     BOOST_LOG(rdErrorLog) << "Error mapping file.\n";
     close(fd);
-    return nullptr;
+    throw(std::runtime_error("Error reading file " + filePath + "."));
   }
 
   close(fd);  // File descriptor is no longer needed
-  return mappedMemory;
 #endif
 }
 
-void unmapMemory(void *mappedMemory, size_t size) {
+MemoryMappedFileReader::~MemoryMappedFileReader() {
 #ifdef _WIN32
   // Windows-specific unmapping
-  UnmapViewOfFile(mappedMemory);
+  UnmapViewOfFile(d_mappedMemory);
 #else
   // Linux-specific unmapping
-  munmap(mappedMemory, size);
+  munmap(d_mappedMemory, d_size);
 #endif
 }
 
-}
+};  // namespace RDKit::SynthonSpaceSearch::details

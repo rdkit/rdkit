@@ -50,7 +50,6 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
 
 SearchResults SynthonSpaceSearcher::search() {
   std::vector<std::unique_ptr<ROMol>> results;
-
   const TimePoint *endTime = nullptr;
   TimePoint endTimePt;
   if (d_params.timeOut > 0) {

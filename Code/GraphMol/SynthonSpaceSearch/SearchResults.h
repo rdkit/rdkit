@@ -41,7 +41,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
    */
   size_t getMaxNumResults() const { return d_maxNumResults; }
   /*!
-   * Returns the hit molecules s from the search. Not necessarily all
+   * Returns the hit molecules from the search. Not necessarily all
    * those possible, just the maximum number requested.
    *
    * @return std::vector<std::unique_ptr<ROMol>>
@@ -69,7 +69,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
   std::vector<std::unique_ptr<ROMol>> d_hitMolecules;
   // Only used when merging in another set, so will be
   // filled in then if needed, empty otherwise.
-  std::set<std::string> d_molNames;
+  std::unordered_set<std::string> d_molNames;
 
   size_t d_maxNumResults;
   bool d_timedOut{false};

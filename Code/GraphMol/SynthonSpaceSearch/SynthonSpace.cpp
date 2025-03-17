@@ -27,6 +27,7 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/GeneralizedSubstruct/XQMol.h>
+#include <GraphMol/SynthonSpaceSearch/MemoryMappedFileReader.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceFingerprintSearcher.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceRascalSearcher.h>
@@ -485,18 +486,18 @@ void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
   }
   is.close();
 
-  size_t mapSize;
-  auto fileMap = static_cast<char *>(
-      details::createReadOnlyMemoryMapping(d_fileName, mapSize));
+  details::MemoryMappedFileReader fileMap(d_fileName);
   // put the end of the last synthon and reaction into their respective arrays,
   synthonPos.push_back(reactionPos[0]);
-  reactionPos.push_back(mapSize);
+  reactionPos.push_back(fileMap.d_size);
   d_synthonPool.resize(numSynthons);
 #if RDK_BUILD_THREADSAFE_SSS
   if (numThreadsToUse > 1) {
-    threadedReadSynthons(fileMap, synthonPos, numThreadsToUse, d_synthonPool);
+    threadedReadSynthons(fileMap.d_mappedMemory, synthonPos, numThreadsToUse,
+                         d_synthonPool);
   } else {
-    readSynthons(0, numSynthons, fileMap, synthonPos, d_synthonPool);
+    readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
+                 d_synthonPool);
   }
 #else
     readSynthons(0, numSynthons, fileMap, synthonPos, d_synthonPool);
@@ -516,10 +517,10 @@ void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
   d_reactions.resize(numReactions);
 #if RDK_BUILD_THREADSAFE_SSS
   if (numThreadsToUse > 1) {
-    threadedReadReactions(fileMap, reactionPos, numThreadsToUse, *this,
-                          d_fileMajorVersion, d_reactions);
+    threadedReadReactions(fileMap.d_mappedMemory, reactionPos, numThreadsToUse,
+                          *this, d_fileMajorVersion, d_reactions);
   } else {
-    readReactions(0, numReactions, fileMap, reactionPos, *this,
+    readReactions(0, numReactions, fileMap.d_mappedMemory, reactionPos, *this,
                   d_fileMajorVersion, d_reactions);
   }
 #else
@@ -541,7 +542,6 @@ void SynthonSpace::readDBFile(const std::string &inFilename, int numThreads) {
       d_maxNumSynthons = reaction->getSynthons().size();
     }
   }
-  details::unmapMemory(fileMap, mapSize);
 }
 
 void SynthonSpace::summarise(std::ostream &os) {
