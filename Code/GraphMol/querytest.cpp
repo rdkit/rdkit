@@ -413,6 +413,15 @@ void testQueryQueryMatches() {
     TEST_ASSERT(a2.QueryMatch(&a1));
   }
 
+  {
+    QueryAtom a1;
+    try {
+      a1.expandQuery(makeAtomNumQuery(7), Queries::COMPOSITE_OR);
+    } catch (std::exception &e) {
+      CHECK_INVARIANT(e.what(), "Can't expand empty query");
+    }
+  }
+
   // =====================================
   // BONDS
   // =====================================
