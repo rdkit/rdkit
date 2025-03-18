@@ -2461,7 +2461,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
         }
       }
     }
-    if (foundAtropisomer) {
+    if (foundAtropisomer || Atropisomers::doesMolHaveAtropisomers(mol)) {
       Atropisomers::cleanupAtropisomerStereoGroups(mol);
     }
     Chirality::cleanupStereoGroups(mol);
