@@ -26,7 +26,6 @@
 #endif
 
 namespace RDKit::SynthonSpaceSearch::details {
-
 // This code is a lightly modified version of something provided by
 // ChatGPT in response to the prompt:
 // "in c++ can I use the same code for mmap on windows and linux?"
@@ -90,8 +89,15 @@ MemoryMappedFileReader::MemoryMappedFileReader(const std::string &filePath) {
     throw(std::runtime_error("Error reading file " + filePath + "."));
   }
 
-  close(fd);  // File descriptor is no longer needed
+  close(fd); // File descriptor is no longer needed
 #endif
+}
+
+MemoryMappedFileReader::MemoryMappedFileReader(MemoryMappedFileReader &&other) {
+  d_mappedMemory = other.d_mappedMemory;
+  other.d_mappedMemory = nullptr;
+  d_size = other.d_size;
+  other.d_size = 0;
 }
 
 MemoryMappedFileReader::~MemoryMappedFileReader() {
@@ -105,7 +111,7 @@ MemoryMappedFileReader::~MemoryMappedFileReader() {
 }
 
 MemoryMappedFileReader &MemoryMappedFileReader::operator=(
-    MemoryMappedFileReader &&other) {
+  MemoryMappedFileReader &&other) {
   if (this != &other) {
 #ifdef _WIN32
     // Windows-specific unmapping
@@ -121,5 +127,4 @@ MemoryMappedFileReader &MemoryMappedFileReader::operator=(
   }
   return *this;
 }
-
-};  // namespace RDKit::SynthonSpaceSearch::details
+}; // namespace RDKit::SynthonSpaceSearch::details
