@@ -21,12 +21,15 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT MemoryMappedFileReader {
   MemoryMappedFileReader() = delete;
   MemoryMappedFileReader(const std::string &filePath);
   MemoryMappedFileReader(const MemoryMappedFileReader &) = delete;
-  MemoryMappedFileReader(MemoryMappedFileReader &&) = delete;
+  MemoryMappedFileReader(MemoryMappedFileReader &&other) {
+    d_mappedMemory = other.d_mappedMemory;
+    other.d_mappedMemory = nullptr;
+  }
 
   ~MemoryMappedFileReader();
 
   MemoryMappedFileReader &operator=(const MemoryMappedFileReader &) = delete;
-  MemoryMappedFileReader &operator=(MemoryMappedFileReader &&) = delete;
+  MemoryMappedFileReader &operator=(MemoryMappedFileReader &&other);
 
   char *d_mappedMemory{nullptr};
   size_t d_size{0};

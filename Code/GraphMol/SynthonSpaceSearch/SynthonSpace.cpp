@@ -501,7 +501,8 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
                  d_synthonPool);
   }
 #else
-    readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos, d_synthonPool);
+    readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
+                 d_synthonPool);
 #endif
   if (!std::is_sorted(
           d_synthonPool.begin(), d_synthonPool.end(),

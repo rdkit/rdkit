@@ -104,4 +104,22 @@ MemoryMappedFileReader::~MemoryMappedFileReader() {
 #endif
 }
 
+MemoryMappedFileReader &MemoryMappedFileReader::operator=(
+    MemoryMappedFileReader &&other) {
+  if (this != &other) {
+#ifdef _WIN32
+    // Windows-specific unmapping
+    UnmapViewOfFile(d_mappedMemory);
+#else
+    // Linux-specific unmapping
+    munmap(d_mappedMemory, d_size);
+#endif
+    d_mappedMemory = other.d_mappedMemory;
+    d_size = other.d_size;
+    other.d_mappedMemory = nullptr;
+    other.d_size = 0;
+  }
+  return *this;
+}
+
 };  // namespace RDKit::SynthonSpaceSearch::details
