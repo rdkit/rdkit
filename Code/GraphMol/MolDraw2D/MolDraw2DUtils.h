@@ -106,8 +106,8 @@ struct ContourParams {
   bool useFillThreshold =
       false;  // use a magnitude threshold to determine if a grid box is filled
   double fillThreshold = 0.01;  // magnitude threshold for filling grid boxes
-  bool fillThreholdIsFraction = true;  // if true, the fill threshold is a
-                                       // fraction of the range of the data
+  bool fillThresholdIsFraction = true;  // if true, the fill threshold is a
+                                        // fraction of the range of the data
 };
 
 //! Generates and draws contours for data on a grid

@@ -836,7 +836,7 @@ TEST_CASE("contour data", "[drawing][conrec]") {
       check_file_hash("contourMol_6.svg");
     }
 
-    cps.fillThreholdIsFraction = false;
+    cps.fillThresholdIsFraction = false;
     {
       MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
       drawer.drawOptions().padding = 0.1;

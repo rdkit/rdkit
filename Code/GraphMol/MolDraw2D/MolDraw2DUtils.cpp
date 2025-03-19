@@ -344,7 +344,7 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
       for (size_t j = 0; j < nY - 1; ++j) {
         auto gridV = grid[i * nY + j];
         auto threshTest = gridV;
-        if (params.fillThreholdIsFraction) {
+        if (params.fillThresholdIsFraction) {
           threshTest /= delta;
         }
         if (params.useFillThreshold &&

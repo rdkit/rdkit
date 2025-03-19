@@ -1339,7 +1339,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "magnitude threshold to determine if a grid point is filled")
       .def_readwrite(
           "fillThresholdIsFraction",
-          &RDKit::MolDraw2DUtils::ContourParams::fillThreholdIsFraction,
+          &RDKit::MolDraw2DUtils::ContourParams::fillThresholdIsFraction,
           "if true, fillThreshold is a fraction of the range of the data")
       .def("setContourColour", &RDKit::setContourColour,
            (python::arg("self"), python::arg("colour")))
