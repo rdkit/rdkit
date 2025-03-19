@@ -28,7 +28,7 @@ TEST_CASE("explicit tests") {
     std::string file =
         rdbase +
         "/Code/GraphMol/FileParsers/test_data/atropisomers/AtropManyChirals.sdf";
-    std::unique_ptr<RWMol> mol(MolFileToMol(file));
+    auto mol = v2::FileParsers::MolFromMolFile(file);
     REQUIRE(mol);
     CHECK(mol->getBondWithIdx(7)->getStereo() ==
           Bond::BondStereo::STEREOATROPCCW);
@@ -37,7 +37,7 @@ TEST_CASE("explicit tests") {
     std::string file =
         rdbase +
         "/Code/GraphMol/FileParsers/test_data/atropisomers/macrocycle-5-meta-Cl-ortho-hash.sdf";
-    std::unique_ptr<RWMol> mol(MolFileToMol(file));
+    auto mol = v2::FileParsers::MolFromMolFile(file);
     REQUIRE(mol);
     CHECK(mol->getBondWithIdx(15)->getStereo() ==
           Bond::BondStereo::STEREOATROPCW);
@@ -47,7 +47,7 @@ TEST_CASE("explicit tests") {
     std::string file =
         rdbase +
         "/Code/GraphMol/FileParsers/test_data/atropisomers/AtropManyChiralsEnhanced.sdf";
-    std::unique_ptr<RWMol> mol(MolFileToMol(file));
+    auto mol = v2::FileParsers::MolFromMolFile(file);
     REQUIRE(mol);
     CHECK(mol->getBondWithIdx(7)->getStereo() ==
           Bond::BondStereo::STEREOATROPCCW);
