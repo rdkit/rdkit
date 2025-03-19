@@ -62,8 +62,14 @@ TEST_CASE("explicit tests") {
     CHECK(mol->getAtomWithIdx(10)->getChiralTag() !=
           Atom::ChiralType::CHI_UNSPECIFIED);
 
-    CHECK(mol->getStereoGroups().size() == 2);
-    for (const auto &sg : mol->getStereoGroups()) {
+    REQUIRE(mol->getStereoGroups().size() == 2);
+    {
+      const auto &sg = mol->getStereoGroups()[0];
+      CHECK(sg.getAtoms().size() == 2);
+      CHECK(sg.getBonds().size() == 1);
+    }
+    {
+      const auto &sg = mol->getStereoGroups()[1];
       CHECK(sg.getAtoms().size() == 2);
       CHECK(sg.getBonds().size() == 0);
     }
