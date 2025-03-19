@@ -270,19 +270,6 @@ class VF2SubState {
       pair.n2++;
     }
 
-#if 0
-    std::cerr<<" **** np: "<< prev_n1<<","<<prev_n2<<std::endl;
-    std::cerr<<"in_1 ";
-    for(unsigned int i=0;i<n1;++i){
-      std::cerr<<"("<<in_1[i]<<","<<out_1[i]<<"), ";
-    } 
-    std::cerr<<std::endl;
-    std::cerr<<"in_2 ";
-    for(unsigned int i=0;i<n2;++i){
-      std::cerr<<"("<<in_2[i]<<","<<out_2[i]<<"), ";
-    } 
-    std::cerr<<std::endl;
-#endif
     if (t1_len > core_len && t2_len > core_len) {
       while (pair.n1 < n1 &&
              (core_1[pair.n1] != NULL_NODE || term_1[pair.n1] == 0)) {
