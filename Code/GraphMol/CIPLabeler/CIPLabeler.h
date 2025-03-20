@@ -10,7 +10,9 @@
 //
 #pragma once
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/export.h>
 

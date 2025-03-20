@@ -11,7 +11,9 @@
 #include <string>
 #include <cstdlib>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "Util.h"
 

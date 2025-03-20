@@ -13,8 +13,10 @@
 // to draw text onto a picture.
 
 #include <sstream>
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/MolDraw2D/MolDraw2DDetails.h>
 #include <GraphMol/MolDraw2D/DrawTextSVG.h>

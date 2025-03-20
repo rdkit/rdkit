@@ -10,8 +10,10 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>

@@ -8,15 +8,14 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
-#include "GasteigerParams.h"
-
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/flyweight.hpp>
 #include <boost/flyweight/key_value.hpp>
 #include <boost/flyweight/no_tracking.hpp>
+#include <boost/tokenizer.hpp>
+typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
 #include <RDGeneral/BoostEndInclude.h>
+#include "GasteigerParams.h"
 
 #include <sstream>
 #include <locale>

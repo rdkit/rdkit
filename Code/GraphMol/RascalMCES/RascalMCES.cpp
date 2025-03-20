@@ -23,8 +23,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
