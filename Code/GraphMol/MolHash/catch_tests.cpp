@@ -438,9 +438,9 @@ TEST_CASE("tautomer v2") {
             {{
                  "S=C1N=CN=C2NC=NC12",
                  "S=C2C1N=CN=C1NC=N2",
+                 "S=C1NC=NC2N=CNC1=2",
              },
              {
-                 "S=C1NC=NC2N=CNC1=2",
                  "S=C1N=CN=C2N=CNC12",
                  "S=C2C1NC=NC1=NC=N2",
              }},
@@ -451,8 +451,9 @@ TEST_CASE("tautomer v2") {
                  "N1C(=O)NC(=O)C2C=NNC=21",
                  "N1C(=O)NC(=O)C2=CNNC2=1",
                  "N1C(=O)NC(=O)C2=CNNC2=1",
+                 "N1C(=O)NC(=O)C2CN=NC=21",
              },
-             {"N1C(=O)NC(=O)C2CN=NC=21", "N1C(=O)NC(=O)C2CN=NC2=1"}},
+             {"N1C(=O)NC(=O)C2CN=NC2=1"}},
             // ---------------------------
             // more stereochemistry
             // ---------------------------
@@ -1043,9 +1044,12 @@ TEST_CASE("new examples") {
         {"NNC(=O)CC1=NNC(=O)C1",
          "[NH2]-[N]:[C](:[O])-[C]:[C]1:[C]-[C](:[O]):[N]-[N]:1_6_0"},
 
-        // {"Cc1ncn2c1NC=NC2N",
-        //  "[C]:[C]1:[N]:[C]:[N]2:[C]:1-[N]:[C]:[N]:[C]-2-[NH2]_7_0"},
-
+        {"Cc1ncn2c1NC=NC2N",
+         "[C]:[C]1:[N]:[C]:[N]2:[C](-[NH2]):[N]:[C]:[N]:[C]:1:2_7_0"},
+        {"Nc1nc2c(c(=O)[nH]1)CC=N2",
+         "[N]:[C]1:[N]:[C](:[O]):[C]2:[C]:[C]:[N]:[C]:2:[N]:1_6_0"},
+        {"NC(N)=[N+]1CCc2ccccc2C1",
+         "[NH2]-[C](-[NH2])=[N+]1-[CH2]-[CH2]-[c]2:[cH]:[cH]:[cH]:[cH]:[c]:2-[CH2]-1_0_0"},
     };
     for (const auto &[smiles, ref] : data) {
       INFO(smiles);

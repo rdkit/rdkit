@@ -15,7 +15,7 @@
 #include <cstdio>
 #include <deque>
 
-#define VERBOSE_HASH 1
+// #define VERBOSE_HASH 1
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
@@ -392,6 +392,7 @@ std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
       //< one side of the "amide", with an ugly exclusion for amidine
       "[A;!$(C=[O,N,S])]-[O,N,S]-C=[O,N,S]",  //< the other side
       "[OH0,SH0]-C=[O,N,S]",                  //< "esters" and "carboxyls"
+      "C-[N;$([N+]=C(N)(N)),$(N-C(N)=N)]",    //< quanidine like
       "[C]-[c](:[o,n,s]):[o,n,s]",  //< a limited version of handling this for
                                     // aromatic systems
       "*[SD4](=*)=*",               // sulfates, sulfonyls, etc.
@@ -579,6 +580,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       continue;
     }
     boost::dynamic_bitset<> conjSystem(mol->getNumBonds());
+    boost::dynamic_bitset<> conjAtoms(mol->getNumAtoms());
     boost::dynamic_bitset<> atomsInSystem(mol->getNumAtoms());
     unsigned int numDonorCs = 0;
     unsigned int activeHeteroHs = 0;
@@ -618,10 +620,11 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         // the logic here prevents the first bond in CNC=C from being included
         // in the tautomeric system. So we get: [CH3]-[N]:[C] instead of
         // [C]:[N]:[C]
-        if (startBonds[bptr->getIdx()] && isHeteroAtom(atm) &&
+        if (startBonds[bptr->getIdx()] && !startBonds[nbrBond->getIdx()] &&
+            isHeteroAtom(atm) &&
             !isUnsaturatedBond(nbrBond)
             //
-            // && numConjugatedNeighbors[oatom->getIdx()] < 2
+            && numConjugatedNeighbors[oatom->getIdx()] < 2
             //
         ) {
 #ifdef VERBOSE_HASH
@@ -635,24 +638,34 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                              bondFlags) &&
             skipNeighborBond(oatom, atm, nbrBond, startBonds, atomFlags,
                              bondFlags)) {
+          // we won't add this bond for further traversal, but if both atoms
+          // are already in this system, then we should add the bond to the
+          // system
+          // if (atomsInSystem[oatom->getIdx()]) {
+          //   conjSystem.set(nbrBond->getIdx());
+          // }
 #ifdef VERBOSE_HASH
           std::cerr << "    skip b" << std::endl;
 #endif
           continue;
         }
 
+        if (std::find(bq.begin(), bq.end(), nbrBond) == bq.end()) {
+          bq.push_back(nbrBond);
 #ifdef VERBOSE_HASH
-        std::cerr << "    push " << nbrBond->getIdx() << " "
-                  << nbrBond->getBeginAtomIdx() << "-"
-                  << nbrBond->getEndAtomIdx() << std::endl;
-        std::cerr << " #### SET1 " << bptr->getIdx() << std::endl;
+          std::cerr << "    push " << nbrBond->getIdx() << " "
+                    << nbrBond->getBeginAtomIdx() << "-"
+                    << nbrBond->getEndAtomIdx() << std::endl;
+          std::cerr << " #### SET1 " << bptr->getIdx() << std::endl;
 #endif
-        bq.push_back(nbrBond);
+          bq.push_back(nbrBond);
+        }
 
         // now we know that we should consider this bond
-
         bondsConsidered.set(bptr->getIdx());
         conjSystem.set(bptr->getIdx());
+        conjAtoms.set(bptr->getBeginAtomIdx());
+        conjAtoms.set(bptr->getEndAtomIdx());
       }
     }
 
@@ -670,6 +683,9 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
 #endif
       bondsConsidered.set(bnd->getIdx());
       conjSystem.set(bnd->getIdx());
+      conjAtoms.set(bnd->getBeginAtomIdx());
+      conjAtoms.set(bnd->getEndAtomIdx());
+
       for (const auto atm :
            std::vector<const Atom *>{bnd->getBeginAtom(), bnd->getEndAtom()}) {
         if (atomsInSystem[atm->getIdx()]) {
@@ -709,7 +725,8 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
           // the logic here prevents the first bond in CNC=C from being
           // included in the tautomeric system. So we get: [CH3]-[N]:[C]
           // instead of [C]:[N]:[C]
-          if (startBonds[bnd->getIdx()] && isHeteroAtom(atm) &&
+          if (startBonds[bnd->getIdx()] && !startBonds[nbrBnd->getIdx()] &&
+              isHeteroAtom(atm) &&
               !isUnsaturatedBond(nbrBnd)
               //
               // && !neighboringStartBond[nbrBnd->getIdx()]
@@ -728,18 +745,20 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
             // we won't add this bond for further traversal, but if both atoms
             // are already in this system, then we should add the bond to the
             // system
-            if (atomsInSystem[oatom->getIdx()]) {
-              conjSystem.set(nbrBnd->getIdx());
-            }
+            // if (atomsInSystem[oatom->getIdx()]) {
+            //   conjSystem.set(nbrBnd->getIdx());
+            // }
 #ifdef VERBOSE_HASH
             std::cerr << "    skip d" << std::endl;
 #endif
             continue;
           }
-          bq.push_back(nbrBnd);
+          if (std::find(bq.begin(), bq.end(), nbrBnd) == bq.end()) {
+            bq.push_back(nbrBnd);
 #ifdef VERBOSE_HASH
-          std::cerr << "  added!" << std::endl;
+            std::cerr << "  added!" << std::endl;
 #endif
+          }
         }
       }
     }
@@ -749,8 +768,26 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       std::cerr << "CONJ: " << conjSystem << " hetero " << activeHeteroHs
                 << " donor " << std::endl;
 #endif
-      bondsToModify |= conjSystem;
+      // bondsToModify |= conjSystem;
+      for (auto i = 0U; i < conjAtoms.size(); i++) {
+        if (conjAtoms[i]) {
+          for (auto j = i; j < conjAtoms.size(); j++) {
+            if (conjAtoms[j]) {
+              auto bnd = mol->getBondBetweenAtoms(i, j);
+              if (bnd) {
+                bondsToModify.set(bnd->getIdx());
+              }
+            }
+          }
+        }
+      }
     } else {
+      // undo all the bonds we marked as considered in this conjugated system
+      for (unsigned int i = 0; i < mol->getNumBonds(); ++i) {
+        if (conjSystem[i]) {
+          bondsConsidered.reset(i);
+        }
+      }
 #ifdef VERBOSE_HASH
       std::cerr << "REJECT CONJ: " << conjSystem << " hetero " << activeHeteroHs
                 << " donor " << std::endl;
