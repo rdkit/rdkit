@@ -458,6 +458,170 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
       }
     }
   }
+  // std::cout << "vertex pairs" << std::endl;
+  // for (size_t i = 0; i < vtxPairs.size(); ++i) {
+  // std::cout << i << " : " << vtxPairs[i].first << ", " << vtxPairs[i].second
+  // << std::endl;
+  // }
+}
+
+// Use the Floyd-Warshall algorithm to compute the distance matrix from the
+// adjacency matrix.
+// Adapted from https://en.wikipedia.org/wiki/Floyd–Warshall_algorithm
+void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
+                    std::vector<std::vector<int>> &distMatrix) {
+  distMatrix = std::vector<std::vector<int>>(
+      adjMatrix.size(),
+      std::vector<int>(adjMatrix.size(), adjMatrix.size() + 1));
+  for (size_t i = 0u; i < adjMatrix.size(); ++i) {
+    distMatrix[i][i] = 0;
+    for (size_t j = 0u; j < adjMatrix.size(); ++j) {
+      if (i != j && adjMatrix[i][j]) {
+        distMatrix[i][j] = 1;
+      }
+    }
+  }
+  for (size_t k = 0u; k < adjMatrix.size(); ++k) {
+    for (size_t i = 0u; i < adjMatrix.size(); ++i) {
+      for (size_t j = 0u; j < adjMatrix.size(); ++j) {
+        if (distMatrix[i][j] > distMatrix[i][k] + distMatrix[k][j]) {
+          distMatrix[i][j] = distMatrix[i][k] + distMatrix[k][j];
+        }
+      }
+    }
+  }
+}
+
+namespace {
+// A simple struct to keep all the paths between 2 bonds in the molecule,
+// constructed from the molecule's line graph.
+struct BondPaths {
+  BondPaths() = default;
+  BondPaths(const ROMol &mol,
+            const std::vector<std::vector<unsigned int>> paths,
+            boost::dynamic_bitset<> dists, bool reverse)
+      : d_pathDists(dists) {
+    d_paths.resize(paths.size());
+    for (size_t i = 0; i < paths.size(); ++i) {
+      d_paths[i].resize(paths[i].size());
+      for (size_t j = 0; j < paths[i].size(); ++j) {
+        if (reverse) {
+          d_paths[i][j] = mol.getBondWithIdx(paths[i][paths[i].size() - j - 1])
+                              ->getBondType();
+        } else {
+          d_paths[i][j] = mol.getBondWithIdx(paths[i][j])->getBondType();
+        }
+      }
+    }
+  }
+  BondPaths(const BondPaths &other) = default;
+  BondPaths(BondPaths &&other) = default;
+  ~BondPaths() = default;
+  BondPaths &operator=(BondPaths &&other) = default;
+  BondPaths &operator=(const BondPaths &other) = default;
+
+  bool hasMatchingPath(const BondPaths &other) {
+    // 2 paths match if they are the same length
+    // and comprised of bonds of the same type.
+    if (!(d_pathDists & other.d_pathDists).count()) {
+      return false;
+    }
+    for (size_t i = 0; i < d_paths.size(); ++i) {
+      for (size_t j = 0; j < other.d_paths.size(); ++j) {
+        if (d_paths[i].size() == other.d_paths[j].size()) {
+          bool bondsMatched = true;
+          for (size_t k = 0; k < d_paths[i].size(); ++k) {
+            if (d_paths[i][k] != other.d_paths[j][k]) {
+              bondsMatched = false;
+              break;
+            }
+          }
+          if (bondsMatched) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+  std::vector<std::vector<Bond::BondType>> d_paths;
+  // If there's a path of length l, bit l will be set.
+  boost::dynamic_bitset<> d_pathDists;
+};
+}  // namespace
+
+// Calculate all the distances between all vertices in the graph, putting
+// the results in the BondPaths structs.
+void calcAllDistancesMatrix(
+    const ROMol &mol, const std::vector<std::vector<int>> &adjMatrix,
+    const size_t numDists,
+    std::vector<std::vector<BondPaths>> &allDistsMatrix) {
+  unsigned int numNodes = adjMatrix.size();
+  allDistsMatrix = std::vector<std::vector<BondPaths>>(
+      numNodes, std::vector<BondPaths>(numNodes, BondPaths()));
+  for (unsigned int s = 0u; s < numNodes - 1; ++s) {
+    for (unsigned int f = s + 1; f < numNodes; ++f) {
+      // find all paths between s and f
+      std::vector<std::vector<unsigned int>> currPaths;
+      std::vector<boost::dynamic_bitset<>> inCurrPath;
+      boost::dynamic_bitset<> dists(numDists);
+      std::vector<std::vector<unsigned int>> finalPaths;
+      currPaths.push_back(std::vector<unsigned int>(1, s));
+      inCurrPath.push_back(boost::dynamic_bitset<>(numNodes));
+      inCurrPath.back()[s] = true;
+      while (true) {
+        unsigned int numEmpty = 0;
+        for (size_t i = 0, stop = currPaths.size(); i < stop; ++i) {
+          if (currPaths[i].empty()) {
+            numEmpty++;
+            continue;
+          }
+          for (unsigned int j = 0; j < numNodes; ++j) {
+            if (adjMatrix[currPaths[i].back()][j]) {
+              if (!inCurrPath[i][j]) {
+                if (j == f) {
+                  dists[currPaths[i].size()] = true;
+                  finalPaths.push_back(currPaths[i]);
+                  finalPaths.back().push_back(j);
+                } else {
+                  currPaths.push_back(currPaths[i]);
+                  currPaths.back().push_back(j);
+                  inCurrPath.push_back(inCurrPath[i]);
+                  inCurrPath.back()[j] = true;
+                }
+              }
+            }
+          }
+          currPaths[i].clear();
+          inCurrPath[i].clear();
+        }
+        if (numEmpty == currPaths.size()) {
+          break;
+        }
+        if (numEmpty > 10) {
+          currPaths.erase(
+              std::remove_if(currPaths.begin(), currPaths.end(),
+                             [](const auto &p) -> bool { return p.empty(); }),
+              currPaths.end());
+          inCurrPath.erase(
+              std::remove_if(inCurrPath.begin(), inCurrPath.end(),
+                             [](const auto &p) -> bool { return p.empty(); }),
+              inCurrPath.end());
+        }
+      }
+      // std::cout << s << " : " << f << " : " << dists << " : "
+      // << finalPaths.size() << std::endl;
+      allDistsMatrix[s][f] = BondPaths(mol, finalPaths, dists, true);
+      allDistsMatrix[f][s] = BondPaths(mol, finalPaths, dists, false);
+    }
+  }
+  int numPaths = 0;
+  for (const auto &pl : allDistsMatrix) {
+    for (const auto &p : pl) {
+      numPaths += p.d_paths.size();
+    }
+  }
+  std::cout << "numPaths: " << numPaths << std::endl;
 }
 
 // Make the modular product between the 2 graphs passed in.  Each node in the
@@ -468,11 +632,9 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
 void makeModularProduct(const ROMol &mol1,
                         const std::vector<std::vector<int>> &adjMatrix1,
                         const std::vector<unsigned int> &vtxLabels1,
-                        const std::vector<std::vector<int>> &distMatrix1,
                         const ROMol &mol2,
                         const std::vector<std::vector<int>> &adjMatrix2,
                         const std::vector<unsigned int> &vtxLabels2,
-                        const std::vector<std::vector<int>> &distMatrix2,
                         const RascalOptions &opts,
                         std::vector<std::pair<int, int>> &vtxPairs,
                         std::vector<boost::dynamic_bitset<>> &modProd) {
@@ -488,6 +650,21 @@ void makeModularProduct(const ROMol &mol1,
     modProd.clear();
     return;
   }
+  std::vector<std::vector<int>> distMatrix1, distMatrix2;
+  if (opts.maxFragSeparation > -1) {
+    calcDistMatrix(adjMatrix1, distMatrix1);
+    calcDistMatrix(adjMatrix2, distMatrix2);
+  }
+  std::vector<std::vector<BondPaths>> allDistsMatrix1, allDistsMatrix2;
+  if (opts.singleLargestFrag) {
+    calcAllDistancesMatrix(mol1, adjMatrix1,
+                           std::max(adjMatrix1.size(), adjMatrix2.size()),
+                           allDistsMatrix1);
+    calcAllDistancesMatrix(mol2, adjMatrix2,
+                           std::max(adjMatrix1.size(), adjMatrix2.size()),
+                           allDistsMatrix2);
+  }
+
   modProd = std::vector<boost::dynamic_bitset<>>(
       vtxPairs.size(), boost::dynamic_bitset<>(vtxPairs.size()));
   for (auto i = 0u; i < vtxPairs.size() - 1; ++i) {
@@ -505,13 +682,14 @@ void makeModularProduct(const ROMol &mol1,
         }
       }
       if (opts.singleLargestFrag &&
-          distMatrix1[vtxPairs[i].first][vtxPairs[j].first] !=
-              distMatrix2[vtxPairs[i].second][vtxPairs[j].second]) {
+          !(allDistsMatrix1[vtxPairs[i].first][vtxPairs[j].first]
+                .hasMatchingPath(
+                    allDistsMatrix2[vtxPairs[i].second][vtxPairs[j].second]))) {
         distsOk = false;
       }
       if (distsOk && adjMatrix1[vtxPairs[i].first][vtxPairs[j].first] ==
                          adjMatrix2[vtxPairs[i].second][vtxPairs[j].second]) {
-        modProd[i][j] = modProd[j][i] = 1;
+        modProd[i][j] = modProd[j][i] = true;
       }
     }
   }
@@ -863,6 +1041,10 @@ void explorePartitions(
       checkTimeout(startTime, opts, clique, maxCliques, numSteps);
     }
     auto part = parts.back();
+    // std::cout << "NEXT" << std::endl << *part << std::endl;
+    // printClique(clique, starter.d_vtxPairs, starter.d_swapped, std::cout);
+    // std::cout << std::endl;
+
     bool goDeeper = false;
     bool backtrack = false;
     if (opts.allBestMCESs) {
@@ -965,33 +1147,6 @@ void findEquivalentBonds(const ROMol &mol, std::vector<int> &equivBonds) {
   }
 }
 
-// Use the Floyd-Warshall algorithm to compute the distance matrix from the
-// adjacency matrix.
-// Adapted from https://en.wikipedia.org/wiki/Floyd–Warshall_algorithm
-void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
-                    std::vector<std::vector<int>> &distMatrix) {
-  distMatrix = std::vector<std::vector<int>>(
-      adjMatrix.size(),
-      std::vector<int>(adjMatrix.size(), adjMatrix.size() + 1));
-  for (size_t i = 0u; i < adjMatrix.size(); ++i) {
-    distMatrix[i][i] = 0;
-    for (size_t j = 0u; j < adjMatrix.size(); ++j) {
-      if (i != j && adjMatrix[i][j]) {
-        distMatrix[i][j] = 1;
-      }
-    }
-  }
-  for (size_t k = 0u; k < adjMatrix.size(); ++k) {
-    for (size_t i = 0u; i < adjMatrix.size(); ++i) {
-      for (size_t j = 0u; j < adjMatrix.size(); ++j) {
-        if (distMatrix[i][j] > distMatrix[i][k] + distMatrix[k][j]) {
-          distMatrix[i][j] = distMatrix[i][k] + distMatrix[k][j];
-        }
-      }
-    }
-  }
-}
-
 // Set the atomic number of the atoms that match the SMARTS in
 // RascalOptions.EquivalentAtoms to 110, 111 etc.  These will
 // be mapped back at the end.
@@ -1060,19 +1215,12 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   makeLineGraph(*starter.d_mol1, starter.d_adjMatrix1);
   makeLineGraph(*starter.d_mol2, starter.d_adjMatrix2);
 
-  std::vector<std::vector<int>> distMat1, distMat2;
-  if (opts.maxFragSeparation > -1 || opts.singleLargestFrag) {
-    calcDistMatrix(starter.d_adjMatrix1, distMat1);
-    calcDistMatrix(starter.d_adjMatrix2, distMat2);
-  }
-
   // pairs are vertices in the 2 line graphs that are the same type.
   // d_modProd is the modular product/correspondence graph of the two
   // line graphs.
   makeModularProduct(*starter.d_mol1, starter.d_adjMatrix1, bondLabels1,
-                     distMat1, *starter.d_mol2, starter.d_adjMatrix2,
-                     bondLabels2, distMat2, opts, starter.d_vtxPairs,
-                     starter.d_modProd);
+                     *starter.d_mol2, starter.d_adjMatrix2, bondLabels2, opts,
+                     starter.d_vtxPairs, starter.d_modProd);
   if (starter.d_modProd.empty()) {
     return starter;
   }
