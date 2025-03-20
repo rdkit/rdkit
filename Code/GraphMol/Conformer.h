@@ -157,7 +157,7 @@ class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
   RDGeom::POINT3D_VECT d_positions;  // positions of the atoms
 };
 
-typedef boost::shared_ptr<Conformer> CONFORMER_SPTR;
+typedef std::shared_ptr<Conformer> CONFORMER_SPTR;
 
 //! Returns true if any of the z coords are non zero, false otherwise
 /*!
