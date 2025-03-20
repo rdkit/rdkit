@@ -497,26 +497,25 @@ namespace {
 // constructed from the molecule's line graph.
 struct BondPaths {
   BondPaths() = default;
-  BondPaths(const ROMol &mol,
-            const std::vector<std::vector<unsigned int>> paths,
+  BondPaths(const std::vector<std::vector<const Bond::BondType>> paths,
             boost::dynamic_bitset<> dists, bool reverse)
       : d_pathDists(dists) {
     d_paths.reserve(paths.size());
+    static const unsigned int bitsPerEl = 5;
     for (const auto &path : paths) {
-      d_paths.push_back(std::vector<Bond::BondType>());
-      d_paths.back().reserve(path.size());
+      const unsigned int numBits = bitsPerEl * path.size();
+      d_paths.push_back(boost::dynamic_bitset<>(numBits));
       if (reverse) {
-        std::transform(path.rbegin(), path.rend(),
-                       std::back_inserter(d_paths.back()),
-                       [&](const unsigned int bidx) -> Bond::BondType {
-                         return mol.getBondWithIdx(bidx)->getBondType();
-                       });
+        for (size_t i = path.size(); i > 0; i--) {
+          unsigned int rev = path.size() - i;
+          d_paths.back() &= boost::dynamic_bitset<>(numBits, path[i - 1])
+                            << (rev * bitsPerEl);
+        }
       } else {
-        std::transform(path.begin(), path.end(),
-                       std::back_inserter(d_paths.back()),
-                       [&](const unsigned int bidx) -> Bond::BondType {
-                         return mol.getBondWithIdx(bidx)->getBondType();
-                       });
+        for (size_t i = 0; i < path.size(); i++) {
+          d_paths.back() &= boost::dynamic_bitset<>(numBits, path[i])
+                            << (i * bitsPerEl);
+        }
       }
     }
   }
@@ -541,7 +540,7 @@ struct BondPaths {
     }
     return false;
   }
-  std::vector<std::vector<Bond::BondType>> d_paths;
+  std::vector<boost::dynamic_bitset<>> d_paths;
   // If there's a path of length l, bit l will be set.
   boost::dynamic_bitset<> d_pathDists;
 };
@@ -556,13 +555,19 @@ void calcAllDistancesMatrix(
   unsigned int numNodes = adjMatrix.size();
   allDistsMatrix = std::vector<std::vector<BondPaths>>(
       numNodes, std::vector<BondPaths>(numNodes, BondPaths()));
+
+  std::vector<const Bond *> bonds(mol.getNumBonds());
+  for (auto bond : mol.bonds()) {
+    bonds[bond->getIdx()] = bond;
+  }
+
   for (unsigned int s = 0u; s < numNodes - 1; ++s) {
     for (unsigned int f = s + 1; f < numNodes; ++f) {
       // find all paths between s and f
       std::vector<std::vector<unsigned int>> currPaths;
       std::vector<boost::dynamic_bitset<>> inCurrPath;
       boost::dynamic_bitset<> dists(numDists);
-      std::vector<std::vector<unsigned int>> finalPaths;
+      std::vector<std::vector<const Bond::BondType>> finalPaths;
       currPaths.push_back(std::vector<unsigned int>(1, s));
       inCurrPath.push_back(boost::dynamic_bitset<>(numNodes));
       inCurrPath.back()[s] = true;
@@ -578,8 +583,14 @@ void calcAllDistancesMatrix(
               if (!inCurrPath[i][j]) {
                 if (j == f) {
                   dists[currPaths[i].size()] = true;
-                  finalPaths.push_back(currPaths[i]);
-                  finalPaths.back().push_back(j);
+                  finalPaths.emplace_back();
+                  std::transform(
+                      currPaths[i].begin(), currPaths[i].end(),
+                      std::back_inserter(finalPaths.back()),
+                      [&](const unsigned int &idx) -> Bond::BondType {
+                        return bonds[idx]->getBondType();
+                      });
+                  finalPaths.back().push_back(bonds[j]->getBondType());
                 } else {
                   currPaths.push_back(currPaths[i]);
                   currPaths.back().push_back(j);
@@ -606,10 +617,8 @@ void calcAllDistancesMatrix(
               inCurrPath.end());
         }
       }
-      // std::cout << s << " : " << f << " : " << dists << " : "
-      // << finalPaths.size() << std::endl;
-      allDistsMatrix[s][f] = BondPaths(mol, finalPaths, dists, true);
-      allDistsMatrix[f][s] = BondPaths(mol, finalPaths, dists, false);
+      allDistsMatrix[s][f] = BondPaths(finalPaths, dists, true);
+      allDistsMatrix[f][s] = BondPaths(finalPaths, dists, false);
     }
   }
   int numPaths = 0;
