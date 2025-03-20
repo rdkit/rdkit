@@ -501,16 +501,22 @@ struct BondPaths {
             const std::vector<std::vector<unsigned int>> paths,
             boost::dynamic_bitset<> dists, bool reverse)
       : d_pathDists(dists) {
-    d_paths.resize(paths.size());
-    for (size_t i = 0; i < paths.size(); ++i) {
-      d_paths[i].resize(paths[i].size());
-      for (size_t j = 0; j < paths[i].size(); ++j) {
-        if (reverse) {
-          d_paths[i][j] = mol.getBondWithIdx(paths[i][paths[i].size() - j - 1])
-                              ->getBondType();
-        } else {
-          d_paths[i][j] = mol.getBondWithIdx(paths[i][j])->getBondType();
-        }
+    d_paths.reserve(paths.size());
+    for (const auto &path : paths) {
+      d_paths.push_back(std::vector<Bond::BondType>());
+      d_paths.back().reserve(path.size());
+      if (reverse) {
+        std::transform(path.rbegin(), path.rend(),
+                       std::back_inserter(d_paths.back()),
+                       [&](const unsigned int bidx) -> Bond::BondType {
+                         return mol.getBondWithIdx(bidx)->getBondType();
+                       });
+      } else {
+        std::transform(path.begin(), path.end(),
+                       std::back_inserter(d_paths.back()),
+                       [&](const unsigned int bidx) -> Bond::BondType {
+                         return mol.getBondWithIdx(bidx)->getBondType();
+                       });
       }
     }
   }
@@ -526,19 +532,10 @@ struct BondPaths {
     if (!(d_pathDists & other.d_pathDists).count()) {
       return false;
     }
-    for (size_t i = 0; i < d_paths.size(); ++i) {
-      for (size_t j = 0; j < other.d_paths.size(); ++j) {
-        if (d_paths[i].size() == other.d_paths[j].size()) {
-          bool bondsMatched = true;
-          for (size_t k = 0; k < d_paths[i].size(); ++k) {
-            if (d_paths[i][k] != other.d_paths[j][k]) {
-              bondsMatched = false;
-              break;
-            }
-          }
-          if (bondsMatched) {
-            return true;
-          }
+    for (const auto &myPath : d_paths) {
+      for (const auto &otherPath : other.d_paths) {
+        if (myPath == otherPath) {
+          return true;
         }
       }
     }
