@@ -531,7 +531,8 @@ TEST_CASE("single fragment") {
            27, 21}};
   opts.similarityThreshold = 0.7;
   for (auto &test : tests) {
-    if (std::get<0>(test) != "c1cnccc1CCc1ncccc1") {
+    if (std::get<0>(test) !=
+        "Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008") {
       continue;
     }
     std::cout << std::get<0>(test) << std::endl;

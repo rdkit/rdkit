@@ -16,6 +16,7 @@
 // https://eprints.whiterose.ac.uk/3568/1/willets3.pdf
 
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <regex>
@@ -494,30 +495,31 @@ void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
 
 namespace {
 // A simple struct to keep all the paths between 2 bonds in the molecule,
-// constructed from the molecule's line graph.
+// constructed from the molecule's line graph.  The input paths will
+// be sorted and uniquified in the c'tor.
 struct BondPaths {
   BondPaths() = default;
-  BondPaths(const std::vector<std::vector<const Bond::BondType>> paths,
-            boost::dynamic_bitset<> dists, bool reverse)
+  BondPaths(std::vector<std::vector<const Bond::BondType>> &paths,
+            boost::dynamic_bitset<> &dists, bool reverse)
       : d_pathDists(dists) {
-    d_paths.reserve(paths.size());
-    static const unsigned int bitsPerEl = 5;
+    std::sort(paths.begin(), paths.end());
+    paths.erase(std::unique(paths.begin(), paths.end()), paths.end());
+    d_pathHashes.reserve(paths.size());
+    std::hash<std::string> hasher;
     for (const auto &path : paths) {
-      const unsigned int numBits = bitsPerEl * path.size();
-      d_paths.push_back(boost::dynamic_bitset<>(numBits));
+      std::string tmp;
       if (reverse) {
-        for (size_t i = path.size(); i > 0; i--) {
-          unsigned int rev = path.size() - i;
-          d_paths.back() &= boost::dynamic_bitset<>(numBits, path[i - 1])
-                            << (rev * bitsPerEl);
-        }
+        std::transform(
+            path.rbegin(), path.rend(), std::back_inserter(tmp),
+            [](const auto bt) -> char { return static_cast<char>('a' + bt); });
       } else {
-        for (size_t i = 0; i < path.size(); i++) {
-          d_paths.back() &= boost::dynamic_bitset<>(numBits, path[i])
-                            << (i * bitsPerEl);
-        }
+        std::transform(
+            path.begin(), path.end(), std::back_inserter(tmp),
+            [](const auto bt) -> char { return static_cast<char>('a' + bt); });
       }
+      d_pathHashes.emplace_back(hasher(tmp));
     }
+    std::sort(d_pathHashes.begin(), d_pathHashes.end());
   }
   BondPaths(const BondPaths &other) = default;
   BondPaths(BondPaths &&other) = default;
@@ -531,16 +533,23 @@ struct BondPaths {
     if (!(d_pathDists & other.d_pathDists).count()) {
       return false;
     }
-    for (const auto &myPath : d_paths) {
-      for (const auto &otherPath : other.d_paths) {
-        if (myPath == otherPath) {
-          return true;
-        }
+    for (const auto &myHash : d_pathHashes) {
+      if (auto it = std::lower_bound(other.d_pathHashes.begin(),
+                                     other.d_pathHashes.end(), myHash);
+          it != other.d_pathHashes.end() && *it == myHash) {
+        return true;
       }
     }
+    // for (const auto &myHash : d_pathHashes) {
+    //   if (std::find(other.d_pathHashes.begin(), other.d_pathHashes.end(),
+    //                 myHash) != other.d_pathHashes.end()) {
+    //     return true;
+    //   }
+    // }
     return false;
   }
-  std::vector<boost::dynamic_bitset<>> d_paths;
+  std::vector<std::vector<const Bond::BondType>> d_paths;
+  std::vector<std::uint64_t> d_pathHashes;
   // If there's a path of length l, bit l will be set.
   boost::dynamic_bitset<> d_pathDists;
 };
@@ -624,7 +633,7 @@ void calcAllDistancesMatrix(
   int numPaths = 0;
   for (const auto &pl : allDistsMatrix) {
     for (const auto &p : pl) {
-      numPaths += p.d_paths.size();
+      numPaths += p.d_pathHashes.size();
     }
   }
   std::cout << "numPaths: " << numPaths << std::endl;
