@@ -2490,7 +2490,7 @@ void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo,
         }
       } else if (si.specified == Chirality::StereoSpecified::Unknown) {
         bond->setStereo(Bond::BondStereo::STEREOANY);
-        bond->getStereoAtoms().clear();
+        bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
         bond->setBondDir(Bond::BondDir::NONE);
       } else if (si.specified == Chirality::StereoSpecified::Unspecified) {
         assignBondCisTrans(mol, si);

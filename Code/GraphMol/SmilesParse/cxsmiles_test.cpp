@@ -1545,7 +1545,8 @@ TEST_CASE(
   }
 }
 
-TEST_CASE("cis/trans in CXSMILES incorrectly interpreted") {
+TEST_CASE("cis/trans/unknown in CXSMILES incorrectly interpreted") {
+  // This is #8365 and #8364
   UseLegacyStereoPerceptionFixture f(false);
   SECTION("in a ring") {
     {
@@ -1568,6 +1569,12 @@ TEST_CASE("cis/trans in CXSMILES incorrectly interpreted") {
       CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
       CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
     }
+    {
+      auto m = "FC1(=C(F)CCCCCCCCCC1) |ctu:1|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(1)->getStereo() == Bond::STEREOANY);
+      CHECK(m->getBondWithIdx(1)->getStereoAtoms() == std::vector<int>{0, 3});
+    }
   }
   SECTION("as reported") {
     // technically these are only valid in rings, but we allow them elsewhere
@@ -1581,6 +1588,12 @@ TEST_CASE("cis/trans in CXSMILES incorrectly interpreted") {
       auto m = "CC(F)=C(C)F |t:2|"_smiles;
       REQUIRE(m);
       CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
+      CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
+    }
+    {
+      auto m = "CC(F)=C(C)F |ctu:2|"_smiles;
+      REQUIRE(m);
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOANY);
       CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
     }
   }
