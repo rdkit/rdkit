@@ -2402,6 +2402,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
         }
       }
     }
+    bool foundAtropisomer = false;
     for (auto bond : mol.bonds()) {
       // wedged bonds to atoms that have no stereochem
       // should be removed. (github issue 87)
@@ -2411,15 +2412,16 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
           bond->getEndAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED) {
         // see if there is an atropisomer bond connected to this bond
 
-        bool hasAtropisomer = false;
+        bool atomHasAtropisomer = false;
         for (auto nbond : mol.atomBonds(bond->getBeginAtom())) {
           if (nbond->getStereo() == Bond::STEREOATROPCCW ||
               nbond->getStereo() == Bond::STEREOATROPCW) {
-            hasAtropisomer = true;
+            atomHasAtropisomer = true;
+            foundAtropisomer = true;
             break;
           }
         }
-        if (!hasAtropisomer) {
+        if (!atomHasAtropisomer) {
           bond->setBondDir(Bond::NONE);
         }
       }
@@ -2458,6 +2460,9 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
           }
         }
       }
+    }
+    if (foundAtropisomer || Atropisomers::doesMolHaveAtropisomers(mol)) {
+      Atropisomers::cleanupAtropisomerStereoGroups(mol);
     }
     Chirality::cleanupStereoGroups(mol);
   }
@@ -2544,6 +2549,7 @@ void stereoPerception(ROMol &mol, bool cleanIt,
   // populate double bond stereo info:
   updateDoubleBondStereo(mol, sinfo, cleanIt);
   if (cleanIt) {
+    Atropisomers::cleanupAtropisomerStereoGroups(mol);
     Chirality::cleanupStereoGroups(mol);
   }
 }
@@ -2914,9 +2920,9 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             if (begAtomNeighbors.size() > 0 && endAtomNeighbors.size() > 0) {
               if ((begAtomNeighbors.size() == 2) &&
                   (endAtomNeighbors.size() == 2)) {
-// if both of the atoms have 2 neighbors (other than the one
-// connected
-// by the double bond) and ....
+                // if both of the atoms have 2 neighbors (other than the one
+                // connected
+                // by the double bond) and ....
                 if ((ranks[begAtomNeighbors[0]] !=
                      ranks[begAtomNeighbors[1]]) &&
                     (ranks[endAtomNeighbors[0]] !=
