@@ -15,7 +15,7 @@
 #include <cstdio>
 #include <deque>
 
-// #define VERBOSE_HASH 1
+#define VERBOSE_HASH 1
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
@@ -389,11 +389,16 @@ std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
   // FIX: oversimplified, but should work for now
   static std::vector<std::string> patterns{
       "[C;!$(C-C(=[NH])-[NH2])]-[C;!$(C(-C)(=[NH])-[NH2])](=[O,N,S])-[O,N,S]",
-      ////< one side of the "amide", with an ugly exclusion for amidine
-      "[C;!$(C=[O,N,S])]-[O,N,S]-C=[O,N,S]",  //< the other side
+      //< one side of the "amide", with an ugly exclusion for amidine
+      "[A;!$(C=[O,N,S])]-[O,N,S]-C=[O,N,S]",  //< the other side
       "[OH0,SH0]-C=[O,N,S]",                  //< "esters" and "carboxyls"
       "[C]-[c](:[o,n,s]):[o,n,s]",  //< a limited version of handling this for
                                     // aromatic systems
+      "*[SD4](=*)=*",               // sulfates, sulfonyls, etc.
+      "*=[SD4](=*)*",               // the other side
+      "*-[H0]=,#[C,N]=,#*",         // isocyanates, azides, et al
+      "*[#7+]-[O-]",                // nitro groups and aromatic n-oxides
+      "[O,S;H]-P=O",                // phosporic acid, etc.
   };
   static std::vector<std::unique_ptr<RDKit::RWMol>> queries;
   if (queries.empty()) {
@@ -409,6 +414,9 @@ std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
       const auto bnd =
           mol.getBondBetweenAtoms(match[0].second, match[1].second);
       bondFlags[bnd->getIdx()] |= bondFlagCarboxyl;
+#ifdef VERBOSE_HASH
+      std::cerr << " exclude bond: " << bnd->getIdx() << std::endl;
+#endif
     }
   }
   return bondFlags;
@@ -542,9 +550,22 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
     numConjugatedNeighbors[atm->getIdx()] = getNumConjugatedNeighbors(atm);
   }
   boost::dynamic_bitset<> startBonds(mol->getNumBonds());
+  // boost::dynamic_bitset<> neighboringStartBond(mol->getNumBonds());
   for (const auto bnd : mol->bonds()) {
-    startBonds.set(bnd->getIdx(),
-                   isPossibleStartingBond(bnd, atomFlags, bondFlags));
+    auto isStartBond = isPossibleStartingBond(bnd, atomFlags, bondFlags);
+    startBonds.set(bnd->getIdx(), isStartBond);
+    // if (isStartBond) {
+    //   // mark neighboring bonds as being neighbors of start bonds
+    //   for (const auto atm :
+    //        std::vector<const Atom *>{bnd->getBeginAtom(), bnd->getEndAtom()})
+    //        {
+    //     for (const auto nbrBond : mol->atomBonds(atm)) {
+    //       if (nbrBond != bnd && !bondFlags[nbrBond->getIdx()]) {
+    //         neighboringStartBond.set(nbrBond->getIdx());
+    //       }
+    //     }
+    //   }
+    // }
   }
 
 #ifdef VERBOSE_HASH
@@ -598,7 +619,14 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         // in the tautomeric system. So we get: [CH3]-[N]:[C] instead of
         // [C]:[N]:[C]
         if (startBonds[bptr->getIdx()] && isHeteroAtom(atm) &&
-            !isUnsaturatedBond(nbrBond)) {
+            !isUnsaturatedBond(nbrBond)
+            //
+            // && numConjugatedNeighbors[oatom->getIdx()] < 2
+            //
+        ) {
+#ifdef VERBOSE_HASH
+          std::cerr << "    skip a" << std::endl;
+#endif
           continue;
         }
 
@@ -607,6 +635,9 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                              bondFlags) &&
             skipNeighborBond(oatom, atm, nbrBond, startBonds, atomFlags,
                              bondFlags)) {
+#ifdef VERBOSE_HASH
+          std::cerr << "    skip b" << std::endl;
+#endif
           continue;
         }
 
@@ -667,19 +698,30 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                     << hasStartBond(oatom, startBonds) << " unsat "
                     << isUnsaturatedBond(nbrBnd) << " icaa "
                     << isCandidateAtom(atm, atomFlags) << " hsba "
-                    << hasStartBond(atm, startBonds) << std::endl;
+                    << hasStartBond(atm, startBonds)
+                    << " ncno: " << numConjugatedNeighbors[oatom->getIdx()]
+                    << std::endl;
 #endif
-          // special case to prevent "overreach" with things like enamines.
-          // the logic here prevents the first bond in CNC=C from being included
-          // in the tautomeric system. So we get: [CH3]-[N]:[C] instead of
-          // [C]:[N]:[C]
-          if (startBonds[bnd->getIdx()] && isHeteroAtom(atm) &&
-              !isUnsaturatedBond(nbrBnd) &&
-              numConjugatedNeighbors[oatom->getIdx()] < 2) {
+          if (bondsConsidered[nbrBnd->getIdx()]) {
             continue;
           }
-          if (bondsConsidered[nbrBnd->getIdx()] ||
-              (skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
+          // special case to prevent "overreach" with things like enamines.
+          // the logic here prevents the first bond in CNC=C from being
+          // included in the tautomeric system. So we get: [CH3]-[N]:[C]
+          // instead of [C]:[N]:[C]
+          if (startBonds[bnd->getIdx()] && isHeteroAtom(atm) &&
+              !isUnsaturatedBond(nbrBnd)
+              //
+              // && !neighboringStartBond[nbrBnd->getIdx()]
+              && numConjugatedNeighbors[oatom->getIdx()] < 2
+              //
+          ) {
+#ifdef VERBOSE_HASH
+            std::cerr << "    skip c" << std::endl;
+#endif
+            continue;
+          }
+          if ((skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
                                 bondFlags) &&
                skipNeighborBond(oatom, atm, nbrBnd, startBonds, atomFlags,
                                 bondFlags))) {
@@ -689,6 +731,9 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
             if (atomsInSystem[oatom->getIdx()]) {
               conjSystem.set(nbrBnd->getIdx());
             }
+#ifdef VERBOSE_HASH
+            std::cerr << "    skip d" << std::endl;
+#endif
             continue;
           }
           bq.push_back(nbrBnd);
