@@ -1955,6 +1955,70 @@ std::pair<bool, bool> assignBondStereoCodes(ROMol &mol, UINT_VECT &ranks) {
   return std::make_pair(unassignedBonds > 0, assignedABond);
 }
 
+// returns a pair:
+//   1) are there non-cleared atrop bonds?
+//   2) did we clear any?
+std::pair<bool, bool> checkAtropBonds(ROMol &mol, UINT_VECT &ranks) {
+  PRECONDITION((!ranks.size() || ranks.size() == mol.getNumAtoms()),
+               "bad rank vector size");
+  boost::dynamic_bitset<> bondsToClear(mol.getNumBonds());
+  bool atLeastOneAtropisomerRemains = false;
+  // find the atrop bonds:
+  for (auto atropBond : mol.bonds()) {
+    if (atropBond->getBondType() == Bond::BondType::SINGLE) {
+      if (atropBond->getStereo() != Bond::BondStereo::STEREOATROPCCW &&
+          atropBond->getStereo() != Bond::BondStereo::STEREOATROPCW) {
+        continue;
+      }
+      if (!ranks.size()) {
+        assignAtomCIPRanks(mol, ranks);
+      }
+
+      // see uf the ranks of two atom are the same - if so, this is not an
+      // atropisomer
+      const Atom *begAtom = atropBond->getBeginAtom();
+      const Atom *endAtom = atropBond->getEndAtom();
+
+      auto bondIsAtrioisomer = true;
+      for (auto atropBondAtom : {begAtom, endAtom}) {
+        if (atropBondAtom->getDegree() == 3) {
+          // find the two neighbor atoms and check the ranks
+
+          unsigned int nbrRank = UINT_MAX;
+          for (const auto nbr : mol.atomNeighbors(atropBondAtom)) {
+            if (nbr->getIdx() != begAtom->getIdx() &&
+                nbr->getIdx() != endAtom->getIdx()) {
+              if (nbrRank == UINT_MAX) {
+                nbrRank = ranks[nbr->getIdx()];
+              } else {
+                if (nbrRank == ranks[nbr->getIdx()]) {
+                  // found two neighbors with the same rank
+                  // this is not an atropisomecd build
+                  // bondsToClear[atropBond->getIdx()] = 1;
+                  bondIsAtrioisomer = false;
+                  break;
+                }
+              }
+            }
+          }
+        }
+      }
+      if (bondIsAtrioisomer) {
+        atLeastOneAtropisomerRemains = true;
+      }
+    }
+  }
+  bool atLeastOneWasCleared = false;
+  for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
+    if (bondsToClear[i]) {
+      mol.getBondWithIdx(i)->setStereo(Bond::BondStereo::STEREONONE);
+      atLeastOneWasCleared = true;
+    }
+  }
+
+  return std::make_pair(atLeastOneAtropisomerRemains, atLeastOneWasCleared);
+}
+
 void assignLegacyCIPLabels(ROMol &mol, bool flagPossibleStereoCenters) {
   std::vector<unsigned int> atomRanks;
   assignAtomChiralCodes(mol, atomRanks, flagPossibleStereoCenters);
@@ -2035,13 +2099,13 @@ void assignBondCisTrans(ROMol &mol, const StereoInfo &sinfo) {
   }
 
   // we've set up the bond directions here so that they correspond to having
-  // both single bonds START at the double bond. This means that if the single
-  // bonds point in the same direction, the bond is cis
+  // both single bonds START at the double bond. This means that if the
+  // single bonds point in the same direction, the bond is cis
   bool sameDir = begDir == endDir;
 
-  // if either the direction bond at the beginning or the direction bond at the
-  // end wasn't to the first neighbor on that side (but not both), then we need
-  // to swap
+  // if either the direction bond at the beginning or the direction bond at
+  // the end wasn't to the first neighbor on that side (but not both), then
+  // we need to swap
   if (begFirstNeighbor ^ endFirstNeighbor) {
     sameDir = !sameDir;
   }
@@ -2290,6 +2354,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
     }
   }
   bool hasStereoBonds = false;
+  bool hasAtropBonds = false;
   for (auto bond : mol.bonds()) {
     if (cleanIt) {
       bond->clearProp(common_properties::_CIPCode);
@@ -2333,15 +2398,21 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
           }
         }
       }
+    } else if (!hasAtropBonds && bond->getBondType() == Bond::SINGLE &&
+               (bond->getStereo() == Bond::STEREOATROPCCW ||
+                bond->getStereo() == Bond::STEREOATROPCW)) {
+      hasAtropBonds = true;
     }
-    if (!cleanIt && hasStereoBonds) {
+
+    if (!cleanIt && hasStereoBonds && hasAtropBonds) {
       break;  // no reason to keep iterating if we've already
-              // determined there are stereo bonds to consider
+              // determined there are stereo bonds and atrop bonds to consider
     }
   }
+
   UINT_VECT atomRanks;
-  bool keepGoing = hasStereoAtoms | hasStereoBonds;
-  bool changedStereoAtoms, changedStereoBonds;
+  bool keepGoing = hasStereoAtoms || hasStereoBonds || hasAtropBonds;
+  bool changedStereoAtoms, changedStereoBonds, changedAtropBonds;
   while (keepGoing) {
     if (hasStereoAtoms) {
       std::tie(hasStereoAtoms, changedStereoAtoms) =
@@ -2356,8 +2427,16 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
     } else {
       changedStereoBonds = false;
     }
-    keepGoing = (hasStereoAtoms || hasStereoBonds) &&
-                (changedStereoAtoms || changedStereoBonds);
+
+    if (hasAtropBonds) {
+      std::tie(hasAtropBonds, changedAtropBonds) =
+          Chirality::checkAtropBonds(mol, atomRanks);
+    } else {
+      changedAtropBonds = false;
+    }
+
+    keepGoing = (hasStereoAtoms || hasStereoBonds || hasAtropBonds) &&
+                (changedStereoAtoms || changedStereoBonds || changedAtropBonds);
 
     if (keepGoing) {
       // update the atom ranks based on the new information we have:
@@ -2571,8 +2650,8 @@ bool canBeStereoBond(const Bond *bond) {
           return false;
         }
 
-        // if a neighbor has a wiggle bond, do NOT mark it as crossed (although
-        // it is unknown
+        // if a neighbor has a wiggle bond, do NOT mark it as crossed
+        // (although it is unknown
         if (nbrBond->getBondDir() == Bond::BondDir::UNKNOWN &&
             nbrBond->getBeginAtom() == atom) {
           return false;
@@ -2621,8 +2700,8 @@ bool shouldBeACrossedBond(const Bond *bond) {
   //    this was sf.net issue 3009756
 
   if (bond->getStereo() == Bond::STEREOANY) {
-    // see if any of the neighbors have a wiggle bond - if so, do NOT make this
-    // one a cross bond
+    // see if any of the neighbors have a wiggle bond - if so, do NOT make
+    // this one a cross bond
     for (auto nbrBond : bond->getOwningMol().atomBonds(bond->getBeginAtom())) {
       if (nbrBond->getBondDir() == Bond::UNKNOWN &&
           nbrBond->getBeginAtom()->getIdx() == bond->getBeginAtom()->getIdx()) {
@@ -2875,9 +2954,9 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
           !(mol.getRingInfo()->numBondRings((*bondIt)->getIdx()))) {
         // we are ignoring ring bonds here - read the FIX above
         Bond *dblBond = *bondIt;
-        // proceed only if we either want to clean the stereocode on this bond,
-        // if none is set on it yet, or it is STEREOANY and we need to find
-        // stereoatoms
+        // proceed only if we either want to clean the stereocode on this
+        // bond, if none is set on it yet, or it is STEREOANY and we need to
+        // find stereoatoms
         if (cleanIt || dblBond->getStereo() == Bond::STEREONONE ||
             (dblBond->getStereo() == Bond::STEREOANY &&
              dblBond->getStereoAtoms().size() != 2)) {
@@ -2914,9 +2993,9 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             if (begAtomNeighbors.size() > 0 && endAtomNeighbors.size() > 0) {
               if ((begAtomNeighbors.size() == 2) &&
                   (endAtomNeighbors.size() == 2)) {
-// if both of the atoms have 2 neighbors (other than the one
-// connected
-// by the double bond) and ....
+                // if both of the atoms have 2 neighbors (other than the one
+                // connected
+                // by the double bond) and ....
                 if ((ranks[begAtomNeighbors[0]] !=
                      ranks[begAtomNeighbors[1]]) &&
                     (ranks[endAtomNeighbors[0]] !=
@@ -3413,9 +3492,9 @@ void assignChiralTypesFrom3D(ROMol &mol, int confId, bool replaceExistingTags) {
       atom->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
       chiralitySet = true;
     } else if (nbrIdx == 4) {
-      // The first three neighbors are on the same plane as the chiral atom (or
-      // very close to it). If a 4th neighbor is present, let's see if this one
-      // determines a chiral volume
+      // The first three neighbors are on the same plane as the chiral atom
+      // (or very close to it). If a 4th neighbor is present, let's see if
+      // this one determines a chiral volume
 
       auto v4 = *nbrs[3] - p0;
       // v4 would be in the opposite direction to v3
@@ -3846,9 +3925,9 @@ std::vector<std::pair<unsigned int, unsigned int>> findMesoCenters(
     return res;
   }
 
-  // we will compare the atom ranks with chirality and with only chiral presence
-  // (so that we can distinguish centers with chirality specified and those
-  // without)
+  // we will compare the atom ranks with chirality and with only chiral
+  // presence (so that we can distinguish centers with chirality specified and
+  // those without)
   const bool breakTies = false;
   const bool includeChiralPresence = true;
   const bool includeStereoGroups = false;

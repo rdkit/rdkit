@@ -6000,3 +6000,21 @@ TEST_CASE(
     CHECK(m->getBondWithIdx(0)->hasProp(common_properties::_CIPCode) == false);
   }
 }
+
+TEST_CASE(
+    "GitHub Issue #8340: Equivalent sidechains does not remove atropisomerism") {
+  SECTION("legacy stereo") {
+    for (bool useLegacy : {true, false}) {
+      Chirality::setUseLegacyStereoPerception(useLegacy);
+
+      RDKit::v2::SmilesParse::SmilesParserParams ps;
+      ps.sanitize = true;
+      ps.allowCXSMILES = true;
+      auto m = RDKit::v2::SmilesParse::MolFromSmiles(
+          "C=C(C)C1=CC=CC=C1 |wD:3.8|", ps);
+      REQUIRE(m);
+
+      CHECK(m->getBondWithIdx(2)->getStereo() == Bond::BondStereo::STEREONONE);
+    }
+  }
+}

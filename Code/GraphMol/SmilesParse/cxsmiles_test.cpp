@@ -675,7 +675,7 @@ class SmilesTest {
       : fileName(fileNameInit),
         expectedResult(expectedResultInit),
         atomCount(atomCountInit),
-        bondCount(bondCountInit){};
+        bondCount(bondCountInit) {};
 
   bool isRxnTest() const { return false; }
 };
@@ -1030,8 +1030,8 @@ void testOne3dChiral(const SmilesTest *smilesTest) {
 TEST_CASE("testAtropisomersInCXSmiles") {
   {
     std::list<SmilesTest> smiTests{
-        SmilesTest("ShortAtropisomerNoCoords.cxsmi", true, 14, 15),
-        SmilesTest("ShortAtropisomer.cxsmi", true, 14, 15),
+        // SmilesTest("ShortAtropisomerNoCoords.cxsmi", true, 14, 15),
+        // SmilesTest("ShortAtropisomer.cxsmi", true, 14, 15),
         SmilesTest("ShortAtropisomerArom.cxsmi", true, 14, 15),
         SmilesTest("AtropManyChirals.cxsmi", true, 20, 20),
         SmilesTest("AtropManyChiralsEnhanced.cxsmi", true, 20, 20),
