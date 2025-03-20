@@ -411,6 +411,9 @@ TEST_CASE("tautomer v2") {
         data = {
             {{"CC=O", "C=CO"}, {}},
             {{"CCC=O", "CC=CO"}, {"C=CCO"}},
+            // this next one is the specific test to ensure that amino acid
+            // stereochemistry is not lost
+            {{"CCC(=O)NC", "CCC(O)=NC"}, {"CC=C(O)NC"}},
             {{"CC(=O)CC(=O)C", "C=C(O)CC(=O)C", "CC(=O)C=C(O)C",
               "C=C(O)C=C(O)C", "C=C(O)CC(O)=C"},
              {}},
@@ -435,7 +438,6 @@ TEST_CASE("tautomer v2") {
             {{
                  "S=C1N=CN=C2NC=NC12",
                  "S=C2C1N=CN=C1NC=N2",
-
              },
              {
                  "S=C1NC=NC2N=CNC1=2",
@@ -1008,11 +1010,19 @@ M  END)CTAB"_ctab;
 
 TEST_CASE("new examples") {
   {
-    auto m = "O=C1NCCC1"_smiles;
-    REQUIRE(m);
-    auto hsh =
-        MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
-    CHECK(hsh == "[O]:[C]1:[N]:[C]-[C]-[C]:1_0_0");
+    std::vector<std::string> smileses = {
+        "O=C1NCCC1",
+        "OC1=NCCC1",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      std::cerr << "----------------------------------" << std::endl;
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == "[O]:[C]1:[N]-[CH2]-[CH2]-[CH2]-1_1_0");
+    }
   }
 
   {
@@ -1021,6 +1031,6 @@ TEST_CASE("new examples") {
     std::cerr << "----------------------------------" << std::endl;
     auto hsh =
         MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
-    CHECK(hsh == "[O]:[C]1:[N]:[C]-[C]-[C]:1_0_0");
+    CHECK(hsh == "[O]:[C]1:[C]-[CH2]-[CH2]-[C]:1_4_0");
   }
 }

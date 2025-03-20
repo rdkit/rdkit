@@ -15,7 +15,7 @@
 #include <cstdio>
 #include <deque>
 
-#define VERBOSE_HASH 1
+// #define VERBOSE_HASH 1
 
 #include <string>
 #include <GraphMol/RDKitBase.h>
@@ -388,7 +388,8 @@ constexpr std::uint64_t bondFlagCarboxyl =
 std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
   // FIX: oversimplified, but should work for now
   static std::vector<std::string> patterns{
-      "[C;!$(C-C(=[NH])-[NH2])]-[C;!$(C(-C)(=[NH])-[NH2])](=[O,N,S])-[O,N,S]",  //< one side of the "amide", with an ugly exclusion for amidine
+      "[C;!$(C-C(=[NH])-[NH2])]-[C;!$(C(-C)(=[NH])-[NH2])](=[O,N,S])-[O,N,S]",
+      ////< one side of the "amide", with an ugly exclusion for amidine
       "[C;!$(C=[O,N,S])]-[O,N,S]-C=[O,N,S]",  //< the other side
       "[OH0,SH0]-C=[O,N,S]",                  //< "esters" and "carboxyls"
       "[C]-[c](:[o,n,s]):[o,n,s]",  //< a limited version of handling this for
