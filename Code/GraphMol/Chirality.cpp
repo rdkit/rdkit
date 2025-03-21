@@ -1994,7 +1994,7 @@ std::pair<bool, bool> checkAtropBonds(ROMol &mol, UINT_VECT &ranks) {
                 if (nbrRank == ranks[nbr->getIdx()]) {
                   // found two neighbors with the same rank
                   // this is not an atropisomecd build
-                  // bondsToClear[atropBond->getIdx()] = 1;
+                  bondsToClear[atropBond->getIdx()] = 1;
                   bondIsAtrioisomer = false;
                   break;
                 }
