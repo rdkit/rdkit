@@ -417,9 +417,6 @@ std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
       const auto bnd =
           mol.getBondBetweenAtoms(match[0].second, match[1].second);
       bondFlags[bnd->getIdx()] |= bondFlagCarboxyl;
-#ifdef VERBOSE_HASH
-      std::cerr << " exclude bond: " << bnd->getIdx() << std::endl;
-#endif
     }
   }
   return bondFlags;
@@ -531,6 +528,19 @@ unsigned int getNumConjugatedNeighbors(
   }
   return res;
 }
+// special case to prevent "overreach" with things like enamines.
+// the logic here prevents the first bond in CNC=C from being
+// included in the tautomeric system. So we get: [CH3]-[N]:[C]
+// instead of [C]:[N]:[C]
+bool checkForOverreach(
+    const Atom *atom, const Atom *oatom, const Bond *bond, const Bond *nbrBond,
+    const boost::dynamic_bitset<> &startBonds,
+    const std::vector<unsigned int> &numConjugatedNeighbors) {
+  return (startBonds[bond->getIdx()] || hasStartBond(atom, startBonds)) &&
+         !startBonds[nbrBond->getIdx()] && isHeteroAtom(atom) &&
+         !isUnsaturatedBond(nbrBond) &&
+         numConjugatedNeighbors[oatom->getIdx()] < 2;
+}
 
 }  // namespace
 
@@ -550,22 +560,9 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
   boost::dynamic_bitset<> bondsConsidered(mol->getNumBonds());
 
   boost::dynamic_bitset<> startBonds(mol->getNumBonds());
-  // boost::dynamic_bitset<> neighboringStartBond(mol->getNumBonds());
   for (const auto bnd : mol->bonds()) {
     auto isStartBond = isPossibleStartingBond(bnd, atomFlags, bondFlags);
     startBonds.set(bnd->getIdx(), isStartBond);
-    // if (isStartBond) {
-    //   // mark neighboring bonds as being neighbors of start bonds
-    //   for (const auto atm :
-    //        std::vector<const Atom *>{bnd->getBeginAtom(), bnd->getEndAtom()})
-    //        {
-    //     for (const auto nbrBond : mol->atomBonds(atm)) {
-    //       if (nbrBond != bnd && !bondFlags[nbrBond->getIdx()]) {
-    //         neighboringStartBond.set(nbrBond->getIdx());
-    //       }
-    //     }
-    //   }
-    // }
   }
   std::vector<unsigned int> numConjugatedNeighbors(mol->getNumAtoms(), 0);
   for (const auto atm : mol->atoms()) {
@@ -608,9 +605,6 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         }
         auto oatom = nbrBond->getOtherAtom(atm);
 
-        // if the bond is unsaturated or to an atom with free Hs, include it:
-        // if (isUnsaturatedBond(nbrBond) || oatom->getTotalNumHs()) {
-
 #ifdef VERBOSE_HASH
         std::cerr << "  check neighbor1 " << nbrBond->getIdx() << " from "
                   << atm->getIdx() << "-" << oatom->getIdx() << std::endl;
@@ -623,37 +617,16 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                   << " ncno: " << numConjugatedNeighbors[oatom->getIdx()]
                   << std::endl;
 #endif
-        // special case to prevent "overreach" with things like enamines.
-        // the logic here prevents the first bond in CNC=C from being included
-        // in the tautomeric system. So we get: [CH3]-[N]:[C] instead of
-        // [C]:[N]:[C]
-        if ((startBonds[bptr->getIdx()] || hasStartBond(atm, startBonds)) &&
-            !startBonds[nbrBond->getIdx()] && isHeteroAtom(atm) &&
-            !isUnsaturatedBond(nbrBond)
-            //
-            && numConjugatedNeighbors[oatom->getIdx()] < 2
-            //
-        ) {
-#ifdef VERBOSE_HASH
-          std::cerr << "    skip a" << std::endl;
-#endif
+        if (checkForOverreach(atm, oatom, bptr, nbrBond, startBonds,
+                              numConjugatedNeighbors)) {
           continue;
         }
 
-        // if both bonds are not eligible, then we can skip this neighbor
+        // if the bond is not eligible, then we can skip this neighbor
         if (skipNeighborBond(atm, oatom, nbrBond, startBonds, atomFlags,
                              bondFlags) &&
             skipNeighborBond(oatom, atm, nbrBond, startBonds, atomFlags,
                              bondFlags)) {
-          // we won't add this bond for further traversal, but if both atoms
-          // are already in this system, then we should add the bond to the
-          // system
-          // if (atomsInSystem[oatom->getIdx()]) {
-          //   conjSystem.set(nbrBond->getIdx());
-          // }
-#ifdef VERBOSE_HASH
-          std::cerr << "    skip b" << std::endl;
-#endif
           continue;
         }
 
@@ -708,7 +681,7 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
           atomsInSystem.set(atm->getIdx());
         }
         for (auto nbrBnd : mol->atomBonds(atm)) {
-          if (nbrBnd == bnd ||
+          if (bondsConsidered[nbrBnd->getIdx()] ||
               std::find(bq.begin(), bq.end(), nbrBnd) != bq.end()) {
             continue;
           }
@@ -726,47 +699,20 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
                     << " ncno: " << numConjugatedNeighbors[oatom->getIdx()]
                     << std::endl;
 #endif
-          if (bondsConsidered[nbrBnd->getIdx()]) {
-            continue;
-          }
-          // special case to prevent "overreach" with things like enamines.
-          // the logic here prevents the first bond in CNC=C from being
-          // included in the tautomeric system. So we get: [CH3]-[N]:[C]
-          // instead of [C]:[N]:[C]
-          if ((startBonds[bnd->getIdx()] || hasStartBond(atm, startBonds)) &&
-              !startBonds[nbrBnd->getIdx()] && isHeteroAtom(atm) &&
-              !isUnsaturatedBond(nbrBnd)
-              //
-              // && !neighboringStartBond[nbrBnd->getIdx()]
-              && numConjugatedNeighbors[oatom->getIdx()] < 2
-              //
-          ) {
-#ifdef VERBOSE_HASH
-            std::cerr << "    skip c" << std::endl;
-#endif
+          if (checkForOverreach(atm, oatom, bnd, nbrBnd, startBonds,
+                                numConjugatedNeighbors)) {
             continue;
           }
           if ((skipNeighborBond(atm, oatom, nbrBnd, startBonds, atomFlags,
                                 bondFlags) &&
                skipNeighborBond(oatom, atm, nbrBnd, startBonds, atomFlags,
                                 bondFlags))) {
-            // we won't add this bond for further traversal, but if both atoms
-            // are already in this system, then we should add the bond to the
-            // system
-            // if (atomsInSystem[oatom->getIdx()]) {
-            //   conjSystem.set(nbrBnd->getIdx());
-            // }
-#ifdef VERBOSE_HASH
-            std::cerr << "    skip d" << std::endl;
-#endif
             continue;
           }
-          if (std::find(bq.begin(), bq.end(), nbrBnd) == bq.end()) {
-            bq.push_back(nbrBnd);
+          bq.push_back(nbrBnd);
 #ifdef VERBOSE_HASH
-            std::cerr << "  added!" << std::endl;
+          std::cerr << "  added!" << std::endl;
 #endif
-          }
         }
       }
     }
@@ -776,7 +722,9 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       std::cerr << "CONJ: " << conjSystem << " hetero " << activeHeteroHs
                 << " donor " << std::endl;
 #endif
-      // bondsToModify |= conjSystem;
+      // all bonds between conjugated atoms in the system are consisdered to be
+      // in the system. There are situations where the traverse doesn't find the
+      // closure bond, so we explicitly check:
       for (auto i = 0U; i < conjAtoms.size(); i++) {
         if (conjAtoms[i]) {
           for (auto j = i; j < conjAtoms.size(); j++) {
