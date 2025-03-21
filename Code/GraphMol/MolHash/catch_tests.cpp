@@ -483,8 +483,6 @@ TEST_CASE("tautomer v2") {
       std::unique_ptr<RWMol> m{SmilesToMol(same[0])};
       REQUIRE(m);
       RWMol cp(*m);
-      std::cerr << "1-------------------------------------------------------"
-                << std::endl;
       auto ref =
           MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
       for (auto i = 1u; i < same.size(); ++i) {
@@ -492,8 +490,6 @@ TEST_CASE("tautomer v2") {
         std::unique_ptr<RWMol> m2{SmilesToMol(same[i])};
         REQUIRE(m2);
         RWMol cp(*m2);
-        std::cerr << "2-------------------------------------------------------"
-                  << std::endl;
         auto hsh =
             MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
         CHECK(hsh == ref);
@@ -503,8 +499,6 @@ TEST_CASE("tautomer v2") {
         std::unique_ptr<RWMol> m2{SmilesToMol(diff[i])};
         REQUIRE(m2);
         RWMol cp(*m2);
-        std::cerr << "3-------------------------------------------------------"
-                  << std::endl;
         auto hsh =
             MolHash::MolHash(&cp, MolHash::HashFunction::HetAtomTautomerv2);
         CHECK(hsh != ref);
@@ -1015,7 +1009,7 @@ M  END)CTAB"_ctab;
   }
 }
 
-TEST_CASE("new examples") {
+TEST_CASE("examples found in ChEMBL") {
   SECTION("things that should match") {
     std::vector<std::pair<std::string, std::string>> smileses = {
         {"S1(Nc2ccccc2N1)(=O)(=O)", "O=S1(=O)Nc2ccccc2N1"},
@@ -1027,12 +1021,10 @@ TEST_CASE("new examples") {
       INFO(smi1 + " " + smi2);
       auto m1 = v2::SmilesParse::MolFromSmiles(smi1);
       REQUIRE(m1);
-      std::cerr << "----------------------------------" << std::endl;
       auto hsh1 =
           MolHash::MolHash(m1.get(), MolHash::HashFunction::HetAtomTautomerv2);
       auto m2 = v2::SmilesParse::MolFromSmiles(smi2);
       REQUIRE(m2);
-      std::cerr << "----------------------------------" << std::endl;
       auto hsh2 =
           MolHash::MolHash(m2.get(), MolHash::HashFunction::HetAtomTautomerv2);
       CHECK(hsh1 == hsh2);
@@ -1057,36 +1049,9 @@ TEST_CASE("new examples") {
       INFO(smiles);
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(m);
-      std::cerr << "----------------------------------" << std::endl;
       auto hsh =
           MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
       CHECK(hsh == ref);
     }
   }
-
-  // {
-  //   std::vector<std::string> smileses = {
-  //       "O=C1NCCC1",
-  //       "OC1=NCCC1",
-  //   };
-  //   for (const auto &smiles : smileses) {
-  //     INFO(smiles);
-  //     auto m = v2::SmilesParse::MolFromSmiles(smiles);
-  //     REQUIRE(m);
-  //     std::cerr << "----------------------------------" << std::endl;
-  //     auto hsh =
-  //         MolHash::MolHash(m.get(),
-  //         MolHash::HashFunction::HetAtomTautomerv2);
-  //     CHECK(hsh == "[O]:[C]1:[N]-[CH2]-[CH2]-[CH2]-1_1_0");
-  //   }
-  // }
-
-  // {
-  //   auto m = "O=C1CCCC1"_smiles;
-  //   REQUIRE(m);
-  //   std::cerr << "----------------------------------" << std::endl;
-  //   auto hsh =
-  //       MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
-  //   CHECK(hsh == "[O]:[C]1:[C]-[CH2]-[CH2]-[C]:1_4_0");
-  // }
 }
