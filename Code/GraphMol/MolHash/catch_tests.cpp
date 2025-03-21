@@ -1050,6 +1050,8 @@ TEST_CASE("new examples") {
          "[N]:[C]1:[N]:[C](:[O]):[C]2:[C]:[C]:[N]:[C]:2:[N]:1_6_0"},
         {"NC(N)=[N+]1CCc2ccccc2C1",
          "[NH2]-[C](-[NH2])=[N+]1-[CH2]-[CH2]-[c]2:[cH]:[cH]:[cH]:[cH]:[c]:2-[CH2]-1_0_0"},
+        {"O=S1(=Nc2ccncc2)CCCCC1",
+         "[O]=[S]1(=[N]-[C]2:[C]:[C]:[N]:[C]:[C]:2)-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-1_4_0"},
     };
     for (const auto &[smiles, ref] : data) {
       INFO(smiles);
