@@ -1557,14 +1557,14 @@ TEST_CASE("Github #8348: Unable to write wiggly bond information by default") {
   auto mol = v2::SmilesParse::MolFromSmiles(test_input);
   // make sure mol is valid
   REQUIRE(mol);
-  REQUIRE(mol->getNumAtoms() > 0);
-  REQUIRE(mol->getNumBonds() > 0);
+  CHECK(mol->getNumAtoms() > 0);
+  CHECK(mol->getNumBonds() > 0);
 
   // the default conversion
   {
     const auto output_cxsmiles = MolToCXSmiles(*mol);
     // we should always be able to write wiggly bond information
-    REQUIRE(output_cxsmiles.find("w:") != std::string::npos);
+    CHECK(output_cxsmiles.find("w:") != std::string::npos);
   }
 
   // testing the RestoreBondDirOption parameter
@@ -1579,6 +1579,6 @@ TEST_CASE("Github #8348: Unable to write wiggly bond information by default") {
     const auto output_cxsmiles =
         MolToCXSmiles(*mol, ps, flags, bond_dir_option);
     // we should always be able to write wiggly bond information
-    REQUIRE(output_cxsmiles.find("w:") != std::string::npos);
+    CHECK(output_cxsmiles.find("w:") != std::string::npos);
   }
 }
