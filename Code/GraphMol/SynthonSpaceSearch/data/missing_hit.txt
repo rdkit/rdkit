@@ -1,0 +1,4 @@
+SMILES	synton_id	synton#	reaction_id
+[1*]c([nH]nc1)c1-c(nn1)c[n]1[2*]	015119586-618282196	0	benzoimidazole_b-8
+N#Cc1ccc(C(C[2*])=O)[s]1	956652961-712098415	1	benzoimidazole_b-8
+[1*]c1nc(cccc2)c2[nH]1	389373490-231764480	2	benzoimidazole_b-8
