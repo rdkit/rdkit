@@ -178,8 +178,8 @@ TEST_CASE("TestParsingInvalidChiralityLabelsWithMaeMolSupplier") {
   auto mol = suppl.next();
 
   REQUIRE(mol);
-  REQUIRE(mol->getNumAtoms() == 5);
-  REQUIRE(mol->getNumBonds() == 4);
+  CHECK(mol->getNumAtoms() == 5);
+  CHECK(mol->getNumBonds() == 4);
 }
 
 #endif
