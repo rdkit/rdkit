@@ -540,12 +540,12 @@ TEST_CASE("single fragment") {
     REQUIRE(res.front().getBondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
     opts.singleLargestFrag = true;
-    res = rascalMCES(*m1, *m2, opts);
-    REQUIRE(res.front().getNumFrags() == 1);
-    REQUIRE(res.front().getBondMatches().size() == std::get<3>(test));
-    REQUIRE(res.front().getLargestFragSize() ==
-            res.front().getAtomMatches().size());
-    check_smarts_ok(*m1, *m2, res.front());
+    auto res1 = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res1.front().getNumFrags() == 1);
+    REQUIRE(res1.front().getBondMatches().size() == std::get<3>(test));
+    REQUIRE(res1.front().getLargestFragSize() ==
+            res1.front().getAtomMatches().size());
+    check_smarts_ok(*m1, *m2, res1.front());
   }
 }
 
@@ -1596,8 +1596,8 @@ TEST_CASE("Github8255 - incorrect MCES with singleLargestFrag=true") {
     auto res = rascalMCES(*m1, *m2, opts);
     CHECK(res.size() == 3);
     for (auto &r : res) {
-      CHECK(r.getAtomMatches().size() == 20);
-      CHECK(r.getBondMatches().size() == 21);
+      CHECK(r.getAtomMatches().size() == 22);
+      CHECK(r.getBondMatches().size() == 24);
     }
   }
   {
@@ -1610,6 +1610,25 @@ TEST_CASE("Github8255 - incorrect MCES with singleLargestFrag=true") {
     for (auto &r : res) {
       CHECK(r.getAtomMatches().size() == 20);
       CHECK(r.getBondMatches().size() == 22);
+    }
+  }
+}
+
+TEST_CASE("Github8360 - another incorrect MCES with singleLargestFrag=true") {
+  RascalOptions opts;
+  opts.singleLargestFrag = true;
+  opts.allBestMCESs = true;
+  opts.completeAromaticRings = false;
+  {
+    auto m2 = "c1ccc(cn1)-c1ccc2ccccc2n1"_smiles;
+    REQUIRE(m2);
+    auto m1 = "c1ccc(cn1)-c1cc2ccccc2[nH]1"_smiles;
+    REQUIRE(m1);
+    auto res = rascalMCES(*m1, *m2, opts);
+    CHECK(res.size() == 3);
+    for (auto &r : res) {
+      CHECK(r.getAtomMatches().size() == 15);
+      CHECK(r.getBondMatches().size() == 16);
     }
   }
 }

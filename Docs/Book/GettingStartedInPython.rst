@@ -1709,6 +1709,49 @@ A better, atom-centric, representation might be C1CCC[$(C-c)]1.  When the
 completeAromaticRings option is set to False, a larger MCES is found, with just
 the pyridine nitrogen atom not matching the corresponding phenyl carbon atom.
 
+There are 2 ways of getting an MCES that is just a single fragment.  The first is
+to use the option `opts.singleLargestFrag = True`.  The second is to use the method
+`largestFragmentOnly` on the results.  The two methods often produce the same result,
+but not always.
+
+.. doctest::
+
+  >>> mola = Chem.MolFromSmiles("c1cnccc1CCc1ncccc1")
+  >>> molb = Chem.MolFromSmiles("c1cnccc1CCCCCCc1ncccc1")
+  >>> opts = rdRascalMCES.RascalOptions()
+  >>> opts.singleLargestFrag = False
+  >>> rascal_matches = rdRascalMCES.FindMCES(mola, molb, opts)
+
+produces the MCES
+
+.. image:: images/rascal_image_1.png
+
+.. doctest::
+
+  >>> rascal_matches[0].largestFragmentOnly()
+
+Then cuts the MCES down to
+
+.. image:: images/rascal_image_2.png
+
+Using the alternative method:
+
+  >>> mola = Chem.MolFromSmiles("c1cnccc1CCc1ncccc1")
+  >>> molb = Chem.MolFromSmiles("c1cnccc1CCCCCCc1ncccc1")
+  >>> opts = rdRascalMCES.RascalOptions()
+  >>> opts.singleLargestFrag = True
+  >>> rascal_matches = rdRascalMCES.FindMCES(mola, molb, opts)
+
+gives
+
+.. image:: images/rascal_image_3.png
+
+This is because the full MCES can't include all 3 alkyl bonds so as to accommodate the
+second pyridyl ring.  The run time for the second method can be significantly
+slower than the first because it has to find all paths between all bonds in the
+two molecules.
+
+
 Clustering with Rascal
 ======================
 
