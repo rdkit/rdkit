@@ -814,7 +814,7 @@ def BertzCTNewVersion(mol):
   entropy_term = sum(v * math.log2(v) if v > 0 else 0 for v in eta_i.values())
   c_eta = 2 * eta * math.log2(eta) - entropy_term if eta != 0 else 0
 
-  # 计算E和C_E
+  # E calculation
   atom_types = defaultdict(int)
   for atom in mol.GetAtoms():
     atom_types[atom.GetSymbol()] += 1
