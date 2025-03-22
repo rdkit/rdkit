@@ -215,13 +215,9 @@ int testMolSup() {
     }
     {  // intentionally bad chirality label, intended to
       // make sure we can step over parse errors
-      std::unique_ptr<ROMol> nmol;
-      try {
-        nmol.reset(maesup.next());
-      } catch (const FileParseException &) {
-        // just ignore this failure
-      }
-      TEST_ASSERT(!nmol);
+      std::unique_ptr<ROMol> nmol(maesup.next());
+      TEST_ASSERT(nmol);
+      TEST_ASSERT(nmol->getNumAtoms() > 1);
     }
     {  // "Undefined" chirality label
       std::unique_ptr<ROMol> nmol(maesup.next());
@@ -310,6 +306,7 @@ int testMolSup() {
     TEST_ASSERT(info->getChainId() == "A");
     TEST_ASSERT(info->getResidueNumber() == 5);
   }
+
 #endif
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
   return 1;
@@ -2811,12 +2808,10 @@ void testGitHub2881() {
     bool sanitize = false;
     bool takeOwnership = true;
     MaeMolSupplier suppl(iss, takeOwnership, sanitize);
-    ROMol *mol = nullptr;
-    try {
-      mol = suppl.next();
-    } catch (const FileParseException &) {
-    }
-    TEST_ASSERT(!mol);
+    auto mol = suppl.next();
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 15);
+    TEST_ASSERT(mol->getNumBonds() == 17);
   }
 }
 #else

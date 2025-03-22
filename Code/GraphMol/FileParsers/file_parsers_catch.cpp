@@ -5865,16 +5865,7 @@ TEST_CASE("MaeMolSupplier setData and reset methods",
   unsigned i = 0;
   while (!supplier.atEnd()) {
     INFO("Second input, mol " + std::to_string(i));
-
-    std::unique_ptr<ROMol> molptr;
-    try {
-      molptr.reset(supplier.next());
-    } catch (const FileParseException &) {
-      // the 4th structure is intentionally bad.
-    }
-
-    REQUIRE((i == 3) ^ (molptr != nullptr));
-
+    std::unique_ptr<ROMol> molptr(supplier.next());
     ++i;
   }
   INFO("Second input, mol count");
