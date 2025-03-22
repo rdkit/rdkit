@@ -726,11 +726,11 @@ BertzCT.version = "2.0.0"
 ************************************************************************************************
 BerzCTNewVersion: A new version of BertzCT descriptor calculation.
 Other bugs in the original BertzCT calculation have been fixed in this new version.(in Unit Test)
-There is only one examples
+There is only one example.
 
 General Mechanism: 
 Atoms progressively aggregate neighboring information to determine their chemical environment within the 
-molecular structure. Typically, distinct chemical environments are differentiated through a few rounds of iteration (often just a few steps before convergence (colors = new_colors.copy())), 
+molecular structure. Typically, distinct chemical environments are differentiated through a few rounds of iteration (often just a few steps before convergence (if new_colors == colors: break), 
 where atoms are assigned distinct colors). The message-passing resembles that of Graph Convolutional Networks (GCNs).
 ************************************************************************************************
 """
@@ -744,7 +744,7 @@ def BertzCTNewVersion(mol):
     return 0.0
 
   # for different bond types, assign different weights
-  # For AROMATIC bond, I treat them as this blog does:https://www.rdkit.org/docs/source/rdkit.Chem.GraphDescriptors.html
+  # For AROMATIC bonds, I treat them as this blog does:https://www.rdkit.org/docs/source/rdkit.Chem.GraphDescriptors.html
   BOND_WEIGHTS = {
     Chem.BondType.SINGLE: 1.0,
     Chem.BondType.DOUBLE: 2.0,
