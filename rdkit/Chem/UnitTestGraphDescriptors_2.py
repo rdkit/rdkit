@@ -525,6 +525,100 @@ class TestCase_python(unittest.TestCase):
                  1e-4), 'line %d, mol %s (c = %f, py = %f)' % (lineNum, smi, cVal, pyVal)
 
 
+#********************************************************************************************************************
+#this part can be deleted after the test is done
+#********************************************************************************************************************
+if __name__ == '__main__':
+
+  from rdkit.Chem import GraphDescriptors
+  import timeit
+
+
+  ''' TEST for both accuracy and speed
+  '''
+  smiles_list = [
+      ######    some examples lead to different outcomes    ######
+      "C1CCCCCS1",  # I think this is a bug in the original code, use hand calculation to verify: (7-membered ring contains 1 sulfur)
+      # 14*math.log2(7)-3*2*math.log2(2)+7*math.log2(7)-6*math.log2(6)=37.445, not 23.793
+      "C1=CC=CC=C1->[Cu+]",  # the outcome is quite different, it's a simple molecule, shouldn't compute to over 1000 in the original code
+      "C1CCCCCCN1",# 7-membered ring contains 1 nitrogen, 16*math.log2(8)-3*2*math.log2(2)+8*math.log2(8)-7*math.log2(7) 46.349 not 28.349
+
+      ######    some examples lead to the same outcomes, to compare the speed  ######
+      "O=C(C1=CC=CC=C1)N[C@@H](C2=CC=CC=C2)[C@H](C(O[C@@H]3C(C)=C([C@@H](OC(C)=O)C([C@@]4(C)[C@]([C@@](CO5)(OC(C)=O)[C@@]5([H])C[C@@H]4O)([H])[C@@H]6OC(C7=CC=CC=C7)=O)=O)C(C)(C)[C@@]6(O)C3)=O)O",  #taxol
+      "O1[C@@]2(CCCCCCC[C@@H](C[C@@H]3[C@@H]([C@H]([C@H]([C@@](C[C@@H]([C@H](/C=C/[C@H](CC[C@H]([C@H]([C@@H]4C[C@H]([C@@H]([C@@H](C[C@H]([C@@H](C[C@@H]5[C@H]([C@@H]([C@H]([C@H](C[C@@H](/C=C\C=C\C[C@H]([C@@H]([C@@H](C/C=C\C(=C)CC[C@@H]([C@H]([C@@H]([C@H](C)C[C@@H]6[C@@H]([C@H]([C@@H]([C@@H](/C=C\[C@H]([C@@H](C[C@@H]7C[C@@H]8C[C@@H]([C@@H](CC[C@@H]9[C@@H](C[C@@H](CN)O9)O)O8)O7)O)O)O6)O)O)O)O)O)O)O)O)O)O)O5)O)O)O)O)O)O4)O)O)O)O)O)C)O)(O)O3)O)O)O)O)C[C@@H](C)C[C@]1(C)[C@@H](C[C@@H](C)CCCCC[C@H]([C@@H]([C@@H]([C@H]([C@@H]([C@@H]1[C@H]([C@@H]([C@H]([C@@H](C[C@@H]([C@@H](/C(=C/[C@@H](C[C@@H](C)[C@@H](C(N/C=C/C(NCCCO)=O)=O)O)O)/C)O)O)O1)O)O)O)O)O)O)O)O)O2",  #shahaikuisu
+      "[H][C@]12[C@](O[C@@]3(OC(C)(C)CC3)[C@H]2C)([H])C[C@]4([H])[C@]5([H])CC[C@@]6([H])CC7=NC8=C(C[C@@](CC[C@]9([H])C%10C[C@@H](O)[C@@]%11(C)[C@]9([H])C[C@H]%12[C@@H]%11[C@H](C)[C@]%13(CCC(C)(C)O%13)O%12)([H])[C@]%10(C)C8)N=C7C[C@]6(C)[C@@]5([H])C[C@@H](O)[C@@]41C"  #Ritterazine S
+      "C=C1C(C)=C[C@]2(O3)[C@]([C@]1(C(OC)=O)C3=O)(C)CC[C@]4([H])C(C)(C)[C@@]([H])(OC(C)=O)CC[C@]42C",  #Janthinoid A
+      "OC(C(C1)=C2[C@]3(CCC4)[C@]1([C@H](CC[C@@]35C)C)C)=CC=C2O[C@]45C",  #dysiherbol A
+      "C=C1[C@@]2([C@@H]3[C@](CC4=CC(C=C[C@]4(O)[C@H]3CC1)=O)([C@H](CC2)C)C)C",  #dysideanone E
+      "[H][C@]12C(C)(C)[C@@H](OC(C)=O)CC[C@@]1([C@@]([C@]3(C)CC2)(C4)C(C3=O)(C)OC4=O)C",  #Cyclobutastellettolide B
+      "O=C1O[C@]23C[C@]4(O)[C@@](C([C@]5(C)CC4)=CC([C@@H]5[C@H](C)[C@H](O)[C@@]6([H])OC(C(C)=C6)=O)=O)([H])CC[C@@]2([H])C(C)(C)O[C@]3([H])C1",  #Propindilactone G
+      "O=C1[C@@]23C([C@]([C@]4([H])C1)([H])CC[C@@]([C@]4(C)C5)([H])CC6=C5N=C(C[C@@](CC[C@]7([H])[C@]8([H])C[C@@H](O)[C@@]9(C)C7=C[C@H]%10[C@]9(O)[C@H](C)[C@]%11([C@H](O)C[C@](CO)(C)O%11)O%10)([H])[C@]8(C)C%12)C%12=N6)=CC[C@]2([H])[C@H](C)[C@]%13(OC(C)(C)C[C@H]%13O)OC3",  #Cephalostatin 1
+      "[H][C@@]1(CC2=O)C(/C2=C(C=C/C=C(C)/C(O3)=CC=C(C)C3=O)/C)(C)CCC4([H])C(C)(C)C(CC[C@@]41C)=O",  #stellentin A
+  ]
+
+  # value and speed comparison
+  OldVersionValue = []
+  NewVersionValue = []
+  NewVersionFaster = []
+  OldVersionFaster = []
+  DifferentOutput = []  # for bug detection
+  InvalidSMILES = []
+
+  n_runs = 100  # number of runs for each test
+
+  for smiles in smiles_list:
+      mol = Chem.MolFromSmiles(smiles)
+      if mol is None:
+          InvalidSMILES.append(smiles)
+          continue
+
+      # old version BertzCT and new version BertzCT value
+      try:
+          old_val = GraphDescriptors.BertzCT(mol)
+      except Exception as e:
+          print(f"old version failed {smiles}: {str(e)}")
+          continue
+      try:
+          new_val = GraphDescriptors.BertzCTNewVersion(mol)
+      except Exception as e:
+          print(f"new version failed {smiles}: {str(e)}")
+          continue
+
+      # save value
+      OldVersionValue.append(round(old_val, 4))
+      NewVersionValue.append(round(new_val, 4))
+
+      # compare value(four decimal places)
+      if round(old_val, 4) != round(new_val, 4):
+          DifferentOutput.append(smiles)
+          continue
+
+      # test speed
+      def OldTest():
+          return GraphDescriptors.BertzCT(mol)
+
+      def NewTest():
+          return GraphDescriptors.BertzCTNewVersion(mol)
+
+      # timeit
+      old_time = timeit.timeit(OldTest, number=n_runs) / n_runs
+      new_time = timeit.timeit(NewTest, number=n_runs) / n_runs
+
+      # compare speed
+      if new_time < old_time:
+          NewVersionFaster.append(smiles)
+      else:
+          OldVersionFaster.append(smiles)
+
+  # print results
+  print(f"OldVersionValue: {OldVersionValue}")
+  print(f"NewVersionValue: {NewVersionValue}")
+  print(f"NewVersionFaster (count: {len(NewVersionFaster)}): {NewVersionFaster}")
+  print(f"OldVersionFaster (count: {len(OldVersionFaster)}): {OldVersionFaster}")
+  print(f"DifferentOutput (count: {len(DifferentOutput)}): {DifferentOutput}")
+  print(f"InvalidSMILES (count: {len(InvalidSMILES)}): {InvalidSMILES}")
+
+
 if __name__ == '__main__':
   import argparse
   import sys
@@ -537,3 +631,7 @@ if __name__ == '__main__':
   if 'l' in sys.argv:
     sys.argv.remove('-l')
   unittest.main()
+
+
+
+
