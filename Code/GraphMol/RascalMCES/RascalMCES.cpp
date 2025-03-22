@@ -499,7 +499,7 @@ namespace {
 // be sorted and uniquified in the c'tor.
 struct BondPaths {
   BondPaths() = default;
-  BondPaths(std::vector<std::vector<const Bond::BondType>> &paths,
+  BondPaths(std::vector<std::vector<Bond::BondType>> &paths,
             boost::dynamic_bitset<> &dists, bool reverse)
       : d_pathDists(dists) {
     std::sort(paths.begin(), paths.end());
@@ -542,7 +542,7 @@ struct BondPaths {
     }
     return false;
   }
-  std::vector<std::vector<const Bond::BondType>> d_paths;
+  std::vector<std::vector<Bond::BondType>> d_paths;
   std::vector<std::uint64_t> d_pathHashes;
   // If there's a path of length l, bit l will be set.
   boost::dynamic_bitset<> d_pathDists;
@@ -555,7 +555,7 @@ void findAllPaths(unsigned int endNode,
                   std::vector<unsigned int> &currPath,
                   boost::dynamic_bitset<> &inCurrPath,
                   boost::dynamic_bitset<> &allDists,
-                  std::vector<std::vector<const Bond::BondType>> &allPaths) {
+                  std::vector<std::vector<Bond::BondType>> &allPaths) {
   for (size_t i = 0; i < adjMatrix.size(); ++i) {
     if (adjMatrix[currPath.back()][i]) {
       if (i == endNode) {
@@ -600,7 +600,7 @@ void calcAllDistancesMatrix(
   for (unsigned int s = 0u; s < numNodes - 1; ++s) {
     for (unsigned int f = s + 1; f < numNodes; ++f) {
       boost::dynamic_bitset<> allDists(numDists);
-      std::vector<std::vector<const Bond::BondType>> allPaths;
+      std::vector<std::vector<Bond::BondType>> allPaths;
       std::vector<unsigned int> currPath(1, s);
       boost::dynamic_bitset<> inCurrPath(numDists);
       inCurrPath[s] = true;
