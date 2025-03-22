@@ -62,6 +62,8 @@ const std::map<std::string, std::hash_result_t> SVG_HASHES = {
     {"contourMol_3.svg", 2579392727U},
     {"contourMol_4.svg", 2914799663U},
     {"contourMol_5.svg", 3792684719U},
+    {"contourMol_6.svg", 1743220181U},
+    {"contourMol_7.svg", 2221193310U},
     {"testDativeBonds_1.svg", 3550231997U},
     {"testDativeBonds_2.svg", 2510476717U},
     {"testDativeBonds_3.svg", 1742381275U},
@@ -790,6 +792,67 @@ TEST_CASE("contour data", "[drawing][conrec]") {
     outs << text;
     outs.close();
     check_file_hash("contourMol_5.svg");
+  }
+
+  SECTION("Threshold testing") {
+    MolDraw2DUtils::prepareMolForDrawing(*m1);
+
+    const auto conf = m1->getConformer();
+    std::vector<Point2D> cents(conf.getNumAtoms());
+    std::vector<double> weights(conf.getNumAtoms());
+    std::vector<double> widths(conf.getNumAtoms());
+    for (size_t i = 0; i < conf.getNumAtoms(); ++i) {
+      cents[i] = Point2D(conf.getAtomPos(i).x, conf.getAtomPos(i).y);
+      weights[i] = i % 2 ? 4 : 1;
+      widths[i] = 0.4 * PeriodicTable::getTable()->getRcovalent(
+                            m1->getAtomWithIdx(i)->getAtomicNum());
+    }
+
+    std::vector<double> levels;
+    MolDraw2DUtils::ContourParams cps;
+    cps.fillGrid = true;
+    cps.colourMap = {
+        DrawColour(1.0, 1.0, 1.0),
+        DrawColour(0.5, 1.0, 0.5),
+        DrawColour(0.0, 1.0, 0.0),
+    };
+
+    cps.useFillThreshold = true;
+
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().padding = 0.1;
+      drawer.clearDrawing();
+      MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths,
+                                              10, levels, cps, m1.get());
+
+      drawer.drawOptions().clearBackground = false;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("contourMol_6.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("contourMol_6.svg");
+    }
+
+    cps.fillThresholdIsFraction = false;
+    {
+      MolDraw2DSVG drawer(250, 250, -1, -1, NO_FREETYPE);
+      drawer.drawOptions().padding = 0.1;
+      drawer.clearDrawing();
+      MolDraw2DUtils::contourAndDrawGaussians(drawer, cents, weights, widths,
+                                              10, levels, cps, m1.get());
+
+      drawer.drawOptions().clearBackground = false;
+      drawer.drawMolecule(*m1);
+      drawer.finishDrawing();
+      std::string text = drawer.getDrawingText();
+      std::ofstream outs("contourMol_7.svg");
+      outs << text;
+      outs.close();
+      check_file_hash("contourMol_7.svg");
+    }
   }
 }
 
