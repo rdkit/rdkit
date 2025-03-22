@@ -531,35 +531,17 @@ TEST_CASE("single fragment") {
            27, 21}};
   opts.similarityThreshold = 0.7;
   for (auto &test : tests) {
-    if (std::get<0>(test) !=
-        "Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008") {
-      continue;
-    }
-    std::cout << std::get<0>(test) << std::endl;
     opts.ringMatchesRingOnly = true;
     opts.singleLargestFrag = false;
-    opts.allBestMCESs = true;
-    std::cout << "DOUBLE_FRAGMENT" << std::endl;
     std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
     std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
     auto res = rascalMCES(*m1, *m2, opts);
     REQUIRE(res.front().getNumFrags() == 2);
     REQUIRE(res.front().getBondMatches().size() == std::get<2>(test));
     check_smarts_ok(*m1, *m2, res.front());
-    std::cout << "first bms : ";
-    for (const auto &bm : res.front().getBondMatches()) {
-      std::cout << "{" << bm.first << ", " << bm.second << "},";
-    }
-    std::cout << std::endl;
-    std::cout << "SINGLE_FRAGMENT" << std::endl;
     opts.singleLargestFrag = true;
     auto res1 = rascalMCES(*m1, *m2, opts);
     REQUIRE(res1.front().getNumFrags() == 1);
-    std::cout << "second bms : ";
-    for (const auto &bm : res1.front().getBondMatches()) {
-      std::cout << "{" << bm.first << ", " << bm.second << "},";
-    }
-    std::cout << std::endl;
     REQUIRE(res1.front().getBondMatches().size() == std::get<3>(test));
     REQUIRE(res1.front().getLargestFragSize() ==
             res1.front().getAtomMatches().size());
@@ -1503,7 +1485,6 @@ TEST_CASE("Order of atoms in bond labels must be consistent - Github 8198.") {
 }
 
 TEST_CASE("Duplicate Single Largest Frag") {
-#if 0
   {
     auto m1 = "c1ccc2c(c1)c(ncn2)CNCc3ccc(cc3)Cl"_smiles;
     REQUIRE(m1);
@@ -1517,7 +1498,6 @@ TEST_CASE("Duplicate Single Largest Frag") {
     CHECK(res.front().getAtomMatches().size() == 11);
     CHECK(res.front().getBondMatches().size() == 12);
   }
-#endif
   {
     // Without the fix, there were 156 results sets, with different breaks
     // in the long chain giving different numbers of atoms in the largest
@@ -1532,13 +1512,6 @@ TEST_CASE("Duplicate Single Largest Frag") {
     auto res = rascalMCES(*m1, *m2, opts);
     REQUIRE(!res.empty());
     CHECK(res.size() == 4);
-    for (const auto &r : res) {
-      std::cout << r.getSmarts() << std::endl;
-      for (const auto &p : r.getBondMatches()) {
-        std::cout << "(" << p.first << "," << p.second << ") ";
-      }
-      std::cout << std::endl;
-    }
     CHECK(res.front().getAtomMatches().size() == 23);
     CHECK(res.front().getBondMatches().size() == 23);
     CHECK(res.back().getAtomMatches().size() == 23);
@@ -1628,11 +1601,6 @@ TEST_CASE("Github8360 - another incorrect MCES with singleLargestFrag=true") {
     for (auto &r : res) {
       CHECK(r.getAtomMatches().size() == 15);
       CHECK(r.getBondMatches().size() == 16);
-      for (const auto &p : r.getBondMatches()) {
-        std::cout << "{" << p.first << "," << p.second << "}, ";
-      }
-      std::cout << std::endl;
-      break;
     }
   }
 }

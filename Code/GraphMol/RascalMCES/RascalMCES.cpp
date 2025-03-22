@@ -540,12 +540,6 @@ struct BondPaths {
         return true;
       }
     }
-    // for (const auto &myHash : d_pathHashes) {
-    //   if (std::find(other.d_pathHashes.begin(), other.d_pathHashes.end(),
-    //                 myHash) != other.d_pathHashes.end()) {
-    //     return true;
-    //   }
-    // }
     return false;
   }
   std::vector<std::vector<const Bond::BondType>> d_paths;
@@ -553,6 +547,38 @@ struct BondPaths {
   // If there's a path of length l, bit l will be set.
   boost::dynamic_bitset<> d_pathDists;
 };
+
+void findAllPaths(unsigned int endNode,
+                  const std::vector<std::vector<int>> &adjMatrix,
+                  const std::vector<const Bond *> &bonds,
+                  std::vector<unsigned int> &currPath,
+                  boost::dynamic_bitset<> &inCurrPath,
+                  boost::dynamic_bitset<> &allDists,
+                  std::vector<std::vector<const Bond::BondType>> &allPaths) {
+  for (size_t i = 0; i < adjMatrix.size(); ++i) {
+    if (adjMatrix[currPath.back()][i]) {
+      if (i == endNode) {
+        allDists[currPath.size()] = true;
+        allPaths.emplace_back();
+        std::transform(currPath.begin(), currPath.end(),
+                       std::back_inserter(allPaths.back()),
+                       [&](const unsigned int &idx) -> Bond::BondType {
+                         return bonds[idx]->getBondType();
+                       });
+        allPaths.back().push_back(bonds[i]->getBondType());
+      } else {
+        if (!inCurrPath[i]) {
+          inCurrPath[i] = true;
+          currPath.push_back(i);
+          findAllPaths(endNode, adjMatrix, bonds, currPath, inCurrPath,
+                       allDists, allPaths);
+          currPath.pop_back();
+          inCurrPath[i] = false;
+        }
+      }
+    }
+  }
+}
 }  // namespace
 
 // Calculate all the distances between all vertices in the graph, putting
@@ -572,71 +598,17 @@ void calcAllDistancesMatrix(
 
   for (unsigned int s = 0u; s < numNodes - 1; ++s) {
     for (unsigned int f = s + 1; f < numNodes; ++f) {
-      // find all paths between s and f
-      std::vector<std::vector<unsigned int>> currPaths;
-      std::vector<boost::dynamic_bitset<>> inCurrPath;
-      boost::dynamic_bitset<> dists(numDists);
-      std::vector<std::vector<const Bond::BondType>> finalPaths;
-      currPaths.push_back(std::vector<unsigned int>(1, s));
-      inCurrPath.push_back(boost::dynamic_bitset<>(numNodes));
-      inCurrPath.back()[s] = true;
-      while (true) {
-        unsigned int numEmpty = 0;
-        for (size_t i = 0, stop = currPaths.size(); i < stop; ++i) {
-          if (currPaths[i].empty()) {
-            numEmpty++;
-            continue;
-          }
-          for (unsigned int j = 0; j < numNodes; ++j) {
-            if (adjMatrix[currPaths[i].back()][j]) {
-              if (!inCurrPath[i][j]) {
-                if (j == f) {
-                  dists[currPaths[i].size()] = true;
-                  finalPaths.emplace_back();
-                  std::transform(
-                      currPaths[i].begin(), currPaths[i].end(),
-                      std::back_inserter(finalPaths.back()),
-                      [&](const unsigned int &idx) -> Bond::BondType {
-                        return bonds[idx]->getBondType();
-                      });
-                  finalPaths.back().push_back(bonds[j]->getBondType());
-                } else {
-                  currPaths.push_back(currPaths[i]);
-                  currPaths.back().push_back(j);
-                  inCurrPath.push_back(inCurrPath[i]);
-                  inCurrPath.back()[j] = true;
-                }
-              }
-            }
-          }
-          currPaths[i].clear();
-          inCurrPath[i].clear();
-        }
-        if (numEmpty == currPaths.size()) {
-          break;
-        }
-        if (numEmpty > 10) {
-          currPaths.erase(
-              std::remove_if(currPaths.begin(), currPaths.end(),
-                             [](const auto &p) -> bool { return p.empty(); }),
-              currPaths.end());
-          inCurrPath.erase(
-              std::remove_if(inCurrPath.begin(), inCurrPath.end(),
-                             [](const auto &p) -> bool { return p.empty(); }),
-              inCurrPath.end());
-        }
-      }
-      allDistsMatrix[s][f] = BondPaths(finalPaths, dists, true);
-      allDistsMatrix[f][s] = BondPaths(finalPaths, dists, false);
+      boost::dynamic_bitset<> allDists(numDists);
+      std::vector<std::vector<const Bond::BondType>> allPaths;
+      std::vector<unsigned int> currPath(1, s);
+      boost::dynamic_bitset<> inCurrPath(numDists);
+      inCurrPath[s] = true;
+      findAllPaths(f, adjMatrix, bonds, currPath, inCurrPath, allDists,
+                   allPaths);
+      allDistsMatrix[s][f] = BondPaths(allPaths, allDists, true);
+      allDistsMatrix[f][s] = BondPaths(allPaths, allDists, false);
     }
   }
-  int numPaths = 0;
-  for (const auto &pl : allDistsMatrix) {
-    for (const auto &p : pl) {
-      numPaths += p.d_pathHashes.size();
-    }
-  }
-  std::cout << "numPaths: " << numPaths << std::endl;
 }
 
 // Make the modular product between the 2 graphs passed in.  Each node in the
