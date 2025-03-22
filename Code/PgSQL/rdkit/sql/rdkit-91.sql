@@ -547,3 +547,100 @@ M  V30 3 1 4 5 ENDPTS=(3 1 2 3) ATTACH=ANY
 M  V30 END BOND
 M  V30 END CTAB
 M  END'));
+
+-- sanitization and Hs: do not sanitize, removing Hs has no effect
+select mol_to_smiles(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 F 1.299038 0.750000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false,false,true));
+-- sanitization and Hs: do not sanitize, do not remove Hs
+select mol_to_smiles(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 F 1.299038 0.750000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false,false,false));
+-- sanitization and Hs: sanitize, do not remove Hs
+select mol_to_smiles(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 O 1.299038 0.750000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false,true,false));
+-- sanitization and Hs: default is to sanitize and remove Hs
+select mol_to_smiles(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 O 1.299038 0.750000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false));
+-- sanitization and Hs: sanitize, do not remove Hs, input coords manipulated
+select mol_to_v3kctab(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 O 1.000000 0.500000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false,true,false));
+
