@@ -548,6 +548,7 @@ struct BondPaths {
   boost::dynamic_bitset<> d_pathDists;
 };
 
+// Recursively find all paths from the end of currPath to endNode.
 void findAllPaths(unsigned int endNode,
                   const std::vector<std::vector<int>> &adjMatrix,
                   const std::vector<const Bond *> &bonds,
