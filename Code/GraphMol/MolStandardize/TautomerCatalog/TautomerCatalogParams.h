@@ -12,7 +12,6 @@
 #define RD_TAUTOMER_CATALOG_PARAMS_H
 
 #include <Catalogs/CatalogParams.h>
-#include "TautomerCatalogUtils.h"
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <vector>
@@ -22,7 +21,6 @@ namespace RDKit {
 class ROMol;
 
 namespace MolStandardize {
-class TautomerTransform;
 
 using TautomerTransformDefs =
     std::vector<std::tuple<std::string, std::string, std::string, std::string>>;
@@ -33,6 +31,37 @@ RDKIT_MOLSTANDARDIZE_EXPORT extern const TautomerTransformDefs
 RDKIT_MOLSTANDARDIZE_EXPORT extern const TautomerTransformDefs
     defaultTautomerTransformsv1;
 }  // namespace defaults
+
+class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
+ public:
+  ROMol *Mol = nullptr;
+  std::vector<Bond::BondType> BondTypes;
+  std::vector<int> Charges;
+
+  TautomerTransform(ROMol *mol, std::vector<Bond::BondType> bondtypes,
+                    std::vector<int> charges)
+      : Mol(mol),
+        BondTypes(std::move(bondtypes)),
+        Charges(std::move(charges)) {}
+
+  TautomerTransform(const TautomerTransform &other)
+      : BondTypes(other.BondTypes), Charges(other.Charges) {
+    Mol = new ROMol(*other.Mol);
+  }
+
+  TautomerTransform &operator=(const TautomerTransform &other) {
+    if (this != &other) {
+      delete Mol;
+      Mol = new ROMol(*other.Mol);
+      BondTypes = other.BondTypes;
+      Charges = other.Charges;
+    }
+    return *this;
+  }
+
+  ~TautomerTransform() { delete Mol; }
+};
+
 class RDKIT_MOLSTANDARDIZE_EXPORT TautomerCatalogParams
     : public RDCatalog::CatalogParams {
  public:
