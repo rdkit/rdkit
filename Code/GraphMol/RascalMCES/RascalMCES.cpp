@@ -469,11 +469,6 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
       }
     }
   }
-  // std::cout << "vertex pairs" << std::endl;
-  // for (size_t i = 0; i < vtxPairs.size(); ++i) {
-  // std::cout << i << " : " << vtxPairs[i].first << ", " << vtxPairs[i].second
-  // << std::endl;
-  // }
 }
 
 // Use the Floyd-Warshall algorithm to compute the distance matrix from the
