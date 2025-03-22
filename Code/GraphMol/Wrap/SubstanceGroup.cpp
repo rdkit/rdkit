@@ -256,7 +256,8 @@ struct sgroup_wrap {
             "  RETURNS: a string\n\n"
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception "
-            "will be raised.\n")
+            "will be raised.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetIntProp",
              (int(RDProps::*)(const std::string &) const) &
                  SubstanceGroup::getProp<int>,

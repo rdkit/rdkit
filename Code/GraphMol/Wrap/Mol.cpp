@@ -172,9 +172,9 @@ void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol() {};
+  ReadWriteMol(){};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId) {};
+      : RWMol(m, quickCopy, confId){};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
@@ -699,8 +699,8 @@ struct mol_wrapper {
             "    - autoConvert: if True attempt to convert the property into a python object\n\n"
             "  RETURNS: a string\n\n"
             "  NOTE:\n"
-            "    - If the property has not been set, a KeyError exception "
-            "will be raised.\n")
+            "    - If the property has not been set, a KeyError exception will be raised.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetDoubleProp", GetProp<ROMol, double>,
              python::args("self", "key"),
              "Returns the double value of the property if possible.\n\n"
