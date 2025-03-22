@@ -16,8 +16,7 @@
 #define SYNTHONSPACESEARCHER_H
 
 #include <chrono>
-
-#include <boost/random.hpp>
+#include <random>
 
 #include <RDGeneral/export.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
@@ -70,7 +69,7 @@ class SynthonSpaceSearcher {
       const std::vector<size_t> &synthNums) const;
 
  private:
-  std::unique_ptr<boost::mt19937> d_randGen;
+  std::unique_ptr<std::mt19937> d_randGen;
 
   const ROMol &d_query;
   const SynthonSpaceSearchParams &d_params;
