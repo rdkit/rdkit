@@ -333,15 +333,14 @@ void makeLineGraph(const ROMol &mol, std::vector<std::vector<int>> &adjMatrix) {
 // make sure that mol1_bond in mol1 and mol2_bond in mol2 are, in at least one
 // ring that is the same. If aromaticRingsMatchOnly is true, then only aromatic
 // bonds are considered.
-bool checkRings(const ROMol &mol1,
-                        std::vector<std::string> &mol1RingSmiles,
-                        int mol1BondIdx, const ROMol &mol2,
-                        std::vector<std::string> &mol2RingSmiles,
-                        int mol2BondIdx,
-                        bool aromaticRingsMatchOnly) {
+bool checkRings(const ROMol &mol1, std::vector<std::string> &mol1RingSmiles,
+                int mol1BondIdx, const ROMol &mol2,
+                std::vector<std::string> &mol2RingSmiles, int mol2BondIdx,
+                bool aromaticRingsMatchOnly) {
   auto mol1Bond = mol1.getBondWithIdx(mol1BondIdx);
   auto mol2Bond = mol2.getBondWithIdx(mol2BondIdx);
-  if (aromaticRingsMatchOnly && (!mol1Bond->getIsAromatic() || !mol2Bond->getIsAromatic())) {
+  if (aromaticRingsMatchOnly &&
+      (!mol1Bond->getIsAromatic() || !mol2Bond->getIsAromatic())) {
     return true;
   }
 
@@ -452,13 +451,15 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
   for (auto i = 0u; i < vtxLabels1.size(); ++i) {
     for (auto j = 0u; j < vtxLabels2.size(); ++j) {
       if (vtxLabels1[i] == vtxLabels2[j]) {
-        // completeSmallestRings automatically implies completeAromaticRings and 
+        // completeSmallestRings automatically implies completeAromaticRings and
         // ringMatchesRingsOnly
         if (opts.completeSmallestRings &&
-            !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j, false)) {
+            !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j,
+                        false)) {
           continue;
         } else if (opts.completeAromaticRings &&
-            !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j, true)) {
+                   !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j,
+                               true)) {
           continue;
         }
         if (!opts.completeSmallestRings && opts.ringMatchesRingOnly &&
