@@ -146,9 +146,8 @@ SearchResults SynthonSpace::substructureSearch(
         std::get<GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T>(
             query.xqmol),
         matchParams, params);
-  }
 #endif
-  else {
+  } else {
     UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
   }
   return SearchResults();
