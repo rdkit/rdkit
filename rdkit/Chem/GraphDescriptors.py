@@ -888,6 +888,5 @@ if __name__ == "__main__":
   print("old_version_TIMECOST: {:.6f} s".format(BertzCTOldVersionTIMECOST / n_runs))
   print("new_version_TIMECOST: {:.6f} s".format(BertzCTNewVersionTIMECOST / n_runs))
 
-  C_T = BertzCTNewVersion(mol)
   print(f"old_version_value: {BertzCT(mol)}")
-  print(f"new_version_value: {C_T}")
+  print(f"new_version_value: {BertzCTNewVersion(mol)}")
