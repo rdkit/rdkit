@@ -47,6 +47,7 @@ option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" O
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
+option(RDK_USE_BOOST_PROGRAM_OPTIONS "Use the boost program options library if available" ON)
 option(RDK_USE_BOOST_STACKTRACE "use boost::stacktrace to do more verbose invariant output (linux only)" ON)
 option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)

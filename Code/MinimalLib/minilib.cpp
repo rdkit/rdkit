@@ -531,6 +531,12 @@ int JSMolBase::has_coords() const {
   return (get().getConformer().is3D() ? 3 : 2);
 }
 
+const RDGeom::POINT3D_VECT &JSMolBase::get_coords() const {
+  static const RDGeom::POINT3D_VECT empty;
+  return (get().getNumConformers() ? get().getConformer().getPositions()
+                                   : empty);
+}
+
 double JSMolBase::normalize_depiction(int canonicalize, double scaleFactor) {
   if (!get().getNumConformers()) {
     return -1.;
@@ -605,6 +611,29 @@ std::pair<JSMolList *, JSMolList *> JSMolBase::get_mmpa_frags(
                         new JSMolList(std::move(sidechains)));
 }
 #endif
+
+std::string JSMolBase::add_to_png_blob(const std::string &pngString,
+                                       const std::string &details) const {
+  PNGMetadataParams params;
+  std::string res;
+  try {
+    MinimalLib::updatePNGMetadataParamsFromJSON(params, details.c_str());
+    res = addMolToPNGString(get(), pngString, params);
+  } catch (...) {
+  }
+  return res;
+}
+
+std::string JSMolBase::combine_with(const JSMolBase &other,
+                                    const std::string &details) {
+  std::unique_ptr<ROMol> combinedMol;
+  auto res = MinimalLib::combine_mols_internal(get(), other.get(), combinedMol,
+                                               details.c_str());
+  if (res.empty() && combinedMol) {
+    reset(static_cast<RWMol *>(combinedMol.release()));
+  }
+  return "";
+}
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RXN
 std::string JSReaction::get_svg(int w, int h) const {
@@ -955,6 +984,26 @@ bool disable_logging(const std::string &logName) {
 }
 
 void disable_logging() { RDKit::MinimalLib::LogHandle::disableLogging(); }
+
+JSMolBase *get_mol_from_png_blob(const std::string &pngString,
+                                 const std::string &details) {
+  auto mols = MinimalLib::get_mols_from_png_blob_internal(pngString, true,
+                                                          details.c_str());
+  if (mols.empty()) {
+    return nullptr;
+  }
+  return new JSMol(new RWMol(*mols.front()));
+}
+
+JSMolList *get_mols_from_png_blob(const std::string &pngString,
+                                  const std::string &details) {
+  auto mols = MinimalLib::get_mols_from_png_blob_internal(pngString, false,
+                                                          details.c_str());
+  if (mols.empty()) {
+    return nullptr;
+  }
+  return new JSMolList(mols);
+}
 
 #ifdef RDK_BUILD_MINIMAL_LIB_RGROUPDECOMP
 JSRGroupDecomposition::JSRGroupDecomposition(const JSMolBase &core,

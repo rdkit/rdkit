@@ -13,18 +13,28 @@
 // https://github.com/openbabel/openbabel/blob/master/src/formats/pngformat.cpp
 
 #include "PNGParser.h"
-#include <GraphMol/MolPickler.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/StreamOps.h>
+#include <GraphMol/Chirality.h>
 #include <vector>
-#include <boost/crc.hpp>
-#include <boost/algorithm/string.hpp>
 
 #include "FileParsers.h"
+#include <RDGeneral/BoostStartInclude.h>
+#include <boost/crc.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 #ifdef RDK_USE_BOOST_IOSTREAMS
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
+#endif
+#include <RDGeneral/BoostEndInclude.h>
+#if !defined(RDK_USE_BOOST_IOSTREAMS) && defined(RDK_USE_STANDALONE_ZLIB)
+#ifndef ZLIB_CONST
+#define ZLIB_CONST
+#endif
+#include <zlib.h>
 #endif
 
 namespace RDKit {
@@ -48,7 +58,7 @@ bool checkPNGHeader(std::istream &inStream) {
   return true;
 }
 
-#ifdef RDK_USE_BOOST_IOSTREAMS
+#if defined(RDK_USE_BOOST_IOSTREAMS)
 std::string uncompressString(const std::string &ztext) {
   std::stringstream compressed(ztext);
   std::stringstream uncompressed;
@@ -67,7 +77,75 @@ std::string compressString(const std::string &text) {
   boost::iostreams::copy(bioOutstream, compressed);
   return compressed.str();
 }
+#elif defined(RDK_USE_STANDALONE_ZLIB)
+std::string zlibActOnString(const std::string &inText, bool compress) {
+  static const char *deflatePrefix = "de";
+  static const char *inflatePrefix = "in";
+  const char *zlibActionPrefix;
+  int (*zlibAction)(z_streamp, int);
+  int (*zlibEnd)(z_streamp);
+  int zRetCode;
+  std::string res;
+  constexpr uInt BUF_SIZE = 65536;
+  std::vector<char> outBuf(BUF_SIZE);
+  z_stream zs{};
+  zs.next_in = reinterpret_cast<const Bytef *>(inText.c_str());
+  zs.avail_in = static_cast<uInt>(inText.size());
+  zs.next_out = reinterpret_cast<Bytef *>(outBuf.data());
+  zs.avail_out = static_cast<uInt>(outBuf.size());
+  if (compress) {
+    zlibActionPrefix = deflatePrefix;
+    zlibAction = deflate;
+    zlibEnd = deflateEnd;
+    zRetCode = deflateInit(&zs, Z_DEFAULT_COMPRESSION);
+  } else {
+    zlibActionPrefix = inflatePrefix;
+    zlibAction = inflate;
+    zlibEnd = inflateEnd;
+    zRetCode = inflateInit(&zs);
+  }
+  if (zRetCode != Z_OK) {
+    BOOST_LOG(rdWarningLog)
+        << "Failed to initialize zlib stream (" << zRetCode << ")";
+    if (zs.msg) {
+      BOOST_LOG(rdWarningLog) << ": " << zs.msg;
+    }
+    BOOST_LOG(rdWarningLog) << "." << std::endl;
+    zlibEnd(&zs);
+    return "";
+  }
+  while (zRetCode == Z_OK) {
+    zRetCode = zlibAction(&zs, zs.avail_in ? Z_NO_FLUSH : Z_FINISH);
+    if (zRetCode != Z_OK && zRetCode != Z_STREAM_END) {
+      BOOST_LOG(rdWarningLog) << "Failed to " << zlibActionPrefix
+                              << "flate zlib stream (" << zRetCode << ")";
+      if (zs.msg) {
+        BOOST_LOG(rdWarningLog) << ": " << zs.msg;
+      }
+      BOOST_LOG(rdWarningLog) << "." << std::endl;
+      zlibEnd(&zs);
+      return "";
+    }
+    if (!zs.avail_out) {
+      res += std::string(outBuf.data(), BUF_SIZE);
+      zs.next_out = reinterpret_cast<Bytef *>(outBuf.data());
+      zs.avail_out = BUF_SIZE;
+    }
+  }
+  auto residual = zs.total_out - res.size();
+  if (residual) {
+    res += std::string(outBuf.data(), residual);
+  }
+  zlibEnd(&zs);
+  return res;
+}
 
+std::string uncompressString(const std::string &ztext) {
+  return zlibActOnString(ztext, false);
+}
+std::string compressString(const std::string &text) {
+  return zlibActOnString(text, true);
+}
 #endif
 }  // namespace
 
@@ -99,7 +177,7 @@ std::vector<std::pair<std::string, std::string>> PNGStreamToMetadata(
         bytes[3] == 'D') {
       break;
     }
-#ifndef RDK_USE_BOOST_IOSTREAMS
+#if !defined(RDK_USE_BOOST_IOSTREAMS) && !defined(RDK_USE_STANDALONE_ZLIB)
     bool alreadyWarned = false;
 #endif
     if (blockLen > 0 &&
@@ -120,8 +198,8 @@ std::vector<std::pair<std::string, std::string>> PNGStreamToMetadata(
         if (inStream.fail()) {
           throw FileParseException("error when reading from PNG");
         }
-      } else if (bytes[0] == 'z') {
-#ifdef RDK_USE_BOOST_IOSTREAMS
+      } else {
+#if defined(RDK_USE_BOOST_IOSTREAMS) || defined(RDK_USE_STANDALONE_ZLIB)
         value.resize(dataLen);
         inStream.read(&value.front(), dataLen);
         if (inStream.fail()) {
@@ -138,11 +216,9 @@ std::vector<std::pair<std::string, std::string>> PNGStreamToMetadata(
           alreadyWarned = true;
         }
 #endif
-      } else {
-        CHECK_INVARIANT(0, "impossible value");
       }
       if (!value.empty()) {
-        res.push_back(std::make_pair(key, value));
+        res.emplace_back(key, value);
       }
     }
     inStream.seekg(beginBlock);
@@ -156,7 +232,7 @@ std::string addMetadataToPNGStream(
     std::istream &inStream,
     const std::vector<std::pair<std::string, std::string>> &metadata,
     bool compressed) {
-#ifndef RDK_USE_BOOST_IOSTREAMS
+#if !defined(RDK_USE_BOOST_IOSTREAMS) && !defined(RDK_USE_STANDALONE_ZLIB)
   compressed = false;
 #endif
   // confirm that it's a PNG file:
@@ -197,22 +273,22 @@ std::string addMetadataToPNGStream(
   }
 
   // write out the metadata:
-  for (const auto &pr : metadata) {
+  for (const auto &[key, value] : metadata) {
     std::stringstream blk;
     if (!compressed) {
       blk.write("tEXt", 4);
       // write the name along with a zero
-      blk.write(pr.first.c_str(), pr.first.size() + 1);
-      blk.write(pr.second.c_str(), pr.second.size());
+      blk.write(key.c_str(), key.size() + 1);
+      blk.write(value.c_str(), value.size());
     } else {
-#ifdef RDK_USE_BOOST_IOSTREAMS
+#if defined(RDK_USE_BOOST_IOSTREAMS) || defined(RDK_USE_STANDALONE_ZLIB)
       blk.write("zTXt", 4);
       // write the name along with a zero
-      blk.write(pr.first.c_str(), pr.first.size() + 1);
+      blk.write(key.c_str(), key.size() + 1);
       // write the compressed data
       // first a zero for the "compression method":
       blk.write("\0", 1);
-      auto dest = compressString(pr.second);
+      auto dest = compressString(value);
       blk.write((const char *)dest.c_str(), dest.size());
 #else
       // we shouldn't get here since we disabled compressed at the beginning of
@@ -247,24 +323,32 @@ std::string addMetadataToPNGStream(
 }
 
 std::string addMolToPNGStream(const ROMol &mol, std::istream &iStream,
-                              bool includePkl, bool includeSmiles,
-                              bool includeMol) {
+                              const PNGMetadataParams &params) {
   std::vector<std::pair<std::string, std::string>> metadata;
-  if (includePkl) {
+  if (params.includePkl) {
     std::string pkl;
-    MolPickler::pickleMol(mol, pkl);
-    metadata.push_back(std::make_pair(augmentTagName(PNGData::pklTag), pkl));
+    MolPickler::pickleMol(mol, pkl, params.propertyFlags);
+    metadata.emplace_back(augmentTagName(PNGData::pklTag), pkl);
   }
-  if (includeSmiles) {
-    std::string smi = MolToCXSmiles(mol);
-    metadata.push_back(std::make_pair(augmentTagName(PNGData::smilesTag), smi));
+  if (params.includeSmiles) {
+    std::string smi =
+        MolToCXSmiles(mol, params.smilesWriteParams, params.cxSmilesFlags,
+                      params.restoreBondDirs);
+    metadata.emplace_back(augmentTagName(PNGData::smilesTag), smi);
   }
-  if (includeMol) {
+  if (params.includeMol) {
+    std::unique_ptr<ROMol> molOrigWedging;
+    const ROMol *molRef = &mol;
     bool includeStereo = true;
     int confId = -1;
     bool kekulize = false;
-    std::string mb = MolToMolBlock(mol, includeStereo, confId, kekulize);
-    metadata.push_back(std::make_pair(augmentTagName(PNGData::molTag), mb));
+    if (params.restoreBondDirs == RestoreBondDirOptionTrue) {
+      molOrigWedging.reset(new ROMol(mol));
+      Chirality::reapplyMolBlockWedging(*molOrigWedging);
+      molRef = molOrigWedging.get();
+    }
+    std::string mb = MolToMolBlock(*molRef, includeStereo, confId, kekulize);
+    metadata.emplace_back(augmentTagName(PNGData::molTag), mb);
   }
   return addMetadataToPNGStream(iStream, metadata);
 };
@@ -274,15 +358,15 @@ ROMol *PNGStreamToMol(std::istream &inStream,
   ROMol *res = nullptr;
   auto metadata = PNGStreamToMetadata(inStream);
   bool formatFound = false;
-  for (const auto &pr : metadata) {
-    if (boost::starts_with(pr.first, PNGData::pklTag)) {
-      res = new ROMol(pr.second);
+  for (const auto &[key, value] : metadata) {
+    if (boost::starts_with(key, PNGData::pklTag)) {
+      res = new ROMol(value);
       formatFound = true;
-    } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
-      res = SmilesToMol(pr.second, params);
+    } else if (boost::starts_with(key, PNGData::smilesTag)) {
+      res = SmilesToMol(value, params);
       formatFound = true;
-    } else if (boost::starts_with(pr.first, PNGData::molTag)) {
-      res = MolBlockToMol(pr.second, params.sanitize, params.removeHs);
+    } else if (boost::starts_with(key, PNGData::molTag)) {
+      res = MolBlockToMol(value, params.sanitize, params.removeHs);
       formatFound = true;
     }
     if (formatFound) {
@@ -300,17 +384,16 @@ std::vector<std::unique_ptr<ROMol>> PNGStreamToMols(
     const SmilesParserParams &params) {
   std::vector<std::unique_ptr<ROMol>> res;
   auto metadata = PNGStreamToMetadata(inStream);
-  for (const auto &pr : metadata) {
-    if (!boost::starts_with(pr.first, tagToUse)) {
+  for (const auto &[key, value] : metadata) {
+    if (!boost::starts_with(key, tagToUse)) {
       continue;
     }
-    if (boost::starts_with(pr.first, PNGData::pklTag)) {
-      res.emplace_back(new ROMol(pr.second));
-    } else if (boost::starts_with(pr.first, PNGData::smilesTag)) {
-      res.emplace_back(SmilesToMol(pr.second, params));
-    } else if (boost::starts_with(pr.first, PNGData::molTag)) {
-      res.emplace_back(
-          MolBlockToMol(pr.second, params.sanitize, params.removeHs));
+    if (boost::starts_with(key, PNGData::pklTag)) {
+      res.emplace_back(new ROMol(value));
+    } else if (boost::starts_with(key, PNGData::smilesTag)) {
+      res.emplace_back(SmilesToMol(value, params));
+    } else if (boost::starts_with(key, PNGData::molTag)) {
+      res.emplace_back(MolBlockToMol(value, params.sanitize, params.removeHs));
     }
   }
   return res;
