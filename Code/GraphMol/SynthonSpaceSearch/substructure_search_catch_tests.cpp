@@ -497,17 +497,24 @@ TEST_CASE("Extended Query") {
         v2::SmilesParse::MolFromSmarts("[#6]-*.c1nc2cccnc2n1 |m:1:3.10|");
     REQUIRE(queryMol);
     auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+#ifdef RDK_USE_BOOST_SERIALIZATION
     auto results = synthonspace.substructureSearch(xrq);
     CHECK(results.getHitMolecules().size() == 12);
-
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq), Invar::Invariant);
+#endif
     MolOps::AdjustQueryParameters aqps;
     aqps.adjustHeavyDegree = true;
     aqps.adjustHeavyDegreeFlags =
         MolOps::AdjustQueryWhichFlags::ADJUST_IGNORECHAINS;
     auto xrq1 = GeneralizedSubstruct::createExtendedQueryMol(*queryMol, true,
                                                              true, true, aqps);
+#ifdef RDK_USE_BOOST_SERIALIZATION
     auto results1 = synthonspace.substructureSearch(xrq1);
     CHECK(results1.getHitMolecules().size() == 5);
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq1), Invar::Invariant);
+#endif
   }
 
   {
@@ -555,8 +562,12 @@ M  END)CTAB"_ctab;
     REQUIRE(queryMol);
     GenericGroups::setGenericQueriesFromProperties(*queryMol);
     auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+#ifdef RDK_USE_BOOST_SERIALIZATION
     auto results = synthonspace.substructureSearch(xrq);
     CHECK(results.getHitMolecules().size() == 2);
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq), Invar::Invariant);
+#endif
   }
 
   {
@@ -602,8 +613,12 @@ M  END)CTAB"_ctab;
     REQUIRE(queryMol);
     GenericGroups::setGenericQueriesFromProperties(*queryMol);
     auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+#ifdef RDK_USE_BOOST_SERIALIZATION
     auto results = synthonspace.substructureSearch(xrq);
     CHECK(results.getHitMolecules().size() == 12);
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq), Invar::Invariant);
+#endif
   }
 
   {
@@ -612,14 +627,22 @@ M  END)CTAB"_ctab;
         "[#6]-1-[#6]-c2ccccc2-[#7]-1 |LN:1:1.2|");
     REQUIRE(queryMol);
     auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
+#ifdef RDK_USE_BOOST_SERIALIZATION
     auto results = synthonspace.substructureSearch(xrq);
     CHECK(results.getHitMolecules().size() == 8);
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq), Invar::Invariant);
+#endif
 
     SynthonSpaceSearch::SynthonSpaceSearchParams params;
     params.maxHits = 5;
     SubstructMatchParameters mparams;
+#ifdef RDK_USE_BOOST_SERIALIZATION
     auto results1 = synthonspace.substructureSearch(xrq, mparams, params);
     CHECK(results1.getHitMolecules().size() == 5);
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams, params), Invar::Invariant);
+#endif
   }
 
   {
@@ -670,7 +693,11 @@ M  END)CTAB"_ctab;
     auto xrq = GeneralizedSubstruct::createExtendedQueryMol(*queryMol);
     SubstructMatchParameters mparams;
     mparams.useGenericMatchers = true;
+#ifdef RDK_USE_BOOST_SERIALIZATION
     auto results1 = synthonspace.substructureSearch(xrq, mparams);
     CHECK(results1.getHitMolecules().size() == 2);
+#else
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams), Invar::Invariant);
+#endif
   }
 }
