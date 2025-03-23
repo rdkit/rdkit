@@ -24,6 +24,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 
 #include <random>
 
@@ -36,6 +37,7 @@ TEST_CASE("chirality and canonicalization") {
     bool cleanIt = true;
     bool force = true;
     MolOps::assignStereochemistry(*mol, cleanIt, force);
+    CIPLabeler::assignCIPLabels(*mol);
     std::string cip;
     CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
                                                    cip));
@@ -58,6 +60,8 @@ TEST_CASE("chirality and canonicalization") {
     bool cleanIt = true;
     bool force = true;
     MolOps::assignStereochemistry(*mol, cleanIt, force);
+    CIPLabeler::assignCIPLabels(*mol);
+
     std::string cip;
     CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
                                                    cip));
@@ -80,6 +84,8 @@ TEST_CASE("chirality and canonicalization") {
     bool cleanIt = true;
     bool force = true;
     MolOps::assignStereochemistry(*mol, cleanIt, force);
+    CIPLabeler::assignCIPLabels(*mol);
+
     std::string cip;
     CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
                                                    cip));
@@ -89,7 +95,7 @@ TEST_CASE("chirality and canonicalization") {
     CHECK(cip == "R");
     CHECK(mol->getAtomWithIdx(4)->getPropIfPresent(common_properties::_CIPCode,
                                                    cip));
-    CHECK(cip == "R");
+    CHECK(cip == "r");
     std::vector<unsigned int> ranks;
     bool breakTies = false;
     Canon::rankMolAtoms(*mol, ranks, breakTies);
@@ -107,6 +113,8 @@ TEST_CASE("chirality and canonicalization") {
     bool force = true;
     mol->getAtomWithIdx(4)->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     MolOps::assignStereochemistry(*mol, cleanIt, force);
+    CIPLabeler::assignCIPLabels(*mol);
+
     std::string cip;
     CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
                                                    cip));
@@ -130,6 +138,8 @@ TEST_CASE("chirality and canonicalization") {
     bool cleanIt = false;
     bool force = true;
     MolOps::assignStereochemistry(*mol, cleanIt, force);
+    CIPLabeler::assignCIPLabels(*mol);
+
     std::string cip;
     CHECK(mol->getAtomWithIdx(1)->getPropIfPresent(common_properties::_CIPCode,
                                                    cip));

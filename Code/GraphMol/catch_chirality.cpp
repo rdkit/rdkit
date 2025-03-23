@@ -89,24 +89,28 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans);
     }
     {  // check an example where one of the stereo atoms isn't the first
-       // neighbor
-      auto mol = "C/C=C(/C)C#C"_smiles;
-      REQUIRE(mol);
+       // neighbor (only true with legacy chirality)
+      for (bool useLegacy : {true, false}) {
+        UseLegacyStereoPerceptionFixture fx(useLegacy);
+        auto mol = "C/C=C(/C)C#C"_smiles;
+        REQUIRE(mol);
 
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == 4);
+        CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
+        CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+        CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] ==
+              (useLegacy ? 4 : 3));
 
-      auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
-      CHECK(sinfo.type == Chirality::StereoType::Bond_Double);
-      CHECK(sinfo.centeredOn == 1);
-      REQUIRE(sinfo.controllingAtoms.size() == 4);
-      CHECK(sinfo.controllingAtoms[0] == 0);
-      CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
-      CHECK(sinfo.controllingAtoms[2] == 3);
-      CHECK(sinfo.controllingAtoms[3] == 4);
-      CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
-      CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans);
+        auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
+        CHECK(sinfo.type == Chirality::StereoType::Bond_Double);
+        CHECK(sinfo.centeredOn == 1);
+        REQUIRE(sinfo.controllingAtoms.size() == 4);
+        CHECK(sinfo.controllingAtoms[0] == 0);
+        CHECK(sinfo.controllingAtoms[1] == Chirality::StereoInfo::NOATOM);
+        CHECK(sinfo.controllingAtoms[2] == 3);
+        CHECK(sinfo.controllingAtoms[3] == 4);
+        CHECK(sinfo.specified == Chirality::StereoSpecified::Specified);
+        CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans);
+      }
     }
     {
       auto mol = "C/C=C(\\C#C)C"_smiles;
