@@ -295,8 +295,8 @@ TEST_CASE("CDXML") {
          E="28"
          BS="N"
         /></fragment></page></CDXML>)";
-    std::stringstream iss(cdxml1);
     {
+      std::stringstream iss(cdxml1);
       auto mols = MolsFromCDXMLDataStream(iss);
       for (auto &mol : mols) {
         CHECK(MolToSmiles(*mol) == "CC(C)(C)OC(=O)C1CCCCCC1");
@@ -304,6 +304,7 @@ TEST_CASE("CDXML") {
     }
     {
       // v1 api
+      std::stringstream iss(cdxml1);
       auto mols = CDXMLDataStreamToMols(iss);
       for (auto &mol : mols) {
         CHECK(MolToSmiles(*mol) == "CC(C)(C)OC(=O)C1CCCCCC1");
