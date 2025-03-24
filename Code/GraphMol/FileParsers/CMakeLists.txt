@@ -61,7 +61,7 @@ if(RDK_TEST_MULTITHREADED)
         LINK_LIBRARIES FileParsers Fingerprints RDStreams)
 endif(RDK_TEST_MULTITHREADED)
 
-rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers)
+rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES CIPLabeler FileParsers)
 
 rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers GraphMol)
 
