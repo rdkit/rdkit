@@ -413,11 +413,12 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
             // now check the ATTCHORD entries
             templateFound = true;  // tentative - until some attachment point in
                                    // the atom is not found in the template
-            for (const auto &[idx, lbl] : attchOrds) {
+            for (const auto &attachOrd : attchOrds) {
               auto supAttachPoints = mainSUP->getAttachPoints();
               if (std::find_if(supAttachPoints.begin(), supAttachPoints.end(),
-                               [&lbl](auto a) { return a.id == lbl; }) ==
-                  supAttachPoints.end()) {
+                               [&attachOrd](auto a) {
+                                 return a.id == attachOrd.second;
+                               }) == supAttachPoints.end()) {
                 templateFound = false;
                 break;
               }
