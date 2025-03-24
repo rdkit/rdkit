@@ -140,7 +140,7 @@ rdkit_test(graphmolMolOpsTest molopstest.cpp
         SmilesParse GraphMol)
 
 rdkit_test(graphmoltestChirality testChirality.cpp
-        LINK_LIBRARIES SmilesParse FileParsers
+        LINK_LIBRARIES CIPLabeler SmilesParse FileParsers
         GraphMol)
 
 rdkit_test(graphmoltestPickler testPickler.cpp
