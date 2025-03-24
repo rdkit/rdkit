@@ -40,7 +40,7 @@ if(MSVC)
   target_compile_definitions(expat PRIVATE "XMLIMPORT=__declspec(dllexport)")
   set_target_properties(expat PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
 elseif(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_EMCC OR CMAKE_COMPILER_IS_GNUCXX)
-  target_compile_definitions(expat PRIVATE "-Wno-error")
+  target_compile_options(expat PRIVATE "-Wno-error")
 endif(MSVC)
 
 install(TARGETS expat DESTINATION ${RDKit_LibDir})
