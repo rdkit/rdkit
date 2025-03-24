@@ -279,10 +279,16 @@ std::string MolToChemDraw(const ROMol &mol, CDXFormat format) {
   document.AddChild(page);
   document.m_colorTable.m_colors
       .clear();  // if this isn't empty something fails.
+  
   std::ostringstream os;
-  os << kCDXML_HeaderString;
-  XMLDataSink ds(os);
-  document.XMLWrite(ds);
+  if(format == CDXML) {
+    os << kCDXML_HeaderString;
+    XMLDataSink ds(os);
+    document.XMLWrite(ds);
+  } else {
+    CDXostream ds(os);
+    CDXWriteDocToStorage(&document, ds);
+  }
   return os.str();
 }
 }  // namespace RDKit
