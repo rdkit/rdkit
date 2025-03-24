@@ -31,11 +31,10 @@ target_include_directories(expat
      PUBLIC
        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/expat/lib>
        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/src_pp>
-
-       $<INSTALL_INTERFACE:include/expat>
+       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
        )
-       
 
+   
 if(MSVC)
   message("== expat exporting all symbols ")
   target_compile_definitions(expat PRIVATE "XMLIMPORT=__declspec(dllexport)")
