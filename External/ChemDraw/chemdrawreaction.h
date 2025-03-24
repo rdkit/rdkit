@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2024, Glysade Inc
+//  Copyright (c) 2025, Glysade Inc
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,46 +29,33 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#ifndef RDKIT_CHEMDRAW_H
-#define RDKIT_CHEMDRAW_H
+#ifndef RDKIT_CHEMDRAW_REACTION_H
+#define RDKIT_CHEMDRAW_REACTION_H
 
 #include <RDGeneral/export.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <string>
 
-#include "ChemDrawStartInclude.h"
-#include "chemdraw/CDXStdObjects.h"
-#include "ChemDrawEndInclude.h"
+namespace RDKit
+{
+//---------------------------------------------------------------------------
+//! \name Chemdraw rxn Support
+///@{
 
-namespace RDKit {
-enum CDXFormat {
-  CDX = 1,
-  CDXML = 2
-};
-  
-struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
-  bool sanitize = true;
-  bool removeHs = true;
-  CDXFormat format = CDXML;
-};
-
-std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToDocument(std::istream &inStream, CDXFormat format);
-
-std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToDocument(const std::string &filename);
-
-std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToMols(std::istream &inStream,
-               const ChemDrawParserParams &params = ChemDrawParserParams());
-
-std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToMols(const std::string &filename,
-               const ChemDrawParserParams &params = ChemDrawParserParams());
-
-std::string RDKIT_RDCHEMDRAWLIB_EXPORT
-MolToChemDraw(const ROMol &mol, CDXFormat format = CDXFormat::CDXML);
+//! Parse text in ChemDraw rxn format into a vector of ChemicalReactions
+RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+ChemDrawToChemicalReactions(const std::string &rxnBlock, bool sanitize = false,
+			    bool removeHs = false);
+//! Parse a file in ChemDraw rxn format into a vector of ChemicalReactions
+RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+ChemDrawFileToChemicalReactions(const std::string &fileName, bool sanitize = false,
+				bool removeHs = false);
+//! Parse a text stream in ChemDraw rxn format into a vector of ChemicalReactions
+RDKIT_RDCHEMDRAWREACTIONLIB_EXPORT std::vector<std::unique_ptr<ChemicalReaction>>
+ChemDrawDataStreamToChemicalReactions(std::istream &rxnStream,
+				      bool sanitize = false,
+				      bool removeHs = false);
 
 }  // namespace RDKit
 #endif

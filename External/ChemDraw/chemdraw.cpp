@@ -262,7 +262,7 @@ std::unique_ptr<CDXDocument> streamToCDXDocument(std::istream &inStream,
 std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     std::istream &inStream, const ChemDrawParserParams &params) {
   std::unique_ptr<CDXDocument> document =
-      streamToCDXDocument(inStream, CDXFormat::CDXML);
+    streamToCDXDocument(inStream, params.format);
   if (!document) {
     // error
     return std::vector<std::unique_ptr<RWMol>>();

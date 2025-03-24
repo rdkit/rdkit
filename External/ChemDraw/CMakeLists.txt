@@ -101,15 +101,6 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       
     install(TARGETS ChemDraw DESTINATION ${RDKit_LibDir})
 
-    # get the big endiand flags
-    test_big_endian(WORDS_BIGENDIAN)
-    #/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
-    if(WORDS_BIGENDIAN)
-          add_compile_definitions("PLATFORM_BIGENDIAN")	
-    else(WORDS_BIGENDIAN)
-      add_compile_definitions("PLATFORM_LITTLEENDIAN")
-    endif(WORDS_BIGENDIAN)
-
   endif()
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -120,6 +111,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat-overflow=0 -Wformat=0 -Wno-format-security")
   endif()
 
+  #######################################################################################
   # finally the RDKit library!
   set(RDChemDrawLib_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         CACHE STRING "RDChemDrawLib Include File" FORCE)
@@ -135,18 +127,30 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       writer.cpp
       # ${EXPAT_SRC}
       SHARED LINK_LIBRARIES ChemDraw expat
+          CIPLabeler ChemTransforms GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
+
+  rdkit_library(RDChemDrawReactionLib
+      chemdrawreaction.cpp
+      # ${EXPAT_SRC}
+      SHARED LINK_LIBRARIES RDChemDrawLib ChemDraw expat
           CIPLabeler ChemTransforms ChemReactions GraphMol RDGeneral Depictor SubstructMatch SmilesParse )
 
   if(MSVC)
       target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD XML_USE_MSC_EXTENSIONS)
+      target_compile_definitions(RDChemDrawReactionLib PRIVATE RDKIT_RDCHEMDRAWREACTIONLIB_BUILD
+                                                               XML_USE_MSC_EXTENSIONS)
   else()
     target_compile_definitions(RDChemDrawLib PRIVATE RDKIT_RDCHEMDRAWLIB_BUILD)
+    target_compile_definitions(RDChemDrawReactionLib PRIVATE RDKIT_RDCHEMDRAWREACTIONLIB_BUILD)
   endif()
 
   install(TARGETS RDChemDrawLib DESTINATION ${RDKit_LibDir})
+  install(TARGETS RDChemDrawReactionLib DESTINATION ${RDKit_LibDir})
   set(RDK_CHEMDRAW_LIBS RDChemDrawLib CACHE STRING "the external libraries" FORCE)
+  set(RDK_CHEMDRAWREACTION_LIBS RDChemDrawReactinoLib CACHE STRING "the external libraries" FORCE)  
 
   rdkit_headers(chemdraw.h DEST GraphMol)
+  rdkit_headers(chemdrawreaction.h DEST GraphMol)
 
   add_definitions(-DRDK_BUILD_CHEMDRAW_SUPPORT)
 
@@ -160,7 +164,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdrawReactionsCatchTest test-reactions.cpp
-        LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
+        LINK_LIBRARIES RDChemDrawReactionLib RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
 	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   rdkit_catch_test(chemdraw3DCatchTest test_3d.cpp

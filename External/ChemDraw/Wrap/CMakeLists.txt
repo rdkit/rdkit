@@ -3,6 +3,6 @@ rdkit_python_extension(rdChemDraw
                        rdChemDraw.cpp
                        DEST Chem
                        LINK_LIBRARIES 
-		       RDChemDrawLib
+		       RDChemDrawLib RDChemDrawReactionLib
                       )
 

@@ -32,6 +32,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include <ChemDraw/chemdraw.h>
+#include <ChemDraw/chemdrawreaction.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/Wrap/props.hpp>
 #include <RDBoost/python.h>

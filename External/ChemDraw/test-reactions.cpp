@@ -31,6 +31,7 @@
 //
 
 #include "chemdraw.h"
+#include "chemdrawreaction.h"
 #include <catch2/catch_all.hpp>
 #include "RDGeneral/test.h"
 #include <RDGeneral/Invariant.h>
