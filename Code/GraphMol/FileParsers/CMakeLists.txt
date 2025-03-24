@@ -42,7 +42,7 @@ rdkit_headers(CDXMLParser.h
     DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
-    LINK_LIBRARIES FileParsers SubstructMatch)
+    LINK_LIBRARIES CIPLabeler FileParsers SubstructMatch)
 
 rdkit_test(testAtropisomers testAtropisomers.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
