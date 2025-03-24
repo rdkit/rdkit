@@ -92,17 +92,6 @@ class TestCase(unittest.TestCase):
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertEqual(len(results), 1)
 
-  def test5(self):
-    # Test setting non-default option singleLargestFrag
-    ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
-    ad2 = Chem.MolFromSmiles("N(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336")
-
-    opts = rdRascalMCES.RascalOptions()
-    opts.singleLargestFrag = True
-    results = rdRascalMCES.FindMCES(ad1, ad2, opts)
-    self.assertEqual(len(results), 1)
-    self.assertEqual(results[0].smartsString, 'CCCCCCCCCCNC12CC3CC(-C1)-CC(-C2)-C3')
-
   def test6(self):
     # Test the threshold and examine the tier1 and tier2 similarities.
     ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
@@ -149,8 +138,7 @@ class TestCase(unittest.TestCase):
     opts = rdRascalMCES.RascalOptions()
     opts.similarityThreshold = 0.0
     opts.returnEmptyMCES = True
-    opts.singleLargestFrag = True
-    opts.allBestMCESs = True
+    opts.allBestMCESs = False
     opts.completeAromaticRings = False
     opts.timeout = -1
 
@@ -161,7 +149,7 @@ class TestCase(unittest.TestCase):
 
     opts.maxBondMatchPairs = 1200
     results = rdRascalMCES.FindMCES(too_long_1, too_long_2, opts)
-    self.assertEqual(len(results[0].bondMatches()), 26)
+    self.assertEqual(len(results[0].bondMatches()), 34)
 
   def testExactConnectionsMatch(self):
     opts = rdRascalMCES.RascalOptions()

@@ -1748,8 +1748,10 @@ gives
 
 This is because the full MCES can't include all 3 alkyl bonds so as to accommodate the
 second pyridyl ring.  The run time for the second method can be significantly
-slower than the first because it has to find all paths between all bonds in the
-two molecules.
+slower than the first because the highly efficient pruning of the search space that
+the Rascal algorithm uses is largely disabled.  It is almost certainly advisable
+to use the first method in most instances, and if using the second you will probably
+have to run without a timeout set (`opts.timeout = -1`).
 
 
 Clustering with Rascal

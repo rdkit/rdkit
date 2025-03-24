@@ -42,7 +42,6 @@
 
 namespace RDKit {
 namespace RascalMCES {
-
 class TimedOutException : public std::exception {
  public:
   TimedOutException(long long int run_time,
@@ -89,9 +88,14 @@ struct RascalStartPoint {
   std::unique_ptr<ROMol> d_mol1;
   std::unique_ptr<ROMol> d_mol2;
 
+  // The line graphs of the 2 molecules as adjacency matrices
   std::vector<std::vector<int>> d_adjMatrix1, d_adjMatrix2;
   std::vector<std::pair<int, int>> d_vtxPairs;
   std::vector<boost::dynamic_bitset<>> d_modProd;
+
+  // These are the conventional adjacency matrices for the mols,
+  // only used if singleLargestFrag is true.
+  std::vector<std::vector<int>> d_atomAdjMatrix1, d_atomAdjMatrix2;
 
   // We might need to know which bonds are symmetrical equivalent.
   std::vector<int> d_equivBonds1, d_equivBonds2;
@@ -330,6 +334,17 @@ void makeLineGraph(const ROMol &mol, std::vector<std::vector<int>> &adjMatrix) {
   }
 }
 
+// Conventional adjacency matrix
+void makeAtomAdjacencyMatrix(const ROMol &mol,
+                             std::vector<std::vector<int>> &adjMatrix) {
+  adjMatrix = std::vector<std::vector<int>>(
+      mol.getNumAtoms(), std::vector<int>(mol.getNumAtoms(), 0));
+  for (const auto &b : mol.bonds()) {
+    adjMatrix[b->getBeginAtomIdx()][b->getEndAtomIdx()] =
+        adjMatrix[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b->getBondType();
+  }
+}
+
 // make sure that mol1_bond in mol1 and mol2_bond in mol2 are, in at least one
 // ring that is the same. If aromaticRingsMatchOnly is true, then only aromatic
 // bonds are considered.
@@ -548,7 +563,6 @@ struct BondPaths {
     }
     return false;
   }
-  std::vector<std::vector<Bond::BondType>> d_paths;
   std::vector<std::uint64_t> d_pathHashes;
   // If there's a path of length l, bit l will be set.
   boost::dynamic_bitset<> d_pathDists;
@@ -675,7 +689,7 @@ void makeModularProduct(const ROMol &mol1,
           distsOk = false;
         }
       }
-      if (opts.singleLargestFrag &&
+      if (distsOk && opts.singleLargestFrag &&
           !(allDistsMatrix1[vtxPairs[i].first][vtxPairs[j].first]
                 .hasMatchingPath(
                     allDistsMatrix2[vtxPairs[i].second][vtxPairs[j].second]))) {
@@ -740,8 +754,8 @@ void printClique(const std::vector<unsigned int> &clique,
       os << "{" << vtxPairs[mem].first << ", " << vtxPairs[mem].second << "},";
     }
   }
-  std::cout << std::endl;
-  std::cout << "mol 1 bonds : [";
+  os << std::endl;
+  os << "mol 1 bonds : [";
   for (auto mem : clique) {
     if (swapped) {
       os << vtxPairs[mem].second << ", ";
@@ -749,8 +763,8 @@ void printClique(const std::vector<unsigned int> &clique,
       os << vtxPairs[mem].first << ", ";
     }
   }
-  std::cout << "]" << std::endl;
-  std::cout << "mol 2 bonds : [";
+  os << "]" << std::endl;
+  os << "mol 2 bonds : [";
   for (auto mem : clique) {
     if (swapped) {
       os << vtxPairs[mem].first << ", ";
@@ -758,7 +772,7 @@ void printClique(const std::vector<unsigned int> &clique,
       os << vtxPairs[mem].second << ", ";
     }
   }
-  std::cout << "]" << std::endl;
+  os << "]" << std::endl;
 }
 
 // if the clique involves a delta-y exchange, returns true.  Should only be
@@ -893,43 +907,134 @@ bool cliqueOk(const std::vector<unsigned int> clique, const RascalOptions &opts,
   return true;
 }
 
+namespace {
+void splitCliqueBonds(const std::vector<unsigned int> &bonds, const ROMol &mol,
+                      std::vector<std::vector<unsigned int>> &cliqueFrags) {
+  boost::dynamic_bitset<> allowedBonds(mol.getNumBonds());
+  for (const auto &bond : bonds) {
+    allowedBonds.set(bond);
+  }
+  boost::dynamic_bitset<> doneBonds(mol.getNumBonds());
+  std::list<const Atom *> toDo;
+  while (doneBonds.count() != bonds.size()) {
+    for (size_t i = 0; i < bonds.size(); ++i) {
+      if (!doneBonds[bonds[i]]) {
+        const auto bond = mol.getBondWithIdx(bonds[i]);
+        doneBonds[bonds[i]] = true;
+        toDo.push_back(bond->getBeginAtom());
+        toDo.push_back(bond->getEndAtom());
+        cliqueFrags.emplace_back(std::vector<unsigned int>{bonds[i]});
+        break;
+      }
+    }
+    while (!toDo.empty()) {
+      const auto nextAtom = toDo.front();
+      toDo.pop_front();
+      for (const auto atomBondi :
+           boost::make_iterator_range(mol.getAtomBonds(nextAtom))) {
+        const auto atomBond = mol[atomBondi];
+        if (allowedBonds[atomBond->getIdx()] &&
+            !doneBonds[atomBond->getIdx()]) {
+          const auto otherAtom = atomBond->getOtherAtom(nextAtom);
+          toDo.push_back(otherAtom);
+          cliqueFrags.back().push_back(atomBond->getIdx());
+          doneBonds[atomBond->getIdx()] = true;
+        }
+      }
+    }
+  }
+  std::sort(cliqueFrags.begin(), cliqueFrags.end(),
+            [](const auto &c1, const auto &c2) -> bool {
+              return c1.size() > c2.size();
+            });
+}
+
+// Finds the largest single fragment in the clique.
+void singleLargestFrag(RascalStartPoint &starter,
+                       const std::vector<unsigned int> &clique,
+                       const std::vector<std::pair<int, int>> &vtxPairs,
+                       std::vector<unsigned int> &cliqueFrag) {
+  if (clique.size() == 1) {
+    cliqueFrag = clique;
+    return;
+  }
+  std::vector<unsigned int> bonds1, bonds2;
+  std::transform(
+      clique.begin(), clique.end(), std::back_inserter(bonds1),
+      [&](const auto &p) -> unsigned int { return vtxPairs[p].first; });
+  std::vector<std::vector<unsigned int>> cliqueFrags1;
+  splitCliqueBonds(bonds1, *starter.d_mol1, cliqueFrags1);
+  std::transform(
+      clique.begin(), clique.end(), std::back_inserter(bonds2),
+      [&](const auto &p) -> unsigned int { return vtxPairs[p].second; });
+  std::vector<std::vector<unsigned int>> cliqueFrags2;
+  splitCliqueBonds(bonds2, *starter.d_mol2, cliqueFrags2);
+  // Build the cliqueFrag based on the smaller largest fragment
+  if (cliqueFrags1.front().size() < cliqueFrags2.front().size()) {
+    for (auto fm : cliqueFrags1.front()) {
+      for (const auto c : clique) {
+        if (vtxPairs[c].first == static_cast<int>(fm)) {
+          cliqueFrag.push_back(c);
+          break;
+        }
+      }
+    }
+  } else {
+    for (auto fm : cliqueFrags2.front()) {
+      for (const auto c : clique) {
+        if (vtxPairs[c].second == static_cast<int>(fm)) {
+          cliqueFrag.push_back(c);
+          break;
+        }
+      }
+    }
+  }
+}
+}  // namespace
+
 // If this clique warrants it, update maxCliques.
 void updateMaxClique(const std::vector<unsigned int> &clique, bool deltaYPoss,
                      const RascalOptions &opts, const ROMol &mol1,
                      const ROMol &mol2,
                      const std::vector<std::pair<int, int>> &vtxPairs,
                      std::vector<std::vector<unsigned int>> &maxCliques,
-                     unsigned int &lowerBound) {
+                     unsigned int &lowerBound, bool singleFrag,
+                     RascalStartPoint &starter) {
   if (!maxCliques.empty() && clique.size() < maxCliques.front().size()) {
     return;
   }
-  bool didDeltaY =
-      !deltaYPoss ? false : deltaYInClique(clique, mol1, mol2, vtxPairs);
-  if (!didDeltaY) {
-    if (maxCliques.empty()) {
-      if (cliqueOk(clique, opts, mol1, mol2, vtxPairs)) {
-        maxCliques.push_back((clique));
-      }
-    } else {
-      bool goodClique = false, didCliqueOk = false;
-      if (clique.size() > maxCliques.front().size()) {
-        goodClique = cliqueOk(clique, opts, mol1, mol2, vtxPairs);
-        didCliqueOk = true;
-        if (goodClique) {
-          maxCliques.clear();
-        }
-      }
-      if (!didCliqueOk) {
-        goodClique = cliqueOk(clique, opts, mol1, mol2, vtxPairs);
-      }
-      if (goodClique &&
-          (maxCliques.empty() || clique.size() == maxCliques.front().size())) {
-        maxCliques.push_back(clique);
+  if (deltaYPoss && deltaYInClique(clique, mol1, mol2, vtxPairs)) {
+    return;
+  }
+  std::vector<unsigned int> cliqueFrag;
+  const std::vector<unsigned int> *cliqueToUse = &clique;
+  if (singleFrag) {
+    singleLargestFrag(starter, clique, vtxPairs, cliqueFrag);
+    cliqueToUse = &cliqueFrag;
+  }
+  if (maxCliques.empty()) {
+    if (cliqueOk(*cliqueToUse, opts, mol1, mol2, vtxPairs)) {
+      maxCliques.push_back((*cliqueToUse));
+    }
+  } else {
+    bool goodClique = false, didCliqueOk = false;
+    if (cliqueToUse->size() > maxCliques.front().size()) {
+      goodClique = cliqueOk(*cliqueToUse, opts, mol1, mol2, vtxPairs);
+      didCliqueOk = true;
+      if (goodClique) {
+        maxCliques.clear();
       }
     }
-    if (!maxCliques.empty() && maxCliques.front().size() > lowerBound) {
-      lowerBound = maxCliques.front().size();
+    if (!didCliqueOk) {
+      goodClique = cliqueOk(*cliqueToUse, opts, mol1, mol2, vtxPairs);
     }
+    if (goodClique && (maxCliques.empty() ||
+                       cliqueToUse->size() == maxCliques.front().size())) {
+      maxCliques.push_back(*cliqueToUse);
+    }
+  }
+  if (!maxCliques.empty() && maxCliques.front().size() > lowerBound) {
+    lowerBound = maxCliques.front().size();
   }
 }
 
@@ -1035,10 +1140,6 @@ void explorePartitions(
       checkTimeout(startTime, opts, clique, maxCliques, numSteps);
     }
     auto part = parts.back();
-    // std::cout << "NEXT" << std::endl << *part << std::endl;
-    // printClique(clique, starter.d_vtxPairs, starter.d_swapped, std::cout);
-    // std::cout << std::endl;
-
     bool goDeeper = false;
     bool backtrack = false;
     if (opts.allBestMCESs) {
@@ -1070,7 +1171,8 @@ void explorePartitions(
             nextPart->pruneVertices(clique.back());
             updateMaxClique(clique, starter.d_deltaYPoss, opts, *starter.d_mol1,
                             *starter.d_mol2, starter.d_vtxPairs, maxCliques,
-                            starter.d_lowerBound);
+                            starter.d_lowerBound, opts.singleLargestFrag,
+                            starter);
             parts.push_back(nextPart);
           }
         } else {
@@ -1209,6 +1311,15 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   makeLineGraph(*starter.d_mol1, starter.d_adjMatrix1);
   makeLineGraph(*starter.d_mol2, starter.d_adjMatrix2);
 
+  if (opts.singleLargestFrag) {
+    BOOST_LOG(rdWarningLog)
+        << "The singleLargestFrag option can be exceptionally slow.  A better"
+        << " option, which often gives equivalent results, might be to use"
+        << " allBestMCESs=true and then extract the single largest fragment"
+        << " from the results." << std::endl;
+    makeAtomAdjacencyMatrix(*starter.d_mol1, starter.d_atomAdjMatrix1);
+    makeAtomAdjacencyMatrix(*starter.d_mol2, starter.d_atomAdjMatrix2);
+  }
   // pairs are vertices in the 2 line graphs that are the same type.
   // d_modProd is the modular product/correspondence graph of the two
   // line graphs.
