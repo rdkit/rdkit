@@ -96,7 +96,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     else()
       ADD_DEFINITIONS("-DTARGET_API_LIB -D__linux -DHAVE_EXPAT_CONFIG_H")
       # we don't really control chemdraw source code, so suppress warnings
-      target_compile_options(ChemDraw PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
+      target_compile_options(ChemDraw PRIVATE -w -Wno-unknown-pragmas -Wno-error)
     endif()
       
     install(TARGETS ChemDraw DESTINATION ${RDKit_LibDir})
@@ -175,11 +175,11 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
         LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
 	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
-  target_compile_options(chemdrawCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
-  target_compile_options(chemdrawChiralCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
-  target_compile_options(chemdrawReactionsCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
-  target_compile_options(chemdraw3DCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
-  target_compile_options(chemdraw6KCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)  
+  target_compile_options(chemdrawCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)
+  target_compile_options(chemdrawChiralCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)
+  target_compile_options(chemdrawReactionsCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)
+  target_compile_options(chemdraw3DCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)
+  target_compile_options(chemdraw6KCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)  
 
   if(MSVC)
     # The nanotubes blow up the smiles writer stack on MSVC so increase it

@@ -50,7 +50,6 @@ bool parse_node(
   else
     charge = node.m_charge;
   int atommap = 0;
-  int mergeparent = -1;
   int rgroup_num = -1;
   int isotope = node.m_isotope;
 
@@ -94,7 +93,6 @@ bool parse_node(
       } else {
         elemno = 0;
         atommap = external_attachment;
-        mergeparent = external_attachment;
       }
       break;
     }
