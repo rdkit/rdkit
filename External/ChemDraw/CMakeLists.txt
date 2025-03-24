@@ -175,6 +175,12 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
         LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
 	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
+  target_compile_options(chemdrawCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
+  target_compile_options(chemdrawChiralCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
+  target_compile_options(chemdrawReactionsCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
+  target_compile_options(chemdraw3DCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)
+  target_compile_options(chemdraw6KCatchTest PRIVATE -w -Wno-unknown-pragmas -Wnomacro-redefined -Wno-error)  
+
   if(MSVC)
     # The nanotubes blow up the smiles writer stack on MSVC so increase it
     set_target_properties(chemdraw6KCatchTest PROPERTIES LINK_FLAGS
