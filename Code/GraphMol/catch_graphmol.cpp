@@ -3111,9 +3111,6 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
   for (size_t i = 0; i < test_vals.size(); ++i) {
     INFO(test_vals[i].first);
     RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
-    // std::cerr << "   " << (MolToSmiles(*m) == test_vals[i].second) <<
-    // std::endl; std::cerr << " {\"" << test_vals[i].first << "\"},\n"
-    //           << "   \"" << MolToSmiles(*m) << "\"}," << std::endl;
     CHECK(MolToSmiles(*m) == test_vals[i].second);
     // make sure the metal atoms are not aromatic and have no aromatic bonds:
     for (auto atom : m->atoms()) {
