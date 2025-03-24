@@ -868,6 +868,10 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
       continue;
     }
 
+    if (HBondFlag && ringHasHydrogenBond(sring, mol)) {
+      continue;
+    }
+
     bool allAromatic = true;
     bool allDummy = true;
     for (auto firstIdx : sring) {
