@@ -3,7 +3,31 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     set(maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
 endif()
 
-rdkit_library(FileParsers
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+  rdkit_library(FileParsers
+    CDXMLParser.cpp
+    Mol2FileParser.cpp MolFileParser.cpp
+    MolSGroupParsing.cpp MolSGroupWriting.cpp
+    MolFileStereochem.cpp MolFileWriter.cpp
+    ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
+    SmilesMolSupplier.cpp 
+    SmilesWriter.cpp
+    TDTMolSupplier.cpp 
+    TDTWriter.cpp
+    TplFileParser.cpp TplFileWriter.cpp
+    PDBParser.cpp PDBWriter.cpp 
+    CMLWriter.cpp XYZFileWriter.cpp XYZFileParser.cpp
+    ${maesupplier}
+    ProximityBonds.cpp
+    SequenceParsers.cpp SequenceWriters.cpp
+    SVGParser.cpp PNGParser.cpp
+    MultithreadedMolSupplier.cpp
+    MultithreadedSmilesMolSupplier.cpp
+    MultithreadedSDMolSupplier.cpp
+    LINK_LIBRARIES RDChemDrawLib GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS})
+    target_compile_definitions(FileParsers PRIVATE RDKIT_CHEMDRAW_BUILD)
+else()
+  rdkit_library(FileParsers
     CDXMLParser.cpp
     Mol2FileParser.cpp MolFileParser.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
@@ -24,7 +48,7 @@ rdkit_library(FileParsers
     MultithreadedSmilesMolSupplier.cpp
     MultithreadedSDMolSupplier.cpp
     LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS})
-target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
+endif()
 
 rdkit_headers(CDXMLParser.h
     FileParsers.h
@@ -81,9 +105,6 @@ rdkit_catch_test(testPropertyLists testPropertyLists.cpp
 rdkit_catch_test(XYZFileParserCatchTest XYZFileParserCatchTest.cpp
     LINK_LIBRARIES FileParsers)
 
-rdkit_catch_test(cdxmlParserCatchTest cdxml_parser_catch.cpp
-    LINK_LIBRARIES FileParsers)
-
 rdkit_catch_test(molfileStereoCatchTest molfile_stereo_catch.cpp
     LINK_LIBRARIES FileParsers CIPLabeler Subgraphs)
 
@@ -100,9 +121,15 @@ rdkit_catch_test(atropisomersCatch atropisomers_catch.cpp
     LINK_LIBRARIES FileParsers)
 
 
-
 if(RDK_TEST_MULTITHREADED AND RDK_BUILD_THREADSAFE_SSS)
 rdkit_catch_test(multithreadedSupplierCatchTest multithreaded_supplier_catch.cpp
     LINK_LIBRARIES FileParsers)
 endif()
+
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+    add_definitions(-DRDKIT_BUILD_CHEMDRAW_SUPPORT)
+endif(RDK_BUILD_CHEMDRAW_SUPPORT)
+
+rdkit_catch_test(cdxmlParserCatchTest cdxml_parser_catch.cpp
+    LINK_LIBRARIES FileParsers)
 

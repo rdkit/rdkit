@@ -23,9 +23,17 @@
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/Atropisomers.h>
 
+#ifdef RDKIT_CHEMDRAW_BUILD
+#include <ChemDraw/chemdraw.h>
+#endif
+
+#ifndef RDKIT_CHEMDRAW_BUILD
 using boost::property_tree::ptree;
+#endif
+
 namespace RDKit {
 
+#ifndef RDKIT_CHEMDRAW_BUILD
 namespace {
 const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
 const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
@@ -702,12 +710,19 @@ void visit_children(
   }
 }
 }  // namespace
-
+#endif
+  
 namespace v2 {
 namespace CDXMLParser {
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
     std::istream &inStream, const CDXMLParserParams &params) {
+#ifdef RDKIT_CHEMDRAW_BUILD
+  ChemDrawParserParams chemdraw_params;
+  chemdraw_params.sanitize = params.sanitize;
+  chemdraw_params.removeHs = params.removeHs;
+  return ChemDrawToMols(inStream, chemdraw_params);
+#else
   // populate tree structure pt
   using boost::property_tree::ptree;
   ptree pt;
@@ -813,6 +828,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
 
   // what do we do with the reaction schemes here???
   return mols;
+#endif
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(
