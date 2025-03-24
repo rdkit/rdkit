@@ -416,7 +416,7 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
             for (const auto &[idx, lbl] : attchOrds) {
               auto supAttachPoints = mainSUP->getAttachPoints();
               if (std::find_if(supAttachPoints.begin(), supAttachPoints.end(),
-                               [lbl](auto a) { return a.id == lbl; }) ==
+                               [&lbl](auto a) { return a.id == lbl; }) ==
                   supAttachPoints.end()) {
                 templateFound = false;
                 break;

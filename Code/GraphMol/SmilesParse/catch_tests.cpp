@@ -3082,10 +3082,10 @@ TEST_CASE("DnaTestError", "DnaTestError") {
 
     // do the operations to the mol
 
-    uint operationThatFailed = 0;
-    const uint sanitizeOps = RDKit::MolOps::SANITIZE_ALL ^
-                             RDKit::MolOps::SANITIZE_CLEANUP ^
-                             RDKit::MolOps::SANITIZE_PROPERTIES;
+    unsigned int operationThatFailed = 0;
+    const unsigned int sanitizeOps = RDKit::MolOps::SANITIZE_ALL ^
+                                     RDKit::MolOps::SANITIZE_CLEANUP ^
+                                     RDKit::MolOps::SANITIZE_PROPERTIES;
 
     RDKit::MolOps::sanitizeMol(*mol, operationThatFailed, sanitizeOps);
 
