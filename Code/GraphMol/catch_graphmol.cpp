@@ -32,7 +32,6 @@
 #include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
-#if 1
 TEST_CASE("SMILES Parsing works", "[molops]") {
   std::unique_ptr<RWMol> mol(SmilesToMol("C1CC1"));
   REQUIRE(mol);
@@ -1151,7 +1150,7 @@ TEST_CASE("RemoveHsParameters", "[molops]") {
     }
   }
 }
-#endif
+
 TEST_CASE("github #2895: acepentalene aromaticity perception ",
           "[molops][bug][aromaticity]") {
   SECTION("acepentalene") {
@@ -1679,7 +1678,7 @@ M  END)CTAB"_ctab;
   }
   SECTION("a simpler system") {
     auto m = R"CTAB(
-  Mrv2014 03092106042D          
+  Mrv2014 03092106042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -2204,7 +2203,7 @@ TEST_CASE("valence edge") {
     m->getAtomWithIdx(0)->setNoImplicit(false);
     m->updatePropertyCache(false);
     CHECK(m->getAtomWithIdx(0)->getFormalCharge() == -2);
-    CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+    CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
   }
   {
     SmilesParserParams ps;
@@ -2607,7 +2606,7 @@ TEST_CASE("query moves") {
 
 TEST_CASE("moves with conformer") {
   auto m1 = R"CTAB(
-  Mrv2108 01192209042D          
+  Mrv2108 01192209042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -3905,8 +3904,8 @@ TEST_CASE("atom output") {
     ss.str("");
   }
   SECTION("chirality 2") {
-    // same as 
-    // C[Pt@SP2]([H])(F)Cl which is stored internally as 
+    // same as
+    // C[Pt@SP2]([H])(F)Cl which is stored internally as
     // C[Pt@SP3](F)(Cl)[H]
     auto m = "C[Pt@SP2H](F)Cl"_smiles;
     REQUIRE(m);
@@ -3924,7 +3923,7 @@ TEST_CASE(
     "[RWMol]") {
   // This mols is made up, it probably doesn't make sense at all.
   auto m1 = R"CTAB(
-  Mrv2311 02062417062D          
+  Mrv2311 02062417062D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4106,7 +4105,9 @@ M  END
   }
 }
 
-TEST_CASE("Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group", "[RWMol]") {
+TEST_CASE(
+    "Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group",
+    "[RWMol]") {
   {
     auto mol = "C1CC1"_smiles;
     REQUIRE(mol);
@@ -4198,7 +4199,7 @@ TEST_CASE("Try not to set wedged bonds as double in the kekulization") {
     // verify that in both cases the kekulization results in assigning
     // a single bond order to the wedged bonds.
     auto mblock1 = R"(
-  Mrv2311 05242408112D          
+  Mrv2311 05242408112D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4251,7 +4252,7 @@ M  END
           Bond::BondType::DOUBLE);
 
     auto mblock2 = R"(
-  Mrv2311 05242408162D          
+  Mrv2311 05242408162D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4313,7 +4314,7 @@ M  END
     // similar to the previous test case, but adding fused rings and
     // an O atom that wouldn't accept double bonds
     auto mblock1 = R"(
-  Mrv2311 05282412322D          
+  Mrv2311 05282412322D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4373,7 +4374,7 @@ M  END
           Bond::BondType::DOUBLE);
 
     auto mblock2 = R"(
-  Mrv2311 05282412342D          
+  Mrv2311 05282412342D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -4438,7 +4439,6 @@ M  END
     pathName += "/Code/GraphMol/FileParsers/test_data/atropisomers/";
 
     std::vector<std::pair<std::string, int>> prs = {
-#if 1
         {"BMS-986142_atrop8.sdf", 8},
         {"Mrtx1719_atrop3.sdf", 21},
         {"AtropManyChiralsEnhanced2.sdf", 7},
@@ -4497,7 +4497,6 @@ M  END
         {"RP-6306_atrop3.sdf", 3},
         {"macrocycle-8-ortho-broken-hash.sdf", 14},
         {"JDQ443_atrop3.sdf", 26},
-#endif
         {"JDQ443_3d.sdf", 26},
         // keep
     };
@@ -4585,8 +4584,8 @@ TEST_CASE("explicit valence handling of transition metals") {
     for (const auto &smiles : smileses) {
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(m);
-      CHECK(m->getAtomWithIdx(0)->getExplicitValence() == 1);
-      CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+      CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 1);
+      CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
     }
   }
 }
@@ -4594,7 +4593,7 @@ TEST_CASE("explicit valence handling of transition metals") {
 TEST_CASE("valence handling of atoms with multiple possible valence states") {
   SECTION("basics") {
     // some of these examples are quite silly
-    std::vector<std::pair<std::string, int>> smileses = {
+    std::vector<std::pair<std::string, unsigned int>> smileses = {
         {"C[S-](=O)=O", 5},
         {"C[P-2](C)C", 3},
         {"C[Se-](=O)=O", 5},
@@ -4604,7 +4603,8 @@ TEST_CASE("valence handling of atoms with multiple possible valence states") {
       INFO(smiles);
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
       CHECK(m);
-      CHECK(val == m->getAtomWithIdx(1)->getExplicitValence());
+      CHECK(val ==
+            m->getAtomWithIdx(1)->getValence(Atom::ValenceType::EXPLICIT));
       // now try figuring out the implicit valence
       m->getAtomWithIdx(1)->setNoImplicit(false);
       m->getAtomWithIdx(1)->calcImplicitValence(true);  // <- should not throw
@@ -4707,15 +4707,12 @@ TEST_CASE("Valences on Al, Si, P, As, Sb, Bi") {
 TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
   SECTION("basics") {
     class FakeAtomMonomerInfo : public AtomMonomerInfo {
-    public:
+     public:
       bool *deleted;
-      FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {
-      }
-      virtual ~FakeAtomMonomerInfo() {
-	*deleted = true;
-      }
+      FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {}
+      virtual ~FakeAtomMonomerInfo() { *deleted = true; }
     };
-    
+
     bool sanitize = true;
     int flavor = 0;
     std::unique_ptr<RWMol> mol(SequenceToMol("KY", sanitize, flavor));
@@ -4730,7 +4727,60 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
     mol->getAtomWithIdx(0)->setMonomerInfo(res);
     mol->getAtomWithIdx(0)->setMonomerInfo(nullptr);
     CHECK(was_deleted == true);
-    
-  }    
+  }
 }
 
+TEST_CASE("Github #8304: addHs should ignore queries") {
+  SECTION("queryAtoms") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    MolOps::addHs(*m1);
+    CHECK(m1->getNumAtoms() == 8);
+    std::vector<std::tuple<std::string, unsigned int, unsigned int>> data = {
+        {"CC", 2, 2},
+        {"[CH3]C", 5, 2},
+        {"[CH3][CH3]", 8, 2},
+    };
+    for (const auto &[sma, def, noq] : data) {
+      INFO(sma);
+      auto m2 = v2::SmilesParse::MolFromSmarts(sma);
+      REQUIRE(m2);
+      m2->updatePropertyCache(false);
+      // by default we addHs:
+      {
+        RWMol m3(*m2);
+        MolOps::addHs(m3);
+        CHECK(m3.getNumAtoms() == def);
+      }
+      // but we can change that:
+      MolOps::AddHsParameters ps;
+      ps.skipQueries = true;
+      {
+        RWMol m3(*m2);
+        MolOps::addHs(m3, ps);
+        CHECK(m3.getNumAtoms() == noq);
+      }
+    }
+  }
+  SECTION("queryBonds make their atoms queries") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    auto qb = v2::SmilesParse::BondFromSmarts("!@");
+    REQUIRE(qb);
+    m1->replaceBond(0, qb.get());
+    // by default we addHs:
+    {
+      RWMol m2(*m1);
+      MolOps::addHs(m2);
+      CHECK(m2.getNumAtoms() == 8);
+    }
+    // but we can change that:
+    MolOps::AddHsParameters ps;
+    ps.skipQueries = true;
+    {
+      RWMol m2(*m1);
+      MolOps::addHs(m2, ps);
+      CHECK(m2.getNumAtoms() == 2);
+    }
+  }
+}

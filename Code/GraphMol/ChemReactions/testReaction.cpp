@@ -1716,7 +1716,6 @@ void test17Issue1920627() {
   TEST_ASSERT(rxn->getNumReactantTemplates() == 1);
   TEST_ASSERT(rxn->getNumProductTemplates() == 1);
 
-#if 1
   reacts.clear();
   smi = "C[C@](Cl)(CO)CC(=O)NC";
   mol = SmilesToMol(smi);
@@ -1844,7 +1843,6 @@ void test17Issue1920627() {
   TEST_ASSERT(prod->getAtomWithIdx(4)->hasProp(common_properties::_CIPCode));
   prod->getAtomWithIdx(4)->getProp(common_properties::_CIPCode, cip);
   TEST_ASSERT(cip == "R");
-#endif
 
   reacts.clear();
   smi = "C(=O)N[C@@H](CC)C";
@@ -2262,8 +2260,10 @@ void test21Issue2540021() {
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
     TEST_ASSERT(prod->getNumAtoms() == 6);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum() == 7);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence() == 0);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 3);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit() == false);
 
     delete rxn;
@@ -2978,8 +2978,10 @@ void test28RxnDepictor() {
     MolOps::sanitizeMol(*(static_cast<RWMol *>(prod.get())));
     TEST_ASSERT(prod->getNumAtoms() == 6);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getAtomicNum() == 7);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getImplicitValence() == 0);
-    TEST_ASSERT(prod->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
+    TEST_ASSERT(
+        prod->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 3);
     TEST_ASSERT(prod->getAtomWithIdx(0)->getNoImplicit() == false);
 
     delete rxn;

@@ -481,7 +481,18 @@ python::object getAnnotationColour(const RDKit::MolDrawOptions &self) {
 void setAnnotationColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
   self.annotationColour = pyTupleToDrawColour(tpl);
 }
-
+void setAtomNoteColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.atomNoteColour = pyTupleToDrawColour(tpl);
+}
+python::object getAtomNoteColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.atomNoteColour);
+}
+void setBondNoteColour(RDKit::MolDrawOptions &self, python::tuple tpl) {
+  self.bondNoteColour = pyTupleToDrawColour(tpl);
+}
+python::object getBondNoteColour(const RDKit::MolDrawOptions &self) {
+  return colourToPyTuple(self.bondNoteColour);
+}
 python::object getVariableAttachmentColour(const RDKit::MolDrawOptions &self) {
   return colourToPyTuple(self.variableAttachmentColour);
 }
@@ -790,6 +801,16 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
       .def("setAnnotationColour", &RDKit::setAnnotationColour,
            python::args("self", "tpl"),
            "method for setting the annotation colour")
+      .def("setAtomNoteColour", &RDKit::setAtomNoteColour,
+           python::args("self", "tpl"),
+           "method for setting the atom note colour")
+      .def("getAtomNoteColour", &RDKit::getAtomNoteColour, python::args("self"),
+           "method returning the atom note colour")
+      .def("setBondNoteColour", &RDKit::setBondNoteColour,
+           python::args("self", "tpl"),
+           "method for setting the bond note colour")
+      .def("getBondNoteColour", &RDKit::getBondNoteColour, python::args("self"),
+           "method returning the bond note colour")
       .def("getLegendColour", &RDKit::getLegendColour, python::args("self"),
            "method returning the legend colour")
       .def("setLegendColour", &RDKit::setLegendColour,
@@ -862,8 +883,12 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "multipleBondOffset", &RDKit::MolDrawOptions::multipleBondOffset,
           "offset for the extra lines in a multiple bond as a fraction of mean"
           " bond length")
-      .def_readwrite("padding", &RDKit::MolDrawOptions::padding,
-                     "fraction of empty space to leave around molecule")
+      .def_readwrite(
+          "padding", &RDKit::MolDrawOptions::padding,
+          "Fraction of empty space to leave around molecule.  Default=0.05.")
+      .def_readwrite("reagentPadding", &RDKit::MolDrawOptions::componentPadding,
+                     "Fraction of empty space to leave around each component"
+                     " of a reaction drawing.  Default=0.0.")
       .def_readwrite(
           "bondLineWidth", &RDKit::MolDrawOptions::bondLineWidth,
           "if positive, this overrides the default line width for bonds")
@@ -988,6 +1013,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "with complex query symbols A, Q, X, M, optionally followed "
           "by H if hydrogen is included (except for AH, which stays *). "
           "Default is true")
+      .def_readwrite("bracketsAroundAtomLists",
+                     &RDKit::MolDrawOptions::bracketsAroundAtomLists,
+                     "Whether to put brackets round atom lists in query atoms."
+                     "  Default is true.")
+      .def_readwrite(
+          "standardColoursForHighlightedAtoms",
+          &RDKit::MolDrawOptions::standardColoursForHighlightedAtoms,
+          "If true, highlighted hetero atoms are drawn in standard colours"
+          " rather than black.  Default=False")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            python::args("self"),
            "method for getting the colour of variable attachment points")
@@ -1296,6 +1330,17 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "isovalScaleForQuantization",
           &RDKit::MolDraw2DUtils::ContourParams::isovalScaleForQuantization,
           "scaling factor used to convert isovalues to ints when forming the continuous lines")
+      .def_readwrite(
+          "useFillThreshold",
+          &RDKit::MolDraw2DUtils::ContourParams::useFillThreshold,
+          "use a magnitude threshold to determine if a grid point is filled")
+      .def_readwrite(
+          "fillThreshold", &RDKit::MolDraw2DUtils::ContourParams::fillThreshold,
+          "magnitude threshold to determine if a grid point is filled")
+      .def_readwrite(
+          "fillThresholdIsFraction",
+          &RDKit::MolDraw2DUtils::ContourParams::fillThresholdIsFraction,
+          "if true, fillThreshold is a fraction of the range of the data")
       .def("setContourColour", &RDKit::setContourColour,
            (python::arg("self"), python::arg("colour")))
       .def("setColourMap", &RDKit::setColoursHelper,

@@ -34,7 +34,8 @@ enum EmbedFailureCauses {
   LINEAR_DOUBLE_BOND = 8,
   BAD_DOUBLE_BOND_STEREO = 9,
   CHECK_CHIRAL_CENTERS2 = 10,
-  END_OF_ENUM = 11,
+  EXCEEDED_TIMEOUT = 11,
+  END_OF_ENUM = 12,
 };
 
 //! Parameter object for controlling embedding
@@ -103,6 +104,7 @@ enum EmbedFailureCauses {
                 sampling
   useMacrocycle14config  If 1-4 distances bound heuristics for
                 macrocycles is used
+  timeout	 time out in seconds
   CPCI	custom columbic interactions between atom pairs
   callback	      void pointer to a function for reporting progress,
                   will be called with the current iteration number.
@@ -142,6 +144,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool useSmallRingTorsions{false};
   bool useMacrocycleTorsions{false};
   bool useMacrocycle14config{false};
+  unsigned int timeout{0};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
   void (*callback)(unsigned int);
   bool forceTransAmides{true};
@@ -165,6 +168,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
       const DistGeom::BoundsMatrix *boundsMat = nullptr,
       bool embedFragmentsSeparately = true, bool useSmallRingTorsions = false,
       bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
+      unsigned int timeout = 0,
       std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>>
           CPCI = nullptr,
       void (*callback)(unsigned int) = nullptr)
@@ -192,6 +196,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useSmallRingTorsions(useSmallRingTorsions),
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
+        timeout(timeout),
         CPCI(std::move(CPCI)),
         callback(callback) {}
 };
@@ -406,14 +411,15 @@ inline void EmbedMultipleConfs(
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
     unsigned int ETversion = 2, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = true, bool useMacrocycle14config = true) {
+    bool useMacrocycleTorsions = true, bool useMacrocycle14config = true,
+    unsigned int timeout = 0) {
   EmbedParameters params(
       maxIterations, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
       onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config);
+      useMacrocycleTorsions, useMacrocycle14config, timeout);
   EmbedMultipleConfs(mol, res, numConfs, params);
 };
 //! \overload
@@ -428,14 +434,15 @@ inline INT_VECT EmbedMultipleConfs(
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
     unsigned int ETversion = 2, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
+    unsigned int timeout = 0) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
       onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config);
+      useMacrocycleTorsions, useMacrocycle14config, timeout);
   INT_VECT res;
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;

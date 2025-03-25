@@ -298,7 +298,8 @@ file(WRITE ${installPgSQLName} ${installPgSQLBody})
 foreach(testDir sql data expected)
   add_custom_command(TARGET ${EXTENSION}${EXTENSION_SUFFIX} PRE_BUILD
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
-      "${PG_CURRENT_SOURCE_DIR}${testDir}" "${PG_CURRENT_BINARY_DIR}${testDir}")
+      "${PG_CURRENT_SOURCE_DIR}${testDir}" "${PG_CURRENT_BINARY_DIR}${testDir}"
+      POST_BUILD)
 endforeach()
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/InstallPgSql.cmake.in"

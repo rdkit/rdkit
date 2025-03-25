@@ -443,3 +443,36 @@ TEST_CASE("Github #7986: Morgan fingerprints, chirality, and radius") {
     CHECK(ao.atomToBits->at(4) == ao.atomToBits->at(10));
   }
 }
+
+TEST_CASE("github #6679: suspicious value for atom pair code calculation") {
+  SECTION("invariants") {
+    std::vector<std::pair<std::string, UINT_VECT>> data = {
+        {"C[I]", {33, 449}},  {"C[Te]", {33, 417}}, {"C[Sb]", {33, 385}},
+        {"C[Sn]", {33, 481}}, {"C[Xe]", {33, 481}}, {"C[Li]", {33, 481}},
+    };
+    auto invg = AtomPair::AtomPairAtomInvGenerator();
+    for (const auto &pr : data) {
+      auto mol = v2::SmilesParse::MolFromSmiles(pr.first);
+      REQUIRE(mol);
+      std::unique_ptr<UINT_VECT> invs{invg.getAtomInvariants(*mol)};
+      INFO(pr.first);
+      CHECK(*invs == pr.second);
+    }
+  }
+  SECTION("fingerprints") {
+    std::vector<std::pair<std::string, unsigned int>> data = {
+        {"C[I]", 7918328},  {"C[Te]", 7918456}, {"C[Sb]", 7918584},
+        {"C[Sn]", 7918200}, {"C[Xe]", 7918200}, {"C[Li]", 7918200},
+    };
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpg{
+        AtomPair::getAtomPairGenerator<std::uint64_t>()};
+    for (const auto &pr : data) {
+      auto mol = v2::SmilesParse::MolFromSmiles(pr.first);
+      REQUIRE(mol);
+      std::unique_ptr<SparseBitVect> fp{fpg->getSparseFingerprint(*mol)};
+      INFO(pr.first);
+      CHECK(fp->getNumOnBits() == 1);
+      CHECK((*fp)[pr.second]);
+    }
+  }
+}

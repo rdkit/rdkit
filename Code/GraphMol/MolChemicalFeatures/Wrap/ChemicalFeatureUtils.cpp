@@ -45,44 +45,6 @@ python::object GetAtomMatch(python::object featMatch, int maxAts = 1024) {
   return res;
 }
 
-#if 0
-  // defined in MolChemicalFeatureFactory.cpp
-  python::tuple getFeatsForMol(const MolChemicalFeatureFactory &factory, 
-			   const ROMol &mol,
-			   std::string includeOnly);
-
-  // Moving this into C++ didn't provide any speed improvement in our profiling,
-  // so, rather than adding additional complications to the wrapper interface,
-  // we'll just leave it out
-  //
-  // In the event it should be re-integrated, here's the def:
-  //python::def("GetFeatureMatchDict",GetFeatMatchDict,(python::arg("mol"),
-  //						      python::arg("factory"),
-  //						      python::arg("feats")),
-  //           );
-
-  python::dict GetFeatMatchDict(const ROMol *mol,const MolChemicalFeatureFactory *factory,
-				python::object feats){
-    python::dict res;
-    unsigned int nEntries=python::extract<unsigned int>(feats.attr("__len__")());
-    
-    for(unsigned int i=0;i<nEntries;++i){
-      const char *family;
-      python::extract<MolChemicalFeature *> cfX(feats[i]);
-      if(cfX.check()){
-	family=cfX()->getFamily().c_str();
-      } else {
-	python::extract<ChemicalFeatures::FreeChemicalFeature *> fcfX(feats[i]);
-	family=fcfX()->getFamily().c_str();
-      }
-      if(!res.has_key(family)){
-	res[family] = getFeatsForMol(factory,mol,family);
-      }
-    }
-    return res;
-  }
-
-#endif
 struct ChemicalFeatureUtils_wrapper {
   static void wrap() {
     python::def(

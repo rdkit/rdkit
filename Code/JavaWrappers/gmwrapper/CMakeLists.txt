@@ -136,9 +136,7 @@ ADD_CUSTOM_COMMAND(
     ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKit.jar -C ${CMAKE_CURRENT_SOURCE_DIR}/build
     org/RDKit
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  #DEPENDS GraphMolWrap
   DEPENDS "${swig_generated_file_fullname}"
-  COMMENT "javac *.java; jar cf -> .jar"
 
   OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
   ## Run Javadoc against newly created .java files to create docs
@@ -149,7 +147,6 @@ ADD_CUSTOM_COMMAND(
     ${CMAKE_CURRENT_SOURCE_DIR}/org.RDKitDoc.jar
     doc
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  #DEPENDS GraphMolWrap
   DEPENDS "${swig_generated_file_fullname}"
   COMMENT "jar cf org.RDKitDoc.jar -d doc"
 )

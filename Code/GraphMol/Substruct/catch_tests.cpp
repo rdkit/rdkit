@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/MolPickler.h>
 
@@ -777,11 +778,80 @@ TEST_CASE("specified query matches unspecified atom") {
     CHECK(SubstructMatch(*m3, *q, ps).empty());
 
     ps.specifiedStereoQueryMatchesUnspecified = true;
-    std::cerr << "m1" << std::endl;
     CHECK(SubstructMatch(*m1, *q, ps).size() == 1);
-    std::cerr << "m2" << std::endl;
     CHECK(SubstructMatch(*m2, *q, ps).size() == 1);
-    std::cerr << "m3" << std::endl;
     CHECK(SubstructMatch(*m3, *q, ps).empty());
   }
+}
+
+TEST_CASE(
+    "Github 8162: conjugated triple bonds match aromatic bonds with aromaticMatchesConjugated") {
+  SECTION("as reported") {
+    auto qry = R"CTAB(ACS Document 1996
+  ChemDraw01092510212D
+
+  0  0  0     0  0              0 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 4 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N 0.357236 0.412500 0.000000 0
+M  V30 2 C 1.071707 0.000000 0.000000 0
+M  V30 3 C -0.357236 0.000000 0.000000 0
+M  V30 4 N -1.071707 -0.412500 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 1 3
+M  V30 3 3 3 4
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(qry);
+    auto mol = "CN1C=NC=C1"_smiles;
+    REQUIRE(mol);
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesConjugated = true;
+    CHECK(SubstructMatch(*mol, *qry, ps).empty());
+  }
+
+  SECTION("details") {
+    auto m_triple = "C#N"_smiles;
+    REQUIRE(m_triple);
+    m_triple->getBondWithIdx(0)->setIsConjugated(true);
+    auto m_double = "C=N"_smiles;
+    REQUIRE(m_double);
+    m_double->getBondWithIdx(0)->setIsConjugated(true);
+    auto m_single = "CN"_smiles;
+    REQUIRE(m_single);
+    m_single->getBondWithIdx(0)->setIsConjugated(true);
+    auto m_aromatic = "CN"_smiles;
+    REQUIRE(m_aromatic);
+    m_aromatic->getBondWithIdx(0)->setBondType(Bond::AROMATIC);
+    m_aromatic->getBondWithIdx(0)->setIsAromatic(true);
+    m_aromatic->getBondWithIdx(0)->setIsConjugated(true);
+
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesConjugated = true;
+    CHECK(SubstructMatch(*m_triple, *m_aromatic, ps).empty());
+    CHECK(SubstructMatch(*m_aromatic, *m_triple, ps).empty());
+
+    CHECK(SubstructMatch(*m_double, *m_aromatic, ps).size() == 1);
+    CHECK(SubstructMatch(*m_aromatic, *m_double, ps).size() == 1);
+    CHECK(SubstructMatch(*m_single, *m_aromatic, ps).size() == 1);
+    CHECK(SubstructMatch(*m_aromatic, *m_single, ps).size() == 1);
+  }
+}
+
+TEST_CASE("Github #7295", "CIS/TRANS in aromatic ring") {
+    SECTION("Smart CIS/TRANS bonds should match single or aromatic"){
+      SubstructMatchParameters ps;
+
+      auto query = "[O:1]=[c:2]1/[c:3](=[C:4]/[c:5]2:[c:10]:[c:9]:[c:8]:[c:7]:[c:6]:2):[s:11]:[c:12]2:[n:13]:1-[N:14]-[C:15]-[N:20]-[N:21]=2"_smarts;
+      auto mol = "[O:1]=[c:2]1/[c:3](=[CH:4]/[c:5]2[cH:6][cH:7][cH:8][cH:9][cH:10]2)[s:11][c:12]2[n:13]1[NH:14][C:15]1([CH2:16][CH2:17][CH2:18][CH2:19]1)[NH:20][N:21]=2"_smiles;
+      CHECK(SubstructMatch(*mol, *query, ps).size() == 1);
+      ps.useChirality = true;
+      CHECK(SubstructMatch(*mol, *query, ps).size() == 1);
+      auto mol2 = "[O:1]=[c:2]1\\[c:3](=[CH:4]/[c:5]2[cH:6][cH:7][cH:8][cH:9][cH:10]2)[s:11][c:12]2[n:13]1[NH:14][C:15]1([CH2:16][CH2:17][CH2:18][CH2:19]1)[NH:20][N:21]=2"_smiles;
+      CHECK(SubstructMatch(*mol2, *query, ps).size() == 0);
+    }
 }

@@ -362,6 +362,12 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
   QueryAtom qaTmpl;
   QueryBond qbTmpl;
 
+  std::vector<int> origAtomicNums;
+  origAtomicNums.reserve(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    origAtomicNums.push_back(atom->getAtomicNum());
+  }
+
   if (params.makeAtomsGeneric) {
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
       if (!((params.makeAtomsGenericFlags & ADJUST_IGNORECHAINS) &&
@@ -394,7 +400,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     // pull properties we need from the atom here, once we
     // create a query atom they may no longer be valid.
     auto nRings = ringInfo->numAtomRings(i);
-    auto atomicNum = at->getAtomicNum();
+    auto atomicNum = origAtomicNums[i];
     if (params.makeDummiesQueries && atomicNum == 0 && !at->hasQuery() &&
         !at->getIsotope()) {
       qaTmpl.setQuery(makeAtomNullQuery());

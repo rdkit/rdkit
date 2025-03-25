@@ -272,18 +272,27 @@ extern "C" CROMol parseMolBlob(char *data, int len) {
 }
 
 extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
-                               bool asQuery) {
+                               bool asQuery, bool sanitize, bool removeHs) {
   RWMol *mol = nullptr;
 
   try {
     if (!asQuery) {
-      mol = MolBlockToMol(data);
+      mol = MolBlockToMol(data, sanitize, removeHs);
+      if (mol && !sanitize) {
+        mol->updatePropertyCache(false);
+        unsigned int failedOp;
+        unsigned int ops = MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_PROPERTIES ^
+                           MolOps::SANITIZE_KEKULIZE;
+        MolOps::sanitizeMol(*mol, failedOp, ops);
+      }
     } else {
       mol = MolBlockToMol(data, false, false);
       if (mol != nullptr) {
         mol->updatePropertyCache(false);
         MolOps::setAromaticity(*mol);
-        MolOps::mergeQueryHs(*mol);
+        if (removeHs) {
+          MolOps::mergeQueryHs(*mol);
+        }
       }
     }
   } catch (...) {
@@ -738,6 +747,13 @@ extern "C" const char *MolInchi(CROMol i, const char *opts) {
   std::string inchi = "InChI not available";
 #ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
+  // Older versions of the InChI code returned an empty string for molecules
+  // without atoms. This changed with 1.07, but we'll keep doing an empty string
+  // here
+  if (!im->getNumAtoms()) {
+    inchi = "";
+    return strdup(inchi.c_str());
+  }
   ExtraInchiReturnValues rv;
   try {
     std::string sopts = "/AuxNone /WarnOnEmptyStructure";
@@ -759,6 +775,13 @@ extern "C" const char *MolInchiKey(CROMol i, const char *opts) {
   std::string key = "InChI not available";
 #ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
+  // Older versions of the InChI code returned an empty string for molecules
+  // without atoms. This changed with 1.07, but we'll keep doing an empty string
+  // here
+  if (!im->getNumAtoms()) {
+    key = "";
+    return strdup(key.c_str());
+  }
   ExtraInchiReturnValues rv;
   try {
     std::string sopts = "/AuxNone /WarnOnEmptyStructure";
@@ -1032,11 +1055,7 @@ extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
     n = iter->first % numInts;
 
     if (iterV > INTRANGEMAX) {
-#if 0
-        elog(ERROR, "sparse fingerprint is too big, increase INTRANGEMAX in rdkit.h");
-#else
       iterV = INTRANGEMAX;
-#endif
     }
 
     if (s[n].low == 0 || s[n].low > iterV) {

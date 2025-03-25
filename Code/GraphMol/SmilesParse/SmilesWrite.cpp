@@ -566,13 +566,6 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       }
     }
 
-#if 0
-    std::cout << "----------------------------" << std::endl;
-    std::cout << "MolToSmiles:" << std::endl;
-    tmol->debugMol(std::cout);
-    std::cout << "----------------------------" << std::endl;
-#endif
-
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively
@@ -745,13 +738,21 @@ std::string MolToCXSmiles(const ROMol &romol,
       if (!canHaveDirection(*bond)) {
         continue;
       }
-      if (bond->getBondDir() != Bond::BondDir::NONE) {
-        bond->setBondDir(Bond::BondDir::NONE);
-      }
-      unsigned int cfg;
-      if (bond->getPropIfPresent<unsigned int>(
-              common_properties::_MolFileBondCfg, cfg)) {
-        bond->clearProp(common_properties::_MolFileBondCfg);
+
+      // we want to preserve wiggly bond information for discovery by
+      // CXSmilesOps::get_bond_config_block
+      using RDKit::common_properties::_MolFileBondCfg;
+      // this is a wiggly bond
+      if (auto cfg = 0u;
+          bond->getPropIfPresent<unsigned int>(_MolFileBondCfg, cfg) &&
+          cfg == 2) {
+        bond->setBondDir(Bond::BondDir::UNKNOWN);
+      } else {
+        if (bond->getBondDir() != Bond::BondDir::NONE) {
+          bond->setBondDir(Bond::BondDir::NONE);
+        }
+
+        bond->clearProp(_MolFileBondCfg);
       }
     }
   }
