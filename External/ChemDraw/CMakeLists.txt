@@ -87,6 +87,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
         message("== ChemDraw exporting all symbols")
         set_target_properties(ChemDraw PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+	ADD_DEFINITIONS("-DCORE_CHEMISTRY_API_DLL_BUILD")
     endif()
     
     if(MSVC)
