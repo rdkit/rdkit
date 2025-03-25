@@ -303,8 +303,9 @@ void fixReactantTemplateAromaticity(ChemicalReaction &rxn) {
     auto *rw = dynamic_cast<RWMol *>(it->get());
     if (rw) {
       sanitizeMol(*rw, ops, MolOps::SANITIZE_SETAROMATICITY);
-    } else
+    } else {
       PRECONDITION(rw, "Oops, not really a RWMol?");
+    }
   }
 }
 
@@ -361,8 +362,9 @@ void fixHs(ChemicalReaction &rxn) {
     auto *rw = dynamic_cast<RWMol *>(it->get());
     if (rw) {
       MolOps::mergeQueryHs(*rw, mergeUnmappedOnly);
-    } else
+    } else {
       PRECONDITION(rw, "Oops, not really an RWMol?");
+    }
   }
 }
 
@@ -372,8 +374,9 @@ void adjustTemplates(const MOL_SPTR_VECT &templates,
     auto *rw = dynamic_cast<RWMol *>(templ.get());
     if (rw) {
       adjustQueryProperties(*rw, &params);
-    } else
+    } else {
       PRECONDITION(rw, "Oops, not really a RWMol?");
+    }
   }
 }
 void sanitizeRxn(ChemicalReaction &rxn, unsigned int &operationsThatFailed,
