@@ -301,10 +301,9 @@ int testMolSup() {
     std::shared_ptr<ROMol> nmol;
     nmol.reset(maesup.next());
     const Atom *atom = nmol->getAtomWithIdx(0);
-    auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
-    TEST_ASSERT(info->getResidueName() == "ARG ");
-    TEST_ASSERT(info->getChainId() == "A");
-    TEST_ASSERT(info->getResidueNumber() == 5);
+    TEST_ASSERT(getResidueName(atom) == "ARG ");
+    TEST_ASSERT(getChainId(atom) == "A");
+    TEST_ASSERT(getResidueNumber(atom) == 5);
   }
 
 #endif
