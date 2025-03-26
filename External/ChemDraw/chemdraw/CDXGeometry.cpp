@@ -36,7 +36,9 @@
 
 #include <ostream>
 
+#if TARGET_OS_WIN32
 #pragma warning( disable : 4786 ) // identifier was truncated to 'number' characters in the debug information
+#endif
 
 #include "CDXStdObjects.h"
 #include "XMLPutEnum.h"

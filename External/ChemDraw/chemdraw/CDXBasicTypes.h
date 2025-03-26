@@ -36,7 +36,9 @@
 #pragma once
 
 // disable identifier too long warning
+#if TARGET_OS_WIN32
 #pragma warning (disable: 4786)
+#endif
 
 // IN VC++ 6.0, INT32 and UINT32 are pre-defined in basetsd.h.
 // For other compilers, we need to define them.

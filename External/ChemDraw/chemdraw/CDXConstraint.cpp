@@ -42,7 +42,9 @@
 #include <sstream>
 #include <stdexcept>
 
+#if TARGET_OS_WIN32
 #pragma warning( disable : 4786 ) // identifier was truncated to 'number' characters in the debug information
+#endif
 
 XMLPutEnum<CDXConstraintType>::Value sXMLConstraintTypeValues[] = {
 	{kCDXConstraintType_Undefined,			"Undefined"},

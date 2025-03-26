@@ -37,8 +37,10 @@
 // This file contains a simple test function which reads a CDX stream that's already
 // in memory, and turns around and writes it out to a stdio file.
 
+#if TARGET_OS_WIN32
 // Don't warn about truncation of decorated names
 #pragma warning (disable:4786)
+#endif
 
 #include "CDXStdObjects.h"
 #include "CDXIO.h"

@@ -36,6 +36,7 @@
 
 #pragma once 
 
+#if TARGET_OS_WIN32
 // Don't warn about truncation of long symbols
 #pragma warning (disable:4786)
 // Don't warn about unknown pragmas
@@ -44,6 +45,7 @@
 #pragma warning (disable:4310)
 // turn off warnings about unreferenced formal parameter
 #pragma warning (disable:4100)
+#endif
 
 #include "CoreChemistryAPI.h"
 //#include "cs_univDefs.h"
@@ -472,7 +474,10 @@ CDXRectangle StringToCDXRectangle(const std::string &s);
 // A CDXPropRep is stored for objects which represent properties of other objects.
 // For example, a charge object might represent a charge property on a node.
 // This is necessary so that the node doesn't try to display the charge itself.
+#if TARGET_OS_WIN32
 #pragma mark
+#endif
+
 class CDXPropRep
 {
 public:

@@ -120,9 +120,10 @@ CDXObjectTag::CDXObjectTag (const CDXObjectTag &src)
     }
 }
 
+#if TARGET_OS_WIN32
 #pragma warning( push )
 #pragma warning( disable : 4800 )	// conversion-to-bool inefficiency warning
-
+#endif
 
 // Take a CDX input stream and create a CDX structure
 void CDXObjectTag::StoreAttribute(CDXDataSource &src_arg, CDXTag attribTag_arg, size_t size_arg)
@@ -258,9 +259,11 @@ void CDXObjectTag::XMLStoreAttribute(CDXTag attribTag_arg, const std::string &at
 	}
 
 }
-	
+
+#if TARGET_OS_WIN32
 #pragma warning( pop )
-	
+#endif
+
 // Take a CDX structure and create a CDX output stream.
 void CDXObjectTag::WriteAttributesTo(CDXDataSink &sink_arg) const {
 	

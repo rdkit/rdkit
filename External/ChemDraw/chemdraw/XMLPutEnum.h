@@ -36,10 +36,12 @@
 
 #pragma once
 
+#if TARGET_OS_WIN32
 // Don't warn about truncation of long symbols
 #pragma warning (disable:4786)
 // Don't warn about unknown pragmas
 #pragma warning (disable:4068)
+#endif
 
 #include <algorithm>
 #include <functional>

@@ -78,7 +78,9 @@ class CDXDocumentProperty;
 CORE_CHEMISTRY_API void CDXAddStandardFactories(CDXObjectFactory &);
 
 // Don't warn about unknown pragmas
+#if TARGET_OS_WIN32
 #pragma warning (disable:4068)
+#endif
 
 typedef UINT16 CDXColorIndex;
 

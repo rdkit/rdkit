@@ -13,6 +13,8 @@
 #pragma GCC diagnostic ignored "-Wmacro-redefined"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#pragma GCC diagnostic ignored "-Wall"
+#pragma GCC diagnostic ignored "-Wextra"
 #if defined(__apple_build_version__)
 #if __apple_build_version__ >= 7000072
 #pragma GCC diagnostic ignored "-Wunused-local-typedef"
@@ -35,7 +37,8 @@
 //#pragma GCC diagnostic ignored "-Wmacro-redefined"
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma GCC diagnostic ignored "-Wignored-qualifiers"
-
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic ignored "-Wall"
 #if (__GNUC__ > 4 || __GNUC_MINOR__ > 7)
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
 #endif

@@ -35,9 +35,10 @@
 
 #pragma once
 
+#if TARGET_OS_WIN32
 // turn off warnings of size_t to int.
 #pragma warning (disable : 4267)
-
+#endif
 
 //#include "cs_assert.h"
 #include <algorithm>
