@@ -75,9 +75,7 @@ class RDKIT_MOLDRAW2D_EXPORT DrawText {
 
   // these are only relevant for the FreeType DrawText classes.
   virtual std::string getFontFile() const { return ""; }
-  virtual void setFontFile(const std::string &font_file) {
-    RDUNUSED_PARAM(font_file);
-  }
+  virtual void setFontFile([[maybe_unused]] const std::string &font_file) {}
 
   //! using the current scale, work out the size of the label
   /*!
