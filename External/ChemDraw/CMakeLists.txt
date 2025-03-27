@@ -176,21 +176,22 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
         LINK_LIBRARIES RDChemDrawLib ChemDraw expat SubstructMatch ChemReactions
 	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
-
-  if(MSVC)
+  if(RDK_BUILD_CPP_TESTS)
+    if(MSVC and RDK_BUILD_CPP)
     # The nanotubes blow up the smiles writer stack on MSVC so increase it
     set_target_properties(chemdraw6KCatchTest PROPERTIES LINK_FLAGS
                    "/STACK:4194304")
 
     # this sets everything I think
     # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /STACK:4194304")
-  else()
+    else()
       #target_compile_options(chemdrawCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)
       #target_compile_options(chemdrawChiralCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)
       #target_compile_options(chemdrawReactionsCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)
       #target_compile_options(chemdraw3DCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)
       #target_compile_options(chemdraw6KCatchTest PRIVATE -w -Wno-unknown-pragmas -Wno-error)  
-  endif(MSVC)
+    endif(MSVC)
+  endif(RDK_BUILD_CPP_TESTS)
 
   if(RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)
