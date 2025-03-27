@@ -9,6 +9,7 @@ steps:
     conda create --name rdkit_build $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
+        libstdcxx-ng \
         numpy pillow eigen pandas=2.0 matplotlib-base=3.7 \
         qt=5 cairo
     conda activate rdkit_build
