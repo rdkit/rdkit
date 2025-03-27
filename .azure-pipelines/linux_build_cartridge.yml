@@ -1,7 +1,8 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get install -y postgresql-common postgresql postgresql-server-dev-all
+    sudo apt-get install -y postgresql-common postgresql-14 postgresql-server-dev-14
+    sudo systemctl start postgresql.service
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
     conda config --set always_yes yes --set changeps1 no
