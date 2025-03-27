@@ -468,6 +468,14 @@ if(RDK_USE_BOOST_IOSTREAMS)
     target_link_libraries(rdkit_base INTERFACE ${zlib_lib})
 endif()
 
+if(RDK_USE_BOOST_PROGRAM_OPTIONS)
+    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system program_options REQUIRED CONFIG)
+    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
+    target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_PROGRAM_OPTIONS)
+    if(NOT Boost_USE_STATIC_LIBS)
+      target_compile_definitions(rdkit_base INTERFACE -DBOOST_PROGRAM_OPTIONS_DYN_LINK)
+    endif()
+endif()
 
 # set the boost include directories and linkage:
 target_include_directories(rdkit_base INTERFACE
