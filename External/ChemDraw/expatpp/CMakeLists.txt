@@ -33,14 +33,34 @@ target_include_directories(expat
        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/src_pp>
        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
        )
+       
+if(RDK_INSTALL_STATIC_LIBS)
+  target_include_directories(expat_static
+     PRIVATE
+       ${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/src_pp
+     PUBLIC
+       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/expat/lib>
+       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/expatpp-code-r6-trunk/src_pp>
+       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+       )
+endif(RDK_INSTALL_STATIC_LIBS)
 
-   
 if(MSVC)
-  message("== expat exporting all symbols ")
+  # == expat exporting all symbols
   target_compile_definitions(expat PRIVATE "XMLIMPORT=__declspec(dllexport)")
   set_target_properties(expat PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-elseif(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_EMCC OR CMAKE_COMPILER_IS_GNUCXX)
+  
+  # turn off warnings as errors, this throws a bunch
+  target_compile_options(expat PRIVATE "/W0")
+endif()
+
+if(CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_EMCC OR CMAKE_COMPILER_IS_GNUCXX)
+  message("== turn off errors")
+  # turn off warnings as errors, this throws a bunch
   target_compile_options(expat PRIVATE "-Wno-error")
-endif(MSVC)
+  if(RDK_INSTALL_STATIC_LIBS)
+    target_compile_options(expat_static PRIVATE "-Wno-error")
+  endif(RDK_INSTALL_STATIC_LIBS)   
+endif()
 
 install(TARGETS expat DESTINATION ${RDKit_LibDir})
