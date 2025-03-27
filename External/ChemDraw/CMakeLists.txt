@@ -177,7 +177,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 	FileParsers SmilesParse CIPLabeler ChemTransforms GraphMol)
 
   if(RDK_BUILD_CPP_TESTS)
-    if(MSVC and RDK_BUILD_CPP)
+    if(MSVC)
     # The nanotubes blow up the smiles writer stack on MSVC so increase it
     set_target_properties(chemdraw6KCatchTest PROPERTIES LINK_FLAGS
                    "/STACK:4194304")
