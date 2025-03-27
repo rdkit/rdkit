@@ -22,7 +22,7 @@ namespace RDKit::SynthonSpaceSearch {
 class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
  public:
   explicit SearchResults() : d_maxNumResults(0) {}
-  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, size_t maxNumRes,
+  SearchResults(std::vector<std::unique_ptr<ROMol>> &&mols, std::uint64_t maxNumRes,
                 bool timedOut, bool cancelled);
   SearchResults(const SearchResults &other);
   SearchResults(SearchResults &&other) = default;
@@ -39,7 +39,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
    *
    * @return int
    */
-  size_t getMaxNumResults() const { return d_maxNumResults; }
+  std::uint64_t getMaxNumResults() const { return d_maxNumResults; }
   /*!
    * Returns the hit molecules from the search. Not necessarily all
    * those possible, just the maximum number requested.
@@ -71,7 +71,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SearchResults {
   // filled in then if needed, empty otherwise.
   std::unordered_set<std::string> d_molNames;
 
-  size_t d_maxNumResults;
+  std::uint64_t d_maxNumResults;
   bool d_timedOut{false};
   bool d_cancelled{false};
 };
