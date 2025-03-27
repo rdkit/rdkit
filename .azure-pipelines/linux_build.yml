@@ -8,9 +8,9 @@ steps:
     conda info -a
     conda create --name rdkit_build $(python) cmake \
         boost-cpp=$(boost_version) \
-        py-boost=$(boost_version) \
+        boost=$(boost_version) \
         numpy pillow eigen pandas=2.0 matplotlib-base=3.7 \
-        qt=5.9.7 cairo
+        qt=5 cairo
     conda activate rdkit_build
     conda install -c conda-forge pytest nbval ipykernel>=6.0
   displayName: Setup build environment
