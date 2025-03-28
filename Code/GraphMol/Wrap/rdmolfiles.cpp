@@ -171,10 +171,14 @@ ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-RDKit::ROMol *MolFromSCSRBlock(
-    python::object imolBlock, bool sanitize, bool removeHs,
-    RDKit::v2::FileParsers::MolFromSCSRParams molFromSCSRParams) {
-  std::istringstream inStream(pyObjectToString(imolBlock));
+RDKit::ROMol *MolFromSCSRBlock(const std::string &molBlock, bool sanitize,
+                               bool removeHs, python::object pyParams) {
+  RDKit::v2::FileParsers::MolFromSCSRParams scsrParams;
+  if (pyParams) {
+    scsrParams =
+        python::extract<RDKit::v2::FileParsers::MolFromSCSRParams>(pyParams);
+  }
+  std::istringstream inStream(molBlock);
   unsigned int line = 0;
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
@@ -182,7 +186,7 @@ RDKit::ROMol *MolFromSCSRBlock(
     params.removeHs = removeHs;
     params.strictParsing = false;
     auto mol = RDKit::v2::FileParsers::MolFromSCSRDataStream(
-        inStream, line, params, molFromSCSRParams);
+        inStream, line, params, scsrParams);
 
     return static_cast<ROMol *>(mol.release());
 
@@ -193,16 +197,20 @@ RDKit::ROMol *MolFromSCSRBlock(
   return static_cast<ROMol *>(nullptr);
 }
 
-RDKit::ROMol *MolFromSCSRFile(
-    const std::string &molFilename, bool sanitize, bool removeHs,
-    RDKit::v2::FileParsers::MolFromSCSRParams molFromSCSRParams) {
+RDKit::ROMol *MolFromSCSRFile(const std::string &molFilename, bool sanitize,
+                              bool removeHs, python::object pyParams) {
+  RDKit::v2::FileParsers::MolFromSCSRParams scsrParams;
+  if (pyParams) {
+    scsrParams =
+        python::extract<RDKit::v2::FileParsers::MolFromSCSRParams>(pyParams);
+  }
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
     auto mol = RDKit::v2::FileParsers::MolFromSCSRFile(molFilename, params,
-                                                       molFromSCSRParams);
+                                                       scsrParams);
 
     return static_cast<ROMol *>(mol.release());
 
@@ -1178,12 +1186,36 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
     \n RETURNS :\n\
     \n a Mol object, None on failure.\n\
     \n ";
-  python::def(
-      "MolFromSCSRBlock", RDKit::MolFromSCSRBlock,
-      (python::arg("molBlock"), python::arg("sanitize") = true,
-       python::arg("removeHs") = true, python::arg("molFromSCSRParams")),
-      docString.c_str(),
-      python::return_value_policy<python::manage_new_object>());
+  python::def("MolFromSCSRBlock", RDKit::MolFromSCSRBlock,
+              (python::arg("molBlock"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true,
+               python::arg("molFromSCSRParams") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
+
+  docString =
+      "Construct a molecule from an SCSR Mol block.\n\n\
+      ARGUMENTS:\n\
+    \n\
+        - filename: string containing the SCSR filename\n\
+    \n\
+        - sanitize: (optional) toggles sanitization of the molecule.\n\
+          Defaults to True.\n\
+    \n\
+        - removeHs: (optional) toggles removing hydrogens from the molecule.\n\
+          This only make sense when sanitization is done.\n\
+          Defaults to true.\n\
+    \n\
+        - molFromSCSRParams : MolFromSCSRParams to control conversion\n\
+    \n RETURNS :\n\
+    \n a Mol object, None on failure.\n\
+    \n ";
+  python::def("MolFromSCSRFile", RDKit::MolFromSCSRFile,
+              (python::arg("filename"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true,
+               python::arg("molFromSCSRParams") = python::object()),
+              docString.c_str(),
+              python::return_value_policy<python::manage_new_object>());
 
   docString =
       "Returns a Mol block for a molecule\n\
