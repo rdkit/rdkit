@@ -5,7 +5,8 @@ endif()
 
 rdkit_library(FileParsers
     CDXMLParser.cpp
-    Mol2FileParser.cpp MolFileParser.cpp
+    Mol2FileParser.cpp MolFileParser.cpp 
+    SCSRMolFileParser.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
@@ -73,6 +74,9 @@ rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(macromolsCatchTest macromols_catch.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp
