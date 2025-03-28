@@ -5,11 +5,13 @@ steps:
     sudo chown -R ${USER} ${CONDA}
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
+    conda config --set channel_priority strict
+    conda config --add channels conda-forge
+    conda config --set solver libmamba
     conda info -a
     conda create --name rdkit_build $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
-        libstdcxx-ng \
         numpy pillow eigen pandas=2.0 matplotlib-base=3.7 \
         qt=5 cairo
     conda activate rdkit_build
