@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX Boolean Data Types</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX Boolean Data Types</h2>
+
+<h3><a name="CDXBoolean">CDXBoolean:</a></h3>
+<p><b>In CDX files</b>, an <a href="CDXNumeric.htm">INT8</a> value representing <tt>True</tt> or <tt>Yes</tt> if non-zero, and <tt>False</tt> or <tt>No</tt> if zero.</p>
+
+<p><b>In CDXML files</b>, a enumerated value that may be either <tt>yes</tt> or <tt>no</tt>.</p>
+
+<p>Note that this data type actually has a third implied value, '<tt>unknown</tt>'.  Since CDX and CDXML are both tagged formats, any given property may be omitted altogether from the file.  A missing property of this type cannot be assumed to be either true or false.</p>
+
+<h3><a name="CDXBooleanImplied">CDXBooleanImplied:</a></h3>
+<p><b>In CDX files</b>, an <a href="CDXNumeric.htm">INT8</a> value representing <tt>True</tt> or <tt>Yes</tt> if present, and <tt>False</tt> or <tt>No</tt> if absent.<p>
+
+<p>Note that properties of this type have zero length in CDX files: the only thing that matters is whether the property is or isn't present in the file.  In contrast to the CDXBoolean data type (above), if a property of this type is missing from the CDX file, its value <i>must</i> be assumed to be <tt>False</tt> or <tt>No</tt>.</p>
+
+<p><b>In CDXML files</b>, a enumerated value that may be either <tt>yes</tt> or <tt>no</tt>.</p>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

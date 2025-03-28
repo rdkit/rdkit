@@ -1,0 +1,31 @@
+<html>
+<head>
+<title>CDX Format Specification: Atom_RestrictSubstituentsUpTo Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Atom_RestrictSubstituentsUpTo Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">SubstituentsUpTo   </td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Atom_RestrictSubstituentsUpTo</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0435</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">UINT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Node.htm">kCDXObj_Node</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Indicates that substitution is restricted to no more than the specified value.</p>
+<p>A substituent is defined as some other non-hydrogen node bonded to this one. It is strictly a count of attached bonds (to non-hydrogen atoms), and <em>not</em> a sum of bond orders. This definition of &quot;substituent&quot;  exactly matches the definition used by ISIS.</p>
+
+<p>Note that it is possible to assign impossible values, for example by saying that one of the atoms in benzene has no more than one substituent (when it already has two, by nature of being part of the benzene ring). Impossibilities of that sort are not forbidden by this specification, but it is assumed that such a structure would match nothing else if posed as a structure query in some database.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The node is treated as unrestricted in terms of substitution.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

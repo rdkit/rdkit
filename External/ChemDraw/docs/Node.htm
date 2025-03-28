@@ -1,0 +1,938 @@
+<html>
+<head>
+<title>CDX Format Specification: Node Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Node Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">n</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_Node</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8004</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Fragment.htm">kCDXObj_Fragment</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Node object is the basic building block of CDX chemical objects. At its most basic level, a Node is &quot;a thing at the end of a bond.&quot; Most commonly, a Node will represent a single atom, but it may have other chemical meanings according to the value of the <a href="properties/Node_Type.htm">kCDXProp_Node_Type</a> property.</p>
+
+<p>When looking at a Node, there are really two places to find most types of information. Consider a node with the atom label (a contained <a href="Text.htm">Text</a> object) CH<sub>2</sub>. The Text object contains the three characters 'C', 'H', and '2'. You could take the Text object itself and -- with no other information -- figure out that this node represents a carbon atom and two attached hydrogens. For such a simple case, that sort of analysis is easy, but things can get very complicated very quickly.</p>
+
+<p>For that reason, ChemDraw will always <em>write</em> redundant information. It is always safe to ignore the label entirely when interpreting ChemDraw-generated files. Instead, you can find out that this node is a carbon by looking at the <a href="properties/Node_Element.htm">kCDXProp_Node_Element</a> property, and you can find the number of attached hydrogens by looking at the <a href="properties/Atom_NumHydrogens.htm">kCDXProp_Atom_NumHydrogens</a> property.
+<p>All Nodes must be contained in <a href="Fragment.htm">Fragment</a> objects; they cannot be stored directly in <a href="Page.htm">Page</a> or <a href="Fragment.htm">Fragment</a> objects. This redundancy extends across all node types.</p>
+
+<p>When <em>reading</em> files, ChemDraw does two things. If a contained Text object is present, ChemDraw uses that object as is as the Node's label, and ignores the chemical properties entirely. If a Text object is not present, ChemDraw then looks to the chemical properties and creates an atom label on the fly, if appropriate. Accordingly, programs writing their own CDX files are welcome to write either a Text object or a collection of chemical properties, whichever is most convenient. Of course, they can write out both, too, just like ChemDraw does -- but they do not have to do so.</p>
+
+<p>Most Node objects have no required properties or objects, but nodes representing multicenter attachments or variable attachment points require the <a href="properties/Node_Attachments.htm">kCDXProp_Node_Attachments</a> property.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8003</td>
+<td><a href="Fragment.htm">kCDXObj_Fragment</a></font></b></td>
+<td>fragment</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A collection of nodes and their connectivity (bonds).</td>
+</tr>
+<tr>
+<td>0x8006</td>
+<td><a href="Text.htm">kCDXObj_Text</a></font></b></td>
+<td>t</td>
+</tr>
+<tr>
+<td></td><td colspan="3">An arbitrary block of (possibly styled) text.</td>
+</tr>
+<tr>
+<td>0x8011</td>
+<td><a href="ObjectTag.htm">kCDXObj_ObjectTag</a></font></b></td>
+<td>objecttag</td>
+</tr>
+<tr>
+<td></td><td colspan="3">Arbitrarily named property, one or more of which can be attached to any ChemDraw object.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000A</td>
+<td><a href="properties/ZOrder.htm">kCDXProp_ZOrder</a></td>
+<td>Z</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Back-to-front ordering index in 2D drawing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000F</td>
+<td><a href="properties/IgnoreWarnings.htm">kCDXProp_IgnoreWarnings</a></td>
+<td>IgnoreWarnings</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether chemical warnings should be suppressed on this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0010</td>
+<td><a href="properties/ChemicalWarning.htm">kCDXProp_ChemicalWarning</a></td>
+<td>Warning</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A warning concerning possible chemical problems with this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0011</td>
+<td><a href="properties/Visible.htm">kCDXProp_Visible</a></td>
+<td>Visible       </td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The object is visible if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0200</td>
+<td><a href="properties/2DPosition.htm">kCDXProp_2DPosition</a></td>
+<td>p</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 2D location (in the order of vertical and horizontal locations) of an object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0201</td>
+<td><a href="properties/3DPosition.htm">kCDXProp_3DPosition</a></td>
+<td>xyz</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 3D location (in the order of X-, Y-, and Z-locations in right-handed coordinate system) of an object in CDX coordinate units. The precise meaning of this attribute varies depending on the type of object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0301</td>
+<td><a href="properties/ForegroundColor.htm">kCDXProp_ForegroundColor</a></td>
+<td>color</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The foreground color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0302</td>
+<td><a href="properties/BackgroundColor.htm">kCDXProp_BackgroundColor</a></td>
+<td>bgcolor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The background color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0400</td>
+<td><a href="properties/Node_Type.htm">kCDXProp_Node_Type</a></td>
+<td>NodeType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of a node object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0401</td>
+<td><a href="properties/Node_LabelDisplay.htm">kCDXProp_Node_LabelDisplay</a></td>
+<td>LabelDisplay</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The characteristics of node label display.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0402</td>
+<td><a href="properties/Node_Element.htm">kCDXProp_Node_Element</a></td>
+<td>Element</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The atomic number of the atom representing this node.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0403</td>
+<td><a href="properties/Atom_ElementList.htm">kCDXProp_Atom_ElementList</a></td>
+<td>ElementList</td>
+<td><a href="DataType/CDXElementList.htm">CDXElementList</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A list of atomic numbers.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0404</td>
+<td><a href="properties/Atom_Formula.htm">kCDXProp_Atom_Formula</a></td>
+<td>Formula</td>
+<td><a href="DataType/CDXFormula.htm">CDXFormula</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The composition of a node representing a fragment whose composition is known, but whose connectivity is not. For example, C<sub>4</sub>H<sub>9</sub> represents a mixture of the 4 butyl isomers.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0420</td>
+<td><a href="properties/Atom_Isotope.htm">kCDXProp_Atom_Isotope</a></td>
+<td>Isotope</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The absolute isotopic mass of an atom (2 for deuterium, 14 for carbon-14).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0421</td>
+<td><a href="properties/Atom_Charge.htm">kCDXProp_Atom_Charge</a></td>
+<td>Charge</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The atomic charge of an atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0422</td>
+<td><a href="properties/Atom_Radical.htm">kCDXProp_Atom_Radical</a></td>
+<td>Radical</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The atomic radical attribute of an atom.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0423</td>
+<td><a href="properties/Atom_RestrictFreeSites.htm">kCDXProp_Atom_RestrictFreeSites</a></td>
+<td>FreeSites</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that up to the specified number of additional substituents are permitted on this atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0424</td>
+<td><a href="properties/Atom_RestrictImplicitHydrogens.htm">kCDXProp_Atom_RestrictImplicitHydrogens</a></td>
+<td>ImplicitHydrogens</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies that implicit hydrogens are not allowed on this atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0425</td>
+<td><a href="properties/Atom_RestrictRingBondCount.htm">kCDXProp_Atom_RestrictRingBondCount</a></td>
+<td>RingBondCount</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of ring bonds attached to an atom.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0426</td>
+<td><a href="properties/Atom_RestrictUnsaturatedBonds.htm">kCDXProp_Atom_RestrictUnsaturatedBonds</a></td>
+<td>UnsaturatedBonds</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates whether unsaturation should be present or absent.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0427</td>
+<td><a href="properties/Atom_RestrictRxnChange.htm">kCDXProp_Atom_RestrictRxnChange</a></td>
+<td>RxnChange</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+If present, signifies that the reaction change of an atom must be as specified.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0428</td>
+<td><a href="properties/Atom_RestrictRxnStereo.htm">kCDXProp_Atom_RestrictRxnStereo</a></td>
+<td>RxnStereo</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The change of stereochemistry of an atom during a reaction.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0429</td>
+<td><a href="properties/Atom_AbnormalValence.htm">kCDXProp_Atom_AbnormalValence</a></td>
+<td>AbnormalValence</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies that an abnormal valence for an atom is permitted.
+</td>
+</tr>
+
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x042B</td>
+<td><a href="properties/Atom_NumHydrogens.htm">kCDXProp_Atom_NumHydrogens</a></td>
+<td>NumHydrogens</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of (explicit) hydrogens in a labeled atom consisting of one heavy atom and (optionally) the symbol H (e.g., CH<sub>3</sub>).
+</td>
+</tr>
+
+
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x042E</td>
+<td><a href="properties/Atom_HDot.htm">kCDXProp_Atom_HDot</a></td>
+<td>HDot</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies the presence of an implicit hydrogen with stereochemistry specified equivalent to an explicit H atom with a wedged bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x042F</td>
+<td><a href="properties/Atom_HDash.htm">kCDXProp_Atom_HDash</a></td>
+<td>HDash</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies the presence of an implicit hydrogen with stereochemistry specified equivalent to an explicit H atom with a hashed bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0430</td>
+<td><a href="properties/Atom_Geometry.htm">kCDXProp_Atom_Geometry</a></td>
+<td>Geometry</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The geometry of the bonds about this atom.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0431</td>
+<td><a href="properties/Atom_BondOrdering.htm">kCDXProp_Atom_BondOrdering</a></td>
+<td>BondOrdering       </td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An ordering of the bonds to this node, used for stereocenters, fragments, and named alternative groups with more than one attachment.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0432</td>
+<td><a href="properties/Node_Attachments.htm">kCDXProp_Node_Attachments</a></td>
+<td>Attachments        </td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArrayWithCounts</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for multi- and variable attached nodes.</font> For multicenter attachment nodes or variable attachment nodes, a list of IDs of the nodes which are multiply or variably attached to this node.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0433</td>
+<td><a href="properties/Atom_GenericNickname.htm">kCDXProp_Atom_GenericNickname</a></td>
+<td>GenericNickname    </td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The name of the generic nickname.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0434</td>
+<td><a href="properties/Atom_AltGroupID.htm">kCDXProp_Atom_AltGroupID</a></td>
+<td>AltGroupID         </td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The ID of the alternative group object that describes this node.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0435</td>
+<td><a href="properties/Atom_RestrictSubstituentsUpTo.htm">kCDXProp_Atom_RestrictSubstituentsUpTo</a></td>
+<td>SubstituentsUpTo   </td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that substitution is restricted to no more than the specified value.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0436</td>
+<td><a href="properties/Atom_RestrictSubstituentsExactly.htm">kCDXProp_Atom_RestrictSubstituentsExactly</a></td>
+<td>SubstituentsExactly</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that exactly the specified number of substituents must be present.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0437</td>
+<td><a href="properties/Atom_CIPStereochemistry.htm">kCDXProp_Atom_CIPStereochemistry</a></td>
+<td>AS</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The node's absolute stereochemistry according to the Cahn-Ingold-Prelog system.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0438</td>
+<td><a href="properties/Atom_Translation.htm">kCDXProp_Atom_Translation</a></td>
+<td>Translation</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Provides for restrictions on whether a given node may match other more- or less-general nodes.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0439</td>
+<td><a href="properties/Atom_AtomNumber.htm">kCDXProp_Atom_AtomNumber</a></td>
+<td>AtomNumber</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Atom number, as text.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043A</td>
+<td><a href="properties/Atom_ShowQuery.htm">kCDXProp_Atom_ShowQuery</a></td>
+<td>ShowAtomQuery</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the query indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043B</td>
+<td><a href="properties/Atom_ShowStereo.htm">kCDXProp_Atom_ShowStereo</a></td>
+<td>ShowAtomStereo</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the stereochemistry indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043C</td>
+<td><a href="properties/Atom_ShowAtomNumber.htm">kCDXProp_Atom_ShowAtomNumber</a></td>
+<td>ShowAtomNumber</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the atom number if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043D</td>
+<td><a href="properties/Atom_LinkCountLow.htm">kCDXProp_Atom_LinkCountLow</a></td>
+<td>LinkCountLow</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Low end of repeat count for link nodes.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043E</td>
+<td><a href="properties/Atom_LinkCountHigh.htm">kCDXProp_Atom_LinkCountHigh</a></td>
+<td>LinkCountHigh</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+High end of repeat count for link nodes.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043F</td>
+<td><a href="properties/Atom_IsotopicAbundance.htm">kCDXProp_Atom_IsotopicAbundance</a></td>
+<td>IsotopicAbundance</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Isotopic abundance of this atom's isotope.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0440</td>
+<td><a href="properties/Atom_ExternalConnectionType.htm">kCDXProp_Atom_ExternalConnectionType</a></td>
+<td>ExternalConnectionType</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Type of external connection, for atoms of type kCDXNodeType_ExternalConnectionPoint.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0441</td>
+<td><a href="properties/Atom_GenericList.htm">kCDXProp_Atom_GenericList</a></td>
+<td>GenericList</td>
+<td><a href="DataType/CDXGenericList.htm">CDXGenericList</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A list of generic nicknames.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0445</td>
+<td><a href="properties/Atom_ShowEnhancedStereo.htm">kCDXProp_Atom_ShowEnhancedStereo</a></td>
+<td>ShowAtomEnhancedStereo</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the enhanced stereochemistry indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0446</td>
+<td><a href="properties/Atom_EnhancedStereoType.htm">kCDXProp_Atom_EnhancedStereoType</a></td>
+<td>EnhancedStereoType</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of enhanced stereochemistry present on this atom.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0447</td>
+<td><a href="properties/Atom_EnhancedStereoGroupNum.htm">kCDXProp_Atom_EnhancedStereoGroupNum</a></td>
+<td>EnhancedStereoGroupNum</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The group number associated with Or and And enhanced stereochemistry types.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0807</td>
+<td><a href="properties/LineWidth.htm">kCDXProp_LineWidth</a></td>
+<td>LineWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default line width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080A</td>
+<td><a href="properties/LabelStyle.htm">kCDXProp_LabelStyle</a></td>
+<td>(not used)</td>
+<td><a href="DataType/CDXString.htm">CDXFontStyle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default style for atom labels..
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081A</td>
+<td><a href="properties/LabelStyleFont.htm">kCDXProp_LabelStyleFont</a></td>
+<td>LabelFont</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font family for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081C</td>
+<td><a href="properties/LabelStyleSize.htm">kCDXProp_LabelStyleSize</a></td>
+<td>LabelSize</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font size for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081E</td>
+<td><a href="properties/LabelStyleFace.htm">kCDXProp_LabelStyleFace</a></td>
+<td>LabelFace</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font style for atom labels.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

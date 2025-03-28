@@ -1,0 +1,253 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX Numeric Data Types</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX Numeric Data Types</h2>
+
+<h3>INT8, UINT8, INT16, UINT16, INT32, UINT32:</h3>
+<p>Signed and unsigned integers of 8-, 16-, or 32-bit size are commonly used as the values of CDX attributes.</p>
+
+<p><b>In CDX files</b>, byte order is Windows byte order (little-endian).</p>
+
+<p>In practice, the size of an integer value in a CDX file is self-documenting since every CDX value is prefixed by the size of that value, in bytes.  An integer value stored in 1 byte must be an INT8 (or UNIT8); a similar value stored in 2 bytes must be an INT16 (or UINT16), and when stored in 4 bytes it must be an INT32 (or UINT32).  A flexible CDX file format interpreter should not be hardcoded to expect, for example, an INT16 value in a given field.  Rather, it should look at the size of the field and treat the value as an INT8, INT16, or IN32 as appropriate.  Under no circumstances should the interpreter read past the end of a field that is shorter than expected, nor should it ever start reading the next attribute too early if the previous attribute is longer than expected.</p>
+
+<p>ChemDraw itself is flexible in reading the size of integer values in CDX files as described above. However, programs that produce CDX files should try to honor the data types described in this specification, so that those CDX files can be read by other programs that might not be flexible.</p>
+ 
+<p><b>In CDXML files</b>, integers are written as an alphanumeric string representing the number.</p>
+
+<p>Note also that some properties that are stored as a numeric value in CDX files are instead stored as an enumerated type (using an alphanumeric string) in CDXML files.</p>
+
+<h3>FLOAT64:</h3>
+<p>Unsigned floating-point value of 64-bit size, corresponding to a <tt>double</tt> value.</p>
+
+<p>In CDX files, byte order is Windows byte order (little-endian).  Floating-point numbers are written in CDXML files as an alphanumeric string representing the number.</p>
+
+<p><b>Examples:</b></p>
+
+<table cellspacing="3">
+<tr><td><b>Data Type</b></td><td align="right"><b>Value</b></td><td></td><td><b>CDX</b></td><td align="right"><b>CDXML</b></td></tr>
+<tr>
+<td valign="top">INT8</td>
+<td align="right"><pre>-1
+0
+10
+127</pre></td>
+<td><pre>:
+:
+:
+:</pre></td>
+<td><pre>FF
+00
+0A
+7F</pre></td>
+<td align="right"><pre>"-1"
+"0"
+"10"
+"127"</pre></td>
+</tr>
+<tr>
+
+<td valign="top">UINT8</td>
+<td align="right"><pre>0
+10
+127
+255</pre></td>
+<td><pre>:
+:
+:
+:</pre></td>
+<td><pre>00
+0A
+7F
+FF</pre></td>
+<td align="right"><pre>"0"
+"10"
+"127"
+"255"</pre></td>
+</tr>
+
+<td valign="top">INT16</td>
+<td align="right"><pre>-1
+0
+10
+255
+256
+1000
+32767</pre></td>
+<td><pre>:
+:
+:
+:
+:
+:
+:</pre></td>
+<td><pre>FF FF
+00 00
+0A 00
+FF 00
+00 01
+E8 03
+FF 7F</pre></td>
+<td align="right"><pre>"-1"
+"0"
+"10"
+"255"
+"256"
+"1000"
+"32767"</pre></td>
+</tr>
+<tr>
+
+<td valign="top">UINT16</td>
+<td align="right"><pre>0
+10
+255
+256
+1000
+32767
+65535</pre></td>
+<td><pre>:
+:
+:
+:
+:
+:
+:</pre></td>
+<td><pre>00 00
+0A 00
+FF 00
+00 01
+E8 03
+FF 7F
+FF FF</pre></td>
+<td align="right"><pre>"0"
+"10"
+"255"
+"256"
+"1000"
+"32767"
+"65535"</pre></td>
+</tr>
+<tr>
+
+<td valign="top">INT32</td>
+<td align="right"><pre>-1
+0
+10
+255
+256
+1000
+100000
+2147483647</pre></td>
+<td><pre>:
+:
+:
+:
+:
+:
+:
+:</pre></td>
+<td><pre>FF FF FF FF
+00 00 00 00
+0A 00 00 00
+FF 00 00 00
+00 01 00 00
+E8 03 00 00
+A0 86 01 00
+FF FF FF 7F</pre></td>
+<td align="right"><pre>"-1"
+"0"
+"10"
+"255"
+"256"
+"1000"
+"100000"
+"2147483647"</pre></td>
+</tr>
+<tr>
+
+<td valign="top">UINT32</td>
+<td align="right"><pre>0
+10
+255
+256
+1000
+100000
+4294967295</pre></td>
+<td><pre>:
+:
+:
+:
+:
+:
+:</pre></td>
+<td><pre>00 00 00 00
+0A 00 00 00
+FF 00 00 00
+00 01 00 00
+E8 03 00 00
+A0 86 01 00
+FF FF FF FF</pre></td>
+<td align="right"><pre>"0"
+"10"
+"255"
+"256"
+"1000"
+"100000"
+"4294967295"</pre></td>
+</tr>
+<tr>
+
+<td valign="top">FLOAT64</td>
+<td align="right"><pre>0.0
+10.0
+255.0
+256.0
+1000.0
+100000.0
+0.5
+0.001
+-123.45</pre></td>
+<td><pre>:
+:
+:
+:
+:
+:
+:
+:
+:</pre></td>
+<td><pre>00 00 00 00 00 00 00 00
+00 00 00 00 00 00 24 40
+00 00 00 00 00 E0 6F 40
+00 00 00 00 00 00 70 40
+00 00 00 00 00 40 8F 40
+00 00 00 00 00 6A F8 40
+00 00 00 00 00 00 E0 3F
+FC A9 F1 D2 4D 62 50 3F
+CD CC CC CC CC DC 5E C0
+</pre></td>
+<td align="right"><pre>"0"
+"10"
+"255"
+"256"
+"1000"
+"100000"
+"0.5"
+"0.001"
+"-123.45"</pre></td>
+</tr>
+<tr>
+
+
+</table>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

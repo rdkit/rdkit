@@ -1,0 +1,85 @@
+<html>
+<head>
+<title>CDX Format Specification: Crossing Bond Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Crossing Bond Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">crossingbond</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_CrossingBond</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8019</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="BracketAttachment.htm">kCDXObj_BracketAttachment</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0 (written only)</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Bond that connects a Bracketed Group to a Node outside that group.</p>
+
+<p>This object necessarily must have <a href="properties/Bracket_BondID.htm">kCDXProp_Bracket_BondID</a> and <a href="properties/Bracket_InnerAtomID.htm">kCDXProp_Bracket_InnerAtomID</a> properties. There are no required subobjects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2C</td>
+<td><a href="properties/Bracket_BondID.htm">kCDXProp_Bracket_BondID</a></td>
+<td>BondID</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required.</font> The ID of a bond that crosses a Bracket Attachment.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2D</td>
+<td><a href="properties/Bracket_InnerAtomID.htm">kCDXProp_Bracket_InnerAtomID</a></td>
+<td>InnerAtomID</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required.</font> The ID of the node located within the Bracketed Group and attached to a bond that crosses a Bracket Attachment.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

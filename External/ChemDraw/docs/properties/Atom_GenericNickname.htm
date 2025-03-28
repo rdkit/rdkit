@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>CDX Format Specification: Atom_GenericNickname Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Atom_GenericNickname Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">GenericNickname    </td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Atom_GenericNickname</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0433</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXString.htm">CDXString</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Node.htm">kCDXObj_Node</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0 / 6.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The name of the generic nickname.</p>
+<p>This property is irrelevent except for nodes with a <a href="Node_Type.htm">kCDXProp_Node_Type</a> of GenericNickname.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The name should be derived from the contained <a href="../Text.htm">Text</a> object, if present. If no such object is present, the name is considered to be the null string, which is almost certainly undesired.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

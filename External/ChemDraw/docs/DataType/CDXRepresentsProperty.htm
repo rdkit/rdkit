@@ -1,0 +1,25 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX RepresentsProperty Data Type</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX RepresentsProperty Data Type</h2>
+
+<p><b>In CDX files</b>, this data type consists of a series of <a href="CDXObjectID.htm">CDXObjectID</a> followed by a <a href="CDXNumeric.htm">UINT16</a>. The first value indicates which other object is relevent, and the second value indicates which propery of that other object is referenced by this object.</p>
+
+<p><b>In CDXML files</b>, this data type is represented by a <tt>represent</tt> object.</p>
+
+<p><b>Examples:</b>
+<table><tr><td><tt>CDX:</tt></td>
+<td><tt>06 00 00 00 21 04</tt></td></tr>
+<tr><td><tt>CDXML:</tt></td>
+<td><tt>&lt;represent attribute=&quot;Charge&quot; object=&quot;6&quot;/&gt;</tt></td></table>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

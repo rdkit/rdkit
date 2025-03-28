@@ -1,0 +1,79 @@
+<html>
+<head>
+<title>CDX Format Specification: Graphic_Type Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Graphic_Type Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">GraphicType</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Graphic_Type</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0A00</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT16</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Graphic.htm">kCDXObj_Graphic</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The type of graphical object.</p>
+<p>In CDX files produced by ChemDraw 8.0, this property was mistakenly written as a 1-byte INT8 value. When reading CDX files, if the size of this property is found to be 1 byte instead of the expected 2 bytes, the actual value should be interpreted as <tt>actualType = (INT16)savedType</tt>. CDX format interpreters that follow the <a href="../DataType/CDXNumeric.htm">best practices for reading integer values from CDX files</a> will handle this error automatically. ChemDraw returned to writing INT16 values starting with version 8.0.6.</p>
+
+<p><a href="../Graphic.htm">Graphic</a> objects are the only objects whose <a href="BoundingBox.htm">kCDXProp_BoundingBox</a> property has a special meaning, representing a pair of points rather than a rectangle. The meaning of those two points in the context of each graphic type is shown below</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Undefined</td>
+<td valign="top">Undefined</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">Line</td>
+<td valign="top">Line<br>(<a href="Line_Type.htm">kCDXProp_Line_Type</a> should be present. <a href="Arrow_Type.htm">kCDXProp_Arrow_Type</a> may also be present.)<br>The two points stored within the <a href="BoundingBox.htm">kCDXProp_BoundingBox</a> represent the start and end of the line.</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">Arc</td>
+<td valign="top">Arc<br>(<a href="Line_Type.htm">kCDXProp_Line_Type</a> should be present. <a href="Arc_AngularSize.htm">kCDXProp_Arc_AngularSize</a> should be present. <a href="Arrow_Type.htm">kCDXProp_Arrow_Type</a> may also be present.)<br>The two points stored within the <a href="BoundingBox.htm">kCDXProp_BoundingBox</a> represent the center and end of he arc.</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">Rectangle</td>
+<td valign="top">Rectangle<br>(<a href="Rectangle_Type.htm">kCDXProp_Rectangle_Type</a> should be present)<br>The two points stored within the <a href="BoundingBox.htm">kCDXProp_BoundingBox</a> represent two opposing corners of the rectangle.</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">Oval</td>
+<td valign="top">Oval<br>(<a href="Oval_Type.htm">kCDXProp_Oval_Type</a> should be present)<br>The two points stored within the <a href="BoundingBox.htm">kCDXProp_BoundingBox</a> represent the center and semimajor end of the oval.</td>
+</tr>
+<tr>
+<td align="right" valign="top">5</td>
+<td valign="top">Orbital</td>
+<td valign="top">Orbital<br>(<a href="Orbital_Type.htm">kCDXProp_Orbital_Type</a> should be present)<br>The two points stored within the <a href="BoundingBox.htm">kCDXProp_BoundingBox</a> represent the center and end of the orbital.</td>
+</tr>
+<tr>
+<td align="right" valign="top">6</td>
+<td valign="top">Bracket</td>
+<td valign="top">Bracket<br>(<a href="Bracket_Type.htm">kCDXProp_Bracket_Type</a> should be present)<br>The two points stored within the <a href="BoundingBox.htm">kCDXProp_BoundingBox</a> represent the two ends of the bracket.</td>
+</tr>
+<tr>
+<td align="right" valign="top">7</td>
+<td valign="top">Symbol</td>
+<td valign="top">Symbol<br>(<a href="Symbol_Type.htm">kCDXProp_Symbol_Type</a> should be present)<br>The two points stored within the <a href="BoundingBox.htm">kCDXProp_BoundingBox</a> represent the center of the symbol and a second point indicating the symbol's size.</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The graphic is treated as having Undefined type. This is not recommended.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

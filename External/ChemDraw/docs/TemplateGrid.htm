@@ -1,0 +1,105 @@
+<html>
+<head>
+<title>CDX Format Specification: Template Grid Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Template Grid Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">templategrid</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_TemplateGrid</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x800B</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Document.htm">kCDXObj_Document</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A TemplateGrid is a thumbnail view of multiple CDX page objects in a grid. If a CDX document object has a TemplateGrid object, then the document has the template grid view associated with it when viewed in ChemDraw. The document must also contain exactly Template_NumRows * Template_NumColumns number of page objects, although some pages might be empty.</p>
+
+<p>Since this object is used only for template documents, it will be encountered only rarely.</p>
+
+<p>All properties within a TemplateGrid object are required. If any property is missing, the file must be considered invalid and should not be displayed.</p>
+
+<p>In versions of ChemDraw prior to 8.0, TemplateGrid objects with IDs other than zero were ignored. Since there is nothing to be gained from a non-zero ID in this case (there will never be more than one TemplateGrid in a document, and no other object will ever reference it), we recommend that an ID of zero always be used.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0202</td>
+<td><a href="properties/2DExtent.htm">kCDXProp_2DExtent</a></td>
+<td>extent</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for templategrids.</font> The width and height of an object in CDX coordinate units. The precise meaning of this attribute varies depending on the type of object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1000</td>
+<td><a href="properties/Template_PaneHeight.htm">kCDXProp_Template_PaneHeight</a></td>
+<td>PaneHeight</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for templategrids.</font> The height of the viewing window of a template grid.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1001</td>
+<td><a href="properties/Template_NumRows.htm">kCDXProp_Template_NumRows</a></td>
+<td>NumRows</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for templategrids.</font> The number of rows of the CDX TemplateGrid object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1002</td>
+<td><a href="properties/Template_NumColumns.htm">kCDXProp_Template_NumColumns</a></td>
+<td>NumColumns</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for templategrids.</font> The number of columns of the CDX TemplateGrid object.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

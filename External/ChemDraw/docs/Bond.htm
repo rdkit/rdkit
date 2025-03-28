@@ -1,0 +1,605 @@
+<html>
+<head>
+<title>CDX Format Specification: Bond Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Bond Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">b</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_Bond</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8005</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Fragment.htm">kCDXObj_Fragment</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Bond object defines a connection between Node objects. It corresponds directly to the notion of a chemical bond.</p>
+
+<p>All Bonds must be contained in <a href="Fragment.htm">Fragment</a> objects; they cannot be stored directly in <a href="Page.htm">Page</a> or <a href="Fragment.htm">Fragment</a> objects.</p>
+
+<p>Bond objects require Begin and End properties, but do not have any required objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8011</td>
+<td><a href="ObjectTag.htm">kCDXObj_ObjectTag</a></font></b></td>
+<td>objecttag</td>
+</tr>
+<tr>
+<td></td><td colspan="3">Arbitrarily named property, one or more of which can be attached to any ChemDraw object.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000A</td>
+<td><a href="properties/ZOrder.htm">kCDXProp_ZOrder</a></td>
+<td>Z</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Back-to-front ordering index in 2D drawing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000F</td>
+<td><a href="properties/IgnoreWarnings.htm">kCDXProp_IgnoreWarnings</a></td>
+<td>IgnoreWarnings</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether chemical warnings should be suppressed on this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0010</td>
+<td><a href="properties/ChemicalWarning.htm">kCDXProp_ChemicalWarning</a></td>
+<td>Warning</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A warning concerning possible chemical problems with this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0011</td>
+<td><a href="properties/Visible.htm">kCDXProp_Visible</a></td>
+<td>Visible       </td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The object is visible if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0301</td>
+<td><a href="properties/ForegroundColor.htm">kCDXProp_ForegroundColor</a></td>
+<td>color</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The foreground color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0302</td>
+<td><a href="properties/BackgroundColor.htm">kCDXProp_BackgroundColor</a></td>
+<td>bgcolor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The background color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0600</td>
+<td><a href="properties/Bond_Order.htm">kCDXProp_Bond_Order</a></td>
+<td>Order</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The order of a bond object.
+This is a bit-encoded property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0601</td>
+<td><a href="properties/Bond_Display.htm">kCDXProp_Bond_Display</a></td>
+<td>Display</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The display type of a bond object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0602</td>
+<td><a href="properties/Bond_Display2.htm">kCDXProp_Bond_Display2</a></td>
+<td>Display2</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The display type for the second line of a double bond.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0603</td>
+<td><a href="properties/Bond_DoublePosition.htm">kCDXProp_Bond_DoublePosition</a></td>
+<td>DoublePosition</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The position of the second line of a double bond.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0604</td>
+<td><a href="properties/Bond_Begin.htm">kCDXProp_Bond_Begin</a></td>
+<td>B</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for bonds.</font> The ID of the CDX node object at the first end of a bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0605</td>
+<td><a href="properties/Bond_End.htm">kCDXProp_Bond_End</a></td>
+<td>E</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for bonds.</font> The ID of the CDX node object at the second end of a bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0606</td>
+<td><a href="properties/Bond_RestrictTopology.htm">kCDXProp_Bond_RestrictTopology</a></td>
+<td>Topology</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates the desired topology of a bond in a query.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0607</td>
+<td><a href="properties/Bond_RestrictRxnParticipation.htm">kCDXProp_Bond_RestrictRxnParticipation</a></td>
+<td>RxnParticipation</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Specifies that a bond is affected by a reaction.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0608</td>
+<td><a href="properties/Bond_BeginAttach.htm">kCDXProp_Bond_BeginAttach</a></td>
+<td>BeginAttach</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates where within the Bond_Begin node a bond is attached.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0609</td>
+<td><a href="properties/Bond_EndAttach.htm">kCDXProp_Bond_EndAttach</a></td>
+<td>EndAttach</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates where within the Bond_End node a bond is attached.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060A</td>
+<td><a href="properties/Bond_CIPStereochemistry.htm">kCDXProp_Bond_CIPStereochemistry</a></td>
+<td>BS</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The bond's absolute stereochemistry according to the Cahn-Ingold-Prelog system.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060B</td>
+<td><a href="properties/Bond_BondOrdering.htm">kCDXProp_Bond_BondOrdering</a></td>
+<td>BondCircularOrdering</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Ordered list of attached bond IDs.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060C</td>
+<td><a href="properties/Bond_ShowQuery.htm">kCDXProp_Bond_ShowQuery</a></td>
+<td>ShowBondQuery</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the query indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060D</td>
+<td><a href="properties/Bond_ShowStereo.htm">kCDXProp_Bond_ShowStereo</a></td>
+<td>ShowBondStereo</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the stereochemistry indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060E</td>
+<td><a href="properties/Bond_CrossingBonds.htm">kCDXProp_Bond_CrossingBonds</a></td>
+<td>CrossingBonds</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The set of bonds that cross a given bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060F</td>
+<td><a href="properties/Bond_ShowRxn.htm">kCDXProp_Bond_ShowRxn</a></td>
+<td>ShowBondRxn</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the reaction-change indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0804</td>
+<td><a href="properties/BondSpacing.htm">kCDXProp_BondSpacing</a></td>
+<td>BondSpacing         </td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The spacing between segments of a multiple bond, measured relative to bond length.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0805</td>
+<td><a href="properties/BondLength.htm">kCDXProp_BondLength</a></td>
+<td>BondLength          </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default bond length.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0806</td>
+<td><a href="properties/BoldWidth.htm">kCDXProp_BoldWidth</a></td>
+<td>BoldWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default bold bond width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0807</td>
+<td><a href="properties/LineWidth.htm">kCDXProp_LineWidth</a></td>
+<td>LineWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default line width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0808</td>
+<td><a href="properties/MarginWidth.htm">kCDXProp_MarginWidth</a></td>
+<td>MarginWidth         </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default amount of space surrounding atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0809</td>
+<td><a href="properties/HashSpacing.htm">kCDXProp_HashSpacing</a></td>
+<td>HashSpacing         </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default spacing between hashed lines used in wedged hashed bonds.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080A</td>
+<td><a href="properties/LabelStyle.htm">kCDXProp_LabelStyle</a></td>
+<td>(not used)</td>
+<td><a href="DataType/CDXString.htm">CDXFontStyle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default style for atom labels..
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081A</td>
+<td><a href="properties/LabelStyleFont.htm">kCDXProp_LabelStyleFont</a></td>
+<td>LabelFont</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font family for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081C</td>
+<td><a href="properties/LabelStyleSize.htm">kCDXProp_LabelStyleSize</a></td>
+<td>LabelSize</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font size for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081E</td>
+<td><a href="properties/LabelStyleFace.htm">kCDXProp_LabelStyleFace</a></td>
+<td>LabelFace</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font style for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0822</td>
+<td><a href="properties/BondSpacingAbs.htm">kCDXProp_BondSpacingAbs</a></td>
+<td>BondSpacingAbs</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The absolute distance between segments of a multiple bond.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

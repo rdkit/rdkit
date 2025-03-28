@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>CDX Format Specification: Atom_BondOrdering Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Atom_BondOrdering Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">BondOrdering       </td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Atom_BondOrdering</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0431</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXObjectID.htm">CDXObjectIDArray</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Node.htm">kCDXObj_Node</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0 / 6.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>An ordering of the bonds to this node, used for stereocenters, fragments, and named alternative groups with more than one attachment.</p>
+<p>An array of bond IDs. For stereocenters, it defines the stereochemistry about this atom. The interpretation depends on the <a href="Atom_Geometry.htm">kCDXProp_Atom_Geometry</a>. For nodes with a <a href="Node_Type.htm">kCDXProp_Node_Type</a> of NamedAlternativeGroup or Fragment, it defines the correspondence between the bonds to this node and the external connection points defined for the fragments.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The order of the bonds to this node is not considered to be significant.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

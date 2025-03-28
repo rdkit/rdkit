@@ -1,0 +1,197 @@
+<html>
+<head>
+<title>CDX Format Specification: Bracketed Group Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Bracketed Group Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">bracketedgroup</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_BracketedGroup</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8017</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a>, <a href="BracketedGroup.htm">kCDXObj_BracketedGroup</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0 (written only)</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Bracketed groups generally represent a collection of objects that is repeated some number of times, such as with polymers, mixtures, or other repeating units. Each contained object is listed by its ID in the <a href="properties/BracketedObjects.htm">kCDXProp_BracketedObjects</a> property, and external connections are indicated by <a href="BracketAttachment.htm">kCDXObj_BracketAttachment</a> subobjects.</p>
+
+<p>Bracketed groups may be nested, indicating that one set of brackets fully contains another set.</p>
+
+<p>Each Bracketed Group may contain zero or more <a href="BracketAttachment.htm">Bracket Attachments</a>, indicating which bonds cross from the inside to the outside of the bracket. Although the cdx specification places no limits on the number of Bracket Attachments associated with each Bracketed Group, the presence of more than four Bracket Attachments can be ambiguous or unclear, and so it is recommended that four Bracket Attachments per Bracketed Group be considered a practical maximum.</p>
+
+<p>As of ChemDraw 7.0, Bracketed Groups are written to files as they are saved, but they (and all contained properties and subobjects) are ignored when reading.</p>
+
+<p>Although there are no required properties or objects, a Bracketed Group without any <a href="properties/BracketedObjects.htm">Bracketed Objects</a> is pretty useless.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8017</td>
+<td><a href="BracketedGroup.htm">kCDXObj_BracketedGroup</a></font></b></td>
+<td>bracketedgroup</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A collection of objects surrounded by brackets (or braces or parentheses).</td>
+</tr>
+<tr>
+<td>0x8018</td>
+<td><a href="BracketAttachment.htm">kCDXObj_BracketAttachment</a></font></b></td>
+<td>bracketattachment</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A linkage that connects a Bracketed Group to some object outside that group.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A24</td>
+<td><a href="properties/Bracket_Usage.htm">kCDXProp_Bracket_Usage</a></td>
+<td>BracketUsage</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The syntactical chemical meaning of the bracket (SRU, mer, mon, xlink, etc).
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A25</td>
+<td><a href="properties/Polymer_RepeatPattern.htm">kCDXProp_Polymer_RepeatPattern</a></td>
+<td>PolymerRepeatPattern</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The head-to-tail connectivity of objects contained within the bracket.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A26</td>
+<td><a href="properties/Polymer_FlipType.htm">kCDXProp_Polymer_FlipType</a></td>
+<td>PolymerFlipType</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The flip state of objects contained within the bracket.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A27</td>
+<td><a href="properties/BracketedObjects.htm">kCDXProp_BracketedObjects</a></td>
+<td>BracketedObjectIDs</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The set of objects contained in a BracketedGroup.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A28</td>
+<td><a href="properties/Bracket_RepeatCount.htm">kCDXProp_Bracket_RepeatCount</a></td>
+<td>RepeatCount</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of times a multiple-group BracketedGroup is repeated.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A29</td>
+<td><a href="properties/Bracket_ComponentOrder.htm">kCDXProp_Bracket_ComponentOrder</a></td>
+<td>ComponentOrder</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The component order associated with a BracketedGroup.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2A</td>
+<td><a href="properties/Bracket_SRULabel.htm">kCDXProp_Bracket_SRULabel</a></td>
+<td>SRULabel</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The label associated with a BracketedGroup that represents an SRU.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

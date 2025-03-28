@@ -1,0 +1,206 @@
+<html>
+<head>
+<title>CDX Format Specification: Object Tag Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Object Tag Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">objecttag</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_ObjectTag</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8011</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Group.htm">kCDXObj_Group</a>, <a href="Fragment.htm">kCDXObj_Fragment</a>, <a href="Node.htm">kCDXObj_Node</a>, <a href="Bond.htm">kCDXObj_Bond</a>, <a href="Text.htm">kCDXObj_Text</a>, <a href="Graphic.htm">kCDXObj_Graphic</a>, <a href="Curve.htm">kCDXObj_Curve</a>, <a href="EmbeddedObject.htm">kCDXObj_EmbeddedObject</a>, <a href="Table.htm">kCDXObj_Table</a>, <a href="NamedAltGroup.htm">kCDXObj_NamedAlternativeGroup</a>, <a href="Spectrum.htm">kCDXObj_Spectrum</a>, <a href="Geometry.htm">kCDXObj_Geometry</a>, <a href="Constraint.htm">kCDXObj_Constraint</a>, <a href="TLCPlate.htm">kCDXObj_TLCPlate</a>, <a href="TLCLane.htm">kCDXObj_TLCLane</a>, <a href="TLCSpot.htm">kCDXObj_TLCSpot</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 6.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Arbitrarily named property, one or more of which can be attached to any ChemDraw object. This object can be used to associate arbitrary data with an object.</p>
+
+<p>An Object Tag may contain a <a href="Text.htm">Text</a> object. If present, the Text object will be displayed in the document according to the state of its <a href="properties/Visible.htm">kCDXProp_Visible</a> property. Object Tags of this type might be used as a visual display for some other property, such as a Node's or Bond's stereochemistry indicator.</p>
+
+<p>Object tag names are critical to their management, since the name tells ChemDraw how to interpret the tag. All tags assigned internally by ChemDraw begin with the character sequence "/CS/CD/". Tags created for user purposes should begin with some other character sequence. Any ChemDraw object can have any number of tags attached to it, including multiple tags with the same name.</p>
+
+<p>Spectrum-structure assignment is done by assigning an object tag with the name &quot;/CS/CD/assign&quot; to one or more atoms and a spectrum. The value of the tag is a string consisting of one or more ranges of x-axis values. The x-axis ranges define one or more bands or lines in the spectrum. The atoms containing a particular assignment are assigned to the bands specified. For example, in an IR spectrum, two atoms and the spectrum might all contain an object tag with the value &quot;905.7-944.35,1123-1200&quot; and a object tag dictionary index pointing to an object tag dictionary entry with the name &quot;/CS/CD/assign&quot; and the tag type kCDXObjectTagType_String. This will create an assignment between those two atoms and the bands lying between 905.7 and 944.35 cm<sup>-1</sup>, and 1123 and 1200 cm<sup>-1</sup>.</p>
+
+<p>Although ChemDraw recognizes the types &quot;unknown&quot;, &quot;query&quot; (for query indicators), &quot;stereo&quot; (for stereochemistry indicators), and &quot;number&quot; (for atom numbers), any sequence of bytes is a valid name. For unknown and user-defined types that contain a Text object, ChemDraw will faithfully display the tag, but no significance will be ascribed to the tag's text.</p>
+
+<p>Object Tags require a Name, but have no required objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8006</td>
+<td><a href="Text.htm">kCDXObj_Text</a></font></b></td>
+<td>t</td>
+</tr>
+<tr>
+<td></td><td colspan="3">An arbitrary block of (possibly styled) text.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0008</td>
+<td><a href="properties/Name.htm">kCDXProp_Name</a></td>
+<td>Name</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for objecttags.</font> Name of an object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D00</td>
+<td><a href="properties/ObjectTag_Type.htm">kCDXProp_ObjectTag_Type</a></td>
+<td>TagType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The tag's data type.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D03</td>
+<td><a href="properties/ObjectTag_Tracking.htm">kCDXProp_ObjectTag_Tracking</a></td>
+<td>Tracking</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The tag will participate in tracking if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D04</td>
+<td><a href="properties/ObjectTag_Persistent.htm">kCDXProp_ObjectTag_Persistent</a></td>
+<td>Persistent</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The tag will be resaved to a CDX file if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D05</td>
+<td><a href="properties/ObjectTag_Value.htm">kCDXProp_ObjectTag_Value</a></td>
+<td>Value</td>
+<td>varies</td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The value is a INT32, FLOAT64 or unformatted string depending on the value of ObjectTag_Type.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D06</td>
+<td><a href="properties/Positioning.htm">kCDXProp_Positioning</a></td>
+<td>PositioningType</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+How the object should be positioned with respect to its containing object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D07</td>
+<td><a href="properties/PositioningAngle.htm">kCDXProp_PositioningAngle</a></td>
+<td>PositioningAngle</td>
+<td><a href="DataType/CDXNumeric.htm">INT32</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Angular positioning, in degrees * 65536.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D08</td>
+<td><a href="properties/PositioningOffset.htm">kCDXProp_PositioningOffset</a></td>
+<td>PositioningOffset</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Offset positioning.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

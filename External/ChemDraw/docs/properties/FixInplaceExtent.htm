@@ -1,0 +1,31 @@
+<html>
+<head>
+<title>CDX Format Specification: FixInplaceExtent Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>FixInplaceExtent Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">FixInPlaceExtent</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_FixInplaceExtent</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0824</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXCoordinates.htm">CDXPoint2D</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Document.htm">kCDXObj_Document</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Defines a size for OLE In-Place editing.</p>
+<p>When OLE In-Place editing is activated, the host application has the option of informing the server application about the window area assigned (by the host application) for in-place editing. In such a case, the server should try to display its document in that area, and should not request that the host application change the size of that area. Usually, such an area is prescribed only by those hosts that display their information in a form-like environment. For example, FileMaker and Microsoft Access use this option. On the other hand, text editors generally allow the in-place area to expand free as long as it fits into the page. This information is sent to the server application only when it changes, and hence must be stored in the document so that it is available when the document is activated the next time.</p>
+
+<p>This property is meaningful only in an OLE In-Place editing environment. It is not expected that other applications would read or write this value in CDX files. See also the <a href="FixInPlaceGap.htm">kCDXProp_FixInPlaceGap</a> property.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The document will behave as if it has no external constrants imposed on the size of the in-place active area.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,72 @@
+<html>
+<head>
+<title>CDX Format Specification: LabelAlignment Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>LabelAlignment Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">LabelAlignment</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_LabelAlignment</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0705</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Text.htm">kCDXObj_Text</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The alignment of the text with respect to the node position.</p>
+<p>ChemDraw reads and writes this property only for multi-attached atom labels. This property stores a value that indicates what the actual label alignment for a non-multi-attached atom label would have to be to match the desired alignment of this label. Consider an atom label with Automatic alignment, positioned on the right side of a molecule. If this label becomes multi-attached, the alignment must &quot;freeze&quot; at its current (left-justified value), so that if the structure is modified (rotated, flipped, etc), the label alignment doesn't change. On the other hand, the original Automatic alignment must still be preserved, in case all but the first bond are deleted in the future, at which point the label should revert to being Automatic.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Auto</td>
+<td valign="top">Label is aligned automatically</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">Left</td>
+<td valign="top">Label is left-aligned</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">Center</td>
+<td valign="top">Label is centered</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">Right</td>
+<td valign="top">Label is right-aligned</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">Above</td>
+<td valign="top">Label is stacked above</td>
+</tr>
+<tr>
+<td align="right" valign="top">5</td>
+<td valign="top">Below</td>
+<td valign="top">Label is stacked below</td>
+</tr>
+<tr>
+<td align="right" valign="top">6</td>
+<td valign="top">Best</td>
+<td valign="top">Label is created in the best alignment for the given bonds</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The text is assumed to be automatically aligned.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

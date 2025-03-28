@@ -1,0 +1,82 @@
+<html>
+<head>
+<title>CDX Format Specification: Arrow_Type Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Arrow_Type Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">ArrowType</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Arrow_Type</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0A02</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT16</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Graphic.htm">kCDXObj_Graphic</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The type of arrow object, which represents line, arrow, arc, rectangle, or orbital.</p>
+<p>In CDX files produced by ChemDraw 8.0, this property was mistakenly written as a 1-byte INT8 value. When reading CDX files, if the size of this property is found to be 1 byte instead of the expected 2 bytes, the actual value should be interpreted as <tt>actualType = (INT16)savedType</tt>. CDX format interpreters that follow the <a href="../DataType/CDXNumeric.htm">best practices for reading integer values from CDX files</a> will handle this error automatically. ChemDraw returned to writing INT16 values starting with version 8.0.6.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">NoHead</td>
+<td valign="top">NoHead</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">HalfHead</td>
+<td valign="top">HalfHead</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">FullHead</td>
+<td valign="top">FullHead</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">Resonance</td>
+<td valign="top">Resonance</td>
+</tr>
+<tr>
+<td align="right" valign="top">8</td>
+<td valign="top">Equilibrium</td>
+<td valign="top">Equilibrium</td>
+</tr>
+<tr>
+<td align="right" valign="top">16</td>
+<td valign="top">Hollow</td>
+<td valign="top">Hollow</td>
+</tr>
+<tr>
+<td align="right" valign="top">32</td>
+<td valign="top">RetroSynthetic</td>
+<td valign="top">RetroSynthetic</td>
+</tr>
+<tr>
+<td align="right" valign="top">64</td>
+<td valign="top">NoGo</td>
+<td valign="top">Failed reaction (crossed-out arrow); may be combined with other types</td>
+</tr>
+<tr>
+<td align="right" valign="top">128</td>
+<td valign="top">Dipole</td>
+<td valign="top">Dipole</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The arrow is treated as headless.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

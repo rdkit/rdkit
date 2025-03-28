@@ -1,0 +1,39 @@
+<html>
+<head>
+<title>CDX Format Specification: BondLength Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>BondLength Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">BondLength          </td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_BondLength</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0805</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXCoordinates.htm">CDXCoordinate</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Document.htm">kCDXObj_Document</a>, <a href="../Bond.htm">kCDXObj_Bond</a>, <a href="../Geometry.htm">kCDXObj_Geometry</a>, <a href="../Constraint.htm">kCDXObj_Constraint</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">Until ChemDraw 4.5</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The default bond length.</p>
+<p>Generally, this property is used to provide a default value for bold lines. ChemDraw uses it to determine the following:
+<ul>
+<li>Default bond length when drawing bonds, chains and rings by hand</li>
+<li>Default size of orbitals and electrons</li>
+<li>Scale factor when pasting and placing templates</li>
+<li>Space between NamedAlternativeGroups without bounding boxes (horizontal spacing is this value)</li>
+<li>Space between NamedAlternativeGroups components without bounding boxes (vertical spacing is half of this value) </li>
+<li>Size of frames for NamedAlternativeGroups without bounding boxes (frames are outset from components by half of this value) </li>
+<li>Spacing between reaction components without bounding boxes (horizontal spacing is this value)</li>
+<li>Charge objects must be within a distance equal to half of this value if they are to be recognized as being applied to some other object</li>
+</ul></p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The value from the same property of a containing object will be used. That is, if this property is omitted from an object, but present for the <a href="../Document.htm">Document</a>, the Document's value will be used. If no value is found at all, ChemDraw will use the value from its last-used Style Sheet.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

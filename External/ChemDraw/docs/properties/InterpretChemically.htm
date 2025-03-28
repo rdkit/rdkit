@@ -1,0 +1,31 @@
+<html>
+<head>
+<title>CDX Format Specification: InterpretChemically Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>InterpretChemically Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">InterpretChemically</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_InterpretChemically</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0708</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXBoolean.htm">CDXBooleanImplied</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Document.htm">kCDXObj_Document</a>, <a href="../Text.htm">kCDXObj_Text</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 8.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Signifies whether to the text label should be interpreted chemically (if possible).</p>
+<p>This attribute indicates whether the given caption or atom label should be interpreted chemically if at all possible. This allows for a distinction between a "C" that represents elemental carbon and a "C" that indicates the third item in a list starting with "A" and "B".<p>
+
+Note the "if at all possible" qualification. Wholly uninterpretable text like "wqertsrtrst" or "Fred" or "Boiling Point" will never be treated as chemically meaningful, regardless of the value of this property.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The text will be treated chemically if at all possible.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,27 @@
+<html>
+<head>
+<title>CDX Format Specification: CrossReference_Identifier Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CrossReference_Identifier Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">CrossReferenceIdentifier</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_CrossReference_Identifier</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0F02</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXString.htm">CDXString</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../CrossReference.htm">kCDXObj_CrossReference</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">Required for cross-references.</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A unique (but otherwise random) identifier for a given Cross-Reference object.</p>
+<p>Unlike the object's <a href="id.htm">ID</a>, this identifier is guaranteed to be both persistent and unique, even across multiple documents. It is a GUID, a standard Globally-Unique IDentifier broadly used under Microsoft Windows. The standard Windows program guidgen.exe may be used to generate GUIDs external to ChemDraw.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

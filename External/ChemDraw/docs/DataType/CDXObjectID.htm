@@ -1,0 +1,40 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX ObjectID Data Types</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX ObjectID Data Types</h2>
+
+<h3><a name="CDXObjectID">CDXObjectID:</a></h3>
+<p>One object may refer to another object via the other object's ObjectID, a <a href="CDXNumeric.htm">UINT32</a> value.  Object IDs should be unique within a CDX/CDXML file, but in a case where there is ambiguity, a CDXObjectID refers to the closest object with that ID.  For example, an object sharing the same containing object is closer than one that does not share the same containing object.</p>
+
+<h3><a name="CDXObjectIDArray">CDXObjectIDArray:</a></h3>
+<p>This data type is used if one object needs to refer to more than one other object.  It is a series of <a href="CDXNumeric.htm">UINT32</a> values. The length of the array is implicit from the size of the data.</p>
+
+<p><b>Examples:</b>
+<table><tr><td><tt>CDX:</tt></td>
+<td><tt>01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00</tt></td></tr>
+<tr><td><tt>CDXML:</tt></td>
+<td><tt>&quot;1 2 3 4&quot;</tt></td></table>
+
+<h3><a name="CDXObjectIDArrayWithCounts">CDXObjectIDArrayWithCounts:</a></h3>
+<p>This data type is used if one object needs to refer to more than one other object.  It is a series of <a href="CDXNumeric.htm">UINT32</a> values.</p>
+
+<p><b>In CDX files</b>, this data type lists the size of the array explicitly, unlike with the CDXObjectIDArray type, with an a leading <a href="CDXNumeric.htm">UINT16</a> value before the series of CDXObjectIDs.</p>
+
+<p><b>In CDXML files</b>, this data type is equivalent to the CDXObjectIDArray type.</p>
+
+<p><b>Examples:</b>
+<table><tr><td><tt>CDX:</tt></td>
+<td><tt>04 00 01 00 00 00 02 00 00 00 03 00 00 00 04 00 00 00</tt></td></tr>
+<tr><td><tt>CDXML:</tt></td>
+<td><tt>&quot;1 2 3 4&quot;</tt></td></table>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,56 @@
+<html>
+<head>
+<title>CDX Format Specification: Polymer_FlipType Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Polymer_FlipType Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">PolymerFlipType</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Polymer_FlipType</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0A26</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Graphic.htm">kCDXObj_Graphic</a>, <a href="../BracketedGroup.htm">kCDXObj_BracketedGroup</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The flip state of objects contained within the bracket.</p>
+<p>For ladder-type polymers (those polymers with two connecting bonds on each side), there is a potential ambiguity in the order of the connections. The Flip Type property is designed to resolve that ambiguity. This property is appropriate <i>only</i> for brackets with exactly two crossing bonds.</p>
+
+<p><img border="0" src="../Graphics/FlipType1.gif" width="547" height="302"></p>
+
+<p>Although this property is written to both <a href="../Graphic.htm">Graphic</a> objects and to <a href="../BracketedGroup.htm">Bracketed Groups</a>, as of ChemDraw 7.0 it is read only from Graphic objects.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Unspecified</td>
+<td valign="top">Unspecified flip type</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">NoFlip</td>
+<td valign="top">The orientation of the repeating unit does not change between adjacent units</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">Flip</td>
+<td valign="top">The orientation of the repeating unit does change between adjacent units</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The flip type is treated as Unspecified.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,197 @@
+<html>
+<head>
+<title>CDX Format Specification: Reaction Step Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Reaction Step Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">step</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_ReactionStep</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x800E</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a>, <a href="Group.htm">kCDXObj_Group</a>, <a href="ReactionScheme.htm">kCDXObj_ReactionScheme</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.1</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Reaction Step describes one step in a reaction.</p>
+
+<p>Technically, this object has no required objects or properties, but it is pretty useless without any reactants or products.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C00</td>
+<td><a href="properties/ReactionStep_Atom_Map.htm">kCDXProp_ReactionStep_Atom_Map</a></td>
+<td>ReactionStepAtomMap</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Represents pairs of mapped atom IDs; each pair is a reactant atom mapped to to a product atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C01</td>
+<td><a href="properties/ReactionStep_Reactants.htm">kCDXProp_ReactionStep_Reactants</a></td>
+<td>ReactionStepReactants</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An order list of reactants present in the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C02</td>
+<td><a href="properties/ReactionStep_Products.htm">kCDXProp_ReactionStep_Products</a></td>
+<td>ReactionStepProducts</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An order list of products present in the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C03</td>
+<td><a href="properties/ReactionStep_Plusses.htm">kCDXProp_ReactionStep_Plusses</a></td>
+<td>ReactionStepPlusses</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An ordered list of pluses used to separate components of the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C04</td>
+<td><a href="properties/ReactionStep_Arrows.htm">kCDXProp_ReactionStep_Arrows</a></td>
+<td>ReactionStepArrows</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An ordered list of arrows used to separate components of the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C05</td>
+<td><a href="properties/ReactionStep_ObjectsAboveArrow.htm">kCDXProp_ReactionStep_ObjectsAboveArrow</a></td>
+<td>ReactionStepObjectsAboveArrow</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An order list of objects above the arrow in the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C06</td>
+<td><a href="properties/ReactionStep_ObjectsBelowArrow.htm">kCDXProp_ReactionStep_ObjectsBelowArrow</a></td>
+<td>ReactionStepObjectsBelowArrow</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An order list of objects below the arrow in the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C07</td>
+<td><a href="properties/ReactionStep_Atom_Map_Manual.htm">kCDXProp_ReactionStep_Atom_Map_Manual</a></td>
+<td>ReactionStepAtomMapManual</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Represents pairs of mapped atom IDs; each pair is a reactant atom mapped to to a product atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C08</td>
+<td><a href="properties/ReactionStep_Atom_Map_Auto.htm">kCDXProp_ReactionStep_Atom_Map_Auto</a></td>
+<td>ReactionStepAtomMapAuto</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Represents pairs of mapped atom IDs; each pair is a reactant atom mapped to to a product atom.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

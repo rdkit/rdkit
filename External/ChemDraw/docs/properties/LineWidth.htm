@@ -1,0 +1,41 @@
+<html>
+<head>
+<title>CDX Format Specification: LineWidth Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>LineWidth Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">LineWidth           </td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_LineWidth</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0807</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXCoordinates.htm">CDXCoordinate</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Document.htm">kCDXObj_Document</a>, <a href="../Node.htm">kCDXObj_Node</a>, <a href="../Bond.htm">kCDXObj_Bond</a>, <a href="../Graphic.htm">kCDXObj_Graphic</a>, <a href="../Table.htm">kCDXObj_Table</a>, <a href="../Spectrum.htm">kCDXObj_Spectrum</a>, <a href="../Border.htm">kCDXObj_Border</a>, <a href="../Geometry.htm">kCDXObj_Geometry</a>, <a href="../Constraint.htm">kCDXObj_Constraint</a>, <a href="../TLCPlate.htm">kCDXObj_TLCPlate</a>, <a href="../Arrow.htm">kCDXObj_Arrow</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">Until ChemDraw 4.5</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The default line width.</p>
+<p>Generally, this property is used to provide a default value for plain lines. ChemDraw uses it to determine the following:
+<ul>
+<li>Line width for most bond types</li>
+<li>Line width for most arrow types</li>
+<li>Line width for most curve types</li>
+<li>Line width for the frame of NamedAlternativeGroups</li>
+<li>Size of the HDot indicator (diameter of dot is 5 * lineWid)</li>
+<li>Size of the HDash indicator</li>
+<li>Size of MultiCenter node indicators</li>
+<li>Thickness of the borders of Attachment Rank Indicator diamonds</li>
+<li>Thickness of the border of Atom-Atom map indicators</li>
+<li>Line width for chemical warning indicators</li>
+</ul></p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The value from the same property of a containing object will be used. That is, if this property is omitted from an object, but present for the <a href="../Document.htm">Document</a>, the Document's value will be used. If no value is found at all, ChemDraw will use the value from its last-used Style Sheet.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

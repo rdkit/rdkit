@@ -1,0 +1,28 @@
+<html>
+<head>
+<title>CDX Format Specification: id Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>id Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">id</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">UINT16</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Page.htm">kCDXObj_Page</a>, <a href="../Group.htm">kCDXObj_Group</a>, <a href="../Fragment.htm">kCDXObj_Fragment</a>, <a href="../Node.htm">kCDXObj_Node</a>, <a href="../Bond.htm">kCDXObj_Bond</a>, <a href="../Text.htm">kCDXObj_Text</a>, <a href="../Graphic.htm">kCDXObj_Graphic</a>, <a href="../BracketedGroup.htm">kCDXObj_BracketedGroup</a>, <a href="../BracketAttachment.htm">kCDXObj_BracketAttachment</a>, <a href="../CrossingBond.htm">kCDXObj_CrossingBond</a>, <a href="../Curve.htm">kCDXObj_Curve</a>, <a href="../EmbeddedObject.htm">kCDXObj_EmbeddedObject</a>, <a href="../Table.htm">kCDXObj_Table</a>, <a href="../NamedAltGroup.htm">kCDXObj_NamedAlternativeGroup</a>, <a href="../ReactionScheme.htm">kCDXObj_ReactionScheme</a>, <a href="../ReactionStep.htm">kCDXObj_ReactionStep</a>, <a href="../Spectrum.htm">kCDXObj_Spectrum</a>, <a href="../ObjectTag.htm">kCDXObj_ObjectTag</a>, <a href="../Border.htm">kCDXObj_Border</a>, <a href="../Geometry.htm">kCDXObj_Geometry</a>, <a href="../Constraint.htm">kCDXObj_Constraint</a>, <a href="../TLCPlate.htm">kCDXObj_TLCPlate</a>, <a href="../TLCLane.htm">kCDXObj_TLCLane</a>, <a href="../TLCSpot.htm">kCDXObj_TLCSpot</a>, <a href="../ChemicalProperty.htm">kCDXObj_ChemicalProperty</a>, <a href="../ColorTable.htm">kCDXProp_ColorTable</a>, <a href="../FontTable.htm">kCDXProp_FontTable</a>, <a href="../Font.htm">font</a>, <a href="../Arrow.htm">kCDXObj_Arrow</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">Required for fonts</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A unique identifier for an object, used when other objects refer to it.</p>
+<p>IDs are required for an object only when some other object needs to refer to it. Except in the special case of "0" (or absent, in CDXML files), object IDs should be unique in a given document.<p>
+IDs are not persistent values; they may change if a file is read into some program and then resaved. They should be used only in the scope of a specific saved file.<p>
+
+This value is treated as a separate property only in CDXML files. In CDX files, an object's ID is stored as an integral part of the object definition.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,4296 @@
+<html>
+<head>
+<title>CDX Format Specification: Predefined Attributes</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Predefined Attributes</h2>
+
+<table>
+<tr><td colspan="4"><font size="-3">(click column header to sort)</font></td></tr>
+<tr>
+<td><a href="TableOfProperties.htm"><b><font size="+1">Value</font></b></a></td>
+<td><a href="TableOfPropertiesByName.htm"><b>Name</b></a></td>
+<td><a href="TableOfPropertiesByCDXMLName.htm"><b>CDXML Name</b></a></td>
+<td><a href="TableOfPropertiesByType.htm"><b>Type</b></a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="2"><b>Description</b></td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0001</td>
+<td><a href="properties/CreationUserName.htm">kCDXProp_CreationUserName</a></td>
+<td>CreationUserName</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The name of the creator (program user's name) of the document.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0002</td>
+<td><a href="properties/CreationDate.htm">kCDXProp_CreationDate</a></td>
+<td>CreationDate</td>
+<td><a href="DataType/DateAndTime.htm">CDXDate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The time of object creation.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0003</td>
+<td><a href="properties/CreationProgram.htm">kCDXProp_CreationProgram</a></td>
+<td>CreationProgram</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The name of the program, including version and platform, that created the associated CDX object. ChemDraw 4.0 uses "ChemDraw 4.0" as the value of CreationProgram.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0004</td>
+<td><a href="properties/ModificationUserName.htm">kCDXProp_ModificationUserName</a></td>
+<td>ModificationUserName</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The name of the last modifier (program user's name) of the document.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0005</td>
+<td><a href="properties/ModificationDate.htm">kCDXProp_ModificationDate</a></td>
+<td>ModificationDate</td>
+<td><a href="DataType/DateAndTime.htm">CDXDate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Time of the last modification.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0006</td>
+<td><a href="properties/ModificationProgram.htm">kCDXProp_ModificationProgram</a></td>
+<td>ModificationProgram</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The name of the program, including version and platform, of the last program to perform a modification. ChemDraw 4.0 uses "ChemDraw 4.0" as the value of CreationProgram.
+</td>
+</tr>
+
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0008</td>
+<td><a href="properties/Name.htm">kCDXProp_Name</a></td>
+<td>Name</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for objecttags.</font> Name of an object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0009</td>
+<td><a href="properties/Comment.htm">kCDXProp_Comment</a></td>
+<td>Comment</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An arbitrary string intended to be meaningful to a user.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000A</td>
+<td><a href="properties/ZOrder.htm">kCDXProp_ZOrder</a></td>
+<td>Z</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Back-to-front ordering index in 2D drawing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000B</td>
+<td><a href="properties/RegistryNumber.htm">kCDXProp_RegistryNumber</a></td>
+<td>RegistryNumber</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A registry or catalog number of a molecule object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000C</td>
+<td><a href="properties/RegistryAuthority.htm">kCDXProp_RegistryAuthority</a></td>
+<td>RegistryAuthority</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A string that specifies the authority which issued a registry or catalog number. Some examples of registry authorities are CAS, Beilstein, Aldrich, and Merck.
+</td>
+</tr>
+
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000E</td>
+<td><a href="properties/RepresentsProperty.htm">kCDXProp_RepresentsProperty</a></td>
+<td>RepresentsProperty</td>
+<td><a href="DataType/CDXRepresentsProperty.htm">CDXRepresentsProperty</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that this object represents some property in some other object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000F</td>
+<td><a href="properties/IgnoreWarnings.htm">kCDXProp_IgnoreWarnings</a></td>
+<td>IgnoreWarnings</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether chemical warnings should be suppressed on this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0010</td>
+<td><a href="properties/ChemicalWarning.htm">kCDXProp_ChemicalWarning</a></td>
+<td>Warning</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A warning concerning possible chemical problems with this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0011</td>
+<td><a href="properties/Visible.htm">kCDXProp_Visible</a></td>
+<td>Visible       </td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The object is visible if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0012</td>
+<td><a href="properties/SupersededBy.htm">kCDXProp_SupersededBy</a></td>
+<td>SupersededBy</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The ID of the object that should be read instead of this one.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0100</td>
+<td><a href="properties/FontTable.htm">kCDXProp_FontTable</a></td>
+<td>fonttable</td>
+<td><a href="DataType/CDXFontTable.htm">CDXFontTable</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required if fonts are used.</font> A list of fonts used in the document.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0200</td>
+<td><a href="properties/2DPosition.htm">kCDXProp_2DPosition</a></td>
+<td>p</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 2D location (in the order of vertical and horizontal locations) of an object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0201</td>
+<td><a href="properties/3DPosition.htm">kCDXProp_3DPosition</a></td>
+<td>xyz</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 3D location (in the order of X-, Y-, and Z-locations in right-handed coordinate system) of an object in CDX coordinate units. The precise meaning of this attribute varies depending on the type of object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0202</td>
+<td><a href="properties/2DExtent.htm">kCDXProp_2DExtent</a></td>
+<td>extent</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for templategrids.</font> The width and height of an object in CDX coordinate units. The precise meaning of this attribute varies depending on the type of object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0203</td>
+<td><a href="properties/3DExtent.htm">kCDXProp_3DExtent</a></td>
+<td>extent3D</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The width, height, and depth of an object in CDX coordinate units (right-handed coordinate system). The precise meaning of this attribute varies depending on the type of object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0204</td>
+<td><a href="properties/BoundingBox.htm">kCDXProp_BoundingBox</a></td>
+<td>BoundingBox</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for pictures and spectra. Required for graphics and text until 6.0.</font> The smallest rectangle that encloses the graphical representation of the object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0205</td>
+<td><a href="properties/RotationAngle.htm">kCDXProp_RotationAngle</a></td>
+<td>RotationAngle</td>
+<td><a href="DataType/CDXNumeric.htm">INT32</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The angular orientation of an object in degrees * 65536.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0207</td>
+<td><a href="properties/3DHead.htm">kCDXProp_3DHead</a></td>
+<td>Head3D</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 3D location (in the order of X-, Y-, and Z-locations in right-handed coordinate system) of the head of an object in CDX coordinate units.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0208</td>
+<td><a href="properties/3DTail.htm">kCDXProp_3DTail</a></td>
+<td>Tail3D</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 3D location (in the order of X-, Y-, and Z-locations in right-handed coordinate system) of the tail of an object in CDX coordinate units.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0209</td>
+<td><a href="properties/TopLeft.htm">kCDXProp_TopLeft</a></td>
+<td>TopLeft</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The location of the top-left corner of a quadrilateral object, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020A</td>
+<td><a href="properties/TopRight.htm">kCDXProp_TopRight</a></td>
+<td>TopRight</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The location of the top-right corner of a quadrilateral object, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020B</td>
+<td><a href="properties/BottomRight.htm">kCDXProp_BottomRight</a></td>
+<td>BottomRight</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The location of the bottom-right corner of a quadrilateral object, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020C</td>
+<td><a href="properties/BottomLeft.htm">kCDXProp_BottomLeft</a></td>
+<td>BottomLeft</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The location of the bottom-left corner of a quadrilateral object, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020D</td>
+<td><a href="properties/3DCenter.htm">kCDXProp_3DCenter</a></td>
+<td>Center3D</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 3D location of the logical center of an object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020E</td>
+<td><a href="properties/3DMajorAxisEnd.htm">kCDXProp_3DMajorAxisEnd</a></td>
+<td>Center3D</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 3D location of the end of the major axis of an object in CDX coordinate units.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020F</td>
+<td><a href="properties/3DMinorAxisEnd.htm">kCDXProp_3DMinorAxisEnd</a></td>
+<td>Center3D</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 3D location of the end of the minor axis of an object in CDX coordinate units.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0300</td>
+<td><a href="properties/ColorTable.htm">kCDXProp_ColorTable</a></td>
+<td>colortable</td>
+<td><a href="DataType/CDXColorTable.htm">CDXColorTable</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The color palette used throughout the document.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0301</td>
+<td><a href="properties/ForegroundColor.htm">kCDXProp_ForegroundColor</a></td>
+<td>color</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The foreground color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0302</td>
+<td><a href="properties/BackgroundColor.htm">kCDXProp_BackgroundColor</a></td>
+<td>bgcolor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The background color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0400</td>
+<td><a href="properties/Node_Type.htm">kCDXProp_Node_Type</a></td>
+<td>NodeType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of a node object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0401</td>
+<td><a href="properties/Node_LabelDisplay.htm">kCDXProp_Node_LabelDisplay</a></td>
+<td>LabelDisplay</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The characteristics of node label display.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0402</td>
+<td><a href="properties/Node_Element.htm">kCDXProp_Node_Element</a></td>
+<td>Element</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The atomic number of the atom representing this node.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0403</td>
+<td><a href="properties/Atom_ElementList.htm">kCDXProp_Atom_ElementList</a></td>
+<td>ElementList</td>
+<td><a href="DataType/CDXElementList.htm">CDXElementList</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A list of atomic numbers.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0404</td>
+<td><a href="properties/Atom_Formula.htm">kCDXProp_Atom_Formula</a></td>
+<td>Formula</td>
+<td><a href="DataType/CDXFormula.htm">CDXFormula</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The composition of a node representing a fragment whose composition is known, but whose connectivity is not. For example, C<sub>4</sub>H<sub>9</sub> represents a mixture of the 4 butyl isomers.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0420</td>
+<td><a href="properties/Atom_Isotope.htm">kCDXProp_Atom_Isotope</a></td>
+<td>Isotope</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The absolute isotopic mass of an atom (2 for deuterium, 14 for carbon-14).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0421</td>
+<td><a href="properties/Atom_Charge.htm">kCDXProp_Atom_Charge</a></td>
+<td>Charge</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The atomic charge of an atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0422</td>
+<td><a href="properties/Atom_Radical.htm">kCDXProp_Atom_Radical</a></td>
+<td>Radical</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The atomic radical attribute of an atom.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0423</td>
+<td><a href="properties/Atom_RestrictFreeSites.htm">kCDXProp_Atom_RestrictFreeSites</a></td>
+<td>FreeSites</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that up to the specified number of additional substituents are permitted on this atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0424</td>
+<td><a href="properties/Atom_RestrictImplicitHydrogens.htm">kCDXProp_Atom_RestrictImplicitHydrogens</a></td>
+<td>ImplicitHydrogens</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies that implicit hydrogens are not allowed on this atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0425</td>
+<td><a href="properties/Atom_RestrictRingBondCount.htm">kCDXProp_Atom_RestrictRingBondCount</a></td>
+<td>RingBondCount</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of ring bonds attached to an atom.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0426</td>
+<td><a href="properties/Atom_RestrictUnsaturatedBonds.htm">kCDXProp_Atom_RestrictUnsaturatedBonds</a></td>
+<td>UnsaturatedBonds</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates whether unsaturation should be present or absent.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0427</td>
+<td><a href="properties/Atom_RestrictRxnChange.htm">kCDXProp_Atom_RestrictRxnChange</a></td>
+<td>RxnChange</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+If present, signifies that the reaction change of an atom must be as specified.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0428</td>
+<td><a href="properties/Atom_RestrictRxnStereo.htm">kCDXProp_Atom_RestrictRxnStereo</a></td>
+<td>RxnStereo</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The change of stereochemistry of an atom during a reaction.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0429</td>
+<td><a href="properties/Atom_AbnormalValence.htm">kCDXProp_Atom_AbnormalValence</a></td>
+<td>AbnormalValence</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies that an abnormal valence for an atom is permitted.
+</td>
+</tr>
+
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x042B</td>
+<td><a href="properties/Atom_NumHydrogens.htm">kCDXProp_Atom_NumHydrogens</a></td>
+<td>NumHydrogens</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of (explicit) hydrogens in a labeled atom consisting of one heavy atom and (optionally) the symbol H (e.g., CH<sub>3</sub>).
+</td>
+</tr>
+
+
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x042E</td>
+<td><a href="properties/Atom_HDot.htm">kCDXProp_Atom_HDot</a></td>
+<td>HDot</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies the presence of an implicit hydrogen with stereochemistry specified equivalent to an explicit H atom with a wedged bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x042F</td>
+<td><a href="properties/Atom_HDash.htm">kCDXProp_Atom_HDash</a></td>
+<td>HDash</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies the presence of an implicit hydrogen with stereochemistry specified equivalent to an explicit H atom with a hashed bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0430</td>
+<td><a href="properties/Atom_Geometry.htm">kCDXProp_Atom_Geometry</a></td>
+<td>Geometry</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The geometry of the bonds about this atom.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0431</td>
+<td><a href="properties/Atom_BondOrdering.htm">kCDXProp_Atom_BondOrdering</a></td>
+<td>BondOrdering       </td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An ordering of the bonds to this node, used for stereocenters, fragments, and named alternative groups with more than one attachment.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0432</td>
+<td><a href="properties/Node_Attachments.htm">kCDXProp_Node_Attachments</a></td>
+<td>Attachments        </td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArrayWithCounts</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for multi- and variable attached nodes.</font> For multicenter attachment nodes or variable attachment nodes, a list of IDs of the nodes which are multiply or variably attached to this node.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0433</td>
+<td><a href="properties/Atom_GenericNickname.htm">kCDXProp_Atom_GenericNickname</a></td>
+<td>GenericNickname    </td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The name of the generic nickname.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0434</td>
+<td><a href="properties/Atom_AltGroupID.htm">kCDXProp_Atom_AltGroupID</a></td>
+<td>AltGroupID         </td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The ID of the alternative group object that describes this node.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0435</td>
+<td><a href="properties/Atom_RestrictSubstituentsUpTo.htm">kCDXProp_Atom_RestrictSubstituentsUpTo</a></td>
+<td>SubstituentsUpTo   </td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that substitution is restricted to no more than the specified value.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0436</td>
+<td><a href="properties/Atom_RestrictSubstituentsExactly.htm">kCDXProp_Atom_RestrictSubstituentsExactly</a></td>
+<td>SubstituentsExactly</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that exactly the specified number of substituents must be present.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0437</td>
+<td><a href="properties/Atom_CIPStereochemistry.htm">kCDXProp_Atom_CIPStereochemistry</a></td>
+<td>AS</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The node's absolute stereochemistry according to the Cahn-Ingold-Prelog system.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0438</td>
+<td><a href="properties/Atom_Translation.htm">kCDXProp_Atom_Translation</a></td>
+<td>Translation</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Provides for restrictions on whether a given node may match other more- or less-general nodes.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0439</td>
+<td><a href="properties/Atom_AtomNumber.htm">kCDXProp_Atom_AtomNumber</a></td>
+<td>AtomNumber</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Atom number, as text.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043A</td>
+<td><a href="properties/Atom_ShowQuery.htm">kCDXProp_Atom_ShowQuery</a></td>
+<td>ShowAtomQuery</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the query indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043B</td>
+<td><a href="properties/Atom_ShowStereo.htm">kCDXProp_Atom_ShowStereo</a></td>
+<td>ShowAtomStereo</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the stereochemistry indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043C</td>
+<td><a href="properties/Atom_ShowAtomNumber.htm">kCDXProp_Atom_ShowAtomNumber</a></td>
+<td>ShowAtomNumber</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the atom number if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043D</td>
+<td><a href="properties/Atom_LinkCountLow.htm">kCDXProp_Atom_LinkCountLow</a></td>
+<td>LinkCountLow</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Low end of repeat count for link nodes.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043E</td>
+<td><a href="properties/Atom_LinkCountHigh.htm">kCDXProp_Atom_LinkCountHigh</a></td>
+<td>LinkCountHigh</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+High end of repeat count for link nodes.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x043F</td>
+<td><a href="properties/Atom_IsotopicAbundance.htm">kCDXProp_Atom_IsotopicAbundance</a></td>
+<td>IsotopicAbundance</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Isotopic abundance of this atom's isotope.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0440</td>
+<td><a href="properties/Atom_ExternalConnectionType.htm">kCDXProp_Atom_ExternalConnectionType</a></td>
+<td>ExternalConnectionType</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Type of external connection, for atoms of type kCDXNodeType_ExternalConnectionPoint.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0441</td>
+<td><a href="properties/Atom_GenericList.htm">kCDXProp_Atom_GenericList</a></td>
+<td>GenericList</td>
+<td><a href="DataType/CDXGenericList.htm">CDXGenericList</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A list of generic nicknames.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0442</td>
+<td><a href="properties/Atom_ShowTerminalCarbonLabels.htm">kCDXProp_Atom_ShowTerminalCarbonLabels</a></td>
+<td>ShowTerminalCarbonLabels</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether terminal carbons (carbons with zero or one bond) should display a text label with the element symbol and appropriate hydrogens.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0443</td>
+<td><a href="properties/Atom_ShowNonTerminalCarbonLabels.htm">kCDXProp_Atom_ShowNonTerminalCarbonLabels</a></td>
+<td>ShowNonTerminalCarbonLabels</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether non-terminal carbons (carbons with more than one bond) should display a text label with the element symbol and appropriate hydrogens.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0444</td>
+<td><a href="properties/Atom_HideImplicitHydrogens.htm">kCDXProp_Atom_HideImplicitHydrogens</a></td>
+<td>HideImplicitHydrogens</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether implicit hydrogens should be displayed on otherwise-atomic atom labels (NH2 versus N).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0445</td>
+<td><a href="properties/Atom_ShowEnhancedStereo.htm">kCDXProp_Atom_ShowEnhancedStereo</a></td>
+<td>ShowAtomEnhancedStereo</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the enhanced stereochemistry indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0446</td>
+<td><a href="properties/Atom_EnhancedStereoType.htm">kCDXProp_Atom_EnhancedStereoType</a></td>
+<td>EnhancedStereoType</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of enhanced stereochemistry present on this atom.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0447</td>
+<td><a href="properties/Atom_EnhancedStereoGroupNum.htm">kCDXProp_Atom_EnhancedStereoGroupNum</a></td>
+<td>EnhancedStereoGroupNum</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The group number associated with Or and And enhanced stereochemistry types.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0500</td>
+<td><a href="properties/Mole_Racemic.htm">kCDXProp_Mole_Racemic</a></td>
+<td>Racemic</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that the molecule is a racemic mixture.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0501</td>
+<td><a href="properties/Mole_Absolute.htm">kCDXProp_Mole_Absolute</a></td>
+<td>Absolute</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that the molecule has known absolute configuration.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0502</td>
+<td><a href="properties/Mole_Relative.htm">kCDXProp_Mole_Relative</a></td>
+<td>Relative</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that the molecule has known relative stereochemistry, but unknown absolute configuration.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0503</td>
+<td><a href="properties/Mole_Formula.htm">kCDXProp_Mole_Formula</a></td>
+<td>Formula</td>
+<td><a href="DataType/CDXFormula.htm">CDXFormula</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The molecular formula representation of a molecule object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0504</td>
+<td><a href="properties/Mole_Weight.htm">kCDXProp_Mole_Weight</a></td>
+<td>Weight</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The average molecular weight of a molecule object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0505</td>
+<td><a href="properties/Frag_ConnectionOrder.htm">kCDXProp_Frag_ConnectionOrder</a></td>
+<td>ConnectionOrder</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An ordered list of attachment points within a fragment.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0600</td>
+<td><a href="properties/Bond_Order.htm">kCDXProp_Bond_Order</a></td>
+<td>Order</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The order of a bond object.
+This is a bit-encoded property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0601</td>
+<td><a href="properties/Bond_Display.htm">kCDXProp_Bond_Display</a></td>
+<td>Display</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The display type of a bond object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0602</td>
+<td><a href="properties/Bond_Display2.htm">kCDXProp_Bond_Display2</a></td>
+<td>Display2</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The display type for the second line of a double bond.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0603</td>
+<td><a href="properties/Bond_DoublePosition.htm">kCDXProp_Bond_DoublePosition</a></td>
+<td>DoublePosition</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The position of the second line of a double bond.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0604</td>
+<td><a href="properties/Bond_Begin.htm">kCDXProp_Bond_Begin</a></td>
+<td>B</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for bonds.</font> The ID of the CDX node object at the first end of a bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0605</td>
+<td><a href="properties/Bond_End.htm">kCDXProp_Bond_End</a></td>
+<td>E</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for bonds.</font> The ID of the CDX node object at the second end of a bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0606</td>
+<td><a href="properties/Bond_RestrictTopology.htm">kCDXProp_Bond_RestrictTopology</a></td>
+<td>Topology</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates the desired topology of a bond in a query.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0607</td>
+<td><a href="properties/Bond_RestrictRxnParticipation.htm">kCDXProp_Bond_RestrictRxnParticipation</a></td>
+<td>RxnParticipation</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Specifies that a bond is affected by a reaction.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0608</td>
+<td><a href="properties/Bond_BeginAttach.htm">kCDXProp_Bond_BeginAttach</a></td>
+<td>BeginAttach</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates where within the Bond_Begin node a bond is attached.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0609</td>
+<td><a href="properties/Bond_EndAttach.htm">kCDXProp_Bond_EndAttach</a></td>
+<td>EndAttach</td>
+<td><a href="DataType/CDXNumeric.htm">UINT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates where within the Bond_End node a bond is attached.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060A</td>
+<td><a href="properties/Bond_CIPStereochemistry.htm">kCDXProp_Bond_CIPStereochemistry</a></td>
+<td>BS</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The bond's absolute stereochemistry according to the Cahn-Ingold-Prelog system.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060B</td>
+<td><a href="properties/Bond_BondOrdering.htm">kCDXProp_Bond_BondOrdering</a></td>
+<td>BondCircularOrdering</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Ordered list of attached bond IDs.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060C</td>
+<td><a href="properties/Bond_ShowQuery.htm">kCDXProp_Bond_ShowQuery</a></td>
+<td>ShowBondQuery</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the query indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060D</td>
+<td><a href="properties/Bond_ShowStereo.htm">kCDXProp_Bond_ShowStereo</a></td>
+<td>ShowBondStereo</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the stereochemistry indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060E</td>
+<td><a href="properties/Bond_CrossingBonds.htm">kCDXProp_Bond_CrossingBonds</a></td>
+<td>CrossingBonds</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The set of bonds that cross a given bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x060F</td>
+<td><a href="properties/Bond_ShowRxn.htm">kCDXProp_Bond_ShowRxn</a></td>
+<td>ShowBondRxn</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the reaction-change indicator if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0700</td>
+<td><a href="properties/Text.htm">kCDXProp_Text</a></td>
+<td>(not used)</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for text objects.</font> The text of a text object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0701</td>
+<td><a href="properties/Justification.htm">kCDXProp_Justification</a></td>
+<td>Justification</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The horizontal justification of a text object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0702</td>
+<td><a href="properties/LineHeight.htm">kCDXProp_LineHeight</a></td>
+<td>LineHeight</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The line height of a text object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0703</td>
+<td><a href="properties/WordWrapWidth.htm">kCDXProp_WordWrapWidth</a></td>
+<td>WordWrapWidth</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The word-wrap width of a text object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0704</td>
+<td><a href="properties/LineStarts.htm">kCDXProp_LineStarts</a></td>
+<td>LineStarts</td>
+<td><a href="DataType/INT16ListWithCounts.htm">INT16ListWithCounts</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of lines of a text object followed by that many values indicating the zero-based text position of each line start.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0705</td>
+<td><a href="properties/LabelAlignment.htm">kCDXProp_LabelAlignment</a></td>
+<td>LabelAlignment</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The alignment of the text with respect to the node position.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0706</td>
+<td><a href="properties/LabelLineHeight.htm">kCDXProp_LabelLineHeight</a></td>
+<td>LabelLineHeight</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Text line height for atom labels
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0707</td>
+<td><a href="properties/CaptionLineHeight.htm">kCDXProp_CaptionLineHeight</a></td>
+<td>CaptionLineHeight</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Text line height for non-atomlabel text objects
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0708</td>
+<td><a href="properties/InterpretChemically.htm">kCDXProp_InterpretChemically</a></td>
+<td>InterpretChemically</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether to the text label should be interpreted chemically (if possible).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0800</td>
+<td><a href="properties/MacPrintInfo.htm">kCDXProp_MacPrintInfo</a></td>
+<td>MacPrintInfo</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The 120 byte Macintosh TPrint data associated with the CDX document object. Refer to Macintosh Toolbox manual for detailed description.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0801</td>
+<td><a href="properties/WinPrintInfo.htm">kCDXProp_WinPrintInfo</a></td>
+<td>WinPrintInfo</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The Windows DEVMODE structure associated with the CDX document object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0802</td>
+<td><a href="properties/PrintMargins.htm">kCDXProp_PrintMargins</a></td>
+<td>PrintMargins</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The outer margins of the Document.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0803</td>
+<td><a href="properties/ChainAngle.htm">kCDXProp_ChainAngle</a></td>
+<td>ChainAngle</td>
+<td><a href="DataType/CDXNumeric.htm">INT32</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default chain angle setting in degrees * 65536.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0804</td>
+<td><a href="properties/BondSpacing.htm">kCDXProp_BondSpacing</a></td>
+<td>BondSpacing         </td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The spacing between segments of a multiple bond, measured relative to bond length.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0805</td>
+<td><a href="properties/BondLength.htm">kCDXProp_BondLength</a></td>
+<td>BondLength          </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default bond length.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0806</td>
+<td><a href="properties/BoldWidth.htm">kCDXProp_BoldWidth</a></td>
+<td>BoldWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default bold bond width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0807</td>
+<td><a href="properties/LineWidth.htm">kCDXProp_LineWidth</a></td>
+<td>LineWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default line width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0808</td>
+<td><a href="properties/MarginWidth.htm">kCDXProp_MarginWidth</a></td>
+<td>MarginWidth         </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default amount of space surrounding atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0809</td>
+<td><a href="properties/HashSpacing.htm">kCDXProp_HashSpacing</a></td>
+<td>HashSpacing         </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default spacing between hashed lines used in wedged hashed bonds.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080A</td>
+<td><a href="properties/LabelStyle.htm">kCDXProp_LabelStyle</a></td>
+<td>(not used)</td>
+<td><a href="DataType/CDXString.htm">CDXFontStyle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default style for atom labels..
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080B</td>
+<td><a href="properties/CaptionStyle.htm">kCDXProp_CaptionStyle</a></td>
+<td>(not used)</td>
+<td><a href="DataType/CDXString.htm">CDXFontStyle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default style for non-atomlabel text objects..
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080C</td>
+<td><a href="properties/CaptionJustification.htm">kCDXProp_CaptionJustification</a></td>
+<td>CaptionJustification</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The horizontal justification of a caption (non-atomlabel text object)
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080D</td>
+<td><a href="properties/FractionalWidths.htm">kCDXProp_FractionalWidths</a></td>
+<td>FractionalWidths</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether to use fractional width information when drawing text.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080E</td>
+<td><a href="properties/Magnification.htm">kCDXProp_Magnification</a></td>
+<td>Magnification</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The view magnification factor
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080F</td>
+<td><a href="properties/WidthPages.htm">kCDXProp_WidthPages</a></td>
+<td>WidthPages</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The width of the document in pages.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0810</td>
+<td><a href="properties/HeightPages.htm">kCDXProp_HeightPages</a></td>
+<td>HeightPages</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The height of the document in pages.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0811</td>
+<td><a href="properties/DrawingSpaceType.htm">kCDXProp_DrawingSpaceType</a></td>
+<td>DrawingSpace</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of drawing space used for this document.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0812</td>
+<td><a href="properties/Width.htm">kCDXProp_Width</a></td>
+<td>Width</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The width of an object in CDX coordinate units, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0813</td>
+<td><a href="properties/Height.htm">kCDXProp_Height</a></td>
+<td>Height</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The height of an object in CDX coordinate units, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0814</td>
+<td><a href="properties/PageOverlap.htm">kCDXProp_PageOverlap</a></td>
+<td>PageOverlap</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The amount of overlap of pages when a poster is tiled.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0815</td>
+<td><a href="properties/Header.htm">kCDXProp_Header</a></td>
+<td>Header</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The text of the header.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0816</td>
+<td><a href="properties/HeaderPosition.htm">kCDXProp_HeaderPosition</a></td>
+<td>HeaderPosition</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The vertical offset of the header baseline from the top of the page.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0817</td>
+<td><a href="properties/Footer.htm">kCDXProp_Footer</a></td>
+<td>Footer</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The text of the footer.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0818</td>
+<td><a href="properties/FooterPosition.htm">kCDXProp_FooterPosition</a></td>
+<td>FooterPosition</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The vertical offset of the footer baseline from the bottom of the page.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0819</td>
+<td><a href="properties/PrintTrimMarks.htm">kCDXProp_PrintTrimMarks</a></td>
+<td>PrintTrimMarks</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+If present, trim marks are to printed in the margins.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081A</td>
+<td><a href="properties/LabelStyleFont.htm">kCDXProp_LabelStyleFont</a></td>
+<td>LabelFont</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font family for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081B</td>
+<td><a href="properties/CaptionStyleFont.htm">kCDXProp_CaptionStyleFont</a></td>
+<td>CaptionFont</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font style for captions (non-atom-label text objects).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081C</td>
+<td><a href="properties/LabelStyleSize.htm">kCDXProp_LabelStyleSize</a></td>
+<td>LabelSize</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font size for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081D</td>
+<td><a href="properties/CaptionStyleSize.htm">kCDXProp_CaptionStyleSize</a></td>
+<td>CaptionSize</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font size for captions (non-atom-label text objects).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081E</td>
+<td><a href="properties/LabelStyleFace.htm">kCDXProp_LabelStyleFace</a></td>
+<td>LabelFace</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font style for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081F</td>
+<td><a href="properties/CaptionStyleFace.htm">kCDXProp_CaptionStyleFace</a></td>
+<td>CaptionFace</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font face for captions (non-atom-label text objects).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0820</td>
+<td><a href="properties/LabelStyleColor.htm">kCDXProp_LabelStyleColor</a></td>
+<td>LabelColor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default color for atom labels
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0821</td>
+<td><a href="properties/CaptionStyleColor.htm">kCDXProp_CaptionStyleColor</a></td>
+<td>CaptionColor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default color for captions (non-atom-label text objects).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0822</td>
+<td><a href="properties/BondSpacingAbs.htm">kCDXProp_BondSpacingAbs</a></td>
+<td>BondSpacingAbs</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The absolute distance between segments of a multiple bond.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0823</td>
+<td><a href="properties/LabelJustification.htm">kCDXProp_LabelJustification</a></td>
+<td>LabelJustification</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default justification for atom labels.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0824</td>
+<td><a href="properties/FixInplaceExtent.htm">kCDXProp_FixInplaceExtent</a></td>
+<td>FixInPlaceExtent</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Defines a size for OLE In-Place editing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0825</td>
+<td><a href="properties/Side.htm">kCDXProp_Side</a></td>
+<td>Side</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required.</font> A specific side of an object (rectangle).
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0826</td>
+<td><a href="properties/FixInplaceGap.htm">kCDXProp_FixInplaceGap</a></td>
+<td>FixInPlaceGap</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Defines a padding for OLE In-Place editing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0827</td>
+<td><a href="properties/CartridgeData.htm">kCDXProp_CartridgeData</a></td>
+<td>CartridgeData</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Transient data used by the CambridgeSoft Oracle Cartridge.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0900</td>
+<td><a href="properties/Window_IsZoomed.htm">kCDXProp_Window_IsZoomed</a></td>
+<td>WindowIsZoomed</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether the main viewing window is zoomed (maximized).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0901</td>
+<td><a href="properties/Window_Position.htm">kCDXProp_Window_Position</a></td>
+<td>WindowPosition</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The top-left position of the main viewing window.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0902</td>
+<td><a href="properties/Window_Size.htm">kCDXProp_Window_Size</a></td>
+<td>WindowSize</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Height and width of the document window.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A00</td>
+<td><a href="properties/Graphic_Type.htm">kCDXProp_Graphic_Type</a></td>
+<td>GraphicType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of graphical object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A01</td>
+<td><a href="properties/Line_Type.htm">kCDXProp_Line_Type</a></td>
+<td>LineType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of a line object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A02</td>
+<td><a href="properties/Arrow_Type.htm">kCDXProp_Arrow_Type</a></td>
+<td>ArrowType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of arrow object, which represents line, arrow, arc, rectangle, or orbital.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A03</td>
+<td><a href="properties/Rectangle_Type.htm">kCDXProp_Rectangle_Type</a></td>
+<td>RectangleType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of a rectangle object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A04</td>
+<td><a href="properties/Oval_Type.htm">kCDXProp_Oval_Type</a></td>
+<td>OvalType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of an arrow object that represents a circle or ellipse.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A05</td>
+<td><a href="properties/Orbital_Type.htm">kCDXProp_Orbital_Type</a></td>
+<td>OrbitalType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of orbital object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A06</td>
+<td><a href="properties/Bracket_Type.htm">kCDXProp_Bracket_Type</a></td>
+<td>BracketType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of symbol object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A07</td>
+<td><a href="properties/Symbol_Type.htm">kCDXProp_Symbol_Type</a></td>
+<td>SymbolType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of symbol object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A08</td>
+<td><a href="properties/Curve_Type.htm">kCDXProp_Curve_Type</a></td>
+<td>CurveType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of curve object.
+This is a bit-encoded property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A20</td>
+<td><a href="properties/Arrowhead_Size.htm">kCDXProp_Arrowhead_Size</a></td>
+<td>HeadSize       </td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The size of the arrow's head.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A21</td>
+<td><a href="properties/Arc_AngularSize.htm">kCDXProp_Arc_AngularSize</a></td>
+<td>AngularSize</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The size of an arc (in degrees * 10, so 90 degrees = 900).
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A22</td>
+<td><a href="properties/Bracket_LipSize.htm">kCDXProp_Bracket_LipSize</a></td>
+<td>LipSize</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The size of a bracket.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A23</td>
+<td><a href="properties/Curve_Points.htm">kCDXProp_Curve_Points</a></td>
+<td>CurvePoints</td>
+<td><a href="DataType/CDXCurvePoints.htm">CDXCurvePoints</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for curves.</font> The B&eacute;zier curve's control point locations.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A24</td>
+<td><a href="properties/Bracket_Usage.htm">kCDXProp_Bracket_Usage</a></td>
+<td>BracketUsage</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The syntactical chemical meaning of the bracket (SRU, mer, mon, xlink, etc).
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A25</td>
+<td><a href="properties/Polymer_RepeatPattern.htm">kCDXProp_Polymer_RepeatPattern</a></td>
+<td>PolymerRepeatPattern</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The head-to-tail connectivity of objects contained within the bracket.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A26</td>
+<td><a href="properties/Polymer_FlipType.htm">kCDXProp_Polymer_FlipType</a></td>
+<td>PolymerFlipType</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The flip state of objects contained within the bracket.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A27</td>
+<td><a href="properties/BracketedObjects.htm">kCDXProp_BracketedObjects</a></td>
+<td>BracketedObjectIDs</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The set of objects contained in a BracketedGroup.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A28</td>
+<td><a href="properties/Bracket_RepeatCount.htm">kCDXProp_Bracket_RepeatCount</a></td>
+<td>RepeatCount</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of times a multiple-group BracketedGroup is repeated.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A29</td>
+<td><a href="properties/Bracket_ComponentOrder.htm">kCDXProp_Bracket_ComponentOrder</a></td>
+<td>ComponentOrder</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The component order associated with a BracketedGroup.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2A</td>
+<td><a href="properties/Bracket_SRULabel.htm">kCDXProp_Bracket_SRULabel</a></td>
+<td>SRULabel</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The label associated with a BracketedGroup that represents an SRU.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2B</td>
+<td><a href="properties/Bracket_GraphicID.htm">kCDXProp_Bracket_GraphicID</a></td>
+<td>GraphicID</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The ID of a graphical object (bracket, brace, or parenthesis) associated with a Bracket Attachment.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2C</td>
+<td><a href="properties/Bracket_BondID.htm">kCDXProp_Bracket_BondID</a></td>
+<td>BondID</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required.</font> The ID of a bond that crosses a Bracket Attachment.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2D</td>
+<td><a href="properties/Bracket_InnerAtomID.htm">kCDXProp_Bracket_InnerAtomID</a></td>
+<td>InnerAtomID</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required.</font> The ID of the node located within the Bracketed Group and attached to a bond that crosses a Bracket Attachment.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2E</td>
+<td><a href="properties/Curve_Points3D.htm">kCDXProp_Curve_Points3D</a></td>
+<td>CurvePoints3D</td>
+<td><a href="DataType/CDXCurvePoints3D.htm">CDXCurvePoints3D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The B&eacute;zier curve's control point locations in 3D space.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2F</td>
+<td><a href="properties/Arrowhead_Type.htm">kCDXProp_Arrowhead_Type</a></td>
+<td>ArrowHeadType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of arrowhead.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A30</td>
+<td><a href="properties/Arrowhead_CenterSize.htm">kCDXProp_Arrowhead_CenterSize</a></td>
+<td>HeadCenterSize</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The size of the arrow's head from the tip to the back of the head.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A31</td>
+<td><a href="properties/Arrowhead_Width.htm">kCDXProp_Arrowhead_Width</a></td>
+<td>HeadWidth</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The half-width of the arrow's head.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A32</td>
+<td><a href="properties/ShadowSize.htm">kCDXProp_ShadowSize</a></td>
+<td>ShadowSize</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The size of the object's shadow.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A33</td>
+<td><a href="properties/Arrow_ShaftSpacing.htm">kCDXProp_Arrow_ShaftSpacing</a></td>
+<td>ArrowShaftSpacing</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The width of the space between a multiple-component arrow shaft, as in an equilibrium arrow.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A34</td>
+<td><a href="properties/Arrow_EquilibriumRatio.htm">kCDXProp_Arrow_EquilibriumRatio</a></td>
+<td>ArrowEquilibriumRatio</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The ratio of the length of the left component of an equilibrium arrow (viewed from the end to the start) to the right component.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A35</td>
+<td><a href="properties/Arrow_ArrowHead_Head.htm">kCDXProp_Arrow_ArrowHead_Head</a></td>
+<td>ArrowHeadHead</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of arrowhead at the head of the arrow.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A36</td>
+<td><a href="properties/Arrow_ArrowHead_Tail.htm">kCDXProp_Arrow_ArrowHead_Tail</a></td>
+<td>ArrowHeadTail</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of arrowhead at the tail of the arrow.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A37</td>
+<td><a href="properties/Fill_Type.htm">kCDXProp_Fill_Type</a></td>
+<td>FillType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of the fill, for objects that can be filled.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A38</td>
+<td><a href="properties/Curve_Spacing.htm">kCDXProp_Curve_Spacing</a></td>
+<td>CurveSpacing</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The width of the space between a a Doubled curve.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A38</td>
+<td><a href="properties/Closed.htm">kCDXProp_Closed</a></td>
+<td>Closed</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether object is closed.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A3A</td>
+<td><a href="properties/Arrow_Dipole.htm">kCDXProp_Arrow_Dipole</a></td>
+<td>Dipole</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether the arrow is a dipole arrow.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A3B</td>
+<td><a href="properties/Arrow_NoGo.htm">kCDXProp_Arrow_NoGo</a></td>
+<td>NoGo</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether arrow is a no-go arrow, and the type of no-go (crossed-through or hashed-out) if so.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A3C</td>
+<td><a href="properties/CornerRadius.htm">kCDXProp_CornerRadius</a></td>
+<td>CornerRadius</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The radius of the rounded corner of a rounded rectangle.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A3D</td>
+<td><a href="properties/Frame_Type.htm">kCDXProp_Frame_Type</a></td>
+<td>FrameType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of frame on an object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A60</td>
+<td><a href="properties/Picture_Edition.htm">kCDXProp_Picture_Edition</a></td>
+<td>Edition</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The section information (SectionHandle) of the Macintosh Publish & Subscribe edition embedded in the CDX picture object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A61</td>
+<td><a href="properties/Picture_EditionAlias.htm">kCDXProp_Picture_EditionAlias</a></td>
+<td>EditionAlias</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The alias information of the Macintosh Publish & Subscribe edition embedded in the CDX picture object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A62</td>
+<td><a href="properties/MacPICT.htm">kCDXProp_MacPICT</a></td>
+<td>MacPICT</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A Macintosh PICT data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A63</td>
+<td><a href="properties/WindowsMetafile.htm">kCDXProp_WindowsMetafile</a></td>
+<td>WindowsMetafile</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A Microsoft Windows Metafile object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A64</td>
+<td><a href="properties/OLEObject.htm">kCDXProp_OLEObject</a></td>
+<td>OLEObject</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An OLE object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A65</td>
+<td><a href="properties/EnhancedMetafile.htm">kCDXProp_EnhancedMetafile</a></td>
+<td>EnhancedMetafile</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A Microsoft Windows Enhanced Metafile object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A6E</td>
+<td><a href="properties/GIF.htm">kCDXProp_GIF</a></td>
+<td>GIF</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary GIF data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A6F</td>
+<td><a href="properties/TIFF.htm">kCDXProp_TIFF</a></td>
+<td>TIFF</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary TIFF data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A70</td>
+<td><a href="properties/PNG.htm">kCDXProp_PNG</a></td>
+<td>PNG</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary PNG data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A71</td>
+<td><a href="properties/JPEG.htm">kCDXProp_JPEG</a></td>
+<td>JPEG</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary JPEG data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A72</td>
+<td><a href="properties/BMP.htm">kCDXProp_BMP</a></td>
+<td>BMP</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary BMP data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A80</td>
+<td><a href="properties/Spectrum_XSpacing.htm">kCDXProp_Spectrum_XSpacing</a></td>
+<td>XSpacing</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for spectra.</font> The spacing in logical units (ppm, Hz, wavenumbers) between points along the X-axis of an evenly-spaced grid.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A81</td>
+<td><a href="properties/Spectrum_XLow.htm">kCDXProp_Spectrum_XLow</a></td>
+<td>XLow</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for spectra.</font> The first data point for the X-axis of an evenly-spaced grid.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A82</td>
+<td><a href="properties/Spectrum_XType.htm">kCDXProp_Spectrum_XType</a></td>
+<td>XType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of units the X-axis represents.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A83</td>
+<td><a href="properties/Spectrum_YType.htm">kCDXProp_Spectrum_YType</a></td>
+<td>YType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of units the Y-axis represents.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A84</td>
+<td><a href="properties/Spectrum_XAxisLabel.htm">kCDXProp_Spectrum_XAxisLabel</a></td>
+<td>XAxisLabel</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A label for the X-axis.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A85</td>
+<td><a href="properties/Spectrum_YAxisLabel.htm">kCDXProp_Spectrum_YAxisLabel</a></td>
+<td>YAxisLabel</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A label for the Y-axis.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A86</td>
+<td><a href="properties/Spectrum_DataPoint.htm">kCDXProp_Spectrum_DataPoint</a></td>
+<td>(not used)</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for spectra.</font> The Y-axis values for the spectrum. It is an array of double values corresponding to X-axis values.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A87</td>
+<td><a href="properties/Spectrum_Class.htm">kCDXProp_Spectrum_Class</a></td>
+<td>Class</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of spectrum represented.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A88</td>
+<td><a href="properties/Spectrum_YLow.htm">kCDXProp_Spectrum_YLow</a></td>
+<td>YLow</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Y value to be used to offset data when storing XML.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A89</td>
+<td><a href="properties/Spectrum_YScale.htm">kCDXProp_Spectrum_YScale</a></td>
+<td>YScale</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Y scaling used to scale data when storing XML.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA0</td>
+<td><a href="properties/TLC_OriginFraction.htm">kCDXProp_TLC_OriginFraction</a></td>
+<td>OriginFraction</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The distance of the origin line from the bottom of a TLC Plate, as a fraction of the total height of the plate.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA1</td>
+<td><a href="properties/TLC_SolventFrontFraction.htm">kCDXProp_TLC_SolventFrontFraction</a></td>
+<td>SolventFrontFraction</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The distance of the solvent front from the top of a TLC Plate, as a fraction of the total height of the plate.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA2</td>
+<td><a href="properties/TLC_ShowOrigin.htm">kCDXProp_TLC_ShowOrigin</a></td>
+<td>ShowOrigin</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the origin line near the base of the TLC Plate if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA3</td>
+<td><a href="properties/TLC_ShowSolventFront.htm">kCDXProp_TLC_ShowSolventFront</a></td>
+<td>ShowSolventFront</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the solvent front line near the top of the TLC Plate if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA4</td>
+<td><a href="properties/TLC_ShowBorders.htm">kCDXProp_TLC_ShowBorders</a></td>
+<td>ShowBorders</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show borders around the edges of the TLC Plate if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA5</td>
+<td><a href="properties/TLC_ShowSideTicks.htm">kCDXProp_TLC_ShowSideTicks</a></td>
+<td>ShowSideTicks</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show tickmarks up the side of the TLC Plate if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AB0</td>
+<td><a href="properties/TLC_Rf.htm">kCDXProp_TLC_Rf</a></td>
+<td>Rf</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The Retention Factor (R<sub>f</sub>) of an individual spot.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AB1</td>
+<td><a href="properties/TLC_Tail.htm">kCDXProp_TLC_Tail</a></td>
+<td>Tail</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The length of the "tail" of an individual spot.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AB2</td>
+<td><a href="properties/TLC_ShowRf.htm">kCDXProp_TLC_ShowRf</a></td>
+<td>ShowRf</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the spot's Retention Fraction (R<sub>f</sub>) value if non-zero..
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B00</td>
+<td><a href="properties/NamedAlternativeGroup_TextFrame.htm">kCDXProp_NamedAlternativeGroup_TextFrame</a></td>
+<td>TextFrame</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The bounding box of upper portion of the Named Alternative Group, containing the name of the group.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B01</td>
+<td><a href="properties/NamedAlternativeGroup_GroupFrame.htm">kCDXProp_NamedAlternativeGroup_GroupFrame</a></td>
+<td>GroupFrame</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The bounding box of the lower portion of the Named Alternative Group, containing the definition of the group.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B02</td>
+<td><a href="properties/NamedAlternativeGroup_Valence.htm">kCDXProp_NamedAlternativeGroup_Valence</a></td>
+<td>Valence</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of attachment points in each alternative in a named alternative group.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B80</td>
+<td><a href="properties/GeometricFeature.htm">kCDXProp_GeometricFeature</a></td>
+<td>GeometricFeature</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of the geometrical feature (point, line, plane, etc.).
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B81</td>
+<td><a href="properties/RelationValue.htm">kCDXProp_RelationValue</a></td>
+<td>RelationValue</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The numeric relationship (if any) among the basis objects used to define this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B82</td>
+<td><a href="properties/BasisObjects.htm">kCDXProp_BasisObjects</a></td>
+<td>BasisObjects</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for geometries and constraints.</font> An ordered list of objects used to define this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B83</td>
+<td><a href="properties/ConstraintType.htm">kCDXProp_ConstraintType</a></td>
+<td>ConstraintType</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The constraint type (distance, angle, or exclusion sphere).
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B84</td>
+<td><a href="properties/ConstraintMin.htm">kCDXProp_ConstraintMin</a></td>
+<td>ConstraintMin</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The minimum value of the constraint.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B85</td>
+<td><a href="properties/ConstraintMax.htm">kCDXProp_ConstraintMax</a></td>
+<td>ConstraintMax</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The maximum value of the constraint.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B86</td>
+<td><a href="properties/IgnoreUnconnectedAtoms.htm">kCDXProp_IgnoreUnconnectedAtoms</a></td>
+<td>IgnoreUnconnectedAtoms</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether unconnected atoms should be ignored within the exclusion sphere.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B87</td>
+<td><a href="properties/DihedralIsChiral.htm">kCDXProp_DihedralIsChiral</a></td>
+<td>DihedralIsChiral</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether a dihedral is signed or unsigned.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B88</td>
+<td><a href="properties/PointIsDirected.htm">kCDXProp_PointIsDirected</a></td>
+<td>PointIsDirected</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+For a point based on a normal, signifies whether it is in a specific direction relative to the reference point.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0BB0</td>
+<td><a href="properties/ChemicalPropertyType.htm">kCDXProp_ChemicalPropertyType</a></td>
+<td>ChemicalPropertyType</td>
+<td><a href="DataType/CDXNumeric.htm">UINT32</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of property (name, formula, molecular weight, etc.).
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0BB1</td>
+<td><a href="properties/ChemicalPropertyDisplayID.htm">kCDXProp_ChemicalPropertyDisplayID</a></td>
+<td>ChemicalPropertyDisplayID</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The ID of a graphical object used to display the property value.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0BB2</td>
+<td><a href="properties/ChemicalPropertyIsActive.htm">kCDXProp_ChemicalPropertyIsActive</a></td>
+<td>ChemicalPropertyIsActive</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Whether the property should be recalculated in response to changes in the basis objects.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C00</td>
+<td><a href="properties/ReactionStep_Atom_Map.htm">kCDXProp_ReactionStep_Atom_Map</a></td>
+<td>ReactionStepAtomMap</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Represents pairs of mapped atom IDs; each pair is a reactant atom mapped to to a product atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C01</td>
+<td><a href="properties/ReactionStep_Reactants.htm">kCDXProp_ReactionStep_Reactants</a></td>
+<td>ReactionStepReactants</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An order list of reactants present in the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C02</td>
+<td><a href="properties/ReactionStep_Products.htm">kCDXProp_ReactionStep_Products</a></td>
+<td>ReactionStepProducts</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An order list of products present in the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C03</td>
+<td><a href="properties/ReactionStep_Plusses.htm">kCDXProp_ReactionStep_Plusses</a></td>
+<td>ReactionStepPlusses</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An ordered list of pluses used to separate components of the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C04</td>
+<td><a href="properties/ReactionStep_Arrows.htm">kCDXProp_ReactionStep_Arrows</a></td>
+<td>ReactionStepArrows</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An ordered list of arrows used to separate components of the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C05</td>
+<td><a href="properties/ReactionStep_ObjectsAboveArrow.htm">kCDXProp_ReactionStep_ObjectsAboveArrow</a></td>
+<td>ReactionStepObjectsAboveArrow</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An order list of objects above the arrow in the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C06</td>
+<td><a href="properties/ReactionStep_ObjectsBelowArrow.htm">kCDXProp_ReactionStep_ObjectsBelowArrow</a></td>
+<td>ReactionStepObjectsBelowArrow</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An order list of objects below the arrow in the Reaction Step.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C07</td>
+<td><a href="properties/ReactionStep_Atom_Map_Manual.htm">kCDXProp_ReactionStep_Atom_Map_Manual</a></td>
+<td>ReactionStepAtomMapManual</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Represents pairs of mapped atom IDs; each pair is a reactant atom mapped to to a product atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0C08</td>
+<td><a href="properties/ReactionStep_Atom_Map_Auto.htm">kCDXProp_ReactionStep_Atom_Map_Auto</a></td>
+<td>ReactionStepAtomMapAuto</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Represents pairs of mapped atom IDs; each pair is a reactant atom mapped to to a product atom.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D00</td>
+<td><a href="properties/ObjectTag_Type.htm">kCDXProp_ObjectTag_Type</a></td>
+<td>TagType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The tag's data type.
+This is an enumerated property.
+</td>
+</tr>
+
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D03</td>
+<td><a href="properties/ObjectTag_Tracking.htm">kCDXProp_ObjectTag_Tracking</a></td>
+<td>Tracking</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The tag will participate in tracking if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D04</td>
+<td><a href="properties/ObjectTag_Persistent.htm">kCDXProp_ObjectTag_Persistent</a></td>
+<td>Persistent</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The tag will be resaved to a CDX file if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D05</td>
+<td><a href="properties/ObjectTag_Value.htm">kCDXProp_ObjectTag_Value</a></td>
+<td>Value</td>
+<td>varies</td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The value is a INT32, FLOAT64 or unformatted string depending on the value of ObjectTag_Type.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D06</td>
+<td><a href="properties/Positioning.htm">kCDXProp_Positioning</a></td>
+<td>PositioningType</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+How the object should be positioned with respect to its containing object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D07</td>
+<td><a href="properties/PositioningAngle.htm">kCDXProp_PositioningAngle</a></td>
+<td>PositioningAngle</td>
+<td><a href="DataType/CDXNumeric.htm">INT32</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Angular positioning, in degrees * 65536.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D08</td>
+<td><a href="properties/PositioningOffset.htm">kCDXProp_PositioningOffset</a></td>
+<td>PositioningOffset</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Offset positioning.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0E00</td>
+<td><a href="properties/Sequence_Identifier.htm">kCDXProp_Sequence_Identifier</a></td>
+<td>SequenceIdentifier</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for sequences.</font> A unique (but otherwise random) identifier for a given Sequence object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0F00</td>
+<td><a href="properties/CrossReference_Container.htm">kCDXProp_CrossReference_Container</a></td>
+<td>CrossReferenceContainer</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An external object containing (as an embedded object) the document containing the Sequence object being referenced.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0F01</td>
+<td><a href="properties/CrossReference_Document.htm">kCDXProp_CrossReference_Document</a></td>
+<td>CrossReferenceDocument</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An external document containing the Sequence object being referenced.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0F02</td>
+<td><a href="properties/CrossReference_Identifier.htm">kCDXProp_CrossReference_Identifier</a></td>
+<td>CrossReferenceIdentifier</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for cross-references..</font> A unique (but otherwise random) identifier for a given Cross-Reference object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0F03</td>
+<td><a href="properties/CrossReference_Sequence.htm">kCDXProp_CrossReference_Sequence</a></td>
+<td>CrossReferenceSequence</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for cross-references..</font> A value matching the SequenceIdentifier of the Sequence object to be referenced.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1000</td>
+<td><a href="properties/Template_PaneHeight.htm">kCDXProp_Template_PaneHeight</a></td>
+<td>PaneHeight</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for templategrids.</font> The height of the viewing window of a template grid.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1001</td>
+<td><a href="properties/Template_NumRows.htm">kCDXProp_Template_NumRows</a></td>
+<td>NumRows</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for templategrids.</font> The number of rows of the CDX TemplateGrid object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1002</td>
+<td><a href="properties/Template_NumColumns.htm">kCDXProp_Template_NumColumns</a></td>
+<td>NumColumns</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for templategrids.</font> The number of columns of the CDX TemplateGrid object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1100</td>
+<td><a href="properties/Group_Integral.htm">kCDXProp_Group_Integral</a></td>
+<td>Integral</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The group is considered to be integral (non-subdivisible) if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1FF0</td>
+<td><a href="properties/SplitterPositions.htm">kCDXProp_SplitterPositions</a></td>
+<td>SplitterPositions</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An array of vertical positions that subdivide a page into regions.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x1FF1</td>
+<td><a href="properties/PageDefinition.htm">kCDXProp_PageDefinition</a></td>
+<td>PageDefinition</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A description of the type of formatting used by the page, or by the splitter.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x206</td>
+<td><a href="properties/BoundsInParent.htm">kCDXProp_BoundsInParent</a></td>
+<td>BoundsInParent</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The rectangle containing a page in the coordinate space of the containing page.
+</td>
+</tr>
+
+
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>
