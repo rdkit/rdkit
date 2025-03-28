@@ -500,6 +500,7 @@ void MolDraw2D::drawPlus(const Point2D &plusPos, int plusWidth,
 // draws the string centred on cds
 void MolDraw2D::drawString(const string &str, const Point2D &cds,
                            bool rawCoords) {
+  text_drawer_->setColour(colour());
   auto draw_cds = rawCoords ? cds : getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, MolDraw2D_detail::OrientType::N);
   //  int olw = lineWidth();
@@ -513,6 +514,7 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds,
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
                            MolDraw2D_detail::TextAlignType talign,
                            bool rawCoords) {
+  text_drawer_->setColour(colour());
   auto draw_cds = rawCoords ? cds : getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, talign);
 }

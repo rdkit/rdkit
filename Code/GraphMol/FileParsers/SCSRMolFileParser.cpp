@@ -13,6 +13,7 @@
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/SCSRMol.h>
 
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
@@ -29,7 +30,7 @@ namespace FileParsers {
 //  Read a SCVSR molecule from a stream
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
+static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::string tempStr;
@@ -373,7 +374,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
     if (atom->hasProp(common_properties::molAttachOrderTemplate)) {
       atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
     }
-    if (dummyLabel != "" && atomClass != "" && attchOrds.size() > 0) {
+    if (dummyLabel != "" && atomClass != "") {
       // find the template that matches the class and label
 
       bool templateFound = false;
@@ -386,31 +387,41 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
           for (auto templateName :
                templateMol->getProp<std::vector<std::string>>(
                    common_properties::templateNames)) {
-            if (templateName == dummyLabel) {
-              // now check the ATTCHORD entries
-
-              for (const auto &[idx, lbl] : attchOrds) {
-                for (auto sgroup : RDKit::getSubstanceGroups(*templateMol)) {
-                  if (sgroup.getProp<std::string>("TYPE") == "SUP" &&
-                      sgroup.getProp<std::string>("CLASS") == atomClass) {
-                    for (auto sap : sgroup.getAttachPoints()) {
-                      if (sap.id == lbl) {
-                        templateFound = true;
-                        break;
-                      }
-                    }
-                  }
-                  if (templateFound) {
-                    break;
-                  }
-                }
-                if (templateFound) {
-                  break;
-                }
-              }
-            }
             if (templateFound) {
               break;
+            }
+            if (templateName != dummyLabel) {
+              continue;  // check next template name
+            }
+            // find the SUP group for the main connections (not leaving
+            // groups)
+
+            const RDKit::SubstanceGroup *mainSUP = nullptr;
+            for (auto &sgroup : RDKit::getSubstanceGroups(*templateMol)) {
+              if (sgroup.getProp<std::string>("TYPE") == "SUP" &&
+                  sgroup.getProp<std::string>("CLASS") == atomClass) {
+                mainSUP = &sgroup;
+                break;
+              }
+            }
+
+            if (mainSUP == nullptr) {
+              break;  // breaks out of the loop over template names - continues
+                      // to next template
+            }
+
+            // now check the ATTCHORD entries
+            templateFound = true;  // tentative - until some attachment point in
+                                   // the atom is not found in the template
+            for (const auto &attachOrd : attchOrds) {
+              auto supAttachPoints = mainSUP->getAttachPoints();
+              if (std::find_if(supAttachPoints.begin(), supAttachPoints.end(),
+                               [&attachOrd](auto a) {
+                                 return a.id == attachOrd.second;
+                               }) == supAttachPoints.end()) {
+                templateFound = false;
+                break;
+              }
             }
           }
         }
@@ -433,7 +444,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
 //  Read a molecule from a string
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
+static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
@@ -446,7 +457,7 @@ std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
 //  Read a molecule from a file
 //
 //------------------------------------------------
-std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
+static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
     const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
@@ -1044,7 +1055,6 @@ class MolFromSCSRMolConverter {
     unsigned int atomCount = mol->getNumAtoms();
     for (unsigned int atomIdx = 0; atomIdx < atomCount; ++atomIdx) {
       auto atom = mol->getAtomWithIdx(atomIdx);
-
       std::string dummyLabel = "";
       std::string atomClass = "";
 
@@ -1111,7 +1121,9 @@ class MolFromSCSRMolConverter {
 
         atomIdxToTemplateIdx[atomIdx] = templateIdx;
         std::vector<std::pair<unsigned int, std::string>> attchOrds;
-        atom->getProp(common_properties::molAttachOrderTemplate, attchOrds);
+
+        atom->getPropIfPresent(common_properties::molAttachOrderTemplate,
+                               attchOrds);
 
         // first find the sgroup that is the base for this atom's
         // template
@@ -1420,10 +1432,32 @@ class MolFromSCSRMolConverter {
   }
 };
 
-std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
+static std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
     const RDKit::SCSRMol *scsrMol, const MolFromSCSRParams &molFromSCSRParams) {
   MolFromSCSRMolConverter converter(scsrMol, molFromSCSRParams);
   return converter.convert();
+}
+
+std::unique_ptr<RDKit::RWMol> MolFromSCSRDataStream(
+    std::istream &inStream, unsigned int &line,
+    const MolFileParserParams &molFileParserParams,
+    const MolFromSCSRParams &molFromSCSRParams) {
+  auto scsr = SCSRMolFromSCSRDataStream(inStream, line, molFileParserParams);
+  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
+}
+
+std::unique_ptr<RDKit::RWMol> MolFromSCSRBlock(
+    const std::string &molBlock, const MolFileParserParams &molFileParserParams,
+    const MolFromSCSRParams &molFromSCSRParams) {
+  auto scsr = SCSRMolFromSCSRBlock(molBlock, molFileParserParams);
+  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
+}
+
+std::unique_ptr<RDKit::RWMol> MolFromSCSRFile(
+    const std::string &fName, const MolFileParserParams &molFileParserParams,
+    const MolFromSCSRParams &molFromSCSRParams) {
+  auto scsr = SCSRMolFromSCSRFile(fName, molFileParserParams);
+  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
 }
 
 }  // namespace FileParsers

@@ -14,7 +14,6 @@
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FileParsers/FileWriters.h>
-#include <GraphMol/SCSRMol.h>
 #include "CDXMLParser.h"
 #include <string>
 #include <string_view>
@@ -95,19 +94,18 @@ RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromMolFile(
     const std::string &fName,
     const MolFileParserParams &params = MolFileParserParams());
 
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol>
-SCSRMolFromSCSRDataStream(
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
-    const MolFileParserParams &params = MolFileParserParams());
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
+    const MolFileParserParams &molFileParserParams = MolFileParserParams(),
+    const MolFromSCSRParams &molFromSCSRParams = MolFromSCSRParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRBlock(
     const std::string &molBlock,
-    const MolFileParserParams &params = MolFileParserParams());
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
+    const MolFileParserParams &molFileParserParams = MolFileParserParams(),
+    const MolFromSCSRParams &molFromSCSRParams = MolFromSCSRParams());
+RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSCSRFile(
     const std::string &fName,
-    const MolFileParserParams &params = MolFileParserParams());
-RDKIT_FILEPARSERS_EXPORT std::unique_ptr<RWMol> MolFromSCSRMol(
-    const RDKit::SCSRMol *scsrMol,
-    const MolFromSCSRParams &params = MolFromSCSRParams());
+    const MolFileParserParams &molFileParserParams = MolFileParserParams(),
+    const MolFromSCSRParams &molFromSCSRParams = MolFromSCSRParams());
 
 }  // namespace FileParsers
 }  // namespace v2
