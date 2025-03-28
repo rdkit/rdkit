@@ -2163,7 +2163,7 @@ TEST_CASE("wiggly and wedged bonds in CXSMILES") {
       auto cxsmi = MolToCXSmiles(nm, SmilesWriteParams(),
                                  SmilesWrite::CXSmilesFields::CX_ALL,
                                  RestoreBondDirOptionClear);
-      CHECK(cxsmi == "CC(O)Cl");
+      CHECK(cxsmi == "CC(O)Cl |w:1.0|");
     }
   }
 

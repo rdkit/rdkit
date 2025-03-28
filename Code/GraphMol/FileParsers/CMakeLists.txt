@@ -100,6 +100,11 @@ rdkit_catch_test(v2MolSuppliers v2_suppliers_catch.cpp
 rdkit_catch_test(v2FileParsersCatchTest v2_file_parsers_catch.cpp
     LINK_LIBRARIES FileParsers)
 
+rdkit_catch_test(atropisomersCatch atropisomers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
+
+
 if(RDK_TEST_MULTITHREADED AND RDK_BUILD_THREADSAFE_SSS)
 rdkit_catch_test(multithreadedSupplierCatchTest multithreaded_supplier_catch.cpp
     LINK_LIBRARIES FileParsers)
