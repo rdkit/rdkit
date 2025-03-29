@@ -1284,11 +1284,11 @@ M  END
         origSetting = RDKitModule.allow_non_tetrahedral_chirality(true);
         var mol = RDKitModule.get_mol(ctab);
         assert(mol !== null);
-        assert.equal(mol.get_smiles(), "F[Pt@SP3](F)(Cl)Cl");
+        assert.equal(mol.get_smiles(), "[F][Pt@SP3]([F])([Cl])[Cl]");
         RDKitModule.allow_non_tetrahedral_chirality(false);
         var mol = RDKitModule.get_mol(ctab);
         assert(mol !== null);
-        assert.equal(mol.get_smiles(), "F[Pt](F)(Cl)Cl");
+        assert.equal(mol.get_smiles(), "[F][Pt]([F])([Cl])[Cl]");
     } finally {
         RDKitModule.allow_non_tetrahedral_chirality(origSetting);
     }
