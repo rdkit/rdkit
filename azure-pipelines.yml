@@ -9,13 +9,11 @@ jobs:
   pool:
     vmImage: ubuntu-latest
   steps:
-  - task: Docker@2
+  - task: DockerCompose@1
     displayName: 'Build MinimalLib JS bindings'
     inputs:
-      command: build
-      Dockerfile: './Code/MinimalLib/docker/Dockerfile_CI'
-      buildContext: '.'
-      tags: 'latest' 
+      action: 'Build services'
+      dockerComposeFile: './Code/MinimalLib/docker/docker_compose_build_from_local_source_tree.yml'
 - job: Ubuntu_x64
   timeoutInMinutes: 120
   pool:

@@ -1,0 +1,66 @@
+# This docker-compose file is used to build the RDKit MinimalLib
+# from a local source tree. It consists of three services:
+# 1. `deps`: This service builds the dependencies required for RDKit.
+# 2. `rdkit_copy`: This service copies the RDKit source code from
+#    the local source tree into the Docker image.
+# 3. `rdkit_build`: This service builds the RDKit MinimalLib using
+#    the dependencies built in the first service and the source code
+#    copied in the second service.
+#
+# (the --build-arg and NETWORK* environment variables are all optional)
+#
+# NETWORK_MODE=host NETWORK=host \
+# docker-compose -f docker_compose_build_from_local_source_tree.yml build \
+#   --build-arg http_proxy=$HTTP_PROXY \
+#   --build-arg https_proxy=$HTTP_PROXY \
+#   --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
+#   2>&1 | tee docker-compose.log
+#
+# Once build is finished, you can run the following commands to
+# create a temporary container and copy built libraries
+# from the container to your local filesystem, then destroy
+# the temporary container:
+# docker create --name=rdkit-minimallib-container rdkit-minimallib:latest --entrypoint /
+# docker cp rdkit-minimallib-container:/RDKit_minimal.js ../demo
+# docker cp rdkit-minimallib-container:/RDKit_minimal.wasm ../demo
+# docker rm rdkit-minimallib-container
+
+version: '3.8'
+
+services:
+  rdkit_deps:
+    environment:
+      - NETWORK_MODE=${NETWORK_MODE:-bridge}
+      - NETWORK=${NETWORK:-rdkit_network}
+    network_mode: ${NETWORK_MODE}
+    build:
+      network: ${NETWORK}
+      context: .
+      dockerfile: Dockerfile_1_deps
+    image: rdkit-minimallib-deps:latest
+
+  rdkit_copy:
+    environment:
+      - NETWORK_MODE=${NETWORK_MODE:-bridge}
+      - NETWORK=${NETWORK:-rdkit_network}
+    network_mode: ${NETWORK_MODE}
+    build:
+      network: ${NETWORK}
+      context: ../../..
+      dockerfile: ./Code/MinimalLib/docker/Dockerfile_2_rdkit_copy_from_local
+    image: rdkit-minimallib-rdkit-src:latest
+    depends_on:
+      - rdkit_deps
+
+  rdkit_build:
+    environment:
+      - NETWORK_MODE=${NETWORK_MODE:-bridge}
+      - NETWORK=${NETWORK:-rdkit_network}
+    network_mode: ${NETWORK_MODE}
+    build:
+      network: ${NETWORK}
+      context: .
+      dockerfile: Dockerfile_3_rdkit_build
+    image: rdkit-minimallib:latest
+    depends_on:
+      - rdkit_copy
