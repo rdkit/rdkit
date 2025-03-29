@@ -11,6 +11,9 @@ class StereoEnumerationOptions(object):
             non-physical and don't return it. NOTE that this is computationally expensive and is
             just a heuristic that could result in stereoisomers being lost.
 
+          - embeddingAttempts: the maximum number of attempts to embed a single isomer. If 0 (the default)
+            the default of EmbedMolecule is used.
+
           - onlyUnassigned: if set (the default), stereocenters which have specified stereochemistry
             will not be perturbed unless they are part of a relative stereo
             group.
@@ -22,17 +25,23 @@ class StereoEnumerationOptions(object):
             number of results (and execution time) it's important to
             keep an eye on this.
 
+          - maxAttempts: the maximum number of attempts to generate isomers. If 0 (the default),
+            isomers are attempted to be generated until maxIsomers is reached
+            or until no more stereocenters are remaining.
+
           - onlyStereoGroups: Only find stereoisomers that differ at the
             StereoGroups associated with the molecule.
     """
-  __slots__ = ('tryEmbedding', 'onlyUnassigned', 'onlyStereoGroups', 'maxIsomers', 'rand', 'unique')
+  __slots__ = ('tryEmbedding', 'embeddingAttempts', 'onlyUnassigned', 'onlyStereoGroups', 'maxIsomers', 'maxAttempts', 'rand', 'unique')
 
-  def __init__(self, tryEmbedding=False, onlyUnassigned=True, maxIsomers=1024, rand=None,
-               unique=True, onlyStereoGroups=False):
+  def __init__(self, tryEmbedding=False, embeddingAttempts=0, onlyUnassigned=True, maxIsomers=1024, maxAttempts=0,
+               rand=None, unique=True, onlyStereoGroups=False):
     self.tryEmbedding = tryEmbedding
+    self.embeddingAttempts = embeddingAttempts
     self.onlyUnassigned = onlyUnassigned
     self.onlyStereoGroups = onlyStereoGroups
     self.maxIsomers = maxIsomers
+    self.maxAttempts = maxAttempts
     self.rand = rand
     self.unique = unique
 
@@ -327,7 +336,10 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
   isomersSeen = set()
   numIsomers = 0
+  numAttempts = 0
   for bitflag in bitsource:
+    if options.maxAttempts != 0 and numAttempts >= options.maxAttempts:
+      break
     for i in range(nCenters):
       flag = bool(bitflag & (1 << i))
       flippers[i].flip(flag)
@@ -353,7 +365,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     if options.tryEmbedding:
       ntm = Chem.AddHs(isomer)
       # mask bitflag to fit within C++ int.
-      cid = EmbedMolecule(ntm, randomSeed=(bitflag & 0x7fffffff))
+      cid = EmbedMolecule(ntm, maxAttempts=options.embeddingAttempts, randomSeed=(bitflag & 0x7fffffff))
       if cid >= 0:
         conf = Chem.Conformer(isomer.GetNumAtoms())
         for aid in range(isomer.GetNumAtoms()):
@@ -368,6 +380,7 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
         break
     elif verbose:
       print("%s    failed to embed" % (Chem.MolToSmiles(isomer, isomericSmiles=True)))
+    numAttempts += 1
 
 
 #------------------------------------
