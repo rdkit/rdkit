@@ -323,14 +323,20 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
       }
     }
 
-    if (df_useAtomMaps) {
+    if (df_useAtomMaps || df_useAtomMapsOnDummies) {
       // use the atom-mapping numbers if they were assigned
       int molAtomMapNumber_i = 0;
       int molAtomMapNumber_j = 0;
-      dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
-                                         molAtomMapNumber_i);
-      dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
-                                         molAtomMapNumber_j);
+      if (df_useAtomMaps ||
+          (df_useAtomMapsOnDummies && dp_atoms[i].atom->getAtomicNum() == 0)) {
+        dp_atoms[i].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                           molAtomMapNumber_i);
+      }
+      if (df_useAtomMaps ||
+          (df_useAtomMapsOnDummies && dp_atoms[j].atom->getAtomicNum() == 0)) {
+        dp_atoms[j].atom->getPropIfPresent(common_properties::molAtomMapNumber,
+                                           molAtomMapNumber_j);
+      }
       if (molAtomMapNumber_i < molAtomMapNumber_j) {
         return -1;
       } else if (molAtomMapNumber_i > molAtomMapNumber_j) {
@@ -505,6 +511,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomCompareFunctor {
   bool df_useAtomMaps{true};
   bool df_useNonStereoRanks{false};
   bool df_useChiralPresence{true};
+  bool df_useAtomMapsOnDummies{true};
 
   AtomCompareFunctor() {}
   AtomCompareFunctor(Canon::canon_atom *atoms, const ROMol &m,
@@ -840,12 +847,14 @@ RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(unsigned int nAtoms, int *order,
                                               int *count, int &activeset,
                                               int *next, int *changed);
 
+//! Note that atom maps on dummy atoms will always be used
 RDKIT_GRAPHMOL_EXPORT void rankMolAtoms(
     const ROMol &mol, std::vector<unsigned int> &res, bool breakTies = true,
     bool includeChirality = true, bool includeIsotopes = true,
     bool includeAtomMaps = true, bool includeChiralPresence = false,
     bool includeStereoGroups = true, bool useNonStereoRanks = false);
 
+//! Note that atom maps on dummy atoms will always be used
 RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,
     const boost::dynamic_bitset<> &atomsInPlay,
@@ -855,6 +864,7 @@ RDKIT_GRAPHMOL_EXPORT void rankFragmentAtoms(
     bool includeChirality, bool includeIsotope, bool includeAtomMaps,
     bool includeChiralPresence);
 
+//! Note that atom maps on dummy atoms will always be used
 inline void rankFragmentAtoms(
     const ROMol &mol, std::vector<unsigned int> &res,
     const boost::dynamic_bitset<> &atomsInPlay,
