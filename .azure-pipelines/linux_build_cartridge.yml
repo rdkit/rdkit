@@ -52,4 +52,3 @@ steps:
       exit 1
     fi
   displayName: Run tests
-
