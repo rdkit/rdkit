@@ -1,0 +1,69 @@
+<html>
+<head>
+<title>CDX Format Specification: Registry Number Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Registry Number Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">regnum</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_RegistryNumber</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x800C</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">(not written/read)</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Registry Number represents a registry or catalog number, along with the name of the authority which issued the number.</p>
+
+<p>The Number and Authority properties are required, but there are no required objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000B</td>
+<td><a href="properties/RegistryNumber.htm">kCDXProp_RegistryNumber</a></td>
+<td>RegistryNumber</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A registry or catalog number of a molecule object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000C</td>
+<td><a href="properties/RegistryAuthority.htm">kCDXProp_RegistryAuthority</a></td>
+<td>RegistryAuthority</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A string that specifies the authority which issued a registry or catalog number. Some examples of registry authorities are CAS, Beilstein, Aldrich, and Merck.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

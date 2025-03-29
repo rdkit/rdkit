@@ -1,0 +1,126 @@
+<html>
+<head>
+<title>CDX Format Specification: Bond_Order Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Bond_Order Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">Order</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Bond_Order</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0600</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT16</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Bond.htm">kCDXObj_Bond</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The order of a bond object.</p>
+<p>Dative and Ionic bonds are specified with the <a href="Bond_Begin.htm">Bond_Begin</a> as the positive end (e.g. the N in pyridine N-oxide). Hydrogen bonds are specified with Bond_Begin as the hydrogen. Three center bonds are specified with two Bond objects, each with Bond_Begin as the center atom.</p>
+
+<p>Bond order values may be combined. For example, a value of 3 would represent a &quot;single or double&quot; bond, which is useful for substructure queries.</p>
+
+<p>Ionic, hydrogen, and three-center bonds are not currently supported by ChemDraw, but are defined for future compatibility.</p>
+<p>This is a bit-encoded property. The values shown in the following list may be combined:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0xFFFF</td>
+<td valign="top"></td>
+<td valign="top">Unspecified order (omitted entirely in CDXML)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0001</td>
+<td valign="top">1</td>
+<td valign="top">Single bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0002</td>
+<td valign="top">2</td>
+<td valign="top">Double bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0004</td>
+<td valign="top">3</td>
+<td valign="top">Triple bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0008</td>
+<td valign="top">4</td>
+<td valign="top">Quadruple bond (used for some inorganic complexes)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0010</td>
+<td valign="top">5</td>
+<td valign="top">Quintuple bond (used for some inorganic complexes)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0020</td>
+<td valign="top">6</td>
+<td valign="top">Hextuple bond (used for some inorganic complexes)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0040</td>
+<td valign="top">0.5</td>
+<td valign="top">Bond of order one-half</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0080</td>
+<td valign="top">1.5</td>
+<td valign="top">Bond of order one and one-half (an aromatic bond)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0100</td>
+<td valign="top">2.5</td>
+<td valign="top">Bond of order two and one-half (in benzyne, for example)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0200</td>
+<td valign="top">3.5</td>
+<td valign="top">Bond of order three and one-half (used for some inorganic complexes)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0400</td>
+<td valign="top">4.5</td>
+<td valign="top">Bond of order four and one-half (used for some inorganic complexes)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x0800</td>
+<td valign="top">5.5</td>
+<td valign="top">Bond of order five and one-half (used for some inorganic complexes)</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x1000</td>
+<td valign="top">dative</td>
+<td valign="top">Dative bond, from the "begin" atom to the "end" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x2000</td>
+<td valign="top">ionic</td>
+<td valign="top">Ionic bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x4000</td>
+<td valign="top">hydrogen</td>
+<td valign="top">Hydrogen bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">0x8000</td>
+<td valign="top">threecenter</td>
+<td valign="top">Three-center-bond (in boranes, for example)</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The bond is treated as a single bond.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

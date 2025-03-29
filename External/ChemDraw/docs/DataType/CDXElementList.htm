@@ -1,0 +1,37 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX Element List</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX Element List</h2>
+
+<p>This data type consists of a series of <a href="CDXNumeric.htm">UINT16</a> values.</p>
+
+<p><b>In CDX files</b>, this data type is prefixed by an additional <a href="CDXNumeric.htm">INT16</a> value whose absolute value indicates the total number of values to follow. If the sign of that prefix is negative, then the list actually represents a &quot;not&quot; list.</p>
+
+<p><b>In CDXML files</b>, this data type may be prefixed by an additional &quot;NOT&quot; string. If present, that string indicate that the list actually represents a &quot;not&quot; list.</p>
+
+<p><b>Examples:</b>
+<table>
+<tr><td><tt>CDX:</tt></td>
+<td><tt>03 00 09 00 11 00 23 00</tt></td></tr>
+<tr><td><tt>CDXML:</tt></td>
+<td><tt>&quot;9 17 35&quot;</tt></td></tr>
+<tr><td><tt>logical:</tt></td>
+<td><tt>[F, Cl, Br]</tt></td></tr>
+<tr><td><tt>CDX:</tt></td>
+<td><tt>FD FF 09 00 11 00 23 00</tt></td></tr>
+<tr><td><tt>CDXML:</tt></td>
+<td><tt>&quot;NOT 9 17 35&quot;</tt></td></tr>
+<tr><td><tt>logical:</tt></td>
+<td><tt>NOT [F, Cl, Br]</tt></td></tr>
+</table>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

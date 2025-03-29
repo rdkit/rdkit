@@ -1,0 +1,119 @@
+<html>
+<head>
+<title>CDX Format Specification: Border Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Border Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">border</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_Border</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8020</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A collection of information describing one edge of an object. As of ChemDraw 7.0, borders are defined only for rectangular objects, but that restriction may be removed in the future.</p>
+
+<p>Borders have significance in ChemDraw 7.0 only for <a href="Page.htm">Page</a> objects that represent individual cells in a table. In such a case, Pages that represent adjacent cells are expected to have identical objects representing the shared border. If the adjacent pages have contradictory border information, the results are undefined.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0301</td>
+<td><a href="properties/ForegroundColor.htm">kCDXProp_ForegroundColor</a></td>
+<td>color</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The foreground color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0807</td>
+<td><a href="properties/LineWidth.htm">kCDXProp_LineWidth</a></td>
+<td>LineWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default line width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0825</td>
+<td><a href="properties/Side.htm">kCDXProp_Side</a></td>
+<td>Side</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required.</font> A specific side of an object (rectangle).
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A01</td>
+<td><a href="properties/Line_Type.htm">kCDXProp_Line_Type</a></td>
+<td>LineType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of a line object.
+This is an enumerated property.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

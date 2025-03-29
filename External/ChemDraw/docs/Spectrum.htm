@@ -1,0 +1,439 @@
+<html>
+<head>
+<title>CDX Format Specification: Spectrum Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Spectrum Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">spectrum</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_Spectrum</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8010</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a>, <a href="Group.htm">kCDXObj_Group</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.5.1</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Spectrum Object stores an NMR, MS, IR or other sort of spectrum. The spectrum is defined on a regular grid of x-axis values running from XLow to XHigh in steps of XSpacing. The y-values may be specified similarly, or may be arbitrary floating-point values. This is a graphical object, and doesn't store spectral information beyond that needed to display the spectrum.</p>
+
+<p>The bounding box, XLow, and XSpacing properties are required, but a Spectrum has no required objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8011</td>
+<td><a href="ObjectTag.htm">kCDXObj_ObjectTag</a></font></b></td>
+<td>objecttag</td>
+</tr>
+<tr>
+<td></td><td colspan="3">Arbitrarily named property, one or more of which can be attached to any ChemDraw object.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000A</td>
+<td><a href="properties/ZOrder.htm">kCDXProp_ZOrder</a></td>
+<td>Z</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Back-to-front ordering index in 2D drawing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000F</td>
+<td><a href="properties/IgnoreWarnings.htm">kCDXProp_IgnoreWarnings</a></td>
+<td>IgnoreWarnings</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether chemical warnings should be suppressed on this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0010</td>
+<td><a href="properties/ChemicalWarning.htm">kCDXProp_ChemicalWarning</a></td>
+<td>Warning</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A warning concerning possible chemical problems with this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0011</td>
+<td><a href="properties/Visible.htm">kCDXProp_Visible</a></td>
+<td>Visible       </td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The object is visible if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0204</td>
+<td><a href="properties/BoundingBox.htm">kCDXProp_BoundingBox</a></td>
+<td>BoundingBox</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for pictures and spectra. Required for graphics and text until 6.0.</font> The smallest rectangle that encloses the graphical representation of the object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0301</td>
+<td><a href="properties/ForegroundColor.htm">kCDXProp_ForegroundColor</a></td>
+<td>color</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The foreground color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0302</td>
+<td><a href="properties/BackgroundColor.htm">kCDXProp_BackgroundColor</a></td>
+<td>bgcolor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The background color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0806</td>
+<td><a href="properties/BoldWidth.htm">kCDXProp_BoldWidth</a></td>
+<td>BoldWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default bold bond width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0807</td>
+<td><a href="properties/LineWidth.htm">kCDXProp_LineWidth</a></td>
+<td>LineWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default line width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x080A</td>
+<td><a href="properties/LabelStyle.htm">kCDXProp_LabelStyle</a></td>
+<td>(not used)</td>
+<td><a href="DataType/CDXString.htm">CDXFontStyle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default style for atom labels..
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081A</td>
+<td><a href="properties/LabelStyleFont.htm">kCDXProp_LabelStyleFont</a></td>
+<td>LabelFont</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font family for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081C</td>
+<td><a href="properties/LabelStyleSize.htm">kCDXProp_LabelStyleSize</a></td>
+<td>LabelSize</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font size for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081E</td>
+<td><a href="properties/LabelStyleFace.htm">kCDXProp_LabelStyleFace</a></td>
+<td>LabelFace</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font style for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A80</td>
+<td><a href="properties/Spectrum_XSpacing.htm">kCDXProp_Spectrum_XSpacing</a></td>
+<td>XSpacing</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for spectra.</font> The spacing in logical units (ppm, Hz, wavenumbers) between points along the X-axis of an evenly-spaced grid.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A81</td>
+<td><a href="properties/Spectrum_XLow.htm">kCDXProp_Spectrum_XLow</a></td>
+<td>XLow</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for spectra.</font> The first data point for the X-axis of an evenly-spaced grid.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A82</td>
+<td><a href="properties/Spectrum_XType.htm">kCDXProp_Spectrum_XType</a></td>
+<td>XType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of units the X-axis represents.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A83</td>
+<td><a href="properties/Spectrum_YType.htm">kCDXProp_Spectrum_YType</a></td>
+<td>YType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of units the Y-axis represents.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A84</td>
+<td><a href="properties/Spectrum_XAxisLabel.htm">kCDXProp_Spectrum_XAxisLabel</a></td>
+<td>XAxisLabel</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A label for the X-axis.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A85</td>
+<td><a href="properties/Spectrum_YAxisLabel.htm">kCDXProp_Spectrum_YAxisLabel</a></td>
+<td>YAxisLabel</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A label for the Y-axis.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A86</td>
+<td><a href="properties/Spectrum_DataPoint.htm">kCDXProp_Spectrum_DataPoint</a></td>
+<td>(not used)</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for spectra.</font> The Y-axis values for the spectrum. It is an array of double values corresponding to X-axis values.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A87</td>
+<td><a href="properties/Spectrum_Class.htm">kCDXProp_Spectrum_Class</a></td>
+<td>Class</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of spectrum represented.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A88</td>
+<td><a href="properties/Spectrum_YLow.htm">kCDXProp_Spectrum_YLow</a></td>
+<td>YLow</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Y value to be used to offset data when storing XML.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A89</td>
+<td><a href="properties/Spectrum_YScale.htm">kCDXProp_Spectrum_YScale</a></td>
+<td>YScale</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Y scaling used to scale data when storing XML.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

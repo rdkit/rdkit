@@ -1,0 +1,251 @@
+<html>
+<head>
+<title>CDX Format Specification: Clipboard</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+
+<h2>CDX on the Clipboard</h2>
+
+<p>When an object is copied, ChemDraw puts a CDX binary file directly on the clipboard. The data placed on the clipboard is exactly the same as would be written to a file, so once you retrieve it from the clipboard in the first place, you can process it exactly as you would process a disk-based file. Here is some sample code for retrieving CDX information from the clipboard on Windows and Macintosh:</p>
+
+<u><b>Windows</b></u>
+
+<pre>
+UINT format = ::RegisterClipboardFormat("ChemDraw Interchange Format");
+if (format != 0)
+{
+   HWND myWindow = /* handle to window opening clipboard */;
+   if (myWindow != NULL && ::OpenClipboard(myWindow))
+   {
+      if (::IsClipboardFormatAvailable(format))
+      {
+         HANDLE theData = ::GetClipboardData(format);
+         if (theData != NULL)
+         {
+            DWORD length = ::GlobalSize(theData);
+            Ptr srcPtr = (Ptr) ::GlobalLock(theData);
+			
+            unsigned char *theCDX = new unsigned char[length];
+            memcpy(theCDX, srcPtr, length);
+            ::GlobalUnlock(theData);
+
+            // Clipboard was retrieved successfully.
+            // CDX data now stored in theCDX variable.
+            // Be sure to delete[] theCDX when done!
+         }
+      }
+   }
+   ::CloseClipboard()
+}
+</pre>
+
+<u><b>Macintosh</b></u>
+
+<pre>
+ScrapRef scrap;
+if (::GetCurrentScrap(&scrap) == noErr)
+{
+   Size scrapSize;
+   if (::GetScrapFlavorSize(scrap, 'CDIF', &scrapSize) == noErr)
+   {
+      unsigned char *theCDX = new unsigned char[scrapSize];
+      if (::GetScrapFlavorData(scrap, 'CDIF', &scrapSize, theCDX) == noErr)
+      {
+         // Clipboard was retrieved successfully.
+         // CDX data now stored in theCDX variable.
+         // Be sure to delete[] theCDX when done!
+      }
+      else
+      {
+         // Clipboard was not retrieved successfully
+      }
+   }
+}
+</pre>
+
+<h4>CDX Embedded in Pictures</h4>
+
+<p>In addition to putting raw CDX data on the clipboard, ChemDraw also puts pictures on the clipboard, and those pictures contain a second complete CDX binary file.  Programs interacting with ChemDraw directly can (should!) ignore this second copy entirely, and focus only on the raw data as discussed above.</p>
+
+<p>Sometimes, however, it is necessary to access CDX data that didn't originate directly from ChemDraw.  For example, if the user draws a structure in ChemDraw, then pastes into Microsoft Word, they might then copy the picture from Word at some later time.  In that case, Microsoft Word wouldn't know enough to put the raw CDX data on the clipboard, and would only put the picture.</p>
+
+<p>It is possible to re-extract the data from the picture, but it is significantly more difficult, of course, than accessing the raw data directly. Some sample code is provided below.  The picture should be passed to the ExtractCDXFromPicture function, which will return the extracted CDX data.  Obtaining the Metafile (Windows) or PICT (Macintosh) is left as an exercise to the reader.</p>
+
+<u><b>Windows</b></u>
+
+<pre>
+#define kScrapCommentKind 100
+#define kScrapIDSize 5
+static void DoMyComment(short kind, short dataSize, unsigned char *theData, string *theCDX)
+{
+   // It's ours if it has the right comment kind, and begins with the ScrapID.
+
+   if (commentKind != kScrapCommentKind)
+      return;
+
+   if (dataSize < kScrapIDSize)
+      return; // not long enough
+
+   if (memcmp(theData, "CDIF", kScrapIDSize) == 0);
+      theCDX->append(theData + kScrapIDSize, dataSize - kScrapIDSize);
+}
+
+static int CALLBACK Picture__EnumComments(HDC theDC, HANDLETABLE *table, METARECORD *mr, int nObj, LPARAM theCDX)
+{
+   if (mr->rdFunction == META_ESCAPE)	// CDX records are escaped comments
+   {
+      if (mr->rdParm[0] == MFCOMMENT)	// ok, it could be one of ours
+      {
+         int length = mr->rdParm[1];
+         if (length > 0 && theCDX != NULL)
+         {
+            unsigned char *theData = (unsigned char *)&mr->rdParm[2];
+            DoMyComment(kScrapCommentKind, length, theData, (string *)theCDX);
+         }
+      }
+   }
+   return 1;
+}
+
+string ExtractCDXFromPicture(HMETAFILE metafile)
+{
+   string theCDX;
+   EnumMetaFile(NULL, metafile, Picture__EnumComments, (LPARAM)&theCDX);
+}
+</pre>
+
+Starting with version 8.0, ChemDraw also embeds CDX data within Enhanced Metafiles. Here is the equivalent code for extracting that data (requies the same DoMyComment function as above):<p>
+
+<pre>
+static int Picture__EnumCommentsEMF(HDC theDC, HANDLETABLE *table, CONST ENHMETARECORD *mr, int nObj, LPARAM theCDX)
+{
+   if (mr->iType == EMR_GDICOMMENT)	// CSC records are escaped comments
+   {
+      int length = mr->nSize - 3 * sizeof(mr->dParm[0]);
+      if (length > 0 && theCDX != NULL)
+      {
+         unsigned char *theData = (unsigned char *)&mr->rdParm[1];
+         DoMyComment(kScrapCommentKind, length, theData, (string *)theCDX);
+      }
+   }
+   return 1;
+}
+
+string ExtractCDXFromPicture(HENHMETAFILE enhmetafile)
+{
+   string theCDX;
+   RECT r = {0, 0, 9999, 9999};
+   BOOL res = EnumEnhMetaFile(NULL, enhmetafile, Picture__EnumCommentsEMF, (LPARAM)&theCDX, &r);
+}
+</pre>
+
+
+<u><b>Macintosh</b></u>
+
+<pre>
+static string theCDX;
+#define kScrapCommentKind 100
+#define kScrapIDSize 5
+static pascal void DoMyComment(short kind, short dataSize, Handle dataHandle)
+{
+   // It's ours if it has the right comment kind, and begins with the ScrapID.
+
+   if (commentKind != kScrapCommentKind)
+      return;
+
+   if (dataSize < kScrapIDSize)
+      return; // not long enough
+
+   if (memcmp(theData, "CDIF", kScrapIDSize) == 0);
+      theCDX.append((*dataHandle) + kScrapIDSize, ::GetHandleSize(dataHandle) - kScrapIDSize);
+}
+
+string ExtractCDXFromPicture(PicHandle pictHandle)
+{
+   static QDCommentUPP uppDoMyComment = NULL;
+   if (uppDoMyComment == NULL)
+      uppDoMyComment = ::NewQDCommentUPP(DoMyComment);
+
+   // Save current port and create new temporary port
+   GrafPtr oldPort;
+   GDHandle oldDevice;
+   ::GetGWorld(&oldPort, &oldDevice);
+   GrafPtr tempPort = ::CreateNewPort();
+
+   // Set up the temp ports GrafProcs so that it will 
+   // call DoMyComment when the picture is drawn
+   CQDProcs procs;
+   ::SetStdCProcs(&procs);
+   procs.commentProc = uppDoMyComment;
+   ::SetPortGrafProcs(tempPort, &procs);
+
+   // We don't want to actually *draw* the picture, so let's hide the pen
+   ::HidePen();
+
+   // Clear the static variable that will store the extracted CDX
+   theCDX.erase();
+
+   // "Draw" the picture -- this will cause DoMyComment to get called
+   ::DrawPicture(pictHandle, (*pictHandle)->picFrame);
+
+   // Restore original port
+   ::SetGWorld(oldPort, oldDevice);
+
+   // Dispose the temporary port
+   ::DisposePort(tempPort);
+}
+</pre>
+<p>&nbsp;</p>
+<p>In some <em>very</em> rare cases, you might need to extract the comments manually.  
+Actually, we can't think of any case where this would be true, but we allow that it could happen somehow.
+This is the extra information you would need to extract the comments by hand:</p>
+
+<p>Each record consists of a 4-byte length (LEN1), a 2-byte opcode, followed by
+LEN1 words of data (note this is in words, so it's 2*LEN1 bytes).  Embedded
+data is stored in ESCAPE records, identified by an opcode of 0x0626.  There
+are many kinds of escape records, typically used to pass information to
+printer drivers.  Escape records contain a 2-byte escape code, a 2-byte
+length (LEN2) in bytes, followed by LEN2 bytes of data.  Note that LEN2 ==
+2*LEN1 - 8.  For embedded data, one uses an escape code of 0x000F
+(MFCOMMENT).  Remember that words are stored low-order byte first, so a hex
+dump will show this as<br>
+<tt>N1 N2 N3 N4 26 06 0F 00 M1 M2</tt><br>
+where the first length is 0xN4N3N2N1 and the second is 0xM2M1.
+So far, this is all Windows-standard Metafile documentation.</p>
+
+<p>CDX streams are identified by a comment escape which begins with "CDIF\0".
+The CDX stream consists of the rest of the data, after removing the
+"CDIF\0".  Complete CDX streams always start with the characters "VjCD0100".</p>
+
+<p>Since some programs choke on long comment escapes, the CDX stream must
+sometimes be broken up into multiple comment escapes.  Thus, if there is
+more than one comment escape in the metafile which begins with "CDIF\0",
+they should be appended in sequence to form a single CDX stream, after
+eliminating the "CDIF\0" identifiers.  Currently, ChemDraw breaks the stream
+into 4096 byte chunks, so you'll combine 4091 bytes from the first comment
+escape, 4091 from the second, and so on.  However, you shouldn't assume that
+the chunk size will always be 4096 bytes, so you need to look for<br>
+<tt>    N1 N2 N3 N4 26 06 0F 00 M1 M2 'C' 'D' 'I' 'F'</tt><br>
+and use 0xM2M1 to determine how many bytes in the chunk.</p>
+
+<p>Usually, these will appear in sequential metafile records, so for a CDX
+stream longer than 4096 bytes you'll see (mixing hex and character notation)<br>
+
+<tt>05 08 00 00 26 06 0F 00 00 10 'C' 'D' 'I' 'F' 00 'V' 'j' 'C' 'D' '0' '1' '0'
+'0' .....</tt><br>
+    (0x1000 bytes starting with the "CDIF")<br>
+<tt>X1 X2 X3 X4 26 06 0F 00 M1 M2 'C' 'D' 'I' 'F' 00 ......</tt><br>
+    (the rest of the bytes)</p>
+
+<p>The 4091 bytes from the first record must be combined with the data from the
+subsequent record to form the complete CDX stream.</p>
+
+<p>As a reminder, this really shouldn't be necessary.  Just use the sample code above.</p>
+
+
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

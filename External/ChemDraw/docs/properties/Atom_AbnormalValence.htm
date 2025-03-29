@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>CDX Format Specification: Atom_AbnormalValence Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Atom_AbnormalValence Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">AbnormalValence</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Atom_AbnormalValence</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0429</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXBoolean.htm">CDXBooleanImplied</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Node.htm">kCDXObj_Node</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Signifies that an abnormal valence for an atom is permitted.</p>
+<p>This attribute indicates that valence checks should be bypassed for this atom, and that the valence should be computed from the bonds actually drawn. The definition of what valence is normal may vary from application to application, so CDX files must contain explicit information about what was drawn or computed, vs. what was inferred.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>Abnormal valence is not permitted. An atom drawn with other-than-normal valence should be considered to be in error.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

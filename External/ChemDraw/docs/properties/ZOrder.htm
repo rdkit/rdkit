@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>CDX Format Specification: ZOrder Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>ZOrder Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">Z</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_ZOrder</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x000A</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT16</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Node.htm">kCDXObj_Node</a>, <a href="../Bond.htm">kCDXObj_Bond</a>, <a href="../Text.htm">kCDXObj_Text</a>, <a href="../Graphic.htm">kCDXObj_Graphic</a>, <a href="../Curve.htm">kCDXObj_Curve</a>, <a href="../EmbeddedObject.htm">kCDXObj_EmbeddedObject</a>, <a href="../Table.htm">kCDXObj_Table</a>, <a href="../NamedAltGroup.htm">kCDXObj_NamedAlternativeGroup</a>, <a href="../Spectrum.htm">kCDXObj_Spectrum</a>, <a href="../TLCPlate.htm">kCDXObj_TLCPlate</a>, <a href="../Arrow.htm">kCDXObj_Arrow</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Back-to-front ordering index in 2D drawing.</p>
+<p>Items with a lower value will be ordered behind items with a higher value. ChemDraw uses this property to determine, for example, which bond is in front when two bonds cross. Note that this is a graphical property only; it can be safely omitted if a  file is only intended to have chemical meaning and the exact visual display is unimportant. It can also be omitted in files where it is known that no objects overlap.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The object will be treated as if the property was present with a value of zero. That is, the object will be arranged with all other objects having a Z-ordering index of zero (those objects will be arranged among themselves randomly), and all other objects will be arranged in order, on top of them.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

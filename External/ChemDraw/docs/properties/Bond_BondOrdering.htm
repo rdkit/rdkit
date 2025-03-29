@@ -1,0 +1,33 @@
+<html>
+<head>
+<title>CDX Format Specification: Bond_BondOrdering Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Bond_BondOrdering Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">BondCircularOrdering</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Bond_BondOrdering</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x060B</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXObjectID.htm">CDXObjectIDArray</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Bond.htm">kCDXObj_Bond</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 6.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Ordered list of attached bond IDs.</p>
+<p>This property is important for preserving stereochemistry in files that do not otherwise have coordinates. An array member value of zero means &quot;no bond at this location&quot;, so an array like 5&nbsp;0&nbsp;7&nbsp;0 indicates a <em>trans</em> bond.</p>
+
+<p>This property is used only for bonds of order 2; accordingly, it may be considered either as a clockwise or counterclockwise ordering without affecting the meaning.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The ordering of bonds is not considered significant.</p>
+
+<p>Note that this property is redundant with the positioning of <a href="../Node.htm">Nodes</a>, and may be safely omitted from any file with fully-defined node <a href="2DPosition.htm">positions</a>.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

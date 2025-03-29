@@ -1,0 +1,69 @@
+<html>
+<head>
+<title>CDX Format Specification: Represents Property Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Represents Property Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">represent</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_RepresentsProperty</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x000e</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Graphic.htm">kCDXObj_Graphic</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Represents Property object is used to indicate that its containing object has chemical meaning that is also represented in another object. This is useful, for example, when a circle-minus <a href="Graphic.htm">Graphic</a> object is located physically near a <a href="Node.htm">Node</a> object. A program saving the file might indicate the negative charge directly as a property of of the node. But the circle-minus charge object still must be saved to preserve its absolute positioning. The Represents Property object is saved as a subject of the graphic, indicating (in this case) that the circle-minus graphical object <i>represents</i> the charge <i>property</i> of the node. Seeing this property, a program reading the file should not attempt to reinterpret the circle-minus charge object and add a second negative charge to the already-negative node.</p>
+
+<p>Both properties of this object are required, but it has no required objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/object.htm">object</a></td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for RepresentsProperty.</font> The object that has a property that is represented graphically by the containing object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/attribute.htm">attribute</a></td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for RepresentsProperty.</font> The property of another object that is represented graphically by the containing object.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,87 @@
+<html>
+<head>
+<title>CDX Format Specification: Color Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Color Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">color</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="ColorTable.htm">kCDXProp_ColorTable</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>An RGB color.</p>
+
+<p>Support for other color types might be added in the future, but note that different color spaces can be interconverted fairly easily. See the <a href="ftp://rtfm.mit.edu/pub/usenet/news.answers/graphics/colorspace-faq">Color Space FAQ</a> for details.</p>
+
+<p>This object  is used only in CDXML files. In CDX files, color information is stored as part of the <a href="properties/ColorTable.htm">Color Table</a> property directly.</p>
+
+<p>All three properties of this object are required, but it has no required objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/b.htm">b</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for colors.</font> The blue component of an RGB color, in the range 0.0 ... 1.0.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/g.htm">g</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for colors.</font> The green component of an RGB color, in the range 0.0 ... 1.0.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/r.htm">r</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for colors.</font> The red component of an RGB color, in the range 0.0 ... 1.0.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

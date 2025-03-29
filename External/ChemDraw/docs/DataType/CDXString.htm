@@ -1,0 +1,140 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX String Data Types</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX String Data Types</h2>
+
+<h3>CDXString:</h3>
+
+<p><b>In CDX files</b>, a CDXString is a variable-length struct that consists of:
+<table border="1">
+<tr>
+<td><b>Bytes</b></td>
+<td><b>Type</b></td>
+<td><b>Contents</b></td>
+</tr>
+<tr>
+<td>0-1</td>
+<td><a href="CDXNumeric.htm">UINT16</a></td>
+<td>Style run count: The number of <i>style runs</i> for this text.<p>
+For each <i>style run</i>:
+<table border>
+<tr>
+<td>0-1</td>
+<td><a href="CDXNumeric.htm">UINT16</a></td>
+<td>The character at which this style starts</td>
+</tr>
+<tr>
+<td>2-9</td>
+<td><a href="#FontStyleRun">Style run</a></td>
+<td>A struct describing this style run</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td><i>n</i>...</td>
+<td>Text</td>
+<td>The string's text written out. The string's length is implicit and determined by subtracting the length of the first two items from the total length of the CDXText object</td>
+</tr>
+</table>
+</p>
+
+<p>The first two bytes of a CDXString are a UINT16 indicating the number of font style runs. If the number of font style runs is zero, the string is taken to be ISO Latin 1 with no particular font or size specified. In some cases, this may imply the use of a default text style specified elsewhere. If the number of font style runs is not zero, it is followed by that many number of font style runs (see below), which is then followed by string text.</p>
+
+<p><b>In CDXML files</b>, a CDXString is an ordered sequence of one or more <a href="../Style.htm">Style</a> objects.</p>
+
+<p><b>Examples:</b> (assuming arbitrary index/id of "3" for the font, 12-point text, arbitrary index/id of "4" for the color)
+<table border>
+<tr>
+<td rowspan="2">Text</td>
+<td><tt><b>CDX:</b></tt></td>
+<td><tt>00 00 54 65 78 74</tt></td>
+</tr><tr>
+<td><tt><b>CDXML:</b></tt></td>
+<td><tt>&lt;s&gt;Text&lt;/s&gt;</tt></td>
+</tr>
+
+<tr>
+<td rowspan="2"><b>Text</b></td>
+<td><tt><b>CDX:</b></tt></td>
+<td><tt>01 00 00 00 03 00 01 00<br>
+0C 00 04 00 54 65 78 74</tt></td>
+</tr><tr>
+<td><tt><b>CDXML:</b></tt></td>
+<td><tt>&lt;s font=&quot;3&quot size=&quot;12&quot; face=&quot;1&quot;&gt;Text&lt;/s&gt;</tt></td>
+</tr>
+
+<tr>
+<td rowspan="2"><b>Te<u>x</u></b>t</td>
+<td><tt><b>CDX:</b></tt></td>
+<td><tt>03 00 00 00 03 00 01 00<br>
+00 00 0C 00 04 00 02 00<br>
+03 00 05 00 00 00 0C 00<br>
+04 00 03 00 03 00 00 00<br>
+0C 00 04 00 54 65 78 74</tt></td>
+</tr><tr>
+<td><tt><b>CDXML:</b></tt></td>
+<td><tt>&lt;s font=&quot;3&quot size=&quot;12&quot; face=&quot;1&quot;&gt;Te&lt;/s&gt;<br>
+&lt;s font=&quot;3&quot size=&quot;12&quot; face=&quot;5&quot;&gt;x&lt;/s&gt;<br>
+&lt;s font=&quot;3&quot size=&quot;12&quot; &gt;t&lt;/s&gt;</tt></td>
+</tr>
+</table>
+</p>
+
+<h3><a name="FontStyleRun">Font style run:</a></h3>
+<p><b>In CDX files</b>, a font style is an 8-byte struct that consists of:<br>
+<table border="1">
+<tr>
+<td><b>Bytes</b></td>
+<td><b>Type</b></td>
+<td><b>Contents</b></td>
+</tr>
+<tr>
+<td>0-1</td>
+<td><a href="CDXNumeric.htm">UINT16</a></td>
+<td>A zero-based index to a font table. There must be at least one font table within an object or its container objects.</td>
+</tr>
+<tr>
+<td>2-3</td>
+<td><a href="CDXNumeric.htm">UINT16</a></td>
+<td>Font type:
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top">0x00 : </td><td>plain</td></tr>
+<tr><td valign="top">0x01 : </td><td>bold</td></tr>
+<tr><td valign="top">0x02 : </td><td>italic</td></tr>
+<tr><td valign="top">0x04 : </td><td>underline</td></tr>
+<tr><td valign="top">0x08 : </td><td>outline</td></tr>
+<tr><td valign="top">0x10 : </td><td>shadow</td></tr>
+<tr><td valign="top">0x20 : </td><td>subscript</td></tr>
+<tr><td valign="top">0x40 : </td><td>superscript</td></tr>
+<tr><td valign="top">0x60 : </td><td>formula (style in which subscript or superscript style is selected appropriately depending on the formula label)</td></tr>
+</table>
+<p>Note that the subscript, superscript, and formula styles are mutually
+exclusive. The other styles may be combined by OR-ing the type codes.
+For example, bold italic is 0x03 (= 0x01 | 0x02).</p>
+<p>The outline and shadow styles are only useful on Macintosh computers.</p>
+</td>
+</tr>
+<tr>
+<td>4-5</td>
+<td><a href="CDXNumeric.htm">UINT16</a></td>
+<td>Font size, measured in 20ths of a point. Note that this is an integral field, which implies that CDX files cannot store font sizes any more accurately than the nearest 0.05 of a point.</td>
+</tr>
+<tr>
+<td>6-7</td>
+<td><a href="CDXNumeric.htm">UINT16</a></td>
+<td>Font color</td>
+</tr>
+</table>
+</p>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>
