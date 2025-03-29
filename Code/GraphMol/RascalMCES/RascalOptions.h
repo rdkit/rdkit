@@ -34,7 +34,9 @@ struct RDKIT_RASCALMCES_EXPORT RascalOptions {
                 C(C)(C) won't match either atom in CC */
   bool singleLargestFrag =
       false; /* if true, only return a single fragment for the MCES. Default
-                is to produce multiple matching fragments if necessary. */
+                is to produce multiple matching fragments if necessary.  This
+                can be exceptionally slow.  A better option is often to
+                extract the largest fragment from the results. */
   int minFragSize =
       -1; /* minimum number of atoms in any fragment - -1 means no minimum */
   int maxFragSeparation = -1; /* biggest through-bond distance that bonds can
