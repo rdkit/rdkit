@@ -8,7 +8,7 @@ steps:
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
     conda info -a
-    conda create --name rdkit_build -c conda-forge $(python) cmake \
+    conda create --name rdkit_build -c conda-forge cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         eigen cairo
