@@ -1689,9 +1689,9 @@ void testIsotopes() {
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     smi = MolToSmiles(*mol, false);
-    TEST_ASSERT(smi == "CC[U]");
+    TEST_ASSERT(smi == "C[CH2][U]");
     smi = MolToSmiles(*mol, true);
-    TEST_ASSERT(smi == "CC[U]");
+    TEST_ASSERT(smi == "C[CH2][U]");
     delete mol;
   }
   {
@@ -1699,9 +1699,9 @@ void testIsotopes() {
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     smi = MolToSmiles(*mol, false);
-    TEST_ASSERT(smi == "CC[U]");
+    TEST_ASSERT(smi == "C[CH2][U]");
     smi = MolToSmiles(*mol, true);
-    TEST_ASSERT(smi == "CC[238U]");
+    TEST_ASSERT(smi == "C[CH2][238U]");
     delete mol;
   }
   {
@@ -3860,7 +3860,7 @@ void testDativeBonds() {
 
     std::string out_smiles = MolToSmiles(*m, true);
     delete m;
-    TEST_ASSERT(out_smiles == smiles);
+    TEST_ASSERT(out_smiles == "CCC(=O)[OH]->[Cu]");
   }
   {
     std::string smiles = "CCC(=O)O->[Cu]<-OC(O)CC";
@@ -3877,7 +3877,7 @@ void testDativeBonds() {
 
     std::string out_smiles = MolToSmiles(*m, true);
     delete m;
-    TEST_ASSERT(out_smiles == smiles);
+    TEST_ASSERT(out_smiles == "CCC(=O)[OH]->[Cu]<-[OH]C(O)CC");
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -4351,7 +4351,6 @@ int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-  // boost::logging::enable_logs("rdApp.debug");
   testPass();
   testFail();
 

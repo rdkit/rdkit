@@ -213,7 +213,7 @@ TEST_CASE("github #2257: writing cxsmiles", "[smiles][cxsmiles]") {
     CHECK(mol->getAtomWithIdx(3)->getNumRadicalElectrons() == 1);
 
     auto smi = MolToCXSmiles(*mol);
-    CHECK(smi == "[O]N([O])[Fe] |^1:0,2|");
+    CHECK(smi == "[O][N]([O])[Fe] |^1:0,2|");
   }
   SECTION("radicals2") {
     auto mol = "[CH]C[CH2] |^1:2,^2:0|"_smiles;
@@ -802,13 +802,13 @@ TEST_CASE("github #3774: MolToSmarts inverts direction of dative bond",
       auto m = "N->[Cu+]"_smiles;
       REQUIRE(m);
       CHECK(MolToSmarts(*m) == "[#7]->[Cu+]");
-      CHECK(MolToSmiles(*m) == "N->[Cu+]");
+      CHECK(MolToSmiles(*m) == "[NH3]->[Cu+]");
     }
     {
       auto m = "N<-[Cu+]"_smiles;
       REQUIRE(m);
       CHECK(MolToSmarts(*m) == "[#7]<-[Cu+]");
-      CHECK(MolToSmiles(*m) == "N<-[Cu+]");
+      CHECK(MolToSmiles(*m) == "[NH2]<-[Cu+]");
     }
   }
   SECTION("from smarts") {
@@ -2509,7 +2509,8 @@ TEST_CASE("Dative  bond in cxsmiles double double def", "[bug][cxsmiles]") {
 
       std::string smilesOut = MolToSmiles(*smilesMol, ps);
 
-      CHECK(smilesOut == "CC(/C=C/C1CCCC1)=O->[Fe]1<-N2=C(CC3=N->1CCC3)CCC2");
+      CHECK(smilesOut ==
+            "CC(/C=C/C1CCCC1)=[O]->[Fe]1<-[N]2=C(CC3=[N]->1CCC3)CCC2");
     }
   }
 }
@@ -2926,11 +2927,11 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
     REQUIRE(m);
     auto smi = MolToSmiles(*m);
-    CHECK(smi == "N[Fe]<-N");
+    CHECK(smi == "[NH2][Fe]<-[NH3]");
     SmilesWriteParams ps;
     ps.includeDativeBonds = false;
     auto newSmi = MolToSmiles(*m, ps);
-    CHECK(newSmi == "N[Fe][NH3]");
+    CHECK(newSmi == "[NH2][Fe][NH3]");
     // ensure that representation round trips:
     auto m2 = v2::SmilesParse::MolFromSmiles(newSmi);
     REQUIRE(m2);
@@ -3073,5 +3074,21 @@ TEST_CASE("trimethylcyclohexane") {
     auto m1 = RDKit::v2::SmilesParse::MolFromSmiles(smi, smilesParserParams);
     auto smiOut = RDKit::MolToCXSmiles(*m1);
     CHECK(smiOut == "C[C@H]1C[C@H](C)C[C@H](C)C1 |o1:1,o2:3,o3:6|");
+  }
+}
+
+TEST_CASE("atoms bound to metals should always have Hs specified") {
+  SECTION("basics") {
+    std::vector<std::pair<std::string, std::string>> smileses = {
+        {"Cl[Pt](F)([NH2])[OH]", "[NH2][Pt]([OH])([F])[Cl]"},
+        {"Cl[Pt](F)(<-[NH3])[OH]", "[NH3]->[Pt]([OH])([F])[Cl]"},
+    };
+    for (const auto &[smi, expected] : smileses) {
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      auto osmi = MolToSmiles(*m);
+      INFO(smi);
+      CHECK(osmi == expected);
+    }
   }
 }
