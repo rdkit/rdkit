@@ -2316,7 +2316,7 @@ Organometallics with Dative Bonds
 
 .. testoutput::
 
-   CN(C)(C)->[Pt]
+   C[N](C)(C)->[Pt]
 
 
 Enumerate SMILES
