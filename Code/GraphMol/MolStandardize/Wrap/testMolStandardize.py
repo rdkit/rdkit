@@ -82,9 +82,9 @@ class TestCase(unittest.TestCase):
       Chem.MolFromSmarts(
         "[Li,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]"
       ))
-    mol2 = Chem.MolFromSmiles("CCC(=O)O[Na]")
+    mol2 = Chem.MolFromSmiles("CCC(=O)[O][Na]")
     nm2 = md.Disconnect(mol2)
-    self.assertEqual(Chem.MolToSmiles(nm2), "CCC(=O)O[Na]")
+    self.assertEqual(Chem.MolToSmiles(nm2), "CCC(=O)[O][Na]")
 
     # Split with organometallics disconnector, two ways.
     rufile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
@@ -230,14 +230,14 @@ class TestCase(unittest.TestCase):
     lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
     mol4 = Chem.MolFromSmiles(smi4)
     lfrag4 = lfrag_params.choose(mol4)
-    self.assertEqual(Chem.MolToSmiles(lfrag4), "O=[Pb]=O")
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "[O]=[Pb]=[O]")
 
     lfParams = rdMolStandardize.CleanupParameters()
     lfParams.largestFragmentChooserUseAtomCount = False
     lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
     mol4 = Chem.MolFromSmiles(smi4)
     lfrag4 = lfrag_params.choose(mol4)
-    self.assertEqual(Chem.MolToSmiles(lfrag4), "O=[Pb]=O")
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "[O]=[Pb]=[O]")
 
     lfParams = rdMolStandardize.CleanupParameters()
     lfParams.largestFragmentChooserCountHeavyAtomsOnly = True
