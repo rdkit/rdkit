@@ -61,12 +61,12 @@ SearchResults SynthonSpaceSearcher::search() {
       d_query, getSpace().getMaxNumSynthons(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
   if (timedOut || ControlCHandler::getGotSignal()) {
-    return SearchResults{std::move(results), 0UL, timedOut,
+    return SearchResults{std::move(results), 0ULL, timedOut,
                          ControlCHandler::getGotSignal()};
   }
   extraSearchSetup(fragments);
   if (ControlCHandler::getGotSignal()) {
-    return SearchResults{std::move(results), 0UL, timedOut, true};
+    return SearchResults{std::move(results), 0ULL, timedOut, true};
   }
 
   std::uint64_t totHits = 0;
