@@ -341,7 +341,9 @@ TEST_CASE("Tetrahedral assignment", "[accurateCIP]") {
   chiral_atom->clearProp(common_properties::_CIPCode);
   REQUIRE(chiral_atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
 
+  CHECK(!mol->hasProp(common_properties::_CIPComputed));
   CIPLabeler::assignCIPLabels(*mol);
+  CHECK(mol->hasProp(common_properties::_CIPComputed));
 
   std::string chirality;
   CHECK(chiral_atom->getPropIfPresent(common_properties::_CIPCode, chirality));
