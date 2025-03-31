@@ -14,7 +14,9 @@
 #include <sstream>
 #include <string>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/BadFileException.h>

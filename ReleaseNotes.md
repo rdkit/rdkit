@@ -49,6 +49,11 @@ YOUNG-JAME, thomp-j, esiaero, bbu-imdea, bzoracler
 - The colors of annotations on atoms and bonds are now controlled by the drawing
   options `atomNoteColour` and `bondNoteColour` instead of the general
   `annotationColour`.
+- When writing SMILES, organic subset atoms which are bonded to "metals" will 
+  always be written in square brackets, i.e. with their H count explicit. Here 
+  the definition of "metal" is any atom matching an "M" query (the corresponding 
+  SMARTS is `[!#0!#1!#2!#5!#6!#7!#8!#9!#10!#14!#15!#16!#17!#18!#33!#34!#35!#36!#52!#53!#54!#85!#86]`)
+
 
 ## New Features and Enhancements:
   - NumAmideBonds descriptor missing

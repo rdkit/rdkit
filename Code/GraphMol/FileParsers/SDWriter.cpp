@@ -13,7 +13,9 @@
 #include <sstream>
 #include <string>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/any.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/FileParseException.h>

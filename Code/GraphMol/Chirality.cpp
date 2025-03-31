@@ -908,12 +908,14 @@ bool has_protium_neighbor(const ROMol &mol, const Atom *atom) {
   return false;
 }
 
-void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo) {
+void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo,
+                      bool useCXSmilesOrdering) {
   // NOTE:  moved from parse_doublebond_stereo CXSmilesOps
-  // the cis/trans/unknown marker is relative to the lowest numbered atom
-  // connected to the lowest numbered double bond atom and the
-  // highest-numbered atom connected to the highest-numbered double bond
-  // atom find those
+  // IF useCXSmilesOrdering is true, the cis/trans/unknown marker will be
+  // assigned relative to the lowest-numbered neighbor of each double bond atom.
+  // Otherwise it uses the lowest-numbered neighbor on the lower-numbered atom
+  // of the double bond and the highest-numbered neighbor on the higher-numbered
+  // atom
   auto begAtom = bond->getBeginAtom();
   auto endAtom = bond->getEndAtom();
   if (begAtom->getIdx() > endAtom->getIdx()) {
@@ -927,12 +929,13 @@ void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo) {
       }
       begControl = std::min(nbr->getIdx(), begControl);
     }
-    unsigned int endControl = 0;
+    unsigned int endControl = useCXSmilesOrdering ? mol.getNumAtoms() : 0;
     for (auto nbr : mol.atomNeighbors(endAtom)) {
       if (nbr == begAtom) {
         continue;
       }
-      endControl = std::max(nbr->getIdx(), endControl);
+      endControl = useCXSmilesOrdering ? std::min(nbr->getIdx(), endControl)
+                                       : std::max(nbr->getIdx(), endControl);
     }
     if (begAtom != bond->getBeginAtom()) {
       std::swap(begControl, endControl);
@@ -2492,7 +2495,7 @@ void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo,
         }
       } else if (si.specified == Chirality::StereoSpecified::Unknown) {
         bond->setStereo(Bond::BondStereo::STEREOANY);
-        bond->getStereoAtoms().clear();
+        bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
         bond->setBondDir(Bond::BondDir::NONE);
       } else if (si.specified == Chirality::StereoSpecified::Unspecified) {
         assignBondCisTrans(mol, si);
