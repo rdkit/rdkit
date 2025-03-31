@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2019-2021 Greg Landrum
+//  Copyright (c) 2019-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -641,7 +641,7 @@ TEST_CASE(
   SECTION("as reported ") {
     auto m = "CC/C=C/N"_smiles;
     REQUIRE(m);
-    std::unique_ptr<ROMol> res(MolFragmenter::fragmentOnBonds(*m, {1}));
+    std::unique_ptr<ROMol> res(MolFragmenter::fragmentOnBonds(*m, std::vector<unsigned int>{1}));
     REQUIRE(res);
     CHECK(res->getBondWithIdx(1)->getBondType() == Bond::BondType::DOUBLE);
     if (useLegacy) {
