@@ -1496,14 +1496,14 @@ TEST_CASE("Github #7372: SMILES output option to disable dative bonds") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
     REQUIRE(m);
     auto smi = MolToCXSmiles(*m);
-    CHECK(smi == "N[Fe][NH3] |C:2.1|");
+    CHECK(smi == "[NH2][Fe][NH3] |C:2.1|");
 
     // disable the dative bond output
     SmilesWriteParams ps;
     smi = MolToCXSmiles(*m, ps,
                         SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS ^
                             SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS);
-    CHECK(smi == "N[Fe][NH3]");
+    CHECK(smi == "[NH2][Fe][NH3]");
   }
   SECTION("basics, SMARTS output") {
     auto m = "[NH3]->[Fe]-[NH2]"_smiles;
@@ -1596,5 +1596,43 @@ TEST_CASE("cis/trans/unknown in CXSMILES incorrectly interpreted") {
       CHECK(m->getBondWithIdx(2)->getStereo() == Bond::STEREOANY);
       CHECK(m->getBondWithIdx(2)->getStereoAtoms() == std::vector<int>{0, 4});
     }
+  }
+}
+
+TEST_CASE("Github #8348: Unable to write wiggly bond information by default") {
+  auto test_input = GENERATE(
+      "CC(O)Cl |w:1.0|",
+      "CC(Cl)(Br)C=C[C@@](C)(N)Cl |(4.9105,-2.4464,;4.1235,-2.6938,;4.7314,-3.2517,;3.9443,-3.4991,;3.2367,-1.8799,;2.4117,-1.8799,;1.6973,-1.4674,;0.9435,-1.803,;1.6973,-0.6424,;1.654,-2.2913,),w:4.3,wU:6.5|",
+      "CC(Cl)(Br)C=C[C@@](C)(N)Cl |(4.9105,-2.4464,;4.1235,-2.6938,;4.7314,-3.2517,;3.9443,-3.4991,;3.2367,-1.8799,;2.4117,-1.8799,;1.6973,-1.4674,;0.9435,-1.803,;1.6973,-0.6424,;1.654,-2.2913,),w:4.3,wD:6.5|"
+
+  );
+  CAPTURE(test_input);
+
+  auto mol = v2::SmilesParse::MolFromSmiles(test_input);
+  // make sure mol is valid
+  REQUIRE(mol);
+  CHECK(mol->getNumAtoms() > 0);
+  CHECK(mol->getNumBonds() > 0);
+
+  // the default conversion
+  {
+    const auto output_cxsmiles = MolToCXSmiles(*mol);
+    // we should always be able to write wiggly bond information
+    CHECK(output_cxsmiles.find("w:") != std::string::npos);
+  }
+
+  // testing the RestoreBondDirOption parameter
+  {
+    auto bond_dir_option =
+        GENERATE(RestoreBondDirOptionClear, RestoreBondDirOptionTrue);
+    CAPTURE(bond_dir_option);
+
+    const SmilesWriteParams ps;
+    const auto flags = SmilesWrite::CXSmilesFields::CX_ALL;
+
+    const auto output_cxsmiles =
+        MolToCXSmiles(*mol, ps, flags, bond_dir_option);
+    // we should always be able to write wiggly bond information
+    CHECK(output_cxsmiles.find("w:") != std::string::npos);
   }
 }
