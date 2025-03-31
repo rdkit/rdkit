@@ -10,8 +10,10 @@
 
 #pragma once
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/format.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/SubstanceGroup.h>
 
 namespace RDKit {
