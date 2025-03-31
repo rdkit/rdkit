@@ -1153,7 +1153,8 @@ bool parse_doublebond_stereo(Iterator &first, Iterator last, RDKit::RWMol &mol,
         return false;
       }
 
-      Chirality::detail::setStereoForBond(mol, bond, stereo);
+      bool useCXOrdering = true;
+      Chirality::detail::setStereoForBond(mol, bond, stereo, useCXOrdering);
     }
     if (first < last && *first == ',') {
       ++first;
