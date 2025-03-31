@@ -1,4 +1,4 @@
-# Release_2025.03.1b1
+# Release_2025.03.1
 (Changes relative to Release_2024.09.1)
 
 ## Acknowledgements
@@ -178,12 +178,16 @@ YOUNG-JAME, thomp-j, esiaero, bbu-imdea, bzoracler
  (github issue #8304 from cdvonbargen)
   - Add RascalMCES option to require complete RingInfo rings
  (github pull #8305 from rachelnwalker)
-  - cartridge: expose sanitize options to mol_from_ctab
+  - Atoms bonded to metal atoms should always have their H counts explicit in SMILES
+ (github pull #8318 from greglandrum)
+ - cartridge: expose sanitize options to mol_from_ctab
  (github pull #8326 from greglandrum)
   - Feat/use draw color in drawString()
  (github pull #8334 from greglandrum)
   - Synthon Search Phase 2
  (github pull #8338 from DavidACosgrove)
+  - bump yaehmop version
+ (github issue #8395 from greglandrum)
 
 ## Bug Fixes:
   - Segmentation fault using None as property name in SetProp
@@ -346,8 +350,16 @@ YOUNG-JAME, thomp-j, esiaero, bbu-imdea, bzoracler
  (github issue #8312 from schatzsc)
   - apply query adjustments when makeAtomsGeneric is enabled
  (github pull #8315 from greglandrum)
+  - Ignore invalid chirality labels when reading MAE inputs
+ (github issue #8346 from whosayn)
+  - Unable to write wiggly bond information by default
+ (github issue #8348 from whosayn)
   - Calling expandQuery on an empty QueryAtom crashes the program
  (github issue #8353 from DavidACosgrove)
+  - stereo atoms not set for STEREOANY bonds when using the new stereo code
+ (github issue #8364 from greglandrum)
+  - cis/trans markers in CXSMILES being interpreted incorrectly
+ (github issue #8365 from greglandrum)
 
 ## Cleanup work:
   - Fix some mem errors in 2024.09.1
@@ -404,6 +416,8 @@ YOUNG-JAME, thomp-j, esiaero, bbu-imdea, bzoracler
  (github pull #8134 from e-kwsm)
   - relax two tolerances for ARM64 builds
  (github pull #8148 from tadhurst-cdd)
+  - Fix build under gcc-14
+ (github pull #8378 from ricrogz)
 
 ## Documentation:
   - The Python type hint for GetMolLayers in RegistrationHash.py appears incorrect
