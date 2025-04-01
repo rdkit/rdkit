@@ -383,7 +383,7 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
  *
  * @return std::string
  */
-std::string formattedIntegerString(std::int64_t value);
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::string formattedIntegerString(std::int64_t value);
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit
