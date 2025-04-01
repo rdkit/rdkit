@@ -45,7 +45,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'The RDKit'
-copyright = u'2024, Greg Landrum and other RDKit contributors'
+copyright = u'2025, Greg Landrum and other RDKit contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

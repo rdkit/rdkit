@@ -72,6 +72,7 @@ option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
+option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
 
 set(RDK_BOOST_VERSION "1.70.0")
 
@@ -140,7 +141,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 set(RDKit_Year "2025")
 set(RDKit_Month "03")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "pre")
+set(RDKit_RevisionModifier "")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
