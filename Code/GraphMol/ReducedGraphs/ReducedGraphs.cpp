@@ -189,7 +189,7 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
             (*res)[bin - 1] += fuzzIncrement;
           }
           if (dist < rdcast<int>(maxPath) && fuzzIncrement > 0 &&
-              bin + 1 < res->size()) {
+              bin + 1 < vSize) {
             (*res)[bin + 1] += fuzzIncrement;
           }
         }
