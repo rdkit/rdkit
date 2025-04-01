@@ -514,6 +514,7 @@ bool skipNeighborBond(const Atom *atom, const Atom *otherAtom,
             !hasStartBond(atom, startBonds))));
 }
 
+// counts the number of neighboring atoms that have conjugated bonds.
 unsigned int getNumConjugatedNeighbors(
     const Atom *atom, const boost::dynamic_bitset<> &startBonds) {
   unsigned int res = 0;
@@ -529,8 +530,14 @@ unsigned int getNumConjugatedNeighbors(
 }
 // special case to prevent "overreach" with things like enamines.
 // the logic here prevents the first bond in CNC=C from being
-// included in the tautomeric system. So we get: [CH3]-[N]:[C]
-// instead of [C]:[N]:[C]
+// included in the tautomeric system. So we get: [CH3]-[N]:[C]:[C]
+// instead of [C]:[N]:[C]:[C]
+// returns true if the bond is a candidate for overreach.
+// The arguments are, with atom indices corresponding to the example above:
+//   atom: atom 1
+//   oatom: atom 0
+//   bond: bond between atom 1 and atom 2
+//   nbrBond: bond between atom 1 and atom 0
 bool checkForOverreach(
     const Atom *atom, const Atom *oatom, const Bond *bond, const Bond *nbrBond,
     const boost::dynamic_bitset<> &startBonds,
@@ -630,7 +637,6 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
         }
 
         if (std::find(bq.begin(), bq.end(), nbrBond) == bq.end()) {
-          bq.push_back(nbrBond);
 #ifdef VERBOSE_HASH
           std::cerr << "    push " << nbrBond->getIdx() << " "
                     << nbrBond->getBeginAtomIdx() << "-"
@@ -721,23 +727,19 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       std::cerr << "CONJ: " << conjSystem << " hetero " << activeHeteroHs
                 << " donor " << std::endl;
 #endif
-      // all bonds between conjugated atoms in the system are consisdered to be
+      // all bonds between conjugated atoms in the system are considered to be
       // in the system. There are situations where the traverse doesn't find the
       // closure bond, so we explicitly check:
       for (auto i = 0U; i < conjAtoms.size(); i++) {
         if (conjAtoms[i]) {
-          for (auto j = i; j < conjAtoms.size(); j++) {
-            if (conjAtoms[j]) {
-              auto bnd = mol->getBondBetweenAtoms(i, j);
-              if (bnd) {
+          for (const auto bnd : mol->atomBonds(mol->getAtomWithIdx(i))) {
+            if (conjAtoms[bnd->getOtherAtomIdx(i)]) {
 #ifdef VERBOSE_HASH
-                if (!conjSystem[bnd->getIdx()]) {
-                  std::cerr << "  BACKFILL BOND: " << bnd->getIdx()
-                            << std::endl;
-                }
-#endif
-                bondsToModify.set(bnd->getIdx());
+              if (!conjSystem[bnd->getIdx()]) {
+                std::cerr << "  BACKFILL BOND: " << bnd->getIdx() << std::endl;
               }
+#endif
+              bondsToModify.set(bnd->getIdx());
             }
           }
         }
