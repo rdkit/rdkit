@@ -17,6 +17,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
+#include <GraphMol/test_fixtures.h>
 
 #include <iostream>
 #include <vector>
@@ -722,8 +723,7 @@ void test5() {
 void test6() {
   BOOST_LOG(rdInfoLog) << "testing canonicalization using the wrapper."
                        << std::endl;
-// canonicalization using the wrapper
-#if 1
+  // canonicalization using the wrapper
   {
     std::string smi = "FC1C(CC)CCC1CC";
     RWMol *m = SmilesToMol(smi);
@@ -805,7 +805,6 @@ void test6() {
     // }
     delete m;
   }
-#endif
   {
     std::string smi = "BrC=C1CCC(C(=O)O1)c2cccc3ccccc23";
     RWMol *m = SmilesToMol(smi);
@@ -1561,29 +1560,15 @@ void testGithub1567() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
-void testCanonicalDiastereomers() {
-  // FIX: this is another one that we dno't currently handle properly
-#if 0
-  BOOST_LOG(rdInfoLog) << "testing diastereomer problem." << std::endl;
-
-  auto m1 = "F[C@@H](Cl)[C@H](F)Cl"_smiles;
-  auto m2 = "F[C@H](Cl)[C@@H](F)Cl"_smiles;
-  auto smi1 = MolToSmiles(*m1);
-  auto smi2 = MolToSmiles(*m2);
-  TEST_ASSERT(smi1 != smi2);
-  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
-#endif
-}
-
 void testRingsAndDoubleBonds() {
-// FIX: we don't currently handle this case properly
-#if 0
   BOOST_LOG(rdInfoLog)
       << "testing some particular ugly para-stereochemistry examples."
       << std::endl;
-  std::vector<std::string> smis = {"C/C=C/C=C/C=C/C=C/C", "C/C=C1/C[C@H](O)C1",
-                                   "C/C=C1/CC[C@H](O)CC1"};
-  for (const auto smi : smis) {
+  std::vector<std::string> smis = {
+      "C/C=C/C=C/C=C/C=C/C",  // "C/C=C1/C[C@H](O)C1",
+      "C/C=C1/CC[C@H](O)CC1"};
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+  for (const auto &smi : smis) {
     SmilesParserParams ps;
     ps.sanitize = false;
     ps.removeHs = false;
@@ -1597,13 +1582,11 @@ void testRingsAndDoubleBonds() {
     std::cerr << "   " << MolToSmiles(*mol) << std::endl;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
-#endif
 }
 
 int main() {
   RDLog::InitLogs();
   boost::logging::enable_logs("rdApp.info");
-#if 1
   test1();
   test2();
   test3();
@@ -1618,9 +1601,7 @@ int main() {
   test7();
   test8();
   testGithub1567();
-#endif
   testRingsAndDoubleBonds();
-  testCanonicalDiastereomers();
 
   return 0;
 }
