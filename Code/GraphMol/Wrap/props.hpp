@@ -164,22 +164,32 @@ boost::python::dict GetPropsAsDict(const T &obj, bool includePrivate,
   return dict;
 }
 
+static PyObject *rawPy(python::object &&pyobj) {
+  Py_INCREF(pyobj.ptr());
+  return pyobj.ptr();
+}
+
+template <class T>
+PyObject *rawPy(T &&thing) {
+  return rawPy(python::object(thing));
+}
+
 template <class RDOb, class T>
-T GetProp(const RDOb *ob, const std::string &key) {
+PyObject* GetProp(const RDOb *ob, const std::string &key) {
   T res;
   try {
     if (!ob->getPropIfPresent(key, res)) {
       PyErr_SetString(PyExc_KeyError, key.c_str());
-      throw python::error_already_set();
+      return nullptr;
     }
-    return res;
   } catch (const std::exception &e) {
-    throw ValueErrorException(std::string("key `") + key +
+    auto msg = std::string("key `") + key +
                               "` exists but does not result in " +
-                              GetTypeName<T>() + " reason: " + e.what());
+                              GetTypeName<T>() + " reason: " + e.what();
+    PyErr_SetString(PyExc_ValueError, msg.c_str());
+    return nullptr;
   }
-
-  return res;
+  return rawPy(std::move(res));
 }
 
 template <class RDOb>
@@ -198,15 +208,7 @@ python::object autoConvertString(const RDOb *ob, const std::string &key) {
   return python::object();
 }
 
-static PyObject *rawPy(python::object &&pyobj) {
-  Py_INCREF(pyobj.ptr());
-  return pyobj.ptr();
-}
 
-template <class T>
-PyObject *rawPy(T &&thing) {
-  return rawPy(python::object(thing));
-}
 
 template <class RDOb>
 PyObject *GetPyProp(const RDOb *obj, const std::string &key, bool autoConvert) {

@@ -355,7 +355,8 @@ struct atom_wrapper {
              "  RETURNS: an int\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("GetUnsignedProp", GetProp<Atom, unsigned>,
              python::args("self", "key"),
@@ -366,8 +367,8 @@ struct atom_wrapper {
              "  RETURNS: an integer (Python has no unsigned type)\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
-
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("SetDoubleProp", AtomSetProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
              "Sets an atomic property\n\n"
@@ -383,7 +384,8 @@ struct atom_wrapper {
              "  RETURNS: a double\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("SetBoolProp", AtomSetProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
@@ -399,7 +401,8 @@ struct atom_wrapper {
              "  RETURNS: a bool\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("SetExplicitBitVectProp", AtomSetProp<ExplicitBitVect>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
@@ -418,7 +421,8 @@ struct atom_wrapper {
              "  RETURNS: an ExplicitBitVect \n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("HasProp", AtomHasProp, python::args("self", "key"),
              "Queries a Atom to see if a particular property has been "
