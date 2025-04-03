@@ -635,6 +635,68 @@ void Atom::setMonomerInfo(AtomMonomerInfo *info) {
   dp_monomerInfo = info;
 }
 
+//! Get the residue information on the atom
+const AtomPDBResidueInfo *getPDBResidueInfo(const Atom *atom) {
+  return dynamic_cast<const AtomPDBResidueInfo *>(atom->getMonomerInfo());
+}
+
+//! Gets mutable the residue information on the atom
+AtomPDBResidueInfo *getOrInitializePDBResidueInfo(Atom *atom) {
+  auto res_info = dynamic_cast<AtomPDBResidueInfo *>(atom->getMonomerInfo());
+  if (!res_info) {
+    res_info = new RDKit::AtomPDBResidueInfo();
+    atom->setMonomerInfo(res_info);
+  }
+  return res_info;
+}
+
+std::string getResidueName(const Atom *atom) {
+  if (auto res_info = getPDBResidueInfo(atom); res_info) {
+    return res_info->getResidueName();
+  }
+  return "";
+}
+
+void setResidueName(Atom *atom, const std::string &residue_name) {
+  getOrInitializePDBResidueInfo(atom)->setResidueName(residue_name);
+}
+
+int getResidueNumber(const Atom *atom) {
+  if (auto res_info = getPDBResidueInfo(atom); res_info) {
+    return res_info->getResidueNumber();
+  }
+
+  return 0;
+}
+
+void setResidueNumber(Atom *atom, int residue_number) {
+  getOrInitializePDBResidueInfo(atom)->setResidueNumber(residue_number);
+}
+
+std::string getChainId(const Atom *atom) {
+  if (auto res_info = getPDBResidueInfo(atom); res_info) {
+    return res_info->getChainId();
+  }
+
+  return "";
+}
+
+void setChainId(Atom *atom, const std::string &chain_id) {
+  getOrInitializePDBResidueInfo(atom)->setChainId(chain_id);
+}
+
+std::string getInsertionCode(const Atom *atom) {
+  if (auto res_info = getPDBResidueInfo(atom); res_info) {
+    return res_info->getInsertionCode();
+  }
+
+  return "";
+}
+
+void setInsertionCode(Atom *atom, const std::string &insertion_code) {
+  getOrInitializePDBResidueInfo(atom)->setInsertionCode(insertion_code);
+}
+
 void Atom::setIsotope(unsigned int what) { d_isotope = what; }
 
 double Atom::getMass() const {
