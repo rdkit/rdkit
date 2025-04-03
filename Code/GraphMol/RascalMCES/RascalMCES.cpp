@@ -663,15 +663,6 @@ void makeModularProduct(const ROMol &mol1,
     calcDistMatrix(adjMatrix1, distMatrix1);
     calcDistMatrix(adjMatrix2, distMatrix2);
   }
-  std::vector<std::vector<BondPaths>> allDistsMatrix1, allDistsMatrix2;
-  if (opts.singleLargestFrag) {
-    calcAllDistancesMatrix(mol1, adjMatrix1,
-                           std::max(adjMatrix1.size(), adjMatrix2.size()),
-                           allDistsMatrix1);
-    calcAllDistancesMatrix(mol2, adjMatrix2,
-                           std::max(adjMatrix1.size(), adjMatrix2.size()),
-                           allDistsMatrix2);
-  }
 
   modProd = std::vector<boost::dynamic_bitset<>>(
       vtxPairs.size(), boost::dynamic_bitset<>(vtxPairs.size()));
@@ -688,12 +679,6 @@ void makeModularProduct(const ROMol &mol1,
             opts.maxFragSeparation) {
           distsOk = false;
         }
-      }
-      if (distsOk && opts.singleLargestFrag &&
-          !(allDistsMatrix1[vtxPairs[i].first][vtxPairs[j].first]
-                .hasMatchingPath(
-                    allDistsMatrix2[vtxPairs[i].second][vtxPairs[j].second]))) {
-        distsOk = false;
       }
       if (distsOk && adjMatrix1[vtxPairs[i].first][vtxPairs[j].first] ==
                          adjMatrix2[vtxPairs[i].second][vtxPairs[j].second]) {
@@ -998,43 +983,37 @@ void updateMaxClique(const std::vector<unsigned int> &clique, bool deltaYPoss,
                      const ROMol &mol2,
                      const std::vector<std::pair<int, int>> &vtxPairs,
                      std::vector<std::vector<unsigned int>> &maxCliques,
-                     unsigned int &lowerBound, bool singleFrag,
-                     RascalStartPoint &starter) {
+                     unsigned int &lowerBound) {
   if (!maxCliques.empty() && clique.size() < maxCliques.front().size()) {
     return;
   }
-  if (deltaYPoss && deltaYInClique(clique, mol1, mol2, vtxPairs)) {
-    return;
-  }
-  std::vector<unsigned int> cliqueFrag;
-  const std::vector<unsigned int> *cliqueToUse = &clique;
-  if (singleFrag) {
-    singleLargestFrag(starter, clique, vtxPairs, cliqueFrag);
-    cliqueToUse = &cliqueFrag;
-  }
-  if (maxCliques.empty()) {
-    if (cliqueOk(*cliqueToUse, opts, mol1, mol2, vtxPairs)) {
-      maxCliques.push_back((*cliqueToUse));
-    }
-  } else {
-    bool goodClique = false, didCliqueOk = false;
-    if (cliqueToUse->size() > maxCliques.front().size()) {
-      goodClique = cliqueOk(*cliqueToUse, opts, mol1, mol2, vtxPairs);
-      didCliqueOk = true;
-      if (goodClique) {
-        maxCliques.clear();
+  bool didDeltaY =
+      !deltaYPoss ? false : deltaYInClique(clique, mol1, mol2, vtxPairs);
+  if (!didDeltaY) {
+    if (maxCliques.empty()) {
+      if (cliqueOk(clique, opts, mol1, mol2, vtxPairs)) {
+        maxCliques.push_back((clique));
+      }
+    } else {
+      bool goodClique = false, didCliqueOk = false;
+      if (clique.size() > maxCliques.front().size()) {
+        goodClique = cliqueOk(clique, opts, mol1, mol2, vtxPairs);
+        didCliqueOk = true;
+        if (goodClique) {
+          maxCliques.clear();
+        }
+      }
+      if (!didCliqueOk) {
+        goodClique = cliqueOk(clique, opts, mol1, mol2, vtxPairs);
+      }
+      if (goodClique &&
+          (maxCliques.empty() || clique.size() == maxCliques.front().size())) {
+        maxCliques.push_back(clique);
       }
     }
-    if (!didCliqueOk) {
-      goodClique = cliqueOk(*cliqueToUse, opts, mol1, mol2, vtxPairs);
+    if (!maxCliques.empty() && maxCliques.front().size() > lowerBound) {
+      lowerBound = maxCliques.front().size();
     }
-    if (goodClique && (maxCliques.empty() ||
-                       cliqueToUse->size() == maxCliques.front().size())) {
-      maxCliques.push_back(*cliqueToUse);
-    }
-  }
-  if (!maxCliques.empty() && maxCliques.front().size() > lowerBound) {
-    lowerBound = maxCliques.front().size();
   }
 }
 
@@ -1171,8 +1150,7 @@ void explorePartitions(
             nextPart->pruneVertices(clique.back());
             updateMaxClique(clique, starter.d_deltaYPoss, opts, *starter.d_mol1,
                             *starter.d_mol2, starter.d_vtxPairs, maxCliques,
-                            starter.d_lowerBound, opts.singleLargestFrag,
-                            starter);
+                            starter.d_lowerBound);
             parts.push_back(nextPart);
           }
         } else {
