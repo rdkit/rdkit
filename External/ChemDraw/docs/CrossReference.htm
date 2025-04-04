@@ -1,0 +1,101 @@
+<html>
+<head>
+<title>CDX Format Specification: Cross-Reference Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Cross-Reference Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">crossreference</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_CrossReference</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8014</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Cross-Reference object represents a link to some <a href="Sequence.htm">Sequence</a> object (possibly not even in the same file!); the contents of its Text object may change as the other Sequence object is updated.</p>
+
+<p>There are no required properties or objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0F00</td>
+<td><a href="properties/CrossReference_Container.htm">kCDXProp_CrossReference_Container</a></td>
+<td>CrossReferenceContainer</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An external object containing (as an embedded object) the document containing the Sequence object being referenced.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0F01</td>
+<td><a href="properties/CrossReference_Document.htm">kCDXProp_CrossReference_Document</a></td>
+<td>CrossReferenceDocument</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An external document containing the Sequence object being referenced.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0F02</td>
+<td><a href="properties/CrossReference_Identifier.htm">kCDXProp_CrossReference_Identifier</a></td>
+<td>CrossReferenceIdentifier</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for cross-references..</font> A unique (but otherwise random) identifier for a given Cross-Reference object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0F03</td>
+<td><a href="properties/CrossReference_Sequence.htm">kCDXProp_CrossReference_Sequence</a></td>
+<td>CrossReferenceSequence</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for cross-references..</font> A value matching the SequenceIdentifier of the Sequence object to be referenced.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

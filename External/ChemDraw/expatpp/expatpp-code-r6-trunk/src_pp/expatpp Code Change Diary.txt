@@ -1,0 +1,359 @@
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+98/09/02
+
+FILE xpatpp.h
+CLASS xpatt
+- added overrideable callbacks:
+	 processingInstruction
+	 defaultHandler
+	 unparsedEntityDecl
+	 notationDecl
+
+-added interface functions for callbacks:
+	 processingInstructionCallback
+	 defaultHandlerCallback
+	 unparsedEntityDeclCallback
+	 notationDeclCallback
+	 
+- added inlines for these interface functions
+
+FILE xpatpp.cpp
+CLASS xpattp
+Method xpattp
+- added calls to 
+  XML_SetProcessingInstructionHandler
+  XML_SetDefaultHandler
+  XML_SetUnparsedEntityDeclHandler
+  XML_SetNotationDeclHandler
+  
+  
+- added empty implementations of the overrideable callbacks
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+99/03/10 AD
+renamed xpatpp to expatpp in filenames and classes.
+updated xpcw project to compile with CodeWarrior Pro4
+and add PPC target to 68K.
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+99/05/03 AD
+UPDATE FOR LATEST EXPAT RELEASE
+
+FILE expatpp.cpp
+CLASS expattp
+Method expattp
+- added call to XML_SetNotStandaloneHandler
+- added call to XML_SetNamespaceDeclHandler
+
+Methods added
+		- virtual notStandaloneHandler returning 0
+		- Empty virtuals startNamespace & endNamespace
+
+
+FILE expatpp.h
+CLASS	expatpp
+- added inline notStandaloneHandlerCallback
+- added inline 
+
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+99/05/05-09 AD
+ADD NESTED PARSER SUBCLASS
+
+CLASS	expatppNesting
+- added subclass of expatpp
+- mDepth, mParent members added
+
+Method	ctor
+		- init mDepth(0)
+		
+Method	ctor(expatppNesting*)
+		- added to nest a parser (pointer to parent)		
+		
+Method	nestedStartElement, nestedEndElement
+		- added callbacks to inc/dec mDepth		
+		
+		
+CLASS	expatpp
+Method	dtor
+		- made virtual
+		
+Method	ctor
+		- add optional param to control creation of parser
+		  so can nest parsers and continue to use existing
+		  XML parser
+		  		  			
+Method	emptyCharData
+		- added to contain common logic I keep putting at top
+		  of overridden charData methods
+
+Method	all callbacks
+		- made non-inline as I realised they will NOT be used
+		  inline, being supplied as function addresses, so no
+		  point having them declared as inline
+		  
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2002/12/28-30 AD
+CONVERT TO EXPAT 1.95.5
+
+CLASS	expatpp
+- made all virtual overrideables protected - should only be invoked through 
+  callback interfaces.
+- Added overrideable empty handlers
+		attlistDecl	
+		comment	
+		elementDecl	
+		endCdataSection
+		endDoctypeDecl	
+		entityDecl	
+		skippedEntity	
+		startCdataSection
+		startDoctypeDecl	
+		xmlDecl
+
+
+- Added callback interfaces
+		attlistDeclCallback	
+		commentCallback	
+		elementDeclCallback	
+		endCdataSectionCallback
+		endDoctypeDeclCallback	
+		entityDeclCallback	
+		skippedEntityCallback	
+		startCdataSectionCallback
+		startDoctypeDeclCallback	
+		xmlDeclCallback
+
+
+Method	ctor
+		- added calls to set handlers for
+			XML_SetAttlistDeclHandler
+			XML_SetCdataSectionHandler
+			XML_SetCommentHandler
+			XML_SetDoctypeDeclHandler
+			XML_SetElementDeclHandler
+			XML_SetEntityDeclHandler
+			XML_SetSkippedEntityHandler
+			XML_SetXmlDeclHandler		  
+
+Method	XML_Parse
+		- changed return type from plain XMLPARSEAPI to XMLPARSEAPI(enum XML_Status)
+
+Method	XML_GetErrorCode
+		- changed return type from plain XMLPARSEAPI to XMLPARSEAPI(enum XML_Error)
+		
+Method	XML_GetCurrentLineNumber
+		- changed return type from plain XMLPARSEAPI to XMLPARSEAPI(int)
+
+Method	parseFile(FILE*)
+		- added to simplify loop to read files
+
+CLASS	expatppNesting
+Method	nestedStartElementCallback
+		- change cast ((expatpp*)userData) to nestedParser-> which is
+		  an earlier cast (expatppNesting*)userData so it can correctly invoke
+		  through the inheritance chain (and avoid compile error)
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2002/12/30 AD
+ADAPT PROJECTS TO COMPILE NEW 1.95.6-COMPATIBLE VERSION ON WIN32
+
+PROJECT	expatpp.dsp
+Static targets (the only ones originally)
+- removed all expat files
+- added files so get new relative path to location in expat/lib
+- changed preprocessor additional include dirs to point via relative ref to expat/lib
+  instead of fixed paths that assumed under \oofile
+- Preprocessor definitions
+  - removed XMLTOKAPI, XMLPARSEAPI
+  - added COMPILED_FROM_DSP, _LIB
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2003/01/03-11 AD
+ABLE TO USE ON POCKETPC (ALSO BETTER WITH UNICODE)
+
+FILE	expatpp.cpp
+- conditional on UNDER_CE being defined (requirement in user project)
+  - #include <windows.h>
+  - #include <dbgapi.h>
+  - #define assert ASSERT
+  - #include <string.h> vs <string>
+  - use namespace std
+  
+- define BUFSIZ as 4096 if not defined already  
+
+- conditional on XML_UNICODE
+  - define tcscmp so don't have to include Windows headers to get
+
+
+CLASS	expatpp
+Method	skipWhiteSpace
+		- use XML_Char for params and locals instead of char
+		
+Method	getAttribute
+		- use XML_Char for params and locals instead of char		
+		
+Method	getIntegerAttribute
+		- use XML_Char for params and locals instead of char		
+		
+		
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2003/01/17 AD
+CLEANUP HANDLING NESTING PARSER AS ROOT
+making it safe to pass in null parser
+
+
+CLASS	expatppNesting
+Method	ctor()
+		- moved different init logic into other ctor
+		
+Method	ctor(expatppNesting*)
+		- allow for null param
+		- default is null param
+
+
+Method	nestedStartElementCallback
+		- added assert user data non null
+		
+Method	nestedEndElementCallback
+		- just quietly exit if null user data (see comments)
+		
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2003/01/18 AD
+ROLL IN CHRIS NEWCOMBE'S IDEAS ABOUT PARENTS OWNING CHILD PARSERS
+
+CLASS	expatppNesting
+- mSelfDeleting added
+- mOwnedChild added
+
+Method	ctor()
+		- init mOwnedChild(0)
+		- init mSelfDeleting(true)
+		- move some logic to RegisterWithParentXMLParser()
+		- call AdoptChild
+		
+Method	copy ctor
+		- added private to avoid pointer problems
+
+Method	operator=
+		- added private to avoid pointer problems
+
+Method	ParentWillDelete
+		- added
+		
+Method	OwnedChildOrphansItself
+		- added
+
+Method	returnToParent
+		- conditional on mSelfDeleting, delete this (was unconditional
+		- add conditional call to OwnedChildOrphansItself
+
+Method	RegisterWithParentXMLParser
+		- added		
+		
+Method	AdoptChild
+		- added to allow child parsers to set our mOwnedChild flag
+		  if not set (Chris had direct member access)		
+		
+
+CLASS	expatpp
+Method	ReleaseParser
+		- added to wrap XML_ParserFree
+		
+Method	dtor
+		- call ReleaseParser instead of XML_ParserFree	
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2003/01/18 AD
+ALLOW FOR REPEATED PARSING 
+
+CLASS	expatpp
+- mHaveParsed added
+
+Method	ctor
+		- init mHaveParsed(false)
+		
+Method	ResetParser
+		- added
+
+Method	parseFile
+		- call ResetParser()
+
+Method	parseString
+		- call ResetParser()
+		
+Method	 XML_Parse
+		- set mHaveParsed
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2003/01/18 AD
+ALLOW (POTENTIALLY) COMPILATION WITH OLD EXPAT 1.2
+to be tested
+
+
+CLASS	expatpp
+Method	ctor
+		- wrap the extra XML_Set... calls in #ifndef EXPATPP_COMPATIBLE_EXPAT12
+		
+FILE	expatpp.h
+#ifdef EXPATPP_COMPATIBLE_EXPAT12 
+	#include "xmlparse.h"	vs expat.h	
+
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2003/01/20 AD
+ADD MORE FLEXIBILITY IN SUBCLASSING FOR ERRORS AND CLEANUP
+
+
+CLASS	expatpp
+Method	ResetParser
+		- made virtual
+		
+Method	SetHandlers
+		- made virtual
+		
+Method	ParserFree
+		- made virtual
+
+Method	CheckFinalStatus
+		- added empty virtual
+		
+Method	XMLParse
+		- call CheckFinalStatus to give subclass chance to log error
+		- made non-inline
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2003/01/20 AD
+PREVENT WINDOWS LINKER ERRORS						
+
+Remove the XMLPARSEAPI wrapper around return type for 
+- XML_Parse
+- parseFile
+- parseString
+- XML_GetErrorCode
+- XML_GetCurrentLineNumber
+
+
+-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+2003/01/24 AD
+DEBUGGING NEW NESTING STYLE
+
+CLASS	expatppNesting
+Method	DeleteChild
+		- added
+		
+Method	dtor
+		- invoke DeleteChild
+				
+

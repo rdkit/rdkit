@@ -1,0 +1,77 @@
+<html>
+<head>
+<title>CDX Format Specification: LabelJustification Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>LabelJustification Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">LabelJustification</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_LabelJustification</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0823</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Document.htm">kCDXObj_Document</a>, <a href="../Text.htm">kCDXObj_Text</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The default justification for atom labels.</p>
+<p>In an Automatically-justified atom label, the atom is assumed to be associated with the first element in the label, reading from left to right. The rest of the label is positioned so that it best stays out of the way of any attached bonds, while trying to keep that first element at the atom's position. For atoms attached on the right end of a bond, this results in an atom label whose display is equivalent to Left, such as &quot;CH<sub>3</sub>&quot; or &quot;OMe&quot;. For atoms attached on the left end of a bond, the atom label will be swapped, producing text such as &quot;H<sub>3</sub>C&quot; or &quot;MeO&quot;. Accordingly, if you have an atom label that you know should always be displayed from left-to-right, you should definitely specify some justification other than Automatic.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">-1</td>
+<td valign="top">Right</td>
+<td valign="top">Text is right justified</td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Left</td>
+<td valign="top">Text is left justified</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">Center</td>
+<td valign="top">Text is centered</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">Full</td>
+<td valign="top">Text is fully justified</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">Above</td>
+<td valign="top">Text is stacked above</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">Below</td>
+<td valign="top">Text is stacked below</td>
+</tr>
+<tr>
+<td align="right" valign="top">5</td>
+<td valign="top">Auto</td>
+<td valign="top">Text is automatically positioned</td>
+</tr>
+<tr>
+<td align="right" valign="top">6</td>
+<td valign="top">Best</td>
+<td valign="top">Text is positioned at creation-type in the alignment that best avoids any associated objects, but that alignment is fixed from that point onward</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The value from the same property of a containing object will be used. That is, if this property is omitted from an object, but present for the <a href="../Document.htm">Document</a>, the Document's value will be used. If no value is found at all, ChemDraw will use the value from its last-used Style Sheet. If no information is found in the Style Sheet either, the text is automatically justified.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

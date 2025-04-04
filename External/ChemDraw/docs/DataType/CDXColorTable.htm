@@ -1,0 +1,40 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX Color Table Data Type</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX Color Table Data Type</h2>
+
+<p><b>In CDX files</b>, this data type consists of a series of a <a href="CDXNumeric.htm">UINT16</a> count, followed by that many <a href="CDXNumeric.htm">UINT16</a> triples.  Each of those triples consists of the red, green, and blue components (in that order) of the color value, scaled to a range of 0...65535</p>
+
+<p><b>In CDXML files</b>, this data type is represented by a <a href="../ColorTable.htm"><tt>colortable</tt></a> object.</p>
+
+<p><b>Examples:</b>
+<table><tr><td valign="top"><tt>CDX:</tt></td>
+<td><tt>08 00 FF FF FF FF FF FF<br>
+00 00 00 00 00 00 FF FF<br>
+00 00 00 00 FF FF FF FF<br>
+00 00 00 00 FF FF 00 00<br>
+00 00 FF FF FF FF 00 00<br>
+00 00 FF FF FF FF 00 00<br>
+FF FF</tt></td></tr>
+<tr><td valign="top"><tt>CDXML:</tt></td>
+<td><tt>&lt;colortable&gt;<br>
+&lt;color r=&quot;1&quot; g=&quot;1&quot; b=&quot;1&quot;/&gt;<br>
+&lt;color r=&quot;0&quot; g=&quot;0&quot; b=&quot;0&quot;/&gt;<br>
+&lt;color r=&quot;1&quot; g=&quot;0&quot; b=&quot;0&quot;/&gt;<br>
+&lt;color r=&quot;1&quot; g=&quot;1&quot; b=&quot;0&quot;/&gt;<br>
+&lt;color r=&quot;0&quot; g=&quot;1&quot; b=&quot;0&quot;/&gt;<br>
+&lt;color r=&quot;0&quot; g=&quot;1&quot; b=&quot;1&quot;/&gt;<br>
+&lt;color r=&quot;0&quot; g=&quot;0&quot; b=&quot;1&quot;/&gt;<br>
+&lt;color r=&quot;1&quot; g=&quot;0&quot; b=&quot;1&quot;/&gt;<br>
+&lt;/colortable&gt;</tt></td></table>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

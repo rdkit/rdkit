@@ -1,0 +1,183 @@
+<html>
+<head>
+<title>CDX Format Specification: TLC Spot Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>TLC Spot Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">tlcspot</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_TLCSpot</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8025</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="TLCLane.htm">kCDXObj_TLCLane</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 8.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>TLC Lane objects technically have no required properties or objects, but non-zero values for <a href="properties/Height.htm">kCDXProp_Height</a> and <a href="properties/Width.htm">kCDXProp_Width</a> would probably be helpful.</p>
+
+<p>The <a href="properties/Height.htm">kCDXProp_Height</a>, <a href="properties/Width.htm">kCDXProp_Width</a>, and <a href="properties/TLC_Tail.htm">kCDXProp_TLC_Tail</a> distances refer to the unrotated reference frame. If the spot's parent <a href="TLCPlate.htm">TLC Plate</a> is rotated 90&deg;, the Height value will actuall refer to a horizontal distance, and so on.</p>
+
+<p>Spots are displayed as modified ellipsoids. If Height == Width and Tail == 0, then the spot is circular. With Height != Width and Tail == 0, the spot is elliptical. If the Tail value is non-zero, the top half of the spot is drawn as a semiellipse with the height = Height and width = Width, and the bottom half of the spot is draw as a second semiellipse with height = (Height + 2 * Tail) and width = Width.<p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8011</td>
+<td><a href="ObjectTag.htm">kCDXObj_ObjectTag</a></font></b></td>
+<td>objecttag</td>
+</tr>
+<tr>
+<td></td><td colspan="3">Arbitrarily named property, one or more of which can be attached to any ChemDraw object.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0011</td>
+<td><a href="properties/Visible.htm">kCDXProp_Visible</a></td>
+<td>Visible       </td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The object is visible if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0812</td>
+<td><a href="properties/Width.htm">kCDXProp_Width</a></td>
+<td>Width</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The width of an object in CDX coordinate units, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0813</td>
+<td><a href="properties/Height.htm">kCDXProp_Height</a></td>
+<td>Height</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The height of an object in CDX coordinate units, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A08</td>
+<td><a href="properties/Curve_Type.htm">kCDXProp_Curve_Type</a></td>
+<td>CurveType</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of curve object.
+This is a bit-encoded property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AB0</td>
+<td><a href="properties/TLC_Rf.htm">kCDXProp_TLC_Rf</a></td>
+<td>Rf</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The Retention Factor (R<sub>f</sub>) of an individual spot.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AB1</td>
+<td><a href="properties/TLC_Tail.htm">kCDXProp_TLC_Tail</a></td>
+<td>Tail</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The length of the "tail" of an individual spot.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AB2</td>
+<td><a href="properties/TLC_ShowRf.htm">kCDXProp_TLC_ShowRf</a></td>
+<td>ShowRf</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the spot's Retention Fraction (R<sub>f</sub>) value if non-zero..
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

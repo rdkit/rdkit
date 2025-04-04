@@ -1,0 +1,734 @@
+<html>
+<head>
+<title>CDX Format Specification: A complex example</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+
+<h2>A complex example</h2>
+
+<p>Given the following graphical drawing for dimethylamine:</p>
+
+<p align="center"><img src="Graphics/Dimethylamine.gif" alt="Dimethylamine.gif (938 bytes)" WIDTH="67" HEIGHT="27"></p>
+
+<p>Let us look at the CDX and CDXML files as produced by ChemDraw.  Unlike the <a href="IntroExampleSimple.htm">previous example</a>, all of the extraneous information has been left in these versions.</p>
+
+<p>These files can be represented schematically like this:</p>
+
+<p><img border="0" src="Graphics/objtree2.gif" width="456" height="452"></p>
+
+<p>Objects are circled and the properties they contain radiate from them. Object nesting is represented by hierarchy. The one and only fragment (ID 8) object holds the entire molecule. Nodes 4 and 6 are the two carbon atoms; Node 5 is the nitrogen. Note that Node 5 contains an additional two properties plus a nested Text object. Nodes 4 and 6 don't need to specify Element because carbon is the default element. Text object 7 represents the NH text in the drawing.</p>
+
+<h3>The CDX version</h3>
+
+<p><a href="dimethylamine.cdx">Original binary version</a></p>
+
+<p><tt>
+56 6A 43 44 30 31 30 30 04 03 02 01 00 00 00 00 <br>
+00 00 00 00 00 00 00 00 00 00 00 00 03 00 OE 00 <br>
+00 00 43 68 65 6D 44 72 61 77 20 37 2E 30 08 00 <br>
+0A 00 00 00 74 65 73 74 2E 63 64 78 00 03 32 00 <br>
+08 00 FF FF FF FF FF FF 00 00 00 00 00 00 FF FF <br>
+00 00 00 00 FF FF FF FF 00 00 00 00 FF FF 00 00 <br>
+00 00 FF FF FF FF 00 00 00 00 FF FF FF FF 00 00 <br>
+FF FF 01 09 08 00 00 40 EC 00 00 C0 EA 00 02 09 <br>
+08 00 00 40 FD 01 00 00 25 02 02 08 10 00 00 00 <br>
+24 00 00 00 24 00 00 00 24 00 00 00 24 00 3A 04 <br>
+01 00 01 3B 04 01 00 00 3C 04 01 00 00 0C 06 01 <br>
+00 01 0D 06 01 00 00 06 07 02 00 00 00 07 07 02 <br>
+00 01 00 03 08 04 00 00 00 78 00 05 08 04 00 00 <br>
+00 1E 00 06 08 04 00 00 00 04 00 07 08 04 00 00 <br>
+00 01 00 08 08 04 00 00 00 02 00 09 08 04 00 33 <br>
+B3 02 00 0C 08 01 00 00 0D 08 00 00 23 08 01 00 <br>
+05 04 08 02 00 78 00 0A 08 08 00 03 00 60 00 C8 <br>
+00 03 00 0B 08 08 00 04 00 00 00 F0 00 03 00 00 <br>
+08 78 00 00 03 00 00 02 58 02 58 00 00 00 00 18 <br>
+F5 13 19 FF 9B FF 94 19 63 13 80 03 67 05 28 03 <br>
+FC 00 02 00 00 02 58 02 58 00 00 00 00 18 F5 13 <br>
+19 00 01 00 64 00 64 00 00 00 01 00 01 01 01 00 <br>
+00 00 01 27 0F 00 01 00 01 00 00 00 00 00 00 00 <br>
+00 00 00 00 00 00 02 00 19 01 90 00 00 00 00 00 <br>
+60 00 00 00 00 00 00 00 00 00 01 00 00 00 00 00 <br>
+00 00 00 00 00 00 00 00 00 00 00 04 02 10 00 00 <br>
+C0 96 00 C2 D7 74 00 2B 0C AF 00 3D 28 B4 00 00 <br>
+01 24 00 00 00 02 00 03 00 E4 04 05 00 41 72 69 <br>
+61 6C 04 00 E4 04 0F 00 54 69 6D 65 73 20 4E 65 <br>
+77 20 52 6F 6D 61 6E 01 80 01 00 00 00 04 02 10 <br>
+00 00 C0 96 00 C2 D7 74 00 2B 0C AF 00 3D 28 B4 <br>
+00 0F 08 02 00 01 00 10 08 02 00 01 00 16 08 04 <br>
+00 00 00 24 00 18 08 04 00 00 00 24 00 19 08 00 <br>
+00 03 80 08 00 00 00 04 02 10 00 00 40 98 00 C2 <br>
+57 76 00 2B 8C AD 00 3D A8 B2 00 04 80 05 00 00 <br>
+00 0A 00 02 00 01 00 00 02 08 00 00 40 A4 00 00 <br>
+80 94 00 06 80 11 00 00 00 0A 00 02 00 06 00 00 <br>
+07 0E 00 01 00 00 00 03 00 60 00 C8 00 03 00 4E <br>
+48 04 07 06 00 02 00 02 00 03 00 05 07 01 00 04 <br>
+00 02 08 00 EE CE 9F 00 00 B0 91 00 04 02 10 00 <br>
+00 40 98 00 00 40 92 00 00 00 A8 00 00 80 97 00 <br>
+23 08 01 00 00 00 00 37 04 01 00 01 02 04 02 00 <br>
+07 00 2B 04 02 00 01 00 00 00 04 80 06 00 00 00 <br>
+0A 00 02 00 02 00 00 02 08 00 BA 03 AC 00 4F 7A <br>
+B1 00 37 04 01 00 01 00 00 05 80 02 00 00 00 0A <br>
+00 02 00 03 00 04 06 04 00 05 00 00 00 05 06 04 <br>
+00 06 00 00 00 0A 06 01 00 01 00 00 04 80 04 00 <br>
+00 00 0A 00 02 00 04 00 00 02 08 00 BA 03 AC 00 <br>
+B0 85 77 00 37 04 01 00 01 00 00 05 80 03 00 00 <br>
+00 0A 00 02 00 05 00 04 06 04 00 05 00 00 00 05 <br>
+06 04 00 04 00 00 00 0A 06 01 00 01 00 00 00 00 <br>
+00 00 00 00 <br>
+</tt></p>
+
+<h3>The CDXML version</h3>
+
+<p><tt>
+&lt;?xml version="1.0" encoding="UTF-8" ?>&lt;!DOCTYPE CDXML SYSTEM "http://www.camsoft.com/xml/cdxml.dtd" ><br>
+&lt;CDXML<br>
+ CreationProgram="ChemDraw 7.0d182"<br>
+ Name="test.cdxml"<br>
+ BoundingBox="116.84 150.75 180.16 175.05"<br>
+ WindowPosition="234 236"<br>
+ WindowSize="549 509"<br>
+ FractionalWidths="yes"<br>
+ ShowAtomQuery="yes"<br>
+ ShowBondQuery="yes"<br>
+ LabelFont="3"<br>
+ LabelSize="10"<br>
+ LabelFace="96"<br>
+ CaptionFont="4"<br>
+ CaptionSize="12"<br>
+ HashSpacing="2.7"<br>
+ MarginWidth="2"<br>
+ LineWidth="1"<br>
+ BoldWidth="4"<br>
+ BondLength="30"<br>
+ BondSpacing="12"<br>
+ ChainAngle="120"<br>
+ PrintMargins="36 36 36 36"<br>
+ MacPrintInfo="00030000025802580000000018F51319FF9BFF94196313800367052803FC00020000025802580000000018F51319000100640064000000010001010100000001270F000100010000000000000000000000000002001901900000000000600000000000000000000100000000000000000000000000000000"<br>
+>&lt;colortable><br>
+&lt;color r="1" g="1" b="1"/><br>
+&lt;color r="0" g="0" b="0"/><br>
+&lt;color r="1" g="0" b="0"/><br>
+&lt;color r="1" g="1" b="0"/><br>
+&lt;color r="0" g="1" b="0"/><br>
+&lt;color r="0" g="1" b="1"/><br>
+&lt;color r="0" g="0" b="1"/><br>
+&lt;color r="1" g="0" b="1"/><br>
+&lt;/colortable>&lt;fonttable><br>
+&lt;font id="3" charset="iso-8859-1" name="Arial"/><br>
+&lt;font id="4" charset="iso-8859-1" name="Times New Roman"/><br>
+&lt;/fonttable>&lt;page<br>
+ id="1"<br>
+ BoundingBox="116.84 150.75 180.16 175.05"<br>
+ HeaderPosition="36"<br>
+ FooterPosition="36"<br>
+ PrintTrimMarks="yes"<br>
+ HeightPages="1"<br>
+ WidthPages="1"<br>
+>&lt;fragment<br>
+ id="8"<br>
+ BoundingBox="118.34 152.25 178.66 173.55"<br>
+>&lt;n<br>
+ id="5"<br>
+ p="148.5 164.25"<br>
+ Z="1"<br>
+ Element="7"<br>
+ NumHydrogens="1"<br>
+ AS="N"<br>
+>&lt;t<br>
+ id="17"<br>
+ p="145.69 159.81"<br>
+ BoundingBox="146.25 152.25 151.5 168"<br>
+ Z="6"<br>
+ LabelAlignment="Above"<br>
+ LineStarts="2 3"<br>
+>&lt;s font="3" size="10" face="96">NH&lt;/s>&lt;/t>&lt;/n>&lt;n<br>
+ id="6"<br>
+ p="177.48 172.01"<br>
+ Z="2"<br>
+ AS="N"<br>
+/>&lt;n<br>
+ id="4"<br>
+ p="119.52 172.01"<br>
+ Z="4"<br>
+ AS="N"<br>
+/>&lt;b<br>
+ id="2"<br>
+ Z="3"<br>
+ B="5"<br>
+ E="6"<br>
+ BS="N"<br>
+/>&lt;b<br>
+ id="3"<br>
+ Z="5"<br>
+ B="5"<br>
+ E="4"<br>
+ BS="N"<br>
+/>&lt;/fragment>&lt;/page>&lt;/CDXML>
+</tt></p>
+
+<h3>Comparison</h3>
+
+<p>Here is a side-by-side listing of the two file formats to highlight how similar they are.  The CDX file is byte-for-byte identical to the original listing above.</p>
+
+<p>The CDXML file has been rearranged to match the order of the CDX file.  Since objects and fragments can be listed in any order, this reordering actually is almost a valid CDXML file in itself.  The only major differences to note are the Color Table and the Font Table, both of which are properties in CDX but distinct objects in CDXML.  Although the ordering of objects and properties is not important, an object cannot appear in the middle of a list of properties in CDXML files.</p>
+
+<table border>
+<tr>
+<td valign="top" width="4000"><tt>56 6A 43 44 30 31 30 30&nbsp;<br>
+ 04 03 02 01 00 00 00 00&nbsp;<br>
+ 00 00 00 00
+00 00 00 00&nbsp;<br>
+ 00 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt>&lt;?xml version="1.0"<br>encoding="UTF-8" ?><br>
+&lt;!DOCTYPE CDXML SYSTEM "http://www.camsoft.com/<br>xml/cdxml.dtd" ><br>
+&lt;CDXML</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>03 00 OE 00 00 00 43 68&nbsp;<br>
+ 65 6D 44 72 61 77 20 37&nbsp;<br>
+ 2E 30&nbsp;</tt></td>
+<td valign="top"><tt> CreationProgram="ChemDraw 7.0&quot;</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>08 00 0A 00 00 00 74 65&nbsp;<br>
+ 73 74 2E 63 64 78&nbsp;</tt></td>
+<td valign="top"><tt> Name="test.cdxml"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 03 32 00 08 00 FF FF&nbsp;<br>
+ FF FF FF FF 00 00 00 00&nbsp;<br>
+ 00 00 FF
+FF 00 00 00 00&nbsp;<br>
+ FF FF FF FF 00 00 00 00&nbsp;<br>
+ FF FF 00 00 00 00 FF FF&nbsp;<br>
+ FF FF 00 00 00 00
+FF FF&nbsp;<br>
+ FF FF 00 00 FF FF&nbsp;</tt></td>
+<td valign="top"><tt>&lt;colortable><br>
+&lt;color r="1" g="1" b="1"/><br>
+&lt;color r="0" g="0" b="0"/><br>
+&lt;color r="1" g="0" b="0"/><br>
+&lt;color r="1" g="1" b="0"/><br>
+&lt;color r="0" g="1" b="0"/><br>
+&lt;color r="0" g="1" b="1"/><br>
+&lt;color r="0" g="0" b="1"/><br>
+&lt;color r="1" g="0" b="1"/><br>
+&lt;/colortable></tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>01 09 08 00 00 40 EC 00&nbsp;<br>
+ 00 C0 EA 00&nbsp;</tt></td>
+<td valign="top"><tt> WindowPosition="234 236"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>02 09 08 00 00 40 FD 01&nbsp;<br>
+ 00 00 25 02&nbsp;</tt></td>
+<td valign="top"><tt> WindowSize="549 509"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>02 08 10 00 00 00 24 00&nbsp;<br>
+ 00 00 24 00 00 00 24 00&nbsp;<br>
+ 00 00 24
+00&nbsp;</tt></td>
+<td valign="top"><tt> PrintMargins="36 36 36 36"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>3A 04 01 00 01&nbsp;</tt></td>
+<td valign="top"><tt> ShowAtomQuery="yes"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>3B 04 01 00 00&nbsp;</tt></td>
+<td valign="top"><tt>ShowAtomStereo=&quot;no&quot;</tt></td>
+<td valign="top">omitted from CDXML because this is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>3C 04 01 00 00&nbsp;</tt></td>
+<td valign="top"><tt>ShowAtomNumber=&quot;no&quot;</tt></td>
+<td valign="top">omitted from CDXML because this is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0C 06 01 00 01&nbsp;</tt></td>
+<td valign="top"><tt> ShowBondQuery="yes"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0D 06 01 00 00&nbsp;</tt></td>
+<td valign="top"><tt>ShowBondStereo=&quot;no&quot;</tt></td>
+<td valign="top">omitted from CDXML because this is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>06 07 02 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt>LabelLineHeight=&quot;0&quot;</tt></td>
+<td valign="top">omitted from CDXML because this is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>07 07 02 00 01 00&nbsp;</tt></td>
+<td valign="top"><tt>CaptionLineHeight=&quot;1&quot;</tt></td>
+<td valign="top">omitted from CDXML because this is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>03 08 04 00 00 00 78 00&nbsp;</tt></td>
+<td valign="top"><tt> ChainAngle="120"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>05 08 04 00 00 00 1E 00&nbsp;</tt></td>
+<td valign="top"><tt> BondLength="30"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>06 08 04 00 00 00 04 00&nbsp;</tt></td>
+<td valign="top"><tt> BoldWidth="4"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>07 08 04 00 00 00 01 00&nbsp;</tt></td>
+<td valign="top"><tt> LineWidth="1"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>08 08 04 00 00 00 02 00&nbsp;</tt></td>
+<td valign="top"><tt> MarginWidth="2"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>09 08 04 00 33 B3 02 00&nbsp;</tt></td>
+<td valign="top"><tt> HashSpacing="2.7"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0C 08 01 00 00&nbsp;</tt></td>
+<td valign="top"><tt>CaptionJustification=&quot;Left&quot;</tt></td>
+<td valign="top">omitted from CDXML because this is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0D 08 00 00&nbsp;</tt></td>
+<td valign="top"><tt> FractionalWidths="yes"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>23 08 01 00 05&nbsp;</tt></td>
+<td valign="top"><tt>LabelJustification=&quot;Auto&quot;</tt></td>
+<td valign="top">omitted from CDXML because this is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 08 02 00 78 00&nbsp;</tt></td>
+<td valign="top"><tt> BondSpacing="12"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 08 08 00 03 00 60 00&nbsp;<br>
+C8 00 03 00&nbsp;</tt></td>
+<td valign="top"><tt> LabelFont="3"<br>
+ LabelSize="10"<br>
+ LabelFace="96"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0B 08 08 00 04 00 00 00&nbsp;<br>
+ F0 00 03 00&nbsp;</tt></td>
+<td valign="top"><tt> CaptionFont="4"<br>
+ CaptionSize="12"<br>
+CaptionFace=&quot;0&quot;</tt></td>
+<td valign="top">CaptionFace omitted from CDXML because it is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 08 78 00&nbsp;<br>
+ 00 03 00 00 02 58 02 58&nbsp;<br>
+ 00 00 00 00 18 F5 13
+19&nbsp;<br>
+ FF 9B FF 94 19 63 13 80&nbsp;<br>
+ 03 67 05 28 03 FC 00 02&nbsp;<br>
+ 00 00 02 58 02 58 00 00&nbsp;<br>
+ 00 00
+18 F5 13 19 00 01&nbsp;<br>
+ 00 64 00 64 00 00 00 01&nbsp;<br>
+ 00 01 01 01 00 00 00 01&nbsp;<br>
+ 27 0F 00 01 00
+01 00 00&nbsp;<br>
+ 00 00 00 00 00 00 00 00&nbsp;<br>
+ 00 00 00 02 00 19 01 90&nbsp;<br>
+ 00 00 00 00 00 60 00 00&nbsp;<br>
+00 00 00 00 00 00 00 01&nbsp;<br>
+ 00 00 00 00 00 00 00 00&nbsp;<br>
+ 00 00 00 00 00 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt>MacPrintInfo=&quot;<br>
+0003000002580258<br>
+0000000018F51319<br>
+FF9BFF9419631380<br>
+0367052803FC0002<br>
+0000025802580000<br>
+000018F513190001<br>
+0064006400000001<br>
+0001010100000001<br>
+270F000100010000<br>
+0000000000000000<br>
+0000000200190190<br>
+0000000000600000<br>
+0000000000000001<br>
+0000000000000000<br>
+0000000000000000&quot;<br>
+</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 02 10 00 00 C0 96 00&nbsp;<br>
+ C2 D7 74 00 2B 0C AF 00&nbsp;<br>
+ 3D 28 B4
+00&nbsp;</tt></td>
+<td valign="top"><tt> BoundingBox=<br>
+&quot;116.84 150.75 180.16 175.05"</tt></td>
+<td valign="top">Omitted from CDXML; written to CDX only for
+backwards-compatibility</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 01 24 00 00 00 02 00&nbsp;<br>
+ 03 00 E4 04 05 00 41 72&nbsp;<br>
+ 69 61 6C 04
+00 E4 04 0F&nbsp;<br>
+ 00 54 69 6D 65 73 20 4E&nbsp;<br>
+ 65 77 20 52 6F 6D 61 6E&nbsp;</tt></td>
+<td valign="top"><tt>&lt;fonttable><br>
+&lt;font id="3"&nbsp;<br>
+ charset="iso-8859-1"&nbsp;<br>
+ name="Arial"/><br>
+&lt;font id="4"&nbsp;<br>
+ charset="iso-8859-1"&nbsp;<br>
+ name="Times New Roman"/><br>
+&lt;/fonttable></tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>01 80&nbsp;</tt></td>
+<td valign="top"><tt>&lt;page</tt></td>
+<td valign="top">Start of Page object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>01 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> id="1"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 02 10 00 00 C0 96 00&nbsp;<br>
+ C2 D7 74 00 2B 0C AF 00&nbsp;<br>
+ 3D 28 B4
+00&nbsp;</tt></td>
+<td valign="top"><tt> BoundingBox=<br>
+&quot;116.84 150.75 180.16 175.05"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0F 08 02 00 01 00&nbsp;</tt></td>
+<td valign="top"><tt> WidthPages="1"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>10 08 02 00 01 00&nbsp;</tt></td>
+<td valign="top"><tt> HeightPages="1"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>16 08 04 00 00 00 24 00&nbsp;</tt></td>
+<td valign="top"><tt> HeaderPosition="36"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>18 08 04 00 00 00 24 00&nbsp;</tt></td>
+<td valign="top"><tt>FooterPosition=&quot;36&quot;</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>19 08 00 00&nbsp;</tt></td>
+<td valign="top"><tt> PrintTrimMarks="yes"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>03 80&nbsp;</tt></td>
+<td valign="top"><tt>&lt;fragment</tt></td>
+<td valign="top">Start of Fragment object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>08 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> id="8"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 02 10 00 00 40 98 00&nbsp;<br>
+ C2 57 76 00 2B 8C AD 00&nbsp;<br>
+ 3D A8 B2
+00&nbsp;</tt></td>
+<td valign="top"><tt> BoundingBox=<br>
+&quot;118.34 152.25 178.66 173.55"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 80&nbsp;</tt></td>
+<td valign="top"><tt>&lt;n</tt></td>
+<td valign="top">Start of Node object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>05 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> id="5"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 00 02 00 01 00&nbsp;</tt></td>
+<td valign="top"><tt> Z="1"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 02 08 00 00 40 A4 00&nbsp;<br>
+ 00 80 94 00&nbsp;</tt></td>
+<td valign="top"><tt> p="148.5 164.25"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>06 80&nbsp;</tt></td>
+<td valign="top"><tt>&lt;t</tt></td>
+<td valign="top">Start of Text object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>11 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> id="17"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 00 02 00 06 00&nbsp;</tt></td>
+<td valign="top"><tt> Z="6"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 07 0E 00 01 00 00 00&nbsp;<br>
+ 03 00 60 00 C8 00 03 00&nbsp;<br>
+ 4E 48&nbsp;</tt></td>
+<td valign="top"><tt>&lt;s font="3"&nbsp;<br>
+ size="10"&nbsp;<br>
+ face="96">NH&lt;/s></tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 07 06 00 02 00 02 00&nbsp;<br>
+ 03 00&nbsp;</tt></td>
+<td valign="top"><tt> LineStarts="2 3"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>05 07 01 00 04&nbsp;</tt></td>
+<td valign="top"><tt> LabelAlignment="Above"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 02 08 00 EE CE 9F 00&nbsp;<br>
+ 00 B0 91 00&nbsp;</tt></td>
+<td valign="top"><tt> p="145.69 159.81"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 02 10 00 00 40 98 00&nbsp;<br>
+ 00 40 92 00 00 00 A8 00&nbsp;<br>
+ 00 80 97
+00&nbsp;</tt></td>
+<td valign="top"><tt> BoundingBox=<br>
+&quot;146.25 152.25 151.5 168"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>23 08 01 00 00&nbsp;</tt></td>
+<td valign="top"><tt>LabelJustification=&quot;Auto&quot;</tt></td>
+<td valign="top">omitted from CDXML because this is the default</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00&nbsp;</tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Text object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>37 04 01 00 01&nbsp;</tt></td>
+<td valign="top"><tt> AS="N"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>02 04 02 00 07 00&nbsp;</tt></td>
+<td valign="top"><tt> Element="7"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>2B 04 02 00 01 00&nbsp;</tt></td>
+<td valign="top"><tt> NumHydrogens="1"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00&nbsp;</tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Node object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 80&nbsp;</tt></td>
+<td valign="top"><tt>&lt;n</tt></td>
+<td valign="top">Start of Node object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>06 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt>id=&quot;6&quot;</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 00 02 00 02 00&nbsp;</tt></td>
+<td valign="top"><tt>Z=&quot;2&quot;</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 02 08 00 BA 03 AC 00&nbsp;<br>
+ 4F 7A B1 00&nbsp;</tt></td>
+<td valign="top"><tt> p="177.48 172.01"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>37 04 01 00 01&nbsp;</tt></td>
+<td valign="top"><tt> AS="N"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00&nbsp;</tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Node object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>05 80&nbsp;</tt></td>
+<td valign="top"><tt>&lt;b</tt></td>
+<td valign="top">Start of Bond object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>02 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> id="2"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 00 02 00 03 00&nbsp;</tt></td>
+<td valign="top"><tt> Z="3"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 06 04 00 05 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> B="5"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>05 06 04 00 06 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> E="6"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 06 01 00 01&nbsp;</tt></td>
+<td valign="top"><tt> BS="N"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00&nbsp;</tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Bond object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 80&nbsp;</tt></td>
+<td valign="top"><tt>&lt;n</tt></td>
+<td valign="top">Start of Node object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> id="4"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 00 02 00 04 00&nbsp;</tt></td>
+<td valign="top"><tt> Z="4"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 02 08 00 BA 03 AC 00&nbsp;<br>
+ B0 85 77 00&nbsp;</tt></td>
+<td valign="top"><tt> p="119.52 172.01"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>37 04 01 00 01&nbsp;</tt></td>
+<td valign="top"><tt> AS="N"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00&nbsp;</tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Node object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>05 80&nbsp;</tt></td>
+<td valign="top"><tt>&lt;b</tt></td>
+<td valign="top">Start of Bond object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>03 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> id="3"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 00 02 00 05 00&nbsp;</tt></td>
+<td valign="top"><tt> Z="5"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>04 06 04 00 05 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> B="5"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>05 06 04 00 04 00 00 00&nbsp;</tt></td>
+<td valign="top"><tt> E="4"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>0A 06 01 00 01&nbsp;</tt></td>
+<td valign="top"><tt> BS="N"</tt></td>
+<td valign="top"></td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00 </tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Bond object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00 </tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Fragment object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00 </tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Page object</td>
+</tr>
+<tr>
+<td valign="top" width="4000"><tt>00 00 </tt></td>
+<td valign="top"><tt>&gt;</tt></td>
+<td valign="top">End of Document</td>
+</tr>
+</table>
+
+
+<p>&nbsp;</p>
+
+<p><a href="General.htm">Return to Introduction</a></p>
+
+
+
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>
