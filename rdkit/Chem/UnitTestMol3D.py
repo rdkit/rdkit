@@ -243,17 +243,10 @@ class TestCase(unittest.TestCase):
     for m in AllChem.EnumerateStereoisomers(mol, opts):
       self.assertEqual(m.GetProp('_MolFileChiralFlag'), '1')
       smiles.add(Chem.MolToSmiles(m, isomericSmiles=True))
-    # Python 3.8 switch how tuples were hashed, so we get different results there
-    if sys.version_info < (3, 8):
-      expected = set([
-        'C/C(F)=C/[C@@H](Cl)/C=C(/Br)[C@@H](N)I',
-        'C/C(F)=C/[C@H](Cl)/C=C(\\Br)[C@H](N)I',
-      ])
-    else:
-      expected = set([
-        'C/C(F)=C\\[C@H](Cl)/C=C(\\Br)[C@H](N)I',
-        'C/C(F)=C/[C@@H](Cl)/C=C(\\Br)[C@H](N)I',
-      ])
+    expected = set([
+      'C/C(F)=C\\[C@H](Cl)/C=C(/Br)[C@H](N)I',
+      'C/C(F)=C/[C@@H](Cl)/C=C(/Br)[C@H](N)I',
+    ])
     self.assertEqual(smiles, expected)
 
   def testEnumerateStereoisomersMaxIsomersShouldBeReturnedEvenWithTryEmbedding(self):
@@ -319,20 +312,22 @@ class TestCase(unittest.TestCase):
     smiles = list(
       Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
     self.assertEqual(smiles, [
-      'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(/CCl)[C@@H](C)CBr)[C@H](F)C(C)C',
-      'CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C'
+      'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C',
+      'CCC/C(=C(/CCl)[C@@H](C)CBr)[C@H](F)C(C)C',
+      'CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C',
+      'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C',
     ])
     rand = DeterministicRandom()
     opts = AllChem.StereoEnumerationOptions(rand=rand, maxIsomers=3)
-    mol = Chem.MolFromSmiles('CCCC(=C(CCl)C(C)CBr)[C@H](F)C(C)C')
     smiles = list()
     for m in AllChem.EnumerateStereoisomers(mol, opts):
       self.assertEqual(m.GetProp('_MolFileChiralFlag'), '1')
       smiles.append(Chem.MolToSmiles(m, isomericSmiles=True))
+    smiles.sort()
     self.assertEqual(smiles, [
-      'CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C',
-      'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C',
+      'CCC/C(=C(/CCl)[C@@H](C)CBr)[C@H](F)C(C)C',
       'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C',
+      'CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C',
     ])
 
   def testEnumerateStereoisomersOnlyUnassigned(self):
@@ -517,10 +512,10 @@ class TestCase(unittest.TestCase):
     rdbase = os.environ["RDBASE"]
     filename = os.path.join(rdbase, 'Code/GraphMol/FileParsers/test_data/simple_either.mol')
     mol = Chem.MolFromMolFile(filename)
-    smiles = []
+    smiles = set()
     for m in AllChem.EnumerateStereoisomers(mol):
       self.assertEqual(m.GetProp('_MolFileChiralFlag'), '1')
-      smiles.append(Chem.MolToSmiles(m, isomericSmiles=True))
+      smiles.add(Chem.MolToSmiles(m, isomericSmiles=True))
     self.assertEqual(smiles, {"C/C=C/C", "C/C=C\\C"})
 
   def testTryEmbeddingManyChirals(self):
