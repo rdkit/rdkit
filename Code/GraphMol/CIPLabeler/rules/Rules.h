@@ -65,9 +65,8 @@ class Rules : public SequenceRule {
     return 0;
   }
 
-  int getComparision(const Edge *a, const Edge *b, bool deep) const override {
-    (void)deep;
-
+  int getComparision(const Edge *a, const Edge *b,
+                     [[maybe_unused]] bool deep) const override {
     // Try using each rules. The rules will expand the search exhaustively
     // to all child substituents
     for (const auto &rule : d_rules) {
