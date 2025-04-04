@@ -395,7 +395,7 @@ std::vector<std::uint64_t> getBondFlags(const ROMol &mol) {
       "[C]-[c](:[o,n,s]):[o,n,s]",  //< a limited version of handling this for
                                     // aromatic systems
       "*[SD4](=*)=*",               // sulfates, sulfonyls, etc.
-      "*=[SD4](=*)*",               // the other side
+      "*=[SD4;$(S(=*)=*)](*)*",     // the other side
       "*-[H0]=,#[C,N]=,#*",         // isocyanates, azides, et al
       "*[#7+]-[O-]",                // nitro groups and aromatic n-oxides
       "[O,S;H]-P=O",                // phosphoric acid, etc.
@@ -755,6 +755,73 @@ std::string TautomerHashv2(RWMol *mol, bool proto, bool useCXSmiles,
       std::cerr << "REJECT CONJ: " << conjSystem << " hetero " << activeHeteroHs
                 << " donor " << std::endl;
 #endif
+    }
+  }
+
+  /*  Another situation we need to correct for is the following:
+
+   These two tautomers should be recognized as equivalent:
+
+      O8          O9
+      ||          |
+   C1-C2-C3-C4-N5=C6-C7
+
+      O8          O9
+      |           |
+   C1-C2=C3-C4-N5=C6-C7
+
+   In the first case neither the N5-C4 nor the C3-C4 bond is recognized as being
+   tautomeric since C4 does not have two conjugated neighbors, in the second
+   case the N5-C4 bond is recognized since C4 does have two conjugated
+   neighbors.
+
+
+   In order to fix this and other similar cases we need to check the neighboring
+   atoms of each start bond and check to see they are connected to other atoms
+   which are involved in bonds which are either in a tautomeric system already
+   (i.e. bondsToModify is set for them) or are start bonds.
+
+   So in the case of the first tautomer above, here we're going to check N5-C4,
+   and recognize that C4 has a neighbor (C3) with an adjacent tautomeric bond
+   (C3-C2). So we'll flag N5-C4 as being part of the tautomeric system.
+
+  */
+  for (const auto bptr : mol->bonds()) {
+    // If this is not a possible starting bond,
+    // then skip it
+    if (!startBonds[bptr->getIdx()]) {
+      continue;
+    }
+
+    for (const auto atm :
+         std::vector<const Atom *>{bptr->getBeginAtom(), bptr->getEndAtom()}) {
+      for (const auto nbrBond : mol->atomBonds(atm)) {
+        if (nbrBond == bptr || bondsToModify[nbrBond->getIdx()]) {
+          continue;
+        }
+        const auto oatom = nbrBond->getOtherAtom(atm);
+        if (!oatom->getTotalNumHs()) {
+          continue;
+        }
+        unsigned int numModifiedNeighbors = 0;
+        for (const auto nbr : mol->atomNeighbors(oatom)) {
+          if (nbr == atm) {
+            continue;
+          }
+          for (const auto nbnd : mol->atomBonds(nbr)) {
+            if (bondsToModify[nbnd->getIdx()] || startBonds[nbnd->getIdx()]) {
+              ++numModifiedNeighbors;
+              break;
+            }
+          }
+          if (numModifiedNeighbors) {
+            break;
+          }
+        }
+        if (numModifiedNeighbors) {
+          bondsToModify.set(nbrBond->getIdx());
+        }
+      }
     }
   }
 #ifdef VERBOSE_HASH
