@@ -21,12 +21,12 @@
 #include <GraphMol/RWMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Depictor/RDDepictor.h>
-#include <GraphMol/FileParsers/MolFileStereochem.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include <boost/algorithm/string.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <limits>
 #include <cmath>
@@ -76,7 +76,7 @@ void prepareMolForDrawing(RWMol &mol, bool kekulize, bool addChiralHs,
     RDDepict::compute2DCoords(mol, nullptr, canonOrient);
   }
   if (wedgeBonds) {
-    WedgeMolBonds(mol, &mol.getConformer());
+    Chirality::wedgeMolBonds(mol, &mol.getConformer());
   }
   if (wavyBonds) {
     addWavyBondsForStereoAny(mol);
@@ -130,29 +130,69 @@ void get_rgba(const boost::property_tree::ptree &node, DrawColour &colour) {
   }
 }
 
-void get_colour_option(boost::property_tree::ptree *pt, const char *pnm,
+void get_colour_option(const boost::property_tree::ptree &pt, const char *pnm,
                        DrawColour &colour) {
   PRECONDITION(pnm && strlen(pnm), "bad property name");
-  if (pt->find(pnm) == pt->not_found()) {
+  if (pt.find(pnm) == pt.not_found()) {
     return;
   }
 
-  const auto &node = pt->get_child(pnm);
+  const auto &node = pt.get_child(pnm);
   get_rgba(node, colour);
 }
 
-void get_colour_palette_option(boost::property_tree::ptree *pt, const char *pnm,
-                               ColourPalette &palette) {
+void get_colour_palette_option(const boost::property_tree::ptree &pt,
+                               const char *pnm, ColourPalette &palette) {
   PRECONDITION(pnm && strlen(pnm), "bad property name");
-  if (pt->find(pnm) == pt->not_found()) {
+  static const std::map<std::string, void (*)(ColourPalette &)>
+      PRESET_PALETTE_MAP{
+          {"default", assignDefaultPalette},
+          {"avalon", assignAvalonPalette},
+          {"cdk", assignCDKPalette},
+          {"darkmode", assignDarkModePalette},
+          {"bw", assignBWPalette},
+      };
+  auto atomColourPaletteIt = pt.find(pnm);
+  if (atomColourPaletteIt == pt.not_found()) {
     return;
   }
+  // Does the "atomColourPalette" key correspond to a terminal value?
+  if (atomColourPaletteIt->second.empty()) {
+    const auto &v = atomColourPaletteIt->second.data();
+    if (v.empty()) {
+      return;
+    }
+    auto paletteName = boost::lexical_cast<std::string>(v);
+    boost::algorithm::to_lower(paletteName);
+    auto preSetPaletteIt = PRESET_PALETTE_MAP.find(paletteName);
+    if (preSetPaletteIt == PRESET_PALETTE_MAP.end()) {
+      return;
+    }
+    // Populate the palette calling the corresponding function
+    preSetPaletteIt->second(palette);
+  } else {
+    for (const auto &atomicNumNode : atomColourPaletteIt->second) {
+      int atomicNum = boost::lexical_cast<int>(atomicNumNode.first);
+      DrawColour colour;
+      get_rgba(atomicNumNode.second, colour);
+      palette[atomicNum] = colour;
+    }
+  }
+}
 
-  for (const auto &atomicNumNodeIt : pt->get_child(pnm)) {
-    int atomicNum = boost::lexical_cast<int>(atomicNumNodeIt.first);
-    DrawColour colour;
-    get_rgba(atomicNumNodeIt.second, colour);
-    palette[atomicNum] = colour;
+void get_highlight_style_option(const boost::property_tree::ptree &pt,
+                                const char *pnm,
+                                MultiColourHighlightStyle &mchs) {
+  PRECONDITION(pnm && strlen(pnm), "bad property name");
+  if (pt.find(pnm) == pt.not_found()) {
+    return;
+  }
+  const auto &node = pt.get_child(pnm);
+  auto styleStr = node.get_value<std::string>();
+  if (styleStr == "Lasso") {
+    mchs = MultiColourHighlightStyle::LASSO;
+  } else if (styleStr == "CircleAndLine") {
+    mchs = MultiColourHighlightStyle::CIRCLEANDLINE;
   }
 }
 
@@ -185,6 +225,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(fontFile);
   PT_OPT_GET(multipleBondOffset);
   PT_OPT_GET(padding);
+  PT_OPT_GET(componentPadding);
   PT_OPT_GET(additionalAtomLabelPadding);
   PT_OPT_GET(noAtomLabels);
   PT_OPT_GET(bondLineWidth);
@@ -216,22 +257,28 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(scalingFactor);
   PT_OPT_GET(drawMolsSameScale);
   PT_OPT_GET(useComplexQueryAtomSymbols);
+  PT_OPT_GET(bracketsAroundAtomLists);
+  PT_OPT_GET(standardColoursForHighlightedAtoms);
 
-  get_colour_option(&pt, "highlightColour", opts.highlightColour);
-  get_colour_option(&pt, "backgroundColour", opts.backgroundColour);
-  get_colour_option(&pt, "queryColour", opts.queryColour);
-  get_colour_option(&pt, "legendColour", opts.legendColour);
-  get_colour_option(&pt, "symbolColour", opts.symbolColour);
-  get_colour_option(&pt, "annotationColour", opts.annotationColour);
-  get_colour_option(&pt, "variableAttachmentColour",
+  get_colour_option(pt, "highlightColour", opts.highlightColour);
+  get_colour_option(pt, "backgroundColour", opts.backgroundColour);
+  get_colour_option(pt, "queryColour", opts.queryColour);
+  get_colour_option(pt, "legendColour", opts.legendColour);
+  get_colour_option(pt, "symbolColour", opts.symbolColour);
+  get_colour_option(pt, "annotationColour", opts.annotationColour);
+  get_colour_option(pt, "atomNoteColour", opts.atomNoteColour);
+  get_colour_option(pt, "bondNoteColour", opts.bondNoteColour);
+  get_colour_option(pt, "variableAttachmentColour",
                     opts.variableAttachmentColour);
-  get_colour_palette_option(&pt, "atomColourPalette", opts.atomColourPalette);
+  get_colour_palette_option(pt, "atomColourPalette", opts.atomColourPalette);
   if (pt.find("atomLabels") != pt.not_found()) {
     for (const auto &item : pt.get_child("atomLabels")) {
       opts.atomLabels[boost::lexical_cast<int>(item.first)] =
           item.second.get_value<std::string>();
     }
   }
+  get_highlight_style_option(pt, "multiColourHighlightStyle",
+                             opts.multiColourHighlightStyle);
 }
 
 RDKIT_MOLDRAW2D_EXPORT void updateDrawerParamsFromJSON(
@@ -296,6 +343,14 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     for (size_t i = 0; i < nX - 1; ++i) {
       for (size_t j = 0; j < nY - 1; ++j) {
         auto gridV = grid[i * nY + j];
+        auto threshTest = gridV;
+        if (params.fillThresholdIsFraction) {
+          threshTest /= delta;
+        }
+        if (params.useFillThreshold &&
+            fabs(threshTest) < params.fillThreshold) {
+          continue;
+        }
         auto fracV = (gridV - minV) / delta;
         if (params.colourMap.size() > 2) {
           // need to find how fractionally far we are from zero, not the min
@@ -332,25 +387,45 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     std::vector<conrec::ConrecSegment> segs;
     conrec::Contour(grid, 0, nX - 1, 0, nY - 1, xcoords.data(), ycoords.data(),
                     nContours, levels.data(), segs);
-    static DashPattern negDash = {2, 6};
+    static DashPattern negDash{2., 2.};
     static DashPattern posDash;
     drawer.setColour(params.contourColour);
     drawer.setLineWidth(params.contourWidth);
-    for (const auto &seg : segs) {
-      if (params.dashNegative && seg.isoVal < 0) {
-        drawer.setDash(negDash);
-      } else {
-        drawer.setDash(posDash);
+    if (!params.drawAsLines) {
+      for (const auto &seg : segs) {
+        if (params.dashNegative && seg.isoVal < 0) {
+          drawer.setDash(negDash);
+        } else {
+          drawer.setDash(posDash);
+        }
+        drawer.drawLine(seg.p1, seg.p2);
       }
-      drawer.drawLine(seg.p1, seg.p2);
+    } else {
+      drawer.setFillPolys(false);
+      auto lines =
+          conrec::connectLineSegments(segs, params.coordScaleForQuantization,
+                                      params.isovalScaleForQuantization);
+      for (const auto &pr : lines) {
+        auto [contour, val] = pr;
+        if (params.dashNegative && val < 0) {
+          drawer.setDash(negDash);
+        } else {
+          drawer.setDash(posDash);
+        }
+        if (contour.size() > 2) {
+          drawer.drawPolygon(contour);
+        } else if (contour.size() == 2) {
+          drawer.drawLine(contour[0], contour[1]);
+        }
+      }
     }
-  }
 
-  drawer.setDash(odash);
-  drawer.setLineWidth(olw);
-  drawer.setColour(ocolor);
-  drawer.setFillPolys(ofill);
-  drawer.setLineWidth(owidth);
+    drawer.setDash(odash);
+    drawer.setLineWidth(olw);
+    drawer.setColour(ocolor);
+    drawer.setFillPolys(ofill);
+    drawer.setLineWidth(owidth);
+  }
 };
 
 void contourAndDrawGaussians(MolDraw2D &drawer,
@@ -374,6 +449,9 @@ void contourAndDrawGaussians(MolDraw2D &drawer,
       maxP.y = std::max(loc.y, maxP.y);
     }
     Point2D dims = maxP - minP;
+    // Here, the drawOptions().padding is just used to extend the grid
+    // beyond the molecule.  The actual padding round the image is added
+    // later.
     minP.x -= drawer.drawOptions().padding * dims.x;
     minP.y -= drawer.drawOptions().padding * dims.y;
     maxP.x += drawer.drawOptions().padding * dims.x;
@@ -460,6 +538,10 @@ void drawMolACS1996(MolDraw2D &drawer, const ROMol &mol,
 
 // ****************************************************************************
 void setACS1996Options(MolDrawOptions &opts, double meanBondLen) {
+  if (meanBondLen <= 0.0) {
+    throw ValueErrorException(
+        "ACS1996Options requires mean bond length > 0.0.");
+  }
   opts.bondLineWidth = 0.6;
   opts.scaleBondWidth = false;
   // the guideline is for a bond length of 14.4px, and we set things up

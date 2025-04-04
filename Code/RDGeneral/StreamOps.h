@@ -88,18 +88,22 @@ inline T EndianSwapBytes(T value) {
 
   return SwapBytes<T, sizeof(T)>(value);
 }
+
 template <EEndian from, EEndian to>
 inline char EndianSwapBytes(char value) {
   return value;
 }
+
 template <EEndian from, EEndian to>
 inline unsigned char EndianSwapBytes(unsigned char value) {
   return value;
 }
+
 template <EEndian from, EEndian to>
 inline signed char EndianSwapBytes(signed char value) {
   return value;
 }
+
 // --------------------------------------
 
 //! Packs an integer and outputs it to a stream
@@ -265,8 +269,8 @@ void streamWrite(std::ostream &ss, const T &val) {
 
 //! special case for string
 inline void streamWrite(std::ostream &ss, const std::string &what) {
-  unsigned int l = rdcast<unsigned int>(what.length());
-  ss.write((const char *)&l, sizeof(l));
+  unsigned int l = static_cast<unsigned int>(what.length());
+  streamWrite(ss, l);
   ss.write(what.c_str(), sizeof(char) * l);
 };
 
@@ -299,17 +303,13 @@ void streamRead(std::istream &ss, T &obj, int version) {
 inline void streamRead(std::istream &ss, std::string &what, int version) {
   RDUNUSED_PARAM(version);
   unsigned int l;
-  ss.read((char *)&l, sizeof(l));
+  streamRead(ss, l);
+  auto buff = std::make_unique<char[]>(l);
+  ss.read(buff.get(), sizeof(char) * l);
   if (ss.fail()) {
     throw std::runtime_error("failed to read from stream");
   }
-  char *buff = new char[l];
-  ss.read(buff, sizeof(char) * l);
-  if (ss.fail()) {
-    throw std::runtime_error("failed to read from stream");
-  }
-  what = std::string(buff, l);
-  delete[] buff;
+  what = std::string(buff.get(), l);
 };
 
 template <class T>
@@ -343,6 +343,7 @@ inline std::string getLine(std::istream *inStream) {
   }
   return res;
 }
+
 //! grabs the next line from an instream and returns it.
 inline std::string getLine(std::istream &inStream) {
   return getLine(&inStream);
@@ -371,10 +372,15 @@ const unsigned char EndTag = 0xFF;
 class CustomPropHandler {
  public:
   virtual ~CustomPropHandler() {}
+
   virtual const char *getPropName() const = 0;
+
   virtual bool canSerialize(const RDValue &value) const = 0;
+
   virtual bool read(std::istream &ss, RDValue &value) const = 0;
+
   virtual bool write(std::ostream &ss, const RDValue &value) const = 0;
+
   virtual CustomPropHandler *clone() const = 0;
 };
 
@@ -643,7 +649,6 @@ inline unsigned int streamReadProps(std::istream &ss, RDProps &props,
 
   return static_cast<unsigned int>(count);
 }
-
 }  // namespace RDKit
 
 #endif

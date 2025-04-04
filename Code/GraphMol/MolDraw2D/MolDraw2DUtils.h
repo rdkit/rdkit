@@ -95,6 +95,19 @@ struct ContourParams {
       {0.557, 0.004, 0.322, 0.5},
       {1, 1, 1, 0.5},
       {0.153, 0.392, 0.098, 0.5}};  // similarity map color scheme
+  bool drawAsLines =
+      true;  // draws the contours as continuous lines instead of line segments.
+  double coordScaleForQuantization =
+      1000.;  // caling factor used to convert coordinates to ints when forming
+              // the continuous lines
+  double isovalScaleForQuantization =
+      1e6;  // scaling factor used to convert isovalues to ints when forming the
+            // continuous lines
+  bool useFillThreshold =
+      false;  // use a magnitude threshold to determine if a grid box is filled
+  double fillThreshold = 0.01;  // magnitude threshold for filling grid boxes
+  bool fillThresholdIsFraction = true;  // if true, the fill threshold is a
+                                        // fraction of the range of the data
 };
 
 //! Generates and draws contours for data on a grid

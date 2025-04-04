@@ -161,7 +161,12 @@ class TestCase(unittest.TestCase):
             ('CCCCF', 3.930), ('CCCCCl', 4.290), ('CCCCBr', 4.480), ('CCC(C)C1CCC(C)CC1', 4.133),
             ('CC(C)CC1CCC(C)CC1', 4.133), ('CC(C)C1CCC(C)CCC1', 4.133)]
     for smi, res in data:
-      m = Chem.MolFromSmiles(smi)
+      # we have some molecules in there with bogus valences, so we need
+      # to do custom sanitization
+      m = Chem.MolFromSmiles(smi, sanitize=False)
+      m.UpdatePropertyCache(strict=False)
+      Chem.SanitizeMol(
+        m, sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL ^ Chem.SanitizeFlags.SANITIZE_PROPERTIES)
       kappa = GraphDescriptors.Kappa2(m)
       assert feq(kappa, res, 1e-3), 'mol %s (kappa2=%f) should have kappa2=%f' % (smi, kappa, res)
 
@@ -179,7 +184,12 @@ class TestCase(unittest.TestCase):
             ('CC(C)CCCC(C)C', 8.000), ('CCC(C)C1CCC(C)CC1', 2.500), ('CC(C)CC1CCC(C)CC1', 3.265),
             ('CC(C)C1CCC(C)CCC1', 2.844)]
     for smi, res in data:
-      m = Chem.MolFromSmiles(smi)
+      # we have some molecules in there with bogus valences, so we need
+      # to do custom sanitization
+      m = Chem.MolFromSmiles(smi, sanitize=False)
+      m.UpdatePropertyCache(strict=False)
+      Chem.SanitizeMol(
+        m, sanitizeOps=Chem.SanitizeFlags.SANITIZE_ALL ^ Chem.SanitizeFlags.SANITIZE_PROPERTIES)
       kappa = GraphDescriptors.Kappa3(m)
       assert feq(kappa, res, 1e-3), 'mol %s (kappa3=%f) should have kappa3=%f' % (smi, kappa, res)
 

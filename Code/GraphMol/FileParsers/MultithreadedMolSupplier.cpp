@@ -9,30 +9,42 @@
 //  of the RDKit source tree.
 //
 #include "MultithreadedMolSupplier.h"
+
+#include <RDGeneral/RDLog.h>
+
 namespace RDKit {
+
+namespace v2 {
+namespace FileParsers {
+
 MultithreadedMolSupplier::~MultithreadedMolSupplier() {
   endThreads();
   // destroy all objects in the input queue
   d_inputQueue->clear();
-  // delete the pointer to the input queue
-  delete d_inputQueue;
-  std::tuple<ROMol*, std::string, unsigned int> r;
-  while (d_outputQueue->pop(r)) {
-    ROMol* m = std::get<0>(r);
-    delete m;
+  if (df_started) {
+    std::tuple<RWMol *, std::string, unsigned int> r;
+    while (d_outputQueue->pop(r)) {
+      RWMol *m = std::get<0>(r);
+      delete m;
+    }
   }
   // destroy all objects in the output queue
   d_outputQueue->clear();
-  // delete the pointer to the output queue
-  delete d_outputQueue;
 }
 
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;
   while (extractNextRecord(record, lineNum, index)) {
-    auto r = std::tuple<std::string, unsigned int, unsigned int>{
-        record, lineNum, index};
+    if (readCallback) {
+      try {
+        record = readCallback(record, index);
+      } catch (std::exception &e) {
+        BOOST_LOG(rdErrorLog)
+            << "Read callback exception: " << e.what() << std::endl;
+      }
+    }
+    auto r = std::make_tuple(record, lineNum, index);
     d_inputQueue->push(r);
   }
   d_inputQueue->setDone();
@@ -42,39 +54,56 @@ void MultithreadedMolSupplier::writer() {
   std::tuple<std::string, unsigned int, unsigned int> r;
   while (d_inputQueue->pop(r)) {
     try {
-      ROMol* mol = processMoleculeRecord(std::get<0>(r), std::get<1>(r));
-      auto temp = std::tuple<ROMol*, std::string, unsigned int>{
-          mol, std::get<0>(r), std::get<2>(r)};
+      std::unique_ptr<RWMol> mol(
+          processMoleculeRecord(std::get<0>(r), std::get<1>(r)));
+      if (mol && writeCallback) {
+        writeCallback(*mol, std::get<0>(r), std::get<2>(r));
+      }
+      auto temp = std::tuple<RWMol *, std::string, unsigned int>{
+          mol.release(), std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(temp);
     } catch (...) {
       // fill the queue wih a null value
-      auto nullValue = std::tuple<ROMol*, std::string, unsigned int>{
+      auto nullValue = std::tuple<RWMol *, std::string, unsigned int>{
           nullptr, std::get<0>(r), std::get<2>(r)};
       d_outputQueue->push(nullValue);
     }
   }
-
-  if (d_threadCounter != d_numWriterThreads) {
+  if (d_threadCounter != d_params.numWriterThreads) {
     ++d_threadCounter;
   } else {
     d_outputQueue->setDone();
   }
 }
 
-ROMol* MultithreadedMolSupplier::next() {
-  std::tuple<ROMol*, std::string, unsigned int> r;
+std::unique_ptr<RWMol> MultithreadedMolSupplier::next() {
+  if (!df_started) {
+    df_started = true;
+    startThreads();
+  }
+  std::tuple<RWMol *, std::string, unsigned int> r;
   if (d_outputQueue->pop(r)) {
-    ROMol* mol = std::get<0>(r);
     d_lastItemText = std::get<1>(r);
     d_lastRecordId = std::get<2>(r);
-    return mol;
+    std::unique_ptr<RWMol> res{std::get<0>(r)};
+    if (res && nextCallback) {
+      try {
+        nextCallback(*res, *this);
+      } catch (...) {
+        // Ignore exception and proceed with mol as is.
+      }
+    }
+    return res;
   }
   return nullptr;
 }
 
 void MultithreadedMolSupplier::endThreads() {
+  if (!df_started) {
+    return;
+  }
   d_readerThread.join();
-  for (auto& thread : d_writerThreads) {
+  for (auto &thread : d_writerThreads) {
     thread.join();
   }
 }
@@ -83,7 +112,7 @@ void MultithreadedMolSupplier::startThreads() {
   // run the reader function in a seperate thread
   d_readerThread = std::thread(&MultithreadedMolSupplier::reader, this);
   // run the writer function in seperate threads
-  for (unsigned int i = 0; i < d_numWriterThreads; i++) {
+  for (unsigned int i = 0; i < d_params.numWriterThreads; i++) {
     d_writerThreads.emplace_back(
         std::thread(&MultithreadedMolSupplier::writer, this));
   }
@@ -104,6 +133,7 @@ std::string MultithreadedMolSupplier::getLastItemText() const {
 void MultithreadedMolSupplier::reset() {
   UNDER_CONSTRUCTION("reset() not supported for MultithreadedMolSupplier();");
 }
-
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit
 #endif

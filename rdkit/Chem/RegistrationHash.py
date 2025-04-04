@@ -26,7 +26,7 @@ import hashlib
 import json
 import logging
 import re
-from typing import Iterable, Optional
+from typing import Dict, Iterable, Optional
 
 from rdkit import Chem
 from rdkit.Chem import rdMolHash
@@ -35,7 +35,8 @@ ATOM_PROP_MAP_NUMBER = 'molAtomMapNumber'
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CXFLAG = Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+DEFAULT_CXFLAG = (Chem.CXSmilesFields.CX_ATOM_LABELS | Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+                  | Chem.CXSmilesFields.CX_BOND_ATROPISOMER)
 
 ENHANCED_STEREO_GROUP_REGEX = re.compile(r'((?:a|[&o]\d+):\d+(?:,\d+)*)')
 
@@ -114,7 +115,7 @@ def GetMolHash(all_layers, hash_scheme: HashScheme = HashScheme.ALL_LAYERS) -> s
 
 def GetMolLayers(original_molecule: Chem.rdchem.Mol, data_field_names: Optional[Iterable] = None,
                  escape: Optional[str] = None, cxflag=DEFAULT_CXFLAG,
-                 enable_tautomer_hash_v2=False) -> set(HashLayer):
+                 enable_tautomer_hash_v2=False) -> Dict[HashLayer, str]:
   """
     Generate layers of data about that could be used to identify a molecule
 

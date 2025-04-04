@@ -30,10 +30,7 @@ void testWHIM2() {
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
-  int nDone = 0;
   while (!reader.atEnd()) {
-    ++nDone;
-
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;
@@ -62,10 +59,7 @@ void testWHIM3() {
 
   RDKit::SDMolSupplier reader(sdfName, true, false);
 
-  int nDone = 0;
   while (!reader.atEnd()) {
-    ++nDone;
-
     RDKit::ROMol *m = reader.next();
     TEST_ASSERT(m);
     std::string nm;

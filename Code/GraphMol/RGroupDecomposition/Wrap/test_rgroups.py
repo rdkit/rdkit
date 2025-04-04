@@ -30,12 +30,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-import copy
-import os
-import pickle
-import sys
 import unittest
 from collections import OrderedDict
+import json
+import itertools
 
 # the RGD code can generate a lot of warnings. disable them
 from rdkit import Chem, RDLogger, rdBase
@@ -43,7 +41,9 @@ from rdkit.Chem.rdRGroupDecomposition import (RGroupCoreAlignment,
                                               RGroupDecompose,
                                               RGroupDecomposition,
                                               RGroupDecompositionParameters,
-                                              RGroupLabels)
+                                              RGroupLabels,
+                                              RGroupLabelling,
+                                              RelabelMappedDummies)
 
 RDLogger.DisableLog("rdApp.warning")
 
@@ -654,6 +654,285 @@ $$$$
     self.assertEqual(unmatched, [])
     rgroups, unmatched = RGroupDecompose(chiral_cores, mols, options=params)
     self.assertEqual(unmatched, [])
+
+  def testTautomerCore(self):
+    block = """"
+  Mrv2008 08072313382D          
+
+  9  9  0  0  0  0            999 V2000
+    5.9823    5.0875    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.9823    4.2625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    3.8500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5534    4.2625    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    4.5534    5.0875    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    5.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    6.3250    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    6.6968    3.8500    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+    5.2679    3.0250    0.0000 R#  0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0  0  0  0
+  2  3  1  0  0  0  0
+  3  4  2  0  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  6  7  2  0  0  0  0
+  1  6  1  0  0  0  0
+  2  8  1  0  0  0  0
+  3  9  1  0  0  0  0
+M  RGP  2   8   1   9   2
+M  END
+"""
+    core = Chem.MolFromMolBlock(block)
+    mol1 = Chem.MolFromSmiles('Cc1cnc(O)cc1Cl')
+    mol2 = Chem.MolFromSmiles('CC1=CNC(=O)C=C1F')
+
+    params = RGroupDecompositionParameters()
+    params.doTautomers = True
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.Add(mol1), 0)
+    self.assertEqual(rgd.Add(mol2), 1)
+    self.assertTrue(rgd.Process())
+    rows = rgd.GetRGroupsAsRows(asSmiles=True)
+    expected_rows = [
+        {'Core': 'Oc1cc([*:1])c([*:2])cn1', 'R1': 'Cl[*:1]', 'R2': 'C[*:2]'},
+        {'Core': 'O=c1cc([*:1])c([*:2])c[nH]1', 'R1': 'F[*:1]', 'R2': 'C[*:2]'}]
+    self.assertEqual(rows, expected_rows)
+
+  def testMolMatchesCore(self):
+    core = Chem.MolFromSmarts("[*:1]c1[!#1]([*:2])cc([*:3])n([*:4])c(=O)1")
+    cmol = Chem.MolFromSmiles("Clc1c(C)cc(F)n(CC)c(=O)1")
+    nmol = Chem.MolFromSmiles("Clc1ncc(F)n(CC)c(=O)1")
+    smol = Chem.MolFromSmiles("Clc1ncc(F)n(CC)c(=S)1")
+    params = RGroupDecompositionParameters()
+    params.onlyMatchAtRGroups = True
+    rgd = RGroupDecomposition(core, params)
+    self.assertEqual(rgd.GetMatchingCoreIdx(cmol), 0)
+    self.assertEqual(rgd.GetMatchingCoreIdx(nmol), 0)
+    self.assertEqual(rgd.GetMatchingCoreIdx(smol), -1)
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(cmol, matches), 0)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(len(matches[0]), core.GetNumAtoms())
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(nmol, matches), 0)
+    self.assertEqual(len(matches), 1)
+    self.assertEqual(len(matches[0]), core.GetNumAtoms() - 1)
+    matches = []
+    self.assertEqual(rgd.GetMatchingCoreIdx(smol, matches), -1)
+    self.assertEqual(len(matches), 0)
+    cmol_h = Chem.AddHs(cmol)
+    nmol_h = Chem.AddHs(nmol)
+    self.assertTrue(cmol_h.HasSubstructMatch(core))
+    self.assertEqual(len(cmol_h.GetSubstructMatch(core)), core.GetNumAtoms())
+    self.assertFalse(nmol_h.HasSubstructMatch(core))
+
+  def testRelabelMappedDummies(self):
+    p = Chem.SmilesWriteParams()
+    p.canonical = False
+    allDifferentCore = Chem.MolFromMolBlock("""
+     RDKit          2D
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+    1.0808   -0.8772    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0827    0.1228    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2177    0.6246    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2198    1.6246    0.0000 R#  0  0  0  0  0 15  0  0  0  4  0  0
+   -0.6493    0.1262    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5142    0.6280    0.0000 R#  0  0  0  0  0 15  0  0  0  3  0  0
+   -0.6513   -0.8736    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2137   -1.3754    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  1  0
+  3  5  2  0
+  5  6  1  0
+  5  7  1  0
+  7  8  2  0
+  8  1  1  0
+M  RGP  2   4   2   6   1
+M  END
+)CTAB
+""")
+    allDifferentCore.RemoveConformer(0)
+    allDifferentCore.GetAtomWithIdx(3).SetIsotope(6)
+    allDifferentCore.GetAtomWithIdx(5).SetIsotope(5)
+    self.assertEqual(Chem.MolToCXSmiles(allDifferentCore, p), "c1cc([6*:4])c([5*:3])cn1 |atomProp:3.dummyLabel.R2:3.molAtomMapNumber.4:5.dummyLabel.R1:5.molAtomMapNumber.3|")
+    # AtomMap in, MDLRGroup out
+    core = Chem.MolFromSmiles("c1cc([*:2])c([*:1])cn1")
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([*:2])c([*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|")
+    RelabelMappedDummies(core)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|")
+    # Isotope in, MDLRGroup out
+    core = Chem.MolFromSmiles("c1cc([2*])c([1*])cn1")
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([2*])c([1*])cn1 |atomProp:3.dummyLabel.*:5.dummyLabel.*|")
+    RelabelMappedDummies(core)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|")
+    # MDLRGroup in, MDLRGroup out
+    core = Chem.MolFromMolBlock("""
+     RDKit          2D
+
+  8  8  0  0  0  0  0  0  0  0999 V2000
+    1.0808   -0.8772    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.0827    0.1228    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2177    0.6246    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2198    1.6246    0.0000 R#  0  0  0  0  0  1  0  0  0  0  0  0
+   -0.6493    0.1262    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.5142    0.6280    0.0000 R#  0  0  0  0  0  1  0  0  0  0  0  0
+   -0.6513   -0.8736    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.2137   -1.3754    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  2  0
+  2  3  1  0
+  3  4  1  0
+  3  5  2  0
+  5  6  1  0
+  5  7  1  0
+  7  8  2  0
+  8  1  1  0
+M  RGP  2   4   2   6   1
+M  END
+)CTAB
+""")
+    core.RemoveConformer(0)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([2*])c([1*])cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|")
+    RelabelMappedDummies(core)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|")
+    # AtomMap and Isotope in, MDLRGroup out - AtomMap has priority
+    core = Chem.MolFromSmiles("c1cc([4*:2])c([3*:1])cn1")
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|")
+    RelabelMappedDummies(core)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|")
+    # AtomMap and Isotope in, MDLRGroup out - force Isotope priority
+    core = Chem.MolFromSmiles("c1cc([4*:2])c([3*:1])cn1")
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([4*:2])c([3*:1])cn1 |atomProp:3.dummyLabel.*:3.molAtomMapNumber.2:5.dummyLabel.*:5.molAtomMapNumber.1|")
+    RelabelMappedDummies(core, RGroupLabelling.Isotope)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R4:5.dummyLabel.R3|")
+    # AtomMap, Isotope and MDLRGroup in, MDLRGroup out - AtomMap has priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R4:5.dummyLabel.R3|")
+    # AtomMap, Isotope and MDLRGroup in, MDLRGroup out - force Isotope priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core, RGroupLabelling.Isotope)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R6:5.dummyLabel.R5|")
+    # AtomMap, Isotope and MDLRGroup in, MDLRGroup out - force MDLRGroup priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core, RGroupLabelling.MDLRGroup)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc(*)c(*)cn1 |atomProp:3.dummyLabel.R2:5.dummyLabel.R1|")
+    # AtomMap, Isotope and MDLRGroup in, AtomMap out - AtomMap has priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core, outputLabels=RGroupLabelling.AtomMap)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([*:4])c([*:3])cn1 |atomProp:3.molAtomMapNumber.4:5.molAtomMapNumber.3|")
+    # AtomMap, Isotope and MDLRGroup in, Isotope out - AtomMap has priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core, outputLabels=RGroupLabelling.Isotope)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([4*])c([3*])cn1")
+    # AtomMap, Isotope and MDLRGroup in, AtomMap out - Isotope has priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core, inputLabels=(RGroupLabelling.Isotope | RGroupLabelling.MDLRGroup), outputLabels=RGroupLabelling.AtomMap)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([*:6])c([*:5])cn1 |atomProp:3.molAtomMapNumber.6:5.molAtomMapNumber.5|")
+    # AtomMap, Isotope and MDLRGroup in, Isotope out - Isotope has priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core, inputLabels=(RGroupLabelling.Isotope | RGroupLabelling.MDLRGroup), outputLabels=RGroupLabelling.Isotope)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([6*])c([5*])cn1")
+    # AtomMap, Isotope and MDLRGroup in, AtomMap out - MDLRGroup has priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core, inputLabels=RGroupLabelling.MDLRGroup, outputLabels=RGroupLabelling.AtomMap)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([*:2])c([*:1])cn1 |atomProp:3.molAtomMapNumber.2:5.molAtomMapNumber.1|")
+    # AtomMap, Isotope and MDLRGroup in, Isotope out - MDLRGroup has priority
+    core = Chem.Mol(allDifferentCore)
+    RelabelMappedDummies(core, inputLabels=RGroupLabelling.MDLRGroup, outputLabels=RGroupLabelling.Isotope)
+    self.assertEqual(Chem.MolToCXSmiles(core, p), "c1cc([2*])c([1*])cn1")
+
+  def testRgroupMolZip(self):
+    core = Chem.MolFromSmiles("CO")
+    mols = [Chem.MolFromSmiles("C1NNO1")]
+    rgroups, unmatched = RGroupDecompose(core, mols)
+    for rgroup in rgroups:
+      self.assertEqual(Chem.MolToSmiles(Chem.molzip(rgroup)),
+                       Chem.CanonSmiles("C1NNO1"))
+
+  def testIncludeTargetMolInResults(self):
+    core = Chem.MolFromSmiles("c1cc(-c2c([*:1])nn3nc([*:2])ccc23)nc(N(c2ccc([*:4])c([*:3])c2))n1")
+    self.assertIsNotNone(core)
+    mols = [Chem.MolFromSmiles(smi) for smi in [
+      "Cc1ccc2c(c3ccnc(Nc4cccc(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccc(F)cc5",
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccc(F)cc6",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccc(F)cc5",
+      "C1CC1c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4",
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CC5)cc1F",
+      "C1CCC(CC1)c2nn3ncccc3c2c4ccnc(Nc5ccccc5)n4",
+      "Fc1ccc(Nc2nccc(n2)c3c(nn4ncccc34)C5CCCCC5)cc1F",
+      "COCCOc1cnn2ncc(c3ccnc(Nc4cccc(OC)c4)n3)c2c1",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5ccccc5",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5ccccc5",
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6ccccc6",
+      "Cc1ccc2c(c3ccnc(Nc4ccccc4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(F)c(F)c4)n3)c(nn2n1)c5cccc(c5)C(F)(F)F",
+      "Cc1ccc2c(c3ccnc(Nc4ccc(Cl)c(c4)C(F)(F)F)n3)c(nn2n1)c5cccc(c5)C(F)(F)F",
+      "Cc1ccc2c(c3ccnc(Nc4ccc5OCCOc5c4)n3)c(nn2n1)c6cccc(c6)C(F)(F)F",
+    ]]
+    self.assertTrue(all(mols))
+    ps = RGroupDecompositionParameters()
+    ps.includeTargetMolInResults = True
+    rgd = RGroupDecomposition(core, ps)
+    for mol in mols:
+      self.assertNotEqual(rgd.Add(mol), -1)
+    self.assertTrue(rgd.Process())
+    def checkRow(row):
+      targetMol = None
+      # These are sets of int tuples rather just plain int tuples
+      # because there can be cyclic R groups with 2 attachment points
+      # in that case it is OK for 2 R groups to have exactly the same
+      # target atom and bond indices
+      allAtomIndices = set()
+      allBondIndices = set()
+      for rlabel, rgroup in row.items():
+        if rlabel == "Mol":
+          targetMol = rgroup
+        else:
+          numNonRAtoms = len([atom for atom in rgroup.GetAtoms() if atom.GetAtomicNum() > 0 or not atom.GetAtomMapNum()])
+          self.assertGreater(rgroup.GetNumAtoms(), numNonRAtoms)
+          numBonds = 0
+          if rlabel == "Core":
+            numBonds = len([bond for bond in rgroup.GetBonds() if (
+              bond.GetBeginAtom().GetAtomicNum() > 0 or not bond.GetBeginAtom().GetAtomMapNum()
+            ) and (
+              bond.GetEndAtom().GetAtomicNum() > 0 or not bond.GetEndAtom().GetAtomMapNum()
+            )])
+          else:
+            numBonds = rgroup.GetNumBonds()
+          self.assertTrue(rgroup.HasProp("_rgroupTargetAtoms"))
+          atomIndices = tuple(json.loads(rgroup.GetProp("_rgroupTargetAtoms")))
+          self.assertTrue(rgroup.HasProp("_rgroupTargetBonds"))
+          bondIndices = tuple(json.loads(rgroup.GetProp("_rgroupTargetBonds")))
+          self.assertEqual(len(atomIndices), numNonRAtoms)
+          allAtomIndices.add(atomIndices)
+          self.assertEqual(len(bondIndices), numBonds)
+          allBondIndices.add(bondIndices)
+      self.assertIsNotNone(targetMol)
+      flattenedAtomIndices = list(itertools.chain.from_iterable(allAtomIndices))
+      uniqueAtomIndices = set(flattenedAtomIndices)
+      self.assertEqual(len(flattenedAtomIndices), len(uniqueAtomIndices))
+      self.assertEqual(len(flattenedAtomIndices), targetMol.GetNumAtoms())
+      flattenedBondIndices = list(itertools.chain.from_iterable(allBondIndices))
+      uniqueBondIndices = set(flattenedBondIndices)
+      self.assertEqual(len(flattenedBondIndices), len(uniqueBondIndices))
+      self.assertEqual(len(flattenedBondIndices), targetMol.GetNumBonds())
+    rows = rgd.GetRGroupsAsRows()
+    self.assertEqual(len(rows), len(mols))
+    for row in rows:
+      checkRow(row)
+    cols = rgd.GetRGroupsAsColumns()
+    rows = []
+    for i in range(len(mols)):
+      row = {}
+      for rlabel, rgroups in cols.items():
+        self.assertEqual(len(rgroups), len(mols))
+        row[rlabel] = rgroups[i]
+      rows.append(row)
+    self.assertEqual(len(rows), len(mols))
+    for row in rows:
+      checkRow(row)
 
 
 if __name__ == '__main__':

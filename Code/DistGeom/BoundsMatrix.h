@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2004-2006 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,8 +8,8 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#ifndef __RD_BOUNDS_MATRIX_H__
-#define __RD_BOUNDS_MATRIX_H__
+#ifndef RD_BOUNDS_MATRIX_H
+#define RD_BOUNDS_MATRIX_H
 
 #include <RDGeneral/Invariant.h>
 #include <boost/smart_ptr.hpp>
@@ -36,9 +36,6 @@ class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
 
   //! Get the upper bound between points i and j
   inline double getUpperBound(unsigned int i, unsigned int j) const {
-    URANGE_CHECK(i, d_nRows);
-    URANGE_CHECK(j, d_nCols);
-
     if (i < j) {
       return getVal(i, j);
     } else {
@@ -48,8 +45,6 @@ class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
 
   //! Set the lower bound between points i and j
   inline void setUpperBound(unsigned int i, unsigned int j, double val) {
-    URANGE_CHECK(i, d_nRows);
-    URANGE_CHECK(j, d_nCols);
     CHECK_INVARIANT(val >= 0.0, "Negative upper bound");
     if (i < j) {
       setVal(i, j, val);
@@ -69,8 +64,6 @@ class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
 
   //! Set the lower bound between points i and j
   inline void setLowerBound(unsigned int i, unsigned int j, double val) {
-    URANGE_CHECK(i, d_nRows);
-    URANGE_CHECK(j, d_nCols);
     CHECK_INVARIANT(val >= 0.0, "Negative lower bound");
     if (i < j) {
       setVal(j, i, val);
@@ -90,9 +83,6 @@ class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
 
   //! Get the lower bound between points i and j
   inline double getLowerBound(unsigned int i, unsigned int j) const {
-    URANGE_CHECK(i, d_nRows);
-    URANGE_CHECK(j, d_nCols);
-
     if (i < j) {
       return getVal(j, i);
     } else {

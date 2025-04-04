@@ -140,7 +140,7 @@ void _covertCovMatToQuad(const double covMat[3][3],
   \param eigenVecs   storage for eigen vectors
   \param maxIter     max number of iterations
 
-  <b>Reference:<\b>
+  <b>Reference:</b>
   This is essentailly a copy of the jacobi routine taken from the program
   quatfit.c available from the Computational Chemistry Archives.
   http://www.ccl.net/cca/software/SOURCES/C/quaternion-mol-fit/index.shtml
@@ -188,7 +188,7 @@ unsigned int jacobi(double quad[4][4], double eigenVals[4],
         offDiagNorm += fabs(quad[i][j]);
       }
     }
-    if ((offDiagNorm / diagNorm) <= TOLERANCE) {
+    if (fabs(diagNorm) > 1.e-16 && (offDiagNorm / diagNorm) <= TOLERANCE) {
       goto Exit_now;
     }
     for (j = 1; j <= 3; j++) {
@@ -233,9 +233,9 @@ unsigned int jacobi(double quad[4][4], double eigenVals[4],
               s * s * eigenVals[i] + c * c * eigenVals[j] + 2.0 * c * s * b;
           eigenVals[i] = dtemp;
         } /* end if */
-      }   /* end for i */
-    }     /* end for j */
-  }       /* end for l */
+      } /* end for i */
+    } /* end for j */
+  } /* end for l */
 
 Exit_now:
 

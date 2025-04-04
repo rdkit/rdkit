@@ -1,7 +1,14 @@
+find_package(PostgreSQL REQUIRED)
+
 if(APPLE)
   set (EXTENSION_PREFIX "")
-  set (EXTENSION_SUFFIX ".so")
-  set (EXTENSION_DEST_SUFFIX ".so")
+  if(${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 16.0)
+    set (EXTENSION_SUFFIX ".dylib")
+    set (EXTENSION_DEST_SUFFIX ".dylib")
+  else()
+    set (EXTENSION_SUFFIX ".so")
+    set (EXTENSION_DEST_SUFFIX ".so")
+  endif()
 elseif(WIN32)
   set(REGEX_SEPARATOR "\\\\")
   if(MSVC)
@@ -20,16 +27,11 @@ else()
   set (EXTENSION_DEST_SUFFIX ".so")
 endif()
 
-find_package(PostgreSQL REQUIRED)
-
 if(RDK_OPTIMIZE_POPCNT)
   add_definitions(-DRDK_OPTIMIZE_POPCNT)
 endif(RDK_OPTIMIZE_POPCNT)
 
 set(EXTENSION rdkit)
-if(NOT DEFINED Boost_INCLUDE_DIRS)
-  find_package(Boost ${RDK_BOOST_VERSION} REQUIRED)
-endif(NOT DEFINED Boost_INCLUDE_DIRS)
 include_directories(${Boost_INCLUDE_DIRS})
 message("postgres: ${PostgreSQL_INCLUDE_DIRS}")
 add_definitions(-DRDK_TOOLKIT_VERSION="${RDKit_RELEASENAME}")
@@ -151,7 +153,7 @@ foreach(pgRDKitLib ${pgRDKitLibList})
   endif()
   set(pgRDKitLibs "${pgRDKitLibs}${pgRDKitLib}${pgRDKitLibSuffix}")
 endforeach()
-target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${pgRDKitLibs})
+target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${pgRDKitLibs} rdkit_base)
 if(RDK_BUILD_THREADSAFE_SSS)
   target_link_libraries(${EXTENSION}${EXTENSION_SUFFIX} ${RDKit_THREAD_LIBS})
 endif(RDK_BUILD_THREADSAFE_SSS)
@@ -263,6 +265,17 @@ else()
   set(RDKIT_PG_BFP_GIST_SORTSUPPORT "")
 endif()
 
+if (${PostgreSQL_VERSION_STRING} VERSION_GREATER_EQUAL 17.0)
+  set(RDKIT_PG_ALTER_OPERATOR_ATEQ_MOL "ALTER OPERATOR @= (mol, mol) SET (
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>'
+);")
+  set(RDKIT_PG_ALTER_OPERATOR_ATEQ_REACTION "ALTER OPERATOR @= (reaction, reaction) SET (
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>'
+);")
+endif()
+
 configure_file("${PG_CURRENT_SOURCE_DIR}${EXTENSION}.sql.in"
                "${PG_CURRENT_BINARY_DIR}${EXTENSION}--${PG_EXTVERSION}.sql")
 file(GLOB files "update_sql/*.in")
@@ -285,7 +298,8 @@ file(WRITE ${installPgSQLName} ${installPgSQLBody})
 foreach(testDir sql data expected)
   add_custom_command(TARGET ${EXTENSION}${EXTENSION_SUFFIX} PRE_BUILD
       COMMAND "${CMAKE_COMMAND}" -E copy_directory
-      "${PG_CURRENT_SOURCE_DIR}${testDir}" "${PG_CURRENT_BINARY_DIR}${testDir}")
+      "${PG_CURRENT_SOURCE_DIR}${testDir}" "${PG_CURRENT_BINARY_DIR}${testDir}"
+      POST_BUILD)
 endforeach()
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/InstallPgSql.cmake.in"

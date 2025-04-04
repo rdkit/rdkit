@@ -35,6 +35,7 @@
 %}
 
 %ignore MCSParameters;
+%ignore MCSParametersInternal;
 %ignore findMCS(const std::vector<ROMOL_SPTR>& mols, const MCSParameters* params);
 %ignore checkAtomRingMatch(const MCSAtomCompareParameters& p,
                            const ROMol& mol1, unsigned int atom1,
@@ -57,6 +58,6 @@
 %{
 
   RDKit::MCSResult findMCS(const std::vector<RDKit::ROMOL_SPTR>& mols){
-    RDKit::findMCS(mols,static_cast<const RDKit::MCSParameters *>(NULL));
+    return RDKit::findMCS(mols,static_cast<const RDKit::MCSParameters *>(NULL));
   };
 %}

@@ -16,7 +16,7 @@
 #include "SmartsWrite.h"
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
-//#include <boost/log/functions.hpp>
+// #include <boost/log/functions.hpp>
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;
@@ -27,102 +27,52 @@ void testPass() {
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing molecules which should parse." << std::endl;
   string smis[] = {
-#if 1
-    "C1CC2C1CC2",
-    "c1cccn(=O)c1",
-    "C",
-    "CC",
-    "C-C",
-    "C=C",
-    "[CH2+]C[CH+2]",
-    "C1CC1",
-    "C1CC=1",
-    "C=1CC1",
-    "C=C-O",
-    "C1CC1",
-    "C1NC1",
-    "C1=CC1",
-    "C1CCC1",
-    "CC(C)CC",
-    "CC(=O)O",
-    "C1C(=O)C1",
-    "C1C(N)C1",
-    "CC(O)C",
-    "OC=CCC",
-    "CC([O-])O",
-    "C1CC2C1CC2",
-    "Cl/C=C/Cl",
-    "Cl/C=C\\Cl",
-    "Cl/C=C/Cl",
-    "Cl/C=C\\Cl",
-    "Cl/C=C\\\\Cl",
-    "C1CC.CC1",
-    "C1C(C2CC2).C2CC2C1",
-    "[Na+].[Cl-].[NH4+].[Cl-]",
-    "C[35Cl]",
-    "C%10CC%10",
-    "[H][H]",
-    "[H+]",
-    "C[N+](=O)[O-]",
-    "N1C(=N)SC=C1",
-    "[O-][N+](=O)C1=CNC(=N)S1",
-    "CN(=O)=O",
-    "C1=CC=C[N+]([O-])=C1",
-    "C1=CC=CN(=O)=C1",
-    // test whitespace tolerance:
-    "  C1=CC=CN(=O)=C1",
-    "C1=CC=CN(=O)=C1  ",
-    "  C1=CC=CN(=O)=C1  ",
-    "\tC1=CC=CN(=O)=C1\r\n",
-#endif
-    // test dummy atoms:
-    "c1ccccc1[*]",
-    "c1ccccc1[1*]",
-    "S1cccc1",
-    "*1ccccc1",
-    "C1=CC=CC=C1",
-    "*1=CC=CC=C1",
-    "*1*cccc1",
-    "*1**ccc1",
-    // test aromatic se and te:
-    "c1ccc[se]1",
-    "c1ccc[te]1",
-    // test zeros as ring indices, issue 2690982:
-    "C0CC0",
-    // test canonization error, issue 3018558:
-    "C/C(/C=C2\\Sc1ccc(cc1N\\2C))=C5\\SC4=NccN4C\\5=O",
-    // "the most common molecule in the universe",
-    // expressed in an ugly way:
-    "[HH]",
-    "[2HH]",
-    "[HH2-]",   // issue 3535669
-    "[2HH2-]",  // issue 3535669
-    // problems handling aromatic boron, issue 3480481
-    "b1ccccc1",
-    "C[Rf]C",  // issue 3535668
-    "[C:1]",
-    "[C:0]",           // issue 3525776
-    "[si]1cccc[si]1",  // aromatic Si (github issue #5)
-    "[asH]1cccc1",     // aromatic As (github issue #682)
-    "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Nh][Fl][Mc][Lv][Ts][Og]",  // new elements
-    "[Uun][Uuu][Uub][Uut][Uuq][Uup][Uuh][Uus][Uuo]",  // old names for new
-                                                      // elements
-    "['Db']['Sg']['Bh']['Hs']['Mt']['Ds']['Rg']['Cn']['Nh']['Fl']['Mc']['Lv']['"
-    "Ts']['Og']",  // a biovia pathology
-    "[#6]",        // feature borrowed from SMARTS
-    "[12#6]",
-    "C$C",  // quadruple bonds
-    // extended chirality
-    "C[Fe@TH](O)(Cl)F",
-    "C[Fe@TH1](O)(Cl)F",
-    "C[Fe@SP](O)(Cl)F",
-    "C[Fe@SP1](O)(Cl)F",
-    "C[Fe@TB](O)(Cl)(Br)F",
-    "C[Fe@TB10](O)(Cl)(Br)F",
-    "C[Fe@OH](O)(Cl)(Br)(N)F",
-    "C[Fe@OH20](O)(Cl)(Br)(N)F",
-    "EOS"
-  };
+      "C1CC2C1CC2", "c1cccn(=O)c1", "C", "CC", "C-C", "C=C", "[CH2+]C[CH+2]",
+      "C1CC1", "C1CC=1", "C=1CC1", "C=C-O", "C1CC1", "C1NC1", "C1=CC1",
+      "C1CCC1", "CC(C)CC", "CC(=O)O", "C1C(=O)C1", "C1C(N)C1", "CC(O)C",
+      "OC=CCC", "CC([O-])O", "C1CC2C1CC2", "Cl/C=C/Cl", "Cl/C=C\\Cl",
+      "Cl/C=C/Cl", "Cl/C=C\\Cl", "Cl/C=C\\\\Cl", "C1CC.CC1",
+      "C1C(C2CC2).C2CC2C1", "[Na+].[Cl-].[NH4+].[Cl-]", "C[35Cl]", "C%10CC%10",
+      "[H][H]", "[H+]", "C[N+](=O)[O-]", "N1C(=N)SC=C1",
+      "[O-][N+](=O)C1=CNC(=N)S1", "CN(=O)=O", "C1=CC=C[N+]([O-])=C1",
+      "C1=CC=CN(=O)=C1",
+      // test whitespace tolerance:
+      "  C1=CC=CN(=O)=C1", "C1=CC=CN(=O)=C1  ", "  C1=CC=CN(=O)=C1  ",
+      "\tC1=CC=CN(=O)=C1\r\n",
+      // test dummy atoms:
+      "c1ccccc1[*]", "c1ccccc1[1*]", "S1cccc1", "*1ccccc1", "C1=CC=CC=C1",
+      "*1=CC=CC=C1", "*1*cccc1", "*1**ccc1",
+      // test aromatic se and te:
+      "c1ccc[se]1", "c1ccc[te]1",
+      // test zeros as ring indices, issue 2690982:
+      "C0CC0",
+      // test canonization error, issue 3018558:
+      "C/C(/C=C2\\Sc1ccc(cc1N\\2C))=C5\\SC4=NccN4C\\5=O",
+      // "the most common molecule in the universe",
+      // expressed in an ugly way:
+      "[HH]", "[2HH]",
+      "[HH2-]",   // issue 3535669
+      "[2HH2-]",  // issue 3535669
+      // problems handling aromatic boron, issue 3480481
+      "b1ccccc1",
+      "C[Rf]C",  // issue 3535668
+      "[C:1]",
+      "[C:0]",           // issue 3525776
+      "[si]1cccc[si]1",  // aromatic Si (github issue #5)
+      "[asH]1cccc1",     // aromatic As (github issue #682)
+      "[Db][Sg][Bh][Hs][Mt][Ds][Rg][Cn][Nh][Fl][Mc][Lv][Ts][Og]",  // new
+                                                                   // elements
+      "[Uun][Uuu][Uub][Uut][Uuq][Uup][Uuh][Uus][Uuo]",  // old names for new
+                                                        // elements
+      "['Db']['Sg']['Bh']['Hs']['Mt']['Ds']['Rg']['Cn']['Nh']['Fl']['Mc']['Lv']['"
+      "Ts']['Og']",  // a biovia pathology
+      "[#6]",        // feature borrowed from SMARTS
+      "[12#6]",
+      "C$C",  // quadruple bonds
+      // extended chirality
+      "C[Fe@TH](O)(Cl)F", "C[Fe@TH1](O)(Cl)F", "C[Fe@SP](O)(Cl)F",
+      "C[Fe@SP1](O)(Cl)F", "C[Fe@TB](O)(Cl)(Br)F", "C[Fe@TB10](O)(Cl)(Br)F",
+      "C[Fe@OH](O)(Cl)(Br)(N)F", "C[Fe@OH20](O)(Cl)(Br)(N)F", "EOS"};
   while (smis[i] != "EOS") {
     string smi = smis[i];
     BOOST_LOG(rdInfoLog) << "***: " << smi << std::endl;
@@ -213,18 +163,18 @@ void testDetails() {
   CHECK_INVARIANT(mol, smi);
   CHECK_INVARIANT(mol->getNumAtoms() == 5, "");
   a = mol->getAtomWithIdx(0);
-  CHECK_INVARIANT(a->getImplicitValence() == 1, "");
-  CHECK_INVARIANT(a->getExplicitValence() == 1, "");
+  CHECK_INVARIANT(a->getValence(Atom::ValenceType::IMPLICIT) == 1, "");
+  CHECK_INVARIANT(a->getValence(Atom::ValenceType::EXPLICIT) == 1, "");
   CHECK_INVARIANT(a->getNoImplicit() == 0, "");
   CHECK_INVARIANT(a->getFormalCharge() == 0, "");
   a = mol->getAtomWithIdx(2);
-  CHECK_INVARIANT(a->getImplicitValence() == 0, "");
-  CHECK_INVARIANT(a->getExplicitValence() == 2, "");
+  CHECK_INVARIANT(a->getValence(Atom::ValenceType::IMPLICIT) == 0, "");
+  CHECK_INVARIANT(a->getValence(Atom::ValenceType::EXPLICIT) == 2, "");
   CHECK_INVARIANT(a->getNoImplicit() == 1, "");
   CHECK_INVARIANT(a->getFormalCharge() == 0, "");
   a = mol->getAtomWithIdx(4);
-  CHECK_INVARIANT(a->getImplicitValence() == 0, "");
-  CHECK_INVARIANT(a->getExplicitValence() == 1, "");
+  CHECK_INVARIANT(a->getValence(Atom::ValenceType::IMPLICIT) == 0, "");
+  CHECK_INVARIANT(a->getValence(Atom::ValenceType::EXPLICIT) == 1, "");
   CHECK_INVARIANT(a->getNoImplicit() == 1, "");
   CHECK_INVARIANT(a->getFormalCharge() == -1, "");
 
@@ -283,7 +233,6 @@ void testBasicCanon() {
 
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing basic SMILES canonicalization" << std::endl;
-#if 1
   smi = "C1OCCCC1";
   mol = SmilesToMol(smi);
   refSmi = MolToSmiles(*mol);
@@ -332,7 +281,6 @@ void testBasicCanon() {
   smi = MolToSmiles(*mol);
   TEST_ASSERT(refSmi == smi);
   delete mol;
-#endif
   // -- Issue 131
   smi = "P#[Ga]";
   mol = SmilesToMol(smi);
@@ -884,7 +832,6 @@ void testIssue127() {
   // mol->debugMol(std::cout);
   TEST_ASSERT(mol);
 
-#if 1
   // first roundtrip the non-chiral SMILES:
   refSmi = MolToSmiles(*mol);
   mol2 = SmilesToMol(refSmi);
@@ -892,7 +839,6 @@ void testIssue127() {
   tempStr = MolToSmiles(*mol2);
   TEST_ASSERT(refSmi == tempStr);
   delete mol2;
-#endif
 
   // now do the true SMILES:
   refSmi = MolToSmiles(*mol, 1);
@@ -1100,7 +1046,6 @@ void testIssue157() {
                           "multiple chiral centers badly canonicalized)"
                        << std::endl;
 
-#if 1
   smi = "O[C@](C)(Cl)[C@@](O)(Cl)C";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -1155,7 +1100,6 @@ void testIssue157() {
   TEST_ASSERT(refSmi == smi);
   delete mol;
   delete mol2;
-#endif
   smi = "[H][C@@]12C[14C@@](C=C1)(C3C2C(NC3=O)=O)[H]";
   // smi="C1=C[C@@H]2C[C@H]1C1C(=O)NC(=O)C21";
   mol = SmilesToMol(smi);
@@ -1599,35 +1543,35 @@ void testIssue191() {
 }
 
 void testIssue256() {
-  Mol *mol;
-  Bond *bond;
-  std::string smi;
-
   BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdInfoLog) << "Testing Issue 256: SMILES yields incorrect structure"
                        << std::endl;
 
-  smi = "C1CC[C+]1=1CCC1";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  bond = mol->getBondBetweenAtoms(3, 0);
-  TEST_ASSERT(bond)
-  TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
-  bond = mol->getBondBetweenAtoms(3, 6);
-  TEST_ASSERT(bond)
-  TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
-  delete mol;
+  v2::SmilesParse::SmilesParserParams ps;
+  ps.sanitize = false;
+  {
+    auto smi = "C1CC[C+]1=1CCC1";
+    auto mol = v2::SmilesParse::MolFromSmiles(smi, ps);
+    TEST_ASSERT(mol);
+    auto bond = mol->getBondBetweenAtoms(3, 0);
+    TEST_ASSERT(bond)
+    TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
+    bond = mol->getBondBetweenAtoms(3, 6);
+    TEST_ASSERT(bond)
+    TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
+  }
 
-  smi = "C1CC[C+]=11CCC1";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  bond = mol->getBondBetweenAtoms(3, 0);
-  TEST_ASSERT(bond)
-  TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
-  bond = mol->getBondBetweenAtoms(3, 6);
-  TEST_ASSERT(bond)
-  TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
-  delete mol;
+  {
+    auto smi = "C1CC[C+]=11CCC1";
+    auto mol = v2::SmilesParse::MolFromSmiles(smi, ps);
+    TEST_ASSERT(mol);
+    auto bond = mol->getBondBetweenAtoms(3, 0);
+    TEST_ASSERT(bond)
+    TEST_ASSERT(bond->getBondType() == Bond::DOUBLE);
+    bond = mol->getBondBetweenAtoms(3, 6);
+    TEST_ASSERT(bond)
+    TEST_ASSERT(bond->getBondType() == Bond::SINGLE);
+  }
 
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -1727,9 +1671,9 @@ void testIsotopes() {
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     smi = MolToSmiles(*mol, false);
-    TEST_ASSERT(smi == "CC[U]");
+    TEST_ASSERT(smi == "C[CH2][U]");
     smi = MolToSmiles(*mol, true);
-    TEST_ASSERT(smi == "CC[U]");
+    TEST_ASSERT(smi == "C[CH2][U]");
     delete mol;
   }
   {
@@ -1737,9 +1681,9 @@ void testIsotopes() {
     RWMol *mol = SmilesToMol(smi);
     TEST_ASSERT(mol);
     smi = MolToSmiles(*mol, false);
-    TEST_ASSERT(smi == "CC[U]");
+    TEST_ASSERT(smi == "C[CH2][U]");
     smi = MolToSmiles(*mol, true);
-    TEST_ASSERT(smi == "CC[238U]");
+    TEST_ASSERT(smi == "C[CH2][238U]");
     delete mol;
   }
   {
@@ -1955,27 +1899,6 @@ void testBug1844617() {
   std::string smi, smi2;
   std::string label;
 
-#if 0
-  smi ="O=C1C2OCC[C@@]22C(CC1)CNCC2";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  MolOps::assignStereochemistry(*mol);
-  //mol->debugMol(std::cout);
-  TEST_ASSERT(mol->getAtomWithIdx(6)->hasProp(common_properties::_CIPCode));
-  mol->getAtomWithIdx(6)->getProp(common_properties::_CIPCode,label);
-  TEST_ASSERT(label=="S");
-
-  smi = MolToSmiles(*mol,true);
-  BOOST_LOG(rdInfoLog) << smi << std::endl;
-  delete mol;
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  smi2 = MolToSmiles(*mol,true);
-  BOOST_LOG(rdInfoLog) << smi2 << std::endl;
-  TEST_ASSERT(smi==smi2);
-
-  delete mol;
-#endif
   smi = "O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
   mol = SmilesToMol(smi);
   TEST_ASSERT(mol);
@@ -1997,7 +1920,6 @@ void testBug1844617() {
   TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode, label);
   TEST_ASSERT(label == "S");
-#if 1
   smi = MolToSmiles(*mol, true);
   delete mol;
   mol = SmilesToMol(smi);
@@ -2007,7 +1929,6 @@ void testBug1844617() {
   BOOST_LOG(rdInfoLog) << smi << std::endl;
   BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi == smi2);
-#endif
 
   delete mol;
   smi = "O=C1CC[C@@]2(O)[C@@H]3N(C)CC[C@]22[C@H]1OC[C@H]2CC3";
@@ -2031,7 +1952,6 @@ void testBug1844617() {
   TEST_ASSERT(mol->getAtomWithIdx(15)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(15)->getProp(common_properties::_CIPCode, label);
   TEST_ASSERT(label == "S");
-#if 1
   smi = MolToSmiles(*mol, true, false, 0);
   delete mol;
   mol = SmilesToMol(smi);
@@ -2041,7 +1961,6 @@ void testBug1844617() {
   BOOST_LOG(rdInfoLog) << smi << std::endl;
   BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi == smi2);
-#endif
 
   delete mol;
   smi = "O=C1CC[C@@]2(O)[C@@H]3N(CC4CC4)CC[C@]22[C@H]1OC[C@H]2CC3";
@@ -2064,7 +1983,6 @@ void testBug1844617() {
   TEST_ASSERT(mol->getAtomWithIdx(18)->hasProp(common_properties::_CIPCode));
   mol->getAtomWithIdx(18)->getProp(common_properties::_CIPCode, label);
   TEST_ASSERT(label == "S");
-#if 1
   smi = MolToSmiles(*mol, true);
   delete mol;
   mol = SmilesToMol(smi);
@@ -2073,7 +1991,6 @@ void testBug1844617() {
   BOOST_LOG(rdInfoLog) << smi << std::endl;
   BOOST_LOG(rdInfoLog) << smi2 << std::endl;
   TEST_ASSERT(smi == smi2);
-#endif
   delete mol;
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
@@ -3925,7 +3842,7 @@ void testDativeBonds() {
 
     std::string out_smiles = MolToSmiles(*m, true);
     delete m;
-    TEST_ASSERT(out_smiles == smiles);
+    TEST_ASSERT(out_smiles == "CCC(=O)[OH]->[Cu]");
   }
   {
     std::string smiles = "CCC(=O)O->[Cu]<-OC(O)CC";
@@ -3942,7 +3859,7 @@ void testDativeBonds() {
 
     std::string out_smiles = MolToSmiles(*m, true);
     delete m;
-    TEST_ASSERT(out_smiles == smiles);
+    TEST_ASSERT(out_smiles == "CCC(=O)[OH]->[Cu]<-[OH]C(O)CC");
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
@@ -4382,12 +4299,40 @@ void testGithub3967() {
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 
+void testGithub6349() {
+  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog)
+      << "Testing Github Issue 6349: Different SMARTS input formats lead to different SMILES outputs."
+      << std::endl;
+
+  auto checkSmartsToSmiles = [](const std::string &sma,
+                                const std::string &refSmi) {
+    std::unique_ptr<ROMol> molFromSmarts(SmartsToMol(sma));
+    {
+      std::string smi = MolToSmiles(*molFromSmarts);
+      TEST_ASSERT(smi == refSmi);
+    }
+
+    std::string molBlock = MolToMolBlock(*molFromSmarts);
+    std::unique_ptr<ROMol> molFromBlock(
+        MolBlockToMol(molBlock, /*sanitize =*/false, /*removeHs =*/false));
+    {
+      std::string smi = MolToSmiles(*molFromBlock);
+      TEST_ASSERT(smi == refSmi);
+    }
+  };
+  checkSmartsToSmiles("[C]", "C");
+  checkSmartsToSmiles("[C,N]", "*");
+  checkSmartsToSmiles("[C,N]~[O,S]", "*~*");
+  checkSmartsToSmiles("C-C(-[Cl,F,Br])-C", "*C(C)C");
+
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-// boost::logging::enable_logs("rdApp.debug");
-#if 1
   testPass();
   testFail();
 
@@ -4438,11 +4383,9 @@ int main(int argc, char *argv[]) {
   testBug1719046();
   testBug1844617();
 
-#if 1  // POSTPONED during canonicalization rewrite
-  // testGithub298();
+  testGithub298();
   testFragmentSmiles();
   testGithub12();
-#endif
   testSmilesWriteForModifiedMolecules();
   testGithub532();
   testGithub786();
@@ -4461,6 +4404,6 @@ int main(int argc, char *argv[]) {
   testGithub1028();
   testGithub3139();
   testGithub3967();
-#endif
+  testGithub6349();
   testOSSFuzzFailures();
 }

@@ -70,6 +70,7 @@ void clearReactionProps(ROMol &mol) {
   mol.clearComputedProps(includeRings);
   for (auto atom : mol.atoms()) {
     atom->clearProp(common_properties::reactantAtomIdx);
+    atom->clearProp(common_properties::reactantIdx);
     atom->clearProp("was_dummy");
     atom->clearProp(common_properties::reactionMapNum);
   }
@@ -139,7 +140,7 @@ MolBundle enumerate(const ROMol &mol, size_t maxPerOperation) {
   repeatUnitParams.dp_operation =
       std::shared_ptr<MolEnumerator::MolEnumeratorOp>(sruOp);
   if (maxPerOperation > 0) {
-    sruOp->d_defaultRepeatCount = maxPerOperation;
+    sruOp->d_maxNumRounds = maxPerOperation;
     repeatUnitParams.maxToEnumerate = maxPerOperation;
   }
   paramsList.push_back(repeatUnitParams);

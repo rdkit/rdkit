@@ -30,8 +30,8 @@
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
 
-//#define VERBOSE_FINGERPRINTING 1
-//#define REPORT_FP_STATS 1
+// #define VERBOSE_FINGERPRINTING 1
+// #define REPORT_FP_STATS 1
 #ifdef REPORT_FP_STATS
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #endif

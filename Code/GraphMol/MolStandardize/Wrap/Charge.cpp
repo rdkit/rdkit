@@ -57,8 +57,9 @@ struct charge_wrapper {
     std::string docString = "";
 
     python::class_<MolStandardize::ChargeCorrection, boost::noncopyable>(
-        "ChargeCorrection", python::init<std::string, std::string, int>(
-                                python::args("name", "smarts", "charge")))
+        "ChargeCorrection",
+        python::init<std::string, std::string, int>(
+            python::args("self", "name", "smarts", "charge")))
         .def_readwrite("Name", &MolStandardize::ChargeCorrection::Name)
         .def_readwrite("Smarts", &MolStandardize::ChargeCorrection::Smarts)
         .def_readwrite("Charge", &MolStandardize::ChargeCorrection::Charge);
@@ -66,10 +67,11 @@ struct charge_wrapper {
     python::def("CHARGE_CORRECTIONS", defaultChargeCorrections);
 
     python::class_<MolStandardize::Reionizer, boost::noncopyable>(
-        "Reionizer", python::init<>())
-        .def(python::init<std::string>())
+        "Reionizer", python::init<>(python::args("self")))
+        .def(python::init<std::string>(python::args("self", "acidbaseFile")))
         .def(python::init<std::string,
-                          std::vector<MolStandardize::ChargeCorrection>>())
+                          std::vector<MolStandardize::ChargeCorrection>>(
+            python::args("self", "acidbaseFile", "ccs")))
         .def("reionize", &reionizeHelper,
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>())
@@ -84,8 +86,11 @@ struct charge_wrapper {
                 "and a list of charge corrections",
                 python::return_value_policy<python::manage_new_object>());
     python::class_<MolStandardize::Uncharger, boost::noncopyable>(
-        "Uncharger", python::init<bool>((python::arg("self"),
-                                         python::arg("canonicalOrder") = true)))
+        "Uncharger",
+        python::init<bool, bool, bool>(
+            (python::arg("self"), python::arg("canonicalOrder") = true,
+             python::arg("force") = false,
+             python::arg("protonationOnly") = false)))
         .def("uncharge", &MolStandardize::Uncharger::uncharge,
              (python::arg("self"), python::arg("mol")), "",
              python::return_value_policy<python::manage_new_object>())

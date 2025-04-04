@@ -75,17 +75,17 @@ struct corrmat_wrap {
         "   lower triangle elements\n";
     python::class_<BitCorrMatGenerator>("BitCorrMatGenerator",
                                         docString.c_str())
-        .def("SetBitList", setBitList,
+        .def("SetBitList", setBitList, python::args("self", "bitList"),
              "Set the list of bits that need to be correllated\n\n"
              " This may for example be their top ranking ensemble bits\n\n"
              "ARGUMENTS:\n\n"
              "  - bitList : an integer list of bit IDs\n")
-        .def("CollectVotes", CollectVotes,
+        .def("CollectVotes", CollectVotes, python::args("self", "bitVect"),
              "For each pair of on bits (bi, bj) in fp increase the correlation "
              "count for the pair by 1\n\n"
              "ARGUMENTS:\n\n"
              "  - fp : a bit vector to collect the fingerprints from\n")
-        .def("GetCorrMatrix", getCorrMatrix,
+        .def("GetCorrMatrix", getCorrMatrix, python::args("self"),
              "Get the correlation matrix following the collection of votes "
              "from a bunch of fingerprints\n");
   };

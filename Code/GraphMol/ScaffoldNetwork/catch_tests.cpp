@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include "GraphMol/ScaffoldNetwork/detail.h"
 #include "RDGeneral/test.h"
 #include <sstream>
@@ -269,6 +269,21 @@ TEST_CASE("addMolToNetwork", "[unittest][scaffolds]") {
     // std::cerr << std::endl;
     CHECK(std::find(net.nodes.begin(), net.nodes.end(),
                     "*1**1**1:*:*:*:*:*:1") != net.nodes.end());
+  }
+  SECTION("includes names") {
+    auto m = "CC(=O)Oc1ccccc1C(=O)O aspirin"_smiles;
+    REQUIRE(m);
+    // check that the name was parsed into "_Name"
+    CHECK(m->getProp<std::string>("_Name") == "aspirin");
+    ScaffoldNetwork::ScaffoldNetworkParams ps;
+    ScaffoldNetwork::ScaffoldNetwork net;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, net, ps);
+    CHECK(net.nodes.at(0) == "CC(=O)Oc1ccccc1C(=O)O");
+
+    ps.includeNames = true;
+    ScaffoldNetwork::ScaffoldNetwork otherNet;
+    ScaffoldNetwork::detail::addMolToNetwork(*m, otherNet, ps);
+    CHECK(otherNet.nodes.at(0) == "CC(=O)Oc1ccccc1C(=O)O aspirin");
   }
 }
 TEST_CASE("Network defaults", "[scaffolds]") {
@@ -898,5 +913,17 @@ TEST_CASE("molCounts", "[scaffolds]") {
       auto idx = loc - net.nodes.begin();
       CHECK(net.molCounts[idx] == endp.second);
     }
+  }
+}
+
+TEST_CASE("Github #6855 MakeScaffoldGeneric isotope removal", "[bug]") {
+  auto m = "[235U]1CC1"_smiles;
+  REQUIRE(m);
+  SECTION("basics") {
+    std::unique_ptr<ROMol> pm(
+        ScaffoldNetwork::detail::makeScaffoldGeneric(*m, true, false));
+    REQUIRE(pm);
+    auto smiles = MolToSmiles(*pm);
+    CHECK(smiles == "*1**1");
   }
 }

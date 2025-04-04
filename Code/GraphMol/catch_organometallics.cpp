@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RWMol.h>
 #include <GraphMol/FileParsers/FileParsers.h>
@@ -86,11 +86,11 @@ TEST_CASE("convert explicit dative bonds to haptic bond") {
       // Check the dummy atoms are in the right place.
       auto [d1, d2, d1x, d1y, d2x, d2y] = exp_res[i];
       auto dummy1pos = mol->getConformer().getAtomPos(d1);
-      REQUIRE_THAT(dummy1pos.x, Catch::WithinAbs(d1x, 0.1));
-      REQUIRE_THAT(dummy1pos.y, Catch::WithinAbs(d1y, 0.1));
+      REQUIRE_THAT(dummy1pos.x, Catch::Matchers::WithinAbs(d1x, 0.1));
+      REQUIRE_THAT(dummy1pos.y, Catch::Matchers::WithinAbs(d1y, 0.1));
       auto dummy2pos = mol->getConformer().getAtomPos(d2);
-      REQUIRE_THAT(dummy2pos.x, Catch::WithinAbs(d2x, 0.1));
-      REQUIRE_THAT(dummy2pos.y, Catch::WithinAbs(d2y, 0.1));
+      REQUIRE_THAT(dummy2pos.x, Catch::Matchers::WithinAbs(d2x, 0.1));
+      REQUIRE_THAT(dummy2pos.y, Catch::Matchers::WithinAbs(d2y, 0.1));
     }
   }
   {
@@ -99,8 +99,8 @@ TEST_CASE("convert explicit dative bonds to haptic bond") {
       std::unique_ptr<ROMol> mol(MolFileToMol(pathName + td));
       REQUIRE(mol);
       auto initSmi = MolToSmiles(*mol);
-      auto mol1 = MolOps::hapticBondsToDative(*mol);
-      auto mol2 = MolOps::dativeBondsToHaptic(*mol1);
+      std::unique_ptr<ROMol> mol1{MolOps::hapticBondsToDative(*mol)};
+      std::unique_ptr<ROMol> mol2{MolOps::dativeBondsToHaptic(*mol1)};
       CHECK(initSmi == MolToSmiles(*mol2));
     }
   }

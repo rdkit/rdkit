@@ -25,7 +25,10 @@ from io import BytesIO, StringIO
 import rdkit.Chem.rdDepictor
 from rdkit import Chem, DataStructs, RDConfig, __version__, rdBase
 from rdkit.Chem import rdqueries
+from rdkit.Chem import AllChem
 from rdkit.Chem.Scaffolds import MurckoScaffold
+
+import numpy as np
 
 # Boost functions are NOT found by doctest, this "fixes" them
 #  by adding the doctests to a fake module
@@ -148,8 +151,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(tbl.GetAtomicNumber('C') == 6)
     self.assertTrue(feq(tbl.GetRvdw(6), 1.7))
     self.assertTrue(feq(tbl.GetRvdw("C"), 1.7))
-    self.assertTrue(feq(tbl.GetRcovalent(6), 0.680))
-    self.assertTrue(feq(tbl.GetRcovalent("C"), 0.680))
+    self.assertTrue(feq(tbl.GetRcovalent(6), 0.76))
+    self.assertTrue(feq(tbl.GetRcovalent("C"), 0.76))
     self.assertTrue(tbl.GetDefaultValence(6) == 4)
     self.assertTrue(tbl.GetDefaultValence("C") == 4)
     self.assertTrue(tuple(tbl.GetValenceList(6)) == (4, ))
@@ -168,6 +171,8 @@ class TestCase(unittest.TestCase):
     self.assertTrue(feq(tbl.GetRb0("C"), 0.77))
     self.assertTrue(tbl.GetElementSymbol(6) == 'C')
     self.assertTrue(tbl.GetElementName(6) == 'Carbon')
+    self.assertTrue(tbl.GetRow(6) == 2)
+    self.assertTrue(tbl.GetRow("C") == 2)
 
   def test2Atom(self):
     atom = Chem.Atom(6)
@@ -265,8 +270,10 @@ class TestCase(unittest.TestCase):
 
     self.assertTrue([x.GetTotalNumHs() for x in aList] == [0, 1, 2, 2])
     self.assertTrue([x.GetNumImplicitHs() for x in aList] == [0, 1, 2, 0])
-    self.assertTrue([x.GetExplicitValence() for x in aList] == [3, 3, 2, 3])
-    self.assertTrue([x.GetImplicitValence() for x in aList] == [0, 1, 2, 0])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.EXPLICIT) for x in aList] == [3, 3, 2, 3])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.IMPLICIT) for x in aList] == [0, 1, 2, 0])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.EXPLICIT) for x in aList] == [3, 3, 2, 3])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.IMPLICIT) for x in aList] == [0, 1, 2, 0])
     self.assertTrue([x.GetFormalCharge() for x in aList] == [0, 0, 0, -1])
     self.assertTrue([x.GetNoImplicit() for x in aList] == [0, 0, 0, 1])
     self.assertTrue([x.GetNumExplicitHs() for x in aList] == [0, 0, 0, 2])
@@ -481,6 +488,23 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m.GetAtomWithIdx(0).GetDegree(), 4)
     self.assertEqual(m.GetAtomWithIdx(2).GetDegree(), 4)
     self.assertEqual(m.GetAtomWithIdx(1).GetDegree(), 2)
+
+    # AddHsParameters
+    params = Chem.AddHsParameters()
+    params.skipQueries = True
+    m = Chem.MolFromSmiles('CC')
+    self.assertIsNotNone(m)
+    nm = Chem.AddHs(m)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+    nm = Chem.AddHs(m, params)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+
+    m = Chem.MolFromSmarts('[CH3][CH3]')
+    self.assertIsNotNone(m)
+    nm = Chem.AddHs(m)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+    nm = Chem.AddHs(m, params)
+    self.assertEqual(nm.GetNumAtoms(), 2)
 
   def test15Neighbors(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
@@ -819,7 +843,6 @@ class TestCase(unittest.TestCase):
   def test23MolFileParsing(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'triazine.mol')
-    #fileN = "../FileParsers/test_data/triazine.mol"
     with open(fileN, 'r') as inF:
       inD = inF.read()
     m1 = Chem.MolFromMolBlock(inD)
@@ -838,7 +861,7 @@ class TestCase(unittest.TestCase):
                          'list-query.mol')
     query = Chem.MolFromMolFile(fileN)
     smi = Chem.MolToSmiles(query)
-    self.assertEqual(smi, 'c1ccccc1')
+    self.assertEqual(smi, '*1ccccc1')
     smi = Chem.MolToSmarts(query)
     self.assertEqual(smi, '[#6]1:[#6]:[#6]:[#6]:[#6]:[#6,#7,#15]:1')
     smi = Chem.MolToSmarts(query, rootedAtAtom=5)
@@ -846,7 +869,7 @@ class TestCase(unittest.TestCase):
 
     query = Chem.MolFromMolFile(fileN, sanitize=False)
     smi = Chem.MolToSmiles(query)
-    self.assertEqual(smi, 'C1=CC=CC=C1')
+    self.assertEqual(smi, '*1=CC=CC=C1')
     query.UpdatePropertyCache()
     smi = Chem.MolToSmarts(query)
     self.assertEqual(smi, '[#6]1=[#6]-[#6]=[#6]-[#6]=[#6,#7,#15]-1')
@@ -1382,6 +1405,7 @@ M  END
     m1 = Chem.MolFromMolBlock(inD)
     self.assertTrue(m1 is not None)
     self.assertTrue(m1.GetNumAtoms() == 5)
+    smi = Chem.MolToSmiles(m1)
     self.assertTrue(smi == 'F[C@](Cl)(Br)I', smi)
 
     inD = """chiral2.cdxml
@@ -3335,7 +3359,7 @@ CAS<~>
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
     self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
-    self.assertEqual(atom.GetExplicitValence(), 0)
+    self.assertEqual(atom.GetValence(which=Chem.ValenceType.EXPLICIT), 0)
     bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
     self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
 
@@ -3344,7 +3368,7 @@ CAS<~>
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
     self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
-    self.assertEqual(atom.GetExplicitValence(), 0)
+    self.assertEqual(atom.GetValence(which=Chem.ValenceType.EXPLICIT), 0)
     bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
     self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
     # test unbinding HOHs
@@ -3884,7 +3908,7 @@ CAS<~>
     qps = Chem.AdjustQueryParameters()
     qps.makeAtomsGeneric = True
     am = Chem.AdjustQueryProperties(m, qps)
-    self.assertEqual(Chem.MolToSmarts(am), '*1-*-*-*-1-*-*')
+    self.assertEqual(Chem.MolToSmarts(am), '[D2]1-[D2]-[D2]-[D3]-1-*-*')
     qps.makeAtomsGenericFlags = Chem.ADJUST_IGNORERINGS
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1-*-*')
@@ -3908,7 +3932,7 @@ CAS<~>
     qps = Chem.AdjustQueryParameters()
     qps.makeAtomsGeneric = True
     am = Chem.AdjustQueryProperties(m, qps)
-    self.assertEqual(Chem.MolFragmentToSmarts(am, [0, 1, 2]), '*-*-*')
+    self.assertEqual(Chem.MolFragmentToSmarts(am, [3, 4, 5]), '[D3]-*-*')
 
   def testAdjustQueryPropertiesgithubIssue1474(self):
     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
@@ -3918,6 +3942,19 @@ CAS<~>
     ap = Chem.AdjustQueryProperties(core)
     self.assertEqual(ap.GetAtomWithIdx(0).GetPropsAsDict()["foo"], "bar")
     self.assertEqual(ap.GetAtomWithIdx(1).GetPropsAsDict()["foo"], "bar")
+
+  def testReplaceAtomWithQueryAtom(self):
+    mol = Chem.MolFromSmiles("CC(C)C")
+    qmol = Chem.MolFromSmiles("C")
+    matches = mol.GetSubstructMatches(qmol)
+    self.assertEqual(((0, ), (1, ), (2, ), (3, )), matches)
+
+    atom = qmol.GetAtomWithIdx(0)
+    natom = rdqueries.ReplaceAtomWithQueryAtom(qmol, atom)
+    qa = rdqueries.ExplicitDegreeEqualsQueryAtom(3)
+    natom.ExpandQuery(qa, Chem.CompositeQueryType.COMPOSITE_AND)
+    matches = mol.GetSubstructMatches(qmol)
+    self.assertEqual(((1, ), ), matches)
 
   def testGithubIssue579(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -4001,8 +4038,8 @@ CAS<~>
     self.assertTrue(resMolSuppl.GetIsEnumerated())
     self.assertTrue(
       (resMolSuppl[0].GetBondBetweenAtoms(0, 1).GetBondType() != resMolSuppl[1].GetBondBetweenAtoms(
-        0, 1).GetBondType()) or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType() !=
-                                 resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
+        0, 1).GetBondType()) or (resMolSuppl[0].GetBondBetweenAtoms(9, 10).GetBondType()
+                                 != resMolSuppl[1].GetBondBetweenAtoms(9, 10).GetBondType()))
 
     resMolSuppl = Chem.ResonanceMolSupplier(mol, Chem.KEKULE_ALL)
     self.assertEqual(len(resMolSuppl), 8)
@@ -5319,6 +5356,7 @@ width='200px' height='200px' >
       self.assertEqual(mol.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREONONE)
       for bond in mol.GetBonds():
         bond.SetBondDir(Chem.BondDir.NONE)
+
       Chem.AssignStereochemistryFrom3D(mol)
       self.assertTrue(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
       self.assertEqual(mol.GetAtomWithIdx(1).GetProp("_CIPCode"), expectedCIP)
@@ -6560,6 +6598,28 @@ M  END
     self.assertEqual(len(ctrs), 2)
     self.assertEqual(ctrs, [(1, 'S'), (5, '?')])
 
+  def testGithub6945(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    tgt = [(1, '?'), (4, 'R')]
+    try:
+      for opt in (not origVal, origVal):
+        Chem.SetUseLegacyStereoPerception(opt)
+        # make sure calling with the default value works:
+        self.assertEqual(
+          tgt,
+          Chem.FindMolChiralCenters(Chem.MolFromSmiles('FC(Cl)(Br)[C@H](F)Cl'),
+                                    includeUnassigned=True))
+        for useLegacy in (True, False):
+          self.assertEqual(
+            tgt,
+            Chem.FindMolChiralCenters(Chem.MolFromSmiles('FC(Cl)(Br)[C@H](F)Cl'),
+                                      includeUnassigned=True, useLegacyImplementation=useLegacy))
+    except:
+      raise
+    finally:
+      Chem.SetUseLegacyStereoPerception(origVal)
+
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMolFromPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.png')
@@ -6573,6 +6633,7 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMolToPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.no_metadata.png')
@@ -6593,6 +6654,7 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMolsFromPNG(self):
     refMols = [Chem.MolFromSmiles(x) for x in ('c1ccccc1', 'CCO', 'CC(=O)O', 'c1ccccn1')]
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
@@ -6602,6 +6664,7 @@ M  END
     for mol, refMol in zip(mols, refMols):
       self.assertEqual(Chem.MolToSmiles(mol), Chem.MolToSmiles(refMol))
 
+  @unittest.skipUnless(hasattr(Chem, 'MolFromPNGFile'), "RDKit not built with iostreams support")
   def testMetadataToPNG(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'colchicine.png')
@@ -6671,6 +6734,43 @@ M  END
     self.assertIsNotNone(read_smile("CCC").GetConformers()[0].GetOwningMol())
     pos = read_smile("CCC").GetConformers()[0].GetPositions()
     self.assertAlmostEqual(sq_dist(pos[0], pos[1]), sq_dist(pos[1], pos[2]))
+
+  def test_get_set_positions(self):
+    m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
+    pos = np.zeros([3, 3], np.double)
+    pos[0][1] = 1
+    pos[0][2] = 2
+    pos[1][0] = 3
+    pos[1][1] = 4
+    pos[1][2] = 5
+    pos[2][0] = 6
+    pos[2][1] = 6
+    pos[2][2] = 7
+
+    m.GetConformer(0).SetPositions(pos)
+    pos2 = m.GetConformer(0).GetPositions()
+
+    self.assertTrue((pos == pos2).all())
+
+  def test_get_set_positions_stride(self):
+    m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
+    # to check stride walking in SetPositions
+    # allocate a double size array, then slice every other element
+    # numpy will mess with the striding to create the view onto the double size array
+    pos = np.zeros([6, 3], np.double)[::2]
+    pos[0][1] = 1
+    pos[0][2] = 2
+    pos[1][0] = 3
+    pos[1][1] = 4
+    pos[1][2] = 5
+    pos[2][0] = 6
+    pos[2][1] = 6
+    pos[2][2] = 7
+
+    m.GetConformer(0).SetPositions(pos)
+    pos2 = m.GetConformer(0).GetPositions()
+
+    self.assertTrue((pos == pos2).all())
 
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
@@ -6977,6 +7077,11 @@ CAS<~>
       self.assertTrue(bond.GetIsAromatic())
       self.assertEqual(bond.GetBondType(), Chem.BondType.AROMATIC)
 
+  def testHasValenceViolation(self):
+    mol = Chem.MolFromSmiles('C(C)(C)(C)(C)C', sanitize=False)
+    mol.UpdatePropertyCache(strict=False)
+    self.assertTrue(any(a.HasValenceViolation() for a in mol.GetAtoms()))
+
   def testgithub4992(self):
     if not hasattr(Chem, "Chem.MultithreadedSDMolSupplier"):
       return
@@ -7110,6 +7215,651 @@ CAS<~>
     self.assertNotEqual(m.GetAtomWithIdx(9).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
 
     Chem.SetUseLegacyStereoPerception(origVal)
+
+  def testValidationMrvRxn(self):
+    Chem.SetUseLegacyStereoPerception(False)
+
+    mrvBlock = ""
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBondRxn.mrv')
+    with open(fileN) as f:
+      mrvBlock = f.read()
+    rxn = AllChem.ReactionFromMrvBlock(mrvBlock, True, True)
+
+    smi = AllChem.ReactionToSmiles(rxn)
+    self.assertEqual(smi, "CC=C1COC(C)OC1>>CC=C1COC(C)OC1")
+
+    rxn = AllChem.ReactionFromMrvFile(fileN, True, True)
+    smi = AllChem.ReactionToSmiles(rxn)
+    self.assertEqual(smi, "CC=C1COC(C)OC1>>CC=C1COC(C)OC1")
+
+    Chem.SetUseLegacyStereoPerception(True)
+
+  def testValidationMrvRxn2(self):
+    Chem.SetUseLegacyStereoPerception(False)
+
+    mrvBlock = ""
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBondRxn2.mrv')
+
+    with open(fileN) as f:
+      mrvBlock = f.read()
+    rxn = AllChem.ReactionFromMrvBlock(mrvBlock, True, True)
+
+    smi = AllChem.ReactionToSmiles(rxn)
+    self.assertEqual(
+      smi,
+      "C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(CCC)c1"
+    )
+
+    Chem.SetUseLegacyStereoPerception(True)
+
+  def testValidationMrvRxn3(self):
+    Chem.SetUseLegacyStereoPerception(False)
+
+    mrvBlock = ""
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBondAndChiralRxn.mrv')
+    with open(fileN) as f:
+      mrvBlock = f.read()
+    rxn = AllChem.ReactionFromMrvBlock(mrvBlock, True, True)
+
+    smi = AllChem.ReactionToSmiles(rxn)
+    self.assertEqual(
+      smi,
+      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+    )
+
+    Chem.SetUseLegacyStereoPerception(True)
+
+  def testValidationRxn(self):
+    Chem.SetUseLegacyStereoPerception(False)
+
+    rxnBlock = ""
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBondAndChiralRxn.rxn')
+    with open(fileN) as f:
+      rxnBlock = f.read()
+
+    rxn = AllChem.ReactionFromRxnBlock(rxnBlock, True, True, False)
+    smi = AllChem.ReactionToSmiles(rxn)
+    self.assertEqual(
+      smi,
+      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+    )
+
+    rxn = AllChem.ReactionFromRxnFile(fileN, True, True, False)
+
+    smi = AllChem.ReactionToSmiles(rxn)
+    self.assertEqual(
+      smi,
+      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+    )
+
+    Chem.SetUseLegacyStereoPerception(True)
+
+  def testValidationSmiles(self):
+    Chem.SetUseLegacyStereoPerception(False)
+
+    smi = "C=C1CC(C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+    ps = Chem.SmilesParserParams()
+    ps.allowCXSMILES = True
+    ps.parseName = False
+    ps.sanitize = True
+    ps.removeHs = False
+    mol = Chem.MolFromSmiles(smi, ps)
+    self.assertIsNotNone(mol)
+
+    of = Chem.SmilesWriteParams()
+    outSmi = Chem.MolToCXSmiles(mol, of, Chem.CXSmilesFields.CX_ALL)
+
+    self.assertEqual(outSmi, "C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    smi = "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+    mol = Chem.MolFromSmiles(smi, ps)
+    self.assertIsNotNone(mol)
+
+    outSmi = Chem.MolToCXSmiles(mol, of, Chem.CXSmilesFields.CX_ALL),
+
+    self.assertEqual(outSmi[0], "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C\\c1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    Chem.SetUseLegacyStereoPerception(True)
+
+  def testValidationMol(self):
+    Chem.SetUseLegacyStereoPerception(False)
+    molBlock = ""
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBond2000.mol')
+    with open(fileN) as f:
+      molBlock = f.read()
+    mol = Chem.MolFromMolBlock(molBlock, True, True, False)
+
+    smi = Chem.MolToSmiles(mol)
+    self.assertEqual(smi, "C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    rxn = Chem.MolFromMolFile(fileN, True, True, False)
+
+    smi = Chem.MolToSmiles(rxn)
+    self.assertEqual(smi, "C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    # nowthe V3000 version
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBond3000.mol')
+    with open(fileN) as f:
+      molBlock = f.read()
+    mol = Chem.MolFromMolBlock(molBlock, True, True, False)
+
+    smi = Chem.MolToSmiles(mol)
+    self.assertEqual(smi, "C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    mol = Chem.MolFromMolFile(fileN, True, True, False)
+    smi = Chem.MolToSmiles(mol)
+    self.assertEqual(smi, "C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    # now the chiral versions - the double bond should be chiral
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBond2000Chiral.mol')
+    with open(fileN) as f:
+      molBlock = f.read()
+    mol = Chem.MolFromMolBlock(molBlock, True, True, False)
+
+    smi = Chem.MolToSmiles(mol)
+    self.assertEqual(smi, "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    rxn = Chem.MolFromMolFile(fileN, True, True, False)
+
+    smi = Chem.MolToSmiles(rxn)
+    self.assertEqual(smi, "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    # now the V3000 version
+
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBond3000Chiral.mol')
+    with open(fileN) as f:
+      molBlock = f.read()
+    mol = Chem.MolFromMolBlock(molBlock, True, True, False)
+
+    smi = Chem.MolToSmiles(mol)
+    self.assertEqual(smi, "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    mol = Chem.MolFromMolFile(fileN, True, True, False)
+    smi = Chem.MolToSmiles(mol)
+    self.assertEqual(smi, "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    Chem.SetUseLegacyStereoPerception(True)
+
+  def testValidationMrv(self):
+    Chem.SetUseLegacyStereoPerception(False)
+    mrvBlock = ""
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'DoubleBond.mrv')
+    with open(fileN) as f:
+      mrvBlock = f.read()
+    mol = Chem.MolFromMrvBlock(mrvBlock, True, True)
+
+    smi = Chem.MolToSmiles(mol)
+    self.assertEqual(smi, "C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    mol = Chem.MolFromMrvFile(fileN, True, True)
+    smi = Chem.MolToSmiles(mol)
+    self.assertEqual(smi, "C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1")
+
+    Chem.SetUseLegacyStereoPerception(True)
+
+  def test_picklingWithAddedAttribs(self):
+    m = Chem.MolFromSmiles("C")
+    m.foo = 1
+    m.SetIntProp("bar", 2)
+    pkl = pickle.dumps(m)
+    nm = pickle.loads(pkl)
+    self.assertEqual(nm.GetIntProp("bar"), 2)
+    self.assertEqual(nm.foo, 1)
+
+  def testGithubIssue6306(self):
+    # test of unpickling
+    props = Chem.GetDefaultPickleProperties()
+    try:
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
+      mols = [Chem.MolFromSmiles(s) for s in ["C", "CC"]]
+      scaffolds = [MurckoScaffold.GetScaffoldForMol(m) for m in mols]
+      # this shouldn't throw an exception
+      unpickler = [pickle.loads(pickle.dumps(m)) for m in mols]
+    finally:
+      Chem.SetDefaultPickleProperties(props)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  def testMaeWriter(self):
+    mol = Chem.MolFromSmiles("C1CCCCC1")
+    self.assertTrue(mol)
+    title = "random test mol"
+    mol.SetProp('_Name', title)
+
+    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
+                         'outMaeWriter.mae')
+    writer1 = Chem.MaeWriter(ofile)
+
+    osio = StringIO()
+    writer2 = Chem.MaeWriter(osio)
+
+    for writer in (writer1, writer2):
+      writer.write(mol)
+      writer.close()
+      del writer
+
+    with open(ofile) as f:
+      maefile = f.read()
+
+    self.assertEqual(maefile, osio.getvalue())
+
+    self.assertIn('s_m_m2io_version', maefile)
+
+    self.assertIn('f_m_ct', maefile)
+
+    self.assertIn('s_m_title', maefile)
+    self.assertIn(title, maefile)
+
+    self.assertIn(f' m_atom[{mol.GetNumAtoms()}] {{', maefile)
+
+    self.assertEqual(maefile.count("A0A0A0"), 6)  # 6 grey-colored heavy atoms
+
+    self.assertTrue(f' m_bond[{mol.GetNumBonds()}] {{', maefile)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  def testMaeWriterProps(self):
+    mol = Chem.MolFromSmiles("C1CCCCC1")
+    self.assertTrue(mol)
+
+    title = "random test mol"
+    mol.SetProp('_Name', title)
+
+    boolProp = False
+    intProp = 123454321
+    realProp = 2.718282  # Mae files have a predefined precision of 6 digits!
+    strProp = r"This is a dummy prop, yay!"
+
+    ignored_prop = 'ignored_prop'
+    str_dummy_prop = 'str_dummy_prop'
+    mol_prop = 'mol_prop'
+    atom_prop = 'atom_prop'
+    bond_prop = 'bond_prop'
+    exported_props = [str_dummy_prop, mol_prop, atom_prop, bond_prop]
+
+    mol.SetIntProp(mol_prop, intProp)
+    mol.SetProp(str_dummy_prop, strProp)
+    mol.SetProp(ignored_prop, ignored_prop)
+
+    atomIdx = 2
+    at = mol.GetAtomWithIdx(atomIdx)
+    at.SetDoubleProp(atom_prop, realProp)
+    at.SetProp(str_dummy_prop, strProp)
+    at.SetProp(ignored_prop, ignored_prop)
+
+    bondIdx = 4
+    b = mol.GetBondWithIdx(bondIdx)
+    b.SetBoolProp(bond_prop, boolProp)
+    b.SetProp(str_dummy_prop, strProp)
+    b.SetProp(ignored_prop, ignored_prop)
+
+    heavyAtomColor = "767676"
+
+    osio = StringIO()
+    with Chem.MaeWriter(osio) as w:
+      w.SetProps(exported_props)
+      w.write(mol, heavyAtomColor=heavyAtomColor)
+
+    maestr = osio.getvalue()
+
+    ctBlockStart = maestr.find('f_m_ct')
+    atomBlockStart = maestr.find(' m_atom[')
+    bondBlockStart = maestr.find(' m_bond[')
+
+    self.assertNotEqual(ctBlockStart, -1)
+    self.assertNotEqual(atomBlockStart, -1)
+    self.assertNotEqual(bondBlockStart, -1)
+
+    self.assertGreater(bondBlockStart, atomBlockStart)
+    self.assertGreater(atomBlockStart, ctBlockStart)
+
+    # structure properties
+    self.assertIn(mol_prop, maestr[ctBlockStart:atomBlockStart])
+    self.assertIn(str(intProp), maestr[ctBlockStart:atomBlockStart])
+
+    self.assertIn(str_dummy_prop, maestr[ctBlockStart:atomBlockStart])
+    self.assertIn(strProp, maestr[ctBlockStart:atomBlockStart])
+
+    self.assertNotIn(ignored_prop, maestr[ctBlockStart:atomBlockStart])
+
+    # atom properties
+    self.assertIn(atom_prop, maestr[atomBlockStart:bondBlockStart])
+    self.assertIn(str_dummy_prop, maestr[atomBlockStart:bondBlockStart])
+
+    self.assertNotIn(ignored_prop, maestr[atomBlockStart:bondBlockStart])
+
+    for line in maestr[atomBlockStart:bondBlockStart].split('\n'):
+      if line.strip().startswith(str(atomIdx + 1)):
+        break
+    self.assertIn(str(realProp), line)
+    self.assertIn(strProp, line)
+    self.assertIn(heavyAtomColor, line)
+
+    # bond properties
+    self.assertIn(bond_prop, maestr[bondBlockStart:])
+    self.assertIn(str_dummy_prop, maestr[bondBlockStart:])
+
+    self.assertNotIn(ignored_prop, maestr[bondBlockStart:])
+
+    for line in maestr[bondBlockStart:].split('\n'):
+      if line.strip().startswith(str(bondIdx + 1)):
+        break
+    self.assertIn(str(int(boolProp)), line)
+    self.assertIn(strProp, line)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  def testMaeWriterRoundtrip(self):
+    smiles = "C1CCCCC1"
+    mol = Chem.MolFromSmiles(smiles)
+    self.assertTrue(mol)
+
+    osio = StringIO()
+    with Chem.MaeWriter(osio) as w:
+      w.write(mol)
+
+    isio = BytesIO(osio.getvalue().encode())
+    with Chem.MaeMolSupplier(isio) as r:
+      roundtrip_mol = next(r)
+    self.assertTrue(roundtrip_mol)
+
+    self.assertEqual(Chem.MolToSmiles(roundtrip_mol), smiles)
+
+  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
+  def testMaeWriterGetText(self):
+    smiles = "C1CCCCC1"
+    mol = Chem.MolFromSmiles(smiles)
+    self.assertTrue(mol)
+
+    dummy_prop = 'dummy_prop'
+    another_dummy_prop = 'another_dummy_prop'
+    mol.SetProp(dummy_prop, dummy_prop)
+    mol.SetProp(another_dummy_prop, another_dummy_prop)
+
+    heavyAtomColor = "767676"
+
+    osio = StringIO()
+    with Chem.MaeWriter(osio) as w:
+      w.SetProps([dummy_prop])
+      w.write(mol, heavyAtomColor=heavyAtomColor)
+
+    iomae = osio.getvalue()
+
+    ctBlockStart = iomae.find('f_m_ct')
+    self.assertNotEqual(ctBlockStart, -1)
+
+    self.assertIn(dummy_prop, iomae)
+    self.assertNotIn(another_dummy_prop, iomae)
+
+    mae = Chem.MaeWriter.GetText(mol, heavyAtomColor, -1, [dummy_prop])
+
+    self.assertEqual(mae, iomae[ctBlockStart:])
+
+  def test3dChiralMolFile(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'Cubane.sdf')
+    with open(fileN, 'r') as inF:
+      inD = inF.read()
+
+    fileWedges = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                              'CubaneWedges.cxsmi')
+    with open(fileWedges, 'r') as inF:
+      inWedges = inF.read()
+
+    fileNoWedges = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                                'CubaneNoWedges.cxsmi')
+    with open(fileNoWedges, 'r') as inF:
+      inNoWedges = inF.read()
+
+    m1 = Chem.MolFromMolBlock(inD, sanitize=False, removeHs=False, strictParsing=True)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    self.assertTrue(smi == inWedges)
+
+    m1 = Chem.MolFromMolFile(fileN, sanitize=False, removeHs=False, strictParsing=True)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    self.assertTrue(smi == inWedges)
+
+    m1 = Chem.MolFromMolBlock(inD, sanitize=False, removeHs=False, strictParsing=True)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    self.assertTrue(smi == inNoWedges)
+
+    m1 = Chem.MolFromMolFile(fileN, sanitize=False, removeHs=False, strictParsing=True)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    self.assertTrue(smi == inNoWedges)
+
+  def test3dChiralMrvFile(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                         'Cubane.mrv')
+    with open(fileN, 'r') as inF:
+      inD = inF.read()
+
+    fileWedges = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                              'CubaneWedges.cxsmi')
+    with open(fileWedges, 'r') as inF:
+      inWedges = inF.read()
+
+    fileNoWedges = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                                'CubaneNoWedges.cxsmi')
+    with open(fileNoWedges, 'r') as inF:
+      inNoWedges = inF.read()
+
+    m1 = Chem.MolFromMrvBlock(inD, sanitize=False, removeHs=False)
+
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    sys.stdout.flush()
+    self.assertTrue(smi == inWedges)
+
+    m1 = Chem.MolFromMrvFile(fileN, sanitize=False, removeHs=False)
+
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    self.assertTrue(smi == inWedges)
+
+    m1 = Chem.MolFromMrvBlock(inD, sanitize=False, removeHs=False)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    self.assertTrue(smi == inNoWedges)
+
+    m1 = Chem.MolFromMrvFile(fileN, sanitize=False, removeHs=False)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    self.assertTrue(smi == inNoWedges)
+
+  def test3dChiralCxsmiles(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'SmilesParse', 'test_data',
+                         'Cubane.cxsmi')
+    with open(fileN, 'r') as inF:
+      inD = inF.read()
+
+    fileWedges = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'SmilesParse', 'test_data',
+                              'Cubane.cxsmi.expected3D.cxsmi')
+    with open(fileWedges, 'r') as inF:
+      inWedges = inF.read()
+
+    fileNoWedges = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'SmilesParse', 'test_data',
+                                'Cubane.cxsmi.expected3D2.cxsmi')
+    with open(fileNoWedges, 'r') as inF:
+      inNoWedges = inF.read()
+
+    ps = Chem.SmilesParserParams()
+    ps.allowCXSMILES = True
+    ps.parseName = False
+    ps.sanitize = False
+    ps.removeHs = False
+
+    m1 = Chem.MolFromSmiles(inD, ps)
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    sys.stdout.flush()
+    self.assertTrue(smi == inWedges)
+
+    m1 = Chem.MolFromSmiles(inD, ps)
+    Chem.RemoveNonExplicit3DChirality(m1)
+
+    self.assertTrue(m1 is not None)
+    self.assertTrue(m1.GetNumAtoms() == 16)
+    smi = Chem.MolToCXSmiles(m1)
+    print('inWedges: ', inNoWedges)
+
+    self.assertTrue(smi == inNoWedges)
+
+  def testReapplyMolBlockWedging(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                         'JDQ443_atrop1.mrv')
+
+    fileReapplied = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                                 'JDQ443_atrop1.mrv.expected.sdf')
+    with open(fileReapplied, 'r') as inF:
+      isReapplied = inF.read()
+
+    fileNotReapplied = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse',
+                                    'test_data', 'JDQ443_atrop1.mrv.expected2.sdf')
+    with open(fileNotReapplied, 'r') as inF:
+      isNotReapplied = inF.read()
+
+    m = Chem.MolFromMrvFile(fileN, False, False)
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 38)
+    mBlock = Chem.MolToMolBlock(m, False, -1, True, True)
+
+    sys.stdout.flush()
+    self.assertTrue(mBlock == isNotReapplied)
+    Chem.ReapplyMolBlockWedging(m)
+
+    mBlock = Chem.MolToMolBlock(m, False, -1, True, True)
+    sys.stdout.flush()
+
+    self.assertTrue(mBlock == isReapplied)
+
+  def testReapplyMolBlockWedgingAllBondTypes(self):
+    m = Chem.MolFromMolBlock('''
+  Mrv2311 04232413302D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 4 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 S -11.583 11.3533 0 0
+M  V30 2 C -12.9167 10.5833 0 0
+M  V30 3 O -11.583 12.8933 0 0
+M  V30 4 C -10.2493 10.5833 0 0
+M  V30 5 C -10.2493 9.0433 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 4 5
+M  V30 2 1 2 1
+M  V30 3 1 1 4
+M  V30 4 2 1 3 CFG=1
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+''')
+    self.assertEqual(m.GetBondWithIdx(3).GetBondType(), Chem.BondType.DOUBLE)
+    Chem.ReapplyMolBlockWedging(m)
+    self.assertEqual(m.GetBondWithIdx(3).GetBondDir(), Chem.BondDir.BEGINWEDGE)
+    Chem.ReapplyMolBlockWedging(m, False)
+    self.assertEqual(m.GetBondWithIdx(3).GetBondDir(), Chem.BondDir.NONE)
+
+  def testAtropisomerWedging(self):
+    m = Chem.MolFromSmiles(
+      'CC1=C(N2C=CC=C2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 16)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi ==
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|'
+    )
+
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_ATROPISOMER | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+
+    self.assertTrue(
+      smi ==
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,&1:8|'
+    )
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi ==
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),&1:8|'
+    )
+
+  def testAtropisomerWedgingRigorousEnhancedStereo(self):
+    m = Chem.MolFromSmiles(
+      'CC1=C(N2C=CC=C2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 16)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    m = Chem.CanonicalizeStereoGroups(m)
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    print('smi: ', smi)
+    self.assertTrue(
+      smi ==
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|'
+    )
 
   def test_picklingWithAddedAttribs(self):
     m = Chem.MolFromSmiles("C")
@@ -7305,7 +8055,7 @@ CAS<~>
     femol = Chem.MolFromMolFile(fefile)
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
     self.assertEqual(Chem.MolToSmiles(newfemol),
-                     'c12->[Fe+2]3456789(<-c1c->3[cH-]->4c->52)<-c1c->6c->7[cH-]->8c->91')
+                     '[cH]12->[Fe+2]3456789(<-[cH]1[cH]->3[cH-]->4[cH]->52)<-[cH]1[cH]->6[cH]->7[cH-]->8[cH]->91')
 
   def test_DativeBondsToHaptic(self):
     fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
@@ -7346,6 +8096,221 @@ CAS<~>
 
     self.assertEqual(sgs[1].GetGroupType(), Chem.StereoGroupType.STEREO_OR)
     self.assertEqual(len(sgs[1].GetAtoms()), 1)
+
+  def testHasQueryHs(self):
+    for sma, hasQHs in [
+      ("[#1]", (True, False)), ("[#1,N]", (True, True)), ("[$(C-[H])]", (True, False)),
+      ("[$([C,#1])]", (True, True)),
+      ("[$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naaaa1),$(c([C;!R;!$(C-[N,O,S]);!$(C-[H])](=O))1naa[n,s,o]1)]",
+       (True, False))
+    ]:
+      pat = Chem.MolFromSmarts(sma)
+      self.assertEqual(Chem.HasQueryHs(pat), hasQHs)
+
+  def testMolHasQuery(self):
+    m1 = Chem.MolFromSmiles("CCO")
+    self.assertFalse(m1.HasQuery())
+
+    m2 = Chem.MolFromSmarts("[#6][#6][#8]")
+    self.assertTrue(m2.HasQuery())
+
+    m3 = Chem.MolFromSmiles("CC~O")
+    self.assertTrue(m3.HasQuery())
+
+  def testMrvHandling(self):
+    fn1 = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                       'aspirin.mrv')
+    mol = Chem.MolFromMrvFile(fn1)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 13)
+    mrv = Chem.MolToMrvBlock(mol)
+    self.assertTrue('<molecule molID="m1">' in mrv)
+    self.assertFalse('<reaction>' in mrv)
+
+    fName = tempfile.NamedTemporaryFile(suffix='.mrv').name
+    self.assertFalse(os.path.exists(fName))
+    Chem.MolToMrvFile(mol, fName)
+    self.assertTrue(os.path.exists(fName))
+    os.unlink(fName)
+
+    with open(fn1, 'r') as inf:
+      ind = inf.read()
+    mol = Chem.MolFromMrvBlock(ind)
+    self.assertIsNotNone(mol)
+    self.assertEqual(mol.GetNumAtoms(), 13)
+
+  def testAtomMapsInCanonicalization(self):
+    mol = Chem.MolFromSmiles("[F:1]C([F:2])O")
+    ranks = Chem.CanonicalRankAtoms(mol, breakTies=False, includeAtomMaps=True)
+    self.assertNotEqual(ranks[0], ranks[2])
+    ranks = Chem.CanonicalRankAtoms(mol, breakTies=False, includeAtomMaps=False)
+    self.assertEqual(ranks[0], ranks[2])
+
+  def testExpandAndCollapseAttachmentPoints(self):
+    mol = Chem.MolFromSmarts("*CO")
+    self.assertEqual(mol.GetNumAtoms(), 3)
+    mol.GetAtomWithIdx(2).SetIntProp("molAttchpt", 1)
+    Chem.ExpandAttachmentPoints(mol)
+    self.assertEqual(mol.GetNumAtoms(), 4)
+    self.assertTrue(mol.GetAtomWithIdx(3).HasQuery())
+
+    Chem.CollapseAttachmentPoints(mol)
+    self.assertEqual(mol.GetNumAtoms(), 3)
+
+    Chem.ExpandAttachmentPoints(mol, addAsQueries=False)
+    self.assertEqual(mol.GetNumAtoms(), 4)
+    self.assertFalse(mol.GetAtomWithIdx(3).HasQuery())
+    Chem.CollapseAttachmentPoints(mol, markedOnly=False)
+    self.assertEqual(mol.GetNumAtoms(), 2)
+
+  def testAddStereoAnnotations(self):
+    mol = Chem.MolFromSmiles(
+      "C[C@@H]1N[C@H](C)[C@@H]([C@H](C)[C@@H]1C)C1[C@@H](C)O[C@@H](C)[C@@H](C)[C@H]1C/C=C/C |a:5,o1:1,8,o2:14,16,&1:11,18,&2:3,6,r|"
+    )
+    self.assertIsNotNone(mol)
+    Chem.rdCIPLabeler.AssignCIPLabels(mol)
+    Chem.AddStereoAnnotations(mol)
+    self.assertEqual(mol.GetAtomWithIdx(5).GetProp("atomNote"), "abs (S)")
+    self.assertEqual(mol.GetAtomWithIdx(3).GetProp("atomNote"), "and2")
+
+  def testIsRingFused(self):
+    molOrig = Chem.MolFromSmiles("C1C(C2CC3CCCCC3C12)C1CCCCC1")
+    mol = Chem.RWMol(molOrig)
+    ri = mol.GetRingInfo()
+    self.assertEqual(ri.NumRings(), 4)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 3)
+    self.assertEqual(fusedRings.count(False), 1)
+    atoms = mol.GetSubstructMatch(Chem.MolFromSmarts("[$(C1CCC1)]-@[$(C1CCCCC1)]"))
+    mol.RemoveBond(*atoms)
+    Chem.SanitizeMol(mol)
+    self.assertEqual(Chem.MolToSmiles(mol), "C1CCC(CC2CCC2C2CCCCC2)CC1")
+    self.assertEqual(ri.NumRings(), 3)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 0)
+    self.assertEqual(fusedRings.count(False), 3)
+    mol = Chem.RWMol(molOrig)
+    ri = mol.GetRingInfo()
+    self.assertEqual(ri.NumRings(), 4)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 3)
+    self.assertEqual(fusedRings.count(False), 1)
+    fusedBonds = [ri.NumFusedBonds(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedBonds.count(0), 1)
+    self.assertEqual(fusedBonds.count(1), 2)
+    self.assertEqual(fusedBonds.count(2), 1)
+    atoms = mol.GetSubstructMatch(
+      Chem.MolFromSmarts("[$(C1CCCCC1-!@[CX4;R1;r4])].[$(C1C(-!@[CX4;R1;r6])CC1)]"))
+    mol.AddBond(*atoms, Chem.BondType.SINGLE)
+    Chem.SanitizeMol(mol)
+    self.assertEqual(Chem.MolToSmiles(mol), "C1CCC2C(C1)CC1C2C2C3CCCCC3C12")
+    self.assertEqual(ri.NumRings(), 5)
+    fusedRings = [ri.IsRingFused(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedRings.count(True), 5)
+    self.assertEqual(fusedRings.count(False), 0)
+    fusedBonds = [ri.NumFusedBonds(i) for i in range(ri.NumRings())]
+    self.assertEqual(fusedBonds.count(0), 0)
+    self.assertEqual(fusedBonds.count(1), 2)
+    self.assertEqual(fusedBonds.count(2), 3)
+
+  def testNeedsHs(self):
+    m = Chem.MolFromSmiles("CO")
+    self.assertTrue(Chem.NeedsHs(m))
+    mh = Chem.AddHs(m)
+    self.assertFalse(Chem.NeedsHs(mh))
+    nm = Chem.RWMol(mh)
+    nm.RemoveAtom(3)
+    self.assertTrue(Chem.NeedsHs(m))
+
+  def testCountAtomElec(self):
+    m = Chem.MolFromSmiles("c1n(C)ccc1")
+    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(0)), 1)
+    self.assertEqual(Chem.CountAtomElec(m.GetAtomWithIdx(1)), 2)
+
+  def testAtomHasConjugatedBond(self):
+    m = Chem.MolFromSmiles("c1n(C)ccc1")
+    self.assertTrue(Chem.AtomHasConjugatedBond(m.GetAtomWithIdx(1)))
+    self.assertFalse(Chem.AtomHasConjugatedBond(m.GetAtomWithIdx(2)))
+
+  def testSmilesWriteParamsForSMARTS(self):
+    mol = Chem.MolFromSmiles('[NH3][Fe]N')
+    self.assertIsNotNone(mol)
+    ps = Chem.SmilesWriteParams()
+    sma = Chem.MolToSmarts(mol, ps)
+    self.assertEqual(sma, '[#7H3]->[Fe]-[#7]')
+    ps.includeDativeBonds = False
+    sma = Chem.MolToSmarts(mol, ps)
+    self.assertEqual(sma, '[#7H3]-[Fe]-[#7]')
+
+  def testMolToV2KMolBlock(self):
+    mol = Chem.MolFromSmiles('[NH3]->[Fe]')
+    self.assertIsNotNone(mol)
+    mb = Chem.MolToV2KMolBlock(mol)
+    self.assertTrue('V2000' in mb)
+    self.assertTrue('  1  2  9  0' in mb)
+
+  def testFindMesoCenters(self):
+    mol = Chem.MolFromSmiles('C[C@@H](Cl)C[C@H](C)Cl')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+
+    mol = Chem.MolFromSmiles('[CH3:1][C@@H](C)C[C@@H](C)[CH3:1]')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol, includeAtomMaps=True)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(centers, ())
+
+    mol = Chem.MolFromSmiles('[13CH3][C@@H](C)C[C@@H](C)[13CH3]')
+    self.assertIsNotNone(mol)
+    centers = Chem.FindMesoCenters(mol)
+    self.assertEqual(len(centers), 1)
+    expected = ((1, 4), )
+    self.assertEqual(centers, expected)
+    centers = Chem.FindMesoCenters(mol, includeIsotopes=False)
+    self.assertEqual(centers, ())
+
+  def testIgnoreAtomMapNumbers(self):
+    mol = Chem.MolFromSmiles("[NH2:1]c1ccccc1")
+    ps = Chem.SmilesWriteParams()
+    ps.ignoreAtomMapNumbers = True
+    self.assertEqual(Chem.MolToSmiles(mol, ps), "[NH2:1]c1ccccc1")
+    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=True), "[NH2:1]c1ccccc1")
+    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False), "c1ccc([NH2:1])cc1")
+
+  def github7873(self):
+    # this used to segfault
+    Chem.MolFromSmiles("C").GetAtomWithIdx(0).SetPDBResidueInfo(None)
+
+  def testSplitMolByPDB(self):
+    mol = Chem.MolFromSmiles("C")
+    res2mol = Chem.SplitMolByPDBResidues(mol)
+    self.assertEqual(len(res2mol), 1)
+    self.assertIn("", res2mol)
+    chain2mol = Chem.SplitMolByPDBChainId(mol)
+    self.assertEqual(len(chain2mol), 1)
+    self.assertIn("", chain2mol)
+
+  def testGithub4570(self):
+    # test sending None to get/set prop
+    m = Chem.Mol()
+    # these should not seg fault
+    for func in ["HasProp", "GetProp", "GetIntProp", "GetDoubleProp"]:
+      try:
+        getattr(m, func)(None)
+      except Exception as e:
+        assert "Python argument types" in str(e), f"{func}: {str(e)}"
+
+    for func, val in [("SetProp", ""), ("SetIntProp", 1), ("SetDoubleProp", 1.0)]:
+      try:
+        getattr(m, func)(None, val)
+      except Exception as e:
+        assert "Python argument types" in str(e), f"{func}: {str(e)}"
 
 
 if __name__ == '__main__':

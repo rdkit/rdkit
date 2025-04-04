@@ -1,8 +1,9 @@
 steps:
-- bash: |
-    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX$(target_platform).sdk.tar.xz
-    tar Jxvf MacOSX$(target_platform).sdk.tar.xz
-  displayName: Install MacOSX $(target_platform) SDK
+- bash: | 
+    export CONDA=/tmp/miniforge
+    wget https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/Miniforge3-24.9.0-0-MacOSX-x86_64.sh
+    bash Miniforge3-24.9.0-0-MacOSX-x86_64.sh -b -p ${CONDA}
+  displayName: install conda
 - script: |
     echo "Removing homebrew from Azure to avoid conflicts."
     curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall > ~/uninstall_homebrew
@@ -11,27 +12,30 @@ steps:
     rm ~/uninstall_homebrew
   displayName: Remove homebrew
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     sudo chown -R ${USER} ${CONDA}
     mkdir -p $HOME/.matplotlib
     echo -e "backend: TkAgg\n" > $HOME/.matplotlib/matplotlibrc
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
-    conda create --name rdkit_build $(compiler)=$(compiler_version) libcxx=$(compiler_version) cmake=3.19.6 \
-        boost-cpp=$(boost_version) boost=$(boost_version) \
-        py-boost=$(boost_version) libboost=$(boost_version) \
+    conda config --set solver libmamba
+    conda config --set channel_priority strict
+    conda config --add channels conda-forge
+    conda create --name rdkit_build $(python) $(compiler) libcxx cmake \
+        libboost=$(boost_version) libboost-devel=$(boost_version) \
+        libboost-python=$(boost_version) libboost-python-devel=$(boost_version) \
         qt \
-        numpy matplotlib cairo pillow eigen pandas  \
-        jupyter
-    conda activate rdkit_build
-    conda install -c conda-forge sphinx myst-parser
-    conda install -c conda-forge nbval
+        numpy matplotlib=3.8 cairo pillow eigen pandas=2.1  \
+        jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval
   displayName: Setup build environment
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
+    export CXXFLAGS="${CXXFLAGS} -Wall -Wextra -Werror"
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -39,7 +43,6 @@ steps:
     -DRDK_INSTALL_STATIC_LIBS=OFF \
     -DRDK_BUILD_CPP_TESTS=ON \
     -DRDK_BUILD_PYTHON_WRAPPERS=ON \
-    -DRDK_USE_BOOST_REGEX=ON \
     -DRDK_BUILD_COORDGEN_SUPPORT=ON \
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
     -DRDK_OPTIMIZE_POPCNT=ON \
@@ -56,29 +59,26 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_CFFI_LIB=ON \
-    -DBoost_NO_SYSTEM_PATHS=ON \
     -DCMAKE_OSX_SYSROOT=${SDKROOT} \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform) \
-    -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
-    -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
-    -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
-    -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform)
   displayName: Configure build (Run CMake)
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     cd build
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
+    export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export DYLD_FALLBACK_LIBRARY_PATH=${RDBASE}/lib:${RDBASE}/rdkit:${CONDA_PREFIX}/lib:${DYLD_FALLBACK_LIBRARY_PATH}
-    export SDKROOT="$(pwd)/MacOSX$(target_platform).sdk/"
+    export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     export QT_QPA_PLATFORM='offscreen'
     cd build

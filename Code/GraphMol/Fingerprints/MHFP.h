@@ -29,8 +29,8 @@ const uint32_t prime = 0x01000193;
 const uint32_t seed = 0x811C9DC5;
 
 //! A simple implementation of the Fowler–Noll–Vo hash function.
-inline uint32_t hash(const std::string& str, uint32_t hash = seed) {
-  const unsigned char* ptr = (const unsigned char*)str.c_str();
+inline uint32_t hash(const std::string &str, uint32_t hash = seed) {
+  const unsigned char *ptr = (const unsigned char *)str.c_str();
   size_t len = str.length();
 
   while (len--) {
@@ -72,7 +72,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
 
     \returns the MinHash of the input.
    */
-  std::vector<uint32_t> FromStringArray(const std::vector<std::string>& vec);
+  std::vector<uint32_t> FromStringArray(const std::vector<std::string> &vec);
 
   /*!
     \brief Creates a MinHash from a list of unsigned integers.
@@ -85,7 +85,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
 
     \returns the MinHash of the input.
    */
-  std::vector<uint32_t> FromArray(const std::vector<uint32_t>& vec);
+  std::vector<uint32_t> FromArray(const std::vector<uint32_t> &vec);
 
   /*!
     \brief Creates a molecular shingling based on circular substructures.
@@ -99,7 +99,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
            each atom. Default: <tt>3</tt>.
     \param rings whether the rings (SSSR) are extrected from the molecule and
            added to the shingling. Given the molecule
-           <tt>"C1CCCCCC1C(=O)C"</tt>, "<tt>C1CCCCCC1"</tt> would be added
+           <tt>"C1CCCCCC1C(=O)C"</tt>, <tt>"C1CCCCCC1"</tt> would be added
            to the shingling. Default: <tt>true</tt>.
     \param isomeric whether the SMILES added to the shingling are isomeric.
            Default: <tt>false</tt>.
@@ -111,7 +111,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
 
     \returns the shingling of a molecule.
    */
-  std::vector<std::string> CreateShingling(const ROMol& mol,
+  std::vector<std::string> CreateShingling(const ROMol &mol,
                                            unsigned char radius = 3,
                                            bool rings = true,
                                            bool isomeric = false,
@@ -119,7 +119,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
                                            unsigned char min_radius = 1);
 
   //! \overload
-  std::vector<std::string> CreateShingling(const std::string& smiles,
+  std::vector<std::string> CreateShingling(const std::string &smiles,
                                            unsigned char radius = 3,
                                            bool rings = true,
                                            bool isomeric = false,
@@ -138,7 +138,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
            each atom. Default: <tt>3</tt>.
     \param rings whether the rings (SSSR) are extrected from the molecule and
            added to the shingling. Given the molecule
-           <tt>"C1CCCCCC1C(=O)C"</tt>, "<tt>C1CCCCCC1"</tt> would be added
+           <tt>"C1CCCCCC1C(=O)C"</tt>, <tt>"C1CCCCCC1"</tt> would be added
            to the shingling. Default: <tt>true</tt>.
     \param isomeric whether the SMILES added to the shingling are isomeric.
            Default: <tt>false</tt>.
@@ -150,13 +150,13 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
 
     \returns the MHFP fingerprint.
    */
-  std::vector<uint32_t> Encode(ROMol& mol, unsigned char radius = 3,
+  std::vector<uint32_t> Encode(ROMol &mol, unsigned char radius = 3,
                                bool rings = true, bool isomeric = false,
                                bool kekulize = false,
                                unsigned char min_radius = 1);
 
   //! \overload
-  std::vector<std::vector<uint32_t>> Encode(std::vector<ROMol>& mols,
+  std::vector<std::vector<uint32_t>> Encode(std::vector<ROMol> &mols,
                                             unsigned char radius = 3,
                                             bool rings = true,
                                             bool isomeric = false,
@@ -164,13 +164,13 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
                                             unsigned char min_radius = 1);
 
   //! \overload
-  std::vector<uint32_t> Encode(std::string& smiles, unsigned char radius = 3,
+  std::vector<uint32_t> Encode(std::string &smiles, unsigned char radius = 3,
                                bool rings = true, bool isomeric = false,
                                bool kekulize = false,
                                unsigned char min_radius = 1);
 
   //! \overload
-  std::vector<std::vector<uint32_t>> Encode(std::vector<std::string>& smiles,
+  std::vector<std::vector<uint32_t>> Encode(std::vector<std::string> &smiles,
                                             unsigned char radius = 3,
                                             bool rings = true,
                                             bool isomeric = false,
@@ -188,7 +188,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
            each atom. Default: <tt>3</tt>.
     \param rings whether the rings (SSSR) are extrected from the molecule and
            added to the shingling. Given the molecule
-           <tt>"C1CCCCCC1C(=O)C"</tt>, "<tt>C1CCCCCC1"</tt> would be added
+           <tt>"C1CCCCCC1C(=O)C"</tt>, <tt>"C1CCCCCC1"</tt> would be added
            to the shingling. Default: <tt>true</tt>.
     \param isomeric whether the SMILES added to the shingling are isomeric.
            Default: <tt>false</tt>.
@@ -202,7 +202,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
 
     \returns the SECFP fingerprint.
    */
-  ExplicitBitVect EncodeSECFP(ROMol& mol, unsigned char radius = 3,
+  ExplicitBitVect EncodeSECFP(ROMol &mol, unsigned char radius = 3,
                               bool rings = true, bool isomeric = false,
                               bool kekulize = false,
                               unsigned char min_radius = 1,
@@ -210,12 +210,12 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
 
   //! \overload
   std::vector<ExplicitBitVect> EncodeSECFP(
-      std::vector<ROMol>& mols, unsigned char radius = 3, bool rings = true,
+      std::vector<ROMol> &mols, unsigned char radius = 3, bool rings = true,
       bool isomeric = false, bool kekulize = false,
       unsigned char min_radius = 1, size_t length = 2048);
 
   //! \overload
-  ExplicitBitVect EncodeSECFP(std::string& smiles, unsigned char radius = 3,
+  ExplicitBitVect EncodeSECFP(std::string &smiles, unsigned char radius = 3,
                               bool rings = true, bool isomeric = false,
                               bool kekulize = false,
                               unsigned char min_radius = 1,
@@ -223,7 +223,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
 
   //! \overload
   std::vector<ExplicitBitVect> EncodeSECFP(
-      std::vector<std::string>& smiles, unsigned char radius = 3,
+      std::vector<std::string> &smiles, unsigned char radius = 3,
       bool rings = true, bool isomeric = false, bool kekulize = false,
       unsigned char min_radius = 1, size_t length = 2048);
 
@@ -236,8 +236,8 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
 
     \returns the Hamming distance between the two fingerprints.
    */
-  static double Distance(const std::vector<uint32_t>& a,
-                         const std::vector<uint32_t>& b) {
+  static double Distance(const std::vector<uint32_t> &a,
+                         const std::vector<uint32_t> &b) {
     size_t mismatches = 0;
 
     for (size_t i = 0; i < a.size(); i++) {
@@ -255,7 +255,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
     return input >= ceil ? input % ceil : input;
   }
 
-  ExplicitBitVect Fold(const std::vector<uint32_t>& vec,
+  ExplicitBitVect Fold(const std::vector<uint32_t> &vec,
                        uint32_t length = 2048) {
     ExplicitBitVect ebv(length);
     for (size_t i = 0; i < vec.size(); i++) {

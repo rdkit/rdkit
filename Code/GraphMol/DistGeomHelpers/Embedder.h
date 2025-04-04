@@ -33,6 +33,9 @@ enum EmbedFailureCauses {
   FINAL_CENTER_IN_VOLUME = 7,
   LINEAR_DOUBLE_BOND = 8,
   BAD_DOUBLE_BOND_STEREO = 9,
+  CHECK_CHIRAL_CENTERS2 = 10,
+  EXCEEDED_TIMEOUT = 11,
+  END_OF_ENUM = 12,
 };
 
 //! Parameter object for controlling embedding
@@ -101,6 +104,7 @@ enum EmbedFailureCauses {
                 sampling
   useMacrocycle14config  If 1-4 distances bound heuristics for
                 macrocycles is used
+  timeout	 time out in seconds
   CPCI	custom columbic interactions between atom pairs
   callback	      void pointer to a function for reporting progress,
                   will be called with the current iteration number.
@@ -133,13 +137,14 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool verbose{false};
   double basinThresh{5.0};
   double pruneRmsThresh{-1.0};
-  bool onlyHeavyAtomsForRMS{false};
+  bool onlyHeavyAtomsForRMS{true};
   unsigned int ETversion{1};
   boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
   bool embedFragmentsSeparately{true};
   bool useSmallRingTorsions{false};
   bool useMacrocycleTorsions{false};
   bool useMacrocycle14config{false};
+  unsigned int timeout{0};
   std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>> CPCI;
   void (*callback)(unsigned int);
   bool forceTransAmides{true};
@@ -148,6 +153,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool trackFailures{false};
   std::vector<unsigned int> failures;
   bool enableSequentialRandomSeeds{false};
+  bool symmetrizeConjugatedTerminalGroupsForPruning{true};
 
   EmbedParameters() : boundsMat(nullptr), CPCI(nullptr), callback(nullptr) {}
   EmbedParameters(
@@ -158,10 +164,11 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
       bool ignoreSmoothingFailures, bool enforceChirality,
       bool useExpTorsionAnglePrefs, bool useBasicKnowledge, bool verbose,
       double basinThresh, double pruneRmsThresh, bool onlyHeavyAtomsForRMS,
-      unsigned int ETversion = 1,
+      unsigned int ETversion = 2,
       const DistGeom::BoundsMatrix *boundsMat = nullptr,
       bool embedFragmentsSeparately = true, bool useSmallRingTorsions = false,
       bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
+      unsigned int timeout = 0,
       std::shared_ptr<std::map<std::pair<unsigned int, unsigned int>, double>>
           CPCI = nullptr,
       void (*callback)(unsigned int) = nullptr)
@@ -189,6 +196,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
         useSmallRingTorsions(useSmallRingTorsions),
         useMacrocycleTorsions(useMacrocycleTorsions),
         useMacrocycle14config(useMacrocycle14config),
+        timeout(timeout),
         CPCI(std::move(CPCI)),
         callback(callback) {}
 };
@@ -285,12 +293,13 @@ inline int EmbedMolecule(ROMol &mol, EmbedParameters &params) {
   \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
   \param ETversion	version of torsion preferences to use
   \param useSmallRingTorsions	optional torsions to improve small ring
-  conformer sampling
-
+                              conformer sampling
   \param useMacrocycleTorsions	optional torsions to improve macrocycle
-  conformer sampling \param useMacrocycle14config  If 1-4 distances bound
-  heuristics for macrocycles is used \return ID of the conformations added to
-  the molecule, -1 if the emdedding failed
+                                conformer sampling
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for
+  macrocycles is used
+
+  \return ID of the conformer added to the molecule, -1 if the emdedding failed
 */
 inline int EmbedMolecule(
     ROMol &mol, unsigned int maxIterations = 0, int seed = -1,
@@ -302,8 +311,8 @@ inline int EmbedMolecule(
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    unsigned int ETversion = 2, bool useSmallRingTorsions = false,
+    bool useMacrocycleTorsions = true, bool useMacrocycle14config = true) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
@@ -383,11 +392,11 @@ inline int EmbedMolecule(
   \param onlyHeavyAtomsForRMS  only use the heavy atoms when doing RMS filtering
   \param ETversion	version of torsion preferences to use
   \param useSmallRingTorsions	optional torsions to improve small ring
-  conformer sampling
-
+                              conformer sampling
   \param useMacrocycleTorsions	optional torsions to improve macrocycle
-  conformer sampling \param useMacrocycle14config  If 1-4 distances bound
-  heuristics for macrocycles is used
+                                conformer sampling
+  \param useMacrocycle14config  If 1-4 distances bound heuristics for
+  macrocycles is used
 
 */
 inline void EmbedMultipleConfs(
@@ -401,15 +410,16 @@ inline void EmbedMultipleConfs(
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    unsigned int ETversion = 2, bool useSmallRingTorsions = false,
+    bool useMacrocycleTorsions = true, bool useMacrocycle14config = true,
+    unsigned int timeout = 0) {
   EmbedParameters params(
       maxIterations, numThreads, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
       onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config);
+      useMacrocycleTorsions, useMacrocycle14config, timeout);
   EmbedMultipleConfs(mol, res, numConfs, params);
 };
 //! \overload
@@ -423,15 +433,16 @@ inline INT_VECT EmbedMultipleConfs(
     bool enforceChirality = true, bool useExpTorsionAnglePrefs = false,
     bool useBasicKnowledge = false, bool verbose = false,
     double basinThresh = 5.0, bool onlyHeavyAtomsForRMS = false,
-    unsigned int ETversion = 1, bool useSmallRingTorsions = false,
-    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false) {
+    unsigned int ETversion = 2, bool useSmallRingTorsions = false,
+    bool useMacrocycleTorsions = false, bool useMacrocycle14config = false,
+    unsigned int timeout = 0) {
   EmbedParameters params(
       maxIterations, 1, seed, clearConfs, useRandomCoords, boxSizeMult,
       randNegEig, numZeroFail, coordMap, optimizerForceTol,
       ignoreSmoothingFailures, enforceChirality, useExpTorsionAnglePrefs,
       useBasicKnowledge, verbose, basinThresh, pruneRmsThresh,
       onlyHeavyAtomsForRMS, ETversion, nullptr, true, useSmallRingTorsions,
-      useMacrocycleTorsions, useMacrocycle14config);
+      useMacrocycleTorsions, useMacrocycle14config, timeout);
   INT_VECT res;
   EmbedMultipleConfs(mol, res, numConfs, params);
   return res;

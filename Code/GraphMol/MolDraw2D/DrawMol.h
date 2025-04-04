@@ -112,6 +112,7 @@ class DrawMol {
   void extractRegions();
   void extractAttachments();
   void extractMolNotes();
+  void extractStereoGroups();
   void extractAtomNotes();
   void extractBondNotes();
   void extractRadicals();
@@ -119,11 +120,12 @@ class DrawMol {
   void extractVariableBonds();
   void extractBrackets();
   void extractLinkNodes();
-  // extractCloseContacts is to show where 2 atoms are drawn too close together
-  // and so needs the final drawing coords.  It is therefore called at the end
-  // of changeToDrawCoords() and any necessary DrawShapePolyLines added to
-  // postShapes_ in drawCoords.
+  // extractCloseContacts is to show where 2 atoms are drawn too close
+  // together and so needs the final drawing coords.  It is therefore called
+  // at the end of changeToDrawCoords() and any necessary DrawShapePolyLines
+  // added to postShapes_ in drawCoords.
   void extractCloseContacts();
+  void resolveAtomSymbolClashes();
   void calculateScale();
   void findExtremes();
   void changeToDrawCoords();
@@ -198,7 +200,7 @@ class DrawMol {
   double getScale() const { return scale_; }
   double getFontScale() const { return fontScale_; }
   // More often than not, newScale and newFontScale will be the same,
-  // but not if minFontScale of maxFontScale have become involved.
+  // but not if minFontScale or maxFontScale have become involved.
   // The newFontScale will be used without checking the min and max.
   void setScale(double newScale, double newFontScale,
                 bool ignoreFontLimits = true);
@@ -232,13 +234,14 @@ class DrawMol {
                           Point2D &l1f, Point2D &l2s, Point2D &l2f) const;
   // assuming at[1-3] are atoms where at1 is bonded to at2 and at2 is bonded
   // to at3, find the position of the at2 end of a double bond between at2
-  // and at3.  If trunc, it'll be along the vector that bisects the two bonds on
-  // the inside, otherwise it's perpendicular to the bond from at1 to at2.
+  // and at3.  If trunc, it'll be along the vector that bisects the two bonds
+  // on the inside, otherwise it's perpendicular to the bond from at1 to at2.
   Point2D doubleBondEnd(unsigned int at1, unsigned int at2, unsigned int at3,
                         double offset, bool trunc) const;
   void calcTripleBondLines(double offset, const Bond &bond, Point2D &l1s,
                            Point2D &l1f, Point2D &l2s, Point2D &l2f);
-  // find the vectors of any atoms singly bonded to atom that aren't otherAtom.
+  // find the vectors of any atoms singly bonded to atom that aren't
+  // otherAtom.
   void findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
                          std::vector<Point2D> &otherBondVecs) const;
   void adjustBondsOnSolidWedgeEnds();
@@ -254,6 +257,10 @@ class DrawMol {
 
   const MolDrawOptions &drawOptions_;
   DrawText &textDrawer_;
+  // For drawing reactions, padding needs to be 0 irrespective
+  // of what drawOptions_ does elsewhere, so it is copied from drawOptions_
+  // on construction, and is then immune to changes in the outer program.
+  double marginPadding_;
   std::vector<int> highlightAtoms_;
   std::vector<int> highlightBonds_;
   std::map<int, DrawColour> highlightAtomMap_;
@@ -281,7 +288,14 @@ class DrawMol {
   std::vector<std::tuple<StringRect, OrientType, int>> radicals_;
   std::vector<int> singleBondLines_;
 
+  // The total width and height of the canvas.  Either or both may be
+  // -1 initially, in which case they will be calculated so the molecule
+  // can be drawn within it at a fixed scale (the so-called flexiCanvas).
   int width_, height_;
+  // The width and height of the drawing area within the canvas.  This is
+  // width_ and height_ less the drawOptions._padding round the outside.
+  // Will always be <= width_, height_.
+  int drawWidth_, drawHeight_;
   // to allow for min and max font sizes, the font scale needs to be
   // independent of the main scale.
   double scale_, fontScale_;
@@ -289,8 +303,10 @@ class DrawMol {
   // offsets are for drawing molecules in grids, for example.
   double xOffset_ = 0.0, yOffset_ = 0.0;
   double meanBondLength_ = 0.0;
-  // if there's a legend, we reserve a bit for it.
-  int drawHeight_, legendHeight_ = 0;
+  // if there's a legend, we reserve a bit for it.  molHeight_ is the
+  // bit for drawing the molecule, legendHeight_ the bit under that
+  // for the legend.  In pixels.
+  int molHeight_, legendHeight_ = 0;
   bool drawingInitialised_ = false;
   // when drawing the atoms and bonds in an SVG, they are given a class
   // via MolDraw2D's activeAtmIdx[12]_ and activeBndIdx.  We don't always want
@@ -301,7 +317,6 @@ class DrawMol {
 };
 
 void centerMolForDrawing(RWMol &mol, int confId = 1);
-void prepareStereoGroups(RWMol &mol);
 bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds);
 std::string getAtomListText(const Atom &atom);
 DrawColour getColourByAtomicNum(int atomicNum,

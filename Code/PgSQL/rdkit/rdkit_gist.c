@@ -119,7 +119,7 @@ PGDLLEXPORT Datum gmol_decompress(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(gmol_decompress);
 Datum gmol_decompress(PG_FUNCTION_ARGS) {
   GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
-  bytea *key = (bytea *)DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+  bytea *key = (bytea *)PG_DETOAST_DATUM(entry->key);
 
   if (key != (bytea *)DatumGetPointer(entry->key)) {
     GISTENTRY *retval = (GISTENTRY *)palloc(sizeof(GISTENTRY));
@@ -517,7 +517,7 @@ Datum gmol_consistent(PG_FUNCTION_ARGS) {
       if (!ISALLTRUE(key)) {
         /*
         ** verify the necessary condition that key should contain the query
-        ** (on leaf nodes, couldn't it also verify that query contains key?)
+        ** (on leaf nodes, check that key and query match)
         */
         if (siglen != SIGLEN(query)) {
           elog(ERROR, "All fingerprints should be the same length");
@@ -526,7 +526,11 @@ Datum gmol_consistent(PG_FUNCTION_ARGS) {
         uint8 *k = (uint8 *)VARDATA(key);
         uint8 *q = (uint8 *)VARDATA(query);
 
-        res = bitstringContains(siglen, k, q);
+        if (GIST_LEAF(entry)) {
+          res = (memcmp(k, q, siglen) == 0);
+        } else {
+          res = bitstringContains(siglen, k, q);
+        }
       }
       break;
     default:
@@ -546,8 +550,8 @@ static int
 gmol_cmp(Datum x, Datum y, SortSupport ssup)
 {
   /* establish order between x and y */
-  bytea *a = (bytea*)DatumGetPointer(PG_DETOAST_DATUM(x));
-  bytea *b = (bytea*)DatumGetPointer(PG_DETOAST_DATUM(y));
+  bytea *a = (bytea*)PG_DETOAST_DATUM(x);
+  bytea *b = (bytea*)PG_DETOAST_DATUM(y);
 
   Assert(!ISALLTRUE(a));
   Assert(!ISALLTRUE(b));
@@ -800,13 +804,11 @@ Datum greaction_consistent(PG_FUNCTION_ARGS) {
         uint8 *k = (uint8 *)VARDATA(key);
         uint8 *q = (uint8 *)VARDATA(query);
 
-        res = bitstringContains(siglen, k, q)
-              /*
-              ** the original implementation also required the query to
-              ** contain the key, but (I think) this is only true on the
-              ** leaves (FIXME?)
-              */
-              && bitstringContains(siglen, q, k);
+        if (GIST_LEAF(entry)) {
+          res = (memcmp(k, q, siglen) == 0);
+        } else {
+          res = bitstringContains(siglen, k, q);
+        }
       }
       break;
     default:

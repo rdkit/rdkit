@@ -412,7 +412,7 @@ void DrawShapeSolidWedge::buildTwoColorTriangles() {
     points_.push_back(mid1);
     points_.push_back(midEnd);
     points_.push_back(adjend2);
-    points_.push_back(adjend1);
+    points_.push_back(mid2);
   }
 }
 
@@ -445,14 +445,16 @@ bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
                             padding)) {
     return true;
   }
-  if (points_.size() > 3) {
+  if (points_.size() >= 6) {
     if (doesTriangleIntersect(rect, points_[3], points_[4], points_[5],
                               padding)) {
       return true;
     }
-    if (doesTriangleIntersect(rect, points_[6], points_[7], points_[8],
-                              padding)) {
-      return true;
+    if (points_.size() >= 9) {
+      if (doesTriangleIntersect(rect, points_[6], points_[7], points_[8],
+                                padding)) {
+        return true;
+      }
     }
   }
   return false;
@@ -486,9 +488,14 @@ void DrawShapeSolidWedge::orderOtherBondVecs() {
     return;
   }
   // otherBondVecs_[0] needs to be on the same side as points_[1], which
-  // implies the larger angle between the 2 vectors.
+  // implies the larger dot product between it and the vector along the
+  // triangle edge.
   auto side1 = (points_[0] - points_[1]);
-  if (side1.angleTo(otherBondVecs_[0]) < side1.angleTo(otherBondVecs_[1])) {
+  auto mid = (points_[1] + points_[2]) / 2.0;
+  auto midp1 = mid.directionVector(points_[1]);
+  auto dot1 = midp1.dotProduct(otherBondVecs_[0]);
+  auto dot2 = midp1.dotProduct(otherBondVecs_[1]);
+  if (dot1 < dot2) {
     std::swap(otherBondVecs_[0], otherBondVecs_[1]);
   }
 }

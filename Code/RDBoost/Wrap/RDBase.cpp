@@ -17,12 +17,6 @@
 #include <cstdlib>
 
 #include <RDGeneral/RDLog.h>
-#if 0
-#include <boost/log/functions.hpp>
-#if defined(BOOST_HAS_THREADS)
-#include <boost/log/extra/functions_ts.hpp>
-#endif
-#endif
 
 namespace python = boost::python;
 namespace logging = boost::logging;
@@ -78,7 +72,11 @@ struct PyLogStream : std::ostream, std::streambuf {
   }
 
   ~PyLogStream() {
+#if PY_VERSION_HEX < 0x30d0000
     if (!_Py_IsFinalizing()) {
+#else
+    if (!Py_IsFinalizing()) {
+#endif
       Py_XDECREF(logfn);
     }
   }
@@ -158,17 +156,6 @@ void AttachFileToLog(std::string spec, std::string filename, int delay = 100) {
   (void)spec;
   (void)filename;
   (void)delay;
-#if 0
-#if defined(BOOST_HAS_THREADS)
-  logging::manipulate_logs(spec)
-    .add_appender(logging::ts_appender(logging::write_to_file(filename),
-				       delay));
-#else
-  logging::manipulate_logs(spec)
-    .add_appender(logging::write_to_file(filename));
-
-#endif
-#endif
 }
 
 void LogDebugMsg(const std::string &msg) {
@@ -257,11 +244,19 @@ BOOST_PYTHON_MODULE(rdBase) {
   RDLog::InitLogs();
   RegisterVectorConverter<int>();
   RegisterVectorConverter<unsigned>();
+  RegisterVectorConverter<size_t>("UnsignedLong_Vect");
+  RegisterVectorConverter<boost::uint64_t>("VectSizeT");
+
   RegisterVectorConverter<double>();
   RegisterVectorConverter<std::string>(1);
   RegisterVectorConverter<std::vector<int>>();
   RegisterVectorConverter<std::vector<unsigned>>();
   RegisterVectorConverter<std::vector<double>>();
+  RegisterVectorConverter<std::vector<std::string>>("VectorOfStringVectors");
+
+  RegisterVectorConverter<std::pair<int, int>>("MatchTypeVect");
+
+  path_converter();
 
   RegisterListConverter<int>();
   RegisterListConverter<std::vector<int>>();
@@ -286,6 +281,25 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::scope().attr("boostVersion") = RDKit::boostVersion;
   python::scope().attr("rdkitBuild") = RDKit::rdkitBuild;
 
+  python::scope().attr("_serializationEnabled") =
+#ifdef RDK_USE_BOOST_SERIALIZATION
+      true;
+#else
+      false;
+#endif
+  python::scope().attr("_iostreamsEnabled") =
+#ifdef RDK_USE_BOOST_IOSTREAMS
+      true;
+#else
+      false;
+#endif
+  python::scope().attr("_multithreadedEnabled") =
+#ifdef RDK_BUILD_THREADSAFE_SSS
+      true;
+#else
+      false;
+#endif
+
   python::def("LogToCppStreams", RDLog::InitLogs,
               "Initialize RDKit logs with C++ streams");
   python::def("LogToPythonLogger", LogToPythonLogger,
@@ -295,18 +309,20 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::def("WrapLogs", WrapLogs,
               "Tee the RDKit logs to Python's stderr stream");
 
-  python::def("EnableLog", EnableLog);
-  python::def("DisableLog", DisableLog);
+  python::def("EnableLog", EnableLog, python::args("spec"));
+  python::def("DisableLog", DisableLog, python::args("spec"));
   python::def("LogStatus", LogStatus);
 
-  python::def("LogDebugMsg", LogDebugMsg,
+  python::def("LogDebugMsg", LogDebugMsg, python::args("msg"),
               "Log a message to the RDKit debug logs");
-  python::def("LogInfoMsg", LogInfoMsg, "Log a message to the RDKit info logs");
-  python::def("LogWarningMsg", LogWarningMsg,
+  python::def("LogInfoMsg", LogInfoMsg, python::args("msg"),
+              "Log a message to the RDKit info logs");
+  python::def("LogWarningMsg", LogWarningMsg, python::args("msg"),
               "Log a message to the RDKit warning logs");
-  python::def("LogErrorMsg", LogErrorMsg,
+  python::def("LogErrorMsg", LogErrorMsg, python::args("msg"),
               "Log a message to the RDKit error logs");
-  python::def("LogMessage", LogMessage, "Log a message to any rdApp.* log");
+  python::def("LogMessage", LogMessage, python::args("spec", "msg"),
+              "Log a message to any rdApp.* log");
 
   python::def("AttachFileToLog", AttachFileToLog,
               "Causes the log to write to a file",
@@ -325,7 +341,7 @@ BOOST_PYTHON_MODULE(rdBase) {
   python::class_<BlockLogs, boost::noncopyable>(
       "BlockLogs",
       "Temporarily block logs from outputting while this instance is in scope.",
-      python::init<>())
+      python::init<>(python::args("self")))
       .def("__enter__", &BlockLogs::enter,
            python::return_internal_reference<>())
       .def("__exit__", &BlockLogs::exit);

@@ -34,8 +34,8 @@ using std::uint32_t;
 
 namespace RDKit {
 
-const int32_t MolPickler::versionMajor = 14;
-const int32_t MolPickler::versionMinor = 1;
+const int32_t MolPickler::versionMajor = 16;
+const int32_t MolPickler::versionMinor = 2;
 const int32_t MolPickler::versionPatch = 0;
 const int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -166,6 +166,7 @@ class PropTracker {
  public:
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
+  // the properties themselves are stored as std::int8_t
   const std::vector<std::pair<std::string, std::uint16_t>> explicitBondProps = {
       {RDKit::common_properties::_MolFileBondType, 0x1},
       {RDKit::common_properties::_MolFileBondStereo, 0x2},
@@ -175,6 +176,7 @@ class PropTracker {
   };
   // this is stored as bitflags in a byte, so don't exceed 8 entries or we need
   // to update the pickle format.
+  // the properties themselves are stored as std::int16_t
   const std::vector<std::pair<std::string, std::uint16_t>> explicitAtomProps = {
       {common_properties::molStereoCare, 0x1},
       {common_properties::molParity, 0x2},
@@ -357,6 +359,10 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
             ->getVal(),
         static_cast<const EqualityQuery<int, T const *, true> *>(query)
             ->getTol()));
+  } else if (typeid(*query) == typeid(HasPropQuery<T const *>)) {
+    return QueryDetails(std::make_tuple(
+        MolPickler::QUERY_PROPERTY,
+        static_cast<const HasPropQuery<T const *> *>(query)->getPropName()));
   } else if (typeid(*query) == typeid(Query<int, T const *, true>)) {
     return QueryDetails(MolPickler::QUERY_NULL);
   } else if (typeid(*query) == typeid(RangeQuery<int, T const *, true>)) {
@@ -380,6 +386,9 @@ QueryDetails getQueryDetails(const Query<int, T const *, true> *query) {
         static_cast<const SetQuery<int, T const *, true> *>(query)->endSet());
     return QueryDetails(
         std::make_tuple(MolPickler::QUERY_SET, std::move(tset)));
+  } else if (auto q = dynamic_cast<const HasPropWithValueQueryBase *>(query)) {
+    return QueryDetails(std::make_tuple(MolPickler::QUERY_PROPERTY_WITH_VALUE,
+                                        q->getPair(), q->getTolerance()));
   } else {
     throw MolPicklerException("do not know how to pickle part of the query.");
   }
@@ -447,6 +456,23 @@ void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
           streamWrite(ss, val);
         }
 
+      } break;
+      case 5: {
+        auto v =
+            boost::get<std::tuple<MolPickler::Tags, std::string>>(qdetails);
+        streamWrite(ss, std::get<0>(v));
+        const auto &pval = std::get<1>(v);
+        streamWrite(ss, MolPickler::QUERY_VALUE, pval);
+      } break;
+      case 6: {
+        auto &v = boost::get<std::tuple<MolPickler::Tags, PairHolder, double>>(
+            qdetails);
+        streamWrite(ss, std::get<0>(v));
+        // The tolerance is pickled first as we can't pickle a PairHolder with
+        // the QUERY_VALUE tag
+        streamWrite(ss, MolPickler::QUERY_VALUE, std::get<2>(v));
+        streamWriteProp(ss, std::get<1>(v),
+                        MolPickler::getCustomPropHandlers());
       } break;
       default:
         throw MolPicklerException(
@@ -586,6 +612,62 @@ Query<int, T const *, true> *buildBaseQuery(std::istream &ss, T const *owner,
     case MolPickler::QUERY_NULL:
       res = new Query<int, T const *, true>();
       break;
+    case MolPickler::QUERY_PROPERTY: {
+      streamRead(ss, tag, version);
+      if (tag != MolPickler::QUERY_VALUE) {
+        throw MolPicklerException(
+            "Bad pickle format: QUERY_VALUE tag not found.");
+      }
+      std::string propName = "";
+      streamRead(ss, propName, version);
+      res = makeHasPropQuery<T>(propName);
+    } break;
+    case MolPickler::QUERY_PROPERTY_WITH_VALUE: {
+      streamRead(ss, tag, version);
+      if (tag != MolPickler::QUERY_VALUE) {
+        throw MolPicklerException(
+            "Bad pickle format: QUERY_VALUE tag not found.");
+      }
+      double tolerance{0.0};
+      streamRead(ss, tolerance, version);
+      PairHolder pair;
+      bool hasNonPod = false;
+      streamReadProp(ss, pair, hasNonPod, MolPickler::getCustomPropHandlers());
+      switch (pair.val.getTag()) {
+        case RDTypeTag::IntTag:
+          res = makePropQuery<T, int>(pair.key, rdvalue_cast<int>(pair.val),
+                                      tolerance);
+          break;
+        case RDTypeTag::UnsignedIntTag:
+          res = makePropQuery<T, unsigned int>(
+              pair.key, rdvalue_cast<unsigned int>(pair.val), tolerance);
+          break;
+        case RDTypeTag::BoolTag:
+          res = makePropQuery<T, bool>(pair.key, rdvalue_cast<bool>(pair.val),
+                                       tolerance);
+          break;
+        case RDTypeTag::FloatTag:
+          res = makePropQuery<T, float>(pair.key, rdvalue_cast<float>(pair.val),
+                                        tolerance);
+          break;
+        case RDTypeTag::DoubleTag:
+          res = makePropQuery<T, double>(
+              pair.key, rdvalue_cast<double>(pair.val), tolerance);
+          break;
+        case RDTypeTag::StringTag:
+          res = makePropQuery<T, std::string>(
+              pair.key, rdvalue_cast<std::string>(pair.val), tolerance);
+          break;
+        case RDTypeTag::AnyTag: {
+          if (rdvalue_is<ExplicitBitVect>(pair.val)) {
+            res = makePropQuery<T, ExplicitBitVect>(
+                pair.key, rdvalue_cast<ExplicitBitVect>(pair.val), tolerance);
+          } else {
+            throw MolPicklerException("unknown query-type tag encountered");
+          }
+        } break;
+      }
+    } break;
     default:
       throw MolPicklerException("unknown query-type tag encountered");
   }
@@ -1099,7 +1181,20 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
   // -------------------
   const RingInfo *ringInfo = mol->getRingInfo();
   if (ringInfo && ringInfo->isInitialized()) {
-    streamWrite(ss, BEGINSSSR);
+    switch (ringInfo->getRingType()) {
+      case RDKit::FIND_RING_TYPE::FIND_RING_TYPE_FAST:
+        streamWrite(ss, BEGINFASTFIND);
+        break;
+      case RDKit::FIND_RING_TYPE::FIND_RING_TYPE_SSSR:
+        streamWrite(ss, BEGINSSSR);
+        break;
+      case RDKit::FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR:
+        streamWrite(ss, BEGINSYMMSSSR);
+        break;
+      default:
+        streamWrite(ss, BEGINFINDOTHERORUNKNOWN);
+        break;
+    }
     _pickleSSSR<T>(ss, ringInfo, atomIdxMap);
   }
 
@@ -1124,7 +1219,7 @@ void MolPickler::_pickle(const ROMol *mol, std::ostream &ss,
     auto &stereo_groups = mol->getStereoGroups();
     if (stereo_groups.size() > 0u) {
       streamWrite(ss, BEGINSTEREOGROUP);
-      _pickleStereo<T>(ss, stereo_groups, atomIdxMap);
+      _pickleStereo<T>(ss, stereo_groups, atomIdxMap, bondIdxMap);
     }
   }
 
@@ -1276,8 +1371,24 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   //
   // -------------------
   streamRead(ss, tag, version);
+  bool ringFound = false;
+  FIND_RING_TYPE ringType =
+      RDKit::FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN;
   if (tag == BEGINSSSR) {
-    _addRingInfoFromPickle<T>(ss, mol, version, directMap);
+    ringFound = true;
+    ringType = FIND_RING_TYPE::FIND_RING_TYPE_SSSR;
+  } else if (tag == BEGINSYMMSSSR) {
+    ringFound = true;
+    ringType = FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR;
+  } else if (tag == BEGINFASTFIND) {
+    ringFound = true;
+    ringType = FIND_RING_TYPE::FIND_RING_TYPE_FAST;
+  } else if (tag == BEGINFINDOTHERORUNKNOWN) {
+    ringFound = true;
+    ringType = FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN;
+  }
+  if (ringFound) {
+    _addRingInfoFromPickle<T>(ss, mol, version, directMap, ringType);
     streamRead(ss, tag, version);
   }
 
@@ -1899,6 +2010,10 @@ void MolPickler::_pickleBond(std::ostream &ss, const Bond *bond,
   if (bond->getStereo() != Bond::STEREONONE) {
     flags |= 0x1 << 1;
   }
+  std::string endpts;
+  if (bond->getPropIfPresent(common_properties::_MolFileBondEndPts, endpts)) {
+    flags |= 0x1;
+  }
   streamWrite(ss, flags);
 
   if (bond->getBondType() != Bond::SINGLE) {
@@ -1926,6 +2041,12 @@ void MolPickler::_pickleBond(std::ostream &ss, const Bond *bond,
     streamWrite(ss, BEGINQUERY);
     pickleQuery(ss, static_cast<const QueryBond *>(bond)->getQuery());
     streamWrite(ss, ENDQUERY);
+  }
+  if (!endpts.empty()) {
+    streamWrite(ss, endpts);
+    std::string attach = "ALL";
+    bond->getPropIfPresent(common_properties::_MolFileBondAttach, attach);
+    streamWrite(ss, attach);
   }
 }
 
@@ -2005,6 +2126,13 @@ Bond *MolPickler::_addBondFromPickle(std::istream &ss, ROMol *mol, int version,
       } else {
         bond->setStereo(Bond::STEREONONE);
       }
+      if (flags & 0x1) {
+        std::string tmpStr;
+        streamRead(ss, tmpStr, version);
+        bond->setProp(common_properties::_MolFileBondEndPts, tmpStr);
+        streamRead(ss, tmpStr, version);
+        bond->setProp(common_properties::_MolFileBondAttach, tmpStr);
+      }
     }
   }
   if (version > 5000 && hasQuery) {
@@ -2063,12 +2191,13 @@ void MolPickler::_pickleSSSR(std::ostream &ss, const RingInfo *ringInfo,
 
 template <typename T>
 void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
-                                        int version, bool directMap) {
+                                        int version, bool directMap,
+                                        FIND_RING_TYPE ringType) {
   PRECONDITION(mol, "empty molecule");
   RingInfo *ringInfo = mol->getRingInfo();
-  if (!ringInfo->isInitialized()) {
-    ringInfo->initialize();
-  }
+  // if (!ringInfo->isInitialized()) {
+  ringInfo->initialize(ringType);
+  //}
 
   std::uint32_t numRings;
   if (version >= 13002) {
@@ -2313,7 +2442,8 @@ SubstanceGroup MolPickler::_getSubstanceGroupFromPickle(std::istream &ss,
 template <typename T>
 void MolPickler::_pickleStereo(std::ostream &ss,
                                std::vector<StereoGroup> groups,
-                               std::map<int, int> &atomIdxMap) {
+                               std::map<int, int> &atomIdxMap,
+                               std::map<int, int> &bondIdxMap) {
   T tmpT = static_cast<T>(groups.size());
   streamWrite(ss, tmpT);
   assignStereoGroupIds(groups);
@@ -2326,6 +2456,13 @@ void MolPickler::_pickleStereo(std::ostream &ss,
     streamWrite(ss, static_cast<T>(atoms.size()));
     for (auto &&atom : atoms) {
       tmpT = static_cast<T>(atomIdxMap[atom->getIdx()]);
+      streamWrite(ss, tmpT);
+    }
+
+    auto &bonds = group.getBonds();
+    streamWrite(ss, static_cast<T>(bonds.size()));
+    for (auto &&bond : bonds) {
+      tmpT = static_cast<T>(bondIdxMap[bond->getIdx()]);
       streamWrite(ss, tmpT);
     }
   }
@@ -2360,7 +2497,18 @@ void MolPickler::_depickleStereo(std::istream &ss, ROMol *mol, int version) {
         atoms.push_back(mol->getAtomWithIdx(tmpT));
       }
 
-      groups.emplace_back(groupType, std::move(atoms), gId);
+      std::vector<Bond *> bonds;
+      if (version > 16000) {
+        streamRead(ss, tmpT, version);
+        const auto numBonds = static_cast<unsigned>(tmpT);
+
+        bonds.reserve(numBonds);
+        for (unsigned i = 0u; i < numBonds; ++i) {
+          streamRead(ss, tmpT, version);
+          bonds.push_back(mol->getBondWithIdx(tmpT));
+        }
+      }
+      groups.emplace_back(groupType, std::move(atoms), std::move(bonds), gId);
     }
 
     mol->setStereoGroups(std::move(groups));

@@ -76,19 +76,18 @@ struct RDKIT_FINGERPRINTS_EXPORT AdditionalOutput {
   hold fingerprint type specific arguments
 
  */
-class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
-    : private boost::noncopyable {
+class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments {
  public:
   FingerprintArguments(bool countSimulation,
                        const std::vector<std::uint32_t> countBounds,
                        std::uint32_t fpSize,
                        std::uint32_t numBitsPerFeature = 1,
                        bool includeChirality = false);
-  bool df_countSimulation;
-  bool df_includeChirality;
+  bool df_countSimulation = false;
+  bool df_includeChirality = false;
   std::vector<std::uint32_t> d_countBounds;
-  std::uint32_t d_fpSize;
-  std::uint32_t d_numBitsPerFeature;
+  std::uint32_t d_fpSize = 2048;
+  std::uint32_t d_numBitsPerFeature = 1;
 
   /**
    \brief method that returns information string about the fingerprint specific
@@ -107,6 +106,7 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintArguments
   std::string commonArgumentsString() const;
 
   virtual ~FingerprintArguments() {}
+  FingerprintArguments() = default;
 };
 
 /*!
@@ -288,7 +288,7 @@ struct FingerprintFuncArguments {
         confId(confId_arg),
         additionalOutput(additionalOutput_arg),
         customAtomInvariants(customAtomInvariants_arg),
-        customBondInvariants(customBondInvariants_arg){};
+        customBondInvariants(customBondInvariants_arg) {};
 };
 
 /*!
@@ -336,6 +336,20 @@ class RDKIT_FINGERPRINTS_EXPORT FingerprintGenerator
 
   std::unique_ptr<ExplicitBitVect> getFingerprint(
       const ROMol &mol, FingerprintFuncArguments &args) const;
+
+  std::vector<std::unique_ptr<ExplicitBitVect>> getFingerprints(
+      const std::vector<const ROMol *> &mols, int numThreads = 1) const;
+
+  std::vector<std::unique_ptr<SparseBitVect>> getSparseFingerprints(
+      const std::vector<const ROMol *> &mols, int numThreads = 1) const;
+
+  std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>>
+  getCountFingerprints(const std::vector<const ROMol *> &mols,
+                       int numThreads = 1) const;
+
+  std::vector<std::unique_ptr<SparseIntVect<OutputType>>>
+  getSparseCountFingerprints(const std::vector<const ROMol *> &mols,
+                             int numThreads = 1) const;
 
   SparseIntVect<OutputType> *getSparseCountFingerprint(
       const ROMol &mol, const std::vector<std::uint32_t> *fromAtoms = nullptr,
@@ -400,18 +414,18 @@ FingerprintGenerator<std::uint32_t>::getSparseFingerprint(
     const std::vector<std::uint32_t> *, int, AdditionalOutput *,
     const std::vector<std::uint32_t> *,
     const std::vector<std::uint32_t> *) const;
-template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t>
-    *FingerprintGenerator<std::uint32_t>::getCountFingerprint(
-        const ROMol &, const std::vector<std::uint32_t> *,
-        const std::vector<std::uint32_t> *, int, AdditionalOutput *,
-        const std::vector<std::uint32_t> *,
-        const std::vector<std::uint32_t> *) const;
-template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t>
-    *FingerprintGenerator<std::uint32_t>::getSparseCountFingerprint(
-        const ROMol &, const std::vector<std::uint32_t> *,
-        const std::vector<std::uint32_t> *, int, AdditionalOutput *,
-        const std::vector<std::uint32_t> *,
-        const std::vector<std::uint32_t> *) const;
+template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *
+FingerprintGenerator<std::uint32_t>::getCountFingerprint(
+    const ROMol &, const std::vector<std::uint32_t> *,
+    const std::vector<std::uint32_t> *, int, AdditionalOutput *,
+    const std::vector<std::uint32_t> *,
+    const std::vector<std::uint32_t> *) const;
+template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *
+FingerprintGenerator<std::uint32_t>::getSparseCountFingerprint(
+    const ROMol &, const std::vector<std::uint32_t> *,
+    const std::vector<std::uint32_t> *, int, AdditionalOutput *,
+    const std::vector<std::uint32_t> *,
+    const std::vector<std::uint32_t> *) const;
 template RDKIT_FINGERPRINTS_EXPORT ExplicitBitVect *
 FingerprintGenerator<std::uint64_t>::getFingerprint(
     const ROMol &, const std::vector<std::uint32_t> *,
@@ -424,18 +438,18 @@ FingerprintGenerator<std::uint64_t>::getSparseFingerprint(
     const std::vector<std::uint32_t> *, int, AdditionalOutput *,
     const std::vector<std::uint32_t> *,
     const std::vector<std::uint32_t> *) const;
-template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t>
-    *FingerprintGenerator<std::uint64_t>::getCountFingerprint(
-        const ROMol &, const std::vector<std::uint32_t> *,
-        const std::vector<std::uint32_t> *, int, AdditionalOutput *,
-        const std::vector<std::uint32_t> *,
-        const std::vector<std::uint32_t> *) const;
-template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint64_t>
-    *FingerprintGenerator<std::uint64_t>::getSparseCountFingerprint(
-        const ROMol &, const std::vector<std::uint32_t> *,
-        const std::vector<std::uint32_t> *, int, AdditionalOutput *,
-        const std::vector<std::uint32_t> *,
-        const std::vector<std::uint32_t> *) const;
+template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint32_t> *
+FingerprintGenerator<std::uint64_t>::getCountFingerprint(
+    const ROMol &, const std::vector<std::uint32_t> *,
+    const std::vector<std::uint32_t> *, int, AdditionalOutput *,
+    const std::vector<std::uint32_t> *,
+    const std::vector<std::uint32_t> *) const;
+template RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint64_t> *
+FingerprintGenerator<std::uint64_t>::getSparseCountFingerprint(
+    const ROMol &, const std::vector<std::uint32_t> *,
+    const std::vector<std::uint32_t> *, int, AdditionalOutput *,
+    const std::vector<std::uint32_t> *,
+    const std::vector<std::uint32_t> *) const;
 
 enum class FPType { AtomPairFP, MorganFP, RDKitFP, TopologicalTorsionFP };
 
@@ -476,8 +490,8 @@ getSparseCountFPBulk(const std::vector<const ROMol *> molVector, FPType fPType);
 RDKIT_FINGERPRINTS_EXPORT std::vector<SparseBitVect *> *getSparseFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType);
 
-RDKIT_FINGERPRINTS_EXPORT std::vector<SparseIntVect<std::uint32_t> *>
-    *getCountFPBulk(const std::vector<const ROMol *> molVector, FPType fPType);
+RDKIT_FINGERPRINTS_EXPORT std::vector<SparseIntVect<std::uint32_t> *> *
+getCountFPBulk(const std::vector<const ROMol *> molVector, FPType fPType);
 
 RDKIT_FINGERPRINTS_EXPORT std::vector<ExplicitBitVect *> *getFPBulk(
     const std::vector<const ROMol *> molVector, FPType fPType);

@@ -1,9 +1,15 @@
 /Code/docs/
+/Code/JavaWrappers/**/*.jar
 /Code/JavaWrappers/gmwrapper/src/*
 /Code/JavaWrappers/gmwrapper/doc/*
 /Code/JavaWrappers/gmwrapper/build/*
 /Code/JavaWrappers/gmwrapper/build-test/*
-/Code/JavaWrappers/csharp_wrapper/swig_csharp
+/Code/JavaWrappers/csharp_wrapper/swig_csharp/*.cs
+/Code/JavaWrappers/csharp_wrapper/swig_csharp/*.cxx
+/Code/JavaWrappers/csharp_wrapper/swig_csharp/bin
+/Code/JavaWrappers/csharp_wrapper/swig_csharp/obj
+/Code/JavaWrappers/csharp_wrapper/RdkitTests/bin
+/Code/JavaWrappers/csharp_wrapper/RdkitTests/obj
 /Data/Fonts/ComicNeue-*
 /Data/Fonts/OFL.txt
 /vcpkg/*
@@ -39,6 +45,7 @@ __pycache__/
 
 /Code/RDBoost/test.h
 /Code/RDGeneral/RDConfig.h
+/Code/RDGeneral/enum.h
 /Code/RDGeneral/export.h
 /Code/RDGeneral/test.h
 /Code/RDGeneral/versions.h
@@ -57,16 +64,19 @@ __pycache__/
 
 /External/**/*.tar.gz
 /External/**/*.zip
-/External/catch/catch/
+/External/AvalonTools/SourceDistribution
 /External/CoordGen/coordgen/
 /External/CoordGen/maeparser/
 /External/Eigen/eigen/
-/External/FreeSASA/freesasa-2.0.1/
+/External/FreeSASA/freesasa*/
 /External/INCHI-API/INCHI-1-SRC/
 /External/INCHI-API/src/
-/External/rapidjson-1.1.0/
+/External/java_lib/
+/External/pubchem_shape/pubchem-align3d/
 /External/RingFamilies/RingDecomposerLib/
-/External/AvalonTools/SourceDistribution
+/External/YAeHMOP/yaehmop/
+/External/catch/catch/
+/External/rapidjson*/
 
 /rdkit/RDPaths.py
 /rdkit/Chem/inchi.py
@@ -123,15 +133,18 @@ __pycache__/
 
 /Projects/DbCLI/testData/bzr/
 
-/rdkit/Chem/Draw/similarityMap1_out.svg
-/rdkit/Chem/Draw/similarityMap1_out2.svg
-/rdkit/Chem/Draw/similarityMap1_out3.svg
-
 /rdkit/sping/tests/testallps.ps
 
 /rdkit/ML/Data/test_data/testgeneral.dat.pkl
 /rdkit/ML/Data/test_data/testquant.qdat.pkl
 .DS_Store
+
+/rdkit/fragmentshetero_atom_mutations_fuzzing.csv
+/rdkit/fragmentsnot_changed_during_fuzzing.csv
+/rdkit/hetero_atom_mutations.csv
+/rdkit/not_changed.csv
+/rdkit/similarityMap1_out.svg
+/rdkit/similarityMap1_out2.svg
 
 # JS distribution or temp files
 Code/MinimalLib/dist

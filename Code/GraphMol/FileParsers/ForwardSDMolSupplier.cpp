@@ -35,16 +35,17 @@ std::string strip(const std::string &orig) {
   return res;
 }
 
+namespace v2 {
+namespace FileParsers {
+
 ForwardSDMolSupplier::ForwardSDMolSupplier(std::istream *inStream,
-                                           bool takeOwnership, bool sanitize,
-                                           bool removeHs, bool strictParsing) {
+                                           bool takeOwnership,
+                                           const MolFileParserParams &params) {
   PRECONDITION(inStream, "bad stream");
   init();
   dp_inStream = inStream;
   df_owner = takeOwnership;
-  df_sanitize = sanitize;
-  df_removeHs = removeHs;
-  df_strictParsing = strictParsing;
+  d_params = params;
   POSTCONDITION(dp_inStream, "bad instream");
 }
 
@@ -60,9 +61,8 @@ void ForwardSDMolSupplier::reset() {
   UNDER_CONSTRUCTION("reset() not supported for ForwardSDMolSuppliers();");
 }
 
-void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
+void ForwardSDMolSupplier::readMolProps(ROMol &mol) {
   PRECONDITION(dp_inStream, "no stream");
-  PRECONDITION(mol, "no molecule");
   d_line++;
   bool hasProp = false;
   bool warningIssued = false;
@@ -73,10 +73,11 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
 
   // FIX: report files missing the $$$$ marker
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
-         (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
+         (tempStr.empty() || tempStr.at(0) != '$' ||
+          tempStr.substr(0, 4) != "$$$$")) {
     tempStr = FileParserUtils::strip(tempStr);
     if (!tempStr.empty()) {
-      if (tempStr[0] == '>') {  // data header line: start of a data item
+      if (tempStr.at(0) == '>') {  // data header line: start of a data item
         // ignore all other crap and seek for for a data label enclosed
         // by '<' and '>'
         // FIX: "CTfile.pdf" (page 51) says that the data header line does not
@@ -116,17 +117,20 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
           std::string prop = "";
           auto stmp = FileParserUtils::strip(tempStr);
           int nplines = 0;  // number of lines for this property
-          while (stmp.length() != 0 || tempStr[0] == ' ' ||
-                 tempStr[0] == '\t') {
+          while (!stmp.empty() ||
+                 (!tempStr.empty() &&
+                  (tempStr.at(0) == ' ' || tempStr.at(0) == '\t'))) {
             nplines++;
             if (nplines > 1) {
               prop += "\n";
             }
             // take off \r if it's still in the property:
-            if (tempStr.back() == '\r') {
-              tempStr = tempStr.substr(0, tempStr.size() - 1);
+            if (!tempStr.empty()) {
+              if (tempStr.back() == '\r') {
+                tempStr = tempStr.substr(0, tempStr.size() - 1);
+              }
+              prop += tempStr;
             }
-            prop += tempStr;
             d_line++;
             // erase inl in case the file does not end with a carriage
             // return (we will end up in an infinite loop if we don't do
@@ -134,16 +138,20 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
             inl.erase();
             std::getline(*dp_inStream, inl);
             tempStr = inl;
-            stmp = FileParserUtils::strip(tempStr);
+            if (tempStr.empty()) {
+              stmp = tempStr;
+            } else {
+              stmp = FileParserUtils::strip(tempStr);
+            }
           }
-          mol->setProp(dlabel, prop);
+          mol.setProp(dlabel, prop);
           if (df_processPropertyLists) {
             // apply this as an atom property list if that's appropriate
-            FileParserUtils::processMolPropertyList(*mol, dlabel);
+            FileParserUtils::processMolPropertyList(mol, dlabel);
           }
         }
       } else {
-        if (df_strictParsing) {
+        if (d_params.strictParsing) {
           // at this point we should always be at a line starting with '>'
           // following a blank line. If this is not true and df_strictParsing
           // is true, then throw an exception, otherwise truncate the rest of
@@ -175,25 +183,23 @@ void ForwardSDMolSupplier::readMolProps(ROMol *mol) {
   }
 }
 
-ROMol *ForwardSDMolSupplier::next() {
+std::unique_ptr<RWMol> ForwardSDMolSupplier::next() {
   PRECONDITION(dp_inStream, "no stream");
-  ROMol *res = nullptr;
 
   if (dp_inStream->eof()) {
     // FIX: we should probably be throwing an exception here
     df_end = true;
-    return res;
+    return nullptr;
   }
 
-  res = _next();
-  return res;
+  return _next();
 }
 
-ROMol *ForwardSDMolSupplier::_next() {
+std::unique_ptr<RWMol> ForwardSDMolSupplier::_next() {
   PRECONDITION(dp_inStream, "no stream");
 
   std::string tempStr;
-  ROMol *res = nullptr;
+  std::unique_ptr<RWMol> res;
   if (dp_inStream->eof()) {
     df_end = true;
     return res;
@@ -202,8 +208,7 @@ ROMol *ForwardSDMolSupplier::_next() {
   df_eofHitOnRead = false;
   unsigned int line = d_line;
   try {
-    res = MolDataStreamToMol(dp_inStream, line, df_sanitize, df_removeHs,
-                             df_strictParsing);
+    MolFromMolDataStream(*dp_inStream, line, d_params).swap(res);
     // there's a special case when trying to read an empty string that
     // we get an empty molecule after only reading a single line without any
     // additional error state.
@@ -212,13 +217,13 @@ ROMol *ForwardSDMolSupplier::_next() {
     }
     d_line = line;
     if (res) {
-      this->readMolProps(res);
+      this->readMolProps(*res);
     } else if (!dp_inStream->eof()) {
       // FIX: report files missing the $$$$ marker
       std::getline(*dp_inStream, tempStr);
       ++d_line;
       while (!dp_inStream->eof() && !dp_inStream->fail() &&
-             (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
+             (tempStr.at(0) != '$' || tempStr.substr(0, 4) != "$$$$")) {
         std::getline(*dp_inStream, tempStr);
         ++d_line;
       }
@@ -239,7 +244,8 @@ ROMol *ForwardSDMolSupplier::_next() {
     d_line++;
     std::getline(*dp_inStream, tempStr);
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' ||
+            tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
@@ -261,7 +267,8 @@ ROMol *ForwardSDMolSupplier::_next() {
       df_eofHitOnRead = true;
     }
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' ||
+            tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
@@ -283,7 +290,8 @@ ROMol *ForwardSDMolSupplier::_next() {
       df_eofHitOnRead = true;
     }
     while (!dp_inStream->eof() && !dp_inStream->fail() &&
-           (tempStr[0] != '$' || tempStr.substr(0, 4) != "$$$$")) {
+           (tempStr.empty() || tempStr.at(0) != '$' ||
+            tempStr.substr(0, 4) != "$$$$")) {
       d_line++;
       std::getline(*dp_inStream, tempStr);
     }
@@ -325,4 +333,6 @@ bool ForwardSDMolSupplier::atEnd() {
   PRECONDITION(dp_inStream, "no stream");
   return df_end;
 }
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

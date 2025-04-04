@@ -28,8 +28,7 @@
 
 namespace RDKit {
 namespace GeneralizedSubstruct {
-struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
-    : private boost::noncopyable {
+struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol {
   enum ExtendedQueryMolTypes : unsigned char {
     XQM_MOL = 1,
     XQM_MOLBUNDLE = 2,
@@ -50,16 +49,29 @@ struct RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol
   ExtendedQueryMol(
       std::unique_ptr<std::vector<std::unique_ptr<TautomerQuery>>> tqs)
       : xqmol(std::move(tqs)) {}
+  ExtendedQueryMol(const ExtendedQueryMol &other) { initFromOther(other); }
+  ExtendedQueryMol &operator=(const ExtendedQueryMol &other) {
+    if (this == &other) {
+      return *this;
+    }
+    initFromOther(other);
+    return *this;
+  }
 
   ExtendedQueryMol(ExtendedQueryMol &&o) noexcept : xqmol(std::move(o.xqmol)) {}
   ExtendedQueryMol(const std::string &text, bool isJSON = false);
 
   void initFromBinary(const std::string &pkl);
   void initFromJSON(const std::string &text);
+  void initFromOther(const ExtendedQueryMol &other);
 
   ContainedType xqmol;
   std::string toBinary() const;
   std::string toJSON() const;
+
+  // Query fingerprint
+  std::unique_ptr<ExplicitBitVect> patternFingerprintQuery(
+      unsigned int fpSize = 2048U) const;
 };
 
 //! Creates an ExtendedQueryMol from the input molecule
@@ -93,6 +105,10 @@ RDKIT_GENERALIZEDSUBSTRUCT_EXPORT ExtendedQueryMol createExtendedQueryMol(
 RDKIT_GENERALIZEDSUBSTRUCT_EXPORT std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const ExtendedQueryMol &query,
     const SubstructMatchParameters &params = SubstructMatchParameters());
+
+//! Fingerprints a target molecule
+RDKIT_GENERALIZEDSUBSTRUCT_EXPORT std::unique_ptr<ExplicitBitVect>
+patternFingerprintTargetMol(const ROMol &mol, unsigned int fpSize = 2048U);
 
 //! checks if a molecule has a match to an ExtendedQueryMol
 inline bool hasSubstructMatch(

@@ -1,6 +1,5 @@
-// $Id$
 //
-//  Copyright (C) 2001-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -12,27 +11,6 @@
 #include "ROMol.h"
 
 namespace RDKit {
-
-void Conformer::initFromOther(const Conformer &conf) {
-  RDProps::operator=(conf);
-  dp_mol = conf.dp_mol;
-  auto nat = conf.getNumAtoms();
-  d_positions.resize(nat);
-  for (unsigned i = 0; i < nat; i++) {
-    d_positions[i] = conf.getAtomPos(i);
-  }
-  d_id = conf.getId();
-  df_is3D = conf.is3D();
-}
-
-Conformer::Conformer(const Conformer &conf) : RDProps() { initFromOther(conf); }
-Conformer &Conformer::operator=(const Conformer &other) {
-  if (this == &other) {
-    return *this;
-  }
-  initFromOther(other);
-  return *this;
-}
 
 void Conformer::setOwningMol(ROMol *mol) {
   PRECONDITION(mol, "");
@@ -48,19 +26,14 @@ const RDGeom::POINT3D_VECT &Conformer::getPositions() const {
   return d_positions;
 }
 
-RDGeom::POINT3D_VECT &Conformer::getPositions() {
-  if (dp_mol) {
-    PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
-  }
-  return d_positions;
-}
+RDGeom::POINT3D_VECT &Conformer::getPositions() { return d_positions; }
 
 const RDGeom::Point3D &Conformer::getAtomPos(unsigned int atomId) const {
   if (dp_mol) {
     PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
   }
   URANGE_CHECK(atomId, d_positions.size());
-  return d_positions[atomId];
+  return d_positions.at(atomId);
 }
 
 RDGeom::Point3D &Conformer::getAtomPos(unsigned int atomId) {
@@ -68,6 +41,6 @@ RDGeom::Point3D &Conformer::getAtomPos(unsigned int atomId) {
     PRECONDITION(dp_mol->getNumAtoms() == d_positions.size(), "");
   }
   URANGE_CHECK(atomId, d_positions.size());
-  return d_positions[atomId];
+  return d_positions.at(atomId);
 }
 }  // namespace RDKit

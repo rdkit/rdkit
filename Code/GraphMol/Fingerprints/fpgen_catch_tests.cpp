@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
@@ -174,7 +174,7 @@ TEST_CASE(
       // there's an unfortunate bit of information loss happening here
       // due to the fact that the SparseBitVect uses ints, so we have to
       // do this test backwards:
-      for (auto pr : *ao.bitInfoMap) {
+      for (const auto &pr : *ao.bitInfoMap) {
         INFO(pr.first);
         CHECK(std::find(obl.begin(), obl.end(), (int)(pr.first)) != obl.end());
       }
@@ -226,5 +226,253 @@ TEST_CASE("numBitsPerFeature") {
       CHECK(fp->getTotalVal() == 16);
     }
     CHECK(fpgen->infoString().find("bitsPerFeature=2") != std::string::npos);
+  }
+}
+
+TEST_CASE("multithreaded fp generation") {
+  std::vector<std::string> smis = {"CC1CCC1", "CCC1CCC1", "CCCC1CCC1",
+                                   "CCCC1CC(O)C1", "CCCC1CC(CO)C1"};
+  std::vector<std::unique_ptr<ROMol>> ov;
+  std::vector<const ROMol *> mols;
+  for (const auto &smi : smis) {
+    ov.emplace_back(SmilesToMol(smi));
+    REQUIRE(ov.back());
+    mols.push_back(ov.back().get());
+  }
+  for (auto i = 0u; i < 6; ++i) {
+    auto n = mols.size();
+    for (auto j = 0u; j < n; ++j) {
+      mols.push_back(mols[j]);
+    }
+  }
+  std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpgen{
+      MorganFingerprint::getMorganGenerator<std::uint32_t>(2)};
+  REQUIRE(fpgen);
+  SECTION("getFingerprints") {
+    std::vector<std::unique_ptr<ExplicitBitVect>> ovs;
+    FingerprintFuncArguments args;
+    for (const auto mp : mols) {
+      ovs.emplace_back(fpgen->getFingerprint(*mp, args));
+    }
+    mols.push_back(nullptr);  // make sure we handle this properly
+    auto mtvs1 = fpgen->getFingerprints(mols, 1);
+    CHECK(mtvs1.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs1[fpi]);
+    }
+    CHECK(mtvs1.back().get() == nullptr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    auto mtvs4 = fpgen->getFingerprints(mols, 4);
+    CHECK(mtvs4.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs4[fpi]);
+    }
+    CHECK(mtvs4.back().get() == nullptr);
+#endif
+  }
+  SECTION("getSparseFingerprints") {
+    std::vector<std::unique_ptr<SparseBitVect>> ovs;
+    FingerprintFuncArguments args;
+    for (const auto mp : mols) {
+      ovs.emplace_back(fpgen->getSparseFingerprint(*mp, args));
+    }
+    mols.push_back(nullptr);  // make sure we handle this properly
+    auto mtvs1 = fpgen->getSparseFingerprints(mols, 1);
+    CHECK(mtvs1.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs1[fpi]);
+    }
+    CHECK(mtvs1.back().get() == nullptr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    auto mtvs4 = fpgen->getSparseFingerprints(mols, 4);
+    CHECK(mtvs4.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs4[fpi]);
+    }
+    CHECK(mtvs4.back().get() == nullptr);
+#endif
+  }
+  SECTION("getCountFingerprints") {
+    std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>> ovs;
+    FingerprintFuncArguments args;
+    for (const auto mp : mols) {
+      ovs.emplace_back(fpgen->getCountFingerprint(*mp, args));
+    }
+    mols.push_back(nullptr);  // make sure we handle this properly
+    auto mtvs1 = fpgen->getCountFingerprints(mols, 1);
+    CHECK(mtvs1.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs1[fpi]);
+    }
+    CHECK(mtvs1.back().get() == nullptr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    auto mtvs4 = fpgen->getCountFingerprints(mols, 4);
+    CHECK(mtvs4.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs4[fpi]);
+    }
+    CHECK(mtvs4.back().get() == nullptr);
+#endif
+  }
+  SECTION("getSparseCountFingerprints") {
+    std::vector<std::unique_ptr<SparseIntVect<std::uint32_t>>> ovs;
+    FingerprintFuncArguments args;
+    for (const auto mp : mols) {
+      ovs.emplace_back(fpgen->getSparseCountFingerprint(*mp, args));
+    }
+    mols.push_back(nullptr);  // make sure we handle this properly
+    auto mtvs1 = fpgen->getSparseCountFingerprints(mols, 1);
+    CHECK(mtvs1.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs1[fpi]);
+    }
+    CHECK(mtvs1.back().get() == nullptr);
+#ifdef RDK_BUILD_THREADSAFE_SSS
+    auto mtvs4 = fpgen->getSparseCountFingerprints(mols, 4);
+    CHECK(mtvs4.size() == ovs.size() + 1);
+    for (auto fpi = 0u; fpi < ovs.size(); ++fpi) {
+      CHECK(*ovs[fpi] == *mtvs4[fpi]);
+    }
+    CHECK(mtvs4.back().get() == nullptr);
+#endif
+  }
+}
+
+TEST_CASE("countBounds edge cases") {
+  auto mol = "CC"_smiles;
+  REQUIRE(mol);
+  SECTION("just zeros") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
+    fpGenerator->getOptions()->d_countBounds = {0, 0, 0, 0};
+    std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(*mol));
+    REQUIRE(fp);
+    CHECK(fp->getNumBits() == 2048);
+  }
+  SECTION("empty bounds") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
+    fpGenerator->getOptions()->d_countBounds.clear();
+    REQUIRE_THROWS_AS(fpGenerator->getFingerprint(*mol), ValueErrorException);
+  }
+  SECTION("really big") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
+    fpGenerator->getOptions()->d_countBounds =
+        std::vector<unsigned int>((1 << 11) + 1, 0);
+    REQUIRE_THROWS_AS(fpGenerator->getFingerprint(*mol), ValueErrorException);
+  }
+  SECTION("edge case") {
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint64_t>(2));
+    REQUIRE(fpGenerator);
+    fpGenerator->getOptions()->df_countSimulation = true;
+    fpGenerator->getOptions()->d_countBounds =
+        std::vector<unsigned int>(2047, 0);
+    std::unique_ptr<ExplicitBitVect> fp(fpGenerator->getFingerprint(*mol));
+    REQUIRE(fp);
+    CHECK(fp->getNumBits() == 2048);
+  }
+}
+
+TEST_CASE("Github #7986: Morgan fingerprints, chirality, and radius") {
+  // chiral, not obvious until radius 2:
+  auto mol1 = "FC[C@H](F)CCl.FC[C@@H](F)CCl"_smiles;
+  REQUIRE(mol1);
+  // not chiral, but flagged as being so:
+  auto mol2 = "FC[C@H](F)CF.FC[C@@H](F)CF"_smiles;
+  REQUIRE(mol2);
+  // set bogus chirality tags
+  mol2->getAtomWithIdx(2)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
+  mol2->getAtomWithIdx(8)->setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
+
+  MorganFingerprint::MorganArguments args;
+  args.df_includeChirality = true;
+  args.df_includeRedundantEnvironments = true;
+
+  SECTION("radius=1") {
+    args.d_radius = 1;
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(args));
+    REQUIRE(fpGenerator);
+    AdditionalOutput ao;
+    ao.allocateBitInfoMap();
+    ao.allocateAtomToBits();
+
+    FingerprintFuncArguments fargs;
+    fargs.additionalOutput = &ao;
+
+    std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
+        fpGenerator->getSparseCountFingerprint(*mol1, fargs));
+    REQUIRE(fp);
+    // the actual chiral centers... we don't see these with radius=1:
+    CHECK(ao.atomToBits->at(2) == ao.atomToBits->at(8));
+    // neighboring atoms, these are always the same
+    CHECK(ao.atomToBits->at(4) == ao.atomToBits->at(10));
+  }
+  SECTION("radius=2") {
+    args.d_radius = 2;
+    std::unique_ptr<FingerprintGenerator<std::uint32_t>> fpGenerator(
+        MorganFingerprint::getMorganGenerator<std::uint32_t>(args));
+    REQUIRE(fpGenerator);
+    AdditionalOutput ao;
+    ao.allocateBitInfoMap();
+    ao.allocateAtomToBits();
+
+    FingerprintFuncArguments fargs;
+    fargs.additionalOutput = &ao;
+
+    std::unique_ptr<SparseIntVect<std::uint32_t>> fp(
+        fpGenerator->getSparseCountFingerprint(*mol1, fargs));
+    REQUIRE(fp);
+    // the actual chiral centers... now we see them:
+    CHECK(ao.atomToBits->at(2) != ao.atomToBits->at(8));
+    // neighboring atoms, these are always the same
+    CHECK(ao.atomToBits->at(4) == ao.atomToBits->at(10));
+
+    fp = fpGenerator->getSparseCountFingerprint(*mol2, fargs);
+    REQUIRE(fp);
+    // no chirality here, so we should see the same bits:
+    CHECK(ao.atomToBits->at(2) == ao.atomToBits->at(8));
+    CHECK(ao.atomToBits->at(4) == ao.atomToBits->at(10));
+  }
+}
+
+TEST_CASE("github #6679: suspicious value for atom pair code calculation") {
+  SECTION("invariants") {
+    std::vector<std::pair<std::string, UINT_VECT>> data = {
+        {"C[I]", {33, 449}},  {"C[Te]", {33, 417}}, {"C[Sb]", {33, 385}},
+        {"C[Sn]", {33, 481}}, {"C[Xe]", {33, 481}}, {"C[Li]", {33, 481}},
+    };
+    auto invg = AtomPair::AtomPairAtomInvGenerator();
+    for (const auto &pr : data) {
+      auto mol = v2::SmilesParse::MolFromSmiles(pr.first);
+      REQUIRE(mol);
+      std::unique_ptr<UINT_VECT> invs{invg.getAtomInvariants(*mol)};
+      INFO(pr.first);
+      CHECK(*invs == pr.second);
+    }
+  }
+  SECTION("fingerprints") {
+    std::vector<std::pair<std::string, unsigned int>> data = {
+        {"C[I]", 7918328},  {"C[Te]", 7918456}, {"C[Sb]", 7918584},
+        {"C[Sn]", 7918200}, {"C[Xe]", 7918200}, {"C[Li]", 7918200},
+    };
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpg{
+        AtomPair::getAtomPairGenerator<std::uint64_t>()};
+    for (const auto &pr : data) {
+      auto mol = v2::SmilesParse::MolFromSmiles(pr.first);
+      REQUIRE(mol);
+      std::unique_ptr<SparseBitVect> fp{fpg->getSparseFingerprint(*mol)};
+      INFO(pr.first);
+      CHECK(fp->getNumOnBits() == 1);
+      CHECK((*fp)[pr.second]);
+    }
   }
 }

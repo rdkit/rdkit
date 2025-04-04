@@ -1,7 +1,5 @@
-//  Copyright (C) 2013-2018 Paolo Tosco
-//
-//  Copyright (C) 2004-2010 Greg Landrum and Rational Discovery LLC
-//
+//  Copyright (C) 2014-2025 Greg Landrum and other RDKit contributors
+
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -10,7 +8,6 @@
 //
 #include <iostream>
 #include <cmath>
-#include <cctype>
 
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
@@ -53,6 +50,9 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
               << std::endl;
     }
   }
+
+  auto contrib = std::make_unique<BondStretchContrib>(field);
+  bool hasContrib = false;
   for (ROMol::ConstBondIterator bi = mol.beginBonds(); bi != mol.endBonds();
        ++bi) {
     unsigned int idx1 = (*bi)->getBeginAtomIdx();
@@ -61,9 +61,8 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     MMFFBond mmffBondParams;
     if (mmffMolProperties->getMMFFBondStretchParams(mol, idx1, idx2, bondType,
                                                     mmffBondParams)) {
-      auto *contrib =
-          new BondStretchContrib(field, idx1, idx2, &mmffBondParams);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      contrib->addTerm(idx1, idx2, &mmffBondParams);
+      hasContrib = true;
       if (mmffMolProperties->getMMFFVerbosity()) {
         unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx1);
         unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx2);
@@ -95,6 +94,9 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     oStream << "TOTAL BOND STRETCH ENERGY      =" << std::right << std::setw(16)
             << std::fixed << std::setprecision(4) << totalBondStretchEnergy
             << std::endl;
+  }
+  if (hasContrib) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib.release()));
   }
 }
 
@@ -248,6 +250,8 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     }
     points = field->positions();
   }
+  auto contrib = std::make_unique<AngleBendContrib>(field);
+  bool hasContrib = false;
   for (idx[1] = 0; idx[1] < nAtoms; ++idx[1]) {
     const Atom *jAtom = mol.getAtomWithIdx(idx[1]);
     if (jAtom->getDegree() == 1) {
@@ -270,11 +274,9 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         MMFFAngle mmffAngleParams;
         if (mmffMolProperties->getMMFFAngleBendParams(
                 mol, idx[0], idx[1], idx[2], angleType, mmffAngleParams)) {
-          auto *contrib =
-              new AngleBendContrib(field, idx[0], idx[1], idx[2],
-                                   &mmffAngleParams, mmffPropParamsCentralAtom);
-          auto sptr = ForceFields::ContribPtr(contrib);
-          field->contribs().push_back(sptr);
+          hasContrib = true;
+          contrib->addTerm(idx[0], idx[1], idx[2],
+                           &mmffAngleParams, mmffPropParamsCentralAtom);
           if (mmffMolProperties->getMMFFVerbosity()) {
             unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
             unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
@@ -323,6 +325,9 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             << std::fixed << std::setprecision(4) << totalAngleBendEnergy
             << std::endl;
   }
+  if (hasContrib) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib.release()));
+  }
 }
 
 // ------------------------------------------------------------------------
@@ -362,6 +367,10 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     }
     points = field->positions();
   }
+
+  auto contrib = std::make_unique<StretchBendContrib>(field);
+  bool contribAdded = false;
+
   for (idx[1] = 0; idx[1] < nAtoms; ++idx[1]) {
     const Atom *jAtom = mol.getAtomWithIdx(idx[1]);
     if (jAtom->getDegree() == 1) {
@@ -393,10 +402,10 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         if (mmffMolProperties->getMMFFStretchBendParams(
                 mol, idx[0], idx[1], idx[2], stretchBendType, mmffStbnParams,
                 mmffBondParams, mmffAngleParams)) {
-          auto *contrib = new StretchBendContrib(
-              field, idx[0], idx[1], idx[2], &mmffStbnParams, &mmffAngleParams,
-              &mmffBondParams[0], &mmffBondParams[1]);
-          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          contribAdded = true;
+          contrib->addTerm(idx[0], idx[1], idx[2], &mmffStbnParams,
+                           &mmffAngleParams, &mmffBondParams[0],
+                           &mmffBondParams[1]);
           if (mmffMolProperties->getMMFFVerbosity()) {
             unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
             unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(idx[1]);
@@ -472,6 +481,9 @@ void addStretchBend(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             << std::fixed << std::setprecision(4) << totalStretchBendEnergy
             << std::endl;
   }
+  if (contribAdded) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib.release()));
+  }
 }
 
 void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
@@ -505,6 +517,8 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     }
     points = field->positions();
   }
+  bool hasContrib = false;
+  auto contrib = std::make_unique<OopBendContrib>(field);
   for (idx[1] = 0; idx[1] < mol.getNumAtoms(); ++idx[1]) {
     atom[1] = mol.getAtomWithIdx(idx[1]);
     if (atom[1]->getDegree() != 3) {
@@ -549,9 +563,8 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
           n[3] = 0;
           break;
       }
-      auto *contrib = new OopBendContrib(field, idx[n[0]], idx[n[1]], idx[n[2]],
-                                         idx[n[3]], &mmffOopParams);
-      field->contribs().push_back(ForceFields::ContribPtr(contrib));
+      contrib->addTerm(idx[n[0]], idx[n[1]], idx[n[2]], idx[n[3]], &mmffOopParams);
+      hasContrib = true;
       if (mmffMolProperties->getMMFFVerbosity()) {
         const RDGeom::Point3D p1((*(points[idx[n[0]]]))[0],
                                  (*(points[idx[n[0]]]))[1],
@@ -593,6 +606,9 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     oStream << "TOTAL OUT-OF-PLANE BEND ENERGY =" << std::right << std::setw(16)
             << std::fixed << std::setprecision(4) << totalOopBendEnergy
             << std::endl;
+  }
+  if (hasContrib) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib.release()));
   }
 }
 
@@ -665,6 +681,9 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
     delete query;
   }
 
+  auto contrib = std::make_unique<TorsionAngleContrib>(field);
+  bool contribAdded = false;
+
   for (unsigned int i = 0; i < nHits; ++i) {
     MatchVectType match = matchVect[i];
     TEST_ASSERT(match.size() == 2);
@@ -698,9 +717,8 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
                 MMFFTor mmffTorParams;
                 if (mmffMolProperties->getMMFFTorsionParams(
                         mol, idx1, idx2, idx3, idx4, torType, mmffTorParams)) {
-                  auto *contrib = new TorsionAngleContrib(
-                      field, idx1, idx2, idx3, idx4, &mmffTorParams);
-                  field->contribs().push_back(ForceFields::ContribPtr(contrib));
+                  contrib->addTerm(idx1, idx2, idx3, idx4, &mmffTorParams);
+                  contribAdded = true;
                   if (mmffMolProperties->getMMFFVerbosity()) {
                     const Atom *iAtom = mol.getAtomWithIdx(idx1);
                     const Atom *lAtom = mol.getAtomWithIdx(idx4);
@@ -768,6 +786,9 @@ void addTorsions(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
             << std::fixed << std::setprecision(4) << totalTorsionEnergy
             << std::endl;
   }
+  if (contribAdded) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib.release()));
+  }
 }
 
 // ------------------------------------------------------------------------
@@ -807,6 +828,8 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
     }
   }
   const Conformer &conf = mol.getConformer(confId);
+  auto contrib = std::make_unique<VdWContrib>(field);
+  bool hasContrib = false;
   for (unsigned int i = 0; i < nAtoms; ++i) {
     for (unsigned int j = i + 1; j < nAtoms; ++j) {
       if (ignoreInterfragInteractions && (fragMapping[i] != fragMapping[j])) {
@@ -820,8 +843,8 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         }
         MMFFVdWRijstarEps mmffVdWConstants;
         if (mmffMolProperties->getMMFFVdWParams(i, j, mmffVdWConstants)) {
-          auto *contrib = new VdWContrib(field, i, j, &mmffVdWConstants);
-          field->contribs().push_back(ForceFields::ContribPtr(contrib));
+          contrib->addTerm(i, j, &mmffVdWConstants);
+          hasContrib = true;
           if (mmffMolProperties->getMMFFVerbosity()) {
             const Atom *iAtom = mol.getAtomWithIdx(i);
             const Atom *jAtom = mol.getAtomWithIdx(j);
@@ -852,6 +875,9 @@ void addVdW(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
     oStream << "TOTAL VAN DER WAALS ENERGY     =" << std::right << std::setw(16)
             << std::fixed << std::setprecision(4) << totalVdWEnergy
             << std::endl;
+  }
+  if (hasContrib) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib.release()));
   }
 }
 
@@ -890,6 +916,8 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
   const Conformer &conf = mol.getConformer(confId);
   double dielConst = mmffMolProperties->getMMFFDielectricConstant();
   std::uint8_t dielModel = mmffMolProperties->getMMFFDielectricModel();
+  auto contrib = std::make_unique<EleContrib>(field);
+  bool hasContrib = false;
   for (unsigned int i = 0; i < nAtoms; ++i) {
     for (unsigned int j = i + 1; j < nAtoms; ++j) {
       if (ignoreInterfragInteractions && (fragMapping[i] != fragMapping[j])) {
@@ -910,9 +938,9 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
         double chargeTerm = mmffMolProperties->getMMFFPartialCharge(i) *
                             mmffMolProperties->getMMFFPartialCharge(j) /
                             dielConst;
-        auto *contrib =
-            new EleContrib(field, i, j, chargeTerm, dielModel, is1_4);
-        field->contribs().push_back(ForceFields::ContribPtr(contrib));
+        contrib->addTerm(i, j, chargeTerm, dielModel, is1_4);
+        hasContrib = true;
+
         if (mmffMolProperties->getMMFFVerbosity()) {
           const unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(i);
           const unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(j);
@@ -941,6 +969,9 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
     oStream << "TOTAL ELECTROSTATIC ENERGY     =" << std::right << std::setw(16)
             << std::fixed << std::setprecision(4) << totalEleEnergy
             << std::endl;
+  }
+  if (hasContrib) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib.release()));
   }
 }
 
@@ -976,7 +1007,7 @@ ForceFields::ForceField *constructForceField(
   PRECONDITION(mmffMolProperties->isValid(),
                "missing atom types - invalid force-field");
 
-  auto *res = new ForceFields::ForceField();
+  std::unique_ptr<ForceFields::ForceField> res(new ForceFields::ForceField());
   // add the atomic positions:
   Conformer &conf = mol.getConformer(confId);
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -985,35 +1016,35 @@ ForceFields::ForceField *constructForceField(
 
   res->initialize();
   if (mmffMolProperties->getMMFFBondTerm()) {
-    Tools::addBonds(mol, mmffMolProperties, res);
+    Tools::addBonds(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFAngleTerm()) {
-    Tools::addAngles(mol, mmffMolProperties, res);
+    Tools::addAngles(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFStretchBendTerm()) {
-    Tools::addStretchBend(mol, mmffMolProperties, res);
+    Tools::addStretchBend(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFOopTerm()) {
-    Tools::addOop(mol, mmffMolProperties, res);
+    Tools::addOop(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFTorsionTerm()) {
-    Tools::addTorsions(mol, mmffMolProperties, res);
+    Tools::addTorsions(mol, mmffMolProperties, res.get());
   }
   if (mmffMolProperties->getMMFFVdWTerm() ||
       mmffMolProperties->getMMFFEleTerm()) {
     boost::shared_array<std::uint8_t> neighborMat =
         Tools::buildNeighborMatrix(mol);
     if (mmffMolProperties->getMMFFVdWTerm()) {
-      Tools::addVdW(mol, confId, mmffMolProperties, res, neighborMat,
+      Tools::addVdW(mol, confId, mmffMolProperties, res.get(), neighborMat,
                     nonBondedThresh, ignoreInterfragInteractions);
     }
     if (mmffMolProperties->getMMFFEleTerm()) {
-      Tools::addEle(mol, confId, mmffMolProperties, res, neighborMat,
+      Tools::addEle(mol, confId, mmffMolProperties, res.get(), neighborMat,
                     nonBondedThresh, ignoreInterfragInteractions);
     }
   }
 
-  return res;
+  return res.release();
 }
 }  // namespace MMFF
 }  // namespace RDKit

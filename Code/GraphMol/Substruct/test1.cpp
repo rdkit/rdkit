@@ -1715,6 +1715,13 @@ void testGithub2570() {
     const auto mol = R"([H][C@](O)(F)Cl)"_smiles;
     const auto query = R"([C@H](O)(F)Cl)"_smarts;
     std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+  {
+    const auto mol = R"([H][C@](O)(F)Cl)"_smiles;
+    const auto query = R"([C@@H](O)(F)Cl)"_smarts;
+    std::vector<MatchVectType> matches;
     TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
                                 recursionPossible, useChirality));
   }
@@ -1731,6 +1738,13 @@ void testGithub2570() {
   {
     const auto mol = R"([C@H](O)(F)Cl)"_smiles;
     const auto query = R"([C@H](O)(F)Cl)"_smarts;
+    std::vector<MatchVectType> matches;
+    TEST_ASSERT(SubstructMatch(*mol, *query, matches, uniquify,
+                               recursionPossible, useChirality));
+  }
+  {
+    const auto mol = R"([C@H](O)(F)Cl)"_smiles;
+    const auto query = R"([C@@H](O)(F)Cl)"_smarts;
     std::vector<MatchVectType> matches;
     TEST_ASSERT(!SubstructMatch(*mol, *query, matches, uniquify,
                                 recursionPossible, useChirality));
@@ -1883,10 +1897,10 @@ void testMostSubstitutedCoreMatch() {
   };
 
   const auto &coreRef = *core;
-  for (auto &molResPair :
-       {std::make_pair(orthoMeta.get(), 0u), std::make_pair(ortho.get(), 1u),
-        std::make_pair(meta.get(), 1u), std::make_pair(biphenyl.get(), 2u),
-        std::make_pair(phenyl.get(), 3u)}) {
+  for (auto &molResPair : std::vector<std::pair<RDKit::RWMol *, unsigned>>{
+           std::make_pair(orthoMeta.get(), 0u), std::make_pair(ortho.get(), 1u),
+           std::make_pair(meta.get(), 1u), std::make_pair(biphenyl.get(), 2u),
+           std::make_pair(phenyl.get(), 3u)}) {
     auto &mol = *molResPair.first;
     const auto res = molResPair.second;
     MolOps::addHs(mol);

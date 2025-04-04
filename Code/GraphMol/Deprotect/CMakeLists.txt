@@ -3,8 +3,8 @@ add_definitions(-DRDKIT_DEPROTECT_BUILD)
 rdkit_library(Deprotect
               Deprotect.cpp
               LINK_LIBRARIES ChemReactions 
-	      FilterCatalog Descriptors Fingerprints DataStructs Depictor
-              FileParsers SubstructMatch ChemTransforms GraphMol ${RDKit_SERIALIZATION_LIBS})
+	      FilterCatalog Fingerprints DataStructs Depictor
+              FileParsers SubstructMatch ChemTransforms GraphMol)
 
 
 rdkit_headers(Deprotect.h

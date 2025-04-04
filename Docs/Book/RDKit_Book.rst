@@ -145,8 +145,6 @@ Neutral carbons with radicals, however, are still considered:
   1
 
 
-
-
 The Simple Aromaticity Model
 ----------------------------
 
@@ -167,6 +165,7 @@ This isn't well documented (at least not publicly), so we tried to reproduce wha
 
 
 **Note:** For reasons of computational expediency, aromaticity perception is only done for fused-ring systems where all members are at most 24 atoms in size.
+
 
 SMILES Support and Extensions
 =============================
@@ -200,7 +199,7 @@ Here's an example of a bipy-copper complex:
   >>> bipycu.GetBondBetweenAtoms(4,12).GetBondType()
   rdkit.Chem.rdchem.BondType.DATIVE
   >>> Chem.MolToSmiles(bipycu)
-  'Cl[Cu]1(Cl)<-n2ccccc2-c2ccccn->12'
+  '[Cl][Cu]1([Cl])<-[n]2ccccc2-c2cccc[n]->12'
 
 Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect
 the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy,
@@ -251,7 +250,7 @@ The features which are parsed include:
 - atomic labels/aliases ``$`` (recognized aliases are ``_AP``, ``star_e``,
   ``Q_e``, ``QH_p``, ``AH_P``, ``X_p``, ``XH_p``, ``M_p``, ``MH_p``, ``*``)
 - atomic properties ``atomprop``
-- coordinate bonds ``C`` (these are translated into double bonds)
+- coordinate/dative bonds ``C`` (these are translated into dative bonds)
 - radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
 - linknodes ``LN``
@@ -274,6 +273,7 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
 - atomic values
 - atomic labels
 - atomic properties
+- dative bonds (only if dative bonds are not also being written to the SMILES/SMARTS)
 - radicals
 - enhanced stereo
 - linknodes
@@ -438,7 +438,8 @@ SMARTS Reference
 escape special characters. This is a wart from the documentation system we are using.
 Please ignore those characters.
 
-**Atoms**
+Atoms
+^^^^^
 
 =========  ==========================================  ===============  ======  =========
 Primitive                  Property                    "Default value"  Range?    Notes
@@ -470,8 +471,8 @@ Z          "number of aliphatic heteroatom neighbors"  >0               Y       
 =========  ==========================================  ===============  ======  =========
 
 
-
-**Bonds**
+Bonds
+^^^^^
 
 =========  ====================  ===================
 Primitive        Property               Notes
@@ -489,6 +490,44 @@ Primitive        Property               Notes
 <-         "dative left"         extension
 =========  ====================  ===================
 
+Hs in SMARTS
+^^^^^^^^^^^^
+
+Hs in SMARTS are interpreted as hydrogen atoms if the equivalent atom expression would also be a valid SMILES; otherwise they are interpreted as a query for any atom with a single attached hydrogen.
+
+Some examples:
+
+======  ==============
+SMARTS  Interpretation
+======  ==============  
+[H]     [#1]
+[H+]    [#1+]
+[H,Cl]  [\*H1,Cl]
+[HH]    [\*H1;\*H1]
+======  ==============
+
+This is somewhat confusing, but is consistent with the Daylight documentation (https://www.daylight.com/dayhtml/doc/theory/theory.smirks.html):
+  
+  Hence, a single change to SMARTS interpretation, for expressions of the form:
+  [<weight>H<charge><map>]. In SMARTS, these expressions now are interpreted as
+  a hydrogen atom, rather than as any atom with one hydrogen attached. All other
+  SMARTS hydrogen expressions retain their pre-4.51 meanings.
+
+It's always possible to see the RDKit's interpretation of a SMARTS using the ``DescribeQuery()`` function::
+
+  >>> print(Chem.AtomFromSmarts('[H,Cl]').DescribeQuery())
+  AtomOr
+    AtomHCount 1 = val
+    AtomType 17 = val
+
+  >>> print(Chem.AtomFromSmarts('[2H+]').DescribeQuery())
+  AtomAnd
+    AtomAnd
+      AtomAtomicNum 1 = val
+      AtomIsotope 2 = val
+    AtomFormalCharge 1 = val
+
+The safest (and clearest) way to incorporate H atoms into your queries is to use the atomic number primitive `[#1]` instead of `[H]`.
 
 Mol/SDF Support and Extensions
 ==============================
@@ -630,8 +669,9 @@ The following atom types are potential tetrahedral stereogenic atoms:
   - atoms with degree 4
   - atoms with degree 3 and one implicit H
   - P or As with degree 3 or 4
-  - N with degree 3 which is in a ring of size 3 or which is shared between at
-    least 3 rings (this last condition is an extension to the InChI rules) 
+  - An SP3 hybridized N with degree 3 that is not involved in any conjugated
+    bonds and that is in a ring of size 3 or that is shared between at least 3
+    rings (this last condition is an extension to the InChI rules).
   - S or Se with degree 3 and a total valence of 4 or a total valence of 3 and a
     net charge of +1.
 
@@ -1546,7 +1586,7 @@ Here's an example of using the features:
 
 Here are the supported groups and a brief description of what they mean:
 
- ========================   =========
+ =========================  =========
   Alkyl (ALK)               alkyl side chains (not an H atom)
   AlkylH (ALH)              alkyl side chains including an H atom
   Alkenyl (AEL)             alkenyl side chains      
@@ -1581,7 +1621,7 @@ Here are the supported groups and a brief description of what they mean:
   GroupH (GH)               any group (including H atom)
   Group* (G*)               any group with a ring closure
   GroupH* (GH*)             any group with a ring closure or an H atom
- ========================   =========
+ =========================  =========
  
 For more detailed descriptions, look at the documentation for the C++ file GenericGroups.h
 
@@ -1661,13 +1701,36 @@ Here are the steps involved, in order.
       example is the nitrogen atom in pyrrole.
 
   13. ``updatePropertyCache``: re-calculates the explicit and implicit valences on
-     all atoms. This generates exceptions for atoms in higher-than-allowed
-     valence states. This step is required to catch some edge cases where input 
-     atoms with non-physical valences are accepted if they are flagged as aromatic.
+      all atoms. This generates exceptions for atoms in higher-than-allowed
+      valence states. This step is required to catch some edge cases where input 
+      atoms with non-physical valences are accepted if they are flagged as aromatic.
 
 
 The individual steps can be toggled on or off when calling
 ``MolOps::sanitizeMol`` or ``Chem.SanitizeMol``.
+
+Valence calculation and allowed valences
+========================================
+
+The RDKit is, by default, fairly strict in the way it enforces allowed valences when sanitizing structures (this is done during the `updatePropertyCache` step of sanitization): atoms which have an explicit valence (sum of the specified bond orders + specified H count) exceeding the maximum allowed valence for the element will raise an exception. 
+
+Allowed valences of the elements (as of 2024.09.1):
+
+  =======  =======  =====  ======  ======  ========  ========  ==========
+  H 1                                                          He 0 
+  Li 1 -1  Be 2     B 3    C 4     N 3     O 2       F 1       Ne 0      
+  Na 1,-1  Mg 2,-1  Al 3   Si 4    P 3,5   S 2,4,6   Cl 1      Ar 0      
+  K  1,-1  Ca 2,-1  Ga 3   Ge 4    As 3,5  Se 2,4,6  Br 1      Kr 0      
+  Rb 1,-1  Sr 2,-1  In 3   Sn 2,4  Sb 3,5  Te 2,4,6  I  1,3,5  Xe 0,2,4,6
+  Cs 1,-1  Ba 2,-1  Tl -1  Pb 2,4  Bi 3,5  Po 2,4,6  At 1,3,5  Rn 0
+  =======  =======  =====  ======  ======  ========  ========  ==========
+
+Elements not listed in the table have a valence of `-1`.
+
+An allowed valence of `-1` indicates that the element can have any valence value. Implicit Hs will not be added to atoms with a possible valence of `-1` when the explicit valence exceeds the highest specified value. So, for example, an Mg atom with a single bond to it (explicit valence = 1) will have one implicit H added to it, while an Mg atom with three bonds to it will have no implicit Hs added. Atoms where the only allowed valence is `-1` will never have implicit Hs added.
+
+The allowed valences of charged atoms are calculated by looking at the isoelectronic element's allowed valences. For example, `N+` has the same allowed valences as `C`, while `N-` has the same allowed valences as `O`. `P-2`, `S-`, `As-2`, and `Se-` are special cases: they all have allowed valences of 1, 3 and 5.
+
 
 JSON Support
 ************
@@ -2061,10 +2124,14 @@ correspond to specific molecules:
 
 .. doctest ::
 
-  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |&1:1|')
+  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |a:4,&1:1|')
   >>> m.GetStereoGroups()[0].GetGroupType()
-  rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
+  rdkit.Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE
   >>> [x.GetIdx() for x in m.GetStereoGroups()[0].GetAtoms()]
+  [4]
+  >>> m.GetStereoGroups()[1].GetGroupType()
+  rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
+  >>> [x.GetIdx() for x in m.GetStereoGroups()[1].GetAtoms()]
   [1]
   >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
   >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
@@ -2084,7 +2151,26 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   >>> ps=rxn.RunReactants([m])
   >>> clearAllAtomProps(ps[0][0])
   >>> Chem.MolToCXSmiles(ps[0][0])
-  'C[C@H](Br)C[C@H](O)Cl |&1:1|'
+  'C[C@H](Br)C[C@H](O)Cl |a:4,&1:1|'
+
+  Stereo Groups can be canonicalized.
+
+.. doctest ::
+  
+  >>> m = Chem.MolFromSmiles('CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3,o1:11,o2:14|')
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.NeverInclude)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |o1:14|'
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.AlwaysInclude)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |a:3,11,o1:14|'
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@H](C)CC1 |a:3,11,o1:14|'
+  >>> m = Chem.MolFromSmiles('CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1 |a:3|')
+  >>> mOut = Chem.CanonicalizeStereoGroups(m, Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist)
+  >>> Chem.MolToCXSmiles(mOut)
+  'CC(C)[C@H]1CCCCN1C(=O)[C@H]1CC[C@@H](C)CC1'
 
 .. |EnhancedSSS_A|  image:: ./images/EnhancedStereoSSS_molA.png
    :scale: 75%
@@ -2162,6 +2248,224 @@ Some concrete examples of this:
   True
   >>> m_OR.HasSubstructMatch(m_AND,ps)
   False
+
+Atropisomeric Bonds
+*******************
+
+Some single bonds have restricted rotation because of steric interactions
+between the groups on adjacent atoms. If the groups on the adjacent atoms are
+different from each other, chirality can be induced. An atropisomer bond is such
+a restricted rotation bond. 
+
+The requirements for a bond to be eligible for atropisomerism in the RDKit are:
+
+- The bond must be a single bond between SP2 hybridized atoms.
+- The neighboring bonds must be single, double or aromatic. 
+- If there are two groups on either end, those groups must be different as per CIP rules. 
+- Currently RDKit considers ring bonds as potential atropisomer bonds only if the
+  ring in which the bond appears is 8 atoms or larger (thus allowing macrocycles).
+- The molecule must have coordinates for atropisomer bonds to be interpreted.
+
+The definition of potential atropisomer bonds is based on the wedging of
+adjacent bonds. 
+
+Defining Atropisomers
+=====================
+
+At least one of the neighbor bonds of one of the atoms of the potential
+atropisomer bond must be a single or aromatic bond, and must have a bond
+direction that is either "wedged" or "hashed". If any of the neighbor bonds is
+marked as "sqwiggly", the bond is considered to have "Any" stereochemistry.
+Example structure:
+
+.. testsetup::
+
+  'N1(C2C(C)=CC=CC=2I)C(C)=CC=C1Br |wU:1.1,(16.58,-10.58,;16.58,-9.58,;17.45,-9.08,;18.31,-9.57,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,)|'
+  
+
+.. image:: images/atrop_example1.png
+
+If more than one of the neighbor bonds are wedged or hashed, they must be consistent. 
+
+For example, if two neighbor bonds on the same end atom are wedged/hashed, one
+must be a wedge and the other must be a hash. If neighbor bonds on different
+ends of the atropisomer bond are wedged, and the two bonds are opposite sides of
+the potential atropisomer bond (the dihedral angle is greater than 90 degrees or
+less than -90 degrees), the two must both be wedges or both must be hashed. If
+the two wedged/hashed neighbor bonds are on the same side of the potential
+atropisomer bond (the dihedral angle is less than 90 degrees and greater than
+-90 degrees), one must be a wedge and the other a hash.
+
+Examples – valid atropisomers with multiple wedges:
+
+.. testsetup::
+
+  'N1(C2=C(I)C=CC=C2C)C(Br)=CC=C1C |wU:1.7,0.9,(15.40,-10.23,;15.40,-9.23,;14.54,-8.73,;13.67,-9.23,;14.54,-7.73,;15.40,-7.23,;16.26,-7.73,;16.27,-8.73,;17.13,-9.22,;14.60,-10.82,;13.64,-10.52,;14.90,-11.77,;15.90,-11.77,;16.20,-10.82,;17.16,-10.52,)|',
+  'N1(C(C)=CC=C1Br)C1C(C)=CC=CC=1I |wU:0.5,wD:0.0,(16.58,-10.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,;16.58,-9.58,;17.45,-9.08,;18.31,-9.57,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,)|'
+  
+.. image:: images/atrop_example2.png
+
+
+Examples – invalid atropisomers with multiple wedges:
+
+.. testsetup::
+
+  'N1(C(C)=CC=C1Br)C1C(C)=CC=CC=1I |wU:0.5,wD:7.8,(12.97,-10.71,;13.78,-11.30,;14.74,-11.00,;13.48,-12.25,;12.47,-12.25,;12.17,-11.30,;11.21,-11.00,;12.97,-9.70,;13.85,-9.20,;14.71,-9.69,;13.84,-8.20,;12.97,-7.70,;12.11,-8.20,;12.11,-9.20,;11.24,-9.70,)|',
+  'N1(C2=C(I)C=CC=C2C)C(Br)=CC=C1C |wU:0.9,0.14,(16.20,-9.43,;16.20,-8.43,;15.34,-7.93,;14.47,-8.43,;15.34,-6.93,;16.20,-6.43,;17.06,-6.93,;17.07,-7.93,;17.93,-8.42,;15.40,-10.02,;14.44,-9.72,;15.70,-10.97,;16.70,-10.97,;17.00,-10.02,;17.96,-9.72,)|'
+  
+.. image:: images/atrop_example3.png
+
+
+Note: the RDKit software makes no attempt to determine if the bond is actually
+rotationally constrained. If the bond meets the requirements above, it is
+marked as an atropisomer.
+
+Internal Representation of Atropisomers
+=======================================
+
+To help with the rest of the explanation, we include the bond indices in the molecule drawing:
+
+.. testsetup::
+
+  'CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wU:7.7,(18.31,-9.57,;17.45,-9.08,;17.44,-8.08,;16.58,-7.58,;15.71,-8.08,;15.71,-9.08,;14.84,-9.58,;16.58,-9.58,;16.58,-10.58,;17.38,-11.17,;18.34,-10.87,;17.08,-12.12,;16.07,-12.12,;15.77,-11.17,;14.81,-10.87,)|'
+  
+.. image:: images/atrop_representation1.png
+
+Here's part of the Debug output for that molecule::
+
+  Atoms:
+    ...
+    1 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    ...
+    5 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    ...
+    7 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    8 7 N chg: 0  deg: 3 exp: 3 imp: 0 hyb: SP2 arom?: 1
+    9 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    ...
+    13 6 C chg: 0  deg: 3 exp: 4 imp: 0 hyb: SP2 arom?: 1
+    ...
+  Bonds:
+    ...
+    6 5->7 order: a conj?: 1 aromatic?: 1
+    7 7->8 order: 1 stereo: CCW bonds: (14 6 8 15) conj?: 1
+    8 8->9 order: a conj?: 1 aromatic?: 1
+    ...
+    14 7->1 order: a dir: wedge conj?: 1 aromatic?: 1
+    15 13->8 order: a conj?: 1 aromatic?: 1
+
+This tells us that bond 7 is atropisomeric and that when looking down the bond
+(from atom C7 to atom N8), the rotation direction between bonds 14 and 8 (these
+are the bonds to the lowest numbered atoms on each of the atropisomeric bond) is
+counterclockwise (CCW).
+
+
+Formats supporting atropisomers
+===============================
+
+Atropisomers are supported for molecule parsing and writing in Mol, MRV, and CXSmiles formats. 
+For reactions, atropisomers are supported for in rxn, MRV and CXSmiles formats.
+Atropisomers can be parsed from a CDXML file.
+
+Enhanced Stereochemistry
+========================
+
+Atropisomers can be part of Enhanced Stereochemistry Groups (Or, And, or
+Absolute). This is indicated by marking one or both of the atropisomer bond's
+atoms as being in the enhanced Stereo Group
+
+Example:
+
+.. testsetup::
+
+  'C=C(N1C(=O)C=CNC1=O)[C@]([C@H](C)F)([C@H](C)Cl)[C@@H](C)Br |(-1.5948,0.91515,;-0.7334,0.39295,;-0.7868,-0.77245,;0.0764,-1.27085,;0.9432,-0.76745,;0.0748,-2.26505,;-0.7868,-2.76205,;-1.6494,-2.26165,;-1.6512,-1.26665,;-2.5194,-0.77025,;0.283,0.98175,;1.4986,1.05295,;2.1262,0.24415,;1.941,1.95055,;0.2298,1.98075,;1.059,2.52775,;-0.6704,2.43135,;0.631,0.16635,;0.0594,-0.45685,;1.4698,-0.05045,),wD:2.8,14.15,wU:2.1,2.2,10.10,11.12,17.18,o1:2,10,11,&1:14,17|'
+  
+.. image:: images/atrop_example4.png
+
+
+3D Coordinates for Input of Atropisomers
+========================================
+
+If 3D coordinates are available (and 2D coordinates are not), the atropisomer
+bond is marked only if one of the neighbor bonds is wedged/hashed. The
+wedge/hash information is ignored except for signaling the presence of the
+atropisomer. The actual configuration is determined by the 3D coordinates.
+
+Here's an example. The drawing at the left shows a 3D structure with a wedged
+bond on one end of the atropisomer bond. The drawing at the right shows a 2D
+drawing of the same structure. In both cases, the atropisomer bond is
+highlighted in red. Notice that the bond wedging in the 3D structure is
+inconsistent with the 3D coordinates; it's just used to indicate that there is
+an atropisomer bond, the actual stereochemistry of the bond is determined by the
+3D coordinates.
+
+.. testsetup::
+
+  'FC1=C(C2=C(C([H])([H])[H])C(N3C(=O)C4=C(N(C([H])([H])[H])C3=O)C(F)=C([H])C([H])=C4[H])=C([H])C([H])=C2[H])C2=C(N([H])C3=C2C([H])([H])C([H])([H])C(C(O[H])(C([H])([H])[H])C([H])([H])[H])([H])C3([H])[H])C(C(=O)N([H])[H])=C1[H] |(-1.4248,-1.9619,-2.2208;-1.8741,-1.6494,-1.6034;-1.6332,-0.9186,-1.2186;-0.9031,-0.4893,-1.4844;-0.138,-0.6553,-1.1342;-0.0582,-1.2887,-0.4699;-0.2862,-1.8851,-0.6843;0.5723,-1.396,-0.2643;-0.4068,-1.1014,0.0747;0.5573,-0.2316,-1.4028;1.3588,-0.3932,-1.0482;1.5905,0.0773,-0.3585;1.2002,0.6554,-0.0665;2.3933,-0.1194,0.0095;2.9068,-0.6967,-0.3594;2.6425,-1.1179,-1.0794;3.1982,-1.7169,-1.457;3.3106,-2.2227,-1.0278;3.7704,-1.4129,-1.6385;2.9318,-1.9829,-2.0144;1.8575,-1.0047,-1.4246;1.6168,-1.4364,-2.0026;3.6768,-0.8489,0.0041;4.2097,-1.3952,-0.3066;3.9217,-0.4363,0.7167;4.5184,-0.5645,0.9877;3.4017,0.1354,1.0788;3.5896,0.457,1.6328;2.6386,0.2956,0.7262;2.2428,0.7475,1.0192;0.4878,0.3584,-2.0214;1.0254,0.6927,-2.2354;-0.2773,0.5242,-2.3716;-0.3315,0.9837,-2.8531;-0.9727,0.1003,-2.1031;-1.5642,0.2383,-2.3831;-2.1142,-0.6018,-0.5711;-2.8218,-1.0304,-0.3345;-3.1799,-0.5981,0.3004;-3.7005,-0.7644,0.5964;-2.7239,0.0857,0.4696;-2.0583,0.1027,-0.0552;-1.4396,0.7778,-0.0395;-0.8137,0.538,-0.0869;-1.5466,1.1855,-0.5657;-1.4992,1.2797,0.7621;-1.2099,0.9291,1.2614;-1.1302,1.8345,0.67;-2.4007,1.4836,0.9934;-2.4335,2.0277,1.7578;-2.112,1.5747,2.4382;-2.128,1.9287,2.9199;-1.9128,2.8014,1.6418;-2.0588,3.1185,1.0662;-1.2527,2.6718,1.666;-2.0211,3.2354,2.1466;-3.3209,2.2556,1.9643;-3.6328,2.5429,1.4415;-3.3403,2.6896,2.48;-3.6795,1.7235,2.1686;-2.6689,1.821,0.4719;-2.9136,0.6925,1.1267;-2.7776,0.4065,1.7216;-3.5722,0.834,1.1115;-3.069,-1.7619,-0.7143;-3.8054,-2.1982,-0.4602;-4.2532,-1.9338,0.1012;-4.0043,-2.9212,-0.8738;-3.6777,-3.1773,-1.3373;-4.5184,-3.2354,-0.7104;-2.581,-2.0639,-1.3539;-2.7202,-2.6244,-1.6865),wD:10.20|',
+  
+.. image:: images/atrop_example5.png
+
+
+Interpreting atropisomers without coordinates
+=============================================
+
+Just as it is possible to interpret atomic and double bond stereochemistry from
+SMILES without providing atomic coordinates, the RDKit adopts (starting with the
+2024.03.2 release) a convention for interpreting bond wedge information in
+CXSMILES that do not have coordinates provided.
+
+In order to understand how this representation works, a quick digression is necessary to explain the difference in the way bonds are numbered in CXSMILES and the RDKit.
+In the RDKit ring closure bonds are added last; they are the highest numbered bonds in the molecule. In CXSMILES, the ring closure bonds are added immediately upon closing the ring.
+Here's an illustration of this for the SMILES ``CC1=CC=CC(I)=C1N1C(C)=CC=C1Br``; the RDKit bond numbering (what we saw above) is shown first and the CXSMILES numbering is shown second.
+
+.. testsetup::
+
+  'CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wU:7.7|'
+  
+.. image:: images/atrop_representation2.png
+
+To describe this atropisomer in CXSMILES without using coordinates, we adopt the convention that the atropisomeric bond's stereochemistry is ``CCW`` when the bond to the lowest-numbered neighbor of the start atom 
+(in this case the neighbor connected via bond 7) is wedged and write the CXSMILES for this molecule as ``CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wU:7.7||``. The stereo values for all possible combinations are shown here:
+
+
++-------+----+-------+-------+--------+------------+
+|       |    | bond  |       |        |            |
+| from  | to | index | type  | stereo |            |
++=======+====+=======+=======+========+============+
+| 7     | 1  | 7     | wedge | CCW    | ``wU7.7``  |
++-------+----+-------+-------+--------+------------+
+| 7     | 5  | 6     | wedge | CW     | ``wU7.6``  |
++-------+----+-------+-------+--------+------------+
+| 8     | 9  | 9     | wedge | CW     | ``wU8.9``  |
++-------+----+-------+-------+--------+------------+
+| 8     | 13 | 14    | wedge | CCW    | ``wU8.14`` |
++-------+----+-------+-------+--------+------------+
+| 7     | 1  | 7     | dash  | CW     | ``wD7.7``  |
++-------+----+-------+-------+--------+------------+
+| 7     | 5  | 6     | dash  | CCW    | ``wD7.6``  |
++-------+----+-------+-------+--------+------------+
+| 8     | 9  | 9     | dash  | CCW    | ``wD8.9``  |
++-------+----+-------+-------+--------+------------+
+| 8     | 13 | 14    | dash  | CW     | ``wD8.14`` |
++-------+----+-------+-------+--------+------------+
+
+
+It's also possible to wedge multiple neighbor bonds around an atropisomeric bond, but the wedging must be consistent based on the table above; 
+so the CXSMILES ``CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wD:7.7,wU:8.9|`` is valid, but ``CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wD:7.7,wU:8.14|`` is not.
+
+
+Validation of Atropisomers
+==========================
+
+Invalid atropisomers (for example, those with two equivalent groups on one end)
+will be removed when reading molecules in with sanitization enabled or by
+calling ``cleanupAtropisomers(mol)``.
+
+Searching and Canonicalization
+==============================
+
+Atropisomers are supported in the canonicalization algorithm of RDKit. They are ignored in 
+substructure searching and similarity searching at this time.
 
 
 Query Features in Molecule Drawings

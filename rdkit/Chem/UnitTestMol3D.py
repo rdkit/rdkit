@@ -313,6 +313,15 @@ class TestCase(unittest.TestCase):
         self.count += 1
         return c
 
+    # start with the non-seeded version, just to make sure we get everything
+    mol = Chem.MolFromSmiles('CCCC(=C(CCl)C(C)CBr)[C@H](F)C(C)C')
+    opts = AllChem.StereoEnumerationOptions()
+    smiles = list(
+      Chem.MolToSmiles(i, isomericSmiles=True) for i in AllChem.EnumerateStereoisomers(mol))
+    self.assertEqual(smiles, [
+      'CCC/C(=C(/CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(/CCl)[C@@H](C)CBr)[C@H](F)C(C)C',
+      'CCC/C(=C(\\CCl)[C@H](C)CBr)[C@H](F)C(C)C', 'CCC/C(=C(\\CCl)[C@@H](C)CBr)[C@H](F)C(C)C'
+    ])
     rand = DeterministicRandom()
     opts = AllChem.StereoEnumerationOptions(rand=rand, maxIsomers=3)
     mol = Chem.MolFromSmiles('CCCC(=C(CCl)C(C)CBr)[C@H](F)C(C)C')
@@ -370,7 +379,6 @@ class TestCase(unittest.TestCase):
       self.assertEqual(m.GetProp('_MolFileChiralFlag'), '1')
       smiles.append(Chem.MolToSmiles(m, isomericSmiles=True))
     self.assertEqual(len(smiles), 4)
-    print(set(smiles))
     self.assertEqual(len(set(smiles)), 3)
 
     mol = Chem.MolFromSmiles('FC(Cl)C(Cl)F')
@@ -532,6 +540,26 @@ class TestCase(unittest.TestCase):
     for prod in prods:
       self.assertEqual(prod.GetProp('_MolFileChiralFlag'), '1')
       self.assertEqual(len(prod.GetStereoGroups()), 0)
+
+  def testGithub7516(self):
+    m = Chem.MolFromSmiles('CC1CC(C)C1')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 2)
+    self.assertEqual(Chem.MolToSmiles(sis[0]), 'C[C@H]1C[C@@H](C)C1')
+    self.assertEqual(Chem.MolToSmiles(sis[1]), 'C[C@H]1C[C@H](C)C1')
+
+    m = Chem.MolFromSmiles('COC(=O)C1CC(NC(N)=O)C1')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 2)
+
+    m = Chem.MolFromSmiles('O=C(NC1CC2[NH+](C(C1)CC2)Cc3ccccc3)N')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 8)
+
+  def testGithub7608(self):
+    m = Chem.MolFromSmiles('N=C(N1CCC1)NCCOc2ccc(C(F)(F)F)cc2')
+    sis = list(AllChem.EnumerateStereoisomers(m))
+    self.assertEqual(len(sis), 1)
 
 
 if __name__ == '__main__':

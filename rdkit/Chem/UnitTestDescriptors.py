@@ -12,15 +12,14 @@
 """
 
 import doctest
-import io
 import os.path
 import pickle
 import unittest
 
 import numpy as np
 
-from rdkit import Chem, RDConfig
-from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors
+from rdkit import Chem
+from rdkit.Chem import AllChem, Descriptors, Descriptors3D, Lipinski, rdMolDescriptors
 
 
 def load_tests(loader, tests, ignore):
@@ -92,6 +91,10 @@ class TestCase(unittest.TestCase):
     with open(refFile, 'rb') as intf:
       refData = pickle.load(intf)
     fn = os.path.join(os.path.dirname(__file__), 'test_data', 'aromat_regress.txt')
+    suppl = Chem.SmilesMolSupplier(fn, delimiter='\t')
+    for i, x in enumerate(suppl):
+      if x is None:
+        print(i, suppl.GetItemText(i))
     ms = [x for x in Chem.SmilesMolSupplier(fn, delimiter='\t')]
     for i, m in enumerate(ms):
       mqns = rdMolDescriptors.MQNs_(m)
@@ -109,11 +112,6 @@ class TestCase(unittest.TestCase):
         292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
       ]
     else:
-      tgt = [
-        42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24061,
-        17820, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
-        292, 41, 20, 1852, 5642, 31, 9, 1, 2, 3060, 1750
-      ]
       tgt = [
         42917, 274, 870, 621, 135, 1582, 29, 3147, 5463, 6999, 470, 62588, 19055, 4424, 309, 24059,
         17822, 1, 8314, 24146, 16076, 5560, 4262, 646, 746, 13725, 5430, 2629, 362, 24211, 15939,
@@ -169,9 +167,9 @@ class TestCase(unittest.TestCase):
       f = getattr(Descriptors, n)
       self.assertEqual(results[i], f(m))
 
-  @unittest.skipIf(not hasattr(rdMolDescriptors, 'BCUT2D')
-                   or not hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'),
-                   "BCUT or AUTOCORR descriptors not available")
+  @unittest.skipIf(
+    not hasattr(rdMolDescriptors, 'BCUT2D') or not hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'),
+    "BCUT or AUTOCORR descriptors not available")
   def testVectorDescriptorsInDescList(self):
     # First try only bcuts should exist
     descriptors = set([n for n, _ in Descriptors.descList])
@@ -201,6 +199,19 @@ class TestCase(unittest.TestCase):
     descs = Descriptors.CalcMolDescriptors(mol)
     self.assertTrue('MolLogP' in descs)
     self.assertEqual(descs['NumHDonors'], 1)
+
+  def testGet3DMolDescriptors(self):
+    mol = Chem.MolFromSmiles('CCCO')
+
+    # check ValueError raised when no 3D coordinates supplied
+    with self.assertRaises(ValueError):
+      Descriptors3D.CalcMolDescriptors3D(mol)
+
+    # test function returns expected outputs
+    AllChem.EmbedMolecule(mol, randomSeed=0xf00d)
+    descs = Descriptors3D.CalcMolDescriptors3D(mol)
+    self.assertTrue('InertialShapeFactor' in descs)
+    self.assertAlmostEqual(descs['PMI1'], 20.9582649071385, delta=1e-4)
 
 
 if __name__ == '__main__':

@@ -15,7 +15,7 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <ForceField/MMFF/Params.h>
 #include <ForceField/MMFF/TorsionAngle.h>
-#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleM6.h>
+#include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionAngleContribs.h>
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
@@ -27,7 +27,7 @@
 using namespace RDGeom;
 using namespace RDKit;
 
-void testTorsionAngleM6() {
+void testTorsionAngleContribs() {
   std::cerr << "-------------------------------------" << std::endl;
   std::cerr << " Test CrystalFF torsional term." << std::endl;
 
@@ -39,7 +39,6 @@ void testTorsionAngleM6() {
   ps.push_back(&p3);
   ps.push_back(&p4);
 
-  ForceFields::CrystalFF::TorsionAngleContribM6 *contrib;
   // ------- ------- ------- ------- ------- ------- -------
   // Basic SP3 - SP3
   // ------- ------- ------- ------- ------- ------- -------
@@ -49,9 +48,9 @@ void testTorsionAngleM6() {
   std::vector<double> v(6, 0.0);
   v[2] = 4.0;
 
-  contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(&ff, 0, 1, 2, 3,
-                                                              v, signs);
-  ff.contribs().push_back(ForceFields::ContribPtr(contrib));
+  auto contrib = new ForceFields::CrystalFF::TorsionAngleContribs(&ff);
+  contrib->addContrib(0, 1, 2, 3, v, signs);
+  ff.contribs().emplace_back(contrib);
 
   p1.x = 0;
   p1.y = 1.5;
@@ -87,9 +86,9 @@ void testTorsionAngleM6() {
   v[1] = 7.0;
 
   ff.contribs().pop_back();
-  contrib = new ForceFields::CrystalFF::TorsionAngleContribM6(&ff, 0, 1, 2, 3,
-                                                              v, signs);
-  ff.contribs().push_back(ForceFields::ContribPtr(contrib));
+  contrib = new ForceFields::CrystalFF::TorsionAngleContribs(&ff);
+  contrib->addContrib(0, 1, 2, 3, v, signs);
+  ff.contribs().emplace_back(contrib);
 
   p1.x = 0;
   p1.y = 1.5;
@@ -221,7 +220,7 @@ int main() {
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t SMARTS parsing\n";
-  testTorsionAngleM6();
+  testTorsionAngleContribs();
 
   BOOST_LOG(rdInfoLog) << "\t---------------------------------\n";
   BOOST_LOG(rdInfoLog) << "\t Seeing if non-ring torsions are applied\n";

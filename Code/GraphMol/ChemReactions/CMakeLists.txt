@@ -1,8 +1,5 @@
-if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
-    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
-else()
-      message("== Making EnumerateLibrary without boost Serialization support")
-    set(RDKit_SERIALIZATION_LIBS )
+if(NOT RDK_USE_BOOST_SERIALIZATION)
+    message("== Making EnumerateLibrary without boost Serialization support")
 endif()
 
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 5)
@@ -20,8 +17,8 @@ rdkit_library(ChemReactions
                     Enumerate/EnumerationPickler.cpp
                     Enumerate/EvenSamplePairs.cpp
               LINK_LIBRARIES
-              FilterCatalog Descriptors Fingerprints DataStructs Depictor
-              FileParsers SubstructMatch ChemTransforms GraphMol ${RDKit_SERIALIZATION_LIBS})
+              FilterCatalog Fingerprints DataStructs Depictor
+              FileParsers SubstructMatch ChemTransforms GraphMol)
 target_compile_definitions(ChemReactions PRIVATE RDKIT_CHEMREACTIONS_BUILD)
 
 rdkit_headers(Reaction.h

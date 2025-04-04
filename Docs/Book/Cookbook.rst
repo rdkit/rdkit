@@ -39,7 +39,7 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_40**.
+   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_41**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -82,6 +82,8 @@ Include an Atom Index
    
 .. image:: images/RDKitCB_0_im1.png
 
+In contrast to the approach below, the atom index zero is not displayed.
+
 A simpler way to add atom indices is to adjust the IPythonConsole properties.
 This produces a similar image to the example above, the difference being that the atom 
 indices are now near the atom, rather than at the atom position.
@@ -101,6 +103,40 @@ indices are now near the atom, rather than at the atom position.
 
 .. image:: images/RDKitCB_0_im2.png
 
+
+Include a Bond Index
+======================
+
+| **Author:** Jeremy Monat
+| **Source:** Direct contribution to Cookbook
+| **Index ID#:** RDKitCB_40
+| **Summary:** Draw a molecule with bond index numbers.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem import Draw
+   from rdkit.Chem.Draw import IPythonConsole
+   IPythonConsole.ipython_useSVG=True  #< set this to False if you want PNGs instead of SVGs
+
+.. testcode::
+
+   # Test in a kinase inhibitor
+   mol = Chem.MolFromSmiles("C1CC2=C3C(=CC=C2)C(=CN3C1)[C@H]4[C@@H](C(=O)NC4=O)C5=CNC6=CC=CC=C65")
+   # Default
+   mol
+
+.. image:: images/RDKitCB_40_im0.png
+
+.. testcode::
+
+   # Add bond indices
+   IPythonConsole.drawOptions.addBondIndices = True
+   IPythonConsole.molSize = 350,300
+   mol
+
+.. image:: images/RDKitCB_40_im1.png
+   :scale: 75%
 
 Include a Calculation
 ======================
@@ -1557,7 +1593,8 @@ Molecule Hash Strings
     'SmallWorldIndexBR': rdkit.Chem.rdMolHash.HashFunction.SmallWorldIndexBR,
     'SmallWorldIndexBRL': rdkit.Chem.rdMolHash.HashFunction.SmallWorldIndexBRL,
     'ArthorSubstructureOrder': rdkit.Chem.rdMolHash.HashFunction.ArthorSubstructureOrder,
-    'HetAtomTautomerv2': rdkit.Chem.rdMolHash.HashFunction.HetAtomTautomerv2}
+    'HetAtomTautomerv2': rdkit.Chem.rdMolHash.HashFunction.HetAtomTautomerv2,
+    'HetAtomProtomerv2': rdkit.Chem.rdMolHash.HashFunction.HetAtomProtomerv2}
 
 .. testcode::
 
@@ -1568,7 +1605,7 @@ Molecule Hash Strings
 .. testoutput::
    :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
 
-   AnonymousGraph **(***1*****1)*(*)*(*)*(*)*1***(*)*(*)*1
+   AnonymousGraph **1***(*(*)*(*)*(*)*(*)***2*****2)**1*
    ElementGraph CC(C(O)C1CCC(O)C(O)C1)N(C)C(O)OCC1CCCCC1
    CanonicalSmiles CC(C(O)c1ccc(O)c(O)c1)N(C)C(=O)OCc1ccccc1
    MurckoScaffold c1ccc(CCNCOCc2ccccc2)cc1
@@ -1586,6 +1623,7 @@ Molecule Hash Strings
    SmallWorldIndexBRL B25R2L10
    ArthorSubstructureOrder 00180019010012000600009b000000
    HetAtomTautomerv2 [CH3]-[CH](-[CH](-[OH])-[C]1:[C]:[C]:[C](:[O]):[C](:[O]):[C]:1)-[N](-[CH3])-[C](=[O])-[O]-[CH2]-[c]1:[cH]:[cH]:[cH]:[cH]:[cH]:1_5_0
+   HetAtomProtomerv2 [CH3]-[CH](-[CH](-[OH])-[C]1:[C]:[C]:[C](:[O]):[C](:[O]):[C]:1)-[N](-[CH3])-[C](=[O])-[O]-[CH2]-[c]1:[cH]:[cH]:[cH]:[cH]:[cH]:1_5
 
 .. testcode::
   
@@ -1730,7 +1768,7 @@ Molecule Hash Strings
 .. image:: images/RDKitCB_21_im5.png
 
 Contiguous Rotatable Bonds
-=========================
+==========================
 
 | **Author:** Paulo Tosco
 | **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/36405144/>`_
@@ -1981,21 +2019,63 @@ Explicit Valence Error - Partial Sanitization
 ==============================================
 
 | **Author:** Greg Landrum
-| **Source:** `<https://sourceforge.net/p/rdkit/mailman/message/32599798/>`_
+| **Original Source:** `<https://sourceforge.net/p/rdkit/mailman/message/32599798/>`_
 | **Index ID#:** RDKitCB_15
 | **Summary:** Create a mol object with skipping valence check, followed by a partial sanitization. N.B. Use caution, and make sure your molecules actually make sense before doing this!
 
 .. testcode::
 
    from rdkit import Chem
-   # default RDKit behavior is to reject hypervalent P, so you need to set sanitize=False
-   m = Chem.MolFromSmiles('F[P-](F)(F)(F)(F)F.CN(C)C(F)=[N+](C)C',sanitize=False)
+   from rdkit.Chem import rdqueries
+
+The default RDKit behavior is to reject hypervalent P, so you need to set `sanitize=False`:
 
 .. testcode::
 
-   # next, you probably want to at least do a partial sanitization so that the molecule is actually useful:
+   m = Chem.MolFromSmiles('F[P-](F)(F)(F)(F)F.CN(C)C(F)=[N+](C)C',sanitize=False)
+   m
+
+.. image:: images/RDKitCB_15_im0.png
+
+The arrangement of the six F around the P is not the octahedral arrangement we would expect because the RDKit has not assigned a hybridization to the P (or any other atoms):
+
+.. testcode::
+
+   # Build a query for the P
+   q = rdqueries.AtomNumEqualsQueryAtom(15)
+
+   # Select the first and only P
+   phosphorus = m.GetAtomsMatchingQuery(q)[0]
+
+   print(phosphorus.GetHybridization())
+
+.. testoutput::
+
+   UNSPECIFIED
+
+Next, you probably want to at least do a partial sanitization so that the molecule is actually useful.
+In this case, setting the hybridization is key:
+
+.. testcode::
+
+   # Regenerate computed properties like implicit valence and ring information
    m.UpdatePropertyCache(strict=False)
+
+   # Apply several sanitization rules
    Chem.SanitizeMol(m,Chem.SanitizeFlags.SANITIZE_FINDRADICALS|Chem.SanitizeFlags.SANITIZE_KEKULIZE|Chem.SanitizeFlags.SANITIZE_SETAROMATICITY|Chem.SanitizeFlags.SANITIZE_SETCONJUGATION|Chem.SanitizeFlags.SANITIZE_SETHYBRIDIZATION|Chem.SanitizeFlags.SANITIZE_SYMMRINGS,catchErrors=True)
+   m
+
+.. image:: images/RDKitCB_15_im1.png
+
+Now the expected octahedral arrangement of the six F around the P exists because the hybridization of P has been assigned as SP3D2:
+
+.. testcode::
+
+   print(phosphorus.GetHybridization())
+
+.. testoutput::
+
+   SP3D2
 
 
 Detect Chemistry Problems
@@ -2236,7 +2316,7 @@ Organometallics with Dative Bonds
 
 .. testoutput::
 
-   CN(C)(C)->[Pt]
+   C[N](C)(C)->[Pt]
 
 
 Enumerate SMILES

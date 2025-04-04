@@ -10,8 +10,10 @@
 // Original author: David Cosgrove (CozChemIx Limited)
 //
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/MolDraw2D/AtomSymbol.h>
 #include <GraphMol/MolDraw2D/DrawText.h>
@@ -62,7 +64,14 @@ void AtomSymbol::findExtremes(double &xmin, double &xmax, double &ymin,
 void AtomSymbol::scale(const Point2D &scaleFactor) {
   cds_.x *= scaleFactor.x;
   cds_.y *= scaleFactor.y;
+  recalculateRects();
+}
 
+// ****************************************************************************
+void AtomSymbol::move(const Point2D &trans) { cds_ += trans; }
+
+// ****************************************************************************
+void AtomSymbol::recalculateRects() {
   // rebuild the rectangles, because the fontScale may be different,
   // and the widths etc might not scale by the same amount.
   rects_.clear();
@@ -71,9 +80,6 @@ void AtomSymbol::scale(const Point2D &scaleFactor) {
   textDrawer_.getStringRects(symbol_, orient_, rects_, drawModes_, drawChars_,
                              false, TextAlignType::MIDDLE);
 }
-
-// ****************************************************************************
-void AtomSymbol::move(const Point2D &trans) { cds_ += trans; }
 
 // ****************************************************************************
 void AtomSymbol::draw(MolDraw2D &molDrawer) const {

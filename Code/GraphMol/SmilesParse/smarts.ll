@@ -1,6 +1,9 @@
 %option reentrant
 %option bison-bridge
 %option noyywrap
+%option never-interactive
+%option nodefault
+%option nostdinit
 
 %{
 
@@ -16,9 +19,6 @@ extern "C" int fileno(FILE*);
 #endif
 
 #include <cstdio>
-#ifdef WIN32
-#include <io.h>
-#endif
 
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
@@ -360,10 +360,12 @@ A			{
 
 [\\]{1,2}    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());
 	return BOND_TOKEN;  }
 
 [\/]    { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());	
 	return BOND_TOKEN;  }
 
 \-\> {

@@ -555,8 +555,9 @@ class VF2SubState {
       GetCoreSet(c1, c2);
       if (MatchChecks(c1, c2)) {
         typename DoubleBackInsertionSequence::value_type newSeq;
+        newSeq.reserve(core_len);
         for (unsigned int i = 0; i < core_len; ++i) {
-          newSeq.push_back(std::pair<int, int>(c1[i], c2[i]));
+          newSeq.emplace_back(c1[i], c2[i]);
         }
         res.push_back(newSeq);
         return lim && res.size() >= lim;
@@ -638,10 +639,11 @@ bool vf2(const Graph &g1, const Graph &g2, VertexLabeling &vertex_labeling,
   int n = 0;
 
   F.clear();
-  F.resize(0);
   if (match(&n, ni1, ni2, s0)) {
-    for (unsigned int i = 0; i < num_vertices(g1); i++) {
-      F.push_back(std::pair<int, int>(ni1[i], ni2[i]));
+    auto sz = num_vertices(g1);
+    F.reserve(sz);
+    for (unsigned int i = 0; i < sz; ++i) {
+      F.emplace_back(ni1[i], ni2[i]);
     }
   }
   delete[] ni1;

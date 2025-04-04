@@ -17,9 +17,6 @@
 #include <algorithm>
 #include <limits>
 
-#include <boost/flyweight.hpp>
-#include <boost/flyweight/key_value.hpp>
-#include <boost/flyweight/no_tracking.hpp>
 #include <utility>
 
 // #define VERBOSE_ENUMERATION 1
@@ -37,7 +34,7 @@ int scoreRings(const ROMol &mol) {
   int score = 0;
   auto ringInfo = mol.getRingInfo();
   std::unique_ptr<ROMol> cp;
-  if (!ringInfo->isInitialized()) {
+  if (!ringInfo->isSymmSssr()) {
     cp.reset(new ROMol(mol));
     MolOps::symmetrizeSSSR(*cp);
     ringInfo = cp->getRingInfo();
@@ -75,35 +72,16 @@ int scoreRings(const ROMol &mol) {
   return score;
 };
 
-struct smarts_mol_holder {
-  std::string d_smarts;
-  ROMOL_SPTR dp_mol;
-  smarts_mol_holder(const std::string &smarts) : d_smarts(smarts) {
-    dp_mol.reset(SmartsToMol(smarts));
+SubstructTerm::SubstructTerm(std::string aname, std::string asmarts, int ascore)
+    : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore) {
+  std::unique_ptr<ROMol> pattern(SmartsToMol(smarts));
+  if (pattern) {
+    matcher = std::move(*pattern);
   }
-};
+}
 
-typedef boost::flyweight<
-    boost::flyweights::key_value<std::string, smarts_mol_holder>,
-    boost::flyweights::no_tracking>
-    smarts_mol_flyweight;
-
-struct SubstructTerm {
-  std::string name;
-  std::string smarts;
-  int score;
-  ROMOL_SPTR matcher;
-  SubstructTerm(std::string aname, std::string asmarts, int ascore)
-      : name(std::move(aname)), smarts(std::move(asmarts)), score(ascore) {
-    matcher = smarts_mol_flyweight(smarts).get().dp_mol;
-  };
-};
-
-int scoreSubstructs(const ROMol &mol) {
-  // a note on efficiency here: we'll construct the SubstructTerm objects here
-  // repeatedly, but the SMARTS parsing for each entry will only be done once
-  // since we're using the boost::flyweights above to cache them
-  const std::vector<SubstructTerm> substructureTerms{
+const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs() {
+  static std::vector<SubstructTerm> substructureTerms{
       {"benzoquinone", "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
        25},
       {"oxim", "[#6]=[N][OH]", 4},
@@ -117,15 +95,20 @@ int scoreSubstructs(const ROMol &mol) {
       {"guanidine terminal=N", "[#7]C(=[NR0])[#7H0]", 1},
       {"guanidine endocyclic=N", "[#7;R][#6;R]([N])=[#7;R]", 2},
       {"aci-nitro", "[#6]=[N+]([O-])[OH]", -4}};
+  return substructureTerms;
+}
+
+int scoreSubstructs(const ROMol &mol,
+                    const std::vector<SubstructTerm> &substructureTerms) {
   int score = 0;
   for (const auto &term : substructureTerms) {
-    if (!term.matcher) {
+    if (!term.matcher.getNumAtoms()) {
       BOOST_LOG(rdErrorLog) << " matcher for term " << term.name
                             << " is invalid, ignoring it." << std::endl;
       continue;
     }
     SubstructMatchParameters params;
-    const auto matches = SubstructMatch(mol, *term.matcher, params);
+    const auto matches = SubstructMatch(mol, term.matcher, params);
     // if (!matches.empty()) {
     //   std::cerr << " " << matches.size() << " matches to " << term.name
     //             << std::endl;
@@ -283,7 +266,7 @@ TautomerEnumeratorResult TautomerEnumerator::enumerate(const ROMol &mol) const {
   if (taut->needsUpdatePropertyCache()) {
     taut->updatePropertyCache(false);
   }
-  if (!taut->getRingInfo()->isInitialized()) {
+  if (!taut->getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(*taut);
   }
 
@@ -592,6 +575,48 @@ ROMol *TautomerEnumerator::canonicalize(
     return new ROMol(mol);
   }
   return pickCanonical(res, scoreFunc);
+}
+
+void TautomerEnumerator::canonicalizeInPlace(
+    RWMol &mol, boost::function<int(const ROMol &mol)> scoreFunc) const {
+  auto thisCopy = TautomerEnumerator(*this);
+  thisCopy.setReassignStereo(false);
+  auto res = thisCopy.enumerate(mol);
+  if (res.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "no tautomers found, molecule unchanged" << std::endl;
+    return;
+  }
+  std::unique_ptr<ROMol> tmp{pickCanonical(res, scoreFunc)};
+
+  TEST_ASSERT(tmp->getNumAtoms() == mol.getNumAtoms());
+  TEST_ASSERT(tmp->getNumBonds() == mol.getNumBonds());
+  // now copy the info from the canonical tautomer over to the input molecule
+  for (const auto tmpAtom : tmp->atoms()) {
+    auto atom = mol.getAtomWithIdx(tmpAtom->getIdx());
+    TEST_ASSERT(tmpAtom->getAtomicNum() == atom->getAtomicNum());
+    atom->setFormalCharge(tmpAtom->getFormalCharge());
+    atom->setNoImplicit(tmpAtom->getNoImplicit());
+    atom->setIsAromatic(tmpAtom->getIsAromatic());
+    atom->setNumExplicitHs(tmpAtom->getNumExplicitHs());
+    atom->setNumRadicalElectrons(tmpAtom->getNumRadicalElectrons());
+    atom->setChiralTag(tmpAtom->getChiralTag());
+  }
+  for (const auto tmpBond : tmp->bonds()) {
+    auto bond = mol.getBondWithIdx(tmpBond->getIdx());
+    TEST_ASSERT(tmpBond->getBeginAtomIdx() == bond->getBeginAtomIdx());
+    TEST_ASSERT(tmpBond->getEndAtomIdx() == bond->getEndAtomIdx());
+    bond->setBondType(tmpBond->getBondType());
+    bond->setBondDir(tmpBond->getBondDir());
+    bond->setIsAromatic(tmpBond->getIsAromatic());
+    bond->setIsConjugated(tmpBond->getIsConjugated());
+    if (tmpBond->getStereoAtoms().size() == 2) {
+      bond->setStereoAtoms(tmpBond->getStereoAtoms()[0],
+                           tmpBond->getStereoAtoms()[1]);
+    }
+    bond->setStereo(tmpBond->getStereo());
+  }
+  mol.updatePropertyCache(false);
 }
 
 }  // namespace MolStandardize

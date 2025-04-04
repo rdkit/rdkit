@@ -20,6 +20,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParserUtils.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/FileParsers/MolSGroupParsing.h>
@@ -32,6 +33,7 @@
 #include <GraphMol/MolEnumerator/LinkNode.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/Depictor/RDDepictor.h>
+#include <GraphMol/Atropisomers.h>
 
 namespace RDKit {
 namespace MolDraw2D_detail {
@@ -49,12 +51,15 @@ DrawMol::DrawMol(
     int confId, bool isReactionMol)
     : drawOptions_(drawOptions),
       textDrawer_(textDrawer),
+      marginPadding_(drawOptions.padding),
       includeAnnotations_(includeAnnotations),
       isReactionMol_(isReactionMol),
       legend_(legend),
       confId_(confId),
       width_(width),
       height_(height),
+      drawWidth_(width),
+      drawHeight_(height),
       scale_(1.0),
       fontScale_(1.0),
       xMin_(std::numeric_limits<double>::max() / 2.0),
@@ -93,10 +98,13 @@ DrawMol::DrawMol(int width, int height, const MolDrawOptions &drawOptions,
                  double ymax, double scale, double fontscale)
     : drawOptions_(drawOptions),
       textDrawer_(textDrawer),
+      marginPadding_(drawOptions.padding),
       isReactionMol_(false),
       confId_(-1),
       width_(width),
       height_(height),
+      drawWidth_(width),
+      drawHeight_(height),
       scale_(scale),
       fontScale_(fontscale),
       xMin_(xmin),
@@ -105,7 +113,7 @@ DrawMol::DrawMol(int width, int height, const MolDrawOptions &drawOptions,
       yMax_(ymax),
       xRange_(xmax - xmin),
       yRange_(ymax - ymin),
-      drawHeight_(height) {
+      molHeight_(height) {
   textDrawer_.setFontScale(fontScale_, true);
   // we reverse the y coords of everything, so do that here, too
   yMin_ *= -1;
@@ -163,31 +171,31 @@ void DrawMol::finishCreateDrawObjects() {
 // ****************************************************************************
 void DrawMol::initDrawMolecule(const ROMol &mol) {
   drawMol_.reset(new RWMol(mol));
-  if (!isReactionMol_) {
-    if (drawOptions_.prepareMolsBeforeDrawing) {
-      MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
-    } else if (!mol.getNumConformers()) {
-      const bool canonOrient = true;
-      RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
-    }
-  }
   if (drawOptions_.centreMoleculesBeforeDrawing) {
     if (drawMol_->getNumConformers()) {
       centerMolForDrawing(*drawMol_, confId_);
     }
   }
+  if (!isReactionMol_ && !drawMol_->getNumConformers()) {
+    const bool canonOrient = true;
+    RDDepict::compute2DCoords(*drawMol_, nullptr, canonOrient);
+  }
   if (drawOptions_.unspecifiedStereoIsUnknown) {
     markUnspecifiedStereoAsUnknown(*drawMol_);
   }
   if (drawOptions_.useMolBlockWedging) {
-    RDKit::reapplyMolBlockWedging(*drawMol_);
+    Chirality::reapplyMolBlockWedging(*drawMol_);
+  }
+  if (!isReactionMol_ && drawOptions_.prepareMolsBeforeDrawing) {
+    MolDraw2DUtils::prepareMolForDrawing(*drawMol_);
   }
   if (drawOptions_.simplifiedStereoGroupLabel &&
       !mol.hasProp(common_properties::molNote)) {
-    prepareStereoGroups(*drawMol_);
+    bool removeAffectedStereoGroups = true;
+    Chirality::simplifyEnhancedStereo(*drawMol_, removeAffectedStereoGroups);
   }
   if (drawOptions_.addStereoAnnotation) {
-    addStereoAnnotation(*drawMol_);
+    Chirality::addStereoAnnotations(*drawMol_);
   }
   if (drawOptions_.addAtomIndices) {
     addAtomIndices(*drawMol_);
@@ -207,10 +215,14 @@ void DrawMol::extractAll(double scale) {
   // the * which won't be in the final picture.
   extractVariableBonds();
   extractBonds();
+  resolveAtomSymbolClashes();
   extractRegions();
   extractHighlights(scale);
   extractAttachments();
   extractAtomNotes();
+  if (!drawOptions_.addStereoAnnotation) {
+    extractStereoGroups();
+  }
   extractBondNotes();
   extractRadicals();
   extractSGroupData();
@@ -247,6 +259,21 @@ void DrawMol::extractAtomCoords() {
     atCds_.push_back(pt);
   }
 }
+
+namespace {
+bool doLabelsClash(AtomSymbol &atsym1, const AtomSymbol &atsym2) {
+  for (auto &rect1 : atsym1.rects_) {
+    auto oldTrans = rect1->trans_;
+    rect1->trans_ += atsym1.cds_;
+    bool res = atsym2.doesRectClash(*rect1, 0.0);
+    rect1->trans_ = oldTrans;
+    if (res) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
 
 // ****************************************************************************
 void DrawMol::extractAtomSymbols() {
@@ -401,23 +428,22 @@ void DrawMol::extractMolNotes() {
     for (int i = 0; i < 3; ++i) {
       locs[i].x += xOffset_;
       locs[i].y += yOffset_;
-      DrawAnnotation *annot =
-          new DrawAnnotation(note, TextAlignType::START, "note", 1.0, locs[i],
-                             drawOptions_.annotationColour, textDrawer_);
+      auto annot = std::make_unique<DrawAnnotation>(
+          note, TextAlignType::START, "note", 1.0, locs[i],
+          drawOptions_.annotationColour, textDrawer_);
       // Put it into the legends_, because it's already in draw coords, so
       // shouldn't be treated by changeToDrawCoords.
       if (!doesNoteClash(*annot)) {
-        legends_.emplace_back(annot);
+        legends_.push_back(std::move(annot));
         didIt = true;
         break;
       }
     }
     if (!didIt) {
       // There was nowhere to put it that didn't clash, so live with it.
-      DrawAnnotation *annot =
+      legends_.emplace_back(
           new DrawAnnotation(note, TextAlignType::START, "note", 1.0, locs[0],
-                             drawOptions_.annotationColour, textDrawer_);
-      legends_.emplace_back(annot);
+                             drawOptions_.annotationColour, textDrawer_));
     }
   }
 }
@@ -431,10 +457,48 @@ void DrawMol::extractAtomNotes() {
         DrawAnnotation *annot = new DrawAnnotation(
             note, TextAlignType::MIDDLE, "note",
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+            drawOptions_.atomNoteColour, textDrawer_);
         calcAnnotationPosition(atom, *annot);
         annotations_.emplace_back(annot);
       }
+    }
+  }
+}
+
+// ****************************************************************************
+void DrawMol::extractStereoGroups() {
+  int orCount(0), andCount(0);
+  for (const StereoGroup &group : drawMol_->getStereoGroups()) {
+    std::string stereoGroupType;
+
+    switch (group.getGroupType()) {
+      case RDKit::StereoGroupType::STEREO_ABSOLUTE:
+        stereoGroupType = "abs";
+        break;
+      case RDKit::StereoGroupType::STEREO_OR:
+        stereoGroupType = "or" + std::to_string(++orCount);
+        break;
+      case RDKit::StereoGroupType::STEREO_AND:
+        stereoGroupType = "and" + std::to_string(++andCount);
+        break;
+      default:
+        throw ValueErrorException("Unrecognized stereo group type");
+    }
+
+    std::vector<unsigned int> atomIds;
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        wedgeBonds;  // empty - all wedges should have been added to the mol, so
+                     // this doesn't matter
+    Atropisomers::getAllAtomIdsForStereoGroup(*drawMol_, group, atomIds,
+                                              wedgeBonds);
+
+    for (auto atomId : atomIds) {
+      DrawAnnotation *annot = new DrawAnnotation(
+          stereoGroupType, TextAlignType::MIDDLE, "stereoGroup",
+          drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
+          drawOptions_.annotationColour, textDrawer_);
+      calcAnnotationPosition(drawMol_->getAtomWithIdx(atomId), *annot);
+      annotations_.emplace_back(annot);
     }
   }
 }
@@ -448,7 +512,7 @@ void DrawMol::extractBondNotes() {
         DrawAnnotation *annot = new DrawAnnotation(
             note, TextAlignType::MIDDLE, "note",
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+            drawOptions_.bondNoteColour, textDrawer_);
         calcAnnotationPosition(bond, *annot);
         annotations_.emplace_back(annot);
       }
@@ -904,6 +968,126 @@ void DrawMol::extractCloseContacts() {
   }
 }
 
+namespace {
+bool doesLabelClashWithBonds(
+    AtomSymbol &atsym1, const std::vector<std::unique_ptr<DrawShape>> &bonds) {
+  for (auto &rect1 : atsym1.rects_) {
+    auto oldTrans = rect1->trans_;
+    rect1->trans_ += atsym1.cds_;
+    for (const auto &bond : bonds) {
+      bool res = bond->doesRectClash(*rect1, 0.0);
+      if (res) {
+        rect1->trans_ = oldTrans;
+        return true;
+      }
+    }
+    rect1->trans_ = oldTrans;
+  }
+  return false;
+}
+
+bool doesLabelClashWithLabels(
+    unsigned idx, const std::vector<std::unique_ptr<AtomSymbol>> &atomLabels) {
+  for (size_t i = 0; i < atomLabels.size(); ++i) {
+    if (i == idx || atomLabels[i] == nullptr) {
+      continue;
+    }
+    if (doLabelsClash(*atomLabels[idx], *atomLabels[i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool orientAtomLabel(int atIdx,
+                     const std::vector<std::unique_ptr<AtomSymbol>> &atomLabels,
+                     const std::vector<std::unique_ptr<DrawShape>> &bonds) {
+  // Prefer the opposite to what it was already, as a starter.
+  const static std::vector<std::vector<OrientType>> newOrients{
+      {OrientType::S, OrientType::E, OrientType::W},
+      {OrientType::N, OrientType::W, OrientType::E},
+      {OrientType::E, OrientType::S, OrientType::N},
+      {OrientType::W, OrientType::N, OrientType::S},
+  };
+  // If it's a 2 character label and the second character is lower case,
+  // don't do anything.  This function is only called if there's more
+  // than 1 character.
+  if (atomLabels[atIdx]->rects_.size() == 2 &&
+      islower(atomLabels[atIdx]->drawChars_[1])) {
+    return false;
+  }
+  auto orig = atomLabels[atIdx]->orient_;
+  unsigned int pref = 0;
+  switch (orig) {
+    case OrientType::S:
+      pref = 1;
+      break;
+    case OrientType::W:
+      pref = 2;
+      break;
+    case OrientType::E:
+      pref = 3;
+      break;
+    default:
+      break;
+  }
+  bool ok = false;
+  for (auto &orient1 : newOrients[pref]) {
+    atomLabels[atIdx]->orient_ = orient1;
+    atomLabels[atIdx]->recalculateRects();
+    if (!doesLabelClashWithLabels(atIdx, atomLabels) &&
+        !doesLabelClashWithBonds(*atomLabels[atIdx], bonds)) {
+      ok = true;
+      break;
+    }
+  }
+  if (!ok) {
+    // Leave it as it is and hope when the other one is moved
+    // a better solution is found.
+    atomLabels[atIdx]->orient_ = orig;
+  }
+
+  return ok;
+}
+}  // namespace
+
+// ****************************************************************************
+void DrawMol::resolveAtomSymbolClashes() {
+  for (auto at1 : drawMol_->atoms()) {
+    const auto atIdx1 = at1->getIdx();
+    for (auto at2 : drawMol_->atoms()) {
+      const auto atIdx2 = at2->getIdx();
+      if (atIdx1 >= atIdx2) {
+        continue;
+      }
+      if (atomLabels_[atIdx1] != nullptr && atomLabels_[atIdx2] != nullptr &&
+          (atomLabels_[atIdx1]->rects_.size() > 1 ||
+           atomLabels_[atIdx2]->rects_.size() > 1)) {
+        if (doLabelsClash(*atomLabels_[atIdx1], *atomLabels_[atIdx2])) {
+          // Prefer moving the smaller label that isn't a single character.
+          int idxs[2]{-1, -1};
+          if (atomLabels_[atIdx1]->rects_.size() > 1) {
+            idxs[0] = atIdx1;
+          }
+          if (atomLabels_[atIdx2]->rects_.size() > 1) {
+            idxs[1] = atIdx2;
+          }
+          if (atomLabels_[atIdx1]->rects_.size() >
+              atomLabels_[atIdx2]->rects_.size()) {
+            std::swap(idxs[0], idxs[1]);
+          }
+          if (!(idxs[0] != -1 &&
+                orientAtomLabel(idxs[0], atomLabels_, bonds_))) {
+            if (idxs[1] != -1) {
+              orientAtomLabel(idxs[1], atomLabels_, bonds_);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 // ****************************************************************************
 void DrawMol::calculateScale() {
   findExtremes();
@@ -912,17 +1096,16 @@ void DrawMol::calculateScale() {
   // height and xRange_.  If both are negative, use drawOptions_scalingFactor.
   double newScale = 1.0;
   if (width_ < 0 && height_ < 0) {
-    width_ =
-        drawOptions_.scalingFactor * xRange_ * (1 + 2 * drawOptions_.padding);
-    drawHeight_ =
-        drawOptions_.scalingFactor * yRange_ * (1 + 2 * drawOptions_.padding);
+    width_ = drawOptions_.scalingFactor * xRange_ * (1 + 2 * marginPadding_);
+    molHeight_ =
+        drawOptions_.scalingFactor * yRange_ * (1 + 2 * marginPadding_);
   } else if (width_ < 0 && yRange_ > 1.0e-4) {
     newScale = double(height_) / yRange_;
     // if the molecule is very wide and short (e.g. HO-NH2) don't let the
     // bonds get too long.
     double mbl = meanBondLength_ * newScale;
-    if (mbl > drawHeight_ / 2) {
-      newScale *= (drawHeight_ / 2) / mbl;
+    if (mbl > molHeight_ / 2) {
+      newScale *= (molHeight_ / 2) / mbl;
     }
     width_ = newScale * xRange_;
   } else if (height_ < 0 && xRange_ > 1.0e-4) {
@@ -931,18 +1114,21 @@ void DrawMol::calculateScale() {
     if (mbl > width_ / 2) {
       newScale *= (width_ / 2) / mbl;
     }
-    drawHeight_ = newScale * yRange_;
+    molHeight_ = newScale * yRange_;
   }
   if (height_ < 0) {
-    height_ = drawHeight_;
+    height_ = molHeight_;
     if (legend_.empty()) {
       legendHeight_ = 0;
     }
   }
+  drawWidth_ = width_ * (1 - 2 * marginPadding_);
+  drawHeight_ = height_ * (1 - 2 * marginPadding_);
+  partitionForLegend();
 
   if (xRange_ > 1e-4 || yRange_ > 1e-4) {
     newScale =
-        std::min(double(width_) / xRange_, double(drawHeight_) / yRange_);
+        std::min(double(drawWidth_) / xRange_, double(molHeight_) / yRange_);
     double fix_scale = newScale;
     // after all that, use the fixed scale unless it's too big, in which case
     // scale the drawing down to fit.
@@ -951,7 +1137,7 @@ void DrawMol::calculateScale() {
       fix_scale = drawOptions_.fixedBondLength;
     }
     if (drawOptions_.fixedScale > 0.0) {
-      fix_scale = double(width_) * drawOptions_.fixedScale;
+      fix_scale = double(drawWidth_) * drawOptions_.fixedScale;
     }
     if (newScale > fix_scale) {
       newScale = fix_scale;
@@ -996,14 +1182,9 @@ void DrawMol::findExtremes() {
     xMin_ = yMin_ = -1.0;
     xMax_ = yMax_ = 1.0;
   }
-  // calculate the x and y spans with a 5% buffer
+  // Calculate the x and y spans.  Don't include the padding, as that's
+  // now taken into account with drawWidth_ and drawHeight_.
   xRange_ = xMax_ - xMin_;
-  xMin_ -= drawOptions_.padding * xRange_;
-  xMax_ += drawOptions_.padding * xRange_;
-  xRange_ = xMax_ - xMin_;
-  yRange_ = yMax_ - yMin_;
-  yMin_ -= drawOptions_.padding * yRange_;
-  yMax_ += drawOptions_.padding * yRange_;
   yRange_ = yMax_ - yMin_;
   if (xRange_ < 1e-4) {
     xRange_ = 2.0;
@@ -1035,6 +1216,7 @@ void DrawMol::draw(MolDraw2D &drawer) const {
   drawer.setScale(scale_);
   auto keepFontScale = textDrawer_.fontScale();
   textDrawer_.setFontScale(fontScale_, true);
+
   for (auto &ps : preShapes_) {
     ps->draw(drawer);
   }
@@ -1185,12 +1367,13 @@ void DrawMol::resetEverything() {
 
 // ****************************************************************************
 void DrawMol::shrinkToFit(bool withPadding) {
-  double padding = withPadding ? drawOptions_.padding : 0;
+  double padding = withPadding ? marginPadding_ : 0;
   int newWidth = std::ceil((2 * padding + 1) * xRange_ * scale_);
   int newHeight = std::ceil((2 * padding + 1) * yRange_ * scale_);
-  Point2D corr((newWidth - width_) / 2, (newHeight - height_) / 2);
+  Point2D corr((newWidth - width_) / 2.0, (newHeight - height_) / 2.0);
   transformAll(&corr, nullptr, nullptr);
   width_ = newWidth;
+  drawWidth_ = width_ * (1 - 2 * padding);
   height_ = newHeight;
   if (!legend_.empty()) {
     partitionForLegend();
@@ -1198,7 +1381,8 @@ void DrawMol::shrinkToFit(bool withPadding) {
     extractLegend();
   } else {
     legendHeight_ = 0;
-    drawHeight_ = height_;
+    molHeight_ = height_;
+    drawHeight_ = height_ * (1 - 2 * padding);
   }
 }
 
@@ -1324,8 +1508,17 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     if (drawOptions_.useComplexQueryAtomSymbols) {
       symbol = getComplexQueryAtomEquivalent(symbol);
     }
+    if (!drawOptions_.bracketsAroundAtomLists) {
+      if (symbol[0] == '[') {
+        symbol = symbol.substr(1, symbol.size() - 2);
+      }
+    }
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
+    std::string mapNum;
+    if (atom.getPropIfPresent("molAtomMapNumber", mapNum)) {
+      symbol += ":" + mapNum;
+    }
   } else if (drawOptions_.atomLabelDeuteriumTritium &&
              atom.getAtomicNum() == 1 && (iso == 2 || iso == 3)) {
     symbol = ((iso == 2) ? "D" : "T");
@@ -1335,10 +1528,9 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     std::vector<std::string> preText, postText;
 
     // first thing after the symbol is the atom map
-    if (atom.hasProp("molAtomMapNumber")) {
-      std::string map_num = "";
-      atom.getProp("molAtomMapNumber", map_num);
-      postText.push_back(std::string(":") + map_num);
+    std::string mapNum;
+    if (atom.getPropIfPresent("molAtomMapNumber", mapNum)) {
+      postText.push_back(std::string(":") + mapNum);
     }
 
     if (0 != atom.getFormalCharge()) {
@@ -1464,6 +1656,15 @@ OrientType DrawMol::getAtomOrientation(const RDKit::Atom &atom) const {
         for (const auto bond : mol.atomBonds(&atom)) {
           const Point2D &at2_cds = atCds_[bond->getOtherAtomIdx(atom.getIdx())];
           Point2D bond_vec = at2_cds - at1_cds;
+          if (std::fabs(bond_vec.x) < 1.e-16) {
+            if (bond_vec.y > 0.0) {
+              orient = OrientType::S;
+              break;
+            } else {
+              orient = OrientType::N;
+              break;
+            }
+          }
           double ang = atan(bond_vec.y / bond_vec.x) * 180.0 / M_PI;
           if (ang > 80.0 && ang < 100.0 && orient == OrientType::S) {
             orient = OrientType::S;
@@ -1504,14 +1705,14 @@ void DrawMol::calcMeanBondLength() {
 // ****************************************************************************
 void DrawMol::partitionForLegend() {
   if (legend_.empty()) {
-    drawHeight_ = height_;
+    molHeight_ = drawHeight_;
     legendHeight_ = 0;
   } else {
-    if (height_ > 0) {
-      legendHeight_ = int(drawOptions_.legendFraction * float(height_));
-      drawHeight_ = height_ - legendHeight_;
+    if (!flexiCanvasY_) {
+      legendHeight_ = int(drawOptions_.legendFraction * float(drawHeight_));
+      molHeight_ = drawHeight_ - legendHeight_;
     } else {
-      drawHeight_ = height_;
+      molHeight_ = drawHeight_;
       // the legendHeight_ isn't needed for the flexiCanvas
     }
   }
@@ -1564,19 +1765,19 @@ void DrawMol::extractLegend() {
   double relFontScale = drawOptions_.legendFontSize / fsize;
   double total_width, total_height;
   calc_legend_height(legend_bits, relFontScale, total_width, total_height);
-  if (total_width >= width_) {
+  if (total_width >= drawWidth_) {
     if (!flexiCanvasX_) {
-      relFontScale *= double(width_) / total_width;
+      relFontScale *= double(drawWidth_) / total_width;
       calc_legend_height(legend_bits, relFontScale, total_width, total_height);
     } else {
-      width_ = total_width * (1 + drawOptions_.padding);
+      width_ = total_width * (1 + 2 * marginPadding_);
+      drawWidth_ = total_width;
     }
   }
 
   if (!flexiCanvasY_) {
-    auto adjLegHt = height_ * drawOptions_.legendFraction;
+    auto adjLegHt = drawHeight_ * drawOptions_.legendFraction;
     // subtract off space for the padding.
-    adjLegHt -= 0.5 * drawOptions_.padding * height_;
     if (total_height > adjLegHt) {
       relFontScale *= double(adjLegHt) / total_height;
       calc_legend_height(legend_bits, relFontScale, total_width, total_height);
@@ -1584,13 +1785,15 @@ void DrawMol::extractLegend() {
   } else {
     // a small gap between the legend and the picture looks better,
     // and make it at least 2 pixels.
-    double extra_padding = total_height * drawOptions_.padding;
+    double extra_padding = total_height * marginPadding_;
     extra_padding = extra_padding < 2.0 ? 2.0 : extra_padding;
-    height_ += total_height + extra_padding;
+    legendHeight_ = total_height + extra_padding;
+    drawHeight_ += legendHeight_;
+    height_ += legendHeight_;
   }
 
-  Point2D loc(width_ / 2 + xOffset_,
-              height_ * (1 - 0.5 * drawOptions_.padding) + yOffset_);
+  Point2D loc(drawWidth_ / 2 + xOffset_ + width_ * marginPadding_,
+              marginPadding_ * height_ + drawHeight_ + yOffset_);
   for (auto bit : legend_bits) {
     DrawAnnotation *da =
         new DrawAnnotation(bit, TextAlignType::MIDDLE, "legend", relFontScale,
@@ -1813,6 +2016,13 @@ void DrawMol::makeDoubleBondLines(
   int at2Idx = bond->getEndAtomIdx();
   adjustBondEndsForLabels(at1Idx, at2Idx, end1, end2);
 
+  bool skipOuterLine = false;
+  if (bond->getBondDir() == Bond::BEGINWEDGE ||
+      bond->getBondDir() == Bond::BEGINDASH) {
+    makeWedgedBond(bond, cols);
+    skipOuterLine = true;
+  }
+
   Point2D l1s, l1f, l2s, l2f, sat1, sat2;
   sat1 = atCds_[at1Idx];
   atCds_[at1Idx] = end1;
@@ -1820,8 +2030,10 @@ void DrawMol::makeDoubleBondLines(
   atCds_[at2Idx] = end2;
   calcDoubleBondLines(doubleBondOffset, *bond, l1s, l1f, l2s, l2f);
   int bondIdx = bond->getIdx();
-  newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
-              noDash);
+  if (!skipOuterLine) {
+    newBondLine(l1s, l1f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
+                noDash);
+  }
   if (bond->getBondType() == Bond::AROMATIC) {
     newBondLine(l2s, l2f, cols.first, cols.second, at1Idx, at2Idx, bondIdx,
                 dashes);
@@ -2587,8 +2799,10 @@ void DrawMol::getDrawTransformers(Point2D &trans, Point2D &scale,
   trans = Point2D(-xMin_, -yMin_);
   scale = Point2D(scale_, scale_);
   Point2D scaledRanges(scale_ * xRange_, scale_ * yRange_);
-  toCentre = Point2D((width_ - scaledRanges.x) / 2.0 + xOffset_,
-                     (drawHeight_ - scaledRanges.y) / 2.0 + yOffset_);
+  toCentre = Point2D(
+      (drawWidth_ - scaledRanges.x) / 2.0 + xOffset_ + width_ * marginPadding_,
+      (molHeight_ - scaledRanges.y) / 2.0 + yOffset_ +
+          height_ * marginPadding_);
 }
 
 // ****************************************************************************
@@ -2808,6 +3022,7 @@ void DrawMol::calcDoubleBondLines(double offset, const Bond &bond, Point2D &l1s,
   Atom *at1 = bond.getBeginAtom();
   Atom *at2 = bond.getEndAtom();
   Point2D perp;
+
   if (isLinearAtom(*at1, atCds_) || isLinearAtom(*at2, atCds_) ||
       (at1->getDegree() == 1 && at2->getDegree() == 1)) {
     const Point2D &at1_cds = atCds_[at1->getIdx()];
@@ -3058,10 +3273,11 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     l2f = at2_cds - perp;
     // extend the two bond lines so they will intersect with the other bonds
     // from at2
+    auto bl = std::max((l1s - l1f).length(), (l2s - l2f).length());
     Point2D l1 = l1s.directionVector(l1f);
-    l1f = l1s + l1 * 2.0;
+    l1f = l1s + l1 * 2.0 * bl;
     Point2D l2 = l2s.directionVector(l2f);
-    l2f = l2s + l2 * 2.0;
+    l2f = l2s + l2 * 2.0 * bl;
     Point2D ip;
     for (auto nbr : make_iterator_range(drawMol_->getAtomNeighbors(at2))) {
       auto nbr_cds = atCds_[nbr];
@@ -3085,8 +3301,8 @@ void DrawMol::doubleBondTerminal(Atom *at1, Atom *at2, double offset,
     // If at1->at2->at3 is a straight line, l2f may have ended up on the
     // wrong side of the other bond from l2s because there is no inner
     // side of the bond.  Do it again with a negative offset if so.
-    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f)) <
-             0.9999)) {
+    if (fabs(l1s.directionVector(l1f).dotProduct(l2s.directionVector(l2f))) <
+        0.9999) {
       l2f = doubleBondEnd(at1->getIdx(), at2->getIdx(), thirdAtom->getIdx(),
                           -offset, true);
     }
@@ -3164,9 +3380,23 @@ void DrawMol::findOtherBondVecs(const Atom *atom, const Atom *otherAtom,
   }
   for (unsigned int i = 1; i < atom->getDegree(); ++i) {
     auto thirdAtom = otherNeighbor(atom, otherAtom, i - 1, *drawMol_);
-    Point2D const &at1_cds = atCds_[atom->getIdx()];
-    Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
-    otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+    auto bond =
+        drawMol_->getBondBetweenAtoms(atom->getIdx(), thirdAtom->getIdx());
+    // Don't do anything if the wedge is to a triple bond.  It gets
+    // really messed up especially if the two bonds aren't exactly
+    // co-linear which happens sometimes in a cluttered layout (Github 7620).
+    if (bond->getBondType() != Bond::BondType::TRIPLE) {
+      // If it's a double bond that straddles the atom-atom vector it also looks
+      // odd or completely wrong, depending on the rest of the molecule
+      // (Github 7739).
+      if (bond->getBondType() == Bond::BondType::DOUBLE &&
+          atom->getDegree() > 2 && thirdAtom->getDegree() == 1) {
+        continue;
+      }
+      Point2D const &at1_cds = atCds_[atom->getIdx()];
+      Point2D const &at2_cds = atCds_[thirdAtom->getIdx()];
+      otherBondVecs.push_back(at1_cds.directionVector(at2_cds));
+    }
   }
 }
 
@@ -3181,6 +3411,19 @@ void DrawMol::adjustBondsOnSolidWedgeEnds() {
           otherNeighbor(bond->getEndAtom(), bond->getBeginAtom(), 0, *drawMol_);
       auto bond1 = drawMol_->getBondBetweenAtoms(bond->getEndAtomIdx(),
                                                  thirdAtom->getIdx());
+      // Don't do anything if it's a triple bond.  Moving the central
+      // line to the wedge corner is clearly wrong.
+      if (bond1->getBondType() == Bond::BondType::TRIPLE) {
+        continue;
+      }
+      // If the bonds are co-linear, don't do anything (Github7036)
+      auto b1 = atCds_[bond->getEndAtomIdx()].directionVector(
+          atCds_[bond->getBeginAtomIdx()]);
+      auto b2 = atCds_[bond1->getEndAtomIdx()].directionVector(
+          atCds_[bond1->getBeginAtomIdx()]);
+      if (fabs(1.0 - b1.dotProduct(b2)) < 0.001) {
+        continue;
+      }
       DrawShape *wedge = nullptr;
       DrawShape *bondLine = nullptr;
       double closestDist = 1.0;
@@ -3247,6 +3490,10 @@ void DrawMol::smoothBondJoins() {
   // classes for the atoms and bond it involves, and people use this to
   // identify the lines for other purposes.
   for (auto atom : drawMol_->atoms()) {
+    // If there's an atom label, there is no join.
+    if (atomLabels_[atom->getIdx()]) {
+      continue;
+    }
     bool doIt = false;
     if (atom->getDegree() == 2) {
       doIt = true;
@@ -3261,15 +3508,16 @@ void DrawMol::smoothBondJoins() {
         }
       }
     }
+    int adjAtomIdx = atom->getIdx() + activeAtmIdxOffset_;
     if (doIt) {
       bool done = false;
       for (unsigned int i = 0; i < singleBondLines_.size(); ++i) {
         auto &sbl1 = bonds_[singleBondLines_[i]];
         int p1 = -1;
         int p2 = -1;
-        if (static_cast<int>(atom->getIdx()) == sbl1->atom1_) {
+        if (adjAtomIdx == sbl1->atom1_) {
           p1 = 0;
-        } else if (static_cast<int>(atom->getIdx()) == sbl1->atom2_) {
+        } else if (adjAtomIdx == sbl1->atom2_) {
           p1 = 1;
         }
         if (p1 != -1) {
@@ -3278,9 +3526,9 @@ void DrawMol::smoothBondJoins() {
               continue;
             }
             auto &sbl2 = bonds_[singleBondLines_[j]];
-            if (static_cast<int>(atom->getIdx()) == sbl2->atom1_) {
+            if (adjAtomIdx == sbl2->atom1_) {
               p2 = 0;
-            } else if (static_cast<int>(atom->getIdx()) == sbl2->atom2_) {
+            } else if (adjAtomIdx == sbl2->atom2_) {
               p2 = 1;
             }
             if (p2 != -1) {
@@ -3360,6 +3608,17 @@ void DrawMol::makeHighlightEnd(const Atom *end1, const Atom *end2,
     // There is only 1 intersection to deal with, which is easier - just
     // a slanted end.
     auto end3Cds = atCds_[end1HighNbrs[0]->getIdx()];
+    auto b1 = end2Cds.directionVector(end1Cds);
+    auto b2 = end2Cds.directionVector(end3Cds);
+    if (1.0 - fabs(b1.dotProduct(b2)) < 1.0e-4) {
+      // move end3 by a small amount to create an inner and outer
+      auto d32 = end3Cds - end2Cds;
+      Point2D d32transp(d32.y, -d32.x);
+      d32transp *= 0.1;
+      end3Cds += d32transp;
+    }
+    // The moved end is only used to construct ins1 and ins2 wrt
+    // end1Cds and end2Cds so there's no need do anything more.
     auto ins1 = innerPoint(end1Cds, end2Cds, end3Cds, 1.0);
     points.push_back(ins1);
     auto ins2 = innerPoint(end1Cds, end2Cds, end3Cds, -1.0);
@@ -3411,11 +3670,11 @@ DrawColour DrawMol::getColour(int atom_idx) const {
   PRECONDITION(rdcast<int>(atomicNums_.size()) > atom_idx, "bad atom_idx");
 
   DrawColour retval = getColourByAtomicNum(atomicNums_[atom_idx], drawOptions_);
-  bool highlightedAtom = false;
+  bool highlightedAtom =
+      highlightAtoms_.end() !=
+      find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx);
   if (!drawOptions_.circleAtoms && !drawOptions_.continuousHighlight) {
-    if (highlightAtoms_.end() !=
-        find(highlightAtoms_.begin(), highlightAtoms_.end(), atom_idx)) {
-      highlightedAtom = true;
+    if (highlightedAtom) {
       retval = drawOptions_.highlightColour;
     }
     // over-ride with explicit colour from highlightMap if there is one
@@ -3429,7 +3688,7 @@ DrawColour DrawMol::getColour(int atom_idx) const {
     // the same highlight colour as the bonds.  It doesn't look right
     // if only some of the bonds are highlighted, IMO.
     if (!highlightedAtom) {
-      Atom *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
+      const auto *atomPtr = drawMol_->getAtomWithIdx(atom_idx);
       int numBonds = 0, numHighBonds = 0;
       std::unique_ptr<DrawColour> highCol;
       for (const auto &nbri :
@@ -3439,9 +3698,9 @@ DrawColour DrawMol::getColour(int atom_idx) const {
         if (std::find(highlightBonds_.begin(), highlightBonds_.end(),
                       nbr->getIdx()) != highlightBonds_.end() ||
             highlightBondMap_.find(nbr->getIdx()) != highlightBondMap_.end()) {
-          DrawColour hc = getHighlightBondColour(
-              nbr, drawOptions_, highlightBonds_, highlightBondMap_,
-              highlightAtoms_, highlightAtomMap_);
+          auto hc = getHighlightBondColour(nbr, drawOptions_, highlightBonds_,
+                                           highlightBondMap_, highlightAtoms_,
+                                           highlightAtomMap_);
           if (!highCol) {
             highCol.reset(new DrawColour(hc));
           } else {
@@ -3457,6 +3716,23 @@ DrawColour DrawMol::getColour(int atom_idx) const {
         retval = *highCol;
       }
     }
+  } else if (highlightedAtom &&
+             !drawOptions_.standardColoursForHighlightedAtoms) {
+    // There's going to be a colour behind the atom, so if the
+    // atom has a symbol, it should be the same colour as carbon.  This
+    // function should only be called if there is an atom symbol.
+
+    if (auto it = drawOptions_.atomColourPalette.find(6);
+        it != drawOptions_.atomColourPalette.end()) {
+      retval = it->second;
+    } else if (auto it = drawOptions_.atomColourPalette.find(-1);
+               it != drawOptions_.atomColourPalette.end()) {
+      // Use the default if no carbon.
+      retval = it->second;
+    } else {
+      // if all else fails, default to black:
+      retval = DrawColour(0, 0, 0);
+    }
   }
   return retval;
 }
@@ -3470,41 +3746,6 @@ void centerMolForDrawing(RWMol &mol, int confId) {
   tf.SetTranslation(centroid);
   MolTransforms::transformConformer(conf, tf);
   MolTransforms::transformMolSubstanceGroups(mol, tf);
-}
-
-// ****************************************************************************
-void prepareStereoGroups(RWMol &mol) {
-  auto sgs = mol.getStereoGroups();
-  if (sgs.size() == 1) {
-    boost::dynamic_bitset<> chiralAts(mol.getNumAtoms());
-    for (const auto atom : mol.atoms()) {
-      if (atom->getChiralTag() > Atom::ChiralType::CHI_UNSPECIFIED &&
-          atom->getChiralTag() < Atom::ChiralType::CHI_OTHER) {
-        chiralAts.set(atom->getIdx(), 1);
-      }
-    }
-    for (const auto atm : sgs[0].getAtoms()) {
-      chiralAts.set(atm->getIdx(), 0);
-    }
-    if (chiralAts.none()) {
-      // all specified chiral centers are accounted for by this StereoGroup.
-      if (sgs[0].getGroupType() == StereoGroupType::STEREO_OR ||
-          sgs[0].getGroupType() == StereoGroupType::STEREO_AND) {
-        std::vector<StereoGroup> empty;
-        mol.setStereoGroups(std::move(empty));
-        std::string label = sgs[0].getGroupType() == StereoGroupType::STEREO_OR
-                                ? "OR enantiomer"
-                                : "AND enantiomer";
-        mol.setProp(common_properties::molNote, label);
-      }
-      // clear the chiral codes on the atoms so that we don't
-      // inadvertently draw them later
-      for (const auto atm : sgs[0].getAtoms()) {
-        mol.getAtomWithIdx(atm->getIdx())
-            ->clearProp(common_properties::_CIPCode);
-      }
-    }
-  }
 }
 
 // ****************************************************************************
@@ -3530,20 +3771,20 @@ bool isLinearAtom(const Atom &atom, const std::vector<Point2D> &atCds) {
 // ****************************************************************************
 DrawColour getColourByAtomicNum(int atomic_num,
                                 const MolDrawOptions &drawOptions) {
-  DrawColour res;
+  // if all else fails, default to black:
+  DrawColour res(0, 0, 0);
   if (atomic_num == 1 && drawOptions.noAtomLabels) {
     atomic_num = 201;
   }
-  if (drawOptions.atomColourPalette.find(atomic_num) !=
-      drawOptions.atomColourPalette.end()) {
-    res = drawOptions.atomColourPalette.find(atomic_num)->second;
-  } else if (atomic_num != -1 && drawOptions.atomColourPalette.find(-1) !=
-                                     drawOptions.atomColourPalette.end()) {
+  if (auto it = drawOptions.atomColourPalette.find(atomic_num);
+      it != drawOptions.atomColourPalette.end()) {
+    res = it->second;
+  } else if (atomic_num != -1) {
     // if -1 is in the palette, we use that for undefined colors
-    res = drawOptions.atomColourPalette.find(-1)->second;
-  } else {
-    // if all else fails, default to black:
-    res = DrawColour(0, 0, 0);
+    if (auto it = drawOptions.atomColourPalette.find(-1);
+        it != drawOptions.atomColourPalette.end()) {
+      res = it->second;
+    }
   }
   return res;
 }

@@ -93,16 +93,17 @@ struct featfactory_wrapper {
     python::class_<MolChemicalFeatureFactory>(
         "MolChemicalFeatureFactory", factoryClassDoc.c_str(), python::no_init)
         .def("GetNumFeatureDefs", &MolChemicalFeatureFactory::getNumFeatureDefs,
-             "Get the number of feature definitions")
-        .def("GetFeatureFamilies", getFeatureFamilies,
+             python::args("self"), "Get the number of feature definitions")
+        .def("GetFeatureFamilies", getFeatureFamilies, python::args("self"),
              "Get a tuple of feature types")
-        .def("GetFeatureDefs", getFeatureDefs,
+        .def("GetFeatureDefs", getFeatureDefs, python::args("self"),
              "Get a dictionary with SMARTS definitions for each feature type")
         .def("GetNumMolFeatures", getNumMolFeatures,
-             (python::arg("mol"), python::arg("includeOnly") = std::string("")),
+             ((python::arg("self"), python::arg("mol")),
+              python::arg("includeOnly") = std::string("")),
              "Get the number of features the molecule has")
         .def("GetMolFeature", getMolFeature,
-             (python::arg("mol"), python::arg("idx"),
+             ((python::arg("self"), python::arg("mol")), python::arg("idx"),
               python::arg("includeOnly") = std::string(""),
               python::arg("recompute") = true, python::arg("confId") = -1),
              python::with_custodian_and_ward_postcall<

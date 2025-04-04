@@ -8,12 +8,13 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/Chirality.h>
 #include <algorithm>
 
 using namespace RDKit;
@@ -41,4 +42,6 @@ TEST_CASE("MolBundle serialization") {
     REQUIRE(bundle.size() == nbundle.size());
   }
 }
+#else
+TEST_CASE("MolBundle serialization") {}
 #endif

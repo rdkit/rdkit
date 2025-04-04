@@ -1,15 +1,12 @@
-if(RDK_USE_BOOST_SERIALIZATION AND Boost_SERIALIZATION_LIBRARY)
-    set(RDKit_SERIALIZATION_LIBS ${Boost_SERIALIZATION_LIBRARY})
-else()
+if(NOT RDK_USE_BOOST_SERIALIZATION)
     message("== Making SubstructLibrary without boost Serialization support")
-    set(RDKit_SERIALIZATION_LIBS )
 endif()
 
 rdkit_library(SubstructLibrary
               SubstructLibrary.cpp
 	      PatternFactory.cpp
-              LINK_LIBRARIES  TautomerQuery MolStandardize Fingerprints SubstructMatch SmilesParse
-              GraphMol Catalogs DataStructs RDGeneral ${RDKit_SERIALIZATION_LIBS})
+              LINK_LIBRARIES  GeneralizedSubstruct TautomerQuery MolStandardize Fingerprints SubstructMatch SmilesParse
+              GraphMol Catalogs DataStructs RDGeneral)
 target_compile_definitions(SubstructLibrary PRIVATE RDKIT_SUBSTRUCTLIBRARY_BUILD)
 
 rdkit_headers(SubstructLibrary.h

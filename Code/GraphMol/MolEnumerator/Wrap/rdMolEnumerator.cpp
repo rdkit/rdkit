@@ -64,7 +64,7 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
 
   python::class_<MolEnumerator::MolEnumeratorParams>(
       "MolEnumeratorParams", "Molecular enumerator parameters",
-      python::init<>())
+      python::init<>(python::args("self")))
       .def("__init__", python::make_constructor(createParamsFromName))
       .def_readwrite("sanitize", &MolEnumerator::MolEnumeratorParams::sanitize,
                      "sanitize molecules after enumeration")
@@ -77,6 +77,7 @@ BOOST_PYTHON_MODULE(rdMolEnumerator) {
                      &MolEnumerator::MolEnumeratorParams::randomSeed,
                      "seed for the random enumeration (not yet implemented")
       .def("SetEnumerationOperator", &setEnumerationHelper,
+           python::args("self", "typ"),
            "set the operator to be used for enumeration");
   python::def("Enumerate", &enumerateHelper1,
               (python::arg("mol"), python::arg("maxPerOperation") = 0),

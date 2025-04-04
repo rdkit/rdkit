@@ -1,5 +1,5 @@
 #
-#  Copyright (c) 2007-2021, Novartis Institutes for BioMedical Research Inc. and
+#  Copyright (c) 2007-2023, Novartis Institutes for BioMedical Research Inc. and
 #  other RDKit contributors
 #
 #  All rights reserved.
@@ -35,6 +35,7 @@ import os
 import pickle
 import sys
 import unittest
+import tempfile
 
 from rdkit import Chem, Geometry, RDConfig, rdBase
 from rdkit.Chem import AllChem, rdChemReactions
@@ -686,7 +687,7 @@ M  END
     rxn.Initialize()
     res = rdChemReactions.PreprocessReaction(rxn)
     self.assertEqual(res,
-                      (0, 0, 2, 1, (((0, 'halogen.bromine.aromatic'), ), ((1, 'boronicacid'), ))))
+                     (0, 0, 2, 1, (((0, 'halogen.bromine.aromatic'), ), ((1, 'boronicacid'), ))))
 
   def testProperties(self):
     smirks_thiourea = "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);!$([ND3]);!$([ND4]);!$(N[O,N]);!$(N[C,S]=[S,O,N]):2]>>[N:3]-[C:1]-[N+0:2]"
@@ -730,6 +731,8 @@ M  END
       _reacts = [Chem.MolToSmarts(r) for r in _rxn.GetReactants()]
       _prods = [Chem.MolToSmarts(p) for p in _rxn.GetProducts()]
 
+  @unittest.skipUnless(hasattr(rdChemReactions, 'ReactionFromPNGFile'),
+                       "RDKit not built with iostreams support")
   def test_PNGMetadata(self):
     fname = os.path.join(self.dataDir, 'reaction1.smarts.png')
     rxn = rdChemReactions.ReactionFromPNGFile(fname)
@@ -789,6 +792,7 @@ def _getProductCXSMILES(product):
   for a in product.GetAtoms():
     for k in a.GetPropsAsDict():
       a.ClearProp(k)
+
   return Chem.MolToCXSmiles(product)
 
 
@@ -864,6 +868,7 @@ class StereoGroupTests(unittest.TestCase):
 
     reaction = '[C@:1]F>>[C:1]F'
     # Reaction destroys stereo (but preserves unaffected group
+
     products = _reactAndSummarize(reaction, 'F[C@H](Cl)[C@@H](Cl)Br |o1:1,&2:3|')
     self.assertEqual(products, 'FC(Cl)[C@H](Cl)Br |&1:3|')
     # Reaction destroys stereo (but preserves the rest of the group
@@ -1031,7 +1036,7 @@ M  END
     self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
     self.assertFalse(rxn.RunReactantInPlace(reactant))
     self.assertEqual(Chem.MolToSmiles(reactant), 'CCOC(C)=O')
-    
+
     rxn = rdChemReactions.ReactionFromSmarts('CC[N:1]>>[N:1]')
     self.assertIsNotNone(rxn)
     reactant = Chem.MolFromSmiles('CCCN.Cl')
@@ -1040,11 +1045,9 @@ M  END
     self.assertEqual(Chem.MolToSmiles(reactant), 'N')
 
     reactant = Chem.MolFromSmiles('CCCN.Cl')
-    self.assertTrue(rxn.RunReactantInPlace(reactant,removeUnmatchedAtoms=False))
+    self.assertTrue(rxn.RunReactantInPlace(reactant, removeUnmatchedAtoms=False))
     Chem.SanitizeMol(reactant)
     self.assertEqual(Chem.MolToSmiles(reactant), 'C.Cl.N')
-
-
 
   def testGithub4651(self):
     mol_sulfonylchloride = Chem.MolFromSmiles("Nc1c(CCCSNCC)cc(cc1)S(=O)(=O)Cl")
@@ -1116,6 +1119,139 @@ M  END
     rxn.GetSubstructParams().useChirality = True
     self.assertEqual(len(rxn.RunReactants((mol, ))), 0)
 
+  def testMrvBlockContainsReaction(self):
+    fn1 = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                       'aspirin.mrv')
+    with open(fn1, 'r') as inf:
+      ind1 = inf.read()
+    fn2 = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                       'aspirineSynthesisWithAttributes.mrv')
+    with open(fn2, 'r') as inf:
+      ind2 = inf.read()
+
+    self.assertFalse(rdChemReactions.MrvFileIsReaction(fn1))
+    self.assertTrue(rdChemReactions.MrvFileIsReaction(fn2))
+
+    self.assertFalse(rdChemReactions.MrvBlockIsReaction(ind1))
+    self.assertTrue(rdChemReactions.MrvBlockIsReaction(ind2))
+
+  def testMrvOutput(self):
+    fn2 = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
+                       'aspirineSynthesisWithAttributes.mrv')
+    rxn = rdChemReactions.ReactionFromMrvFile(fn2)
+    self.assertIsNotNone(rxn)
+    rxnb = rdChemReactions.ReactionToMrvBlock(rxn)
+    self.assertTrue('<reaction>' in rxnb)
+
+    fName = tempfile.NamedTemporaryFile(suffix='.mrv').name
+    self.assertFalse(os.path.exists(fName))
+    rdChemReactions.ReactionToMrvFile(rxn, fName)
+    self.assertTrue(os.path.exists(fName))
+    os.unlink(fName)
+
+  def testCDXML(self):
+    fname = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'CDXML', 'rxn2.cdxml')
+    rxns = AllChem.ReactionsFromCDXMLFile(fname)
+    self.assertEqual(len(rxns), 1)
+    self.assertEqual(
+      AllChem.ReactionToSmarts(rxns[0]),
+      "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6&D2:1]1:[#6&D2:5]:[#6&D3:6](:[#6&D2:2]:[#6&D2:3]:[#6&D2:4]:1)-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1"
+    )
+
+    rxns = AllChem.ReactionsFromCDXMLFile('does-not-exist.cdxml')
+    self.assertEqual(len(rxns), 0)
+
+    with open(fname, 'r') as inf:
+      cdxml = inf.read()
+    rxns = AllChem.ReactionsFromCDXMLBlock(cdxml)
+    self.assertEqual(len(rxns), 1)
+    self.assertEqual(
+      AllChem.ReactionToSmarts(rxns[0]),
+      "[#6&D2:2]1:[#6&D2:3]:[#6&D2:4]:[#6&D3:1](:[#6&D2:5]:[#6&D2:6]:1)-[#17&D1].[#6&D3](-[#5&D2]-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1)(-[#8&D1])-[#8&D1]>>[#6&D2:1]1:[#6&D2:5]:[#6&D3:6](:[#6&D2:2]:[#6&D2:3]:[#6&D2:4]:1)-[#6&D3:7]1:[#6&D2:8]:[#6&D2:9]:[#6&D2:10]:[#6&D2:11]:[#6&D2:12]:1"
+    )
+
+    rxns = AllChem.ReactionsFromCDXMLBlock('')
+    self.assertEqual(len(rxns), 0)
+
+  def testSanitizeRxnAsMols(self):
+    rxn = AllChem.ReactionFromSmarts("C1=CC=CC=C1>CN(=O)=O>C1=CC=CC=N1", useSmiles=True)
+    self.assertIsNotNone(rxn)
+    self.assertFalse(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 0)
+
+    AllChem.SanitizeRxnAsMols(rxn)
+    self.assertTrue(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertTrue(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 1)
+
+    rxn = AllChem.ReactionFromSmarts("C1=CC=CC=C1>CN(=O)=O>C1=CC=CC=N1", useSmiles=True)
+    self.assertIsNotNone(rxn)
+    self.assertFalse(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 0)
+
+    AllChem.SanitizeRxnAsMols(rxn, Chem.SanitizeFlags.SANITIZE_CLEANUP)
+    self.assertFalse(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertFalse(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
+    self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 1)
+
+  def testSmilesWriteParams(self):
+    rxn = AllChem.ReactionFromSmarts(
+      "[C:1]-[C:2].[NH3:3]->[Fe:4]-[NH2:5]>>[C:1]=[C:2].[NH3:3]->[Fe:4]-[NH2:5]")
+    self.assertIsNotNone(rxn)
+    params = AllChem.SmilesWriteParams()
+    self.assertEqual(
+      AllChem.ReactionToSmiles(rxn, params),
+      "[CH3:1][CH3:2].[NH3:3]->[Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3]->[Fe:4][NH2:5]")
+    self.assertEqual(
+      AllChem.ReactionToSmarts(rxn, params),
+      "[C:1]-[C:2].[N&H3:3]->[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]->[#26:4]-[N&H2:5]")
+    params.includeDativeBonds = False
+    self.assertEqual(AllChem.ReactionToSmiles(rxn, params),
+                     "[CH3:1][CH3:2].[NH3:3][Fe:4][NH2:5]>>[CH2:1]=[CH2:2].[NH3:3][Fe:4][NH2:5]")
+    self.assertEqual(
+      AllChem.ReactionToSmarts(rxn, params),
+      "[C:1]-[C:2].[N&H3:3]-[#26:4]-[N&H2:5]>>[C:1]=[C:2].[N&H3:3]-[#26:4]-[N&H2:5]")
+
+class CXExtensionsTests(unittest.TestCase):
+  def test_cxsmarts_reaction(self):
+    CXSmarts_string = (
+      "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
+      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
+    )
+    rxnCXSmarts = rdChemReactions.ReactionFromSmarts(CXSmarts_string)
+    self.assertIsNotNone(rxnCXSmarts)
+
+    params = Chem.SmilesWriteParams()
+    flags = Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_ATOM_PROPS
+
+    rxnCXSmarts_string = rdChemReactions.ReactionToCXSmarts(rxnCXSmarts, params, flags)
+    expected_rxnCXSmarts_string = (
+      "[C&H3:1][C&H1:2]([C&H3:3])[*:4].[O&H1:5][C&H2:6][*:7]>O=C=O>"
+      "[C&H3:1][C&H1:2]([C&H3:3])[C&H2:6][O&H1:5] |$;;;_AP1;;;_AP1;;;;;;;;$|"
+    )
+    self.assertEqual(rxnCXSmarts_string, expected_rxnCXSmarts_string)
+    
+  def test_cxsmiles_reaction(self):
+    reactant1 = '[CH3:1][CH:2]([CH3:3])[*:4]'
+    reactant2 = '[OH:5][CH2:6][*:7]'
+    product = '[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5]'
+    cxExtension = "|$;;;_R1;;;_R2;;;;;;;;$|"
+
+    reaction_smarts = f'{reactant1}.{reactant2}>O=C=O>{product} {cxExtension}'
+    reaction = rdChemReactions.ReactionFromSmarts(reaction_smarts)
+    params = Chem.SmilesWriteParams()
+    flags = Chem.CXSmilesFields.CX_ALL ^ Chem.CXSmilesFields.CX_ATOM_PROPS
+    cxsmiles_reaction_string = Chem.rdChemReactions.ReactionToCXSmiles(reaction, params, flags)
+    self.assertIsNotNone(cxsmiles_reaction_string)
+
+    expected_cxsmiles_reaction_string = (
+      "[CH3:1][CH:2]([CH3:3])[*:4].[OH:5][CH2:6][*:7]>O=C=O>"
+      "[CH3:1][CH:2]([CH3:3])[CH2:6][OH:5] |$;;;_R1;;;_R2;;;;;;;;$|"
+    )
+
+    self.assertEqual(cxsmiles_reaction_string, expected_cxsmiles_reaction_string)
 
 if __name__ == '__main__':
   unittest.main(verbosity=True)

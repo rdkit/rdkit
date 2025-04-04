@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -169,5 +169,121 @@ M  END
               common_properties::molAtomMapNumber) == 2);
     CHECK(mol2.getAtomWithIdx(3)->getProp<std::string>(
               common_properties::dummyLabel) == "foo");
+  }
+
+  SECTION("attachment points") {
+    auto mol = R"CTAB(
+  Mrv2211 09062306242D          
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 5 3 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -7.7917 4.0833 0 0
+M  V30 2 C -6.458 4.8533 0 0
+M  V30 3 C -5.1243 4.0833 0 0
+M  V30 4 * -6.458 4.34 0 0
+M  V30 5 C -5.303 6.3405 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 4 5 ENDPTS=(3 1 2 3) ATTACH=ANY
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB"_ctab;
+    REQUIRE(mol);
+    CHECK(mol->getBondWithIdx(2)->getProp<std::string>(
+              common_properties::_MolFileBondAttach) == "ANY");
+    CHECK(mol->getBondWithIdx(2)->getProp<std::string>(
+              common_properties::_MolFileBondEndPts) == "(3 1 2 3)");
+
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+
+    // make sure the property names aren't in the pickle
+    CHECK(pkl.find(common_properties::_MolFileBondAttach) == std::string::npos);
+    CHECK(pkl.find(common_properties::_MolFileBondEndPts) == std::string::npos);
+    // std::cerr << "!!!! " << pkl.size() << " " << basepkl.size() << std::endl;
+
+    RWMol mol2(pkl);
+    CHECK(mol2.getBondWithIdx(2)->getProp<std::string>(
+              common_properties::_MolFileBondAttach) == "ANY");
+    CHECK(mol2.getBondWithIdx(2)->getProp<std::string>(
+              common_properties::_MolFileBondEndPts) == "(3 1 2 3)");
+  }
+}
+
+TEST_CASE("parsing old pickles with many features") {
+  std::string pklName = getenv("RDBASE");
+  pklName += "/Code/GraphMol/test_data/mol_with_sgroups_and_stereo.pkl";
+
+  auto m =
+      "C/C=C/C[C@H](O)[C@@H](C)F |a:6,o2:4,r,SgD:5:data_pt:4.5::::|"_smiles;
+  REQUIRE(m);
+  std::ifstream inStream(pklName.c_str(), std::ios_base::binary);
+  RWMol m2;
+  // if the mol can be read, the primary problem was addressed
+  MolPickler::molFromPickle(inStream, m2);
+  CHECK(m2.getNumAtoms() == m->getNumAtoms());
+  CHECK(MolToCXSmiles(*m) == MolToCXSmiles(m2));
+}
+
+TEST_CASE("github #7675 : pickling HasProp queries") {
+  SECTION("basics") {
+    auto mol = "CC"_smarts;
+    REQUIRE(mol);
+    mol->getAtomWithIdx(0)->expandQuery(makeHasPropQuery<Atom>("foo"));
+    mol->getBondWithIdx(0)->expandQuery(makeHasPropQuery<Bond>("foo"));
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    RWMol mol2(pkl);
+    REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
+  }
+}
+
+TEST_CASE("pickling HasPropWithValue queries") {
+  SECTION("basics") {
+    if (0) {
+      auto mol = "CC"_smarts;
+      REQUIRE(mol);
+      mol->getAtomWithIdx(0)->expandQuery(
+          makePropQuery<Atom, int>("foo", 1, 2));
+      mol->getBondWithIdx(0)->expandQuery(
+          makePropQuery<Bond, int>("bar", 1, 0));
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol mol2(pkl);
+      REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(mol2.getAtomWithIdx(1)->hasQuery());
+    }
+    {
+      auto mol = "CC"_smarts;
+      REQUIRE(mol);
+      mol->getAtomWithIdx(0)->expandQuery(
+          makePropQuery<Atom, std::string>("foo", "asdfs"));
+      mol->getBondWithIdx(0)->expandQuery(
+          makePropQuery<Bond, std::string>("bar", "dsafasdf"));
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol mol2(pkl);
+      REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(mol2.getAtomWithIdx(1)->hasQuery());
+    }
+    {
+      auto mol = "CC"_smarts;
+      REQUIRE(mol);
+      ExplicitBitVect bv(10);
+      mol->getAtomWithIdx(0)->expandQuery(
+          makePropQuery<Atom, ExplicitBitVect>("foo", bv, 0.1));
+      mol->getBondWithIdx(0)->expandQuery(
+          makePropQuery<Bond, ExplicitBitVect>("bar", bv, 0.1));
+      std::string pkl;
+      MolPickler::pickleMol(*mol, pkl);
+      RWMol mol2(pkl);
+      REQUIRE(mol2.getAtomWithIdx(0)->hasQuery());
+      REQUIRE(mol2.getAtomWithIdx(1)->hasQuery());
+    }
   }
 }

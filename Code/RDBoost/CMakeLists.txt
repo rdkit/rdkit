@@ -1,14 +1,11 @@
-if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    rdkit_library(RDBoost Wrap.cpp
-                LINK_LIBRARIES RDGeneral rdkit_py_base rdkit_base)
-else()
-    rdkit_library(RDBoost Wrap.cpp
-                LINK_LIBRARIES RDGeneral rdkit_base)
-    if("${PYTHON_LDSHARED}" STREQUAL "")
-    else()       # fixes an apple issue
-       STRING(REGEX REPLACE "-bundle" "" LDSHARED ${PYTHON_LDSHARED})
-       set_target_properties(RDBoost PROPERTIES LINK_FLAGS ${LDSHARED})
-    endif()
+rdkit_library(RDBoost Wrap.cpp
+              LINK_LIBRARIES RDGeneral rdkit_py_base)
+if(NOT WIN32 AND
+   NOT "${Py_ENABLE_SHARED}" STREQUAL "1" AND
+   NOT "${PYTHON_LDSHARED}" STREQUAL "")
+   # fixes an apple issue
+   STRING(REGEX REPLACE "-bundle" "" LDSHARED ${PYTHON_LDSHARED})
+   set_target_properties(RDBoost PROPERTIES LINK_FLAGS ${LDSHARED})
 endif()
 target_compile_definitions(RDBoost PRIVATE RDKIT_RDBOOST_BUILD)
 
@@ -17,6 +14,7 @@ rdkit_headers(Wrap.h PySequenceHolder.h
               python.h
               boost_numpy.h
               python_streambuf.h
+              pyint_api.h
               DEST RDBoost)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

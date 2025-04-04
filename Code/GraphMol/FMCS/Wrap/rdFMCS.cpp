@@ -191,7 +191,7 @@ struct PyMCSBondCompare : public PyMCSWrapper {
 struct PyAtomBondCompData {
   python::object pyAtomComp;
   python::object pyBondComp;
-  MCSBondCompareFunction standardBondTyperFunc;
+  MCSBondCompareFunction standardBondTyperFunc = nullptr;
 };
 
 struct PyBaseUserData {
@@ -289,7 +289,7 @@ struct PyMCSAcceptance : public PyMCSWrapper {
   }
 };
 
-class PyMCSParameters {
+class PyMCSParameters : public boost::noncopyable {
  public:
   PyMCSParameters() : p(new MCSParameters()) {
     cfud.mcsParameters = p.get();
@@ -643,7 +643,7 @@ python::object degenerateSmartsQueryMolDictHelper(
   for (const auto &pair : self.DegenerateSmartsQueryMolDict) {
     res[pair.first] = pair.second;
   }
-  return std::move(res);
+  return res;
 }
 struct mcsresult_wrapper {
   static void wrap() {

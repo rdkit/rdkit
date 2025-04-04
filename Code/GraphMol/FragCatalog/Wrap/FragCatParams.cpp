@@ -27,18 +27,22 @@ struct fragparams_wrapper {
     python::class_<FragCatParams>(
         "FragCatParams",
         python::init<int, int, std::string, double>(
-            (python::arg("lLen"), python::arg("uLen"),
+            (python::arg("self"), python::arg("lLen"), python::arg("uLen"),
              python::arg("fgroupFilename"), python::arg("tol") = 1e-8)))
-        .def("GetTypeString", &FragCatParams::getTypeStr)
-        .def("GetUpperFragLength", &FragCatParams::getUpperFragLength)
-        .def("GetLowerFragLength", &FragCatParams::getLowerFragLength)
-        .def("GetTolerance", &FragCatParams::getTolerance)
-        .def("GetNumFuncGroups", &FragCatParams::getNumFuncGroups)
+        .def("GetTypeString", &FragCatParams::getTypeStr, python::args("self"))
+        .def("GetUpperFragLength", &FragCatParams::getUpperFragLength,
+             python::args("self"))
+        .def("GetLowerFragLength", &FragCatParams::getLowerFragLength,
+             python::args("self"))
+        .def("GetTolerance", &FragCatParams::getTolerance, python::args("self"))
+        .def("GetNumFuncGroups", &FragCatParams::getNumFuncGroups,
+             python::args("self"))
         .def("GetFuncGroup",
-             (const ROMol* (FragCatParams::*)(int) const) &
+             (const ROMol *(FragCatParams::*)(int) const) &
                  FragCatParams::getFuncGroup,
-             python::return_value_policy<python::reference_existing_object>())
-        .def("Serialize", &FragCatParams::Serialize);
+             python::return_value_policy<python::reference_existing_object>(),
+             python::args("self", "fid"))
+        .def("Serialize", &FragCatParams::Serialize, python::args("self"));
   };
 };
 }  // namespace RDKit

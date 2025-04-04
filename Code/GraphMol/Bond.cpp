@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2024 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,6 +11,7 @@
 #include "Atom.h"
 #include "ROMol.h"
 #include <RDGeneral/Invariant.h>
+#include "Atropisomers.h"
 
 namespace RDKit {
 
@@ -248,7 +249,7 @@ void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
       getOwningMol().getBondBetweenAtoms(getEndAtomIdx(), endIdx) != nullptr,
       "endIdx not connected to end atom of bond");
 
-  INT_VECT &atoms = getStereoAtoms();
+  auto &atoms = getStereoAtoms();
   atoms.clear();
   atoms.push_back(bgnIdx);
   atoms.push_back(endIdx);
@@ -310,24 +311,154 @@ uint8_t getTwiceBondType(const Bond &b) {
       UNDER_CONSTRUCTION("Bad bond type");
   }
 }
+
+bool Bond::invertChirality() {
+  switch (getStereo()) {
+    case STEREOATROPCW:
+      setStereo(STEREOATROPCCW);
+      return true;
+    case STEREOATROPCCW:
+      setStereo(STEREOATROPCW);
+      return true;
+
+    default:
+      break;
+  }
+  return false;
+}
+
 };  // namespace RDKit
+
+namespace {
+constexpr const char *bondTypeToString(RDKit::Bond::BondType d) {
+  switch (d) {
+    case RDKit::Bond::BondType::UNSPECIFIED:
+      return "?";
+    case RDKit::Bond::BondType::SINGLE:
+      return "1";
+    case RDKit::Bond::BondType::DOUBLE:
+      return "2";
+    case RDKit::Bond::BondType::TRIPLE:
+      return "3";
+    case RDKit::Bond::BondType::QUADRUPLE:
+      return "4";
+    case RDKit::Bond::BondType::QUINTUPLE:
+      return "5";
+    case RDKit::Bond::BondType::HEXTUPLE:
+      return "6";
+    case RDKit::Bond::BondType::ONEANDAHALF:
+      return "1.5";
+    case RDKit::Bond::BondType::TWOANDAHALF:
+      return "2.5";
+    case RDKit::Bond::BondType::THREEANDAHALF:
+      return "3.5";
+    case RDKit::Bond::BondType::FOURANDAHALF:
+      return "4.5";
+    case RDKit::Bond::BondType::FIVEANDAHALF:
+      return "5.5";
+    case RDKit::Bond::BondType::AROMATIC:
+      return "a";
+    case RDKit::Bond::BondType::IONIC:
+      return "I";
+    case RDKit::Bond::BondType::HYDROGEN:
+      return "H";
+    case RDKit::Bond::BondType::THREECENTER:
+      return "3C";
+    case RDKit::Bond::BondType::DATIVEONE:
+      return "D1";
+    case RDKit::Bond::BondType::DATIVE:
+      return "D";
+    case RDKit::Bond::BondType::DATIVEL:
+      return "DL";
+    case RDKit::Bond::BondType::DATIVER:
+      return "DR";
+    case RDKit::Bond::BondType::OTHER:
+      return "Other";
+    case RDKit::Bond::BondType::ZERO:
+      return "0";
+  }
+  return ("");
+}
+constexpr const char *bondDirToString(RDKit::Bond::BondDir d) {
+  switch (d) {
+    case RDKit::Bond::BondDir::NONE:
+      return "NONE";
+    case RDKit::Bond::BondDir::BEGINWEDGE:
+      return "wedge";
+    case RDKit::Bond::BondDir::BEGINDASH:
+      return "dash";
+    case RDKit::Bond::BondDir::ENDDOWNRIGHT:
+      return "\\";
+    case RDKit::Bond::BondDir::ENDUPRIGHT:
+      return "/";
+    case RDKit::Bond::BondDir::EITHERDOUBLE:
+      return "x";
+    case RDKit::Bond::BondDir::UNKNOWN:
+      return "?";
+  }
+  return ("");
+}
+constexpr const char *bondStereoToString(RDKit::Bond::BondStereo d) {
+  switch (d) {
+    case RDKit::Bond::BondStereo::STEREONONE:
+      return "NONE";
+    case RDKit::Bond::BondStereo::STEREOANY:
+      return "ANY";
+    case RDKit::Bond::BondStereo::STEREOZ:
+      return "Z";
+    case RDKit::Bond::BondStereo::STEREOE:
+      return "E";
+    case RDKit::Bond::BondStereo::STEREOCIS:
+      return "CIS";
+    case RDKit::Bond::BondStereo::STEREOTRANS:
+      return "TRANS";
+    case RDKit::Bond::BondStereo::STEREOATROPCW:
+      return "CW";
+    case RDKit::Bond::BondStereo::STEREOATROPCCW:
+      return "CCW";
+  }
+  return ("");
+}
+}  // namespace
 
 std::ostream &operator<<(std::ostream &target, const RDKit::Bond &bond) {
   target << bond.getIdx() << " ";
   target << bond.getBeginAtomIdx() << "->" << bond.getEndAtomIdx();
-  target << " order: " << bond.getBondType();
+  target << " order: " << bondTypeToString(bond.getBondType());
   if (bond.getBondDir()) {
-    target << " dir: " << bond.getBondDir();
+    target << " dir: " << bondDirToString(bond.getBondDir());
   }
   if (bond.getStereo()) {
-    target << " stereo: " << bond.getStereo();
+    target << " stereo: " << bondStereoToString(bond.getStereo());
     if (bond.getStereoAtoms().size() == 2) {
       const auto &ats = bond.getStereoAtoms();
-      target << " stereoAts: (" << ats[0] << " " << ats[1] << ")";
+      target << " ats: (" << ats[0] << " " << ats[1] << ")";
+    }
+    if (bond.getStereo() == RDKit::Bond::BondStereo::STEREOATROPCCW ||
+        bond.getStereo() == RDKit::Bond::BondStereo::STEREOATROPCW) {
+      RDKit::Atropisomers::AtropAtomAndBondVec atomAndBonds[2];
+      if (RDKit::Atropisomers::getAtropisomerAtomsAndBonds(
+              &bond, atomAndBonds, bond.getOwningMol())) {
+        target << " bonds: (";
+        for (auto i = 0u; i < atomAndBonds[0].second.size(); ++i) {
+          if (i) {
+            target << " ";
+          }
+          target << atomAndBonds[0].second[i]->getIdx();
+        }
+        for (auto i = 0u; i < atomAndBonds[1].second.size(); ++i) {
+          target << " " << atomAndBonds[1].second[i]->getIdx();
+        }
+        target << ")";
+      }
     }
   }
-  target << " conj?: " << bond.getIsConjugated();
-  target << " aromatic?: " << bond.getIsAromatic();
+  if (bond.getIsConjugated()) {
+    target << " conj?: " << bond.getIsConjugated();
+  }
+  if (bond.getIsAromatic()) {
+    target << " aromatic?: " << bond.getIsAromatic();
+  }
 
   return target;
 }

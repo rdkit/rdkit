@@ -55,7 +55,7 @@ if(RDK_BUILD_QT_SUPPORT)
 endif(RDK_BUILD_QT_SUPPORT)
 
 if(RDK_BUILD_QT_DEMO)
-  add_subdirectory(QTDemo)
+  add_subdirectory(Demo)
 endif(RDK_BUILD_QT_DEMO)
 
 if(RDK_BUILD_PYTHON_WRAPPERS)

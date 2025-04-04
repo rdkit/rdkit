@@ -58,7 +58,7 @@ namespace MolInterchange {
 
 namespace {
 struct DefaultValueCache {
-  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs){};
+  DefaultValueCache(const rj::Value &defs) : rjDefaults(defs) {};
   const rj::Value &rjDefaults;
   mutable std::map<const char *, int> intMap;
   mutable std::map<const char *, bool> boolMap;
@@ -245,12 +245,13 @@ void readStereoGroups(RWMol *mol, const rj::Value &sgVals) {
 
     const auto &aids = sgVal["atoms"].GetArray();
     std::vector<Atom *> atoms;
+    std::vector<Bond *> bonds;
     for (const auto &aid : aids) {
       atoms.push_back(mol->getAtomWithIdx(aid.GetUint()));
     }
 
     if (!atoms.empty()) {
-      molSGs.emplace_back(typ, std::move(atoms), gId);
+      molSGs.emplace_back(typ, std::move(atoms), std::move(bonds), gId);
     }
   }
   mol->setStereoGroups(std::move(molSGs));
@@ -921,15 +922,18 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
   if (!doc.IsObject()) {
     throw FileParseException("Bad Format: JSON should be an object");
   }
+
   if (doc.HasMember("commonchem")) {
-    if (!doc["commonchem"].HasMember("version")) {
+    if (!doc["commonchem"].IsObject() ||
+        !doc["commonchem"].HasMember("version")) {
       throw FileParseException("Bad Format: missing version in JSON");
     }
     if (doc["commonchem"]["version"].GetInt() != currentMolJSONVersion) {
       throw FileParseException("Bad Format: bad version in JSON");
     }
   } else if (doc.HasMember("rdkitjson")) {
-    if (!doc["rdkitjson"].HasMember("version")) {
+    if (!doc["rdkitjson"].IsObject() ||
+        !doc["rdkitjson"].HasMember("version")) {
       throw FileParseException("Bad Format: missing version in JSON");
     }
     // FIX: we want to be backwards compatible
@@ -965,11 +969,11 @@ std::vector<boost::shared_ptr<ROMol>> DocToMols(
       throw FileParseException("Bad Format: molecules is not an array");
     }
     for (const auto &molval : doc["molecules"].GetArray()) {
-      auto *mol = new RWMol();
-      processMol(mol, molval, atomDefaults, bondDefaults, params);
+      std::unique_ptr<RWMol> mol(new RWMol());
+      processMol(mol.get(), molval, atomDefaults, bondDefaults, params);
       mol->updatePropertyCache(params.strictValenceCheck);
       mol->setProp(common_properties::_StereochemDone, 1);
-      res.emplace_back(static_cast<ROMol *>(mol));
+      res.emplace_back(static_cast<ROMol *>(mol.release()));
     }
   }
 

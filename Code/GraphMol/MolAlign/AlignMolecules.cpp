@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2023 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -18,11 +18,12 @@
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <Numerics/Alignment/AlignPoints.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <RDGeneral/RDThreads.h>
 
 namespace RDKit {
 namespace MolAlign {
 
-namespace {
+namespace details {
 void symmetrizeTerminalAtoms(RWMol &mol) {
   // clang-format off
   static const std::string qsmarts =
@@ -49,7 +50,8 @@ void symmetrizeTerminalAtoms(RWMol &mol) {
     mol.replaceBond(obond->getIdx(), &qb);
   }
 }
-
+}  // namespace details
+namespace {
 double alignConfsOnAtomMap(const Conformer &prbCnf, const Conformer &refCnf,
                            const MatchVectType &atomMap,
                            RDGeom::Transform3D &trans,
@@ -76,7 +78,7 @@ void getAllMatchesPrbRef(const ROMol &prbMol, const ROMol &refMol,
   std::unique_ptr<RWMol> prbMolSymm;
   if (symmetrizeConjugatedTerminalGroups) {
     prbMolSymm.reset(new RWMol(prbMol));
-    symmetrizeTerminalAtoms(*prbMolSymm);
+    details::symmetrizeTerminalAtoms(*prbMolSymm);
   }
   const auto &prbMolForMatch = prbMolSymm ? *prbMolSymm : prbMol;
   SubstructMatch(refMol, prbMolForMatch, matches, uniquify, recursionPossible,
@@ -125,26 +127,71 @@ double calcMSDInternal(const Conformer &prbCnf, const Conformer &refCnf,
 double getBestRMSInternal(const ROMol &prbMol, const ROMol &refMol, int prbCid,
                           int refCid, const std::vector<MatchVectType> &matches,
                           RDGeom::Transform3D *trans, MatchVectType *bestMatch,
-                          const RDNumeric::DoubleVector *weights,
-                          bool reflect = false, unsigned int maxIters = 50) {
+                          const RDNumeric::DoubleVector *weights, bool reflect,
+                          unsigned int maxIters, unsigned int numThreads) {
   PRECONDITION(!matches.empty(), "matches must not be empty");
+#ifndef RDK_BUILD_THREADSAFE_SSS
+  numThreads = 1;
+#endif
   double msdBest = std::numeric_limits<double>::max();
   const Conformer &prbCnf = prbMol.getConformer(prbCid);
   const Conformer &refCnf = refMol.getConformer(refCid);
   const MatchVectType *bestMatchPtr = &matches[0];
-  for (const auto &matche : matches) {
-    RDGeom::Transform3D tmpTrans;
-    double msd = trans ? alignConfsOnAtomMap(prbCnf, refCnf, matche, tmpTrans,
-                                             weights, reflect, maxIters)
-                       : calcMSDInternal(prbCnf, refCnf, matche, weights);
-    if (msd < msdBest) {
-      msdBest = msd;
-      bestMatchPtr = &matche;
-      if (trans) {
-        trans->assign(tmpTrans);
+
+  if (numThreads == 1) {
+    for (const auto &matche : matches) {
+      RDGeom::Transform3D tmpTrans;
+      double msd = trans ? alignConfsOnAtomMap(prbCnf, refCnf, matche, tmpTrans,
+                                               weights, reflect, maxIters)
+                         : calcMSDInternal(prbCnf, refCnf, matche, weights);
+      if (msd < msdBest) {
+        msdBest = msd;
+        bestMatchPtr = &matche;
+        if (trans) {
+          trans->assign(tmpTrans);
+        }
       }
     }
   }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    std::vector<std::thread> tg;
+    std::vector<
+        std::vector<std::tuple<double, unsigned int, RDGeom::Transform3D>>>
+        rmsds(numThreads);
+    for (auto ti = 0u; ti < numThreads; ++ti) {
+      auto func = [&](unsigned int tidx) {
+        for (auto midx = tidx; midx < matches.size(); midx += numThreads) {
+          auto matche = matches[midx];
+          RDGeom::Transform3D tmpTrans;
+          auto msd = trans
+                         ? alignConfsOnAtomMap(prbCnf, refCnf, matche, tmpTrans,
+                                               weights, reflect, maxIters)
+                         : calcMSDInternal(prbCnf, refCnf, matche, weights);
+          rmsds[tidx].emplace_back(msd, midx, tmpTrans);
+        }
+      };
+      tg.emplace_back(std::thread(func, ti));
+    }
+    for (auto &thread : tg) {
+      if (thread.joinable()) {
+        thread.join();
+      }
+    }
+    for (const auto &rv : rmsds) {
+      for (const auto &res : rv) {
+        const auto &[msd, midx, tf] = res;
+        if (msd < msdBest) {
+          msdBest = msd;
+          bestMatchPtr = &matches[midx];
+          if (trans) {
+            trans->assign(tf);
+          }
+        }
+      }
+    }
+  }
+#endif
   if (bestMatch) {
     *bestMatch = *bestMatchPtr;
   }
@@ -191,31 +238,29 @@ double alignMol(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   return res;
 }
 
-double getBestAlignmentTransform(const ROMol &prbMol, const ROMol &refMol,
-                                 RDGeom::Transform3D &bestTrans,
-                                 MatchVectType &bestMatch, int prbCid,
-                                 int refCid,
-                                 const std::vector<MatchVectType> &map,
-                                 int maxMatches,
-                                 bool symmetrizeConjugatedTerminalGroups,
-                                 const RDNumeric::DoubleVector *weights,
-                                 bool reflect, unsigned int maxIters) {
+double getBestAlignmentTransform(
+    const ROMol &prbMol, const ROMol &refMol, RDGeom::Transform3D &bestTrans,
+    MatchVectType &bestMatch, int prbCid, int refCid,
+    const std::vector<MatchVectType> &map, int maxMatches,
+    bool symmetrizeConjugatedTerminalGroups,
+    const RDNumeric::DoubleVector *weights, bool reflect, unsigned int maxIters,
+    int numThreads) {
   std::vector<MatchVectType> allMatches;
   if (map.empty()) {
     getAllMatchesPrbRef(prbMol, refMol, allMatches, maxMatches,
                         symmetrizeConjugatedTerminalGroups);
   }
   const auto &matches = map.empty() ? allMatches : map;
-  auto bestRMS =
-      getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches, &bestTrans,
-                         &bestMatch, weights, reflect, maxIters);
+  auto bestRMS = getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches,
+                                    &bestTrans, &bestMatch, weights, reflect,
+                                    maxIters, getNumThreadsToUse(numThreads));
   return bestRMS;
 }
 
 double getBestRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                   const std::vector<MatchVectType> &map, int maxMatches,
                   bool symmetrizeConjugatedTerminalGroups,
-                  const RDNumeric::DoubleVector *weights) {
+                  const RDNumeric::DoubleVector *weights, int numThreads) {
   std::vector<MatchVectType> allMatches;
   if (map.empty()) {
     getAllMatchesPrbRef(prbMol, refMol, allMatches, maxMatches,
@@ -223,12 +268,83 @@ double getBestRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
   }
   const auto &matches = map.empty() ? allMatches : map;
   RDGeom::Transform3D trans;
+  bool reflect = false;
+  unsigned int maxIters = 50;
   auto bestRMS = getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches,
-                                    &trans, nullptr, weights);
+                                    &trans, nullptr, weights, reflect, maxIters,
+                                    getNumThreadsToUse(numThreads));
 
   // Perform a final alignment to the best alignment...
   MolTransforms::transformConformer(prbMol.getConformer(prbCid), trans);
   return bestRMS;
+}
+
+std::vector<double> getAllConformerBestRMS(
+    const ROMol &mol, int numThreads, const std::vector<MatchVectType> &map,
+    int maxMatches, bool symmetrizeConjugatedTerminalGroups,
+    const RDNumeric::DoubleVector *weights) {
+  numThreads = getNumThreadsToUse(numThreads);
+  std::vector<MatchVectType> allMatches;
+  if (map.empty()) {
+    getAllMatchesPrbRef(mol, mol, allMatches, maxMatches,
+                        symmetrizeConjugatedTerminalGroups);
+  }
+  const auto &matches = map.empty() ? allMatches : map;
+  std::vector<double> res;
+  RDGeom::Transform3D trans;
+  bool reflect = false;
+  unsigned int maxIters = 50;
+  std::vector<int> cids;
+  for (auto cit = mol.beginConformers(); cit != mol.endConformers(); ++cit) {
+    cids.push_back((*cit)->getId());
+  }
+  if (numThreads == 1) {
+    for (auto ci = 0u; ci < mol.getNumConformers(); ++ci) {
+      for (auto cj = 0u; cj < ci; ++cj) {
+        res.push_back(getBestRMSInternal(mol, mol, cids[ci], cids[cj], matches,
+                                         &trans, nullptr, weights, reflect,
+                                         maxIters, 1));
+      }
+    }
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  else {
+    std::vector<std::pair<unsigned int, unsigned int>> pairs;
+    for (auto ci = 0u; ci < mol.getNumConformers(); ++ci) {
+      for (auto cj = 0u; cj < ci; ++cj) {
+        pairs.emplace_back(cids[ci], cids[cj]);
+      }
+    }
+    std::vector<std::vector<std::pair<unsigned int, double>>> rmsds(numThreads);
+    auto func = [&](unsigned int tidx) {
+      RDGeom::Transform3D trans;
+      bool reflect = false;
+      unsigned int maxIters = 50;
+      for (auto i = tidx; i < pairs.size(); i += numThreads) {
+        auto rms = getBestRMSInternal(mol, mol, pairs[i].first, pairs[i].second,
+                                      matches, &trans, nullptr, weights,
+                                      reflect, maxIters, 1);
+        rmsds[tidx].emplace_back(i, rms);
+      }
+    };
+    std::vector<std::thread> tg;
+    for (auto ti = 0; ti < numThreads; ++ti) {
+      tg.emplace_back(std::thread(func, ti));
+    }
+    for (auto &thread : tg) {
+      if (thread.joinable()) {
+        thread.join();
+      }
+    }
+    res.resize(pairs.size());
+    for (const auto &tres : rmsds) {
+      for (const auto &v : tres) {
+        res[v.first] = v.second;
+      }
+    }
+  }
+#endif
+  return res;
 }
 
 double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
@@ -241,8 +357,11 @@ double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,
                         symmetrizeConjugatedTerminalGroups);
   }
   const auto &matches = map.empty() ? allMatches : map;
+  bool reflect = false;
+  unsigned int maxIters = 50;
+  unsigned int numThreads = 1;
   return getBestRMSInternal(prbMol, refMol, prbCid, refCid, matches, nullptr,
-                            nullptr, weights);
+                            nullptr, weights, reflect, maxIters, numThreads);
 }
 
 double CalcRMS(ROMol &prbMol, const ROMol &refMol, int prbCid, int refCid,

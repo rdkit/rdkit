@@ -8,7 +8,9 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/lexical_cast.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include "FileParsers.h"
 #include "FileParserUtils.h"
@@ -106,7 +108,10 @@ Atom *ParseXYZFileAtomLine(const std::string &atomLine, RDGeom::Point3D &pos,
   return atom;
 }
 
-RWMol *XYZDataStreamToMol(std::istream &inStream) {
+namespace v2 {
+namespace FileParsers {
+
+std::unique_ptr<RWMol> MolFromXYZDataStream(std::istream &inStream) {
   unsigned int numAtoms = 0;
 
   std::string num{getLine(inStream)};
@@ -121,7 +126,7 @@ RWMol *XYZDataStreamToMol(std::istream &inStream) {
 
   std::string comment{getLine(inStream)};
 
-  RWMol *mol = new RWMol();
+  auto mol = std::make_unique<RWMol>();
   if (numAtoms) {
     Conformer *conf = new Conformer(numAtoms);
     if (!comment.empty()) {
@@ -148,19 +153,18 @@ RWMol *XYZDataStreamToMol(std::istream &inStream) {
   return mol;
 }
 
-RWMol *XYZBlockToMol(const std::string &xyzBlock) {
+std::unique_ptr<RWMol> MolFromXYZBlock(const std::string &xyzBlock) {
   std::istringstream xyz(xyzBlock);
 
-  RWMol *mol = nullptr;
   xyz.peek();
   if (!xyz.eof()) {
-    mol = XYZDataStreamToMol(xyz);
+    return MolFromXYZDataStream(xyz);
+  } else {
+    return nullptr;
   }
-
-  return mol;
 }
 
-RWMol *XYZFileToMol(const std::string &fName) {
+std::unique_ptr<RWMol> MolFromXYZFile(const std::string &fName) {
   std::ifstream xyzFile(fName);
   if (!xyzFile || (xyzFile.bad())) {
     std::ostringstream errout;
@@ -168,13 +172,13 @@ RWMol *XYZFileToMol(const std::string &fName) {
     throw BadFileException(errout.str());
   }
 
-  RWMol *mol = nullptr;
   xyzFile.peek();
   if (!xyzFile.eof()) {
-    mol = XYZDataStreamToMol(xyzFile);
+    return MolFromXYZDataStream(xyzFile);
+  } else {
+    return nullptr;
   }
-
-  return mol;
 }
-
+}  // namespace FileParsers
+}  // namespace v2
 }  // namespace RDKit

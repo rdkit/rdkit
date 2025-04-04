@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2021 Susan H. Leung and other RDKit contributors
+//  Copyright (C) 2018-2023 Susan H. Leung and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -106,6 +106,10 @@ inline RWMol *cleanup(const RWMol &mol, const CleanupParameters &params =
 //! Works the same as cleanup(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT void cleanupInPlace(
     RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void cleanupInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as Normalizer().normalize(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *normalize(
@@ -114,6 +118,10 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *normalize(
 //! Works the same as Normalizer().normalizeInPlace(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT void normalizeInPlace(
     RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void normalizeInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as Reionizer().reionize(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *reionize(
@@ -122,6 +130,10 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *reionize(
 //! Works the same as Reionizer().reionizeInPlace(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT void reionizeInPlace(
     RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void reionizeInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as FragmentRemover().remove(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *removeFragments(
@@ -130,16 +142,29 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *removeFragments(
 //! Works the same as FragmentRemover().removeInPlace(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT void removeFragmentsInPlace(
     RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
+//! Operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void removeFragmentsInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters);
 
 //! Works the same as TautomerEnumerator().canonicalize(mol)
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *canonicalTautomer(
     const RWMol *mol,
     const CleanupParameters &params = defaultCleanupParameters);
+RDKIT_MOLSTANDARDIZE_EXPORT void canonicalTautomerInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters);
 
 //! Returns the tautomer parent of a given molecule. The fragment parent is the
 /// standardized canonical tautomer of the molecule
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *tautomerParent(
     const RWMol &mol,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skipStandardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void tautomerParentInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
+    bool skipStandardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void tautomerParentInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skipStandardize = false);
 
@@ -149,16 +174,37 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *fragmentParent(
     const RWMol &mol,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void fragmentParentInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void fragmentParentInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
 
 //! calls removeStereochemistry() on the given molecule
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *stereoParent(
     const RWMol &mol,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void stereoParentInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void stereoParentInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
 
 //! removes all isotopes specifications from the given molecule
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *isotopeParent(
     const RWMol &mol,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void isotopeParentInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void isotopeParentInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skip_standardize = false);
 
@@ -168,11 +214,26 @@ RDKIT_MOLSTANDARDIZE_EXPORT RWMol *chargeParent(
     const RWMol &mol,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void chargeParentInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+//! operates on multiple molecules
+RDKIT_MOLSTANDARDIZE_EXPORT void chargeParentInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
 
-//! Returns the super parent. The super parent is the fragment, charge, isotope,
-//! stereo, and tautomer parent of the molecule.
+//! Returns the super parent. The super parent is the fragment, charge,
+//! isotope, stereo, and tautomer parent of the molecule.
 RDKIT_MOLSTANDARDIZE_EXPORT RWMol *superParent(
     const RWMol &mol,
+    const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void superParentInPlace(
+    RWMol &mol, const CleanupParameters &params = defaultCleanupParameters,
+    bool skip_standardize = false);
+RDKIT_MOLSTANDARDIZE_EXPORT void superParentInPlace(
+    std::vector<RWMol *> &mols, int numThreads = 1,
     const CleanupParameters &params = defaultCleanupParameters,
     bool skip_standardize = false);
 

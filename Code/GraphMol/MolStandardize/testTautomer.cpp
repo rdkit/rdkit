@@ -316,6 +316,14 @@ void testEnumerator() {
   checkAns("C/C=C/C(C)=O", {"C=C(O)C=CC", "C=CC=C(C)O", "C=CCC(=C)O",
                             "C=CCC(C)=O", "CC=CC(C)=O"});
 
+  // No stereochemistry in conjugated double bonds to nitro
+  checkAns("c1ccnc(c1)C=C[N+](=O)[O-]", {"O=[N+]([O-])C=Cc1ccccn1",
+                                         "[O-][N+](O)=C=Cc1ccccn1"});
+
+  // Retain stereochemistry in conjugated double bonds to nitro
+  checkAns("c1ccnc(c1)/C=C/[N+](=O)[O-]", {"O=[N+]([O-])/C=C/c1ccccn1",
+                                           "[O-][N+](O)=C=Cc1ccccn1"});
+
   // Remove stereochemistry from mobile double bonds
   std::string smi66 = "C/C=C\\C(C)=O";
   ROMOL_SPTR m66(SmilesToMol(smi66));
@@ -334,7 +342,7 @@ void testEnumerator() {
   std::sort(ans66.begin(), ans66.end());
   TEST_ASSERT(sm66 == ans66);
 
-  // Gaunine tautomers
+  // Guanine tautomers
   std::string smi67 = "N1C(N)=NC=2N=CNC2C1=O";
   ROMOL_SPTR m67(SmilesToMol(smi67));
   TautomerEnumeratorResult res67 = te.enumerate(*m67);
@@ -487,6 +495,56 @@ void testEnumeratorParams() {
     for (const auto &taut : res) {
       if (taut->getBondWithIdx(1)->getBondType() == Bond::DOUBLE) {
         TEST_ASSERT(taut->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+      }
+    }
+  }
+  std::string eOximeSmi = "c1ccnc(c1)/C=N/O";
+  ROMOL_SPTR eOxime(SmilesToMol(eOximeSmi));
+  TEST_ASSERT(eOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
+  {
+    // test remove oxime E stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*eOxime);
+    for (const auto &taut : res) {
+      TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    }
+  }
+  {
+    // test retain enol E stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*eOxime);
+    for (const auto &taut : res) {
+      if (taut->getBondWithIdx(6)->getBondType() == Bond::DOUBLE) {
+        TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREOE);
+      }
+    }
+  }
+  ROMOL_SPTR zOxime = "c1ccnc(c1)/C=N\\O"_smiles;
+  // zOxime->debugMol(std::cerr);
+  TEST_ASSERT(zOxime->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
+  {
+    // test remove enol Z stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = true;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*zOxime);
+    for (const auto &taut : res) {
+      TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREONONE);
+    }
+  }
+  {
+    // test retain enol Z stereochemistry
+    CleanupParameters params;
+    params.tautomerRemoveBondStereo = false;
+    TautomerEnumerator te(params);
+    TautomerEnumeratorResult res = te.enumerate(*zOxime);
+    for (const auto &taut : res) {
+      if (taut->getBondWithIdx(6)->getBondType() == Bond::DOUBLE) {
+        TEST_ASSERT(taut->getBondWithIdx(6)->getStereo() == Bond::STEREOZ);
       }
     }
   }
@@ -717,11 +775,13 @@ void testCanonicalize() {
   TautomerEnumerator te(new TautomerCatalog(tautparams.get()));
 
   for (const auto &itm : canonTautomerData) {
-    std::unique_ptr<ROMol> mol{SmilesToMol(itm.first)};
+    std::unique_ptr<RWMol> mol{SmilesToMol(itm.first)};
     TEST_ASSERT(mol);
     std::unique_ptr<ROMol> res{te.canonicalize(*mol)};
     TEST_ASSERT(res);
     TEST_ASSERT(MolToSmiles(*res) == itm.second);
+    te.canonicalizeInPlace(*mol);
+    TEST_ASSERT(MolToSmiles(*mol) == itm.second);
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
@@ -1374,10 +1434,12 @@ void testGithub3755() {
       {"NC(=N)C(N)CO", "N=C(N)C(N)CO"}, {"NC(=N)NC(N)CO", "N=C(N)NC(N)CO"}};
   TautomerEnumerator te;
   for (const auto &pair : orig_vs_expected) {
-    ROMOL_SPTR orig(SmilesToMol(pair.first));
+    std::unique_ptr<RWMol> orig{SmilesToMol(pair.first)};
     TEST_ASSERT(orig);
     ROMOL_SPTR canonical(te.canonicalize(*orig));
     TEST_ASSERT(MolToSmiles(*canonical) == pair.second);
+    te.canonicalizeInPlace(*orig);
+    TEST_ASSERT(MolToSmiles(*orig) == pair.second);
   }
 }
 

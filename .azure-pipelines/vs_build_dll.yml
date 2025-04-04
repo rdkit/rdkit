@@ -6,12 +6,14 @@ steps:
     conda info -a
     conda install -n base conda-libmamba-solver
     conda config --set solver libmamba
-    conda create --name rdkit_build ^
-        boost-cpp=$(boost_version) boost=$(boost_version) ^
+    conda create --name rdkit_build -c conda-forge $(python) ^
+        boost=$(boost_version) boost-cpp=$(boost_version) ^
+        libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
-        cairo eigen
+        libboost-devel=$(boost_version) ^
+        numpy matplotlib cairo pillow eigen pandas=2.1
     call activate rdkit_build
-    conda install -c conda-forge cmake
+    conda install -c conda-forge cmake ipython pytest nbval
   displayName: Install dependencies
 - script: |
     set Boost_ROOT=
@@ -25,7 +27,6 @@ steps:
     -DRDK_INSTALL_DLLS_MSVC=ON ^
     -DRDK_BUILD_CPP_TESTS=ON ^
     -DRDK_BUILD_PYTHON_WRAPPERS=OFF ^
-    -DRDK_USE_BOOST_REGEX=ON ^
     -DRDK_BUILD_COORDGEN_SUPPORT=ON ^
     -DRDK_BUILD_MAEPARSER_SUPPORT=ON ^
     -DRDK_OPTIMIZE_POPCNT=ON ^
@@ -40,7 +41,6 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=OFF ^
     -DRDK_SWIG_STATIC=OFF ^
     -DRDK_TEST_MULTITHREADED=ON ^
-    -DBoost_NO_BOOST_CMAKE=TRUE ^
     -DCMAKE_INCLUDE_PATH=%CONDA_PREFIX%/Library/include ^
     -DCMAKE_LIBRARY_PATH="%CONDA_PREFIX%/Library/lib
   displayName: Configure build (Run CMake)

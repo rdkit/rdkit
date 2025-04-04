@@ -41,7 +41,7 @@
 #include <ForceField/UFF/AngleBend.h>
 #include <ForceField/UFF/BondStretch.h>
 #include <ForceField/UFF/Contribs.h>
-#include <ForceField/UFF/DistanceConstraint.h>
+#include <ForceField/DistanceConstraint.h>
 #include <ForceField/UFF/Nonbonded.h>
 #include <ForceField/UFF/TorsionAngle.h>
 #include <ForceField/UFF/Inversion.h>
@@ -59,7 +59,7 @@
 %include <ForceField/UFF/Params.h>
 %include <ForceField/UFF/AngleBend.h>
 %include <ForceField/UFF/BondStretch.h>
-%include <ForceField/UFF/DistanceConstraint.h>
+%include <ForceField/DistanceConstraint.h>
 %include <ForceField/UFF/Nonbonded.h>
 %include <ForceField/UFF/TorsionAngle.h>
 %include <ForceField/UFF/Inversion.h>

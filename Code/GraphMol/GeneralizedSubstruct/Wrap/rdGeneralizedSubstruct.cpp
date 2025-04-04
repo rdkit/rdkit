@@ -89,8 +89,8 @@ ExtendedQueryMol *createExtendedQueryMolHelper(
   if (!ps) {
     ps = &defaults;
   }
-  return new ExtendedQueryMol(std::move(createExtendedQueryMol(
-      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps)));
+  return new ExtendedQueryMol(createExtendedQueryMol(
+      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
 }
 
 }  // namespace
@@ -103,12 +103,18 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
       "ExtendedQueryMol",
       "Extended query molecule for use in generalized substructure searching.",
       python::init<const std::string &, bool>(
-          (python::args("text"), python::args("isJSON") = false),
+          (python::args("self"), python::args("text"),
+           python::args("isJSON") = false),
           "constructor from either a binary string (from ToBinary()) or a JSON string."))
-      .def("InitFromBinary", &ExtendedQueryMol::initFromBinary)
-      .def("InitFromJSON", &ExtendedQueryMol::initFromJSON)
-      .def("ToBinary", XQMolToBinary)
-      .def("ToJSON", &ExtendedQueryMol::toJSON);
+      .def("InitFromBinary", &ExtendedQueryMol::initFromBinary,
+           python::args("self", "pkl"))
+      .def("InitFromJSON", &ExtendedQueryMol::initFromJSON,
+           python::args("self", "text"))
+      .def("ToBinary", XQMolToBinary, python::args("self"))
+      .def("ToJSON", &ExtendedQueryMol::toJSON, python::args("self"))
+      .def("PatternFingerprintQuery",
+           &ExtendedQueryMol::patternFingerprintQuery,
+           (python::arg("self"), python::arg("fingerprintSize") = 2048));
 
   python::def(
       "MolHasSubstructMatch", &hasSubstructHelper,
@@ -125,6 +131,11 @@ BOOST_PYTHON_MODULE(rdGeneralizedSubstruct) {
       (python::arg("mol"), python::arg("query"),
        python::arg("params") = python::object()),
       "returns all matches (if any) of a molecule to a generalized substructure query");
+
+  python::def(
+      "PatternFingerprintTarget", &patternFingerprintTargetMol,
+      (python::arg("target"), python::arg("fingerprintSize") = 2048),
+      "Creates a pattern fingerprint for a target molecule that is compatible with an extended query");
 
   python::def("CreateExtendedQueryMol", createExtendedQueryMolHelper,
               (python::arg("mol"), python::arg("doEnumeration") = true,

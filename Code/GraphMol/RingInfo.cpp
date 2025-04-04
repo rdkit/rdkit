@@ -195,25 +195,22 @@ unsigned int RingInfo::addRing(const INT_VECT &atomIndices,
 }
 
 bool RingInfo::isRingFused(unsigned int ringIdx) {
-  PRECONDITION(ringIdx < d_bondRings.size(), "ringIdx out of bounds");
-  if (d_fusedRings.empty()) {
-    initFusedRings();
-  }
-  return d_fusedRings.at(ringIdx).any();
+  initFusedRings();
+  PRECONDITION(ringIdx < d_fusedRings.size(), "ringIdx out of bounds");
+  return d_fusedRings[ringIdx].any();
 }
 
 bool RingInfo::areRingsFused(unsigned int ring1Idx, unsigned int ring2Idx) {
-  PRECONDITION(ring1Idx < d_bondRings.size(), "ring1Idx out of bounds");
-  PRECONDITION(ring2Idx < d_bondRings.size(), "ring2Idx out of bounds");
-  if (d_fusedRings.empty()) {
-    initFusedRings();
-  }
-  return d_fusedRings.at(ring1Idx).test(ring2Idx);
+  initFusedRings();
+  PRECONDITION(ring1Idx < d_fusedRings.size(), "ring1Idx out of bounds");
+  PRECONDITION(ring2Idx < d_fusedRings.size(), "ring2Idx out of bounds");
+  return d_fusedRings[ring1Idx].test(ring2Idx);
 }
 
 unsigned int RingInfo::numFusedBonds(unsigned int ringIdx) {
   PRECONDITION(ringIdx < d_bondRings.size(), "ringIdx out of bounds");
-  if (d_numFusedBonds.empty()) {
+  if (d_numFusedBonds.size() != d_bondRings.size()) {
+    d_numFusedBonds.clear();
     d_numFusedBonds.resize(d_bondRings.size(), 0);
     for (unsigned int ri = 0; ri < d_bondRings.size(); ++ri) {
       d_numFusedBonds[ri] += std::count_if(
@@ -225,12 +222,14 @@ unsigned int RingInfo::numFusedBonds(unsigned int ringIdx) {
 }
 
 unsigned int RingInfo::numFusedRingNeighbors(unsigned int ringIdx) {
+  initFusedRings();
   PRECONDITION(ringIdx < d_fusedRings.size(), "ringIdx out of bounds");
   return d_fusedRings[ringIdx].count();
 }
 
 std::vector<unsigned int> RingInfo::fusedRingNeighbors(unsigned int ringIdx) {
-  PRECONDITION(ringIdx < d_bondRings.size(), "ringIdx out of bounds");
+  initFusedRings();
+  PRECONDITION(ringIdx < d_fusedRings.size(), "ringIdx out of bounds");
   std::vector<unsigned int> res;
   res.reserve(d_fusedRings[ringIdx].count());
   for (unsigned int i = 0; i < d_fusedRings[ringIdx].size(); ++i) {
@@ -242,6 +241,10 @@ std::vector<unsigned int> RingInfo::fusedRingNeighbors(unsigned int ringIdx) {
 }
 
 void RingInfo::initFusedRings() {
+  if (d_fusedRings.size() == d_bondRings.size()) {
+    return;
+  }
+  d_fusedRings.clear();
   if (d_bondRings.empty()) {
     return;
   }
@@ -287,15 +290,16 @@ unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
 }
 #endif
 
-void RingInfo::initialize() {
-  PRECONDITION(!df_init, "already initialized");
+void RingInfo::initialize(RDKit::FIND_RING_TYPE ringType) {
   df_init = true;
+  df_find_type_type = ringType;
 };
 void RingInfo::reset() {
   if (!df_init) {
     return;
   }
   df_init = false;
+  df_find_type_type = RDKit::FIND_RING_TYPE_OTHER_OR_UNKNOWN;
   d_atomMembers.clear();
   d_bondMembers.clear();
   d_atomRings.clear();

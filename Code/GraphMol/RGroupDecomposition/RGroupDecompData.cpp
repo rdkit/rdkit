@@ -14,6 +14,7 @@
 #include "RGroupDecomp.h"
 #include "RGroupMatch.h"
 #include "RGroupGa.h"
+#include "GraphMol/MolEnumerator/MolEnumerator.h"
 
 // #define VERBOSE 1
 
@@ -22,7 +23,7 @@ namespace RDKit {
 RGroupDecompData::RGroupDecompData(const RWMol &inputCore,
                                    RGroupDecompositionParameters inputParams)
     : params(std::move(inputParams)) {
-  addCore(inputCore);
+  addInputCore(inputCore);
   prepareCores();
 }
 
@@ -30,9 +31,24 @@ RGroupDecompData::RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
                                    RGroupDecompositionParameters inputParams)
     : params(std::move(inputParams)) {
   for (const auto &core : inputCores) {
-    addCore(*core);
+    addInputCore(*core);
   }
   prepareCores();
+}
+
+void RGroupDecompData::addInputCore(const ROMol &inputCore) {
+  if (params.doEnumeration) {
+    if (const auto bundle = MolEnumerator::enumerate(inputCore);
+        !bundle.empty()) {
+      for (auto c : bundle.getMols()) {
+        addCore(*c);
+      }
+    } else {
+      addCore(inputCore);
+    }
+  } else {
+    addCore(inputCore);
+  }
 }
 
 void RGroupDecompData::addCore(const ROMol &inputCore) {
@@ -484,19 +500,16 @@ void RGroupDecompData::relabelRGroup(RGroupData &rgroup,
 
   if (params.removeHydrogensPostMatch) {
     RDLog::LogStateSetter blocker;
-    bool implicitOnly = false;
-    bool updateExplicitCount = false;
+    MolOps::RemoveHsParameters rhp;
     bool sanitize = false;
-    MolOps::removeHs(mol, implicitOnly, updateExplicitCount, sanitize);
+    MolOps::removeHs(mol, rhp, sanitize);
   }
 
   mol.updatePropertyCache(false);  // this was github #1550
   rgroup.labelled = true;
 
   // Restore any core matches that we have set to dummy
-  for (RWMol::AtomIterator atIt = mol.beginAtoms(); atIt != mol.endAtoms();
-       ++atIt) {
-    Atom *atom = *atIt;
+  for (auto atom : mol.atoms()) {
     if (atom->hasProp(RLABEL_CORE_INDEX)) {
       // don't need to set IsAromatic on atom - that seems to have been saved
       atom->setAtomicNum(
@@ -655,19 +668,18 @@ RGroupDecompositionProcessResult RGroupDecompData::process(bool pruneMatches,
       offset = previousMatchSize;
     }
     previousMatchSize = matches.size();
+    permutations.reserve(matches.size() - offset);
     std::transform(matches.begin() + offset, matches.end(),
                    std::back_inserter(permutations),
                    [](const std::vector<RGroupMatch> &m) { return m.size(); });
     permutation = std::vector<size_t>(permutations.size(), 0);
 
-    // run through all possible matches and score each
-    //  set
+    // run through all possible matches and score each set
     size_t count = 0;
 #ifdef DEBUG
     std::cerr << "Processing" << std::endl;
 #endif
-    std::unique_ptr<CartesianProduct> it(new CartesianProduct(permutations));
-    iterator = std::move(it);
+    iterator.reset(new CartesianProduct(permutations));
     // Iterates through the permutation idx, i.e.
     //  [m1_permutation_idx,  m2_permutation_idx, m3_permutation_idx]
 

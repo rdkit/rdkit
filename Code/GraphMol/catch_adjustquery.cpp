@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <utility>
 
@@ -24,7 +24,8 @@ using namespace RDKit;
 
 using matchCase = std::tuple<std::string, std::string, bool, bool>;
 
-class _IsSubstructOf : public Catch::MatcherBase<const std::string &> {
+class _IsSubstructOf
+    : public Catch::Matchers::MatcherBase<const std::string &> {
   ROMol const *m_query;
   std::string m_description;
   SubstructMatchParameters m_ps;
@@ -812,5 +813,49 @@ TEST_CASE(
     CHECK(MolToSmarts(*mol) ==
           "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
     // clang-format on
+  }
+}
+
+TEST_CASE(
+    "Github #8256: PR #8192 breaks AdjustQueryProperties / aromatizeIfPossible for some molecules") {
+  SECTION("between aromatic atoms") {
+    auto mol =
+        R"SMARTS([#6]1=[#6]-[#6]=[#6]-[#6]=[#6]-1/[#7](=[#7]\[#8])-*)SMARTS"_smarts;
+    REQUIRE(mol);
+    auto ps = MolOps::AdjustQueryParameters::noAdjustments();
+    ps.aromatizeIfPossible = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(MolToSmiles(*mol) == "*/N(=N/O)c1ccccc1");
+  }
+}
+
+TEST_CASE("makeAtomsGeneric and other operations") {
+  SECTION("makeAtomsGeneric and adjustDegree") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.makeAtomsGeneric = true;
+    ps.adjustDegree = true;
+    ps.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
+    auto q = "CN"_smiles;
+    REQUIRE(q);
+    MolOps::adjustQueryProperties(*q, &ps);
+    std::vector<std::pair<std::string, bool>> examples = {
+        {"CC", true},
+        {"CN", true},
+        {"CCC", false},
+        {"CNC", false},
+    };
+    for (const auto &tpl : examples) {
+      auto smi = tpl.first;
+      auto shouldMatch = tpl.second;
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      if (shouldMatch) {
+        CHECK(!SubstructMatch(*m, *q).empty());
+      } else {
+        CHECK(SubstructMatch(*m, *q).empty());
+      }
+    }
   }
 }

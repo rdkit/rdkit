@@ -74,7 +74,7 @@ void adjustConjugatedFiveRings(RWMol &mol) {
 
   std::vector<Bond::BondType> bondTypesToModify = {
       Bond::BondType::SINGLE, Bond::BondType::DOUBLE, Bond::BondType::AROMATIC};
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto ring : mol.getRingInfo()->bondRings()) {
@@ -134,7 +134,7 @@ void adjustSingleBondsFromAromaticAtoms(RWMol &mol, bool toDegreeOneNeighbors,
   }
   QueryBond qb;
   qb.setQuery(makeSingleOrAromaticBondQuery());
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto bond : mol.bonds()) {
@@ -170,7 +170,7 @@ void setMDLAromaticity(RWMol &mol) {
 
   // it would be simpler to use the substructure matcher for this, but we can't
   // use SubstructMatch in the core GraphMol lib
-  if (!mol.getRingInfo()->isInitialized()) {
+  if (!mol.getRingInfo()->isSymmSssr()) {
     MolOps::symmetrizeSSSR(mol);
   }
   for (auto ring : mol.getRingInfo()->atomRings()) {
@@ -355,12 +355,18 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     unsigned int failed;
     sanitizeMol(mol, failed, SANITIZE_SYMMRINGS | SANITIZE_SETAROMATICITY);
   } else {
-    if (!ringInfo->isInitialized()) {
+    if (!ringInfo->isSymmSssr()) {
       MolOps::symmetrizeSSSR(mol);
     }
   }
   QueryAtom qaTmpl;
   QueryBond qbTmpl;
+
+  std::vector<int> origAtomicNums;
+  origAtomicNums.reserve(mol.getNumAtoms());
+  for (const auto atom : mol.atoms()) {
+    origAtomicNums.push_back(atom->getAtomicNum());
+  }
 
   if (params.makeAtomsGeneric) {
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -394,7 +400,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
     // pull properties we need from the atom here, once we
     // create a query atom they may no longer be valid.
     auto nRings = ringInfo->numAtomRings(i);
-    auto atomicNum = at->getAtomicNum();
+    auto atomicNum = origAtomicNums[i];
     if (params.makeDummiesQueries && atomicNum == 0 && !at->hasQuery() &&
         !at->getIsotope()) {
       qaTmpl.setQuery(makeAtomNullQuery());
@@ -491,7 +497,7 @@ void adjustQueryProperties(RWMol &mol, const AdjustQueryParameters *inParams) {
       }
       qa->expandQuery(nq);
     }  // end of adjust ring chain
-  }    // end of loop over atoms
+  }  // end of loop over atoms
   if (params.useStereoCareForBonds) {
     for (auto bnd : mol.bonds()) {
       if (bnd->getBondType() == Bond::BondType::DOUBLE) {

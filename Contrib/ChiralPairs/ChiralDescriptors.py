@@ -121,7 +121,7 @@ def determineAtomSubstituents(atomID, mol, distanceMatrix, verbose=False):
       for n in atom.GetNeighbors():
         nidx = n.GetIdx()
         for k, v in subs.items():
-          # is the neighbor in the substituent and is not inthe same shell as the current atom
+          # is the neighbor in the substituent and is not in the same shell as the current atom
           # and we haven't added the current atom already then put it in the correct substituent list
           if nidx in v and nidx not in newShell and aidx not in v:
             subs[k].append(aidx)

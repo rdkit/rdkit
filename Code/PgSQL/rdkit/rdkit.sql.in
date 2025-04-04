@@ -225,7 +225,7 @@ RETURNS NULL ON NULL INPUT;
 CREATE CAST (text as mol) WITH FUNCTION mol_from_smiles(text) AS IMPLICIT;
 CREATE CAST (varchar as mol) WITH FUNCTION mol_from_smiles(text) AS IMPLICIT;
 
-CREATE OR REPLACE FUNCTION mol_from_ctab(cstring,bool default false)
+CREATE OR REPLACE FUNCTION mol_from_ctab(ctab cstring,keep_conformer bool default false, sanitize bool default true, remove_hs bool default true)
 RETURNS mol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -276,13 +276,13 @@ LANGUAGE C STRICT IMMUTABLE;
 
 -- mol conversion functions
 
-CREATE OR REPLACE FUNCTION mol_to_smiles(mol)
+CREATE OR REPLACE FUNCTION mol_to_smiles(mol, isomeric bool DEFAULT true)
 RETURNS cstring
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION mol_to_cxsmiles(mol)
+CREATE OR REPLACE FUNCTION mol_to_cxsmiles(mol, isomeric bool DEFAULT true)
 RETURNS cstring
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -300,7 +300,7 @@ PARALLEL SAFE
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION mol_to_ctab(mol,bool default true, bool default false)
+CREATE OR REPLACE FUNCTION mol_to_ctab(mol mol,bool default true, bool default false)
 RETURNS cstring
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -340,7 +340,7 @@ PARALLEL SAFE
 AS 'MODULE_PATHNAME', 'mol_from_smarts'
 LANGUAGE C STRICT IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION qmol_from_ctab(cstring,bool default false)
+CREATE OR REPLACE FUNCTION qmol_from_ctab(ctab cstring,keep_conformer bool default false, merge_hs bool default true)
 RETURNS qmol
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
@@ -814,7 +814,7 @@ CREATE OR REPLACE FUNCTION mol_nm_hash(mol, cstring default 'AnonymousGraph')
 
 -- extended query operations
 CREATE OR REPLACE FUNCTION mol_to_xqmol(mol, bool default true, 
-                                        bool default true, bool default true,
+                                        bool default true, bool default false,
                                         cstring default '' )
 RETURNS xqmol
 PARALLEL SAFE
@@ -1370,10 +1370,20 @@ CREATE OPERATOR @= (
     LEFTARG = mol,
     RIGHTARG = mol,
     PROCEDURE = mol_eq,
-    COMMUTATOR = '=',
-    NEGATOR = '<>',
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>',
     RESTRICT = eqsel,
     JOIN = eqjoinsel
+);
+
+CREATE OPERATOR @<> (
+    LEFTARG = mol,
+    RIGHTARG = mol,
+    PROCEDURE = mol_ne,
+    COMMUTATOR = '@<>',
+    NEGATOR = '@=',
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
 );
 
 
@@ -1681,10 +1691,20 @@ CREATE OPERATOR @= (
     LEFTARG = reaction,
     RIGHTARG = reaction,
     PROCEDURE = reaction_eq,
-    COMMUTATOR = '=',
-    NEGATOR = '<>',
+    COMMUTATOR = '@=',
+    NEGATOR = '@<>',
     RESTRICT = eqsel,
     JOIN = eqjoinsel
+);
+
+CREATE OPERATOR @<> (
+    LEFTARG = reaction,
+    RIGHTARG = reaction,
+    PROCEDURE = reaction_ne,
+    COMMUTATOR = '@<>',
+    NEGATOR = '@=',
+    RESTRICT = neqsel,
+    JOIN = neqjoinsel
 );
 
 

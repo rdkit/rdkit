@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 #define CATCH_CONFIG_RUNNER
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
 
@@ -171,7 +171,7 @@ M  END
     }
   }
 }
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   QGuiApplication app(argc, argv);
 
   int result = Catch::Session().run(argc, argv);

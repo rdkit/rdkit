@@ -14,7 +14,8 @@
 #ifndef RD_CHIRALITY_20AUG2008_H
 #define RD_CHIRALITY_20AUG2008_H
 #include <RDGeneral/types.h>
-#include <GraphMol/Bond.h>
+#include <GraphMol/Atom.h> /* for Atom:ChiralType enum */
+#include <GraphMol/Bond.h> /* for Bond::BondDir enum */
 #include <boost/dynamic_bitset.hpp>
 #include <limits>
 
@@ -42,6 +43,8 @@ RDKIT_GRAPHMOL_EXPORT extern bool getAllowNontetrahedralChirality();
 
 RDKIT_GRAPHMOL_EXPORT extern void setUseLegacyStereoPerception(bool val);
 RDKIT_GRAPHMOL_EXPORT extern bool getUseLegacyStereoPerception();
+
+RDKIT_GRAPHMOL_EXPORT void removeNonExplicit3DChirality(ROMol &mol);
 
 RDKIT_GRAPHMOL_EXPORT extern bool
     useLegacyStereoPerception;  //!< Toggle usage of the legacy stereo
@@ -95,7 +98,15 @@ enum class StereoType {
   Bond_Atropisomer
 };
 
-enum class StereoDescriptor { None, Tet_CW, Tet_CCW, Bond_Cis, Bond_Trans };
+enum class StereoDescriptor {
+  None,
+  Tet_CW,
+  Tet_CCW,
+  Bond_Cis,
+  Bond_Trans,
+  Bond_AtropCW,
+  Bond_AtropCCW
+};
 
 enum class StereoSpecified {
   Unspecified,  // no information provided
@@ -198,8 +209,17 @@ RDKIT_GRAPHMOL_EXPORT double getIdealAngleBetweenLigands(const Atom *center,
                                                          const Atom *lig1,
                                                          const Atom *lig2);
 
+RDKIT_GRAPHMOL_EXPORT unsigned int getMaxNbors(const Atom::ChiralType tag);
+
+//
+// Get the chiral permutation from the storage order of bonds on an atom
+// to the desired output order (probe). Missing/implicit neihgbors can be
+// represented with (-1). To get the inverse order, i.e. from the probe to the
+// current storage order set (inverse=true)
+//
 RDKIT_GRAPHMOL_EXPORT unsigned int getChiralPermutation(const Atom *center,
-                                                        const INT_LIST &probe);
+                                                        const INT_LIST &probe,
+                                                        bool inverse = false);
 //! @}
 
 RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(std::ostream &oss,
@@ -217,29 +237,192 @@ struct RDKIT_GRAPHMOL_EXPORT BondWedgingParameters {
               //!<      wedged
 };
 
+enum class WedgeInfoType {
+  WedgeInfoTypeChiral,
+  WedgeInfoTypeAtropisomer,
+};
+
+class WedgeInfoBase {
+ public:
+  WedgeInfoBase(int idxInit) : idx(idxInit) {};
+  virtual ~WedgeInfoBase() {};
+
+  virtual WedgeInfoType getType() const = 0;
+  virtual Bond::BondDir getDir() const = 0;
+
+  int getIdx() const { return idx; }
+
+ private:
+  int idx = -1;
+};
+
+class WedgeInfoChiral : public WedgeInfoBase {
+ public:
+  WedgeInfoChiral(int atomId) : WedgeInfoBase(atomId) {};
+  ~WedgeInfoChiral() {};
+
+  WedgeInfoType getType() const override {
+    return Chirality::WedgeInfoType::WedgeInfoTypeChiral;
+  }
+  Bond::BondDir getDir() const override {
+    throw std::runtime_error(
+        "BondDir is not stored/used in Chiral type WedgInfos");
+  }
+};
+
+class WedgeInfoAtropisomer : public WedgeInfoBase {
+ public:
+  WedgeInfoAtropisomer(int bondId, RDKit::Bond::BondDir dirInit)
+      : WedgeInfoBase(bondId) {
+    dir = dirInit;
+  };
+  ~WedgeInfoAtropisomer() {};
+
+  RDKit::Bond::BondDir dir = RDKit::Bond::BondDir::NONE;
+
+  WedgeInfoType getType() const override {
+    return Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer;
+  }
+
+  Bond::BondDir getDir() const override { return dir; }
+};
+
 namespace detail {
 RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
     const Bond *bond, unsigned int fromAtomIdx, const Conformer *conf);
 RDKIT_GRAPHMOL_EXPORT Bond::BondDir determineBondWedgeState(
-    const Bond *bond, const INT_MAP_INT &wedgeBonds, const Conformer *conf);
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf);
+
 RDKIT_GRAPHMOL_EXPORT std::pair<bool, INT_VECT> countChiralNbrs(
     const ROMol &mol, int noNbrs);
-RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(const Atom *atom, const ROMol &mol,
-                                          const INT_VECT &nChiralNbrs,
-                                          const INT_MAP_INT &resSoFar,
-                                          int noNbrs);
+RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(
+    const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &resSoFar,
+    int noNbrs);
+
+//! If useCXSmilesOrdering is true, the stereo will be assigned relative to the
+/// lowest-numbered neighbor of each double bond atom.
+/// Otherwise it uses the lowest-numbered neighbor on the lower-numbered atom of
+/// the double bond and the highest-numbered neighbor on the higher-numbered
+/// atom
+RDKIT_GRAPHMOL_EXPORT void setStereoForBond(ROMol &mol, Bond *bond,
+                                            Bond::BondStereo stereo,
+                                            bool useCXSmilesOrdering = false);
 }  // namespace detail
 
 //! picks the bonds which should be wedged
-/// \returns a map from bond idx -> controlling atom idx
-RDKIT_GRAPHMOL_EXPORT INT_MAP_INT pickBondsToWedge(
+/// returns a map from bond idx -> controlling atom idx
+RDKIT_GRAPHMOL_EXPORT
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
     const ROMol &mol, const BondWedgingParameters *params = nullptr);
+
+RDKIT_GRAPHMOL_EXPORT
+std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
+    const ROMol &mol, const BondWedgingParameters *params,
+    const Conformer *conf);
 
 RDKIT_GRAPHMOL_EXPORT void wedgeMolBonds(
     ROMol &mol, const Conformer *conf = nullptr,
     const BondWedgingParameters *params = nullptr);
 RDKIT_GRAPHMOL_EXPORT void wedgeBond(Bond *bond, unsigned int fromAtomIdx,
                                      const Conformer *conf);
+
+//! Returns true for double bonds which should be shown as a crossed bonds.
+// It always returns false if any adjacent bond is a squiggle bond.
+RDKIT_GRAPHMOL_EXPORT bool shouldBeACrossedBond(const Bond *bond);
+
+//! Clears existing bond wedging and forces use of atom wedging from MolBlock.
+/*!
+ \param mol: molecule to have its wedges altered
+ \param allBondTypes: reapply the wedging also on bonds other than single and
+ aromatic ones
+ */
+RDKIT_GRAPHMOL_EXPORT void reapplyMolBlockWedging(ROMol &mol,
+                                                  bool allBondTypes = true);
+//! Remove MolBlock bond wedging information from molecule.
+/*!
+ \param mol: molecule to modify
+ */
+RDKIT_GRAPHMOL_EXPORT void clearMolBlockWedgingInfo(ROMol &mol);
+//! Invert bond wedging information read from a mol block (if present).
+/*!
+ \param mol: molecule to modify
+ */
+RDKIT_GRAPHMOL_EXPORT void invertMolBlockWedgingInfo(ROMol &mol);
+
+//! gets stereo info for a bond
+/*!
+ \param bond: bond to check
+ \param wedgeBonds - the list of bonds to have wedges
+ \param conf -  Conformer to use
+ \param dirCode - receives the dircode for the bond
+ \param reverse - receives the reverse flag
+ only returned if it was exlicility set witha wiggle bond
+ */
+
+RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf, int &dirCode, bool &reverse);
+
+RDKIT_GRAPHMOL_EXPORT void GetMolFileBondStereoInfo(
+    const Bond *bond,
+    const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
+        &wedgeBonds,
+    const Conformer *conf, Bond::BondDir &dir, bool &reverse);
+
+//! add R/S, relative stereo, and E/Z annotations to atoms and bonds
+/*!
+ \param mol: molecule to modify
+ \param absLabel: label for atoms in an ABS stereo group
+ \param orLabel: label for atoms in an OR stereo group
+ \param andLabel: label for atoms in an AND stereo group
+ \param cipLabel: label for chiral atoms that aren't in a stereo group.
+ \param bondLabel: label for CIP stereochemistry on bonds
+
+ If any label is empty, the corresponding annotations will not be added.
+
+ The labels can contain the following placeholders:
+   {id} - the stereo group's index
+   {cip} - the atom or bond's CIP stereochemistry
+
+ Note that CIP labels will only be added if CIP stereochemistry has been
+ assigned to the molecule.
+
+ */
+RDKIT_GRAPHMOL_EXPORT void addStereoAnnotations(
+    ROMol &mol, std::string absLabel = "abs ({cip})",
+    std::string orLabel = "or{id}", std::string andLabel = "and{id}",
+    std::string cipLabel = "({cip})", std::string bondLabel = "({cip})");
+
+//! simplifies the stereochemical representation of a molecule where all
+//! specified stereocenters are in the same StereoGroup
+/*!
+ \param mol: molecule to modify
+ \param removeAffectedStereoGroups: if set then the affected StereoGroups will
+ be removed
+
+If all specified stereocenters are in the same AND or OR stereogroup, a
+moleculeNote property will be set on the molecule with the value "AND
+enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
+
+*/
+RDKIT_GRAPHMOL_EXPORT void simplifyEnhancedStereo(
+    ROMol &mol, bool removeAffectedStereoGroups = true);
+
+//! returns the meso centers in a molecule (if any)
+/*!
+ \param mol: molecule to work with
+
+*/
+RDKIT_GRAPHMOL_EXPORT std::vector<std::pair<unsigned int, unsigned int>>
+findMesoCenters(const ROMol &mol, bool includeIsotopes = true,
+                bool includeAtomMaps = false);
 
 }  // namespace Chirality
 }  // namespace RDKit

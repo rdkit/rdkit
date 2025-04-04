@@ -100,25 +100,58 @@ class _GetBondsIterator(_GetRDKitObjIterator):
     return self._mol.GetBondWithIdx(i)
 
 
-rdchem.Mol.GetAtoms = lambda m: _GetAtomsIterator(m)
-rdchem.Mol.GetBonds = lambda m: _GetBondsIterator(m)
+rdchem.Mol.GetAtoms = lambda self: _GetAtomsIterator(self)
+rdchem.Mol.GetAtoms.__doc__ = """returns an iterator over the atoms in the molecule"""
+rdchem.Mol.GetBonds = lambda self: _GetBondsIterator(self)
+rdchem.Mol.GetBonds.__doc__ = """returns an iterator over the bonds in the molecule"""
 
 
 def QuickSmartsMatch(smi, sma, unique=True, display=False):
+  ''' A convenience function for quickly matching a SMARTS against a SMILES
+
+  Arguments:
+    - smi: the SMILES to match
+    - sma: the SMARTS to match
+    - unique: (optional) determines whether or not only unique matches are returned
+    - display: (optional) IGNORED
+
+  Returns:
+    a list of list of the indices of the atoms in the molecule that match the SMARTS  
+  
+  '''
   m = MolFromSmiles(smi)
   p = MolFromSmarts(sma)
   res = m.GetSubstructMatches(p, unique)
-  if display:
-    pass
   return res
 
 
 def CanonSmiles(smi, useChiral=1):
+  ''' A convenience function for canonicalizing SMILES
+
+  Arguments:
+    - smi: the SMILES to canonicalize
+    - useChiral: (optional) determines whether or not chiral information is included in the canonicalization and SMILES
+
+  Returns:
+    the canonical SMILES
+
+  '''
   m = MolFromSmiles(smi)
   return MolToSmiles(m, useChiral)
 
 
 def SupplierFromFilename(fileN, delim='', **kwargs):
+  ''' A convenience function for creating a molecule supplier from a filename 
+  
+  Arguments:
+    - fileN: the name of the file to read from
+    - delim: (optional) the delimiter to use for reading the file (only for csv and txt files)
+    - kwargs: additional keyword arguments to be passed to the supplier constructor
+
+  Returns:
+    a molecule supplier
+
+  '''
   ext = fileN.split('.')[-1].lower()
   if ext == 'sdf':
     suppl = SDMolSupplier(fileN, **kwargs)
@@ -139,8 +172,19 @@ def SupplierFromFilename(fileN, delim='', **kwargs):
 
 
 def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=True,
-                         useLegacyImplementation=True):
-  """
+                         useLegacyImplementation=None):
+  """ returns information about the chiral centers in a molecule
+
+  Arguments:
+    - mol: the molecule to work with
+    - force: (optional) if True, stereochemistry will be assigned even if it has been already
+    - includeUnassigned: (optional) if True, unassigned stereo centers will be included in the output
+    - includeCIP: (optional) if True, the CIP code for each chiral center will be included in the output
+    - useLegacyImplementation: (optional) if True, the legacy stereochemistry perception code will be used
+
+  Returns:
+    a list of tuples of the form (atomId, CIPCode)
+
     >>> from rdkit import Chem
     >>> mol = Chem.MolFromSmiles('[C@H](Cl)(F)Br')
     >>> Chem.FindMolChiralCenters(mol)
@@ -188,54 +232,45 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
     [(2, 'Tet_CCW'), (4, 'Tet_CCW'), (6, 'Tet_CCW')]
 
   """
-  if useLegacyImplementation:
-    AssignStereochemistry(mol, force=force, flagPossibleStereoCenters=includeUnassigned)
-    centers = []
-    for atom in mol.GetAtoms():
-      if atom.HasProp('_CIPCode'):
-        centers.append((atom.GetIdx(), atom.GetProp('_CIPCode')))
-      elif includeUnassigned and atom.HasProp('_ChiralityPossible'):
-        centers.append((atom.GetIdx(), '?'))
-  else:
-    centers = []
-    itms = FindPotentialStereo(mol)
-    if includeCIP:
-      atomsToLabel = []
-      bondsToLabel = []
+  origUseLegacyVal = GetUseLegacyStereoPerception()
+  if useLegacyImplementation is None:
+    useLegacyImplementation = origUseLegacyVal
+  SetUseLegacyStereoPerception(useLegacyImplementation)
+  try:
+    if useLegacyImplementation:
+      AssignStereochemistry(mol, force=force, flagPossibleStereoCenters=includeUnassigned)
+      centers = []
+      for atom in mol.GetAtoms():
+        if atom.HasProp('_CIPCode'):
+          centers.append((atom.GetIdx(), atom.GetProp('_CIPCode')))
+        elif includeUnassigned and atom.HasProp('_ChiralityPossible'):
+          centers.append((atom.GetIdx(), '?'))
+    else:
+      centers = []
+      itms = FindPotentialStereo(mol)
+      if includeCIP:
+        atomsToLabel = []
+        bondsToLabel = []
+        for si in itms:
+          if si.type == StereoType.Atom_Tetrahedral:
+            atomsToLabel.append(si.centeredOn)
+          elif si.type == StereoType.Bond_Double:
+            bondsToLabel.append(si.centeredOn)
+        AssignCIPLabels(mol, atomsToLabel=atomsToLabel, bondsToLabel=bondsToLabel)
       for si in itms:
-        if si.type == StereoType.Atom_Tetrahedral:
-          atomsToLabel.append(si.centeredOn)
-        elif si.type == StereoType.Bond_Double:
-          bondsToLabel.append(si.centeredOn)
-      AssignCIPLabels(mol, atomsToLabel=atomsToLabel, bondsToLabel=bondsToLabel)
-    for si in itms:
-      if si.type == StereoType.Atom_Tetrahedral and (includeUnassigned
-                                                     or si.specified == StereoSpecified.Specified):
-        idx = si.centeredOn
-        atm = mol.GetAtomWithIdx(idx)
-        if includeCIP and atm.HasProp("_CIPCode"):
-          code = atm.GetProp("_CIPCode")
-        else:
-          if si.specified:
-            code = str(si.descriptor)
+        if si.type == StereoType.Atom_Tetrahedral and (includeUnassigned or si.specified
+                                                       == StereoSpecified.Specified):
+          idx = si.centeredOn
+          atm = mol.GetAtomWithIdx(idx)
+          if includeCIP and atm.HasProp("_CIPCode"):
+            code = atm.GetProp("_CIPCode")
           else:
-            code = '?'
-            atm.SetIntProp('_ChiralityPossible', 1)
-        centers.append((idx, code))
+            if si.specified:
+              code = str(si.descriptor)
+            else:
+              code = '?'
+              atm.SetIntProp('_ChiralityPossible', 1)
+          centers.append((idx, code))
+  finally:
+    SetUseLegacyStereoPerception(origUseLegacyVal)
   return centers
-
-
-#------------------------------------
-#
-#  doctest boilerplate
-#
-def _test():
-  import doctest
-  import sys
-  return doctest.testmod(sys.modules["__main__"])
-
-
-if __name__ == '__main__':
-  import sys
-  failed, tried = _test()
-  sys.exit(failed)

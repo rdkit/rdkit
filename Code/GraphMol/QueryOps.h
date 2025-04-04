@@ -13,6 +13,7 @@
     \brief Includes a bunch of functionality for handling Atom and Bond queries.
 */
 #include <RDGeneral/export.h>
+#include <RDGeneral/Dict.h>
 #ifndef RD_QUERY_OPS_H
 #define RD_QUERY_OPS_H
 
@@ -117,10 +118,10 @@ static inline int queryAtomHasImplicitH(Atom const *at) {
   return int(at->getTotalNumHs(false) > 0);
 };
 static inline int queryAtomImplicitValence(Atom const *at) {
-  return at->getImplicitValence();
+  return at->getValence(Atom::ValenceType::IMPLICIT);
 };
 static inline int queryAtomExplicitValence(Atom const *at) {
-  return at->getExplicitValence() - at->getNumExplicitHs();
+  return at->getValence(Atom::ValenceType::EXPLICIT) - at->getNumExplicitHs();
 };
 static inline int queryAtomTotalValence(Atom const *at) {
   return at->getTotalValence();
@@ -598,7 +599,8 @@ RDKIT_GRAPHMOL_EXPORT ATOM_OR_QUERY *makeMHAtomQuery();
 // CXSMILES
 const std::vector<std::string> complexQueries = {"A", "AH", "Q", "QH",
                                                  "X", "XH", "M", "MH"};
-RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery(Atom *query, std::string_view symb);
+RDKIT_GRAPHMOL_EXPORT void convertComplexNameToQuery(Atom *query,
+                                                     std::string_view symb);
 
 //! returns a Query for matching atoms that have ring bonds
 template <class T>
@@ -821,14 +823,12 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
 
  public:
   HasPropQuery() : Queries::EqualityQuery<int, TargetPtr, true>(), propname() {
-    // default is to just do a number of rings query:
-    this->setDescription("AtomHasProp");
-    this->setDataFunc(0);
+    this->setDescription("HasProp");
+    this->setDataFunc(nullptr);
   }
   explicit HasPropQuery(std::string v)
       : Queries::EqualityQuery<int, TargetPtr, true>(), propname(std::move(v)) {
-    // default is to just do a number of rings query:
-    this->setDescription("AtomHasProp");
+    this->setDescription("HasProp");
     this->setDataFunc(nullptr);
   }
 
@@ -847,6 +847,8 @@ class HasPropQuery : public Queries::EqualityQuery<int, TargetPtr, true> {
     res->d_description = this->d_description;
     return res;
   }
+
+  const std::string &getPropName() const { return propname; }
 };
 
 typedef Queries::EqualityQuery<int, Atom const *, true> ATOM_PROP_QUERY;
@@ -860,12 +862,21 @@ Queries::EqualityQuery<int, const Target *, true> *makeHasPropQuery(
 }
 
 // ! Query whether an atom has a property with a value
+class HasPropWithValueQueryBase {
+ public:
+  HasPropWithValueQueryBase() = default;
+  virtual ~HasPropWithValueQueryBase() = default;
+  virtual PairHolder getPair() const = 0;
+  virtual double getTolerance() const = 0;
+};
+
 template <class TargetPtr, class T>
 class HasPropWithValueQuery
-    : public Queries::EqualityQuery<int, TargetPtr, true> {
+    : public HasPropWithValueQueryBase,
+      public Queries::EqualityQuery<int, TargetPtr, true> {
   std::string propname;
   T val;
-  T tolerance;
+  double tolerance{0.0};
 
  public:
   HasPropWithValueQuery()
@@ -874,6 +885,13 @@ class HasPropWithValueQuery
     this->setDescription("HasPropWithValue");
     this->setDataFunc(0);
   }
+
+  PairHolder getPair() const override {
+    return PairHolder(Dict::Pair(propname, val));
+  }
+
+  double getTolerance() const override { return tolerance; }
+
   explicit HasPropWithValueQuery(std::string prop, const T &v,
                                  const T &tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
@@ -890,7 +908,8 @@ class HasPropWithValueQuery
     if (res) {
       try {
         T atom_val = what->template getProp<T>(propname);
-        res = Queries::queryCmp(atom_val, this->val, this->tolerance) == 0;
+        res = Queries::queryCmp(atom_val, this->val,
+                                static_cast<T>(this->tolerance)) == 0;
       } catch (KeyErrorException &) {
         res = false;
       } catch (std::bad_any_cast &) {
@@ -929,7 +948,8 @@ class HasPropWithValueQuery
 
 template <class TargetPtr>
 class HasPropWithValueQuery<TargetPtr, std::string>
-    : public Queries::EqualityQuery<int, TargetPtr, true> {
+    : public HasPropWithValueQueryBase,
+      public Queries::EqualityQuery<int, TargetPtr, true> {
   std::string propname;
   std::string val;
 
@@ -941,15 +961,20 @@ class HasPropWithValueQuery<TargetPtr, std::string>
     this->setDataFunc(0);
   }
   explicit HasPropWithValueQuery(std::string prop, std::string v,
-                                 const std::string &tol = "")
+                                 const double /*tol*/ = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
         propname(std::move(prop)),
         val(std::move(v)) {
-    RDUNUSED_PARAM(tol);
     // default is to just do a number of rings query:
     this->setDescription("HasPropWithValue");
     this->setDataFunc(nullptr);
   }
+
+  PairHolder getPair() const override {
+    return PairHolder(Dict::Pair(propname, val));
+  }
+
+  double getTolerance() const override { return 0.0; }
 
   bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
@@ -996,10 +1021,11 @@ class HasPropWithValueQuery<TargetPtr, std::string>
 
 template <class TargetPtr>
 class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
-    : public Queries::EqualityQuery<int, TargetPtr, true> {
+    : public HasPropWithValueQueryBase,
+      public Queries::EqualityQuery<int, TargetPtr, true> {
   std::string propname;
   ExplicitBitVect val;
-  float tol{0.0};
+  double tol{0.0};
 
  public:
   HasPropWithValueQuery()
@@ -1009,7 +1035,7 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
   }
 
   explicit HasPropWithValueQuery(std::string prop, const ExplicitBitVect &v,
-                                 float tol = 0.0)
+                                 double tol = 0.0)
       : Queries::EqualityQuery<int, TargetPtr, true>(),
         propname(std::move(prop)),
         val(v),
@@ -1017,6 +1043,12 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
     this->setDescription("HasPropWithValue");
     this->setDataFunc(nullptr);
   }
+
+  PairHolder getPair() const override {
+    return PairHolder(Dict::Pair(propname, val));
+  }
+
+  double getTolerance() const override { return tol; }
 
   bool Match(const TargetPtr what) const override {
     bool res = what->hasProp(propname);
@@ -1065,14 +1097,14 @@ class HasPropWithValueQuery<TargetPtr, ExplicitBitVect>
 
 template <class Target, class T>
 Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
-    const std::string &propname, const T &val, const T &tolerance = T()) {
+    const std::string &propname, const T &val, double tolerance = 0.0) {
   return new HasPropWithValueQuery<const Target *, T>(propname, val, tolerance);
 }
 
 template <class Target>
 Queries::EqualityQuery<int, const Target *, true> *makePropQuery(
     const std::string &propname, const ExplicitBitVect &val,
-    float tolerance = 0.0) {
+    double tolerance = 0.0) {
   return new HasPropWithValueQuery<const Target *, ExplicitBitVect>(
       propname, val, tolerance);
 }
@@ -1084,9 +1116,24 @@ RDKIT_GRAPHMOL_EXPORT bool isAtomListQuery(const Atom *a);
 RDKIT_GRAPHMOL_EXPORT void getAtomListQueryVals(const Atom::QUERYATOM_QUERY *q,
                                                 std::vector<int> &vals);
 
+// Checks if an atom is dummy or not.
+// 1. A dummy non-query atom (e.g., "*" in SMILES) is defined by its zero atomic
+//    number. This rule breaks for query atoms because a COMPOSITE_OR query atom
+//    also has a zero atomic number (#6349).
+// 2. A dummy query atom (e.g., "*" in SMARTS) is defined by its explicit
+//    description: "AtomNull".
+inline bool isAtomDummy(const Atom *a) {
+  return (!a->hasQuery() && a->getAtomicNum() == 0) ||
+         (a->hasQuery() && !a->getQuery()->getNegation() &&
+          a->getQuery()->getDescription() == "AtomNull");
+}
+
 namespace QueryOps {
 RDKIT_GRAPHMOL_EXPORT void completeMolQueries(
     RWMol *mol, unsigned int magicVal = 0xDEADBEEF);
+// Replaces the given atom in the molecule with a QueryAtom that is otherwise
+// a copy of the given atom.  Returns a pointer to that atom.
+// if the atom already has a query, nothing will be changed
 RDKIT_GRAPHMOL_EXPORT Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom);
 
 RDKIT_GRAPHMOL_EXPORT void finalizeQueryFromDescription(
@@ -1111,6 +1158,7 @@ inline bool hasComplexBondTypeQuery(const Bond &bond) {
   return hasComplexBondTypeQuery(*bond.getQuery());
 }
 
+RDKIT_GRAPHMOL_EXPORT bool isMetal(const Atom &atom);
 }  // namespace QueryOps
 }  // namespace RDKit
 #endif

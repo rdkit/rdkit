@@ -12,7 +12,7 @@
 //       copyright notice, this list of conditions and the following
 //       disclaimer in the documentation and/or other materials provided
 //       with the distribution.
-//     * Neither the name of Novartis Institutues for BioMedical Research Inc.
+//     * Neither the name of Novartis Institutes for BioMedical Research Inc.
 //       nor the names of its contributors may be used to endorse or promote
 //       products derived from this software without specific prior written
 //       permission.
@@ -142,55 +142,61 @@ struct enumeration_wrapper {
   static void wrap() {
     std::string docString;
 
-    RegisterVectorConverter<std::vector<std::string>>("VectorOfStringVectors");
-    RegisterVectorConverter<boost::uint64_t>("VectSizeT");
     RegisterVectorConverter<MOL_SPTR_VECT>("VectMolVect");
 
-    python::class_<RDKit::EnumerateLibraryBase, RDKit::EnumerateLibraryBase *,
+    python::class_<RDKit::EnumerateLibraryBase,
+                   boost::shared_ptr<RDKit::EnumerateLibraryBase>,
                    RDKit::EnumerateLibraryBase &, boost::noncopyable>(
         "EnumerateLibraryBase", python::no_init)
-        .def("__nonzero__", &EnumerateLibraryBase__nonzero__)
-        .def("__bool__", &EnumerateLibraryBase__nonzero__)
-        .def("__iter__", &pass_through)
-        .def("next", &EnumerateLibraryBase__next__,
+        .def("__nonzero__", &EnumerateLibraryBase__nonzero__,
+             python::args("self"))
+        .def("__bool__", &EnumerateLibraryBase__nonzero__, python::args("self"))
+        .def("__iter__", &pass_through, python::args("self"))
+        .def("next", &EnumerateLibraryBase__next__, python::args("self"),
              "Return the next molecule from the enumeration.")
-        .def("__next__", &EnumerateLibraryBase__next__,
+        .def("__next__", &EnumerateLibraryBase__next__, python::args("self"),
              "Return the next molecule from the enumeration.")
         .def("nextSmiles", &RDKit::EnumerateLibraryBase::nextSmiles,
+             python::args("self"),
              "Return the next smiles string from the enumeration.")
-        .def("Serialize", &EnumerateLibraryBase_Serialize,
+        .def("Serialize", &EnumerateLibraryBase_Serialize, python::args("self"),
              "Serialize the library to a binary string.\n"
              "Note that the position in the library is serialized as well.  "
              "Care should\n"
              "be taken when serializing.  See GetState/SetState for position "
              "manipulation.")
         .def("InitFromString", &RDKit::EnumerateLibraryBase::initFromString,
-             python::arg("data"),
+             (python::arg("self"), python::arg("data")),
              "Inititialize the library from a binary string")
         .def(
             "GetPosition", &RDKit::EnumerateLibraryBase::getPosition,
             "Returns the current enumeration position into the reagent vectors",
             python::return_internal_reference<
-                1, python::with_custodian_and_ward_postcall<0, 1>>())
+                1, python::with_custodian_and_ward_postcall<0, 1>>(),
+            python::args("self"))
         .def(
             "GetState", &RDKit::EnumerateLibraryBase::getState,
+            python::args("self"),
             "Returns the current enumeration state (position) of the library.\n"
             "This position can be used to restart the library from a known "
             "position")
         .def("SetState", &RDKit::EnumerateLibraryBase::setState,
-             python::arg("state"),
+             (python::arg("self"), python::arg("state")),
              "Sets the enumeration state (position) of the library.")
         .def("ResetState", &RDKit::EnumerateLibraryBase::resetState,
+             python::args("self"),
              "Returns the current enumeration state (position) of the library "
              "to the start.")
         .def("GetReaction", &RDKit::EnumerateLibraryBase::getReaction,
              "Returns the chemical reaction for this library",
              python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>())
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
+             python::args("self"))
         .def("GetEnumerator", &RDKit::EnumerateLibraryBase::getEnumerator,
              "Returns the enumation strategy for the current library",
              python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>());
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
+             python::args("self"));
 
     docString =
         "EnumerationParams\n\
@@ -205,9 +211,11 @@ Options:\n\
      does not pass sanitization, then none of the products will.\n\
 ";
 
-    python::class_<RDKit::EnumerationParams, RDKit::EnumerationParams *,
+    python::class_<RDKit::EnumerationParams,
+                   boost::shared_ptr<RDKit::EnumerationParams>,
                    RDKit::EnumerationParams &>(
-        "EnumerationParams", docString.c_str(), python::init<>())
+        "EnumerationParams", docString.c_str(),
+        python::init<>(python::args("self")))
         .def_readwrite("reagentMaxMatchCount",
                        &RDKit::EnumerationParams::reagentMaxMatchCount)
         .def_readwrite("sanePartialProducts",
@@ -282,63 +290,73 @@ for result in itertools.islice(libary2, 1000):\n\
 ";
     python::class_<EnumerateLibraryWrap, boost::noncopyable,
                    python::bases<RDKit::EnumerateLibraryBase>>(
-        "EnumerateLibrary", docString.c_str(), python::init<>())
+        "EnumerateLibrary", docString.c_str(),
+        python::init<>(python::args("self")))
         .def(python::init<const RDKit::ChemicalReaction &, python::list,
                           python::optional<const RDKit::EnumerationParams &>>(
-            python::args("rxn", "reagents", "params")))
+            python::args("self", "rxn", "reagents", "params")))
         .def(python::init<const RDKit::ChemicalReaction &, python::tuple,
                           python::optional<const RDKit::EnumerationParams &>>(
-            python::args("rxn", "reagents", "params")))
+            python::args("self", "rxn", "reagents", "params")))
 
         .def(python::init<const RDKit::ChemicalReaction &, python::list,
                           const RDKit::EnumerationStrategyBase &,
                           python::optional<const RDKit::EnumerationParams &>>(
-            python::args("rxn", "reagents", "enumerator", "params")))
+            python::args("self", "rxn", "reagents", "enumerator", "params")))
         .def(python::init<const RDKit::ChemicalReaction &, python::tuple,
                           const RDKit::EnumerationStrategyBase &,
                           python::optional<const RDKit::EnumerationParams &>>(
-            python::args("rxn", "reagents", "enumerator", "params")))
+            python::args("self", "rxn", "reagents", "enumerator", "params")))
 
         .def("GetReagents", &RDKit::EnumerateLibrary::getReagents,
              "Return the reagents used in this library.",
              python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>());
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
+             python::args("self"));
 
     // iterator_wrappers<EnumerateLibrary>().wrap("EnumerateLibraryIterator");
 
     python::class_<RDKit::EnumerationStrategyBase,
-                   RDKit::EnumerationStrategyBase *,
+                   boost::shared_ptr<RDKit::EnumerationStrategyBase>,
                    RDKit::EnumerationStrategyBase &, boost::noncopyable>(
         "EnumerationStrategyBase", python::no_init)
-        .def("__nonzero__", &EnumerationStrategyBase__nonzero__)
-        .def("__bool__", &EnumerationStrategyBase__nonzero__)
-        .def("Type", &EnumerationStrategyBase::type,
+        .def("__nonzero__", &EnumerationStrategyBase__nonzero__,
+             python::args("self"))
+        .def("__bool__", &EnumerationStrategyBase__nonzero__,
+             python::args("self"))
+        .def("Type", &EnumerationStrategyBase::type, python::args("self"),
              "Returns the enumeration strategy type as a string.")
-        .def("Skip", &EnumerationStrategyBase::skip, python::args("skipCount"),
+        .def("Skip", &EnumerationStrategyBase::skip,
+             python::args("self", "skipCount"),
              "Skip the next Nth results. note: this may be an expensive "
              "operation\n"
              "depending on the enumeration strategy used. It is recommended to "
              "use\n"
              "the enumerator state to advance to a known position")
         .def("__copy__", python::pure_virtual(&EnumerationStrategyBase::copy),
-             python::return_value_policy<python::manage_new_object>())
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
         .def("GetNumPermutations", &EnumerationStrategyBase::getNumPermutations,
+             python::args("self"),
              "Returns the total number of results for this enumeration "
              "strategy.\n"
              "Note that some strategies are effectively infinite.")
         .def("GetPosition", &EnumerationStrategyBase::getPosition,
              "Return the current indices into the arrays of reagents",
              python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>())
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
+             python::args("self"))
         .def("next", python::pure_virtual(&EnumerationStrategyBase::next),
              "Return the next indices into the arrays of reagents",
              python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>())
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
+             python::args("self"))
         .def("__next__", python::pure_virtual(&EnumerationStrategyBase::next),
              "Return the next indices into the arrays of reagents",
              python::return_internal_reference<
-                 1, python::with_custodian_and_ward_postcall<0, 1>>())
-        .def("Initialize", ToBBS);
+                 1, python::with_custodian_and_ward_postcall<0, 1>>(),
+             python::args("self"))
+        .def("Initialize", ToBBS, python::args("self", "rxn", "ob"));
 
     docString =
         "CartesianProductStrategy produces a standard walk through all "
@@ -348,22 +366,27 @@ for result in itertools.islice(libary2, 1000):\n\
         "(0,0,0), (1,0,0), (2,0,0) ...\n";
 
     python::class_<RDKit::CartesianProductStrategy,
-                   RDKit::CartesianProductStrategy *,
+                   boost::shared_ptr<RDKit::CartesianProductStrategy>,
                    RDKit::CartesianProductStrategy &,
                    python::bases<EnumerationStrategyBase>>(
-        "CartesianProductStrategy", docString.c_str(), python::init<>())
+        "CartesianProductStrategy", docString.c_str(),
+        python::init<>(python::args("self")))
         .def("__copy__", &RDKit::CartesianProductStrategy::copy,
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"));
 
     docString =
         "RandomSampleStrategy simply randomly samples from the reagent sets.\n"
         "Note that this strategy never halts and can produce duplicates.";
-    python::class_<RDKit::RandomSampleStrategy, RDKit::RandomSampleStrategy *,
+    python::class_<RDKit::RandomSampleStrategy,
+                   boost::shared_ptr<RDKit::RandomSampleStrategy>,
                    RDKit::RandomSampleStrategy &,
                    python::bases<EnumerationStrategyBase>>(
-        "RandomSampleStrategy", docString.c_str(), python::init<>())
+        "RandomSampleStrategy", docString.c_str(),
+        python::init<>(python::args("self")))
         .def("__copy__", &RDKit::RandomSampleStrategy::copy,
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"));
 
     docString =
         "RandomSampleAllBBsStrategy randomly samples from the reagent sets\n"
@@ -371,12 +394,14 @@ for result in itertools.islice(libary2, 1000):\n\
         "possible.\n"
         "Note that this strategy never halts and can produce duplicates.";
     python::class_<RDKit::RandomSampleAllBBsStrategy,
-                   RDKit::RandomSampleAllBBsStrategy *,
+                   boost::shared_ptr<RDKit::RandomSampleAllBBsStrategy>,
                    RDKit::RandomSampleAllBBsStrategy &,
                    python::bases<EnumerationStrategyBase>>(
-        "RandomSampleAllBBsStrategy", docString.c_str(), python::init<>())
+        "RandomSampleAllBBsStrategy", docString.c_str(),
+        python::init<>(python::args("self")))
         .def("__copy__", &RDKit::RandomSampleAllBBsStrategy::copy,
-             python::return_value_policy<python::manage_new_object>());
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"));
 
     docString =
         "Randomly sample Pairs evenly from a collection of building blocks\n"
@@ -388,13 +413,16 @@ for result in itertools.islice(libary2, 1000):\n\
         "See EnumerationStrategyBase for more details.\n";
 
     python::class_<RDKit::EvenSamplePairsStrategy,
-                   RDKit::EvenSamplePairsStrategy *,
+                   boost::shared_ptr<RDKit::EvenSamplePairsStrategy>,
                    RDKit::EvenSamplePairsStrategy &,
                    python::bases<EnumerationStrategyBase>>(
-        "EvenSamplePairsStrategy", docString.c_str(), python::init<>())
+        "EvenSamplePairsStrategy", docString.c_str(),
+        python::init<>(python::args("self")))
         .def("__copy__", &RDKit::EvenSamplePairsStrategy::copy,
-             python::return_value_policy<python::manage_new_object>())
+             python::return_value_policy<python::manage_new_object>(),
+             python::args("self"))
         .def("Stats", &RDKit::EvenSamplePairsStrategy::stats,
+             python::args("self"),
              "Return the statistics log of the pairs used in the current "
              "enumeration.");
 

@@ -72,12 +72,15 @@ PyObject *generateRmsdTransMatchPyTuple(double rmsd,
   PyTuple_SetItem(resTup, 0, rmsdItem);
   PyTuple_SetItem(resTup, 1, PyArray_Return(res));
   if (match) {
-    python::list pairList;
-    for (const auto &pair : *match) {
-      pairList.append(python::make_tuple(pair.first, pair.second));
+    PyObject *listTup = PyTuple_New(match->size());
+    for (unsigned int i = 0; i < match->size(); ++i) {
+      auto *pairTup = PyTuple_New(2);
+      PyTuple_SetItem(pairTup, 0, PyLong_FromLong((*match)[i].first));
+      PyTuple_SetItem(pairTup, 1, PyLong_FromLong((*match)[i].second));
+      PyTuple_SetItem(listTup, i, pairTup);
     }
-    auto pairTup = new python::tuple(pairList);
-    PyTuple_SetItem(resTup, 2, pairTup->ptr());
+
+    PyTuple_SetItem(resTup, 2, listTup);
   }
   return resTup;
 }
@@ -113,14 +116,12 @@ PyObject *getMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
   return generateRmsdTransMatchPyTuple(rmsd, trans);
 }
 
-PyObject *getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
-                                   int prbCid = -1, int refCid = -1,
-                                   python::object map = python::list(),
-                                   int maxMatches = 1000000,
-                                   bool symmetrizeTerminalGroups = true,
-                                   python::object weights = python::list(),
-                                   bool reflect = false,
-                                   unsigned int maxIters = 50) {
+PyObject *getBestMolAlignTransform(
+    const ROMol &prbMol, const ROMol &refMol, int prbCid = -1, int refCid = -1,
+    python::object map = python::list(), int maxMatches = 1000000,
+    bool symmetrizeTerminalGroups = true,
+    python::object weights = python::list(), bool reflect = false,
+    unsigned int maxIters = 50, int numThreads = 1) {
   std::vector<MatchVectType> aMapVec;
   unsigned int nAtms = 0;
   if (map != python::object()) {
@@ -142,7 +143,8 @@ PyObject *getBestMolAlignTransform(const ROMol &prbMol, const ROMol &refMol,
     NOGIL gil;
     rmsd = MolAlign::getBestAlignmentTransform(
         prbMol, refMol, bestTrans, bestMatch, prbCid, refCid, aMapVec,
-        maxMatches, symmetrizeTerminalGroups, wtsVec.get(), reflect, maxIters);
+        maxMatches, symmetrizeTerminalGroups, wtsVec.get(), reflect, maxIters,
+        numThreads);
   }
 
   return generateRmsdTransMatchPyTuple(rmsd, bestTrans, &bestMatch);
@@ -178,7 +180,7 @@ double AlignMolecule(ROMol &prbMol, const ROMol &refMol, int prbCid = -1,
 double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
                   python::object map, int maxMatches,
                   bool symmetrizeTerminalGroups,
-                  python::object weights = python::list()) {
+                  python::object weights = python::list(), int numThreads = 1) {
   std::vector<MatchVectType> aMapVec;
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
@@ -187,11 +189,34 @@ double GetBestRMS(ROMol &prbMol, ROMol &refMol, int prbId, int refId,
   double rmsd;
   {
     NOGIL gil;
-    rmsd =
-        MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec, maxMatches,
-                             symmetrizeTerminalGroups, wtsVec.get());
+    rmsd = MolAlign::getBestRMS(prbMol, refMol, prbId, refId, aMapVec,
+                                maxMatches, symmetrizeTerminalGroups,
+                                wtsVec.get(), numThreads);
   }
   return rmsd;
+}
+
+python::tuple GetAllConformerBestRMS(ROMol &mol, int numThreads,
+                                     python::object map, int maxMatches,
+                                     bool symmetrizeTerminalGroups,
+                                     python::object weights = python::list()) {
+  std::vector<MatchVectType> aMapVec;
+  if (map != python::object()) {
+    aMapVec = translateAtomMapSeq(map);
+  }
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
+  std::vector<double> rmsds;
+  {
+    NOGIL gil;
+    rmsds = MolAlign::getAllConformerBestRMS(
+        mol, numThreads, aMapVec, maxMatches, symmetrizeTerminalGroups,
+        wtsVec.get());
+  }
+  python::list res;
+  for (auto v : rmsds) {
+    res.append(v);
+  }
+  return python::tuple(res);
 }
 
 double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
@@ -202,12 +227,13 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
   if (map != python::object()) {
     aMapVec = translateAtomMapSeq(map);
   }
-  RDNumeric::DoubleVector *wtsVec = translateDoubleSeq(weights);
+  std::unique_ptr<RDNumeric::DoubleVector> wtsVec(translateDoubleSeq(weights));
   double rmsd;
   {
     NOGIL gil;
-    rmsd = MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec,
-                             maxMatches, symmetrizeTerminalGroups, wtsVec);
+    rmsd =
+        MolAlign::CalcRMS(prbMol, refMol, prbCid, refCid, aMapVec, maxMatches,
+                          symmetrizeTerminalGroups, wtsVec.get());
   }
   return rmsd;
 }
@@ -215,8 +241,8 @@ double CalcRMS(ROMol &prbMol, ROMol &refMol, int prbCid, int refCid,
 namespace MolAlign {
 class PyO3A {
  public:
-  PyO3A(O3A *o) : o3a(o){};
-  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)){};
+  PyO3A(O3A *o) : o3a(o) {};
+  PyO3A(boost::shared_ptr<O3A> o) : o3a(std::move(o)) {};
   ~PyO3A() = default;
   double align() { return o3a.get()->align(); };
   PyObject *trans() {
@@ -384,8 +410,11 @@ python::tuple getMMFFO3AForConfs(
   }
 
   python::list pyres;
+  boost::python::manage_new_object::apply<PyO3A *>::type converter;
   for (auto &i : res) {
-    pyres.append(new PyO3A(i));
+    // transfer ownership to python
+    python::handle<> handle(converter(new PyO3A(i)));
+    pyres.append(handle);
   }
 
   return python::tuple(pyres);
@@ -540,9 +569,13 @@ python::tuple getCrippenO3AForConfs(
                         numThreads, MolAlign::O3A::CRIPPEN, refCid, reflect,
                         maxIters, options, cMap.get(), cWts.get());
   }
+
   python::list pyres;
-  for (auto &re : res) {
-    pyres.append(new PyO3A(re));
+  boost::python::manage_new_object::apply<PyO3A *>::type converter;
+  for (auto &i : res) {
+    // transfer ownership to python
+    python::handle<> handle(converter(new PyO3A(i)));
+    pyres.append(handle);
   }
 
   return python::tuple(pyres);
@@ -617,6 +650,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
       - weights     Optionally specify weights for each of the atom pairs\n\
       - reflect     if true reflect the conformation of the probe molecule\n\
       - maxIters    maximum number of iterations used in minimizing the RMSD\n\
+      - numThreads  (optional) number of threads to use\n\
        \n\
       RETURNS\n\
       a tuple of (RMSD value, best transform matrix, best atom map)\n\
@@ -629,7 +663,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("maxMatches") = 1000000,
        python::arg("symmetrizeConjugatedTerminalGroups") = true,
        python::arg("weights") = python::list(), python::arg("reflect") = false,
-       python::arg("maxIters") = 50),
+       python::arg("maxIters") = 50, python::arg("numThreads") = 1),
       docString.c_str());
 
   docString =
@@ -693,6 +727,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
                        terminal functional groups (like nitro or carboxylate)\n\
                        will be considered symmetrically\n\
         - weights:     (optional) weights for mapping\n\
+        - numThreads:  (optional) number of threads to use\n\
        \n\
       RETURNS\n\
       The best RMSD found\n\
@@ -703,8 +738,37 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
        python::arg("refId") = -1, python::arg("map") = python::object(),
        python::arg("maxMatches") = 1000000,
        python::arg("symmetrizeConjugatedTerminalGroups") = true,
-       python::arg("weights") = python::list()),
+       python::arg("weights") = python::list(), python::arg("numThreads") = 1),
       docString.c_str());
+
+  docString =
+      R"DOC(Returns the symmetric distance matrix between the conformers of a molecule.
+       getBestRMS() is used to calculate the inter-conformer distances
+
+       ARGUMENTS
+        - mol:       the molecule to be considered
+        - numThreads:  (optional) number of threads to use
+        - map:         (optional) a list of lists of (probeAtomId,refAtomId)
+                       tuples with the atom-atom mappings of the two
+                       molecules. If not provided, these will be generated
+                       using a substructure search.
+        - maxMatches:  (optional) if map isn't specified, this will be
+                       the max number of matches found in a SubstructMatch()
+        - symmetrizeConjugatedTerminalGroups:  (optional) if set, conjugated
+                       terminal functional groups (like nitro or carboxylate)
+                       will be considered symmetrically
+        - weights:     (optional) weights for mapping
+       
+      RETURNS
+      A tuple with the best RMSDS. The ordering is [(1,0),(2,0),(2,1),(3,0),... etc]
+  )DOC";
+  python::def("GetAllConformerBestRMS", RDKit::GetAllConformerBestRMS,
+              (python::arg("mol"), python::arg("numThreads") = 1,
+               python::arg("map") = python::object(),
+               python::arg("maxMatches") = 1000000,
+               python::arg("symmetrizeConjugatedTerminalGroups") = true,
+               python::arg("weights") = python::list()),
+              docString.c_str());
 
   docString =
       "Returns the RMS between two molecules, taking symmetry into account.\n\
@@ -753,7 +817,7 @@ BOOST_PYTHON_MODULE(rdMolAlign) {
      \n\
      ARGUMENTS\n\
       - mol          molecule of interest\n\
-      - atomIds      List of atom ids to use a points for alingment - defaults to all atoms\n\
+      - atomIds      List of atom ids to use a points for alignment - defaults to all atoms\n\
       - confIds      Ids of conformations to align - defaults to all conformers \n\
       - weights      Optionally specify weights for each of the atom pairs\n\
       - reflect      if true reflect the conformation of the probe molecule\n\

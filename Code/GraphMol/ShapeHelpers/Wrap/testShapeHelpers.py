@@ -86,15 +86,15 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(lc.Length(), 0.0, 4)
     self.assertAlmostEqual(uc.Length(), 0.0, 4)
 
-    lc1 -= geom.Point3D(-10.7519, -6.0778, -3.0123)
-    uc1 -= geom.Point3D(8.7163, 5.3279, 3.1621)
-    self.assertAlmostEqual(lc1.Length(), 0.0, 4)
+    lc1 -= geom.Point3D(-8.7163, -5.3279, -3.1621)
+    uc1 -= geom.Point3D(10.7519, 6.0778, 3.0123)
+    self.assertAlmostEqual(lc1.Length(), 0.0, 3)
     self.assertAlmostEqual(uc1.Length(), 0.0, 3)
 
-    lc2 -= geom.Point3D(-10.7519, -6.0778, -3.01226)
-    uc2 -= geom.Point3D(9.574, 33.799, 12.557)
-    self.assertAlmostEqual(lc2.Length(), 0.0, 4)
-    self.assertAlmostEqual(uc2.Length(), 0.0, 4)
+    lc2 -= geom.Point3D(-8.716, -5.328, -3.162)
+    uc2 -= geom.Point3D(10.752, 33.799, 12.557)
+    self.assertAlmostEqual(lc2.Length(), 0.0, 3)
+    self.assertAlmostEqual(uc2.Length(), 0.0, 3)
 
 
 if __name__ == '__main__':

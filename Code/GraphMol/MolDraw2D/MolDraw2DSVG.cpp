@@ -212,6 +212,21 @@ void MolDraw2DSVG::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
   d_os << " />\n";
 }
 
+namespace {
+std::string getDashString(const DashPattern &dashes) {
+  std::string res;
+  if (dashes.size()) {
+    std::stringstream dss;
+    dss << ";stroke-dasharray:";
+    std::copy(dashes.begin(), dashes.end() - 1,
+              std::ostream_iterator<double>(dss, ","));
+    dss << dashes.back();
+    res = dss.str();
+  }
+  return res;
+}
+}  // namespace
+
 // ****************************************************************************
 void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2,
                             bool rawCoords) {
@@ -219,16 +234,7 @@ void MolDraw2DSVG::drawLine(const Point2D &cds1, const Point2D &cds2,
   Point2D c2 = rawCoords ? cds2 : getDrawCoords(cds2);
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
-  std::string dashString = "";
-  const DashPattern &dashes = dash();
-  if (dashes.size()) {
-    std::stringstream dss;
-    dss << ";stroke-dasharray:";
-    std::copy(dashes.begin(), dashes.end() - 1,
-              std::ostream_iterator<double>(dss, ","));
-    dss << dashes.back();
-    dashString = dss.str();
-  }
+  std::string dashString = getDashString(dash());
   d_os << "<path ";
   outputClasses();
   d_os << "d='M " << MolDraw2D_detail::formatDouble(c1.x) << ","
@@ -249,7 +255,8 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds,
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
-  std::string dashString = "";
+  std::string dashString = getDashString(dash());
+
   d_os << "<path ";
   outputClasses();
   d_os << "d='M";
@@ -290,7 +297,7 @@ void MolDraw2DSVG::drawEllipse(const Point2D &cds1, const Point2D &cds2,
 
   std::string col = DrawColourToSVG(colour());
   double width = getDrawLineWidth();
-  std::string dashString = "";
+  std::string dashString = getDashString(dash());
   d_os << "<ellipse"
        << " cx='" << MolDraw2D_detail::formatDouble(cx) << "'"
        << " cy='" << MolDraw2D_detail::formatDouble(cy) << "'"
@@ -317,8 +324,8 @@ void MolDraw2DSVG::clearDrawing() {
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
   d_os << "<rect";
   d_os << " style='opacity:1.0;fill:" << col << ";stroke:none'";
-  d_os << " width='" << MolDraw2D_detail::formatDouble(width()) << "' height='"
-       << MolDraw2D_detail::formatDouble(height()) << "'";
+  d_os << " width='" << MolDraw2D_detail::formatDouble(panelWidth())
+       << "' height='" << MolDraw2D_detail::formatDouble(panelHeight()) << "'";
   d_os << " x='" << MolDraw2D_detail::formatDouble(offset().x) << "' y='"
        << MolDraw2D_detail::formatDouble(offset().y) << "'";
   d_os << "> </rect>\n";
@@ -328,11 +335,13 @@ void MolDraw2DSVG::clearDrawing() {
 static const char *RDKIT_SVG_VERSION = "0.9";
 void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
   PRECONDITION(d_os, "no output stream");
-  d_os << "<metadata>" << std::endl;
+  d_os << "<metadata>"
+       << "\n";
   d_os << "<rdkit:mol"
        << " xmlns:rdkit = \"http://www.rdkit.org/xml\""
        << " version=\"" << RDKIT_SVG_VERSION << "\""
-       << ">" << std::endl;
+       << ">"
+       << "\n";
   for (const auto atom : mol.atoms()) {
     d_os << "<rdkit:atom idx=\"" << atom->getIdx() + 1 << "\"";
     bool doKekule = false, allHsExplicit = true, isomericSmiles = true;
@@ -359,7 +368,8 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
 
     outputMetaData(atom, d_os);
 
-    d_os << " />" << std::endl;
+    d_os << " />"
+         << "\n";
   }
   for (const auto bond : mol.bonds()) {
     d_os << "<rdkit:bond idx=\"" << bond->getIdx() + 1 << "\"";
@@ -372,9 +382,11 @@ void MolDraw2DSVG::addMoleculeMetadata(const ROMol &mol, int confId) const {
 
     outputMetaData(bond, d_os);
 
-    d_os << " />" << std::endl;
+    d_os << " />"
+         << "\n";
   }
-  d_os << "</rdkit:mol></metadata>" << std::endl;
+  d_os << "</rdkit:mol></metadata>"
+       << "\n";
 }
 
 // ****************************************************************************

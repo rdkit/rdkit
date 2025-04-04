@@ -38,7 +38,7 @@ void testCleanup() {
   {
     // Github 5997
     auto m = "CC(=O)O[Mg]OC(=O)C"_smiles;
-    auto res(MolStandardize::cleanup(*m, params));
+    RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
     TEST_ASSERT(MolToSmiles(*res) == "CC(=O)[O-].CC(=O)[O-].[Mg+2]");
   }
 
@@ -60,7 +60,7 @@ void testCleanup() {
   {
     RWMOL_SPTR m = "C[Hg]C"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
-    TEST_ASSERT(MolToSmiles(*res) == "C[Hg]C")
+    TEST_ASSERT(MolToSmiles(*res) == "[CH3][Hg][CH3]")
   }
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
@@ -117,7 +117,7 @@ void testMetalDisconnector() {
   MolStandardize::MetalDisconnector md;
   unsigned int failedOp;
   {
-    auto m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
+    RWMOL_SPTR m(SmilesToMol("[O-]C(=O)C.[Mg+2][O-]C(=O)C", 0, false));
     MolOps::sanitizeMol(*m, failedOp, MolOps::SANITIZE_CLEANUP);
     TEST_ASSERT(m);
     md.disconnect(*m);
@@ -143,7 +143,7 @@ void testMetalDisconnector() {
     RWMOL_SPTR m("c1ccccc1[Mg]Br"_smiles);
     TEST_ASSERT(m);
     md.disconnect(*m);
-    TEST_ASSERT(MolToSmiles(*m) == "Br[Mg]c1ccccc1");
+    TEST_ASSERT(MolToSmiles(*m) == "[Br][Mg][c]1ccccc1");
   }
 
   {
@@ -157,7 +157,7 @@ void testMetalDisconnector() {
     RWMOL_SPTR m("Br[Mg]c1ccccc1CCC(=O)O[Na]"_smiles);
     TEST_ASSERT(m);
     md.disconnect(*m);
-    TEST_ASSERT(MolToSmiles(*m) == "O=C([O-])CCc1ccccc1[Mg]Br.[Na+]");
+    TEST_ASSERT(MolToSmiles(*m) == "O=C([O-])CCc1cccc[c]1[Mg][Br].[Na+]");
   }
 
   // test input own dp_metal_non, dp_metal_nof
@@ -172,7 +172,7 @@ void testMetalDisconnector() {
     ROMOL_SPTR m("CCC(=O)O[Na]"_smiles);
     TEST_ASSERT(m);
     ROMOL_SPTR nm(md2.disconnect(*m));
-    TEST_ASSERT(MolToSmiles(*nm) == "CCC(=O)O[Na]");  // not disconnected
+    TEST_ASSERT(MolToSmiles(*nm) == "CCC(=O)[O][Na]");  // not disconnected
   }
 
   // test that metals are not assigned excess positive charge
@@ -557,11 +557,11 @@ void testCharge() {
 
   // Reionization should not infinitely loop forever on these molecules.
   {
-    std::string smi = "CCCCCCCCCCCCCCCCCC(=O)CC(=C)C(=O)O[Ti](=O)(OC(C)C)C(C)C";
+    std::string smi = "CCCCCCCCCCCCCCCCCC(=O)CC(=C)C(=O)O[V](=O)(OC(C)C)C(C)C";
     std::string ss = MolStandardize::standardizeSmiles(smi);
     TEST_ASSERT(
         ss ==
-        "C=C(CC(=O)[CH-]CCCCCCCCCCCCCCCC)C(=O)[O-].CC(C)[O-].CCC.[O-2].[Ti+5]");
+        "C=C(CC(=O)[CH-]CCCCCCCCCCCCCCCC)C(=O)[O-].CC(C)[O-].CCC.[O-2].[V+5]");
   }
 
   // Reionization should not infinitely loop forever on these molecules.
@@ -1524,6 +1524,7 @@ void testOrganometallics() {
     bool takeOwnership = true;
     SDMolSupplier mol_supplier(full_file, takeOwnership);
     std::unique_ptr<ROMol> m(mol_supplier.next());
+    TEST_ASSERT(m);
     std::unique_ptr<ROMol> dm(MolStandardize::disconnectOrganometallics(*m));
     //    std::cout << test_file.first << " got : " << MolToSmiles(*dm)
     //              << " expected : " << test_file.second << std::endl;

@@ -46,6 +46,8 @@
 #endif
 #endif
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
 #include <GraphMol/ChemReactions/ReactionPickler.h>
@@ -121,9 +123,9 @@ constexpr unsigned int pickleDefault =
 
 class ByteA : public std::string {
  public:
-  ByteA() : string(){};
-  ByteA(bytea *b) : string(VARDATA(b), VARSIZE(b) - VARHDRSZ){};
-  ByteA(string &s) : string(s){};
+  ByteA() : string() {};
+  ByteA(bytea *b) : string(VARDATA(b), VARSIZE(b) - VARHDRSZ) {};
+  ByteA(string &s) : string(s) {};
 
   /*
    * Convert string to bytea. Convertaion is in pgsql's memory
@@ -270,18 +272,27 @@ extern "C" CROMol parseMolBlob(char *data, int len) {
 }
 
 extern "C" CROMol parseMolCTAB(char *data, bool keepConformer, bool warnOnFail,
-                               bool asQuery) {
+                               bool asQuery, bool sanitize, bool removeHs) {
   RWMol *mol = nullptr;
 
   try {
     if (!asQuery) {
-      mol = MolBlockToMol(data);
+      mol = MolBlockToMol(data, sanitize, removeHs);
+      if (mol && !sanitize) {
+        mol->updatePropertyCache(false);
+        unsigned int failedOp;
+        unsigned int ops = MolOps::SANITIZE_ALL ^ MolOps::SANITIZE_PROPERTIES ^
+                           MolOps::SANITIZE_KEKULIZE;
+        MolOps::sanitizeMol(*mol, failedOp, ops);
+      }
     } else {
       mol = MolBlockToMol(data, false, false);
       if (mol != nullptr) {
         mol->updatePropertyCache(false);
         MolOps::setAromaticity(*mol);
-        MolOps::mergeQueryHs(*mol);
+        if (removeHs) {
+          MolOps::mergeQueryHs(*mol);
+        }
       }
     }
   } catch (...) {
@@ -398,15 +409,15 @@ extern "C" bool isValidMolBlob(char *data, int len) {
 }
 
 extern "C" char *makeMolText(CROMol data, int *len, bool asSmarts,
-                             bool cxSmiles) {
+                             bool cxSmiles, bool doIsomeric) {
   auto *mol = (ROMol *)data;
 
   try {
     if (!asSmarts) {
       if (!cxSmiles) {
-        StringData = MolToSmiles(*mol);
+        StringData = MolToSmiles(*mol, doIsomeric);
       } else {
-        StringData = MolToCXSmiles(*mol);
+        StringData = MolToCXSmiles(*mol, doIsomeric);
       }
     } else {
       if (!cxSmiles) {
@@ -562,8 +573,8 @@ extern "C" int molcmp(CROMol i, CROMol a) {
     return res;
   }
 
-  res = int(RDKit::Descriptors::calcAMW(*im, false)) -
-        int(RDKit::Descriptors::calcAMW(*am, false));
+  res = int(RDKit::MolOps::getAvgMolWt(*im, false)) -
+        int(RDKit::MolOps::getAvgMolWt(*am, false));
   if (res) {
     return res;
   }
@@ -718,8 +729,8 @@ extern "C" char *makeMolFormulaText(CROMol data, int *len,
   auto *mol = (ROMol *)data;
 
   try {
-    StringData = RDKit::Descriptors::calcMolFormula(*mol, separateIsotopes,
-                                                    abbreviateHIsotopes);
+    StringData = RDKit::MolOps::getMolFormula(*mol, separateIsotopes,
+                                              abbreviateHIsotopes);
   } catch (...) {
     ereport(WARNING,
             (errcode(ERRCODE_WARNING),
@@ -736,6 +747,13 @@ extern "C" const char *MolInchi(CROMol i, const char *opts) {
   std::string inchi = "InChI not available";
 #ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
+  // Older versions of the InChI code returned an empty string for molecules
+  // without atoms. This changed with 1.07, but we'll keep doing an empty string
+  // here
+  if (!im->getNumAtoms()) {
+    inchi = "";
+    return strdup(inchi.c_str());
+  }
   ExtraInchiReturnValues rv;
   try {
     std::string sopts = "/AuxNone /WarnOnEmptyStructure";
@@ -757,6 +775,13 @@ extern "C" const char *MolInchiKey(CROMol i, const char *opts) {
   std::string key = "InChI not available";
 #ifdef RDK_BUILD_INCHI_SUPPORT
   const ROMol *im = (ROMol *)i;
+  // Older versions of the InChI code returned an empty string for molecules
+  // without atoms. This changed with 1.07, but we'll keep doing an empty string
+  // here
+  if (!im->getNumAtoms()) {
+    key = "";
+    return strdup(key.c_str());
+  }
   ExtraInchiReturnValues rv;
   try {
     std::string sopts = "/AuxNone /WarnOnEmptyStructure";
@@ -1030,11 +1055,7 @@ extern "C" bytea *makeLowSparseFingerPrint(CSfp data, int numInts) {
     n = iter->first % numInts;
 
     if (iterV > INTRANGEMAX) {
-#if 0
-        elog(ERROR, "sparse fingerprint is too big, increase INTRANGEMAX in rdkit.h");
-#else
       iterV = INTRANGEMAX;
-#endif
     }
 
     if (s[n].low == 0 || s[n].low > iterV) {
@@ -1948,8 +1969,8 @@ MoleculeDescriptors *calcMolecularDescriptorsReaction(
   for (; begin != end; ++begin) {
     des->nAtoms += begin->get()->getNumHeavyAtoms();
     des->nBonds += begin->get()->getNumBonds(true);
-    des->MW = RDKit::Descriptors::calcAMW(*begin->get(), true);
-    if (!begin->get()->getRingInfo()->isInitialized()) {
+    des->MW = RDKit::MolOps::getAvgMolWt(*begin->get(), true);
+    if (!begin->get()->getRingInfo()->isSssrOrBetter()) {
       begin->get()->updatePropertyCache();
       RDKit::MolOps::findSSSR(*begin->get());
     }
@@ -2171,7 +2192,7 @@ extern "C" char *findMCSsmiles(char *smiles, char *params) {
   while (*s && *s <= ' ') {
     s++;
   }
-  while (s<s_end && * s> ' ') {
+  while (s < s_end && *s > ' ') {
     len = 0;
     while (s[len] > ' ') {
       len++;
@@ -2404,7 +2425,7 @@ extern "C" CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
     try {
       MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
     } catch (const ValueErrorException &e) {
-      elog(ERROR, "MolAdjustQueryProperties: %s", e.what());
+      elog(ERROR, "adjustQueryProperties: %s", e.what());
     } catch (...) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
@@ -2416,10 +2437,10 @@ extern "C" CXQMol MolToXQMol(CROMol m, bool doEnumeration, bool doTautomers,
     xqm = new ExtendedQueryMol(GeneralizedSubstruct::createExtendedQueryMol(
         *im, doEnumeration, doTautomers, adjustQueryProperties, p));
   } catch (MolSanitizeException &e) {
-    elog(ERROR, "MolToTautomerQuery: %s", e.what());
+    elog(ERROR, "MolToXQMol: %s", e.what());
     xqm = nullptr;
   } catch (...) {
-    elog(ERROR, "MolToTautomerQuery: unknown failure type");
+    elog(ERROR, "MolToXQMol: unknown failure type");
     xqm = nullptr;
   }
   return (CXQMol)xqm;

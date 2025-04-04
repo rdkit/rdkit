@@ -8,7 +8,7 @@
 //
 
 #include "RDGeneral/test.h"
-#include "catch.hpp"
+#include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
@@ -32,7 +32,7 @@ TEST_CASE("Github #5863: failure in WedgeMolBonds") {
     auto env = findAtomEnvironmentOfRadiusN(*mol, radius + 1, atomId);
     std::unique_ptr<ROMol> frag(Subgraphs::pathToSubmol(*mol, env));
     REQUIRE(frag);
-    WedgeMolBonds(*frag, &frag->getConformer());
+    Chirality::wedgeMolBonds(*frag, &frag->getConformer());
     INFO(MolToV3KMolBlock(*frag));
     CHECK(frag->getBondBetweenAtoms(9, 10)->getBondDir() !=
           Bond::BondDir::NONE);
@@ -42,7 +42,7 @@ TEST_CASE("Github #5863: failure in WedgeMolBonds") {
 TEST_CASE("translating the chiral flag to stereo groups") {
   SECTION("basics") {
     auto withFlag = R"CTAB(
-  Mrv2211 03302308372D          
+  Mrv2211 03302308372D
 
   5  4  0  0  1  0            999 V2000
    -6.5625    3.9286    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -57,7 +57,7 @@ TEST_CASE("translating the chiral flag to stereo groups") {
 M  END
 )CTAB"_ctab;
     REQUIRE(withFlag);
-    int flag;
+    int flag = 0;
     CHECK(withFlag->getPropIfPresent(common_properties::_MolFileChiralFlag,
                                      flag));
     CHECK(flag == 1);
@@ -103,7 +103,7 @@ M  END
 
   SECTION("explicit zero chiral flag") {
     auto zeroFlag = R"CTAB(
-  Mrv2211 03302308372D          
+  Mrv2211 03302308372D
 
   5  4  0  0  o  0            999 V2000
    -6.5625    3.9286    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
@@ -118,7 +118,7 @@ M  END
 M  END
 )CTAB"_ctab;
     REQUIRE(zeroFlag);
-    int flag;
+    int flag = 0;
     CHECK(zeroFlag->getPropIfPresent(common_properties::_MolFileChiralFlag,
                                      flag));
     CHECK(flag == 0);
@@ -240,11 +240,10 @@ void testStereoExample(const std::string &mb, unsigned int aidx,
 }
 
 TEST_CASE("IUPAC recommendations") {
-#if 1
   SECTION("simple examples") {
     std::vector<std::string> mbs = {
         R"CTAB(
-  Mrv2211 06082308462D          
+  Mrv2211 06082308462D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -266,7 +265,7 @@ M  V30 END CTAB
 M  END
 )CTAB",
         R"CTAB(
-  Mrv2211 06082309052D          
+  Mrv2211 06082309052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -288,7 +287,7 @@ M  V30 END CTAB
 M  END
 )CTAB",
         R"CTAB(
-  Mrv2211 06082309052D          
+  Mrv2211 06082309052D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -310,7 +309,7 @@ M  V30 END CTAB
 M  END
 )CTAB",
         R"CTAB(IUPAC does not like this one
-  Mrv2211 06082309142D          
+  Mrv2211 06082309142D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -332,7 +331,7 @@ M  V30 END CTAB
 M  END
 )CTAB",
         R"CTAB(IUPAC does not like this one2
-  Mrv2211 06082309142D          
+  Mrv2211 06082309142D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -347,7 +346,7 @@ M  V30 END ATOM
 M  V30 BEGIN BOND
 M  V30 1 1 1 2
 M  V30 2 1 2 3
-M  V30 3 1 2 4 
+M  V30 3 1 2 4
 M  V30 4 1 2 5 CFG=1
 M  V30 END BOND
 M  V30 END CTAB
@@ -369,7 +368,7 @@ M  END
   }
   SECTION("three coordinate") {
     auto m = R"CTAB(
-  Mrv2108 01192209042D          
+  Mrv2108 01192209042D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -403,7 +402,6 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(5)->getChiralTag() ==
           Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
   }
-#endif
   SECTION("this came up") {
     std::string rdbase = getenv("RDBASE");
     std::string fName = rdbase + "/Code/GraphMol/test_data/github87.mol";
@@ -415,7 +413,7 @@ M  END)CTAB"_ctab;
 
   SECTION("narrow angle") {
     auto m = R"CTAB(
-  Mrv2211 06092305312D          
+  Mrv2211 06092305312D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -469,7 +467,7 @@ M  END)CTAB"_ctab;
   SECTION("linear arrangements") {
     {
       auto m = R"CTAB(
-  Mrv2211 06102314502D          
+  Mrv2211 06102314502D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -498,7 +496,7 @@ M  END
     }
     {
       auto m = R"CTAB(opposing stereo
-  Mrv2211 06102314502D          
+  Mrv2211 06102314502D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -526,8 +524,39 @@ M  END
             Atom::ChiralType::CHI_UNSPECIFIED);
     }
     {
-      auto m = R"CTAB(
-  Mrv2211 06102314502D          
+      // std::cerr<<"11111111111111"<<std::endl;
+      auto m = R"CTAB(opposing stereo, order change
+  Mrv2211 06102314502D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 O 9.0665 0.9156 0 0
+M  V30 2 N 9.6304 4.5593 0 0
+M  V30 3 C 8.2965 2.2493 0 0 MASS=14
+M  V30 4 C 6.9628 1.4792 0 0
+M  V30 5 C 9.6304 3.0193 0 0
+M  V30 6 H 7.8191 3.0761 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 3 1 CFG=1
+M  V30 2 1 2 5
+M  V30 3 1 3 4
+M  V30 4 1 3 6 CFG=3
+M  V30 5 1 3 5
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
+            Atom::ChiralType::CHI_UNSPECIFIED);
+    }
+    {
+      // IUPAC (ST-1.2.12) says this one is wrong. It definitely requires making
+      // an assumption about where the H is.
+      auto m = R"CTAB(three-coordinate, T shaped, wedge in the middle
+  Mrv2211 06102314502D
 
   0  0  0     0  0            999 V3000
 M  V30 BEGIN CTAB
@@ -548,15 +577,16 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END
 )CTAB"_ctab;
+
       REQUIRE(m);
       CHECK(m->getAtomWithIdx(2)->getChiralTag() ==
-            Atom::ChiralType::CHI_UNSPECIFIED);
+            Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
     }
   }
 }
 
 TEST_CASE(
-    "GitHub Issue #6502: MolToMolBlock writes \"either\" stereo for double bonds "
+    "GitHub Issue #6502: MolToMolBlock writes \"either\" stereo for double bonds"
     "which shouldn't be stereo.",
     "[bug][molblock][stereo]") {
   auto m = "CP1(O)=NP(C)(O)=NP(C)(O)=NP(C)(O)=N1"_smiles;
@@ -564,4 +594,48 @@ TEST_CASE(
 
   auto mb = MolToV3KMolBlock(*m);
   CHECK(mb.find("CFG=2") == std::string::npos);
+}
+
+TEST_CASE("stereo in ring", "[molblock][stereo]") {
+  SECTION("test 1") {
+    auto molblock = R"CTAB(
+  Mrv2311 10242314442D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 10 11 0 0 1
+M  V30 BEGIN ATOM
+M  V30 1 C -2.6673 -0.77 0 0
+M  V30 2 C -2.6673 0.77 0 0
+M  V30 3 C -1.3337 1.54 0 0
+M  V30 4 C 0 0.77 0 0
+M  V30 5 C 1.3336 1.54 0 0
+M  V30 6 C 2.6673 0.77 0 0
+M  V30 7 C 2.6673 -0.77 0 0
+M  V30 8 C 1.3336 -1.54 0 0
+M  V30 9 C 0 -0.77 0 0
+M  V30 10 C -1.3337 -1.54 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 1 6 7
+M  V30 7 1 7 8
+M  V30 8 1 8 9
+M  V30 9 1 4 9
+M  V30 10 1 9 10
+M  V30 11 1 1 10
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+)CTAB";
+
+    std::unique_ptr<RWMol> m(MolBlockToMol(molblock, true, false, false));
+
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(1)->getStereo() == Bond::BondStereo::STEREONONE);
+  }
 }

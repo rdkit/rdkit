@@ -56,10 +56,6 @@ RDKIT_MOLDRAW2D_EXPORT void arcPoints(const Point2D &cds1, const Point2D &cds2,
                                       std::vector<Point2D> &res,
                                       float startAng = 0, float extent = 360);
 
-//! add R/S, relative stereo, and E/Z annotations to atoms and bonds
-RDKIT_MOLDRAW2D_EXPORT void addStereoAnnotation(
-    const ROMol &mol, bool includeRelativeCIP = false);
-
 //! add annotations with atom indices.
 RDKIT_MOLDRAW2D_EXPORT inline void addAtomIndices(const ROMol &mol) {
   // we don't need this in the global set of tags since it will only be used
@@ -158,6 +154,14 @@ RDKIT_MOLDRAW2D_EXPORT void calcArrowHead(Point2D &arrowEnd, Point2D &arrow1,
                                           const Point2D &arrowBegin,
                                           bool asPolygon, double frac,
                                           double angle);
+
+// adjust p2 so that the line from p1 to p2 stops where it intersects
+// the ellipse.
+RDKIT_MOLDRAW2D_EXPORT void adjustLineEndForEllipse(const Point2D &centre,
+                                                    double xradius,
+                                                    double yradius, Point2D p1,
+                                                    Point2D &p2);
+
 }  // namespace MolDraw2D_detail
 }  // namespace RDKit
 

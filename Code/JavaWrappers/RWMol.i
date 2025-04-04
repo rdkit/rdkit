@@ -48,19 +48,10 @@
 %ignore RDKit::RWMol::addAtom(Atom *atom,bool updateLabel,bool takeOwnership);
 %ignore RDKit::RWMol::addBond(Bond *bond,bool takeOwnership);
 
-%newobject RDKit::SmilesToMol;
-%newobject RDKit::SmartsToMol;
-%newobject RDKit::MolBlockToMol;
-%newobject RDKit::MolFileToMol;
-%newobject RDKit::MolFromMolFile;
-%newobject RDKit::MolFromTPLFIle;
-%newobject RDKit::MolFromMol2File;
-%newobject RDKit::MolFromMol2Block;
-%newobject RDKit::MolFromPDBBlock;
-%newobject RDKit::MolFromPDBFile;
-%newobject RDKit::MolFromSequence;
-%newobject RDKit::MolFromFasta;
-
+%newobject RDKit::v1::SmilesToMol;
+%newobject RDKit::v1::SmartsToMol;
+%newobject RDKit::v1::MolBlockToMol;
+%newobject RDKit::v1::MolFileToMol;
 
 %shared_ptr(RDKit::RWMol)
 %include "enums.swg"
@@ -68,6 +59,8 @@
 %javaconst(1);
 #endif
 %include <GraphMol/FileParsers/FileParsers.h>
+%ignore RDKit::v2;
+%ignore RDKit::v2::SmilesParse;
 %include <GraphMol/SmilesParse/SmilesParse.h>
 %include <GraphMol/RWMol.h>
 
@@ -76,7 +69,7 @@
                                          std::map<std::string,std::string> *replacements=0){
     return RDKit::RWMOL_SPTR(RDKit::SmilesToMol(smi, debugParse, sanitize,replacements));
   }
-  static RDKit::RWMOL_SPTR MolFromSmiles(const std::string &smi, const RDKit::SmilesParserParams &params){
+  static RDKit::RWMOL_SPTR MolFromSmiles(const std::string &smi, const RDKit::v1::SmilesParserParams &params){
     return RDKit::RWMOL_SPTR(RDKit::SmilesToMol(smi, params));
   }
   static RDKit::RWMOL_SPTR MolFromSmarts(const std::string &sma,int debugParse=0,bool mergeHs=false,
@@ -100,13 +93,13 @@ static RDKit::RWMOL_SPTR MolFromTPLFile(const std::string &fName,bool sanitize=t
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromMol2File(const std::string &fName,bool sanitize=true,bool removeHs=true,
-                       RDKit::Mol2Type variant=RDKit::CORINA, bool cleanupSubstructures=true) {
+                       RDKit::Mol2Type variant=RDKit::Mol2Type::CORINA, bool cleanupSubstructures=true) {
   RDKit::RWMol *mol=0;
   mol=RDKit::Mol2FileToMol(fName, sanitize, removeHs, variant, cleanupSubstructures);
   return RDKit::RWMOL_SPTR(mol);
 }
 static RDKit::RWMOL_SPTR MolFromMol2Block(const std::string &molBlock,bool sanitize=true,bool removeHs=true,
-                        RDKit::Mol2Type variant=RDKit::CORINA, bool cleanupSubstructures=true) {
+                        RDKit::Mol2Type variant=RDKit::Mol2Type::CORINA, bool cleanupSubstructures=true) {
   RDKit::RWMol *mol=0;
     mol=RDKit::Mol2BlockToMol(molBlock, sanitize, removeHs, variant, cleanupSubstructures);
   return RDKit::RWMOL_SPTR(mol);
@@ -179,13 +172,13 @@ void ClearSingleBondDirFlags() {
  RDKit::ClearSingleBondDirFlags(*($self));
 };
 void reapplyMolBlockWedging() {
-  RDKit::reapplyMolBlockWedging(*($self));
+  RDKit::Chirality::reapplyMolBlockWedging(*($self));
 }
 void clearMolBlockWedgingInfo() {
-  RDKit::clearMolBlockWedgingInfo(*($self));
+  RDKit::Chirality::clearMolBlockWedgingInfo(*($self));
 }
 void invertMolBlockWedgingInfo() {
-  RDKit::invertMolBlockWedgingInfo(*($self));
+  RDKit::Chirality::invertMolBlockWedgingInfo(*($self));
 }
 void markUnspecifiedStereoAsUnknown(int confId) {
   RDKit::markUnspecifiedStereoAsUnknown(*($self), confId);

@@ -49,6 +49,43 @@ class TestCase(unittest.TestCase):
     self.assertFalse(deleted)
     self.assertEqual(m, mol)
 
+  def test_withUseChirality(self):
+    chiralRemover = SaltRemover(defnData="OC(=O)\C=C/C(O)=O\nOC(=O)/C=C/C(O)=O", defnFormat=InputFormat.SMILES, useChirality=True)
+    remover = SaltRemover(defnData="OC(=O)\C=C/C(O)=O\nOC(=O)/C=C/C(O)=O", defnFormat=InputFormat.SMILES, useChirality=False)
+    
+    maleaic_acid_smiles = Chem.MolToSmiles(Chem.MolFromSmiles('OC(=O)\C=C/C(O)=O'))
+    fumaric_acid_smiles = Chem.MolToSmiles(Chem.MolFromSmiles('OC(=O)/C=C/C(O)=O'))
+
+    m = Chem.MolFromSmiles('OC(=O)C=CC(O)=O')
+
+    # remover ignores chirality in defnData: removes OC(=O)C=CC(O)=O but stores it as OC(=O)\C=C/C(O)=O
+    # (the first defnData SMILE to match when chirality is ignored)
+    _, deleted = remover.StripMolWithDeleted(m)
+    self.assertEqual(len(deleted), 1)
+    self.assertEqual(Chem.MolToSmiles(deleted[0]), maleaic_acid_smiles)
+
+    # chiralRemover ignores OC(=O)C=CC(O)=O as it is not included in defnData
+    _, deleted = chiralRemover.StripMolWithDeleted(m)
+    self.assertEqual(len(deleted), 0)
+
+    m = Chem.MolFromSmiles(maleaic_acid_smiles)
+    _, deleted = remover.StripMolWithDeleted(m)
+    self.assertEqual(len(deleted), 1)
+    self.assertEqual(Chem.MolToSmiles(deleted[0]), maleaic_acid_smiles)
+
+    _, deleted = chiralRemover.StripMolWithDeleted(m)
+    self.assertEqual(len(deleted), 1)
+    self.assertEqual(Chem.MolToSmiles(deleted[0]), maleaic_acid_smiles)
+
+    m = Chem.MolFromSmiles(fumaric_acid_smiles)
+    _, deleted = remover.StripMolWithDeleted(m)
+    self.assertEqual(len(deleted), 1)
+    self.assertEqual(Chem.MolToSmiles(deleted[0]), maleaic_acid_smiles)
+
+    _, deleted = chiralRemover.StripMolWithDeleted(m)
+    self.assertEqual(len(deleted), 1)
+    self.assertEqual(Chem.MolToSmiles(deleted[0]), fumaric_acid_smiles)
+
   def test_SmilesVsSmarts(self):
     # SMARTS
     remover = SaltRemover(defnData="[Cl,Br]")
@@ -75,6 +112,22 @@ class TestCase(unittest.TestCase):
     saltstrip = SaltRemover()
     res = saltstrip.StripMol(m, sanitize=False)
     self.assertEqual(Chem.MolToSmiles(res), 'CN1=CC=CC=C1')
+
+  def test_github_7327(self):
+    m = Chem.MolFromSmiles('C=CC=O')
+    assert m
+
+    saltstrip = SaltRemover()
+    m = saltstrip.StripMol(m)
+
+    # No atoms removed
+    assert m.GetNumAtoms() == 4
+
+    # Rotatable bond definition from mmpdb
+    q = Chem.MolFromSmarts('[!$([NH]!@C(=O))&!D1&!$(*#*)]-&!@[!$([NH]!@C(=O))&!D1&!$(*#*)]')
+    assert q
+
+    assert m.GetSubstructMatches(q) == ((1, 2), )
 
 
 if __name__ == '__main__':  # pragma: nocover

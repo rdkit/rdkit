@@ -122,7 +122,11 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
     \param highlight_atom_map   : map from atomId -> DrawColours
     providing the highlight colours.
     \param highlight_bond_map   : map from bondId -> DrawColours
-    providing the highlight colours.
+    providing the highlight colours for the bonds.  If the highlight style
+    is Lasso (as opposed to the default CircleAndLine) then the colours in the
+    highlight_bond_map will be ignored, although the entries in the map will
+    control which bonds are highlighted.  The lasso will be coloured according
+    to the associated atom colours.
     \param highlight_radii : map from atomId -> radius (in molecule
     coordinates) for the radii of atomic highlights. If not provided for an
     index, the default value from \c drawOptions() will be used.
@@ -319,8 +323,8 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
   //! molecular coordinates.
   const std::vector<Point2D> &atomCoords() const;
   //! returns the atomic symbols of the activeMolIdx_ molecule
-  const std::vector<std::pair<std::string, MolDraw2D_detail::OrientType>>
-      &atomSyms() const;
+  const std::vector<std::pair<std::string, MolDraw2D_detail::OrientType>> &
+  atomSyms() const;
 
   //! return the width of the drawing area.
   int width() const { return width_; }
@@ -543,7 +547,7 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
 inline void setDarkMode(MolDrawOptions &opts) {
   assignDarkModePalette(opts.atomColourPalette);
   opts.backgroundColour = DrawColour{0.0, 0.0, 0.0, 1.0};
-  opts.annotationColour = DrawColour{0.9, 0.9, 0.9, 1.0};
+  opts.atomNoteColour = opts.annotationColour = DrawColour{0.9, 0.9, 0.9, 1.0};
   opts.legendColour = DrawColour{0.9, 0.9, 0.9, 1.0};
   opts.symbolColour = DrawColour{0.9, 0.9, 0.9, 1.0};
   opts.variableAttachmentColour = DrawColour{0.3, 0.3, 0.3, 1.0};
@@ -554,7 +558,7 @@ inline void setMonochromeMode(MolDrawOptions &opts, const DrawColour &fgColour,
   opts.atomColourPalette.clear();
   opts.atomColourPalette[-1] = fgColour;
   opts.backgroundColour = bgColour;
-  opts.annotationColour = fgColour;
+  opts.atomNoteColour = opts.bondNoteColour = opts.annotationColour = fgColour;
   opts.legendColour = fgColour;
   opts.symbolColour = fgColour;
   opts.variableAttachmentColour = fgColour;
