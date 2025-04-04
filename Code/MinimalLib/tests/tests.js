@@ -395,11 +395,14 @@ function test_substruct_library(done) {
     var nonExistingQuery = RDKitModule.get_mol('O=C(O)C(c1ccc(cc1)CCN4CCC(c2nc3ccccc3n2CCOCC)CC4)(C)C');
     const numBitOptions = [-1, 0];
     var patternFpArray = [];
+    var sslibObjs = [];
     numBitOptions.forEach((numBits, optIdx) => {
         var smiReader = readline.createInterface({
             input: fs.createReadStream(__dirname + '/../../GraphMol/test_data/compounds.smi')
         });
         var sslib = numBits < 0 ? new RDKitModule.SubstructLibrary() : new RDKitModule.SubstructLibrary(numBits);
+        assert(sslib);
+        sslibObjs.push(sslib);
         assert.equal(sslib.count_matches(query), 0);
         assert.equal(sslib.get_matches(query), JSON.stringify([]));
         assert.equal(sslib.get_matches_as_uint32array(query).length, 0);
@@ -438,6 +441,8 @@ function test_substruct_library(done) {
             assert.equal(patternFpArray.length, sslib.size());
             assert.equal(trustedSmiArray.length, patternFpArray.length);
             var sslib2 = new RDKitModule.SubstructLibrary();
+            assert(sslib2);
+            sslibObjs.push(sslib2);
             for (var i = 0; i < sslib.size(); ++i) {
                 sslib2.add_trusted_smiles_and_pattern_fp(trustedSmiArray[i], patternFpArray[i]);
             }
@@ -478,12 +483,13 @@ function test_substruct_library(done) {
                 var sslib2MatchesUInt32Array = sslib2.get_matches_as_uint32array(nonExistingQuery);
                 assert.equal(sslib2MatchesUInt32Array.length, 0);
             }
-            sslib.delete();
-            sslib2.delete();
             if (optIdx === numBitOptions.length - 1) {
                 done.test_substruct_library = true;
                 query.delete();
                 nonExistingQuery.delete();
+                sslibObjs.forEach((sslib) => {
+                    sslib.delete();
+                });
             }
         });
     });
