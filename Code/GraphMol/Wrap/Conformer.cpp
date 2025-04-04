@@ -232,7 +232,8 @@ struct conformer_wrapper {
             "  RETURNS: a string\n\n"
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception "
-            "will be raised.\n")
+            "will be raised.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetDoubleProp", GetProp<Conformer, double>,
              python::args("self", "key"),
              "Returns the double value of the property if possible.\n\n"
