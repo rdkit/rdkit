@@ -1072,9 +1072,11 @@ TEST_CASE("bad DrawMolecules() when molecules are not kekulized",
 }
 TEST_CASE("draw atom/bond indices", "[drawing]") {
   auto m1 = "C[C@H](F)N"_smiles;
-  auto m2 = "C[C@@H](F)N"_smiles;
   REQUIRE(m1);
+  CIPLabeler::assignCIPLabels(*m1);
+  auto m2 = "C[C@@H](F)N"_smiles;
   REQUIRE(m2);
+  CIPLabeler::assignCIPLabels(*m2);
   SECTION("foundations") {
     {
       MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);

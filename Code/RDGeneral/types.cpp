@@ -32,6 +32,7 @@ const std::string _BondsPotentialStereo = "_BondsPotentialStereo";
 const std::string _ChiralAtomRank = "_chiralAtomRank";
 const std::string _CIPCode = "_CIPCode";
 const std::string _CIPRank = "_CIPRank";
+const std::string _CIPComputed = "_CIPComputed";
 const std::string _CanonicalRankingNumber = "_CanonicalRankingNumber";
 const std::string _ChiralityPossible = "_ChiralityPossible";
 const std::string _CrippenLogP = "_CrippenLogP";

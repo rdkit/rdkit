@@ -365,11 +365,19 @@ TEST_CASE("Github #2148", "[bug][Smiles][Smarts]") {
   }
 
   SECTION("Writing SMILES") {
+    const auto useLegacy = GENERATE(true, false);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
     auto mol = "C/C=c1/ncc(=C)cc1"_smiles;
     REQUIRE(mol);
     REQUIRE(mol->getBondBetweenAtoms(1, 2));
     CHECK(mol->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
-    CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    if (useLegacy) {
+      CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    } else {
+      CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOTRANS);
+      CHECK(mol->getBondBetweenAtoms(1, 2)->getStereoAtoms() ==
+            std::vector<int>{0, 3});
+    }
     auto smi = MolToSmiles(*mol);
     CHECK(smi == "C=c1cc/c(=C\\C)nc1");
   }
@@ -1627,6 +1635,8 @@ TEST_CASE(
 }
 
 TEST_CASE("Github #4582: double bonds and ring closures") {
+  const auto useLegacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fxn(useLegacy);
   auto mol = R"CTAB(CHEMBL409450
      RDKit          2D
 
@@ -1683,9 +1693,13 @@ M  END)CTAB"_ctab;
   auto dbond = mol->getBondBetweenAtoms(1, 19);
   REQUIRE(dbond);
   CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
-  CHECK((dbond->getStereo() == Bond::BondStereo::STEREOE ||
-         dbond->getStereo() == Bond::BondStereo::STEREOTRANS));
-  CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+  if (useLegacy) {
+    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOE);
+    CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+  } else {
+    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOCIS);
+    CHECK(dbond->getStereoAtoms() == std::vector<int>{0, 20});
+  }
   auto csmiles = MolToSmiles(*mol);
   CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
 

@@ -8,7 +8,10 @@ GitHub)
 
 ## Highlights
 
-## Backwards incompatible changes
+## Backwards incompatible changes:
+- atom maps on dummy atoms are now always used in the calculation of canonical
+  atom ranks.
+
 
 ## New Features and Enhancements:
 
