@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2000-2017  greg Landrum and other RDKit contributors
+#  Copyright (C) 2000-2025  greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -211,7 +211,7 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
     using the legacy implementation:
 
     >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('C1CC(C)C(C)C(C)C1'),includeUnassigned=True, useLegacyImplementation=True)
-    [(2, '?'), (4, '?'), (6, '?')]
+    [(2, '?'), (6, '?')]
     >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('C1C[C@H](C)C(C)[C@H](C)C1'),includeUnassigned=True)
     [(2, 'S'), (4, '?'), (6, 'R')]
 
@@ -238,6 +238,8 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
   SetUseLegacyStereoPerception(useLegacyImplementation)
   try:
     if useLegacyImplementation:
+      for atom in mol.GetAtoms():
+        atom.ClearProp('_ChiralityPossible')
       AssignStereochemistry(mol, force=force, flagPossibleStereoCenters=includeUnassigned)
       centers = []
       for atom in mol.GetAtoms():
