@@ -1709,6 +1709,33 @@ A better, atom-centric, representation might be C1CCC[$(C-c)]1.  When the
 completeAromaticRings option is set to False, a larger MCES is found, with just
 the pyridine nitrogen atom not matching the corresponding phenyl carbon atom.
 
+There are 2 ways of getting an MCES that is just a single fragment.  The first is
+to use the option `opts.singleLargestFrag = True`.  The second is to use the method
+`opts.allBestMCESs`, find the result with the largest single fragment and use
+its `largestFragmentOnly`.  The two methods are equivalent - the first
+option does this internally.
+
+The result of the singleLargestFrag option may not be the largest single possible
+fragment in common between the two molecules.  For example, consider the 2 molecules
+
+.. image:: images/rascal_1.png
+
+There are 8 multi-fragment MCESs, all with 12 bonds, of which one of the ones with
+the largest single fragment is
+
+.. image:: images/rascal_2.png
+
+The single largest fragment is thus the 3-propylpiperidine.  However, if you use
+rdFMCS with the same pair of molecules, you get
+
+.. image:: images/rascal_3.png
+
+Which has a 10 atom, 9 bond fragment which cannot be part of a fragmented MCES of
+12 bonds, so doesn't appear in the Rascal results set.  If you are sure you will
+only ever be interested in the single largest fragment in common, you should use
+rdFMCS.
+
+
 Clustering with Rascal
 ======================
 
