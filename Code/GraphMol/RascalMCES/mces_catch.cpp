@@ -481,6 +481,37 @@ TEST_CASE("bad aromatics 1") {
   }
 }
 
+TEST_CASE("single fragment") {
+  RascalOptions opts;
+  std::vector<std::tuple<std::string, std::string, unsigned int, unsigned int>>
+      tests = {
+    {"C1CC1CCC1NC1", "C1CC1CCCCC1NC1", 8, 5},
+    {"c1cnccc1CCc1ncccc1", "c1cnccc1CCCCCCc1ncccc1", 14, 8},
+    {"c1ccccc1c1cccc(c1)CCc1ccccc1", "c1ccccc1c1cccc(c1)CCCCCc1ccccc1",
+     21, 15},
+    {"Cc1cc2nc(-c3cccc(NC(=O)CSc4ccc(Cl)cc4)c3)oc2cc1C  CHEMBL1398008",
+     "COc1ccc2oc(-c3ccc(C)c(NC(=O)COc4cc(C)cc(C)c4)c3)nc2c1  CHEMBL1436972",
+     27, 21}};
+  opts.similarityThreshold = 0.7;
+  for (auto &test : tests) {
+    opts.ringMatchesRingOnly = true;
+    opts.singleLargestFrag = false;
+    std::unique_ptr<RDKit::RWMol> m1(RDKit::SmilesToMol(std::get<0>(test)));
+    std::unique_ptr<RDKit::RWMol> m2(RDKit::SmilesToMol(std::get<1>(test)));
+    auto res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.front().getNumFrags() == 2);
+    REQUIRE(res.front().getBondMatches().size() == std::get<2>(test));
+    check_smarts_ok(*m1, *m2, res.front());
+    opts.singleLargestFrag = true;
+    res = rascalMCES(*m1, *m2, opts);
+    REQUIRE(res.front().getNumFrags() == 1);
+    REQUIRE(res.front().getBondMatches().size() == std::get<3>(test));
+    REQUIRE(res.front().getLargestFragSize() ==
+            res.front().getAtomMatches().size());
+    check_smarts_ok(*m1, *m2, res.front());
+  }
+}
+
 TEST_CASE("minimum fragment sizes") {
   RascalOptions opts;
 
