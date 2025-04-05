@@ -93,10 +93,6 @@ struct RascalStartPoint {
   std::vector<std::pair<int, int>> d_vtxPairs;
   std::vector<boost::dynamic_bitset<>> d_modProd;
 
-  // These are the conventional adjacency matrices for the mols,
-  // only used if singleLargestFrag is true.
-  std::vector<std::vector<int>> d_atomAdjMatrix1, d_atomAdjMatrix2;
-
   // We might need to know which bonds are symmetrical equivalent.
   std::vector<int> d_equivBonds1, d_equivBonds2;
 
@@ -334,17 +330,6 @@ void makeLineGraph(const ROMol &mol, std::vector<std::vector<int>> &adjMatrix) {
   }
 }
 
-// Conventional adjacency matrix
-void makeAtomAdjacencyMatrix(const ROMol &mol,
-                             std::vector<std::vector<int>> &adjMatrix) {
-  adjMatrix = std::vector<std::vector<int>>(
-      mol.getNumAtoms(), std::vector<int>(mol.getNumAtoms(), 0));
-  for (const auto &b : mol.bonds()) {
-    adjMatrix[b->getBeginAtomIdx()][b->getEndAtomIdx()] =
-        adjMatrix[b->getEndAtomIdx()][b->getBeginAtomIdx()] = b->getBondType();
-  }
-}
-
 // make sure that mol1_bond in mol1 and mol2_bond in mol2 are, in at least one
 // ring that is the same. If aromaticRingsMatchOnly is true, then only aromatic
 // bonds are considered.
@@ -510,124 +495,6 @@ void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
           distMatrix[i][j] = distMatrix[i][k] + distMatrix[k][j];
         }
       }
-    }
-  }
-}
-
-namespace {
-// A simple struct to keep all the paths between 2 bonds in the molecule,
-// constructed from the molecule's line graph.  The input paths will
-// be sorted and uniquified in the c'tor.
-struct BondPaths {
-  BondPaths() = default;
-  BondPaths(std::vector<std::vector<Bond::BondType>> &paths,
-            boost::dynamic_bitset<> &dists, bool reverse)
-      : d_pathDists(dists) {
-    std::sort(paths.begin(), paths.end());
-    paths.erase(std::unique(paths.begin(), paths.end()), paths.end());
-    d_pathHashes.reserve(paths.size());
-    std::hash<std::string> hasher;
-    for (const auto &path : paths) {
-      std::string tmp;
-      if (reverse) {
-        std::transform(
-            path.rbegin(), path.rend(), std::back_inserter(tmp),
-            [](const auto bt) -> char { return static_cast<char>('a' + bt); });
-      } else {
-        std::transform(
-            path.begin(), path.end(), std::back_inserter(tmp),
-            [](const auto bt) -> char { return static_cast<char>('a' + bt); });
-      }
-      d_pathHashes.emplace_back(hasher(tmp));
-    }
-    std::sort(d_pathHashes.begin(), d_pathHashes.end());
-  }
-  BondPaths(const BondPaths &other) = default;
-  BondPaths(BondPaths &&other) = default;
-  ~BondPaths() = default;
-  BondPaths &operator=(BondPaths &&other) = default;
-  BondPaths &operator=(const BondPaths &other) = default;
-
-  bool hasMatchingPath(const BondPaths &other) {
-    // 2 paths match if they are the same length
-    // and comprised of bonds of the same type.
-    if (!(d_pathDists & other.d_pathDists).count()) {
-      return false;
-    }
-    for (const auto &myHash : d_pathHashes) {
-      if (auto it = std::lower_bound(other.d_pathHashes.begin(),
-                                     other.d_pathHashes.end(), myHash);
-          it != other.d_pathHashes.end() && *it == myHash) {
-        return true;
-      }
-    }
-    return false;
-  }
-  std::vector<std::uint64_t> d_pathHashes;
-  // If there's a path of length l, bit l will be set.
-  boost::dynamic_bitset<> d_pathDists;
-};
-
-// Recursively find all paths from the end of currPath to endNode.
-void findAllPaths(unsigned int endNode,
-                  const std::vector<std::vector<int>> &adjMatrix,
-                  const std::vector<const Bond *> &bonds,
-                  std::vector<unsigned int> &currPath,
-                  boost::dynamic_bitset<> &inCurrPath,
-                  boost::dynamic_bitset<> &allDists,
-                  std::vector<std::vector<Bond::BondType>> &allPaths) {
-  for (size_t i = 0; i < adjMatrix.size(); ++i) {
-    if (adjMatrix[currPath.back()][i]) {
-      if (i == endNode) {
-        allDists[currPath.size()] = true;
-        allPaths.emplace_back();
-        std::transform(currPath.begin(), currPath.end(),
-                       std::back_inserter(allPaths.back()),
-                       [&](const unsigned int &idx) -> Bond::BondType {
-                         return bonds[idx]->getBondType();
-                       });
-        allPaths.back().push_back(bonds[i]->getBondType());
-      } else {
-        if (!inCurrPath[i]) {
-          inCurrPath[i] = true;
-          currPath.push_back(i);
-          findAllPaths(endNode, adjMatrix, bonds, currPath, inCurrPath,
-                       allDists, allPaths);
-          currPath.pop_back();
-          inCurrPath[i] = false;
-        }
-      }
-    }
-  }
-}
-}  // namespace
-
-// Calculate all the distances between all vertices in the graph, putting
-// the results in the BondPaths structs.
-void calcAllDistancesMatrix(
-    const ROMol &mol, const std::vector<std::vector<int>> &adjMatrix,
-    const size_t numDists,
-    std::vector<std::vector<BondPaths>> &allDistsMatrix) {
-  unsigned int numNodes = adjMatrix.size();
-  allDistsMatrix = std::vector<std::vector<BondPaths>>(
-      numNodes, std::vector<BondPaths>(numNodes, BondPaths()));
-
-  std::vector<const Bond *> bonds(mol.getNumBonds());
-  for (auto bond : mol.bonds()) {
-    bonds[bond->getIdx()] = bond;
-  }
-
-  for (unsigned int s = 0u; s < numNodes - 1; ++s) {
-    for (unsigned int f = s + 1; f < numNodes; ++f) {
-      boost::dynamic_bitset<> allDists(numDists);
-      std::vector<std::vector<Bond::BondType>> allPaths;
-      std::vector<unsigned int> currPath(1, s);
-      boost::dynamic_bitset<> inCurrPath(numDists);
-      inCurrPath[s] = true;
-      findAllPaths(f, adjMatrix, bonds, currPath, inCurrPath, allDists,
-                   allPaths);
-      allDistsMatrix[s][f] = BondPaths(allPaths, allDists, true);
-      allDistsMatrix[f][s] = BondPaths(allPaths, allDists, false);
     }
   }
 }
@@ -891,91 +758,6 @@ bool cliqueOk(const std::vector<unsigned int> clique, const RascalOptions &opts,
 
   return true;
 }
-
-namespace {
-void splitCliqueBonds(const std::vector<unsigned int> &bonds, const ROMol &mol,
-                      std::vector<std::vector<unsigned int>> &cliqueFrags) {
-  boost::dynamic_bitset<> allowedBonds(mol.getNumBonds());
-  for (const auto &bond : bonds) {
-    allowedBonds.set(bond);
-  }
-  boost::dynamic_bitset<> doneBonds(mol.getNumBonds());
-  std::list<const Atom *> toDo;
-  while (doneBonds.count() != bonds.size()) {
-    for (size_t i = 0; i < bonds.size(); ++i) {
-      if (!doneBonds[bonds[i]]) {
-        const auto bond = mol.getBondWithIdx(bonds[i]);
-        doneBonds[bonds[i]] = true;
-        toDo.push_back(bond->getBeginAtom());
-        toDo.push_back(bond->getEndAtom());
-        cliqueFrags.emplace_back(std::vector<unsigned int>{bonds[i]});
-        break;
-      }
-    }
-    while (!toDo.empty()) {
-      const auto nextAtom = toDo.front();
-      toDo.pop_front();
-      for (const auto atomBondi :
-           boost::make_iterator_range(mol.getAtomBonds(nextAtom))) {
-        const auto atomBond = mol[atomBondi];
-        if (allowedBonds[atomBond->getIdx()] &&
-            !doneBonds[atomBond->getIdx()]) {
-          const auto otherAtom = atomBond->getOtherAtom(nextAtom);
-          toDo.push_back(otherAtom);
-          cliqueFrags.back().push_back(atomBond->getIdx());
-          doneBonds[atomBond->getIdx()] = true;
-        }
-      }
-    }
-  }
-  std::sort(cliqueFrags.begin(), cliqueFrags.end(),
-            [](const auto &c1, const auto &c2) -> bool {
-              return c1.size() > c2.size();
-            });
-}
-
-// Finds the largest single fragment in the clique.
-void singleLargestFrag(RascalStartPoint &starter,
-                       const std::vector<unsigned int> &clique,
-                       const std::vector<std::pair<int, int>> &vtxPairs,
-                       std::vector<unsigned int> &cliqueFrag) {
-  if (clique.size() == 1) {
-    cliqueFrag = clique;
-    return;
-  }
-  std::vector<unsigned int> bonds1, bonds2;
-  std::transform(
-      clique.begin(), clique.end(), std::back_inserter(bonds1),
-      [&](const auto &p) -> unsigned int { return vtxPairs[p].first; });
-  std::vector<std::vector<unsigned int>> cliqueFrags1;
-  splitCliqueBonds(bonds1, *starter.d_mol1, cliqueFrags1);
-  std::transform(
-      clique.begin(), clique.end(), std::back_inserter(bonds2),
-      [&](const auto &p) -> unsigned int { return vtxPairs[p].second; });
-  std::vector<std::vector<unsigned int>> cliqueFrags2;
-  splitCliqueBonds(bonds2, *starter.d_mol2, cliqueFrags2);
-  // Build the cliqueFrag based on the smaller largest fragment
-  if (cliqueFrags1.front().size() < cliqueFrags2.front().size()) {
-    for (auto fm : cliqueFrags1.front()) {
-      for (const auto c : clique) {
-        if (vtxPairs[c].first == static_cast<int>(fm)) {
-          cliqueFrag.push_back(c);
-          break;
-        }
-      }
-    }
-  } else {
-    for (auto fm : cliqueFrags2.front()) {
-      for (const auto c : clique) {
-        if (vtxPairs[c].second == static_cast<int>(fm)) {
-          cliqueFrag.push_back(c);
-          break;
-        }
-      }
-    }
-  }
-}
-}  // namespace
 
 // If this clique warrants it, update maxCliques.
 void updateMaxClique(const std::vector<unsigned int> &clique, bool deltaYPoss,
@@ -1289,15 +1071,6 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   makeLineGraph(*starter.d_mol1, starter.d_adjMatrix1);
   makeLineGraph(*starter.d_mol2, starter.d_adjMatrix2);
 
-  if (opts.singleLargestFrag) {
-    BOOST_LOG(rdWarningLog)
-        << "The singleLargestFrag option can be exceptionally slow.  A better"
-        << " option, which often gives equivalent results, might be to use"
-        << " allBestMCESs=true and then extract the single largest fragment"
-        << " from the results." << std::endl;
-    makeAtomAdjacencyMatrix(*starter.d_mol1, starter.d_atomAdjMatrix1);
-    makeAtomAdjacencyMatrix(*starter.d_mol2, starter.d_atomAdjMatrix2);
-  }
   // pairs are vertices in the 2 line graphs that are the same type.
   // d_modProd is the modular product/correspondence graph of the two
   // line graphs.

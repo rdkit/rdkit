@@ -1488,7 +1488,6 @@ TEST_CASE("Github8360 - another incorrect MCES with singleLargestFrag=true") {
   opts.singleLargestFrag = true;
   opts.allBestMCESs = true;
   opts.completeAromaticRings = false;
-#if 0
   {
     auto m2 = "c1ccc(cn1)-c1ccc2ccccc2n1"_smiles;
     REQUIRE(m2);
@@ -1501,7 +1500,6 @@ TEST_CASE("Github8360 - another incorrect MCES with singleLargestFrag=true") {
       CHECK(r.getBondMatches().size() == 16);
     }
   }
-#endif
   {
     auto m1 = "C=CCCC=CCCC1CNCCC1"_smiles;
     REQUIRE(m1);
@@ -1511,7 +1509,6 @@ TEST_CASE("Github8360 - another incorrect MCES with singleLargestFrag=true") {
     REQUIRE(!res.empty());
     CHECK(res.size() == 1);
     for (auto &r : res) {
-      std::cout << r.getSmarts() << std::endl;
       CHECK(r.getAtomMatches().size() == 9);
       CHECK(r.getBondMatches().size() == 9);
     }

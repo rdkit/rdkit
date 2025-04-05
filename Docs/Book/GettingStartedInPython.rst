@@ -1711,47 +1711,29 @@ the pyridine nitrogen atom not matching the corresponding phenyl carbon atom.
 
 There are 2 ways of getting an MCES that is just a single fragment.  The first is
 to use the option `opts.singleLargestFrag = True`.  The second is to use the method
-`largestFragmentOnly` on the results.  The two methods often produce the same result,
-but not always.
+`opts.allBestMCESs`, find the result with the largest single fragment and use
+its `largestFragmentOnly`.  The two methods are equivalent - the first
+option does this internally.
 
-.. doctest::
+The result of the singleLargestFrag option may not be the largest single possible
+fragment in common between the two molecules.  For example, consider the 2 molecules
 
-  >>> mola = Chem.MolFromSmiles("c1cnccc1CCc1ncccc1")
-  >>> molb = Chem.MolFromSmiles("c1cnccc1CCCCCCc1ncccc1")
-  >>> opts = rdRascalMCES.RascalOptions()
-  >>> opts.singleLargestFrag = False
-  >>> rascal_matches = rdRascalMCES.FindMCES(mola, molb, opts)
+.. image:: images/rascal_1.png
 
-produces the MCES
+There are 8 multi-fragment MCESs, all with 12 bonds, of which one of the ones with
+the largest single fragment is
 
-.. image:: images/rascal_image_1.png
+.. image:: images/rascal_2.png
 
-.. doctest::
+The single largest fragment is thus the 3-propylpiperidine.  However, if you use
+rdFMCS with the same pair of molecules, you get
 
-  >>> rascal_matches[0].largestFragmentOnly()
+.. image:: images/rascal_3.png
 
-Then cuts the MCES down to
-
-.. image:: images/rascal_image_2.png
-
-Using the alternative method:
-
-  >>> mola = Chem.MolFromSmiles("c1cnccc1CCc1ncccc1")
-  >>> molb = Chem.MolFromSmiles("c1cnccc1CCCCCCc1ncccc1")
-  >>> opts = rdRascalMCES.RascalOptions()
-  >>> opts.singleLargestFrag = True
-  >>> rascal_matches = rdRascalMCES.FindMCES(mola, molb, opts)
-
-gives
-
-.. image:: images/rascal_image_3.png
-
-This is because the full MCES can't include all 3 alkyl bonds so as to accommodate the
-second pyridyl ring.  The run time for the second method can be significantly
-slower than the first because the highly efficient pruning of the search space that
-the Rascal algorithm uses is largely disabled.  It is almost certainly advisable
-to use the first method in most instances, and if using the second you will probably
-have to run without a timeout set (`opts.timeout = -1`).
+Which has a 10 atom, 9 bond fragment which cannot be part of a fragmented MCES of
+12 bonds, so doesn't appear in the Rascal results set.  If you are sure you will
+only ever be interested in the single largest fragment in common, you should use
+rdFMCS.
 
 
 Clustering with Rascal

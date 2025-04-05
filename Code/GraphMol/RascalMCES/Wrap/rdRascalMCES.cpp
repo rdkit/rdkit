@@ -168,11 +168,12 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
       .def_readwrite(
           "singleLargestFrag",
           &RDKit::RascalMCES::RascalOptions::singleLargestFrag,
-          "Return the just single largest fragment of the MCES.  This can"
-          "be exceptionally slow.  It is normally equivalent to running with"
-          " allBestMCEs=True, finding the result with the largest"
-          " largestFragmentSize, and calling its largestFragmentOnly method,"
-          " which can be a lot faster.")
+          "Return the just single largest fragment of the MCES. It is"
+          " equivalent to running with allBestMCEs=True, finding the result"
+          " with the largest largestFragmentSize, and calling its"
+          " largestFragmentOnly method.  This option may not produce the largest"
+          " possible single fragment that the molecules have in common. If you"
+          " definitely want that you may be better off using rdFMCS.")
       .def_readwrite(
           "completeAromaticRings",
           &RDKit::RascalMCES::RascalOptions::completeAromaticRings,
