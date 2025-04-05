@@ -40,9 +40,9 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
       // work on all platforms.
       if (d_params.randomSeed == -1) {
         std::random_device rd;
-        d_randGen = std::make_unique<boost::mt19937>(rd());
+        d_randGen = std::make_unique<std::mt19937>(rd());
       } else {
-        d_randGen = std::make_unique<boost::mt19937>(d_params.randomSeed);
+        d_randGen = std::make_unique<std::mt19937>(d_params.randomSeed);
       }
     }
   }
@@ -61,12 +61,12 @@ SearchResults SynthonSpaceSearcher::search() {
       d_query, getSpace().getMaxNumSynthons(), d_params.maxNumFragSets, endTime,
       d_params.numThreads, timedOut);
   if (timedOut || ControlCHandler::getGotSignal()) {
-    return SearchResults{std::move(results), 0UL, timedOut,
+    return SearchResults{std::move(results), 0ULL, timedOut,
                          ControlCHandler::getGotSignal()};
   }
   extraSearchSetup(fragments);
   if (ControlCHandler::getGotSignal()) {
-    return SearchResults{std::move(results), 0UL, timedOut, true};
+    return SearchResults{std::move(results), 0ULL, timedOut, true};
   }
 
   std::uint64_t totHits = 0;
