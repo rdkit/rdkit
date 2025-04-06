@@ -26,6 +26,7 @@
 # docker rm rdkit-minimallib-container
 
 version: '3.8'
+name: rdkit-minimallib-from-local-source-tree
 
 services:
   rdkit_deps:
