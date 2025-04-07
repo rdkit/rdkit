@@ -160,13 +160,13 @@ unsigned int addCoords(T &mol, const CoordGenParams *params = nullptr) {
     }
 
     sketcherMinimizerBondStereoInfo sinfo;
-    sinfo.atom1 = ats.at(obnd->getStereoAtoms().at(0));
-    sinfo.atom2 = ats.at(obnd->getStereoAtoms().at(1));
+    sinfo.atom1 = ats[obnd->getStereoAtoms()[0]];
+    sinfo.atom2 = ats[obnd->getStereoAtoms()[1]];
     sinfo.stereo = (obnd->getStereo() == Bond::STEREOZ ||
                     obnd->getStereo() == Bond::STEREOCIS)
                        ? sketcherMinimizerBondStereoInfo::cis
                        : sketcherMinimizerBondStereoInfo::trans;
-    auto bnd = bnds.at(obnd->getIdx());
+    auto bnd = bnds[obnd->getIdx()];
     bnd->setStereoChemistry(sinfo);
     bnd->setAbsoluteStereoFromStereoInfo();
   }
