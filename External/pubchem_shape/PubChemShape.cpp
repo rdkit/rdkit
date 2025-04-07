@@ -292,6 +292,7 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
       res.coord[j * 3] = pos.x;
       res.coord[(j * 3) + 1] = pos.y;
       res.coord[(j * 3) + 2] = pos.z;
+      ++j;
     }
   }
 
