@@ -154,17 +154,19 @@ unsigned int addCoords(T &mol, const CoordGenParams *params = nullptr) {
     auto obnd = *bndit;
     if (obnd->getBondType() != Bond::DOUBLE ||
         obnd->getStereo() <= Bond::STEREOANY ||
-        obnd->getStereo() > Bond::STEREOTRANS)
+        obnd->getStereo() > Bond::STEREOTRANS ||
+        obnd->getStereoAtoms().size() < 2) {
       continue;
+    }
 
     sketcherMinimizerBondStereoInfo sinfo;
-    sinfo.atom1 = ats[obnd->getStereoAtoms()[0]];
-    sinfo.atom2 = ats[obnd->getStereoAtoms()[1]];
+    sinfo.atom1 = ats.at(obnd->getStereoAtoms().at(0));
+    sinfo.atom2 = ats.at(obnd->getStereoAtoms().at(1));
     sinfo.stereo = (obnd->getStereo() == Bond::STEREOZ ||
                     obnd->getStereo() == Bond::STEREOCIS)
                        ? sketcherMinimizerBondStereoInfo::cis
                        : sketcherMinimizerBondStereoInfo::trans;
-    auto bnd = bnds[obnd->getIdx()];
+    auto bnd = bnds.at(obnd->getIdx());
     bnd->setStereoChemistry(sinfo);
     bnd->setAbsoluteStereoFromStereoInfo();
   }
