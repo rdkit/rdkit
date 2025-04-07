@@ -212,7 +212,7 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
 
     >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('C1CC(C)C(C)C(C)C1'),includeUnassigned=True, useLegacyImplementation=True)
     [(2, '?'), (6, '?')]
-    >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('C1C[C@H](C)C(C)[C@H](C)C1'),includeUnassigned=True)
+    >>> Chem.FindMolChiralCenters(Chem.MolFromSmiles('C1C[C@H](C)C(C)[C@H](C)C1'),includeUnassigned=True, useLegacyImplementation=True)
     [(2, 'S'), (4, '?'), (6, 'R')]
 
     But works with the new implementation:
@@ -240,7 +240,8 @@ def FindMolChiralCenters(mol, force=True, includeUnassigned=False, includeCIP=Tr
     if useLegacyImplementation:
       for atom in mol.GetAtoms():
         atom.ClearProp('_ChiralityPossible')
-      AssignStereochemistry(mol, force=force, flagPossibleStereoCenters=includeUnassigned)
+      AssignStereochemistry(mol, force=force, flagPossibleStereoCenters=includeUnassigned,
+                            cleanIt=True)
       centers = []
       for atom in mol.GetAtoms():
         if atom.HasProp('_CIPCode'):
