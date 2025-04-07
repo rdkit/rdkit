@@ -92,6 +92,17 @@ class TestCase(unittest.TestCase):
     results = rdRascalMCES.FindMCES(mol1, mol2, opts)
     self.assertEqual(len(results), 1)
 
+  def test5(self):
+    # Test setting non-default option singleLargestFrag
+    ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")
+    ad2 = Chem.MolFromSmiles("N(C)c1ccc(CC(=O)NCCCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL157336")
+
+    opts = rdRascalMCES.RascalOptions()
+    opts.singleLargestFrag = True
+    results = rdRascalMCES.FindMCES(ad1, ad2, opts)
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0].smartsString, 'CNc1:c:c:c(-CC(=O)-NCCCCCCCCCC):c:c:1')
+
   def test6(self):
     # Test the threshold and examine the tier1 and tier2 similarities.
     ad1 = Chem.MolFromSmiles("CN(C)c1ccc(CC(=O)NCCCCCCCCCCNC23CC4CC(C2)CC(C3)C4)cc1 CHEMBL153934")

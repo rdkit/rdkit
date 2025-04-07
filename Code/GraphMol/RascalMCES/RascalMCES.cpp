@@ -493,9 +493,7 @@ void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
   for (size_t k = 0u; k < adjMatrix.size(); ++k) {
     for (size_t i = 0u; i < adjMatrix.size(); ++i) {
       for (size_t j = 0u; j < adjMatrix.size(); ++j) {
-        if (distMatrix[i][j] > distMatrix[i][k] + distMatrix[k][j]) {
-          distMatrix[i][j] = distMatrix[i][k] + distMatrix[k][j];
-        }
+        distMatrix[i][j] = std::min(distMatrix[i][j], distMatrix[i][k] + distMatrix[k][j]);
       }
     }
   }
