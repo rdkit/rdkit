@@ -298,7 +298,6 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
 
     """
   tm = Chem.Mol(m)
-  tm.SetProp('_MolFileChiralFlag', '1')
   for atom in tm.GetAtoms():
     atom.ClearProp("_CIPCode")
   for bond in tm.GetBonds():
@@ -309,6 +308,8 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
   if not nCenters:
     yield tm
     return
+
+  tm.SetProp('_MolFileChiralFlag', '1')
 
   if (options.maxIsomers == 0 or 2**nCenters <= options.maxIsomers):
     bitsource = _RangeBitsGenerator(nCenters)

@@ -335,7 +335,7 @@ class TestCase(unittest.TestCase):
     fully_assigned = Chem.MolFromSmiles('C/C(F)=C/[C@@H](C)Cl')
     smiles = set()
     for m in AllChem.EnumerateStereoisomers(fully_assigned):
-      self.assertEqual(m.GetProp('_MolFileChiralFlag'), '1')
+      self.assertEqual(m.HasProp('_MolFileChiralFlag'), False)
       smiles.add(Chem.MolToSmiles(m, isomericSmiles=True))
     self.assertEqual(smiles, set(['C/C(F)=C/[C@@H](C)Cl']))
 
