@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -2273,7 +2273,8 @@ M  END
   CHECK(match == expected);
 }
 
-TEST_CASE("Normalize should always center in centroid, irrespective of canonicalize parameter") {
+TEST_CASE(
+    "Normalize should always center in centroid, irrespective of canonicalize parameter") {
   auto m = R"CTAB(
      RDKit          2D
 
@@ -2339,7 +2340,8 @@ M  END)CTAB"_ctab;
 }
 
 #ifdef RDK_BUILD_COORDGEN_SUPPORT
-TEST_CASE("CoordGen should not segfault when bond has stereo spec but no stereo atoms") {
+TEST_CASE(
+    "CoordGen should not segfault when bond has stereo spec but no stereo atoms") {
   auto m = "C=C1C=CC(=O)CC1"_smiles;
   REQUIRE(m);
   CHECK(m->getNumBonds() == 8);
