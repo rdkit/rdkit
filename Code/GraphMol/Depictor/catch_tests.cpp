@@ -2337,3 +2337,19 @@ M  END)CTAB"_ctab;
   CHECK_THAT(ctd.x, Catch::Matchers::WithinAbs(0.0, 1.0e-4));
   CHECK_THAT(ctd.y, Catch::Matchers::WithinAbs(0.0, 1.0e-4));
 }
+
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+TEST_CASE("CoordGen should not segfault when bond has stereo spec but no stereo atoms") {
+  auto m = "C=C1C=CC(=O)CC1"_smiles;
+  REQUIRE(m);
+  CHECK(m->getNumBonds() == 8);
+  auto b = m->getBondWithIdx(0);
+  CHECK(b->getBondType() == Bond::DOUBLE);
+  b->setStereo(Bond::STEREOZ);
+  CHECK(b->getStereoAtoms().empty());
+  RDDepict::preferCoordGen = true;
+  RDDepict::compute2DCoords(*m);
+  RDDepict::preferCoordGen = false;
+  CHECK(m->getNumConformers() == 1);
+}
+#endif
