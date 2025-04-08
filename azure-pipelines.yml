@@ -38,8 +38,8 @@ jobs:
     python: python=3.11
     boost_version: 1.82.0
     compiler: gxx_linux-64
-    cc: gcc-11
-    cxx: g++-11
+    cc: gcc-13
+    cxx: g++-13
     number_of_cores: nproc
     python_name: python311
   steps:
