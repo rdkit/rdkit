@@ -1085,14 +1085,14 @@ TEST_CASE("includeTargetMolInResults") {
     REQUIRE(targetMol);
     auto flattenedAtomIndices = std::accumulate(
         allAtomIndices.begin(), allAtomIndices.end(), std::vector<int>{},
-        [](std::vector<int> &acc, const std::vector<int> &v) {
+        [](std::vector<int> acc, const std::vector<int> &v) {
           acc.insert(acc.end(), std::make_move_iterator(v.begin()),
                      std::make_move_iterator(v.end()));
           return acc;
         });
     auto uniqueAtomIndices = std::accumulate(
         allAtomIndices.begin(), allAtomIndices.end(), std::set<int>{},
-        [](std::set<int> &acc, const std::vector<int> &v) {
+        [](std::set<int> acc, const std::vector<int> &v) {
           acc.insert(std::make_move_iterator(v.begin()),
                      std::make_move_iterator(v.end()));
           return acc;
@@ -1101,14 +1101,14 @@ TEST_CASE("includeTargetMolInResults") {
     CHECK(flattenedAtomIndices.size() == targetMol->getNumAtoms());
     auto flattenedBondIndices = std::accumulate(
         allBondIndices.begin(), allBondIndices.end(), std::vector<int>{},
-        [](std::vector<int> &acc, const std::vector<int> &v) {
+        [](std::vector<int> acc, const std::vector<int> &v) {
           acc.insert(acc.end(), std::make_move_iterator(v.begin()),
                      std::make_move_iterator(v.end()));
           return acc;
         });
     auto uniqueBondIndices = std::accumulate(
         allBondIndices.begin(), allBondIndices.end(), std::set<int>{},
-        [](std::set<int> &acc, const std::vector<int> &v) {
+        [](std::set<int> acc, const std::vector<int> &v) {
           acc.insert(std::make_move_iterator(v.begin()),
                      std::make_move_iterator(v.end()));
           return acc;

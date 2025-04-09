@@ -38,8 +38,8 @@ jobs:
     python: python=3.11
     boost_version: 1.82.0
     compiler: gxx_linux-64
-    cc: gcc-10
-    cxx: g++-10
+    cc: gcc-13
+    cxx: g++-13
     number_of_cores: nproc
     python_name: python311
   steps:
@@ -121,7 +121,7 @@ jobs:
   variables:
     boost_version: 1.84.0
     number_of_cores: nproc
-    python_name: python37
+    python_name: python39
     compiler: gxx_linux-64
     cc: gcc-10
     cxx: g++-10
@@ -134,7 +134,7 @@ jobs:
   variables:
     boost_version: 1.84.0
     number_of_cores: '%NUMBER_OF_PROCESSORS%'
-    python_name: python38
+    python_name: python39
   steps:
   - template: .azure-pipelines/vs_build_swig.yml
 

@@ -9,10 +9,10 @@ steps:
     conda config --add channels conda-forge
     conda config --set solver libmamba
     conda info -a
-    conda create --name rdkit_build $(python) cmake \
+    conda create --name rdkit_build -c conda-forge $(python) cmake \
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
-        numpy=1.24 pillow eigen pandas=2.0 matplotlib-base=3.7 \
+        numpy pillow eigen pandas=2.0 matplotlib-base=3.8 \
         qt=5 cairo
     conda activate rdkit_build
     conda install -c conda-forge pytest nbval ipykernel>=6.0
