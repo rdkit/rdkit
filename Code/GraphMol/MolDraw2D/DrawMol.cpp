@@ -457,7 +457,7 @@ void DrawMol::extractAtomNotes() {
         DrawAnnotation *annot = new DrawAnnotation(
             note, TextAlignType::MIDDLE, "note",
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+            drawOptions_.atomNoteColour, textDrawer_);
         calcAnnotationPosition(atom, *annot);
         annotations_.emplace_back(annot);
       }
@@ -512,7 +512,7 @@ void DrawMol::extractBondNotes() {
         DrawAnnotation *annot = new DrawAnnotation(
             note, TextAlignType::MIDDLE, "note",
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+            drawOptions_.bondNoteColour, textDrawer_);
         calcAnnotationPosition(bond, *annot);
         annotations_.emplace_back(annot);
       }
@@ -1507,6 +1507,11 @@ std::string DrawMol::getAtomSymbol(const Atom &atom,
     symbol = getAtomListText(atom);
     if (drawOptions_.useComplexQueryAtomSymbols) {
       symbol = getComplexQueryAtomEquivalent(symbol);
+    }
+    if (!drawOptions_.bracketsAroundAtomLists) {
+      if (symbol[0] == '[') {
+        symbol = symbol.substr(1, symbol.size() - 2);
+      }
     }
   } else if (isComplexQuery(&atom)) {
     symbol = "?";
@@ -3485,6 +3490,10 @@ void DrawMol::smoothBondJoins() {
   // classes for the atoms and bond it involves, and people use this to
   // identify the lines for other purposes.
   for (auto atom : drawMol_->atoms()) {
+    // If there's an atom label, there is no join.
+    if (atomLabels_[atom->getIdx()]) {
+      continue;
+    }
     bool doIt = false;
     if (atom->getDegree() == 2) {
       doIt = true;
@@ -3499,15 +3508,16 @@ void DrawMol::smoothBondJoins() {
         }
       }
     }
+    int adjAtomIdx = atom->getIdx() + activeAtmIdxOffset_;
     if (doIt) {
       bool done = false;
       for (unsigned int i = 0; i < singleBondLines_.size(); ++i) {
         auto &sbl1 = bonds_[singleBondLines_[i]];
         int p1 = -1;
         int p2 = -1;
-        if (static_cast<int>(atom->getIdx()) == sbl1->atom1_) {
+        if (adjAtomIdx == sbl1->atom1_) {
           p1 = 0;
-        } else if (static_cast<int>(atom->getIdx()) == sbl1->atom2_) {
+        } else if (adjAtomIdx == sbl1->atom2_) {
           p1 = 1;
         }
         if (p1 != -1) {
@@ -3516,9 +3526,9 @@ void DrawMol::smoothBondJoins() {
               continue;
             }
             auto &sbl2 = bonds_[singleBondLines_[j]];
-            if (static_cast<int>(atom->getIdx()) == sbl2->atom1_) {
+            if (adjAtomIdx == sbl2->atom1_) {
               p2 = 0;
-            } else if (static_cast<int>(atom->getIdx()) == sbl2->atom2_) {
+            } else if (adjAtomIdx == sbl2->atom2_) {
               p2 = 1;
             }
             if (p2 != -1) {
@@ -3706,7 +3716,8 @@ DrawColour DrawMol::getColour(int atom_idx) const {
         retval = *highCol;
       }
     }
-  } else if (highlightedAtom) {
+  } else if (highlightedAtom &&
+             !drawOptions_.standardColoursForHighlightedAtoms) {
     // There's going to be a colour behind the atom, so if the
     // atom has a symbol, it should be the same colour as carbon.  This
     // function should only be called if there is an atom symbol.

@@ -287,9 +287,6 @@ void MolDraw2D::drawReaction(
 
   // Copy the reaction because processing for drawing alters it.
   ChemicalReaction nrxn(rxn);
-  // I think a larger minimum font size than the default works better for this
-  int mfs = drawOptions().minFontSize > 12 ? drawOptions().minFontSize : 12;
-  text_drawer_->setMinFontSize(mfs);
   int plusWidth;
   getReactionDrawMols(nrxn, highlightByReactant, highlightColorsReactants,
                       confIds, reagents, products, agents, plusWidth);
@@ -318,7 +315,7 @@ void MolDraw2D::drawReaction(
     frac *= 5 / delta;
   }
   xOffset = drawReactionPart(agents, 0, xOffset, offsets);
-  xOffset = drawReactionPart(products, plusWidth, xOffset, offsets);
+  drawReactionPart(products, plusWidth, xOffset, offsets);
   auto osbw = drawOptions().scaleBondWidth;
   if (reagents.empty() && products.empty() && agents.empty()) {
     // if it's an empty reaction, we won't have a DrawMol with a scale,
@@ -503,6 +500,7 @@ void MolDraw2D::drawPlus(const Point2D &plusPos, int plusWidth,
 // draws the string centred on cds
 void MolDraw2D::drawString(const string &str, const Point2D &cds,
                            bool rawCoords) {
+  text_drawer_->setColour(colour());
   auto draw_cds = rawCoords ? cds : getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, MolDraw2D_detail::OrientType::N);
   //  int olw = lineWidth();
@@ -516,6 +514,7 @@ void MolDraw2D::drawString(const string &str, const Point2D &cds,
 void MolDraw2D::drawString(const std::string &str, const Point2D &cds,
                            MolDraw2D_detail::TextAlignType talign,
                            bool rawCoords) {
+  text_drawer_->setColour(colour());
   auto draw_cds = rawCoords ? cds : getDrawCoords(cds);
   text_drawer_->drawString(str, draw_cds, talign);
 }
@@ -1025,13 +1024,16 @@ void MolDraw2D::calcReactionOffsets(
   // it's too wide for the panel.
   const int arrowMult = 2;  // number of plusWidths for an empty arrow.
 
-  if (width_ == -1) {
-    width_ = reactionWidth(reagents, products, agents, drawOptions(), arrowMult,
-                           plusWidth);
+  int widthToUse = panel_width_ == -1 ? width_ : panel_width_;
+  if (widthToUse == -1) {
+    widthToUse = reactionWidth(reagents, products, agents, drawOptions(),
+                               arrowMult, plusWidth);
+    if (width_ == -1) {
+      width_ = widthToUse;
+    }
   }
-
   // The DrawMols are sized/scaled according to the panelHeight() which is all
-  // there is to go on initially, so they may be wider than the width() in
+  // there is to go on initially, so they may be wider than the widthToUse in
   // total. If so, shrink them to fit.  Because the shrinking imposes min and
   // max font sizes, we may not get the smaller size we want first go, so
   // iterate until we do or we give up.
@@ -1045,10 +1047,10 @@ void MolDraw2D::calcReactionOffsets(
                            return lhs->width_ < rhs->width_;
                          });
     plusWidth = (*maxWidthIt)->width_ / 4;
-    plusWidth = plusWidth > width() / 20 ? width() / 20 : plusWidth;
+    plusWidth = plusWidth > widthToUse / 20 ? widthToUse / 20 : plusWidth;
     auto oldTotWidth = totWidth;
     auto stretch =
-        double(width_ * (1 - 2.0 * drawOptions().padding)) / totWidth;
+        double(widthToUse * (1 - 2.0 * drawOptions().padding)) / totWidth;
     // If stretch < 1, we need to shrink the DrawMols to fit.  This isn't
     // necessary if we're just stretching them along the panel as they already
     // fit for height.
@@ -1061,7 +1063,7 @@ void MolDraw2D::calcReactionOffsets(
     }
     totWidth = reactionWidth(reagents, products, agents, drawOptions(),
                              arrowMult, plusWidth);
-    if (fabs(totWidth - oldTotWidth) < 0.01 * width()) {
+    if (fabs(totWidth - oldTotWidth) < 0.01 * widthToUse) {
       break;
     }
   }
@@ -1081,7 +1083,7 @@ void MolDraw2D::calcReactionOffsets(
   numGaps += products.empty() ? 0 : products.size() - 1;
   numGaps += 1;  // for either side of the arrow
   numGaps += agents.empty() ? 2 : agents.size() - 1;
-  if (width() - totWidth > numGaps * 5) {
+  if (widthToUse - totWidth > numGaps * 5) {
     plusWidth += 5;
   }
   totWidth = reactionWidth(reagents, products, agents, drawOptions(), arrowMult,
@@ -1089,7 +1091,9 @@ void MolDraw2D::calcReactionOffsets(
   // And finally work out where to put all the pieces, centring them.
   // The padding is already taken care of, so take it out.
   int xOffset =
-      std::round((width() - totWidth / (1 + 2.0 * drawOptions().padding)) / 2);
+      x_offset_ +
+      std::round((widthToUse - totWidth / (1 + 2.0 * drawOptions().padding)) /
+                 2);
   for (size_t i = 0; i < reagents.size(); ++i) {
     double hOffset = y_offset_ + (panelHeight() - reagents[i]->height_) / 2.0;
     offsets.emplace_back(xOffset, hOffset);
@@ -1136,6 +1140,18 @@ int MolDraw2D::drawReactionPart(
 
   Point2D plusPos(0.0, y_offset_ + panelHeight() / 2.0);
   for (size_t i = 0; i < reactBit.size(); ++i) {
+    // Adjust the scale to take account of any reagent padding.  The molecules
+    // will be re-centred in their panel, so don't need to fiddle with
+    // offsets.
+    double widthPadding = reactBit[i]->width_ * drawOptions().componentPadding;
+    double heightPadding =
+        reactBit[i]->height_ * drawOptions().componentPadding;
+    double newXScale =
+        (reactBit[i]->width_ - 2 * widthPadding) / reactBit[i]->width_;
+    double newYScale =
+        (reactBit[i]->height_ - 2 * heightPadding) / reactBit[i]->height_;
+    double newScale = std::min(newXScale, newYScale) * reactBit[i]->getScale();
+    reactBit[i]->setScale(newScale, newScale, true);
     ++activeMolIdx_;
     reactBit[i]->setOffsets(offsets[initOffset].x, offsets[initOffset].y);
     reactBit[i]->draw(*this);

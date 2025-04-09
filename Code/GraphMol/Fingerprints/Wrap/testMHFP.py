@@ -50,6 +50,26 @@ class TestCase(unittest.TestCase):
     dist = rdMHFPFingerprint.MHFPEncoder.Distance(fp_a, fp_c)
     self.assertEqual(dist, 0.5390625)
 
+  def testBulkFunctions(self):
+    s = "CN1C=NC2=C1C(=O)N(C(=O)N2C)C"
+    l = [s] * 10
+    enc = rdMHFPFingerprint.MHFPEncoder(128, 42)
+
+    fp = enc.EncodeSECFPSmiles(s)
+    fps = enc.EncodeSECFPSmilesBulk(l)
+    self.assertEqual(len(fps), 10)
+    self.assertEqual(fps[0], fp)
+
+    fp = enc.EncodeSmiles(s)
+    fps = enc.EncodeSmilesBulk(l)
+    self.assertEqual(len(fps), 10)
+    self.assertEqual(list(fps[0]), list(fp))
+
+    mols = [Chem.MolFromSmiles(x) for x in l]
+    fps = enc.EncodeMolsBulk(mols)
+    self.assertEqual(len(fps), 10)
+    self.assertEqual(list(fps[0]), list(fp))
+
 
 if __name__ == "__main__":
   unittest.main()

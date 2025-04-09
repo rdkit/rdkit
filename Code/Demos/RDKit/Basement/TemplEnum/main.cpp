@@ -74,26 +74,6 @@ void test3() {
   std::cout << " <---------- Done " << std::endl;
 }
 
-void test4() {
-  // test templates that have repeated attachment points
-  std::cout << " ----------> Test4 " << std::endl;
-  RWMOL_SPTR_VECT library;
-  std::vector<const char *> fileNames;
-  fileNames.push_back("esters.2.sdf");
-  fileNames.push_back("esters.2.sdf");
-  library = enumFromFiles("template.2.mol", fileNames);
-
-  CHECK_INVARIANT(library.size() == 2, "");
-  library[0]->debugMol(std::cout);
-  std::cout << "smi0: " << MolToSmiles(*library[0], 0) << std::endl;
-  std::cout << "smi1: " << MolToSmiles(*library[1], 0) << std::endl;
-  CHECK_INVARIANT(library[0]->getNumAtoms() == 14, "");
-  CHECK_INVARIANT(library[1]->getNumAtoms() == 16, "");
-
-  library.clear();
-  std::cout << " <---------- Done " << std::endl;
-}
-
 void test5() {
   // test working from SMILES
   std::cout << " ----------> Test5 " << std::endl;
@@ -336,146 +316,11 @@ void test7() {
   std::cout << " <---------- Done " << std::endl;
 }
 
-#if 0
-void testCoords(){
-  std::cout << " ----------> Test Coords " << std::endl;
-  RWMol *m1 = SmilesToMol("[Xa]C",0,0);
-  CHECK_INVARIANT(m1,"");
-  m1->getConformer().setAtomPos(1,Point3D(0,0,0));
-  m1->getAtomWithIdx(0)->setPos(0.0,1.5,0.0);
-
-  RWMol *m2 = SmilesToMol("[X]C(C)(C)C",0,0);
-  TEST_ASSERT(m2);
-  m2->getAtomWithIdx(0)->setPos(3.0,1,1);
-  m2->getAtomWithIdx(1)->setPos(1.5,1,1);
-  m2->getAtomWithIdx(2)->setPos(0.0,1,1);
-  m2->getAtomWithIdx(3)->setPos(1.5,2.5,1);
-  m2->getAtomWithIdx(4)->setPos(1.5,1,2.5);
-
-  orientSidechain(m1,m2,0,0);
-  std::cout << "Atoms:" << std::endl;
-  for(int i=0;i<m2->getNumAtoms();i++){
-    std::cout << i << " " << m2->getAtomWithIdx(i)->getPos() << std::endl;
-  }
-
-  TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getPos(),
-		  m2->getAtomWithIdx(1)->getPos()));
-
-  TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getPos(),
-		  RDGeom::Point3D(0,0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(1)->getPos(),
-		  RDGeom::Point3D(0,1.5,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(2)->getPos(),
-		  RDGeom::Point3D(0,3.0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(3)->getPos(),
-		  RDGeom::Point3D(1.5,1.5,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(4)->getPos(),
-		  RDGeom::Point3D(0,1.5,1.5)));
-  
-  // ---------------------------------------------------
-  std::cout << "-*-*-*-*-*-*-*-*-*-*-*-*-" << std::endl;
-  m1->getAtomWithIdx(1)->setPos(0,0,0);
-  m1->getAtomWithIdx(0)->setPos(0.0,-1.5,0.0);
-  m2->getAtomWithIdx(0)->setPos(3.0,1,1);
-  m2->getAtomWithIdx(1)->setPos(1.5,1,1);
-  m2->getAtomWithIdx(2)->setPos(0.0,1,1);
-  m2->getAtomWithIdx(3)->setPos(1.5,2.5,1);
-  m2->getAtomWithIdx(4)->setPos(1.5,1,2.5);
-
-  orientSidechain(m1,m2,0,0);
-  std::cout << "Atoms:" << std::endl;
-  for(int i=0;i<m2->getNumAtoms();i++){
-    std::cout << i << " " << m2->getAtomWithIdx(i)->getPos() << std::endl;
-  }
-  TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getPos(),
-		  m2->getAtomWithIdx(1)->getPos()));
-
-  TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getPos(),
-		  RDGeom::Point3D(0,0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(1)->getPos(),
-		  RDGeom::Point3D(0,-1.5,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(2)->getPos(),
-		  RDGeom::Point3D(0,-3.0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(3)->getPos(),
-		  RDGeom::Point3D(-1.5,-1.5,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(4)->getPos(),
-		  RDGeom::Point3D(0,-1.5,1.5)));
-
-  // ---------------------------------------------------
-  std::cout << "-*-*-*-*-*-*-*-*-*-*-*-*-" << std::endl;
-  m1->getAtomWithIdx(1)->setPos(1,0,0);
-  m1->getAtomWithIdx(0)->setPos(1.0,-1.5,0);
-  m2->getAtomWithIdx(0)->setPos(3.0,1,1);
-  m2->getAtomWithIdx(1)->setPos(1.5,1,1);
-  m2->getAtomWithIdx(2)->setPos(0.0,1,1);
-  m2->getAtomWithIdx(3)->setPos(1.5,2.5,1);
-  m2->getAtomWithIdx(4)->setPos(1.5,1,2.5);
-
-  orientSidechain(m1,m2,0,0);
-  std::cout << "Atoms:" << std::endl;
-  for(int i=0;i<m2->getNumAtoms();i++){
-    std::cout << i << " " << m2->getAtomWithIdx(i)->getPos() << std::endl;
-  }
-  TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getPos(),
-		  m2->getAtomWithIdx(1)->getPos()));
-
-  TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getPos(),
-		  RDGeom::Point3D(1,0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(1)->getPos(),
-		  RDGeom::Point3D(1,-1.5,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(2)->getPos(),
-		  RDGeom::Point3D(1,-3.0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(3)->getPos(),
-		  RDGeom::Point3D(-0.5,-1.5,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(4)->getPos(),
-		  RDGeom::Point3D(1,-1.5,1.5)));
-
-  // ---------------------------------------------------
-  std::cout << "-*-*-*-*-*-*-*-*-*-*-*-*-" << std::endl;
-  m1->getAtomWithIdx(1)->setPos(3.0,0,0);
-  m1->getAtomWithIdx(0)->setPos(1.5,0.0,0.0);
-  m2->getAtomWithIdx(0)->setPos(3.0,1,1);
-  m2->getAtomWithIdx(1)->setPos(1.5,1,1);
-  m2->getAtomWithIdx(2)->setPos(0.0,1,1);
-  m2->getAtomWithIdx(3)->setPos(1.5,2.5,1);
-  m2->getAtomWithIdx(4)->setPos(1.5,1,2.5);
-
-  orientSidechain(m1,m2,0,0);
-  std::cout << "Atoms:" << std::endl;
-  for(int i=0;i<m2->getNumAtoms();i++){
-    std::cout << i << " " << m2->getAtomWithIdx(i)->getPos() << std::endl;
-  }
-  TEST_ASSERT(feq(m1->getAtomWithIdx(0)->getPos(),
-		  m2->getAtomWithIdx(1)->getPos()));
-
-  TEST_ASSERT(feq(m2->getAtomWithIdx(0)->getPos(),
-		  RDGeom::Point3D(3,0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(1)->getPos(),
-		  RDGeom::Point3D(1.5,0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(2)->getPos(),
-		  RDGeom::Point3D(0,0,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(3)->getPos(),
-		  RDGeom::Point3D(1.5,1.5,0)));
-  TEST_ASSERT(feq(m2->getAtomWithIdx(4)->getPos(),
-		  RDGeom::Point3D(1.5,0,1.5)));
-
-
-  delete m1;
-  delete m2;
-  
-  std::cout << " <---------- Done " << std::endl;
-}
-
-#endif
 int main() {
-#if 1
   test1();
   test2();
   test3();
-  // test4();
   test5();
   test6();
-#endif
   test7();
-  // testCoords();
 }

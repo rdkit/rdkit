@@ -5,6 +5,9 @@ steps:
     sudo chown -R ${USER} ${CONDA}
     conda config --set always_yes yes --set changeps1 no
     conda update -q conda
+    conda config --set channel_priority strict
+    conda config --add channels conda-forge
+    conda config --set solver libmamba
     conda info -a
     conda create --name rdkit_build -c conda-forge $(python) cmake \
         boost-cpp=$(boost_version) \
@@ -43,7 +46,6 @@ steps:
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_CFFI_LIB=ON \
     -DBoost_NO_SYSTEM_PATHS=ON \
-    -DBoost_NO_BOOST_CMAKE=TRUE \
     -DRDK_BOOST_PYTHON3_NAME=$(python_name) \
     -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \

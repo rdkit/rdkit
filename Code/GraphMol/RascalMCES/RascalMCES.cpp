@@ -16,6 +16,7 @@
 // https://eprints.whiterose.ac.uk/3568/1/willets3.pdf
 
 #include <chrono>
+#include <functional>
 #include <iostream>
 #include <map>
 #include <regex>
@@ -23,8 +24,10 @@
 #include <unordered_set>
 #include <vector>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/MolOps.h>
@@ -41,7 +44,6 @@
 
 namespace RDKit {
 namespace RascalMCES {
-
 class TimedOutException : public std::exception {
  public:
   TimedOutException(long long int run_time,
@@ -88,6 +90,7 @@ struct RascalStartPoint {
   std::unique_ptr<ROMol> d_mol1;
   std::unique_ptr<ROMol> d_mol2;
 
+  // The line graphs of the 2 molecules as adjacency matrices
   std::vector<std::vector<int>> d_adjMatrix1, d_adjMatrix2;
   std::vector<std::pair<int, int>> d_vtxPairs;
   std::vector<boost::dynamic_bitset<>> d_modProd;
@@ -265,23 +268,14 @@ void getBondLabels(const ROMol &mol, const RascalOptions &opts,
     } else {
       bondType = std::to_string(b->getBondType());
     }
-    if (b->getBeginAtom()->getAtomicNum() == b->getEndAtom()->getAtomicNum()) {
-      if (b->getEndAtom()->getDegree() < b->getBeginAtom()->getDegree()) {
-        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] + bondType +
-                                  atomLabels[b->getBeginAtomIdx()];
-      } else {
-        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] + bondType +
-                                  atomLabels[b->getEndAtomIdx()];
-      }
-    } else {
-      if (b->getBeginAtom()->getAtomicNum() < b->getEndAtom()->getAtomicNum()) {
-        bondLabels[b->getIdx()] = atomLabels[b->getBeginAtomIdx()] + bondType +
-                                  atomLabels[b->getEndAtomIdx()];
-      } else {
-        bondLabels[b->getIdx()] = atomLabels[b->getEndAtomIdx()] + bondType +
-                                  atomLabels[b->getBeginAtomIdx()];
-      }
+    // The atom labels need to be in consistent order irrespective
+    // of input order.
+    auto lbl1 = atomLabels[b->getBeginAtomIdx()];
+    auto lbl2 = atomLabels[b->getEndAtomIdx()];
+    if (lbl1 < lbl2) {
+      std::swap(lbl1, lbl2);
     }
+    bondLabels[b->getIdx()] = lbl1 + bondType + lbl2;
   }
 }
 
@@ -338,17 +332,22 @@ void makeLineGraph(const ROMol &mol, std::vector<std::vector<int>> &adjMatrix) {
   }
 }
 
-// make sure that mol1_bond in mol1 and mol2_bond in mol2 are, if aromatic, in
-// at least one ring that is the same.
-bool checkAromaticRings(const ROMol &mol1,
-                        std::vector<std::string> &mol1RingSmiles,
-                        int mol1BondIdx, const ROMol &mol2,
-                        std::vector<std::string> &mol2RingSmiles,
-                        int mol2BondIdx) {
+// make sure that mol1_bond in mol1 and mol2_bond in mol2 are, in at least one
+// ring that is the same. If aromaticRingsMatchOnly is true, then only aromatic
+// bonds are considered.
+bool checkRings(const ROMol &mol1, std::vector<std::string> &mol1RingSmiles,
+                int mol1BondIdx, const ROMol &mol2,
+                std::vector<std::string> &mol2RingSmiles, int mol2BondIdx,
+                bool aromaticRingsMatchOnly) {
   auto mol1Bond = mol1.getBondWithIdx(mol1BondIdx);
   auto mol2Bond = mol2.getBondWithIdx(mol2BondIdx);
-  if (!mol1Bond->getIsAromatic() || !mol2Bond->getIsAromatic()) {
+  if (aromaticRingsMatchOnly &&
+      (!mol1Bond->getIsAromatic() || !mol2Bond->getIsAromatic())) {
     return true;
+  }
+
+  if (mol1Bond->getBondType() != mol2Bond->getBondType()) {
+    return false;
   }
 
   // If neither bond was in a ring, but they were marked aromatic, then
@@ -454,16 +453,47 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
   for (auto i = 0u; i < vtxLabels1.size(); ++i) {
     for (auto j = 0u; j < vtxLabels2.size(); ++j) {
       if (vtxLabels1[i] == vtxLabels2[j]) {
-        if (opts.completeAromaticRings &&
-            !checkAromaticRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles,
-                                j)) {
+        // completeSmallestRings automatically implies completeAromaticRings and
+        // ringMatchesRingsOnly
+        if (opts.completeSmallestRings &&
+            !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j,
+                        false)) {
+          continue;
+        } else if (opts.completeAromaticRings &&
+                   !checkRings(mol1, mol1RingSmiles, i, mol2, mol2RingSmiles, j,
+                               true)) {
           continue;
         }
-        if (opts.ringMatchesRingOnly &&
+        if (!opts.completeSmallestRings && opts.ringMatchesRingOnly &&
             !checkRingMatchesRing(mol1, i, mol2, j)) {
           continue;
         }
         vtxPairs.push_back(std::make_pair(i, j));
+      }
+    }
+  }
+}
+
+// Use the Floyd-Warshall algorithm to compute the distance matrix from the
+// adjacency matrix.
+// Adapted from https://en.wikipedia.org/wiki/Floyd–Warshall_algorithm
+void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
+                    std::vector<std::vector<int>> &distMatrix) {
+  distMatrix = std::vector<std::vector<int>>(
+      adjMatrix.size(),
+      std::vector<int>(adjMatrix.size(), adjMatrix.size() + 1));
+  for (size_t i = 0u; i < adjMatrix.size(); ++i) {
+    distMatrix[i][i] = 0;
+    for (size_t j = 0u; j < adjMatrix.size(); ++j) {
+      if (i != j && adjMatrix[i][j]) {
+        distMatrix[i][j] = 1;
+      }
+    }
+  }
+  for (size_t k = 0u; k < adjMatrix.size(); ++k) {
+    for (size_t i = 0u; i < adjMatrix.size(); ++i) {
+      for (size_t j = 0u; j < adjMatrix.size(); ++j) {
+        distMatrix[i][j] = std::min(distMatrix[i][j], distMatrix[i][k] + distMatrix[k][j]);
       }
     }
   }
@@ -477,11 +507,9 @@ void buildPairs(const ROMol &mol1, const std::vector<unsigned int> &vtxLabels1,
 void makeModularProduct(const ROMol &mol1,
                         const std::vector<std::vector<int>> &adjMatrix1,
                         const std::vector<unsigned int> &vtxLabels1,
-                        const std::vector<std::vector<int>> &distMatrix1,
                         const ROMol &mol2,
                         const std::vector<std::vector<int>> &adjMatrix2,
                         const std::vector<unsigned int> &vtxLabels2,
-                        const std::vector<std::vector<int>> &distMatrix2,
                         const RascalOptions &opts,
                         std::vector<std::pair<int, int>> &vtxPairs,
                         std::vector<boost::dynamic_bitset<>> &modProd) {
@@ -492,11 +520,17 @@ void makeModularProduct(const ROMol &mol1,
     return;
   }
   if (vtxPairs.size() > opts.maxBondMatchPairs) {
-    std::cerr << "Too many matching bond pairs (" << vtxPairs.size()
-              << ") so can't continue." << std::endl;
+    BOOST_LOG(rdErrorLog) << "Too many matching bond pairs (" << vtxPairs.size()
+                          << ") so can't continue." << std::endl;
     modProd.clear();
     return;
   }
+  std::vector<std::vector<int>> distMatrix1, distMatrix2;
+  if (opts.maxFragSeparation > -1) {
+    calcDistMatrix(adjMatrix1, distMatrix1);
+    calcDistMatrix(adjMatrix2, distMatrix2);
+  }
+
   modProd = std::vector<boost::dynamic_bitset<>>(
       vtxPairs.size(), boost::dynamic_bitset<>(vtxPairs.size()));
   for (auto i = 0u; i < vtxPairs.size() - 1; ++i) {
@@ -513,14 +547,9 @@ void makeModularProduct(const ROMol &mol1,
           distsOk = false;
         }
       }
-      if (opts.singleLargestFrag &&
-          distMatrix1[vtxPairs[i].first][vtxPairs[j].first] !=
-              distMatrix2[vtxPairs[i].second][vtxPairs[j].second]) {
-        distsOk = false;
-      }
       if (distsOk && adjMatrix1[vtxPairs[i].first][vtxPairs[j].first] ==
                          adjMatrix2[vtxPairs[i].second][vtxPairs[j].second]) {
-        modProd[i][j] = modProd[j][i] = 1;
+        modProd[i][j] = modProd[j][i] = true;
       }
     }
   }
@@ -577,8 +606,8 @@ void printClique(const std::vector<unsigned int> &clique,
       os << "{" << vtxPairs[mem].first << ", " << vtxPairs[mem].second << "},";
     }
   }
-  std::cout << std::endl;
-  std::cout << "mol 1 bonds : [";
+  os << std::endl;
+  os << "mol 1 bonds : [";
   for (auto mem : clique) {
     if (swapped) {
       os << vtxPairs[mem].second << ", ";
@@ -586,8 +615,8 @@ void printClique(const std::vector<unsigned int> &clique,
       os << vtxPairs[mem].first << ", ";
     }
   }
-  std::cout << "]" << std::endl;
-  std::cout << "mol 2 bonds : [";
+  os << "]" << std::endl;
+  os << "mol 2 bonds : [";
   for (auto mem : clique) {
     if (swapped) {
       os << vtxPairs[mem].first << ", ";
@@ -595,7 +624,7 @@ void printClique(const std::vector<unsigned int> &clique,
       os << vtxPairs[mem].second << ", ";
     }
   }
-  std::cout << "]" << std::endl;
+  os << "]" << std::endl;
 }
 
 // if the clique involves a delta-y exchange, returns true.  Should only be
@@ -974,33 +1003,6 @@ void findEquivalentBonds(const ROMol &mol, std::vector<int> &equivBonds) {
   }
 }
 
-// Use the Floyd-Warshall algorithm to compute the distance matrix from the
-// adjacency matrix.
-// Adapted from https://en.wikipedia.org/wiki/Floyd–Warshall_algorithm
-void calcDistMatrix(const std::vector<std::vector<int>> &adjMatrix,
-                    std::vector<std::vector<int>> &distMatrix) {
-  distMatrix = std::vector<std::vector<int>>(
-      adjMatrix.size(),
-      std::vector<int>(adjMatrix.size(), adjMatrix.size() + 1));
-  for (size_t i = 0u; i < adjMatrix.size(); ++i) {
-    distMatrix[i][i] = 0;
-    for (size_t j = 0u; j < adjMatrix.size(); ++j) {
-      if (i != j && adjMatrix[i][j]) {
-        distMatrix[i][j] = 1;
-      }
-    }
-  }
-  for (size_t k = 0u; k < adjMatrix.size(); ++k) {
-    for (size_t i = 0u; i < adjMatrix.size(); ++i) {
-      for (size_t j = 0u; j < adjMatrix.size(); ++j) {
-        if (distMatrix[i][j] > distMatrix[i][k] + distMatrix[k][j]) {
-          distMatrix[i][j] = distMatrix[i][k] + distMatrix[k][j];
-        }
-      }
-    }
-  }
-}
-
 // Set the atomic number of the atoms that match the SMARTS in
 // RascalOptions.EquivalentAtoms to 110, 111 etc.  These will
 // be mapped back at the end.
@@ -1069,25 +1071,21 @@ RascalStartPoint makeInitialPartitionSet(const ROMol *mol1, const ROMol *mol2,
   makeLineGraph(*starter.d_mol1, starter.d_adjMatrix1);
   makeLineGraph(*starter.d_mol2, starter.d_adjMatrix2);
 
-  std::vector<std::vector<int>> distMat1, distMat2;
-  if (opts.maxFragSeparation > -1 || opts.singleLargestFrag) {
-    calcDistMatrix(starter.d_adjMatrix1, distMat1);
-    calcDistMatrix(starter.d_adjMatrix2, distMat2);
-  }
-
   // pairs are vertices in the 2 line graphs that are the same type.
   // d_modProd is the modular product/correspondence graph of the two
   // line graphs.
   makeModularProduct(*starter.d_mol1, starter.d_adjMatrix1, bondLabels1,
-                     distMat1, *starter.d_mol2, starter.d_adjMatrix2,
-                     bondLabels2, distMat2, opts, starter.d_vtxPairs,
-                     starter.d_modProd);
+                     *starter.d_mol2, starter.d_adjMatrix2, bondLabels2, opts,
+                     starter.d_vtxPairs, starter.d_modProd);
   if (starter.d_modProd.empty()) {
     return starter;
   }
-  starter.d_lowerBound = calcLowerBound(*starter.d_mol1, *starter.d_mol2,
-                                        opts.similarityThreshold);
-
+  if (opts.minCliqueSize > 0) {
+    starter.d_lowerBound = opts.minCliqueSize;
+  } else {
+    starter.d_lowerBound = calcLowerBound(*starter.d_mol1, *starter.d_mol2,
+                                          opts.similarityThreshold);
+  }
   starter.d_partSet.reset(new PartitionSet(starter.d_modProd,
                                            starter.d_vtxPairs, bondLabels1,
                                            bondLabels2, starter.d_lowerBound));
@@ -1121,7 +1119,7 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
   try {
     explorePartitions(starter, startTime, tmpOpts, maxCliques);
   } catch (TimedOutException &e) {
-    std::cout << e.what() << std::endl;
+    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
     maxCliques = e.d_cliques;
     timedOut = true;
   }
@@ -1135,7 +1133,55 @@ std::vector<RascalResult> findMCES(RascalStartPoint &starter,
                      opts.maxFragSeparation, opts.exactConnectionsMatch,
                      opts.equivalentAtoms, opts.ignoreBondOrders));
   }
-  std::sort(results.begin(), results.end(), details::resultCompare);
+  if (opts.singleLargestFrag) {
+    std::sort(
+        results.begin(), results.end(),
+        [](const RascalResult &r1, const RascalResult &r2) -> bool {
+          if (r1.getAtomMatches().size() == r2.getAtomMatches().size()) {
+            if (r1.getBondMatches().size() == r2.getBondMatches().size()) {
+              if (r1.getAtomMatches() == r2.getAtomMatches()) {
+                return (r1.getBondMatches() < r2.getBondMatches());
+              }
+              return r1.getAtomMatches() < r2.getAtomMatches();
+            }
+            return r1.getBondMatches().size() > r2.getBondMatches().size();
+          }
+          return (r1.getAtomMatches().size() > r2.getAtomMatches().size());
+        });
+
+    // the singleLargestFrag method throws bits of solutions out, so there may
+    // now be duplicates and results that are different sizes.
+    results.erase(
+        std::unique(results.begin(), results.end(),
+                    [](const RascalResult &r1, const RascalResult &r2) -> bool {
+                      return (r1.getAtomMatches() == r2.getAtomMatches() &&
+                              r1.getBondMatches() == r2.getBondMatches());
+                    }),
+        results.end());
+    boost::dynamic_bitset<> want(results.size());
+    want.set();
+    for (size_t i = 1; i < results.size(); ++i) {
+      if (results[i].getAtomMatches().size() <
+              results[0].getAtomMatches().size() ||
+          results[i].getBondMatches().size() <
+              results[0].getBondMatches().size()) {
+        want[i] = false;
+      }
+    }
+    if (want.count() < results.size()) {
+      size_t j = 0;
+      for (size_t i = 0; i < results.size(); ++i) {
+        if (want[i]) {
+          results[j++] = results[i];
+        }
+      }
+      results.erase(results.begin() + j, results.end());
+    }
+  } else {
+    // If 2 cliques are the same size, this sort puts the one with the smaller
+    // number of fragments first, which may have fewer atoms.
+    std::sort(results.begin(), results.end(), details::resultCompare);
+  }
   return results;
 }
 

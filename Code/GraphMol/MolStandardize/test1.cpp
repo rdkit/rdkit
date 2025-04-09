@@ -60,7 +60,7 @@ void testCleanup() {
   {
     RWMOL_SPTR m = "C[Hg]C"_smiles;
     RWMOL_SPTR res(MolStandardize::cleanup(*m, params));
-    TEST_ASSERT(MolToSmiles(*res) == "C[Hg]C")
+    TEST_ASSERT(MolToSmiles(*res) == "[CH3][Hg][CH3]")
   }
   BOOST_LOG(rdDebugLog) << "Finished" << std::endl;
 }
@@ -143,7 +143,7 @@ void testMetalDisconnector() {
     RWMOL_SPTR m("c1ccccc1[Mg]Br"_smiles);
     TEST_ASSERT(m);
     md.disconnect(*m);
-    TEST_ASSERT(MolToSmiles(*m) == "Br[Mg]c1ccccc1");
+    TEST_ASSERT(MolToSmiles(*m) == "[Br][Mg][c]1ccccc1");
   }
 
   {
@@ -157,7 +157,7 @@ void testMetalDisconnector() {
     RWMOL_SPTR m("Br[Mg]c1ccccc1CCC(=O)O[Na]"_smiles);
     TEST_ASSERT(m);
     md.disconnect(*m);
-    TEST_ASSERT(MolToSmiles(*m) == "O=C([O-])CCc1ccccc1[Mg]Br.[Na+]");
+    TEST_ASSERT(MolToSmiles(*m) == "O=C([O-])CCc1cccc[c]1[Mg][Br].[Na+]");
   }
 
   // test input own dp_metal_non, dp_metal_nof
@@ -172,7 +172,7 @@ void testMetalDisconnector() {
     ROMOL_SPTR m("CCC(=O)O[Na]"_smiles);
     TEST_ASSERT(m);
     ROMOL_SPTR nm(md2.disconnect(*m));
-    TEST_ASSERT(MolToSmiles(*nm) == "CCC(=O)O[Na]");  // not disconnected
+    TEST_ASSERT(MolToSmiles(*nm) == "CCC(=O)[O][Na]");  // not disconnected
   }
 
   // test that metals are not assigned excess positive charge

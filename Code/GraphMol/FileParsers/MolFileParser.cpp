@@ -3094,14 +3094,17 @@ void ProcessMolProps(RWMol *mol) {
       ) {
         atom->setNumExplicitHs(0);
       } else {
-        if (atom->getExplicitValence() > ival) {
+        if (static_cast<int>(atom->getValence(Atom::ValenceType::EXPLICIT)) >
+            ival) {
           BOOST_LOG(rdWarningLog)
               << "atom " << atom->getIdx() << " has specified valence (" << ival
               << ") smaller than the drawn valence "
-              << atom->getExplicitValence() << "." << std::endl;
+              << atom->getValence(Atom::ValenceType::EXPLICIT) << "."
+              << std::endl;
           atom->setNumExplicitHs(0);
         } else {
-          atom->setNumExplicitHs(ival - atom->getExplicitValence());
+          atom->setNumExplicitHs(ival -
+                                 atom->getValence(Atom::ValenceType::EXPLICIT));
         }
       }
     }
@@ -3348,7 +3351,9 @@ void finishMolProcessing(
   const Conformer &conf = res->getConformer();
   if (chiralityPossible || conf.is3D()) {
     if (!conf.is3D()) {
-      DetectAtomStereoChemistry(*res, &conf);
+      bool replaceExistingTags = true;
+      MolOps::assignChiralTypesFromBondDirs(*res, conf.getId(),
+                                            replaceExistingTags);
     } else {
       res->updatePropertyCache(false);
       MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);
@@ -3375,7 +3380,7 @@ void finishMolProcessing(
       unsigned int failedOp = 0;
       MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
       MolOps::detectBondStereochemistry(*res);
-      MolOps::removeHs(*res, false, false);
+      MolOps::removeHs(*res);
     } else {
       MolOps::sanitizeMol(*res);
       MolOps::detectBondStereochemistry(*res);

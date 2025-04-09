@@ -2,6 +2,9 @@
 #include <map>
 #include <vector>
 
+#ifndef RDKIT_PUBCHEMSHAPE_GUARD
+#define RDKIT_PUBCHEMSHAPE_GUARD
+
 //! The input for the pubchem shape alignment code
 struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   std::vector<float> coord;
@@ -66,3 +69,5 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     int refConfId = -1, int fitConfId = -1, bool useColors = true,
     double opt_param = 1.0, unsigned int max_preiters = 10u,
     unsigned int max_postiters = 30u);
+
+#endif

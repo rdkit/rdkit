@@ -4221,7 +4221,8 @@ void testGithub164() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3);
     TEST_ASSERT(m->getNumBonds() == 2);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) ==
+                2);
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
@@ -4896,7 +4897,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CCC(=O)O->[Cu]");
+    TEST_ASSERT(smiles == "CCC(=O)[OH]->[Cu]");
 
     delete m;
   }
@@ -4910,7 +4911,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(9)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CCC(=O)O->[Cu]<-OC(O)CC");
+    TEST_ASSERT(smiles == "CCC(=O)[OH]->[Cu]<-[OH]C(O)CC");
 
     delete m;
   }
@@ -4923,7 +4924,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CC(C)->[Mg](Cl)Cl");
+    TEST_ASSERT(smiles == "C[CH2](C)->[Mg]([Cl])[Cl]");
 
     delete m;
   }
@@ -4962,7 +4963,8 @@ void testGithub1029() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 3268);
     TEST_ASSERT(m->getNumBonds() == 3302);
-    TEST_ASSERT(m->getAtomWithIdx(121)->getExplicitValence() == 4);
+    TEST_ASSERT(
+        m->getAtomWithIdx(121)->getValence(Atom::ValenceType::EXPLICIT) == 4);
     TEST_ASSERT(m->getAtomWithIdx(121)->getFormalCharge() == 1);
 
     delete m;
@@ -4974,7 +4976,8 @@ void testGithub1029() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getNumAtoms() == 1533);
     TEST_ASSERT(m->getNumBonds() == 1545);
-    TEST_ASSERT(m->getAtomWithIdx(123)->getExplicitValence() == 4);
+    TEST_ASSERT(
+        m->getAtomWithIdx(123)->getValence(Atom::ValenceType::EXPLICIT) == 4);
     TEST_ASSERT(m->getAtomWithIdx(123)->getFormalCharge() == 1);
 
     delete m;

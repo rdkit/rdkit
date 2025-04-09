@@ -283,15 +283,16 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
   res.shift = {-ave.x, -ave.y, -ave.z};
   res.coord.resize(nAlignmentAtoms * 3);
 
-  for (unsigned i = 0; i < nAtoms; ++i) {
+  for (unsigned i = 0, j = 0; i < nAtoms; ++i) {
     // use only non-H for alignment
     if (mol.getAtomWithIdx(i)->getAtomicNum() > 1) {
       RDGeom::Point3D pos = conformer.getAtomPos(i);
       pos -= ave;
 
-      res.coord[i * 3] = pos.x;
-      res.coord[(i * 3) + 1] = pos.y;
-      res.coord[(i * 3) + 2] = pos.z;
+      res.coord[j * 3] = pos.x;
+      res.coord[(j * 3) + 1] = pos.y;
+      res.coord[(j * 3) + 2] = pos.z;
+      ++j;
     }
   }
 

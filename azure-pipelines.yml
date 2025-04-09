@@ -4,6 +4,18 @@ trigger:
 - dev/*
 
 jobs:
+- job: Ubuntu_x64_minimallib_build
+  timeoutInMinutes: 120
+  pool:
+    vmImage: ubuntu-latest
+  steps:
+  - task: Docker@2
+    displayName: 'Build MinimalLib JS bindings'
+    inputs:
+      command: build
+      Dockerfile: './Code/MinimalLib/docker/Dockerfile_CI'
+      buildContext: '.'
+      tags: 'latest' 
 - job: Ubuntu_x64
   timeoutInMinutes: 120
   pool:
@@ -14,8 +26,8 @@ jobs:
     compiler: gxx_linux-64
     number_of_cores: nproc
     python_name: python39
-    cc: gcc-10
-    cxx: g++-10
+    cc: gcc-11
+    cxx: g++-11
   steps:
   - template: .azure-pipelines/linux_build.yml
 - job: Ubuntu_x64_py311
@@ -26,8 +38,8 @@ jobs:
     python: python=3.11
     boost_version: 1.82.0
     compiler: gxx_linux-64
-    cc: gcc-10
-    cxx: g++-10
+    cc: gcc-13
+    cxx: g++-13
     number_of_cores: nproc
     python_name: python311
   steps:
@@ -82,11 +94,11 @@ jobs:
   pool:
     vmImage: ubuntu-22.04
   variables:
-    boost_version: 1.82.0
+    boost_version: 1.82
     number_of_cores: nproc
     compiler: gxx_linux-64
-    cc: gcc-10
-    cxx: g++-10
+    cc: gcc-11
+    cxx: g++-11
   steps:
   - template: .azure-pipelines/linux_build_cartridge.yml
 - job: Ubuntu_x64_limitexternaldependencies

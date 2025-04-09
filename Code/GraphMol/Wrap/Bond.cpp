@@ -207,7 +207,8 @@ struct bond_wrapper {
             "  RETURNS: a string\n\n"
             "  NOTE:\n"
             "    - If the property has not been set, a KeyError exception "
-            "will be raised.\n")
+            "will be raised.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("SetIntProp", BondSetProp<int>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
              "Sets a bond property\n\n"
@@ -229,7 +230,8 @@ struct bond_wrapper {
              "  RETURNS: an int\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("GetUnsignedProp", GetProp<Bond, unsigned int>,
              python::args("self", "key"),
@@ -240,7 +242,8 @@ struct bond_wrapper {
              "  RETURNS: an int (Python has no unsigned type)\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("SetDoubleProp", BondSetProp<double>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
@@ -257,7 +260,8 @@ struct bond_wrapper {
              "  RETURNS: a double\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("SetBoolProp", BondSetProp<bool>,
              (python::arg("self"), python::arg("key"), python::arg("val")),
@@ -273,7 +277,8 @@ struct bond_wrapper {
              "  RETURNS: a boolean\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
 
         .def("HasProp", BondHasProp, python::args("self", "key"),
              "Queries a Bond to see if a particular property has been "
