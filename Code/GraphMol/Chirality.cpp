@@ -2517,7 +2517,6 @@ void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo,
             si.controllingAtoms[2] != StereoInfo::NOATOM) {
           bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
           bond->setStereo(Bond::BondStereo::STEREOANY);
-          bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
         } else {
           bond->setStereo(Bond::BondStereo::STEREONONE);
         }
