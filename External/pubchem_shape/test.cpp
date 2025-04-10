@@ -282,3 +282,16 @@ TEST_CASE("Github #8096") {
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(1.0, 0.005));
   }
 }
+
+TEST_CASE("Serialization") {
+  auto m1 =
+      "[H]c1c([H])c([H])c([H])c([H])c1[H] |(-2.06264,-0.844763,-0.0261403;-1.04035,-0.481453,-0.0114878;-0.00743655,-1.41861,-0.0137121;-0.215455,-2.47997,-0.0295909;1.29853,-0.949412,0.00507497;2.12524,-1.65277,0.00390664;1.58501,0.395878,0.0254188;2.61997,0.704365,0.0394811;0.550242,1.31385,0.0273741;0.783172,2.37039,0.0434262;-0.763786,0.88847,0.00908113;-1.60557,1.58532,0.0100194)|"_smiles;
+  REQUIRE(m1);
+  auto shape = PrepareConformer(*m1);
+  std::cout << shape.coord.size() << std::endl;
+  std::ofstream ofs("filename");
+  boost::archive::text_oarchive oa(ofs);
+  oa << shape;
+  // auto str = shape.toString();
+  // std::cout << str << std::endl;
+}

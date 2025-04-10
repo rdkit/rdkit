@@ -2,6 +2,9 @@
 #include <map>
 #include <vector>
 
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+
 #ifndef RDKIT_PUBCHEMSHAPE_GUARD
 #define RDKIT_PUBCHEMSHAPE_GUARD
 
@@ -16,6 +19,12 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   std::vector<double> shift;
   double sov{0.0};
   double sof{0.0};
+
+  template <class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar & sov;
+    ar & sof;
+  }
 };
 
 //! Prepare the input for the shape comparison
