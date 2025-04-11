@@ -19,6 +19,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
 
@@ -2355,3 +2356,21 @@ TEST_CASE(
   CHECK(m->getNumConformers() == 1);
 }
 #endif
+
+TEST_CASE("canonical ordering") {
+  auto useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture useLegacyFixture(useLegacy);
+  auto m = "CN2C3CC(OC(=O)C(CO)c1ccccc1)CC2CC3"_smiles;
+  REQUIRE(m);
+  RDDepict::compute2DCoords(*m);
+  auto conf = m->getConformer();
+  for (auto i = 0u; i < m->getNumAtoms(); ++i) {
+    for (auto j = i + 1; j < m->getNumAtoms(); ++j) {
+      auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+      auto dist = pos.length();
+      CHECK(dist > 0.35);
+      INFO("i " << i << " " << j);
+    }
+  }
+}

@@ -164,7 +164,8 @@ void testCollisions() {
     unsigned int confId = RDDepict::compute2DCoords(*m);
     // check that there are no collisions in the molecules
     const Conformer &conf = m->getConformer(confId);
-
+    writer.write(*m);
+    writer.flush();
     int natms = m->getNumAtoms();
     for (int i = 0; i < natms; i++) {
       RDGeom::Point3D loci = conf.getAtomPos(i);
@@ -174,7 +175,6 @@ void testCollisions() {
         CHECK_INVARIANT(locj.length() > 0.35, "");
       }
     }
-    writer.write(*m);
     delete m;
   }
 }
