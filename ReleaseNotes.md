@@ -11,6 +11,8 @@ GitHub)
 ## Backwards incompatible changes:
 - atom maps on dummy atoms are now always used in the calculation of canonical
   atom ranks.
+- 2D coordinate generation may produce different results for some molecules due
+  to a change in the way the atom ordering is computed in the depiction code.
 
 
 ## New Features and Enhancements:

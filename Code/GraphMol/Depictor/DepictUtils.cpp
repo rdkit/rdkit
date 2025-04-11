@@ -489,7 +489,7 @@ T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
   INT_PAIR_VECT rankAid;
   rankAid.reserve(natms);
   for (const auto aid : commAtms) {
-    unsigned int rank;
+    unsigned int rank = aid;
     const auto at = mol.getAtomWithIdx(aid);
     // we try for a pseudo-canonical ordering in order to always get the same
     // coords for the same molecule.
@@ -501,12 +501,11 @@ T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
         // the ordering of the CIP ranks and chiral atom ranks are (roughly)
         // inverted, so reverse this one to be consistent with the old
         // _CIPRank-driven behavior
-        rank *= -1;
-      } else {
-        // no information for "canonical" ranking present, just use our defaults
-        rank = mol.getNumAtoms() * getAtomDepictRank(at) + aid;
+        rank = mol.getNumAtoms() - rank;
       }
     }
+    rank += mol.getNumAtoms() * getAtomDepictRank(at);
+
     rankAid.emplace_back(rank, aid);
   }
   if (ascending) {
