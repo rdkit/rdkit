@@ -292,7 +292,7 @@ TEST_CASE("Serialization") {
   CHECK(istr.length() == 734);
   CHECK(istr.substr(0, 4) == "22 s");
   CHECK(istr.substr(730) == "e+00");
-  
+
   ShapeInput shape2(istr);
   CHECK(shape2.coord.size() == 21);
   CHECK_THAT(shape2.sov, Catch::Matchers::WithinAbs(253.764, 0.005));

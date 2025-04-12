@@ -22,7 +22,7 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   
   std::string toString() const {
     std::stringstream ss;
-      boost::archive::text_oarchive oa(ss);
+    boost::archive::text_oarchive oa(ss);
       oa & *this;
       return ss.str();
   }
