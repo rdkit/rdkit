@@ -12,21 +12,25 @@
 
 //! The input for the pubchem shape alignment code
 struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
-
   ShapeInput() = default;
   ShapeInput(const std::string &str) {
     std::stringstream ss(str);
     boost::archive::text_iarchive ia(ss);
-    ia & *this;
+    ia &*this;
   }
-  
+  ShapeInput(const ShapeInput &other) = default;
+  ShapeInput(ShapeInput &&other) = default;
+  ShapeInput &operator=(const ShapeInput &other) = default;
+  ShapeInput &operator=(ShapeInput &&other) = default;
+  ~ShapeInput() = default;
+
   std::string toString() const {
     std::stringstream ss;
     boost::archive::text_oarchive oa(ss);
-      oa & *this;
-      return ss.str();
+    oa &*this;
+    return ss.str();
   }
-  
+
   template <class Archive>
   void serialize(Archive &ar, const unsigned int) {
     ar & coord;
