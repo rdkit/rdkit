@@ -1,6 +1,6 @@
 
 rdkit_library(FMCS
-              FMCS.cpp Seed.cpp MaximumCommonSubgraph.cpp SubstructMatchCustom.cpp
+              FMCS.cpp Seed.cpp TargetMatch.cpp MaximumCommonSubgraph.cpp SubstructMatchCustom.cpp
               LINK_LIBRARIES Depictor SmilesParse FileParsers ChemTransforms SubstructMatch GraphMol )
 target_compile_definitions(FMCS PRIVATE RDKIT_FMCS_BUILD)
 

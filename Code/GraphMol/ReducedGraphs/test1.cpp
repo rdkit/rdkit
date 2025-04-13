@@ -188,6 +188,18 @@ void testCanRetrieveProp() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub8201() {
+  BOOST_LOG(rdInfoLog) << "testing Github8201 : not filling last bits."
+                       << std::endl;
+  const auto m = "c4ccc(C(CCCCCCCCCCC(c1ccccc1)C2CCNCC2)C3CCNCC3)cc4"_smiles;
+  TEST_ASSERT(m);
+  RDNumeric::DoubleVector *fp = ReducedGraphs::getErGFingerprint(*m);
+  TEST_ASSERT(fp->size() == 315);
+  TEST_ASSERT((*fp)[314] == 1.0);
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+  delete fp;
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -195,5 +207,6 @@ int main(int argc, char *argv[]) {
   test1();
   test2();
   testCanRetrieveProp();
+  testGithub8201();
   return 0;
 }

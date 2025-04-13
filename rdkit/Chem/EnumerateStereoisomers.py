@@ -309,6 +309,8 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
     yield tm
     return
 
+  tm.SetProp('_MolFileChiralFlag', '1')
+
   if (options.maxIsomers == 0 or 2**nCenters <= options.maxIsomers):
     bitsource = _RangeBitsGenerator(nCenters)
   else:

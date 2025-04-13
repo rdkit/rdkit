@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2020-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -6126,5 +6126,35 @@ $$$$
       CHECK(sgs[0].getAtoms().size() == 1);
       CHECK(sgs[0].getAtoms().at(0)->getIdx() == aid);
     }
+  }
+}
+
+TEST_CASE("Github #8420: imines and crossed bonds") {
+  bool useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(useLegacy);
+  SECTION("as reported") {
+    std::string ctab = R"CTAB(
+  MJ250100                      
+
+  7  7  0  0  1  0  0  0  0  0999 V2000
+    0.6961    0.4995    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0196    1.7395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7332    0.4968    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4118    0.9090    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4118    1.7395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6961    2.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0196    0.9101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  3  7  2  3  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  2  6  1  0  0  0  0
+  2  7  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  7  1  0  0  0  0
+M  END)CTAB";
+    auto m = v2::FileParsers::MolFromMolBlock(ctab);
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
   }
 }
