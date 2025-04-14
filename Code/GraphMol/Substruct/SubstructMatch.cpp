@@ -199,8 +199,7 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
                                            const std::uint32_t m_c[]) {
   if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
-    // EFF: we can no-doubt do better than this
-    std::vector<unsigned int> aids(m_c, m_c + d_query.getNumAtoms());
+    const std::span<const std::uint32_t> aids(m_c, d_query.getNumAtoms());
     if (d_params.useGenericMatchers &&
         !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
       return false;

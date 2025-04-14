@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <cstdint>
 #include <string>
+#include <span>
 
 #include <boost/dynamic_bitset.hpp>
 #if BOOST_VERSION >= 107100
@@ -62,7 +63,7 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   std::vector<std::string> bondProperties;  //!< bond properties that must be
                                             //!< equivalent in order to match
   std::function<bool(const ROMol &mol,
-                     const std::vector<unsigned int> &match)>
+                     const std::span<const unsigned int> &match)>
       extraFinalCheck;  //!< a function to be called at the end to validate a
                         //!< match
   unsigned int maxRecursiveMatches =
