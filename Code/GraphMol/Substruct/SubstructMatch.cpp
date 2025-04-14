@@ -21,10 +21,7 @@
 #include <GraphMol/GenericGroups/GenericGroups.h>
 #include <boost/smart_ptr.hpp>
 #include <map>
-
-#if BOOST_VERSION == 106400
-#include <boost/serialization/array_wrapper.hpp>
-#endif
+#include <span>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -33,8 +30,6 @@
 #endif
 
 #include "vf2.hpp"
-
-using boost::make_iterator_range;
 
 namespace RDKit {
 namespace detail {
@@ -57,14 +52,14 @@ bool enhancedStereoIsOK(
   // If the query has stereo groups:
   // * OR only matches AND or OR (not absolute)
   // * AND only matches OR
-  for (auto &&sg : query.getStereoGroups()) {
+  for (const auto &sg : query.getStereoGroups()) {
     if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
       continue;
     }
     // StereoGroup const* matched_mol_group = nullptr;
     const bool is_and = sg.getGroupType() == StereoGroupType::STEREO_AND;
-    for (auto &&a : sg.getAtoms()) {
-      auto mol_group = molStereoGroups.find(q_to_mol[a->getIdx()]);
+    for (const auto a : sg.getAtoms()) {
+      const auto mol_group = molStereoGroups.find(q_to_mol[a->getIdx()]);
       if (mol_group == molStereoGroups.end()) {
         // group matching absolute. not ok.
         return false;
@@ -81,15 +76,15 @@ bool enhancedStereoIsOK(
   // If the mol has stereo groups:
   // * All atoms must either be the same or opposite, you can't mix
   // * Only one stereogroup must cover all matched atoms in the mol stereo group
-  for (auto &&sg : mol.getStereoGroups()) {
+  for (const auto &sg : mol.getStereoGroups()) {
     if (sg.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
       continue;
     }
-    bool doesMatch;
+    bool doesMatch = false;
     bool seen = false;
     StereoGroup const *QGroup = nullptr;
 
-    for (auto &&a : sg.getAtoms()) {
+    for (const auto &a : sg.getAtoms()) {
       auto thisDoesMatch = matches.find(a->getIdx());
       if (thisDoesMatch == matches.end()) {
         // not matched
@@ -275,8 +270,8 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     mOrder.insert(mOrder.end(), unmatchedNeighbors, -1);
 
     INT_LIST moOrder;
-    for (const auto &bond : make_iterator_range(d_mol.getAtomBonds(mAt))) {
-      int dbidx = d_mol[bond]->getIdx();
+    for (const auto &bond : d_mol.atomBonds(mAt)) {
+      int dbidx = bond->getIdx();
       if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
         moOrder.push_back(dbidx);
       } else {
