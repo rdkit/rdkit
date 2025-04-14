@@ -1,22 +1,30 @@
+#ifndef RDKIT_PUBCHEMSHAPE_GUARD
+#define RDKIT_PUBCHEMSHAPE_GUARD
+
 #include <GraphMol/ROMol.h>
 #include <map>
 #include <vector>
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/vector.hpp>
-
-#ifndef RDKIT_PUBCHEMSHAPE_GUARD
-#define RDKIT_PUBCHEMSHAPE_GUARD
+#include <RDGeneral/BoostEndInclude.h>
+#endif
 
 //! The input for the pubchem shape alignment code
 struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   ShapeInput() = default;
   ShapeInput(const std::string &str) {
+#ifndef RDK_USE_BOOST_SERIALIZATION
+    PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+#else
     std::stringstream ss(str);
     boost::archive::text_iarchive ia(ss);
     ia &*this;
+#endif
   }
   ShapeInput(const ShapeInput &other) = default;
   ShapeInput(ShapeInput &&other) = default;
@@ -25,12 +33,17 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   ~ShapeInput() = default;
 
   std::string toString() const {
+#ifndef RDK_USE_BOOST_SERIALIZATION
+    PRECONDITION(0, "Boost SERIALIZATION is not enabled")
+#else
     std::stringstream ss;
     boost::archive::text_oarchive oa(ss);
     oa &*this;
     return ss.str();
+#endif
   }
 
+#ifdef RDK_USE_BOOST_SERIALIZATION
   template <class Archive>
   void serialize(Archive &ar, const unsigned int) {
     ar & coord;
@@ -42,6 +55,7 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
     ar & sov;
     ar & sof;
   }
+#endif
 
   std::vector<float> coord;
   std::vector<double> alpha_vector;

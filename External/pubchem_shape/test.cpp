@@ -289,12 +289,15 @@ TEST_CASE("Serialization") {
   REQUIRE(m1);
   auto shape = PrepareConformer(*m1);
   auto istr = shape.toString();
-  CHECK(istr.length() == 734);
-  CHECK(istr.substr(0, 4) == "22 s");
-  CHECK(istr.substr(730) == "e+00");
 
   ShapeInput shape2(istr);
-  CHECK(shape2.coord.size() == 21);
+  CHECK(shape2.coord == shape.coord);
+  CHECK(shape2.alpha_vector == shape.alpha_vector);
+  CHECK(shape2.atom_type_vector == shape.atom_type_vector);
+  CHECK(shape2.volumeAtomIndexVector == shape.volumeAtomIndexVector);
+  CHECK(shape2.colorAtomType2IndexVectorMap ==
+        shape.colorAtomType2IndexVectorMap);
+  CHECK(shape2.shift == shape.shift);
   CHECK_THAT(shape2.sov, Catch::Matchers::WithinAbs(253.764, 0.005));
   CHECK_THAT(shape2.sof, Catch::Matchers::WithinAbs(5.074, 0.005));
 }
