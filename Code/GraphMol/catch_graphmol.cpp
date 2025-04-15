@@ -1503,6 +1503,15 @@ TEST_CASE("needsHs function", "[chemistry]") {
     REQUIRE(m);
     CHECK(!MolOps::needsHs(*m));
   }
+  SECTION("edges") {
+    const std::string smiles = "[H]OC([H])[H]";
+    v2::SmilesParse::SmilesParserParams params;
+    params.removeHs = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+    REQUIRE(m);
+    CHECK(m->getNumAtoms() == 5);
+    CHECK(MolOps::needsHs(*m));
+  }
 }
 
 TEST_CASE(
