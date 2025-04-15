@@ -1,6 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and Rational Discovery LLC
-//
+//  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -146,6 +145,7 @@ bool atomCompat(const Atom *a1, const Atom *a2,
 }
 
 bool chiralAtomCompat(const Atom *&a1, const Atom *&a2) {
+  /// DEPRECATED
   PRECONDITION(a1, "bad atom");
   PRECONDITION(a2, "bad atom");
   bool res = a1->Match(a2);
