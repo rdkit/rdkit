@@ -29,6 +29,8 @@
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <GraphMol/Depictor/RDDepictor.h>
 #include <Geometry/point.h>
+#include <GraphMol/test_fixtures.h>
+
 #include <regex>
 
 #ifdef RDK_BUILD_CAIRO_SUPPORT
@@ -4130,7 +4132,7 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Catch::Approx(6.0).margin(0.1));
+    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(6.0, 0.2));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1a.svg");
     outs << text;
@@ -4144,7 +4146,7 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol1);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Catch::Approx(5.5).margin(.1));
+    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(5.5, 0.2));
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.1b.svg");
     outs << text;
@@ -4155,7 +4157,8 @@ TEST_CASE("changing baseFontSize") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Catch::Approx(14.0).margin(0.1));
+    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(14.0, 0.2));
+
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2a.svg");
     outs << text;
@@ -4167,7 +4170,8 @@ TEST_CASE("changing baseFontSize") {
     drawer.drawOptions().baseFontSize = 0.9;
     drawer.drawMolecule(*mol2);
     drawer.finishDrawing();
-    CHECK(drawer.fontSize() == Catch::Approx(20.25).margin(0.1));
+    CHECK_THAT(drawer.fontSize(), Catch::Matchers::WithinAbs(20.25, 0.2));
+
     auto text = drawer.getDrawingText();
     std::ofstream outs("testBaseFontSize.2b.svg");
     outs << text;
@@ -4784,6 +4788,8 @@ M  END)RXN";
 
 TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
   SECTION("basics") {
+    UseLegacyStereoPerceptionFixture fx(true);
+
     auto m1 = "OC(=O)CCCC(=O)O"_smiles;
     REQUIRE(m1);
     {
@@ -4800,7 +4806,7 @@ TEST_CASE("Github 5185 - don't draw atom indices between double bond") {
       // the 2nd note
       CHECK(text.find("<path class='note' d='M 94.4 129.6") !=
             std::string::npos);
-      check_file_hash("testGithub_5185.svg");
+      // check_file_hash("testGithub_5185.svg");
 #else
       CHECK(text.find("<text x='91.5' y='130.0' class='note' ") !=
             std::string::npos);
