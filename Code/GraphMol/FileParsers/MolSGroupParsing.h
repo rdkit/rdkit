@@ -22,24 +22,24 @@ typedef std::map<int, STR_VECT> IDX_TO_STR_VECT_MAP;
 
 /* ------------------ V2000 Utils  ------------------ */
 
-unsigned int ParseSGroupIntField(const std::string &text, unsigned int &line,
+unsigned int ParseSGroupIntField(const std::string &text, unsigned int line,
                                  unsigned int &pos,
                                  bool isFieldCounter = false);
 
 unsigned int ParseSGroupIntField(bool &ok, bool strictParsing,
-                                 const std::string &text, unsigned int &line,
+                                 const std::string &text, unsigned int line,
                                  unsigned int &pos,
                                  bool isFieldCounter = false);
 
-double ParseSGroupDoubleField(const std::string &text, unsigned int &line,
+double ParseSGroupDoubleField(const std::string &text, unsigned int line,
                               unsigned int &pos);
 
 double ParseSGroupDoubleField(bool &ok, bool strictParsing,
-                              const std::string &text, unsigned int &line,
+                              const std::string &text, unsigned int line,
                               unsigned int &pos);
 
 SubstanceGroup *FindSgIdx(IDX_TO_SGROUP_MAP &sGroupMap, int sgIdx,
-                          unsigned int &line);
+                          unsigned int line);
 
 template <class Exc = FileParseException>
 void SGroupWarnOrThrow(bool strictParsing, const std::string &msg) {
@@ -51,15 +51,15 @@ void SGroupWarnOrThrow(bool strictParsing, const std::string &msg) {
 }
 
 void ParseSGroupV2000STYLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000VectorDataLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                                    const std::string &text, unsigned int &line,
+                                    const std::string &text, unsigned int line,
                                     bool strictParsing = true);
 
 void ParseSGroupV2000SDILine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SSTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
@@ -71,42 +71,42 @@ void ParseSGroupV2000SMTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SLBLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SCNLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SDSLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SBVLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SDTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SDDLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SCDSEDLine(IDX_TO_SGROUP_MAP &sGroupMap,
                                 IDX_TO_STR_VECT_MAP &dataFieldsMap, RWMol *mol,
-                                const std::string &text, unsigned int &line,
+                                const std::string &text, unsigned int line,
                                 bool strictParsing, unsigned int &counter,
                                 unsigned int &lastDataSGroup,
                                 std::ostringstream &currentDataField);
 
 void ParseSGroupV2000SPLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SNCLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 //! if the SAP line is malformed and has no lvIdx and no id,
@@ -115,15 +115,15 @@ void ParseSGroupV2000SNCLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
 //! index: if d_bonds.size() == 1, and one of the bond atom indices
 //! is aIdx, the other can be safely assigned to lvIdx
 void ParseSGroupV2000SAPLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SCLLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SBTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int &line,
+                             const std::string &text, unsigned int line,
                              bool strictParsing = true);
 
 /* ------------------ V3000 Utils  ------------------ */
@@ -145,7 +145,7 @@ std::vector<T> ParseV3000Array(const std::string &s, int maxV = -1,
 }
 
 void ParseV3000CStateLabel(RWMol *mol, SubstanceGroup &sgroup,
-                           std::stringstream &stream, unsigned int &line,
+                           std::stringstream &stream, unsigned int line,
                            bool strictParsing = true);
 
 void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,

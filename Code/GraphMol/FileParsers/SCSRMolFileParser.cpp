@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2024 Tad Hurst and other RDKit contributors
+//  Copyright (C) 2024 Tad Hurst and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -13,7 +13,6 @@
 #include <RDGeneral/StreamOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
-#include <GraphMol/SCSRMol.h>
 
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
@@ -25,207 +24,62 @@ namespace RDKit {
 namespace v2 {
 namespace FileParsers {
 
+class SCSRMol {
+ private:
+  std::unique_ptr<ROMol> p_mol;
+  std::vector<std::unique_ptr<ROMol>> p_templates;
+
+ public:
+  SCSRMol() {};
+  SCSRMol(const SCSRMol &other) = delete;
+  SCSRMol(SCSRMol &&other) noexcept = delete;
+  SCSRMol &operator=(SCSRMol &&other) noexcept = delete;
+
+  SCSRMol &operator=(const SCSRMol &) = delete;  // disable assignment
+  ~SCSRMol() {}
+
+  void addTemplate(std::unique_ptr<ROMol> templateMol) {
+    PRECONDITION(templateMol, "bad template molecule");
+    p_templates.push_back(std::move(templateMol));
+  }
+
+  unsigned int getTemplateCount() const { return p_templates.size(); }
+
+  ROMol *getTemplate(unsigned int index) { return p_templates[index].get(); };
+
+  const ROMol *getMol() const { return p_mol.get(); }
+
+  ROMol *getMol() { return p_mol.get(); }
+
+  void setMol(std::unique_ptr<ROMol> mol) {
+    PRECONDITION(mol, "bad molecule");
+    p_mol = std::move(mol);
+  }
+};
+
 //------------------------------------------------
 //
 //  Read a SCVSR molecule from a stream
 //
 //------------------------------------------------
-static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
+static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
     std::istream &inStream, unsigned int &line,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
-  std::string tempStr;
-  bool molComplete = false;
   bool chiralityPossible = false;
-  Utils::LocaleSwitcher ls;
-  // mol name
-  line++;
-  tempStr = getLine(inStream);
   if (inStream.eof()) {
     return nullptr;
   }
-  auto res = std::unique_ptr<RDKit::SCSRMol>(new RDKit::SCSRMol());
-
-  res->getMol()->setProp(common_properties::_Name, tempStr);
-
-  // info
-  line++;
-  tempStr = getLine(inStream);
-  res->getMol()->setProp("_MolFileInfo", tempStr);
-  if (tempStr.length() >= 22) {
-    std::string dimLabel = tempStr.substr(20, 2);
-    // Unless labelled as 3D we assume 2D
-    if (dimLabel == "3d" || dimLabel == "3D") {
-      res->getMol()->setProp(common_properties::_3DConf, 1);
-    }
-  }
-  // comments
-  line++;
-  tempStr = getLine(inStream);
-  res->getMol()->setProp("_MolFileComments", tempStr);
-
-  unsigned int nAtoms = 0, nBonds = 0, nLists = 0, chiralFlag = 0, nsText = 0,
-               nRxnComponents = 0;
-  int nReactants = 0, nProducts = 0, nIntermediates = 0;
-  (void)nLists;  // read from the file but unused
-  (void)nsText;
-  (void)nRxnComponents;
-  (void)nReactants;
-  (void)nProducts;
-  (void)nIntermediates;
-  // counts line, this is where we really get started
-  line++;
-  tempStr = getLine(inStream);
-
-  if (tempStr.size() < 6) {
-    if (res) {
-      res = nullptr;
-    }
-    std::ostringstream errout;
-    errout << "Counts line too short: '" << tempStr << "' on line" << line;
-    throw FileParseException(errout.str());
-  }
-
-  unsigned int spos = 0;
-  // this needs to go into a try block because if the lexical_cast throws an
-  // exception we want to catch throw a different exception
-  try {
-    nAtoms = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    spos = 3;
-    nBonds = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    spos = 6;
-  } catch (boost::bad_lexical_cast &) {
-    std::ostringstream errout;
-    errout << "Cannot convert '" << tempStr.substr(spos, 3)
-           << "' to unsigned int on line " << line;
-    throw FileParseException(errout.str());
-  }
-  try {
-    spos = 6;
-    if (tempStr.size() >= 9) {
-      nLists = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    }
-
-    spos = 12;
-    if (tempStr.size() >= spos + 3) {
-      chiralFlag = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    }
-
-    spos = 15;
-    if (tempStr.size() >= spos + 3) {
-      nsText = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    }
-
-    spos = 18;
-    if (tempStr.size() >= spos + 3) {
-      nRxnComponents =
-          FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    }
-
-    spos = 21;
-    if (tempStr.size() >= spos + 3) {
-      nReactants = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    }
-
-    spos = 24;
-    if (tempStr.size() >= spos + 3) {
-      nProducts = FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    }
-
-    spos = 27;
-    if (tempStr.size() >= spos + 3) {
-      nIntermediates =
-          FileParserUtils::toUnsigned(tempStr.substr(spos, 3), true);
-    }
-
-  } catch (boost::bad_lexical_cast &) {
-    // some SD files (such as some from NCI) lack all the extra information
-    // on the header line, so ignore problems parsing there.
-  }
-
-  if (tempStr.size() > 35) {
-    if (tempStr.size() < 39 || tempStr[34] != 'V') {
-      std::ostringstream errout;
-      errout << "CTAB version string invalid at line " << line;
-      if (params.strictParsing) {
-        throw FileParseException(errout.str());
-      } else {
-        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-      }
-    } else if (tempStr.substr(34, 5) != "V3000") {
-      std::ostringstream errout;
-      errout << "SCSR Mol files in not V3000 at line" << line;
-      throw FileParseException(errout.str());
-    }
-  }
-
-  res->getMol()->setProp(common_properties::_MolFileChiralFlag, chiralFlag);
-
-  Conformer *conf = nullptr;
-  try {
-    if (nAtoms != 0 || nBonds != 0) {
-      std::ostringstream errout;
-      errout << "V3000 mol blocks should have 0s in the initial counts line. "
-                "(line: "
-             << line << ")";
-      if (params.strictParsing) {
-        throw FileParseException(errout.str());
-      } else {
-        BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
-      }
-    }
-    bool expectMEND = false;
-    bool expectMacroAtoms = true;
-    molComplete = FileParserUtils::ParseV3000CTAB(
-        &inStream, line, (RWMol *)res->getMol(), conf, chiralityPossible,
-        nAtoms, nBonds, params.strictParsing, expectMEND, expectMacroAtoms);
-  } catch (MolFileUnhandledFeatureException &e) {
-    // unhandled mol file feature, show an error
-    res.reset();
-    delete conf;
-    conf = nullptr;
-    BOOST_LOG(rdErrorLog) << " Unhandled CTAB feature: '" << e.what()
-                          << "'. Molecule skipped." << std::endl;
-
-    if (!inStream.eof()) {
-      tempStr = getLine(inStream);
-    }
-    ++line;
-    while (!inStream.eof() && !inStream.fail() &&
-           tempStr.substr(0, 6) != "M  END" && tempStr.substr(0, 4) != "$$$$") {
-      tempStr = getLine(inStream);
-      ++line;
-    }
-    molComplete = !inStream.eof() || tempStr.substr(0, 6) == "M  END" ||
-                  tempStr.substr(0, 4) == "$$$$";
-  } catch (FileParseException &e) {
-    // catch our exceptions and throw them back after cleanup
-    delete conf;
-    conf = nullptr;
-    throw e;
-  }
-
-  if (!molComplete) {
-    delete conf;
-    conf = nullptr;
-    std::ostringstream errout;
-    errout
-        << "Problems encountered parsing Mol data, M  END or BEGIN TEMPLATE missing around line "
-        << line;
-    throw FileParseException(errout.str());
-  }
-
-  if (res) {
-    FileParserUtils::finishMolProcessing((RWMol *)res->getMol(),
-                                         chiralityPossible, params);
-  }
+  auto res = std::unique_ptr<SCSRMol>(new SCSRMol());
+  auto localParams = params;
+  localParams.parsingSCSRMol = true;
+  res->setMol(RDKit::v2::FileParsers::MolFromMolDataStream(inStream, line,
+                                                           localParams));
 
   // now get all of the templates
 
-  tempStr = FileParserUtils::getV3000Line(&inStream, line);
+  auto tempStr = FileParserUtils::getV3000Line(&inStream, line);
 
   if (tempStr != "BEGIN TEMPLATE") {
-    delete conf;
-    conf = nullptr;
     std::ostringstream errout;
     errout << "BEGIN TEMPLATE not found at line  " << line;
     throw FileParseException(errout.str());
@@ -240,16 +94,12 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
     std::string natReplace = "";
     if (tokens.size() == 4) {
       if (tokens[3].size() < 12 || tokens[3].substr(0, 11) != "NATREPLACE=") {
-        delete conf;
-        conf = nullptr;
         std::ostringstream errout;
         errout << "Bad NATREPLACE entry at line  " << line;
         throw FileParseException(errout.str());
       }
       natReplace = tokens[3].substr(12);
     } else if (tokens.size() != 3) {
-      delete conf;
-      conf = nullptr;
       std::ostringstream errout;
       errout << "Bad TEMPLATE at line  " << line;
       throw FileParseException(errout.str());
@@ -257,8 +107,6 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
     boost::algorithm::split(tokens, tokens[2],
                             boost::algorithm::is_any_of("/"));
     if (tokens.size() < 3) {
-      delete conf;
-      conf = nullptr;
       std::ostringstream errout;
       errout << "Type/Name(s) string is not of the form \"AA/Gly/G/\" at line  "
              << line;
@@ -279,7 +127,7 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
     }
 
     templateMol->setProp(common_properties::templateNames, templateNames);
-
+    auto molComplete = false;
     Conformer *conf = nullptr;
     try {
       unsigned int nAtoms = 0, nBonds = 0;
@@ -336,8 +184,6 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
   }
 
   if (tempStr != "END TEMPLATE") {
-    delete conf;
-    conf = nullptr;
     std::ostringstream errout;
     errout << "END TEMPLATE not found at line  " << line;
     throw FileParseException(errout.str());
@@ -346,8 +192,6 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
   tempStr = getLine(inStream);
   ++line;
   if (tempStr.substr(0, 6) != "M  END") {
-    delete conf;
-    conf = nullptr;
     std::ostringstream errout;
     errout << "M  END not found at line  " << line;
     throw FileParseException(errout.str());
@@ -444,7 +288,7 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRDataStream(
 //  Read a molecule from a string
 //
 //------------------------------------------------
-static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
+static std::unique_ptr<SCSRMol> SCSRMolFromSCSRBlock(
     const std::string &molBlock,
     const RDKit::v2::FileParsers::MolFileParserParams &params) {
   std::istringstream inStream(molBlock);
@@ -457,7 +301,7 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRBlock(
 //  Read a molecule from a file
 //
 //------------------------------------------------
-static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
+static std::unique_ptr<SCSRMol> SCSRMolFromSCSRFile(
     const std::string &fName, const MolFileParserParams &params) {
   std::ifstream inStream(fName.c_str());
   if (!inStream || (inStream.bad())) {
@@ -469,7 +313,7 @@ static std::unique_ptr<RDKit::SCSRMol> SCSRMolFromSCSRFile(
     unsigned int line = 0;
     return SCSRMolFromSCSRDataStream(inStream, line, params);
   } else {
-    return std::unique_ptr<RDKit::SCSRMol>();
+    return std::unique_ptr<SCSRMol>();
   }
 }
 
@@ -535,9 +379,10 @@ class MolFromSCSRMolConverter {
           dp_mol{SmartsToMol(smarts)} {}
   };
 
-  const RDKit::SCSRMol *scsrMol;
+  SCSRMol *scsrMol;
   std::unique_ptr<RWMol> resMol;
   const ROMol *mol;
+  const MolFileParserParams molFileParserParams;
   const MolFromSCSRParams molFromSCSRParams;
 
   std::map<unsigned int, std::vector<HydrogenBondConnection>>
@@ -915,9 +760,12 @@ class MolFromSCSRMolConverter {
   }
 
  public:
-  MolFromSCSRMolConverter(const RDKit::SCSRMol *scsrMolInit,
+  MolFromSCSRMolConverter(SCSRMol *scsrMolInit,
+                          const MolFileParserParams &molFileParserParamsInit,
                           const MolFromSCSRParams &molFromSCSRParamsInit)
-      : scsrMol(scsrMolInit), molFromSCSRParams(molFromSCSRParamsInit) {}
+      : scsrMol(scsrMolInit),
+        molFileParserParams(molFileParserParamsInit),
+        molFromSCSRParams(molFromSCSRParamsInit) {}
 
   std::unique_ptr<RDKit::RWMol> convert() {
     resMol.reset(new RWMol());
@@ -1428,13 +1276,19 @@ class MolFromSCSRMolConverter {
       resMol->setStereoGroups(newStereoGroups);
     }
 
+    bool chiralityPossible = false;
+    FileParserUtils::finishMolProcessing(resMol.get(), chiralityPossible,
+                                         molFileParserParams);
+
     return std::move(resMol);
   }
 };
 
 static std::unique_ptr<RDKit::RWMol> MolFromSCSRMol(
-    const RDKit::SCSRMol *scsrMol, const MolFromSCSRParams &molFromSCSRParams) {
-  MolFromSCSRMolConverter converter(scsrMol, molFromSCSRParams);
+    SCSRMol *scsrMol, const MolFileParserParams &molFileParserParams,
+    const MolFromSCSRParams &molFromSCSRParams) {
+  MolFromSCSRMolConverter converter(scsrMol, molFileParserParams,
+                                    molFromSCSRParams);
   return converter.convert();
 }
 
@@ -1443,21 +1297,21 @@ std::unique_ptr<RDKit::RWMol> MolFromSCSRDataStream(
     const MolFileParserParams &molFileParserParams,
     const MolFromSCSRParams &molFromSCSRParams) {
   auto scsr = SCSRMolFromSCSRDataStream(inStream, line, molFileParserParams);
-  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
+  return MolFromSCSRMol(scsr.get(), molFileParserParams, molFromSCSRParams);
 }
 
 std::unique_ptr<RDKit::RWMol> MolFromSCSRBlock(
     const std::string &molBlock, const MolFileParserParams &molFileParserParams,
     const MolFromSCSRParams &molFromSCSRParams) {
   auto scsr = SCSRMolFromSCSRBlock(molBlock, molFileParserParams);
-  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
+  return MolFromSCSRMol(scsr.get(), molFileParserParams, molFromSCSRParams);
 }
 
 std::unique_ptr<RDKit::RWMol> MolFromSCSRFile(
     const std::string &fName, const MolFileParserParams &molFileParserParams,
     const MolFromSCSRParams &molFromSCSRParams) {
   auto scsr = SCSRMolFromSCSRFile(fName, molFileParserParams);
-  return MolFromSCSRMol(scsr.get(), molFromSCSRParams);
+  return MolFromSCSRMol(scsr.get(), molFileParserParams, molFromSCSRParams);
 }
 
 }  // namespace FileParsers

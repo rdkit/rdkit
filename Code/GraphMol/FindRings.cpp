@@ -825,16 +825,18 @@ bool findRingConnectingAtoms(const ROMol &tMol, const Bond *bond,
 
 namespace RDKit {
 namespace MolOps {
-int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds) {
+int findSSSR(const ROMol &mol, VECT_INT_VECT *res, bool includeDativeBonds,
+             bool includeHydrogenBonds) {
   if (!res) {
     VECT_INT_VECT rings;
-    return findSSSR(mol, rings, includeDativeBonds);
+    return findSSSR(mol, rings, includeDativeBonds, includeHydrogenBonds);
   } else {
-    return findSSSR(mol, (*res), includeDativeBonds);
+    return findSSSR(mol, (*res), includeDativeBonds, includeHydrogenBonds);
   }
 }
 
-int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
+int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
+             bool includeHydrogenBonds) {
   res.resize(0);
   if (mol.getRingInfo()->isInitialized()) {
     mol.getRingInfo()->reset();
@@ -849,14 +851,15 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   boost::dynamic_bitset<> activeBonds(nbnds);
   activeBonds.set();
 
-  // Zero-order bonds are not candidates for rings, and dative bonds may also be
-  // out
+  // Zero-order bonds are not candidates for rings, and dative bonds and
+  // hydrogen bonds may also be out
   ROMol::EDGE_ITER firstB, lastB;
   boost::tie(firstB, lastB) = mol.getEdges();
   while (firstB != lastB) {
     const Bond *bond = mol[*firstB];
-    if (bond->getBondType() == Bond::ZERO ||
-        (!includeDativeBonds && isDative(*bond))) {
+    auto bt = bond->getBondType();
+    if (bt == Bond::ZERO || (!includeDativeBonds && isDative(bt)) ||
+        (!includeHydrogenBonds && bt == Bond::HYDROGEN)) {
       activeBonds[bond->getIdx()] = 0;
     }
     ++firstB;
@@ -873,8 +876,9 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
     atomDegrees[i] = deg;
     atomDegreesWithZeroOrderBonds[i] = deg;
     for (const auto bond : mol.atomBonds(atom)) {
-      if (bond->getBondType() == Bond::ZERO ||
-          (!includeDativeBonds && isDative(*bond))) {
+      auto bt = bond->getBondType();
+      if (bt == Bond::ZERO || (!includeHydrogenBonds && bt == Bond::HYDROGEN) ||
+          (!includeDativeBonds && isDative(bt))) {
         atomDegrees[i]--;
       }
     }
@@ -1066,18 +1070,20 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
   return rdcast<int>(res.size());
 }
 
-int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds) {
+int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds,
+                   bool includeHydrogenBonds) {
   VECT_INT_VECT tmp;
-  return symmetrizeSSSR(mol, tmp, includeDativeBonds);
+  return symmetrizeSSSR(mol, tmp, includeDativeBonds, includeHydrogenBonds);
 };
 
-int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds) {
+int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
+                   bool includeHydrogenBonds) {
   res.clear();
   VECT_INT_VECT sssrs;
 
   // FIX: need to set flag here the symmetrization has been done in order to
   // avoid repeating this work
-  findSSSR(mol, sssrs, includeDativeBonds);
+  findSSSR(mol, sssrs, includeDativeBonds, includeHydrogenBonds);
 
   // reinit as SYMM_SSSR
   mol.getRingInfo()->initialize(FIND_RING_TYPE_SYMM_SSSR);

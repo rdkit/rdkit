@@ -1380,7 +1380,8 @@ void setRGPProps(const std::string_view symb, Atom *res) {
   res->setProp(common_properties::dummyLabel, symbc);
 }
 
-void lookupAtomicNumber(Atom *res, std::string &symb, bool strictParsing) {
+void lookupAtomicNumber(Atom *res, const std::string &symb,
+                        bool strictParsing) {
   std::string tCopy(symb);
   if (symb.size() == 2 && symb[1] >= 'A' && symb[1] <= 'Z') {
     tCopy[1] = static_cast<char>(tolower(symb[1]));
@@ -2378,8 +2379,8 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
         }
       }
     } else if (prop == "ATTCHORD") {
-      // there are two kinds of ATTAHORD
-      // one is for template instances and look like this: ATTCHORD=(4 1 Al 3
+      // there are two kinds of ATTCHORD
+      // one is for template instances and looks like this: ATTCHORD=(4 1 Al 3
       // Br)
 
       if (val.substr(0, 1) == "(") {
@@ -2566,7 +2567,7 @@ void ParseV3000AtomBlock(std::istream *inStream, unsigned int &line,
 
     auto isMacroAtom = false;
     if (expectMacroAtoms) {
-      std::vector<std::string_view>::iterator lookAheadToken = token + 1;
+      auto lookAheadToken = token + 1;
       while (lookAheadToken != tokens.end()) {
         std::string prop;
         std::string_view val;
@@ -3272,10 +3273,8 @@ bool ParseV3000CTAB(std::istream *inStream, unsigned int &line, RWMol *mol,
 
       } else if (!nSgroups) {
         std::ostringstream errout;
-        errout
-
-            << "BEGIN SGROUP  found but Sgroups NOT expected not found on line "
-            << line;
+        errout << "BEGIN SGROUP  found but Sgroups NOT expected on line "
+               << line;
         if (strictParsing) {
           throw FileParseException(errout.str());
         } else {
@@ -3641,6 +3640,10 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
       } else {
         BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
       }
+    } else if (params.parsingSCSRMol) {
+      std::ostringstream errout;
+      errout << "SCSR Mol files is not V3000 at line" << line;
+      throw FileParseException(errout.str());
     }
   }
 
@@ -3664,9 +3667,17 @@ std::unique_ptr<RWMol> MolFromMolDataStream(std::istream &inStream,
           BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
         }
       }
+
+      auto expectMEND = true;
+      auto expectMacroAtoms = false;
+      if (params.parsingSCSRMol) {
+        expectMEND = false;
+        expectMacroAtoms = true;
+      }
+
       fileComplete = FileParserUtils::ParseV3000CTAB(
           &inStream, line, res.get(), conf, chiralityPossible, nAtoms, nBonds,
-          params.strictParsing);
+          params.strictParsing, expectMEND, expectMacroAtoms);
     }
   } catch (MolFileUnhandledFeatureException &e) {
     // unhandled mol file feature, show an error

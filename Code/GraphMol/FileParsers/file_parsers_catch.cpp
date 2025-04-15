@@ -3430,7 +3430,7 @@ M  END
     auto mb = MolToV3KMolBlock(*m);
     CHECK(mb.find("V30 8 10 5 8") != std::string::npos);
     CHECK(MolToSmiles(*m) ==
-          "CC1=O~[H]OC(C)C1");  // the SMILES writer still doesn't know what to
+          "CC1CC(C)O[H]~O=1");  // the SMILES writer still doesn't know what to
                                 // do with it
   }
 }
@@ -3892,7 +3892,9 @@ M  V30 1 1 1 2
 M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB";
-    { REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException); }
+    {
+      REQUIRE_THROWS_AS(MolBlockToMol(ctab), FileParseException);
+    }
     {
       bool sanitize = true;
       bool removeHs = true;
@@ -7133,7 +7135,7 @@ class FragTest {
         expectedResult(expectedResultInit),
         reapplyMolBlockWedging(reapplyMolBlockWedgingInit),
         origSgroupCount(origSgroupCountInit),
-        newSgroupCount(newSgroupCountInit){};
+        newSgroupCount(newSgroupCountInit) {};
 };
 
 void testFragmentation(const FragTest &fragTest) {

@@ -52,6 +52,7 @@ struct RDKIT_FILEPARSERS_EXPORT MolFileParserParams {
                                 correctness of the contents. */
   bool expandAttachmentPoints =
       false; /**< toggle conversion of attachment points into dummy atoms */
+  bool parsingSCSRMol = false; /**< if true, we are parsing a SCSR mol file */
 };
 enum class SCSRTemplateNames {
   AsEntered,     //<! use the name of the temlate as entered in the SCSR Mol

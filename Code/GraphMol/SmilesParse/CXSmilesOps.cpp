@@ -2217,8 +2217,8 @@ std::string get_bond_config_block(
 
 std::string get_coord_or_hydrogen_bonds_block(
     const ROMol &mol, Bond::BondType bondType, std::string symbol,
-                                 const std::vector<unsigned int> &atomOrder,
-                                 const std::vector<unsigned int> &bondOrder) {
+    const std::vector<unsigned int> &atomOrder,
+    const std::vector<unsigned int> &bondOrder) {
   std::string res = "";
   for (unsigned int i = 0; i < bondOrder.size(); ++i) {
     auto idx = bondOrder[i];

@@ -78,9 +78,9 @@ class ScsiMolTest {
                         scsiTest->fileName;
 
     RDKit::v2::FileParsers::MolFileParserParams pp;
-    pp.sanitize = false;
+    pp.sanitize = true;
     pp.removeHs = false;
-    pp.strictParsing = false;
+    pp.strictParsing = true;
 
     RDKit::v2::FileParsers::MolFromSCSRParams molFromSCSRParams;
     molFromSCSRParams.includeLeavingGroups = true;
