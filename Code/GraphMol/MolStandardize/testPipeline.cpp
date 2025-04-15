@@ -1744,6 +1744,7 @@ M  END
   SECTION(
       "standardize replaces wavy bonds with double bonds w/ stereo type 'either'") {
     auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
     UseLegacyStereoPerceptionFixture fx(useLegacy);
     const char *molblock;
     MolStandardize::PipelineResult result;

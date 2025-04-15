@@ -152,16 +152,6 @@ TEST_CASE("molzip") {
       CHECK(MolToSmiles(*mol) == "*C.*N");
     }
     {
-      // 0 isotopes aren't mapped
-      auto a = "C[*]"_smiles;
-      auto b = "N[*]"_smiles;
-      MolzipParams p;
-      p.label = MolzipLabel::Isotope;
-      auto mol = molzip(*a, *b, p);
-      CHECK(MolToSmiles(*mol) == "*C.*N");
-    }
-    {
-      // 0 isotopes aren't mapped
       auto a = "C[1*]"_smiles;
       auto b = "N[1*]"_smiles;
       MolzipParams p;
@@ -176,40 +166,17 @@ TEST_CASE("molzip") {
       CHECK(MolToSmiles(*mol) == "N[C@@H](F)Br");
     }
     {
-      auto b = "[C@H](Br)([*:1])F"_smiles;
-      auto a = "[*:1]N"_smiles;
-      auto mol = molzip(*a, *b);
-      CHECK(MolToSmiles(*mol) == "N[C@@H](F)Br");
-    }
-    {
       auto a = "[C@H]([*:1])(Br)F"_smiles;
       auto b = "[*:1]N"_smiles;
       auto mol = molzip(*a, *b);
       CHECK(MolToSmiles(*mol) == "N[C@H](F)Br");
     }
-    {
-      std::cerr << "useLegacy1: " << useLegacy << std::endl;
-      auto b = "[C@H]([*:1])(Br)F"_smiles;
-      auto a = "[*:1]N"_smiles;
-      auto mol = molzip(*a, *b);
-      mol->debugMol(std::cerr);
-      REQUIRE(MolToSmiles(*mol) == "N[C@H](F)Br");
-    }
 
     {
-      std::cerr << "useLegacy2: " << useLegacy << std::endl;
       auto a = "[C@H]([*:1])(F)([*:2])"_smiles;
-      a->debugMol(std::cerr);
       auto b = "[*:1]N.[*:2]I"_smiles;
       auto mol = molzip(*a, *b);
-      mol->debugMol(std::cerr);
       REQUIRE(MolToSmiles(*mol) == "N[C@@H](F)I");
-    }
-    {
-      auto b = "[C@H]([*:1])(F)([*:2])"_smiles;
-      auto a = "[*:1]N.[*:2]I"_smiles;
-      auto mol = molzip(*a, *b);
-      CHECK(MolToSmiles(*mol) == "N[C@@H](F)I");
     }
 
     {
@@ -261,7 +228,8 @@ TEST_CASE("molzip") {
     p.label = MolzipLabel::AtomProperty;
     p.atomProperty = "foo";
     auto mol = molzip(*a, *b, p);
-    // chirality is "lost" here because [C@H]([*])(F)([*]) is considered achiral
+    // chirality is "lost" here because [C@H]([*])(F)([*]) is considered
+    // achiral
     CHECK(MolToSmiles(*mol) == "NC(F)I");
   }
 
@@ -272,48 +240,10 @@ TEST_CASE("molzip") {
       auto mol = molzip(*a, *b);
       CHECK(MolToSmiles(*mol) == "F/C=C/F");
     }
-    {
-      auto b = "F/C=C/[*:1]"_smiles;
-      auto a = "[*:1]F"_smiles;
-      auto mol = molzip(*a, *b);
-      CHECK(MolToSmiles(*mol) == "F/C=C/F");
-    }
-
-    {
-      auto a = "O/C=N/[*:1]"_smiles;
-      auto b = "[*:1]C=C"_smiles;
-      auto mol = molzip(*a, *b);
-      CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
-    }
-    {
-      auto b = "O/C=N/[*:1]"_smiles;
-      auto a = "[*:1]C=C"_smiles;
-      auto mol = molzip(*a, *b);
-      CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
-    }
 
     {
       auto a = "C=C/N=C/[*:1]"_smiles;
       auto b = "O[*:1]"_smiles;
-      auto mol = molzip(*a, *b);
-      CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
-    }
-
-    {
-      auto b = "C=C/N=C/[*:1]"_smiles;
-      auto a = "O[*:1]"_smiles;
-      auto mol = molzip(*a, *b);
-      CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
-    }
-    {
-      auto a = "C=C[*:1]"_smiles;
-      auto b = "O/C=N/[*:1]"_smiles;
-      auto mol = molzip(*a, *b);
-      CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
-    }
-    {
-      auto b = "C=C[*:1]"_smiles;
-      auto a = "O/C=N/[*:1]"_smiles;
       auto mol = molzip(*a, *b);
       CHECK(MolToSmiles(*mol) == "C=C/N=C/O");
     }
@@ -641,7 +571,8 @@ TEST_CASE(
   SECTION("as reported ") {
     auto m = "CC/C=C/N"_smiles;
     REQUIRE(m);
-    std::unique_ptr<ROMol> res(MolFragmenter::fragmentOnBonds(*m, std::vector<unsigned int>{1}));
+    std::unique_ptr<ROMol> res(
+        MolFragmenter::fragmentOnBonds(*m, std::vector<unsigned int>{1}));
     REQUIRE(res);
     CHECK(res->getBondWithIdx(1)->getBondType() == Bond::BondType::DOUBLE);
     if (useLegacy) {

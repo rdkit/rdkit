@@ -366,6 +366,7 @@ TEST_CASE("Github #2148", "[bug][Smiles][Smarts]") {
 
   SECTION("Writing SMILES") {
     const auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
     UseLegacyStereoPerceptionFixture fx(useLegacy);
     auto mol = "C/C=c1/ncc(=C)cc1"_smiles;
     REQUIRE(mol);
@@ -1636,6 +1637,7 @@ TEST_CASE(
 
 TEST_CASE("Github #4582: double bonds and ring closures") {
   const auto useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
   UseLegacyStereoPerceptionFixture fxn(useLegacy);
   auto mol = R"CTAB(CHEMBL409450
      RDKit          2D

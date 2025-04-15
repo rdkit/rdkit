@@ -97,11 +97,11 @@ std::vector<std::uint32_t> *MorganBondInvGenerator::getBondInvariants(
 
           // for backwards compatibility, if we are E or Z, set those, otherwise
           // just use whatever the bondStereo is set to.
-          std::string chirality;
-          if (bond->getPropIfPresent(common_properties::_CIPCode, chirality)) {
-            if (chirality == "E") {
+          std::string cipCode;
+          if (bond->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
+            if (cipCode == "E") {
               bondStereo = static_cast<int32_t>(Bond::STEREOE);
-            } else if (chirality == "Z") {
+            } else if (cipCode == "Z") {
               bondStereo = static_cast<int32_t>(Bond::STEREOZ);
             }
           }

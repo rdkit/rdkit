@@ -503,8 +503,8 @@ T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
         // _CIPRank-driven behavior
         rank = mol.getNumAtoms() - rank;
       }
+      rank += mol.getNumAtoms() * getAtomDepictRank(at);
     }
-    rank += mol.getNumAtoms() * getAtomDepictRank(at);
 
     rankAid.emplace_back(rank, aid);
   }
