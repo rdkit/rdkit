@@ -140,7 +140,7 @@ rdkit_test(graphmolMolOpsTest molopstest.cpp
         SmilesParse GraphMol)
 
 rdkit_test(graphmoltestChirality testChirality.cpp
-        LINK_LIBRARIES SmilesParse FileParsers
+        LINK_LIBRARIES CIPLabeler SmilesParse FileParsers
         GraphMol)
 
 rdkit_test(graphmoltestPickler testPickler.cpp
@@ -183,7 +183,7 @@ rdkit_catch_test(chiralityTestsCatch catch_chirality.cpp
         LINK_LIBRARIES CIPLabeler FileParsers SmilesParse GraphMol)
 
 rdkit_catch_test(canonTestsCatch catch_canon.cpp
-        LINK_LIBRARIES FileParsers SmilesParse GraphMol)
+        LINK_LIBRARIES CIPLabeler FileParsers SmilesParse GraphMol)
 
 rdkit_catch_test(moliteratorTestsCatch catch_moliterators.cpp
         LINK_LIBRARIES SubstructMatch SmilesParse GraphMol)

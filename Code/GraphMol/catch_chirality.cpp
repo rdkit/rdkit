@@ -69,6 +69,10 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
     }
   }
   SECTION("stereo") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
     {
       auto mol = "C/C=C(/C#C)C"_smiles;
       REQUIRE(mol);
@@ -89,13 +93,13 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans);
     }
     {  // check an example where one of the stereo atoms isn't the first
-       // neighbor
+       // neighbor (only true with legacy chirality)
       auto mol = "C/C=C(/C)C#C"_smiles;
       REQUIRE(mol);
 
       CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
       CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == 4);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == (useLegacy ? 4 : 3));
 
       auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
       CHECK(sinfo.type == Chirality::StereoType::Bond_Double);
@@ -4896,6 +4900,18 @@ TEST_CASE("github #6931: atom maps influencing chirality perception") {
                                   flagPossibleStereoCenters);
     CHECK(
         !m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
+  }
+  SECTION(
+      "github #8391: atom maps on dummy atoms do influence chirality perception") {
+    auto m = "[*:1]C([*:2])(O)F"_smiles;
+    REQUIRE(m);
+    bool cleanIt = true;
+    bool force = true;
+    bool flagPossibleStereoCenters = true;
+    UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+    MolOps::assignStereochemistry(*m, cleanIt, force,
+                                  flagPossibleStereoCenters);
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
   }
 }
 

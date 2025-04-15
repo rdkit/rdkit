@@ -1,3 +1,31 @@
+# Release_2025.09.1
+(Changes relative to Release_2025.03.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Highlights
+
+## Backwards incompatible changes:
+- atom maps on dummy atoms are now always used in the calculation of canonical
+  atom ranks.
+- 2D coordinate generation may produce different results for some molecules due
+  to a change in the way the atom ordering is computed in the depiction code.
+
+
+## New Features and Enhancements:
+
+## Bug Fixes:
+
+## Cleanup work:
+
+## Code removed in this release:
+
+## Deprecated code (to be removed in a future release):
+
+
 # Release_2025.03.1
 (Changes relative to Release_2024.09.1)
 
