@@ -8,9 +8,8 @@
 #    cloned in the second service.
 #
 # Example usage:
-# (the --build-arg and NETWORK* environment variables are all optional)
+# (the --build-arg are all optional)
 #
-# NETWORK_MODE=host NETWORK=host \
 # docker-compose -f docker_compose_build_from_github.yml build \
 #   --build-arg http_proxy=$HTTP_PROXY \
 #   --build-arg https_proxy=$HTTP_PROXY \
@@ -19,14 +18,10 @@
 #   --build-arg "RDKIT_GIT_BRANCH=master" \
 #   2>&1 | tee docker-compose.log
 #
-# Once build is finished, you can run the following commands to
-# create a temporary container and copy built libraries
-# from the container to your local filesystem, then destroy
-# the temporary container:
-# docker create --name=rdkit-minimallib-container rdkit-minimallib:latest --entrypoint /
-# docker cp rdkit-minimallib-container:/RDKit_minimal.js ../demo
-# docker cp rdkit-minimallib-container:/RDKit_minimal.wasm ../demo
-# docker rm rdkit-minimallib-container
+# Once the build is finished, you can run the following command to
+# export the buildartifacts to your local filesystem:
+#
+# DOCKER_BUILDKIT=1 docker build -f Dockerfile_4_rdkit_export -o ../demo .
 
 version: '3.8'
 name: rdkit-minimallib-from-github
