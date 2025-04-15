@@ -53,7 +53,7 @@ jobs:
     compiler_version: 16
     boost_version: 1.84
     number_of_cores: sysctl -n hw.ncpu
-    target_platform: 14.5
+    target_platform: 15.2
     python: python=3.11
   steps:
   - template: .azure-pipelines/mac_build.yml
@@ -66,7 +66,7 @@ jobs:
     compiler_version: 16
     boost_version: 1.84
     number_of_cores: sysctl -n hw.ncpu
-    target_platform: 14.5
+    target_platform: 15.2
   steps:
   - template: .azure-pipelines/mac_build_java.yml
 - job: Windows_VS2022_x64

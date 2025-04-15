@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Greg Landrum
+//  Copyright (C) 2018-2025 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -7,6 +7,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
 #include <RDGeneral/RDLog.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
@@ -402,6 +403,8 @@ void testGithub2046() {
                         << std::endl;
   roundtripSmi("C1CCO[C@H]1F");
   {
+    // this test only makes sense when we are using legacy stereo
+    UseLegacyStereoPerceptionFixture lf(true);
     std::unique_ptr<RWMol> mol(SmilesToMol("C1CCO[C@H]1F"));
     TEST_ASSERT(mol);
     mol->setProp("_Name", "mol1 name");
