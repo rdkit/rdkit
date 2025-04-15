@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -271,7 +271,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
 
     INT_LIST moOrder;
     for (const auto &bond : d_mol.atomBonds(mAt)) {
-      int dbidx = bond->getIdx();
+      const int dbidx = bond->getIdx();
       if (std::find(mOrder.begin(), mOrder.end(), dbidx) != mOrder.end()) {
         moOrder.push_back(dbidx);
       } else {
@@ -279,7 +279,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       }
     }
 
-    int mPermCount =
+    const int mPermCount =
         static_cast<int>(countSwapsToInterconvert(moOrder, mOrder));
 
     const bool requireMatch = qPermCount % 2 == mPermCount % 2;
@@ -287,7 +287,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     const bool matchOK = requireMatch == labelsMatch;
 
     // if this is not part of a stereogroup and doesn't match, return false
-    auto msg = d_molStereoGroups.find(m_c[i]);
+    const auto msg = d_molStereoGroups.find(m_c[i]);
     if (msg == d_molStereoGroups.end()) {
       if (!matchOK) {
         return false;
@@ -445,7 +445,7 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
                               unsigned int ei) {
   for (unsigned int i = bi;
        (matches->size() < args.params.maxMatches) && (i < ei); ++i) {
-    ROMol *mol = args.resMolSupplier[i];
+    std::unique_ptr<ROMol> mol{args.resMolSupplier[i]};
     std::vector<MatchVectType> matchesTmp =
         SubstructMatch(*mol, args.query, args.params);
     for (const auto &match : matchesTmp) {
@@ -453,7 +453,6 @@ void ResSubstructMatchHelper_(const ResSubstructMatchHelperArgs_ &args,
         break;
       }
     }
-    delete mol;
   }
 };
 
@@ -510,7 +509,7 @@ std::vector<MatchVectType> SubstructMatch(
       boost::vf2_all(query.getTopology(), mol.getTopology(), atomLabeler,
                      bondLabeler, matchChecker, pms, params.maxMatches);
   if (found) {
-    unsigned int nQueryAtoms = query.getNumAtoms();
+    const unsigned int nQueryAtoms = query.getNumAtoms();
     matches.reserve(pms.size());
     MatchVectType matchVect(nQueryAtoms);
     for (const auto &pairs : pms) {
@@ -527,7 +526,7 @@ std::vector<MatchVectType> SubstructMatch(
     const MolBundle &bundle, const ROMol &query,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> res;
-  for (unsigned int i = 0; i < bundle.size() && !res.size(); ++i) {
+  for (unsigned int i = 0; i < bundle.size() && res.empty(); ++i) {
     res = SubstructMatch(*bundle[i], query, params);
   }
   return res;
@@ -537,7 +536,7 @@ std::vector<MatchVectType> SubstructMatch(
     const ROMol &mol, const MolBundle &query,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> res;
-  for (unsigned int i = 0; i < query.size() && !res.size(); ++i) {
+  for (unsigned int i = 0; i < query.size() && res.empty(); ++i) {
     res = SubstructMatch(mol, *query[i], params);
   }
   return res;
@@ -547,8 +546,8 @@ std::vector<MatchVectType> SubstructMatch(
     const MolBundle &mol, const MolBundle &query,
     const SubstructMatchParameters &params) {
   std::vector<MatchVectType> res;
-  for (unsigned int i = 0; i < mol.size() && !res.size(); ++i) {
-    for (unsigned int j = 0; j < query.size() && !res.size(); ++j) {
+  for (unsigned int i = 0; i < mol.size() && res.empty(); ++i) {
+    for (unsigned int j = 0; j < query.size() && res.empty(); ++j) {
       res = SubstructMatch(*mol[i], *query[j], params);
     }
   }
@@ -667,8 +666,6 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
                      SUBQUERY_MAP &subqueryMap,
                      std::vector<RecursiveStructureQuery *> &locked) {
   PRECONDITION(query, "bad query");
-  // std::cout << "*-*-* MS: " << query << std::endl;
-  // std::cout << "\t\t" << typeid(*query).name() << std::endl;
   if (query->getDescription() == "RecursiveStructure") {
     auto *rsq = (RecursiveStructureQuery *)query;
 #ifdef RDK_BUILD_THREADSAFE_SSS
@@ -688,8 +685,6 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
            ++setIter) {
         rsq->insert(*setIter);
       }
-      // std::cerr<<" copying results for query serial number:
-      // "<<rsq->getSerialNumber()<<std::endl;
     }
 
     if (!matchDone) {
@@ -707,13 +702,8 @@ void MatchSubqueries(const ROMol &mol, QueryAtom::QUERYATOM_QUERY *query,
       }
       if (rsq->getSerialNumber()) {
         subqueryMap[rsq->getSerialNumber()] = query;
-        // std::cerr << " storing results for query serial number: "
-        //           << rsq->getSerialNumber() << " " << rsq->size() <<
-        //           std::endl;
       }
     }
-  } else {
-    // std::cout << "\tmsq1: ";
   }
 
   // now recurse over our children (these things can be nested)
