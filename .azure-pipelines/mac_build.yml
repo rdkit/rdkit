@@ -33,6 +33,7 @@ steps:
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    ls -l /Library
     ls -l /Library/Developer
     ls -l /Library/Developer/CommandLineTools
     ls -l /Library/Developer/CommandLineTools/SDKs    
