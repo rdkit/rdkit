@@ -33,6 +33,9 @@ steps:
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    ls -l /Library/Developer
+    ls -l /Library/Developer/CommandLineTools
+    ls -l /Library/Developer/CommandLineTools/SDKs    
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     export CXXFLAGS="${CXXFLAGS} -Wall -Wextra -Werror"
