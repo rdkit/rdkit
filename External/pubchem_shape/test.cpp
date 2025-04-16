@@ -282,3 +282,21 @@ TEST_CASE("Github #8096") {
     CHECK_THAT(nbr_ct, Catch::Matchers::WithinAbs(1.0, 0.005));
   }
 }
+
+TEST_CASE("d2CutOff set") {
+  // Previously, shape1.sov and shape2.sov were slightly different because
+  // useCutOff was only being set in AlignMolecule, not PrepareConformer.
+  // Thus aligning a different molecule meant that PrepareConformer gave
+  // different results before and after the alignment.
+  auto m1 =
+      "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
+  REQUIRE(m1);
+  auto shape1 = PrepareConformer(*m1, -1, true);
+  std::vector<float> matrix(12, 0.0);
+  auto m2 =
+      "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
+  REQUIRE(m2);
+  AlignMolecule(*m2, *m2, matrix);
+  auto shape2 = PrepareConformer(*m1, -1, true);
+  CHECK(shape1.sov == shape2.sov);
+}
