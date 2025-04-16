@@ -1,6 +1,7 @@
 #include <GraphMol/ROMol.h>
 #include <map>
 #include <vector>
+#include <boost/iostreams/filter/zlib.hpp>
 
 #ifndef RDKIT_PUBCHEMSHAPE_GUARD
 #define RDKIT_PUBCHEMSHAPE_GUARD
@@ -23,12 +24,17 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   \param mol        the molecule to prepare
   \param confId     (optional) the conformer to use
   \param useColors  (optional) whether to generate info about colors
+  \param atomSubset (optional) if provided, only those atoms will be
+                    included in the shape.
+  \param dummyRad   (optional) if provided, dummy atoms will be given
+                    this radius, otherwise they will be ignored.
 
-  \return a ShapeInput object
+  \return a ShapeInput object, translated to the origin
 */
-RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput PrepareConformer(const RDKit::ROMol &mol,
-                                                      int confId = -1,
-                                                      bool useColors = true);
+RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput PrepareConformer(
+    const RDKit::ROMol &mol, int confId = -1, bool useColors = true,
+    const std::vector<unsigned int> *atomSubset = nullptr,
+    const double *dummyRad = nullptr);
 
 //! Align a molecule to a reference shape
 /*!

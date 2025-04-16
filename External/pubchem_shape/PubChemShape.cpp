@@ -159,8 +159,11 @@ std::vector<std::vector<const ROMol *>> *getPh4Patterns() {
   return patterns.get();
 }
 
-// the conformer is translated to the origin
-ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
+// The conformer is left where it is, the shape is translated to the origin.
+ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors,
+                            const std::vector<unsigned int> *atomSubset,
+                            const double *dummyRad) {
+  Align3D::setUseCutOff(true);
   ShapeInput res;
 
   // unpack features (PubChem-specific property from SDF)
@@ -254,41 +257,51 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
   unsigned int nAtoms = mol.getNumAtoms();
   // DEBUG_MSG("num atoms: " << nAtoms);
 
-  unsigned int nHeavyAtoms = mol.getNumHeavyAtoms();
-  DEBUG_MSG("num heavy atoms: " << nHeavyAtoms);
-
-  unsigned int nAlignmentAtoms = nHeavyAtoms + feature_idx_type.size();
-
+  // Start with the arrays as large as they will possibly have to be.
+  // They will be re-sized later.
+  unsigned int nAlignmentAtoms = nAtoms + feature_idx_type.size();
   std::vector<double> rad_vector(nAlignmentAtoms);
   res.atom_type_vector.resize(nAlignmentAtoms, 0);
 
   RDGeom::Point3D ave;
-  for (unsigned i = 0, activeAtomIdx = 0; i < nAtoms; ++i) {
+  unsigned int nSelectedAtoms = 0;
+  for (unsigned i = 0; i < nAtoms; ++i) {
+    if (atomSubset && std::find(atomSubset->begin(), atomSubset->end(), i) ==
+                          atomSubset->end()) {
+      continue;
+    }
     unsigned int Z = mol.getAtomWithIdx(i)->getAtomicNum();
     if (Z > 1) {
       ave += conformer.getAtomPos(i);
 
       if (auto rad = vdw_radii.find(Z); rad != vdw_radii.end()) {
-        rad_vector[activeAtomIdx++] = rad->second;
+        rad_vector[nSelectedAtoms++] = rad->second;
       } else {
         throw ValueErrorException("No VdW radius for atom with Z=" +
                                   std::to_string(Z));
       }
+    } else if (dummyRad && Z == 0) {
+      ave += conformer.getAtomPos(i);
+      rad_vector[nSelectedAtoms++] = *dummyRad;
     }
   }
 
   // translate steric center to origin
-  ave /= nHeavyAtoms;
+  ave /= nSelectedAtoms;
   DEBUG_MSG("steric center: (" << ave << ")");
   res.shift = {-ave.x, -ave.y, -ave.z};
   res.coord.resize(nAlignmentAtoms * 3);
 
   for (unsigned i = 0, j = 0; i < nAtoms; ++i) {
+    if (atomSubset && std::find(atomSubset->begin(), atomSubset->end(), i) ==
+                          atomSubset->end()) {
+      continue;
+    }
     // use only non-H for alignment
-    if (mol.getAtomWithIdx(i)->getAtomicNum() > 1) {
+    unsigned int Z = mol.getAtomWithIdx(i)->getAtomicNum();
+    if (Z > 1 || (dummyRad && Z == 0)) {
       RDGeom::Point3D pos = conformer.getAtomPos(i);
       pos -= ave;
-
       res.coord[j * 3] = pos.x;
       res.coord[(j * 3) + 1] = pos.y;
       res.coord[(j * 3) + 2] = pos.z;
@@ -298,28 +311,44 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
 
   // get feature coordinates - simply the average of coords of all atoms in the
   // feature
+  unsigned int numFeatures = 0;
   for (unsigned i = 0; i < feature_idx_type.size(); ++i) {
     RDGeom::Point3D floc;
+    unsigned int nSel = 0;
     for (unsigned int j = 0; j < feature_idx_type[i].first.size(); ++j) {
       unsigned int idx = feature_idx_type[i].first[j];
+      if (atomSubset && std::find(atomSubset->begin(), atomSubset->end(),
+                                  idx) == atomSubset->end()) {
+        continue;
+      }
       if (idx >= nAtoms || mol.getAtomWithIdx(idx)->getAtomicNum() <= 1) {
         throw ValueErrorException("Invalid feature atom index");
       }
       floc += conformer.getAtomPos(idx);
+      ++nSel;
     }
-    floc /= feature_idx_type[i].first.size();
-    floc -= ave;
-    DEBUG_MSG("feature type " << feature_idx_type[i].second << " (" << floc
-                              << ")");
+    if (nSel) {
+      floc /= nSel;
+      floc -= ave;
+      DEBUG_MSG("feature type " << feature_idx_type[i].second << " (" << floc
+                                << ")");
 
-    auto array_idx = nHeavyAtoms + i;
-    res.coord[array_idx * 3] = floc.x;
-    res.coord[(array_idx * 3) + 1] = floc.y;
-    res.coord[(array_idx * 3) + 2] = floc.z;
-    rad_vector[array_idx] = radius_color;
-    res.atom_type_vector[array_idx] = feature_idx_type[i].second;
+      auto array_idx = nSelectedAtoms + numFeatures;
+      res.coord[array_idx * 3] = floc.x;
+      res.coord[(array_idx * 3) + 1] = floc.y;
+      res.coord[(array_idx * 3) + 2] = floc.z;
+      rad_vector[array_idx] = radius_color;
+      res.atom_type_vector[array_idx] = feature_idx_type[i].second;
+      ++numFeatures;
+    }
   }
 
+  // Now cut the final vectors down to the actual number of atoms and
+  // features used.
+  nAlignmentAtoms = nSelectedAtoms + numFeatures;
+  res.coord.resize(nAlignmentAtoms * 3);
+  rad_vector.resize(nAlignmentAtoms);
+  res.atom_type_vector.resize(nAlignmentAtoms);
   Align3D::setAlpha(rad_vector.data(), rad_vector.size(), res.alpha_vector);
 
   // regular atom self overlap
