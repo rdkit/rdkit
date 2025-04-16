@@ -164,6 +164,7 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors,
                             const std::vector<unsigned int> *atomSubset,
                             const double *dummyRad) {
   Align3D::setUseCutOff(true);
+
   ShapeInput res;
 
   // unpack features (PubChem-specific property from SDF)
