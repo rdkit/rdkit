@@ -161,6 +161,8 @@ std::vector<std::vector<const ROMol *>> *getPh4Patterns() {
 
 // the conformer is translated to the origin
 ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors) {
+  Align3D::setUseCutOff(true);
+
   ShapeInput res;
 
   // unpack features (PubChem-specific property from SDF)
