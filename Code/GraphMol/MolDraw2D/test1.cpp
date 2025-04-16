@@ -25,6 +25,7 @@
 #include <GraphMol/MolDraw2D/MolDraw2D.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/MolDraw2D/MolDraw2DUtils.h>
+#include <GraphMol/test_fixtures.h>
 
 #include <algorithm>
 #include <cstdio>
@@ -3260,6 +3261,9 @@ M  END
 void test18FixedScales() {
   std::cout << " ----------------- Testing use of fixed scales for drawing."
             << std::endl;
+
+  UseLegacyStereoPerceptionFixture fx(true);
+
   std::string nameBase = "test18_";
   {
     auto m = "Clc1ccccc1"_smiles;

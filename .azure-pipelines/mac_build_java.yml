@@ -23,13 +23,17 @@ steps:
         libcxx=$(compiler_version) cmake=3.26 \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        cairo eigen swig=4.2
+        cairo eigen swig=4.2 make
     conda activate rdkit_build
   displayName: Setup build environment
 - bash: |
     export CONDA=/tmp/miniforge
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
+    ls -l /Library
+    ls -l /Library/Developer
+    ls -l /Library/Developer/CommandLineTools
+    ls -l /Library/Developer/CommandLineTools/SDKs    
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     mkdir build && cd build && \
