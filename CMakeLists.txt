@@ -166,17 +166,14 @@ if(NOT Catch2_FOUND)
   FetchContent_MakeAvailable(Catch2)
 endif()
 
-#include better-enums
-find_package(better_enums 0 QUIET)
-if(NOT better_enums)
-  Include(FetchContent)
+# make sure we have better_enums
+Include(FetchContent)
 
-  FetchContent_Declare(
-    better_enums
-    GIT_REPOSITORY https://github.com/aantron/better-enums.git
-    GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
-  )
-endif()
+FetchContent_Declare(
+  better_enums
+  GIT_REPOSITORY https://github.com/aantron/better-enums.git
+  GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
+)
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
