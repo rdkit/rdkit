@@ -5533,6 +5533,21 @@ M  END
       at.SetProp("foo2", "bar2")
       self.assertTrue(m.GetAtomWithIdx(at.GetIdx()).HasProp("foo2"))
 
+  def testGetEnhancedStereoAtrop(self):
+
+    m = Chem.MolFromSmiles('Cc1cccc(O)c1-c1c(C)cccc1F |wU:7.7,&1:7|')
+
+    sg = m.GetStereoGroups()
+    self.assertEqual(len(sg), 1)
+    group1 = sg[0]
+    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_AND)
+    stereo_atoms = group1.GetAtoms()
+    self.assertEqual(len(stereo_atoms), 0)
+
+    stereo_bonds = group1.GetBonds()
+    self.assertEqual(len(stereo_bonds), 1)
+    self.assertEqual(stereo_bonds[0].GetIdx(), 7)
+
   def testEnhancedStereoPreservesMol(self):
     """
     Check that the stereo group (and the atoms therein) preserve the lifetime
