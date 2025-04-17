@@ -128,14 +128,14 @@ void RascalResult::largestFragOnly() { largestFragsOnly(1); }
 
 void RascalResult::largestFragsOnly(unsigned int numFrags) {
   std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
-  // getMolFrags() returns boost::shared_ptr.  Ho-hum.
+  // getMolFrags() returns std::shared_ptr.  Ho-hum.
   auto frags = RDKit::MolOps::getMolFrags(*mol1_frags, false);
   if (numFrags < 1 || frags.size() < numFrags) {
     return;
   }
   std::sort(frags.begin(), frags.end(),
-            [](const boost::shared_ptr<ROMol> &f1,
-               const boost::shared_ptr<ROMol> &f2) -> bool {
+            [](const std::shared_ptr<ROMol> &f1,
+               const std::shared_ptr<ROMol> &f2) -> bool {
               if (f1->getNumAtoms() == f2->getNumAtoms()) {
                 return f1->getNumBonds() > f2->getNumBonds();
               }
@@ -147,10 +147,10 @@ void RascalResult::largestFragsOnly(unsigned int numFrags) {
 
 void RascalResult::trimSmallFrags(unsigned int minFragSize) {
   std::unique_ptr<RDKit::ROMol> mol1_frags(makeMolFrags(1));
-  // getMolFrags() returns boost::shared_ptr.  Ho-hum.
+  // getMolFrags() returns std::shared_ptr.  Ho-hum.
   auto frags = RDKit::MolOps::getMolFrags(*mol1_frags, false);
   frags.erase(std::remove_if(frags.begin(), frags.end(),
-                             [&](const boost::shared_ptr<ROMol> &f) -> bool {
+                             [&](const std::shared_ptr<ROMol> &f) -> bool {
                                return f->getNumAtoms() < minFragSize;
                              }),
               frags.end());
@@ -166,7 +166,7 @@ double RascalResult::getSimilarity() const {
 }
 
 void RascalResult::rebuildFromFrags(
-    const std::vector<boost::shared_ptr<ROMol>> &frags) {
+    const std::vector<std::shared_ptr<ROMol>> &frags) {
   // Force the re-creation of the SMARTS and other properties next time
   // they-re needed.
   d_smarts = "";
@@ -389,8 +389,8 @@ void RascalResult::applyMaxFragSep() {
   if (frags1.size() < 2) {
     return;
   }
-  auto fragFragDist = [](const boost::shared_ptr<RDKit::ROMol> &frag1,
-                         const boost::shared_ptr<RDKit::ROMol> &frag2,
+  auto fragFragDist = [](const std::shared_ptr<RDKit::ROMol> &frag1,
+                         const std::shared_ptr<RDKit::ROMol> &frag2,
                          const double *pathMatrix, int num_atoms) -> double {
     int minDist = std::numeric_limits<int>::max();
     for (auto at1 : frag1->atoms()) {

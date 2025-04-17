@@ -52,14 +52,14 @@
 
 
 %extend RDKit::RascalMCES::RascalApp {
-    static std::vector<std::vector<unsigned int> > RascalCluster(const std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, const RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
+    static std::vector<std::vector<unsigned int> > RascalCluster(const std::vector<std::shared_ptr<RDKit::ROMol> >& mols, const RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
 		std::vector<std::shared_ptr<RDKit::ROMol> > rascalMolecules;
 		for (auto molIn: mols) {
 			rascalMolecules.emplace_back(new RDKit::ROMol(*molIn));
 		}
 		return RDKit::RascalMCES::rascalCluster(rascalMolecules, clusterOptions);
 	}
-    static std::vector<std::vector<unsigned int> > RascalButinaCluster(const std::vector<boost::shared_ptr<RDKit::ROMol> >& mols, const RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
+    static std::vector<std::vector<unsigned int> > RascalButinaCluster(const std::vector<std::shared_ptr<RDKit::ROMol> >& mols, const RDKit::RascalMCES::RascalClusterOptions& clusterOptions=RascalClusterOptions()) {
 		std::vector<std::shared_ptr<RDKit::ROMol> > rascalMolecules;
 		for (auto molIn: mols) {
 			rascalMolecules.emplace_back(new RDKit::ROMol(*molIn));
