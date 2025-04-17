@@ -17,6 +17,7 @@ def data(fname):
 
 
 logger = logger()
+logger.setLevel(1)
 
 tests = [1] * 1001
 if len(sys.argv) > 1:
@@ -80,6 +81,7 @@ if tests[3] or tests[4] or tests[5]:
   logger.info('patterns from smiles')
   patts = []
   nMols = 0
+  nBad = 0
   t1 = time.time()
   for line in pattData:
     m = Chem.MolFromSmarts(line)
