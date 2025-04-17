@@ -5524,6 +5524,10 @@ M  END
     # file is 1 indexed and says 5
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
 
+    # no bonds here:
+    stereo_bonds = group1.GetBonds()
+    self.assertEqual(len(stereo_bonds), 0)
+
     # make sure the atoms are connected to the parent molecule
     stereo_atoms[1].SetProp("foo", "bar")
     self.assertTrue(m.GetAtomWithIdx(4).HasProp("foo"))
