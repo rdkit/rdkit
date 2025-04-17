@@ -573,19 +573,19 @@ std::vector<MatchVectType> SubstructMatch(
 #ifdef RDK_BUILD_THREADSAFE_SSS
   else {
     std::vector<std::future<void>> tg;
-    std::vector<std::set<MatchVectType> *> matchesThread(nt);
+    std::vector<std::unique_ptr<std::set<MatchVectType>>> matchesThread(nt);
     unsigned int ei = 0;
     double dpt =
         static_cast<double>(resMolSupplier.length()) / static_cast<double>(nt);
     double dc = 0.0;
     for (unsigned int ti = 0; ti < nt; ++ti) {
-      matchesThread[ti] = new std::set<MatchVectType>();
+      matchesThread[ti] = std::make_unique<std::set<MatchVectType>>();
       unsigned int bi = ei;
       dc += dpt;
       ei = static_cast<unsigned int>(floor(dc));
       tg.emplace_back(std::async(std::launch::async,
                                  detail::ResSubstructMatchHelper_, args,
-                                 matchesThread[ti], bi, ei));
+                                 matchesThread[ti].get(), bi, ei));
     }
     for (auto &fut : tg) {
       fut.get();
@@ -597,7 +597,6 @@ std::vector<MatchVectType> SubstructMatch(
           break;
         }
       }
-      delete matchesThread[ti];
     }
   }
 #endif
