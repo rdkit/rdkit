@@ -69,22 +69,32 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput {
   double sof{0.0};
 };
 
+struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInputOptions {
+  bool useColors{true};  // Whether to use colors (pharmacophore features) in
+                         // the score.
+  bool includeDummies{false};  // Hydrogen and dummy atoms are normally skipped.
+                               // This forces the inclusion of dummy atoms.
+  double dummyRadius{2.16};    // This is the radius used for Xe.
+  std::vector<unsigned int> atomSubset;  // If not empty, use just these atoms
+                                         // in the molecule to form the
+                                         // ShapeInput object.
+  std::vector<std::pair<unsigned int, double>>
+      atomRadii;  // Use these non-standard radii for these atoms.
+                  // The int is for the index in the molecule, not
+                  // the atomic number.
+};
+
 //! Prepare the input for the shape comparison
 /*!
   \param mol        the molecule to prepare
   \param confId     (optional) the conformer to use
-  \param useColors  (optional) whether to generate info about colors
-  \param atomSubset (optional) if provided, only those atoms will be
-                    included in the shape.
-  \param dummyRad   (optional) if provided, dummy atoms will be given
-                    this radius, otherwise they will be ignored.
+  \param shapeOpts  (optional) Change the default behaviour.
 
   \return a ShapeInput object, translated to the origin
 */
-RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput PrepareConformer(
-    const RDKit::ROMol &mol, int confId = -1, bool useColors = true,
-    const std::vector<unsigned int> *atomSubset = nullptr,
-    const double *dummyRad = nullptr);
+RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput
+PrepareConformer(const RDKit::ROMol &mol, int confId = -1,
+                 const ShapeInputOptions &shapeOpts = ShapeInputOptions());
 
 //! Align a molecule to a reference shape
 /*!

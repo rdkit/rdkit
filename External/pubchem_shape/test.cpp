@@ -312,13 +312,13 @@ TEST_CASE("d2CutOff set") {
   auto m1 =
       "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
   REQUIRE(m1);
-  auto shape1 = PrepareConformer(*m1, -1, true);
+  auto shape1 = PrepareConformer(*m1, -1);
   std::vector<float> matrix(12, 0.0);
   auto m2 =
       "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
   REQUIRE(m2);
   AlignMolecule(*m2, *m2, matrix);
-  auto shape2 = PrepareConformer(*m1, -1, true);
+  auto shape2 = PrepareConformer(*m1, -1);
   CHECK(shape1.sov == shape2.sov);
 }
 
@@ -326,13 +326,15 @@ TEST_CASE("Shape subset") {
   auto m1 =
       "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
   REQUIRE(m1);
-  std::vector<unsigned int> atomSubset{0, 1, 2, 3, 10, 11};
-  auto partShape = PrepareConformer(*m1, -1, true, &atomSubset);
+  ShapeInputOptions shapeOpts;
+  shapeOpts.atomSubset = std::vector<unsigned int>{0, 1, 2, 3, 10, 11};
+  auto partShape = PrepareConformer(*m1, -1, shapeOpts);
   CHECK(partShape.coord.size() == 21);
   CHECK_THAT(partShape.sov, Catch::Matchers::WithinAbs(253.929, 0.005));
   CHECK_THAT(partShape.sof, Catch::Matchers::WithinAbs(5.074, 0.005));
 
-  auto wholeShape = PrepareConformer(*m1, -1, true);
+  shapeOpts.atomSubset.clear();
+  auto wholeShape = PrepareConformer(*m1, -1, shapeOpts);
   CHECK(wholeShape.coord.size() == 42);
   CHECK_THAT(wholeShape.sov, Catch::Matchers::WithinAbs(542.04, 0.005));
   CHECK_THAT(wholeShape.sof, Catch::Matchers::WithinAbs(10.148, 0.005));
@@ -341,20 +343,23 @@ TEST_CASE("Shape subset") {
 TEST_CASE("Dummy radii") {
   auto m1 =
       "[Xe]c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
-  auto shape1 = PrepareConformer(*m1, -1, true, nullptr, nullptr);
+  auto shape1 = PrepareConformer(*m1, -1);
   CHECK(shape1.coord.size() == 24);
   auto m2 =
       "*c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
-  // This is the radius for Xenon used by PubChemShape.
-  double dummyRad = 2.16;
-  auto shape2 = PrepareConformer(*m2, -1, true, nullptr, &dummyRad);
+  ShapeInputOptions shapeOpts;
+  shapeOpts.includeDummies = true;
+  auto shape2 = PrepareConformer(*m2, -1, shapeOpts);
   CHECK(shape2.coord.size() == 24);
   CHECK(shape1.sov == shape2.sov);
 
-  auto m3 =
-      "*c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
-  auto shape3 = PrepareConformer(*m3, -1, true, nullptr, nullptr);
-  CHECK(shape3.coord.size() == 21);
-  CHECK(shape3.sov < shape2.sov);
-  CHECK_THAT(shape3.sov, Catch::Matchers::WithinAbs(254.578, 0.005));
+  shapeOpts.dummyRadius = 2.5;
+  auto shape3 = PrepareConformer(*m2, -1, shapeOpts);
+  CHECK_THAT(shape3.sov, Catch::Matchers::WithinAbs(427.925, 0.005));
+
+  shapeOpts.includeDummies = false;
+  auto shape4 = PrepareConformer(*m2, -1, shapeOpts);
+  CHECK(shape4.coord.size() == 21);
+  CHECK(shape4.sov < shape2.sov);
+  CHECK_THAT(shape4.sov, Catch::Matchers::WithinAbs(254.578, 0.005));
 }

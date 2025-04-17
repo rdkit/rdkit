@@ -159,23 +159,18 @@ std::vector<std::vector<const ROMol *>> *getPh4Patterns() {
   return patterns.get();
 }
 
-// The conformer is left where it is, the shape is translated to the origin.
-ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors,
-                            const std::vector<unsigned int> *atomSubset,
-                            const double *dummyRad) {
-  Align3D::setUseCutOff(true);
-
-  ShapeInput res;
-
+namespace {
+std::vector<std::pair<std::vector<unsigned int>, unsigned int>> extractFeatures(
+    const ROMol &mol, const ShapeInputOptions &shapeOpts) {
   // unpack features (PubChem-specific property from SDF)
   // NOTE: this unpacking assumes that RWMol-atom-index = SDF-atom-number - 1
   //   e.g. RWMol uses [0..N-1] and SDF uses [1..N], with atoms in the same
   //   order
+  // If there are no PubChem features, falls back on RDKit pphore types.
 
   std::vector<std::pair<std::vector<unsigned int>, unsigned int>>
       feature_idx_type;
-
-  if (useColors) {
+  if (shapeOpts.useColors) {
     std::string features;
     if (mol.getPropIfPresent(pubchemFeatureName, features)) {
       // regular atoms have type 0; feature "atoms" (features represented by a
@@ -248,30 +243,29 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors,
       }
     }
   }
+  return feature_idx_type;
+}
 
-  // unpack atoms
-
-  auto &conformer = mol.getConformer(confId);
-  if (!conformer.is3D()) {
-    throw ValueErrorException("Conformer must be 3D");
+bool atomInSubset(unsigned int atomIdx, const ShapeInputOptions &shapeOpts) {
+  if (shapeOpts.atomSubset.empty()) {
+    return true;
   }
-  unsigned int nAtoms = mol.getNumAtoms();
-  // DEBUG_MSG("num atoms: " << nAtoms);
+  return (std::find(shapeOpts.atomSubset.begin(), shapeOpts.atomSubset.end(),
+                    atomIdx) != shapeOpts.atomSubset.end());
+}
 
-  // Start with the arrays as large as they will possibly have to be.
-  // They will be re-sized later.
-  unsigned int nAlignmentAtoms = nAtoms + feature_idx_type.size();
-  std::vector<double> rad_vector(nAlignmentAtoms);
-  res.atom_type_vector.resize(nAlignmentAtoms, 0);
-
-  RDGeom::Point3D ave;
-  unsigned int nSelectedAtoms = 0;
-  for (unsigned i = 0; i < nAtoms; ++i) {
-    if (atomSubset && std::find(atomSubset->begin(), atomSubset->end(), i) ==
-                          atomSubset->end()) {
+// Get the atom radii.  rad_vector is expected to be big enough to hold them
+// all.  Also computes the average coordinates of the selected atoms.
+void extractAtomRadii(const Conformer &conformer, unsigned int nAtoms,
+                      const ShapeInputOptions &shapeOpts, RDGeom::Point3D &ave,
+                      unsigned int &nSelectedAtoms,
+                      std::vector<double> &rad_vector) {
+  nSelectedAtoms = 0;
+  for (unsigned int i = 0u; i < nAtoms; ++i) {
+    if (!atomInSubset(i, shapeOpts)) {
       continue;
     }
-    unsigned int Z = mol.getAtomWithIdx(i)->getAtomicNum();
+    unsigned int Z = conformer.getOwningMol().getAtomWithIdx(i)->getAtomicNum();
     if (Z > 1) {
       ave += conformer.getAtomPos(i);
 
@@ -281,48 +275,54 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors,
         throw ValueErrorException("No VdW radius for atom with Z=" +
                                   std::to_string(Z));
       }
-    } else if (dummyRad && Z == 0) {
+    } else if (shapeOpts.includeDummies && Z == 0) {
       ave += conformer.getAtomPos(i);
-      rad_vector[nSelectedAtoms++] = *dummyRad;
+      rad_vector[nSelectedAtoms++] = shapeOpts.dummyRadius;
     }
   }
-
-  // translate steric center to origin
   ave /= nSelectedAtoms;
-  DEBUG_MSG("steric center: (" << ave << ")");
-  res.shift = {-ave.x, -ave.y, -ave.z};
-  res.coord.resize(nAlignmentAtoms * 3);
+}
 
+void extractAtomCoords(const Conformer &conformer, const unsigned int nAtoms,
+                       const ShapeInputOptions &shapeOpts,
+                       const RDGeom::Point3D &ave, std::vector<float> &coords) {
   for (unsigned i = 0, j = 0; i < nAtoms; ++i) {
-    if (atomSubset && std::find(atomSubset->begin(), atomSubset->end(), i) ==
-                          atomSubset->end()) {
+    if (!atomInSubset(i, shapeOpts)) {
       continue;
     }
-    // use only non-H for alignment
-    unsigned int Z = mol.getAtomWithIdx(i)->getAtomicNum();
-    if (Z > 1 || (dummyRad && Z == 0)) {
+    // use only non-H for alignment, optionally with dummy atoms.
+    unsigned int Z = conformer.getOwningMol().getAtomWithIdx(i)->getAtomicNum();
+    if (Z > 1 || (shapeOpts.includeDummies && Z == 0)) {
       RDGeom::Point3D pos = conformer.getAtomPos(i);
       pos -= ave;
-      res.coord[j * 3] = pos.x;
-      res.coord[(j * 3) + 1] = pos.y;
-      res.coord[(j * 3) + 2] = pos.z;
+      coords[j * 3] = pos.x;
+      coords[(j * 3) + 1] = pos.y;
+      coords[(j * 3) + 2] = pos.z;
       ++j;
     }
   }
+}
 
+void extractFeatureCoords(
+    const Conformer &conformer, const unsigned int nAtoms,
+    const unsigned int nSelectedAtoms,
+    const std::vector<std::pair<std::vector<unsigned int>, unsigned int>>
+        &feature_idx_type,
+    const ShapeInputOptions &shapeOpts, const RDGeom::Point3D &ave,
+    unsigned int &numFeatures, ShapeInput &res,
+    std::vector<double> &rad_vector) {
   // get feature coordinates - simply the average of coords of all atoms in the
   // feature
-  unsigned int numFeatures = 0;
   for (unsigned i = 0; i < feature_idx_type.size(); ++i) {
     RDGeom::Point3D floc;
     unsigned int nSel = 0;
     for (unsigned int j = 0; j < feature_idx_type[i].first.size(); ++j) {
       unsigned int idx = feature_idx_type[i].first[j];
-      if (atomSubset && std::find(atomSubset->begin(), atomSubset->end(),
-                                  idx) == atomSubset->end()) {
+      if (!atomInSubset(idx, shapeOpts)) {
         continue;
       }
-      if (idx >= nAtoms || mol.getAtomWithIdx(idx)->getAtomicNum() <= 1) {
+      if (idx >= nAtoms ||
+          conformer.getOwningMol().getAtomWithIdx(idx)->getAtomicNum() <= 1) {
         throw ValueErrorException("Invalid feature atom index");
       }
       floc += conformer.getAtomPos(idx);
@@ -343,6 +343,45 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId, bool useColors,
       ++numFeatures;
     }
   }
+}
+
+}  // namespace
+// The conformer is left where it is, the shape is translated to the origin.
+ShapeInput PrepareConformer(const ROMol &mol, int confId,
+                            const ShapeInputOptions &shapeOpts) {
+  Align3D::setUseCutOff(true);
+
+  ShapeInput res;
+
+  auto feature_idx_type = extractFeatures(mol, shapeOpts);
+
+  auto &conformer = mol.getConformer(confId);
+  if (!conformer.is3D()) {
+    throw ValueErrorException("Conformer must be 3D");
+  }
+  unsigned int nAtoms = mol.getNumAtoms();
+  // DEBUG_MSG("num atoms: " << nAtoms);
+
+  // Start with the arrays as large as they will possibly have to be.
+  // They will be re-sized later.
+  unsigned int nAlignmentAtoms = nAtoms + feature_idx_type.size();
+  std::vector<double> rad_vector(nAlignmentAtoms);
+  res.atom_type_vector.resize(nAlignmentAtoms, 0);
+
+  RDGeom::Point3D ave;
+  unsigned int nSelectedAtoms = 0;
+  extractAtomRadii(conformer, nAtoms, shapeOpts, ave, nSelectedAtoms,
+                   rad_vector);
+
+  // translate steric center to origin
+  DEBUG_MSG("steric center: (" << ave << ")");
+  res.shift = {-ave.x, -ave.y, -ave.z};
+  res.coord.resize(nAlignmentAtoms * 3);
+
+  extractAtomCoords(conformer, nAtoms, shapeOpts, ave, res.coord);
+  unsigned int numFeatures = 0;
+  extractFeatureCoords(conformer, nAtoms, nSelectedAtoms, feature_idx_type,
+                       shapeOpts, ave, numFeatures, res, rad_vector);
 
   // Now cut the final vectors down to the actual number of atoms and
   // features used.
@@ -384,7 +423,9 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
   Align3D::setUseCutOff(true);
 
   DEBUG_MSG("Fit details:");
-  auto fitShape = PrepareConformer(fit, fitConfId, useColors);
+  ShapeInputOptions shapeOpts;
+  shapeOpts.useColors = useColors;
+  auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
 
   std::set<unsigned int> jointColorAtomTypeSet;
   Align3D::getJointColorTypeSet(
@@ -450,7 +491,9 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
   Align3D::setUseCutOff(true);
 
   DEBUG_MSG("Reference details:");
-  auto refShape = PrepareConformer(ref, refConfId, useColors);
+  ShapeInputOptions shapeOpts;
+  shapeOpts.useColors = useColors;
+  auto refShape = PrepareConformer(ref, refConfId, shapeOpts);
 
   return AlignMolecule(refShape, fit, matrix, fitConfId, useColors, opt_param,
                        max_preiters, max_postiters);
