@@ -350,7 +350,6 @@ void extractFeatureCoords(
 ShapeInput PrepareConformer(const ROMol &mol, int confId,
                             const ShapeInputOptions &shapeOpts) {
   Align3D::setUseCutOff(true);
-
   ShapeInput res;
 
   auto feature_idx_type = extractFeatures(mol, shapeOpts);

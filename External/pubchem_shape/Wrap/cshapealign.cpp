@@ -52,8 +52,24 @@ python::tuple alignMol2(const ShapeInput &ref, RDKit::ROMol &probe,
                     max_preiters, max_postiters);
   return python::make_tuple(nbr_st, nbr_ct);
 }
-ShapeInput *prepConf(const RDKit::ROMol &mol, int confId, bool useColors) {
-  return new ShapeInput(PrepareConformer(mol, confId, useColors));
+ShapeInput *prepConf(const RDKit::ROMol &mol, int confId,
+                     const python::object &py_opts) {
+  ShapeInputOptions opts;
+  if (!py_opts.is_none()) {
+    opts = python::extract<ShapeInputOptions>(py_opts);
+  }
+  return new ShapeInput(PrepareConformer(mol, confId, opts));
+}
+void set_atomSubset(ShapeInputOptions &opts, const python::list &as) {
+  pythonObjectToVect<unsigned int>(as, opts.atomSubset);
+}
+
+python::list get_atomSubset(const ShapeInputOptions &opts) {
+  python::list py_list;
+  for (const auto &val : opts.atomSubset) {
+    py_list.append(val);
+  }
+  return py_list;
 }
 }  // namespace helpers
 
@@ -61,6 +77,22 @@ void wrap_pubchemshape() {
   RegisterVectorConverter<float>("FloatVector");
   RegisterVectorConverter<double>("DoubleVector");
   RegisterVectorConverter<unsigned int>("UnsignedIntVector");
+
+  python::class_<ShapeInputOptions, boost::noncopyable>("ShapeInputOptions",
+                                                        "Shape Input Options")
+      .def_readwrite(
+          "useColors", &ShapeInputOptions::useColors,
+          "Whether to use colors (pharmacophore features) in the score.  Default=True.")
+      .def_readwrite(
+          "includeDummies", &ShapeInputOptions::includeDummies,
+          "Whether to use dummy atoms in the alignment. Default=False.")
+      .def_readwrite(
+          "dummyRadius", &ShapeInputOptions::dummyRadius,
+          "If using dummy atoms in the alignment, what radius to use for it."
+          "  Default=2.16 (the radius of Xe).")
+      .add_property(
+          "atomSubset", &helpers::get_atomSubset, &helpers::set_atomSubset,
+          "If not empty, use just these atoms in the molecule to form the ShapeInput object.");
 
   python::def(
       "AlignMol", &helpers::alignMol,
@@ -124,7 +156,7 @@ Returns
 
   python::def("PrepareConformer", &helpers::prepConf,
               (python::arg("mol"), python::arg("confId") = -1,
-               python::arg("useColors") = true),
+               python::arg("opts") = python::object()),
               R"DOC(Generates a ShapeInput object for a molecule
 
 Parameters

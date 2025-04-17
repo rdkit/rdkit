@@ -32,6 +32,19 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(tpl[0], 0.773, places=3)
     self.assertAlmostEqual(tpl[1], 0.303, places=3)
 
+  def test4_ShapeInputOptions(self):
+    opts = rdShapeAlign.ShapeInputOptions()
+    opts.useColors = False
+    shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
+    print(Chem.MolToCXSmiles(self.ref))
+    tpl = rdShapeAlign.AlignMol(shp, self.probe, opt_param=0.5, max_preiters=3, max_postiters=16)
+    self.assertAlmostEqual(tpl[0], 0.773, places=3)
+    self.assertAlmostEqual(tpl[1], 0.0, places=3)
+
+    opts.atomSubset = [4, 5, 6, 7, 8, 9]
+    shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
+    self.assertAlmostEqual(shp.sov, 251.946, places=3)
+    self.assertAlmostEqual(shp.sof, 0.0, places=3)
 
 if __name__ == '__main__':
   unittest.main()
