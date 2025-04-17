@@ -1,0 +1,111 @@
+<html>
+<head>
+<title>CDX Format Specification: The CDX binary file format</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+
+<h2>The CDX binary file format</h2>
+
+<p>A CDX file has the following general attributes:
+<ul>
+<li>It consists of a fixed header, followed by a series of tagged items.</li>
+<li>All multi-byte data items are stored in little-endian byte order, that is, least significant byte first. (Intel uses little-endian; Macintosh uses big-endian. Accordingly, CDX files must be byte-swapped appropriately if they are to be read on Macintosh computers.)</li>
+</ul>
+
+<h3>Header Format</h3>
+
+<p>The CDX File Header consists of:
+<ul>
+<li>8 bytes with the value &quot;VjCD0100&quot; (<tt>56 6A 43 44 30 31 30 30</tt>)</li>
+<li>4 bytes reserved (<tt>04 03 02 01</tt>)</li>
+<li>16 bytes reserved, set to zero (<tt>00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</tt>).</li>
+</ul>
+
+<p><img src="Graphics/CDXHeader.gif" alt="CDXHeader.gif (4668 bytes)" WIDTH="245" HEIGHT="310"></p>
+
+<p>The header is then followed by an object tree of tagged items beginning with a document object.</p>
+
+<h3>End</h3>
+
+<p>The end of the CDX file is marked with two bytes of 0 (<tt>00 00</tt>).</p>
+
+<h3><a name="Attributes" href="TableOfProperties.htm">Properties</a></h3>
+
+<p>Properties, also called attributes, are self-contained. A property applies to the object which logically contains it. It may also describe other objects contained within the object which logically contains the property. For example, bond order is a property of a bond, and molecular weight is a property of a molecule. Unless otherwise noted, all properties are optional.</p>
+
+<p>Properties have three parts, as follows:</p>
+
+<h4>Tag identifier</h4>
+
+<p>The tag identifier defines what this property represents -- for instance, the order of a bond. The 2-byte tag identifier identifies the property. Having the most significant bit (bit 15) clear indicates that this is a property rather than an object. Bit 14 is clear for predefined properties, set for user-defined properties. Therefore, there are 16383 tags reserved for predefined Properties and 16384 for user-defined Properties.</p>
+
+<h4>Length</h4>
+
+<p>The 2-byte length item specifies the number of (8-bit) bytes that comprise the data the property. The length is zero if the mere presence of the property is sufficient.</p>
+
+<p>A length of 0xFFFF is a special value that indicates the object is greater than 65534 bytes in size. In this case it is followed immediately by an additional 4-byte Length item to specify the actual length.</p>
+
+<h4>Data</h4>
+
+<p>The <em>n</em>-byte data item may be an integer, a floating point number, or some other type determined by the property tag. For instance, a RotationAngle property's value consists of a CDX angle.</p>
+
+<h4>Example</h4>
+
+<table>
+<tr><td><tt>06 00</tt></td><td>:</td><td valign="top">The tag identifier 0x0600 indicates a bond order</td></tr>
+<tr><td><tt>02 00</tt></td><td>:</td><td valign="top">Bond orders are stored as an INT16 value, consisting of two (0x0002) bytes</td></tr>
+<tr><td><tt>02 00</tt></td><td>:</td><td valign="top">This bond has a bond order of 0x0002.  It is a double bond.</td></tr>
+</table>
+
+<h3><a name="Objects" href="AllCDXObjects.htm"><big>Objects</big></a></h3>
+
+<p>Like properties, objects are also self-contained.  Unlike properties, however, objects can contain properties and other objects.</p>
+
+<p>Objects have four parts, as follows:</p>
+
+<h5>Tag Identifier</h5>
+<p>An object's tag is a two-byte value, which will always have the most significant bit (bit 15) set. Bit 14 is zero for predefined objects, or one for user-defined. There are therefore 16383 tags reserved for predefined objects, and 16384 for user-defined objects.</p>
+
+<h4>Object Identifier</h4>
+
+<p>A four-byte object ID immediately follows the tag. It should be a unique value within the container. An value of zero indicates that no ID is assigned, and may only be used if the object is not referenced by any other object.  Object IDs <em>need</em> only be unique within the containing object, however, we <em>recommend</em> that they be unique within the entire document.</p>
+
+<p>(In principle, a complete reference to any object in a CDX file may require a series of object identifiers, each indicating the branch to take at one level of the containment heirarchy. It is therefore sufficient that identifiers be unique with respect to the other objects housed in the same container. However, there is currently no mechanism to specify series of object identifiers, and it is therefore recommended that all object identifiers be &quot;globally&quot; unique for the time being, when convenient.)</p>
+
+<h4>Object contents</h4>
+
+<p>An object may contain any number of properties or other objects.</p>
+
+<h4>EndObject</h4>
+
+<p>Every object ends with a pair of zero bytes (<tt>00 00</tt>).</p>
+
+<h4>Example</h4>
+
+<table>
+<tr><td valign="top"><tt>05 80</tt></td><td>:</td><td valign="top">The tag identifier 0x8005 indicates a bond</td></tr>
+<tr><td valign="top"><tt>1D 00 00 00</tt></td><td valign="top">:</td><td valign="top">This bond has an ID of 29 (0x0000001D)</td></tr>
+<tr><td valign="top"><tt>04 06 04 00 15 00 00 00</tt></td><td valign="top">:</td><td valign="top">The atom at the first end of this bond (property 0x0604) has ID 21 (0x00000015)</td></tr>
+<tr><td valign="top"><tt>05 06 04 00 16 00 00 00</tt></td><td valign="top">:</td><td valign="top">The atom at the second end of this bond (property 0x0605) has ID 22 (0x00000016)</td></tr>
+<tr><td valign="top"><tt>00 06 02 00 02 00</tt></td><td valign="top">:</td><td valign="top">This bond has a bond order (property 0x0600) of 0x0002.  It is a double bond.</td></tr>
+<tr><td valign="top"><tt>03 06 02 00 01 00</tt></td><td valign="top">:</td><td valign="top">This double bond is positioned (property 0x0603) so that the second line of the double bond is to the right of the first, looking from the first atom to the second atom</td></tr>
+<tr><td valign="top"><tt>00 00</tt></td><td valign="top">:</td><td valign="top">There are no more properties or objects associated with this bond</td></tr>
+</table>
+
+<h3>Sample header file</h3>
+
+<p>As a convenience, we have provided a <a href="CDXConstants.h">C++ header file</a> with human-readable enumerations of all of the CDX object and property values.  The enum names used in this file (kCDXProp_*, etc) are the same as used throughout this documentation. This header file is provided simply to save you the problem of typing the same values in again youself.</p>
+
+<p>&nbsp;</p>
+
+<p><a href="General.htm">Return to Introduction</a><br>
+<a href="IntroExampleSimple.htm">Continue to simple example</a></p>
+
+
+
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

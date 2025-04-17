@@ -1,0 +1,78 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX Font Table Data Type</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX Font Table Data Type</h2>
+
+<h3>CDXFontTable:</h3>
+<b>In CDX files</b>, a the font table is a variable-length struct that consists of:<br>
+<table border="1">
+<tr>
+<td><b>Bytes</b></td>
+<td><b>Type</b></td>
+<td><b>Contents</b></td>
+</tr>
+<tr>
+<td>0-1</td>
+<td><a href="CDXNumeric.htm">UINT16</a></td>
+<td>A value indicating the originating platform. Currently limited to the values 0x0000 for Macintosh and 0x0001 for Windows.<p>
+</td>
+</tr>
+<tr>
+<td>2-3</td>
+<td><a href="CDXNumeric.htm">UINT16</a></td>
+<td>Style run count: The number of font listings to follow</td>
+</tr>
+<tr>
+<td><i>n</i>...</td>
+<td>struct</td>
+<td>
+For each font listing:
+<table>
+<tr>
+<td valign="top">0-1</td>
+<td valign="top"><a href="CDXNumeric.htm">UINT16</a></td>
+<td valign="top">The ID of this font. This must be unique, but need not be sequential</td>
+</tr>
+<td valign="top">2-3</td>
+<td valign="top"><a href="CDXNumeric.htm">UINT16</a></td>
+<td valign="top">The character set of this font. Acceptible values are shown as part of the discussion of the CDXML <a href="../properties/charset.htm">charset</a> property</td>
+</tr>
+<td valign="top">4-5</td>
+<td valign="top"><a href="CDXNumeric.htm">UINT16</a></td>
+<td valign="top">The length of the name of this font</td>
+</tr>
+<tr>
+<td valign="top">6...<i>n</i></td>
+<td valign="top"><a href="Unformatted.htm">Unformatted</a></td>
+<td valign="top">The actual name of this font</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+
+<p><b>In CDXML files</b>, this data type is represented by a <a href="../FontTable.htm"><tt>fonttable</tt></a> object.</p>
+
+<p><b>Examples:</b>
+<table><tr><td valign="top"><tt>CDX:</tt></td>
+<td><tt>00 02 00 03 00 E4 04 05 &nbsp; ........<br>
+00 41 72 69 61 6C 04 00 &nbsp; .Arial..<br>
+E4 04 0F 00 54 69 6D 65 &nbsp; ....Time<br>
+73 20 4E 65 77 20 52 6F &nbsp; s New Ro<br>
+6D 61 6E &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; man</tt></td></tr>
+<tr><td valign="top"><tt>CDXML:</tt></td>
+<td><tt>&lt;fonttable&gt;<br>
+&lt;font id=&quot;3&quot; charset=&quot;iso-8859-1&quot; name=&quot;Arial&quot;/&gt;<br>
+&lt;font id=&quot;4&quot; charset=&quot;iso-8859-1&quot; name=&quot;Times New Roman&quot;/&gt;<br>
+&lt;/fonttable&gt;</tt></td></table>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

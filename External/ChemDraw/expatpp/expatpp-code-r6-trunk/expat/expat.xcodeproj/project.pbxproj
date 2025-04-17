@@ -1,0 +1,2424 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXAggregateTarget section */
+		2C0876E007CE407585BA126A /* ZERO_CHECK */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 7EAAAAD6A1FC490BB98AF60B /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */;
+			buildPhases = (
+				11CF7C5CFA0FCF058A2AA78A /* Generate CMakeFiles/ZERO_CHECK */,
+			);
+			dependencies = (
+			);
+			name = ZERO_CHECK;
+			productName = ZERO_CHECK;
+		};
+		43880B038875AE187BA77260 /* RUN_TESTS */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 47429424E3544F95AC4CC15A /* Build configuration list for PBXAggregateTarget "RUN_TESTS" */;
+			buildPhases = (
+				003C8D08B0008F35F218E126 /* CMake PostBuild Rules */,
+			);
+			dependencies = (
+			);
+			name = RUN_TESTS;
+			productName = RUN_TESTS;
+		};
+		489ED055845E68027E9DAB86 /* package */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 89834B0341CC4C76944CBB77 /* Build configuration list for PBXAggregateTarget "package" */;
+			buildPhases = (
+				571234464C2A5D0D43F1AB42 /* CMake PostBuild Rules */,
+			);
+			dependencies = (
+				89922761E0194E6C891E29D7 /* PBXTargetDependency */,
+			);
+			name = package;
+			productName = package;
+		};
+		A57D4E6630B1BF0A318B72FF /* ALL_BUILD */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 8EDFE9C48D8444B19E3E0DEE /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */;
+			buildPhases = (
+				F4B0891FAD4B3CE4C05433EF /* Generate CMakeFiles/ALL_BUILD */,
+			);
+			dependencies = (
+				FE3DF289AC3C4910A72D5D9C /* PBXTargetDependency */,
+				6A4B2FE2A85B4A58A59EC045 /* PBXTargetDependency */,
+				6D82C7BD80B34C48909898E4 /* PBXTargetDependency */,
+				CD53B321EAFA41839DACF472 /* PBXTargetDependency */,
+				B9F7329624A344FCB91FB781 /* PBXTargetDependency */,
+				F81FE52787DD47A99118B31E /* PBXTargetDependency */,
+				9B3C726B18304AB5A7F76ADB /* PBXTargetDependency */,
+			);
+			name = ALL_BUILD;
+			productName = ALL_BUILD;
+		};
+		DEB428313FBDBB62B436DBA7 /* install */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 53E8A93FF0DD47D0A8DBB5CF /* Build configuration list for PBXAggregateTarget "install" */;
+			buildPhases = (
+				93426DA6A4AC2C2AC9CE883C /* CMake PostBuild Rules */,
+			);
+			dependencies = (
+				CC6DE28738FA497991631748 /* PBXTargetDependency */,
+			);
+			name = install;
+			productName = install;
+		};
+/* End PBXAggregateTarget section */
+
+/* Begin PBXBuildFile section */
+		00F782BCB6994F34BF27DAED /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_impl.c */ = {isa = PBXBuildFile; fileRef = 538C552A44F540819AD4844C /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_impl.c */; };
+		02C03F46F8AB4184A19E8014 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */ = {isa = PBXBuildFile; fileRef = 99EF3CACF6F44E139D141968 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */; };
+		0EF4F38F36BB43DD8396A3C6 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 7037B77BC8254DED9D259BDD /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */; };
+		1137A31FC1534DCB8BEA00FC /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_ns.c */ = {isa = PBXBuildFile; fileRef = 071FD0FEF8CA454FB8B7C827 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_ns.c */; };
+		1F37EC2256054A3C9B24F7AC /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */ = {isa = PBXBuildFile; fileRef = 8000EAD32D49451398AF17DF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */; };
+		291A624D5266428A836A3514 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/codepage.c */ = {isa = PBXBuildFile; fileRef = EB035388463A4AAFBFB9C0BF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/codepage.c */; };
+		372485ECBD1847FF8D184F59 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */ = {isa = PBXBuildFile; fileRef = 96E60CC96C854E3F954EC02F /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */; };
+		42B8DB9FF3314C3BBA48A9A6 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok.c */ = {isa = PBXBuildFile; fileRef = DBF89E908A744FF49E4DEA75 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok.c */; };
+		49E5239D05434E7C9FC783CC /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */ = {isa = PBXBuildFile; fileRef = DBED7097ECC34743ACA51A76 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */; };
+		546E1C344D3C42749C205718 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/elements.c */ = {isa = PBXBuildFile; fileRef = CEFFABCB400348A8947A476A /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/elements.c */; };
+		5970A5470A8743AC99AC1E80 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlrole.c */ = {isa = PBXBuildFile; fileRef = A72B6108367C43FCA1E28072 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlrole.c */; };
+		6A17F685DBF14448989CB430 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 1C3234B709184FC2B2E5F5A2 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */; };
+		71F143AE79BB4CA8A6C30680 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = EEAEA451A3544405AD6A1D2F /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */; };
+		7277C37FB12040ACA67B3650 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 8ECA1C239B424EC183923D5D /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */; };
+		7842F6DB3E55411E9D8D9AD9 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtestspp.cpp */ = {isa = PBXBuildFile; fileRef = 33CE274CE1D8495997834F0A /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtestspp.cpp */; };
+		7F5CC3231E844A7CA00E0464 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/readfilemap.c */ = {isa = PBXBuildFile; fileRef = 99196F391EB4435191597404 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/readfilemap.c */; };
+		9E2B8DAF1FBF409F8C18E753 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = F04333CA686345369B11BDE3 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */; };
+		AA4D4587A3194F94884FAF8F /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlfile.c */ = {isa = PBXBuildFile; fileRef = 4A63B80C6A3E42DF9613FCEA /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlfile.c */; };
+		AAB9A337738D4E0C9926ED4D /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtests.c */ = {isa = PBXBuildFile; fileRef = 7D04BF1D264C46829331C5AF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtests.c */; };
+		E3698F51CF5045439178DE3E /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlwf.c */ = {isa = PBXBuildFile; fileRef = 26C97E1D8A6A440097E632E3 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlwf.c */; };
+		E47595EAE2A54B9299ABA43A /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXBuildFile; fileRef = 3753FCAAE9B1433CBED681BA /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */; };
+		E6AFF7EE4BFB4985BB86D967 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlparse.c */ = {isa = PBXBuildFile; fileRef = 60C5B9F2A6734BD2B63155A1 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlparse.c */; };
+		FBA3F7A7342C4C609D978398 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/outline.c */ = {isa = PBXBuildFile; fileRef = B5B5C8F9755D445BB27FF2EE /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/outline.c */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXBuildStyle section */
+		151989DC38E5416198FC27DF /* Release */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Release;
+		};
+		7F7AA02BEC37439C8041D303 /* MinSizeRel */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = MinSizeRel;
+		};
+		B04E84DF4A864BDDA917E413 /* Debug */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = Debug;
+		};
+		FC1DA4F335444A6F8C3DA85A /* RelWithDebInfo */ = {
+			isa = PBXBuildStyle;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+			};
+			name = RelWithDebInfo;
+		};
+/* End PBXBuildStyle section */
+
+/* Begin PBXContainerItemProxy section */
+		2DD4000875DC472EB4BB51A2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F58F2EF04EA4F455FD5477C5;
+			remoteInfo = outline;
+		};
+		38798923A9FD4A5485E23F97 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C0876E007CE407585BA126A;
+			remoteInfo = ZERO_CHECK;
+		};
+		3EA02EB1A21B42E48E8768F8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C0876E007CE407585BA126A;
+			remoteInfo = ZERO_CHECK;
+		};
+		4B1F2DCCC2034D6BBB64579F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0A1DB3F9279DABA9ED26DEA0;
+			remoteInfo = runtestspp;
+		};
+		534C055978894CA4A787370F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 55EF000C6DF609E77970934A;
+			remoteInfo = expat;
+		};
+		577BA3FFAE144C2AAEA0036E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C0876E007CE407585BA126A;
+			remoteInfo = ZERO_CHECK;
+		};
+		5B7DDA7ECBF14E87A553A164 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DDB1F61396F2F5B656A7158A;
+			remoteInfo = elements;
+		};
+		7299CAA03C8C4F49A5DE9175 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 55EF000C6DF609E77970934A;
+			remoteInfo = expat;
+		};
+		756FBB325D6D40ED88912667 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 55EF000C6DF609E77970934A;
+			remoteInfo = expat;
+		};
+		77B4168063254EB8A7EB9357 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 55EF000C6DF609E77970934A;
+			remoteInfo = expat;
+		};
+		808380EF98394AB6B0C5E28A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A57D4E6630B1BF0A318B72FF;
+			remoteInfo = ALL_BUILD;
+		};
+		892C391141284ABC8895E177 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F6FF9CE5EFFE1C8EC53D267A;
+			remoteInfo = runtests;
+		};
+		9FE879C2B5204383A5FBEC9C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C0876E007CE407585BA126A;
+			remoteInfo = ZERO_CHECK;
+		};
+		AC571541B3F842EA9896F226 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 55EF000C6DF609E77970934A;
+			remoteInfo = expat;
+		};
+		BE782A2B8BDC48FFB0C5C726 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C0876E007CE407585BA126A;
+			remoteInfo = ZERO_CHECK;
+		};
+		C79F18202EB1481AB3C39EEB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A57D4E6630B1BF0A318B72FF;
+			remoteInfo = ALL_BUILD;
+		};
+		D2A21DBF3D3E408F9FF944FC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C0876E007CE407585BA126A;
+			remoteInfo = ZERO_CHECK;
+		};
+		D8556F9968604EBD9C401F5A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2C0876E007CE407585BA126A;
+			remoteInfo = ZERO_CHECK;
+		};
+		DFBF184C47D143B980A84977 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 55EF000C6DF609E77970934A;
+			remoteInfo = expat;
+		};
+		E320B416B54946ED99D97419 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 9F951F03B5C2449FB40E396B /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8E947C9F40FC87A6F47A8469;
+			remoteInfo = xmlwf;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		071FD0FEF8CA454FB8B7C827 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_ns.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = xmltok_ns.c; path = lib/xmltok_ns.c; sourceTree = SOURCE_ROOT; };
+		11DBB167D6454A6081B7772B /* elements */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = elements; sourceTree = BUILT_PRODUCTS_DIR; };
+		1C3234B709184FC2B2E5F5A2 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		26C97E1D8A6A440097E632E3 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlwf.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = xmlwf.c; path = xmlwf/xmlwf.c; sourceTree = SOURCE_ROOT; };
+		33680936BC9B4538BD0CDC99 /* xmlwf */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = xmlwf; sourceTree = BUILT_PRODUCTS_DIR; };
+		33CE274CE1D8495997834F0A /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtestspp.cpp */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.cpp; fileEncoding = 4; name = runtestspp.cpp; path = tests/runtestspp.cpp; sourceTree = SOURCE_ROOT; };
+		3753FCAAE9B1433CBED681BA /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		4A63B80C6A3E42DF9613FCEA /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlfile.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = xmlfile.c; path = xmlwf/xmlfile.c; sourceTree = SOURCE_ROOT; };
+		538C552A44F540819AD4844C /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_impl.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = xmltok_impl.c; path = lib/xmltok_impl.c; sourceTree = SOURCE_ROOT; };
+		60C5B9F2A6734BD2B63155A1 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlparse.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = xmlparse.c; path = lib/xmlparse.c; sourceTree = SOURCE_ROOT; };
+		6DB84A9A41FE437280C4995E /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		7037B77BC8254DED9D259BDD /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		7BCCE71EA72A4C18BE1CAEC8 /* outline */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = outline; sourceTree = BUILT_PRODUCTS_DIR; };
+		7D04BF1D264C46829331C5AF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtests.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = runtests.c; path = tests/runtests.c; sourceTree = SOURCE_ROOT; };
+		8000EAD32D49451398AF17DF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = minicheck.c; path = tests/minicheck.c; sourceTree = SOURCE_ROOT; };
+		8ECA1C239B424EC183923D5D /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		96E60CC96C854E3F954EC02F /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = chardata.c; path = tests/chardata.c; sourceTree = SOURCE_ROOT; };
+		99196F391EB4435191597404 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/readfilemap.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = readfilemap.c; path = xmlwf/readfilemap.c; sourceTree = SOURCE_ROOT; };
+		99EF3CACF6F44E139D141968 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = minicheck.c; path = tests/minicheck.c; sourceTree = SOURCE_ROOT; };
+		A250AEF1F33446ACBAA0285E /* runtestspp */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = runtestspp; sourceTree = BUILT_PRODUCTS_DIR; };
+		A72B6108367C43FCA1E28072 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlrole.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = xmlrole.c; path = lib/xmlrole.c; sourceTree = SOURCE_ROOT; };
+		B5B5C8F9755D445BB27FF2EE /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/outline.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = outline.c; path = examples/outline.c; sourceTree = SOURCE_ROOT; };
+		BAF0F7BD9E244D9AB9A7471D /* runtests */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; path = runtests; sourceTree = BUILT_PRODUCTS_DIR; };
+		CEFFABCB400348A8947A476A /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/elements.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = elements.c; path = examples/elements.c; sourceTree = SOURCE_ROOT; };
+		DBED7097ECC34743ACA51A76 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = chardata.c; path = tests/chardata.c; sourceTree = SOURCE_ROOT; };
+		DBF89E908A744FF49E4DEA75 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = xmltok.c; path = lib/xmltok.c; sourceTree = SOURCE_ROOT; };
+		DD5F91CCDB354A98B65CA20C /* expat */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libexpat.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB035388463A4AAFBFB9C0BF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/codepage.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.c; fileEncoding = 4; name = codepage.c; path = xmlwf/codepage.c; sourceTree = SOURCE_ROOT; };
+		EEAEA451A3544405AD6A1D2F /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+		F04333CA686345369B11BDE3 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */ = {isa = PBXFileReference; explicitFileType = sourcecode.text; fileEncoding = 4; name = CMakeLists.txt; path = CMakeLists.txt; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		418048574E3D4FE1BED2C8CE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		580979D689E642D1AF4C1DA8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		62E7A929B5294E1596DC6F62 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7453E4D528BE4B59900EA953 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A4550FDF986E42F5BE2DA174 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D7549066B0BB4DAC8CC21F28 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		00675ABF164A4E67A9F0C783 /* CMake Rules */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = "CMake Rules";
+			sourceTree = "<group>";
+		};
+		0EE22D6390BE476F9C9E2F3E /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				B5B5C8F9755D445BB27FF2EE /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/outline.c */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		242DCC9895E84229A1F44347 /* runtestspp */ = {
+			isa = PBXGroup;
+			children = (
+				87404CA8377549EB899B5CE4 /* Source Files */,
+				EEAEA451A3544405AD6A1D2F /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */,
+			);
+			name = runtestspp;
+			sourceTree = "<group>";
+		};
+		2D7948EB5D534A0CB3C43584 /* outline */ = {
+			isa = PBXGroup;
+			children = (
+				0EE22D6390BE476F9C9E2F3E /* Source Files */,
+				3753FCAAE9B1433CBED681BA /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */,
+			);
+			name = outline;
+			sourceTree = "<group>";
+		};
+		35EDC4EB2F474FA1AD89571E /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				CEFFABCB400348A8947A476A /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/elements.c */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		3F1A27E9A716441A8FFD99F0 /* runtests */ = {
+			isa = PBXGroup;
+			children = (
+				A6A83D0B3A524B77A51D7186 /* Source Files */,
+				1C3234B709184FC2B2E5F5A2 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */,
+			);
+			name = runtests;
+			sourceTree = "<group>";
+		};
+		570C5A77CA5E4F3C93672C5A /* ALL_BUILD */ = {
+			isa = PBXGroup;
+			children = (
+				00675ABF164A4E67A9F0C783 /* CMake Rules */,
+				6DB84A9A41FE437280C4995E /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */,
+			);
+			name = ALL_BUILD;
+			sourceTree = "<group>";
+		};
+		5D9060A6D08140A996DC5080 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				60C5B9F2A6734BD2B63155A1 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlparse.c */,
+				A72B6108367C43FCA1E28072 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlrole.c */,
+				DBF89E908A744FF49E4DEA75 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok.c */,
+				538C552A44F540819AD4844C /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_impl.c */,
+				071FD0FEF8CA454FB8B7C827 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_ns.c */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		6B5135E4593149CD92490952 /* expat */ = {
+			isa = PBXGroup;
+			children = (
+				5D9060A6D08140A996DC5080 /* Source Files */,
+				8ECA1C239B424EC183923D5D /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */,
+			);
+			name = expat;
+			sourceTree = "<group>";
+		};
+		7B9C5AE85D5048C584DA7B64 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				EB035388463A4AAFBFB9C0BF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/codepage.c */,
+				99196F391EB4435191597404 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/readfilemap.c */,
+				4A63B80C6A3E42DF9613FCEA /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlfile.c */,
+				26C97E1D8A6A440097E632E3 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlwf.c */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		80B11D9C34634196A6D57CAB /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Resources;
+			sourceTree = "<group>";
+		};
+		87404CA8377549EB899B5CE4 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				96E60CC96C854E3F954EC02F /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */,
+				99EF3CACF6F44E139D141968 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */,
+				33CE274CE1D8495997834F0A /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtestspp.cpp */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		8B4557D014644344A3F9F1F3 = {
+			isa = PBXGroup;
+			children = (
+				6B5135E4593149CD92490952 /* expat */,
+				A2DAE4AA42904465B592F89B /* xmlwf */,
+				C73A4DDC3878482B87CECA3A /* elements */,
+				2D7948EB5D534A0CB3C43584 /* outline */,
+				3F1A27E9A716441A8FFD99F0 /* runtests */,
+				242DCC9895E84229A1F44347 /* runtestspp */,
+				570C5A77CA5E4F3C93672C5A /* ALL_BUILD */,
+				DDCF3EE485F442C2834F1F7E /* Products */,
+				CF714FB2E190411A95F493B2 /* Frameworks */,
+				80B11D9C34634196A6D57CAB /* Resources */,
+			);
+			sourceTree = "<group>";
+		};
+		A2DAE4AA42904465B592F89B /* xmlwf */ = {
+			isa = PBXGroup;
+			children = (
+				7B9C5AE85D5048C584DA7B64 /* Source Files */,
+				7037B77BC8254DED9D259BDD /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */,
+			);
+			name = xmlwf;
+			sourceTree = "<group>";
+		};
+		A6A83D0B3A524B77A51D7186 /* Source Files */ = {
+			isa = PBXGroup;
+			children = (
+				DBED7097ECC34743ACA51A76 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */,
+				8000EAD32D49451398AF17DF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */,
+				7D04BF1D264C46829331C5AF /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtests.c */,
+			);
+			name = "Source Files";
+			sourceTree = "<group>";
+		};
+		C73A4DDC3878482B87CECA3A /* elements */ = {
+			isa = PBXGroup;
+			children = (
+				35EDC4EB2F474FA1AD89571E /* Source Files */,
+				F04333CA686345369B11BDE3 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeLists.txt */,
+			);
+			name = elements;
+			sourceTree = "<group>";
+		};
+		CF714FB2E190411A95F493B2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DDCF3EE485F442C2834F1F7E /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				11DBB167D6454A6081B7772B /* elements */,
+				DD5F91CCDB354A98B65CA20C /* expat */,
+				7BCCE71EA72A4C18BE1CAEC8 /* outline */,
+				BAF0F7BD9E244D9AB9A7471D /* runtests */,
+				A250AEF1F33446ACBAA0285E /* runtestspp */,
+				33680936BC9B4538BD0CDC99 /* xmlwf */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0A1DB3F9279DABA9ED26DEA0 /* runtestspp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AE1649F1DCDE4FED9AC3876E /* Build configuration list for PBXNativeTarget "runtestspp" */;
+			buildPhases = (
+				7C26A089FCAE418CB9449902 /* Sources */,
+				D7549066B0BB4DAC8CC21F28 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A4C44E94636245BFB082C229 /* PBXTargetDependency */,
+				3084D6EAE92842E7BA4BCD74 /* PBXTargetDependency */,
+			);
+			name = runtestspp;
+			productName = runtestspp;
+			productReference = A250AEF1F33446ACBAA0285E /* runtestspp */;
+			productType = "com.apple.product-type.tool";
+		};
+		55EF000C6DF609E77970934A /* expat */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 91869B93059742A2A4227CE1 /* Build configuration list for PBXNativeTarget "expat" */;
+			buildPhases = (
+				FEBDC0EA2A284FE4A3CC1F2D /* Sources */,
+				418048574E3D4FE1BED2C8CE /* Frameworks */,
+				B4CA2D3B6A4A9F6979B9A318 /* CMake PostBuild Rules */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5CDD50B0358D4FB78F7F5265 /* PBXTargetDependency */,
+			);
+			name = expat;
+			productName = expat;
+			productReference = DD5F91CCDB354A98B65CA20C /* expat */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+		8E947C9F40FC87A6F47A8469 /* xmlwf */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7CF012D39FE34BC89A94FD10 /* Build configuration list for PBXNativeTarget "xmlwf" */;
+			buildPhases = (
+				B4B1B8CF6AAA4ABEBFB4D212 /* Sources */,
+				A4550FDF986E42F5BE2DA174 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				8FF4EB5DF4D240A699378926 /* PBXTargetDependency */,
+				B549E667ED7849A0B4F81B64 /* PBXTargetDependency */,
+			);
+			name = xmlwf;
+			productName = xmlwf;
+			productReference = 33680936BC9B4538BD0CDC99 /* xmlwf */;
+			productType = "com.apple.product-type.tool";
+		};
+		DDB1F61396F2F5B656A7158A /* elements */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AE7D20AE13EA4C818F24256F /* Build configuration list for PBXNativeTarget "elements" */;
+			buildPhases = (
+				04074869B8A444B593071DB5 /* Sources */,
+				62E7A929B5294E1596DC6F62 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4834D7FB14E54172BFD06BDE /* PBXTargetDependency */,
+				66E7252C460D4A909BE64D53 /* PBXTargetDependency */,
+			);
+			name = elements;
+			productName = elements;
+			productReference = 11DBB167D6454A6081B7772B /* elements */;
+			productType = "com.apple.product-type.tool";
+		};
+		F58F2EF04EA4F455FD5477C5 /* outline */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C98F0C5F00324F1E82C4D475 /* Build configuration list for PBXNativeTarget "outline" */;
+			buildPhases = (
+				3A0204E345D545BF8080032B /* Sources */,
+				580979D689E642D1AF4C1DA8 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F33B36EFECCB4418919C4C48 /* PBXTargetDependency */,
+				6097DD7609A143548D93C222 /* PBXTargetDependency */,
+			);
+			name = outline;
+			productName = outline;
+			productReference = 7BCCE71EA72A4C18BE1CAEC8 /* outline */;
+			productType = "com.apple.product-type.tool";
+		};
+		F6FF9CE5EFFE1C8EC53D267A /* runtests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3B6D0EFAB6514C86A52DD9DB /* Build configuration list for PBXNativeTarget "runtests" */;
+			buildPhases = (
+				37ED626A94BE42DE9AF06103 /* Sources */,
+				7453E4D528BE4B59900EA953 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F11E52E740AB4DAF81DDB164 /* PBXTargetDependency */,
+				3FE88C23C5434A769AE4767E /* PBXTargetDependency */,
+			);
+			name = runtests;
+			productName = runtests;
+			productReference = BAF0F7BD9E244D9AB9A7471D /* runtests */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9F951F03B5C2449FB40E396B /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+			};
+			buildConfigurationList = 6F7E669321DE45BA9361697B /* Build configuration list for PBXProject "expat" */;
+			buildSettings = {
+			};
+			buildStyles = (
+				B04E84DF4A864BDDA917E413 /* Debug */,
+				151989DC38E5416198FC27DF /* Release */,
+				7F7AA02BEC37439C8041D303 /* MinSizeRel */,
+				FC1DA4F335444A6F8C3DA85A /* RelWithDebInfo */,
+			);
+			compatibilityVersion = "Xcode 3.2";
+			hasScannedForEncodings = 0;
+			mainGroup = 8B4557D014644344A3F9F1F3;
+			projectDirPath = .;
+			projectRoot = "";
+			targets = (
+				A57D4E6630B1BF0A318B72FF /* ALL_BUILD */,
+				43880B038875AE187BA77260 /* RUN_TESTS */,
+				2C0876E007CE407585BA126A /* ZERO_CHECK */,
+				DDB1F61396F2F5B656A7158A /* elements */,
+				55EF000C6DF609E77970934A /* expat */,
+				DEB428313FBDBB62B436DBA7 /* install */,
+				F58F2EF04EA4F455FD5477C5 /* outline */,
+				489ED055845E68027E9DAB86 /* package */,
+				F6FF9CE5EFFE1C8EC53D267A /* runtests */,
+				0A1DB3F9279DABA9ED26DEA0 /* runtestspp */,
+				8E947C9F40FC87A6F47A8469 /* xmlwf */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		003C8D08B0008F35F218E126 /* CMake PostBuild Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake PostBuild Rules";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/ctest --force-new-ctest-process -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/ctest --force-new-ctest-process -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/ctest --force-new-ctest-process -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/ctest --force-new-ctest-process -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+		11CF7C5CFA0FCF058A2AA78A /* Generate CMakeFiles/ZERO_CHECK */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate CMakeFiles/ZERO_CHECK";
+			outputPaths = (
+"/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeFiles/ZERO_CHECK"			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  make -f /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeScripts/ReRunCMake.make
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  make -f /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeScripts/ReRunCMake.make
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  make -f /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeScripts/ReRunCMake.make
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  make -f /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeScripts/ReRunCMake.make
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+		3C0110FC8322DE7E50886E21 = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		571234464C2A5D0D43F1AB42 /* CMake PostBuild Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake PostBuild Rules";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cpack -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME --config ./CPackConfig.cmake
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cpack -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME --config ./CPackConfig.cmake
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cpack -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME --config ./CPackConfig.cmake
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cpack -C $CONFIGURATION$EFFECTIVE_PLATFORM_NAME --config ./CPackConfig.cmake
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+		661D9C604B3B91332E7543CC = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		87AF4882E018677E2624B544 = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		910A41151295C5F9742C25BD = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		93426DA6A4AC2C2AC9CE883C /* CMake PostBuild Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake PostBuild Rules";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cmake -DBUILD_TYPE=$CONFIGURATION$EFFECTIVE_PLATFORM_NAME -P cmake_install.cmake
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cmake -DBUILD_TYPE=$CONFIGURATION$EFFECTIVE_PLATFORM_NAME -P cmake_install.cmake
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cmake -DBUILD_TYPE=$CONFIGURATION$EFFECTIVE_PLATFORM_NAME -P cmake_install.cmake
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cmake -DBUILD_TYPE=$CONFIGURATION$EFFECTIVE_PLATFORM_NAME -P cmake_install.cmake
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+		9B50530E35CC49C82C2FACCF = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# shell script goes here
+exit 0";
+			showEnvVarsInLog = 0;
+		};
+		B4CA2D3B6A4A9F6979B9A318 /* CMake PostBuild Rules */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			name = "CMake PostBuild Rules";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cmake -E cmake_symlink_library /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug/libexpat.dylib /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug/libexpat.dylib /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug/libexpat.dylib
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cmake -E cmake_symlink_library /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release/libexpat.dylib /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release/libexpat.dylib /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release/libexpat.dylib
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cmake -E cmake_symlink_library /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel/libexpat.dylib /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel/libexpat.dylib /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel/libexpat.dylib
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/_build_env/bin/cmake -E cmake_symlink_library /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo/libexpat.dylib /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo/libexpat.dylib /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo/libexpat.dylib
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+		F4B0891FAD4B3CE4C05433EF /* Generate CMakeFiles/ALL_BUILD */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate CMakeFiles/ALL_BUILD";
+			outputPaths = (
+"/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/CMakeFiles/ALL_BUILD"			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e
+if test \"$CONFIGURATION\" = \"Debug\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"Release\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"MinSizeRel\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  echo Build\\ all\\ projects
+fi
+if test \"$CONFIGURATION\" = \"RelWithDebInfo\"; then :
+  cd /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat
+  echo Build\\ all\\ projects
+fi
+";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		04074869B8A444B593071DB5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				546E1C344D3C42749C205718 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/elements.c */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		37ED626A94BE42DE9AF06103 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				49E5239D05434E7C9FC783CC /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */,
+				1F37EC2256054A3C9B24F7AC /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */,
+				AAB9A337738D4E0C9926ED4D /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtests.c */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3A0204E345D545BF8080032B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FBA3F7A7342C4C609D978398 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/examples/outline.c */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7C26A089FCAE418CB9449902 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				372485ECBD1847FF8D184F59 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/chardata.c */,
+				02C03F46F8AB4184A19E8014 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/minicheck.c */,
+				7842F6DB3E55411E9D8D9AD9 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/tests/runtestspp.cpp */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B4B1B8CF6AAA4ABEBFB4D212 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				291A624D5266428A836A3514 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/codepage.c */,
+				7F5CC3231E844A7CA00E0464 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/readfilemap.c */,
+				AA4D4587A3194F94884FAF8F /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlfile.c */,
+				E3698F51CF5045439178DE3E /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/xmlwf/xmlwf.c */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FEBDC0EA2A284FE4A3CC1F2D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E6AFF7EE4BFB4985BB86D967 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlparse.c */,
+				5970A5470A8743AC99AC1E80 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmlrole.c */,
+				42B8DB9FF3314C3BBA48A9A6 /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok.c */,
+				00F782BCB6994F34BF27DAED /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_impl.c */,
+				1137A31FC1534DCB8BEA00FC /* /Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/lib/xmltok_ns.c */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		3084D6EAE92842E7BA4BCD74 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C0876E007CE407585BA126A /* ZERO_CHECK */;
+			targetProxy = 3EA02EB1A21B42E48E8768F8 /* PBXContainerItemProxy */;
+		};
+		3FE88C23C5434A769AE4767E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C0876E007CE407585BA126A /* ZERO_CHECK */;
+			targetProxy = D8556F9968604EBD9C401F5A /* PBXContainerItemProxy */;
+		};
+		4834D7FB14E54172BFD06BDE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 55EF000C6DF609E77970934A /* expat */;
+			targetProxy = DFBF184C47D143B980A84977 /* PBXContainerItemProxy */;
+		};
+		5CDD50B0358D4FB78F7F5265 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C0876E007CE407585BA126A /* ZERO_CHECK */;
+			targetProxy = 577BA3FFAE144C2AAEA0036E /* PBXContainerItemProxy */;
+		};
+		6097DD7609A143548D93C222 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C0876E007CE407585BA126A /* ZERO_CHECK */;
+			targetProxy = BE782A2B8BDC48FFB0C5C726 /* PBXContainerItemProxy */;
+		};
+		66E7252C460D4A909BE64D53 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C0876E007CE407585BA126A /* ZERO_CHECK */;
+			targetProxy = 9FE879C2B5204383A5FBEC9C /* PBXContainerItemProxy */;
+		};
+		6A4B2FE2A85B4A58A59EC045 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8E947C9F40FC87A6F47A8469 /* xmlwf */;
+			targetProxy = E320B416B54946ED99D97419 /* PBXContainerItemProxy */;
+		};
+		6D82C7BD80B34C48909898E4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DDB1F61396F2F5B656A7158A /* elements */;
+			targetProxy = 5B7DDA7ECBF14E87A553A164 /* PBXContainerItemProxy */;
+		};
+		89922761E0194E6C891E29D7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A57D4E6630B1BF0A318B72FF /* ALL_BUILD */;
+			targetProxy = 808380EF98394AB6B0C5E28A /* PBXContainerItemProxy */;
+		};
+		8FF4EB5DF4D240A699378926 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 55EF000C6DF609E77970934A /* expat */;
+			targetProxy = AC571541B3F842EA9896F226 /* PBXContainerItemProxy */;
+		};
+		9B3C726B18304AB5A7F76ADB /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C0876E007CE407585BA126A /* ZERO_CHECK */;
+			targetProxy = 38798923A9FD4A5485E23F97 /* PBXContainerItemProxy */;
+		};
+		A4C44E94636245BFB082C229 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 55EF000C6DF609E77970934A /* expat */;
+			targetProxy = 756FBB325D6D40ED88912667 /* PBXContainerItemProxy */;
+		};
+		B549E667ED7849A0B4F81B64 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2C0876E007CE407585BA126A /* ZERO_CHECK */;
+			targetProxy = D2A21DBF3D3E408F9FF944FC /* PBXContainerItemProxy */;
+		};
+		B9F7329624A344FCB91FB781 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F6FF9CE5EFFE1C8EC53D267A /* runtests */;
+			targetProxy = 892C391141284ABC8895E177 /* PBXContainerItemProxy */;
+		};
+		CC6DE28738FA497991631748 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A57D4E6630B1BF0A318B72FF /* ALL_BUILD */;
+			targetProxy = C79F18202EB1481AB3C39EEB /* PBXContainerItemProxy */;
+		};
+		CD53B321EAFA41839DACF472 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F58F2EF04EA4F455FD5477C5 /* outline */;
+			targetProxy = 2DD4000875DC472EB4BB51A2 /* PBXContainerItemProxy */;
+		};
+		F11E52E740AB4DAF81DDB164 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 55EF000C6DF609E77970934A /* expat */;
+			targetProxy = 534C055978894CA4A787370F /* PBXContainerItemProxy */;
+		};
+		F33B36EFECCB4418919C4C48 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 55EF000C6DF609E77970934A /* expat */;
+			targetProxy = 77B4168063254EB8A7EB9357 /* PBXContainerItemProxy */;
+		};
+		F81FE52787DD47A99118B31E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0A1DB3F9279DABA9ED26DEA0 /* runtestspp */;
+			targetProxy = 4B1F2DCCC2034D6BBB64579F /* PBXContainerItemProxy */;
+		};
+		FE3DF289AC3C4910A72D5D9C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 55EF000C6DF609E77970934A /* expat */;
+			targetProxy = 7299CAA03C8C4F49A5DE9175 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		069F6AE91BD548AE82B43BD8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format    ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = xmlwf;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/xmlwf.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		0D99F5F09DD6473DA9E188B4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		13421DCD52994C188DC9C1EC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release";
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .dylib;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",expat_EXPORTS,RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release";
+				LIBRARY_STYLE = DYNAMIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG -fPIC ","$(inherited)");
+				OTHER_LDFLAGS = (" -dynamiclib -Wl,-headerpad_max_install_names","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = expat;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/expat.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		1352057B75254CEB9ED36FFE /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		169769DA53134E63AF4F9992 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = runtests;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/runtests.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		271CAB895CED43058AA532F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		27E74697A7AA4972BD663AFC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk;
+				SYMROOT = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build";
+			};
+			name = Debug;
+		};
+		2B25D68C580F40E3A781D627 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel";
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .dylib;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",expat_EXPORTS,RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel";
+				LIBRARY_STYLE = DYNAMIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG -fPIC ","$(inherited)");
+				OTHER_LDFLAGS = (" -dynamiclib -Wl,-headerpad_max_install_names","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = expat;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/expat.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		3890926C0719448B8FBE9A28 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug";
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .dylib;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",expat_EXPORTS,RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug";
+				LIBRARY_STYLE = DYNAMIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format    -fPIC ","$(inherited)");
+				OTHER_LDFLAGS = (" -dynamiclib -Wl,-headerpad_max_install_names","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = expat;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/expat.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		42181703CD104013B0A92338 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = elements;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/elements.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		46541DB5EB78436FBA4D169E /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format        -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = runtests;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/runtests.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		497A6356BFA047DA8FE1B4A8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		5161E09A44FB42D5890AB55B /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = runtests;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/runtests.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		543B8E12D70141D4AAA2DA9B /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		5C2DEE8F0D5A43C0890C6212 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format        -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = elements;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/elements.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		5F09A59867AA4E888C06121C /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = RUN_TESTS;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		652D5F1563874E83B5499F78 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = outline;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/outline.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		6EB4D3F42D364454A9279713 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		6FDDC09051884363BD391F51 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format        -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = xmlwf;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/xmlwf.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		6FEF4AA06D15450F8593221C /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build";
+			};
+			name = RelWithDebInfo;
+		};
+		7414B76D14DE46BDA1C5D67D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = RUN_TESTS;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		774C05D590344D8883BE5B85 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build";
+			};
+			name = Release;
+		};
+		78311E78C0254114ACDB4223 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		7AEB35AE04C7422EA3608226 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = elements;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/elements.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		7D76794ABFE24EB7A40E4813 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		7F45347638E24036B278F72E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		871BB717DE04473283CC8E39 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = RUN_TESTS;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		8C9009C4683D408BB0188169 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format    ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = elements;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/elements.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		90C4A9830313428B8972B2E2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = RUN_TESTS;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		93252D57202C41F6B5CFD5D7 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		9CBE32766D8446B0BE56D35F /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = xmlwf;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/xmlwf.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		A0855BBD19CE471192AB9840 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = package;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		A34CCFEC8FE343F3A7EC2AEC /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC                    -DNDEBUG '-std=gnu++17' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = runtestspp;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/runtestspp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		A72EA2023A2F4542B547C248 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		A92C253B7ECF407BA9B2A70B /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format        -DNDEBUG ","$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC                       -DNDEBUG '-std=gnu++17' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = runtestspp;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/runtestspp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		A96CF815808E429C8305E675 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ZERO_CHECK;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		AFDDE0965D7B4E39992AC6AE /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/MinSizeRel/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = outline;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/outline.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = MinSizeRel;
+		};
+		B1A08783F8C84C5FBA58EFC8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format    ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = outline;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/outline.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		B49C8F9FF8E74B8BB3E7E65D /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format        -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = outline;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/outline.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		B710584F04574A779778BE15 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo";
+				DYLIB_COMPATIBILITY_VERSION = "";
+				DYLIB_CURRENT_VERSION = "";
+				EXECUTABLE_PREFIX = lib;
+				EXECUTABLE_SUFFIX = .dylib;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 2;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",expat_EXPORTS,RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/RelWithDebInfo";
+				LIBRARY_STYLE = DYNAMIC;
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format        -DNDEBUG -fPIC ","$(inherited)");
+				OTHER_LDFLAGS = (" -dynamiclib -Wl,-headerpad_max_install_names","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = expat;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/expat.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		B7CF74AFBF6F42B2B731E624 /* MinSizeRel */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				SDKROOT = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build";
+			};
+			name = MinSizeRel;
+		};
+		B9A6FF164D4E4A62863DCE34 /* RelWithDebInfo */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = install;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = RelWithDebInfo;
+		};
+		BD29A38C104C425DBACD1B2C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		C0A854E32A3F45628A570981 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'","$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_LDFLAGS = ("","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = ALL_BUILD;
+				SECTORDER_FLAGS = "";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		C2335E6FAD0749C9ABA6DA46 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = xmlwf;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/xmlwf.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		E92FEE00A78E412DB00D6CCE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format     -DNDEBUG ","$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC                    -DNDEBUG '-std=gnu++17' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Release/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = runtestspp;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/runtestspp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Release;
+		};
+		F5560CD54DCF40B78D48FEDF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format    ","$(inherited)");
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = runtests;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/runtests.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+		FF1469E81C894976BEA4423D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = arm64;
+				CLANG_CXX_LIBRARY = "libc++";
+				COMBINE_HIDPI_IMAGES = YES;
+				CONFIGURATION_BUILD_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug";
+				EXECUTABLE_PREFIX = "";
+				EXECUTABLE_SUFFIX = "";
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("'CMAKE_INTDIR=\"$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)\"'",RDKIT_DYN_LINK,RDK_BUILD_COORDGEN_SUPPORT,RDK_BUILD_MAEPARSER_SUPPORT,RDK_USE_URF,HAVE_EXPAT_CONFIG_H,"$(inherited)");
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				HEADER_SEARCH_PATHS = ("/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/RingFamilies/RingDecomposerLib/src/RingDecomposerLib","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/lib","$(inherited)");
+				INSTALL_PATH = "";
+				ONLY_ACTIVE_ARCH = NO;
+				OTHER_CFLAGS = (" -Wno-array-bounds -fPIC -Wno-parentheses -Wno-logical-op-parentheses -Wno-format    ","$(inherited)");
+				OTHER_CPLUSPLUSFLAGS = " -Wall -Wextra -Wno-deprecated -Wno-unused-function -fno-strict-aliasing -Wno-format -Wno-logical-op-parentheses -fPIC                   '-std=gnu++17' ";
+				OTHER_LDFLAGS = (" -Wl,-search_paths_first -Wl,-headerpad_max_install_names","/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/External/Revvity/expatpp/expatpp-code-r6-trunk/expat/Debug/libexpat.dylib","$(inherited)");
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = runtestspp;
+				SECTORDER_FLAGS = "";
+				TARGET_TEMP_DIR = "/Users/brian/miniforge3/conda-bld/rdkit_1733161966177/work/build/runtestspp.build/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
+				USE_HEADERMAP = NO;
+				WARNING_CFLAGS = ("$(inherited)");
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3B6D0EFAB6514C86A52DD9DB /* Build configuration list for PBXNativeTarget "runtests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F5560CD54DCF40B78D48FEDF /* Debug */,
+				169769DA53134E63AF4F9992 /* Release */,
+				5161E09A44FB42D5890AB55B /* MinSizeRel */,
+				46541DB5EB78436FBA4D169E /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		47429424E3544F95AC4CC15A /* Build configuration list for PBXAggregateTarget "RUN_TESTS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				90C4A9830313428B8972B2E2 /* Debug */,
+				7414B76D14DE46BDA1C5D67D /* Release */,
+				871BB717DE04473283CC8E39 /* MinSizeRel */,
+				5F09A59867AA4E888C06121C /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		53E8A93FF0DD47D0A8DBB5CF /* Build configuration list for PBXAggregateTarget "install" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				497A6356BFA047DA8FE1B4A8 /* Debug */,
+				0D99F5F09DD6473DA9E188B4 /* Release */,
+				78311E78C0254114ACDB4223 /* MinSizeRel */,
+				B9A6FF164D4E4A62863DCE34 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		6F7E669321DE45BA9361697B /* Build configuration list for PBXProject "expat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				27E74697A7AA4972BD663AFC /* Debug */,
+				774C05D590344D8883BE5B85 /* Release */,
+				B7CF74AFBF6F42B2B731E624 /* MinSizeRel */,
+				6FEF4AA06D15450F8593221C /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7CF012D39FE34BC89A94FD10 /* Build configuration list for PBXNativeTarget "xmlwf" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				069F6AE91BD548AE82B43BD8 /* Debug */,
+				C2335E6FAD0749C9ABA6DA46 /* Release */,
+				9CBE32766D8446B0BE56D35F /* MinSizeRel */,
+				6FDDC09051884363BD391F51 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7EAAAAD6A1FC490BB98AF60B /* Build configuration list for PBXAggregateTarget "ZERO_CHECK" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7F45347638E24036B278F72E /* Debug */,
+				271CAB895CED43058AA532F7 /* Release */,
+				6EB4D3F42D364454A9279713 /* MinSizeRel */,
+				A96CF815808E429C8305E675 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		89834B0341CC4C76944CBB77 /* Build configuration list for PBXAggregateTarget "package" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				93252D57202C41F6B5CFD5D7 /* Debug */,
+				A0855BBD19CE471192AB9840 /* Release */,
+				1352057B75254CEB9ED36FFE /* MinSizeRel */,
+				7D76794ABFE24EB7A40E4813 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8EDFE9C48D8444B19E3E0DEE /* Build configuration list for PBXAggregateTarget "ALL_BUILD" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C0A854E32A3F45628A570981 /* Debug */,
+				BD29A38C104C425DBACD1B2C /* Release */,
+				A72EA2023A2F4542B547C248 /* MinSizeRel */,
+				543B8E12D70141D4AAA2DA9B /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		91869B93059742A2A4227CE1 /* Build configuration list for PBXNativeTarget "expat" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3890926C0719448B8FBE9A28 /* Debug */,
+				13421DCD52994C188DC9C1EC /* Release */,
+				2B25D68C580F40E3A781D627 /* MinSizeRel */,
+				B710584F04574A779778BE15 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AE1649F1DCDE4FED9AC3876E /* Build configuration list for PBXNativeTarget "runtestspp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FF1469E81C894976BEA4423D /* Debug */,
+				E92FEE00A78E412DB00D6CCE /* Release */,
+				A34CCFEC8FE343F3A7EC2AEC /* MinSizeRel */,
+				A92C253B7ECF407BA9B2A70B /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		AE7D20AE13EA4C818F24256F /* Build configuration list for PBXNativeTarget "elements" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8C9009C4683D408BB0188169 /* Debug */,
+				42181703CD104013B0A92338 /* Release */,
+				7AEB35AE04C7422EA3608226 /* MinSizeRel */,
+				5C2DEE8F0D5A43C0890C6212 /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		C98F0C5F00324F1E82C4D475 /* Build configuration list for PBXNativeTarget "outline" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B1A08783F8C84C5FBA58EFC8 /* Debug */,
+				652D5F1563874E83B5499F78 /* Release */,
+				AFDDE0965D7B4E39992AC6AE /* MinSizeRel */,
+				B49C8F9FF8E74B8BB3E7E65D /* RelWithDebInfo */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9F951F03B5C2449FB40E396B /* Project object */;
+}

@@ -1,0 +1,181 @@
+<html>
+<head>
+<title>CDX Format Specification: Chemical Property Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Chemical Property Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">chemicalproperty</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_ChemicalProperty</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8026</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 9.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>This object ties together a collection of objects and a single 'display' object. Some physical property, such as a chemical name, might be derived from the collection, and then displayed. A Chemical Property object links the collection with the display of the property. A program (such as ChemDraw) that implements support for the Chemical Property object might then automatically update the display object based on changes to the collection.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0008</td>
+<td><a href="properties/Name.htm">kCDXProp_Name</a></td>
+<td>Name</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for objecttags.</font> Name of an object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B82</td>
+<td><a href="properties/BasisObjects.htm">kCDXProp_BasisObjects</a></td>
+<td>BasisObjects</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for geometries and constraints.</font> An ordered list of objects used to define this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0BB0</td>
+<td><a href="properties/ChemicalPropertyType.htm">kCDXProp_ChemicalPropertyType</a></td>
+<td>ChemicalPropertyType</td>
+<td><a href="DataType/CDXNumeric.htm">UINT32</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The type of property (name, formula, molecular weight, etc.).
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0BB1</td>
+<td><a href="properties/ChemicalPropertyDisplayID.htm">kCDXProp_ChemicalPropertyDisplayID</a></td>
+<td>ChemicalPropertyDisplayID</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The ID of a graphical object used to display the property value.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0BB2</td>
+<td><a href="properties/ChemicalPropertyIsActive.htm">kCDXProp_ChemicalPropertyIsActive</a></td>
+<td>ChemicalPropertyIsActive</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Whether the property should be recalculated in response to changes in the basis objects.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D06</td>
+<td><a href="properties/Positioning.htm">kCDXProp_Positioning</a></td>
+<td>PositioningType</td>
+<td><a href="DataType/CDXNumeric.htm">INT8</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+How the object should be positioned with respect to its containing object.
+This is an enumerated property.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D07</td>
+<td><a href="properties/PositioningAngle.htm">kCDXProp_PositioningAngle</a></td>
+<td>PositioningAngle</td>
+<td><a href="DataType/CDXNumeric.htm">INT32</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Angular positioning, in degrees * 65536.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0D08</td>
+<td><a href="properties/PositioningOffset.htm">kCDXProp_PositioningOffset</a></td>
+<td>PositioningOffset</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Offset positioning.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

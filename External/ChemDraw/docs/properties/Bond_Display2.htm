@@ -1,0 +1,114 @@
+<html>
+<head>
+<title>CDX Format Specification: Bond_Display2 Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Bond_Display2 Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">Display2</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Bond_Display2</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0602</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT16</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Bond.htm">kCDXObj_Bond</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The display type for the second line of a double bond.</p>
+<p>ChemDraw supports only Dashed types for the second line of a double bond (unsupport values are provided for future compatibility).</p>
+
+<p>See also <a href="Bond_Display.htm">kCDXProp_Bond_Display</a>.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Solid</td>
+<td valign="top">Solid bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">Dash</td>
+<td valign="top">Dashed bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">Hash</td>
+<td valign="top">Hashed bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">WedgedHashBegin</td>
+<td valign="top">Wedged hashed bond with the narrow end on the "begin" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">WedgedHashEnd</td>
+<td valign="top">Wedged hashed bond with the narrow end on the "end" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">5</td>
+<td valign="top">Bold</td>
+<td valign="top">Bold bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">6</td>
+<td valign="top">WedgeBegin</td>
+<td valign="top">Wedged solid bond with the narrow end on the "begin" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">7</td>
+<td valign="top">WedgeEnd</td>
+<td valign="top">Wedged solid bond with the narrow end on the "end" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">8</td>
+<td valign="top">Wavy</td>
+<td valign="top">Wavy bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">9</td>
+<td valign="top">HollowWedgeBegin</td>
+<td valign="top">Wedged hollow bond with the narrow end on the "begin" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">10</td>
+<td valign="top">HollowWedgeEnd</td>
+<td valign="top">Wedged hollow bond with the narrow end on the "end" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">11</td>
+<td valign="top">WavyWedgeBegin</td>
+<td valign="top">Wedged wavy bond with the narrow end on the "begin" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">12</td>
+<td valign="top">WavyWedgeEnd</td>
+<td valign="top">Wedged wavy bond with the narrow end on the "end" atom</td>
+</tr>
+<tr>
+<td align="right" valign="top">13</td>
+<td valign="top">Dot</td>
+<td valign="top">Dotted bond</td>
+</tr>
+<tr>
+<td align="right" valign="top">14</td>
+<td valign="top">DashDot</td>
+<td valign="top">Dashed-and-dotted bond</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The second line of a double bond is treated as the same as the first line. Additionally, any unsupported type will also be treated as Solid.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>
