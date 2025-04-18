@@ -298,6 +298,7 @@ void test3() {
     TEST_ASSERT(count[order[7]] == 1);
 
     delete m;
+    free(order);
     free(touched);
   }
   {
@@ -345,6 +346,7 @@ void test3() {
     TEST_ASSERT(count[order[5]] == 3);
     TEST_ASSERT(count[order[6]] == 0);
     delete m;
+    free(order);
     free(touched);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
@@ -499,6 +501,7 @@ void test4() {
       }
     }
     delete m;
+    free(order);
     free(touched);
   }
 
@@ -549,6 +552,7 @@ void test4() {
       }
     }
     delete m;
+    free(order);
     free(touched);
   }
 
@@ -614,6 +618,7 @@ void test4() {
     TEST_ASSERT(order[9] == 1 && count[1] == 1);
 
     delete m;
+    free(order);
     free(touched);
   }
 
@@ -688,6 +693,7 @@ void test5() {
       TEST_ASSERT(count[order[i]] == 1);
     }
     delete m;
+    free(order);
     free(touched);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
