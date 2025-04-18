@@ -49,6 +49,9 @@ class TestCase(unittest.TestCase):
     shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
     self.assertAlmostEqual(shp.sov, 274.576, places=3)
 
+    with self.assertRaises(AttributeError):
+      opts.rhubarb = True
+
   def test5_ShapeShapeOverlay(self):
     refShp = rdShapeAlign.PrepareConformer(self.ref, -1)
     probeShp = rdShapeAlign.PrepareConformer(self.probe, -1)
@@ -61,6 +64,6 @@ class TestCase(unittest.TestCase):
     matrix = tpl[2][:10]
     with self.assertRaises(ValueError):
       rdShapeAlign.TransformConformer(refShp, matrix, probeShp, probeCp.GetConformer(-1))
-    
+
 if __name__ == '__main__':
   unittest.main()

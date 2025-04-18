@@ -136,7 +136,8 @@ void wrap_pubchemshape() {
       .add_property(
           "atomRadii", &helpers::get_atomRadii, &helpers::set_atomRadii,
           "Non-standard radii to use for the atoms specified by their indices"
-          " in the molecule.  A list of tuples of [int, float].");
+          " in the molecule.  A list of tuples of [int, float].")
+      .def("__setattr__", &safeSetattr);
 
   python::def(
       "AlignMol", &helpers::alignMol,
