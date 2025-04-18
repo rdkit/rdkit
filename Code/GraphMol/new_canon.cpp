@@ -19,6 +19,7 @@
 #include <cstring>
 #include <iostream>
 #include <cassert>
+#include <vector>
 // #define VERBOSE_CANON 1
 
 namespace RDKit {
@@ -780,8 +781,9 @@ void rankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useNonStereoRanks = useNonStereoRanks;
   ftor.df_useChiralPresence = includeChiralPresence;
 
-  auto order = std::make_unique<int[]>(mol.getNumAtoms());
-  detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality);
+  std::vector<int> order(mol.getNumAtoms());
+  detail::rankWithFunctor(ftor, breakTies, order.data(), true,
+                          includeChirality);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;
@@ -829,8 +831,8 @@ void rankFragmentAtoms(const ROMol &mol, std::vector<unsigned int> &res,
   ftor.df_useChiralityRings = includeChirality;
   ftor.df_useChiralPresence = includeChiralPresence;
 
-  auto order = std::make_unique<int[]>(mol.getNumAtoms());
-  detail::rankWithFunctor(ftor, breakTies, order.get(), true, includeChirality,
+  std::vector<int> order(mol.getNumAtoms());
+  detail::rankWithFunctor(ftor, breakTies, order.data(), true, includeChirality,
                           &atomsInPlay, &bondsInPlay);
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -858,8 +860,8 @@ void chiralRankMolAtoms(const ROMol &mol, std::vector<unsigned int> &res) {
   detail::initChiralCanonAtoms(mol, atoms);
   ChiralAtomCompareFunctor ftor(&atoms.front(), mol);
 
-  auto order = std::make_unique<int[]>(mol.getNumAtoms());
-  detail::rankWithFunctor(ftor, false, order.get());
+  std::vector<int> order(mol.getNumAtoms());
+  detail::rankWithFunctor(ftor, false, order.data());
 
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
     res[order[i]] = atoms[order[i]].index;

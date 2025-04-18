@@ -694,7 +694,8 @@ template <typename CompareFunc>
 void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                       int mode, int *order, std::vector<int> &count,
                       int &activeset, std::vector<int> &next,
-                      std::vector<int> &changed, std::vector<char>& touchedPartitions) {
+                      std::vector<int> &changed,
+                      std::vector<char> &touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int symclass = 0;
@@ -792,7 +793,7 @@ template <typename CompareFunc>
 void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
                int mode, int *order, std::vector<int> &count, int &activeset,
                std::vector<int> &next, std::vector<int> &changed,
-               std::vector<char>& touchedPartitions) {
+               std::vector<char> &touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
   int offset;
@@ -910,4 +911,3 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
 
 }  // namespace Canon
 }  // namespace RDKit
-
