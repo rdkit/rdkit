@@ -1,7 +1,6 @@
 import copy
 import math
 import os
-import pickle
 import unittest
 
 import numpy
@@ -730,6 +729,17 @@ class TestCase(unittest.TestCase):
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
     self.assertGreater(len(cids), 1)
+  
+  def testSetattr(self):
+    mol = Chem.MolFromSmiles("CCC")
+    bm = rdDistGeom.GetMoleculeBoundsMatrix(mol)
+    ps = rdDistGeom.EmbedParameters()
+    ps.randomSeed = 0xc0ffee
+    ps.SetBoundsMat(bm)
+    with self.assertRaises(AttributeError):
+      ps.wrongName=1234
+    with self.assertRaises(AttributeError):
+      ps.wrongName(1234)
 
 
 if __name__ == '__main__':
