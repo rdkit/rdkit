@@ -258,9 +258,9 @@ void test3() {
     std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size());
+    memset(changed.data(), 1, atoms.size() * sizeof(int));
     char *touched = (char *)malloc(atoms.size() * sizeof(char));
     memset(touched, 0, atoms.size() * sizeof(char));
 
@@ -298,9 +298,6 @@ void test3() {
     TEST_ASSERT(count[order[7]] == 1);
 
     delete m;
-    free(order);
-    free(next);
-    free(changed);
     free(touched);
   }
   {
@@ -316,9 +313,9 @@ void test3() {
     std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size());
+    memset(changed.data(), 1, atoms.size() * sizeof(int));
     char *touched = (char *)malloc(atoms.size() * sizeof(char));
     memset(touched, 0, atoms.size() * sizeof(char));
 
@@ -348,9 +345,6 @@ void test3() {
     TEST_ASSERT(count[order[5]] == 3);
     TEST_ASSERT(count[order[6]] == 0);
     delete m;
-    free(order);
-    free(next);
-    free(changed);
     free(touched);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
@@ -457,9 +451,9 @@ void test4() {
     std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size());
+    memset(changed.data(), 1, atoms.size() * sizeof(int));
     char *touched = (char *)malloc(atoms.size() * sizeof(char));
     memset(touched, 0, atoms.size() * sizeof(char));
 
@@ -505,9 +499,6 @@ void test4() {
       }
     }
     delete m;
-    free(order);
-    free(next);
-    free(changed);
     free(touched);
   }
 
@@ -523,9 +514,9 @@ void test4() {
     std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size());
+    memset(changed.data(), 1, atoms.size() * sizeof(int));
     char *touched = (char *)malloc(atoms.size() * sizeof(char));
     memset(touched, 0, atoms.size() * sizeof(char));
 
@@ -558,9 +549,6 @@ void test4() {
       }
     }
     delete m;
-    free(order);
-    free(next);
-    free(changed);
     free(touched);
   }
 
@@ -576,9 +564,9 @@ void test4() {
     std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size());
+    memset(changed.data(), 1, atoms.size() * sizeof(int));
     char *touched = (char *)malloc(atoms.size() * sizeof(char));
     memset(touched, 0, atoms.size() * sizeof(char));
 
@@ -626,9 +614,6 @@ void test4() {
     TEST_ASSERT(order[9] == 1 && count[1] == 1);
 
     delete m;
-    free(order);
-    free(next);
-    free(changed);
     free(touched);
   }
 
@@ -651,9 +636,9 @@ void test5() {
     std::vector<int> count(atoms.size());
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
-    int *next = (int *)malloc(atoms.size() * sizeof(int));
-    int *changed = (int *)malloc(atoms.size() * sizeof(int));
-    memset(changed, 1, atoms.size() * sizeof(int));
+    std::vector<int> next(atoms.size());
+    std::vector<int> changed(atoms.size());
+    memset(changed.data(), 1, atoms.size() * sizeof(int));
     char *touched = (char *)malloc(atoms.size() * sizeof(char));
     memset(touched, 0, atoms.size() * sizeof(char));
 
@@ -703,9 +688,6 @@ void test5() {
       TEST_ASSERT(count[order[i]] == 1);
     }
     delete m;
-    free(order);
-    free(next);
-    free(changed);
     free(touched);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
