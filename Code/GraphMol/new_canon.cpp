@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Atropisomers.h>
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -153,10 +154,10 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
   PRECONDITION(atoms, "bad pointer");
   RingInfo *ringInfo = mol.getRingInfo();
 
-  auto visited = std::make_unique<char[]>(nAtoms);
-  auto lastLevelNbrs = std::make_unique<char[]>(nAtoms);
-  auto currentLevelNbrs = std::make_unique<char[]>(nAtoms);
-  auto revisitedNeighbors = std::make_unique<int[]>(nAtoms);
+  std::vector<char> visited(nAtoms);
+  std::vector<char> lastLevelNbrs(nAtoms);
+  std::vector<char> currentLevelNbrs(nAtoms);
+  std::vector<int> revisitedNeighbors(nAtoms);
   for (unsigned idx = 0; idx < nAtoms; ++idx) {
     const Canon::canon_atom &a = atoms[idx];
     if (!ringInfo->isInitialized() ||
@@ -169,10 +170,10 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
     atoms[idx].neighborNum.reserve(1000);
     atoms[idx].revistedNeighbors.assign(1000, 0);
 
-    memset(visited.get(), 0, nAtoms * sizeof(char));
-    memset(lastLevelNbrs.get(), 0, nAtoms * sizeof(char));
-    memset(currentLevelNbrs.get(), 0, nAtoms * sizeof(char));
-    memset(revisitedNeighbors.get(), 0, nAtoms * sizeof(int));
+    std::fill(visited.begin(), visited.end(), 0);
+    std::fill(lastLevelNbrs.begin(), lastLevelNbrs.end(), 0);
+    std::fill(currentLevelNbrs.begin(), currentLevelNbrs.end(), 0);
+    std::fill(revisitedNeighbors.begin(), revisitedNeighbors.end(), 0);
     std::vector<int> nextLevelNbrs;
     while (!neighbors.empty()) {
       unsigned int numLevelNbrs = 0;
@@ -208,13 +209,13 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
           }
         }
       }
-      memset(lastLevelNbrs.get(), 0, nAtoms * sizeof(char));
+      std::fill(lastLevelNbrs.begin(), lastLevelNbrs.end(), 0);
       for (unsigned i = 0; i < nAtoms; ++i) {
         if (currentLevelNbrs[i]) {
           lastLevelNbrs[i] = 1;
         }
       }
-      memset(currentLevelNbrs.get(), 0, nAtoms * sizeof(char));
+      std::fill(currentLevelNbrs.begin(), currentLevelNbrs.end(), 0);
       std::vector<int> tmp;
       tmp.reserve(30);
       for (unsigned i = 0; i < nAtoms; ++i) {
@@ -232,7 +233,7 @@ void compareRingAtomsConcerningNumNeighbors(Canon::canon_atom *atoms,
         atoms[idx].revistedNeighbors[currentRNIdx] = i;
         currentRNIdx++;
       }
-      memset(revisitedNeighbors.get(), 0, nAtoms * sizeof(int));
+      std::fill(revisitedNeighbors.begin(), revisitedNeighbors.end(), 0);
 
       atoms[idx].neighborNum.push_back(numLevelNbrs);
       atoms[idx].neighborNum.push_back(-1);
@@ -255,16 +256,12 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
   canon_atom *atoms = ftor.dp_atoms;
   const unsigned int nAts = mol.getNumAtoms();
 
-  //  auto order = std::make_unique<int[]>(mol.getNumAtoms());
-
   std::vector<int> count(nAts);
-  // auto next = std::make_unique<int[]>(nAts);
-  // auto changed = std::make_unique<int[]>(nAts);
   std::vector<int> next(nAts);
   std::vector<int> changed(nAts);
-  memset(changed.data(), 1, nAts * sizeof(int));
-  auto touched = std::make_unique<char[]>(nAts);
-  memset(touched.get(), 0, nAts * sizeof(char));
+  std::fill(changed.begin(), changed.end(), 1);
+  std::vector<char> touched(nAts);
+  std::fill(touched.begin(), touched.end(), 0);
   int activeset;
   CreateSinglePartition(nAts, order, count, atoms);
 // ActivatePartitions(nAts,order,count,activeset,next,changed);
@@ -286,7 +283,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
   }
 #endif
   RefinePartitions(mol, atoms, ftor, true, order, count, activeset, next,
-                   changed, touched.get());
+                   changed, touched);
 #ifdef VERBOSE_CANON
   std::cerr << "2--------" << std::endl;
   for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -305,7 +302,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
                                               bondsInPlay);
     ActivatePartitions(nAts, order, count, activeset, next, changed);
     RefinePartitions(mol, atoms, scftor, true, order, count, activeset, next,
-                     changed, touched.get());
+                     changed, touched);
 #ifdef VERBOSE_CANON
     std::cerr << "2a--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -342,7 +339,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
     compareRingAtomsConcerningNumNeighbors(atoms, nAts, mol);
     ActivatePartitions(nAts, order, count, activeset, next, changed);
     RefinePartitions(mol, atoms, sftor, true, order, count, activeset, next,
-                     changed, touched.get());
+                     changed, touched);
 #ifdef VERBOSE_CANON
     std::cerr << "2b--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {
@@ -353,7 +350,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
   }
   if (breakTies) {
     BreakTies(mol, atoms, ftor, true, order, count, activeset, next, changed,
-              touched.get());
+              touched);
 #ifdef VERBOSE_CANON
     std::cerr << "3--------" << std::endl;
     for (unsigned int i = 0; i < mol.getNumAtoms(); ++i) {

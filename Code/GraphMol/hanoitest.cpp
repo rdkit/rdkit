@@ -18,6 +18,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 #include <random>
@@ -260,9 +261,9 @@ void test3() {
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size());
-    memset(changed.data(), 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::fill(changed.begin(), changed.end(), 1);
+    std::vector<char> touched(atoms.size());
+    std::fill(touched.begin(), touched.end(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -299,7 +300,6 @@ void test3() {
 
     delete m;
     free(order);
-    free(touched);
   }
   {
     // this time with smarter invariants
@@ -316,9 +316,9 @@ void test3() {
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size());
-    memset(changed.data(), 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::fill(changed.begin(), changed.end(), 1);
+    std::vector<char> touched(atoms.size());
+    std::fill(touched.begin(), touched.end(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -347,7 +347,6 @@ void test3() {
     TEST_ASSERT(count[order[6]] == 0);
     delete m;
     free(order);
-    free(touched);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
@@ -455,9 +454,9 @@ void test4() {
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size());
-    memset(changed.data(), 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::fill(changed.begin(), changed.end(), 1);
+    std::vector<char> touched(atoms.size());
+    std::fill(touched.begin(), touched.end(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -502,7 +501,6 @@ void test4() {
     }
     delete m;
     free(order);
-    free(touched);
   }
 
   {
@@ -519,9 +517,9 @@ void test4() {
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size());
-    memset(changed.data(), 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::fill(changed.begin(), changed.end(), 1);
+    std::vector<char> touched(atoms.size());
+    std::fill(touched.begin(), touched.end(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -553,7 +551,6 @@ void test4() {
     }
     delete m;
     free(order);
-    free(touched);
   }
 
   {
@@ -570,9 +567,9 @@ void test4() {
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size());
-    memset(changed.data(), 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::fill(changed.begin(), changed.end(), 1);
+    std::vector<char> touched(atoms.size());
+    std::fill(touched.begin(), touched.end(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -619,7 +616,6 @@ void test4() {
 
     delete m;
     free(order);
-    free(touched);
   }
 
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
@@ -643,9 +639,9 @@ void test5() {
     int activeset;
     std::vector<int> next(atoms.size());
     std::vector<int> changed(atoms.size());
-    memset(changed.data(), 1, atoms.size() * sizeof(int));
-    char *touched = (char *)malloc(atoms.size() * sizeof(char));
-    memset(touched, 0, atoms.size() * sizeof(char));
+    std::fill(changed.begin(), changed.end(), 1);
+    std::vector<char> touched(atoms.size());
+    std::fill(touched.begin(), touched.end(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -694,7 +690,6 @@ void test5() {
     }
     delete m;
     free(order);
-    free(touched);
   }
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 };
