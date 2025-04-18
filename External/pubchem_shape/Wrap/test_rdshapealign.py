@@ -49,5 +49,18 @@ class TestCase(unittest.TestCase):
     shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
     self.assertAlmostEqual(shp.sov, 274.576, places=3)
 
+  def test5_ShapeShapeOverlay(self):
+    refShp = rdShapeAlign.PrepareConformer(self.ref, -1)
+    probeShp = rdShapeAlign.PrepareConformer(self.probe, -1)
+    tpl = rdShapeAlign.AlignShapes(refShp, probeShp)
+    probeCp = Chem.Mol(self.probe)
+    rdShapeAlign.TransformConformer(refShp, tpl[2], probeShp, probeCp.GetConformer(-1))
+    # Just show it did something.  The full test is in the C++ layer.
+    self.assertNotEqual(self.probe.GetConformer().GetAtomPosition(0),
+                        probeCp.GetConformer().GetAtomPosition(0))
+    matrix = tpl[2][:10]
+    with self.assertRaises(ValueError):
+      rdShapeAlign.TransformConformer(refShp, matrix, probeShp, probeCp.GetConformer(-1))
+    
 if __name__ == '__main__':
   unittest.main()

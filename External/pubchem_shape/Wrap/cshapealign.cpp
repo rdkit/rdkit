@@ -52,6 +52,28 @@ python::tuple alignMol2(const ShapeInput &ref, RDKit::ROMol &probe,
                     max_preiters, max_postiters);
   return python::make_tuple(nbr_st, nbr_ct);
 }
+python::tuple alignShapes(const ShapeInput &refShape, ShapeInput &fitShape,
+                          double opt_param, unsigned int max_preiters,
+                          unsigned int max_postiters) {
+  std::vector<float> matrix(12, 0.0);
+  auto [nbr_st, nbr_ct] = AlignShapes(refShape, fitShape, matrix, opt_param,
+                                      max_preiters, max_postiters);
+  python::list pyMatrix;
+  for (auto m : matrix) {
+    pyMatrix.append(m);
+  }
+  return python::make_tuple(nbr_st, nbr_ct, pyMatrix);
+}
+void transformConformer(const ShapeInput &refShape,
+                        const python::list &pyMatrix, ShapeInput probeShape,
+                        RDKit::Conformer &probeConf) {
+  std::vector<float> matrix;
+  pythonObjectToVect<float>(pyMatrix, matrix);
+  if (matrix.size() != 12) {
+    throw_value_error("The transformation matrix must have 12 values.");
+  }
+  TransformConformer(refShape, matrix, probeShape, probeConf);
+}
 ShapeInput *prepConf(const RDKit::ROMol &mol, int confId,
                      const python::object &py_opts) {
   ShapeInputOptions opts;
@@ -158,7 +180,7 @@ Returns
 Parameters
 ----------
 refShape : ShapeInput
-    Reference molecule
+    Reference shape
 probe : RDKit.ROMol
     Probe molecule
 probeConfId : int, optional
@@ -175,6 +197,51 @@ Returns
  2-tuple of doubles
     The results are (shape_score, color_score)
     The color_score is zero if useColors is False)DOC");
+
+  python::def(
+      "AlignShapes", &helpers::alignShapes,
+      (python::arg("refShape"), python::arg("probeShape"),
+       python::arg("opt_param") = 1.0, python::arg("max_preiters") = 10,
+       python::arg("max_postiters") = 30),
+      R"DOC(Aligns a probe shape to a reference shape. The probe is modified.
+
+Parameters
+----------
+refShape : ShapeInput
+    Reference shape
+probeShape : ShapeInput
+    Probe shape
+opt_param : float, optional
+max_preiters : int, optional
+max_postiters : int, optional
+
+
+Returns
+-------
+ 3-tuple of double, double, list of doubles
+    The results are (shape_score, color_score, matrix)
+    The matrix is a 12-float list giving the transformation matrix that
+    overlays the probe onto the reference.)DOC");
+
+  python::def(
+      "TransformConformer", &helpers::transformConformer,
+      (python::arg("refShape"), python::arg("matrix"),
+       python::arg("probeShape"), python::arg("probeConformer")),
+      R"DOC(Assuming that probeShape has been overlaid onto refShape to give
+the supplied transformation matrix, applies that transformation to the
+ given conformer.
+
+Parameters
+----------
+refShape : ShapeInput
+    Reference shape
+matrix: list[float * 12]
+    The transformation matrix
+probeShape : ShapeInput
+    Probe shape
+probeConformer : Conformer
+    Probe conformer
+)DOC");
 
   python::def("PrepareConformer", &helpers::prepConf,
               (python::arg("mol"), python::arg("confId") = -1,
