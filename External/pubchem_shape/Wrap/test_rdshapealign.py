@@ -36,7 +36,6 @@ class TestCase(unittest.TestCase):
     opts = rdShapeAlign.ShapeInputOptions()
     opts.useColors = False
     shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
-    print(Chem.MolToCXSmiles(self.ref))
     tpl = rdShapeAlign.AlignMol(shp, self.probe, opt_param=0.5, max_preiters=3, max_postiters=16)
     self.assertAlmostEqual(tpl[0], 0.773, places=3)
     self.assertAlmostEqual(tpl[1], 0.0, places=3)
@@ -45,6 +44,10 @@ class TestCase(unittest.TestCase):
     shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
     self.assertAlmostEqual(shp.sov, 251.946, places=3)
     self.assertAlmostEqual(shp.sof, 0.0, places=3)
+
+    opts.atomRadii = [(4, 1.9)]
+    shp = rdShapeAlign.PrepareConformer(self.ref, -1, opts)
+    self.assertAlmostEqual(shp.sov, 274.576, places=3)
 
 if __name__ == '__main__':
   unittest.main()

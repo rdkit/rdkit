@@ -71,6 +71,24 @@ python::list get_atomSubset(const ShapeInputOptions &opts) {
   }
   return py_list;
 }
+
+void set_atomRadii(ShapeInputOptions &opts, const python::list &ar) {
+  int len = python::len(ar);
+  opts.atomRadii.resize(len);
+  for (int i = 0; i < len; i++) {
+    unsigned int atomIdx = python::extract<unsigned int>(ar[i][0]);
+    double radius = python::extract<double>(ar[i][1]);
+    opts.atomRadii[i] = std::make_pair(atomIdx, radius);
+  }
+}
+
+python::list get_atomRadii(const ShapeInputOptions &opts) {
+  python::list py_list;
+  for (const auto &val : opts.atomRadii) {
+    py_list.append(python::make_tuple(static_cast<int>(val.first), val.second));
+  }
+  return py_list;
+}
 }  // namespace helpers
 
 void wrap_pubchemshape() {
@@ -92,7 +110,11 @@ void wrap_pubchemshape() {
           "  Default=2.16 (the radius of Xe).")
       .add_property(
           "atomSubset", &helpers::get_atomSubset, &helpers::set_atomSubset,
-          "If not empty, use just these atoms in the molecule to form the ShapeInput object.");
+          "If not empty, use just these atoms in the molecule to form the ShapeInput object.")
+      .add_property(
+          "atomRadii", &helpers::get_atomRadii, &helpers::set_atomRadii,
+          "Non-standard radii to use for the atoms specified by their indices"
+          " in the molecule.  A list of tuples of [int, float].");
 
   python::def(
       "AlignMol", &helpers::alignMol,

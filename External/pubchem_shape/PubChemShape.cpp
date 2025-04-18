@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 
@@ -250,10 +251,19 @@ bool atomInSubset(unsigned int atomIdx, const ShapeInputOptions &shapeOpts) {
   if (shapeOpts.atomSubset.empty()) {
     return true;
   }
-  return (std::find(shapeOpts.atomSubset.begin(), shapeOpts.atomSubset.end(),
-                    atomIdx) != shapeOpts.atomSubset.end());
+  return (std::ranges::find(shapeOpts.atomSubset, atomIdx) !=
+          shapeOpts.atomSubset.end());
 }
 
+double getAtomRadius(unsigned int atomIdx, const ShapeInputOptions &shapeOpts) {
+  auto it = std::ranges::find_if(
+      shapeOpts.atomRadii,
+      [atomIdx](const auto &p) -> bool { return p.first == atomIdx; });
+  if (it == shapeOpts.atomRadii.end()) {
+    return -1.0;
+  }
+  return it->second;
+}
 // Get the atom radii.  rad_vector is expected to be big enough to hold them
 // all.  Also computes the average coordinates of the selected atoms.
 void extractAtomRadii(const Conformer &conformer, unsigned int nAtoms,
@@ -265,19 +275,25 @@ void extractAtomRadii(const Conformer &conformer, unsigned int nAtoms,
     if (!atomInSubset(i, shapeOpts)) {
       continue;
     }
-    unsigned int Z = conformer.getOwningMol().getAtomWithIdx(i)->getAtomicNum();
-    if (Z > 1) {
+    double rad = getAtomRadius(i, shapeOpts);
+    if (rad != -1.0) {
+      rad_vector[nSelectedAtoms++] = rad;
       ave += conformer.getAtomPos(i);
-
-      if (auto rad = vdw_radii.find(Z); rad != vdw_radii.end()) {
-        rad_vector[nSelectedAtoms++] = rad->second;
-      } else {
-        throw ValueErrorException("No VdW radius for atom with Z=" +
-                                  std::to_string(Z));
+    } else {
+      unsigned int Z =
+          conformer.getOwningMol().getAtomWithIdx(i)->getAtomicNum();
+      if (Z > 1) {
+        ave += conformer.getAtomPos(i);
+        if (auto rad = vdw_radii.find(Z); rad != vdw_radii.end()) {
+          rad_vector[nSelectedAtoms++] = rad->second;
+        } else {
+          throw ValueErrorException("No VdW radius for atom with Z=" +
+                                    std::to_string(Z));
+        }
+      } else if (shapeOpts.includeDummies && Z == 0) {
+        ave += conformer.getAtomPos(i);
+        rad_vector[nSelectedAtoms++] = shapeOpts.dummyRadius;
       }
-    } else if (shapeOpts.includeDummies && Z == 0) {
-      ave += conformer.getAtomPos(i);
-      rad_vector[nSelectedAtoms++] = shapeOpts.dummyRadius;
     }
   }
   ave /= nSelectedAtoms;
@@ -412,20 +428,12 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
   return res;
 }
 
-std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
-                                        std::vector<float> &matrix,
-                                        int fitConfId, bool useColors,
-                                        double opt_param,
-                                        unsigned int max_preiters,
-                                        unsigned int max_postiters) {
-  PRECONDITION(matrix.size() == 12, "bad matrix size");
-  Align3D::setUseCutOff(true);
-
-  DEBUG_MSG("Fit details:");
-  ShapeInputOptions shapeOpts;
-  shapeOpts.useColors = useColors;
-  auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
-
+std::pair<double, double> AlignShapes(const ShapeInput &refShape,
+                                      ShapeInput &fitShape,
+                                      std::vector<float> &matrix,
+                                      double opt_param,
+                                      unsigned int max_preiters,
+                                      unsigned int max_postiters) {
   std::set<unsigned int> jointColorAtomTypeSet;
   Align3D::getJointColorTypeSet(
       refShape.atom_type_vector.data(), refShape.atom_type_vector.size(),
@@ -451,34 +459,64 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
   DEBUG_MSG("nbr_st: " << nbr_st);
   DEBUG_MSG("nbr_ct: " << nbr_ct);
 
-  // transform fit coords
-  Conformer &fit_conformer = fit.getConformer(fitConfId);
-  if (3 * fit.getNumAtoms() != fitShape.coord.size()) {
+  std::vector<float> transformed(fitShape.coord.size());
+  Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
+                                fitShape.coord.size() / 3, matrix.data());
+  fitShape.coord = transformed;
+  return std::make_pair(nbr_st, nbr_ct);
+}
+
+void TransformConformer(const ShapeInput &refShape,
+                        const std::vector<float> &matrix, ShapeInput &fitShape,
+                        Conformer &fitConf) {
+  const unsigned int nAtoms = fitConf.getOwningMol().getNumAtoms();
+  if (3 * nAtoms != fitShape.coord.size()) {
     // Hs were removed
-    fitShape.coord.resize(3 * fit.getNumAtoms());
-    for (unsigned int i = 0; i < fit.getNumAtoms(); ++i) {
-      const auto &pos = fit_conformer.getAtomPos(i);
+    fitShape.coord.resize(3 * nAtoms);
+    for (unsigned int i = 0; i < nAtoms; ++i) {
+      const auto &pos = fitConf.getAtomPos(i);
       fitShape.coord[i * 3] = pos.x + fitShape.shift[0];
       fitShape.coord[i * 3 + 1] = pos.y + fitShape.shift[1];
       fitShape.coord[i * 3 + 2] = pos.z + fitShape.shift[2];
     }
   }
-  std::vector<float> transformed(fit.getNumAtoms() * 3);
-  Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
-                                fit.getNumAtoms(), matrix.data());
 
-  for (unsigned i = 0; i < fit.getNumAtoms(); ++i) {
+  std::vector<float> transformed(nAtoms * 3);
+  Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
+                                nAtoms, matrix.data());
+  for (unsigned i = 0; i < nAtoms; ++i) {
     // both conformers have been translated to the origin, translate the fit
     // conformer back to the steric center of the reference.
-    RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
+    RDGeom::Point3D &pos = fitConf.getAtomPos(i);
     pos.x = transformed[i * 3] - refShape.shift[0];
     pos.y = transformed[(i * 3) + 1] - refShape.shift[1];
     pos.z = transformed[(i * 3) + 2] - refShape.shift[2];
   }
-  fit.setProp("shape_align_shape_tanimoto", nbr_st);
-  fit.setProp("shape_align_color_tanimoto", nbr_ct);
+}
 
-  return std::make_pair(nbr_st, nbr_ct);
+std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
+                                        std::vector<float> &matrix,
+                                        int fitConfId, bool useColors,
+                                        double opt_param,
+                                        unsigned int max_preiters,
+                                        unsigned int max_postiters) {
+  PRECONDITION(matrix.size() == 12, "bad matrix size");
+  Align3D::setUseCutOff(true);
+
+  DEBUG_MSG("Fit details:");
+  ShapeInputOptions shapeOpts;
+  shapeOpts.useColors = useColors;
+  auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
+  auto tanis = AlignShapes(refShape, fitShape, matrix, opt_param, max_preiters,
+                           max_postiters);
+
+  // transform fit coords
+  Conformer &fit_conformer = fit.getConformer(fitConfId);
+  TransformConformer(refShape, matrix, fitShape, fit_conformer);
+  fit.setProp("shape_align_shape_tanimoto", tanis.first);
+  fit.setProp("shape_align_color_tanimoto", tanis.second);
+
+  return tanis;
 }
 
 std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
