@@ -692,7 +692,7 @@ class RDKIT_GRAPHMOL_EXPORT ChiralAtomCompareFunctor {
 
 template <typename CompareFunc>
 void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
-                      int mode, int *order, int *count, int &activeset,
+                      int mode, int *order, std::vector<int>& count, int &activeset,
                       int *next, int *changed, char *touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
@@ -734,7 +734,7 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
     //   std::cerr<<order[ii]+1<<" count: "<<count[order[ii]]<<" index:
     //   "<<atoms[order[ii]].index<<std::endl;
     // }
-    hanoisort(start, len, count, changed, compar);
+    hanoisort(start, len, count.data(), changed, compar);
     // std::cerr<<"*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*"<<std::endl;
     // std::cerr<<"  result:";
     // for(unsigned int ii=0;ii<nAtoms;++ii){
@@ -789,7 +789,7 @@ void RefinePartitions(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
 
 template <typename CompareFunc>
 void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
-               int mode, int *order, int *count, int &activeset, int *next,
+               int mode, int *order, std::vector<int>& count, int &activeset, int *next,
                int *changed, char *touchedPartitions) {
   unsigned int nAtoms = mol.getNumAtoms();
   int partition;
@@ -840,11 +840,11 @@ void BreakTies(const ROMol &mol, canon_atom *atoms, CompareFunc compar,
 }  // end of BreakTies()
 
 RDKIT_GRAPHMOL_EXPORT void CreateSinglePartition(unsigned int nAtoms,
-                                                 int *order, int *count,
+                                                 int *order, std::vector<int>& count,
                                                  canon_atom *atoms);
 
 RDKIT_GRAPHMOL_EXPORT void ActivatePartitions(unsigned int nAtoms, int *order,
-                                              int *count, int &activeset,
+                                              std::vector<int>& count, int &activeset,
                                               int *next, int *changed);
 
 //! Note that atom maps on dummy atoms will always be used
@@ -905,3 +905,4 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
 
 }  // namespace Canon
 }  // namespace RDKit
+

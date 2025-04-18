@@ -13,6 +13,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Atropisomers.h>
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -93,10 +94,10 @@ int bondholder::compareStereo(const bondholder &o) const {
   return 0;
 }
 
-void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
+void CreateSinglePartition(unsigned int nAtoms, int *order, std::vector<int>& count,
                            canon_atom *atoms) {
   PRECONDITION(order, "bad pointer");
-  PRECONDITION(count, "bad pointer");
+  PRECONDITION(!count.empty(), "count should not be empty");
   PRECONDITION(atoms, "bad pointer");
 
   for (unsigned int i = 0; i < nAtoms; i++) {
@@ -107,10 +108,10 @@ void CreateSinglePartition(unsigned int nAtoms, int *order, int *count,
   count[0] = nAtoms;
 }
 
-void ActivatePartitions(unsigned int nAtoms, int *order, int *count,
+void ActivatePartitions(unsigned int nAtoms, int *order, std::vector<int>& count,
                         int &activeset, int *next, int *changed) {
   PRECONDITION(order, "bad pointer");
-  PRECONDITION(count, "bad pointer");
+  PRECONDITION(!count.empty(), "count should not be empty");
   PRECONDITION(next, "bad pointer");
   PRECONDITION(changed, "bad pointer");
   unsigned int i, j;
@@ -251,18 +252,18 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
   PRECONDITION(order, "bad pointer");
   const ROMol &mol = *ftor.dp_mol;
   canon_atom *atoms = ftor.dp_atoms;
-  unsigned int nAts = mol.getNumAtoms();
+  const unsigned int nAts = mol.getNumAtoms();
 
   //  auto order = std::make_unique<int[]>(mol.getNumAtoms());
 
-  auto count = std::make_unique<int[]>(nAts);
+  std::vector<int> count(nAts);
   auto next = std::make_unique<int[]>(nAts);
   auto changed = std::make_unique<int[]>(nAts);
   memset(changed.get(), 1, nAts * sizeof(int));
   auto touched = std::make_unique<char[]>(nAts);
   memset(touched.get(), 0, nAts * sizeof(char));
   int activeset;
-  CreateSinglePartition(nAts, order, count.get(), atoms);
+  CreateSinglePartition(nAts, order, count, atoms);
 // ActivatePartitions(nAts,order,count,activeset,next,changed);
 // RefinePartitions(mol,atoms,ftor,false,order,count,activeset,next,changed,touched);
 #ifdef VERBOSE_CANON
@@ -273,7 +274,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
   }
 #endif
   ftor.df_useNbrs = true;
-  ActivatePartitions(nAts, order, count.get(), activeset, next.get(),
+  ActivatePartitions(nAts, order, count, activeset, next.get(),
                      changed.get());
 #ifdef VERBOSE_CANON
   std::cerr << "1a--------" << std::endl;
@@ -282,7 +283,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
               << " count: " << count[order[i]] << std::endl;
   }
 #endif
-  RefinePartitions(mol, atoms, ftor, true, order, count.get(), activeset,
+  RefinePartitions(mol, atoms, ftor, true, order, count, activeset,
                    next.get(), changed.get(), touched.get());
 #ifdef VERBOSE_CANON
   std::cerr << "2--------" << std::endl;
@@ -300,9 +301,9 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
   if (useChirality && ties) {
     SpecialChiralityAtomCompareFunctor scftor(atoms, mol, atomsInPlay,
                                               bondsInPlay);
-    ActivatePartitions(nAts, order, count.get(), activeset, next.get(),
+    ActivatePartitions(nAts, order, count, activeset, next.get(),
                        changed.get());
-    RefinePartitions(mol, atoms, scftor, true, order, count.get(), activeset,
+    RefinePartitions(mol, atoms, scftor, true, order, count, activeset,
                      next.get(), changed.get(), touched.get());
 #ifdef VERBOSE_CANON
     std::cerr << "2a--------" << std::endl;
@@ -338,9 +339,9 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
     SpecialSymmetryAtomCompareFunctor sftor(atoms, mol, atomsInPlay,
                                             bondsInPlay);
     compareRingAtomsConcerningNumNeighbors(atoms, nAts, mol);
-    ActivatePartitions(nAts, order, count.get(), activeset, next.get(),
+    ActivatePartitions(nAts, order, count, activeset, next.get(),
                        changed.get());
-    RefinePartitions(mol, atoms, sftor, true, order, count.get(), activeset,
+    RefinePartitions(mol, atoms, sftor, true, order, count, activeset,
                      next.get(), changed.get(), touched.get());
 #ifdef VERBOSE_CANON
     std::cerr << "2b--------" << std::endl;
@@ -351,7 +352,7 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 #endif
   }
   if (breakTies) {
-    BreakTies(mol, atoms, ftor, true, order, count.get(), activeset, next.get(),
+    BreakTies(mol, atoms, ftor, true, order, count, activeset, next.get(),
               changed.get(), touched.get());
 #ifdef VERBOSE_CANON
     std::cerr << "3--------" << std::endl;
