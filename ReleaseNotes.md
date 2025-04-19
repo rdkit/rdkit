@@ -16,10 +16,6 @@ GitHub)
 
 
 ## New Features and Enhancements:
-- Added a custom CXSMIILES feature to encode Zero order bonds. These are
-  indicated using the "Z:" label followed by a comma-separated list of bond
-  indexes (same as the c/t/ctu label). Generation of this custom extension
-  can be toggled using the CX_ZERO_BONDS flag.
 
 ## Bug Fixes:
 
