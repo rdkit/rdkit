@@ -3094,3 +3094,36 @@ TEST_CASE("atoms bound to metals should always have Hs specified") {
     }
   }
 }
+
+TEST_CASE("ZOB cx smiles extension", "[smiles][cxsmiles]") {
+  SECTION("basics") {
+    auto m = "CC"_smiles;
+    REQUIRE(m);
+
+    auto b = m->getBondWithIdx(0);
+    b->setBondType(Bond::ZERO);
+
+    auto smi = MolToCXSmiles(*m);
+    REQUIRE(smi == "C~C |Z:0|");
+
+    auto m2 = RDKit::v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m2);
+
+    CHECK(m2->getBondWithIdx(0)->getBondType() == Bond::ZERO);
+  }
+  SECTION("Reverse") {
+    constexpr const char *smi = "FB1(F)N2CCCC/C2=N/C2=[NH+]~1CCC=C2 |Z:12|";
+
+    auto p = v2::SmilesParse::SmilesParserParams();
+    p.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+    REQUIRE(m);
+
+    auto b = m->getBondWithIdx(15);
+    CHECK(b->getBondType() == Bond::BondType::ZERO);
+    CHECK(b->getBeginAtom()->getAtomicNum() == 7);
+    CHECK(b->getEndAtom()->getAtomicNum() == 5);
+
+    REQUIRE(MolToCXSmiles(*m) == smi);
+  }
+}

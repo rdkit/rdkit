@@ -156,8 +156,8 @@ ROMol *MolFromMolBlock(python::object imolBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize, bool removeHs,
-                      bool strictParsing) {
+ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
+                      bool removeHs, bool strictParsing) {
   RWMol *newM = nullptr;
   try {
     newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
@@ -171,7 +171,8 @@ ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize, bool remove
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize, bool removeHs) {
+ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize,
+                      bool removeHs) {
   RWMol *newM = nullptr;
   try {
     newM = MrvFileToMol(molFilename, sanitize, removeHs);
@@ -604,7 +605,8 @@ python::object addMetadataToPNGStringHelper(python::dict pymetadata,
   return retval;
 }
 
-python::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
+python::object MolsFromPNGFile(const std::string &filename,
+                               const std::string &tag,
                                python::object pyParams) {
   SmilesParserParams params;
   if (pyParams) {
@@ -1725,6 +1727,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
              RDKit::SmilesWrite::CXSmilesFields::CX_BOND_ATROPISOMER)
       .value("CX_COORDINATE_BONDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_COORDINATE_BONDS)
+      .value("CX_ZERO_BONDS", RDKit::SmilesWrite::CXSmilesFields::CX_ZERO_BONDS)
       .value("CX_ALL", RDKit::SmilesWrite::CXSmilesFields::CX_ALL)
       .value("CX_ALL_BUT_COORDS",
              RDKit::SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
