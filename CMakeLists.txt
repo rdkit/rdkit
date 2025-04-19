@@ -73,6 +73,7 @@ option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrar
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
+option(RDK_BUILD_OSMORDRED_SUPPORT "build osmordred (requires liblapacke)" OFF )
 
 set(RDK_BOOST_VERSION "1.81.0")
 
@@ -166,17 +167,14 @@ if(NOT Catch2_FOUND)
   FetchContent_MakeAvailable(Catch2)
 endif()
 
-#include better-enums
-find_package(better_enums 0 QUIET)
-if(NOT better_enums)
-  Include(FetchContent)
+# make sure we have better_enums
+Include(FetchContent)
 
-  FetchContent_Declare(
-    better_enums
-    GIT_REPOSITORY https://github.com/aantron/better-enums.git
-    GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
-  )
-endif()
+FetchContent_Declare(
+  better_enums
+  GIT_REPOSITORY https://github.com/aantron/better-enums.git
+  GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
+)
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
@@ -268,6 +266,9 @@ if (CMAKE_COMPILER_IS_CLANG OR CMAKE_COMPILER_IS_EMCC)
     target_compile_definitions(rdkit_base INTERFACE -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_NO_CXX98_FUNCTION_BASE -D_HAS_AUTO_PTR_ETC=0)
     target_compile_options(rdkit_base INTERFACE -Wno-deprecated-builtins -Wno-deprecated-non-prototype -Wno-unused-parameter)
   endif()
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16)
+      set(CMAKE_CXX_FLAGS "${CXX_FLAGS} -Wno-deprecated-literal-operator")
+  endif()
 endif()
 
 # defines macros: rdkit_python_extension, rdkit_test
@@ -289,7 +290,7 @@ endif(MSVC)
 
 # extra boost versions
 if(MSVC)
-  # FIX: do we still need this?
+  # FIX: do we still need this?t
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_NO_LIB")
   if(RDK_INSTALL_DLLS_MSVC)
     target_compile_definitions(rdkit_base INTERFACE "-DBOOST_ALL_DYN_LINK")
@@ -324,6 +325,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
 
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" REQUIRED CONFIG)
 
+  include_directories(${Boost_INCLUDE_DIRS})
   target_link_libraries(rdkit_py_base INTERFACE "Boost::python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}" "Boost::numpy${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR}")
 
   if(RDK_INSTALL_INTREE)
@@ -469,11 +471,13 @@ endif()
 
 
 # set the boost include directories and linkage:
+unset(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES)
 target_include_directories(rdkit_base INTERFACE
                            $<BUILD_INTERFACE:${RDKit_CodeDir}>
                            $<INSTALL_INTERFACE:${RDKit_HdrDir}>
                            ${Boost_INCLUDE_DIRS}
                            )
+set(CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES)			   
 target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
 
 
