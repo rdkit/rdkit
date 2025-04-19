@@ -192,7 +192,7 @@ void determineConnectivity(RWMol &mol, bool useHueckel, int charge,
   } else if (useVdw) {
     connectivityVdW(mol, covFactor);
   } else {
-    ConnectTheDots(&mol, ctdIGNORE_H_H_CONTACTS);
+    ConnectTheDots(&mol, ctdQUICKREMOVE_H_H_CONTACTS);
   }
 }  // determineConnectivity()
 

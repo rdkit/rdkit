@@ -494,3 +494,18 @@ TEST_CASE(
     }
   }
 }
+
+TEST_CASE("problems with H2") {
+  SECTION("as reported") {
+    std::string xyz = R"XYZ(2
+
+H       0.0     0.0     -0.37
+H       0.0     0.0     0.37)XYZ";
+    std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
+    REQUIRE(m);
+    determineConnectivity(*m);
+    CHECK(m->getNumAtoms() == 2);
+    CHECK(m->getNumBonds() == 1);
+    CHECK(m->getBondBetweenAtoms(0, 1));
+  }
+}

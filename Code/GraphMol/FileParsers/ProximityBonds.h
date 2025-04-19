@@ -14,6 +14,7 @@
 
 namespace RDKit {
 static const unsigned int ctdIGNORE_H_H_CONTACTS = 0x1;
+static const unsigned int ctdQUICKREMOVE_H_H_CONTACTS = 0x2;
 // static const unsigned int ctdALL_FLAGS = 0xFFFFFFFF;
 class AtomPDBResidueInfo;
 RDKIT_FILEPARSERS_EXPORT bool IsBlacklistedPair(Atom *beg_atom, Atom *end_atom);

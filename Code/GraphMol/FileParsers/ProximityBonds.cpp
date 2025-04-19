@@ -215,6 +215,27 @@ static void ConnectTheDots_Large(RWMol *mol, unsigned int flags) {
     unsigned int elem = atom->getAtomicNum();
     // detect multivalent Hs, which could happen with ConnectTheDots
     if (elem == 1 && atom->getDegree() > 1) {
+      // if there's an H neighbor and a non-H neighbor, remove the bond to the H
+      if (flags & ctdQUICKREMOVE_H_H_CONTACTS) {
+        Bond *bondToH = nullptr;
+        Bond *bondToNonH = nullptr;
+        for (auto bond : mol->atomBonds(atom)) {
+          if (bond->getOtherAtom(atom)->getAtomicNum() == 1) {
+            bondToH = bond;
+          } else {
+            bondToNonH = bond;
+          }
+        }
+        if (bondToH && bondToNonH) {
+          mol->removeBond(bondToH->getBeginAtomIdx(), bondToH->getEndAtomIdx());
+        }
+      }
+
+      // if we now have a degree of 1, we're done
+      if (atom->getDegree() == 1) {
+        continue;
+      }
+
       auto *atom_info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
       // cut all but shortest Bond
       RDGeom::Point3D p = conf->getAtomPos(i);
