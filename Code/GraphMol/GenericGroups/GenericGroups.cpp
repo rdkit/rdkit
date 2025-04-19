@@ -657,7 +657,7 @@ bool RAtomMatcher(const ROMol &mol, const Atom &atom,
 }  // namespace Matchers
 
 bool genericAtomMatcher(const ROMol &mol, const ROMol &query,
-                        const std::vector<unsigned int> &match) {
+                        const std::span<const unsigned int> &match) {
   boost::dynamic_bitset<> ignore(mol.getNumAtoms());
   for (const auto idx : match) {
     ignore.set(idx);

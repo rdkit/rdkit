@@ -156,8 +156,11 @@ class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() = default;
-  bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
-    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
+  bool operator()(const ROMol &m, const std::span<const unsigned int> &match) {
+    // boost::python doesn't handle std::span, so we need to convert the span to
+    // a vector before calling into python:
+    std::vector<unsigned int> matchVec(match.begin(), match.end());
+    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(matchVec)));
   }
 
  private:
