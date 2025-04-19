@@ -65,7 +65,7 @@ class TestCase(unittest.TestCase):
     ps.parseName = False
     ps.sanitize = True
     ps.removeHs = False
-    ps.explicit3dChirality = False
+    # ps.explicit3dChirality = False
 
     mol = Chem.MolFromSmiles(inputSmiles, ps)
 
