@@ -63,11 +63,11 @@ void ParseSGroupV2000SDILine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SSTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line,
+                             const std::string &text, unsigned int &line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SMTLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
-                             const std::string &text, unsigned int line,
+                             const std::string &text, unsigned int &line,
                              bool strictParsing = true);
 
 void ParseSGroupV2000SLBLine(IDX_TO_SGROUP_MAP &sGroupMap, RWMol *mol,
@@ -154,7 +154,7 @@ void ParseV3000SAPLabel(RWMol *mol, SubstanceGroup &sgroup,
 std::string ParseV3000StringPropLabel(std::stringstream &stream);
 
 // returns the last line read in the SGroups block
-std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int line,
+std::string ParseV3000SGroupsBlock(std::istream *inStream, unsigned int &line,
                                    unsigned int nSgroups, RWMol *mol,
                                    bool strictParsing);
 
