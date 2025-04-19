@@ -839,6 +839,11 @@ M  END''')
         # it's enough to check that this doesn't throw an exception
         d2d.DrawMolecule(m)
 
+    def testProtectedAttributes(self):
+        do = rdMolDraw2D.MolDrawOptions()
+        with self.assertRaises(AttributeError):
+            do.rhubarb = True
+            
 
 if __name__ == "__main__":
     unittest.main()
