@@ -1096,7 +1096,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
           "force generation a V3000 mol block (happens automatically with more than 999 atoms or bonds)(default=False)")
       .def_readwrite(
           "precision", &RDKit::MolWriterParams::precision,
-          "precision of coordinates (only available in V3000)(default=false)");
+          "precision of coordinates (only available in V3000)(default=false)")
+      .def("__setattr__",&safeSetattr);
 
   docString =
       "Returns a Mol block for a molecule\n\
@@ -1435,7 +1436,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "being returned")
       .def_readwrite("removeHs", &RDKit::SmilesParserParams::removeHs,
                      "controls whether or not Hs are removed before the "
-                     "molecule is returned");
+                     "molecule is returned")
+      .def("__setattr__", &safeSetattr);
   python::class_<RDKit::SmartsParserParams, boost::noncopyable>(
       "SmartsParserParams", "Parameters controlling SMARTS Parsing")
       .def_readwrite("debugParse", &RDKit::SmartsParserParams::debugParse,
@@ -1451,7 +1453,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
                      "causes molecule parsing to fail")
       .def_readwrite(
           "mergeHs", &RDKit::SmartsParserParams::mergeHs,
-          "toggles merging H atoms in the SMARTS into neighboring atoms");
+          "toggles merging H atoms in the SMARTS into neighboring atoms")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       "Construct a molecule from a SMILES string.\n\n\
@@ -1593,7 +1596,8 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
       .def_readwrite(
           "ignoreAtomMapNumbers",
           &RDKit::SmilesWriteParams::ignoreAtomMapNumbers,
-          "ignore atom map numbers when canonicalizing the molecule");
+          "ignore atom map numbers when canonicalizing the molecule")
+      .def("__setattr__", &safeSetattr);
 
   python::def("MolToSmiles",
               (std::string(*)(const ROMol &,
