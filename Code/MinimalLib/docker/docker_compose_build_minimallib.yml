@@ -64,4 +64,4 @@ services:
       dockerfile: Dockerfile_3_rdkit_build
     image: rdkit-minimallib:latest
     depends_on:
-      - rdkit_copy
+      - rdkit_get_src
