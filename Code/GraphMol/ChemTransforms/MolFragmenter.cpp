@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2013-2018 Greg Landrum
+//  Copyright (C) 2013-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -408,6 +408,7 @@ void checkChiralityPostMove(const ROMol &mol, const Atom *oAt, Atom *nAt,
     nAt->invertChirality();
   }
 }
+constexpr const char *molfragSaveStereo = "_molfragSaveStereo";
 
 std::vector<std::pair<Bond *, std::vector<int>>> getNbrBondStereo(
     RWMol &mol, const Bond *bnd) {
@@ -419,6 +420,7 @@ std::vector<std::pair<Bond *, std::vector<int>>> getNbrBondStereo(
   for (const auto *atom : {bgn, end}) {
     for (auto obnd : mol.atomBonds(atom)) {
       if (obnd->getIdx() != bnd->getIdx() && !obnd->getStereoAtoms().empty()) {
+        obnd->setProp(molfragSaveStereo, obnd->getStereo());
         res.emplace_back(obnd, obnd->getStereoAtoms());
       }
     }
@@ -503,6 +505,9 @@ ROMol *fragmentOnBonds(
         std::replace(stereo_atoms.second.begin(), stereo_atoms.second.end(),
                      eidx, idx2);
         stereo_atoms.first->getStereoAtoms().swap(stereo_atoms.second);
+        stereo_atoms.first->setStereo(
+            stereo_atoms.first->getProp<Bond::BondStereo>(molfragSaveStereo));
+        stereo_atoms.first->clearProp(molfragSaveStereo);
       }
 
       // figure out if we need to change the stereo tags on the atoms:
@@ -893,10 +898,8 @@ struct ZipBond {
 
     // check bond stereo
     auto &m = chiral_atom->getOwningMol();
-    for (auto nbrIdx :
-         boost::make_iterator_range(m.getAtomNeighbors(chiral_atom))) {
-      auto bond = m.getBondBetweenAtoms(chiral_atom->getIdx(), nbrIdx);
-      if (bond->getStereo()) {
+    for (auto bond : m.atomBonds(chiral_atom)) {
+      if (bond->getStereo() != Bond::BondStereo::STEREONONE) {
         std::string mark = "__molzip_bond_stereo_mark";
         std::vector<Atom *> atoms;
         bool has_dummy = false;
@@ -1255,8 +1258,6 @@ std::unique_ptr<ROMol> molzip(std::vector<ROMOL_SPTR> &decomposition,
     for (const auto atom : zippedMol->atoms()) {
       atom->clearProp(indexPropName);
     }
-
-    return zippedMol;
   }
 
   return zippedMol;
