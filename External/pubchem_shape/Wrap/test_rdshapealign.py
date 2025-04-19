@@ -65,5 +65,16 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(ValueError):
       rdShapeAlign.TransformConformer(refShp, matrix, probeShp, probeCp.GetConformer(-1))
 
+  def test6_notColorAtoms(self):
+    m1 = Chem.MolFromSmiles("Nc1ccccc1 |(0.392086,-2.22477,0.190651;"
+                            "0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;"
+                            "-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;"
+                            "1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097)"
+                            ",atomProp:0.dummyLabel.*|")
+    opts = rdShapeAlign.ShapeInputOptions()
+    opts.notColorAtoms = [0]
+    shp = rdShapeAlign.PrepareConformer(m1, -1, opts)
+    self.assertAlmostEqual(shp.sof, 5.074, places=3)
+
 if __name__ == '__main__':
   unittest.main()

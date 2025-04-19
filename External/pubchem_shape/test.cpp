@@ -431,3 +431,16 @@ TEST_CASE("Shape-Shape alignment") {
     CHECK_THAT(pos.z, Catch::Matchers::WithinAbs(poscp.z, 0.001));
   }
 }
+
+TEST_CASE("Atoms excluded from Color features") {
+  auto m1 =
+      "Nc1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
+  auto shape1 = PrepareConformer(*m1, -1);
+  // The aniline N comes out as a donor, acceptor and basic so gets 3
+  // features.
+  CHECK(shape1.coord.size() == 33);
+  ShapeInputOptions opts;
+  opts.notColorAtoms = std::vector<unsigned int>{0};
+  auto shape2 = PrepareConformer(*m1, -1, opts);
+  CHECK(shape2.coord.size() == 24);
+}

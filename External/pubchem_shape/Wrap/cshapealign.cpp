@@ -94,6 +94,18 @@ python::list get_atomSubset(const ShapeInputOptions &opts) {
   return py_list;
 }
 
+void set_notColorAtoms(ShapeInputOptions &opts, const python::list &nca) {
+  pythonObjectToVect<unsigned int>(nca, opts.notColorAtoms);
+}
+
+python::list get_notColorAtoms(const ShapeInputOptions &opts) {
+  python::list py_list;
+  for (const auto &val : opts.notColorAtoms) {
+    py_list.append(val);
+  }
+  return py_list;
+}
+
 void set_atomRadii(ShapeInputOptions &opts, const python::list &ar) {
   int len = python::len(ar);
   opts.atomRadii.resize(len);
@@ -133,6 +145,10 @@ void wrap_pubchemshape() {
       .add_property(
           "atomSubset", &helpers::get_atomSubset, &helpers::set_atomSubset,
           "If not empty, use just these atoms in the molecule to form the ShapeInput object.")
+      .add_property(
+          "notColorAtoms", &helpers::get_notColorAtoms,
+          &helpers::set_notColorAtoms,
+          "Any atoms mentioned here by index should not be used in a color feature.")
       .add_property(
           "atomRadii", &helpers::get_atomRadii, &helpers::set_atomRadii,
           "Non-standard radii to use for the atoms specified by their indices"

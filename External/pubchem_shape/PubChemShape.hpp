@@ -78,6 +78,9 @@ struct RDKIT_PUBCHEMSHAPE_EXPORT ShapeInputOptions {
   std::vector<unsigned int> atomSubset;  // If not empty, use just these atoms
                                          // in the molecule to form the
                                          // ShapeInput object.
+  std::vector<unsigned int> notColorAtoms;  // Any atoms mentioned here by index
+                                            // should not be used in a color
+                                            // feature.
   std::vector<std::pair<unsigned int, double>>
       atomRadii;  // Use these non-standard radii for these atoms.
                   // The int is for the atom index in the molecule, not

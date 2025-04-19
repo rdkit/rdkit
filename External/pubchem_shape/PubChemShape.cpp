@@ -251,8 +251,13 @@ bool atomInSubset(unsigned int atomIdx, const ShapeInputOptions &shapeOpts) {
   if (shapeOpts.atomSubset.empty()) {
     return true;
   }
-  return (std::ranges::find(shapeOpts.atomSubset, atomIdx) !=
-          shapeOpts.atomSubset.end());
+  return std::ranges::find(shapeOpts.atomSubset, atomIdx) !=
+         shapeOpts.atomSubset.end();
+}
+bool atomAllowedInColor(unsigned int atomIdx,
+                        const ShapeInputOptions &shapeOpts) {
+  return std::ranges::find(shapeOpts.notColorAtoms, atomIdx) ==
+         shapeOpts.notColorAtoms.end();
 }
 
 double getAtomRadius(unsigned int atomIdx, const ShapeInputOptions &shapeOpts) {
@@ -334,7 +339,8 @@ void extractFeatureCoords(
     unsigned int nSel = 0;
     for (unsigned int j = 0; j < feature_idx_type[i].first.size(); ++j) {
       unsigned int idx = feature_idx_type[i].first[j];
-      if (!atomInSubset(idx, shapeOpts)) {
+      if (!atomInSubset(idx, shapeOpts) ||
+          !atomAllowedInColor(idx, shapeOpts)) {
         continue;
       }
       if (idx >= nAtoms ||
@@ -344,7 +350,7 @@ void extractFeatureCoords(
       floc += conformer.getAtomPos(idx);
       ++nSel;
     }
-    if (nSel) {
+    if (nSel == feature_idx_type[i].first.size()) {
       floc /= nSel;
       floc -= ave;
       DEBUG_MSG("feature type " << feature_idx_type[i].second << " (" << floc
