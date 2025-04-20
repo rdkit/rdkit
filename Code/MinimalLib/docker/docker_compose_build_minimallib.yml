@@ -44,11 +44,12 @@ services:
     environment:
       - NETWORK_MODE=${NETWORK_MODE:-bridge}
       - NETWORK=${NETWORK:-rdkit_network}
+      - GET_SRC=${GET_SRC:-clone_from_github}
     network_mode: ${NETWORK_MODE}
     build:
       network: ${NETWORK}
       context: ../../..
-      dockerfile: ./Code/MinimalLib/docker/Dockerfile_2_rdkit_${GET_SRC:-clone_from_github}
+      dockerfile: ./Code/MinimalLib/docker/Dockerfile_2_rdkit_${GET_SRC}
     image: rdkit-minimallib-rdkit-src:latest
     depends_on:
       - rdkit_deps
