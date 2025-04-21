@@ -447,8 +447,11 @@ std::pair<double, double> AlignShapes(const ShapeInput &refShape,
       jointColorAtomTypeSet);
   auto mapCp = refShape.colorAtomType2IndexVectorMap;
   Align3D::restrictColorAtomType2IndexVectorMap(mapCp, jointColorAtomTypeSet);
-  Align3D::restrictColorAtomType2IndexVectorMap(
-      fitShape.colorAtomType2IndexVectorMap, jointColorAtomTypeSet);
+  // Take copy of the color atom mappings so as not to alter the input shape
+  // which might be re-used.
+  auto fitMapCp = fitShape.colorAtomType2IndexVectorMap;
+  Align3D::restrictColorAtomType2IndexVectorMap(fitMapCp,
+                                                jointColorAtomTypeSet);
 
   DEBUG_MSG("Running alignment...");
   double nbr_st = 0.0;
@@ -457,9 +460,9 @@ std::pair<double, double> AlignShapes(const ShapeInput &refShape,
       refShape.coord.data(), refShape.alpha_vector,
       refShape.volumeAtomIndexVector, mapCp, refShape.sov, refShape.sof,
       fitShape.coord.data(), fitShape.alpha_vector,
-      fitShape.volumeAtomIndexVector, fitShape.colorAtomType2IndexVectorMap,
-      fitShape.sov, fitShape.sof, !jointColorAtomTypeSet.empty(), max_preiters,
-      max_postiters, opt_param, matrix.data(), nbr_st, nbr_ct);
+      fitShape.volumeAtomIndexVector, fitMapCp, fitShape.sov, fitShape.sof,
+      !jointColorAtomTypeSet.empty(), max_preiters, max_postiters, opt_param,
+      matrix.data(), nbr_st, nbr_ct);
 
   DEBUG_MSG("Done!");
   DEBUG_MSG("nbr_st: " << nbr_st);
