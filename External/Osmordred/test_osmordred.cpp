@@ -168,16 +168,16 @@ TEST_CASE("Test Osmordred") {
       std::vector<double> v = calcChipathcluster(*mol);
     }
     {
-      int v = calcAcidicGroupCount(*mol); 
+      int v = calcAcidicGroupCount(*mol); (void) v;
     }
     {
-      int v = calcBasicGroupCount(*mol); 
+      int v = calcBasicGroupCount(*mol); (void) v;
     }
     {
-      int v = countAromaticAtoms(*mol); 
+      int v = countAromaticAtoms(*mol); (void) v;
     }
     {
-      int v = countAromaticBonds(*mol); 
+      int v = countAromaticBonds(*mol); (void) v;
     }
     {
       std::vector<double> v = calcBEStateDescs(*mol);
