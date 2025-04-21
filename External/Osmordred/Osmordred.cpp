@@ -71,8 +71,15 @@
 #include <cstring> // For memcpy
 #include <functional>
 #include <numeric>
-#include <Eigen/src/misc/lapacke.h>
 #include <stack>
+
+#if defined(_MSC_VER) && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#include <complex>
+#define lapack_complex_float std::complex<float>
+#define lapack_complex_double std::complex<double>
+#endif
+
+#include <lapacke.h>
 
 // Define a custom hash function for std::pair<int, int>
 namespace std {
