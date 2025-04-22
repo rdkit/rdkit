@@ -14,10 +14,7 @@
 #include <GraphMol/QueryOps.h>
 #include <GraphMol/Atropisomers.h>
 #include <algorithm>
-#include <array>
-#include <cstdint>
 #include <cstring>
-#include <iostream>
 #include <cassert>
 #include <vector>
 // #define VERBOSE_CANON 1
