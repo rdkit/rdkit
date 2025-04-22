@@ -911,3 +911,4 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order,
 
 }  // namespace Canon
 }  // namespace RDKit
+

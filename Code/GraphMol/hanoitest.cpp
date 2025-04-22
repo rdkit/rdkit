@@ -260,10 +260,8 @@ void test3() {
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
     std::vector<int> next(atoms.size());
-    std::vector<int> changed(atoms.size());
-    std::fill(changed.begin(), changed.end(), 1);
-    std::vector<char> touched(atoms.size());
-    std::fill(touched.begin(), touched.end(), 0);
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -315,10 +313,8 @@ void test3() {
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
     std::vector<int> next(atoms.size());
-    std::vector<int> changed(atoms.size());
-    std::fill(changed.begin(), changed.end(), 1);
-    std::vector<char> touched(atoms.size());
-    std::fill(touched.begin(), touched.end(), 0);
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -453,10 +449,8 @@ void test4() {
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
     std::vector<int> next(atoms.size());
-    std::vector<int> changed(atoms.size());
-    std::fill(changed.begin(), changed.end(), 1);
-    std::vector<char> touched(atoms.size());
-    std::fill(touched.begin(), touched.end(), 0);
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -516,10 +510,8 @@ void test4() {
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
     std::vector<int> next(atoms.size());
-    std::vector<int> changed(atoms.size());
-    std::fill(changed.begin(), changed.end(), 1);
-    std::vector<char> touched(atoms.size());
-    std::fill(touched.begin(), touched.end(), 0);
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -566,10 +558,8 @@ void test4() {
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
     std::vector<int> next(atoms.size());
-    std::vector<int> changed(atoms.size());
-    std::fill(changed.begin(), changed.end(), 1);
-    std::vector<char> touched(atoms.size());
-    std::fill(touched.begin(), touched.end(), 0);
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,
@@ -638,10 +628,8 @@ void test5() {
     int *order = (int *)malloc(atoms.size() * sizeof(int));
     int activeset;
     std::vector<int> next(atoms.size());
-    std::vector<int> changed(atoms.size());
-    std::fill(changed.begin(), changed.end(), 1);
-    std::vector<char> touched(atoms.size());
-    std::fill(touched.begin(), touched.end(), 0);
+    std::vector<int> changed(atoms.size(), 1);
+    std::vector<char> touched(atoms.size(), 0);
 
     RDKit::Canon::CreateSinglePartition(atoms.size(), order, count, data);
     RDKit::Canon::ActivatePartitions(atoms.size(), order, count, activeset,

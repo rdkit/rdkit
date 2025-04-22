@@ -259,10 +259,8 @@ void rankWithFunctor(T &ftor, bool breakTies, int *order, bool useSpecial,
 
   std::vector<int> count(nAts);
   std::vector<int> next(nAts);
-  std::vector<int> changed(nAts);
-  std::fill(changed.begin(), changed.end(), 1);
-  std::vector<char> touched(nAts);
-  std::fill(touched.begin(), touched.end(), 0);
+  std::vector<int> changed(nAts, 1);
+  std::vector<char> touched(nAts, 0);
   int activeset;
   CreateSinglePartition(nAts, order, count, atoms);
 // ActivatePartitions(nAts,order,count,activeset,next,changed);
