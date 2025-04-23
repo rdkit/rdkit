@@ -56,8 +56,8 @@ python::tuple alignShapes(const ShapeInput &refShape, ShapeInput &fitShape,
                           double opt_param, unsigned int max_preiters,
                           unsigned int max_postiters) {
   std::vector<float> matrix(12, 0.0);
-  auto [nbr_st, nbr_ct] = AlignShapes(refShape, fitShape, matrix, opt_param,
-                                      max_preiters, max_postiters);
+  auto [nbr_st, nbr_ct] = AlignShape(refShape, fitShape, matrix, opt_param,
+                                     max_preiters, max_postiters);
   python::list pyMatrix;
   for (auto m : matrix) {
     pyMatrix.append(m);

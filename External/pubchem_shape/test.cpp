@@ -402,7 +402,7 @@ TEST_CASE("Shape-Shape alignment") {
   std::vector<float> matrix(12, 0.0);
   auto [mol_st, mol_ct] = AlignMolecule(*ref, *probe, matrix, -1, -1);
 
-  auto [shape_st, shape_ct] = AlignShapes(refShape, probeShape, matrix);
+  auto [shape_st, shape_ct] = AlignShape(refShape, probeShape, matrix);
 
   // Check that the same results are achieved when overlaying the probe
   // molecule onto the reference and the probe shape onto the reference shape

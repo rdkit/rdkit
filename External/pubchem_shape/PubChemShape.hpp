@@ -111,7 +111,7 @@ PrepareConformer(const RDKit::ROMol &mol, int confId = -1,
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
   if useColors is false)
 */
-RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShapes(
+RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
     const ShapeInput &refShape, ShapeInput &fitShape,
     std::vector<float> &matrix, double opt_param = 1.0,
     unsigned int max_preiters = 10u, unsigned int max_postiters = 30u);

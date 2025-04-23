@@ -434,12 +434,12 @@ ShapeInput PrepareConformer(const ROMol &mol, int confId,
   return res;
 }
 
-std::pair<double, double> AlignShapes(const ShapeInput &refShape,
-                                      ShapeInput &fitShape,
-                                      std::vector<float> &matrix,
-                                      double opt_param,
-                                      unsigned int max_preiters,
-                                      unsigned int max_postiters) {
+std::pair<double, double> AlignShape(const ShapeInput &refShape,
+                                     ShapeInput &fitShape,
+                                     std::vector<float> &matrix,
+                                     double opt_param,
+                                     unsigned int max_preiters,
+                                     unsigned int max_postiters) {
   std::set<unsigned int> jointColorAtomTypeSet;
   Align3D::getJointColorTypeSet(
       refShape.atom_type_vector.data(), refShape.atom_type_vector.size(),
@@ -516,8 +516,8 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
   ShapeInputOptions shapeOpts;
   shapeOpts.useColors = useColors;
   auto fitShape = PrepareConformer(fit, fitConfId, shapeOpts);
-  auto tanis = AlignShapes(refShape, fitShape, matrix, opt_param, max_preiters,
-                           max_postiters);
+  auto tanis = AlignShape(refShape, fitShape, matrix, opt_param, max_preiters,
+                          max_postiters);
 
   // transform fit coords
   Conformer &fit_conformer = fit.getConformer(fitConfId);
