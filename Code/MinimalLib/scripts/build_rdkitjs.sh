@@ -9,7 +9,7 @@ mkdir -p $MINIMALLIB_OUTPUT_PATH
 RDKIT_BRANCH=${1:-master}
 RDKIT_GIT_URL=${2:-"https://github.com/rdkit/rdkit.git"}
 echo "Building distribution files for release $RDKIT_BRANCH from repo $RDKIT_GIT_URL"
-docker-compose -f docker/docker_compose_build_from_github.yml build --no-cache \
+GET_SRC=clone_from_github docker-compose -f docker/docker_compose_build_minimallib.yml build --no-cache \
   --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
   --build-arg "RDKIT_GIT_URL=$RDKIT_GIT_URL" \
   --build-arg "RDKIT_GIT_BRANCH=$RDKIT_BRANCH"

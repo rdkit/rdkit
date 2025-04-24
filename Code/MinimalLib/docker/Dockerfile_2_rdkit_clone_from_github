@@ -24,7 +24,5 @@ LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
 
 WORKDIR /src
 ENV RDBASE=/src/rdkit
-RUN git clone ${RDKIT_GIT_URL}
+RUN git clone -b ${RDKIT_BRANCH} --depth 1 --single-branch ${RDKIT_GIT_URL} 
 WORKDIR $RDBASE
-RUN git fetch --all --tags && \
-  git checkout ${RDKIT_BRANCH}

@@ -105,6 +105,8 @@ If you are using the MinimalLib for the first time, see the getting started exam
 
 ## Building the MinimalLib
 
+### Building from Github
+
 Make sure you are at the root of the [MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib), and run the following script.
 
 ```bash
@@ -112,6 +114,17 @@ bash scripts/build_rdkitjs.sh <RDKit git release tag name>
 # Example: bash scripts/build_rdkitjs.sh Release_2021_03_1
 ```
 
-This command will take several minutes to complete, and will default to using the `master` branch if no version is provided. Also, checkout the `build_rdkitjs.sh` file and the minimallib `Dockerfile` to see how things are tied together.
+This command will take several minutes to complete, and will default to using the `master` branch if no version is provided. Also, checkout the `build_rdkitjs.sh` file to see how things are tied together.
 
 Once you have verified that the distribution files have been properly added in `Code/MinimalLib/dist`, refer to the [Using the RDKit package assets](#using-the-rdkit-package-assets) section for the next steps.
+
+### Building from the local source tree
+
+Make sure you are at the root of the [MinimalLib](https://github.com/rdkit/rdkit/tree/master/Code/MinimalLib), and run the following commands.
+
+```bash
+GET_SRC=copy_from_local docker-compose -f docker/docker_compose_build_minimallib.yml build --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions"
+DOCKER_BUILDKIT=1 docker build -f docker/Dockerfile_4_rdkit_export  -o dist .
+```
+
+This command will take several minutes to complete, and will add the distribution files to the directory `dist`.
