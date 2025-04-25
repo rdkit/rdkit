@@ -35,7 +35,7 @@ namespace MolDraw2D_detail {
 // ****************************************************************************
 class RDKIT_MOLDRAW2D_EXPORT DrawTextFT : public DrawText {
  public:
-  virtual ~DrawTextFT() override;
+  ~DrawTextFT() override;
   virtual int MoveToFunctionImpl(const FT_Vector *to) = 0;
   virtual int LineToFunctionImpl(const FT_Vector *to) = 0;
   virtual int ConicToFunctionImpl(const FT_Vector *control,
