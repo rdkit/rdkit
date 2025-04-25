@@ -69,7 +69,7 @@ class DrawShapeArrow : public DrawShape {
                  double frac = 0.2, double angle = M_PI / 6);
   DrawShapeArrow(const DrawShapeArrow &) = delete;
   DrawShapeArrow(DrawShapeArrow &&) = delete;
-  ~DrawShapeArrow() = default;
+  ~DrawShapeArrow() override = default;
   DrawShapeArrow &operator=(const DrawShapeArrow &) = delete;
   DrawShapeArrow &operator=(DrawShapeArrow &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -89,7 +89,7 @@ class DrawShapeEllipse : public DrawShape {
                    bool fill = false, int atom1 = -1);
   DrawShapeEllipse(const DrawShapeEllipse &) = delete;
   DrawShapeEllipse(DrawShapeEllipse &&) = delete;
-  ~DrawShapeEllipse() = default;
+  ~DrawShapeEllipse() override = default;
   DrawShapeEllipse &operator=(const DrawShapeEllipse &) = delete;
   DrawShapeEllipse &operator=(DrawShapeEllipse &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -108,7 +108,7 @@ class DrawShapeSimpleLine : public DrawShape {
                       DashPattern dashPattern = noDash);
   DrawShapeSimpleLine(const DrawShapeSimpleLine &) = delete;
   DrawShapeSimpleLine(DrawShapeSimpleLine &&) = delete;
-  ~DrawShapeSimpleLine() = default;
+  ~DrawShapeSimpleLine() override = default;
   DrawShapeSimpleLine &operator=(const DrawShapeSimpleLine &) = delete;
   DrawShapeSimpleLine &operator=(DrawShapeSimpleLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -126,7 +126,7 @@ class DrawShapePolyLine : public DrawShape {
                     int bond = -1, DashPattern dashPattern = noDash);
   DrawShapePolyLine(const DrawShapePolyLine &) = delete;
   DrawShapePolyLine(DrawShapePolyLine &&) = delete;
-  ~DrawShapePolyLine() = default;
+  ~DrawShapePolyLine() override = default;
   DrawShapePolyLine &operator=(const DrawShapePolyLine &) = delete;
   DrawShapePolyLine &operator=(DrawShapePolyLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -144,7 +144,7 @@ class DrawShapeSolidWedge : public DrawShape {
                       int bond = -1);
   DrawShapeSolidWedge(const DrawShapeSolidWedge &) = delete;
   DrawShapeSolidWedge(DrawShapeSolidWedge &&) = delete;
-  ~DrawShapeSolidWedge() = default;
+  ~DrawShapeSolidWedge() override = default;
   DrawShapeSolidWedge &operator=(const DrawShapeSolidWedge &) = delete;
   DrawShapeSolidWedge &operator=(DrawShapeSolidWedge &&) = delete;
   void buildTriangles();
@@ -178,7 +178,7 @@ class DrawShapeDashedWedge : public DrawShape {
                        int atom1 = -1, int atom2 = -1, int bond = -1);
   DrawShapeDashedWedge(const DrawShapeDashedWedge &) = delete;
   DrawShapeDashedWedge(DrawShapeDashedWedge &&) = delete;
-  ~DrawShapeDashedWedge() = default;
+  ~DrawShapeDashedWedge() override = default;
   DrawShapeDashedWedge &operator=(const DrawShapeDashedWedge &) = delete;
   DrawShapeDashedWedge &operator=(DrawShapeDashedWedge &&) = delete;
   void buildLines();
@@ -207,7 +207,7 @@ class DrawShapeWavyLine : public DrawShape {
                     int bond = -1);
   DrawShapeWavyLine(const DrawShapeWavyLine &) = delete;
   DrawShapeWavyLine(DrawShapeWavyLine &&) = delete;
-  ~DrawShapeWavyLine() = default;
+  ~DrawShapeWavyLine() override = default;
   DrawShapeWavyLine &operator=(const DrawShapeWavyLine &) = delete;
   DrawShapeWavyLine &operator=(DrawShapeWavyLine &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
@@ -234,7 +234,7 @@ class DrawShapeArc : public DrawShape {
                int atom1 = -1);
   DrawShapeArc(const DrawShapeArc &) = delete;
   DrawShapeArc(DrawShapeArc &&) = delete;
-  ~DrawShapeArc() = default;
+  ~DrawShapeArc() override = default;
   DrawShapeArc &operator=(const DrawShapeArc &) = delete;
   DrawShapeArc &operator=(DrawShapeArc &&) = delete;
 

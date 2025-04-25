@@ -4730,7 +4730,7 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
      public:
       bool *deleted;
       FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {}
-      virtual ~FakeAtomMonomerInfo() { *deleted = true; }
+      ~FakeAtomMonomerInfo() override { *deleted = true; }
     };
 
     bool sanitize = true;
