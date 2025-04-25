@@ -2947,7 +2947,7 @@ zipped molecule (for molzipFragments only)")
              "AtomType labeling");
 
     docString =
-        "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
+        "molzip: zip molecules together preserving bond and atom stereochemistry.\n\
 \n\
 This is useful when dealing with results from fragmentOnBonds, RGroupDecomposition and MMPs.\n\
 \n\
@@ -2956,6 +2956,14 @@ Example:\n\
     >>> a = MolFromSmiles('C=C[*:1]')\n\
     >>> b = MolFromSmiles('O/C=N/[*:1]')\n\
     >>> c = molzip(a,b)\n\
+    >>> MolToSmiles(c)\n\
+    'C=C/N=C/O'\n\
+\n\
+    >>> from rdkit.Chem import CombineMols, MolFromSmiles,  MolToSmiles, molzip\n\
+    >>> a = MolFromSmiles('C=C[*:1]')\n\
+    >>> b = MolFromSmiles('O/C=N/[*:1]')\n\
+    >>> combined = CombineMols(a, b)\n\
+    >>> c = molzip(combined)\n\
     >>> MolToSmiles(c)\n\
     'C=C/N=C/O'\n\
 \n\
@@ -2982,7 +2990,7 @@ The atoms to zip can be specified with the MolzipParams class.\n\
         "molzip",
         (ROMol * (*)(const ROMol &, const MolzipParams &)) & molzip_new,
         (python::arg("a"), python::arg("params") = MolzipParams()),
-        "zip together two molecules using the given matching parameters",
+        "zip together multiple molecules within a combined molecule using the given matching parameters",
         python::return_value_policy<python::manage_new_object>());
 
     python::def(
