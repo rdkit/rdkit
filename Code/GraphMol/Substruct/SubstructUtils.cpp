@@ -219,14 +219,14 @@ void removeDuplicates(std::vector<MatchVectType> &matches,
   //  that the 4 paths are equivalent in the semantics of the query.
   //  Also, OELib returns the same results
   //
-  std::unordered_set<boost::dynamic_bitset<>> seen;
+  std::unordered_set<std::string> seen;
   std::vector<MatchVectType> res;
   res.reserve(matches.size());
   seen.reserve(matches.size());
   for (const auto &match : matches) {
-    boost::dynamic_bitset<> val(nAtoms);
+    std::string val(nAtoms, '0');
     for (const auto &ci : match) {
-      val.set(ci.second);
+      val[ci.second] = '1';
     }
     const bool inserted = seen.insert(std::move(val)).second;
     if (inserted) {
