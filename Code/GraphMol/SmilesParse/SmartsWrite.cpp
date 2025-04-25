@@ -110,7 +110,12 @@ std::string getAtomSmartsSimple(const QueryAtom *qatom,
 
   std::string descrip = query->getDescription();
   bool hasVal = false;
-  enum class Modifiers : std::uint8_t { NONE, RANGE, LESS, GREATER };
+  enum class Modifiers : std::uint8_t {
+    NONE,
+    RANGE,
+    LESS,
+    GREATER
+  };
   Modifiers mods = Modifiers::NONE;
   if (boost::starts_with(descrip, "range_")) {
     mods = Modifiers::RANGE;
@@ -372,6 +377,13 @@ std::string getBasicBondRepr(Bond::BondType typ, Bond::BondDir dir,
       break;
     case Bond::AROMATIC:
       res = ":";
+      if (params.doIsomericSmiles) {
+        if (dir == Bond::ENDDOWNRIGHT) {
+          res = "\\";
+        } else if (dir == Bond::ENDUPRIGHT) {
+          res = "/";
+        }
+      }
       break;
     case Bond::DATIVE:
       if (params.includeDativeBonds) {
@@ -411,7 +423,7 @@ std::string getBondSmartsSimple(const Bond *bond,
     res += "@";
   } else if (descrip == "SingleOrAromaticBond") {
     auto dir = bond->getBondDir();
-    switch(dir) {
+    switch (dir) {
       case Bond::ENDDOWNRIGHT: {
         res += "\\";
         break;
@@ -793,6 +805,14 @@ std::string getNonQueryBondSmarts(const Bond *qbond, int atomToLeftIdx,
 
   if (qbond->getIsAromatic()) {
     res = ":";
+    if (params.doIsomericSmiles) {
+      if (qbond->getBondDir() == Bond::ENDDOWNRIGHT) {
+        res = "\\";
+      } else if (qbond->getBondDir() == Bond::ENDUPRIGHT) {
+        res = "/";
+      }
+    }
+
   } else {
     bool reverseDative =
         (atomToLeftIdx >= 0 &&
