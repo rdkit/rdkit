@@ -492,14 +492,13 @@ void TransformConformer(const ShapeInput &refShape,
 
   std::vector<float> transformed(nAtoms * 3);
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
-                                nAtoms, matrix.data());
-  for (unsigned i = 0; i < nAtoms; ++i) {
-    // both conformers have been translated to the origin, translate the fit
-    // conformer back to the steric center of the reference.
-    RDGeom::Point3D &pos = fitConf.getAtomPos(i);
-    pos.x = transformed[i * 3] - refShape.shift[0];
-    pos.y = transformed[(i * 3) + 1] - refShape.shift[1];
-    pos.z = transformed[(i * 3) + 2] - refShape.shift[2];
+                                fit.getNumAtoms(), matrix.data());
+
+  for (unsigned i = 0; i < fit.getNumAtoms(); ++i) {
+    RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
+    pos.x = transformed[i * 3];
+    pos.y = transformed[(i * 3) + 1];
+    pos.z = transformed[(i * 3) + 2];
   }
 }
 
@@ -541,6 +540,15 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
   shapeOpts.useColors = useColors;
   auto refShape = PrepareConformer(ref, refConfId, shapeOpts);
 
-  return AlignMolecule(refShape, fit, matrix, fitConfId, useColors, opt_param,
-                       max_preiters, max_postiters);
+  auto scores = AlignMolecule(refShape, fit, matrix, fitConfId, useColors,
+                              opt_param, max_preiters, max_postiters);
+  // translate the fit conformer back to the steric center of the reference.
+  Conformer &fit_conformer = fit.getConformer(fitConfId);
+  for (unsigned i = 0; i < fit.getNumAtoms(); ++i) {
+    RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
+    pos.x -= refShape.shift[0];
+    pos.y -= refShape.shift[1];
+    pos.z -= refShape.shift[2];
+  }
+  return scores;
 }

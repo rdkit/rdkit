@@ -346,11 +346,12 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT MMFFVdWaals : public VdWaals {
   MMFFVdWaals &operator=(const MMFFVdWaals &other) = delete;
   MMFFVdWaals(MMFFVdWaals &&other) = default;
   MMFFVdWaals &operator=(MMFFVdWaals &&other) = default;
-  ~MMFFVdWaals() = default;
+  ~MMFFVdWaals() override = default;
 
  private:
-  double calcEnergy(double, double, double) const;  // MMFF energy function
-  void fillVdwParamVectors(unsigned int atomIdx);
+  double calcEnergy(double, double,
+                    double) const override;  // MMFF energy function
+  void fillVdwParamVectors(unsigned int atomIdx) override;
   bool d_scaling;
   std::unique_ptr<RDKit::MMFF::MMFFMolProperties> d_props;
   const ForceFields::MMFF::MMFFVdWCollection *d_mmffVdW;
@@ -374,11 +375,12 @@ class RDKIT_MOLINTERACTIONFIELDS_EXPORT UFFVdWaals : public VdWaals {
   UFFVdWaals &operator=(const UFFVdWaals &other) = delete;
   UFFVdWaals(UFFVdWaals &&other) = default;
   UFFVdWaals &operator=(UFFVdWaals &&other) = default;
-  ~UFFVdWaals() = default;
+  ~UFFVdWaals() override = default;
 
  private:
-  double calcEnergy(double, double, double) const;  // UFF energy function
-  void fillVdwParamVectors(unsigned int atomIdx);
+  double calcEnergy(double, double,
+                    double) const override;  // UFF energy function
+  void fillVdwParamVectors(unsigned int atomIdx) override;
   const ForceFields::UFF::ParamCollection *d_uffParamColl;
   const ForceFields::UFF::AtomicParams *d_probeParams;
   RDKit::UFF::AtomicParamVect d_params;

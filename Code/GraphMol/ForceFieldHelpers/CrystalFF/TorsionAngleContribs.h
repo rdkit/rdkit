@@ -57,7 +57,7 @@ class RDKIT_FORCEFIELDHELPERS_EXPORT TorsionAngleContribs
     \param owner  pointer to the owning ForceField
   */
   TorsionAngleContribs(ForceField *owner);
-  ~TorsionAngleContribs() = default;
+  ~TorsionAngleContribs() override = default;
   //! Add contribution to this collection.
   /*!
     \param idx1           index of atom1 in the ForceField's positions

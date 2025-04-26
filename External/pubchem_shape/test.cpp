@@ -322,6 +322,40 @@ TEST_CASE("d2CutOff set") {
   CHECK(shape1.sov == shape2.sov);
 }
 
+TEST_CASE("Overlay onto shape bug (Github8462)") {
+  auto m1 =
+      "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
+  REQUIRE(m1);
+  ROMol m2(*m1);
+  for (auto a : m2.atoms()) {
+    auto &pos = m2.getConformer().getAtomPos(a->getIdx());
+    pos.x += 3.0;
+    pos.y += 2.0;
+  }
+  ROMol m3(m2);
+
+  std::vector<float> matrix(12, 0.0);
+  auto [st, ct] = AlignMolecule(*m1, m2, matrix);
+  CHECK_THAT(st, Catch::Matchers::WithinAbs(1.0, 0.005));
+  CHECK_THAT(ct, Catch::Matchers::WithinAbs(1.0, 0.005));
+  for (unsigned int i = 0; i < m1->getNumAtoms(); ++i) {
+    auto pos1 = m1->getConformer().getAtomPos(i);
+    auto pos2 = m2.getConformer().getAtomPos(i);
+    CHECK_THAT((pos1 - pos2).length(), Catch::Matchers::WithinAbs(0.0, 0.005));
+  }
+
+  auto s1 = PrepareConformer(*m1, -1, true);
+  auto [st1, ct1] = AlignMolecule(s1, m3, matrix);
+  CHECK_THAT(st1, Catch::Matchers::WithinAbs(1.0, 0.005));
+  CHECK_THAT(ct1, Catch::Matchers::WithinAbs(1.0, 0.005));
+  for (unsigned int i = 0; i < m3.getNumAtoms(); ++i) {
+    RDGeom::Point3D pos1(s1.coord[3 * i], s1.coord[3 * i + 1],
+                         s1.coord[3 * i + 2]);
+    auto pos2 = m3.getConformer().getAtomPos(i);
+    CHECK_THAT((pos1 - pos2).length(), Catch::Matchers::WithinAbs(0.0, 0.005));
+  }
+}
+
 TEST_CASE("Shape subset") {
   auto m1 =
       "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
