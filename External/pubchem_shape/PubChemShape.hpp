@@ -165,7 +165,7 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
   \param opt_param     (optional) the optimization parameter
   \param max_preiters  (optional) the max number of pre-optimization iterations
   \param max_postiters (optional) the max number of post-optimization
-  iterationsa
+                       iterations
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
   if useColors is false)
