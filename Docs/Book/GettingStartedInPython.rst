@@ -3391,6 +3391,13 @@ comparison may cause genuine hits to be missed, so there is a parameter `approxS
 threshold for the first test.  It defaults to 0.1.  The higher the value the fewer hits will be missed, but at the
 expense of longer search times.
 
+Limiting Hits
+=============
+
+The sizes of the hits can be limited by setting appropriate values to the SynthonSpaceSearchParams object.  And I'll
+write some more in due course.
+
+
 Non-Chemical Functionality
 **************************
 
