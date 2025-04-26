@@ -26,8 +26,11 @@ using namespace RDKit;
 // Bondi radii
 //  can find more of these in Table 12 of this publication:
 //   https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3658832/
+// The dummy atom radius (atomic number 0) is set to
+// 2.16 in ShapeInputOptions and may be varied there, as
+// may all the other radii if required, including the
+// addition of atoms not covered here.
 const std::map<unsigned int, double> vdw_radii = {
-    {0, 1.10},   // dummy atom (value copied from H)
     {1, 1.10},   // H
     {2, 1.40},   // He
     {3, 1.81},   // Li
@@ -264,11 +267,9 @@ double getAtomRadius(unsigned int atomIdx, const ShapeInputOptions &shapeOpts) {
   auto it = std::ranges::find_if(
       shapeOpts.atomRadii,
       [atomIdx](const auto &p) -> bool { return p.first == atomIdx; });
-  if (it == shapeOpts.atomRadii.end()) {
-    return -1.0;
-  }
-  return it->second;
+  return it == shapeOpts.atomRadii.end() ? -1.0 : it->second;
 }
+
 // Get the atom radii.  rad_vector is expected to be big enough to hold them
 // all.  Also computes the average coordinates of the selected atoms.
 void extractAtomRadii(const Conformer &conformer, unsigned int nAtoms,
@@ -281,7 +282,7 @@ void extractAtomRadii(const Conformer &conformer, unsigned int nAtoms,
       continue;
     }
     double rad = getAtomRadius(i, shapeOpts);
-    if (rad != -1.0) {
+    if (rad > 0.0) {
       rad_vector[nSelectedAtoms++] = rad;
       ave += conformer.getAtomPos(i);
     } else {

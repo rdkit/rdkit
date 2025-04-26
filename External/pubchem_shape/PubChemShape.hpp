@@ -4,7 +4,6 @@
 #include <GraphMol/ROMol.h>
 #include <map>
 #include <vector>
-#include <boost/iostreams/filter/zlib.hpp>
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>

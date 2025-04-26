@@ -140,7 +140,7 @@ void wrap_pubchemshape() {
           "Whether to use dummy atoms in the alignment. Default=False.")
       .def_readwrite(
           "dummyRadius", &ShapeInputOptions::dummyRadius,
-          "If using dummy atoms in the alignment, what radius to use for it."
+          "If using dummy atoms in the alignment, what radius to use for them."
           "  Default=2.16 (the radius of Xe).")
       .add_property(
           "atomSubset", &helpers::get_atomSubset, &helpers::set_atomSubset,

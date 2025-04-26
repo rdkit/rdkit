@@ -379,6 +379,9 @@ TEST_CASE("Dummy radii") {
       "[Xe]c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
   auto shape1 = PrepareConformer(*m1, -1);
   CHECK(shape1.coord.size() == 24);
+
+  // The dummy radius defaults to 2.16, the same as Xe, so these shapes should
+  // come out the same.
   auto m2 =
       "*c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
   ShapeInputOptions shapeOpts;
