@@ -58,9 +58,7 @@ RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
   \throws AttributeError if the attribute does not exist
   \throws Python error if assignment fails
 */
-RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self,
-                                      std::string const &name,
-                                      python::object const &value);
+RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self, std::string const &name, python::object const &value);
 
 #ifdef INVARIANT_EXCEPTION_METHOD
 RDKIT_RDBOOST_EXPORT void throw_runtime_error(
@@ -218,7 +216,7 @@ class RDKIT_RDBOOST_EXPORT RDUNUSED NOGIL {
 };
 #else
 // Never release the lock when not compiling thread-safe
-struct RDUNUSED NOGIL{};
+struct RDUNUSED NOGIL {};
 #endif
 
 // -------------------
