@@ -1,4 +1,4 @@
-# Release_2025.09.1
+# Release_2025.03.2
 (Changes relative to Release_2025.03.1)
 
 ## Acknowledgements
@@ -6,7 +6,9 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
-## Highlights
+Filip Chmielewski, David Cosgrove, Bryan Kelley, Niels Maeder, Dan
+Nealschneider, Axel Pahl, Lauren Reid, Ricardo Rodriguez, Paolo Tosco, stewu5,
+yuri@FreeBSD
 
 ## Backwards incompatible changes:
 - atom maps on dummy atoms are now always used in the calculation of canonical
@@ -14,16 +16,69 @@ GitHub)
 - 2D coordinate generation may produce different results for some molecules due
   to a change in the way the atom ordering is computed in the depiction code.
 
-
 ## New Features and Enhancements:
+  - switch to C++20
+ (github pull #8039 from greglandrum)
+  - Speed up GetProp Python keyerrors
+ (github pull #8372 from d-b-w)
+  - add property to indicate when a CIP calculation has been done
+ (github issue #8396 from greglandrum)
+  - Bump MaeParser version to 1.3.2
+ (github pull #8404 from ptosco)
+  - Moving towards getting all tests to pass when using the new stereo code
+ (github pull #8409 from greglandrum)
+  - Enable the chiral flag on enumerated isomers
+ (github pull #8410 from ricrogz)
+  - Support pickling Shape inputs
+ (github pull #8434 from DavidACosgrove)
+  - add function to overwrite __setattr__ to only accept valid arguments
+ (github pull #8448 from nmaeder)
+  - add StereoGroup.getBonds() to Python wrapper
+ (github pull #8451 from greglandrum)
+  - add quick H-H bond removal to connectTheDots
+ (github pull #8452 from greglandrum)
+  - Protect Python DrawOptions from bad attributes.
+ (github pull #8453 from DavidACosgrove)
+  - Add a custom CXSMILES feature to indicate Zero Order Bonds
+ (github pull #8454 from ricrogz)
+  - Add the safeSetattr to the rdMolFiles param objects
+ (github pull #8457 from nmaeder)
 
 ## Bug Fixes:
+  - MHFP package error: all Bulk functions fail to execute in Python
+ (github issue #3102 from stewu5)
+  - Possible Off-by-One Bug in the ERG Implementation
+ (github issue #8201 from apahl)
+  - order dependence in tautomer hash
+ (github issue #8205 from greglandrum)
+  - Missing bonds in MCES when singleLargestFrag = True
+ (github issue #8360 from laurenreid1)
+  - RWMol::insertMol does not update _ringStereoOtherAtom
+ (github issue #8379 from greglandrum)
+  - Fix SynthonSpace build when RDK_USE_BOOST_SERIALIZATION is not defined
+ (github pull #8380 from ptosco)
+  - add correct export to SynthonSpace.h
+ (github pull #8399 from greglandrum)
+  - Do not free sslib until patternFpArray is still needed by the test
+ (github pull #8407 from ptosco)
+  - Avoid a segfault in CoordGen when a double bond has stereo spec but no stereo atoms
+ (github pull #8415 from ptosco)
+  - Overwrite end of array in PubChemShape.cpp
+ (github issue #8416 from DavidACosgrove)
+  - PR #8366 triggers range errors on imines with new stereo perception
+ (github issue #8420 from ricrogz)
+  - update_pains.py script does not check for pains_c.in file existence
+ (github issue #8430 from IridiumOxide)
+  - fix a logic error in needsHs
+ (github pull #8442 from greglandrum)
+  - Pubchem Shape: make sure cutoff is set
+ (github pull #8446 from DavidACosgrove)
+  - In pubchem-shape, overlaying onto a shape does an incorrect final translation
+ (github issue #8462 from DavidACosgrove)
 
 ## Cleanup work:
-
-## Code removed in this release:
-
-## Deprecated code (to be removed in a future release):
+  - find_package(better_enums) can never find better_enums
+ (github issue #8438 from yurivict)
 
 
 # Release_2025.03.1
