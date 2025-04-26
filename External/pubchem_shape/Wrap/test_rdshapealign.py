@@ -57,13 +57,13 @@ class TestCase(unittest.TestCase):
     probeShp = rdShapeAlign.PrepareConformer(self.probe, -1)
     tpl = rdShapeAlign.AlignShapes(refShp, probeShp)
     probeCp = Chem.Mol(self.probe)
-    rdShapeAlign.TransformConformer(refShp, tpl[2], probeShp, probeCp.GetConformer(-1))
+    rdShapeAlign.TransformConformer(refShp.shift, tpl[2], probeShp, probeCp.GetConformer(-1))
     # Just show it did something.  The full test is in the C++ layer.
     self.assertNotEqual(self.probe.GetConformer().GetAtomPosition(0),
                         probeCp.GetConformer().GetAtomPosition(0))
     matrix = tpl[2][:10]
     with self.assertRaises(ValueError):
-      rdShapeAlign.TransformConformer(refShp, matrix, probeShp, probeCp.GetConformer(-1))
+      rdShapeAlign.TransformConformer(refShp.shift, matrix, probeShp, probeCp.GetConformer(-1))
 
   def test6_notColorAtoms(self):
     m1 = Chem.MolFromSmiles("Nc1ccccc1 |(0.392086,-2.22477,0.190651;"

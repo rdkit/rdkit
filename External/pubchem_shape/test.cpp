@@ -344,7 +344,7 @@ TEST_CASE("Overlay onto shape bug (Github8462)") {
     CHECK_THAT((pos1 - pos2).length(), Catch::Matchers::WithinAbs(0.0, 0.005));
   }
 
-  auto s1 = PrepareConformer(*m1, -1, true);
+  auto s1 = PrepareConformer(*m1, -1);
   auto [st1, ct1] = AlignMolecule(s1, m3, matrix);
   CHECK_THAT(st1, Catch::Matchers::WithinAbs(1.0, 0.005));
   CHECK_THAT(ct1, Catch::Matchers::WithinAbs(1.0, 0.005));
@@ -459,7 +459,8 @@ TEST_CASE("Shape-Shape alignment") {
   }
 
   // Also check the TransformConformer function
-  TransformConformer(refShape, matrix, probeShape, probeCP.getConformer(-1));
+  TransformConformer(refShape.shift, matrix, probeShape,
+                     probeCP.getConformer(-1));
   for (unsigned int i = 0; i < probe->getNumAtoms(); i++) {
     const auto &pos = probe->getConformer().getAtomPos(i);
     const auto &poscp = probeCP.getConformer().getAtomPos(i);

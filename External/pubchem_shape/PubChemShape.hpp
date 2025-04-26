@@ -98,7 +98,8 @@ RDKIT_PUBCHEMSHAPE_EXPORT ShapeInput
 PrepareConformer(const RDKit::ROMol &mol, int confId = -1,
                  const ShapeInputOptions &shapeOpts = ShapeInputOptions());
 
-//! Align a shape onto a reference shape.
+//! Align a shape onto a reference shape.  Assumes the shapes are both
+//! centred on the origin.
 /*!
   \param refShape      the reference shape
   \param fit           the shape to align
@@ -115,18 +116,17 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignShape(
     std::vector<float> &matrix, double opt_param = 1.0,
     unsigned int max_preiters = 10u, unsigned int max_postiters = 30u);
 
-//! Assuming that fitShape has been overlaid onto refShape to give the
-//! transformation matrix, apply the same transformation to the given
+//! Assuming that fitShape has been overlaid onto a reference shape to give
+//! the ! transformation matrix, apply the same transformation to the given
 //! conformer.
 /*!
-  \param refShape      the reference shape
-  \param matrix        the transformation matrix produced when fitShape was
-                       aligned with refShape
+  \param finalTrans    the final translation to apply to the fitConf coords.
+  \param matrix        the transformation matrix produced from alignment
   \param fitShape      the shape that was aligned
   \param fitConf       the conformation to be transformed
 */
 RDKIT_PUBCHEMSHAPE_EXPORT void TransformConformer(
-    const ShapeInput &refShape, const std::vector<float> &matrix,
+    const std::vector<double> &finalTrans, const std::vector<float> &matrix,
     ShapeInput &fitShape, RDKit::Conformer &fitConf);
 
 //! Align a molecule to a reference shape
@@ -139,6 +139,8 @@ RDKIT_PUBCHEMSHAPE_EXPORT void TransformConformer(
   \param opt_param     (optional) the optimization parameter
   \param max_preiters  (optional) the max number of pre-optimization iterations
   \param max_postiters (optional) the max number of post-optimization iterations
+  \param applyRefShift (optional) if true, apply the reference shape's shift
+                                  translation to the final coordinates
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
   if useColors is false)
@@ -146,7 +148,8 @@ RDKIT_PUBCHEMSHAPE_EXPORT void TransformConformer(
 RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
     const ShapeInput &refShape, RDKit::ROMol &fit, std::vector<float> &matrix,
     int fitConfId = -1, bool useColors = true, double opt_param = 1.0,
-    unsigned int max_preiters = 10u, unsigned int max_postiters = 30u);
+    unsigned int max_preiters = 10u, unsigned int max_postiters = 30u,
+    bool applyRefShift = false);
 
 //! Align a molecule to a reference molecule
 /*!
@@ -159,9 +162,10 @@ RDKIT_PUBCHEMSHAPE_EXPORT std::pair<double, double> AlignMolecule(
                        molecule
   \param useColors     (optional) whether or not to use colors in the
                        scoring
-  \param opt_param     (optional) the optimization parameter \param
-  max_preiters  (optional) the max number of pre-optimization iterations \param
-  max_postiters (optional) the max number of post-optimization iterationsa
+  \param opt_param     (optional) the optimization parameter
+  \param max_preiters  (optional) the max number of pre-optimization iterations
+  \param max_postiters (optional) the max number of post-optimization
+  iterationsa
 
   \return a pair of the shape Tanimoto value and the color Tanimoto value (zero
   if useColors is false)

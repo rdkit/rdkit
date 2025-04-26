@@ -45,11 +45,12 @@ python::tuple alignMol(const RDKit::ROMol &ref, RDKit::ROMol &probe,
 }
 python::tuple alignMol2(const ShapeInput &ref, RDKit::ROMol &probe,
                         int probeConfId, bool useColors, double opt_param,
-                        unsigned int max_preiters, unsigned int max_postiters) {
+                        unsigned int max_preiters, unsigned int max_postiters,
+                        bool applyRefShift) {
   std::vector<float> matrix(12, 0.0);
   auto [nbr_st, nbr_ct] =
       AlignMolecule(ref, probe, matrix, probeConfId, useColors, opt_param,
-                    max_preiters, max_postiters);
+                    max_preiters, max_postiters, applyRefShift);
   return python::make_tuple(nbr_st, nbr_ct);
 }
 python::tuple alignShapes(const ShapeInput &refShape, ShapeInput &fitShape,
@@ -64,15 +65,24 @@ python::tuple alignShapes(const ShapeInput &refShape, ShapeInput &fitShape,
   }
   return python::make_tuple(nbr_st, nbr_ct, pyMatrix);
 }
-void transformConformer(const ShapeInput &refShape,
+void transformConformer(const python::list &pyFinalTrans,
                         const python::list &pyMatrix, ShapeInput probeShape,
                         RDKit::Conformer &probeConf) {
   std::vector<float> matrix;
   pythonObjectToVect<float>(pyMatrix, matrix);
   if (matrix.size() != 12) {
-    throw_value_error("The transformation matrix must have 12 values.");
+    throw_value_error(
+        "The transformation matrix must have 12 values.  It had " +
+        std::to_string(matrix.size()) + ".");
   }
-  TransformConformer(refShape, matrix, probeShape, probeConf);
+  std::vector<double> finalTrans;
+  pythonObjectToVect<double>(pyFinalTrans, finalTrans);
+  if (finalTrans.size() != 3) {
+    throw_value_error(
+        "The final translation vector must have 3 values.  It had " +
+        std::to_string(finalTrans.size()) + ".");
+  }
+  TransformConformer(finalTrans, matrix, probeShape, probeConf);
 }
 ShapeInput *prepConf(const RDKit::ROMol &mol, int confId,
                      const python::object &py_opts) {
@@ -120,6 +130,17 @@ python::list get_atomRadii(const ShapeInputOptions &opts) {
   python::list py_list;
   for (const auto &val : opts.atomRadii) {
     py_list.append(python::make_tuple(static_cast<int>(val.first), val.second));
+  }
+  return py_list;
+}
+
+void set_shapeShift(ShapeInput &shp, const python::list &s) {
+  pythonObjectToVect<double>(s, shp.shift);
+}
+python::list get_shapeShift(const ShapeInput &shp) {
+  python::list py_list;
+  for (const auto &val : shp.shift) {
+    py_list.append(val);
   }
   return py_list;
 }
@@ -191,8 +212,9 @@ Returns
       (python::arg("refShape"), python::arg("probe"),
        python::arg("probeConfId") = -1, python::arg("useColors") = true,
        python::arg("opt_param") = 1.0, python::arg("max_preiters") = 10,
-       python::arg("max_postiters") = 30),
+       python::arg("max_postiters") = 30, python::arg("applyRefShift") = false),
       R"DOC(Aligns a probe molecule to a reference shape. The probe is modified.
+Assumes the shapes are both centred on the origin.
 
 Parameters
 ----------
@@ -207,6 +229,9 @@ useColors : bool, optional
 optParam : float, optional
 max_preiters : int, optional
 max_postiters : int, optional
+applyRefShift : bool, optional
+    If True, apply the reference shape's shift translation to the final
+    coordinates.
 
 
 Returns
@@ -242,7 +267,7 @@ Returns
 
   python::def(
       "TransformConformer", &helpers::transformConformer,
-      (python::arg("refShape"), python::arg("matrix"),
+      (python::arg("finalTrans"), python::arg("matrix"),
        python::arg("probeShape"), python::arg("probeConformer")),
       R"DOC(Assuming that probeShape has been overlaid onto refShape to give
 the supplied transformation matrix, applies that transformation to the
@@ -284,7 +309,8 @@ Returns
       .def_readwrite("atom_type_vector", &ShapeInput::atom_type_vector)
       .def_readwrite("volumeAtomIndexVector",
                      &ShapeInput::volumeAtomIndexVector)
-      .def_readwrite("shift", &ShapeInput::shift)
+      .add_property("shift", &helpers::get_shapeShift, &helpers::set_shapeShift,
+                    "Translation of centre of shape coordinates to origin.")
       .def_readwrite("sov", &ShapeInput::sov)
       .def_readwrite("sof", &ShapeInput::sof);
 }

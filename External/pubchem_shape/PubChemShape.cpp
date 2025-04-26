@@ -476,7 +476,7 @@ std::pair<double, double> AlignShape(const ShapeInput &refShape,
   return std::make_pair(nbr_st, nbr_ct);
 }
 
-void TransformConformer(const ShapeInput &refShape,
+void TransformConformer(const std::vector<double> &finalTrans,
                         const std::vector<float> &matrix, ShapeInput &fitShape,
                         Conformer &fitConf) {
   const unsigned int nAtoms = fitConf.getOwningMol().getNumAtoms();
@@ -493,22 +493,21 @@ void TransformConformer(const ShapeInput &refShape,
 
   std::vector<float> transformed(nAtoms * 3);
   Align3D::VApplyRotTransMatrix(transformed.data(), fitShape.coord.data(),
-                                fit.getNumAtoms(), matrix.data());
+                                fitConf.getOwningMol().getNumAtoms(),
+                                matrix.data());
 
-  for (unsigned i = 0; i < fit.getNumAtoms(); ++i) {
-    RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
-    pos.x = transformed[i * 3];
-    pos.y = transformed[(i * 3) + 1];
-    pos.z = transformed[(i * 3) + 2];
+  for (unsigned i = 0; i < nAtoms; ++i) {
+    RDGeom::Point3D &pos = fitConf.getAtomPos(i);
+    pos.x = transformed[i * 3] - finalTrans[0];
+    pos.y = transformed[(i * 3) + 1] - finalTrans[1];
+    pos.z = transformed[(i * 3) + 2] - finalTrans[2];
   }
 }
 
-std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
-                                        std::vector<float> &matrix,
-                                        int fitConfId, bool useColors,
-                                        double opt_param,
-                                        unsigned int max_preiters,
-                                        unsigned int max_postiters) {
+std::pair<double, double> AlignMolecule(
+    const ShapeInput &refShape, ROMol &fit, std::vector<float> &matrix,
+    int fitConfId, bool useColors, double opt_param, unsigned int max_preiters,
+    unsigned int max_postiters, bool applyRefShift) {
   PRECONDITION(matrix.size() == 12, "bad matrix size");
   Align3D::setUseCutOff(true);
 
@@ -521,7 +520,11 @@ std::pair<double, double> AlignMolecule(const ShapeInput &refShape, ROMol &fit,
 
   // transform fit coords
   Conformer &fit_conformer = fit.getConformer(fitConfId);
-  TransformConformer(refShape, matrix, fitShape, fit_conformer);
+  std::vector<double> finalTrans{0.0, 0.0, 0.0};
+  if (applyRefShift) {
+    finalTrans = refShape.shift;
+  }
+  TransformConformer(finalTrans, matrix, fitShape, fit_conformer);
   fit.setProp("shape_align_shape_tanimoto", tanis.first);
   fit.setProp("shape_align_color_tanimoto", tanis.second);
 
@@ -542,14 +545,6 @@ std::pair<double, double> AlignMolecule(const ROMol &ref, ROMol &fit,
   auto refShape = PrepareConformer(ref, refConfId, shapeOpts);
 
   auto scores = AlignMolecule(refShape, fit, matrix, fitConfId, useColors,
-                              opt_param, max_preiters, max_postiters);
-  // translate the fit conformer back to the steric center of the reference.
-  Conformer &fit_conformer = fit.getConformer(fitConfId);
-  for (unsigned i = 0; i < fit.getNumAtoms(); ++i) {
-    RDGeom::Point3D &pos = fit_conformer.getAtomPos(i);
-    pos.x -= refShape.shift[0];
-    pos.y -= refShape.shift[1];
-    pos.z -= refShape.shift[2];
-  }
+                              opt_param, max_preiters, max_postiters, true);
   return scores;
 }
