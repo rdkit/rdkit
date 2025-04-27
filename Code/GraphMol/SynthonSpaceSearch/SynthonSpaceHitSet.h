@@ -52,7 +52,7 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceFPHitSet
                        const std::vector<std::unique_ptr<ROMol>> &fragSet);
   SynthonSpaceFPHitSet(const SynthonSpaceFPHitSet &lhs) = delete;
   SynthonSpaceFPHitSet(SynthonSpaceFPHitSet &&lhs) = delete;
-  ~SynthonSpaceFPHitSet() = default;
+  ~SynthonSpaceFPHitSet() override = default;
   SynthonSpaceFPHitSet &operator=(const SynthonSpaceFPHitSet &rhs) = delete;
   SynthonSpaceFPHitSet &operator=(SynthonSpaceFPHitSet &&rhs) = delete;
 
