@@ -312,13 +312,13 @@ TEST_CASE("d2CutOff set") {
   auto m1 =
       "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
   REQUIRE(m1);
-  auto shape1 = PrepareConformer(*m1, -1, true);
+  auto shape1 = PrepareConformer(*m1, -1);
   std::vector<float> matrix(12, 0.0);
   auto m2 =
       "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
   REQUIRE(m2);
   AlignMolecule(*m2, *m2, matrix);
-  auto shape2 = PrepareConformer(*m1, -1, true);
+  auto shape2 = PrepareConformer(*m1, -1);
   CHECK(shape1.sov == shape2.sov);
 }
 
@@ -344,7 +344,7 @@ TEST_CASE("Overlay onto shape bug (Github8462)") {
     CHECK_THAT((pos1 - pos2).length(), Catch::Matchers::WithinAbs(0.0, 0.005));
   }
 
-  auto s1 = PrepareConformer(*m1, -1, true);
+  auto s1 = PrepareConformer(*m1, -1);
   auto [st1, ct1] = AlignMolecule(s1, m3, matrix);
   CHECK_THAT(st1, Catch::Matchers::WithinAbs(1.0, 0.005));
   CHECK_THAT(ct1, Catch::Matchers::WithinAbs(1.0, 0.005));
@@ -354,4 +354,131 @@ TEST_CASE("Overlay onto shape bug (Github8462)") {
     auto pos2 = m3.getConformer().getAtomPos(i);
     CHECK_THAT((pos1 - pos2).length(), Catch::Matchers::WithinAbs(0.0, 0.005));
   }
+}
+
+TEST_CASE("Shape subset") {
+  auto m1 =
+      "c1ccc(-c2ccccc2)cc1 |(-3.26053,-0.0841607,-0.741909;-2.93383,0.123873,0.593407;-1.60713,0.377277,0.917966;-0.644758,0.654885,-0.0378428;0.743308,0.219134,0.168663;1.82376,1.0395,-0.0112769;3.01462,0.695405,0.613858;3.18783,-0.589771,1.09649;2.15761,-1.50458,1.01949;0.988307,-1.1313,0.385783;-1.1048,0.797771,-1.34022;-2.39754,0.435801,-1.69921)|"_smiles;
+  REQUIRE(m1);
+  ShapeInputOptions shapeOpts;
+  shapeOpts.atomSubset = std::vector<unsigned int>{0, 1, 2, 3, 10, 11};
+  auto partShape = PrepareConformer(*m1, -1, shapeOpts);
+  CHECK(partShape.coord.size() == 21);
+  CHECK_THAT(partShape.sov, Catch::Matchers::WithinAbs(253.929, 0.005));
+  CHECK_THAT(partShape.sof, Catch::Matchers::WithinAbs(5.074, 0.005));
+
+  shapeOpts.atomSubset.clear();
+  auto wholeShape = PrepareConformer(*m1, -1, shapeOpts);
+  CHECK(wholeShape.coord.size() == 42);
+  CHECK_THAT(wholeShape.sov, Catch::Matchers::WithinAbs(542.04, 0.005));
+  CHECK_THAT(wholeShape.sof, Catch::Matchers::WithinAbs(10.148, 0.005));
+}
+
+TEST_CASE("Dummy radii") {
+  auto m1 =
+      "[Xe]c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
+  auto shape1 = PrepareConformer(*m1, -1);
+  CHECK(shape1.coord.size() == 24);
+
+  // The dummy radius defaults to 2.16, the same as Xe, so these shapes should
+  // come out the same.
+  auto m2 =
+      "*c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
+  ShapeInputOptions shapeOpts;
+  shapeOpts.includeDummies = true;
+  auto shape2 = PrepareConformer(*m2, -1, shapeOpts);
+  CHECK(shape2.coord.size() == 24);
+  CHECK(shape1.sov == shape2.sov);
+
+  shapeOpts.dummyRadius = 2.5;
+  auto shape3 = PrepareConformer(*m2, -1, shapeOpts);
+  CHECK_THAT(shape3.sov, Catch::Matchers::WithinAbs(427.925, 0.005));
+
+  shapeOpts.includeDummies = false;
+  auto shape4 = PrepareConformer(*m2, -1, shapeOpts);
+  CHECK(shape4.coord.size() == 21);
+  CHECK(shape4.sov < shape2.sov);
+  CHECK_THAT(shape4.sov, Catch::Matchers::WithinAbs(254.578, 0.005));
+}
+
+TEST_CASE("Non-standard radii") {
+  auto m1 =
+      "[Xe]c1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
+  auto shape1 = PrepareConformer(*m1, -1);
+  CHECK(shape1.coord.size() == 24);
+  CHECK_THAT(shape1.sov, Catch::Matchers::WithinAbs(376.434, 0.005));
+
+  ShapeInputOptions shapeOpts;
+  // Benzene derivative with atom 4 with an N radius.
+  shapeOpts.atomRadii =
+      std::vector<std::pair<unsigned int, double>>{{0, 2.5}, {4, 1.55}};
+  auto shape2 = PrepareConformer(*m1, -1, shapeOpts);
+  CHECK_THAT(shape2.sov, Catch::Matchers::WithinAbs(412.666, 0.005));
+
+  // Corresponding pyridine derivative.
+  auto m2 =
+      "[Xe]c1ccncc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
+  auto shape3 = PrepareConformer(*m2, -1, shapeOpts);
+  CHECK(shape3.sov == shape2.sov);
+}
+
+TEST_CASE("Shape-Shape alignment") {
+  std::string dirName = getenv("RDBASE");
+  dirName += "/External/pubchem_shape/test_data";
+
+  auto suppl = v2::FileParsers::SDMolSupplier(dirName + "/test1.sdf");
+  auto ref = suppl[0];
+  REQUIRE(ref);
+  auto probe = suppl[1];
+  REQUIRE(probe);
+  RWMol probeCP(*probe);
+
+  auto refShape = PrepareConformer(*ref, -1);
+  auto probeShape = PrepareConformer(*probe, -1);
+
+  std::vector<float> matrix(12, 0.0);
+  auto [mol_st, mol_ct] = AlignMolecule(*ref, *probe, matrix, -1, -1);
+
+  auto [shape_st, shape_ct] = AlignShape(refShape, probeShape, matrix);
+
+  // Check that the same results are achieved when overlaying the probe
+  // molecule onto the reference and the probe shape onto the reference shape
+
+  CHECK_THAT(shape_st, Catch::Matchers::WithinAbs(mol_st, 0.001));
+  CHECK_THAT(shape_ct, Catch::Matchers::WithinAbs(mol_ct, 0.001));
+  for (unsigned int i = 0; i < probe->getNumAtoms(); i++) {
+    const auto &pos = probe->getConformer().getAtomPos(i);
+    CHECK_THAT(pos.x, Catch::Matchers::WithinAbs(
+                          probeShape.coord[3 * i] - refShape.shift[0], 0.001));
+    CHECK_THAT(pos.y,
+               Catch::Matchers::WithinAbs(
+                   probeShape.coord[3 * i + 1] - refShape.shift[1], 0.001));
+    CHECK_THAT(pos.z,
+               Catch::Matchers::WithinAbs(
+                   probeShape.coord[3 * i + 2] - refShape.shift[2], 0.001));
+  }
+
+  // Also check the TransformConformer function
+  TransformConformer(refShape.shift, matrix, probeShape,
+                     probeCP.getConformer(-1));
+  for (unsigned int i = 0; i < probe->getNumAtoms(); i++) {
+    const auto &pos = probe->getConformer().getAtomPos(i);
+    const auto &poscp = probeCP.getConformer().getAtomPos(i);
+    CHECK_THAT(pos.x, Catch::Matchers::WithinAbs(poscp.x, 0.001));
+    CHECK_THAT(pos.y, Catch::Matchers::WithinAbs(poscp.y, 0.001));
+    CHECK_THAT(pos.z, Catch::Matchers::WithinAbs(poscp.z, 0.001));
+  }
+}
+
+TEST_CASE("Atoms excluded from Color features") {
+  auto m1 =
+      "Nc1ccccc1 |(0.392086,-2.22477,0.190651;0.232269,-1.38667,0.118385;-1.06274,-0.918982,0.0342466;-1.26098,0.446053,-0.0811879;-0.244035,1.36265,-0.11691;1.05134,0.875929,-0.031248;1.28797,-0.499563,0.0864097),atomProp:0.dummyLabel.*|"_smiles;
+  auto shape1 = PrepareConformer(*m1, -1);
+  // The aniline N comes out as a donor, acceptor and basic so gets 3
+  // features.
+  CHECK(shape1.coord.size() == 33);
+  ShapeInputOptions opts;
+  opts.notColorAtoms = std::vector<unsigned int>{0};
+  auto shape2 = PrepareConformer(*m1, -1, opts);
+  CHECK(shape2.coord.size() == 24);
 }
