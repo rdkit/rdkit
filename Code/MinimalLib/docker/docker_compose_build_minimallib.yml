@@ -26,8 +26,6 @@
 #
 # DOCKER_BUILDKIT=1 docker build -f Dockerfile_4_rdkit_export -o ../demo .
 
-version: '3.8'
-
 services:
   rdkit_deps:
     environment:
