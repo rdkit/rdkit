@@ -279,7 +279,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " number.  If <= 0, will use the number of hardware"
           " threads plus this number.  So if the number of"
           " hardware threads is 8, and numThreads is -1, it will"
-          " use 7 threads.  Default=1.");
+          " use 7 threads.  Default=1.")
+      .def("__setattr__", &safeSetattr);
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(
