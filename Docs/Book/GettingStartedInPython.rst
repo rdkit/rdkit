@@ -3314,10 +3314,11 @@ The databases are normally supplied in text form, and can be used as such:
   >>> import os
   >>> RDBASE = os.environ["RDBASE"]
   >>> synthonspace = rdSynthonSpaceSearch.SynthonSpace()
-  >>> synthonspace.ReadTextFile(f"{RDBASE}/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt")
+  >>> textFile = f"{RDBASE}/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt"
+  >>> synthonspace.ReadTextFile(textFile)
   >>> print(f"Number of reactions : {synthonspace.GetNumReactions()}")
-  >>> print(f"Number of products : {synthonspace.GetNumProducts()}")
   Number of reactions : 1
+  >>> print(f"Number of products : {synthonspace.GetNumProducts()}")
   Number of products : 12
 
 However, a large amount of pre-processing is required before the data are searchable which can be time consuming.
@@ -3332,7 +3333,8 @@ database, labelled accordingly.
 
   >>> fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048)
   >>> synthonspace.BuildSynthonFingerprints(fpgen)
-  >>> synthonspace.WriteDBFile("amide_library_rdkit.spc")
+  >>> dbFile = "amide_library_rdkit.spc"
+  >>> synthonspace.WriteDBFile(dbFile)
 
 There is also a convenience function for performing the conversion in one go:
 
@@ -3381,7 +3383,7 @@ optional parameters object that can control various aspects of the search:
   >>> params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
   >>> params.maxHits = 10
   >>> params.timeOut = 10
-  >>> results = spc.SubstructureSearch(qmol)
+  >>> results = spc.SubstructureSearch(qmol, params=params)
   >>> print(f"Number of hits : {len(results.GetHitMolecules())}")
   Number of hits : 10
 
