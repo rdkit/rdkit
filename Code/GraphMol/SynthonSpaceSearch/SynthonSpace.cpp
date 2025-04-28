@@ -146,9 +146,8 @@ SearchResults SynthonSpace::substructureSearch(
         std::get<GeneralizedSubstruct::ExtendedQueryMol::TautomerBundle_T>(
             query.xqmol),
         matchParams, params);
-  }
 #endif
-  else {
+  } else {
     UNDER_CONSTRUCTION("unrecognized type in ExtendedQueryMol");
   }
   return SearchResults();
@@ -738,8 +737,8 @@ namespace {
 template <class Char>
 class MyFacet : public std::numpunct<Char> {
  public:
-  std::string do_grouping() const { return "\3"; }
-  Char do_thousands_sep() const { return ' '; }
+  std::string do_grouping() const override { return "\3"; }
+  Char do_thousands_sep() const override { return ' '; }
 };
 }  // namespace
 

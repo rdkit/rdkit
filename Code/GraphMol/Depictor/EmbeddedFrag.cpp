@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -362,35 +362,79 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
     if (neighbors.size() != 2) {
       continue;
     }
-    int atom1_neighbor = neighbors[0];
-    int atom2_neighbor = neighbors[1];
+    int atom1_neighbor1 = neighbors[0];
+    int atom2_neighbor1 = neighbors[1];
     int atom1 = bond->getBeginAtomIdx();
     int atom2 = bond->getEndAtomIdx();
+
+    // now get the other two atoms that are not part of the double bond (if any)
+    int atom1_neighbor2 = -1;
+    int atom2_neighbor2 = -1;
+    if (mol.getAtomWithIdx(atom1)->getDegree() > 2) {
+      for (auto neighbor : mol.atomNeighbors(mol.getAtomWithIdx(atom1))) {
+        if (static_cast<int>(neighbor->getIdx()) != atom1_neighbor1 &&
+            static_cast<int>(neighbor->getIdx()) != atom2) {
+          atom1_neighbor2 = neighbor->getIdx();
+          break;
+        }
+      }
+    }
+    if (mol.getAtomWithIdx(atom2)->getDegree() > 2) {
+      for (auto neighbor : mol.atomNeighbors(mol.getAtomWithIdx(atom2))) {
+        if (static_cast<int>(neighbor->getIdx()) != atom2_neighbor1 &&
+            static_cast<int>(neighbor->getIdx()) != atom1) {
+          atom2_neighbor2 = neighbor->getIdx();
+          break;
+        }
+      }
+    }
+
     // find the template atoms that correspond to the four atoms
     int template_atom1 = -1;
     int template_atom2 = -1;
-    int template_atom1_neighbor = -1;
-    int template_atom2_neighbor = -1;
+    int template_atom1_neighbor1 = -1;
+    int template_atom1_neighbor2 = -1;
+    int template_atom2_neighbor1 = -1;
+    int template_atom2_neighbor2 = -1;
     for (auto &[template_aidx, rs_aidx] : match) {
       if (rs_aidx == atom1) {
         template_atom1 = template_aidx;
       } else if (rs_aidx == atom2) {
         template_atom2 = template_aidx;
-      } else if (rs_aidx == atom1_neighbor) {
-        template_atom1_neighbor = template_aidx;
-      } else if (rs_aidx == atom2_neighbor) {
-        template_atom2_neighbor = template_aidx;
+      } else if (rs_aidx == atom1_neighbor1) {
+        template_atom1_neighbor1 = template_aidx;
+      } else if (rs_aidx == atom2_neighbor1) {
+        template_atom2_neighbor1 = template_aidx;
+      } else if (rs_aidx == atom1_neighbor2) {
+        template_atom1_neighbor2 = template_aidx;
+      } else if (rs_aidx == atom2_neighbor2) {
+        template_atom2_neighbor2 = template_aidx;
       }
     }
+
+    // there's a chance that the atoms controlling the double bond stereochem in
+    // the molecule are not the atoms that matched to the template, handle that
+    // here by swapping to the other atom
+    bool swapStereo = false;
+    if (template_atom1_neighbor1 == -1) {
+      template_atom1_neighbor1 = template_atom1_neighbor2;
+      swapStereo = !swapStereo;
+    }
+    if (template_atom2_neighbor1 == -1) {
+      template_atom2_neighbor1 = template_atom2_neighbor2;
+      swapStereo = !swapStereo;
+    }
+
     if (template_atom1 == -1 || template_atom2 == -1 ||
-        template_atom1_neighbor == -1 || template_atom2_neighbor == -1) {
+        template_atom1_neighbor1 == -1 || template_atom2_neighbor1 == -1) {
       return false;
     }
+
     const auto &conf = template_mol.getConformer();
     const auto &atom1_loc = conf.getAtomPos(template_atom1);
     const auto &atom2_loc = conf.getAtomPos(template_atom2);
-    const auto &atom1_neighbor_loc = conf.getAtomPos(template_atom1_neighbor);
-    const auto &atom2_neighbor_loc = conf.getAtomPos(template_atom2_neighbor);
+    const auto &atom1_neighbor_loc = conf.getAtomPos(template_atom1_neighbor1);
+    const auto &atom2_neighbor_loc = conf.getAtomPos(template_atom2_neighbor1);
     // check if the two neighbors are on the same side of the bond
     const auto v12 = atom1_neighbor_loc - atom1_loc;
     const auto v42 = atom2_neighbor_loc - atom1_loc;
@@ -398,6 +442,9 @@ static bool checkStereoChemistry(const RDKit::ROMol &mol,
     auto cross1 = v32.x * v12.y - v32.y * v12.x;
     auto cross2 = v32.x * v42.y - v32.y * v42.x;
     bool is_cis = cross1 * cross2 > 0;
+    if (swapStereo) {
+      is_cis = !is_cis;
+    }
     if (is_cis != (bond->getStereo() == RDKit::Bond::STEREOZ ||
                    bond->getStereo() == RDKit::Bond::STEREOCIS)) {
       return false;

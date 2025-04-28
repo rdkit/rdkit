@@ -194,6 +194,8 @@ void assignCIPLabels(ROMol &mol, const boost::dynamic_bitset<> &atoms,
   CIPMol cipmol{mol};
   auto configs = findConfigs(cipmol, atoms, bonds);
   label(configs);
+  const bool computed = true;
+  mol.setProp(common_properties::_CIPComputed, true, computed);
 }
 
 void assignCIPLabels(ROMol &mol, unsigned int maxRecursiveIterations) {

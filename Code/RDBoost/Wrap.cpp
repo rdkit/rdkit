@@ -48,6 +48,20 @@ void translate_key_error(KeyErrorException const &e) {
   throw_key_error(e.key());
 }
 
+void safeSetattr(python::object self, std::string const &name,
+                 python::object const &value) {
+  python::object cls = self.attr("__class__");
+  if (!PyObject_HasAttrString(cls.ptr(), name.c_str())) {
+    PyErr_Format(PyExc_AttributeError, "Cannot set unknown attribute '%s'",
+                 name.c_str());
+    python::throw_error_already_set();
+  }
+  python::object builtin = python::import("builtins");
+  python::object objectType = builtin.attr("object");
+  python::object setattrFunc = objectType.attr("__setattr__");
+  setattrFunc(self, name, value);
+}
+
 #ifdef INVARIANT_EXCEPTION_METHOD
 // A helper function for dealing with errors. Throw a Python RuntimeError
 void throw_runtime_error(const std::string err) {

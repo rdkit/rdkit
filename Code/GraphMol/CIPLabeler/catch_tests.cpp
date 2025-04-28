@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020 Schrödinger, LLC
+//  Copyright (C) 2020-2025 Schrödinger, LLC and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -25,6 +25,7 @@
 #include <GraphMol/MarvinParse/MarvinParser.h>
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/test_fixtures.h>
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/algorithm/string.hpp>
@@ -340,7 +341,9 @@ TEST_CASE("Tetrahedral assignment", "[accurateCIP]") {
   chiral_atom->clearProp(common_properties::_CIPCode);
   REQUIRE(chiral_atom->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
 
+  CHECK(!mol->hasProp(common_properties::_CIPComputed));
   CIPLabeler::assignCIPLabels(*mol);
+  CHECK(mol->hasProp(common_properties::_CIPComputed));
 
   std::string chirality;
   CHECK(chiral_atom->getPropIfPresent(common_properties::_CIPCode, chirality));
@@ -348,6 +351,10 @@ TEST_CASE("Tetrahedral assignment", "[accurateCIP]") {
 }
 
 TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
+  auto useLegacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
+  CAPTURE(useLegacy);
+
   auto mol = R"(CC\C(\C(\C)=N\O)=N\O)"_smiles;  // VS013
   REQUIRE(mol->getNumAtoms() == 9);
 
@@ -355,8 +362,15 @@ TEST_CASE("Double bond stereo assignment", "[accurateCIP]") {
   auto bond_2 = mol->getBondWithIdx(6);
   REQUIRE(bond_1->getBondType() == Bond::DOUBLE);
   REQUIRE(bond_2->getBondType() == Bond::DOUBLE);
-  REQUIRE(bond_1->getStereo() == Bond::STEREOE);
-  REQUIRE(bond_2->getStereo() == Bond::STEREOZ);
+  if (useLegacy) {
+    CHECK(bond_1->getStereo() == Bond::STEREOE);
+    CHECK(bond_2->getStereo() == Bond::STEREOZ);
+  } else {
+    CHECK(bond_1->getStereo() == Bond::STEREOTRANS);
+    CHECK(bond_1->getStereoAtoms() == std::vector<int>({2, 6}));
+    CHECK(bond_2->getStereo() == Bond::STEREOTRANS);
+    CHECK(bond_2->getStereoAtoms() == std::vector<int>({1, 8}));
+  }
 
   CIPLabeler::assignCIPLabels(*mol);
 
@@ -376,6 +390,7 @@ TEST_CASE("phosphine and arsine chirality", "[accurateCIP]") {
       {"C[P@@H]C1CCCCC1", "S"}};
 
   for (const auto &ref : mols) {
+    INFO(ref.first);
     std::unique_ptr<RWMol> mol{SmilesToMol(ref.first)};
     REQUIRE(mol);
     CIPLabeler::assignCIPLabels(*mol);

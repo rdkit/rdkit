@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
 
@@ -2273,7 +2274,8 @@ M  END
   CHECK(match == expected);
 }
 
-TEST_CASE("Normalize should always center in centroid, irrespective of canonicalize parameter") {
+TEST_CASE(
+    "Normalize should always center in centroid, irrespective of canonicalize parameter") {
   auto m = R"CTAB(
      RDKit          2D
 
@@ -2336,4 +2338,39 @@ M  END)CTAB"_ctab;
   auto ctd = MolTransforms::computeCentroid(m->getConformer());
   CHECK_THAT(ctd.x, Catch::Matchers::WithinAbs(0.0, 1.0e-4));
   CHECK_THAT(ctd.y, Catch::Matchers::WithinAbs(0.0, 1.0e-4));
+}
+
+#ifdef RDK_BUILD_COORDGEN_SUPPORT
+TEST_CASE(
+    "CoordGen should not segfault when bond has stereo spec but no stereo atoms") {
+  auto m = "C=C1C=CC(=O)CC1"_smiles;
+  REQUIRE(m);
+  CHECK(m->getNumBonds() == 8);
+  auto b = m->getBondWithIdx(0);
+  CHECK(b->getBondType() == Bond::DOUBLE);
+  b->setStereo(Bond::STEREOZ);
+  CHECK(b->getStereoAtoms().empty());
+  RDDepict::preferCoordGen = true;
+  RDDepict::compute2DCoords(*m);
+  RDDepict::preferCoordGen = false;
+  CHECK(m->getNumConformers() == 1);
+}
+#endif
+
+TEST_CASE("canonical ordering") {
+  auto useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture useLegacyFixture(useLegacy);
+  auto m = "CN2C3CC(OC(=O)C(CO)c1ccccc1)CC2CC3"_smiles;
+  REQUIRE(m);
+  RDDepict::compute2DCoords(*m);
+  auto conf = m->getConformer();
+  for (auto i = 0u; i < m->getNumAtoms(); ++i) {
+    for (auto j = i + 1; j < m->getNumAtoms(); ++j) {
+      auto pos = conf.getAtomPos(i) - conf.getAtomPos(j);
+      auto dist = pos.length();
+      CHECK(dist > 0.35);
+      INFO("i " << i << " " << j);
+    }
+  }
 }
