@@ -3394,8 +3394,8 @@ expense of longer search times.
 Limiting Hits
 =============
 
-The sizes of the hits can be limited by setting appropriate values to the SynthonSpaceSearchParams object.  And I'll
-write some more in due course.
+The sizes of the hits can be limited by setting appropriate values to the SynthonSpaceSearchParams object.  Maximum and
+minimum values can be set for the number of heavy atoms, the number of chiral atoms and the molecular weight.
 
 
 Non-Chemical Functionality
