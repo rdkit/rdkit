@@ -16,7 +16,7 @@
 namespace RDKit {
 namespace MolInterchange {
 constexpr int currentMolJSONVersion = 10;
-constexpr int currentRDKitJSONVersion = 11;
+constexpr int currentRDKitJSONVersion = 12;
 constexpr int currentRDKitRepresentationVersion = 2;
 constexpr int currentChargeRepresentationVersion = 10;
 constexpr int currentQueryRepresentationVersion = 10;
@@ -40,14 +40,14 @@ static const std::map<Bond::BondType, unsigned int> inv_bolookup = {
     {Bond::TRIPLE, 3}, {Bond::QUADRUPLE, 4}, {Bond::DATIVE, 17}};
 
 static const std::map<std::string, Bond::BondStereo> stereoBondlookup = {
-    {"unspecified", Bond::STEREONONE},
-    {"cis", Bond::STEREOCIS},
-    {"trans", Bond::STEREOTRANS},
-    {"either", Bond::STEREOANY}};
+    {"unspecified", Bond::STEREONONE}, {"cis", Bond::STEREOCIS},
+    {"trans", Bond::STEREOTRANS},      {"either", Bond::STEREOANY},
+    {"atrop_cw", Bond::STEREOATROPCW}, {"atrop_ccw", Bond::STEREOATROPCCW}};
 static const std::map<Bond::BondStereo, std::string> inv_stereoBondlookup = {
     {Bond::STEREONONE, "unspecified"}, {Bond::STEREOCIS, "cis"},
     {Bond::STEREOTRANS, "trans"},      {Bond::STEREOZ, "cis"},
-    {Bond::STEREOE, "trans"},          {Bond::STEREOANY, "either"}};
+    {Bond::STEREOE, "trans"},          {Bond::STEREOANY, "either"},
+    {Bond::STEREOATROPCW, "atrop_cw"}, {Bond::STEREOATROPCCW, "atrop_ccw"}};
 
 static const std::map<std::string, StereoGroupType> stereoGrouplookup = {
     {"abs", StereoGroupType::STEREO_ABSOLUTE},
