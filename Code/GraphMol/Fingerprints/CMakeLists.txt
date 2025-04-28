@@ -4,7 +4,7 @@ rdkit_library(Fingerprints
               AtomPairs.cpp MACCS.cpp MHFP.cpp FingerprintGenerator.cpp 
               AtomPairGenerator.cpp MorganGenerator.cpp RDKitFPGenerator.cpp 
               FingerprintUtil.cpp TopologicalTorsionGenerator.cpp
-              LINK_LIBRARIES DataStructs Subgraphs SubstructMatch SmilesParse GraphMol RDGeneral
+              LINK_LIBRARIES CIPLabeler DataStructs Subgraphs SubstructMatch SmilesParse GraphMol RDGeneral
               )
 target_compile_definitions(Fingerprints PRIVATE RDKIT_FINGERPRINTS_BUILD)
 

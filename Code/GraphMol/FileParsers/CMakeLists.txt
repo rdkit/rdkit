@@ -42,7 +42,7 @@ rdkit_headers(CDXMLParser.h
     DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
-    LINK_LIBRARIES FileParsers SubstructMatch)
+    LINK_LIBRARIES CIPLabeler FileParsers SubstructMatch)
 
 rdkit_test(testAtropisomers testAtropisomers.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
@@ -61,7 +61,7 @@ if(RDK_TEST_MULTITHREADED)
         LINK_LIBRARIES FileParsers Fingerprints RDStreams)
 endif(RDK_TEST_MULTITHREADED)
 
-rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers)
+rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES CIPLabeler FileParsers)
 
 rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers GraphMol)
 
@@ -95,6 +95,11 @@ rdkit_catch_test(v2MolSuppliers v2_suppliers_catch.cpp
 
 rdkit_catch_test(v2FileParsersCatchTest v2_file_parsers_catch.cpp
     LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(atropisomersCatch atropisomers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
+
 
 if(RDK_TEST_MULTITHREADED AND RDK_BUILD_THREADSAFE_SSS)
 rdkit_catch_test(multithreadedSupplierCatchTest multithreaded_supplier_catch.cpp

@@ -1,19 +1,49 @@
+# Note: there are docker-compose .yml files that handle the 3
+# build steps automatically for you; see the comments in the
+# respective docker-compose files for details.
+# However, if you prefer to run individual docker commands rather
+# than using docker-compose, you can do so by following the
+# instructions below.
+#
 # Example usage of this Dockerfile:
-# (the build-arg arguments are all optional)
+# (the --build-arg arguments are all optional)
 #
 # 1. cd to Code/MinimalLib/docker
 # cd Code/MinimalLib/docker
 #
-# 2. build the JS and WASM libraries
+# 2. build the MinimalLib rdkit-minimallib-deps image:
+# docker build --target deps-stage -t rdkit-minimallib-deps \
+#   --build-arg http_proxy=$HTTP_PROXY \
+#   --build-arg https_proxy=$HTTP_PROXY \
+#   --network=host --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
+#   -f Dockerfile_1_deps .
+#
+# 3. build the MinimalLib rdkit-minimallib-rdkit-src image:
+#   3a. from a git clone:
+#   docker build --target clone-stage -t rdkit-minimallib-rdkit-src \
+#     --build-arg http_proxy=$HTTP_PROXY \
+#     --build-arg https_proxy=$HTTP_PROXY \
+#     --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
+#     --build-arg "RDKIT_BRANCH=mybranch" \
+#     --network=host -f Dockerfile_rdkit_clone_from_github .
+#   or
+#   3b. from an existing local source tree:
+#   docker build --target local-src-stage -t rdkit-minimallib-rdkit-src \
+#     --build-arg http_proxy=$HTTP_PROXY \
+#     --build-arg https_proxy=$HTTP_PROXY \
+#     --network=host -f Dockerfile_2_rdkit_copy_from_local ../../..
+#
+# 4. build the MinimalLib rdkit-minimallib image:
 #    (the build-arg arguments are all optional; in the following
 #     example we select the more performant, though still experimental,
 #     native WASM exception handling):
 # docker build -t rdkit-minimallib --network=host \
-#  --build-arg "RDKIT_GIT_URL=https://github.com/myfork/rdkit.git" \
-#  --build-arg "RDKIT_BRANCH=mybranch" \
-#  --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions".
+#   --build-arg http_proxy=$HTTP_PROXY \
+#   --build-arg https_proxy=$HTTP_PROXY \
+#   --build-arg "EXCEPTION_HANDLING=-fwasm-exceptions" \
+#   -f Dockerfile_3_rdkit_build .
 #
-# 3. create a temporary container and copy built libraries
+# 5. create a temporary container and copy built libraries
 #    from the container to your local filesystem, then destroy
 #    the temporary container
 # docker create --name=rdkit-minimallib-container rdkit-minimallib:latest --entrypoint /
@@ -22,75 +52,15 @@
 # docker rm rdkit-minimallib-container
 
 
-ARG EMSDK_VERSION="latest"
 ARG EXCEPTION_HANDLING="-fexceptions -sNO_DISABLE_EXCEPTION_CATCHING"
-ARG BOOST_MAJOR_VERSION="1"
-ARG BOOST_MINOR_VERSION="87"
-ARG BOOST_PATCH_VERSION="0"
-ARG FREETYPE_VERSION="2.13.3"
 
-FROM debian:bookworm AS build-stage
-ARG EMSDK_VERSION
+FROM rdkit-minimallib-rdkit-src AS build-stage
 ARG EXCEPTION_HANDLING
-ARG BOOST_MAJOR_VERSION
-ARG BOOST_MINOR_VERSION
-ARG BOOST_PATCH_VERSION
-ARG FREETYPE_VERSION
 
 LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
 
-RUN apt-get update && apt-get upgrade -y && apt install -y \
-  curl \
-  wget \
-  cmake \
-  python3 \
-  g++ \
-  libeigen3-dev \
-  git \
-  xz-utils \
-  nodejs
-
-ENV LANG C
-
-WORKDIR /opt
-RUN git clone https://github.com/emscripten-core/emsdk.git
-
 WORKDIR /src
-ARG BOOST_DOT_VERSION="${BOOST_MAJOR_VERSION}.${BOOST_MINOR_VERSION}.${BOOST_PATCH_VERSION}"
-ARG BOOST_UNDERSCORE_VERSION="${BOOST_MAJOR_VERSION}_${BOOST_MINOR_VERSION}_${BOOST_PATCH_VERSION}"
-RUN wget -q https://archives.boost.io/release/${BOOST_DOT_VERSION}/source/boost_${BOOST_UNDERSCORE_VERSION}.tar.gz && \
-  tar xzf boost_${BOOST_UNDERSCORE_VERSION}.tar.gz
-WORKDIR /src/boost_${BOOST_UNDERSCORE_VERSION}
-RUN ./bootstrap.sh --prefix=/opt/boost --with-libraries=system && \
-  ./b2 install
-
-WORKDIR /opt/emsdk
-RUN ./emsdk install ${EMSDK_VERSION} && \
-  ./emsdk activate ${EMSDK_VERSION}
-
-#RUN source ./emsdk_env.sh
-
-RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
-SHELL ["/bin/bash", "-c", "-l"]
-
-WORKDIR /src
-RUN wget -q https://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VERSION}.tar.gz && \
-  tar xzf freetype-${FREETYPE_VERSION}.tar.gz
-WORKDIR /src/freetype-${FREETYPE_VERSION}
-RUN mkdir build
-WORKDIR /src/freetype-${FREETYPE_VERSION}/build
-RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DWITH_ZLIB=OFF -DWITH_BZip2=OFF -DWITH_PNG=OFF \
-  -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING}" -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING}" \
-  -DCMAKE_INSTALL_PREFIX=/opt/freetype ..
-RUN make -j2 && make -j2 install
-
-WORKDIR /
-COPY Code /src/rdkit/Code
-COPY External /src/rdkit/External
-COPY CMakeLists.txt license.txt *.in *.md *.cmake /src/rdkit
 ENV RDBASE=/src/rdkit
-
-WORKDIR $RDBASE
 RUN mkdir build
 WORKDIR $RDBASE/build
 RUN emcmake cmake -DRDK_BUILD_FREETYPE_SUPPORT=ON -DRDK_BUILD_MINIMAL_LIB=ON \
@@ -125,9 +95,9 @@ RUN make -j2 RDKit_minimal && \
 WORKDIR /src/rdkit/Code/MinimalLib/tests
 RUN /opt/emsdk/node/*/bin/node tests.js
 
-# # Copy js and wasm rdkit files to use in browser
-# # This feature requires the BuildKit backend
-# # https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
-# FROM scratch AS export-stage
-# COPY --from=build-stage /src/rdkit/Code/MinimalLib/demo /
-# COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /
+# Copy js and wasm rdkit files to use in browser
+# This feature requires the BuildKit backend
+# https://docs.docker.com/engine/reference/commandline/build/#custom-build-outputs
+FROM scratch as export-stage
+COPY --from=build-stage /src/rdkit/Code/MinimalLib/demo /
+COPY --from=build-stage /src/rdkit/Code/MinimalLib/docs /

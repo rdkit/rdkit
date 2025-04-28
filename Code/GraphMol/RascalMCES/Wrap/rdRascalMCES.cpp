@@ -168,14 +168,24 @@ BOOST_PYTHON_MODULE(rdRascalMCES) {
       .def_readwrite(
           "singleLargestFrag",
           &RDKit::RascalMCES::RascalOptions::singleLargestFrag,
-          "Return the just single largest fragment of the MCES.  This is equivalent to running with allBestMCEs=True, finding the result with the largest largestFragmentSize, and calling its largestFragmentOnly method.")
+          "Return the just single largest fragment of the MCES. It is"
+          " equivalent to running with allBestMCEs=True, finding the result"
+          " with the largest largestFragmentSize, and calling its"
+          " largestFragmentOnly method.  This option may not produce the largest"
+          " possible single fragment that the molecules have in common. If you"
+          " definitely want that you may be better off using rdFMCS.")
       .def_readwrite(
           "completeAromaticRings",
           &RDKit::RascalMCES::RascalOptions::completeAromaticRings,
           "If True (default), partial aromatic rings won't be returned.")
-      .def_readwrite("ringMatchesRingOnly",
-                     &RDKit::RascalMCES::RascalOptions::ringMatchesRingOnly,
-                     "If True (default), ring bonds won't match ring bonds.")
+      .def_readwrite(
+          "ringMatchesRingOnly",
+          &RDKit::RascalMCES::RascalOptions::ringMatchesRingOnly,
+          "If True (default is False), ring bonds won't match non-ring bonds.")
+      .def_readwrite(
+          "completeSmallestRings",
+          &RDKit::RascalMCES::RascalOptions::completeSmallestRings,
+          "If True (default is False), only complete rings present in both input molecule's RingInfo will be returned. Implies completeAromaticRings and ringMatchesRingOnly.")
       .def_readwrite(
           "exactConnectionsMatch",
           &RDKit::RascalMCES::RascalOptions::exactConnectionsMatch,

@@ -908,12 +908,14 @@ bool has_protium_neighbor(const ROMol &mol, const Atom *atom) {
   return false;
 }
 
-void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo) {
+void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo,
+                      bool useCXSmilesOrdering) {
   // NOTE:  moved from parse_doublebond_stereo CXSmilesOps
-  // the cis/trans/unknown marker is relative to the lowest numbered atom
-  // connected to the lowest numbered double bond atom and the
-  // highest-numbered atom connected to the highest-numbered double bond
-  // atom find those
+  // IF useCXSmilesOrdering is true, the cis/trans/unknown marker will be
+  // assigned relative to the lowest-numbered neighbor of each double bond atom.
+  // Otherwise it uses the lowest-numbered neighbor on the lower-numbered atom
+  // of the double bond and the highest-numbered neighbor on the higher-numbered
+  // atom
   auto begAtom = bond->getBeginAtom();
   auto endAtom = bond->getEndAtom();
   if (begAtom->getIdx() > endAtom->getIdx()) {
@@ -927,12 +929,13 @@ void setStereoForBond(ROMol &mol, Bond *bond, Bond::BondStereo stereo) {
       }
       begControl = std::min(nbr->getIdx(), begControl);
     }
-    unsigned int endControl = 0;
+    unsigned int endControl = useCXSmilesOrdering ? mol.getNumAtoms() : 0;
     for (auto nbr : mol.atomNeighbors(endAtom)) {
       if (nbr == begAtom) {
         continue;
       }
-      endControl = std::max(nbr->getIdx(), endControl);
+      endControl = useCXSmilesOrdering ? std::min(nbr->getIdx(), endControl)
+                                       : std::max(nbr->getIdx(), endControl);
     }
     if (begAtom != bond->getBeginAtom()) {
       std::swap(begControl, endControl);
@@ -2402,6 +2405,7 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
         }
       }
     }
+    bool foundAtropisomer = false;
     for (auto bond : mol.bonds()) {
       // wedged bonds to atoms that have no stereochem
       // should be removed. (github issue 87)
@@ -2411,17 +2415,33 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
           bond->getEndAtom()->getChiralTag() == Atom::CHI_UNSPECIFIED) {
         // see if there is an atropisomer bond connected to this bond
 
-        bool hasAtropisomer = false;
+        bool atomHasAtropisomer = false;
         for (auto nbond : mol.atomBonds(bond->getBeginAtom())) {
           if (nbond->getStereo() == Bond::STEREOATROPCCW ||
               nbond->getStereo() == Bond::STEREOATROPCW) {
-            hasAtropisomer = true;
+            atomHasAtropisomer = true;
+            foundAtropisomer = true;
             break;
           }
         }
-        if (!hasAtropisomer) {
+        if (!atomHasAtropisomer) {
           bond->setBondDir(Bond::NONE);
         }
+      }
+
+      // if we have either a double bond that involves a degree one atom and
+      // that is either crossed or STEREOANY, we need to clear the stereo and,
+      // possibly, direction. This can happen with imines that just have an
+      // implicit H on the N
+      if (bond->getBondType() == Bond::DOUBLE &&
+          (bond->getBondDir() == Bond::EITHERDOUBLE ||
+           bond->getStereo() == Bond::STEREOANY) &&
+          (bond->getBeginAtom()->getDegree() == 1 ||
+           bond->getEndAtom()->getDegree() == 1)) {
+        if (bond->getBondDir() == Bond::EITHERDOUBLE) {
+          bond->setBondDir(Bond::NONE);
+        }
+        bond->setStereo(Bond::STEREONONE);
       }
 
       // check for directionality on single bonds around
@@ -2459,6 +2479,9 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
         }
       }
     }
+    if (foundAtropisomer || Atropisomers::doesMolHaveAtropisomers(mol)) {
+      Atropisomers::cleanupAtropisomerStereoGroups(mol);
+    }
     Chirality::cleanupStereoGroups(mol);
   }
 }
@@ -2486,8 +2509,17 @@ void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo,
                 << "unrecognized bond stereo type" << std::endl;
         }
       } else if (si.specified == Chirality::StereoSpecified::Unknown) {
-        bond->setStereo(Bond::BondStereo::STEREOANY);
-        bond->getStereoAtoms().clear();
+        // in cases like imines without explicit Hs, we have double bonds with
+        // Unknown stereo but with only one neighbor on the N. Catch those and
+        // clear the stereochem
+        if (si.controllingAtoms.size() == 4 &&
+            si.controllingAtoms[0] != StereoInfo::NOATOM &&
+            si.controllingAtoms[2] != StereoInfo::NOATOM) {
+          bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
+          bond->setStereo(Bond::BondStereo::STEREOANY);
+        } else {
+          bond->setStereo(Bond::BondStereo::STEREONONE);
+        }
         bond->setBondDir(Bond::BondDir::NONE);
       } else if (si.specified == Chirality::StereoSpecified::Unspecified) {
         assignBondCisTrans(mol, si);
@@ -2544,6 +2576,7 @@ void stereoPerception(ROMol &mol, bool cleanIt,
   // populate double bond stereo info:
   updateDoubleBondStereo(mol, sinfo, cleanIt);
   if (cleanIt) {
+    Atropisomers::cleanupAtropisomerStereoGroups(mol);
     Chirality::cleanupStereoGroups(mol);
   }
 }
@@ -2914,9 +2947,9 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
             if (begAtomNeighbors.size() > 0 && endAtomNeighbors.size() > 0) {
               if ((begAtomNeighbors.size() == 2) &&
                   (endAtomNeighbors.size() == 2)) {
-// if both of the atoms have 2 neighbors (other than the one
-// connected
-// by the double bond) and ....
+                // if both of the atoms have 2 neighbors (other than the one
+                // connected
+                // by the double bond) and ....
                 if ((ranks[begAtomNeighbors[0]] !=
                      ranks[begAtomNeighbors[1]]) &&
                     (ranks[endAtomNeighbors[0]] !=

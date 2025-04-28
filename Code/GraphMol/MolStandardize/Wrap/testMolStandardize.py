@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 Susan H. Leung
+# Copyright (C) 2018-2025 Susan H. Leung and other RDKit contributors
 #         All Rights Reserved
 #
 import math
@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 
 from rdkit import Chem, DataStructs, RDConfig
 from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit.Chem import rdCIPLabeler
 from rdkit.Chem.rdchem import Atom
 from rdkit.Geometry import rdGeometry as geom
 
@@ -82,9 +83,9 @@ class TestCase(unittest.TestCase):
       Chem.MolFromSmarts(
         "[Li,K,Rb,Cs,Fr,Be,Mg,Ca,Sr,Ba,Ra,Sc,Ti,V,Cr,Mn,Fe,Co,Ni,Cu,Zn,Al,Ga,Y,Zr,Nb,Mo,Tc,Ru,Rh,Pd,Ag,Cd,In,Sn,Hf,Ta,W,Re,Os,Ir,Pt,Au,Hg,Tl,Pb,Bi]~[N,O,F]"
       ))
-    mol2 = Chem.MolFromSmiles("CCC(=O)O[Na]")
+    mol2 = Chem.MolFromSmiles("CCC(=O)[O][Na]")
     nm2 = md.Disconnect(mol2)
-    self.assertEqual(Chem.MolToSmiles(nm2), "CCC(=O)O[Na]")
+    self.assertEqual(Chem.MolToSmiles(nm2), "CCC(=O)[O][Na]")
 
     # Split with organometallics disconnector, two ways.
     rufile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
@@ -230,14 +231,14 @@ class TestCase(unittest.TestCase):
     lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
     mol4 = Chem.MolFromSmiles(smi4)
     lfrag4 = lfrag_params.choose(mol4)
-    self.assertEqual(Chem.MolToSmiles(lfrag4), "O=[Pb]=O")
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "[O]=[Pb]=[O]")
 
     lfParams = rdMolStandardize.CleanupParameters()
     lfParams.largestFragmentChooserUseAtomCount = False
     lfrag_params = rdMolStandardize.LargestFragmentChooser(lfParams)
     mol4 = Chem.MolFromSmiles(smi4)
     lfrag4 = lfrag_params.choose(mol4)
-    self.assertEqual(Chem.MolToSmiles(lfrag4), "O=[Pb]=O")
+    self.assertEqual(Chem.MolToSmiles(lfrag4), "[O]=[Pb]=[O]")
 
     lfParams = rdMolStandardize.CleanupParameters()
     lfParams.largestFragmentChooserCountHeavyAtomsOnly = True
@@ -520,109 +521,129 @@ chlorine	[Cl]
     self.assertEqual(len(res68), 50)
     self.assertEqual(res68.status, rdMolStandardize.TautomerEnumeratorStatus.MaxTautomersReached)
 
-    sAlaSmi = "C[C@H](N)C(=O)O"
-    sAla = Chem.MolFromSmiles(sAlaSmi)
-    # test remove (S)-Ala stereochemistry
-    self.assertEqual(sAla.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
-    self.assertEqual(sAla.GetAtomWithIdx(1).GetProp("_CIPCode"), "S")
-    params = rdMolStandardize.CleanupParameters()
-    params.tautomerRemoveSp3Stereo = True
-    enumerator = rdMolStandardize.TautomerEnumerator(params)
-    res = enumerator.Enumerate(sAla)
-    for taut in res:
-      self.assertEqual(taut.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
-      self.assertFalse(taut.GetAtomWithIdx(1).HasProp("_CIPCode"))
-    for taut in res.tautomers:
-      self.assertEqual(taut.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
-      self.assertFalse(taut.GetAtomWithIdx(1).HasProp("_CIPCode"))
-    for i, taut in enumerate(res):
-      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res.tautomers[i]))
-    self.assertEqual(len(res), len(res.smiles))
-    self.assertEqual(len(res), len(res.tautomers))
-    self.assertEqual(len(res), len(res()))
-    self.assertEqual(len(res), len(res.smilesTautomerMap))
-    for i, taut in enumerate(res.tautomers):
-      self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res[i]))
-      self.assertEqual(Chem.MolToSmiles(taut), res.smiles[i])
-      self.assertEqual(Chem.MolToSmiles(taut),
-                       Chem.MolToSmiles(res.smilesTautomerMap.values()[i].tautomer))
-    for i, k in enumerate(res.smilesTautomerMap.keys()):
-      self.assertEqual(k, res.smiles[i])
-    for i, v in enumerate(res.smilesTautomerMap.values()):
-      self.assertEqual(Chem.MolToSmiles(v.tautomer), Chem.MolToSmiles(res[i]))
-    for i, (k, v) in enumerate(res.smilesTautomerMap.items()):
-      self.assertEqual(k, res.smiles[i])
-      self.assertEqual(Chem.MolToSmiles(v.tautomer), Chem.MolToSmiles(res[i]))
-    for i, smiles in enumerate(res.smiles):
-      self.assertEqual(smiles, Chem.MolToSmiles(res[i]))
-      self.assertEqual(smiles, res.smilesTautomerMap.keys()[i])
-    self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res[-1]))
-    self.assertEqual(Chem.MolToSmiles(res[-1]), Chem.MolToSmiles(res[len(res) - 1]))
-    self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]),
-                     Chem.MolToSmiles(res.tautomers[len(res) - 1]))
-    with self.assertRaises(IndexError):
-      res[len(res)]
-    with self.assertRaises(IndexError):
-      res[-len(res) - 1]
-    with self.assertRaises(IndexError):
-      res.tautomers[len(res)]
-    with self.assertRaises(IndexError):
-      res.tautomers[-len(res.tautomers) - 1]
 
-    # test retain (S)-Ala stereochemistry
-    self.assertEqual(sAla.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
-    self.assertEqual(sAla.GetAtomWithIdx(1).GetProp("_CIPCode"), "S")
-    params = rdMolStandardize.CleanupParameters()
-    params.tautomerRemoveSp3Stereo = False
-    enumerator = rdMolStandardize.TautomerEnumerator(params)
-    res = enumerator.Enumerate(sAla)
-    for taut in res:
-      tautAtom = taut.GetAtomWithIdx(1)
-      if (tautAtom.GetHybridization() == Chem.HybridizationType.SP3):
-        self.assertEqual(tautAtom.GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
-        self.assertTrue(tautAtom.HasProp("_CIPCode"))
-        self.assertEqual(tautAtom.GetProp("_CIPCode"), "S")
+    origVal = Chem.GetUseLegacyStereoPerception()
+    for useLegacy in (True, False):
+      Chem.SetUseLegacyStereoPerception(useLegacy)
+
+      sAlaSmi = "C[C@H](N)C(=O)O"
+      sAla = Chem.MolFromSmiles(sAlaSmi)
+      rdCIPLabeler.AssignCIPLabels(sAla)
+      # test remove (S)-Ala stereochemistry
+      self.assertEqual(sAla.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+      self.assertEqual(sAla.GetAtomWithIdx(1).GetProp("_CIPCode"), "S")
+      params = rdMolStandardize.CleanupParameters()
+      params.tautomerRemoveSp3Stereo = True
+      enumerator = rdMolStandardize.TautomerEnumerator(params)
+      res = enumerator.Enumerate(sAla)
+      for taut in res:
+        self.assertEqual(taut.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+        self.assertFalse(taut.GetAtomWithIdx(1).HasProp("_CIPCode"))
+      for taut in res.tautomers:
+        self.assertEqual(taut.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+        self.assertFalse(taut.GetAtomWithIdx(1).HasProp("_CIPCode"))
+      for i, taut in enumerate(res):
+        self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res.tautomers[i]))
+      self.assertEqual(len(res), len(res.smiles))
+      self.assertEqual(len(res), len(res.tautomers))
+      self.assertEqual(len(res), len(res()))
+      self.assertEqual(len(res), len(res.smilesTautomerMap))
+      for i, taut in enumerate(res.tautomers):
+        self.assertEqual(Chem.MolToSmiles(taut), Chem.MolToSmiles(res[i]))
+        self.assertEqual(Chem.MolToSmiles(taut), res.smiles[i])
+        self.assertEqual(Chem.MolToSmiles(taut),
+                        Chem.MolToSmiles(res.smilesTautomerMap.values()[i].tautomer))
+      for i, k in enumerate(res.smilesTautomerMap.keys()):
+        self.assertEqual(k, res.smiles[i])
+      for i, v in enumerate(res.smilesTautomerMap.values()):
+        self.assertEqual(Chem.MolToSmiles(v.tautomer), Chem.MolToSmiles(res[i]))
+      for i, (k, v) in enumerate(res.smilesTautomerMap.items()):
+        self.assertEqual(k, res.smiles[i])
+        self.assertEqual(Chem.MolToSmiles(v.tautomer), Chem.MolToSmiles(res[i]))
+      for i, smiles in enumerate(res.smiles):
+        self.assertEqual(smiles, Chem.MolToSmiles(res[i]))
+        self.assertEqual(smiles, res.smilesTautomerMap.keys()[i])
+      self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]), Chem.MolToSmiles(res[-1]))
+      self.assertEqual(Chem.MolToSmiles(res[-1]), Chem.MolToSmiles(res[len(res) - 1]))
+      self.assertEqual(Chem.MolToSmiles(res.tautomers[-1]),
+                      Chem.MolToSmiles(res.tautomers[len(res) - 1]))
+      with self.assertRaises(IndexError):
+        res[len(res)]
+      with self.assertRaises(IndexError):
+        res[-len(res) - 1]
+      with self.assertRaises(IndexError):
+        res.tautomers[len(res)]
+      with self.assertRaises(IndexError):
+        res.tautomers[-len(res.tautomers) - 1]
+
+      # test retain (S)-Ala stereochemistry
+      self.assertEqual(sAla.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+      self.assertEqual(sAla.GetAtomWithIdx(1).GetProp("_CIPCode"), "S")
+      params = rdMolStandardize.CleanupParameters()
+      params.tautomerRemoveSp3Stereo = False
+      enumerator = rdMolStandardize.TautomerEnumerator(params)
+      res = enumerator.Enumerate(sAla)
+      for taut in res:
+        rdCIPLabeler.AssignCIPLabels(taut)
+        tautAtom = taut.GetAtomWithIdx(1)
+        if (tautAtom.GetHybridization() == Chem.HybridizationType.SP3):
+          self.assertEqual(tautAtom.GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+          self.assertTrue(tautAtom.HasProp("_CIPCode"))
+          self.assertEqual(tautAtom.GetProp("_CIPCode"), "S")
+        else:
+          self.assertFalse(tautAtom.HasProp("_CIPCode"))
+          self.assertEqual(tautAtom.GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+
+      eEnolSmi = "C/C=C/O"
+      eEnol = Chem.MolFromSmiles(eEnolSmi)
+      if useLegacy:
+        self.assertEqual(eEnol.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOE)
       else:
-        self.assertFalse(tautAtom.HasProp("_CIPCode"))
-        self.assertEqual(tautAtom.GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+        self.assertEqual(eEnol.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOTRANS)
+      # test remove enol E stereochemistry
+      params = rdMolStandardize.CleanupParameters()
+      params.tautomerRemoveBondStereo = True
+      enumerator = rdMolStandardize.TautomerEnumerator(params)
+      res = enumerator.Enumerate(eEnol)
+      for taut in res.tautomers:
+        self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
+      # test retain enol E stereochemistry
+      params = rdMolStandardize.CleanupParameters()
+      params.tautomerRemoveBondStereo = False
+      enumerator = rdMolStandardize.TautomerEnumerator(params)
+      res = enumerator.Enumerate(eEnol)
+      for taut in res.tautomers:
+        if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
+          if useLegacy:
+            self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOE)
+          else:
+            self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOTRANS)
 
-    eEnolSmi = "C/C=C/O"
-    eEnol = Chem.MolFromSmiles(eEnolSmi)
-    self.assertEqual(eEnol.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOE)
-    # test remove enol E stereochemistry
-    params = rdMolStandardize.CleanupParameters()
-    params.tautomerRemoveBondStereo = True
-    enumerator = rdMolStandardize.TautomerEnumerator(params)
-    res = enumerator.Enumerate(eEnol)
-    for taut in res.tautomers:
-      self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
-    # test retain enol E stereochemistry
-    params = rdMolStandardize.CleanupParameters()
-    params.tautomerRemoveBondStereo = False
-    enumerator = rdMolStandardize.TautomerEnumerator(params)
-    res = enumerator.Enumerate(eEnol)
-    for taut in res.tautomers:
-      if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
-        self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOE)
-
-    zEnolSmi = "C/C=C\\O"
-    zEnol = Chem.MolFromSmiles(zEnolSmi)
-    self.assertEqual(zEnol.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
-    # test remove enol Z stereochemistry
-    params = rdMolStandardize.CleanupParameters()
-    params.tautomerRemoveBondStereo = True
-    enumerator = rdMolStandardize.TautomerEnumerator(params)
-    res = enumerator.Enumerate(zEnol)
-    for taut in res:
-      self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
-    # test retain enol Z stereochemistry
-    params = rdMolStandardize.CleanupParameters()
-    params.tautomerRemoveBondStereo = False
-    enumerator = rdMolStandardize.TautomerEnumerator(params)
-    res = enumerator.Enumerate(zEnol)
-    for taut in res:
-      if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
-        self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
+      zEnolSmi = "C/C=C\\O"
+      zEnol = Chem.MolFromSmiles(zEnolSmi)
+      if useLegacy:
+        self.assertEqual(zEnol.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
+      else:
+        self.assertEqual(zEnol.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOCIS)
+      # test remove enol Z stereochemistry
+      params = rdMolStandardize.CleanupParameters()
+      params.tautomerRemoveBondStereo = True
+      enumerator = rdMolStandardize.TautomerEnumerator(params)
+      res = enumerator.Enumerate(zEnol)
+      for taut in res:
+        self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREONONE)
+      # test retain enol Z stereochemistry
+      params = rdMolStandardize.CleanupParameters()
+      params.tautomerRemoveBondStereo = False
+      enumerator = rdMolStandardize.TautomerEnumerator(params)
+      res = enumerator.Enumerate(zEnol)
+      for taut in res:
+        if (taut.GetBondWithIdx(1).GetBondType() == Chem.BondType.DOUBLE):
+          if useLegacy:
+            self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOZ)
+          else:
+            self.assertEqual(taut.GetBondWithIdx(1).GetStereo(), Chem.BondStereo.STEREOCIS)
+    Chem.SetUseLegacyStereoPerception(origVal)
 
     chembl2024142Smi = "[2H]C1=C(C(=C2C(=C1[2H])C(=O)C(=C(C2=O)C([2H])([2H])[2H])C/C=C(\\C)/CC([2H])([2H])/C=C(/CC/C=C(\\C)/CCC=C(C)C)\\C([2H])([2H])[2H])[2H])[2H]"
     chembl2024142 = Chem.MolFromSmiles(chembl2024142Smi)
@@ -735,6 +756,7 @@ chlorine	[Cl]
 
     smi = "CC\\C=C(/O)[C@@H](C)C(C)=O"
     mol = Chem.MolFromSmiles(smi)
+    rdCIPLabeler.AssignCIPLabels(mol)
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
     self.assertEqual(mol.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
@@ -754,6 +776,7 @@ chlorine	[Cl]
     te = rdMolStandardize.TautomerEnumerator(params)
     can_taut = te.Canonicalize(mol)
     self.assertIsNotNone(can_taut)
+    rdCIPLabeler.AssignCIPLabels(can_taut)
     self.assertEqual(can_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
     self.assertEqual(can_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
     self.assertEqual(Chem.MolToSmiles(can_taut), "CCCC(=O)[C@@H](C)C(C)=O")
@@ -795,6 +818,7 @@ chlorine	[Cl]
     self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
     self.assertEqual(len(res.tautomers), 8)
     best_taut = get_canonical_taut(res)
+    rdCIPLabeler.AssignCIPLabels(best_taut)
     self.assertIsNotNone(best_taut)
     self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
     self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
@@ -820,6 +844,7 @@ chlorine	[Cl]
     smi = "CC\\C=C(/O)[C@@](CC)(C)C(C)=O"
     mol = Chem.MolFromSmiles(smi)
     self.assertIsNotNone(mol)
+    rdCIPLabeler.AssignCIPLabels(mol)
     self.assertEqual(mol.GetAtomWithIdx(5).GetProp("_CIPCode"), "S")
     self.assertEqual(mol.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
 
@@ -828,6 +853,7 @@ chlorine	[Cl]
     te = rdMolStandardize.TautomerEnumerator()
     can_taut = te.Canonicalize(mol)
     self.assertIsNotNone(can_taut)
+    rdCIPLabeler.AssignCIPLabels(can_taut)
     self.assertEqual(can_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
     self.assertEqual(can_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
     self.assertEqual(Chem.MolToSmiles(can_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
@@ -837,6 +863,7 @@ chlorine	[Cl]
     te = rdMolStandardize.TautomerEnumerator(params)
     can_taut = te.Canonicalize(mol)
     self.assertIsNotNone(can_taut)
+    rdCIPLabeler.AssignCIPLabels(can_taut)
     self.assertEqual(can_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
     self.assertEqual(can_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
     self.assertEqual(Chem.MolToSmiles(can_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
@@ -849,6 +876,7 @@ chlorine	[Cl]
     self.assertEqual(len(res.tautomers), 4)
     best_taut = get_canonical_taut(res)
     self.assertIsNotNone(best_taut)
+    rdCIPLabeler.AssignCIPLabels(best_taut)
     self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
     self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")
     self.assertEqual(Chem.MolToSmiles(best_taut), "CCCC(=O)[C@](C)(CC)C(C)=O")
@@ -876,6 +904,7 @@ chlorine	[Cl]
     self.assertEqual(res.status, rdMolStandardize.TautomerEnumeratorStatus.Completed)
     self.assertEqual(len(res.tautomers), 4)
     best_taut = get_canonical_taut(res)
+    rdCIPLabeler.AssignCIPLabels(best_taut)
     self.assertIsNotNone(best_taut)
     self.assertEqual(best_taut.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
     self.assertEqual(best_taut.GetAtomWithIdx(5).GetProp("_CIPCode"), "R")

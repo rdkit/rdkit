@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -164,7 +164,8 @@ void testCollisions() {
     unsigned int confId = RDDepict::compute2DCoords(*m);
     // check that there are no collisions in the molecules
     const Conformer &conf = m->getConformer(confId);
-
+    writer.write(*m);
+    writer.flush();
     int natms = m->getNumAtoms();
     for (int i = 0; i < natms; i++) {
       RDGeom::Point3D loci = conf.getAtomPos(i);
@@ -174,7 +175,6 @@ void testCollisions() {
         CHECK_INVARIANT(locj.length() > 0.35, "");
       }
     }
-    writer.write(*m);
     delete m;
   }
 }
@@ -1775,6 +1775,7 @@ M  END
     TEST_ASSERT(MolAlign::CalcRMS(*cpSittingOnHorizontalBond,
                                   *cpSittingOnHorizontalBondCopy) < 1.e-3);
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 void testValidRingSystemTemplates() {
@@ -1785,6 +1786,7 @@ void testValidRingSystemTemplates() {
     std::unique_ptr<ROMol> mol{SmilesToMol(smiles)};
     RDDepict::CoordinateTemplates::assertValidTemplate(*mol, smiles);
   }
+  BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
 int main() {
@@ -1793,6 +1795,7 @@ int main() {
 #endif
 
   RDLog::InitLogs();
+  boost::logging::enable_logs("rdApp.info");
   BOOST_LOG(rdInfoLog)
       << "***********************************************************\n";
   BOOST_LOG(rdInfoLog) << "   test1 \n";

@@ -258,6 +258,7 @@ void updateMolDrawOptionsFromJSON(MolDrawOptions &opts,
   PT_OPT_GET(drawMolsSameScale);
   PT_OPT_GET(useComplexQueryAtomSymbols);
   PT_OPT_GET(bracketsAroundAtomLists);
+  PT_OPT_GET(standardColoursForHighlightedAtoms);
 
   get_colour_option(pt, "highlightColour", opts.highlightColour);
   get_colour_option(pt, "backgroundColour", opts.backgroundColour);
@@ -342,6 +343,14 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     for (size_t i = 0; i < nX - 1; ++i) {
       for (size_t j = 0; j < nY - 1; ++j) {
         auto gridV = grid[i * nY + j];
+        auto threshTest = gridV;
+        if (params.fillThresholdIsFraction) {
+          threshTest /= delta;
+        }
+        if (params.useFillThreshold &&
+            fabs(threshTest) < params.fillThreshold) {
+          continue;
+        }
         auto fracV = (gridV - minV) / delta;
         if (params.colourMap.size() > 2) {
           // need to find how fractionally far we are from zero, not the min

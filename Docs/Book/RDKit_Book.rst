@@ -199,7 +199,7 @@ Here's an example of a bipy-copper complex:
   >>> bipycu.GetBondBetweenAtoms(4,12).GetBondType()
   rdkit.Chem.rdchem.BondType.DATIVE
   >>> Chem.MolToSmiles(bipycu)
-  'Cl[Cu]1(Cl)<-n2ccccc2-c2ccccn->12'
+  '[Cl][Cu]1([Cl])<-[n]2ccccc2-c2cccc[n]->12'
 
 Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect
 the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy,
@@ -251,6 +251,8 @@ The features which are parsed include:
   ``Q_e``, ``QH_p``, ``AH_P``, ``X_p``, ``XH_p``, ``M_p``, ``MH_p``, ``*``)
 - atomic properties ``atomprop``
 - coordinate/dative bonds ``C`` (these are translated into dative bonds)
+- hydrogen bonds ``H``
+- zero order bonds bonds ``Z`` (custom extension, same syntax as c/t/ctu below)
 - radicals ``^``
 - enhanced stereo (these are converted into ``StereoGroups``)
 - linknodes ``LN``
@@ -292,8 +294,9 @@ The features which are written by :py:func:`rdkit.Chem.rdmolfiles.MolToCXSmiles`
   >>> m.GetAtomWithIdx(1).SetProp('p2','A1')
   >>> m.GetAtomWithIdx(0).SetProp('atomLabel','O1')
   >>> m.GetAtomWithIdx(1).SetProp('atomLabel','C2')
+  >>> m.GetBondWithIdx(0).SetBondType(Chem.BondType.ZERO)
   >>> Chem.MolToCXSmiles(m)
-  'CO |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2|'
+  'C~O |$C2;O1$,atomProp:0.p1.5:0.p2.A1:1.p1.2,Z:0|'
 
 Reading molecule names
 ----------------------

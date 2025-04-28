@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2021-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -11,7 +11,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
-
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -653,6 +653,8 @@ TEST_CASE("rgroupLabelling") {
     }
   }
   SECTION("RGroup") {
+    auto useLegacy = GENERATE(true, false);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
     RGroupRows rows;
     std::vector<unsigned> unmatched;
     RGroupDecompositionParameters params;
@@ -663,11 +665,13 @@ TEST_CASE("rgroupLabelling") {
       CHECK(n == mols.size());
       CHECK(rows.size() == n);
       CHECK(unmatched.empty());
-      // in this case the labels don't show up in the output SMILES
-      // Presumably the dummy atoms are no longer distinguishable without
-      // the isotope labels as the smiles no longer contains chiralty.
-      // Chirality is present in the core SMARTS
-      CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+
+      if (useLegacy) {
+        // in this case the labels don't show up in the output SMILES
+        // Presumably the dummy atoms are no longer distinguishable without
+        // the isotope labels as the smiles no longer contains chiralty.
+        // Chirality is present in the core SMARTS
+        CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
 [
   {
     "Core":"*C1(*)CCN1",
@@ -690,7 +694,37 @@ TEST_CASE("rgroupLabelling") {
     "R2":"*[H]"
   }
 ]
-    )JSON"));
+        )JSON"));
+      } else {
+        // in this case the labels don't show up in the output SMILES
+        // Presumably the dummy atoms are no longer distinguishable without
+        // the isotope labels as the smiles no longer contains chiralty.
+        // Chirality is present in the core SMARTS
+        CHECK(flatten_whitespace(toJSON(rows)) == flatten_whitespace(R"JSON(
+[
+  {
+    "Core":"*[C@@]1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  },
+  {
+    "Core":"*[C@@]1(*)CCN1",
+    "R1":"*F",
+    "R2":"*O"
+  },
+  {
+    "Core":"*[C@]1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  },
+  {
+    "Core":"*C1(*)CCN1",
+    "R1":"*F",
+    "R2":"*[H]"
+  }
+]
+        )JSON"));
+      }
     }
   }
   SECTION("Isotope|Map") {
@@ -1051,14 +1085,14 @@ TEST_CASE("includeTargetMolInResults") {
     REQUIRE(targetMol);
     auto flattenedAtomIndices = std::accumulate(
         allAtomIndices.begin(), allAtomIndices.end(), std::vector<int>{},
-        [](std::vector<int> &acc, const std::vector<int> &v) {
+        [](std::vector<int> acc, const std::vector<int> &v) {
           acc.insert(acc.end(), std::make_move_iterator(v.begin()),
                      std::make_move_iterator(v.end()));
           return acc;
         });
     auto uniqueAtomIndices = std::accumulate(
         allAtomIndices.begin(), allAtomIndices.end(), std::set<int>{},
-        [](std::set<int> &acc, const std::vector<int> &v) {
+        [](std::set<int> acc, const std::vector<int> &v) {
           acc.insert(std::make_move_iterator(v.begin()),
                      std::make_move_iterator(v.end()));
           return acc;
@@ -1067,14 +1101,14 @@ TEST_CASE("includeTargetMolInResults") {
     CHECK(flattenedAtomIndices.size() == targetMol->getNumAtoms());
     auto flattenedBondIndices = std::accumulate(
         allBondIndices.begin(), allBondIndices.end(), std::vector<int>{},
-        [](std::vector<int> &acc, const std::vector<int> &v) {
+        [](std::vector<int> acc, const std::vector<int> &v) {
           acc.insert(acc.end(), std::make_move_iterator(v.begin()),
                      std::make_move_iterator(v.end()));
           return acc;
         });
     auto uniqueBondIndices = std::accumulate(
         allBondIndices.begin(), allBondIndices.end(), std::set<int>{},
-        [](std::set<int> &acc, const std::vector<int> &v) {
+        [](std::set<int> acc, const std::vector<int> &v) {
           acc.insert(std::make_move_iterator(v.begin()),
                      std::make_move_iterator(v.end()));
           return acc;

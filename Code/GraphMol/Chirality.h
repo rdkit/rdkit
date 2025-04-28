@@ -259,7 +259,7 @@ class WedgeInfoBase {
 class WedgeInfoChiral : public WedgeInfoBase {
  public:
   WedgeInfoChiral(int atomId) : WedgeInfoBase(atomId) {};
-  ~WedgeInfoChiral() {};
+  ~WedgeInfoChiral() override {}
 
   WedgeInfoType getType() const override {
     return Chirality::WedgeInfoType::WedgeInfoTypeChiral;
@@ -276,7 +276,7 @@ class WedgeInfoAtropisomer : public WedgeInfoBase {
       : WedgeInfoBase(bondId) {
     dir = dirInit;
   };
-  ~WedgeInfoAtropisomer() {};
+  ~WedgeInfoAtropisomer() override {}
 
   RDKit::Bond::BondDir dir = RDKit::Bond::BondDir::NONE;
 
@@ -303,16 +303,22 @@ RDKIT_GRAPHMOL_EXPORT int pickBondToWedge(
     const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
         &resSoFar,
     int noNbrs);
+
+//! If useCXSmilesOrdering is true, the stereo will be assigned relative to the
+/// lowest-numbered neighbor of each double bond atom.
+/// Otherwise it uses the lowest-numbered neighbor on the lower-numbered atom of
+/// the double bond and the highest-numbered neighbor on the higher-numbered
+/// atom
 RDKIT_GRAPHMOL_EXPORT void setStereoForBond(ROMol &mol, Bond *bond,
-                                            Bond::BondStereo stereo);
+                                            Bond::BondStereo stereo,
+                                            bool useCXSmilesOrdering = false);
 }  // namespace detail
 
 //! picks the bonds which should be wedged
 /// returns a map from bond idx -> controlling atom idx
 RDKIT_GRAPHMOL_EXPORT
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
-  const ROMol &mol, const BondWedgingParameters *params = nullptr);
-
+    const ROMol &mol, const BondWedgingParameters *params = nullptr);
 
 RDKIT_GRAPHMOL_EXPORT
 std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(

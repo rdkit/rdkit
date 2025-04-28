@@ -304,12 +304,22 @@ void addStereoGroup(const StereoGroup &sg, rj::Value &rjSG, rj::Document &doc) {
     addIntVal(rjSG, "id", sg.getWriteId(), doc);
   }
 
-  rj::Value rjAtoms(rj::kArrayType);
-  for (const auto atm : sg.getAtoms()) {
-    rj::Value v1(static_cast<int>(atm->getIdx()));
-    rjAtoms.PushBack(v1, doc.GetAllocator());
+  if (!sg.getAtoms().empty()) {
+    rj::Value rjAtoms(rj::kArrayType);
+    for (const auto atm : sg.getAtoms()) {
+      rj::Value v1(static_cast<int>(atm->getIdx()));
+      rjAtoms.PushBack(v1, doc.GetAllocator());
+    }
+    rjSG.AddMember("atoms", rjAtoms, doc.GetAllocator());
   }
-  rjSG.AddMember("atoms", rjAtoms, doc.GetAllocator());
+  if (!sg.getBonds().empty()) {
+    rj::Value rjBonds(rj::kArrayType);
+    for (const auto bnd : sg.getBonds()) {
+      rj::Value v1(static_cast<int>(bnd->getIdx()));
+      rjBonds.PushBack(v1, doc.GetAllocator());
+    }
+    rjSG.AddMember("bonds", rjBonds, doc.GetAllocator());
+  }
 }
 
 void addSubstanceGroup(const SubstanceGroup &sg, rj::Value &rjSG,

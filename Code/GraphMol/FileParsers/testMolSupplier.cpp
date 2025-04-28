@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2019 Greg Landrum and Rational Discovery LLC
+//   Copyright (C) 2002-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
 #include <GraphMol/RDKitBase.h>
 #include <string>
 #include <iostream>
@@ -104,213 +105,218 @@ int testMolSup() {
     TEST_ASSERT(i == 16);
   }
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-  {  // Test reading properties
-    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/props_test.mae";
+  for (const bool useLegacy : {true, false}) {
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    {  // Test reading properties
+      fname = rdbase + "/Code/GraphMol/FileParsers/test_data/props_test.mae";
 
-    MaeMolSupplier maesup(fname);
-    std::unique_ptr<ROMol> nmol(maesup.next());
-    TEST_ASSERT(nmol);
-
-    // Test mol properties
-    TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-    TEST_ASSERT(nmol->hasProp("b_sd_chiral_flag"));
-    TEST_ASSERT(nmol->getProp<bool>("b_sd_chiral_flag") == false);
-    TEST_ASSERT(nmol->hasProp("i_sd_NSC"));
-    TEST_ASSERT(nmol->getProp<int>("i_sd_NSC") == 48);
-    TEST_ASSERT(nmol->hasProp("s_m_entry_name"));
-    TEST_ASSERT(nmol->getProp<std::string>("s_m_entry_name") ==
-                "NCI_aids_few.1");
-    TEST_ASSERT(nmol->hasProp("r_f3d_dummy"));
-    TEST_ASSERT(std::abs(nmol->getProp<double>("r_f3d_dummy") - 42.123) <
-                0.0001);
-
-    // Test atom properties
-    TEST_ASSERT(nmol->getNumAtoms() == 19);
-    for (int i = 0; i < 19; ++i) {
-      const auto *atom = nmol->getAtomWithIdx(i);
-
-      // The integer property is present for all atoms
-      TEST_ASSERT(atom->hasProp("i_m_minimize_atom_index"));
-      TEST_ASSERT(atom->getProp<int>("i_m_minimize_atom_index") == 1 + i);
-
-      // The bool property is only defined for i < 10
-      if (i < 10) {
-        TEST_ASSERT(atom->hasProp("b_m_dummy"));
-        TEST_ASSERT(atom->getProp<bool>("b_m_dummy") ==
-                    static_cast<bool>(i % 2));
-      } else {
-        TEST_ASSERT(!atom->hasProp("b_m_dummy"));
-      }
-
-      // The real property is only defined for i >= 10
-      if (i >= 10) {
-        TEST_ASSERT(atom->hasProp("r_f3d_dummy"));
-        TEST_ASSERT(std::abs(atom->getProp<double>("r_f3d_dummy") -
-                             (19.1 - i)) < 0.0001);
-      } else {
-        TEST_ASSERT(!atom->hasProp("r_f3d_dummy"));
-      }
-
-      // All atoms have the string prop
-      TEST_ASSERT(atom->hasProp("s_m_dummy"));
-      TEST_ASSERT(atom->getProp<std::string>("s_m_dummy") ==
-                  std::to_string(19 - i));
-    }
-
-    TEST_ASSERT(maesup.atEnd());
-  }
-  {  // Test parsing stereo properties. Mol is 2D and has stereo labels.
-    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/stereochem.mae";
-    MaeMolSupplier maesup(fname);
-
-    {  // Stereo bonds. These get overwritten by the double bond detection.
+      MaeMolSupplier maesup(fname);
       std::unique_ptr<ROMol> nmol(maesup.next());
       TEST_ASSERT(nmol);
-      {
-        Bond *bnd = nmol->getBondWithIdx(1);
-        TEST_ASSERT(bnd);
-        TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
-        TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+
+      // Test mol properties
+      TEST_ASSERT(nmol->hasProp(common_properties::_Name));
+      TEST_ASSERT(nmol->hasProp("b_sd_chiral_flag"));
+      TEST_ASSERT(nmol->getProp<bool>("b_sd_chiral_flag") == false);
+      TEST_ASSERT(nmol->hasProp("i_sd_NSC"));
+      TEST_ASSERT(nmol->getProp<int>("i_sd_NSC") == 48);
+      TEST_ASSERT(nmol->hasProp("s_m_entry_name"));
+      TEST_ASSERT(nmol->getProp<std::string>("s_m_entry_name") ==
+                  "NCI_aids_few.1");
+      TEST_ASSERT(nmol->hasProp("r_f3d_dummy"));
+      TEST_ASSERT(std::abs(nmol->getProp<double>("r_f3d_dummy") - 42.123) <
+                  0.0001);
+
+      // Test atom properties
+      TEST_ASSERT(nmol->getNumAtoms() == 19);
+      for (int i = 0; i < 19; ++i) {
+        const auto *atom = nmol->getAtomWithIdx(i);
+
+        // The integer property is present for all atoms
+        TEST_ASSERT(atom->hasProp("i_m_minimize_atom_index"));
+        TEST_ASSERT(atom->getProp<int>("i_m_minimize_atom_index") == 1 + i);
+
+        // The bool property is only defined for i < 10
+        if (i < 10) {
+          TEST_ASSERT(atom->hasProp("b_m_dummy"));
+          TEST_ASSERT(atom->getProp<bool>("b_m_dummy") ==
+                      static_cast<bool>(i % 2));
+        } else {
+          TEST_ASSERT(!atom->hasProp("b_m_dummy"));
+        }
+
+        // The real property is only defined for i >= 10
+        if (i >= 10) {
+          TEST_ASSERT(atom->hasProp("r_f3d_dummy"));
+          TEST_ASSERT(std::abs(atom->getProp<double>("r_f3d_dummy") -
+                               (19.1 - i)) < 0.0001);
+        } else {
+          TEST_ASSERT(!atom->hasProp("r_f3d_dummy"));
+        }
+
+        // All atoms have the string prop
+        TEST_ASSERT(atom->hasProp("s_m_dummy"));
+        TEST_ASSERT(atom->getProp<std::string>("s_m_dummy") ==
+                    std::to_string(19 - i));
       }
-      {
-        Bond *bnd = nmol->getBondWithIdx(3);
-        TEST_ASSERT(bnd);
-        TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({2, 5}));
-        TEST_ASSERT(bnd->getStereo() == Bond::STEREOCIS);
-      }
+
+      TEST_ASSERT(maesup.atEnd());
     }
-    {  // Chiralities (these get CIP codes)
-      std::unique_ptr<ROMol> nmol(maesup.next());
-      TEST_ASSERT(nmol);
-      {
-        Atom *at = nmol->getAtomWithIdx(1);
-        TEST_ASSERT(at);
-        TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
-        TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
-                    "R");
-      }
-      {
-        Atom *at = nmol->getAtomWithIdx(3);
-        TEST_ASSERT(at);
-        TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
-        TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
-                    "S");
-      }
-    }
-    {  // Pseudochiralities (no CIP codes)
-      std::unique_ptr<ROMol> nmol(maesup.next());
-      TEST_ASSERT(nmol);
-      {
-        Atom *at = nmol->getAtomWithIdx(2);
-        TEST_ASSERT(at);
-        TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
-        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
-      }
-      {
-        Atom *at = nmol->getAtomWithIdx(5);
-        TEST_ASSERT(at);
-        TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
-        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
-      }
-    }
-    {  // intentionally bad chirality label, intended to
-      // make sure we can step over parse errors
-      std::unique_ptr<ROMol> nmol;
-      try {
-        nmol.reset(maesup.next());
-      } catch (const FileParseException &) {
-        // just ignore this failure
-      }
-      TEST_ASSERT(!nmol);
-    }
-    {  // "Undefined" chirality label
-      std::unique_ptr<ROMol> nmol(maesup.next());
-      TEST_ASSERT(nmol);
-      {
-        Atom *at = nmol->getAtomWithIdx(2);
-        TEST_ASSERT(at);
-        TEST_ASSERT(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
-        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
-      }
-      {
-        Atom *at = nmol->getAtomWithIdx(5);
-        TEST_ASSERT(at);
-        TEST_ASSERT(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
-        TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
-      }
-    }
-    TEST_ASSERT(maesup.atEnd());
-  }
-  {  // Test loop reading
-    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
-    MaeMolSupplier maesup(fname);
-    std::shared_ptr<ROMol> nmol;
-    for (unsigned int i = 0; i < 16; ++i) {
-      nmol.reset(maesup.next());
-      if (nmol) {
-        TEST_ASSERT(nmol->hasProp(common_properties::_Name));
-        TEST_ASSERT(nmol->getNumAtoms() > 0);
-        if (i == 0) {
-          auto smiles = MolToSmiles(*nmol);
-          TEST_ASSERT(smiles ==
-                      "CCC1=[O+][Cu@]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2");
+
+    {  // Test parsing stereo properties. Mol is 2D and has stereo labels.
+      fname = rdbase + "/Code/GraphMol/FileParsers/test_data/stereochem.mae";
+      MaeMolSupplier maesup(fname);
+
+      {  // Stereo bonds. These get overwritten by the double bond detection.
+        std::unique_ptr<ROMol> nmol(maesup.next());
+        TEST_ASSERT(nmol);
+        {
+          Bond *bnd = nmol->getBondWithIdx(1);
+          TEST_ASSERT(bnd);
+          TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({0, 3}));
+          TEST_ASSERT(bnd->getStereo() == Bond::STEREOTRANS);
+        }
+        {
+          Bond *bnd = nmol->getBondWithIdx(3);
+          TEST_ASSERT(bnd);
+          TEST_ASSERT(bnd->getStereoAtoms() == INT_VECT({2, 5}));
+          TEST_ASSERT(bnd->getStereo() == Bond::STEREOCIS);
         }
       }
-    }
-    TEST_ASSERT(maesup.atEnd());
-    bool ok = false;
-    try {
-      maesup.next();
-    } catch (FileParseException &) {
-      ok = true;
-    }
-    TEST_ASSERT(ok);
-  }
-
-  {
-    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/bad_ppty.mae";
-    const std::string err_msg_substr = "Bad format for property";
-
-    bool ok = false;
-    std::unique_ptr<ROMol> mol;
-    MaeMolSupplier maesup(fname);
-
-    // This is in excess: there are only 3 mols in the file, and the second one
-    // has an invalid property name, so it won't be read
-    for (unsigned int i = 0; i < 5; ++i) {
-      try {
-        mol.reset(maesup.next());
-      } catch (const FileParseException &e) {
-        const std::string err_msg(e.what());
-        TEST_ASSERT(i == 1);
-        TEST_ASSERT(err_msg.find(err_msg_substr) != std::string::npos);
-        ok = true;
-        break;
+      {  // Chiralities (these get CIP codes)
+        std::unique_ptr<ROMol> nmol(maesup.next());
+        TEST_ASSERT(nmol);
+        {
+          Atom *at = nmol->getAtomWithIdx(1);
+          TEST_ASSERT(at);
+          TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+          if (useLegacy) {
+            TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
+                        "R");
+          }
+        }
+        {
+          Atom *at = nmol->getAtomWithIdx(3);
+          TEST_ASSERT(at);
+          TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+          if (useLegacy) {
+            TEST_ASSERT(at->getProp<std::string>(common_properties::_CIPCode) ==
+                        "S");
+          }
+        }
       }
-      TEST_ASSERT(mol);
-      TEST_ASSERT(mol->hasProp(common_properties::_Name));
-      TEST_ASSERT(mol->getNumAtoms() == 1);
-      TEST_ASSERT(!maesup.atEnd());
+      {  // Pseudochiralities (no CIP codes)
+        std::unique_ptr<ROMol> nmol(maesup.next());
+        TEST_ASSERT(nmol);
+        {
+          Atom *at = nmol->getAtomWithIdx(2);
+          TEST_ASSERT(at);
+          TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+          TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+        }
+        {
+          Atom *at = nmol->getAtomWithIdx(5);
+          TEST_ASSERT(at);
+          TEST_ASSERT(at->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+          TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+        }
+      }
+      {  // intentionally bad chirality label, intended to
+        // make sure we can step over parse errors
+        std::unique_ptr<ROMol> nmol(maesup.next());
+        TEST_ASSERT(nmol);
+        TEST_ASSERT(nmol->getNumAtoms() > 1);
+      }
+      {  // "Undefined" chirality label
+        std::unique_ptr<ROMol> nmol(maesup.next());
+        TEST_ASSERT(nmol);
+        {
+          Atom *at = nmol->getAtomWithIdx(2);
+          TEST_ASSERT(at);
+          TEST_ASSERT(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
+          TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+        }
+        {
+          Atom *at = nmol->getAtomWithIdx(5);
+          TEST_ASSERT(at);
+          TEST_ASSERT(at->getChiralTag() == Atom::CHI_UNSPECIFIED);
+          TEST_ASSERT(!at->hasProp(common_properties::_CIPCode));
+        }
+      }
+      TEST_ASSERT(maesup.atEnd());
     }
-    TEST_ASSERT(!maesup.atEnd());
-    TEST_ASSERT(ok);
-  }
+    {  // Test loop reading
+      fname = rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.mae";
+      MaeMolSupplier maesup(fname);
+      std::shared_ptr<ROMol> nmol;
+      for (unsigned int i = 0; i < 16; ++i) {
+        nmol.reset(maesup.next());
+        if (nmol) {
+          TEST_ASSERT(nmol->hasProp(common_properties::_Name));
+          TEST_ASSERT(nmol->getNumAtoms() > 0);
+          if (i == 0) {
+            auto smiles = MolToSmiles(*nmol);
+            TEST_ASSERT(smiles ==
+                        "CCC1=[O+][Cu@]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2");
+          }
+        }
+      }
+      TEST_ASSERT(maesup.atEnd());
+      bool ok = false;
+      try {
+        maesup.next();
+      } catch (FileParseException &) {
+        ok = true;
+      }
+      TEST_ASSERT(ok);
+    }
+
+    {
+      fname = rdbase + "/Code/GraphMol/FileParsers/test_data/bad_ppty.mae";
+      const std::string err_msg_substr = "Bad format for property";
+
+      bool ok = false;
+      std::unique_ptr<ROMol> mol;
+      MaeMolSupplier maesup(fname);
+
+      // This is in excess: there are only 3 mols in the file, and the second
+      // one has an invalid property name, so it won't be read
+      for (unsigned int i = 0; i < 5; ++i) {
+        try {
+          mol.reset(maesup.next());
+        } catch (const FileParseException &e) {
+          const std::string err_msg(e.what());
+          TEST_ASSERT(i == 1);
+          TEST_ASSERT(err_msg.find(err_msg_substr) != std::string::npos);
+          ok = true;
+          break;
+        }
+        TEST_ASSERT(mol);
+        TEST_ASSERT(mol->hasProp(common_properties::_Name));
+        TEST_ASSERT(mol->getNumAtoms() == 1);
+        TEST_ASSERT(!maesup.atEnd());
+      }
+      TEST_ASSERT(!maesup.atEnd());
+      TEST_ASSERT(ok);
+    }
 
 #if RDK_USE_BOOST_IOSTREAMS
-  {  // Test Maestro PDB property reading
-    fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
-    auto *strm = new gzstream(fname);
-    MaeMolSupplier maesup(strm);
+    {  // Test Maestro PDB property reading
+      fname = rdbase + "/Code/GraphMol/FileParsers/test_data/1kv1.maegz";
+      auto *strm = new gzstream(fname);
+      MaeMolSupplier maesup(strm);
 
-    std::shared_ptr<ROMol> nmol;
-    nmol.reset(maesup.next());
-    const Atom *atom = nmol->getAtomWithIdx(0);
-    auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
-    TEST_ASSERT(info->getResidueName() == "ARG ");
-    TEST_ASSERT(info->getChainId() == "A");
-    TEST_ASSERT(info->getResidueNumber() == 5);
-  }
+      std::shared_ptr<ROMol> nmol;
+      nmol.reset(maesup.next());
+      const Atom *atom = nmol->getAtomWithIdx(0);
+      auto *info = (AtomPDBResidueInfo *)(atom->getMonomerInfo());
+      TEST_ASSERT(info->getResidueName() == "ARG ");
+      TEST_ASSERT(info->getChainId() == "A");
+      TEST_ASSERT(info->getResidueNumber() == 5);
+    }
+
 #endif
+  }
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
   return 1;
 }
@@ -2811,12 +2817,10 @@ void testGitHub2881() {
     bool sanitize = false;
     bool takeOwnership = true;
     MaeMolSupplier suppl(iss, takeOwnership, sanitize);
-    ROMol *mol = nullptr;
-    try {
-      mol = suppl.next();
-    } catch (const FileParseException &) {
-    }
-    TEST_ASSERT(!mol);
+    auto mol = suppl.next();
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getNumAtoms() == 15);
+    TEST_ASSERT(mol->getNumBonds() == 17);
   }
 }
 #else
@@ -2835,7 +2839,9 @@ void testGitHub3517() {
   TEST_ASSERT(!sdsup.atEnd());
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+  (void)argc;
+  (void)argv;
   RDLog::InitLogs();
 
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
