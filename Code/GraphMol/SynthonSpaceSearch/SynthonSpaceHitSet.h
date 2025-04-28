@@ -36,7 +36,8 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceHitSet {
   SynthonSpaceHitSet &operator=(SynthonSpaceHitSet &&rhs) = delete;
 
   const SynthonSet *d_reaction{nullptr};
-  std::vector<std::vector<std::pair<std::string, const ROMol *>>> synthonsToUse;
+  std::vector<std::vector<std::pair<std::string, const Synthon *>>>
+      synthonsToUse;
   size_t numHits{0};
   // The fragments that this hitset is derived from, useful for debugging.
   std::vector<const ROMol *> frags;

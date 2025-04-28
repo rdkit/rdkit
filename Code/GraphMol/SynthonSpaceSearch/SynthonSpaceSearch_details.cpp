@@ -862,4 +862,14 @@ std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
   return fragSmiToFrag;
 }
 
+unsigned int countChiralAtoms(const ROMol &mol) {
+  unsigned int numChiralAtoms = 0;
+  for (const auto atom : mol.atoms()) {
+    if (atom->hasProp("_CIPCode") || atom->hasProp("_ChiralityPossible")) {
+      numChiralAtoms++;
+    }
+  }
+  return numChiralAtoms;
+}
+
 }  // namespace RDKit::SynthonSpaceSearch::details

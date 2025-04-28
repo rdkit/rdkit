@@ -21,9 +21,7 @@ SynthonSpaceHitSet::SynthonSpaceHitSet(
     synthonsToUse.emplace_back();
     synthonsToUse[i].reserve(stu[i].size());
     for (size_t j = 0; j < stu[i].size(); ++j) {
-      synthonsToUse[i].emplace_back(
-          std::make_pair(synthons[i][stu[i][j]].first,
-                         synthons[i][stu[i][j]].second->getOrigMol().get()));
+      synthonsToUse[i].emplace_back(synthons[i][stu[i][j]]);
     }
   }
 

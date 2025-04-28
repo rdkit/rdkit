@@ -158,6 +158,10 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::map<std::string, std::vector<ROMol *>>
 mapFragsBySmiles(std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
                  bool &cancelled);
 
+// Count the number of chiral atoms, both specified and unspecified i.e. any
+// atoms with properties _CIPCode or _ChiralityPossible.
+RDKIT_SYNTHONSPACESEARCH_EXPORT unsigned int countChiralAtoms(const ROMol &mol);
+
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 

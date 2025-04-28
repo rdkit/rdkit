@@ -85,7 +85,8 @@ std::unique_ptr<ROMol> SynthonSpaceSearcher::buildAndVerifyHit(
   std::vector<const ROMol *> synths(synthNums.size());
   std::vector<std::string> synthNames(synthNums.size());
   for (size_t i = 0; i < synthNums.size(); i++) {
-    synths[i] = hitset->synthonsToUse[i][synthNums[i]].second;
+    synths[i] =
+        hitset->synthonsToUse[i][synthNums[i]].second->getOrigMol().get();
     synthNames[i] = hitset->synthonsToUse[i][synthNums[i]].first;
   }
 
@@ -227,6 +228,60 @@ SynthonSpaceSearcher::doTheSearch(
   }
   timedOut = details::checkTimeOut(endTime);
   return allHits;
+}
+
+bool SynthonSpaceSearcher::quickVerify(
+    const SynthonSpaceHitSet *hitset,
+    const std::vector<size_t> &synthNums) const {
+  if (getParams().minHitHeavyAtoms || getParams().maxHitHeavyAtoms) {
+    unsigned int numHeavyAtoms = 0;
+    for (unsigned int i = 0; i < synthNums.size(); ++i) {
+      numHeavyAtoms +=
+          hitset->synthonsToUse[i][synthNums[i]].second->getNumHeavyAtoms();
+    }
+    if (numHeavyAtoms < getParams().minHitHeavyAtoms ||
+        (getParams().maxHitHeavyAtoms &&
+         numHeavyAtoms > getParams().maxHitHeavyAtoms)) {
+      return false;
+    }
+  }
+  if (getParams().minHitMolWt > 0.0 || getParams().maxHitMolWt > 0.0) {
+    double molWt = 0.0;
+    for (unsigned int i = 0; i < synthNums.size(); ++i) {
+      molWt += hitset->synthonsToUse[i][synthNums[i]].second->getMolWt();
+    }
+    if (molWt < getParams().minHitMolWt ||
+        (getParams().maxHitMolWt > 0.0 && molWt > getParams().maxHitMolWt)) {
+      return false;
+    }
+  }
+  if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms) {
+    unsigned int numChiralAtoms = 0;
+    for (unsigned int i = 0; i < synthNums.size(); ++i) {
+      numChiralAtoms +=
+          hitset->synthonsToUse[i][synthNums[i]].second->getNumChiralAtoms();
+    }
+    if (numChiralAtoms < getParams().minHitChiralAtoms ||
+        (getParams().maxHitChiralAtoms &&
+         numChiralAtoms > getParams().maxHitChiralAtoms)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// It's conceivable that building the full molecule has changed the
+// chiral atom count.
+bool SynthonSpaceSearcher::verifyHit(const ROMol &mol) const {
+  if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms) {
+    auto numChiralAtoms = details::countChiralAtoms(mol);
+    if (numChiralAtoms < getParams().minHitChiralAtoms ||
+        (getParams().maxHitChiralAtoms &&
+         numChiralAtoms > getParams().maxHitChiralAtoms)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 namespace {
