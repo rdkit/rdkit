@@ -3311,6 +3311,8 @@ The databases are normally supplied in text form, and can be used as such:
 
   >>> from rdkit import Chem
   >>> from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator
+  >>> import os
+  >>> RDBASE = os.environ["RDBASE"]
   >>> synthonspace = rdSynthonSpaceSearch.SynthonSpace()
   >>> synthonspace.ReadTextFile(f"{RDBASE}/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt")
   >>> print(f"Number of reactions : {synthonspace.GetNumReactions()}")
