@@ -3265,10 +3265,10 @@ Searching Synthon Spaces
 
 A number of companies, notably `Enamine <https://enamine.net>`_ and `ChemSpace <https://chem-space.com>`_,
 provide very large libraries of compounds in synthon form.  Enumerating and searching them is infeasible due
-to their enormous sizes, of the order of 10s of billions of compounds.  They can, however, be searched efficiently in
-synthon form.  Currently the RDKit can be used to query them by substructure (returning those products that match a SMARTS
-string or MOL query) or fingerprint Tanimoto similarity (returning products which match a query molecule within a
-given Tanimoto similarity) using any of the available fingerprints.
+to their enormous sizes, on the order of 10s of billions of compounds.  They can, however, be searched efficiently in
+synthon form.  Currently the RDKit can be used to query these libraries by substructure (returning those products
+that match a SMARTS string or MOL query) or fingerprint Tanimoto similarity (returning products which match a query
+molecule within a given Tanimoto similarity) using any of the available fingerprint generators.
 
 How It Works
 ============
@@ -3323,7 +3323,7 @@ The databases are normally supplied in text form, and can be used as such:
 
 However, a large amount of pre-processing is required before the data are searchable which can be time consuming.
 For example, preparing the current REAL database (2024-09) of 70 billion compounds can take several hours.  It is
-therefore strongly recommended that the binary database is created before use.
+therefore strongly recommended that a binary database is created before use.
 
 The fingerprints are written to the DB file, which means that the file must be searched using exactly the same type
 in order to get meaningful results.  This will be checked at runtime.  You may need to keep several versions of the
@@ -3355,7 +3355,7 @@ The binary database is read using the appropriate function:
 Memory Usage
 ============
 
-The 2024-09 REAL database requires about 10GiB of RAM, FreedomSpace 2024-09 about 3.5GiB.  They should both therefore
+The 2024-09 REAL database requires about 10GB of RAM, FreedomSpace 2024-09 about 3.5GB.  They should both therefore
 be searchable on an average laptop.
 
 Substructure Searching
@@ -3375,8 +3375,9 @@ Results are returned in a `rdSynthonSpaceSearch.SearchResults` object.
   Number of hits : 50
 
 Substructure searches should take no more than a few seconds on a machine with average performance, although this will
-depend on the generality or otherwise of the query and the number of hits returned.  The search can be given an
-optional parameters object that can control various aspects of the search:
+depend on the generality and complexity of the query and the number of hits returned.
+
+The search can be given an optional parameters object that can control various aspects of the search:
 
 .. doctest::
 
@@ -3387,7 +3388,7 @@ optional parameters object that can control various aspects of the search:
   >>> print(f"Number of hits : {len(results.GetHitMolecules())}")
   Number of hits : 10
 
-The timeout is specified in seconds; if the given time is exceeded results found thus far will be returned.  The method
+The timeout is specified in seconds; if the given time is exceeded all results found thus far will be returned.  The method
 `results.GetTimedOut()` will report whether or not that has occurred.  The `maxHits` parameter defaults to 1000.  If
 set to -1, all hits will be returned.  It can happen that having looked at the first 1000 hits, you may wish to examine
 the following 1000 in the hit list.  The parameter `hitStart` allows this.
