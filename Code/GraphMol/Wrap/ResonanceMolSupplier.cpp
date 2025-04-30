@@ -237,13 +237,13 @@ struct resmolsup_wrap {
              "Returns the number of individual conjugated groups in the "
              "molecule.\n")
         .def("GetBondConjGrpIdx",
-             (unsigned int (ResonanceMolSupplier::*)(unsigned int)) &
+             (int (ResonanceMolSupplier::*)(unsigned int)) &
                  ResonanceMolSupplier::getBondConjGrpIdx,
              python::args("self", "bi"),
              "Given a bond index, it returns the index of the conjugated group"
              "the bond belongs to, or -1 if it is not conjugated.\n")
         .def("GetAtomConjGrpIdx",
-             (unsigned int (ResonanceMolSupplier::*)(unsigned int)) &
+             (int (ResonanceMolSupplier::*)(unsigned int)) &
                  ResonanceMolSupplier::getAtomConjGrpIdx,
              python::args("self", "ai"),
              "Given an atom index, it returns the index of the conjugated group"
