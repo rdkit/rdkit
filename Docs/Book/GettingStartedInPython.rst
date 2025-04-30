@@ -3259,6 +3259,177 @@ out the code will automatically assign labels:
 R-group decomposition is actually pretty complex, so there's a lot more there.
 Hopefully this is enough to get you started. 
 
+
+Searching Synthon Spaces
+************************
+
+A number of companies, notably `Enamine <https://enamine.net>`_ and `ChemSpace <https://chem-space.com>`_,
+provide very large libraries of compounds in synthon form.  Enumerating and searching them is infeasible due
+to their enormous sizes, on the order of 10s of billions of compounds.  They can, however, be searched efficiently in
+synthon form.  Currently the RDKit can be used to query these libraries by substructure (returning those products
+that match a SMARTS string or MOL query) or fingerprint Tanimoto similarity (returning products which match a query
+molecule within a given Tanimoto similarity) using any of the available fingerprint generators.
+
+How It Works
+============
+
+The synthon space is provided in a format similar to: ::
+
+    SMILES	synton_id	synton#	reaction_id
+    c1ccccc1C(=O)[1*]	1-1	0	amide-1
+    C1CCCCC1C(=O)[1*]	1-2	0	amide-1
+    Clc1ccccc1C(=O)[1*]	1-3	0	amide-1
+    CCCCC(=O)[1*]	1-4	0	amide-1
+    [1*]N1CCCC1		2-1	1	amide-1
+    [1*]NCCCCC		2-2	1	amide-1
+    [1*]NCC1CC1		2-3	1	amide-1
+
+which describes a library of amides built from 2 synthons.  There are 4 examples for the first synthon and
+3 for the second, giving a total of 12 products.  Each product is formed by taking a synthon from the first
+set and another from the second and combining them by removing the attachment atoms ([1*] in this case),
+and adding a bond between the atoms the attachment atoms were bonded to.  Both Enamine and ChemSpace use
+transuranic elements (uranium, neptunium, plutonium and americium) as the attachment atoms.  Libraries with
+up to 4 synthons per product are supported.
+
+In order to perform the search, the query molecule is fragmented by cutting all combinations of bonds that give rise
+to a maximum number of fragments.  The maximum is the largest number of synthon sets in any reaction in the space,
+and will most likely be between 2 and 4.  There is not a maximum on the number of bonds used in the cutting, because
+2 non-ring bonds will give rise to 3 fragments, but 4 ring bonds may also do so, 2 splitting one ring and the other 2
+a different ring in the query.
+This produces a large number of fragment sets, where each set is produced by cutting one particular combination
+of bonds.  Each fragment in the set is compared with synthons in one column of the synthons for each reaction
+thus identifying combinations of synthons that might match the query.  These combinations are enumerated and
+a final comparison with the query performed to select the hit set.  The algorithm is largely similar to that
+described by `Liphardt and Sander <https://doi.org/10.1021/acs.jcim.3c00290>`_.
+
+Database Preparation
+====================
+
+The databases are normally supplied in text form, and can be used as such:
+
+.. doctest::
+
+  >>> from rdkit import Chem
+  >>> from rdkit.Chem import rdSynthonSpaceSearch, rdFingerprintGenerator
+  >>> import os
+  >>> RDBASE = os.environ["RDBASE"]
+  >>> synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+  >>> textFile = f"{RDBASE}/Code/GraphMol/SynthonSpaceSearch/data/amide_space.txt"
+  >>> synthonspace.ReadTextFile(textFile)
+  >>> print(f"Number of reactions : {synthonspace.GetNumReactions()}")
+  Number of reactions : 1
+  >>> print(f"Number of products : {synthonspace.GetNumProducts()}")
+  Number of products : 12
+
+However, a large amount of pre-processing is required before the data are searchable which can be time consuming.
+For example, preparing the current REAL database (2024-09) of 70 billion compounds can take several hours.  It is
+therefore strongly recommended that a binary database is created before use.
+
+The fingerprints are written to the DB file, which means that the file must be searched using exactly the same type
+in order to get meaningful results.  This will be checked at runtime.  You may need to keep several versions of the
+database, labelled accordingly.
+
+.. doctest::
+
+  >>> fpgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=2048)
+  >>> synthonspace.BuildSynthonFingerprints(fpgen)
+  >>> dbFile = "amide_library_rdkit.spc"
+  >>> synthonspace.WriteDBFile(dbFile)
+
+There is also a convenience function for performing the conversion in one go:
+
+.. doctest::
+
+  >>> fpgen = rdFingerprintGenerator.GetMorganGenerator(fpSize=2048)
+  >>> rdSynthonSpaceSearch.ConvertTextToDBFile(textFile, dbFile, fpgen)
+
+although under the hood it does exactly the same steps.
+
+The binary database is read using the appropriate function:
+
+.. doctest::
+
+  >>> synthonspace.ReadDBFile(f"{RDBASE}/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc")
+
+
+Memory Usage
+============
+
+The 2024-09 REAL database requires about 10GB of RAM, FreedomSpace 2024-09 about 3.5GB.  They should both therefore
+be searchable on an average laptop.
+
+Substructure Searching
+======================
+
+Any query molecule can be used for substructure searching.  The full set of query features supported by the RDKit is
+allowed.  However, queries that use recursive SMARTS or other more complicated features may be noticeably slower.
+Results are returned in a `rdSynthonSpaceSearch.SearchResults` object.
+
+.. doctest::
+
+  >>> spc = rdSynthonSpaceSearch.SynthonSpace()
+  >>> spc.ReadDBFile(f"{RDBASE}/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc")
+  >>> qmol = Chem.MolFromSmarts("s1cccc1C(=O)Cn1nn(c(-c)c1)")
+  >>> results = spc.SubstructureSearch(qmol)
+  >>> print(f"Number of hits : {len(results.GetHitMolecules())}")
+  Number of hits : 50
+
+Substructure searches should take no more than a few seconds on a machine with average performance, although this will
+depend on the generality and complexity of the query and the number of hits returned.
+
+The search can be given an optional parameters object that can control various aspects of the search:
+
+.. doctest::
+
+  >>> params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+  >>> params.maxHits = 10
+  >>> params.timeOut = 10
+  >>> results = spc.SubstructureSearch(qmol, params=params)
+  >>> print(f"Number of hits : {len(results.GetHitMolecules())}")
+  Number of hits : 10
+
+The timeout is specified in seconds; if the given time is exceeded all results found thus far will be returned.  The method
+`results.GetTimedOut()` will report whether or not that has occurred.  The `maxHits` parameter defaults to 1000.  If
+set to -1, all hits will be returned.  It can happen that having looked at the first 1000 hits, you may wish to examine
+the following 1000 in the hit list.  The parameter `hitStart` allows this.
+
+As well as returning the first hits, the parameter `randomSample`, if set True, will return a random sampling of the
+possible hits.
+
+Similarity Searching
+====================
+
+The synthon space can also be searched by fingerprint similarity.  The fingerprint generator used to make the query
+fingerprints must be exactly the same as that used to create the DB file.  The SynthonSpace can report the infoString
+of the fingerprint generator it was used with, which will help if there is a mismatch.  At present there is no way
+of using the infoString directly to create a fingerprint generator, so it must be examined visually.
+
+.. doctest::
+
+  >>> print(spc.GetSynthonFingerprintType())
+  Common arguments : countSimulation=0 fpSize=2048 bitsPerFeature=2 includeChirality=0 --- RDKitFPArguments minPath=1 maxPath=7 useHs=1 branchedPaths=1 useBondOrder=1 --- RDKitFPEnvGenerator --- RDKitFPAtomInvGenerator --- No bond invariants generator
+
+The similarity metric is hard-coded to use the Tanimoto coefficient.  The default similarity cutoff for the search
+is 0.5, which is a reasonable starting value for a Morgan fingerprint of radius 2.  Note that in the similarity search,
+you will get the first `maxHits` hits that pass the threshold, not necessarily the best hits.  The search attempts to
+bring the most similar matches towards the start of the hit list by ordering the synthons that match a fragment in
+descending order of similarity, but this does not always bring the most similar products to the fore.
+
+Once the search has assembled a set of likely synthon combinations that might match the query by similarity, a two stage
+screen is used.  The fingerprints of the synthons are added together and the Tanimoto similarity to the query fingerprint
+calculated.  If this is above the threshold then the hit molecule is made, a fingerprint generated and that compared with
+the query fingerprint.  If that similarity passes the threshold, the hit is accepted.  The first, approximate,
+comparison may cause genuine hits to be missed, so there is a parameter `approxSimilarityAdjuster` that lowers the
+threshold for the first test.  It defaults to 0.1.  The higher the value the fewer hits will be missed, but at the
+expense of longer search times.
+
+Limiting Hits
+=============
+
+The sizes of the hits can be limited by setting appropriate values to the SynthonSpaceSearchParams object.  Maximum and
+minimum values can be set for the number of heavy atoms, the number of chiral atoms and the molecular weight.
+
+
 Non-Chemical Functionality
 **************************
 
