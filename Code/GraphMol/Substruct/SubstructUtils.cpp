@@ -173,6 +173,10 @@ bool bondCompat(const Bond *b1, const Bond *b2,
     return bond->getIsConjugated() && (bond->getBondType() == Bond::SINGLE ||
                                        bond->getBondType() == Bond::DOUBLE);
   });
+  auto isSingleOrDoubleBond([](const Bond *bond) {
+    return (bond->getBondType() == Bond::SINGLE ||
+            bond->getBondType() == Bond::DOUBLE);
+  });
 
   if (ps.useQueryQueryMatches && b1->hasQuery() && b2->hasQuery()) {
     res = static_cast<const QueryBond *>(b1)->QueryMatch(
@@ -185,6 +189,15 @@ bool bondCompat(const Bond *b1, const Bond *b2,
                isConjugatedSingleOrDoubleBond(b2)) ||
               (b2->getBondType() == Bond::AROMATIC &&
                isConjugatedSingleOrDoubleBond(b1)))) {
+    res = true;
+  } else if (ps.aromaticMatchesSingleOrDouble && !b1->hasQuery() &&
+             !b2->hasQuery() &&
+             ((b1->getBondType() == Bond::AROMATIC &&
+               b2->getBondType() == Bond::AROMATIC) ||
+              (b1->getBondType() == Bond::AROMATIC &&
+               isSingleOrDoubleBond(b2)) ||
+              (b2->getBondType() == Bond::AROMATIC &&
+               isSingleOrDoubleBond(b1)))) {
     res = true;
   } else {
     res = b1->Match(b2);
@@ -282,6 +295,7 @@ void updateSubstructMatchParamsFromJSON(SubstructMatchParameters &params,
   PT_OPT_GET(maxRecursiveMatches);
   PT_OPT_GET(numThreads);
   PT_OPT_GET(specifiedStereoQueryMatchesUnspecified);
+  PT_OPT_GET(aromaticMatchesSingleOrDouble);
 }
 
 std::string substructMatchParamsToJSON(const SubstructMatchParameters &params) {
@@ -297,6 +311,7 @@ std::string substructMatchParamsToJSON(const SubstructMatchParameters &params) {
   PT_OPT_PUT(maxRecursiveMatches);
   PT_OPT_PUT(numThreads);
   PT_OPT_PUT(specifiedStereoQueryMatchesUnspecified);
+  PT_OPT_PUT(aromaticMatchesSingleOrDouble);
 
   std::stringstream ss;
   boost::property_tree::json_parser::write_json(ss, pt);

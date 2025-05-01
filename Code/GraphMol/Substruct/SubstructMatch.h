@@ -71,6 +71,8 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   bool specifiedStereoQueryMatchesUnspecified =
       false;  //!< If set, query atoms and bonds with specified stereochemistry
               //!< will match atoms and bonds with unspecified stereochemistry
+  bool aromaticMatchesSingleOrDouble = false;  //!< Aromatic bonds match single
+                                               //!< or double bonds
   SubstructMatchParameters() {}
 };
 
