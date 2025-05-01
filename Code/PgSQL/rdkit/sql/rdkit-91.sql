@@ -246,6 +246,7 @@ select 'CC(F)Cl'::mol@='CC(F)Cl'::mol;
 set rdkit.do_chiral_sss=false;
 
 -- Enhanced stereo
+-- Includes Issue# 8465: Demonstrate that modification of molecule coords does not impact identity
 set rdkit.do_chiral_sss=false;
 set rdkit.do_enhanced_stereo_sss=false; /* has no effect when do_chiral_sss is false */
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
@@ -256,6 +257,7 @@ select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'c1ccccc1 |(7.8993,-8.9847,;8.6138,-8.5722,;8.6138,-7.7472,;7.8993,-7.3347,;7.1848,-7.7472,;7.1848,-8.5722,)|'::mol@='c1ccccc1 |(10.3733,-8.9847,;11.0877,-8.5722,;11.0877,-7.7472,;10.3733,-7.3347,;9.6588,-7.7472,;9.6588,-8.5722,)|'::mol;
 set rdkit.do_enhanced_stereo_sss=true; /* has no effect when do_chiral_sss is false */
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
@@ -265,6 +267,7 @@ select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'c1ccccc1 |(7.8993,-8.9847,;8.6138,-8.5722,;8.6138,-7.7472,;7.8993,-7.3347,;7.1848,-7.7472,;7.1848,-8.5722,)|'::mol@='c1ccccc1 |(10.3733,-8.9847,;11.0877,-8.5722,;11.0877,-7.7472,;10.3733,-7.3347,;9.6588,-7.7472,;9.6588,-8.5722,)|'::mol;
 set rdkit.do_chiral_sss=true;
 set rdkit.do_enhanced_stereo_sss=false;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
@@ -275,6 +278,7 @@ select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'c1ccccc1 |(7.8993,-8.9847,;8.6138,-8.5722,;8.6138,-7.7472,;7.8993,-7.3347,;7.1848,-7.7472,;7.1848,-8.5722,)|'::mol@='c1ccccc1 |(10.3733,-8.9847,;11.0877,-8.5722,;11.0877,-7.7472,;10.3733,-7.3347,;9.6588,-7.7472,;9.6588,-8.5722,)|'::mol;
 set rdkit.do_enhanced_stereo_sss=true; /* now we expect to see an effect */
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
@@ -284,6 +288,7 @@ select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'c1ccccc1 |(7.8993,-8.9847,;8.6138,-8.5722,;8.6138,-7.7472,;7.8993,-7.3347,;7.1848,-7.7472,;7.1848,-8.5722,)|'::mol@='c1ccccc1 |(10.3733,-8.9847,;11.0877,-8.5722,;11.0877,-7.7472,;10.3733,-7.3347,;9.6588,-7.7472,;9.6588,-8.5722,)|'::mol;
 
 set rdkit.do_chiral_sss=false;
 set rdkit.do_enhanced_stereo_sss=false;
