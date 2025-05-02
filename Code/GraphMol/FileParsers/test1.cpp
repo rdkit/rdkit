@@ -4381,7 +4381,7 @@ void testPDBResidues() {
     TEST_ASSERT(m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getMonomerInfo()->getMonomerType() ==
                 AtomMonomerInfo::PDBRESIDUE);
-    std::map<std::string, boost::shared_ptr<ROMol>> res =
+    std::map<std::string, std::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false);
 
     TEST_ASSERT(res.size() == 22);
@@ -4408,7 +4408,7 @@ void testPDBResidues() {
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
     keep.emplace_back("8NH");
-    std::map<std::string, boost::shared_ptr<ROMol>> res =
+    std::map<std::string, std::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep);
 
     TEST_ASSERT(res.size() == 1);
@@ -4434,7 +4434,7 @@ void testPDBResidues() {
                 AtomMonomerInfo::PDBRESIDUE);
     std::vector<std::string> keep;
     keep.emplace_back("8NH");
-    std::map<std::string, boost::shared_ptr<ROMol>> res =
+    std::map<std::string, std::shared_ptr<ROMol>> res =
         MolOps::getMolFragsWithQuery(*m, getResidue, false, &keep, true);
 
     TEST_ASSERT(res.size() == 21);

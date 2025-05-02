@@ -80,7 +80,7 @@ void clearReactionProps(ROMol &mol) {
 MolBundle enumerate(const ROMol &mol,
                     const std::vector<MolEnumeratorParams> &paramLists) {
   std::unique_ptr<MolBundle> accum{new MolBundle()};
-  boost::shared_ptr<ROMol> molCpy{new ROMol(mol)};
+  std::shared_ptr<ROMol> molCpy{new ROMol(mol)};
   detail::preserveOrigIndices(*molCpy);
   accum->addMol(molCpy);
   bool variationsFound = false;
