@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build -c conda-forge cmake \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        swig=4.2
+        swig=4.2 ccache
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -34,7 +34,9 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=ON \
     -DRDK_SWIG_STATIC=ON \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
-    -DRDK_TEST_MULTITHREADED=ON
+    -DRDK_TEST_MULTITHREADED=ON \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

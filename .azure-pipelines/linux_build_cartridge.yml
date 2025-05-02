@@ -14,7 +14,8 @@ steps:
         boost-cpp=$(boost_version) \
         boost=$(boost_version) \
         eigen \
-        cairo
+        cairo \
+        ccache
     conda activate rdkit_build
   displayName: Setup build environment
 - bash: |
@@ -36,7 +37,9 @@ steps:
     -DRDK_BUILD_THREADSAFE_SSS=ON \
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_PGSQL=ON \
-    -DPostgreSQL_CONFIG=/usr/bin/pg_config
+    -DPostgreSQL_CONFIG=/usr/bin/pg_config \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

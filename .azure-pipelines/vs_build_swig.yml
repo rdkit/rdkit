@@ -15,7 +15,7 @@ steps:
         cmake=3.26 ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        cairo eigen swig=4.2
+        cairo eigen swig=4.2 ccache
     call activate rdkit_build
   displayName: Install dependencies
 - script: |
@@ -45,7 +45,9 @@ steps:
     -DRDK_BUILD_SWIG_CSHARP_WRAPPER=ON ^
     -DRDK_BUILD_CFFI_LIB=OFF ^
     -DRDK_SWIG_STATIC=ON ^
-    -DRDK_TEST_MULTITHREADED=ON 
+    -DRDK_TEST_MULTITHREADED=ON ^
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache
   displayName: Configure build (Run CMake)
 - script: |
     call activate rdkit_build
@@ -58,7 +60,7 @@ steps:
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
     cd build
-    ctest -R CSharpTests -C Release -T test --output-on-failure --verbose 
+    ctest -R CSharpTests -C Release -T test --output-on-failure --verbose
   displayName: Run tests
 - task: PublishTestResults@2
   inputs:

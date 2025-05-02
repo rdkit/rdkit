@@ -1,5 +1,5 @@
 steps:
-- bash: | 
+- bash: |
     export CONDA=/tmp/miniforge
     wget https://github.com/conda-forge/miniforge/releases/download/24.9.0-0/Miniforge3-24.9.0-0-MacOSX-x86_64.sh
     bash Miniforge3-24.9.0-0-MacOSX-x86_64.sh -b -p ${CONDA}
@@ -23,7 +23,7 @@ steps:
         libcxx=$(compiler_version) cmake=3.26 \
         libboost=$(boost_version) \
         libboost-devel=$(boost_version) \
-        cairo eigen swig=4.2 make
+        cairo eigen swig=4.2 make ccache
     conda activate rdkit_build
   displayName: Setup build environment
 - bash: |
@@ -33,7 +33,7 @@ steps:
     ls -l /Library
     ls -l /Library/Developer
     ls -l /Library/Developer/CommandLineTools
-    ls -l /Library/Developer/CommandLineTools/SDKs    
+    ls -l /Library/Developer/CommandLineTools/SDKs
     export SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX$(target_platform).sdk
     export CONDA_BUILD_SYSROOT=${SDKROOT}
     mkdir build && cd build && \
@@ -55,7 +55,9 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=ON \
     -DRDK_SWIG_STATIC=ON \
     -DRDK_BUILD_THREADSAFE_SSS=ON \
-    -DRDK_TEST_MULTITHREADED=ON
+    -DRDK_TEST_MULTITHREADED=ON \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache
   displayName: Configure build (Run CMake)
 - bash: |
     export CONDA=/tmp/miniforge

@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
-        cairo eigen
+        cairo eigen ccache
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -36,7 +36,9 @@ steps:
     -DBoost_NO_SYSTEM_PATHS=ON \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib" \
-    -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+    -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_C_COMPILER_LAUNCHER=ccache
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

@@ -11,7 +11,7 @@ steps:
         libboost-python-devel=(boost_version) ^
         libboost=$(boost_version) ^
         libboost-devel=$(boost_version) ^
-        numpy matplotlib cairo pillow eigen pandas=2.1
+        numpy matplotlib cairo pillow eigen pandas=2.1 ccache
     call activate rdkit_build
     conda install -c conda-forge cmake ipython pytest nbval
   displayName: Install dependencies
