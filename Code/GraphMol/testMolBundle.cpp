@@ -182,10 +182,8 @@ void testExceptions() {
 
 int main() {
   RDLog::InitLogs();
-#if 1
   testBaseFunctionality();
   testSubstructFunctionality();
   testExceptions();
-#endif
   return 0;
 }
