@@ -64,9 +64,7 @@ steps:
     -DRDK_TEST_MULTITHREADED=ON \
     -DRDK_BUILD_CFFI_LIB=ON \
     -DCMAKE_OSX_SYSROOT=${SDKROOT} \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform) \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_COMPILER_LAUNCHER=ccache
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=$(target_platform)
   displayName: Configure build (Run CMake)
 - bash: |
     export CONDA=/tmp/miniforge

@@ -36,9 +36,7 @@ steps:
     -DBoost_NO_SYSTEM_PATHS=ON \
     -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib" \
-    -DCMAKE_PREFIX_PATH=$CONDA_PREFIX \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_C_COMPILER_LAUNCHER=ccache
+    -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
   displayName: Configure build (Run CMake)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh

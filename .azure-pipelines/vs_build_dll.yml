@@ -41,8 +41,6 @@ steps:
     -DRDK_BUILD_SWIG_WRAPPERS=OFF ^
     -DRDK_SWIG_STATIC=OFF ^
     -DRDK_TEST_MULTITHREADED=ON ^
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
-    -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
     -DCMAKE_INCLUDE_PATH=%CONDA_PREFIX%/Library/include ^
     -DCMAKE_LIBRARY_PATH="%CONDA_PREFIX%/Library/lib
   displayName: Configure build (Run CMake)
