@@ -167,7 +167,7 @@ void MolDraw2DCairo::drawPolygon(const std::vector<Point2D> &cds,
   cairo_line_join_t olinejoin = cairo_get_line_join(dp_cr);
 
   cairo_set_line_cap(dp_cr, CAIRO_LINE_CAP_BUTT);
-  cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_BEVEL);
+  cairo_set_line_join(dp_cr, CAIRO_LINE_JOIN_MITER);
   setDashes(dp_cr, dash());
   cairo_set_line_width(dp_cr, width);
 
