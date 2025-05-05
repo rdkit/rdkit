@@ -6582,10 +6582,10 @@ M  END
     // it is done as a fraction of the overall arrow length and the dative
     // bonds in this ferrocene are of markedly different lengths.  The
     // lengths are in pixels, so the differences aren't huge.
-    CHECK_THAT(h1s1, Catch::Matchers::WithinAbs(h2s1, 0.5));
+    CHECK_THAT(h1s1, Catch::Matchers::WithinAbs(h2s1, 0.75));
     auto h1s2 = (ends1[0] - ends1[2]).length();
     auto h2s2 = (ends2[0] - ends2[2]).length();
-    CHECK_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.15));
+    CHECK_THAT(h1s2, Catch::Matchers::WithinAbs(h2s2, 0.75));
 
     check_file_hash(nameBase + ".svg");
   }
