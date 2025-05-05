@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2019-2023 Greg Landrum
+//  Copyright (C) 2019-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -843,15 +843,69 @@ M  END)CTAB"_ctab;
 }
 
 TEST_CASE("Github #7295", "CIS/TRANS in aromatic ring") {
-    SECTION("Smart CIS/TRANS bonds should match single or aromatic"){
-      SubstructMatchParameters ps;
+  SECTION("Smart CIS/TRANS bonds should match single or aromatic") {
+    SubstructMatchParameters ps;
 
-      auto query = "[O:1]=[c:2]1/[c:3](=[C:4]/[c:5]2:[c:10]:[c:9]:[c:8]:[c:7]:[c:6]:2):[s:11]:[c:12]2:[n:13]:1-[N:14]-[C:15]-[N:20]-[N:21]=2"_smarts;
-      auto mol = "[O:1]=[c:2]1/[c:3](=[CH:4]/[c:5]2[cH:6][cH:7][cH:8][cH:9][cH:10]2)[s:11][c:12]2[n:13]1[NH:14][C:15]1([CH2:16][CH2:17][CH2:18][CH2:19]1)[NH:20][N:21]=2"_smiles;
-      CHECK(SubstructMatch(*mol, *query, ps).size() == 1);
-      ps.useChirality = true;
-      CHECK(SubstructMatch(*mol, *query, ps).size() == 1);
-      auto mol2 = "[O:1]=[c:2]1\\[c:3](=[CH:4]/[c:5]2[cH:6][cH:7][cH:8][cH:9][cH:10]2)[s:11][c:12]2[n:13]1[NH:14][C:15]1([CH2:16][CH2:17][CH2:18][CH2:19]1)[NH:20][N:21]=2"_smiles;
-      CHECK(SubstructMatch(*mol2, *query, ps).size() == 0);
+    auto query =
+        "[O:1]=[c:2]1/[c:3](=[C:4]/[c:5]2:[c:10]:[c:9]:[c:8]:[c:7]:[c:6]:2):[s:11]:[c:12]2:[n:13]:1-[N:14]-[C:15]-[N:20]-[N:21]=2"_smarts;
+    auto mol =
+        "[O:1]=[c:2]1/[c:3](=[CH:4]/[c:5]2[cH:6][cH:7][cH:8][cH:9][cH:10]2)[s:11][c:12]2[n:13]1[NH:14][C:15]1([CH2:16][CH2:17][CH2:18][CH2:19]1)[NH:20][N:21]=2"_smiles;
+    CHECK(SubstructMatch(*mol, *query, ps).size() == 1);
+    ps.useChirality = true;
+    CHECK(SubstructMatch(*mol, *query, ps).size() == 1);
+    auto mol2 =
+        "[O:1]=[c:2]1\\[c:3](=[CH:4]/[c:5]2[cH:6][cH:7][cH:8][cH:9][cH:10]2)[s:11][c:12]2[n:13]1[NH:14][C:15]1([CH2:16][CH2:17][CH2:18][CH2:19]1)[NH:20][N:21]=2"_smiles;
+    CHECK(SubstructMatch(*mol2, *query, ps).size() == 0);
+  }
+}
+
+TEST_CASE(
+    "Github #8485: Allow single/double bonds to match aromatic in substructure search") {
+  SECTION("basics") {
+    auto m = "C1=CC=CC=C1"_smiles;
+    REQUIRE(m);
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesSingleOrDouble = true;
+
+    {
+      auto q = "[#6]:[#6]"_smarts;
+      REQUIRE(q);
+      CHECK(!SubstructMatch(*m, *q).empty());
+      CHECK(!SubstructMatch(*m, *q, ps).empty());
     }
+    {
+      auto q = "C-C"_smiles;
+      REQUIRE(q);
+      CHECK(SubstructMatch(*m, *q).empty());
+      CHECK(!SubstructMatch(*m, *q, ps).empty());
+    }
+    {
+      auto q = "C=C"_smiles;
+      REQUIRE(q);
+      CHECK(SubstructMatch(*m, *q).empty());
+      CHECK(!SubstructMatch(*m, *q, ps).empty());
+    }
+  }
+  SECTION("as reported") {
+    auto m = "C1=CC2=C(OC1=O)C(=CC=C2)C(=O)O"_smiles;
+    REQUIRE(m);
+    auto q = "CC(=O)OC1=CC=CC=C1C(=O)O"_smiles;
+    REQUIRE(q);
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesSingleOrDouble = true;
+    CHECK(SubstructMatch(*m, *q).empty());
+    CHECK(!SubstructMatch(*m, *q, ps).empty());
+  }
+  SECTION("symmetry") {
+    auto m1 = "C1=CC=CC=C1"_smiles;
+    REQUIRE(m1);
+    auto m2 = "C1CCCCC1"_smiles;
+    REQUIRE(m2);
+    CHECK(SubstructMatch(*m1, *m2).empty());
+    CHECK(SubstructMatch(*m2, *m1).empty());
+    SubstructMatchParameters ps;
+    ps.aromaticMatchesSingleOrDouble = true;
+    CHECK(!SubstructMatch(*m1, *m2, ps).empty());
+    CHECK(!SubstructMatch(*m2, *m1, ps).empty());
+  }
 }
