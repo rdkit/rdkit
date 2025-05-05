@@ -107,11 +107,10 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
   origPts_[0] = points_[0];
   origPts_[1] = points_[1];
   Point2D ab(points_[1]), p1, p2;
-  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[0], fill_, frac_,
-                                  lineWidth_, angle_);
-  ab = origPts_[1];
-  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[1], fill_, frac_, 0.0,
+  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[0], frac_, lineWidth_,
                                   angle_);
+  ab = origPts_[1];
+  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[1], frac_, 0.0, angle_);
   origPts_[2] = p1;
   origPts_[3] = p2;
 }
@@ -132,7 +131,7 @@ void DrawShapeArrow::myDraw(MolDraw2D &drawer) const {
 void DrawShapeArrow::findExtremes(double &xmin, double &xmax, double &ymin,
                                   double &ymax) const {
   // do it for origPts_ rather than points_.  The difference is that the
-  // arrow ends haven't been adjusted of the lineWidth_.  It's pretty
+  // arrow ends haven't been adjusted for the lineWidth_.  It's pretty
   // inconceivable that this will matter for these purposes as the chances
   // of a dative bond going to an atom without a symbol on the edge of the
   // drawing seem slim.  findExtremes is only used for finding the extremes
