@@ -233,15 +233,16 @@ SynthonSpaceSearcher::doTheSearch(
 bool SynthonSpaceSearcher::quickVerify(
     const SynthonSpaceHitSet *hitset,
     const std::vector<size_t> &synthNums) const {
-  if (getParams().minHitHeavyAtoms || getParams().maxHitHeavyAtoms) {
+  if (getParams().minHitHeavyAtoms || getParams().maxHitHeavyAtoms > -1) {
     unsigned int numHeavyAtoms = 0;
     for (unsigned int i = 0; i < synthNums.size(); ++i) {
       numHeavyAtoms +=
           hitset->synthonsToUse[i][synthNums[i]].second->getNumHeavyAtoms();
     }
     if (numHeavyAtoms < getParams().minHitHeavyAtoms ||
-        (getParams().maxHitHeavyAtoms &&
-         numHeavyAtoms > getParams().maxHitHeavyAtoms)) {
+        (getParams().maxHitHeavyAtoms > -1 &&
+         numHeavyAtoms >
+             static_cast<unsigned int>(getParams().maxHitHeavyAtoms))) {
       return false;
     }
   }
@@ -255,7 +256,7 @@ bool SynthonSpaceSearcher::quickVerify(
       return false;
     }
   }
-  if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms) {
+  if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms > -1) {
     unsigned int numChiralAtoms = 0;
     unsigned int numExcDummies = 0;
     for (unsigned int i = 0; i < synthNums.size(); ++i) {
@@ -267,8 +268,9 @@ bool SynthonSpaceSearcher::quickVerify(
     // numChiralAtoms is the upper bound on the number of chiral atoms in
     // the hit, numExcDummies the lower bound.
     if (numChiralAtoms < getParams().minHitChiralAtoms ||
-        (getParams().maxHitChiralAtoms &&
-         numExcDummies > getParams().maxHitChiralAtoms)) {
+        (getParams().maxHitChiralAtoms > -1 &&
+         numExcDummies >
+             static_cast<unsigned int>(getParams().maxHitChiralAtoms))) {
       return false;
     }
   }
@@ -281,8 +283,9 @@ bool SynthonSpaceSearcher::verifyHit(ROMol &mol) const {
   if (getParams().minHitChiralAtoms || getParams().maxHitChiralAtoms) {
     auto numChiralAtoms = details::countChiralAtoms(mol);
     if (numChiralAtoms < getParams().minHitChiralAtoms ||
-        (getParams().maxHitChiralAtoms &&
-         numChiralAtoms > getParams().maxHitChiralAtoms)) {
+        (getParams().maxHitChiralAtoms > -1 &&
+         numChiralAtoms >
+             static_cast<unsigned int>(getParams().maxHitChiralAtoms))) {
       return false;
     }
   }

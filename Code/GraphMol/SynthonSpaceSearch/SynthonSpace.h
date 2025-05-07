@@ -111,15 +111,15 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
              // 0.05 is adequate, and higher than that has been seen to
              // produce long run times.
   unsigned int minHitHeavyAtoms{0};  // Minimum number of heavy atoms in a hit.
-  unsigned int maxHitHeavyAtoms{0};  // Maximum number of heavy atoms in a hit.
-                                     // 0 means no maximum.
+  int maxHitHeavyAtoms{-1};          // Maximum number of heavy atoms in a hit.
+                                     // -1 means no maximum.
   double minHitMolWt{0};             // Minimum molecular weight for a hit.
   double maxHitMolWt{0};  // Maximum molecular weight for a hit.  0.0 means
                           // no maximum.
   unsigned int minHitChiralAtoms{
-      0};  // Minimum number of chiral atoms in a hit.
-  unsigned int maxHitChiralAtoms{0};  // Maximum number of chiral atoms in a
-                                      // hit. 0 means no maximum.
+      0};                      // Minimum number of chiral atoms in a hit.
+  int maxHitChiralAtoms{-1};   // Maximum number of chiral atoms in a hit.
+                               // -1 means no maximum.
   std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
                                // search.  0 means no maximum.
   int numThreads = 1;  // The number of threads to use.  If > 0, will use that

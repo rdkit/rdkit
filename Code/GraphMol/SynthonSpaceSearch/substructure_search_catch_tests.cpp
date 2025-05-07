@@ -720,15 +720,21 @@ F[2*]	277310376-742385dd	2	fake-chiral
   REQUIRE(qmol);
   auto res1 = space.substructureSearch(*qmol);
   CHECK(res1.getHitMolecules().size() == 2);
+
   SubstructMatchParameters mparams;
   SynthonSpaceSearchParams sparams;
   sparams.minHitChiralAtoms = 2;
   auto res2 = space.substructureSearch(*qmol, mparams, sparams);
   REQUIRE(res2.getHitMolecules().size() == 1);
   CHECK(MolToSmiles(*res2.getHitMolecules().front()) == "NC(F)(Cl)[C@H](O)F");
+
   sparams.minHitChiralAtoms = 0;
   sparams.maxHitChiralAtoms = 1;
   auto res3 = space.substructureSearch(*qmol, mparams, sparams);
   REQUIRE(res3.getHitMolecules().size() == 1);
   CHECK(MolToSmiles(*res3.getHitMolecules().front()) == "NC(F)(F)[C@H](O)F");
+
+  sparams.maxHitChiralAtoms = 0;
+  auto res4 = space.substructureSearch(*qmol, mparams, sparams);
+  CHECK(res4.getHitMolecules().size() == 0);
 }

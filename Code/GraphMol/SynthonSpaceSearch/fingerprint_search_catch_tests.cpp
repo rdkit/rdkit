@@ -229,7 +229,7 @@ TEST_CASE("Hit Filters") {
     CHECK(results.getHitMolecules().size() == 17);
     params.minHitChiralAtoms = 1;
     results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
-    CHECK(results.getHitMolecules().size() == 10);
+    CHECK(results.getHitMolecules().size() == 11);
     params.maxHitChiralAtoms = 1;
     results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
     CHECK(results.getHitMolecules().size() == 4);
