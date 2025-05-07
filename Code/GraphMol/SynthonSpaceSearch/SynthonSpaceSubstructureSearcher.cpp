@@ -399,7 +399,7 @@ SynthonSpaceSubstructureSearcher::searchFragSet(
   return results;
 }
 
-bool SynthonSpaceSubstructureSearcher::verifyHit(const ROMol &hit) const {
+bool SynthonSpaceSubstructureSearcher::verifyHit(ROMol &hit) const {
   if (!SynthonSpaceSearcher::verifyHit(hit)) {
     return false;
   }

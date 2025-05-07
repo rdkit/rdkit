@@ -261,7 +261,7 @@ bool SynthonSpaceFingerprintSearcher::quickVerify(
          getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }
 
-bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
+bool SynthonSpaceFingerprintSearcher::verifyHit(ROMol &hit) const {
   if (!SynthonSpaceSearcher::verifyHit(hit)) {
     return false;
   }

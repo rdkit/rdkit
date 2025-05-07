@@ -27,6 +27,7 @@
 */
 
 #include <map>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -274,7 +275,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * If it receives a SIGINT, returns cancelled=true.
    */
   void readTextFile(const std::string &inFilename, bool &cancelled);
-
+  void readStream(std::istream &is, bool &cancelled);
   /*!
    * Writes to a binary DB File in our format.
    *
@@ -306,6 +307,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * @param outFilename: name of the file to write
    */
   void writeEnumeratedFile(const std::string &outFilename) const;
+  void enumerateToStream(std::ostream &os) const;
 
   /*!
    * Create the fingerprints for the synthons ready for fingerprint searches.

@@ -71,8 +71,8 @@ class SynthonSpaceSearcher {
  protected:
   // Checks that the given molecule is definitely a hit according to
   // the derived class' criteria.  This function checks the chiralAtomCount
-  // if appropriate.
-  virtual bool verifyHit(const ROMol &mol) const;
+  // if appropriate, which required a non-const ROMol.
+  virtual bool verifyHit(ROMol &mol) const;
 
   // Do a check against number of heavy atoms etc. if options call for it
   // which can be done without having to build the full molecule from the

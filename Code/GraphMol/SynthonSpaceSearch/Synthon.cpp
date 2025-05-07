@@ -9,6 +9,7 @@
 //
 
 #include <DataStructs/ExplicitBitVect.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolPickler.h>
@@ -34,6 +35,7 @@ Synthon::Synthon(const std::string &smi) : d_smiles(smi) {
     // bring it all down.
     throw ValueErrorException("Unparsable synthon SMILES " + d_smiles);
   }
+  calcProperties();
 }
 
 Synthon::Synthon(const Synthon &other)
@@ -42,7 +44,12 @@ Synthon::Synthon(const Synthon &other)
       dp_searchMol(std::make_unique<ROMol>(*other.dp_searchMol)),
       dp_pattFP(std::make_unique<ExplicitBitVect>(*other.dp_pattFP)),
       dp_FP(std::make_unique<ExplicitBitVect>(*other.dp_FP)),
-      d_connRegions(other.d_connRegions) {}
+      d_connRegions(other.d_connRegions),
+      d_numDummies(other.d_numDummies),
+      d_numHeavyAtoms(other.d_numHeavyAtoms),
+      d_numChiralAtoms(other.d_numChiralAtoms),
+      d_numChiralAtomsExcDummies(other.d_numChiralAtomsExcDummies),
+      d_molWt(other.d_molWt) {}
 
 Synthon &Synthon::operator=(const Synthon &other) {
   if (this == &other) {
@@ -80,6 +87,11 @@ Synthon &Synthon::operator=(const Synthon &other) {
   } else {
     d_connRegions.clear();
   }
+  d_numDummies = other.d_numDummies;
+  d_numHeavyAtoms = other.d_numHeavyAtoms;
+  d_numChiralAtoms = other.d_numChiralAtoms;
+  d_numChiralAtomsExcDummies = other.d_numChiralAtomsExcDummies;
+  d_molWt = other.d_molWt;
   return *this;
 }
 const std::unique_ptr<ROMol> &Synthon::getOrigMol() const { return dp_origMol; }
@@ -184,8 +196,6 @@ void Synthon::finishInitialization() {
 void Synthon::calcProperties() {
   d_numDummies = 0;
   d_numHeavyAtoms = 0;
-  d_numChiralAtoms = 0;
-  d_molWt = 0;
   MolOps::assignStereochemistry(*dp_origMol);
   for (const auto atom : dp_origMol->atoms()) {
     if (atom->getAtomicNum() == 0) {
@@ -193,10 +203,10 @@ void Synthon::calcProperties() {
     } else if (atom->getAtomicNum() > 1) {
       d_numHeavyAtoms++;
     }
-    if (atom->hasProp("_CIPCode") || atom->hasProp("_ChiralityPossible")) {
-      d_numChiralAtoms++;
-    }
   }
-  d_molWt = Descriptors::calcExactMW(*dp_origMol);
+  Chirality::findPotentialStereo(*dp_origMol, true, true);
+  d_numChiralAtoms =
+      details::countChiralAtoms(*dp_origMol, &d_numChiralAtomsExcDummies);
+  d_molWt = Descriptors::calcAMW(*dp_origMol);
 }
 }  // namespace RDKit::SynthonSpaceSearch

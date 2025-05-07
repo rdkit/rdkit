@@ -177,7 +177,7 @@ bool SynthonSpaceRascalSearcher::quickVerify(
   return bestSim >= d_rascalOptions.similarityThreshold;
 }
 
-bool SynthonSpaceRascalSearcher::verifyHit(const ROMol &hit) const {
+bool SynthonSpaceRascalSearcher::verifyHit(ROMol &hit) const {
   if (!SynthonSpaceSearcher::verifyHit(hit)) {
     return false;
   }
