@@ -264,6 +264,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    * If it receives a SIGINT, returns cancelled=true.
    */
   void readTextFile(const std::string &inFilename, bool &cancelled);
+  void readStream(std::istream &is, bool &cancelled);
 
   /*!
    * Writes to a binary DB File in our format.
@@ -383,7 +384,8 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void convertTextToDBFile(
  *
  * @return std::string
  */
-RDKIT_SYNTHONSPACESEARCH_EXPORT std::string formattedIntegerString(std::int64_t value);
+RDKIT_SYNTHONSPACESEARCH_EXPORT std::string formattedIntegerString(
+    std::int64_t value);
 
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit
