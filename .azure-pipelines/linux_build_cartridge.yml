@@ -48,6 +48,8 @@ steps:
   displayName: Build
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
+    export CCACHE_REMOTE_ONLY=true
+    export CCACHE_REMOTE_STORAGE="redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)"
     conda activate rdkit_build
     cd build
     sh ./Code/PgSQL/rdkit/pgsql_regress.sh

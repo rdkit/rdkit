@@ -57,6 +57,8 @@ steps:
     export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
     echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
     export QT_QPA_PLATFORM='offscreen'
+    export CCACHE_REMOTE_ONLY=true
+    export CCACHE_REMOTE_STORAGE="redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)"
     cd build
     ctest -j $( $(number_of_cores) ) --output-on-failure -T Test
   displayName: Run tests

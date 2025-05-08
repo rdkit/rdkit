@@ -55,6 +55,8 @@ steps:
     set RDBASE=%cd%
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
+    set CCACHE_REMOTE_ONLY=true
+    set CCACHE_REMOTE_STORAGE="redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)"
     cd build
     ctest -C Release -j $(number_of_cores) --output-on-failure -T Test
   displayName: Run tests

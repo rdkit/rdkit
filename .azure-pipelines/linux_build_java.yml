@@ -48,6 +48,8 @@ steps:
     export RDBASE=`pwd`
     export PYTHONPATH=${RDBASE}:${PYTHONPATH}
     export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+    export CCACHE_REMOTE_ONLY=true
+    export CCACHE_REMOTE_STORAGE="redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)"
     echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
     export QT_QPA_PLATFORM='offscreen'
     cd build
