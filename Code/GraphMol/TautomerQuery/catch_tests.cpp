@@ -337,8 +337,8 @@ TEST_CASE("github #3821 check TAUTOMERQUERY_OPERATOR= does a deep copy") {
 }
 
 TEST_CASE("Serialization") {
-#ifdef RDK_USE_BOOST_SERIALIZATION
   SECTION("basics") {
+#ifdef RDK_USE_BOOST_SERIALIZATION
     auto mol = "Nc1nc(=O)c2nc[nH]c2[nH]1"_smiles;
     REQUIRE(mol);
     auto tautomerQuery =
@@ -365,8 +365,8 @@ TEST_CASE("Serialization") {
       delete target;
     }
     delete queryFingerprint;
-  }
 #endif
+  }
 }
 
 TEST_CASE("Tautomer queries should propagate atom properties") {
@@ -385,4 +385,27 @@ TEST_CASE("Tautomer queries should propagate atom properties") {
     CHECK(tq2.getTemplateMolecule().getAtomWithIdx(6)->hasProp("_foo"));
   }
 #endif
+}
+
+TEST_CASE("GitHub Issue #8492: TautomerQuery drops queries for some atoms") {
+  // These queries don't make sense, but they are easy to check
+  auto mol = "[#6X0](=[#8&X1])(-[#6X2])-[#6X3]"_smarts;
+  REQUIRE(mol);
+
+  auto check_queries = [](const auto &m) {
+    REQUIRE(m.getNumAtoms() == 4);
+    for (auto atom : m.atoms()) {
+      auto query = atom->getQuery();
+      REQUIRE(query != nullptr);
+      auto desc = describeQuery(atom);
+      CHECK(desc.find("AtomTotalDegree " + std::to_string(atom->getIdx())) !=
+            std::string::npos);
+    }
+  };
+
+  check_queries(*mol);
+  auto tq = std::unique_ptr<TautomerQuery>(TautomerQuery::fromMol(*mol));
+  auto &mol2 = tq->getTemplateMolecule();
+
+  check_queries(mol2);
 }
