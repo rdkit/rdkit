@@ -276,10 +276,11 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds,
     d_os << "' style='fill:none;";
   }
 
-  d_os << "stroke:" << col
-       << ";stroke-width:" << MolDraw2D_detail::formatDouble(width)
-       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
-       << colour().a << ";" << dashString << "'";
+  d_os
+      << "stroke:" << col
+      << ";stroke-width:" << MolDraw2D_detail::formatDouble(width)
+      << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:"
+      << colour().a << ";" << dashString << "'";
   d_os << " />\n";
 }
 

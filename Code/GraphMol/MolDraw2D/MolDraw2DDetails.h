@@ -152,7 +152,7 @@ std::vector<std::tuple<Point2D, Point2D, Point2D, Point2D>> getWavyLineSegments(
 RDKIT_MOLDRAW2D_EXPORT void calcArrowHead(Point2D &arrowEnd, Point2D &arrow1,
                                           Point2D &arrow2,
                                           const Point2D &arrowBegin,
-                                          bool asPolygon, double frac,
+                                          double frac, double lineWidth,
                                           double angle);
 
 // adjust p2 so that the line from p1 to p2 stops where it intersects
