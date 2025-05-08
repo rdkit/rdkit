@@ -8375,6 +8375,14 @@ M  END
       except Exception as e:
         assert "Python argument types" in str(e), f"{func}: {str(e)}"
 
+  def testGithub8467(self):
+    m = Chem.MolFromSmiles('C[C@H](F)Cl |&1:1|')
+    self.assertIsNotNone(m)
+    self.assertEqual(len(m.GetStereoGroups()), 1)
+    m.GetAtomWithIdx(1).SetChiralTag(Chem.CHI_UNSPECIFIED)
+    Chem.CleanupStereoGroups(m)
+    self.assertEqual(len(m.GetStereoGroups()), 0)
+    
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
