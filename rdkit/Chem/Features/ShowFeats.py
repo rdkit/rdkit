@@ -281,8 +281,7 @@ if __name__ == '__main__':
     import traceback
     traceback.print_exc()
     logger.error(
-      'Unable to connect to PyMol server.\nPlease run ~landrgr1/extern/PyMol/launch.sh to start it.'
-    )
+      'Unable to connect to PyMol server.\nPlease start PyMol with the -R argument provided.')
     sys.exit(1)
   if options.clearAll:
     v.DeleteAll()
