@@ -61,7 +61,7 @@ steps:
   displayName: Build
   env:
     CCACHE_REMOTE_ONLY: true
-    CCACHE_REMOTE_STORAGE: 'redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)'
+    CCACHE_REMOTE_STORAGE: redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
