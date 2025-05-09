@@ -500,7 +500,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
           static_cast<unsigned int>(params.rootedAtAtom) < mol.getNumAtoms(),
       "rootedAtAtom must be less than the number of atoms");
 
-  int rootedAtAtom = params.rootedAtAtom;
+  int rootedAtAtom;
+  std::vector<int> fragsRootedAtAtom;
   std::vector<std::vector<int>> fragsMolAtomMapping;
   auto mols =
       MolOps::getMolFrags(mol, false, nullptr, &fragsMolAtomMapping, false);
@@ -515,6 +516,13 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     for (auto aidx : atsInFrag) {
       atsPresent.set(aidx);
     }
+
+    rootedAtAtom = -1;
+    if (params.rootedAtAtom >= 0 && atsPresent[params.rootedAtAtom]) {
+        rootedAtAtom = params.rootedAtAtom - atsPresent.find_first();
+    }
+    fragsRootedAtAtom.push_back(rootedAtAtom);
+
     for (const auto bnd : mol.bonds()) {
       if (atsPresent[bnd->getBeginAtomIdx()] &&
           atsPresent[bnd->getEndAtomIdx()]) {
@@ -593,6 +601,7 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       }
     }
 
+    rootedAtAtom = fragsRootedAtAtom[fragIdx];
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively
