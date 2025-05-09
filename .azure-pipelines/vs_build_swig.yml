@@ -50,6 +50,8 @@ steps:
 - script: |
     call activate rdkit_build
     cd build
+    set CCACHE_REMOTE_ONLY=true
+    set CCACHE_REMOTE_STORAGE="redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)"
     cmake --build . --config Release --target install -j $(number_of_cores)
   displayName: Build
 - script: |
@@ -57,8 +59,6 @@ steps:
     set RDBASE=%cd%
     set PYTHONPATH=%RDBASE%;%PYTHONPATH%
     set PATH=%RDBASE%\lib;%PATH%
-    set CCACHE_REMOTE_ONLY=true
-    set CCACHE_REMOTE_STORAGE="redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)"
     cd build
     ctest -R CSharpTests -C Release -T test --output-on-failure --verbose
   displayName: Run tests
