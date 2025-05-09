@@ -4,7 +4,7 @@
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are
+// modification, are permitted provided that the following conditions areg
 // met:
 //
 //     * Redistributions of source code must retain the above copyright
@@ -2146,7 +2146,7 @@ std::string InchiToInchiKey(const std::string &inchi) {
   char inchiKey[29];
   char xtra1[65], xtra2[65];
   int ret = 0;
-  { ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2); }
+  ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
   std::string error;
   switch (ret) {
     case INCHIKEY_OK:
