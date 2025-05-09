@@ -73,10 +73,15 @@ class DrawShapeArrow : public DrawShape {
   DrawShapeArrow &operator=(const DrawShapeArrow &) = delete;
   DrawShapeArrow &operator=(DrawShapeArrow &&) = delete;
   void myDraw(MolDraw2D &drawer) const override;
+  void findExtremes(double &xmin, double &xmax, double &ymin,
+                    double &ymax) const override;
+  void scale(const Point2D &scale_factor) override;
+  void move(const Point2D &trans) override;
   bool doesRectClash(const StringRect &rect, double padding) const override;
 
   double frac_;
   double angle_;
+  Point2D origPts_[4]{{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}};
 };
 
 class DrawShapeEllipse : public DrawShape {

@@ -268,18 +268,21 @@ void SynthonSpace::readTextFile(const std::string &inFilename,
   if (!ifs.is_open() || ifs.bad()) {
     throw std::runtime_error("Couldn't open file " + d_fileName);
   }
+  readStream(ifs, cancelled);
+}
 
+void SynthonSpace::readStream(std::istream &is, bool &cancelled) {
   int format = -1;
   std::string nextLine;
   int lineNum = 1;
   ControlCHandler::reset();
 
-  while (!ifs.eof()) {
+  while (!is.eof()) {
     if (ControlCHandler::getGotSignal()) {
       cancelled = true;
       return;
     }
-    auto nextSynthon = readSynthonLine(ifs, lineNum, format, d_fileName);
+    auto nextSynthon = readSynthonLine(is, lineNum, format, d_fileName);
     if (nextSynthon.empty()) {
       continue;
     }
@@ -500,8 +503,8 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
                  d_synthonPool);
   }
 #else
-    readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
-                 d_synthonPool);
+  readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
+               d_synthonPool);
 #endif
   if (!std::is_sorted(
           d_synthonPool.begin(), d_synthonPool.end(),
@@ -525,8 +528,8 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
                   d_fileMajorVersion, d_reactions);
   }
 #else
-    readReactions(0, numReactions, fileMap.d_mappedMemory, reactionPos, *this,
-                  d_fileMajorVersion, d_reactions);
+  readReactions(0, numReactions, fileMap.d_mappedMemory, reactionPos, *this,
+                d_fileMajorVersion, d_reactions);
 #endif
   if (!std::is_sorted(
           d_reactions.begin(), d_reactions.end(),
