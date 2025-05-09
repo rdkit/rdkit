@@ -9,6 +9,8 @@
 //
 
 #include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/RDKitQueries.h>
@@ -1341,24 +1343,40 @@ void testGithub608() {
   }
 
   {
-    INT_VECT nAtoms;
-    RWMol *m = SmilesToMol("N1NN1");
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    RWMol *f = SmilesToMol("C[C@]1(F)CC[C@](Cl)(Br)CC1");
-    TEST_ASSERT(f);
-    TEST_ASSERT(f->getNumAtoms() == 10);
-    TEST_ASSERT(f->getAtomWithIdx(1)->getPropIfPresent(
-        common_properties::_ringStereoAtoms, nAtoms));
-    TEST_ASSERT(std::find(nAtoms.begin(), nAtoms.end(), 6) != nAtoms.end());
-    m->insertMol(*f);
-    TEST_ASSERT(m->getNumAtoms() == 13);
-    TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(
-        common_properties::_ringStereoAtoms, nAtoms));
-    TEST_ASSERT(std::find(nAtoms.begin(), nAtoms.end(), 9) != nAtoms.end());
+    for (const bool useLegacy : {true, false}) {
+      // when useLegacy is false, this tests #8379
+      UseLegacyStereoPerceptionFixture fx(useLegacy);
 
-    delete m;
-    delete f;
+      INT_VECT nAtoms;
+      auto m = v2::SmilesParse::MolFromSmiles("N1NN1");
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 3);
+      auto f = v2::SmilesParse::MolFromSmiles("C[C@]1(F)CC[C@](Cl)(Br)CC1");
+      TEST_ASSERT(f);
+      TEST_ASSERT(f->getNumAtoms() == 10);
+      if (useLegacy) {
+        TEST_ASSERT(f->getAtomWithIdx(1)->getPropIfPresent(
+            common_properties::_ringStereoAtoms, nAtoms));
+        TEST_ASSERT(std::find(nAtoms.begin(), nAtoms.end(), 6) != nAtoms.end());
+      } else {
+        unsigned int oatom = 0;
+        TEST_ASSERT(f->getAtomWithIdx(1)->getPropIfPresent(
+            common_properties::_ringStereoOtherAtom, oatom));
+        TEST_ASSERT(oatom == 5);
+      }
+      m->insertMol(*f);
+      TEST_ASSERT(m->getNumAtoms() == 13);
+      if (useLegacy) {
+        TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(
+            common_properties::_ringStereoAtoms, nAtoms));
+        TEST_ASSERT(std::find(nAtoms.begin(), nAtoms.end(), 9) != nAtoms.end());
+      } else {
+        unsigned oatom = 0;
+        TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(
+            common_properties::_ringStereoOtherAtom, oatom));
+        TEST_ASSERT(oatom == 8);
+      }
+    }
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

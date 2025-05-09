@@ -64,3 +64,43 @@ TEST_CASE(
     CHECK(m->getNumBonds() == 1);
   }
 }
+
+TEST_CASE("ctdQUICKREMOVE_H_H_CONTACTS mode") {
+  SECTION("H2, basics") {
+    auto m = "[H].[H] |(0.0,0.0,0.3;0.0,0.0,-0.3)|"_smiles;
+    REQUIRE(m);
+    // by default we get a bond:
+    {
+      RWMol m2(*m);
+      ConnectTheDots(&m2, 0);
+      CHECK(m2.getNumBonds() == 1);
+    }
+    {
+      RWMol m2(*m);
+      ConnectTheDots(&m2, ctdIGNORE_H_H_CONTACTS);
+      CHECK(m2.getNumBonds() == 0);
+    }
+    {
+      RWMol m2(*m);
+      ConnectTheDots(&m2, ctdQUICKREMOVE_H_H_CONTACTS);
+      CHECK(m2.getNumBonds() == 1);
+    }
+  }
+  SECTION("H2, basics") {
+    auto m = "[H].[H].[C] |(0.0,0.0,0.3;0.0,0.0,-0.3;0.0,0.0,-1.3)|"_smiles;
+    REQUIRE(m);
+    {
+      RWMol m2(*m);
+      ConnectTheDots(&m2, 0);
+      CHECK(m2.getNumBonds() == 1);
+      CHECK(m2.getBondBetweenAtoms(0, 1));
+    }
+    {
+      RWMol m2(*m);
+      ConnectTheDots(&m2, ctdQUICKREMOVE_H_H_CONTACTS);
+      CHECK(m2.getNumBonds() == 1);
+      CHECK(!m2.getBondBetweenAtoms(0, 1));
+      CHECK(m2.getBondBetweenAtoms(1, 2));
+    }
+  }
+}

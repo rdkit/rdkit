@@ -23,6 +23,8 @@
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/FileParsers/ProximityBonds.h>
+#include <GraphMol/test_fixtures.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/LocaleSwitcher.h>
@@ -393,114 +395,135 @@ void test5() {
 
 void test6() {
   BOOST_LOG(rdInfoLog) << "testing chirality parsing" << std::endl;
+  for (const bool useLegacy : {true, false}) {
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    std::string rdbase = getenv("RDBASE");
+    rdbase += "/Code/GraphMol/FileParsers/";
+    std::string fName = rdbase + "test_data/chiral1.mol";
 
-  std::string rdbase = getenv("RDBASE");
-  rdbase += "/Code/GraphMol/FileParsers/";
-  std::string fName = rdbase + "test_data/chiral1.mol";
+    RWMol *m;
+    std::string smi, cip;
 
-  RWMol *m;
-  std::string smi, cip;
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "C[C@](F)(Cl)Br");
+    delete m;
 
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 5);
-  smi = MolToSmiles(*m, true);
-  TEST_ASSERT(smi == "C[C@](F)(Cl)Br");
-  delete m;
+    fName = rdbase + "test_data/chiral1a.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "C[C@](F)(Cl)Br");
+    delete m;
 
-  fName = rdbase + "test_data/chiral1a.mol";
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 5);
-  smi = MolToSmiles(*m, true);
-  TEST_ASSERT(smi == "C[C@](F)(Cl)Br");
-  delete m;
+    fName = rdbase + "test_data/chiral2.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "C[C@@](F)(Cl)Br");
+    delete m;
 
-  fName = rdbase + "test_data/chiral2.mol";
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 5);
-  smi = MolToSmiles(*m, true);
-  TEST_ASSERT(smi == "C[C@@](F)(Cl)Br");
-  delete m;
+    fName = rdbase + "test_data/chiral2a.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "C[C@@](F)(Cl)Br");
+    delete m;
 
-  fName = rdbase + "test_data/chiral2a.mol";
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 5);
-  smi = MolToSmiles(*m, true);
-  TEST_ASSERT(smi == "C[C@@](F)(Cl)Br");
-  delete m;
-
-  fName = rdbase + "test_data/chiral3.mol";
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 4);
-  MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
-  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
-  TEST_ASSERT(cip == "R");
+    fName = rdbase + "test_data/chiral3.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    if (useLegacy) {
+      MolOps::assignStereochemistry(*m);
+    } else {
+      CIPLabeler::assignCIPLabels(*m);
+    }
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+    TEST_ASSERT(cip == "R");
 #if 1
-  smi = MolToSmiles(*m, true);
-  // BOOST_LOG(rdInfoLog) << " smi: " << smi << std::endl;
-  TEST_ASSERT(smi == "C[C@H](F)Cl");
+    smi = MolToSmiles(*m, true);
+    // BOOST_LOG(rdInfoLog) << " smi: " << smi << std::endl;
+    TEST_ASSERT(smi == "C[C@H](F)Cl");
 #endif
-  delete m;
+    delete m;
 
-  fName = rdbase + "test_data/chiral3a.mol";
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 4);
-  MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
-  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
-  TEST_ASSERT(cip == "R");
+    fName = rdbase + "test_data/chiral3a.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    if (useLegacy) {
+      MolOps::assignStereochemistry(*m);
+    } else {
+      CIPLabeler::assignCIPLabels(*m);
+    }
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+    TEST_ASSERT(cip == "R");
 #if 1
-  smi = MolToSmiles(*m, true);
-  TEST_ASSERT(smi == "C[C@H](F)Cl");
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "C[C@H](F)Cl");
 #endif
-  delete m;
+    delete m;
 
-  fName = rdbase + "test_data/chiral4.mol";
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 4);
-  MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
-  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
-  TEST_ASSERT(cip == "S");
+    fName = rdbase + "test_data/chiral4.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    if (useLegacy) {
+      MolOps::assignStereochemistry(*m);
+    } else {
+      CIPLabeler::assignCIPLabels(*m);
+    }
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+    TEST_ASSERT(cip == "S");
 #if 1
-  smi = MolToSmiles(*m, true);
-  TEST_ASSERT(smi == "C[C@@H](F)Cl");
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "C[C@@H](F)Cl");
 #endif
-  delete m;
+    delete m;
 
-  fName = rdbase + "test_data/chiral4a.mol";
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 4);
-  MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
-  m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
-  TEST_ASSERT(cip == "S");
+    fName = rdbase + "test_data/chiral4a.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 4);
+    if (useLegacy) {
+      MolOps::assignStereochemistry(*m);
+    } else {
+      CIPLabeler::assignCIPLabels(*m);
+    }
+    TEST_ASSERT(m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    m->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+    TEST_ASSERT(cip == "S");
 #if 1
-  smi = MolToSmiles(*m, true);
-  TEST_ASSERT(smi == "C[C@@H](F)Cl");
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "C[C@@H](F)Cl");
 #endif
-  delete m;
+    delete m;
 
-  fName = rdbase + "test_data/chiral5.mol";
-  m = MolFileToMol(fName);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getNumAtoms() == 5);
-  MolOps::assignStereochemistry(*m);
-  TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
+    fName = rdbase + "test_data/chiral5.mol";
+    m = MolFileToMol(fName);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getNumAtoms() == 5);
+    if (useLegacy) {
+      MolOps::assignStereochemistry(*m);
+    } else {
+      CIPLabeler::assignCIPLabels(*m);
+    }
+    TEST_ASSERT(!m->getAtomWithIdx(0)->hasProp(common_properties::_CIPCode));
 #if 1
-  smi = MolToSmiles(*m, true);
-  TEST_ASSERT(smi == "CC(C)(Cl)Br");
+    smi = MolToSmiles(*m, true);
+    TEST_ASSERT(smi == "CC(C)(Cl)Br");
 #endif
-  delete m;
-
+    delete m;
+  }
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
@@ -4897,7 +4920,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CCC(=O)O->[Cu]");
+    TEST_ASSERT(smiles == "CCC(=O)[OH]->[Cu]");
 
     delete m;
   }
@@ -4911,7 +4934,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(9)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CCC(=O)O->[Cu]<-OC(O)CC");
+    TEST_ASSERT(smiles == "CCC(=O)[OH]->[Cu]<-[OH]C(O)CC");
 
     delete m;
   }
@@ -4924,7 +4947,7 @@ void testMolFileDativeBonds() {
     TEST_ASSERT(m->getBondWithIdx(4)->getBondType() == Bond::DATIVE);
 
     std::string smiles = MolToSmiles(*m);
-    TEST_ASSERT(smiles == "CC(C)->[Mg](Cl)Cl");
+    TEST_ASSERT(smiles == "C[CH2](C)->[Mg]([Cl])[Cl]");
 
     delete m;
   }

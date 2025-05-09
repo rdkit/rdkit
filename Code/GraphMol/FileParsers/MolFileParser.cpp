@@ -3351,7 +3351,9 @@ void finishMolProcessing(
   const Conformer &conf = res->getConformer();
   if (chiralityPossible || conf.is3D()) {
     if (!conf.is3D()) {
-      DetectAtomStereoChemistry(*res, &conf);
+      bool replaceExistingTags = true;
+      MolOps::assignChiralTypesFromBondDirs(*res, conf.getId(),
+                                            replaceExistingTags);
     } else {
       res->updatePropertyCache(false);
       MolOps::assignChiralTypesFrom3D(*res, conf.getId(), true);

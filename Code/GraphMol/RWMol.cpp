@@ -8,7 +8,9 @@
 //  of the RDKit source tree.
 //
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/tokenizer.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 // our stuff
 #include <RDGeneral/Invariant.h>
@@ -148,8 +150,8 @@ void RWMol::insertMol(const ROMol &other) {
     const bool takeOwnership = true;
     addAtom(newAt, updateLabel, takeOwnership);
     // take care of atom-numbering-dependent properties:
-    INT_VECT nAtoms;
-    if (newAt->getPropIfPresent(common_properties::_ringStereoAtoms, nAtoms)) {
+    if (INT_VECT nAtoms;
+        newAt->getPropIfPresent(common_properties::_ringStereoAtoms, nAtoms)) {
       for (auto &val : nAtoms) {
         if (val < 0) {
           val = -1 * (-val + origNumAtoms);
@@ -158,6 +160,11 @@ void RWMol::insertMol(const ROMol &other) {
         }
       }
       newAt->setProp(common_properties::_ringStereoAtoms, nAtoms, true);
+    }
+    if (unsigned int val;
+        oatom->getPropIfPresent(common_properties::_ringStereoOtherAtom, val)) {
+      newAt->setProp(common_properties::_ringStereoOtherAtom,
+                     val + origNumAtoms, true);
     }
   }
 

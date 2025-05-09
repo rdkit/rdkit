@@ -1,15 +1,25 @@
 steps:
 - bash: |
     sudo apt-get update
-    sudo apt-get remove postgresql-14 postgresql-client-14
-    sudo apt-get remove postgresql postgresql-common postgresql-client-common libpq5
-    sudo apt purge postgresql-14 postgresql-client-14
-    sudo apt purge postgresql postgresql-common postgresql-client-common libpq5
-    sudo apt-get install -y libboost-all-dev postgresql-common postgresql-12 postgresql-server-dev-12
+    sudo apt-get install -y postgresql-14 postgresql-client-14 postgresql-server-dev-14 postgresql-common
+    echo "start postgres server"
+    sudo systemctl start postgresql.service
     echo "add postgres user"
     sudo -u postgres createuser -s `whoami`
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda config --set always_yes yes --set changeps1 no
+    conda update -q conda
+    conda info -a
+    conda create --name rdkit_build -c conda-forge cmake \
+        boost-cpp=$(boost_version) \
+        boost=$(boost_version) \
+        eigen \
+        cairo
+    conda activate rdkit_build
   displayName: Setup build environment
 - bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
     mkdir build && cd build && \
     cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
@@ -29,11 +39,15 @@ steps:
     -DPostgreSQL_CONFIG=/usr/bin/pg_config
   displayName: Configure build (Run CMake)
 - bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
     cd build
     make -j $( $(number_of_cores) ) install
     sudo sh ./Code/PgSQL/rdkit/pgsql_install.sh
   displayName: Build
 - bash: |
+    source ${CONDA}/etc/profile.d/conda.sh
+    conda activate rdkit_build
     cd build
     sh ./Code/PgSQL/rdkit/pgsql_regress.sh
     if [ -e ./Code/PgSQL/rdkit/regression.diffs ]
@@ -42,4 +56,3 @@ steps:
       exit 1
     fi
   displayName: Run tests
-

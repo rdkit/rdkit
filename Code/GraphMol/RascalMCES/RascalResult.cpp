@@ -11,8 +11,10 @@
 #include <regex>
 #include <set>
 
+#include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/algorithm/string.hpp>
+#include <RDGeneral/BoostEndInclude.h>
 
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
@@ -134,6 +136,9 @@ void RascalResult::largestFragsOnly(unsigned int numFrags) {
   std::sort(frags.begin(), frags.end(),
             [](const boost::shared_ptr<ROMol> &f1,
                const boost::shared_ptr<ROMol> &f2) -> bool {
+              if (f1->getNumAtoms() == f2->getNumAtoms()) {
+                return f1->getNumBonds() > f2->getNumBonds();
+              }
               return f1->getNumAtoms() > f2->getNumAtoms();
             });
   frags.erase(frags.begin() + numFrags, frags.end());

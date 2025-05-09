@@ -411,6 +411,9 @@ TEST_CASE("tautomer v2") {
         data = {
             {{"CC=O", "C=CO"}, {}},
             {{"CCC=O", "CC=CO"}, {"C=CCO"}},
+            // this next one is the specific test to ensure that amino acid
+            // stereochemistry is not lost
+            {{"CCC(=O)NC", "CCC(O)=NC"}, {"CC=C(O)NC"}},
             {{"CC(=O)CC(=O)C", "C=C(O)CC(=O)C", "CC(=O)C=C(O)C",
               "C=C(O)C=C(O)C", "C=C(O)CC(O)=C"},
              {}},
@@ -432,16 +435,17 @@ TEST_CASE("tautomer v2") {
              {}},
             {{"CC(=O)C=CC", "C=C(O)C=CC"}, {"CC(=O)CC=C"}},
             {{"N=C1N=CN(C)C2N=CNC=21", "NC1N=CN(C)C2=NC=NC2=1"}, {}},
-            {{
-                 "S=C1N=CN=C2NC=NC12",
-                 "S=C2C1N=CN=C1NC=N2",
-
-             },
-             {
-                 "S=C1NC=NC2N=CNC1=2",
-                 "S=C1N=CN=C2N=CNC12",
-                 "S=C2C1NC=NC1=NC=N2",
-             }},
+            {
+                {
+                    "S=C1N=CN=C2NC=NC12",
+                    "S=C2C1N=CN=C1NC=N2",
+                    "S=C1NC=NC2N=CNC1=2",
+                    "S=C1N=CN=C2N=CNC12",
+                    "S=C2C1NC=NC1=NC=N2",
+                    "S=C2C1NC=NC=1NC=N2",
+                },
+                {},
+            },
             {{"S=C1NC=NC2N=CNC1=2", "S=C1NC=NC2NC=NC1=2", "SC1=NC=NC2N=CNC1=2"},
              {}},
             {{"CC1=CN=CN1", "CC1CN=CN=1"}, {}},
@@ -449,8 +453,9 @@ TEST_CASE("tautomer v2") {
                  "N1C(=O)NC(=O)C2C=NNC=21",
                  "N1C(=O)NC(=O)C2=CNNC2=1",
                  "N1C(=O)NC(=O)C2=CNNC2=1",
+                 "N1C(=O)NC(=O)C2CN=NC=21",
              },
-             {"N1C(=O)NC(=O)C2CN=NC=21", "N1C(=O)NC(=O)C2CN=NC2=1"}},
+             {"N1C(=O)NC(=O)C2CN=NC2=1"}},
             // ---------------------------
             // more stereochemistry
             // ---------------------------
@@ -930,6 +935,153 @@ TEST_CASE("v2 tautomers, carboxylic acids, amids, and related structures") {
       auto hsh =
           MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
       CHECK(hsh == ref);
+    }
+  }
+}
+
+TEST_CASE("github #8205: order dependence in tautomer hash") {
+  SECTION("as reported") {
+    auto mol1 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 15 16 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -0.006857 -1.225143 0.000000 0
+M  V30 2 C -1.242571 -0.508286 0.000000 0
+M  V30 3 C -2.481143 -1.220000 0.000000 0
+M  V30 4 C -2.484000 -2.648571 0.000000 0
+M  V30 5 N -1.248286 -3.365429 0.000000 0
+M  V30 6 C -0.009714 -2.653714 0.000000 0
+M  V30 7 O -3.722571 -3.360572 0.000000 0
+M  V30 8 N -1.239714 0.920286 0.000000 0
+M  V30 9 C 1.549143 3.346571 0.000000 0
+M  V30 10 C 2.260857 2.108000 0.000000 0
+M  V30 11 C 1.302857 1.048286 0.000000 0
+M  V30 12 C -0.001143 1.632000 0.000000 0
+M  V30 13 C 0.151143 3.052571 0.000000 0
+M  V30 14 C -1.251227 -4.793997 0.000000 0
+M  V30 15 C -0.908467 4.010717 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 3 4
+M  V30 4 1 4 5
+M  V30 5 1 5 6
+M  V30 6 2 6 1
+M  V30 7 2 4 7
+M  V30 8 1 2 8
+M  V30 9 1 9 10
+M  V30 10 1 10 11
+M  V30 11 1 11 12
+M  V30 12 1 12 13
+M  V30 13 1 13 9
+M  V30 14 1 12 8 CFG=1
+M  V30 15 1 5 14
+M  V30 16 1 13 15
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(mol1);
+    auto mol2 = v2::SmilesParse::MolFromSmiles(MolToSmiles(*mol1));
+    REQUIRE(mol2);
+    auto hsh1 =
+        MolHash::MolHash(mol1.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    auto hsh2 =
+        MolHash::MolHash(mol2.get(), MolHash::HashFunction::HetAtomTautomerv2);
+    CHECK(hsh1 == hsh2);
+    // make sure the chirality wasn't destroyed
+    CHECK(hsh1.find("@") != std::string::npos);
+  }
+  SECTION("tests for the same issue from #8320 report") {
+    std::vector<std::string> smileses = {
+        "CC(=O)N[C@H](C)S(N)(=O)=O",
+        "O=P(O)(O)[C@@H](O)c1cccc2ccccc12",
+    };
+    for (const auto &smiles : smileses) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      INFO(hsh);
+      CHECK(hsh.find("@") != std::string::npos);
+    }
+  }
+}
+
+TEST_CASE("examples found in ChEMBL") {
+  SECTION("things that should match") {
+    std::vector<std::pair<std::string, std::string>> smileses = {
+        {"S1(Nc2ccccc2N1)(=O)(=O)", "O=S1(=O)Nc2ccccc2N1"},
+        {"c1ccccc1CN=C=S", "S=C=NCc1ccccc1"},
+        {"O=C1NCCC1", "OC1=NCCC1"},
+        {"c1no[n+]([O-])c1", "n1o[n+](cc1)[O-]"},
+    };
+    for (const auto &[smi1, smi2] : smileses) {
+      INFO(smi1 + " " + smi2);
+      auto m1 = v2::SmilesParse::MolFromSmiles(smi1);
+      REQUIRE(m1);
+      auto hsh1 =
+          MolHash::MolHash(m1.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      auto m2 = v2::SmilesParse::MolFromSmiles(smi2);
+      REQUIRE(m2);
+      auto hsh2 =
+          MolHash::MolHash(m2.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh1 == hsh2);
+    }
+  }
+
+  SECTION("specific problems") {
+    std::vector<std::pair<std::string, std::string>> data = {
+        {"NNC(=O)CC1=NNC(=O)C1",
+         "[NH2]-[N]:[C](:[O]):[C]:[C]1:[C]:[C](:[O]):[N]:[N]:1_6_0"},
+        {"Cc1ncn2c1NC=NC2N",
+         "[C]:[C]1:[N]:[C]:[N]2:[C](-[NH2]):[N]:[C]:[N]:[C]:1:2_7_0"},
+        {"Nc1nc2c(c(=O)[nH]1)CC=N2",
+         "[N]:[C]1:[N]:[C](:[O]):[C]2:[C]:[C]:[N]:[C]:2:[N]:1_6_0"},
+        {"NC(N)=[N+]1CCc2ccccc2C1",
+         "[NH2]-[C](-[NH2])=[N+]1-[CH2]-[CH2]-[c]2:[cH]:[cH]:[cH]:[cH]:[c]:2-[CH2]-1_0_0"},
+        {"O=S1(=Nc2ccncc2)CCCCC1",
+         "[O]=[S]1(=[N]-[C]2:[C]:[C]:[N]:[C]:[C]:2)-[CH2]-[CH2]-[CH2]-[CH2]-[CH2]-1_4_0"},
+    };
+    for (const auto &[smiles, ref] : data) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      auto hsh =
+          MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      CHECK(hsh == ref);
+    }
+  }
+}
+
+TEST_CASE("github #8405: some tautomer mismatches") {
+  SECTION("things that should match") {
+    std::vector<std::vector<std::string>> smilesSets = {
+        {
+            "O=C1CC(C)NC(=O)C1",
+            "OC1=CC(C)N=C(C1)O",
+            "OC1=CC(C)NC(C1)=O",
+            "O=C1CC(C)N=C(C1)O",
+        },
+    };
+    for (const auto &smileses : smilesSets) {
+      auto m0 = v2::SmilesParse::MolFromSmiles(smileses[0]);
+      REQUIRE(m0);
+      auto hsh0 =
+          MolHash::MolHash(m0.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      for (auto i = 1u; i < smileses.size(); ++i) {
+        auto smi = smileses[i];
+        INFO(smi);
+        auto m = v2::SmilesParse::MolFromSmiles(smi);
+        REQUIRE(m);
+        auto hsh =
+            MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+        CHECK(hsh == hsh0);
+      }
     }
   }
 }

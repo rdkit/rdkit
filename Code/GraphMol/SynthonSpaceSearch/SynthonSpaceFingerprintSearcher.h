@@ -19,6 +19,7 @@
 
 namespace RDKit::SynthonSpaceSearch {
 
+// Concrete class that does the search by fingerprint similarity.
 class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
  public:
   SynthonSpaceFingerprintSearcher() = delete;
@@ -26,13 +27,28 @@ class SynthonSpaceFingerprintSearcher : public SynthonSpaceSearcher {
       const ROMol &query, const FingerprintGenerator<std::uint64_t> &fpGen,
       const SynthonSpaceSearchParams &params, SynthonSpace &space);
 
+  std::vector<std::unique_ptr<SynthonSpaceHitSet>> searchFragSet(
+      const std::vector<std::unique_ptr<ROMol>> &fragSet,
+      const SynthonSet &reaction) const override;
+
  private:
   std::unique_ptr<ExplicitBitVect> d_queryFP;
-  const FingerprintGenerator<std::uint64_t> &d_fpGen;
 
-  std::vector<SynthonSpaceHitSet> searchFragSet(
-      std::vector<std::unique_ptr<ROMol>> &fragSet) const override;
-  bool quickVerify(const std::unique_ptr<SynthonSet> &reaction,
+  const FingerprintGenerator<std::uint64_t> &d_fpGen;
+  // These are the fingerprints for the fragments in this search.
+  // The fingerprint in d_fragFPs are keyed on the addresses of the
+  // corresponding fragment.  There are usually multiple fragments
+  // with the same SMILES and this way the fingerprints are
+  // generated the minimum number of times.
+  // d_fragFPPool is never read, it is just used as a repository
+  // for the fragFPs for the lifetime of the search.
+  std::vector<std::unique_ptr<ExplicitBitVect>> d_fragFPPool;
+  std::vector<std::pair<void *, ExplicitBitVect *>> d_fragFPs;
+
+  void extraSearchSetup(
+      std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets) override;
+
+  bool quickVerify(const SynthonSpaceHitSet *hitset,
                    const std::vector<size_t> &synthNums) const override;
   bool verifyHit(const ROMol &hit) const override;
 };

@@ -163,8 +163,15 @@ TautomerQuery *TautomerQuery::fromMol(
 
   auto templateMolecule = new RWMol(query);
   for (auto idx : modifiedAtoms) {
-    const auto atom = templateMolecule->getAtomWithIdx(idx);
+    const auto atom = query.getAtomWithIdx(idx);
     const auto queryAtom = new QueryAtom(atom->getAtomicNum());
+
+    // Forward original queries
+    if (atom->hasQuery()) {
+      auto originalAtomQuery = static_cast<const QueryAtom *>(atom)->getQuery();
+      queryAtom->setQuery(originalAtomQuery->copy());
+    }
+
     const bool updateLabel = false;
     const bool preserveProps = true;
     templateMolecule->replaceAtom(idx, queryAtom, updateLabel, preserveProps);

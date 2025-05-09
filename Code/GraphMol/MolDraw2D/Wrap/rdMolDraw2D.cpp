@@ -1021,13 +1021,14 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "standardColoursForHighlightedAtoms",
           &RDKit::MolDrawOptions::standardColoursForHighlightedAtoms,
           "If true, highlighted hetero atoms are drawn in standard colours"
-              " rather than black.  Default=False")
+          " rather than black.  Default=False")
       .def("getVariableAttachmentColour", &RDKit::getVariableAttachmentColour,
            python::args("self"),
            "method for getting the colour of variable attachment points")
       .def("setVariableAttachmentColour", &RDKit::setVariableAttachmentColour,
            python::args("self", "tpl"),
-           "method for setting the colour of variable attachment points");
+           "method for setting the colour of variable attachment points")
+      .def("__setattr__", &safeSetattr);
   docString = "Drawer abstract base class";
   python::class_<RDKit::MolDraw2D, boost::noncopyable>(
       "MolDraw2D", docString.c_str(), python::no_init)
@@ -1330,6 +1331,17 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
           "isovalScaleForQuantization",
           &RDKit::MolDraw2DUtils::ContourParams::isovalScaleForQuantization,
           "scaling factor used to convert isovalues to ints when forming the continuous lines")
+      .def_readwrite(
+          "useFillThreshold",
+          &RDKit::MolDraw2DUtils::ContourParams::useFillThreshold,
+          "use a magnitude threshold to determine if a grid point is filled")
+      .def_readwrite(
+          "fillThreshold", &RDKit::MolDraw2DUtils::ContourParams::fillThreshold,
+          "magnitude threshold to determine if a grid point is filled")
+      .def_readwrite(
+          "fillThresholdIsFraction",
+          &RDKit::MolDraw2DUtils::ContourParams::fillThresholdIsFraction,
+          "if true, fillThreshold is a fraction of the range of the data")
       .def("setContourColour", &RDKit::setContourColour,
            (python::arg("self"), python::arg("colour")))
       .def("setColourMap", &RDKit::setColoursHelper,

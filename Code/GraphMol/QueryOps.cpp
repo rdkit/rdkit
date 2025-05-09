@@ -1171,5 +1171,10 @@ void finalizeQueryFromDescription(
   }
 }
 
+bool isMetal(const Atom &atom) {
+  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
+  return q->Match(&atom);
+}
+
 }  // namespace QueryOps
 };  // namespace RDKit

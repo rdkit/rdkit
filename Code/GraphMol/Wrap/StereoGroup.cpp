@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018 Dan Nealschneider
+//  Copyright (C) 2018-2025 Dan Nealschneider and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -51,6 +51,13 @@ python::object getAtomsHelper(StereoGroup &sg) {
   }
   return python::tuple(res);
 }
+python::object getBondsHelper(StereoGroup &sg) {
+  python::list res;
+  for (auto bnd : sg.getBonds()) {
+    res.append(boost::ref(*bnd));
+  }
+  return python::tuple(res);
+}
 }  // namespace
 
 struct stereogroup_wrap {
@@ -67,6 +74,8 @@ struct stereogroup_wrap {
              "Returns the StereoGroupType.\n")
         .def("GetAtoms", getAtomsHelper, python::args("self"),
              "access the atoms in the StereoGroup.\n")
+        .def("GetBonds", getBondsHelper, python::args("self"),
+             "access the bonds in the StereoGroup.\n")
         .def("GetReadId", &StereoGroup::getReadId, python::args("self"),
              "return the StereoGroup's original ID.\n"
              "Note that the ID only makes sense for AND/OR groups.\n")

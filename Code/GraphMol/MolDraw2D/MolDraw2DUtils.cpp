@@ -343,6 +343,14 @@ void contourAndDrawGrid(MolDraw2D &drawer, const double *grid,
     for (size_t i = 0; i < nX - 1; ++i) {
       for (size_t j = 0; j < nY - 1; ++j) {
         auto gridV = grid[i * nY + j];
+        auto threshTest = gridV;
+        if (params.fillThresholdIsFraction) {
+          threshTest /= delta;
+        }
+        if (params.useFillThreshold &&
+            fabs(threshTest) < params.fillThreshold) {
+          continue;
+        }
         auto fracV = (gridV - minV) / delta;
         if (params.colourMap.size() > 2) {
           // need to find how fractionally far we are from zero, not the min
