@@ -29,8 +29,6 @@ jobs:
     python_name: python39
     cc: gcc-11
     cxx: g++-11
-    CCACHE_REMOTE_ONLY: true
-    CCACHE_REMOTE_STORAGE: redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)
   steps:
   - template: .azure-pipelines/linux_build.yml
 - job: Ubuntu_x64_py311

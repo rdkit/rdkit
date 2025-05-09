@@ -52,13 +52,21 @@ steps:
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
   displayName: Configure build (Run CMake)
 - bash: |
-    echo "CCACHE_REMOTE_ONLY: $CCACHE_REMOTE_ONLY"
-    echo "CCACHE_REMOTE_STORAGE: $CCACHE_REMOTE_STORAGE"
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
+    export CCACHE_REMOTE_ONLY=true
+    export CCACHE_REMOTE_STORAGE="redis://$CCACHE_REDIS_PASSWORD@$CCACHE_REDIS_URL:$CCACHE_REDIS_PORT"
+    echo "CCACHE_REMOTE_ONLY: $CCACHE_REMOTE_ONLY"
+    echo "CCACHE_REMOTE_STORAGE: $CCACHE_REMOTE_STORAGE"
+    echo "CCACHE_REDIS_PORT: $CCACHE_REDIS_PORT"
+    echo "CCACHE_REDIS_URL: $CCACHE_REDIS_URL"
     make -j $( $(number_of_cores) ) install
   displayName: Build
+  env:
+    CCACHE_REDIS_PASSWORD: $(REDIS_PASSWORD)
+    CCACHE_REDIS_PORT: $(REDIS_PORT)
+    CCACHE_REDIS_URL: $(REDIS_URL)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
