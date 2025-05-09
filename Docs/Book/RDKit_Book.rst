@@ -2704,12 +2704,11 @@ type definitions.
 Self-Contained Structure Representations (SCSR) for Macromolecules
 *******************
 
-The SCSR support tentative added to RDKit follows the description in the BIOVIA document “biovia_ctfileformats_2020.pdf” available from 
+The SCSR support added to RDKit follows the description in the BIOVIA document “biovia_ctfileformats_2020.pdf” available from 
 “CTfile Formats - Dassault Systèmes”.  That document does not provide any real detail for that format, and contains one example file.
 
 In addition, Biovia Draw supports reading and writing this format.  As much as possible, the RDKit support allows the functionality
-supported by Biovia Draw.  One exception is the RDkit treatment of hydrogen bonds in SCSR files/blocks (vide infra).
-
+supported by Biovia Draw.  One exception is the RDKit treatment of hydrogen bonds in SCSR files/blocks (vide infra).
 
 Representation
 ==============
@@ -2719,11 +2718,11 @@ Main mol
 An SCSR file contains a mol with a CTAB in v3000 format.   That CTAB can contain elemental atoms and macro atoms corresponding to amino acids (AA), RNA, and DNA elements.  
 The RNA and DNA elements are represented by three parts – a phosphate group, a sugar, and a base.  
 
-Each atom line in the CAT can refer to an elemental atom or a macro atom.  Macro atom lines have a text description of the macro name and must have a CLASS and an
+Each atom line in the CTAB can refer to an elemental atom or a macro atom.  Macro atom lines have a text description of the macro name and must have a CLASS and an
 ATTCHORD attributed.  They can also have an optional SEQID attribute.  
 
-According to the Biovia doc, the CLASS attribute must have a value that is one of:  AA, dAA, ScsrSupportInRDKitDNA, RNA, SUGAR, BASE, PHOSPHATE, LINKER, CHEM, LGR,P MODAA, MODdAA, MODDNA, MODRNA, XLINKAA, XLINKdAA, XLINKDNA, XLINKRNA.   
-This implementation in RDKit does NOT enforce the allowed list.
+According to the Biovia doc, the CLASS attribute must have a value that is one of:  AA, dAA, DNA, RNA, SUGAR, BASE, PHOSPHATE, LINKER, CHEM, LGRP, MODAA, MODdAA, MODDNA, MODRNA, XLINKAA, XLINKdAA, XLINKDNA, XLINKRNA.   
+For an SCSR mol block, (and for any SGROUP), RDKit requires that the CLASS attribute be one of these values.
 
 The SEQID is a sequential integer and is ignored by this treatment.  Typically, the three parts of an RNA or DNA element have the same SEQID.
 
@@ -2732,9 +2731,9 @@ character is a integer that indicates the number of items that follow.  Each con
 CTAB, and a string that indicates the attachment point for this macro atom.   The attachment point string is always two characters.  
 The first indicates the order, and is a capital letter starting at A.  The second char is one of “l” (left), “r” (right), “x” (cross connections – e.g. for cysteine).  
 In this implementation, the second character can also be “h” for hydrogen bond.   
-Thus, the attach connections are almost always in the list: “Al”, “Br”, “Cx” or “Ch”.   For example:
+Thus, the attach connections are almost always in the list: “Al”, “Br”, “Cx” or “Ch”.   For example::
 
-    # ATTCHORD=(6 15 Br 13 Al 21 Cx)
+    ATTCHORD=(6 15 Br 13 Al 21 Cx)
 
 Templates
 ---------
@@ -2746,13 +2745,13 @@ In addition to the CTAB for the main molecule, each macro atom is detailed autom
 BEGIN TEMPLATES line and an END TEMPLATES line. Each template starts with a TEMPLATE line that indicates the template number (1 to n), the template Class and 
 Name, and the NATREPLACE attribute.
 
-The Class and Name consists of three (or more) parts separated by forward slashes.  The first part is the CLASS,  and must match the CLASS attribute in 
+The Class and Name consists of three (or more) parts separated by forward slashes.  The first part is the CLASS, and must match the CLASS attribute in 
 one or more of the atoms in the main CTAB.  The second and third (and subsequent) items are choices for names of the macro atom template.  Typically, the 
 first name is the long form and second is the short form, as in “AA/Ala/A” for alanine.  This treatment does not enforce any restrictions on the name lengths.    
 The name given the macro atom in the main CTAB must match one of the names in one of the templates with the correct class.
-The NATREPLACE attribute specifies the natural replacement for this macro atom, and is ignored by this treatment.  Example:
+The NATREPLACE attribute specifies the natural replacement for this macro atom, and is ignored by this treatment.  Example::
 
-    # M  V30 TEMPLATE 1 SUGAR/Rib/R NATREPLACE=SUGAR/R
+    M  V30 TEMPLATE 1 SUGAR/Rib/R NATREPLACE=SUGAR/R
 
 Main Template CTAB and SGROUPs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -2770,9 +2769,9 @@ the connection name.  The connection name, as discussed above, is usually one of
 “Ch” will typically have two or three distinct SAP attributes.  The order of the SAP attributes for hydrogen bonds (“Ch”) matters, and should go from the H-bond 
 atom nearest to the connecting “Al” atom to the most distant.  Hydrogen bonds do not have a leaving group, so the second ID of the designation is “0”.
 
-Example:
+Example::
 
-    # M  V30 2 SUP 2 ATOMS=(8 1 2 3 4 5 6 7 8) XBONDS=(1 7)-
+    M  V30 2 SUP 2 ATOMS=(8 1 2 3 4 5 6 7 8) XBONDS=(1 7)-
     M  V30 LABEL=U CLASS=BASE SAP=(3 4 9 Al) SAP=(3 8 0 Ch) SAP=(3 6 0 Ch) SAP=(3 7 0 Ch)-
     NATREPLACE=BASE/U
 
@@ -2780,45 +2779,39 @@ In addition to the main SGROUP, there will be an SGROUP that identifies each lea
 atoms.  The leaving group SGROUPS have ATOMS, XBONDS, LABEL, and CLASS attributes.   The XBONDS attribute is ignored in this treatment.   LABEL must be 
 “LGRP” (leaving group).
 
-Example:
+Example::
 
-    # M  V30 1 SUP 1 ATOMS=(1 11) XBONDS=(1 11) LABEL=H CLASS=LGRP
+    M  V30 1 SUP 1 ATOMS=(1 11) XBONDS=(1 11) LABEL=H CLASS=LGRP
 
+ 
 Parsing SCSR files and text blocks
 ==================================
 
-The following calls parse the SCSR mol or block produces an SCSRMol:
-
-  * SCSRMolFromScsrDataStream  (stream to SCSRMol)
-  * SCSRMolFromScsrBlock  (text block to SCSRMol)
-  * SCSRMolFromScsrFile  (file to SCSRMol)
-  
-Full Example of SCST files:
-===========================
-
-Here are two examples of SCST files:
-
-`DnaTest3 </Docs/Book/data/DnaTest3.mol>`_.
-
-`CrossLink.mol </Docs/Book/data/CrossLink.mol>`_.
-
-  
-Expansion to Full Atomistic Form
-===============================
-
-It is possible to convert an SCSRMol into a full atomistic representation as a RWMol.   That conversion is made with a call to MolFromSCSRMol.  This routine 
-takes two parameters:  the SCSRMol to convert and a MolFromScsrParams parameter.
-MolFromScsrParams has two properties at this time – a ScsrTemplateNames parameter and a Boolean ”includeLeavingGroups”.  
-
-    * The “ScsrTemplateNames” parameter controls how the Sgoups of the expanded file are generated, and must be one of: ScsrTemplateNamesAsEntered, 
-    ScsrTemplateNamesUseFirstName, or ScsrTemplateNamesUseLastName.   If ScsrTemplateNamesAsEntered is specified, the name as referenced in the main 
-    SCSR CTAB will be used.  
-
-    * The ”includeLeavingGroups” parameter control whether leaving groups that are not replaced in the main CTAB are included in the resulting atomistic file.   
-    The leaving groups that are so retained become end caps and caps on unused cross-link sites.    Setting this property to “false” causes the end caps and cross-link caps to remain unsubstituted.  This allows the results to be used as a full atom query for the sub-units from the SCSR mol.
+RDKit converts the SCSR data into a fully atomistic representation. 
 
 An SGROUP is produced in the resulting RWMol for each template and retained leaving group from the SCSRMol.  The name of each SGROUP is derived from the 
 template name, the sequence number if present, and, for leaving groups, the leaving group SAP ID (e.g. “Al”, “Br”, “Cx” or “Ch”).
+
+The following calls parse the SCSR mol or block produces a fully atomistic RDKit mol.: 
+
+  * MolFromSCSRDataStream  (stream to mol)
+  * MolFromSCSRBlock  (SCSR text block to mol)
+  * MolFromSCSRFile  (SCSR file to mol)
+
+These functions all take, in addition to the strean, text block, or file name, a MolFileParserParams and a MolFromSCSRParams parameter.  
+The MolFileParserParams parameter is used to control the parsing of the SCSR data, as is describe elsewhere in this document.  
+The MolFromSCSRParams parameter is used to control the conversion of the SCSR data into a full atomistic representation.
+
+MolFromScsrParams has three properties: 
+
+    * The “ScsrTemplateNames” property controls how the Sgoups of the expanded file are generated, and must be one of: ScsrTemplateNamesAsEntered, 
+    ScsrTemplateNamesUseFirstName, or ScsrTemplateNamesUseLastName.   If ScsrTemplateNamesAsEntered is specified, the name as referenced in the main 
+    SCSR CTAB will be used.  
+
+    * The ”includeLeavingGroups” property controls whether leaving groups that are not replaced in the main CTAB are included in the resulting atomistic file.   
+    The leaving groups that are so retained become end caps and caps on unused cross-link sites.    Setting this property to “false” causes the end caps and cross-link caps to remain unsubstituted.  This allows the results to be used as a full atom query for the sub-units from the SCSR mol.
+
+    * The "SCSRBaseHbondOptions" property controls the treatment of hydrogen bonds in the SCSR file.  This is described in the following section.
 
 Hydrogen Bonds
 -------
@@ -2901,6 +2894,15 @@ Example of “Wobble” pairing conversion:
 
 .. image:: images/WobbleRna.png
  
+ Full Example of SCSR files:
+===========================
+
+ Here are two examples of SCSR files:
+
+`DnaTest3 <https://github.com/rdkit/rdkit/blob/master/Docs/Book/data/DnaTest3.mol>`_.
+
+`CrossLink.mol <https://github.com/rdkit/rdkit/blob/master/Docs/Book/data/CrossLink.mol>`_.
+
 
 Feature Flags: global variables affecting RDKit behavior
 ********************************************************
