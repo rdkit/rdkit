@@ -276,6 +276,7 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpace {
    */
   void readTextFile(const std::string &inFilename, bool &cancelled);
   void readStream(std::istream &is, bool &cancelled);
+
   /*!
    * Writes to a binary DB File in our format.
    *

@@ -704,6 +704,28 @@ M  END)CTAB"_ctab;
   }
 }
 
+TEST_CASE("Fails simple test (Github 8502)") {
+  SynthonSpace space;
+  std::istringstream iss(R"(SMILES	synton_id	synton#	reaction_id
+F[1*]	277310376-742385846	0	fake-chiral
+Cl[1*]	287123986-010598048	0	fake-chiral
+OC(N)([1*])[2*]	584456271-623025187	1	fake-chiral
+OC(Br)([1*])[2*]	584456271-623025187	1	fake-chiral
+F[2*]	277310376-742385dd	2	fake-chiral
+)");
+  bool cancelled = false;
+  space.readStream(iss, cancelled);
+
+  auto mol1 = "C"_smiles;
+  REQUIRE(mol1);
+  auto res1 = space.substructureSearch(*mol1);
+  CHECK(res1.getHitMolecules().size() == 2);
+
+  auto mol2 = "CF"_smiles;
+  REQUIRE(mol2);
+  auto res2 = space.substructureSearch(*mol2);
+  CHECK(res2.getHitMolecules().size() == 2);
+}
 TEST_CASE("Chiral substructure search") {
   SynthonSpace space;
   std::istringstream iss(R"(SMILES	synton_id	synton#	reaction_id

@@ -501,6 +501,10 @@ void buildSplitBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> &bondPairs,
     const unsigned int maxBondSplits,
     std::vector<std::vector<unsigned int>> &splitBonds) {
+  if (bondPairs.size() == 1) {
+    splitBonds.push_back({bondPairs[0].first});
+    return;
+  }
   std::vector<unsigned int> nextSplits;
   splitBonds.reserve(maxBondSplits * maxBondSplits * bondPairs.size());
   for (unsigned int i = 1; i < maxBondSplits; ++i) {
@@ -538,7 +542,8 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   if (maxNumFrags < 1) {
     maxNumFrags = 1;
   }
-  maxNumFrags = std::min({maxNumFrags, MAX_CONNECTOR_NUM, query.getNumBonds()});
+  maxNumFrags =
+      std::min({maxNumFrags, MAX_CONNECTOR_NUM, query.getNumBonds() + 1});
 
   auto ringBonds = flagRingBonds(query);
 
