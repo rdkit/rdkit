@@ -239,6 +239,9 @@ SynthonSpaceFingerprintSearcher::searchFragSet(
 bool SynthonSpaceFingerprintSearcher::quickVerify(
     const SynthonSpaceHitSet *hitset,
     const std::vector<size_t> &synthNums) const {
+  if (!SynthonSpaceSearcher::quickVerify(hitset, synthNums)) {
+    return false;
+  }
   // The hitsets produced by the fingerprint searcher are SynthonSpaceFPHitSets,
   // which have the synthon fps as well.
   const auto hs = dynamic_cast<const SynthonSpaceFPHitSet *>(hitset);
@@ -258,7 +261,10 @@ bool SynthonSpaceFingerprintSearcher::quickVerify(
          getParams().similarityCutoff - getParams().approxSimilarityAdjuster;
 }
 
-bool SynthonSpaceFingerprintSearcher::verifyHit(const ROMol &hit) const {
+bool SynthonSpaceFingerprintSearcher::verifyHit(ROMol &hit) const {
+  if (!SynthonSpaceSearcher::verifyHit(hit)) {
+    return false;
+  }
   const std::unique_ptr<ExplicitBitVect> fp(d_fpGen.getFingerprint(hit));
   if (const auto sim = TanimotoSimilarity(*fp, *d_queryFP);
       sim >= getParams().similarityCutoff) {

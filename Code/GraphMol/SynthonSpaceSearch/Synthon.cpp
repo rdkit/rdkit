@@ -9,8 +9,11 @@
 //
 
 #include <DataStructs/ExplicitBitVect.h>
+#include <GraphMol/Chirality.h>
+#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/FileParsers/FileWriters.h>
 #include <GraphMol/Fingerprints/Fingerprints.h>
 #include <GraphMol/SynthonSpaceSearch/Synthon.h>
@@ -32,6 +35,7 @@ Synthon::Synthon(const std::string &smi) : d_smiles(smi) {
     // bring it all down.
     throw ValueErrorException("Unparsable synthon SMILES " + d_smiles);
   }
+  calcProperties();
 }
 
 Synthon::Synthon(const Synthon &other)
@@ -40,7 +44,12 @@ Synthon::Synthon(const Synthon &other)
       dp_searchMol(std::make_unique<ROMol>(*other.dp_searchMol)),
       dp_pattFP(std::make_unique<ExplicitBitVect>(*other.dp_pattFP)),
       dp_FP(std::make_unique<ExplicitBitVect>(*other.dp_FP)),
-      d_connRegions(other.d_connRegions) {}
+      d_connRegions(other.d_connRegions),
+      d_numDummies(other.d_numDummies),
+      d_numHeavyAtoms(other.d_numHeavyAtoms),
+      d_numChiralAtoms(other.d_numChiralAtoms),
+      d_numChiralAtomsExcDummies(other.d_numChiralAtomsExcDummies),
+      d_molWt(other.d_molWt) {}
 
 Synthon &Synthon::operator=(const Synthon &other) {
   if (this == &other) {
@@ -78,6 +87,11 @@ Synthon &Synthon::operator=(const Synthon &other) {
   } else {
     d_connRegions.clear();
   }
+  d_numDummies = other.d_numDummies;
+  d_numHeavyAtoms = other.d_numHeavyAtoms;
+  d_numChiralAtoms = other.d_numChiralAtoms;
+  d_numChiralAtomsExcDummies = other.d_numChiralAtomsExcDummies;
+  d_molWt = other.d_molWt;
   return *this;
 }
 const std::unique_ptr<ROMol> &Synthon::getOrigMol() const { return dp_origMol; }
@@ -128,9 +142,13 @@ void Synthon::writeToDBStream(std::ostream &os) const {
   } else {
     streamWrite(os, false);
   }
+  streamWrite(os, d_numDummies);
+  streamWrite(os, d_numHeavyAtoms);
+  streamWrite(os, d_numChiralAtoms);
+  streamWrite(os, d_molWt);
 }
 
-void Synthon::readFromDBStream(std::istream &is) {
+void Synthon::readFromDBStream(std::istream &is, std::uint32_t version) {
   streamRead(is, d_smiles, 0);
   dp_origMol = std::make_unique<ROMol>();
   MolPickler::molFromPickle(is, *dp_origMol);
@@ -153,6 +171,14 @@ void Synthon::readFromDBStream(std::istream &is) {
     streamRead(is, pickle, 0);
     dp_FP = std::make_unique<ExplicitBitVect>(pickle);
   }
+  if (version > 3000) {
+    streamRead(is, d_numDummies);
+    streamRead(is, d_numHeavyAtoms);
+    streamRead(is, d_numChiralAtoms);
+    streamRead(is, d_molWt);
+  } else {
+    calcProperties();
+  }
 }
 
 void Synthon::finishInitialization() {
@@ -167,4 +193,20 @@ void Synthon::finishInitialization() {
   }
 }
 
+void Synthon::calcProperties() {
+  d_numDummies = 0;
+  d_numHeavyAtoms = 0;
+  MolOps::assignStereochemistry(*dp_origMol);
+  for (const auto atom : dp_origMol->atoms()) {
+    if (atom->getAtomicNum() == 0) {
+      d_numDummies++;
+    } else if (atom->getAtomicNum() > 1) {
+      d_numHeavyAtoms++;
+    }
+  }
+  Chirality::findPotentialStereo(*dp_origMol, true, true);
+  d_numChiralAtoms =
+      details::countChiralAtoms(*dp_origMol, &d_numChiralAtomsExcDummies);
+  d_molWt = Descriptors::calcAMW(*dp_origMol);
+}
 }  // namespace RDKit::SynthonSpaceSearch

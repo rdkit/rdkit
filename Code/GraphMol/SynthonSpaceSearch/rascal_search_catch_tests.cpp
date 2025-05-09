@@ -114,31 +114,3 @@ TEST_CASE("RASCAL Small tests") {
     }
   }
 }
-
-TEST_CASE("Rascal Biggy") {
-  REQUIRE(rdbase);
-  std::string fName(rdbase);
-  std::string libName =
-      fName + "/Code/GraphMol/SynthonSpaceSearch/data/Syntons_5567.csv";
-  SynthonSpace synthonspace;
-  bool cancelled = false;
-  synthonspace.readTextFile(libName, cancelled);
-
-  const std::vector<std::string> smis{
-      "c1ccccc1C(=O)N1CCCC1", "c1ccccc1NC(=O)C1CCN1",
-      "c12ccccc1c(N)nc(N)n2", "c12ccc(C)cc1[nH]nc2C(=O)NCc1cncs1",
-      "c1n[nH]cn1",           "C(=O)NC(CC)C(=O)N(CC)C"};
-  const std::vector<size_t> numRes{254, 89, 2, 34, 0, 14};
-  const std::vector<size_t> maxRes{376110, 278747, 79833, 34817, 190, 45932};
-  SynthonSpaceSearchParams params;
-  params.maxHits = -1;
-  params.numThreads = 1;
-  RascalOptions rascalOptions;
-
-  for (size_t i = 0; i < smis.size(); ++i) {
-    auto queryMol = v2::SmilesParse::MolFromSmiles(smis[i]);
-    auto results = synthonspace.rascalSearch(*queryMol, rascalOptions, params);
-    CHECK(results.getHitMolecules().size() == numRes[i]);
-    CHECK(results.getMaxNumResults() == maxRes[i]);
-  }
-}

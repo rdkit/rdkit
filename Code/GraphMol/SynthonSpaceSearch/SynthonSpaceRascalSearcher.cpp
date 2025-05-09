@@ -151,17 +151,20 @@ SynthonSpaceRascalSearcher::searchFragSet(
 bool SynthonSpaceRascalSearcher::quickVerify(
     const SynthonSpaceHitSet *hitset,
     const std::vector<size_t> &synthNums) const {
+  if (!SynthonSpaceSearcher::quickVerify(hitset, synthNums)) {
+    return false;
+  }
   // If the query is an exact substructure of the product, then that's an upper
   // bound on the Johnson similarity.  Check that that is not below the
   // threshold.
   int qbit = getQuery().getNumAtoms() + getQuery().getNumBonds();
   int numAtoms = 0, numBonds = 0;
   for (size_t i = 0; i < synthNums.size(); i++) {
-    const auto &smol = hitset->synthonsToUse[i][synthNums[i]].second;
+    const auto &synth = hitset->synthonsToUse[i][synthNums[i]].second;
     // Adjust for connector points that aren't in the final product.
-    numAtoms += smol->getNumAtoms() -
+    numAtoms += synth->getOrigMol()->getNumAtoms() -
                 hitset->d_reaction->getSynthonConnectorPatterns()[i].count();
-    numBonds += smol->getNumBonds() -
+    numBonds += synth->getOrigMol()->getNumBonds() -
                 hitset->d_reaction->getSynthonConnectorPatterns()[i].count();
   }
   // The Johnson similarity is
@@ -174,7 +177,11 @@ bool SynthonSpaceRascalSearcher::quickVerify(
   return bestSim >= d_rascalOptions.similarityThreshold;
 }
 
-bool SynthonSpaceRascalSearcher::verifyHit(const ROMol &hit) const {
+bool SynthonSpaceRascalSearcher::verifyHit(ROMol &hit) const {
+  if (!SynthonSpaceSearcher::verifyHit(hit)) {
+    return false;
+  }
+
   auto res = RascalMCES::rascalMCES(hit, getQuery(), d_rascalOptions);
   // Rascal reports all matches that proceed to full MCES elucidation,
   // even if the final similarity value ends up below the threshold.

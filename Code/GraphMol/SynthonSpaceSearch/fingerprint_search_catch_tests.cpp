@@ -12,10 +12,11 @@
 #include <filesystem>
 #include <fstream>
 
-#include <GraphMol/SubstructLibrary/SubstructLibrary.h>
+#include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <GraphMol/Fingerprints/RDKitFPGenerator.h>
+#include <GraphMol/SubstructLibrary/SubstructLibrary.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
 #include <GraphMol/SynthonSpaceSearch/SearchResults.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpaceSearch_details.h>
@@ -175,4 +176,66 @@ TEST_CASE("Missing exact match") {
   CHECK_NOTHROW(results = synthonspace.fingerprintSearch(*queryMol, *fpGen));
   CHECK(results.getHitMolecules().size() == 1);
   CHECK(results.getHitMolecules()[0]->getProp<double>("Similarity") == 1.0);
+}
+
+TEST_CASE("Hit Filters") {
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  SynthonSpace synthonspace;
+  std::string libName =
+      fName + "/Code/GraphMol/SynthonSpaceSearch/data/idorsia_toy_space_a.spc";
+  std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
+      RDKitFP::getRDKitFPGenerator<std::uint64_t>());
+  SearchResults results;
+  auto queryMol = "CCNC(=O)Cc1cncc(CCOC2c3ccccc3CC2)c1"_smiles;
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.45;
+  synthonspace.readDBFile(libName);
+  results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+  CHECK(results.getHitMolecules().size() == 18);
+  {
+    SynthonSpaceSearchParams params;
+    params.minHitHeavyAtoms = 28;
+    params.similarityCutoff = 0.45;
+    results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+    CHECK(results.getHitMolecules().size() == 13);
+    params.maxHitHeavyAtoms = 29;
+    results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+    CHECK(results.getHitMolecules().size() == 12);
+    for (const auto &r : results.getHitMolecules()) {
+      auto numHeavies = Descriptors::calcNumHeavyAtoms(*r);
+      CHECK((numHeavies == 28 || numHeavies == 29));
+    }
+  }
+  {
+    SynthonSpaceSearchParams params;
+    params.similarityCutoff = 0.45;
+    params.minHitMolWt = 375.0;
+    results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+    CHECK(results.getHitMolecules().size() == 13);
+    params.maxHitMolWt = 390.0;
+    results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
+    CHECK(results.getHitMolecules().size() == 4);
+    for (const auto &r : results.getHitMolecules()) {
+      auto molWt = Descriptors::calcExactMW(*r);
+      CHECK((molWt >= 375.0 || molWt <= 390.0));
+    }
+  }
+  {
+    SynthonSpaceSearchParams params;
+    params.similarityCutoff = 0.45;
+    auto chiralQuery = "Cc1nccn1CCc1ccsc1COO[C@@H]1CCC[C@H](N)C1"_smiles;
+    results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
+    CHECK(results.getHitMolecules().size() == 17);
+    params.minHitChiralAtoms = 1;
+    results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
+    CHECK(results.getHitMolecules().size() == 11);
+    params.maxHitChiralAtoms = 1;
+    results = synthonspace.fingerprintSearch(*chiralQuery, *fpGen, params);
+    CHECK(results.getHitMolecules().size() == 4);
+    for (const auto &r : results.getHitMolecules()) {
+      auto numChiralAtoms = details::countChiralAtoms(*r);
+      CHECK((numChiralAtoms >= 1 && numChiralAtoms <= 3));
+    }
+  }
 }

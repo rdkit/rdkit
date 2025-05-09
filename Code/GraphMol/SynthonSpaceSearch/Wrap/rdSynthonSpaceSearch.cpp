@@ -20,7 +20,6 @@
 namespace python = boost::python;
 
 namespace RDKit {
-
 python::list hitMolecules_helper(const SynthonSpaceSearch::SearchResults &res) {
   python::list pyres;
   for (auto &r : res.getHitMolecules()) {
@@ -247,6 +246,29 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " 0.05 is adequate, and higher than that has been seen to"
           " produce long run times.")
       .def_readwrite(
+          "minHitHeavyAtoms",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitHeavyAtoms,
+          "Minimum number of heavy atoms in a hit.  Default=0.")
+      .def_readwrite(
+          "maxHitHeavyAtoms",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitHeavyAtoms,
+          "Maximum number of heavy atoms in a hit.  Default=-1 means no maximum.")
+      .def_readwrite("minHitMolWt",
+                     &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitMolWt,
+                     "Minimum molecular weight for a hit.  Default=0.0.")
+      .def_readwrite(
+          "maxHitMolWt",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitMolWt,
+          "Maximum molecular weight for a hit.  Default=0.0 mean no maximum.")
+      .def_readwrite(
+          "minHitChiralAtoms",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::minHitChiralAtoms,
+          "Minimum number of chiral atoms in a hit.  Default=0.")
+      .def_readwrite(
+          "maxHitChiralAtoms",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHitChiralAtoms,
+          "Maximum number of chiral atoms in a hit.  Default=-1 means no maximum.")
+      .def_readwrite(
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
           " timeout.  Requires an integer")
@@ -257,7 +279,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " number.  If <= 0, will use the number of hardware"
           " threads plus this number.  So if the number of"
           " hardware threads is 8, and numThreads is -1, it will"
-          " use 7 threads.  Default=1.");
+          " use 7 threads.  Default=1.")
+      .def("__setattr__", &safeSetattr);
 
   docString = "SynthonSpaceSearch object.";
   python::class_<SynthonSpaceSearch::SynthonSpace, boost::noncopyable>(

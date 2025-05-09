@@ -39,7 +39,7 @@ from pathlib import Path
 
 from rdkit import Chem, rdBase
 from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator,
-                        rdRascalMCES, rdGeneralizedSubstruct)
+                        rdRascalMCES, rdGeneralizedSubstruct, rdMolDescriptors)
 
 
 class TestCase(unittest.TestCase):
@@ -126,7 +126,49 @@ class TestCase(unittest.TestCase):
     xqry = rdGeneralizedSubstruct.CreateExtendedQueryMol(m)
     results = synthonspace.SubstructureSearch(xqry)
     self.assertEqual(12, len(results.GetHitMolecules()))
-  
+
+  def testHeavyAtomCutoffs(self):
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = -1
+    params.maxHitHeavyAtoms = 30
+    params.minHitHeavyAtoms = 25
+    q = Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1")
+    results = synthonspace.SubstructureSearch(q)
+    self.assertEqual(220, len(results.GetHitMolecules()))
+    results = synthonspace.SubstructureSearch(q, params=params)
+    self.assertEqual(141, len(results.GetHitMolecules()))
+
+  def testMolWeightCutoffs(self):
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = -1
+    params.maxHitMolWt = 450
+    params.minHitMolWt = 350
+    q = Chem.MolFromSmarts("c1ccccc1C(=O)N1CCCC1")
+    results = synthonspace.SubstructureSearch(q)
+    self.assertEqual(220, len(results.GetHitMolecules()))
+    results = synthonspace.SubstructureSearch(q, params=params)
+    self.assertEqual(185, len(results.GetHitMolecules()))
+    
+  def testChiralAtomtCutoffs(self):
+    fName = self.sssDir / "idorsia_toy_space_a.spc"
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(fName)
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.maxHits = -1
+    params.maxHitChiralAtoms = 2
+    params.minHitChiralAtoms = 1
+    q = Chem.MolFromSmarts("Cc1nc(-c2ccnn2CC(C))n([C@@H]2CCOC2)n1")
+    results = synthonspace.SubstructureSearch(q)
+    self.assertEqual(20, len(results.GetHitMolecules()))
+    results = synthonspace.SubstructureSearch(q, params=params)
+    self.assertEqual(10, len(results.GetHitMolecules()))
+    
     
 if __name__ == "__main__":
   unittest.main()
