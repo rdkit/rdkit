@@ -52,6 +52,9 @@ steps:
     -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
   displayName: Configure build (Run CMake)
 - bash: |
+    echo "CCACHE_REMOTE_ONLY: $CCACHE_REMOTE_ONLY"
+    echo "CCACHE_REMOTE_STORAGE: $CCACHE_REMOTE_STORAGE"
+    echo "REDIS_PORT:: ${{ secrets.REDIS_PORT }}"
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
