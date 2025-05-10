@@ -1125,7 +1125,8 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("rawCoords") = false),
            "draws a line with the current drawing style. The coordinates "
-           "are in the molecule frame")
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("DrawArrow", RDKit::drawArrowHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("asPolygon") = false, python::arg("frac") = 0.05,
@@ -1133,30 +1134,40 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("color") = python::object(),
             python::arg("rawCoords") = false),
            "draws an arrow with the current drawing style. The coordinates "
-           "are in the molecule frame. If asPolygon is true the head of the "
-           "arrow will be drawn as a triangle, otherwise two lines are used.")
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels. "
+           "If asPolygon is true the head of the "
+           "arrow will be drawn as a triangle, otherwise two lines are used. "
+           "The fraction of the arrow length to use for the head is given by "
+           "frac. The angle of the arrowhead "
+           "(the angle between the main line and each arrowhead line) is given by angle. "
+           "The color is a tuple of 3 floats (0-1) in red, green, blue (RGB) order.")
       .def("DrawTriangle", &RDKit::MolDraw2D::drawTriangle,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("cds3"), python::arg("rawCoords") = false),
            "draws a triangle with the current drawing style. The coordinates "
-           "are in the molecule frame")
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("DrawPolygon", RDKit::drawPolygonHelper,
            (python::arg("self"), python::arg("cds"),
             python::arg("rawCoords") = false),
            "draws a polygon with the current drawing style. The coordinates "
-           "are in the molecule frame")
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("DrawEllipse", &RDKit::MolDraw2D::drawEllipse,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("rawCoords") = false),
            "draws a triangle with the current drawing style in the rectangle "
            "defined by the two points. The coordinates "
-           "are in the molecule frame")
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("DrawRect", &RDKit::MolDraw2D::drawRect,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("rawCoords") = false),
            "draws a rectangle with the current drawing style in the rectangle "
            "defined by the two points. The coordinates "
-           "are in the molecule frame")
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("DrawArc",
            (void(RDKit::MolDraw2D::*)(const Point2D &, double, double, double,
                                       bool)) &
@@ -1164,34 +1175,47 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            (python::arg("self"), python::arg("center"), python::arg("radius"),
             python::arg("angle1"), python::arg("angle2"),
             python::arg("rawCoords") = false),
-           "draws an arc with the current drawing style. "
-           "The coordinates are in the molecule frame, the angles are in "
-           "degrees, angle2 should be > angle1.")
+           "draws an arc with the current drawing style. The coordinates "
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels."
+           "The angles are in "
+           "degrees; angle2 should be > angle1.")
       .def("DrawAttachmentLine", &RDKit::drawAttachmentLineHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("color"), python::arg("len") = 1.0,
             python::arg("nSegments") = 16, python::arg("rawCoords") = false),
            "draw a line indicating the presence of an attachment point "
-           "(normally a squiggle line perpendicular to a bond)")
+           "(normally a squiggle line perpendicular to a bond). "
+           "The coordinates "
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("DrawWavyLine", &RDKit::drawWavyLineHelper,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("color1"), python::arg("color2"),
             python::arg("nSegments") = 16, python::arg("vertOffset") = 0.05,
             python::arg("rawCoords") = false),
            "draw a line indicating the presence of an attachment point "
-           "(normally a squiggle line perpendicular to a bond)")
+           "(normally a squiggle line perpendicular to a bond). "
+           "The coordinates "
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("DrawString",
            (void(RDKit::MolDraw2D::*)(const std::string &,
                                       const RDGeom::Point2D &, bool)) &
                RDKit::MolDraw2D::drawString,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("rawCoords") = false),
-           "add text to the canvas")
+           "add text to the canvas. The coordinates "
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("DrawString", RDKit::drawStringHelper,
            (python::arg("self"), python::arg("string"), python::arg("pos"),
             python::arg("align"), python::arg("rawCoords") = false),
            "add aligned text to the canvas. The align argument can be 0 "
-           "(=MIDDLE), 1 (=START), or 2 (=END)")
+           "(=MIDDLE), 1 (=START), or 2 (=END)."
+           "The coordinates "
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels.")
       .def("GetDrawCoords",
            (RDGeom::Point2D(RDKit::MolDraw2D::*)(const RDGeom::Point2D &)
                 const) &
