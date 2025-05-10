@@ -1,5 +1,6 @@
 //
-//  Copyright (c) 2011-2014, Novartis Institutes for BioMedical Research Inc.
+//  Copyright (c) 2011-2025, Novartis Institutes for BioMedical Research Inc.
+//    and other RDkit contributors
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,6 +35,7 @@
 #ifndef RDKIT_INCHI_30JUNE2011
 #define RDKIT_INCHI_30JUNE2011
 #include <GraphMol/RDKitBase.h>
+
 #include <string>
 namespace RDKit {
 struct RDKIT_RDINCHILIB_EXPORT ExtraInchiReturnValues {
@@ -106,6 +108,8 @@ inline std::string MolToInchiKey(const ROMol &mol, const char *options = NULL) {
   ExtraInchiReturnValues rv;
   return InchiToInchiKey(MolToInchi(mol, rv, options));
 };
+
+RDKIT_RDINCHILIB_EXPORT std::string getInchiVersion();
 
 }  // namespace RDKit
 #endif

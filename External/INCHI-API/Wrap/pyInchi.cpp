@@ -147,4 +147,7 @@ BOOST_PYTHON_MODULE(rdinchi) {
       "MolToInchiKey", RDKit::MolToInchiKey,
       (boost::python::arg("mol"), boost::python::arg("options") = ""),
       docString.c_str());
+
+  boost::python::def("GetInchiVersion", RDKit::getInchiVersion,
+                     "returns the version of the InChI software being used");
 }

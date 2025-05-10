@@ -1,5 +1,5 @@
 //
-//  Copyright (c) 2011-2022 Novartis Institutes for BioMedical Research Inc. and
+//  Copyright (c) 2011-2025 Novartis Institutes for BioMedical Research Inc. and
 //  other RDkit contributors
 //  All rights reserved.
 //
@@ -62,6 +62,7 @@
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <inchi_api.h>
+#include <bcf_s.h>
 #include <cstring>
 #include <vector>
 #include <stack>
@@ -2145,9 +2146,7 @@ std::string InchiToInchiKey(const std::string &inchi) {
   char inchiKey[29];
   char xtra1[65], xtra2[65];
   int ret = 0;
-  {
-    ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
-  }
+  ret = GetINCHIKeyFromINCHI(inchi.c_str(), 0, 0, inchiKey, xtra1, xtra2);
   std::string error;
   switch (ret) {
     case INCHIKEY_OK:
@@ -2174,4 +2173,6 @@ std::string InchiToInchiKey(const std::string &inchi) {
   BOOST_LOG(rdErrorLog) << error << " in generating InChI Key" << std::endl;
   return std::string();
 }
+
+std::string getInchiVersion() { return CURRENT_VER; }
 }  // namespace RDKit
