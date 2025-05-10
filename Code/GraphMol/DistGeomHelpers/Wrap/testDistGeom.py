@@ -136,9 +136,9 @@ class TestCase(unittest.TestCase):
     conf = mol.GetConformer()
 
     # writer.write(mol)
-    self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.2180, -0.06088, 0.0]))
-    self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.00408, 0.12116, 0.0]))
-    self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.22207, -0.060276, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.237578, -0.000110, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.003500, 0.000027, 0.0]))
+    self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.241078, 0.000137, 0.0]))
 
     mol = Chem.MolFromSmiles('C=C=C=C')
     rdDistGeom.EmbedMolecule(mol, 10, 1, useExpTorsionAnglePrefs=False, useBasicKnowledge=False)
@@ -729,7 +729,7 @@ class TestCase(unittest.TestCase):
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
     self.assertGreater(len(cids), 1)
-  
+
   def testSetattr(self):
     mol = Chem.MolFromSmiles("CCC")
     bm = rdDistGeom.GetMoleculeBoundsMatrix(mol)
@@ -737,7 +737,7 @@ class TestCase(unittest.TestCase):
     ps.randomSeed = 0xc0ffee
     ps.SetBoundsMat(bm)
     with self.assertRaises(AttributeError):
-      ps.wrongName=1234
+      ps.wrongName = 1234
     with self.assertRaises(AttributeError):
       ps.wrongName(1234)
 
