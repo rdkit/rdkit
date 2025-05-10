@@ -1,5 +1,5 @@
 
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
 #include <string>
+#include <span>
 
 #include "props.hpp"
 #include "rdchem.h"
@@ -156,7 +157,7 @@ class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() = default;
-  bool operator()(const ROMol &m, const std::span<const unsigned int> &match) {
+  bool operator()(const ROMol &m, std::span<const unsigned int> match) {
     // boost::python doesn't handle std::span, so we need to convert the span to
     // a vector before calling into python:
     std::vector<unsigned int> matchVec(match.begin(), match.end());
