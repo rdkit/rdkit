@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2001-2020 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2001-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -19,6 +19,7 @@
 #include <unordered_map>
 #include <cstdint>
 #include <string>
+#include <span>
 
 #include <boost/dynamic_bitset.hpp>
 #if BOOST_VERSION >= 107100
@@ -62,7 +63,7 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   std::vector<std::string> bondProperties;  //!< bond properties that must be
                                             //!< equivalent in order to match
   std::function<bool(const ROMol &mol,
-                     const std::vector<unsigned int> &match)>
+                     std::span<const unsigned int> match)>
       extraFinalCheck;  //!< a function to be called at the end to validate a
                         //!< match
   unsigned int maxRecursiveMatches =
