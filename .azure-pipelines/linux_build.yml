@@ -63,10 +63,6 @@ steps:
     echo "CCACHE_REDIS_URL: $CCACHE_REDIS_URL"
     make -j $( $(number_of_cores) ) install
   displayName: Build
-  env:
-    CCACHE_REDIS_PASSWORD: $(REDIS_PASSWORD)
-    CCACHE_REDIS_PORT: $(REDIS_PORT)
-    CCACHE_REDIS_URL: $(REDIS_URL)
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
