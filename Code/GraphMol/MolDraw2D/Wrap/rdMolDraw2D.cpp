@@ -1133,8 +1133,15 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
             python::arg("color") = python::object(),
             python::arg("rawCoords") = false),
            "draws an arrow with the current drawing style. The coordinates "
-           "are in the molecule frame. If asPolygon is true the head of the "
-           "arrow will be drawn as a triangle, otherwise two lines are used.")
+           "are in the molecule frame unless rawCoords is true, "
+           "in which case the coordinates are in pixels. "
+           "If asPolygon is true the head of the "
+           "arrow will be drawn as a triangle, otherwise two lines are used. "
+           "The fraction of the arrow length to use for the head is given by "
+           "frac. The angle of the arrowhead "
+           "(the angle between the main line and each arrowhead line) is given by angle. "
+           "The color is a tuple of 3 floats (0-1) in red, green, blue (RGB) order. "
+           ")
       .def("DrawTriangle", &RDKit::MolDraw2D::drawTriangle,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("cds3"), python::arg("rawCoords") = false),
