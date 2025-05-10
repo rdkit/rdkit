@@ -1140,8 +1140,7 @@ BOOST_PYTHON_MODULE(rdMolDraw2D) {
            "The fraction of the arrow length to use for the head is given by "
            "frac. The angle of the arrowhead "
            "(the angle between the main line and each arrowhead line) is given by angle. "
-           "The color is a tuple of 3 floats (0-1) in red, green, blue (RGB) order. "
-           ")
+           "The color is a tuple of 3 floats (0-1) in red, green, blue (RGB) order.")
       .def("DrawTriangle", &RDKit::MolDraw2D::drawTriangle,
            (python::arg("self"), python::arg("cds1"), python::arg("cds2"),
             python::arg("cds3"), python::arg("rawCoords") = false),
