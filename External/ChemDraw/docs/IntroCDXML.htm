@@ -1,0 +1,80 @@
+<html>
+<head>
+<title>CDX Format Specification: The CDXML text-based file format</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+
+<h2>The CDXML text-based file format</h2>
+
+<p>A CDXML is a CDX file specially formatted so that it conforms to the <a href="http://www.xml.org">XML</a> specification. We expect that anyone who manipulates a CDXML file will be familiar with the general XML specifications, so we present only a brief overview here.</p>
+
+<p>A CDXML file has the following general attributes:
+<ul>
+<li>Like a CDXML file, It consists of a fixed header followed by a series of tagged items.</li>
+<li>All multi-byte data items are stored as quoted text.  That is, the value equal to 2<sup>8</sup> - 1 is stored as the three-byte string &quot;255&quot; rather than as the single byte 0xFF or as any other value.  The same value might also be stored as &quot;255.0&quot; or &quot;255.00&quot;; any program reading a CDXML file should be flexible about data types.</li>
+<li>Any amount of whitespace is permitted between objects, and any non-zero amount of whitespace is permitted between properties.</li>
+</ul>
+
+<h3>Header Format</h3>
+
+<p>The CDX File Header consists of the following string:</p>
+
+<p><tt>&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;<br>
+&lt;!DOCTYPE CDXML SYSTEM &quot;http://www.camsoft.com/xml/cdxml.dtd&quot;&gt</tt></p>
+
+<p>The header is then followed by an object tree of tagged items beginning with a document object.</p>
+
+<h3>End</h3>
+
+<p>Since the first object following the header is a document object, the end of the file is signified by the end of the document object:</p>
+
+<p><tt>&lt;/CDXML&gt</tt></p>
+
+<h4><a name="Attributes" href="TableOfProperties.htm">Properties</a></h4>
+
+<p>Properties, also called attributes, are self-contained. A property applies to the object which logically contains it. It may also describe other objects contained within the object which logically contains the property. For example, bond order is a property of a bond, and molecular weight is a property of a molecule. Unless otherwise noted, all properties are optional.</p>
+
+<p>All properties have a name. Properties are included in a CDXML file by listing the property name, an equals sign, and then a quoted string representing the property's value.</p>
+
+<h5>Example</h5>
+
+<table>
+<tr><td><tt>Order=&quot;2&quot;</tt></td><td>:</td><td valign="top">The bond with this property is a double bond</td></tr>
+</table>
+
+<h4><a name="Objects" href="AllCDXObjects.htm"><big>Objects</big></a></h4>
+
+<p>Like properties, objects are also self-contained.  Unlike properties, however, objects can contain properties and other objects.</p>
+
+<p>Each object has a name that identifies the type of object.  For example, an object that represents a bond has the name &quot;b&quot;.  These names, like everything else in XML, are case-sensitive.<p>
+
+<p>The definition of an object starts with a less-than sign, followed by the object's name.  Any properties, of present, are listed immediately afterward in pairs formatted as <em>propertyname</em>=&quot;propertyvalue&quot;.  A greater-than sign will appear after the last property.</p>
+
+<p>The definition of an object ends with a less-than sign followed by a slash followed by the object name again, followed by a greater-than sign. Alternatively, if there are no subobjects, the end-object marker may be omitted and replaced by a slash immediately before the first closing greater-than sign.<p>
+
+<p>Any subobjects are listed between those object-begin and object-end markers.</p>
+
+<h5>Example</h5>
+
+<table>
+<tr><td valign="top"><tt>&lt;b</tt></td><td>:</td><td valign="top">This is a bond</td></tr>
+<tr><td valign="top"><tt>id=&quot;29&quot;</tt></td><td>:</td><td valign="top">This bond has an ID of 29</td></tr>
+<tr><td valign="top"><tt>B=&quot;21&quot;</tt></td><td valign="top">:</td><td valign="top">The atom at the first end of this bond has ID 21</td></tr>
+<tr><td valign="top"><tt>E=&quot;22&quot;</tt></td><td valign="top">:</td><td valign="top">The atom at the first end of this bond has ID 22</td></tr>
+<tr><td valign="top"><tt>Order=&quot;2&quot;</tt></td><td valign="top">:</td><td valign="top">This bond has a bond order 2.  It is a double bond.</td></tr>
+<tr><td valign="top"><tt>DoublePosition=&quot;Right&quot;</tt></td><td valign="top">:</td><td valign="top">This double bond is positioned so that the second line of the double bond is to the right of the first, looking from the first atom to the second atom</td></tr>
+<tr><td valign="top"><tt>/&gt;</tt></td><td valign="top">:</td><td valign="top">There are no more properties or objects associated with this bond</td></tr>
+</table>
+
+<p>&nbsp;</p>
+
+<p><a href="General.htm">Return to Introduction</a><br>
+<a href="IntroExampleSimple.htm">Continue to simple example</a></li>
+
+
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

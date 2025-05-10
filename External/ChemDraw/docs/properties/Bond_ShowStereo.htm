@@ -1,0 +1,28 @@
+<html>
+<head>
+<title>CDX Format Specification: Bond_ShowStereo Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Bond_ShowStereo Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">ShowBondStereo</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Bond_ShowStereo</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x060D</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXBoolean.htm">CDXBoolean</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Document.htm">kCDXObj_Document</a>, <a href="../Bond.htm">kCDXObj_Bond</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Show the stereochemistry indicator if non-zero.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The value from the same property of a containing object will be used. That is, if this property is omitted from an object, but present for the <a href="../Document.htm">Document</a>, the Document's value will be used. If no value is found at all, ChemDraw will use the value from its last-used Style Sheet. If no information is found in the Style Sheet either, this value is treated as false (stereochemistry indicators are not shown).</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

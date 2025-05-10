@@ -1,0 +1,31 @@
+<html>
+<head>
+<title>CDX Format Specification: LineHeight Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>LineHeight Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">LineHeight</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_LineHeight</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0702</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">UINT16</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Text.htm">kCDXObj_Text</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The line height of a text object.</p>
+<p>The value stored in this property is in screen units. So, for example, a reasonable line height for 12-point text would be 12 (ore maybe a smidge more). There are, additionally, two special values: the value 0 provides Variable line height (determined by the tallest character on each line), and the value 1 provides Automatic line height (determined by the tallest character on any line in the text object).</p>
+
+<p>This property is considered obsolete starting with ChemDraw 7.0. Values stored in the <a href="CaptionLineHeight.htm">kCDXProp_CaptionLineHeight</a> and <a href="LabelLineHeight.htm">kCDXProp_LabelLineHeight</a> properties are used preferentially, if present. ChemDraw will continue to write this property for backward-compatibility, however.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The value from the same property of a containing object will be used. That is, if this property is omitted from an object, but present for the <a href="../Document.htm">Document</a>, the Document's value will be used. If no value is found at all, ChemDraw will use the value from its last-used Style Sheet. If no information is found in the Style Sheet either, then atom labels have a Variable line height, and non-atomlabel text has an Automatic line height.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

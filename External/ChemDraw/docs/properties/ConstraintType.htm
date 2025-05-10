@@ -1,0 +1,60 @@
+<html>
+<head>
+<title>CDX Format Specification: ConstraintType Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>ConstraintType Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">ConstraintType</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_ConstraintType</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0B83</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Constraint.htm">kCDXObj_Constraint</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 8.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The constraint type (distance, angle, or exclusion sphere).</p>
+<p><p>For the purpose of Constraint objects based on other objects:
+<ul><li>A <b>point</b> is defined as a <a href="../Node.htm">Node</a> or a <a href="../Geometry.htm">Geometry</a> object with a Geometric Feature property equal to kCDXGeometricFeature_PointFromPointPointDistance, kCDXGeometricFeature_PointFromPointPointPercentage, kCDXGeometricFeature_PointFromPointNormalDistance, or kCDXGeometricFeature_CentroidFromPoints</li>
+<li>A <b>line</b> is defined as a <a href="../Geometry.htm">Geometry</a> object with a Geometric Feature property equal to kCDXGeometricFeature_LineFromPoints or kCDXGeometricFeature_NormalFromPointPlane</li>
+<li>A <b>plane</b> is defined as a <a href="../Geometry.htm">Geometry</a> object with a Geometric Feature property equal to kCDXGeometricFeature_PlaneFromPoints or kCDXGeometricFeature_PlaneFromPointLine</li></ul></p></p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Undefined</td>
+<td valign="top">The type of constraint is undefined.</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">Distance</td>
+<td valign="top">The <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> property should be present and contain an unordered list of two other objects: two points, a point and a line, or a point and a plane. The <a href="ConstraintMin.htm">kCDXProp_ConstraintMin</a> and <a href="ConstraintMax.htm">kCDXProp_ConstraintMax</a> properties will contain the minimum and maximum acceptable distances that define the constraint range (both values in Angstroms).</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">Angle</td>
+<td valign="top">The <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> property should be present and contain one of four set of objects: an <em>ordered</em> list of three points (constraining the A-B-C angle), an <em>ordered</em> list of four points (constraining the A-B-C-D dihedral angle), an unordered pair of lines (constraining the angle between the lines), or an unordered pair of planes (constraining the dihedral angle between the planes). The <a href="ConstraintMin.htm">kCDXProp_ConstraintMin</a> and <a href="ConstraintMax.htm">kCDXProp_ConstraintMax</a> properties contain the minimum and maximum acceptable angles that define the constraint range (both values in degrees).</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">ExclusionSphere</td>
+<td valign="top">The <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> property should be present and contain a list of at least one point. The Exclusion Sphere will be centered around the first point in the list. If additional points are present, those points are assumed to be allowed within the radious of the sphere. The <a href="ConstraintMin.htm">kCDXProp_ConstraintMin</a> and <a href="ConstraintMax.htm">kCDXProp_ConstraintMax</a> properties contain the minimum and maximum acceptable radii that define the exclusion sphere (both values in Angstroms). Under most normal cases, the kCDXProp_ConstraintMin for an exclusion sphere will be zero. A non-zero value would indicate a shell (hollow sphere of some thickness) rather than the usual solid sphere.</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The type will be treated as Undefined.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

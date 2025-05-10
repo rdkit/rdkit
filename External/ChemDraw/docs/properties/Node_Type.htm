@@ -1,0 +1,120 @@
+<html>
+<head>
+<title>CDX Format Specification: Node_Type Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Node_Type Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">NodeType</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Node_Type</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0400</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT16</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Node.htm">kCDXObj_Node</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The type of a node object.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Unspecified</td>
+<td valign="top">A node of unspecified type. This may be used in cases where the node has unknown chemical significance. It may also be used when a node has an uninterpretable label.</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">Element</td>
+<td valign="top">A node consisting either of one chemical element or of one heavy element and attached hydrogens. The node property <a href="Node_Element.htm">kCDXProp_Node_Element</a> records the atomic number of the node's element. If the element property is missing, the atom is assumed to be a carbon.<p></td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">ElementList</td>
+<td valign="top">An element list node (e.g. [O,S]) representing a node with alternative elements. The <a href="Atom_ElementList.htm">kCDXProp_Atom_ElementList</a> and/or <a href="Atom_GenericList.htm">kCDXProp_Atom_GenericList</a> attributes must be present as well, to provide the actual list of elements.</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">ElementListNickname</td>
+<td valign="top">A special type of element list node representing a group of elements of a common attribute as a nickname instead of representing each element in a list. For example, DARC uses HAL to represent [F,Cl,Br,I], MX to represent any metal. The <a href="Atom_ElementList.htm"</a>kCDXProp_Atom_ElementList</a> and/or <a href="Atom_GenericList.htm">kCDXProp_Atom_GenericList</a> attributes must be present. A <a href="../Text.htm">Text</a> object that represents the node label is required for the node.</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">Nickname</td>
+<td valign="top">A molecular fragment represented by a single symbol, such as Ph. For example, Ph commonly represents a monosubstituted phenyl ring, C<sub>6</sub>H<sub>5</sub>. The Node should contain a <a href="../Fragment.htm">Fragment</a> object that contains the set of nodes and bonds that define the nickname. A <a href="../Text.htm">Text</a> object that represents the node label is required for the node.</p>
+
+<p>A node may be of Nickname type only if it can be represented by a <em>single</em> symbol. A node with a label of &quot;OPh&quot; should be considered a Fragment rather than a Nickname</p>
+
+<p>If a label is theoretically interpretable, but that interpretation is not also present in the file (as a Fragment object), the node should be specified as Unknown type instead.</p>
+
+<p>As a practical matter, there is very little difference between a Nickname and a Fragment. CDX-reading programs may simply treat a Nickname as a special case of a Fragment.</td>
+</tr>
+<tr>
+<td align="right" valign="top">5</td>
+<td valign="top">Fragment</td>
+<td valign="top">An interpretable label, such as CH(CH<sub>2</sub>OH)<sub>2</sub>, which may include elements, nicknames, or named alternative groups. A <a href="../Text.htm">Text</a> object that represents the node label is required for the node. A <a href="../Fragment.htm">Fragment</a> object defining the content of the fragment is also required. If there is more than one bond to this node, a <a href="Atom_BondOrdering.htm">kCDXProp_Atom_BondOrdering</a> attribute should also be given, specifying the order of the bonds to correspond to the ordered external connection nodes in the fragment.</p>
+
+<p>If a label is theoretically interpretable, but that interpretation is not also present in the file (as a Fragment object), the node should be specified as Unknown type instead.</td>
+</tr>
+<tr>
+<td align="right" valign="top">6</td>
+<td valign="top">Formula</td>
+<td valign="top">A labeled node such as C<sub>5</sub>H<sub>10</sub>O, representing any or all of the possible isomers. A <a href="../Text.htm">Text</a> object that represents the node label is required for the node. A <a href="Atom_Formula.htm">kCDXProp_Atom_Formula</a> property must be present, defining the formula for the fragment.</td>
+</tr>
+<tr>
+<td align="right" valign="top">7</td>
+<td valign="top">GenericNickname</td>
+<td valign="top">A large or infinite set of alternative fragments, which may be defined by example. For example, DARC uses CHK to represent acyclic hydrocarbons. A <a href="../Text.htm">Text</a> object that represents the node label is required for the node. A <a href="Atom_GenericNickname.htm">kCDXProp_Atom_GenericNickname</a> property must be present, giving the name of the generic nickname.</td>
+</tr>
+<tr>
+<td align="right" valign="top">8</td>
+<td valign="top">AnonymousAlternativeGroup</td>
+<td valign="top">A set of alternative fragments defined by enumeration, such as CH<sub>3</sub>, CH<sub>2</sub>OH, Ph. A <a href="../Text.htm">Text</a> object that represents the node label is required for the node. This node should contain two or more fragment objects.</td>
+</tr>
+<tr>
+<td align="right" valign="top">9</td>
+<td valign="top">NamedAlternativeGroup</td>
+<td valign="top">A set of fragments grouped together and given a name. A <a href="../Text.htm">Text</a> object that represents the node label (equivalent to the alternative group name) is required for the node. A <a href="Atom_AltGroupID.htm">kCDXProp_Atom_AltGroupID</a> property must be present. If there is more than one bond to this node, a <a href="Atom_BondOrdering.htm">kCDXProp_Atom_BondOrdering</a> property should be present. See the discussion of the <a href="../NamedAltGroup.htm">Named Alternative Group</a> object for more details and examples.</td>
+</tr>
+<tr>
+<td align="right" valign="top">10</td>
+<td valign="top">MultiAttachment</td>
+<td valign="top"><img align="Left" src="../Graphics/Node1.gif">The endpoint of a bonding to a set of atoms, such as in <font face="Symbol">p</font>-allyl and <font face="Symbol">p</font>-aryl bonding. The node must contain a <a href="Node_Attachments.htm">kCDXProp_Node_Attachments</a> property that describes the nodes in the set.<p>
+
+A multicenter attachment node might also have bonds to other nodes which are not part of the multicenter attachment. For example, in Ferrocene, two multicenter attachment nodes are used, one at the center of each ring Each multicenter attachment node contains the IDs of the five carbons in the Cp ring, but the connection to the iron is represented with a normal bond.<p>
+
+A multicenter attachment node can also have charge and radical attributes, which are treated as being distributed over the attached nodes.</td>
+</tr>
+<tr>
+<td align="right" valign="top">11</td>
+<td valign="top">VariableAttachment</td>
+<td valign="top"><img align="Right" src="../Graphics/Node2.gif">A node representing alternative positional isomers. The <a href="Node_Attachments.htm">kCDXProp_Node_Attachments</a> property contains the IDs of the variable attachment positions. For example, to find ortho-, meta-, or para-cresol, you might draw the following. The kCDXProp_Node_Attachments attribute would have the IDs of the five ring atoms to which the methyl group might be attached. Note that the methyl group is not in this list; the bond to the methyl group is represented as a normal bond to this node.</td>
+</tr>
+<tr>
+<td align="right" valign="top">12</td>
+<td valign="top">ExternalConnectionPoint</td>
+<td valign="top">An external connection point node is used in defining fragments for fragment nicknames and named alternative groups. This node indicates a point at which a fragment is connected to its parent. An external connection point node is represented in ChemDraw with a small filled diamond.<p>
+
+An external connection point normally has a single bond of order 1, but it may have more than one bond or a multiple bond to represent certain special cases. Note, however, that use of multiple bonds in either the use or definition of an alternative group can lead to ambiguities in the stereochemistry of the resulting query. For this reason, except in the simplest cases, it is preferable to define attachment points with a single connection.</td>
+</tr>
+<tr>
+<td align="right" valign="top">13</td>
+<td valign="top">LinkNode</td>
+<td valign="top">A node containing a single element or generic nickname, repeated some number of times in a chain, as in [CH<sub>2</sub>]<sub><i>1-5</i></sub> (which indicates an alkyl chain of at most 5 carbons). The node must also contain <a href="Atom_LinkCountLow.htm">kCDXProp_Atom_LinkCountLow</a> and <a href="Atom_LinkCountHigh.htm">kCDXProp_Atom_LinkCountHigh</a> properties, indicating the low and high ends of the repeat range.</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The node is treated as Element type.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

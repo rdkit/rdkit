@@ -1,0 +1,398 @@
+<html>
+<head>
+<title>CDX Format Specification: TLC Plate Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>TLC Plate Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">tlcplate</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_TLCPlate</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8023</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 8.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Each plate contains a series of <a href="TLCLane.htm">Lanes</a>. Those lanes should be arranged on the plate from left to right in the order that they appear in the cdx file.</p>
+
+<p>TLC Plates should not be assumed to be positioned vertically. The actual orientation can be determined from the four corner properties (<a href="properties/TopLeft.htm">kCDXProp_TopLeft</a>, etc). Similarly, they should not be assumed to be orthogonal, although in most practical cases there will be 90&deg; angles at each corner.
+
+<p>TLC Plate objects technically have no required properties or objects, but if the four corner properties are omitted, the plate will be assumed to have a zero-by-zero size, which isn't very useful. Similarly, at least one <a href="TLCLane.htm">Lane</a> would be helpful, and that lane should probably contain at least one <a href="TLCSpot.htm">Spot</a>.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8011</td>
+<td><a href="ObjectTag.htm">kCDXObj_ObjectTag</a></font></b></td>
+<td>objecttag</td>
+</tr>
+<tr>
+<td></td><td colspan="3">Arbitrarily named property, one or more of which can be attached to any ChemDraw object.</td>
+</tr>
+<tr>
+<td>0x8024</td>
+<td><a href="TLCLane.htm">kCDXObj_TLCLane</a></font></b></td>
+<td>tlclane</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A logical object representing a series of spots arranged vertically on a TLC plate.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000A</td>
+<td><a href="properties/ZOrder.htm">kCDXProp_ZOrder</a></td>
+<td>Z</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Back-to-front ordering index in 2D drawing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0011</td>
+<td><a href="properties/Visible.htm">kCDXProp_Visible</a></td>
+<td>Visible       </td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The object is visible if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0204</td>
+<td><a href="properties/BoundingBox.htm">kCDXProp_BoundingBox</a></td>
+<td>BoundingBox</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The smallest rectangle that encloses the graphical representation of the object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0209</td>
+<td><a href="properties/TopLeft.htm">kCDXProp_TopLeft</a></td>
+<td>TopLeft</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The location of the top-left corner of a quadrilateral object, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020A</td>
+<td><a href="properties/TopRight.htm">kCDXProp_TopRight</a></td>
+<td>TopRight</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The location of the top-right corner of a quadrilateral object, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020B</td>
+<td><a href="properties/BottomRight.htm">kCDXProp_BottomRight</a></td>
+<td>BottomRight</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The location of the bottom-right corner of a quadrilateral object, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x020C</td>
+<td><a href="properties/BottomLeft.htm">kCDXProp_BottomLeft</a></td>
+<td>BottomLeft</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXPoint2D</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The location of the bottom-left corner of a quadrilateral object, possibly in a rotated or skewed frame.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0301</td>
+<td><a href="properties/ForegroundColor.htm">kCDXProp_ForegroundColor</a></td>
+<td>color</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The foreground color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0302</td>
+<td><a href="properties/BackgroundColor.htm">kCDXProp_BackgroundColor</a></td>
+<td>bgcolor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The background color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0806</td>
+<td><a href="properties/BoldWidth.htm">kCDXProp_BoldWidth</a></td>
+<td>BoldWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default bold bond width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0807</td>
+<td><a href="properties/LineWidth.htm">kCDXProp_LineWidth</a></td>
+<td>LineWidth           </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default line width.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0808</td>
+<td><a href="properties/MarginWidth.htm">kCDXProp_MarginWidth</a></td>
+<td>MarginWidth         </td>
+<td><a href="DataType/CDXCoordinates.htm">CDXCoordinate</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default amount of space surrounding atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081A</td>
+<td><a href="properties/LabelStyleFont.htm">kCDXProp_LabelStyleFont</a></td>
+<td>LabelFont</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font family for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081C</td>
+<td><a href="properties/LabelStyleSize.htm">kCDXProp_LabelStyleSize</a></td>
+<td>LabelSize</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font size for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x081E</td>
+<td><a href="properties/LabelStyleFace.htm">kCDXProp_LabelStyleFace</a></td>
+<td>LabelFace</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The default font style for atom labels.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA0</td>
+<td><a href="properties/TLC_OriginFraction.htm">kCDXProp_TLC_OriginFraction</a></td>
+<td>OriginFraction</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The distance of the origin line from the bottom of a TLC Plate, as a fraction of the total height of the plate.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA1</td>
+<td><a href="properties/TLC_SolventFrontFraction.htm">kCDXProp_TLC_SolventFrontFraction</a></td>
+<td>SolventFrontFraction</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The distance of the solvent front from the top of a TLC Plate, as a fraction of the total height of the plate.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA2</td>
+<td><a href="properties/TLC_ShowOrigin.htm">kCDXProp_TLC_ShowOrigin</a></td>
+<td>ShowOrigin</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the origin line near the base of the TLC Plate if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA3</td>
+<td><a href="properties/TLC_ShowSolventFront.htm">kCDXProp_TLC_ShowSolventFront</a></td>
+<td>ShowSolventFront</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show the solvent front line near the top of the TLC Plate if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0AA4</td>
+<td><a href="properties/TLC_ShowBorders.htm">kCDXProp_TLC_ShowBorders</a></td>
+<td>ShowBorders</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Show borders around the edges of the TLC Plate if non-zero.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

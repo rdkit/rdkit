@@ -1,0 +1,259 @@
+<html>
+<head>
+<title>CDX Format Specification: Named Alternative Group Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Named Alternative Group Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">altgroup</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_NamedAlternativeGroup</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x800A</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a>, <a href="Group.htm">kCDXObj_Group</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A NamedAlternativeGroup is a container object holding fragments that represent alternative substituents for a query. It should contain two or more fragments and/or groups containing fragments. The optional property <a href="properties/NamedAlternativeGroup_Valence.htm">kCDXProp_NamedAlternativeGroup_Valence</a> (1 if not present) describes the number of external connection points. Each fragment or group must contain exactly that number of external connection point nodes. Generally, there will be a <a href="Node.htm">Node</a> in another fragment not contained in this NamedAlternativeGroup which has Node_Type equal to kCDXNodeType_NamedAlternativeGroup, and a kCDXProp_Node_AltGroupID property that refers to this NamedAlternativeGroup object.</p>
+
+<img src="Graphics/NamedAltGroup1.gif"><br>
+<img src="Graphics/NamedAltGroup2.gif"></p>
+
+<p>The number of bonds connected to a named alternative group node should match the valence (number of external connection points in each fragment) of the alternative group. If a named alternative group node has more than one bond connected to it, the named alternative group node should contain a kCDXProp_BondOrdering property.</p>
+
+<p>A NamedAlternativeGroup is also commonly known as an R-Group or a G-Group.</p>
+
+<p>A NamedAlternativeGroup must contain a <a href="Text.htm">Text</a> object, and a NamedAlternativeGroup without any contained fragments is pretty useless. It has no required properties.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8002</td>
+<td><a href="Group.htm">kCDXObj_Group</a></font></b></td>
+<td>group</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A logical collection of objects.</td>
+</tr>
+<tr>
+<td>0x8003</td>
+<td><a href="Fragment.htm">kCDXObj_Fragment</a></font></b></td>
+<td>fragment</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A collection of nodes and their connectivity (bonds).</td>
+</tr>
+<tr>
+<td>0x8006</td>
+<td><a href="Text.htm">kCDXObj_Text</a></font></b></td>
+<td>t</td>
+</tr>
+<tr>
+<td></td><td colspan="3">An arbitrary block of (possibly styled) text.</td>
+</tr>
+<tr>
+<td>0x8011</td>
+<td><a href="ObjectTag.htm">kCDXObj_ObjectTag</a></font></b></td>
+<td>objecttag</td>
+</tr>
+<tr>
+<td></td><td colspan="3">Arbitrarily named property, one or more of which can be attached to any ChemDraw object.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000A</td>
+<td><a href="properties/ZOrder.htm">kCDXProp_ZOrder</a></td>
+<td>Z</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Back-to-front ordering index in 2D drawing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000F</td>
+<td><a href="properties/IgnoreWarnings.htm">kCDXProp_IgnoreWarnings</a></td>
+<td>IgnoreWarnings</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBooleanImplied</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Signifies whether chemical warnings should be suppressed on this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0010</td>
+<td><a href="properties/ChemicalWarning.htm">kCDXProp_ChemicalWarning</a></td>
+<td>Warning</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A warning concerning possible chemical problems with this object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0011</td>
+<td><a href="properties/Visible.htm">kCDXProp_Visible</a></td>
+<td>Visible       </td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The object is visible if non-zero.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0204</td>
+<td><a href="properties/BoundingBox.htm">kCDXProp_BoundingBox</a></td>
+<td>BoundingBox</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The smallest rectangle that encloses the graphical representation of the object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0301</td>
+<td><a href="properties/ForegroundColor.htm">kCDXProp_ForegroundColor</a></td>
+<td>color</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The foreground color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0302</td>
+<td><a href="properties/BackgroundColor.htm">kCDXProp_BackgroundColor</a></td>
+<td>bgcolor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The background color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B00</td>
+<td><a href="properties/NamedAlternativeGroup_TextFrame.htm">kCDXProp_NamedAlternativeGroup_TextFrame</a></td>
+<td>TextFrame</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The bounding box of upper portion of the Named Alternative Group, containing the name of the group.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B01</td>
+<td><a href="properties/NamedAlternativeGroup_GroupFrame.htm">kCDXProp_NamedAlternativeGroup_GroupFrame</a></td>
+<td>GroupFrame</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The bounding box of the lower portion of the Named Alternative Group, containing the definition of the group.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0B02</td>
+<td><a href="properties/NamedAlternativeGroup_Valence.htm">kCDXProp_NamedAlternativeGroup_Valence</a></td>
+<td>Valence</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The number of attachment points in each alternative in a named alternative group.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

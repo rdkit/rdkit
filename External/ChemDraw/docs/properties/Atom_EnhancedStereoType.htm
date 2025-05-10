@@ -1,0 +1,62 @@
+<html>
+<head>
+<title>CDX Format Specification: Atom_EnhancedStereoType Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Atom_EnhancedStereoType Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">EnhancedStereoType</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Atom_EnhancedStereoType</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0446</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">UINT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Node.htm">kCDXObj_Node</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 10.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The type of enhanced stereochemistry present on this atom.</p>
+<p>And and Or types additionally require a <a href="Atom_EnhancedStereoGroupNum.htm">kCDXProp_Atom_EnhancedStereoGroupNum</a>.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Unspecified</td>
+<td valign="top">Unspecified</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">None</td>
+<td valign="top">None</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">Absolute</td>
+<td valign="top">Absolute</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">Or</td>
+<td valign="top">Or (requires <a href="Atom_EnhancedStereoGroupNum.htm">kCDXProp_Atom_EnhancedStereoGroupNum</a>)</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">And</td>
+<td valign="top">And (requires <a href="Atom_EnhancedStereoGroupNum.htm">kCDXProp_Atom_EnhancedStereoGroupNum</a>)</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The node is treated as unspecified in terms of enhanced stereochemistry.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

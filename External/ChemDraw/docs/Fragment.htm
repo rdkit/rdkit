@@ -1,0 +1,214 @@
+<html>
+<head>
+<title>CDX Format Specification: Fragment Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Fragment Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">fragment</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_Fragment</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8003</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a>, <a href="Group.htm">kCDXObj_Group</a>, <a href="Node.htm">kCDXObj_Node</a>, <a href="NamedAltGroup.htm">kCDXObj_NamedAlternativeGroup</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Fragment object is a collection of nodes and their connectivity (bonds). Generally, all nodes within a fragment will be connected, but this is not strictly guaranteed. For example, a cyclopentadienyl anion might be represented as a single fragment containing five nodes, five bonds, a curve (an ellipse, to represent delocalization), and a graphic (a circled minus charge, to represent the delocalized charge).</p>
+
+<p>Unlike with <a href="Group.htm">Group</a> objects, Fragment objects are guaranteed to be chemically meaningful.</p>
+
+<p>A Fragment has no required objects or properties, but a Fragment without any objects is pretty useless.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8004</td>
+<td><a href="Node.htm">kCDXObj_Node</a></font></b></td>
+<td>n</td>
+</tr>
+<tr>
+<td></td><td colspan="3">The basic building block of chemical objects, usually referring to a single atom</td>
+</tr>
+<tr>
+<td>0x8005</td>
+<td><a href="Bond.htm">kCDXObj_Bond</a></font></b></td>
+<td>b</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A connection between two Node objects.</td>
+</tr>
+<tr>
+<td>0x8007</td>
+<td><a href="Graphic.htm">kCDXObj_Graphic</a></font></b></td>
+<td>graphic</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A (generally non-chemical) graphic object such as a line, arc, circle, or rectangle.</td>
+</tr>
+<tr>
+<td>0x8008</td>
+<td><a href="Curve.htm">kCDXObj_Curve</a></font></b></td>
+<td>curve</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A B&eacute;zier curve.</td>
+</tr>
+<tr>
+<td>0x8011</td>
+<td><a href="ObjectTag.htm">kCDXObj_ObjectTag</a></font></b></td>
+<td>objecttag</td>
+</tr>
+<tr>
+<td></td><td colspan="3">Arbitrarily named property, one or more of which can be attached to any ChemDraw object.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0204</td>
+<td><a href="properties/BoundingBox.htm">kCDXProp_BoundingBox</a></td>
+<td>BoundingBox</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The smallest rectangle that encloses the graphical representation of the object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0500</td>
+<td><a href="properties/Mole_Racemic.htm">kCDXProp_Mole_Racemic</a></td>
+<td>Racemic</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that the molecule is a racemic mixture.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0501</td>
+<td><a href="properties/Mole_Absolute.htm">kCDXProp_Mole_Absolute</a></td>
+<td>Absolute</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that the molecule has known absolute configuration.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0502</td>
+<td><a href="properties/Mole_Relative.htm">kCDXProp_Mole_Relative</a></td>
+<td>Relative</td>
+<td><a href="DataType/CDXBoolean.htm">CDXBoolean</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Indicates that the molecule has known relative stereochemistry, but unknown absolute configuration.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0503</td>
+<td><a href="properties/Mole_Formula.htm">kCDXProp_Mole_Formula</a></td>
+<td>Formula</td>
+<td><a href="DataType/CDXFormula.htm">CDXFormula</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The molecular formula representation of a molecule object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0504</td>
+<td><a href="properties/Mole_Weight.htm">kCDXProp_Mole_Weight</a></td>
+<td>Weight</td>
+<td><a href="DataType/CDXNumeric.htm">FLOAT64</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The average molecular weight of a molecule object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0505</td>
+<td><a href="properties/Frag_ConnectionOrder.htm">kCDXProp_Frag_ConnectionOrder</a></td>
+<td>ConnectionOrder</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectIDArray</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An ordered list of attachment points within a fragment.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>CDX Format Specification: Name Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Name Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">Name</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Name</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0008</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXString.htm">CDXString</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Document.htm">kCDXObj_Document</a>, <a href="../ObjectTag.htm">kCDXObj_ObjectTag</a>, <a href="../Geometry.htm">kCDXObj_Geometry</a>, <a href="../Constraint.htm">kCDXObj_Constraint</a>, <a href="../ChemicalProperty.htm">kCDXObj_ChemicalProperty</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">Required for objecttags</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>Name of an object.</p>
+<p>Although this value is normally stored as a CDXString, ChemDraw will ignore any style information, if present.</p>
+
+<p>When used as a property of an <a href="../ObjectTag.htm">Object Tag</a>, this property is stored as unformatted data (that is, there are no styles).</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

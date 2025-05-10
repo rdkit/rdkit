@@ -1,0 +1,69 @@
+<html>
+<head>
+<title>CDX Format Specification: Atom_RestrictRingBondCount Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Atom_RestrictRingBondCount Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">RingBondCount</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Atom_RestrictRingBondCount</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0425</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Node.htm">kCDXObj_Node</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The number of ring bonds attached to an atom.</p>
+<p>If posed as a structure query in some database, this atom should not match only those atoms with the specified number of ring bonds.</p>
+
+<p>The value stored in this property exactly corresponds to the Ring Bond Count property in ISIS.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">-1</td>
+<td valign="top">Unspecified</td>
+<td valign="top">Unspecified number of ring bonds</td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">NoRingBonds</td>
+<td valign="top">Exactly 0 ring bonds</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">AsDrawn</td>
+<td valign="top">Ring bonds as drawn</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">SimpleRing</td>
+<td valign="top">Exactly 2 ring bonds</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">Fusion</td>
+<td valign="top">Exactly 3 ring bonds</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">SpiroOrHigher</td>
+<td valign="top">4 or more ring bonds</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The number of ring bonds is unspecified.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

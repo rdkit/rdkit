@@ -1,0 +1,915 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Header: /ChemDraw/CDXML.dtd 48    4/23/03 12:52p Jsb $ -->
+<!-- This Document Type Definition declares Entities, Elements, Attributes and Notations for the document type "CDXML" -->
+<!ELEMENT CDXML (colortable?,fonttable?,page+,templategrid?)>
+<!ATTLIST CDXML
+	alpha CDATA #IMPLIED
+	AminoAcidTermini (HOH | NH2COOH) "HOH"
+	bgalpha CDATA #IMPLIED
+	bgcolor CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BondLength CDATA #IMPLIED
+	BondSpacing CDATA #IMPLIED
+	BondSpacingAbs CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	CaptionColor CDATA #IMPLIED
+	CaptionFace CDATA #IMPLIED
+	CaptionFont CDATA #IMPLIED
+	CaptionJustification (Auto|Left|Center|Right|Full) "Left"
+	CaptionLineHeight CDATA #IMPLIED
+	CaptionSize CDATA #IMPLIED
+	CartridgeData CDATA #IMPLIED
+	ChainAngle CDATA #IMPLIED
+	ChemPropAnalysis CDATA #IMPLIED
+	ChemPropBoilingPt CDATA #IMPLIED
+	ChemPropCLogP CDATA #IMPLIED
+	ChemPropCMR CDATA #IMPLIED
+	ChemPropCritPres CDATA #IMPLIED
+	ChemPropCritTemp CDATA #IMPLIED
+	ChemPropCritVol CDATA #IMPLIED
+	ChemPropEForm CDATA #IMPLIED
+	ChemPropExactMass CDATA #IMPLIED
+	ChemPropFormula CDATA #IMPLIED
+	ChemPropGibbs CDATA #IMPLIED
+	ChemPropHenry CDATA #IMPLIED
+	ChemPropLogP CDATA #IMPLIED
+	ChemPropMeltingPt CDATA #IMPLIED
+	ChemPropMolWt CDATA #IMPLIED
+	ChemPropMOverZ CDATA #IMPLIED
+	ChemPropMR CDATA #IMPLIED
+	ChemPropName CDATA #IMPLIED
+	ChemProptPSA CDATA #IMPLIED
+	color CDATA #IMPLIED
+	Comment CDATA #IMPLIED
+	CreationDate CDATA #IMPLIED
+	CreationProgram CDATA #IMPLIED
+	CreationUserName CDATA #IMPLIED
+	FixInPlaceExtent CDATA #IMPLIED
+	FixInPlaceGap CDATA #IMPLIED
+	FractionalWidths (yes|no) "no"
+	HashSpacing CDATA #IMPLIED
+	HideImplicitHydrogens (yes|no) "no"
+	InterpretChemically (yes|no) "yes"
+	LabelColor CDATA #IMPLIED
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelJustification (Auto|Left|Center|Right|Above|Below|Best) "Left"
+	LabelLineHeight CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MacPrintInfo CDATA #IMPLIED
+	Magnification CDATA #IMPLIED
+	MarginWidth CDATA #IMPLIED
+	ModificationDate CDATA #IMPLIED
+	ModificationProgram CDATA #IMPLIED
+	ModificationUserName CDATA #IMPLIED
+	Name CDATA #IMPLIED
+	PrintMargins CDATA #IMPLIED
+	ShowAtomEnhancedStereo (yes|no) "yes"
+	ShowAtomNumber (yes|no) "no"
+	ShowAtomQuery (yes|no) "yes"
+	ShowAtomStereo (yes|no) "no"
+	ShowBondQuery (yes|no) "yes"
+	ShowBondRxn (yes|no) "yes"
+	ShowBondStereo (yes|no) "no"
+	ShowNonTerminalCarbonLabels (yes|no) "no"
+	ShowSequenceBonds (yes|no) "yes"
+	ShowSequenceTermini (yes|no) "yes"
+	ShowSequenceUnlinkedBranches (yes|no) "no"
+	ShowTerminalCarbonLabels (yes|no) "no"
+	WindowIsZoomed (yes|no) "no"
+	WindowPosition CDATA #IMPLIED
+	WindowSize CDATA #IMPLIED
+	WinPrintInfo CDATA #IMPLIED
+	ChemPropID CDATA #IMPLIED
+	ChemPropFragmentLabel CDATA #IMPLIED
+	ChemPropLogS CDATA #IMPLIED
+	ChemPropPKa CDATA #IMPLIED
+	ResidueWrapCount CDATA #IMPLIED
+	RxnAutonumberConditions CDATA #IMPLIED
+	RxnAutonumberFormat CDATA #IMPLIED
+	RxnAutonumberStart CDATA #IMPLIED
+	RxnAutonumberStyle CDATA #IMPLIED
+	ShowResidueID (yes|no) "no"
+>
+<!ELEMENT colortable (color+)>
+<!ATTLIST colortable id CDATA #IMPLIED>
+<!ELEMENT color EMPTY>
+<!ATTLIST color
+	r CDATA #REQUIRED
+	g CDATA #REQUIRED
+	b CDATA #REQUIRED
+>
+<!ELEMENT fonttable (font+)>
+<!ATTLIST fonttable id CDATA #IMPLIED>
+<!ELEMENT font EMPTY>
+<!ATTLIST font
+	charset CDATA #IMPLIED
+	id CDATA #REQUIRED
+	name CDATA #REQUIRED
+>
+<!ELEMENT page ((t | fragment | group | graphic | altgroup | curve | step | scheme | spectrum | embeddedobject | sequence | crossreference | splitter | table | bracketedgroup | border | geometry | constraint | tlcplate | gepplate | chemicalproperty | arrow | bioshape | stoichiometrygrid | plasmidmap | objecttag | annotation | rlogic)*)>
+<!ATTLIST page
+	alpha CDATA #IMPLIED
+	bgalpha CDATA #IMPLIED
+	bgcolor CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	BoundsInParent CDATA #IMPLIED
+	color CDATA #IMPLIED
+	DrawingSpace (poster|pages) "pages"
+	Footer CDATA #IMPLIED
+	FooterPosition CDATA #IMPLIED
+	Height CDATA #IMPLIED
+	id CDATA #IMPLIED
+	WidthPages CDATA "1"
+	Header CDATA #IMPLIED
+	HeaderPosition CDATA #IMPLIED
+	HeightPages CDATA "1"
+	PageDefinition (Undefined|Center|TL4|IDTerm|FlushLeft|FlushRight|Reaction1|Reaction2|MulticolumnTL4|MulticolumnNonTL4|UserDefined) "Undefined"
+	PageOverlap CDATA #IMPLIED
+	PrintTrimMarks (yes|no) "no"
+	SplitterPositions CDATA #IMPLIED
+	Width CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT group ((t | fragment | group | graphic | altgroup | curve | step | scheme | spectrum | objecttag | annotation | plasmidmap | rlogic | arrow | bioshape)*)>
+<!ATTLIST group
+	BoundingBox CDATA #IMPLIED
+	id CDATA #IMPLIED
+	Integral (yes|no) "no"
+	Z CDATA #IMPLIED
+>
+<!ELEMENT fragment ((n | b | t | graphic | curve | objecttag | annotation | regnum | coloredmoleculararea)*)>
+<!ATTLIST fragment
+	Absolute (yes|no) "no"
+	BoundingBox CDATA #IMPLIED
+	ConnectionOrder CDATA #IMPLIED
+	Formula CDATA #IMPLIED
+	id CDATA #IMPLIED
+	Relative (yes|no) "no"
+	Racemic (yes|no) "no"
+	SequenceType (Unknown|Peptide|Peptide1|Peptide3|DNA|RNA) "Unknown"
+	Weight CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT t (s | objecttag | annotation)+>
+<!ATTLIST t
+	alpha CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	CaptionColor CDATA #IMPLIED
+	CaptionFace CDATA #IMPLIED
+	CaptionFont CDATA #IMPLIED
+	CaptionJustification (Auto|Left|Center|Right|Full) "Left"
+	CaptionLineHeight CDATA #IMPLIED
+	CaptionSize CDATA #IMPLIED
+	color CDATA #IMPLIED
+	id CDATA #IMPLIED
+	IgnoreWarnings (yes|no) "no"
+	InterpretChemically (yes|no) "yes"
+	Justification (Auto|Left|Center|Right|Full|Above|Below|Best) "Left"
+	LabelAlignment (Auto|Left|Center|Right|Above|Below|Best) "Auto"
+	LabelColor CDATA #IMPLIED
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelJustification (Auto|Left|Center|Right|Above|Below|Best) "Left"
+	LabelLineHeight CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineStarts CDATA #IMPLIED
+	LineHeight CDATA #IMPLIED
+	p CDATA #IMPLIED
+	RotationAngle CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Warning CDATA #IMPLIED
+	WordWrapWidth CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT s (#PCDATA)>
+<!ATTLIST s
+	alpha CDATA #IMPLIED
+	color CDATA #IMPLIED
+	face CDATA #IMPLIED
+	font CDATA #IMPLIED
+	size CDATA #IMPLIED
+>
+<!ELEMENT n (objecttag | annotation | t | fragment)*>
+<!ATTLIST n
+	AbnormalValence (yes|no) "no"
+	AltGroupID CDATA #IMPLIED
+	AS (U|N|R|S|r|s|u|M|P|a|+|-|?) "U"
+	AtomID CDATA #IMPLIED
+	AtomNumber CDATA #IMPLIED
+	Attachments CDATA #IMPLIED
+	BondOrdering CDATA #IMPLIED
+	Charge CDATA #IMPLIED
+	color CDATA #IMPLIED
+	Element CDATA "6"
+	ElementList CDATA #IMPLIED
+	EnhancedStereoGroupNum CDATA #IMPLIED
+	EnhancedStereoType CDATA #IMPLIED
+	ExternalConnectionType (Unspecified|Diamond|Star|PolymerBead|Wavy|Residue|Peptide|DNA|RNA|Terminus|Sulfide|Nucleotide|UnlinkedBranch) "Unspecified"
+	ExternalConnectionNum CDATA #IMPLIED
+	alpha CDATA #IMPLIED
+	Formula CDATA #IMPLIED
+	FreeSites CDATA #IMPLIED
+	Geometry (Unknown|1|Linear|Bent|TrigonalPlanar|TrigonalPyramidal|SquarePlanar|Tetrahedral|TrigonalBipyramidal|SquarePyramidal|5|Octahedral|6|7|8|9|10) "Unknown"
+	GenericList CDATA #IMPLIED
+	GenericNickname CDATA #IMPLIED
+	HDash (yes|no) "no"
+	HDot (yes|no) "no"
+	HideImplicitHydrogens (yes|no) "no"
+	id CDATA #IMPLIED
+	IgnoreWarnings (yes|no) "no"
+	ImplicitHydrogens (yes|no) "no"
+	Isotope CDATA #IMPLIED
+	IsotopicAbundance (Unspecified|Any|Natural|Enriched|Deficient|Nonnatural) "Unspecified"
+	LabelDisplay (Auto|Left|Center|Right|Above|Below|Best) "Auto"
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	LinkCountHigh CDATA #IMPLIED
+	LinkCountLow CDATA #IMPLIED
+	MarginWidth CDATA #IMPLIED
+	NeedsClean (yes|no) "no"
+	NumHydrogens CDATA #IMPLIED
+	NodeType (Unspecified|Element|ElementList|ElementListNickname|Nickname|Fragment|Formula|GenericNickname|AnonymousAlternativeGroup|NamedAlternativeGroup|MultiAttachment|VariableAttachment|ExternalConnectionPoint) "Element"
+	p CDATA #IMPLIED
+	Radical (None|Singlet|Doublet|Triplet) "None"
+	RingBondCount (SpiroOrHigher|Fusion|SimpleRing|AsDrawn|NoRingBonds|Unspecified) "Unspecified"
+	RxnChange (yes|no) "no"
+	RxnStereo (Unspecified|Inversion|Retention) "Unspecified"
+	ShowAtomEnhancedStereo (yes|no) "yes"
+	ShowAtomID (yes|no) "no"
+	ShowAtomNumber (yes|no) "no"
+	ShowAtomQuery (yes|no) "yes"
+	ShowAtomStereo (yes|no) "no"
+	ShowNonTerminalCarbonLabels (yes|no) "no"
+	ShowTerminalCarbonLabels (yes|no) "no"
+	SubstituentsExactly CDATA #IMPLIED
+	SubstituentsUpTo CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Translation (Equal|Broad|Narrow|Any) "Equal"
+	UnsaturatedBonds (Unspecified|MustBeAbsent|MustBePresent) "Unspecified"
+	Visible (yes|no) "yes"
+	Warning CDATA #IMPLIED
+	xyz CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT b (objecttag | annotation)*>
+<!ATTLIST b
+	alpha CDATA #IMPLIED
+	B CDATA #REQUIRED
+	BeginAttach CDATA #IMPLIED
+	BeginExternalNum CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BondCircularOrdering CDATA #IMPLIED
+	BondLength CDATA #IMPLIED
+	BondSpacing CDATA #IMPLIED
+	BondSpacingAbs CDATA #IMPLIED
+	BS (U|N|E|Z) "U"
+	color CDATA #IMPLIED
+	Connectivity (Linear|Bridged|Staggered|Cyclic|Unspecified) "Unspecified"
+	CrossingBonds CDATA #IMPLIED
+	CrossingBondss CDATA #IMPLIED
+	Display (Solid|Dash|Hash|WedgedHashBegin|WedgedHashEnd|Bold|WedgeBegin|WedgeEnd|Wavy|HollowWedgeBegin|HollowWedgeEnd|WavyWedgeBegin|WavyWedgeEnd|Dot|DashDot) "Solid"
+	Display2 (Solid|Dash|Hash|WedgedHashBegin|WedgedHashEnd|Bold|WedgeBegin|WedgeEnd|Wavy|HollowWedgeBegin|HollowWedgeEnd|WavyWedgeBegin|WavyWedgeEnd|Dot|DashDot) "Solid"
+	DoublePosition (Center|Right|Left) #IMPLIED
+	E CDATA #REQUIRED
+	EndAttach CDATA #IMPLIED
+	EndExternalNum CDATA #IMPLIED
+	HashSpacing CDATA #IMPLIED
+	id CDATA #IMPLIED
+	IgnoreWarnings (yes|no) "no"
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MarginWidth CDATA #IMPLIED
+	Order CDATA #IMPLIED
+	RxnParticipation (Unspecified|ReactionCenter|MakeOrBreak|ChangeType|MakeAndChange|NotReactionCenter|NoChange|Unmapped) "Unspecified"
+	ShowBondQuery (yes|no) "yes"
+	ShowBondRxn (yes|no) "yes"
+	ShowBondStereo (yes|no) "no"
+	SupersededBy CDATA #IMPLIED
+	Topology (Unspecified|Ring|Chain|RingOrChain) "Unspecified"
+	Visible (yes|no) "yes"
+	Warning CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT graphic (objecttag | annotation | represent | t)*>
+<!ATTLIST graphic
+	alpha CDATA #IMPLIED
+	AngularSize CDATA #IMPLIED
+	ArrowType (NoHead|HalfHead|FullHead|Resonance|Equilibrium|Hollow|RetroSynthetic|NoGo|Dipole) #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	BracketType (RoundPair|SquarePair|CurlyPair|Square|Curly|Round) #IMPLIED
+	BracketUsage (Unspecified|Anypolymer|Component|Copolymer|CopolymerAlternating|CopolymerBlock|CopolymerRandom|Crosslink|Generic|Graft|Mer|MixtureOrdered|MixtureUnordered|Modification|Monomer|MultipleGroup|SRU) #IMPLIED
+	CaptionFace CDATA #IMPLIED
+	CaptionFont CDATA #IMPLIED
+	CaptionSize CDATA #IMPLIED
+	Center3D CDATA #IMPLIED
+	color CDATA #IMPLIED
+	CornerRadius CDATA #IMPLIED
+	FadePercent CDATA #IMPLIED
+	FrameType CDATA #IMPLIED
+	GraphicType (Undefined|Line|Arc|Rectangle|Oval|Orbital|Bracket|Symbol) "Undefined"
+	HashSpacing CDATA #IMPLIED
+	Head3D CDATA #IMPLIED
+	HeadSize CDATA #IMPLIED
+	id CDATA #IMPLIED
+	IgnoreWarnings (yes|no) "no"
+	LineWidth CDATA #IMPLIED
+	LineType (Solid|Dashed|Bold|Wavy) #IMPLIED
+	LipSize CDATA #IMPLIED
+	MajorAxisEnd3D CDATA #IMPLIED
+	MinorAxisEnd3D CDATA #IMPLIED
+	OrbitalType (s|p|oval|lobe|hybridPlus|hybridMinus|dz2Plus|dz2Minus|dxy|sShaded|sFilled|ovalShaded|ovalFilled|lobeShaded|pShaded|lobeFilled|pFilled|hybridPlusFilled|hybridMinusFilled|dz2PlusFilled|dz2MinusFilled|dxyFilled) #IMPLIED
+	OvalType CDATA #IMPLIED
+	PolymerFlipType (Unspecified|NoFlip|Flip) #IMPLIED
+	PolymerRepeatPattern (HeadToTail|HeadToHead|EitherUnknown) #IMPLIED
+	ShadowSize CDATA #IMPLIED
+	RectangleType CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	SymbolType (LonePair|Electron|RadicalCation|RadicalAnion|CirclePlus|CircleMinus|Dagger|DoubleDagger|Plus|Minus|Racemic|Absolute|Relative|LonePairBar) #IMPLIED
+	Tail3D CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Warning CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT arrow (objecttag | annotation)*>
+<!ATTLIST arrow
+	alpha CDATA #IMPLIED
+	AngularSize CDATA #IMPLIED
+	ArrowEquilibriumRatio CDATA #IMPLIED
+	ArrowheadCenterSize CDATA #IMPLIED
+	ArrowheadHead (Unspecified|None|Full|HalfLeft|HalfRight) #IMPLIED
+	ArrowheadWidth CDATA #IMPLIED
+	ArrowheadTail (Unspecified|None|Full|HalfLeft|HalfRight) #IMPLIED
+	ArrowheadType (Solid|Hollow|Angle) #IMPLIED
+	ArrowShaftSpacing CDATA #IMPLIED
+	ArrowSource CDATA #IMPLIED
+	ArrowTarget CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	CaptionFace CDATA #IMPLIED
+	CaptionFont CDATA #IMPLIED
+	CaptionSize CDATA #IMPLIED
+	Center3D CDATA #IMPLIED
+	color CDATA #IMPLIED
+	Dipole (yes|no) "no"
+	FadePercent CDATA #IMPLIED
+	FillType (Unspecified|None|Solid|Shaded) #IMPLIED
+	HashSpacing CDATA #IMPLIED
+	Head3D CDATA #IMPLIED
+	HeadSize CDATA #IMPLIED
+	id CDATA #IMPLIED
+	IgnoreWarnings (yes|no) "no"
+	LineType (Solid|Dashed|Bold|Wavy) #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MajorAxisEnd3D CDATA #IMPLIED
+	MinorAxisEnd3D CDATA #IMPLIED
+	NoGo (Unspecified|None|Cross|Hash) #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Tail3D CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Warning CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT curve (objecttag | annotation)*>
+<!ATTLIST curve
+	alpha CDATA #IMPLIED
+	ArrowheadHead (Unspecified|None|Full|HalfLeft|HalfRight) #IMPLIED
+	ArrowheadTail (Unspecified|None|Full|HalfLeft|HalfRight) #IMPLIED
+	ArrowheadType (Solid|Hollow|Angle) #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	Closed (yes|no) "no"
+	CurvePoints CDATA #IMPLIED
+	CurvePoints3D CDATA #IMPLIED
+	CurveSpacing CDATA #IMPLIED
+	CurveType CDATA #IMPLIED
+	FadePercent CDATA #IMPLIED
+	FillType (Unspecified|None|Solid|Shaded) #IMPLIED
+	HashSpacing CDATA #IMPLIED
+	HeadCenterSize CDATA #IMPLIED
+	HeadSize CDATA #IMPLIED
+	HeadWidth CDATA #IMPLIED
+	id CDATA #IMPLIED
+	IgnoreWarnings (yes|no) "no"
+	LineType (Solid|Dashed|Bold|Wavy) #IMPLIED
+	LineWidth CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Warning CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT altgroup (objecttag | annotation | t | fragment | group | graphic | bracket)+>
+<!ATTLIST altgroup
+	alpha CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	GroupFrame CDATA #IMPLIED
+	id CDATA #IMPLIED
+	IgnoreWarnings (yes|no) "no"
+	p CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	TextFrame CDATA #IMPLIED
+	Valence CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Warning CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT step EMPTY>
+<!ATTLIST step
+	id CDATA #IMPLIED
+	ReactionStepArrows CDATA #IMPLIED
+	ReactionStepAtomMap CDATA #IMPLIED
+	ReactionStepAtomMapAuto CDATA #IMPLIED
+	ReactionStepAtomMapManual CDATA #IMPLIED
+	ReactionStepObjectsAboveArrow CDATA #IMPLIED
+	ReactionStepObjectsBelowArrow CDATA #IMPLIED
+	ReactionStepPlusses CDATA #IMPLIED
+	ReactionStepProducts CDATA #IMPLIED
+	ReactionStepReactants CDATA #IMPLIED
+>
+<!ELEMENT scheme (step+)>
+<!ATTLIST scheme id CDATA #IMPLIED>
+<!ELEMENT geometry (objecttag | annotation)*>
+<!ATTLIST geometry
+	alpha CDATA #IMPLIED
+	BasisObjects CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	GeometricFeature (Unknown|PointFromPointPointDistance|PointFromPointPointPercentage|PointFromPointNormalDistance|LineFromPoints|PlaneFromPoints|PlaneFromPointLine|CentroidFromPoints|NormalFromPointPlane) "Unknown"
+	id CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	Name CDATA #IMPLIED
+	RelationValue CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT constraint (objecttag | annotation)*>
+<!ATTLIST constraint
+	alpha CDATA #IMPLIED
+	BasisObjects CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	ConstraintMax CDATA #IMPLIED
+	ConstraintMin CDATA #IMPLIED
+	ConstraintType (Unknown|Distance|Angle|ExclusionSphere) "Unknown"
+	DihedralIsChiral (yes|no) "no"
+	HashSpacing CDATA #IMPLIED
+	id CDATA #IMPLIED
+	IgnoreUnconnectedAtoms (yes|no) "no"
+	LineWidth CDATA #IMPLIED
+	Name CDATA #IMPLIED
+	PointIsDirected (yes|no) "no"
+	SupersededBy CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT templategrid EMPTY>
+<!ATTLIST templategrid
+	extent CDATA #IMPLIED
+	NumColumns CDATA #IMPLIED
+	NumRows CDATA #IMPLIED
+	PaneHeight CDATA #IMPLIED
+>
+<!ELEMENT spectrum (#PCDATA | objecttag | annotation)*>
+<!ATTLIST spectrum
+	alpha CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	Class (Unknown|Chromatogram|Infrared|UVVis|XRayDiffraction|MassSpectrum|NMR|Raman|Fluorescence|Atomic) "Unknown"
+	color CDATA #IMPLIED
+	id CDATA #IMPLIED
+	IgnoreWarnings (yes|no) "no"
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	XAxisLabel CDATA #IMPLIED
+	XLow CDATA #IMPLIED
+	XSpacing CDATA #IMPLIED
+	XType (Unknown|Wavenumbers|Microns|Hertz|MassUnits|PartsPerMillion|Other) "Unknown"
+	YAxisLabel CDATA #IMPLIED
+	YLow CDATA "0"
+	YScale CDATA "1"
+	YType (Unknown|Absorbance|Transmittance|PercentTransmittance|Other|ArbitraryUnits) "Unknown"
+	Visible (yes|no) "yes"
+	Warning CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT embeddedobject (objecttag | annotation)*>
+<!ATTLIST embeddedobject
+	alpha CDATA #IMPLIED
+	BMP CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	CompressedEnhancedMetafile CDATA #IMPLIED
+	CompressedOLEObject CDATA #IMPLIED
+	CompressedWindowsMetafile CDATA #IMPLIED
+	Edition CDATA #IMPLIED
+	EditionAlias CDATA #IMPLIED
+	EnhancedMetafile CDATA #IMPLIED
+	GIF CDATA #IMPLIED
+	id CDATA #IMPLIED
+	JPEG CDATA #IMPLIED
+	MacPICT CDATA #IMPLIED
+	OLEObject CDATA #IMPLIED
+	PDF CDATA #IMPLIED
+	PNG CDATA #IMPLIED
+	RotationAngle CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	TIFF CDATA #IMPLIED
+	UncompressedEnhancedMetafileSize CDATA #IMPLIED
+	UncompressedOLEObjectSize CDATA #IMPLIED
+	UncompressedWindowsMetafileSize CDATA #IMPLIED
+	WindowsMetafile CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT represent EMPTY>
+<!ATTLIST represent
+	attribute CDATA #REQUIRED
+	object CDATA #REQUIRED
+>
+<!ELEMENT objecttag (t*)>
+<!ATTLIST objecttag
+	DisplayName CDATA #IMPLIED
+	id CDATA #IMPLIED
+	Name CDATA #REQUIRED
+	Persistent (yes|no) "yes"
+	PositioningAngle CDATA #IMPLIED
+	PositioningOffset CDATA #IMPLIED
+	PositioningType (auto|angle|offset|absolute) "auto"
+	TagType (Unknown|String|Long|Double) #IMPLIED
+	Tracking (yes|no) "yes"
+	Value CDATA #IMPLIED
+	Visible (yes|no) "yes"
+>
+<!ELEMENT sequence (t*)>
+<!ATTLIST sequence SequenceIdentifier CDATA #REQUIRED>
+<!ELEMENT crossreference (t*)>
+<!ATTLIST crossreference
+	CrossReferenceContainer CDATA #IMPLIED
+	CrossReferenceDocument CDATA #IMPLIED
+	CrossReferenceIdentifier CDATA #REQUIRED
+	CrossReferenceSequence CDATA #REQUIRED
+>
+<!ELEMENT regnum EMPTY>
+<!ATTLIST regnum
+	id CDATA #IMPLIED
+	RegistryAuthority CDATA #REQUIRED
+	RegistryNumber CDATA #REQUIRED
+>
+<!ELEMENT splitter EMPTY>
+<!ATTLIST splitter
+	p CDATA #IMPLIED
+	PageDefinition (Undefined|Center|TL4|IDTerm|FlushLeft|FlushRight|Reaction1|Reaction2|MulticolumnTL4|MulticolumnNonTL4|UserDefined) "Undefined"
+>
+<!ELEMENT table (page | objecttag | annotation)*>
+<!ATTLIST table
+	alpha CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	id CDATA #IMPLIED
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MarginWidth CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Z CDATA #IMPLIED
+>
+<!ELEMENT tlcplate ((objecttag | annotation | tlclane)*)>
+<!ATTLIST tlcplate
+	alpha CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BottomLeft CDATA #IMPLIED
+	BottomRight CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	HashSpacing CDATA #IMPLIED
+	id CDATA #IMPLIED
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MarginWidth CDATA #IMPLIED
+	OriginFraction CDATA #IMPLIED
+	ShowBorders (yes|no) "no"
+	ShowOrigin (yes|no) "no"
+	ShowSideTicks (yes|no) "no"
+	ShowSolventFront (yes|no) "no"
+	SolventFrontFraction CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	TopLeft CDATA #IMPLIED
+	TopRight CDATA #IMPLIED
+	Transparent (yes|no) "no"
+	Visible (yes|no) "yes"
+	Z CDATA #IMPLIED
+>
+<!ELEMENT tlclane ((objecttag | annotation | tlcspot)*)>
+<!ATTLIST tlclane
+	id CDATA #IMPLIED
+	Visible (yes|no) "yes"
+>
+<!ELEMENT tlcspot (objecttag | annotation | embeddedobject)*>
+<!ATTLIST tlcspot
+	alpha CDATA #IMPLIED
+	color CDATA #IMPLIED
+	CurveType CDATA #IMPLIED
+	Height CDATA #IMPLIED
+	id CDATA #IMPLIED
+	Rf CDATA #IMPLIED
+	ShowRf (yes|no) "no"
+	Tail CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Width CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT gepplate ((annotation | geplane)*)>
+<!ATTLIST gepplate
+	AxisWidth CDATA #IMPLIED
+	alpha CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BottomLeft CDATA #IMPLIED
+	BottomRight CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	EndRange CDATA #IMPLIED
+	HashSpacing CDATA #IMPLIED
+	id CDATA #IMPLIED
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelsAngle CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LabelText CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MarginWidth CDATA #IMPLIED
+	ShowBorders (yes|no) "no"
+	ShowScale (yes|no) "no"
+	StartRange CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	TopLeft CDATA #IMPLIED
+	TopRight CDATA #IMPLIED
+	Transparent (yes|no) "no"
+	UnitID CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Z CDATA #IMPLIED
+>
+<!ELEMENT geplane ((annotation | gepband | t)*)>
+<!ATTLIST geplane
+	id CDATA #IMPLIED
+	LabelText CDATA #IMPLIED
+	Visible (yes|no) "yes"
+>
+<!ELEMENT gepband (annotation | embeddedobject | marker)*>
+<!ATTLIST gepband
+	alpha CDATA #IMPLIED
+	BandValue CDATA #IMPLIED
+	color CDATA #IMPLIED
+	CurveType CDATA #IMPLIED
+	Height CDATA #IMPLIED
+	id CDATA #IMPLIED
+	ShowValue (yes|no) "no"
+	Visible (yes|no) "yes"
+	Width CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT marker (annotation | t | curve)*>
+<!ATTLIST marker
+	CaptionJustification (Auto|Left|Center|Right|Full) "Left"
+	color CDATA #IMPLIED
+	DisplayName CDATA #IMPLIED
+	id CDATA #IMPLIED
+	MarkerAngle CDATA #IMPLIED
+	MarkerOffset CDATA #IMPLIED
+	Name CDATA #REQUIRED
+	Persistent (yes|no) "yes"
+	TagType (Unknown|String|Long|Double) #IMPLIED
+	Value CDATA #IMPLIED
+>
+<!ELEMENT stoichiometrygrid ((objecttag | annotation | sgcomponent)*)>
+<!ATTLIST stoichiometrygrid
+	alpha CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	id CDATA #IMPLIED
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MarginWidth CDATA #IMPLIED
+	p CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Z CDATA #IMPLIED
+>
+<!ELEMENT sgcomponent ((objecttag | sgdatum)*)>
+<!ATTLIST sgcomponent
+	ComponentIsHeader (yes|no) "no"
+	ComponentIsReactant (yes|no) "no"
+	ComponentReferenceID CDATA #IMPLIED
+	id CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Width CDATA #IMPLIED
+>
+<!ELEMENT sgdatum (objecttag | embeddedobject)*>
+<!ATTLIST sgdatum
+	id CDATA #IMPLIED
+	IsEdited (yes|no) "no"
+	IsHidden (yes|no) "no"
+	IsReadOnly (yes|no) "no"
+	SGDataType CDATA #IMPLIED
+	SGDataValue CDATA #IMPLIED
+	SGPropertyType CDATA #IMPLIED
+	Visible (yes|no) "yes"
+>
+<!ELEMENT plasmidmap ((objecttag | annotation | plasmidregion | plasmidmarker | t | graphic)*)>
+<!ATTLIST plasmidmap
+	alpha CDATA #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	id CDATA #IMPLIED
+	LabelFace CDATA #IMPLIED
+	LabelFont CDATA #IMPLIED
+	LabelSize CDATA #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MarginWidth CDATA #IMPLIED
+	NumberBasePairs CDATA #IMPLIED
+	p CDATA #IMPLIED
+	RingRadius CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	Z CDATA #IMPLIED
+>
+<!ELEMENT plasmidregion (objecttag | annotation | plasmidmarker)*>
+<!ATTLIST plasmidregion
+	alpha CDATA #IMPLIED
+	AngularSize CDATA #IMPLIED
+	ArrowheadCenterSize CDATA #IMPLIED
+	ArrowheadHead (Unspecified|None|Full|HalfLeft|HalfRight) #IMPLIED
+	ArrowheadTail (Unspecified|None|Full|HalfLeft|HalfRight) #IMPLIED
+	ArrowheadType (Solid|Hollow|Angle) #IMPLIED
+	ArrowheadWidth CDATA #IMPLIED
+	ArrowShaftSpacing CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	Center3D CDATA #IMPLIED
+	color CDATA #IMPLIED
+	FadePercent CDATA #IMPLIED
+	FillType (Unspecified|None|Solid|Shaded) #IMPLIED
+	Head3D CDATA #IMPLIED
+	HeadSize CDATA #IMPLIED
+	id CDATA #IMPLIED
+	LineType (Solid|Dashed|Bold|Wavy) #IMPLIED
+	MajorAxisEnd3D CDATA #IMPLIED
+	MinorAxisEnd3D CDATA #IMPLIED
+	RegionEnd CDATA #IMPLIED
+	RegionOffset CDATA #IMPLIED
+	RegionStart CDATA #IMPLIED
+	Tail3D CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT plasmidmarker (objecttag | annotation | t | curve)*>
+<!ATTLIST plasmidmarker
+	CaptionJustification (Auto|Left|Center|Right|Full) "Left"
+	color CDATA #IMPLIED
+	DisplayName CDATA #IMPLIED
+	id CDATA #IMPLIED
+	MarkerAngle CDATA #IMPLIED
+	MarkerOffset CDATA #IMPLIED
+	Name CDATA #REQUIRED
+	Persistent (yes|no) "yes"
+	TagType (Unknown|String|Long|Double) #IMPLIED
+	Value CDATA #IMPLIED
+>
+<!ELEMENT bracketedgroup (bracketattachment+,bracketedgroup*)>
+<!ATTLIST bracketedgroup
+	BracketedObjectIDs CDATA #IMPLIED
+	BracketUsage (Unspecified|Anypolymer|Component|Copolymer|CopolymerAlternating|CopolymerBlock|CopolymerRandom|Crosslink|Generic|Graft|Mer|MixtureOrdered|MixtureUnordered|Modification|Monomer|MultipleGroup|SRU) #IMPLIED
+	ComponentOrder CDATA #IMPLIED
+	id CDATA #IMPLIED
+	PolymerFlipType (Unspecified|NoFlip|Flip) #IMPLIED
+	PolymerRepeatPattern (HeadToTail|HeadToHead|EitherUnknown) #IMPLIED
+	RepeatCount CDATA #IMPLIED
+	SRULabel CDATA #IMPLIED
+>
+<!ELEMENT bracketattachment (crossingbond)*>
+<!ATTLIST bracketattachment
+	GraphicID CDATA #IMPLIED
+	id CDATA #IMPLIED
+>
+<!ELEMENT crossingbond EMPTY>
+<!ATTLIST crossingbond
+	BondID CDATA #REQUIRED
+	id CDATA #IMPLIED
+	InnerAtomID CDATA #REQUIRED
+>
+<!ELEMENT border EMPTY>
+<!ATTLIST border
+	alpha CDATA #IMPLIED
+	color CDATA #IMPLIED
+	id CDATA #IMPLIED
+	LineType (Solid|Dashed|Bold|Wavy) #IMPLIED
+	LineWidth CDATA #IMPLIED
+	Side (undefined|top|left|bottom|right) #REQUIRED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT chemicalproperty EMPTY>
+<!ATTLIST chemicalproperty
+	BasisObjects CDATA #IMPLIED
+	ChemicalPropertyDisplayID CDATA #IMPLIED
+	ChemicalPropertyIsActive (yes|no) "no"
+	ChemicallySignificant (yes|no) "no"
+	ChemicalPropertyType CDATA #IMPLIED
+	id CDATA #IMPLIED
+	Name CDATA #IMPLIED
+	PositioningAngle CDATA #IMPLIED
+	PositioningOffset CDATA #IMPLIED
+	PositioningType (auto|angle|offset|absolute) "auto"
+	ExternalBonds CDATA #IMPLIED
+>
+<!ELEMENT bioshape (objecttag | annotation | curve)*>
+<!ATTLIST bioshape
+	alpha CDATA #IMPLIED
+	BioShapeType (Undefined|1SubstrateEnzyme|2SubstrateEnzyme|Receptor|GProteinAlpha|GProteinBeta|GProteinGamma|Immunoglobin|IonChannel|EndoplasmicReticulum|Golgi|MembraneLine|MembraneArc|MembraneEllipse|MembraneMicelle|DNA|HelixProtein|Mitochondrion|Cloud|tRNA|RibosomeA|RibosomeB) #IMPLIED
+	BoldWidth CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	CylinderDistance CDATA #IMPLIED
+	CylinderHeight CDATA #IMPLIED
+	CylinderWidth CDATA #IMPLIED
+	DNAWaveHeight CDATA #IMPLIED
+	DNAWaveLength CDATA #IMPLIED
+	DNAWaveOffset CDATA #IMPLIED
+	DNAWaveWidth CDATA #IMPLIED
+	EnzymeHeight CDATA #IMPLIED
+	EnzymeReceptorSize CDATA #IMPLIED
+	EnzymeWidth CDATA #IMPLIED
+	FadePercent CDATA #IMPLIED
+	FillType (Unspecified|None|Solid|Shaded) #IMPLIED
+	GproteinLowerHeight CDATA #IMPLIED
+	GproteinUpperHeight CDATA #IMPLIED
+	GolgiHeight CDATA #IMPLIED
+	GolgiLength CDATA #IMPLIED
+	GolgiWidth CDATA #IMPLIED
+	HashSpacing CDATA #IMPLIED
+	HelixProteinExtra CDATA #IMPLIED
+	id CDATA #IMPLIED
+	ImmunoglobinHeight CDATA #IMPLIED
+	ImmunoglobinWidth CDATA #IMPLIED
+	LineType (Solid|Dashed|Bold|Wavy) #IMPLIED
+	LineWidth CDATA #IMPLIED
+	MajorAxisEnd3D CDATA #IMPLIED
+	MembraneElementSize CDATA #IMPLIED
+	MembraneEndAngle CDATA #IMPLIED
+	MembraneMajorAxisSize CDATA #IMPLIED
+	MembraneMinorAxisSize CDATA #IMPLIED
+	MembraneStartAngle CDATA #IMPLIED
+	MinorAxisEnd3D CDATA #IMPLIED
+	NeckHeight CDATA #IMPLIED
+	NeckWidth CDATA #IMPLIED
+	PipeWidth CDATA #IMPLIED
+	SupersededBy CDATA #IMPLIED
+	Visible (yes|no) "yes"
+	xyz CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT annotation EMPTY>
+<!ATTLIST annotation
+	Content CDATA #IMPLIED
+	id CDATA #IMPLIED
+	Keyword CDATA #IMPLIED
+>
+<!ELEMENT rlogicitem EMPTY>
+<!ATTLIST rlogicitem
+	id CDATA #IMPLIED
+	RLogicGroup CDATA #IMPLIED
+	RLogicIfThenGroup CDATA #IMPLIED
+	RLogicOccurrence CDATA #IMPLIED
+	RLogicRestH (yes|no) "no"
+>
+<!ELEMENT rlogic (s | rlogicitem)*>
+<!ATTLIST rlogic
+	alpha CDATA #IMPLIED
+	BoundingBox CDATA #IMPLIED
+	color CDATA #IMPLIED
+	id CDATA #IMPLIED
+	LineHeight CDATA #IMPLIED
+	p CDATA #IMPLIED
+	Z CDATA #IMPLIED
+>
+<!ELEMENT coloredmoleculararea EMPTY>
+<!ATTLIST coloredmoleculararea
+	id CDATA #IMPLIED
+	bgcolor CDATA #IMPLIED
+	BasisObjects CDATA #IMPLIED
+>

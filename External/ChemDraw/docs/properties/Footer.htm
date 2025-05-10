@@ -1,0 +1,62 @@
+<html>
+<head>
+<title>CDX Format Specification: Footer Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Footer Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">Footer</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Footer</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0817</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXString.htm">CDXString</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Page.htm">kCDXObj_Page</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 6.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The text of the footer.</p>
+<p>A footer, if present, will print at the top of each page (for <a href="../Document.htm">Documents</a> with a <a href="DrawingSpaceType.htm">DrawingSpaceType</a> of type Pages) or at the top of the drawing space (for Documents with a DrawingSpaceType of type Pages. It will be offset from the top of the page by the amount specified by the <a href="HeaderPosition.htm">kCDXProp_HeaderPosition</a> property.</p>
+
+<p>In addition to the raw text, the following special sequences may be used:</p>
+
+<table>
+<tr>
+<td align="top">&amp;f</td>
+<td>File name</td>
+</tr>
+<tr>
+<td align="top">&amp;p</td>
+<td>Page number</td>
+</tr>
+<tr>
+<td align="top">&amp;d</td>
+<td>Date printed</td>
+</tr>
+<tr>
+<td align="top">&amp;t</td>
+<td>Time printed</td>
+</tr>
+<tr>
+<td align="top">&amp;r</td>
+<td>Text that follows should be right-justified</td>
+</tr>
+<tr>
+<td align="top">&amp;c</td>
+<td>Text that follows should be centered</td>
+</tr>
+<tr>
+<td align="top">&amp;l</td>
+<td>Text that follows should be left-justified</td>
+</tr>
+</table></p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The document has no footer</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

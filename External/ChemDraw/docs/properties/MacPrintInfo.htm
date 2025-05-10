@@ -1,0 +1,49 @@
+<html>
+<head>
+<title>CDX Format Specification: MacPrintInfo Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>MacPrintInfo Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">MacPrintInfo</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_MacPrintInfo</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0800</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/Unformatted.htm">Unformatted</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Document.htm">kCDXObj_Document</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The 120 byte Macintosh TPrint data associated with the CDX document object. Refer to Macintosh Toolbox manual for detailed description.</p>
+<p>This property is an excellent example of what <em>not</em> to do when designing a cross-platform file format. Because of the extreme nastiness involved in dealing with this data blob, it is our intent that it will become deprecated in some future version of ChemDraw. Until then, however...</p>
+
+<p>This object contains a classic Macintosh TPrint record. It may be treated, nominally, as:</p>
+
+<p><tt>INT16 macPrint[60];</tt></p>
+
+<p>Most bytes within this structure are ignored by ChemDraw, and should be written as zeroes if this structure is created on a non-Macintosh platform. Important bytes are shown as follows:</p>
+
+<table>
+<tr>
+<tr><td valign="top">macPrint[2]</td><td valign="top">Vertical resolution, in dpi</td></tr>
+<tr><td valign="top">macPrint[3]</td><td valign="top">Horizontal resolution, in dpi</td></tr>
+<tr><td valign="top">macPrint[4]<br>macPrint[5]<br>macPrint[6]<br>macPrint[7]</td><td valign="top">Coordinates of the top, left, bottom, and right edges, respectively, of the imageable page area, in the scale of the vertical and horizontal values above.</td></tr>
+<tr><td valign="top">macPrint[8]<br>macPrint[9]<br>macPrint[10]<br>macPrint[11]</td><td valign="top">Coordinates of the top, left, bottom, and right edges, respectively, of the physical paper area, in the scale of the vertical and horizontal values above.</td></tr>
+<tr><td valign="top">macPrint[12]</td><td valign="top">Should be 0xFFFF for portrait-orientation pages, and 0xFFFD for landscape-orientation pages.</td></tr>
+<tr><td valign="top">macPrint[13]</td><td valign="top">Height of the page, in the scale of the vertical and horizontal values above.</td></tr>
+<tr><td valign="top">macPrint[14]</td><td valign="top">Width of the page, in the scale of the vertical and horizontal values above.</td></tr>
+<tr><td valign="top">macPrint[24]</td><td valign="top">Horizontal scale, in percent.</td></tr>
+<tr><td valign="top">macPrint[25]</td><td valign="top">Vertical scale, in percent</td>
+</tr>
+</table></p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>ChemDraw will use values based on the last-selected Style Sheet, or from the currently-selected printer if no Style Sheet is available. In a last resort, a portrait-orientation, letter-size page will be used.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,179 @@
+<html>
+<head>
+<title>CDX Format Specification: Bracket_Usage Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Bracket_Usage Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">BracketUsage</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_Bracket_Usage</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0A24</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Graphic.htm">kCDXObj_Graphic</a>, <a href="../BracketedGroup.htm">kCDXObj_BracketedGroup</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The syntactical chemical meaning of the bracket (SRU, mer, mon, xlink, etc).</p>
+<p>In a general sense, brackets (and by extension, parentheses and braces) enclose structures or structural fragments that are to be repeated some number of times. The CDX file format offers several properties of brackets that allow users to specify the context of those repeating units, as well as their orientation.</p>
+
+<p>There are two main representations for polymers, <i>structure-based</i> and <i>source-based</i>. There is little benefit of one form over the other, and both have been widely used.</p>
+
+<p>Structure-based representations enclose only a portion of a structure within brackets. One or more bonds will cross each of the brackets that enclose the structure. With such a representation, those crossing bonds &quot;match up&quot;, making the polymer structure more explicit. Structure-based representations are created in ChemDraw by enclosing a portion of a structure in brackets with a Bracket usage of kCDXBracketUsage_SRU. The subscript &quot;n&quot; is the notation recommended by IUPAC for structure-based representations of unknown size, but that text can be specified via the <a href="Bracket_SRULabel.htm">kCDXProp_Bracket_SRULabel</a> property.</p>
+
+<p><img border="0" src="../Graphics/BracketUsage1.gif" width="118" height="91"><br><i>Poly(vinyl chloride), structure-based representation</i></p>
+
+<p>The Bracket Usage types kCDXBracketUsage_Crosslink, kCDXBracketUsage_Graft, and kCDXBracketUsage_Modification can also be used to represent specific types of repeating units within a structure-based representation, but they are rarely encountered and their use is discouraged. For more information about these types, please consult the references at bottom.</p>
+
+<p> In a source-based representation, an entire discrete chemical substance is enclosed within the brackets. The mode of polymerization might be obvious from context (for example, the breaking of a double bond to form a diradical), or it might be unknown. Source-based representations are particularly useful when describing processes where the starting materials are known, but the exact structure of the reaction product is not. Source-based representations are most comonly created in ChemDraw by enclosing a structure in brackets with a Bracket Usage of kCDXBracketUsage_Monomer.</p>
+
+<p><img border="0" src="../Graphics/BracketUsage2.gif" width="106" height="95"><br><i>Poly(vinyl chloride), source-based representation</i></p>
+
+<p>Brackets with a Bracket Usage of kCDXBracketUsage_Mer are also used for source based representations, but their usage is limited to components of a copolymer where those individual components are known not to repeat with themselves (that is, they must alternate with the other component(s).</p>
+
+<p><img border="0" src="../Graphics/BracketUsage3.gif" width="500" height="232"></p>
+
+<p>Copolymers, as above, represent substances with more than one repeating unit. For most purposes, the Bracket Usage kCDXBracketUsage_Copolymer will be sufficient. The Bracket Usage types kCDXBracketUsage_CopolymerAlternating, kCDXBracketUsage_CopolymerBlock, and kCDXBracketUsage_CopolymerRandom can also be used to represent specific types of copolymers within a source-based representation, but they are rarely encountered and their use is discouraged. For more information about these types, please consult the references at bottom.</p>
+
+<p>The Bracket Usage of kCDXBracketUsage_MixtureUnordered is not used for polymers, but to represent a collection of substances that might all be present, but not necessarily in known amounts. It could be used, for example, to indicate the products of a reaction. Brackets with a Bracket Usage of kCDXBracketUsage_Component are used to indicate individual elements within a mixture.</p>
+
+<p>&nbsp;<img border="0" src="../Graphics/BracketUsage4.gif" width="500" height="309"></p>
+
+<p>The Bracket Usage of kCDXBracketUsage_MixtureOrdered is primarily used to describe manufacturing processes, where the ordering of components is a critical part of the process (and where a different ordering might produce a different final product!). As with Unordered Mixtures, individual elements of an Ordered Mixture should be surrounded by brackets witha Bracket Usage of kCDXBracketUsage_Component. Unlike with Unordered Mixtures, however, components of Ordered Mixtures must represent their ordering via the <a href="Bracket_ComponentOrder.htm">kCDXProp_Bracket_ComponentOrder</a> property.</p>
+
+<p>Finally, the Bracket Usage of kCDXBracketUsage_MultipleGroup is used to indicate that the enclosed items are repeated a specific known number of times. Multiple Group brackets may enclose entire structures, or may enclose a portion of the structures only. The numeric repeat count can be specified via the <a href="Bracket_RepeatCount.htm">kCDXProp_Bracket_RepeatCount</a> property.</p>
+
+<p><img border="0" src="../Graphics/BracketUsage5.gif" width="351" height="264">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+<img border="0" src="../Graphics/BracketUsage6.gif" width="215" height="130"></p>
+
+<p><b>Some references for chemical meanings of polymers and polymer
+representations:</b></p>
+
+<p>&quot;Graphic Representations (Chemical Formulae) of Macromolecules
+(Recommendations 1994)&quot; <I>Pure Appl. Chem.,</I> <B>66</B>, 2469-2482 (1994).</p>
+
+<p>&quot;Source-Based Nomenclature for Copolymers (Recommendations 1985)&quot; <I>Pure Appl. Chem.,</I> <B>57</B>, 1427-1440 (1985). (also
+available at <a href="http://www.iupac.org/publications/books/pbook/PurpleBook-C7.pdf">http://www.iupac.org/publications/books/pbook/PurpleBook-C7.pdf</a>)
+
+<p>"Basic Definitions of Terms Relating to Polymers (1974)&quot; <I>Pure Appl. Chem.,</I> <B>40,
+</B>479-491 (1974) (also available at <a href="http://www.iupac.org/reports/1996/6812jenkins/index.html">http://www.iupac.org/reports/1996/6812jenkins/index.html</a>).&nbsp;
+
+<p>See also <a href="http://www.iupac.org/reports/IV/guide-for-authors.pdf">Guide 
+for the authors of papers and reports in polymer science and technology</a>
+(from IUPAC)</p>
+
+<p>Although this property is written to both <a href="../Graphic.htm">Graphic</a> objects and to <a href="../BracketedGroup.htm">Bracketed Groups</a>, as of ChemDraw 7.0 it is read only from Graphic objects.</p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Unspecified</td>
+<td valign="top">Unspecified bracket usage</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">Unused1</td>
+<td valign="top">(unused)</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">Unused2</td>
+<td valign="top">(unused)</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">SRU</td>
+<td valign="top">Brackets enclose a Structural Repeating Unit in a structure-based representation</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">Monomer</td>
+<td valign="top">Brackets enclose a source-based monomeric unit</td>
+</tr>
+<tr>
+<td align="right" valign="top">5</td>
+<td valign="top">Mer</td>
+<td valign="top">Brackets enclose a source-based monomeric unit that is known not to self-polymerize</td>
+</tr>
+<tr>
+<td align="right" valign="top">6</td>
+<td valign="top">Copolymer</td>
+<td valign="top">Brackets enclose one of several repeating units that co-polymerize</td>
+</tr>
+<tr>
+<td align="right" valign="top">7</td>
+<td valign="top">CopolymerAlternating</td>
+<td valign="top">Brackets enclose one of several repeating units that co-polymerize in an alternating fashion</td>
+</tr>
+<tr>
+<td align="right" valign="top">8</td>
+<td valign="top">CopolymerRandom</td>
+<td valign="top">Brackets enclose one of several repeating units that co-polymerize in a random fashion</td>
+</tr>
+<tr>
+<td align="right" valign="top">9</td>
+<td valign="top">CopolymerBlock</td>
+<td valign="top">Brackets enclose one of several repeating units that co-polymerize in a block fashion</td>
+</tr>
+<tr>
+<td align="right" valign="top">10</td>
+<td valign="top">Crosslink</td>
+<td valign="top">Brackets enclose a cross-linking repeating unit in a source-based representation</td>
+</tr>
+<tr>
+<td align="right" valign="top">11</td>
+<td valign="top">Graft</td>
+<td valign="top">Brackets enclose a graft repeating unit in a source-based representation</td>
+</tr>
+<tr>
+<td align="right" valign="top">12</td>
+<td valign="top">Modification</td>
+<td valign="top">Brackets enclose a modified repeating unit in a source-based representation</td>
+</tr>
+<tr>
+<td align="right" valign="top">13</td>
+<td valign="top">Component</td>
+<td valign="top">Brackets enclose an individual component of an ordered or unordered mixture</td>
+</tr>
+<tr>
+<td align="right" valign="top">14</td>
+<td valign="top">MixtureUnordered</td>
+<td valign="top">Brackets enclose a collection of substances that comprise an unordered mixture</td>
+</tr>
+<tr>
+<td align="right" valign="top">15</td>
+<td valign="top">MixtureOrdered</td>
+<td valign="top">Brackets enclose a collection of substances that comprise an ordered mixture (also called a formulation)</td>
+</tr>
+<tr>
+<td align="right" valign="top">16</td>
+<td valign="top">MultipleGroup</td>
+<td valign="top">Brackets enclose a structure or fragment that is repeated some number of times</td>
+</tr>
+<tr>
+<td align="right" valign="top">17</td>
+<td valign="top">Generic</td>
+<td valign="top">Brackets enclose a generic polymer</td>
+</tr>
+<tr>
+<td align="right" valign="top">18</td>
+<td valign="top">Anypolymer</td>
+<td valign="top">Brackets enclose any polymer</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The bracket usage is treated as Unspecified.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

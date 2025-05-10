@@ -1,0 +1,62 @@
+<html>
+<head>
+<title>CDX Format Specification: CDX Coordinates Data Types</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>CDX Coordinates Data Types</h2>
+
+<h3><a NAME="CDXCoordinate">CDXCoordinate</a>:</h3>
+
+<p><b>In CDX files</b>, a CDXCoordinate is an <a href="CDXNumeric.htm">INT32</a>. 1 unit represents 1/65536 points, or 1/4718592 inches, or 1/1857710 cm. This permits a drawing space of about 23.1 meters. In contexts where appropriate, 1 unit represents 10<sup>-15</sup> meters, permitting a coordinate space of approx. &plusmn;2.1x10<sup>-6</sup> meters (&plusmn;21,474 Angstroms).</p>
+
+<p><b>In CDXML files</b>, a CDXCoordinate is scaled differently, so that 1 unit represents 1 point.  CDXCoordinates in CDXML files may be represented as decimal values.</p>
+
+<p>In 2D coordinate spaces, the origin is at the top left corner, and the coordinates increase down and to the right.</p>
+
+<b>Example:</b> 1 inch (72 points):<br>
+<table cellspacing="3">
+<tr><td><tt><b>CDX:</b></tt></td><td><tt>00 00 48 00</tt></td></tr>
+<tr><td><tt><b>CDXML:</b></tt></td><td><tt>"72"</tt></td></tr>
+</table>
+
+<h3><a name="CDXPoint2D">CDXPoint2D</a>: </h3>
+<p><b>In CDX files</b>, a CDXPoin t2D is an x- and a y-CDXCoordinate stored as a pair of <a href="CDXNumeric.htm">INT32</a>s, y coordinate followed by x coordinate. </p>
+
+<p><b>In CDXML files</b>, a CDXPoint2D is a stored as a pair of numeric values, x coordinate followed by y coordinate. Note that this ordering is different than in CDX files!</p>
+
+<b>Example:</b> 1 inch (72 points) to the right, and 2 inches down:<br>
+<table cellspacing="3">
+<tr><td><tt><b>CDX:</b></tt></td><td><tt>00 00 90 00 00 00 48 00</tt></td></tr>
+<tr><td><tt><b>CDXML:</b></tt></td><td><tt>"72 144"</tt></td></tr>
+</table>
+
+<h3><a name="CDXPoint3D">CDXPoint3D</a>: </h3>
+<p><b>In CDX files</b>, a CDXPoint3D is an x- and a y-CDXCoordinate stored as a pair of <a href="CDXNumeric.htm">INT32</a>s, z coordinate followed by y coordinate followed by x coordinate. </p>
+
+<p><b>In CDXML files</b>, a CDXPoint2D is a stored as a pair of numeric values, x coordinate followed by y coordinate followed by z coordinate. Note that this ordering is different than in CDX files!</p>
+
+<b>Example:</b> 1 inch (72 points) to the right, 2 inches down, and 3 inches deep:<br>
+<table cellspacing="3">
+<tr><td><tt><b>CDX:</b></tt></td><td><tt>00 00 d8 00 00 00 90 00 00 00 48 00</tt></td></tr>
+<tr><td><tt><b>CDXML:</b></tt></td><td><tt>"72 144 216"</tt></td></tr>
+</table>
+
+<h3><a NAME="CDXRectangle">CDXRectangle</a>:</h3>
+<p><b>In CDX files</b>, rectangles are stored as four CDXCoordinate values, representing, in order: top, left, bottom, and right edges of the rectangle. </p>
+
+<p><b>In CDXML files</b>, rectangles are stored as four CDXCoordinate values, representing, in order: left, top, right, and bottom edges of the rectangle.Note that this ordering is different than in CDX files!</p>
+
+<b>Example:</b> top: 1 inch, left: 2 inches, bottom: 3 inches, right: 4 inches:<br>
+<table cellspacing="3">
+<tr><td><tt><b>CDX:</b></tt></td><td><tt>00 00 48 00 00 00 90 00 00 00 D8 00 00 00 20 01</tt></td></tr>
+<tr><td><tt><b>CDXML:</b></tt></td><td><tt>"144 72 288 216"</tt></td></tr>
+</table>
+<p>&nbsp;</p>
+<p>See the <a href="../DataTypes.htm">complete list of CDX data types</a></p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,86 @@
+<html>
+<head>
+<title>CDX Format Specification: Bracket Attachment Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Bracket Attachment Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">bracketattachment</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_BracketAttachment</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8018</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="BracketedGroup.htm">kCDXObj_BracketedGroup</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0 (written only)</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>An individual bracket (or brace or parenthesis) that, together with others, defines a <a href="BracketedGroup.htm">Bracketed Group</a>.</p>
+
+<p>Each Bracket Attachment may contain zero or more <a href="CrossingBond.htm">Crossing Bonds</a>, indicating which bonds cross from the inside to the outside of the bracket. Although the cdx specification places no limits on the number of Crossing Bonds associated with each Bracket Attachment, the presence of more than two Crossing Bonds can be ambiguous or unclear, and so it is recommended that two Crossing Bonds per Bracket Attachment be considered a practical maximum.</p>
+
+<p>There are no required properties or objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8019</td>
+<td><a href="CrossingBond.htm">kCDXObj_CrossingBond</a></font></b></td>
+<td>crossingbond</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A Bond that connects a Bracketed Group to a Node outside that group.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A2B</td>
+<td><a href="properties/Bracket_GraphicID.htm">kCDXProp_Bracket_GraphicID</a></td>
+<td>GraphicID</td>
+<td><a href="DataType/CDXObjectID.htm">CDXObjectID</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The ID of a graphical object (bracket, brace, or parenthesis) associated with a Bracket Attachment.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

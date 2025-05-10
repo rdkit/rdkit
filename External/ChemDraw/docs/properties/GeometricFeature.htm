@@ -1,0 +1,85 @@
+<html>
+<head>
+<title>CDX Format Specification: GeometricFeature Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>GeometricFeature Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">GeometricFeature</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_GeometricFeature</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0B80</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">INT8</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Geometry.htm">kCDXObj_Geometry</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 8.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The type of the geometrical feature (point, line, plane, etc.).</p>
+<p><p>For the purpose of Geometry objects based on other objects:
+<ul><li>A <b>point</b> is defined as a <a href="../Node.htm">Node</a> or a Geometry object with a Geometric Feature property equal to kCDXGeometricFeature_PointFromPointPointDistance, kCDXGeometricFeature_PointFromPointPointPercentage, kCDXGeometricFeature_PointFromPointNormalDistance, or kCDXGeometricFeature_CentroidFromPoints</li>
+<li>A <b>line</b> is defined as a Geometry object with a Geometric Feature property equal to kCDXGeometricFeature_LineFromPoints or kCDXGeometricFeature_NormalFromPointPlane</li>
+<li>A <b>plane</b> is defined as a Geometry object with a Geometric Feature property equal to kCDXGeometricFeature_PlaneFromPoints or kCDXGeometricFeature_PlaneFromPointLine</li></ul></p></p>
+<p>This is an enumerated property. Acceptible values are shown in the following list:
+<table>
+<tr>
+<td align="right"><b>Value</b></td>
+<td><b>CDXML Name</b></td>
+<td><b>Description</b></td>
+</tr>
+<tr>
+<td align="right" valign="top">0</td>
+<td valign="top">Undefined</td>
+<td valign="top">Geometric feature type is undefined</td>
+</tr>
+<tr>
+<td align="right" valign="top">1</td>
+<td valign="top">PointFromPointPointDistance</td>
+<td valign="top">A point defined by two points and a distance. <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> should be present and contain an <em>ordered</em> list of two other points. This new point will be positioned at a given <a href="RelationValue.htm">distance</a> (may be negative) from the first of those points in the direction of the second of those points)</td>
+</tr>
+<tr>
+<td align="right" valign="top">2</td>
+<td valign="top">PointFromPointPointPercentage</td>
+<td valign="top">A point defined by two points and a percentage. <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> should be present and contain an <em>ordered</em> list of two other points. This new point will be positioned at a given <a href="RelationValue.htm">percentage</a> of the distance (may be negative) from the first of those points in the direction of the second of those points)</td>
+</tr>
+<tr>
+<td align="right" valign="top">3</td>
+<td valign="top">PointFromPointNormalDistance</td>
+<td valign="top">A point defined by a point, a normal line, and a distance. <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> should be present and contain an unordered list consisting of a point and a normal. This new point will be positioned at a given <a href="RelationValue.htm">distance</a> (may be negative) from the point in the direction of the indicated by the normal)</td>
+</tr>
+<tr>
+<td align="right" valign="top">4</td>
+<td valign="top">LineFromPoints</td>
+<td valign="top">A best fit line defined by two or more points. <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> should be present and contain an unordered list consisting of at least two points. If more than two points are used to define this line, a <a href="RelationValue.htm">maximum RMS deviation</a> may also be specified</td>
+</tr>
+<tr>
+<td align="right" valign="top">5</td>
+<td valign="top">PlaneFromPoints</td>
+<td valign="top">A best fit plane defined by three or more points. <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> should be present and contain an unordered list consisting of at least three points. If more than three points are used to define this line, a <a href="RelationValue.htm">maximum RMS deviation</a> may also be specified</td>
+</tr>
+<tr>
+<td align="right" valign="top">6</td>
+<td valign="top">PlaneFromPointLine</td>
+<td valign="top">A plane defined by a point and a line. <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> should be present and contain an unordered list consisting of at a point and a line.</td>
+</tr>
+<tr>
+<td align="right" valign="top">7</td>
+<td valign="top">CentroidFromPoints</td>
+<td valign="top">A centroid defined by points. <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> should be present and contain an unordered list consisting of at least one point</td>
+</tr>
+<tr>
+<td align="right" valign="top">8</td>
+<td valign="top">NormalFromPointPlane</td>
+<td valign="top">A normal line defined by a point and a plane. <a href="BasisObjects.htm">kCDXProp_BasisObjects</a> should be present and contain an unordered list consisting of at a point and a plane.</td>
+</tr>
+</table>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The type will be treated as Undefined.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

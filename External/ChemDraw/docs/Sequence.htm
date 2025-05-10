@@ -1,0 +1,53 @@
+<html>
+<head>
+<title>CDX Format Specification: Sequence Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Sequence Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">sequence</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_Sequence</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8013</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 7.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Sequence object is one member of an ordered series; the contents of its Text object may change as other objects are added to or removed from the series. It may function as a bookmark so that other objects (<a href="CrossReference.htm">Cross-References</a>) may link to it, even if the other objects are in different documents altogether.</p>
+
+<p>There are no required properties or objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<i>(none)</i><p>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0E00</td>
+<td><a href="properties/Sequence_Identifier.htm">kCDXProp_Sequence_Identifier</a></td>
+<td>SequenceIdentifier</td>
+<td><a href="DataType/CDXString.htm">CDXString</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for sequences.</font> A unique (but otherwise random) identifier for a given Sequence object.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

@@ -1,0 +1,33 @@
+<html>
+<head>
+<title>CDX Format Specification: RelationValue Property</title>
+</head>
+<link rel="stylesheet" href="../style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>RelationValue Property</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">RelationValue</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXProp_RelationValue</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x0B81</td></tr>
+<tr><td valign="top"><b>Data Size:</b></td><td valign="top"><a href="../DataType/CDXNumeric.htm">FLOAT64</a></td></tr>
+<tr><td valign="top"><b>Property of objects:</b></td><td valign="top"><a href="../Geometry.htm">kCDXObj_Geometry</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 8.0</td></tr>
+<tr><td valign="top"><b>Required?</b></td><td valign="top">No</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The numeric relationship (if any) among the basis objects used to define this object.</p>
+<p>For <a href="../Geometry.htm">Geometry</a> objects with a <a href="GeometricFeature.htm">Geometric Feature</a> type of kCDXGeometricFeature_PointFromPointPointDistance or kCDXGeometricFeature_PointFromPointNormalDistance, this value represents the distance.</p>
+
+<p>For those with a Geometric Feature type of kCDXGeometricFeature_PointFromPointPointPercentage, this value represents the percentage.</p>
+
+<p>For those with a Geometric Feature type of kCDXGeometricFeature_LineFromPoints or kCDXGeometricFeature_PlaneFromPoints, this value represents the maximum RMS deviation for the line or plane.</p>
+<p><b><u>If this property is absent:</u></b><br>
+<p>The value will be treated as zero.</p>
+<p>&nbsp;</p>
+<hr>
+<a href="../index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

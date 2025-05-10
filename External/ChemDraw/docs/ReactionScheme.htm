@@ -1,0 +1,71 @@
+<html>
+<head>
+<title>CDX Format Specification: Reaction Scheme Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Reaction Scheme Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">scheme</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_ReactionScheme</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x800D</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">(not written/read)</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>A Reaction Scheme describes a single- or multi-step reaction. It contains one or more
+Reaction Steps.</p>
+
+<p>A single-step reaction will, unsurprisingly, contain only a single Reaction Step. A multi-step reaction will contain more than one Reaction Step, one for each step in the reaction. Although the various Reaction Step objects will often appear in the CDX file in the same logical order that they appear in the reaction, this is not guaranteed and should not be assumed. In many cases, it is impossible to specify a single unique order to the Reaction Steps. For example, a convergent synthesis will have more than one 'first' step, while a divergent reaction will have more than one 'last' step. A circular reaction may have no 'first' or 'last' steps at all in a logical sense, yet all of the steps will be present in the cdx file in some unspecified order.</p>
+
+<p>There are no required properties, but a Reaction Scheme must contain at least one <a href="ReactionStep.htm">Reaction Step</a>.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x800E</td>
+<td><a href="ReactionStep.htm">kCDXObj_ReactionStep</a></font></b></td>
+<td>step</td>
+</tr>
+<tr>
+<td></td><td colspan="3">A description of one step in a reaction. It contains the constituents, conditions, and products.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

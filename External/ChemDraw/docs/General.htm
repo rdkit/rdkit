@@ -1,0 +1,87 @@
+<html>
+<head>
+<title>CDX Format Specification: General</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+
+<h2>Introduction</h2>
+
+
+<h4>What is CDX?</h4>
+
+<p>CDX is the native file format of ChemDraw, and is guaranteed to save anything drawn in ChemDraw without loss of data. At the same time, however, its architecture was carefully designed to make it a flexible and general-purpose chemical format. It is intended to be a practical choice for use by non-graphical programs, i.e. ones dealing in connection tables rather than desktop publishing. Because of its ability to incorporate custom information, and because it is in the public domain, CDX has been adopted by the U.S. Patent Office as its standard chemical format. We are working to make the format useful to third parties and would appreciate feedback.</p>
+
+<h4>What is CDXML?</h4>
+
+<p>CDXML is an XML encoding of CDX -- a variant of CDX that complies with the <a href="http://www.xml.org">XML</a> specification.  It differs from CDX only in the details of its formatting, and it doesn't even differ by that much.  Everything that can be stored in a CDX file can also be stored in a CDXML file.  Everything that can be stored in a CDXML file can also be stored in a CDX file. This is a very important point: a document can be converted from binary CDX to text-based CDXML and back again with absolutely no loss of information.</p>
+
+<h4>What are the CDX/CDXML File Formats?</h4>
+
+<p>The CDX File Format is a tagged file format, meaning that it consists of a series of objects, each of which is preceded by a tag that identifies what the object represents (for example, a bond). Tagged file formats in general are very flexible.  Readers of a tagged file can efficiently skip over parts they aren't interested in or do not recognize, and in fact they are expected to do so. Among other things, this flexibility means that a tagged file format can be expanded without invalidating any existing files.  We fully expect that ChemDraw 4.0 will be able to read files created by ChemDraw 40.0.  The older version surely won't understand any new features added in the meantime, but the basic contents should be intact.</p>
+
+<p>This flexibility also means that the CDX/CDXML formats may be extended by companies other than CambridgeSoft.  As a practical matter, we would request that anyone wishing to extend these formats let us know, it isn't strictly <em>necessary</em> that they do so.  Contacting us simply lets us document any changes publically; the files will be readable by ChemDraw whether or not we are notified.</p>
+
+<p>In the simplest view, a CDX file consists of a document header followed by a stream of <em>tagged items</em> followed by the <em>end</em> of the Document. Each tagged item is self-contained:</p>
+
+<p><small>DocumentHeader, TaggedItem, TaggedItem, TaggedItem, ...., DocumentEnd</small></p>
+
+<p>There are three kinds of tagged item: an <em>object header</em>, an <em>object end</em>, and a <em>property</em>. An <em>object</em> consists of an object header and all tagged items until a matching object end is reached. Every object header has a corresponding object end. For example,</p>
+
+<p><small>DocumentHeader, ObjectHeader, ObjectEnd, ObjectHeader, Property, ObjectEnd, ..., DocumentEnd</small></p>
+
+<p>Objects can contain other objects and properties. The enclosing object is called a &quot;container.&quot; A typical CDX file consists of layers of nested objects. A simple example might look like this:</p>
+
+<table cellspacing="0" cellpadding="0">
+<tr><td><small>Document Header,</small></td>
+<td><small>ObjectHeader,</small></td>
+<td><small>Property,</small></td>
+<td><small>ObjectHeader,</small></td>
+<td><small>Property,</small></td>
+<td><small>ObjectEnd,</small></td>
+<td><small>ObjectEnd,</small></td>
+<td><small>DocumentEnd,</small></td></tr>
+<tr><td></td>
+<td></td>
+<td></td>
+<td colspan="3"><hr></td>
+<td></td>
+<td></td></tr>
+<tr><td></td>
+<td colspan="6"><hr></td>
+<td></td></tr>
+<tr><td colspan="8"><hr></td></tr>
+</table>
+
+<p>The nesting can be arbitrarily deep with no limit to the number of objects and properties at any level. Although the order of objects or properties at any level does not matter, the nesting structure is very significant. Using <em>Obj</em> to represent an Objectheader, and <em>/Obj</em> to represent an ObjectEnd, a general CDX-format file looks like this:</p>
+
+<p><small>DocumentHeader, Obj<font color="#0000ff">(Prop, Prop, Obj</font> <font color="#ff0000">(Obj </font><font color="#008000">(Prop, Obj</font> <font color="#808080">(...)</font><font color="#008000"> )</font> <font color="#ff0000">Prop)</font><font color="#0000ff">)</font>,
+    Obj<font color="#0000ff">(...)</font>, ..., End</font>
+</small></p>
+
+<p>This nesting can be difficult to see in a raw binary file. We have provided a simple program specifically designed to make it easy to view the nesting. <a href="CDXHexDumper.exe">CDXHexDumper.exe</a> is a very crude program that reads a CDX file and dumps it in hex to the file c:\temp\dump.txt. The file is interpreted into objects and properties and shows the complete structure of the CDX file. The program does not provide any semantic interpretation; it simply reformats the data to make it easier to see the different objects and properties. It is much simpler to see the nesting in a text-based CDXML file, and there are many XML-reading programs readily available that can make the nesting even more apparent if you like.</p>
+
+<h4>How does ChemDraw store a document?</h4>
+
+<p>ChemDraw stores a document as a set of nested objects and properties. Objects are things such as atoms, bonds, fragments, arrows, and text. Properties are things like position, color, arrow type, and bond order. Each object has zero or more properties and may contain zero or more other nested objects -- themselves each containing zero or more properties and nested objects, and so on.</p>
+
+<p>For example, a molecular fragment might contain an atom, a bond, text, and another fragment containing atoms, bonds, and various properties. The following diagram omits the various properties of the atoms and bonds, showing only objects for simplicity. &quot;Node&quot; refers to an attachment point, usually an atom.</p>
+
+<p><img src="Graphics/objtree1.gif" alt="objtree1.gif (2844 bytes)" WIDTH="248" HEIGHT="200"></p>
+
+<h2>More info...</h2>
+
+<ul>
+<li><a href="IntroCDX.htm">The CDX binary file format</a></li>
+<li><a href="IntroCDXML.htm">The CDXML text-based file format</a></li>
+<li><a href="IntroExampleSimple.htm">Simple example</a></li>
+<li><a href="IntroExampleComplex.htm">Less-simple example</a></li>
+</ul>
+
+<p>&nbsp;</p>
+
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>

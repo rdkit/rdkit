@@ -1,0 +1,324 @@
+<html>
+<head>
+<title>CDX Format Specification: Embedded Object Object</title>
+</head>
+<link rel="stylesheet" href="style.css">
+<body bgcolor="#FFFFFF">
+<!--webbot bot="Include" U-Include="/chemdraw/header.htm" TAG="BODY" -->
+<h2>Embedded Object Object</h2>
+
+<table cellpadding="0" cellspacing="0">
+<tr><td valign="top"><b>CDXML Name:</b></td><td valign="top">embeddedobject</td></tr>
+<tr><td valign="top"><b>CDX Constant Name:</b></td><td valign="top">kCDXObj_EmbeddedObject</td></tr>
+<tr><td valign="top"><b>CDX Constant Value:</b></td><td valign="top">0x8009</td></tr>
+<tr><td valign="top"><b>Contained by objects:</b></td><td valign="top"><a href="Page.htm">kCDXObj_Page</a></td></tr>
+<tr><td></td><td></td></tr>
+<tr><td valign="top"><b>First written/read in:</b></td><td valign="top">ChemDraw 4.0</td></tr>
+</table>
+<p><b><u>Description:</u></b><br>
+<p>The EmbeddedObject object is, as its name implies, an externally-generated object embedded in the file. It may be a Macintosh PICT, a Windows Metafile, or a Windows OLE Object.</p>
+
+<p>The bounding box property is required, but there are no required objects.</p><p>
+<p><b><u>Subobjects:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b></b></td>
+</tr>
+<tr>
+<td>0x8011</td>
+<td><a href="ObjectTag.htm">kCDXObj_ObjectTag</a></font></b></td>
+<td>objecttag</td>
+</tr>
+<tr>
+<td></td><td colspan="3">Arbitrarily named property, one or more of which can be attached to any ChemDraw object.</td>
+</tr>
+</table>
+<p><b><u>Properties:</u></b><br>
+<table>
+<tr>
+<td width="10%"><b>Value</b></td>
+<td width="35%"><b>Name</b></td>
+<td width="35%"><b>CDXML Name</b></td>
+<td width="20%"><b>Type</b></td>
+</tr>
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>n/a</td>
+<td>n/a</td>
+<td><a href="properties/id.htm">id</a></td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A unique identifier for an object, used when other objects refer to it.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x000A</td>
+<td><a href="properties/ZOrder.htm">kCDXProp_ZOrder</a></td>
+<td>Z</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+Back-to-front ordering index in 2D drawing.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0204</td>
+<td><a href="properties/BoundingBox.htm">kCDXProp_BoundingBox</a></td>
+<td>BoundingBox</td>
+<td><a href="DataType/CDXCoordinates.htm">CDXRectangle</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+<font color="#FF0000">Required for pictures and spectra. Required for graphics and text until 6.0.</font> The smallest rectangle that encloses the graphical representation of the object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0205</td>
+<td><a href="properties/RotationAngle.htm">kCDXProp_RotationAngle</a></td>
+<td>RotationAngle</td>
+<td><a href="DataType/CDXNumeric.htm">INT32</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The angular orientation of an object in degrees * 65536.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0301</td>
+<td><a href="properties/ForegroundColor.htm">kCDXProp_ForegroundColor</a></td>
+<td>color</td>
+<td><a href="DataType/CDXNumeric.htm">UINT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The foreground color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0302</td>
+<td><a href="properties/BackgroundColor.htm">kCDXProp_BackgroundColor</a></td>
+<td>bgcolor</td>
+<td><a href="DataType/CDXNumeric.htm">INT16</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The background color of an object represented as the two-based index into the object's color table.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A60</td>
+<td><a href="properties/Picture_Edition.htm">kCDXProp_Picture_Edition</a></td>
+<td>Edition</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The section information (SectionHandle) of the Macintosh Publish & Subscribe edition embedded in the CDX picture object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A61</td>
+<td><a href="properties/Picture_EditionAlias.htm">kCDXProp_Picture_EditionAlias</a></td>
+<td>EditionAlias</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+The alias information of the Macintosh Publish & Subscribe edition embedded in the CDX picture object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A62</td>
+<td><a href="properties/MacPICT.htm">kCDXProp_MacPICT</a></td>
+<td>MacPICT</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A Macintosh PICT data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A63</td>
+<td><a href="properties/WindowsMetafile.htm">kCDXProp_WindowsMetafile</a></td>
+<td>WindowsMetafile</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A Microsoft Windows Metafile object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A64</td>
+<td><a href="properties/OLEObject.htm">kCDXProp_OLEObject</a></td>
+<td>OLEObject</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+An OLE object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A65</td>
+<td><a href="properties/EnhancedMetafile.htm">kCDXProp_EnhancedMetafile</a></td>
+<td>EnhancedMetafile</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A Microsoft Windows Enhanced Metafile object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A6E</td>
+<td><a href="properties/GIF.htm">kCDXProp_GIF</a></td>
+<td>GIF</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary GIF data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A6F</td>
+<td><a href="properties/TIFF.htm">kCDXProp_TIFF</a></td>
+<td>TIFF</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary TIFF data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A70</td>
+<td><a href="properties/PNG.htm">kCDXProp_PNG</a></td>
+<td>PNG</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary PNG data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A71</td>
+<td><a href="properties/JPEG.htm">kCDXProp_JPEG</a></td>
+<td>JPEG</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary JPEG data object.
+</td>
+</tr>
+
+<tr>
+<td colspan="4"></td>
+</tr>
+<tr>
+<td>0x0A72</td>
+<td><a href="properties/BMP.htm">kCDXProp_BMP</a></td>
+<td>BMP</td>
+<td><a href="DataType/Unformatted.htm">Unformatted</a></td>
+</tr>
+<tr>
+<td></td>
+<td colspan="3">
+A binary BMP data object.
+</td>
+</tr>
+
+</table>
+<p>&nbsp;</p>
+<hr>
+<a href="index.htm">CDX Documentation index</a>
+<!--webbot bot="Include" U-Include="/footer.htm" TAG="BODY" -->
+</body></html>
