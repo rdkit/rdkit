@@ -9,7 +9,7 @@ steps:
     conda create --name rdkit_build cmake \
         boost-cpp=$(boost_version) boost=$(boost_version) \
         py-boost=$(boost_version) libboost=$(boost_version) \
-        cairo eigen
+        cairo eigen ccache
   displayName: Setup build environment
 - bash: |
     source ${CONDA}/etc/profile.d/conda.sh
@@ -42,6 +42,8 @@ steps:
     source ${CONDA}/etc/profile.d/conda.sh
     conda activate rdkit_build
     cd build
+    export CCACHE_REMOTE_ONLY=true
+    export CCACHE_REMOTE_STORAGE="redis://$(REDIS_PASSWORD)@$(REDIS_URL):$(REDIS_PORT)"
     make -j $( $(number_of_cores) ) install
   displayName: Build
 - bash: |
