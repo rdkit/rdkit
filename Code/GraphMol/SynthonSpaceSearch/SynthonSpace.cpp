@@ -43,7 +43,7 @@ namespace RDKit::SynthonSpaceSearch {
 
 // used for serialization
 constexpr int32_t versionMajor = 3;
-constexpr int32_t versionMinor = 0;
+constexpr int32_t versionMinor = 1;
 constexpr int32_t endianId = 0xa100f;
 
 size_t SynthonSpace::getNumReactions() const { return d_reactions.size(); }
@@ -358,7 +358,7 @@ namespace {
 // large enough to accept everything.
 void readSynthons(
     const size_t startNum, size_t endNum, const char *fileMap,
-    const std::vector<std::uint64_t> &synthonPos,
+    const std::vector<std::uint64_t> &synthonPos, std::uint32_t version,
     std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> &synthons) {
   if (endNum > synthons.size()) {
     endNum = synthons.size();
@@ -369,7 +369,7 @@ void readSynthons(
     std::istringstream is(view, std::ios::binary);
     auto tmp =
         std::make_pair(std::string(), std::unique_ptr<Synthon>(new Synthon));
-    tmp.second->readFromDBStream(is);
+    tmp.second->readFromDBStream(is, version);
     tmp.first = tmp.second->getSmiles();
     synthons[i] = std::move(tmp);
   }
@@ -377,14 +377,14 @@ void readSynthons(
 
 void threadedReadSynthons(
     const char *fileMap, const std::vector<std::uint64_t> &synthonPos,
-    unsigned int numThreads,
+    unsigned int numThreads, std::uint32_t version,
     std::vector<std::pair<std::string, std::unique_ptr<Synthon>>> &synthons) {
   size_t eachThread = 1 + (synthonPos.size() / numThreads);
   size_t start = 0;
   std::vector<std::thread> threads;
   for (unsigned int i = 0U; i < numThreads; ++i, start += eachThread) {
     threads.push_back(std::thread(readSynthons, start, start + eachThread,
-                                  fileMap, std::ref(synthonPos),
+                                  fileMap, std::ref(synthonPos), version,
                                   std::ref(synthons)));
   }
   for (auto &t : threads) {
@@ -497,14 +497,14 @@ void SynthonSpace::readDBFile(const std::string &inFilename,
   unsigned int numThreadsToUse = getNumThreadsToUse(numThreads);
   if (numThreadsToUse > 1) {
     threadedReadSynthons(fileMap.d_mappedMemory, synthonPos, numThreadsToUse,
-                         d_synthonPool);
+                         d_fileMajorVersion, d_synthonPool);
   } else {
     readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
-                 d_synthonPool);
+                 d_fileMajorVersion, d_synthonPool);
   }
 #else
   readSynthons(0, numSynthons, fileMap.d_mappedMemory, synthonPos,
-               d_synthonPool);
+               d_fileMajorVersion, d_synthonPool);
 #endif
   if (!std::is_sorted(
           d_synthonPool.begin(), d_synthonPool.end(),
@@ -578,10 +578,14 @@ void SynthonSpace::writeEnumeratedFile(const std::string &outFilename) const {
                           << " some time and result in a large file."
                           << std::endl;
   std::ofstream os(outFilename);
+  enumerateToStream(os);
+  os.close();
+}
+
+void SynthonSpace::enumerateToStream(std::ostream &os) const {
   for (const auto &[fst, snd] : d_reactions) {
     snd->enumerateToStream(os);
   }
-  os.close();
 }
 
 bool SynthonSpace::hasFingerprints() const { return !d_fpType.empty(); }
