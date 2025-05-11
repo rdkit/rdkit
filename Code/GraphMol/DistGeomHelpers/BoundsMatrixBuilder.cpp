@@ -1731,8 +1731,8 @@ void collectBondsAndAngles(const ROMol &mol,
         tmp[2] = aid21;
       }
 
-      if ((bondi->getBondType() == Bond::TRIPLE) ||
-          (bondj->getBondType() == Bond::TRIPLE)) {
+      if (bondi->getBondType() == Bond::TRIPLE ||
+          bondj->getBondType() == Bond::TRIPLE) {
         // triple bond
         tmp[3] = 1;
       } else if (bondi->getBondType() == Bond::DOUBLE &&
