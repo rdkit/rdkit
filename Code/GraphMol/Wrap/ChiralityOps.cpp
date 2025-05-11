@@ -31,6 +31,9 @@ struct chiralityops_wrapper {
 Note that this function is still somewhat experimental and the API\n\
 and results may change in a future release.",
         python::with_custodian_and_ward_postcall<0, 1>());
+    python::def("CleanupStereoGroups", &Chirality::cleanupStereoGroups,
+                (python::arg("mol")),
+                "removes atoms without specified chirality from stereo groups");
   };
 };
 }  // namespace RDKit
