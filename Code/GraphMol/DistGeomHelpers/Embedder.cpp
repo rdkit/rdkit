@@ -1013,6 +1013,10 @@ void findDoubleBonds(
           if (nbr == oatm) {
             continue;
           }
+          const auto obnd = mol.getBondBetweenAtoms(atm->getIdx(), nbr->getIdx());
+          if (!obnd || obnd->getBondType() != Bond::BondType::SINGLE) {
+            continue;
+          }
           doubleBondEnds.emplace_back(nbr->getIdx(), atm->getIdx(),
                                       oatm->getIdx());
         }
