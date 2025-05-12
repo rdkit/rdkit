@@ -202,17 +202,17 @@ TEST_CASE("substructure parameters", "[substruct]") {
 }
 
 namespace {
-bool no_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
+bool no_match(const ROMol &mol, const std::span<const unsigned int> &ids) {
   RDUNUSED_PARAM(mol);
   RDUNUSED_PARAM(ids);
   return false;
 }
-bool always_match(const ROMol &mol, const std::vector<unsigned int> &ids) {
+bool always_match(const ROMol &mol, const std::span<const unsigned int> &ids) {
   RDUNUSED_PARAM(mol);
   RDUNUSED_PARAM(ids);
   return true;
 }
-bool bigger(const ROMol &mol, const std::vector<unsigned int> &ids) {
+bool bigger(const ROMol &mol, const std::span<const unsigned int> &ids) {
   RDUNUSED_PARAM(mol);
   return std::accumulate(ids.begin(), ids.end(), 0) > 5;
 }
