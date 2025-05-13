@@ -6133,7 +6133,7 @@ $$$$
     pathName += "/Code/GraphMol/test_data/Github8323.sdf";
     SDMolSupplier suppl(pathName);
     while (!suppl.atEnd()) {
-      auto mol = suppl.next();
+      std::unique_ptr<ROMol> mol(suppl.next());
       REQUIRE(mol);
       auto &sgs = mol->getStereoGroups();
       REQUIRE(sgs.size() == 1);
