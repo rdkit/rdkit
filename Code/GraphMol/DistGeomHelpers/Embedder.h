@@ -452,6 +452,8 @@ inline INT_VECT EmbedMultipleConfs(
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters KDG;
 //! Parameters corresponding to Sereina Riniker's ETDG approach
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETDG;
+//! Parameters corresponding to Sereina Riniker's ETDG approach - version 2
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETDGv2;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDG;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2
