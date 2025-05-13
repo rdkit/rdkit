@@ -12,6 +12,8 @@
 #include <functional>
 #include <set>
 #include <utility>
+#include <span>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Tautomer.h>
 #include <GraphMol/Bond.h>
@@ -101,7 +103,7 @@ class TautomerQueryMatcher {
         d_params(params),
         d_matchingTautomers(matchingTautomers) {}
 
-  bool match(const ROMol &mol, const std::vector<unsigned int> &match) {
+  bool match(const ROMol &mol, const std::span<const unsigned int> &match) {
 #ifdef VERBOSE
     std::cout << "Checking template match" << std::endl;
 #endif
@@ -163,8 +165,15 @@ TautomerQuery *TautomerQuery::fromMol(
 
   auto templateMolecule = new RWMol(query);
   for (auto idx : modifiedAtoms) {
-    const auto atom = templateMolecule->getAtomWithIdx(idx);
+    const auto atom = query.getAtomWithIdx(idx);
     const auto queryAtom = new QueryAtom(atom->getAtomicNum());
+
+    // Forward original queries
+    if (atom->hasQuery()) {
+      auto originalAtomQuery = static_cast<const QueryAtom *>(atom)->getQuery();
+      queryAtom->setQuery(originalAtomQuery->copy());
+    }
+
     const bool updateLabel = false;
     const bool preserveProps = true;
     templateMolecule->replaceAtom(idx, queryAtom, updateLabel, preserveProps);
@@ -185,7 +194,7 @@ TautomerQuery *TautomerQuery::fromMol(
 
 bool TautomerQuery::matchTautomer(
     const ROMol &mol, const ROMol &tautomer,
-    const std::vector<unsigned int> &match,
+    const std::span<const unsigned int> &match,
     const SubstructMatchParameters &params) const {
   for (auto idx : d_modifiedAtoms) {
     const auto queryAtom = tautomer.getAtomWithIdx(idx);
@@ -248,7 +257,7 @@ std::vector<MatchVectType> TautomerQuery::substructOf(
   // use this functor as a final check to see if any tautomer matches the target
   auto checker = [&tautomerQueryMatcher](
                      const ROMol &mol,
-                     const std::vector<unsigned int> &match) mutable {
+                     const std::span<const unsigned int> &match) mutable {
     return tautomerQueryMatcher.match(mol, match);
   };
   templateParams.extraFinalCheck = checker;

@@ -18,10 +18,6 @@ extern "C" {
 
 namespace RDKit {
 namespace EHTTools {
-const std::string _EHTCharge = "_EHTCharge";
-const std::string _EHTMullikenOP = "_EHTMullikenOP";
-const std::string _EHTChargeMatrix = "_EHTChargeMatrix";
-
 // we should only call into the C code, which uses tons of globals, from one
 // thread at a time. This mutex enforces that.
 #ifdef RDK_BUILD_THREADSAFE_SSS

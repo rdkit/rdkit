@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -1322,16 +1322,8 @@ ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly,
 
 bool needsHs(const ROMol &mol) {
   for (const auto atom : mol.atoms()) {
-    unsigned int nHNbrs = 0;
-    for (const auto nbri :
-         boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
-      const auto nbr = mol[nbri];
-      if (nbr->getAtomicNum() == 1) {
-        ++nHNbrs;
-      }
-    }
-    bool noNeighbors = false;
-    if (atom->getTotalNumHs(noNeighbors) > nHNbrs) {
+    bool includeNeighbors = false;
+    if (atom->getTotalNumHs(includeNeighbors)) {
       return true;
     }
   }

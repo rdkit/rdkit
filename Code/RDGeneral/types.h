@@ -124,6 +124,8 @@ RDKIT_RDGENERAL_EXPORT extern const std::string
     _CIPCode;  // std::string COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string _CIPRank;  // int COMPUTED
 RDKIT_RDGENERAL_EXPORT extern const std::string
+    _CIPComputed;  // int (bool) COMPUTED
+RDKIT_RDGENERAL_EXPORT extern const std::string
     _CanonicalRankingNumber;  // unsigned int
 RDKIT_RDGENERAL_EXPORT extern const std::string _ChiralityPossible;  // int
 RDKIT_RDGENERAL_EXPORT extern const std::string
@@ -376,8 +378,6 @@ struct RDKIT_RDGENERAL_EXPORT larger_of {
 //! functor for comparing two strings
 struct RDKIT_RDGENERAL_EXPORT charptr_functor {
   bool operator()(const char *s1, const char *s2) const {
-    // std::cout << s1 << " " << s2 << " " << strcmp(s1, s2) << "\n";
-
     return strcmp(s1, s2) < 0;
   }
 };
@@ -416,7 +416,6 @@ RDKIT_RDGENERAL_EXPORT void Union(const VECT_INT_VECT &rings, INT_VECT &res,
 
 */
 RDKIT_RDGENERAL_EXPORT int nextCombination(INT_VECT &comb, int tot);
-
 };  // namespace RDKit
 
 #endif

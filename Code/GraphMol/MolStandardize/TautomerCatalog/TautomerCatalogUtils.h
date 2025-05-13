@@ -33,35 +33,6 @@ class TautomerCatalogParams;
 //} BondType;
 
 // typedef std::vector<ROMol*, std::string, std::string> tautomerTransform;
-class RDKIT_MOLSTANDARDIZE_EXPORT TautomerTransform {
- public:
-  ROMol *Mol = nullptr;
-  std::vector<Bond::BondType> BondTypes;
-  std::vector<int> Charges;
-
-  TautomerTransform(ROMol *mol, std::vector<Bond::BondType> bondtypes,
-                    std::vector<int> charges)
-      : Mol(mol),
-        BondTypes(std::move(bondtypes)),
-        Charges(std::move(charges)) {}
-
-  TautomerTransform(const TautomerTransform &other)
-      : BondTypes(other.BondTypes), Charges(other.Charges) {
-    Mol = new ROMol(*other.Mol);
-  }
-
-  TautomerTransform &operator=(const TautomerTransform &other) {
-    if (this != &other) {
-      delete Mol;
-      Mol = new ROMol(*other.Mol);
-      BondTypes = other.BondTypes;
-      Charges = other.Charges;
-    }
-    return *this;
-  }
-
-  ~TautomerTransform() { delete Mol; }
-};
 
 RDKIT_MOLSTANDARDIZE_EXPORT std::vector<Bond::BondType> stringToBondType(
     std::string bond_str);

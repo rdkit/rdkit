@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2020-2025 Greg Landrum and other RDKit contributors
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -14,6 +14,7 @@
 #include <streambuf>
 
 #include "RDGeneral/test.h"
+#include <GraphMol/test_fixtures.h>
 #include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
@@ -6801,6 +6802,8 @@ TEST_CASE("StereoGroup id forwarding", "[StereoGroup][ctab]") {
 TEST_CASE(
     "GitHub issue #6664: Mol file parser strips stereogenic H from imine bonds",
     "[reader]") {
+  auto useLegacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
   SECTION("mol file") {
     auto mol = R"CTAB(
                     2D
@@ -6827,7 +6830,13 @@ M  END
 
     auto dblBond = mol->getBondWithIdx(3);
     REQUIRE(dblBond->getBondType() == Bond::DOUBLE);
-    CHECK(dblBond->getStereo() == Bond::STEREOE);
+    if (useLegacy) {
+      CHECK(dblBond->getStereo() == Bond::STEREOE);
+    } else {
+      CHECK(dblBond->getStereo() == Bond::STEREOCIS);
+      CHECK(dblBond->getStereoAtoms()[0] == 0);
+      CHECK(dblBond->getStereoAtoms()[1] == 6);
+    }
   }
   SECTION("mol2 file") {
     auto mol = R"MOL2(
@@ -6860,7 +6869,13 @@ USER_CHARGES
 
     auto dblBond = mol->getBondWithIdx(5);
     REQUIRE(dblBond->getBondType() == Bond::DOUBLE);
-    CHECK(dblBond->getStereo() == Bond::STEREOE);
+    if (useLegacy) {
+      CHECK(dblBond->getStereo() == Bond::STEREOE);
+    } else {
+      CHECK(dblBond->getStereo() == Bond::STEREOCIS);
+      CHECK(dblBond->getStereoAtoms()[0] == 0);
+      CHECK(dblBond->getStereoAtoms()[1] == 6);
+    }
   }
 }
 

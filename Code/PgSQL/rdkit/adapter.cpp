@@ -610,8 +610,9 @@ extern "C" int molcmp(CROMol i, CROMol a) {
     smi1 = MolToSmiles(*im, useChirality);
     smi2 = MolToSmiles(*am, useChirality);
   } else {
-    smi1 = MolToCXSmiles(*im);
-    smi2 = MolToCXSmiles(*am);
+    RDKit::SmilesWriteParams sps;
+    smi1 = MolToCXSmiles(*im, sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    smi2 = MolToCXSmiles(*am, sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
   }
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }

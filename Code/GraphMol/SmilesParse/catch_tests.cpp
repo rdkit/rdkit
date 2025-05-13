@@ -366,11 +366,20 @@ TEST_CASE("Github #2148", "[bug][Smiles][Smarts]") {
   }
 
   SECTION("Writing SMILES") {
+    const auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
     auto mol = "C/C=c1/ncc(=C)cc1"_smiles;
     REQUIRE(mol);
     REQUIRE(mol->getBondBetweenAtoms(1, 2));
     CHECK(mol->getBondBetweenAtoms(1, 2)->getBondType() == Bond::DOUBLE);
-    CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    if (useLegacy) {
+      CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOE);
+    } else {
+      CHECK(mol->getBondBetweenAtoms(1, 2)->getStereo() == Bond::STEREOTRANS);
+      CHECK(mol->getBondBetweenAtoms(1, 2)->getStereoAtoms() ==
+            std::vector<int>{0, 3});
+    }
     auto smi = MolToSmiles(*mol);
     CHECK(smi == "C=c1cc/c(=C\\C)nc1");
   }
@@ -1628,6 +1637,9 @@ TEST_CASE(
 }
 
 TEST_CASE("Github #4582: double bonds and ring closures") {
+  const auto useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture fxn(useLegacy);
   auto mol = R"CTAB(CHEMBL409450
      RDKit          2D
 
@@ -1684,9 +1696,13 @@ M  END)CTAB"_ctab;
   auto dbond = mol->getBondBetweenAtoms(1, 19);
   REQUIRE(dbond);
   CHECK(dbond->getBondType() == Bond::BondType::DOUBLE);
-  CHECK((dbond->getStereo() == Bond::BondStereo::STEREOE ||
-         dbond->getStereo() == Bond::BondStereo::STEREOTRANS));
-  CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+  if (useLegacy) {
+    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOE);
+    CHECK(dbond->getStereoAtoms() == std::vector<int>{8, 20});
+  } else {
+    CHECK(dbond->getStereo() == Bond::BondStereo::STEREOCIS);
+    CHECK(dbond->getStereoAtoms() == std::vector<int>{0, 20});
+  }
   auto csmiles = MolToSmiles(*mol);
   CHECK(csmiles == "O=C1Nc2cc(Br)ccc2/C1=C1/Nc2ccccc2/C1=N\\O");
 
@@ -2776,7 +2792,10 @@ TEST_CASE("Test rootedAtAtom argument", "[smarts]") {
     REQUIRE(mol1);
     auto ps = SmilesWriteParams();
     ps.rootedAtAtom = 20;
-    CHECK_THROWS_AS(MolToSmiles(*mol1, ps), Invar::Invariant);
+
+    // Fixed by #8328. Multiple fragments are supported now.
+    CHECK(MolToSmiles(*mol1, ps) ==
+          "CCOc1c(Cl)c(C(=O)[O-])c(Cl)c(OCC)c1C(=O)[O-].O=C([O-])C#CC#CC(=O)[O-].[Zn][Zn]");
   }
 }
 
@@ -3132,6 +3151,49 @@ TEST_CASE("DnaTestError", "DnaTestError") {
   }
 }
 
+TEST_CASE("Github 8328", "MolToSmiles with rootedAtAtom for multiple fragments") {
+    SECTION("basics") {
+        auto mol = "[C:1][C:2].[N:3]([C:4])=[O:5]"_smiles;
+        auto ps = SmilesWriteParams();
+        ps.rootedAtAtom = 0;
+        CHECK(MolToSmiles(*mol, ps) == "[C:1][C:2].[N:3]([C:4])=[O:5]");
+        ps.rootedAtAtom = 1;
+        CHECK(MolToSmiles(*mol, ps) == "[C:2][C:1].[N:3]([C:4])=[O:5]");
+        ps.rootedAtAtom = 2;
+        CHECK(MolToSmiles(*mol, ps) == "[C:1][C:2].[N:3]([C:4])=[O:5]");
+        ps.rootedAtAtom = 3;
+        CHECK(MolToSmiles(*mol, ps) == "[C:1][C:2].[C:4][N:3]=[O:5]");
+        ps.rootedAtAtom = 4;
+        CHECK(MolToSmiles(*mol, ps) == "[C:1][C:2].[O:5]=[N:3][C:4]");
+        ps.rootedAtAtom = 5;
+        CHECK_THROWS_AS(MolToSmiles(*mol, ps), Invar::Invariant);
+    }
+    SECTION("Compare with and without canonicalization") {
+        auto mol = "[Al+3].[Na+2].[O-]S(=O)(=O)[O-].CC(=O)OCC.NC(=O)Cc1ccccc1"_smiles;
+        auto ps = SmilesWriteParams();
+
+        ps.canonical = true;
+        ps.rootedAtAtom = -1;
+        CHECK(MolToSmiles(*mol, ps) ==
+              "CCOC(C)=O.NC(=O)Cc1ccccc1.O=S(=O)([O-])[O-].[Al+3].[Na+2]");
+
+        ps.canonical = true;
+        ps.rootedAtAtom = 10;
+        CHECK(MolToSmiles(*mol, ps) ==
+              "NC(=O)Cc1ccccc1.O(CC)C(C)=O.O=S(=O)([O-])[O-].[Al+3].[Na+2]");
+
+        ps.canonical = true;
+        ps.rootedAtAtom = 21;
+        CHECK(MolToSmiles(*mol, ps) ==
+              "CCOC(C)=O.O=S(=O)([O-])[O-].[Al+3].[Na+2].c1cccc(CC(N)=O)c1");
+
+        ps.canonical = false;
+        ps.rootedAtAtom = 21;
+        CHECK(MolToSmiles(*mol, ps) ==
+              "[Al+3].[Na+2].[O-]S(=O)(=O)[O-].CC(=O)OCC.c1cccc(CC(N)=O)c1");
+    }
+}
+
 TEST_CASE("atoms bound to metals should always have Hs specified") {
   SECTION("basics") {
     std::vector<std::pair<std::string, std::string>> smileses = {
@@ -3145,5 +3207,38 @@ TEST_CASE("atoms bound to metals should always have Hs specified") {
       INFO(smi);
       CHECK(osmi == expected);
     }
+  }
+}
+
+TEST_CASE("ZOB cx smiles extension", "[smiles][cxsmiles]") {
+  SECTION("basics") {
+    auto m = "CC"_smiles;
+    REQUIRE(m);
+
+    auto b = m->getBondWithIdx(0);
+    b->setBondType(Bond::ZERO);
+
+    auto smi = MolToCXSmiles(*m);
+    REQUIRE(smi == "C~C |Z:0|");
+
+    auto m2 = RDKit::v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(m2);
+
+    CHECK(m2->getBondWithIdx(0)->getBondType() == Bond::ZERO);
+  }
+  SECTION("Reverse") {
+    constexpr const char *smi = "FB1(F)N2CCCC/C2=N/C2=[NH+]~1CCC=C2 |Z:12|";
+
+    auto p = v2::SmilesParse::SmilesParserParams();
+    p.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smi, p);
+    REQUIRE(m);
+
+    auto b = m->getBondWithIdx(15);
+    CHECK(b->getBondType() == Bond::BondType::ZERO);
+    CHECK(b->getBeginAtom()->getAtomicNum() == 7);
+    CHECK(b->getEndAtom()->getAtomicNum() == 5);
+
+    REQUIRE(MolToCXSmiles(*m) == smi);
   }
 }

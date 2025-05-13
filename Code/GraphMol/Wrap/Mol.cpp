@@ -1,5 +1,5 @@
 
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
 #include <string>
+#include <span>
 
 #include "props.hpp"
 #include "rdchem.h"
@@ -156,8 +157,11 @@ class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() = default;
-  bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
-    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
+  bool operator()(const ROMol &m, std::span<const unsigned int> match) {
+    // boost::python doesn't handle std::span, so we need to convert the span to
+    // a vector before calling into python:
+    std::vector<unsigned int> matchVec(match.begin(), match.end());
+    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(matchVec)));
   }
 
  private:
@@ -172,9 +176,9 @@ void setSubstructMatchFinalCheck(SubstructMatchParameters &ps,
 
 class ReadWriteMol : public RWMol {
  public:
-  ReadWriteMol(){};
+  ReadWriteMol() {};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
-      : RWMol(m, quickCopy, confId){};
+      : RWMol(m, quickCopy, confId) {};
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
@@ -309,6 +313,10 @@ struct mol_wrapper {
             "aromaticMatchesConjugated",
             &RDKit::SubstructMatchParameters::aromaticMatchesConjugated,
             "aromatic and conjugated bonds match each other")
+        .def_readwrite(
+            "aromaticMatchesSingleOrDouble",
+            &RDKit::SubstructMatchParameters::aromaticMatchesSingleOrDouble,
+            "aromatic and single or double bonds match each other")
         .def_readwrite(
             "useGenericMatchers",
             &RDKit::SubstructMatchParameters::useGenericMatchers,

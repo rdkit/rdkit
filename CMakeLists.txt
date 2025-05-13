@@ -11,8 +11,10 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 # Enable CTest
 include(CTest)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
@@ -74,7 +76,7 @@ option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
 
-set(RDK_BOOST_VERSION "1.70.0")
+set(RDK_BOOST_VERSION "1.81.0")
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
@@ -166,17 +168,14 @@ if(NOT Catch2_FOUND)
   FetchContent_MakeAvailable(Catch2)
 endif()
 
-#include better-enums
-find_package(better_enums 0 QUIET)
-if(NOT better_enums)
-  Include(FetchContent)
+# make sure we have better_enums
+Include(FetchContent)
 
-  FetchContent_Declare(
-    better_enums
-    GIT_REPOSITORY https://github.com/aantron/better-enums.git
-    GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
-  )
-endif()
+FetchContent_Declare(
+  better_enums
+  GIT_REPOSITORY https://github.com/aantron/better-enums.git
+  GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
+)
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
