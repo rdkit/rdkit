@@ -601,7 +601,22 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
       }
     }
 
+
+    // if we are doing CXSMILES, Hydrogen bonds are shown as single bonds
+    // in the smiles part, and are indicated with the H: block of the CX
+    // extensions
+
+    if (doingCXSmiles) {
+      for (auto bond : tmol->bonds()) {
+        if (bond->getBondType() == Bond::HYDROGEN) {
+          bond->setBondType(Bond::SINGLE);
+        }
+      }
+    }
+
+
     rootedAtAtom = fragsRootedAtAtom[fragIdx];
+
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
       // exclusively
