@@ -1043,8 +1043,10 @@ void findDoubleBonds(
           if (nbr == oatm) {
             continue;
           }
-          const auto obnd = mol.getBondBetweenAtoms(atm->getIdx(), nbr->getIdx());
-          if (!obnd || (obnd->getBondType() != Bond::BondType::SINGLE && atm->getDegree() == 2)) {
+          const auto obnd =
+              mol.getBondBetweenAtoms(atm->getIdx(), nbr->getIdx());
+          if (!obnd || (obnd->getBondType() != Bond::BondType::SINGLE &&
+                        atm->getDegree() == 2)) {
             continue;
           }
           doubleBondEnds.emplace_back(nbr->getIdx(), atm->getIdx(),
@@ -1156,8 +1158,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
