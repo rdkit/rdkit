@@ -831,11 +831,13 @@ RDKIT_GRAPHMOL_EXPORT void setHybridization(ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> &res,
-                                   bool includeDativeBonds = false);
+                                   bool includeDativeBonds = false,
+                                   bool includeHydrogenBonds = false);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
                                    std::vector<std::vector<int>> *res = nullptr,
-                                   bool includeDativeBonds = false);
+                                   bool includeDativeBonds = false,
+                                   bool includeHydrogenBonds = false);
 
 //! use a DFS algorithm to identify ring bonds and atoms in a molecule
 /*!
@@ -876,10 +878,12 @@ RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
 */
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
                                          std::vector<std::vector<int>> &res,
-                                         bool includeDativeBonds = false);
+                                         bool includeDativeBonds = false,
+                                         bool includeHydrogenBonds = false);
 //! \overload
 RDKIT_GRAPHMOL_EXPORT int symmetrizeSSSR(ROMol &mol,
-                                         bool includeDativeBonds = false);
+                                         bool includeDativeBonds = false,
+                                         bool includeHydrogenBonds = false);
 
 //! @}
 
