@@ -1044,7 +1044,7 @@ void findDoubleBonds(
             continue;
           }
           const auto obnd = mol.getBondBetweenAtoms(atm->getIdx(), nbr->getIdx());
-          if (!obnd || obnd->getBondType() != Bond::BondType::SINGLE) {
+          if (!obnd || (obnd->getBondType() != Bond::BondType::SINGLE && atm->getDegree() == 2)) {
             continue;
           }
           doubleBondEnds.emplace_back(nbr->getIdx(), atm->getIdx(),
