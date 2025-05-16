@@ -24,6 +24,19 @@
 
 #include <vector>
 #include <string>
+#include <set>
+#include <map>
+#include <functional>
+#include <stdexcept>
+
+namespace {
+constexpr const char* kRotatableBondNonStrictSmarts = "[!$(*#*)&!D1]-,:;!@[!$(*#*)&!D1]";
+constexpr const char* kRotatableBondStrictSmarts = "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
+  "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
+  "[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-,:;!@[!$"
+  "(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])(["
+  "CH3])[CH3])]";
+}
 
 namespace {
 class ss_matcher {
@@ -112,17 +125,10 @@ unsigned int calcNumRotatableBonds(const ROMol &mol,
   }
 
   if (strict == NonStrict) {
-    std::string pattern = "[!$(*#*)&!D1]-,:;!@[!$(*#*)&!D1]";
-    pattern_flyweight m(pattern);
+    pattern_flyweight m(kRotatableBondNonStrictSmarts);
     return m.get().countMatches(mol);
   } else if (strict == Strict) {
-    std::string strict_pattern =
-        "[!$(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])("
-        "[CH3])[CH3])&!$([CD3](=[N,O,S])-!@[#7,O,S!D1])&!$([#7,O,S!D1]-!@[CD3]="
-        "[N,O,S])&!$([CD3](=[N+])-!@[#7!D1])&!$([#7!D1]-!@[CD3]=[N+])]-,:;!@[!$"
-        "(*#*)&!D1&!$(C(F)(F)F)&!$(C(Cl)(Cl)Cl)&!$(C(Br)(Br)Br)&!$(C([CH3])(["
-        "CH3])[CH3])]";
-    pattern_flyweight m(strict_pattern);
+    pattern_flyweight m(kRotatableBondStrictSmarts);
     return m.get().countMatches(mol);
   } else {
     // Major changes in definition relative to the original GPS calculator:
@@ -190,6 +196,82 @@ unsigned int calcNumRotatableBonds(const ROMol &mol,
 
 unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
   return calcNumRotatableBonds(mol, (strict) ? Strict : NonStrict);
+}
+
+const std::string MaxConsecutiveRotatableBondsVersion = "1.0.0";
+unsigned int calcMaxConsecutiveRotatableBonds(const ROMol &mol, NumRotatableBondsOptions strict) {
+  if (strict == Default) {
+    strict = DefaultStrictDefinition;
+  }
+  if (strict == StrictLinkages) {
+    throw std::invalid_argument("StrictLinkages is not supported in calcMaxConsecutiveRotatableBonds");
+  }
+  // Use the appropriate SMARTS pattern
+  const char* smarts_pattern_cstr = (strict == NonStrict) ? kRotatableBondNonStrictSmarts : kRotatableBondStrictSmarts;
+  pattern_flyweight m(smarts_pattern_cstr);
+  const ROMol* queryMol = m.get().getMatcher();
+  PRECONDITION(queryMol, "SMARTS pattern failed to parse in calcMaxConsecutiveRotatableBonds");
+
+  std::vector<MatchVectType> matches;
+  SubstructMatch(mol, *queryMol, matches);
+
+  // 2. Extract unique rotatable bonds as pairs of atom indices (sorted)
+  using BondPair = std::pair<int, int>;
+  std::set<BondPair> rotBonds;
+  for (const auto &match : matches) {
+    if (match.size() == 2) {
+      int a1 = match[0].second;
+      int a2 = match[1].second;
+      if (a1 > a2) std::swap(a1, a2);
+      rotBonds.insert({a1, a2});
+    }
+  }
+  if (rotBonds.empty()) {
+    return 0;
+  }
+
+  // 3. Build adjacency: atom idx -> set of connected atom idx (rotatable bonds only)
+  std::map<int, std::set<int>> adjacency;
+  for (const auto& bp : rotBonds) {
+    adjacency[bp.first].insert(bp.second);
+    adjacency[bp.second].insert(bp.first);
+  }
+
+  // 4. For each rotatable bond, walk in both directions to find the longest chain
+  unsigned int maxConsecutive = 0;
+  for (const auto& bp : rotBonds) {
+    for (int dir = 0; dir < 2; ++dir) {
+      int start = (dir == 0) ? bp.first : bp.second;
+      int prev = (dir == 0) ? bp.second : bp.first;
+      unsigned int length = 1;
+      std::set<BondPair> visitedBonds{bp};
+      std::set<int> visitedAtoms{prev};
+      int current = start;
+      while (true) {
+        visitedAtoms.insert(current);
+        bool extended = false;
+        for (int neighbor : adjacency[current]) {
+          if (visitedAtoms.count(neighbor)) continue;
+          BondPair nextBond = (current < neighbor) ? BondPair{current, neighbor} : BondPair{neighbor, current};
+          if (visitedBonds.count(nextBond)) continue;
+          // Continue the chain
+          visitedBonds.insert(nextBond);
+          prev = current;
+          current = neighbor;
+          ++length;
+          extended = true;
+          break;
+        }
+        if (!extended) break;
+      }
+      if (length > maxConsecutive) maxConsecutive = length;
+    }
+  }
+  return maxConsecutive;
+}
+
+unsigned int calcMaxConsecutiveRotatableBonds(const ROMol &mol, bool strict) {
+  return calcMaxConsecutiveRotatableBonds(mol, (strict) ? Strict : NonStrict);
 }
 
 // SMARTSCOUNTFUNC(NumHBD,
