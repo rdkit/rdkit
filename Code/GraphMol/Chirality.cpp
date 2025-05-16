@@ -2798,7 +2798,7 @@ void addStereoAnnotations(ROMol &mol, std::string absLabel, std::string orLabel,
     // empty - all wedges should have been added to the mol, so this doesn't matter
     Atropisomers::getAllAtomIdsForStereoGroup(mol, sg, atomIds, wedgeBonds);
     for (const auto atomId : atomIds) {
-      atom = mol.getAtomWithIdx(atomId);
+      Atom *atom = mol.getAtomWithIdx(atomId);
       if (doneAts[atom->getIdx()]) {
         BOOST_LOG(rdWarningLog) << "Warning: atom " << atom->getIdx()
                                 << " is in more than one stereogroup. Only the "
