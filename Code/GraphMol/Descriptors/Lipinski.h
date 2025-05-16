@@ -161,6 +161,9 @@ RDKIT_DESCRIPTORS_EXPORT extern const std::string
 RDKIT_DESCRIPTORS_EXPORT unsigned numUnspecifiedAtomStereoCenters(
     const ROMol &mol);
 
+//! calculates the maximum number of consecutive rotatable bonds
+RDKIT_DESCRIPTORS_EXPORT unsigned int calcMaxConsecutiveRotatableBonds(const ROMol &mol);
+
 //! Helper function to register the descriptors with the descriptor service
 RDKIT_DESCRIPTORS_EXPORT void registerDescriptors();
 }  // end of namespace Descriptors

@@ -24,6 +24,9 @@
 
 #include <vector>
 #include <string>
+#include <set>
+#include <map>
+#include <functional>
 
 namespace {
 class ss_matcher {
@@ -190,6 +193,88 @@ unsigned int calcNumRotatableBonds(const ROMol &mol,
 
 unsigned int calcNumRotatableBonds(const ROMol &mol, bool strict) {
   return calcNumRotatableBonds(mol, (strict) ? Strict : NonStrict);
+}
+
+unsigned int calcMaxConsecutiveRotatableBonds(const ROMol &mol) {
+  // 1. Find all rotatable bonds using the non-strict pattern
+  std::string pattern = "[!$(*#*)&!D1]-,:;!@[!$(*#*)&!D1]";
+  RWMol *query = SmartsToMol(pattern);
+  std::vector<MatchVectType> matches;
+  SubstructMatch(mol, *query, matches);
+  delete query;
+
+  // 2. Extract unique rotatable bond indices
+  std::set<unsigned int> rotBondIndices;
+  for (const auto &match : matches) {
+    if (match.size() == 2) {
+      int atomIdx1 = match[0].second;
+      int atomIdx2 = match[1].second;
+      const Bond *bond = mol.getBondBetweenAtoms(atomIdx1, atomIdx2);
+      if (bond) {
+        rotBondIndices.insert(bond->getIdx());
+      }
+    }
+  }
+  if (rotBondIndices.empty()) {
+    return 0;
+  }
+
+  // 3. Build adjacency map: bondIdx -> set of neighbor bondIdx (sharing an atom)
+  std::map<unsigned int, std::set<unsigned int>> adjacency;
+  for (auto it1 = rotBondIndices.begin(); it1 != rotBondIndices.end(); ++it1) {
+    const Bond *bond1 = mol.getBondWithIdx(*it1);
+    int a1 = bond1->getBeginAtomIdx();
+    int a2 = bond1->getEndAtomIdx();
+    for (auto it2 = std::next(it1); it2 != rotBondIndices.end(); ++it2) {
+      const Bond *bond2 = mol.getBondWithIdx(*it2);
+      int b1 = bond2->getBeginAtomIdx();
+      int b2 = bond2->getEndAtomIdx();
+      // If bonds share an atom, they are adjacent
+      if (a1 == b1 || a1 == b2 || a2 == b1 || a2 == b2) {
+        adjacency[*it1].insert(*it2);
+        adjacency[*it2].insert(*it1);
+      }
+    }
+  }
+
+  // 4. For each rotatable bond, walk in both directions to find the longest chain
+  unsigned int maxConsecutive = 0;
+  for (auto bondIdx : rotBondIndices) {
+    const Bond* startBond = mol.getBondWithIdx(bondIdx);
+    int atomA = startBond->getBeginAtomIdx();
+    int atomB = startBond->getEndAtomIdx();
+    // Try both directions: atomA->atomB and atomB->atomA
+    for (int dir = 0; dir < 2; ++dir) {
+      int currentAtom = (dir == 0) ? atomA : atomB;
+      int prevAtom = (dir == 0) ? atomB : atomA;
+      unsigned int length = 1;
+      std::set<unsigned int> visitedBonds{bondIdx};
+      std::set<unsigned int> visitedAtoms{prevAtom};
+      unsigned int currentBondIdx = bondIdx;
+      while (true) {
+        visitedAtoms.insert(currentAtom);
+        bool extended = false;
+        for (auto neighborBondIdx : adjacency[currentBondIdx]) {
+          if (visitedBonds.count(neighborBondIdx)) continue;
+          const Bond* neighborBond = mol.getBondWithIdx(neighborBondIdx);
+          int n1 = neighborBond->getBeginAtomIdx();
+          int n2 = neighborBond->getEndAtomIdx();
+          int nextAtom = (n1 == currentAtom) ? n2 : (n2 == currentAtom) ? n1 : -1;
+          if (nextAtom == -1 || visitedAtoms.count(nextAtom)) continue;
+          // Continue the chain
+          currentBondIdx = neighborBondIdx;
+          currentAtom = nextAtom;
+          visitedBonds.insert(currentBondIdx);
+          ++length;
+          extended = true;
+          break;
+        }
+        if (!extended) break;
+      }
+      if (length > maxConsecutive) maxConsecutive = length;
+    }
+  }
+  return maxConsecutive;
 }
 
 // SMARTSCOUNTFUNC(NumHBD,
