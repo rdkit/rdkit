@@ -2793,7 +2793,12 @@ void addStereoAnnotations(ROMol &mol, std::string absLabel, std::string orLabel,
   boost::dynamic_bitset<> doneAts(mol.getNumAtoms());
   for (const auto &sg : sgs) {
     std::string gid = std::to_string(sg.getWriteId());
-    for (const auto atom : sg.getAtoms()) {
+    std::vector<unsigned int> atomIds;
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>> wedgeBonds;
+    // empty - all wedges should have been added to the mol, so this doesn't matter
+    Atropisomers::getAllAtomIdsForStereoGroup(*drawMol_, group, atomIds,
+                                              wedgeBonds);
+    for (const auto atom : atomIds) {
       if (doneAts[atom->getIdx()]) {
         BOOST_LOG(rdWarningLog) << "Warning: atom " << atom->getIdx()
                                 << " is in more than one stereogroup. Only the "
