@@ -1194,7 +1194,7 @@ TEST_CASE("allenes and cumulenes") {
 namespace RDKit {
 namespace DGeomHelpers {
 namespace EmbeddingOps {
-void findDoubleBonds(
+RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
     const ROMol &mol,
     std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
         &doubleBondEnds,
