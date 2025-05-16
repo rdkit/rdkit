@@ -5219,8 +5219,8 @@ TEST_CASE(
     CHECK(txt == "or1"); //This is the atropisomer stereolabel check
     CHECK(m4.getAtomWithIdx(16)->getPropIfPresent(common_properties::atomNote, txt));
     CHECK(txt == "and1");  
-    Chirality::addStereoAnnotations(m2);
-    CHECK(m2.getBondBetweenAtoms(10, 11)->getPropIfPresent(
+    Chirality::addStereoAnnotations(m4);
+    CHECK(m4.getBondBetweenAtoms(10, 11)->getPropIfPresent(
         common_properties::bondNote, txt));
     CHECK(txt == "(M)");
   }
