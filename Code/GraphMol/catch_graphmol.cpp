@@ -4823,3 +4823,17 @@ TEST_CASE("stereogroups operator<<") {
     CHECK(oss.str() == "AND rId: 0 wId: 0 bonds: { 7 }");
   }
 }
+
+TEST_CASE("clearPropertyCache") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  CHECK(!m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(!atom->needsUpdatePropertyCache());
+  }
+  m->clearPropertyCache();
+  CHECK(m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(atom->needsUpdatePropertyCache());
+  }
+}

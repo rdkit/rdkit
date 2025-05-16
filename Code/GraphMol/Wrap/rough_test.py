@@ -1797,20 +1797,22 @@ M  END
     child_bonds = bonds[1:]
     self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
     bond.SetStereo(Chem.BondStereo.STEREOTRANS)
-    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOTRANS],
+    for isomer in self.recursive_enumerate_stereo_bonds(mol,
+                                                        done_bonds + [Chem.BondStereo.STEREOTRANS],
                                                         child_bonds):
       yield isomer
 
     self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
     bond.SetStereo(Chem.BondStereo.STEREOCIS)
-    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOCIS],
+    for isomer in self.recursive_enumerate_stereo_bonds(mol,
+                                                        done_bonds + [Chem.BondStereo.STEREOCIS],
                                                         child_bonds):
       yield isomer
 
   def testBondSetStereoDifficultCase(self):
     origVal = Chem.GetUseLegacyStereoPerception()
     Chem.SetUseLegacyStereoPerception(False)
-    
+
     unspec_smiles = "CCC=CC(CO)=C(C)CC"
     mol = Chem.MolFromSmiles(unspec_smiles)
     Chem.FindPotentialStereoBonds(mol)
@@ -1839,7 +1841,6 @@ M  END
     self.assertEqual(len(isomers), 4)
     Chem.SetUseLegacyStereoPerception(origVal)
 
-
   def getNumUnspecifiedBondStereo(self, smi):
     mol = Chem.MolFromSmiles(smi)
     Chem.FindPotentialStereoBonds(mol)
@@ -1847,7 +1848,7 @@ M  END
     count = 0
     for bond in mol.GetBonds():
       if bond.GetStereo() != Chem.BondStereo.STEREONONE:
-        print(bond.GetIdx(),bond.GetStereo())
+        print(bond.GetIdx(), bond.GetStereo())
       if bond.GetStereo() == Chem.BondStereo.STEREOANY:
         count += 1
 
@@ -5370,15 +5371,15 @@ width='200px' height='200px' >
     self.assertEqual(atom0.GetChiralTag(), Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
   def testAssignStereochemistryFrom3D(self):
-    
+
     def _stereoTester(mol, expectedTag, expectedStereo):
       Chem.AssignStereochemistryFrom3D(mol)
-      self.assertEqual(mol.GetNumAtoms(), 9)     
+      self.assertEqual(mol.GetNumAtoms(), 9)
       self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), expectedTag)
       self.assertEqual(mol.GetBondWithIdx(3).GetStereo(), expectedStereo)
 
     origVal = Chem.GetUseLegacyStereoPerception()
-    for useLegacy in (True,False):
+    for useLegacy in (True, False):
       Chem.SetUseLegacyStereoPerception(useLegacy)
 
       fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'stereochem.sdf')
@@ -8117,8 +8118,9 @@ M  END
                           'ferrocene.mol')
     femol = Chem.MolFromMolFile(fefile)
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
-    self.assertEqual(Chem.MolToSmiles(newfemol),
-                     '[cH]12->[Fe+2]3456789(<-[cH]1[cH]->3[cH-]->4[cH]->52)<-[cH]1[cH]->6[cH]->7[cH-]->8[cH]->91')
+    self.assertEqual(
+      Chem.MolToSmiles(newfemol),
+      '[cH]12->[Fe+2]3456789(<-[cH]1[cH]->3[cH-]->4[cH]->52)<-[cH]1[cH]->6[cH]->7[cH-]->8[cH]->91')
 
   def test_DativeBondsToHaptic(self):
     fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
@@ -8382,7 +8384,17 @@ M  END
     m.GetAtomWithIdx(1).SetChiralTag(Chem.CHI_UNSPECIFIED)
     Chem.CleanupStereoGroups(m)
     self.assertEqual(len(m.GetStereoGroups()), 0)
-    
+
+  def testClearPropertyCache(self):
+    m = Chem.MolFromSmiles("CC")
+    self.assertFalse(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertFalse(atom.NeedsUpdatePropertyCache())
+    m.ClearPropertyCache()
+    self.assertTrue(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertTrue(atom.NeedsUpdatePropertyCache())
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

@@ -765,6 +765,7 @@ class RDKIT_GRAPHMOL_EXPORT ROMol : public RDProps {
   void updatePropertyCache(bool strict = true);
 
   bool needsUpdatePropertyCache() const;
+  void clearPropertyCache();
 
   //! @}
 
