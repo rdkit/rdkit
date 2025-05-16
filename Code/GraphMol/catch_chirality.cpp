@@ -5203,6 +5203,27 @@ TEST_CASE(
     CHECK(!m2.getBondBetweenAtoms(20, 21)->getPropIfPresent(
         common_properties::bondNote, txt));
   }
+
+  SECTION("Stereogroup annotations for atropisomers Github:#8536") {
+    auto m3 =
+      "Cc1cc([C@H](C)Cl)cc(F)c1-c1c(C)cc([C@H](C)O)cc1Cl |wU:10.10,o1:10,&1:16|"_smiles;
+    REQUIRE(m3);
+    ROMol m4(*m3);
+    CIPLabeler::assignCIPLabels(m4);
+    Chirality::addStereoAnnotations(m4);
+    //now check that all atom and bond labels including atropisomer labels are correctly set
+    std::string txt;
+    CHECK(m4.getAtomWithIdx(4)->getPropIfPresent(common_properties::atomNote, txt));
+    CHECK(txt == "(S)");
+    CHECK(m4.getAtomWithIdx(10)->getPropIfPresent(common_properties::atomNote, txt));
+    CHECK(txt == "or1"); //This is the atropisomer stereolabel check
+    CHECK(m4.getAtomWithIdx(16)->getPropIfPresent(common_properties::atomNote, txt));
+    CHECK(txt == "and1");  
+    Chirality::addStereoAnnotations(m2);
+    CHECK(m2.getBondBetweenAtoms(10, 11)->getPropIfPresent(
+        common_properties::bondNote, txt));
+    CHECK(txt == "(M)");
+  }
 }
 
 TEST_CASE("do not wedge bonds to attachment points") {
