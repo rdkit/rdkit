@@ -2222,25 +2222,31 @@ void testMaxConsecutiveRotatableBonds() {
 
   struct TestCase {
     std::string smiles;
-    unsigned int expected;
+    unsigned int expected_non_strict;
+    unsigned int expected_strict;
   };
   std::vector<TestCase> cases = {
-    {"CN1CCN(/N=C/c2ccc(C#N)cc2)CC1", 1},
-    {"Brc1ccc2[nH]cc(-c3ccccc3)c2c1", 1},
-    {"CCc1c(-c2ccccc2)oc(-c2ccc(O)cc2)c1-c1ccccc1", 1},
-    {"Cc1nc(NC(=O)CN2CCN(C)CC2)sc1-c1ccc2c(/C=C/c3ccccn3)n[nH]c2c1", 4},
-    {"CCN(CC)c1nc(OC)c2ccccc2n1", 2},
-    {"C1CCCCC1", 0},
-    {"CCCCCCCNCCO", 8}
+    {"CN1CCN(/N=C/c2ccc(C#N)cc2)CC1", 1, 1},
+    {"Brc1ccc2[nH]cc(-c3ccccc3)c2c1", 1, 1},
+    {"CCc1c(-c2ccccc2)oc(-c2ccc(O)cc2)c1-c1ccccc1", 1, 1},
+    {"Cc1nc(NC(=O)CN2CCN(C)CC2)sc1-c1ccc2c(/C=C/c3ccccn3)n[nH]c2c1", 4, 2},
+    {"CCN(CC)c1nc(OC)c2ccccc2n1", 2, 2},
+    {"C1CCCCC1", 0, 0},
+    {"CCCCCCCNCCO", 8, 8}
   };
   for (const auto& tc : cases) {
     std::unique_ptr<ROMol> mol(SmilesToMol(tc.smiles));
     TEST_ASSERT(mol);
-    unsigned int result = calcMaxConsecutiveRotatableBonds(*mol);
-    if (result != tc.expected) {
-      std::cerr << "  failed: " << tc.smiles << " expected " << tc.expected << " got " << result << std::endl;
+    unsigned int result = calcMaxConsecutiveRotatableBonds(*mol, false);
+    if (result != tc.expected_non_strict) {
+      std::cerr << "  failed: " << tc.smiles << " expected " << tc.expected_non_strict << " got " << result << std::endl;
     }
-    TEST_ASSERT(result == tc.expected);
+    TEST_ASSERT(result == tc.expected_non_strict);
+    result = calcMaxConsecutiveRotatableBonds(*mol, true);
+    if (result != tc.expected_strict) {
+      std::cerr << "  failed: " << tc.smiles << " expected " << tc.expected_strict << " got " << result << std::endl;
+    }
+    TEST_ASSERT(result == tc.expected_strict);
   }
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
