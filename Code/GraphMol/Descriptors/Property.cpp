@@ -52,6 +52,7 @@ void _registerDescriptors() {
   REGISTER_DESCRIPTOR(lipinskiHBA, calcLipinskiHBA);
   REGISTER_DESCRIPTOR(lipinskiHBD, calcLipinskiHBD);
   REGISTER_DESCRIPTOR(NumRotatableBonds, calcNumRotatableBonds);
+  REGISTER_DESCRIPTOR(MaxConsecutiveRotatableBonds, calcMaxConsecutiveRotatableBonds);
   REGISTER_DESCRIPTOR(NumHBD, calcNumHBD);
   REGISTER_DESCRIPTOR(NumHBA, calcNumHBA);
   REGISTER_DESCRIPTOR(NumHeavyAtoms, calcNumHeavyAtoms);
