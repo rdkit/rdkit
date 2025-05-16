@@ -2817,7 +2817,7 @@ void testGitHub2881() {
     bool sanitize = false;
     bool takeOwnership = true;
     MaeMolSupplier suppl(iss, takeOwnership, sanitize);
-    auto mol = suppl.next();
+    std::unique_ptr<ROMol> mol(suppl.next());
     TEST_ASSERT(mol);
     TEST_ASSERT(mol->getNumAtoms() == 15);
     TEST_ASSERT(mol->getNumBonds() == 17);

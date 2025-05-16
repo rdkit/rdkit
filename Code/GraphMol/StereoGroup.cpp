@@ -180,18 +180,20 @@ std::ostream &operator<<(std::ostream &target, const RDKit::StereoGroup &stg) {
   }
   target << " rId: " << stg.getReadId();
   target << " wId: " << stg.getWriteId();
-  target << " atoms: { ";
-  for (auto atom : stg.getAtoms()) {
-    target << atom->getIdx() << ' ';
+  if (!stg.getAtoms().empty()) {
+    target << " atoms: { ";
+    for (auto atom : stg.getAtoms()) {
+      target << atom->getIdx() << ' ';
+    }
+    target << '}';
   }
-  if (stg.getBonds().size() > 0) {
-    target << " Bonds: { ";
+  if (!stg.getBonds().empty()) {
+    target << " bonds: { ";
     for (auto bond : stg.getBonds()) {
       target << bond->getIdx() << ' ';
     }
     target << '}';
   }
-  target << '}';
 
   return target;
 }

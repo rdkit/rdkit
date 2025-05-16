@@ -641,7 +641,8 @@ M  END)CTAB"_ctab;
     auto results1 = synthonspace.substructureSearch(xrq, mparams, params);
     CHECK(results1.getHitMolecules().size() == 5);
 #else
-    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams, params), Invar::Invariant);
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams, params),
+                    Invar::Invariant);
 #endif
   }
 
@@ -697,7 +698,65 @@ M  END)CTAB"_ctab;
     auto results1 = synthonspace.substructureSearch(xrq, mparams);
     CHECK(results1.getHitMolecules().size() == 2);
 #else
-    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams), Invar::Invariant);
+    CHECK_THROWS_AS(synthonspace.substructureSearch(xrq, mparams),
+                    Invar::Invariant);
 #endif
   }
+}
+
+TEST_CASE("Fails simple test (Github 8502)") {
+  SynthonSpace space;
+  std::istringstream iss(R"(SMILES	synton_id	synton#	reaction_id
+F[1*]	277310376-742385846	0	fake-chiral
+Cl[1*]	287123986-010598048	0	fake-chiral
+OC(N)([1*])[2*]	584456271-623025187	1	fake-chiral
+OC(Br)([1*])[2*]	584456271-623025187	1	fake-chiral
+F[2*]	277310376-742385dd	2	fake-chiral
+)");
+  bool cancelled = false;
+  space.readStream(iss, cancelled);
+
+  auto mol1 = "C"_smiles;
+  REQUIRE(mol1);
+  auto res1 = space.substructureSearch(*mol1);
+  CHECK(res1.getHitMolecules().size() == 2);
+
+  auto mol2 = "CF"_smiles;
+  REQUIRE(mol2);
+  auto res2 = space.substructureSearch(*mol2);
+  CHECK(res2.getHitMolecules().size() == 2);
+}
+TEST_CASE("Chiral substructure search") {
+  SynthonSpace space;
+  std::istringstream iss(R"(SMILES	synton_id	synton#	reaction_id
+F[1*]	277310376-742385846	0	fake-chiral
+Cl[1*]	287123986-010598048	0	fake-chiral
+O[C@H](F)C(N)([1*])[2*]	584456271-623025187	1	fake-chiral
+O[C@H](F)C(Br)([1*])[2*]	584456271-623025187	1	fake-chiral
+F[2*]	277310376-742385dd	2	fake-chiral
+)");
+  bool cancelled = false;
+  space.readStream(iss, cancelled);
+
+  auto qmol = "N-C-C"_smarts;
+  REQUIRE(qmol);
+  auto res1 = space.substructureSearch(*qmol);
+  CHECK(res1.getHitMolecules().size() == 2);
+
+  SubstructMatchParameters mparams;
+  SynthonSpaceSearchParams sparams;
+  sparams.minHitChiralAtoms = 2;
+  auto res2 = space.substructureSearch(*qmol, mparams, sparams);
+  REQUIRE(res2.getHitMolecules().size() == 1);
+  CHECK(MolToSmiles(*res2.getHitMolecules().front()) == "NC(F)(Cl)[C@H](O)F");
+
+  sparams.minHitChiralAtoms = 0;
+  sparams.maxHitChiralAtoms = 1;
+  auto res3 = space.substructureSearch(*qmol, mparams, sparams);
+  REQUIRE(res3.getHitMolecules().size() == 1);
+  CHECK(MolToSmiles(*res3.getHitMolecules().front()) == "NC(F)(F)[C@H](O)F");
+
+  sparams.maxHitChiralAtoms = 0;
+  auto res4 = space.substructureSearch(*qmol, mparams, sparams);
+  CHECK(res4.getHitMolecules().size() == 0);
 }

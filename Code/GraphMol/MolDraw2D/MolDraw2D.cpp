@@ -465,24 +465,21 @@ void MolDraw2D::drawWavyLine(const Point2D &cds1, const Point2D &cds2,
 void MolDraw2D::drawArrow(const Point2D &arrowBegin, const Point2D &arrowEnd,
                           bool asPolygon, double frac, double angle,
                           const DrawColour &col, bool rawCoords) {
+  PRECONDITION(angle > 1.0e-6,
+               "Arrow angle must be positive and greater than 0.0.");
   Point2D ae(arrowEnd), p1, p2;
-  MolDraw2D_detail::calcArrowHead(ae, p1, p2, arrowBegin, asPolygon, frac,
-                                  angle);
+  MolDraw2D_detail::calcArrowHead(ae, p1, p2, arrowBegin, frac,
+                                  getDrawLineWidth(), angle);
 
   drawLine(arrowBegin, ae, col, col, rawCoords);
-  if (!asPolygon) {
-    drawLine(ae, p1, col, col, rawCoords);
-    drawLine(ae, p2, col, col, rawCoords);
-  } else {
-    std::vector<Point2D> pts = {p1, ae, p2};
-    bool fps = fillPolys();
-    auto dc = colour();
-    setFillPolys(true);
-    setColour(col);
-    drawPolygon(pts, rawCoords);
-    setFillPolys(fps);
-    setColour(dc);
-  }
+  std::vector<Point2D> pts = {p1, ae, p2};
+  bool fps = fillPolys();
+  auto dc = colour();
+  setFillPolys(asPolygon);
+  setColour(col);
+  drawPolygon(pts, rawCoords);
+  setFillPolys(fps);
+  setColour(dc);
 }
 
 // ****************************************************************************

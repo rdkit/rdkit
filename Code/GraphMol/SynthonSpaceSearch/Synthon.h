@@ -44,10 +44,17 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   const std::vector<std::shared_ptr<ROMol>> &getConnRegions() const;
   void setSearchMol(std::unique_ptr<ROMol> mol);
   void setFP(std::unique_ptr<ExplicitBitVect> fp);
+  unsigned int getNumDummies() const { return d_numDummies; }
+  unsigned int getNumHeavyAtoms() const { return d_numHeavyAtoms; }
+  unsigned int getNumChiralAtoms() const { return d_numChiralAtoms; }
+  unsigned int getNumChiralAtomsExcDummies() const {
+    return d_numChiralAtomsExcDummies;
+  }
+  double getMolWt() const { return d_molWt; }
 
   // Writes to/reads from a binary stream.
   void writeToDBStream(std::ostream &os) const;
-  void readFromDBStream(std::istream &is);
+  void readFromDBStream(std::istream &is, std::uint32_t version);
 
  private:
   std::string d_smiles;
@@ -69,9 +76,20 @@ class RDKIT_SYNTHONSPACESEARCH_EXPORT Synthon {
   // be 1 or 2.  These are derived from the search mol.
   std::vector<std::shared_ptr<ROMol>> d_connRegions;
 
+  unsigned int d_numDummies{0};
+  unsigned int d_numHeavyAtoms{0};
+  // As calculated by details::countChiralAtoms().
+  unsigned int d_numChiralAtoms{0};
+  // This is the number of chiral atoms excluding those that have 2 or
+  // more dummies attached.
+  unsigned int d_numChiralAtomsExcDummies{0};
+  double d_molWt{0.0};
+
   // Once the search molecule has been added, get the connector regions,
   // connector fingerprint etc.
   void finishInitialization();
+  // Calculate the number of dummy atoms etc.
+  void calcProperties();
 };
 
 }  // namespace SynthonSpaceSearch

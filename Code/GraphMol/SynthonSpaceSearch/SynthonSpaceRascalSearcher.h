@@ -44,7 +44,7 @@ class SynthonSpaceRascalSearcher : public SynthonSpaceSearcher {
   bool quickVerify(const SynthonSpaceHitSet *hitset,
                    const std::vector<size_t> &synthNums) const override;
 
-  bool verifyHit(const ROMol &hit) const override;
+  bool verifyHit(ROMol &hit) const override;
 
   const RascalMCES::RascalOptions &d_rascalOptions;
   RascalMCES::RascalOptions d_rascalFragOptions;

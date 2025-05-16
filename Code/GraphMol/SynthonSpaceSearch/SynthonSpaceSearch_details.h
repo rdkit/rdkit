@@ -158,6 +158,18 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT std::map<std::string, std::vector<ROMol *>>
 mapFragsBySmiles(std::vector<std::vector<std::unique_ptr<ROMol>>> &fragSets,
                  bool &cancelled);
 
+// Count the number of chiral atoms, both specified and unspecified i.e. any
+// atoms returned by findPotentialStereo. If numExcDummies is not nullptr,
+// it will be sent back with the number of chiral centres excluding those
+// that include 2 or more dummy atoms (which are flagged as chiral if the
+// dummies have different isotopes which will be the case here).  They
+// may not be chiral in the final product if the 2 synthons attached are the
+// same.  For example in [1*]C([2*])(N)[C@H](O)F with [1*]F and [2*]F, the
+// first C is deemed possibly chiral, but isn't with the 2 F atoms are
+// attached.
+RDKIT_SYNTHONSPACESEARCH_EXPORT unsigned int countChiralAtoms(
+    ROMol &mol, unsigned int *numExcDummies = nullptr);
+
 }  // namespace SynthonSpaceSearch::details
 }  // namespace RDKit
 

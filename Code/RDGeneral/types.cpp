@@ -129,11 +129,14 @@ const std::string molRingBondCount = "molRingBondCount";
 const std::string molSubstCount = "molSubstCount";
 const std::string molAttachPoint = "molAttchpt";
 const std::string molAttachOrder = "molAttchord";
+const std::string molAttachOrderTemplate = "molAttachOrderTemplate";
 const std::string molAtomClass = "molClass";
 const std::string molAtomSeqId = "molSeqid";
 const std::string molRxnExactChange = "molRxnExachg";
 const std::string molReactStatus = "molReactStatus";
 const std::string _fromAttachPoint = "_fromAttchpt";
+const std::string natReplace = "natReplace";
+const std::string templateNames = "templateNames";
 
 const std::string molNote = "molNote";
 const std::string atomNote = "atomNote";
