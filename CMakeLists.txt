@@ -54,6 +54,7 @@ option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)
 option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
 option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" ON)
+option(RDK_BUILD_CHEMDRAW_SUPPORT "build spport for the Revvity ChemDraw document format" ON )
 option(RDK_BUILD_FREESASA_SUPPORT "build the rdkit freesasa wrapper" OFF )
 option(RDK_BUILD_COORDGEN_SUPPORT "build the rdkit coordgen wrapper" ON )
 option(RDK_BUILD_MAEPARSER_SUPPORT "build the rdkit MAE parser wrapper" ON )
@@ -588,7 +589,17 @@ if (MSVC)
   add_definitions( "/wd4267" )
 endif(MSVC)
 
-
+if(RDK_BUILD_CHEMDRAW_SUPPORT)
+    # get the endian flags for ChemDraw
+    test_big_endian(WORDS_BIGENDIAN)
+    #/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
+    if(WORDS_BIGENDIAN)
+          add_definitions("-DPLATFORM_BIGENDIAN")	
+    else(WORDS_BIGENDIAN)
+          add_definitions("-DPLATFORM_LITTLEENDIAN")
+    endif(WORDS_BIGENDIAN)
+    add_definitions(-DRDK_BUILD_CHEMDRAW_SUPPORT)
+endif(RDK_BUILD_CHEMDRAW_SUPPORT)
 
 add_subdirectory(External)
 add_subdirectory(Code)
