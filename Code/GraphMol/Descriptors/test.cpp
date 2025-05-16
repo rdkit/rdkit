@@ -2216,6 +2216,35 @@ void testGithub2948() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testMaxConsecutiveRotatableBonds() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test calcMaxConsecutiveRotatableBonds." << std::endl;
+
+  struct TestCase {
+    std::string smiles;
+    unsigned int expected;
+  };
+  std::vector<TestCase> cases = {
+    {"CN1CCN(/N=C/c2ccc(C#N)cc2)CC1", 1},
+    {"Brc1ccc2[nH]cc(-c3ccccc3)c2c1", 1},
+    {"CCc1c(-c2ccccc2)oc(-c2ccc(O)cc2)c1-c1ccccc1", 1},
+    {"Cc1nc(NC(=O)CN2CCN(C)CC2)sc1-c1ccc2c(/C=C/c3ccccn3)n[nH]c2c1", 4},
+    {"CCN(CC)c1nc(OC)c2ccccc2n1", 2},
+    {"C1CCCCC1", 0},
+    {"CCCCCCCNCCO", 8}
+  };
+  for (const auto& tc : cases) {
+    std::unique_ptr<ROMol> mol(SmilesToMol(tc.smiles));
+    TEST_ASSERT(mol);
+    unsigned int result = calcMaxConsecutiveRotatableBonds(*mol);
+    if (result != tc.expected) {
+      std::cerr << "  failed: " << tc.smiles << " expected " << tc.expected << " got " << result << std::endl;
+    }
+    TEST_ASSERT(result == tc.expected);
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -2259,4 +2288,5 @@ int main() {
 #endif
   testGithub1973();
   testGithub2948();
+  testMaxConsecutiveRotatableBonds();
 }
