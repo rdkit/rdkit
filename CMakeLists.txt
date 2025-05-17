@@ -49,7 +49,6 @@ option(RDK_BUILD_CPP_TESTS "build the c++ tests (disabing can speed up builds" O
 option(RDK_USE_FLEXBISON "use flex/bison, if available, to build the SMILES/SMARTS/SLN parsers" OFF)
 option(RDK_TEST_COVERAGE "Use G(L)COV to compute test coverage" OFF)
 option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if available" ON)
-option(RDK_USE_BOOST_PROGRAM_OPTIONS "Use the boost program options library if available" ON)
 option(RDK_USE_BOOST_STACKTRACE "use boost::stacktrace to do more verbose invariant output (linux only)" ON)
 option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)
@@ -467,14 +466,6 @@ if(RDK_USE_BOOST_IOSTREAMS)
     target_link_libraries(rdkit_base INTERFACE ${zlib_lib})
 endif()
 
-if(RDK_USE_BOOST_PROGRAM_OPTIONS)
-    find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS system program_options REQUIRED CONFIG)
-    target_link_libraries(rdkit_base INTERFACE ${Boost_LIBRARIES})
-    target_compile_definitions(rdkit_base INTERFACE -DRDK_USE_BOOST_PROGRAM_OPTIONS)
-    if(NOT Boost_USE_STATIC_LIBS)
-      target_compile_definitions(rdkit_base INTERFACE -DBOOST_PROGRAM_OPTIONS_DYN_LINK)
-    endif()
-endif()
 
 # set the boost include directories and linkage:
 target_include_directories(rdkit_base INTERFACE

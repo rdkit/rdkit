@@ -14,48 +14,24 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <variant>
-#include <map>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/MolWriters.h>
 #include <GraphMol/RGroupDecomposition/RGroupDecomp.h>
 
-#ifdef RDK_USE_BOOST_PROGRAM_OPTIONS
 #include <boost/program_options.hpp>
-#endif
 
 using namespace std;
 using namespace RDKit;
-#ifdef RDK_USE_BOOST_PROGRAM_OPTIONS
 using namespace boost::program_options;
 namespace options = boost::program_options;
-#else
-namespace {
-class Option {
- public:
-  Option(): d_option(std::string()) {}
-  template<typename T>
-  Option(const T o): d_option(o) {}
-  template<>
-  Option(const char *o): d_option(o) {}
-  template<typename T>
-  T as() const {
-    return std::get<T>(d_option);
-  }
- private:
-  std::variant<std::string, int> d_option;
-};
-} // end anonymous namespace
-#endif
 
 // Example systems based on Brian's MultipleCores notebook for profiling
 int main(int argc, char *argv[]) {
   RDLog::InitLogs();
   boost::logging::disable_logs("rdApp.debug");
 
-#ifdef RDK_USE_BOOST_PROGRAM_OPTIONS
   options_description desc("Allowed options");
   desc.add_options()("help", "Help message")(
       "dataset", options::value<std::string>()->default_value("rg-easy"),
@@ -83,18 +59,6 @@ int main(int argc, char *argv[]) {
     cerr << desc << endl;
     return 0;
   }
-#else
-  std::map<std::string, Option> vm;
-  vm.emplace("dataset", "rg-easy");
-  vm.emplace("maximumOperations", -1);
-  vm.emplace("populationSize", -1);
-  vm.emplace("numberOperationsWithoutImprovement", -1);
-  vm.emplace("randomSeed", -1);
-  vm.emplace("matchingStrategy", "GA");
-  vm.emplace("numberRuns", 1);
-  vm.emplace("start", 0);
-  vm.emplace("batch", 10000000);
-#endif
 
   auto dataset = vm["dataset"].as<std::string>();
   std::string rdBase(getenv("RDBASE"));

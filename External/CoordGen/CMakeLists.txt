@@ -21,15 +21,9 @@ if(RDK_BUILD_MAEPARSER_SUPPORT OR RDK_BUILD_COORDGEN_SUPPORT)
         execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/maeparser-v${RELEASE_NO}.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E rename "maeparser-${RELEASE_NO}" "${MAEPARSER_DIR}"
-          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-        set(REMOVE_BOOST_IOSTREAMS_DEP_PATCH_COMMIT "d04fa00602bfd19d0222bf54c819b3029cbc85e8.diff")
-        set(REMOVE_BOOST_IOSTREAMS_DEP_PATCH_MD5 "b8e648bad20cf6fc285d5840430476c9")
-        downloadAndCheckMD5("https://github.com/schrodinger/maeparser/commit/${REMOVE_BOOST_IOSTREAMS_DEP_PATCH_COMMIT}"
-              "${MAEPARSER_DIR}/${REMOVE_BOOST_IOSTREAMS_DEP_PATCH_COMMIT}" ${REMOVE_BOOST_IOSTREAMS_DEP_PATCH_MD5})
-        execute_process(COMMAND git --git-dir= apply ${REMOVE_BOOST_IOSTREAMS_DEP_PATCH_COMMIT}
-          WORKING_DIRECTORY ${MAEPARSER_DIR})
+        file(RENAME "maeparser-${RELEASE_NO}" "${MAEPARSER_DIR}")
         patchCoordGenMaeExportHeaders("MAEPARSER" "${MAEPARSER_DIR}/MaeParserConfig.hpp")
+
     else()
       message("-- Found MAEParser source in ${MAEPARSER_DIR}")
     endif()
