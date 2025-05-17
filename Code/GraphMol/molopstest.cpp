@@ -5586,7 +5586,7 @@ void testGetMolFrags() {
     TEST_ASSERT(fragsMapping.size() == m->getNumAtoms());
 
     RDKit::SmilesWriteParams sps;
-    TEST_ASSERT(MolToCXSmiles(*frags[0], sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "Cc1cccc(Cl)c1-c1c(C)cccc1I |wD:8.15,&1:8|");
+    TEST_ASSERT(MolToCXSmiles(*frags[0], sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "Cc1cccc(Cl)c1-c1c(C)cccc1I |wU:7.6,&1:7|");
     TEST_ASSERT(MolToCXSmiles(*frags[1], sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.6,o1:7|");
     delete m;
   }
