@@ -507,7 +507,8 @@ void clearStereoGroups(ROMol &mol) {
 
 void canonicalizeStereoGroups_internal(
     std::unique_ptr<RDKit::ROMol> &mol, RDKit::StereoGroupType stereoGroupType,
-    RDKit::StereoGroupAbsOptions outputAbsoluteGroups) {
+    RDKit::StereoGroupAbsOptions outputAbsoluteGroups,
+    unsigned int maxStereoGroups) {
   // this expands a mol with stereo groups to a vector of values that are the
   // result of expanding the stereo groups, then determines the stereo groups
   // from that set
@@ -530,6 +531,12 @@ void canonicalizeStereoGroups_internal(
       andGroupsToKeep);  // these groups might be empty, especially if we
                          // are PROCESSING AND groups
   std::unique_ptr<RDKit::ROMol> bestNewMol;
+
+  if (maxStereoGroups > 0 && groupsToProcess.size() > maxStereoGroups) {
+    throw RDKit::RigorousEnhancedStereoException(
+        "too many enhanced stereo groups");
+  }
+
   auto newMolCount = std::pow(2, groupsToProcess.size());
 
   for (unsigned int molIndex = 0; molIndex < newMolCount; ++molIndex) {
@@ -565,7 +572,7 @@ void canonicalizeStereoGroups_internal(
     if (!andGroupsToKeep.empty()) {
       canonicalizeStereoGroups_internal(
           newMol, RDKit::StereoGroupType::STEREO_AND,
-          RDKit::StereoGroupAbsOptions::NeverInclude);
+          RDKit::StereoGroupAbsOptions::NeverInclude, maxStereoGroups);
     }
     std::vector<unsigned int> ranks(mol->getNumAtoms());
 
@@ -862,7 +869,8 @@ void canonicalizeStereoGroups_internal(
   return;
 }
 void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
-                              StereoGroupAbsOptions outputAbsoluteGroups) {
+                              StereoGroupAbsOptions outputAbsoluteGroups,
+                              unsigned int maxStereoGroups) {
   // this returns a mol that has a caononical rep for the enhanced stereo
   // groups it expands the given mol to all possible non-stereo-group mols,
   // then determines a single set of stereo groups that uniquely represent
@@ -976,10 +984,12 @@ void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
   try {
     if (!foundOrGroup) {
       RDKit::canonicalizeStereoGroups_internal(mol, StereoGroupType::STEREO_AND,
-                                               outputAbsoluteGroups);
+                                               outputAbsoluteGroups,
+                                               maxStereoGroups);
     } else {
       RDKit::canonicalizeStereoGroups_internal(mol, StereoGroupType::STEREO_OR,
-                                               outputAbsoluteGroups);
+                                               outputAbsoluteGroups,
+                                               maxStereoGroups);
     }
 
     // Fix up the mol - round trip through smiles

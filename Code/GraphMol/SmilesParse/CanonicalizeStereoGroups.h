@@ -40,7 +40,8 @@ class RigorousEnhancedStereoException : public std::runtime_error {
 RDKIT_SMILESPARSE_EXPORT void canonicalizeStereoGroups(
     std::unique_ptr<ROMol> &mol,
     StereoGroupAbsOptions outputAbsoluteGroups =
-        StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist);
+        StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist,
+    unsigned int maxStereoGroups = 12);
 
 }  // namespace RDKit
 
