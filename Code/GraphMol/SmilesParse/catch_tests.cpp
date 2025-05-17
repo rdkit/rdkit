@@ -2618,6 +2618,36 @@ TEST_CASE("ensure unused features are not used") {
   }
 }
 TEST_CASE("enhanced stereo canonicalized") {
+  SECTION("case takes forever") {
+    std::unique_ptr<RDKit::ROMol> m1 =
+        "C[C@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C "
+        "|&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29,&13:31,&14:33,&15:35,&16:37,&17:39,&18:41,&19:43,&20:45,&21:47,&22:51,&23:53,&24:56,&25:58,&26:59|"_smiles;
+    REQUIRE(m1);
+    std::unique_ptr<RDKit::ROMol> m2 =
+        "C[C@@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C "
+        "|&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29,&13:31,&14:33,&15:35,&16:37,&17:39,&18:41,&19:43,&20:45,&21:47,&22:51,&23:53,&24:56,&25:58,&26:59|"_smiles;
+    REQUIRE(m2);
+    RDKit::canonicalizeStereoGroups(m1);
+    RDKit::canonicalizeStereoGroups(m2);
+
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+
+  SECTION("case takes long but not forever") {
+    std::unique_ptr<RDKit::ROMol> m1 =
+        "C[C@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C "
+        "|&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29|"_smiles;
+    REQUIRE(m1);
+    std::unique_ptr<RDKit::ROMol> m2 =
+        "C[C@@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C "
+        "|&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29|"_smiles;
+    REQUIRE(m2);
+    RDKit::canonicalizeStereoGroups(m1);
+    RDKit::canonicalizeStereoGroups(m2);
+
+    CHECK(MolToCXSmiles(*m1) == MolToCXSmiles(*m2));
+  }
+
   SECTION("basic") {
     std::unique_ptr<ROMol> mol1 = "F[C@H](Cl)NCO[C@H](F)Cl |&1:6|"_smiles;
     REQUIRE(mol1);
