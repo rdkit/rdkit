@@ -136,8 +136,7 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
     nTypes = atomTypes->size();
   }
   nTypes += 1;  // need the extra one for aromatic features
-  unsigned int nBins = maxPath - minPath;
-
+  unsigned int nBins = maxPath - minPath + 1;
   unsigned int vSize = (nTypes * (nTypes + 1)) / 2 * (maxPath - minPath + 1);
   auto *res = new RDNumeric::DoubleVector(vSize, 0.0);
 
@@ -189,7 +188,8 @@ RDNumeric::DoubleVector *generateErGFingerprintForReducedGraph(
           if (dist > rdcast<int>(minPath) && fuzzIncrement > 0) {
             (*res)[bin - 1] += fuzzIncrement;
           }
-          if (dist < rdcast<int>(maxPath) && fuzzIncrement > 0) {
+          if (dist < rdcast<int>(maxPath) && fuzzIncrement > 0 &&
+              bin + 1 < vSize) {
             (*res)[bin + 1] += fuzzIncrement;
           }
         }

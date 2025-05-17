@@ -20,6 +20,7 @@
 #include <boost/dynamic_bitset.hpp>
 
 #include <RDGeneral/ControlCHandler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
@@ -500,6 +501,10 @@ void buildSplitBonds(
     const std::vector<std::pair<unsigned int, unsigned int>> &bondPairs,
     const unsigned int maxBondSplits,
     std::vector<std::vector<unsigned int>> &splitBonds) {
+  if (bondPairs.size() == 1) {
+    splitBonds.push_back({bondPairs[0].first});
+    return;
+  }
   std::vector<unsigned int> nextSplits;
   splitBonds.reserve(maxBondSplits * maxBondSplits * bondPairs.size());
   for (unsigned int i = 1; i < maxBondSplits; ++i) {
@@ -537,7 +542,8 @@ std::vector<std::vector<std::unique_ptr<ROMol>>> splitMolecule(
   if (maxNumFrags < 1) {
     maxNumFrags = 1;
   }
-  maxNumFrags = std::min({maxNumFrags, MAX_CONNECTOR_NUM, query.getNumBonds()});
+  maxNumFrags =
+      std::min({maxNumFrags, MAX_CONNECTOR_NUM, query.getNumBonds() + 1});
 
   auto ringBonds = flagRingBonds(query);
 
@@ -826,14 +832,12 @@ std::unique_ptr<ROMol> buildProduct(
     const std::vector<const ROMol *> &synthons) {
   MolzipParams mzparams;
   mzparams.label = MolzipLabel::Isotope;
-
   auto prodMol = std::make_unique<ROMol>(*synthons.front());
   for (size_t i = 1; i < synthons.size(); ++i) {
     prodMol.reset(combineMols(*prodMol, *synthons[i]));
   }
   prodMol = molzip(*prodMol, mzparams);
   MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prodMol.get()));
-
   return prodMol;
 }
 
@@ -860,6 +864,31 @@ std::map<std::string, std::vector<ROMol *>> mapFragsBySmiles(
     }
   }
   return fragSmiToFrag;
+}
+
+unsigned int countChiralAtoms(ROMol &mol, unsigned int *numExcDummies) {
+  auto sis = Chirality::findPotentialStereo(mol, true, true);
+  unsigned int numChiralAtoms = 0;
+  if (numExcDummies) {
+    *numExcDummies = 0;
+  }
+  for (auto &si : sis) {
+    ++numChiralAtoms;
+    if (numExcDummies) {
+      auto atom = mol.getAtomWithIdx(si.centeredOn);
+      unsigned int numDummies = 0;
+      for (auto nbr : mol.atomNeighbors(atom)) {
+        if (nbr->getAtomicNum() == 0 &&
+            nbr->getIsotope() <= MAX_CONNECTOR_NUM) {
+          numDummies++;
+        }
+      }
+      if (numDummies < 2) {
+        (*numExcDummies)++;
+      }
+    }
+  }
+  return numChiralAtoms;
 }
 
 }  // namespace RDKit::SynthonSpaceSearch::details

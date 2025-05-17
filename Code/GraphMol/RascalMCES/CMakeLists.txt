@@ -10,6 +10,9 @@ rdkit_headers(RascalMCES.h RascalOptions.h RascalClusterOptions.h RascalResult.h
 
 rdkit_catch_test(testRascalMCES mces_catch.cpp LINK_LIBRARIES RascalMCES)
 rdkit_catch_test(testRascalCluster mces_cluster_catch.cpp LINK_LIBRARIES RascalMCES)
+if (RDK_BUILD_LONG_RUNNING_TESTS)
+    rdkit_catch_test(testRascalMCESLONG_TEST LONG_TEST_mces_catch.cpp LINK_LIBRARIES RascalMCES)
+endif ()
 
 if (RDK_BUILD_PYTHON_WRAPPERS)
     add_subdirectory(Wrap)

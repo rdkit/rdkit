@@ -45,6 +45,21 @@ RDKIT_RDBOOST_EXPORT void translate_index_error(IndexErrorException const &e);
 RDKIT_RDBOOST_EXPORT void translate_value_error(ValueErrorException const &e);
 RDKIT_RDBOOST_EXPORT void translate_key_error(KeyErrorException const &e);
 
+//! \brief Safely set an attribute on a Python-wrapped object
+/*!
+  Reimplements Python's `__setattr__` to disallow assignment to attributes
+  that are not explicitly defined on the C++ class. This simulates the
+  behavior of `__slots__`.
+
+  \param self   Python object instance
+  \param name   Name of the attribute to set
+  \param value  Value to assign to the attribute
+
+  \throws AttributeError if the attribute does not exist
+  \throws Python error if assignment fails
+*/
+RDKIT_RDBOOST_EXPORT void safeSetattr(python::object self, std::string const &name, python::object const &value);
+
 #ifdef INVARIANT_EXCEPTION_METHOD
 RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError

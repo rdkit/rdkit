@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -16,7 +16,9 @@
 #include "SmartsWrite.h"
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <RDGeneral/RDLog.h>
-// #include <boost/log/functions.hpp>
+#include <GraphMol/test_fixtures.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
+
 using namespace RDKit;
 using namespace std;
 typedef ROMol Mol;
@@ -989,50 +991,66 @@ void testIssue153() {
       << "Testing Issue 153 (Incorrect order of ring-closure bonds from SMILES)"
       << std::endl;
 
-  smi = "C1(O[C@H]12)S2";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() == Atom::CHI_UNSPECIFIED);
-  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
-  TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-  TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() ==
-              Atom::CHI_TETRAHEDRAL_CCW);
-  MolOps::assignStereochemistry(*mol);
-  TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
-  mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, code);
-  TEST_ASSERT(code == "S");
+  for (const bool useLegacy : {true, false}) {
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+    smi = "C1(O[C@H]12)S2";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() ==
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() !=
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CCW);
+    if (useLegacy) {
+      MolOps::assignStereochemistry(*mol);
+    } else {
+      CIPLabeler::assignCIPLabels(*mol);
+    }
+    TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, code);
+    TEST_ASSERT(code == "S");
 
-  refSmi = MolToSmiles(*mol, true);
-  TEST_ASSERT(refSmi == "O1C2S[C@H]12");
-  mol2 = SmilesToMol(refSmi);
-  TEST_ASSERT(mol2);
-  smi = MolToSmiles(*mol2, true);
-  TEST_ASSERT(refSmi == smi);
-  delete mol;
-  delete mol2;
+    refSmi = MolToSmiles(*mol, true);
+    TEST_ASSERT(refSmi == "O1C2S[C@H]12");
+    mol2 = SmilesToMol(refSmi);
+    TEST_ASSERT(mol2);
+    smi = MolToSmiles(*mol2, true);
+    TEST_ASSERT(refSmi == smi);
+    delete mol;
+    delete mol2;
 
-  smi = "C1(O[C@H]21)S2";
-  mol = SmilesToMol(smi);
-  TEST_ASSERT(mol);
-  TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() == Atom::CHI_UNSPECIFIED);
-  TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_UNSPECIFIED);
-  TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() != Atom::CHI_UNSPECIFIED);
-  TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() ==
-              Atom::CHI_TETRAHEDRAL_CW);
-  MolOps::assignStereochemistry(*mol);
-  TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
-  mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, code);
-  TEST_ASSERT(code == "R");
+    smi = "C1(O[C@H]21)S2";
+    mol = SmilesToMol(smi);
+    TEST_ASSERT(mol);
+    TEST_ASSERT(mol->getAtomWithIdx(0)->getChiralTag() ==
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(mol->getAtomWithIdx(1)->getChiralTag() ==
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() !=
+                Atom::CHI_UNSPECIFIED);
+    TEST_ASSERT(mol->getAtomWithIdx(2)->getChiralTag() ==
+                Atom::CHI_TETRAHEDRAL_CW);
+    if (useLegacy) {
+      MolOps::assignStereochemistry(*mol);
+    } else {
+      CIPLabeler::assignCIPLabels(*mol);
+    }
+    TEST_ASSERT(mol->getAtomWithIdx(2)->hasProp(common_properties::_CIPCode));
+    mol->getAtomWithIdx(2)->getProp(common_properties::_CIPCode, code);
+    TEST_ASSERT(code == "R");
 
-  refSmi = MolToSmiles(*mol, true);
-  TEST_ASSERT(refSmi == "O1C2S[C@@H]12");
-  mol2 = SmilesToMol(refSmi);
-  TEST_ASSERT(mol2);
-  smi = MolToSmiles(*mol2, true);
-  TEST_ASSERT(refSmi == smi);
-  delete mol;
-  delete mol2;
-
+    refSmi = MolToSmiles(*mol, true);
+    TEST_ASSERT(refSmi == "O1C2S[C@@H]12");
+    mol2 = SmilesToMol(refSmi);
+    TEST_ASSERT(mol2);
+    smi = MolToSmiles(*mol2, true);
+    TEST_ASSERT(refSmi == smi);
+    delete mol;
+    delete mol2;
+  }
   BOOST_LOG(rdInfoLog) << "\tdone" << std::endl;
 }
 

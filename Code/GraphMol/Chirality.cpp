@@ -2429,6 +2429,21 @@ void legacyStereoPerception(ROMol &mol, bool cleanIt,
         }
       }
 
+      // if we have either a double bond that involves a degree one atom and
+      // that is either crossed or STEREOANY, we need to clear the stereo and,
+      // possibly, direction. This can happen with imines that just have an
+      // implicit H on the N
+      if (bond->getBondType() == Bond::DOUBLE &&
+          (bond->getBondDir() == Bond::EITHERDOUBLE ||
+           bond->getStereo() == Bond::STEREOANY) &&
+          (bond->getBeginAtom()->getDegree() == 1 ||
+           bond->getEndAtom()->getDegree() == 1)) {
+        if (bond->getBondDir() == Bond::EITHERDOUBLE) {
+          bond->setBondDir(Bond::NONE);
+        }
+        bond->setStereo(Bond::STEREONONE);
+      }
+
       // check for directionality on single bonds around
       // double bonds without stereo. This was github #2422
       if (bond->getBondType() == Bond::DOUBLE &&
@@ -2494,8 +2509,17 @@ void updateDoubleBondStereo(ROMol &mol, const std::vector<StereoInfo> &sinfo,
                 << "unrecognized bond stereo type" << std::endl;
         }
       } else if (si.specified == Chirality::StereoSpecified::Unknown) {
-        bond->setStereo(Bond::BondStereo::STEREOANY);
-        bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
+        // in cases like imines without explicit Hs, we have double bonds with
+        // Unknown stereo but with only one neighbor on the N. Catch those and
+        // clear the stereochem
+        if (si.controllingAtoms.size() == 4 &&
+            si.controllingAtoms[0] != StereoInfo::NOATOM &&
+            si.controllingAtoms[2] != StereoInfo::NOATOM) {
+          bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
+          bond->setStereo(Bond::BondStereo::STEREOANY);
+        } else {
+          bond->setStereo(Bond::BondStereo::STEREONONE);
+        }
         bond->setBondDir(Bond::BondDir::NONE);
       } else if (si.specified == Chirality::StereoSpecified::Unspecified) {
         assignBondCisTrans(mol, si);

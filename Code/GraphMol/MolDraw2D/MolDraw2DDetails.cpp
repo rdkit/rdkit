@@ -342,17 +342,25 @@ std::vector<std::tuple<Point2D, Point2D, Point2D, Point2D>> getWavyLineSegments(
 RDKIT_MOLDRAW2D_EXPORT void calcArrowHead(Point2D &arrowEnd, Point2D &arrow1,
                                           Point2D &arrow2,
                                           const Point2D &arrowBegin,
-                                          bool asPolygon, double frac,
+                                          double frac, double lineWidth,
                                           double angle) {
+  if (angle < 1.0e-6) {
+    return;
+  }
+  // Allow for the mitre.
+  double adjuster = 0.5 * lineWidth / sin(angle);
+  double len = (arrowBegin - arrowEnd).length();
+  if (len > 1.0e-6) {
+    double adjLen = len - adjuster;
+    arrowEnd.x = arrowBegin.x + (arrowEnd.x - arrowBegin.x) * adjLen / len;
+    arrowEnd.y = arrowBegin.y + (arrowEnd.y - arrowBegin.y) * adjLen / len;
+  }
+
   auto delta = arrowBegin - arrowEnd;
   double cos_angle = std::cos(angle), sin_angle = std::sin(angle);
-  // to have the arrowhead a consistent fraction of the line length, we need
-  // the hypotenuse
+  // To have the arrowhead a consistent fraction of the line length, we need
+  // the hypotenuse.
   frac /= cos_angle;
-  if (asPolygon) {
-    // allow for the mitring, using an empirically derived guess.
-    arrowEnd += delta * 0.1;
-  }
   arrow1 = arrowEnd;
   arrow1.x += frac * (delta.x * cos_angle + delta.y * sin_angle);
   arrow1.y += frac * (delta.y * cos_angle - delta.x * sin_angle);

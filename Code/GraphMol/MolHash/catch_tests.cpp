@@ -435,15 +435,17 @@ TEST_CASE("tautomer v2") {
              {}},
             {{"CC(=O)C=CC", "C=C(O)C=CC"}, {"CC(=O)CC=C"}},
             {{"N=C1N=CN(C)C2N=CNC=21", "NC1N=CN(C)C2=NC=NC2=1"}, {}},
-            {{
-                 "S=C1N=CN=C2NC=NC12",
-                 "S=C2C1N=CN=C1NC=N2",
-                 "S=C1NC=NC2N=CNC1=2",
-             },
-             {
-                 "S=C1N=CN=C2N=CNC12",
-                 "S=C2C1NC=NC1=NC=N2",
-             }},
+            {
+                {
+                    "S=C1N=CN=C2NC=NC12",
+                    "S=C2C1N=CN=C1NC=N2",
+                    "S=C1NC=NC2N=CNC1=2",
+                    "S=C1N=CN=C2N=CNC12",
+                    "S=C2C1NC=NC1=NC=N2",
+                    "S=C2C1NC=NC=1NC=N2",
+                },
+                {},
+            },
             {{"S=C1NC=NC2N=CNC1=2", "S=C1NC=NC2NC=NC1=2", "SC1=NC=NC2N=CNC1=2"},
              {}},
             {{"CC1=CN=CN1", "CC1CN=CN=1"}, {}},
@@ -1004,6 +1006,7 @@ M  END)CTAB"_ctab;
       REQUIRE(m);
       auto hsh =
           MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      INFO(hsh);
       CHECK(hsh.find("@") != std::string::npos);
     }
   }
@@ -1034,8 +1037,7 @@ TEST_CASE("examples found in ChEMBL") {
   SECTION("specific problems") {
     std::vector<std::pair<std::string, std::string>> data = {
         {"NNC(=O)CC1=NNC(=O)C1",
-         "[NH2]-[N]:[C](:[O])-[C]:[C]1:[C]-[C](:[O]):[N]-[N]:1_6_0"},
-
+         "[NH2]-[N]:[C](:[O]):[C]:[C]1:[C]:[C](:[O]):[N]:[N]:1_6_0"},
         {"Cc1ncn2c1NC=NC2N",
          "[C]:[C]1:[N]:[C]:[N]2:[C](-[NH2]):[N]:[C]:[N]:[C]:1:2_7_0"},
         {"Nc1nc2c(c(=O)[nH]1)CC=N2",
@@ -1052,6 +1054,34 @@ TEST_CASE("examples found in ChEMBL") {
       auto hsh =
           MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
       CHECK(hsh == ref);
+    }
+  }
+}
+
+TEST_CASE("github #8405: some tautomer mismatches") {
+  SECTION("things that should match") {
+    std::vector<std::vector<std::string>> smilesSets = {
+        {
+            "O=C1CC(C)NC(=O)C1",
+            "OC1=CC(C)N=C(C1)O",
+            "OC1=CC(C)NC(C1)=O",
+            "O=C1CC(C)N=C(C1)O",
+        },
+    };
+    for (const auto &smileses : smilesSets) {
+      auto m0 = v2::SmilesParse::MolFromSmiles(smileses[0]);
+      REQUIRE(m0);
+      auto hsh0 =
+          MolHash::MolHash(m0.get(), MolHash::HashFunction::HetAtomTautomerv2);
+      for (auto i = 1u; i < smileses.size(); ++i) {
+        auto smi = smileses[i];
+        INFO(smi);
+        auto m = v2::SmilesParse::MolFromSmiles(smi);
+        REQUIRE(m);
+        auto hsh =
+            MolHash::MolHash(m.get(), MolHash::HashFunction::HetAtomTautomerv2);
+        CHECK(hsh == hsh0);
+      }
     }
   }
 }

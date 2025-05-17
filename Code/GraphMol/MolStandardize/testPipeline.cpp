@@ -17,6 +17,7 @@
 #include <GraphMol/MolStandardize/Pipeline.h>
 #include <GraphMol/MolStandardize/MolStandardize.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/test_fixtures.h>
 #include <memory>
 #include <string>
 
@@ -1742,6 +1743,9 @@ M  END
 
   SECTION(
       "standardize replaces wavy bonds with double bonds w/ stereo type 'either'") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
     const char *molblock;
     MolStandardize::PipelineResult result;
     std::unique_ptr<RWMol> parentMol;
@@ -2127,7 +2131,11 @@ M  END
       }
     }
     REQUIRE(doubleBond != nullptr);
-    REQUIRE(doubleBond->getStereo() == Bond::STEREOANY);
+    if (useLegacy) {
+      REQUIRE(doubleBond->getStereo() == Bond::STEREOANY);
+    } else {
+      REQUIRE(doubleBond->getStereo() == Bond::STEREONONE);
+    }
   }
 
   SECTION("pipeline doesn't remove stereo bonds from biaryls") {

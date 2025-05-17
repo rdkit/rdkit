@@ -13,7 +13,8 @@ endif()
 
 rdkit_library(FileParsers
     CDXMLParser.cpp
-    Mol2FileParser.cpp MolFileParser.cpp
+    Mol2FileParser.cpp MolFileParser.cpp 
+    SCSRMolFileParser.cpp
     MolSGroupParsing.cpp MolSGroupWriting.cpp
     MolFileStereochem.cpp MolFileWriter.cpp
     ForwardSDMolSupplier.cpp SDMolSupplier.cpp SDWriter.cpp
@@ -31,7 +32,7 @@ rdkit_library(FileParsers
     MultithreadedMolSupplier.cpp
     MultithreadedSmilesMolSupplier.cpp
     MultithreadedSDMolSupplier.cpp
-    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol ${RDK_MAEPARSER_LIBS} ${STANDALONE_ZLIB_LIBRARY})
+    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${RDK_MAEPARSER_LIBS} ${STANDALONE_ZLIB_LIBRARY})
 if(STANDALONE_ZLIB_LIBRARY)
     target_include_directories(FileParsers PRIVATE ${ZLIB_INCLUDE_DIRS})
 endif(STANDALONE_ZLIB_LIBRARY)
@@ -53,7 +54,7 @@ rdkit_headers(CDXMLParser.h
     DEST GraphMol/FileParsers)
 
 rdkit_test(fileParsersTest1 test1.cpp
-    LINK_LIBRARIES FileParsers SubstructMatch)
+    LINK_LIBRARIES CIPLabeler FileParsers SubstructMatch)
 
 rdkit_test(testAtropisomers testAtropisomers.cpp
     LINK_LIBRARIES FileParsers SubstructMatch)
@@ -72,7 +73,7 @@ if(RDK_TEST_MULTITHREADED)
         LINK_LIBRARIES FileParsers Fingerprints RDStreams)
 endif(RDK_TEST_MULTITHREADED)
 
-rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES FileParsers)
+rdkit_test(testMolWriter testMolWriter.cpp LINK_LIBRARIES CIPLabeler FileParsers)
 
 rdkit_test(testTplParser testTpls.cpp LINK_LIBRARIES FileParsers GraphMol)
 
@@ -84,6 +85,9 @@ rdkit_test(testExtendedStereoParsing testExtendedStereoParsing.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(fileParsersCatchTest file_parsers_catch.cpp
+    LINK_LIBRARIES FileParsers)
+
+rdkit_catch_test(macromolsCatchTest macromols_catch.cpp
     LINK_LIBRARIES FileParsers)
 
 rdkit_catch_test(testPropertyLists testPropertyLists.cpp

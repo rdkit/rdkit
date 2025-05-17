@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2020-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2020-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -69,6 +69,10 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
     }
   }
   SECTION("stereo") {
+    auto useLegacy = GENERATE(true, false);
+    CAPTURE(useLegacy);
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
+
     {
       auto mol = "C/C=C(/C#C)C"_smiles;
       REQUIRE(mol);
@@ -89,13 +93,13 @@ TEST_CASE("bond StereoInfo", "[unittest]") {
       CHECK(sinfo.descriptor == Chirality::StereoDescriptor::Bond_Trans);
     }
     {  // check an example where one of the stereo atoms isn't the first
-       // neighbor
+       // neighbor (only true with legacy chirality)
       auto mol = "C/C=C(/C)C#C"_smiles;
       REQUIRE(mol);
 
       CHECK(mol->getBondWithIdx(1)->getStereoAtoms().size() == 2);
       CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
-      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == 4);
+      CHECK(mol->getBondWithIdx(1)->getStereoAtoms()[1] == (useLegacy ? 4 : 3));
 
       auto sinfo = Chirality::detail::getStereoInfo(mol->getBondWithIdx(1));
       CHECK(sinfo.type == Chirality::StereoType::Bond_Double);
@@ -4897,6 +4901,18 @@ TEST_CASE("github #6931: atom maps influencing chirality perception") {
     CHECK(
         !m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
   }
+  SECTION(
+      "github #8391: atom maps on dummy atoms do influence chirality perception") {
+    auto m = "[*:1]C([*:2])(O)F"_smiles;
+    REQUIRE(m);
+    bool cleanIt = true;
+    bool force = true;
+    bool flagPossibleStereoCenters = true;
+    UseLegacyStereoPerceptionFixture reset_stereo_perception(false);
+    MolOps::assignStereochemistry(*m, cleanIt, force,
+                                  flagPossibleStereoCenters);
+    CHECK(m->getAtomWithIdx(1)->hasProp(common_properties::_ChiralityPossible));
+  }
 }
 
 TEST_CASE(
@@ -6117,7 +6133,7 @@ $$$$
     pathName += "/Code/GraphMol/test_data/Github8323.sdf";
     SDMolSupplier suppl(pathName);
     while (!suppl.atEnd()) {
-      auto mol = suppl.next();
+      std::unique_ptr<ROMol> mol(suppl.next());
       REQUIRE(mol);
       auto &sgs = mol->getStereoGroups();
       REQUIRE(sgs.size() == 1);
@@ -6126,5 +6142,35 @@ $$$$
       CHECK(sgs[0].getAtoms().size() == 1);
       CHECK(sgs[0].getAtoms().at(0)->getIdx() == aid);
     }
+  }
+}
+
+TEST_CASE("Github #8420: imines and crossed bonds") {
+  bool useLegacy = GENERATE(true, false);
+  CAPTURE(useLegacy);
+  UseLegacyStereoPerceptionFixture reset_stereo_perception(useLegacy);
+  SECTION("as reported") {
+    std::string ctab = R"CTAB(
+  MJ250100                      
+
+  7  7  0  0  1  0  0  0  0  0999 V2000
+    0.6961    0.4995    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0196    1.7395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.7332    0.4968    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4118    0.9090    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.4118    1.7395    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    0.6961    2.1583    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -0.0196    0.9101    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  3  7  2  3  0  0  0
+  4  5  1  0  0  0  0
+  5  6  1  0  0  0  0
+  2  6  1  0  0  0  0
+  2  7  1  0  0  0  0
+  1  4  1  0  0  0  0
+  1  7  1  0  0  0  0
+M  END)CTAB";
+    auto m = v2::FileParsers::MolFromMolBlock(ctab);
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(0)->getStereo() == Bond::BondStereo::STEREONONE);
   }
 }

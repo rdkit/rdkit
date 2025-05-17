@@ -156,6 +156,36 @@ const EmbedParameters ETDG(0,        // maxIterations
                            nullptr,  // CPCI
                            nullptr   // callback
 );
+//! Parameters corresponding to Sereina Riniker's ETDG approach with v2 of the
+//! torsion parameters
+const EmbedParameters ETDGv2(0,        // maxIterations
+                             1,        // numThreads
+                             -1,       // randomSeed
+                             true,     // clearConfs
+                             false,    // useRandomCoords
+                             2.0,      // boxSizeMult
+                             true,     // randNegEig
+                             1,        // numZeroFail
+                             nullptr,  // coordMap
+                             1e-3,     // optimizerForceTol
+                             false,    // ignoreSmoothingFailures
+                             false,    // enforceChirality
+                             true,     // useExpTorsionAnglePrefs
+                             false,    // useBasicKnowledge
+                             false,    // verbose
+                             5.0,      // basinThresh
+                             -1.0,     // pruneRmsThresh
+                             true,     // onlyHeavyAtomsForRMS
+                             2,        // ETversion
+                             nullptr,  // boundsMat
+                             true,     // embedFragmentsSeparately
+                             false,    // useSmallRingTorsions
+                             false,    // useMacrocycleTorsions
+                             false,    // useMacrocycle14config
+                             0,        // timeout
+                             nullptr,  // CPCI
+                             nullptr   // callback
+);
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 const EmbedParameters ETKDG(0,        // maxIterations
                             1,        // numThreads
@@ -1011,6 +1041,10 @@ void findDoubleBonds(
         auto oatm = bnd->getOtherAtom(atm);
         for (const auto nbr : mol.atomNeighbors(atm)) {
           if (nbr == oatm) {
+            continue;
+          }
+          const auto obnd = mol.getBondBetweenAtoms(atm->getIdx(), nbr->getIdx());
+          if (!obnd || obnd->getBondType() != Bond::BondType::SINGLE) {
             continue;
           }
           doubleBondEnds.emplace_back(nbr->getIdx(), atm->getIdx(),

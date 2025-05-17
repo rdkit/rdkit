@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2022 greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2025 greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -485,19 +485,28 @@ INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
 
 template <class T>
 T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
-  size_t natms = commAtms.size();
+  const auto natms = commAtms.size();
   INT_PAIR_VECT rankAid;
   rankAid.reserve(natms);
-  typename T::const_iterator ci;
-  for (ci = commAtms.begin(); ci != commAtms.end(); ci++) {
-    unsigned int rank;
-    const RDKit::Atom *at = mol.getAtomWithIdx(*ci);
-    if (at->hasProp(RDKit::common_properties::_CIPRank)) {
-      at->getProp(RDKit::common_properties::_CIPRank, rank);
-    } else {
-      rank = mol.getNumAtoms() * getAtomDepictRank(at) + (*ci);
+  for (const auto aid : commAtms) {
+    unsigned int rank = aid;
+    const auto at = mol.getAtomWithIdx(aid);
+    // we try for a pseudo-canonical ordering in order to always get the same
+    // coords for the same molecule.
+    if (!at->getPropIfPresent(RDKit::common_properties::_CIPRank, rank)) {
+      // _CIPRank, assigned by the legacy stereochem code, is not set,
+      //  check for _ChiralAtomRank, assigned by the new stereochem code.
+      if (at->getPropIfPresent(RDKit::common_properties::_ChiralAtomRank,
+                               rank)) {
+        // the ordering of the CIP ranks and chiral atom ranks are (roughly)
+        // inverted, so reverse this one to be consistent with the old
+        // _CIPRank-driven behavior
+        rank = mol.getNumAtoms() - rank;
+      }
+      rank += mol.getNumAtoms() * getAtomDepictRank(at);
     }
-    rankAid.push_back(std::make_pair(rank, (*ci)));
+
+    rankAid.emplace_back(rank, aid);
   }
   if (ascending) {
     std::stable_sort(rankAid.begin(), rankAid.end(),

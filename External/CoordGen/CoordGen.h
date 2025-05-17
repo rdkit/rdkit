@@ -154,8 +154,10 @@ unsigned int addCoords(T &mol, const CoordGenParams *params = nullptr) {
     auto obnd = *bndit;
     if (obnd->getBondType() != Bond::DOUBLE ||
         obnd->getStereo() <= Bond::STEREOANY ||
-        obnd->getStereo() > Bond::STEREOTRANS)
+        obnd->getStereo() > Bond::STEREOTRANS ||
+        obnd->getStereoAtoms().size() < 2) {
       continue;
+    }
 
     sketcherMinimizerBondStereoInfo sinfo;
     sinfo.atom1 = ats[obnd->getStereoAtoms()[0]];

@@ -271,7 +271,9 @@ class RDKIT_MOLDRAW2D_EXPORT MolDraw2D {
                             const DrawColour &col1, const DrawColour &col2,
                             unsigned int nSegments = 16,
                             double vertOffset = 0.05, bool rawCoords = false);
-  //! Draw an arrow with either lines or a filled head (when asPolygon is true)
+  //! Draw an arrow with either lines or a filled head (when asPolygon is true).
+  //! Angle is the half-angle at the point, so the default gives total angle
+  //! of 60 degrees at the arrow head.
   virtual void drawArrow(const Point2D &cds1, const Point2D &cds2,
                          bool asPolygon = false, double frac = 0.05,
                          double angle = M_PI / 6,

@@ -1503,6 +1503,24 @@ TEST_CASE("needsHs function", "[chemistry]") {
     REQUIRE(m);
     CHECK(!MolOps::needsHs(*m));
   }
+  SECTION("edges") {
+    v2::SmilesParse::SmilesParserParams params;
+    params.removeHs = false;
+    {
+      const std::string smiles = "[H]OC([H])[H]";
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+      REQUIRE(m);
+      CHECK(m->getNumAtoms() == 5);
+      CHECK(MolOps::needsHs(*m));
+    }
+    {
+      const std::string smiles = "C([H])([H])[H]";
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+      REQUIRE(m);
+      CHECK(m->getNumAtoms() == 4);
+      CHECK(MolOps::needsHs(*m));
+    }
+  }
 }
 
 TEST_CASE(
@@ -4712,7 +4730,7 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
      public:
       bool *deleted;
       FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {}
-      virtual ~FakeAtomMonomerInfo() { *deleted = true; }
+      ~FakeAtomMonomerInfo() override { *deleted = true; }
     };
 
     bool sanitize = true;
@@ -4784,5 +4802,24 @@ TEST_CASE("Github #8304: addHs should ignore queries") {
       MolOps::addHs(m2, ps);
       CHECK(m2.getNumAtoms() == 2);
     }
+  }
+}
+
+TEST_CASE("stereogroups operator<<") {
+  SECTION("atoms and bonds in one") {
+    auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8,15|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getStereoGroups().size() == 1);
+    std::ostringstream oss;
+    oss << m->getStereoGroups()[0];
+    CHECK(oss.str() == "AND rId: 0 wId: 0 atoms: { 15 } bonds: { 7 }");
+  }
+  SECTION("just bonds in one") {
+    auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getStereoGroups().size() == 1);
+    std::ostringstream oss;
+    oss << m->getStereoGroups()[0];
+    CHECK(oss.str() == "AND rId: 0 wId: 0 bonds: { 7 }");
   }
 }

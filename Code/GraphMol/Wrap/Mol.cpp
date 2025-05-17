@@ -1,5 +1,5 @@
 
-//  Copyright (C) 2003-2017 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 #define NO_IMPORT_ARRAY
 #include <RDBoost/python.h>
 #include <string>
+#include <span>
 
 #include "props.hpp"
 #include "rdchem.h"
@@ -156,8 +157,11 @@ class pyobjFunctor {
  public:
   pyobjFunctor(python::object obj) : dp_obj(std::move(obj)) {}
   ~pyobjFunctor() = default;
-  bool operator()(const ROMol &m, const std::vector<unsigned int> &match) {
-    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(match)));
+  bool operator()(const ROMol &m, std::span<const unsigned int> match) {
+    // boost::python doesn't handle std::span, so we need to convert the span to
+    // a vector before calling into python:
+    std::vector<unsigned int> matchVec(match.begin(), match.end());
+    return python::extract<bool>(dp_obj(boost::ref(m), boost::ref(matchVec)));
   }
 
  private:
@@ -309,6 +313,10 @@ struct mol_wrapper {
             "aromaticMatchesConjugated",
             &RDKit::SubstructMatchParameters::aromaticMatchesConjugated,
             "aromatic and conjugated bonds match each other")
+        .def_readwrite(
+            "aromaticMatchesSingleOrDouble",
+            &RDKit::SubstructMatchParameters::aromaticMatchesSingleOrDouble,
+            "aromatic and single or double bonds match each other")
         .def_readwrite(
             "useGenericMatchers",
             &RDKit::SubstructMatchParameters::useGenericMatchers,
@@ -699,8 +707,8 @@ struct mol_wrapper {
             "    - autoConvert: if True attempt to convert the property into a python object\n\n"
             "  RETURNS: a string\n\n"
             "  NOTE:\n"
-            "    - If the property has not been set, a KeyError exception "
-            "will be raised.\n")
+            "    - If the property has not been set, a KeyError exception will be raised.\n",
+            boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetDoubleProp", GetProp<ROMol, double>,
              python::args("self", "key"),
              "Returns the double value of the property if possible.\n\n"
@@ -709,7 +717,8 @@ struct mol_wrapper {
              "  RETURNS: a double\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetIntProp", GetProp<ROMol, int>, python::args("self", "key"),
              "Returns the integer value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -717,7 +726,8 @@ struct mol_wrapper {
              "  RETURNS: an integer\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetUnsignedProp", GetProp<ROMol, unsigned int>,
              python::args("self", "key"),
              "Returns the unsigned int value of the property if possible.\n\n"
@@ -726,7 +736,8 @@ struct mol_wrapper {
              "  RETURNS: an unsigned integer\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("GetBoolProp", GetProp<ROMol, bool>, python::args("self", "key"),
              "Returns the Bool value of the property if possible.\n\n"
              "  ARGUMENTS:\n"
@@ -734,7 +745,8 @@ struct mol_wrapper {
              "  RETURNS: a bool\n\n"
              "  NOTE:\n"
              "    - If the property has not been set, a KeyError exception "
-             "will be raised.\n")
+             "will be raised.\n",
+             boost::python::return_value_policy<return_pyobject_passthrough>())
         .def("ClearProp", MolClearProp<ROMol>, python::args("self", "key"),
              "Removes a property from the molecule.\n\n"
              "  ARGUMENTS:\n"
@@ -799,14 +811,15 @@ struct mol_wrapper {
              python::args("self"),
              "Returns a read-only sequence containing all of the molecule's "
              "aromatic Atoms.\n")
-        .def("GetAtomsMatchingQuery", MolGetQueryAtoms,
-             python::return_value_policy<
-                 python::manage_new_object,
-                 python::with_custodian_and_ward_postcall<0, 1>>(),
-             python::args("self", "qa"),
-             "Returns a read-only sequence containing all of the atoms in a "
-             "molecule that match the query atom. "
-             "Atom query options are defined in the rdkit.Chem.rdqueries module.\n")
+        .def(
+            "GetAtomsMatchingQuery", MolGetQueryAtoms,
+            python::return_value_policy<
+                python::manage_new_object,
+                python::with_custodian_and_ward_postcall<0, 1>>(),
+            python::args("self", "qa"),
+            "Returns a read-only sequence containing all of the atoms in a "
+            "molecule that match the query atom. "
+            "Atom query options are defined in the rdkit.Chem.rdqueries module.\n")
 
         // enable pickle support
         .def_pickle(mol_pickle_suite())
