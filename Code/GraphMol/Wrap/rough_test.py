@@ -6693,7 +6693,9 @@ M  END
     self.assertIsNotNone(mol)
     self.assertEqual(mol.GetNumAtoms(), 29)
 
-    nd = Chem.MolMetadataToPNGString(mol, d)
+    params = Chem.PNGMetadataParams()
+    params.propertyFlags = Chem.PropertyPickleOptions.AllProps
+    nd = Chem.MolMetadataToPNGString(mol, d, params)
     molFromPNG = Chem.MolFromPNGString(nd)
     self.assertIsNotNone(molFromPNG)
     self.assertEqual(molFromPNG.GetNumAtoms(), 29)
@@ -6707,7 +6709,10 @@ M  END
     self.assertEqual(molFromPNG.GetNumAtoms(), 29)
     self.assertEqual(molFromPNG.GetNumConformers(), 1)
     self.assertFalse(molFromPNG.HasProp('property'))
-    nd = Chem.MolMetadataToPNGString(mol, d, includePkl=True)
+    params = Chem.PNGMetadataParams()
+    params.includePkl = True
+    params.propertyFlags = Chem.PropertyPickleOptions.AllProps
+    nd = Chem.MolMetadataToPNGString(mol, d, params)
     molFromPNG = Chem.MolFromPNGString(nd)
     self.assertIsNotNone(molFromPNG)
     self.assertEqual(molFromPNG.GetNumAtoms(), 29)
@@ -6744,7 +6749,10 @@ M  END
     self.assertEqual(molFromPNG.GetNumAtoms(), 29)
     self.assertEqual(molFromPNG.GetNumConformers(), 1)
     self.assertFalse(molFromPNG.HasProp('property'))
-    nd = Chem.MolMetadataToPNGFile(mol, fileN, includePkl=True)
+    params = Chem.PNGMetadataParams()
+    params.includePkl = True
+    params.propertyFlags = Chem.PropertyPickleOptions.AllProps
+    nd = Chem.MolMetadataToPNGFile(mol, fileN, params)
     molFromPNG = Chem.MolFromPNGString(nd)
     self.assertIsNotNone(molFromPNG)
     self.assertEqual(molFromPNG.GetNumAtoms(), 29)
