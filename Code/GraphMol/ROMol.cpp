@@ -604,6 +604,12 @@ bool ROMol::needsUpdatePropertyCache() const {
   return false;
 }
 
+void ROMol::clearPropertyCache() {
+  for (auto atom : atoms()) {
+    atom->clearPropertyCache();
+  }
+}
+
 const Conformer &ROMol::getConformer(int id) const {
   // make sure we have more than one conformation
   if (d_confs.size() == 0) {
