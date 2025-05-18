@@ -25,5 +25,7 @@ void updateSanitizeFlagsFromJSON(unsigned int &sanitizeFlags,
 void updateRemoveHsParametersFromJSON(MolOps::RemoveHsParameters &ps,
                                       bool &sanitize, const char *details_json);
 
+void updatePNGMetadataParamsFromJSON(PNGMetadataParams &params,
+                                     const char *details_json);
 }  // end namespace MinimalLib
 }  // end namespace RDKit

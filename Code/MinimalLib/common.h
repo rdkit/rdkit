@@ -20,6 +20,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/FileParsers/PNGParser.h>
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/MolDraw2D/MolDraw2DSVG.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -51,6 +52,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <GraphMol/ChemReactions/ReactionParser.h>
 #include <GraphMol/ChemReactions/SanitizeRxn.h>
+#include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/RGroupDecomposition/RGroupUtils.h>
 #include <RDGeneral/RDLog.h>
 #include "common_defs.h"
@@ -353,11 +355,32 @@ std::string parse_int_array(const rj::Document &doc, std::vector<int> &intVec,
     if (!it->value.IsArray()) {
       return "JSON contains '" + keyName + "' field, but it is not an array";
     }
+    intVec.clear();
     for (const auto &val : it->value.GetArray()) {
       if (!val.IsInt()) {
         return valueName + " should be integers";
       }
       intVec.push_back(val.GetInt());
+    }
+  }
+  return "";
+}
+
+std::string parse_double_array(const rj::Document &doc,
+                               std::vector<double> &doubleVec,
+                               const std::string &keyName,
+                               const std::string &valueName) {
+  const auto it = doc.FindMember(keyName.c_str());
+  if (it != doc.MemberEnd()) {
+    if (!it->value.IsArray()) {
+      return "JSON contains '" + keyName + "' field, but it is not an array";
+    }
+    doubleVec.clear();
+    for (const auto &val : it->value.GetArray()) {
+      if (!val.IsNumber()) {
+        return valueName + " should be floats";
+      }
+      doubleVec.push_back(val.GetDouble());
     }
   }
   return "";
@@ -1360,6 +1383,87 @@ class LogHandle {
   bool d_isTee;
   std::stringstream d_stream;
 };
+
+std::vector<ROMOL_SPTR> get_mols_from_png_blob_internal(
+    const std::string &pngString, bool singleMol = false,
+    const char *details = nullptr) {
+  std::vector<ROMOL_SPTR> res;
+  if (pngString.empty()) {
+    return res;
+  }
+  PNGMetadataParams params;
+  params.includePkl = singleMol;
+  params.includeSmiles = singleMol;
+  params.includeMol = singleMol;
+  updatePNGMetadataParamsFromJSON(params, details);
+  std::string tagToUse;
+  unsigned int numTagsFound = 0;
+  if (params.includePkl) {
+    ++numTagsFound;
+    tagToUse = PNGData::pklTag;
+  }
+  if (params.includeSmiles) {
+    ++numTagsFound;
+    tagToUse = PNGData::smilesTag;
+  }
+  if (params.includeMol) {
+    ++numTagsFound;
+    tagToUse = PNGData::molTag;
+  }
+  if (numTagsFound == 0 || (!singleMol && numTagsFound > 1)) {
+    return res;
+  }
+  auto metadata = PNGStringToMetadata(pngString);
+  for (const auto &[key, value] : metadata) {
+    if (!singleMol && key.rfind(tagToUse, 0) == std::string::npos) {
+      continue;
+    }
+    std::unique_ptr<RWMol> mol;
+    if (params.includePkl && key.rfind(PNGData::pklTag, 0) == 0) {
+      try {
+        mol.reset(new RWMol(value));
+      } catch (...) {
+      }
+    } else if ((params.includeSmiles &&
+                key.rfind(PNGData::smilesTag, 0) == 0) ||
+               (params.includeMol && key.rfind(PNGData::molTag, 0) == 0)) {
+      mol.reset(MinimalLib::mol_from_input(value, details));
+    }
+    if (mol) {
+      res.emplace_back(mol.release());
+      if (singleMol) {
+        break;
+      }
+    }
+  }
+  return res;
+}
+
+std::string combine_mols_internal(const ROMol &mol1, const ROMol &mol2,
+                                  std::unique_ptr<ROMol> &combinedMol,
+                                  const char *details_json = nullptr) {
+  std::vector<double> offset(3, 0.0);
+  combinedMol = nullptr;
+  if (details_json) {
+    rj::Document doc;
+    doc.Parse(details_json);
+    if (!doc.IsObject()) {
+      return "Invalid JSON";
+    }
+    std::string problems;
+    problems = parse_double_array(doc, offset, "offset", "offset coordinates");
+    if (!problems.empty()) {
+      return problems;
+    }
+  }
+  try {
+    combinedMol.reset(combineMols(
+        mol1, mol2, RDGeom::Point3D(offset[0], offset[1], offset[2])));
+  } catch (...) {
+    return "Failed to combine molecules";
+  }
+  return "";
+}
 
 }  // namespace MinimalLib
 }  // namespace RDKit
