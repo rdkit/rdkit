@@ -31,9 +31,9 @@ services:
     environment:
       - NETWORK_MODE=${NETWORK_MODE:-bridge}
       - NETWORK=${NETWORK:-rdkit_network}
-    network_mode: ${NETWORK_MODE}
+    network_mode: ${NETWORK_MODE:-bridge}
     build:
-      network: ${NETWORK}
+      network: ${NETWORK:-rdkit_network}
       context: .
       dockerfile: Dockerfile_1_deps
     image: rdkit-minimallib-deps:latest
@@ -43,11 +43,11 @@ services:
       - NETWORK_MODE=${NETWORK_MODE:-bridge}
       - NETWORK=${NETWORK:-rdkit_network}
       - GET_SRC=${GET_SRC:-clone_from_github}
-    network_mode: ${NETWORK_MODE}
+    network_mode: ${NETWORK_MODE:-bridge}
     build:
-      network: ${NETWORK}
+      network: ${NETWORK:-rdkit_network}
       context: ../../..
-      dockerfile: ./Code/MinimalLib/docker/Dockerfile_2_rdkit_${GET_SRC}
+      dockerfile: ./Code/MinimalLib/docker/Dockerfile_2_rdkit_${GET_SRC:-clone_from_github}
     image: rdkit-minimallib-rdkit-src:latest
     depends_on:
       - rdkit_deps
@@ -56,9 +56,9 @@ services:
     environment:
       - NETWORK_MODE=${NETWORK_MODE:-bridge}
       - NETWORK=${NETWORK:-rdkit_network}
-    network_mode: ${NETWORK_MODE}
+    network_mode: ${NETWORK_MODE:-bridge}
     build:
-      network: ${NETWORK}
+      network: ${NETWORK:-rdkit_network}
       context: .
       dockerfile: Dockerfile_3_rdkit_build
     image: rdkit-minimallib:latest
