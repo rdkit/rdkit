@@ -103,13 +103,10 @@ DrawShapeArrow::DrawShapeArrow(const std::vector<Point2D> &points,
   // may as well store them.  They won't be used for drawing.  lineWidth_ is
   // in pixels rather than drawing coords, so keep another set of coords that
   // are the original ends and arrowhead ends, with a lineWidth_ of 0, used
-  // for findExtremes.
+  // for findExtremes and doesRectClash.
   origPts_[0] = points_[0];
   origPts_[1] = points_[1];
   Point2D ab(points_[1]), p1, p2;
-  MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[0], frac_, lineWidth_,
-                                  angle_);
-  ab = origPts_[1];
   MolDraw2D_detail::calcArrowHead(ab, p1, p2, points_[1], frac_, 0.0, angle_);
   origPts_[2] = p1;
   origPts_[3] = p2;
@@ -167,16 +164,16 @@ void DrawShapeArrow::move(const Point2D &trans) {
 bool DrawShapeArrow::doesRectClash(const StringRect &rect,
                                    double padding) const {
   padding = scaleLineWidth_ ? padding * lineWidth_ : padding;
-  if (doesLineIntersect(rect, points_[0], points_[1], padding)) {
+  if (doesLineIntersect(rect, origPts_[0], origPts_[1], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[1], points_[2], padding)) {
+  if (doesLineIntersect(rect, origPts_[1], origPts_[2], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[1], points_[3], padding)) {
+  if (doesLineIntersect(rect, origPts_[1], origPts_[3], padding)) {
     return true;
   }
-  if (doesLineIntersect(rect, points_[2], points_[3], padding)) {
+  if (doesLineIntersect(rect, origPts_[2], origPts_[3], padding)) {
     return true;
   }
   return false;
