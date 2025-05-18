@@ -742,6 +742,11 @@ bool Atom::needsUpdatePropertyCache() const {
            (this->df_noImplicit || this->d_implicitValence >= 0));
 }
 
+void Atom::clearPropertyCache() {
+  d_explicitValence = -1;
+  d_implicitValence = -1;
+}
+
 // returns the number of swaps required to convert the ordering
 // of the probe list to match the order of our incoming bonds:
 //

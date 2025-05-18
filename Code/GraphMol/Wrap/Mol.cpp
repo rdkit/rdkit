@@ -767,6 +767,11 @@ struct mol_wrapper {
              "explicit "
              "valence of the molecule have already been calculated.\n\n")
 
+        .def(
+            "ClearPropertyCache", &ROMol::clearPropertyCache,
+            (python::arg("self")),
+            "Clears implicit and explicit valence information from all atoms.\n\n")
+
         .def("GetStereoGroups", &ROMol::getStereoGroups,
              "Returns a list of StereoGroups defining the relative "
              "stereochemistry "
