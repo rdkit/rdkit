@@ -68,15 +68,15 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "3.0.2")
-        set(MD5 "bc9dabbbb2b99ae426f3a1bf16c4d3cc")
-        downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
-              "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
-          ${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz
-          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      set(RELEASE_NO "3.0.2")
+      set(MD5 "bc9dabbbb2b99ae426f3a1bf16c4d3cc")
+      downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
+            "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
+        ${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-        file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
+      file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
     else()
       message("-- Found coordgenlibs source in ${COORDGEN_DIR}")
     endif()
@@ -85,16 +85,16 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
         CACHE STRING "CoordGen Include File" FORCE)
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
     rdkit_library(coordgen ${CGSOURCES} SHARED)
-if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(coordgen PUBLIC -Wno-unused-but-set-variable)
-if(RDK_INSTALL_STATIC_LIBS)
-    target_compile_options(coordgen_static PUBLIC -Wno-unused-but-set-variable)
-endif()
-endif()
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+      target_compile_options(coordgen PUBLIC -Wno-unused-but-set-variable)
+      if(RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
+        target_compile_options(coordgen_static PUBLIC -Wno-unused-but-set-variable)
+      endif()
+    endif()
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(RDK_COORDGEN_LIBS coordgen CACHE STRING "the external libraries" FORCE)
 
-  elseif(coordgen_FOUND)
+  elseif(COORDGEN_FORCE_BUILD OR(NOT coordgen_FOUND))
 
     set(RDK_COORDGEN_LIBS "${coordgen_LIBRARIES}" CACHE STRING "the external libraries" FORCE)
 
