@@ -3,6 +3,7 @@
 if(NOT RDK_USE_BOOST_IOSTREAMS)
     find_package(ZLIB)
     set(STANDALONE_ZLIB_LIBRARY ${ZLIB_LIBRARIES})
+    include_directories(${ZLIB_INCLUDE_DIRS})
     add_definitions("-DRDK_USE_STANDALONE_ZLIB")
 endif(NOT RDK_USE_BOOST_IOSTREAMS)
 
