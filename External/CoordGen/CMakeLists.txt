@@ -94,7 +94,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(RDK_COORDGEN_LIBS coordgen CACHE STRING "the external libraries" FORCE)
 
-  elseif(COORDGEN_FORCE_BUILD OR(NOT coordgen_FOUND))
+  elseif(coordgen_FOUND)
 
     set(RDK_COORDGEN_LIBS "${coordgen_LIBRARIES}" CACHE STRING "the external libraries" FORCE)
 
