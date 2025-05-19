@@ -162,6 +162,7 @@ RDKIT_DESCRIPTORS_EXPORT unsigned numUnspecifiedAtomStereoCenters(
     const ROMol &mol);
 
 //! calculates the maximum number of consecutive rotatable bonds
+RDKIT_DESCRIPTORS_EXPORT extern const std::string MaxConsecutiveRotatableBondsVersion;
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcMaxConsecutiveRotatableBonds(
     const ROMol &mol, NumRotatableBondsOptions strict = Default);
 
