@@ -100,6 +100,9 @@ Args:
       sanitizeMol() when this is true
    useAtomMap : (optional) if this is true, an atom map will be created for the
       molecule
+   maxIterations: (optional) maximum number of iterations to run in the bond order
+   determination algorithm, after which a MaxFindBondOrdersItersExceeded
+   exception will be thrown. Defaults to 0 (no limit)
 )DOC";
   python::def(
       "DetermineBondOrders", &determineBondOrdersHelper,
@@ -132,6 +135,9 @@ Args:
       molecule
    useVdw: (optional) if this is false, the connect-the-dots method
        will be used instead of the van der Waals method
+   maxIterations: (optional) maximum number of iterations to run in the bond order
+   determination algorithm, after which a MaxFindBondOrdersItersExceeded
+   exception will be thrown. Defaults to 0 (no limit)
 )DOC";
   python::def(
       "DetermineBonds", &determineBondsHelper,

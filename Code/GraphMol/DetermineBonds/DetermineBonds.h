@@ -65,6 +65,11 @@ RDKIT_DETERMINEBONDS_EXPORT void determineConnectivity(RWMol &mol,
    sanitizeMol() when this is true
    \param useAtomMap (optional) if this is \c
    true, an atom map will be created for the molecule
+   \param maxIterations (optional) maximum number of iterations to run in the
+   bond order detection algorithm, after which a MaxFindBondOrdersItersExceeded
+   exception will be thrown. Defaults to 0 (no limit)
+
+   \throws MaxFindBondOrdersItersExceeded
  */
 RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
     RWMol &mol, int charge = 0, bool allowChargedFragments = true,
@@ -95,6 +100,11 @@ RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
    for the molecule
    \param useVdw (optional) if this is  \c false, the connect-the-dots method
     will be used instead of the van der Waals method
+   \param maxIterations (optional) maximum number of iterations to run in the
+   bond order detection algorithm, after which a MaxFindBondOrdersItersExceeded
+   exception will be thrown. Defaults to 0 (no limit)
+
+   \throws MaxFindBondOrdersItersExceeded
  */
 RDKIT_DETERMINEBONDS_EXPORT void determineBonds(
     RWMol &mol, bool useHueckel = false, int charge = 0, double covFactor = 1.3,
