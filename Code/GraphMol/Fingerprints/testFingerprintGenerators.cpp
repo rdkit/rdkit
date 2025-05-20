@@ -199,63 +199,6 @@ void testAtomPairOld() {
   }
 }
 
-// todo this test needs to be updated since the fingerprint size logic is
-// changed, count simulation no longer makes fingerprints larger
-void testAtomPairNonSparseBitvector() {
-  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdErrorLog) << "Test consistency between different output types "
-                           "for folded atom pair fingerprint"
-                        << std::endl;
-  {
-    ROMol *mol;
-    SparseIntVect<std::uint32_t> *fp1;
-    ExplicitBitVect *fp2;
-
-    FingerprintGenerator<std::uint32_t> *atomPairGenerator =
-        AtomPair::getAtomPairGenerator<std::uint32_t>();
-    std::vector<std::uint32_t> defaultCountBounds = {1, 2, 4, 8};
-
-    mol = SmilesToMol("CCC");
-    fp1 = atomPairGenerator->getCountFingerprint(*mol);
-    fp2 = atomPairGenerator->getFingerprint(*mol);
-
-    std::map<std::uint32_t, int> nz = fp1->getNonzeroElements();
-    for (const auto &it : nz) {
-      for (unsigned int i = 0; i < defaultCountBounds.size(); ++i) {
-        bool isSet = static_cast<bool>(
-            fp2->getBit(it.first * defaultCountBounds.size() + i));
-        TEST_ASSERT(isSet ==
-                    (it.second >= static_cast<long>(defaultCountBounds[i])));
-      }
-    }
-
-    delete mol;
-    delete fp1;
-    delete fp2;
-
-    mol = SmilesToMol("CC=O.Cl");
-    fp1 = atomPairGenerator->getCountFingerprint(*mol);
-    fp2 = atomPairGenerator->getFingerprint(*mol);
-
-    nz = fp1->getNonzeroElements();
-    for (const auto &it : nz) {
-      for (unsigned int i = 0; i < defaultCountBounds.size(); ++i) {
-        bool isSet = static_cast<bool>(
-            fp2->getBit(it.first * defaultCountBounds.size() + i));
-        TEST_ASSERT(isSet ==
-                    (it.second >= static_cast<long>(defaultCountBounds[i])));
-      }
-    }
-
-    delete mol;
-    delete fp1;
-    delete fp2;
-    delete atomPairGenerator;
-
-    BOOST_LOG(rdErrorLog) << "  done" << std::endl;
-  }
-}
-
 void testAtomPairOutput() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog) << "Test atom-pair additional output" << std::endl;
@@ -2469,11 +2412,9 @@ int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
   RDLog::InitLogs();
-#if 1
   testAtomPairFP();
   testAtomPairArgs();
   testAtomPairOld();
-  // testAtomPairNonSparseBitvector();
   testAtomPairOutput();
   testFoldedAtomPairs();
   testRootedAtomPairs();
@@ -2499,7 +2440,6 @@ int main(int argc, char *argv[]) {
   testIgnoreTorsions();
   testPairsAndTorsionsOptions();
   testChiralTorsions();
-#endif
   testGitHubIssue25();
   testGitHubIssue334();
   testGitHubIssue811();
