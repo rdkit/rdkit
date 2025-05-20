@@ -13,7 +13,7 @@
 #ifdef RDK_BUILD_YAEHMOP_SUPPORT
 #include <YAeHMOP/EHTTools.h>
 #endif
-#include <iostream>
+#include <limits>
 #include <vector>
 #include <numeric>
 #include <cmath>
@@ -364,7 +364,13 @@ void addBondOrdering(RWMol &mol,
 }
 
 void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
-                         bool embedChiral, bool useAtomMap) {
+                         bool embedChiral, bool useAtomMap, size_t iterations) {
+  if (iterations == 0) {
+    // LazyCartesianProduct allows up to uint1024_t::max iterations,
+    // but it's unlikely we'll even get to size_t::max
+    iterations = std::numeric_limits<size_t>::max();
+  }
+
   auto numAtoms = mol.getNumAtoms();
 
   std::vector<std::vector<unsigned int>> conMat(
@@ -391,7 +397,12 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
   bool saturationValid = false;
 
   while (!valenceCombos.atEnd()) {
+    if (--iterations == 0) {
+      throw MaxFindBondOrdersItersExceeded();
+    }
+
     auto order = valenceCombos.next();
+
     std::vector<unsigned int> unsat;
     getUnsaturated(order, origValency, unsat);
     // checks whether the atomic connectivity is valid for the current set of
@@ -438,7 +449,7 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
         }
       }
 
-    } while (newBonds == true);
+    } while (newBonds);
 
     valencyValid = checkValency(order, valency);
     chargeValid = checkCharge(mol, valency, charge);
@@ -451,7 +462,6 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
         return;
       } else {
         int sum = std::accumulate(valency.begin(), valency.end(), 0);
-        ;
         if (sum > bestSum) {
           best = ordMat;
           bestSum = sum;
@@ -468,13 +478,13 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
 
 void determineBonds(RWMol &mol, bool useHueckel, int charge, double covFactor,
                     bool allowChargedFragments, bool embedChiral,
-                    bool useAtomMap, bool useVdw) {
+                    bool useAtomMap, bool useVdw, size_t maxIterations) {
   if (mol.getNumAtoms() <= 1) {
     return;
   }
   determineConnectivity(mol, useHueckel, charge, covFactor, useVdw);
   determineBondOrders(mol, charge, allowChargedFragments, embedChiral,
-                      useAtomMap);
+                      useAtomMap, maxIterations);
 }  // determineBonds()
 
 }  // namespace RDKit

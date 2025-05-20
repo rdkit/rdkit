@@ -14,6 +14,15 @@
 #include <GraphMol/RDKitBase.h>
 
 namespace RDKit {
+
+class RDKIT_DETERMINEBONDS_EXPORT MaxFindBondOrdersItersExceeded
+    : public std::runtime_error {
+ public:
+  explicit MaxFindBondOrdersItersExceeded()
+      : std::runtime_error(
+            "Max Iterations Exceeded in Determine Bond Orders"){};
+};
+
 // ! assigns atomic connectivity to a molecule using atomic coordinates,
 // disregarding pre-existing bonds
 /*!
@@ -59,7 +68,7 @@ RDKIT_DETERMINEBONDS_EXPORT void determineConnectivity(RWMol &mol,
  */
 RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
     RWMol &mol, int charge = 0, bool allowChargedFragments = true,
-    bool embedChiral = true, bool useAtomMap = false);
+    bool embedChiral = true, bool useAtomMap = false, size_t maxIterations = 0);
 
 // ! assigns atomic connectivity to a molecule using atomic coordinates,
 // disregarding pre-existing bonds; it is recommended to sanitize the molecule
@@ -90,7 +99,7 @@ RDKIT_DETERMINEBONDS_EXPORT void determineBondOrders(
 RDKIT_DETERMINEBONDS_EXPORT void determineBonds(
     RWMol &mol, bool useHueckel = false, int charge = 0, double covFactor = 1.3,
     bool allowChargedFragments = true, bool embedChiral = true,
-    bool useAtomMap = false, bool useVdw = false);
+    bool useAtomMap = false, bool useVdw = false, size_t maxIterations = 0);
 
 }  // namespace RDKit
 
