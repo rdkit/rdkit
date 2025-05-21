@@ -144,7 +144,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
         riVect.begin(), riVect.end(),
         [&isRingNotCand](int ri) { return isRingNotCand.test(ri); });
     if (!at->getAtomicNum() && nonArNonDummyNbr < numAtomRings &&
-        numNonCandRings < numAtomRings) {
+        std::cmp_less(numNonCandRings, numAtomRings)) {
       // dummies always start as candidates to have a double bond:
       dBndCands[allAtm] = 1;
       // but they don't have to have one, so mark them as questionable:
