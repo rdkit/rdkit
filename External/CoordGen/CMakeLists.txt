@@ -6,7 +6,7 @@ if(RDK_BUILD_MAEPARSER_SUPPORT OR RDK_BUILD_COORDGEN_SUPPORT)
     add_definitions(-DIN_MAEPARSER)
   endif()
 
-  find_package(maeparser MODULE QUIET)
+  find_package(maeparser QUIET)
 
   if(MAEPARSER_FORCE_BUILD OR (NOT maeparser_FOUND))
     if(NOT DEFINED MAEPARSER_DIR)
@@ -61,7 +61,7 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     add_definitions(-DIN_COORDGEN)
   endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
 
-  find_package(coordgen MODULE QUIET)
+  find_package(coordgen QUIET)
   if(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
     if(NOT DEFINED COORDGEN_DIR)
       set(COORDGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coordgen")
@@ -110,7 +110,7 @@ endif()
 
   rdkit_test(testCoordGen test.cpp
     LINK_LIBRARIES
-    "${RDK_COORDGEN_LIBS}" Depictor ChemTransforms
+    coordgen Depictor ChemTransforms
     FileParsers SmilesParse SubstructMatch GraphMol
     RDGeneral DataStructs RDGeneral RDGeometryLib
     ${RDKit_THREAD_LIBS})
