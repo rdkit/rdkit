@@ -288,14 +288,14 @@ struct State {
     elem->radius2 = rad * rad;
 
     if (dotDensity) {
-      long count = ((4.0 * M_PI) * rad * rad * dotDensity);
+      unsigned long count = ((4.0 * M_PI) * rad * rad * dotDensity);
       std::vector<DotStruct> dots(count);
 
       unsigned int equat = sqrt(M_PI * count);
       if (!(vert = equat >> 1)) vert = 1;
 
       unsigned int i = 0;
-      for (unsigned int j = 0; std::cmp_less(i, count) && (j < vert); j++) {
+      for (unsigned int j = 0; (i < count) && (j < vert); j++) {
         p = (M_PI * j) / (double)vert;
         z = cos(p);
         xy = sin(p);
@@ -304,7 +304,7 @@ struct State {
           horz = 1;
         }
 
-        for (unsigned int k = 0; std::cmp_less(i, count) && (k < horz); k++) {
+        for (unsigned int k = 0; (i < count) && (k < horz); k++) {
           q = (2.0 * M_PI * k) / (double)horz;
           x = xy * sin(q);
           y = xy * cos(q);
