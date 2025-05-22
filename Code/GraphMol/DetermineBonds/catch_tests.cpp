@@ -10,6 +10,7 @@
 #include <GraphMol/AddHs.cpp>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <GraphMol/Resonance.h>
 
 using namespace RDKit;
@@ -413,9 +414,9 @@ TEST_CASE("github 6961: P-H bonds not found in phosphine") {
   SECTION("as reported") {
     std::string xyz = R"XYZ(4
 xyz file
-P 9.9999767321286015 9.9999428968490651 9.9298216136095618 
-H 8.8082284983002523 9.9999330478847508 10.7216030817151875 
-H 10.5974890657086007 11.0338788274478361 10.7168666854072114 
+P 9.9999767321286015 9.9999428968490651 9.9298216136095618
+H 8.8082284983002523 9.9999330478847508 10.7216030817151875
+H 10.5974890657086007 11.0338788274478361 10.7168666854072114
 H 10.5976057038625981 8.9661452278177478 10.7170086192680003)XYZ";
     std::unique_ptr<RWMol> m(XYZBlockToMol(xyz));
     REQUIRE(m);
@@ -508,4 +509,32 @@ H       0.0     0.0     0.37)XYZ";
     CHECK(m->getNumBonds() == 1);
     CHECK(m->getBondBetweenAtoms(0, 1));
   }
+}
+
+TEST_CASE("Time out in DetermineBondOrders()") {
+  auto mol = "O=[Cl+]"_smiles;
+  REQUIRE(mol);
+  REQUIRE(mol->getNumBonds() == 1);
+
+  auto bond = mol->getBondWithIdx(0);
+  bond->setBondType(Bond::SINGLE);
+
+  constexpr int globalCharge = 1;
+  constexpr bool allowChargedFragments = true;
+  constexpr bool embedChiral = false;
+  constexpr bool useAtomMap = false;
+  size_t maxIterations = 1;  // fail immediately
+  CHECK_THROWS_AS(determineBondOrders(*mol, globalCharge, allowChargedFragments,
+                                      embedChiral, useAtomMap, maxIterations),
+                  MaxFindBondOrdersItersExceeded);
+
+  // No double bond after the failed assignment
+  REQUIRE(bond->getBondType() == Bond::SINGLE);
+
+  // Should succeed with a larger threshold
+  maxIterations = 100;
+  determineBondOrders(*mol, globalCharge, allowChargedFragments, embedChiral,
+                      useAtomMap, maxIterations);
+
+  CHECK(bond->getBondType() == Bond::DOUBLE);
 }
