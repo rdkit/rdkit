@@ -90,9 +90,15 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(NOT UNIX OR APPLE OR CYGWIN)
+# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
+# detect it.
+string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+# Detect emcc
+string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
+
+if(NOT UNIX OR APPLE OR CYGWIN OR CMAKE_COMPILER_IS_EMCC)
   if(RDK_USE_BOOST_STACKTRACE)
-    MESSAGE("Disabling boost::stacktrace on non-linux platform")
+    MESSAGE("Disabling boost::stacktrace on non-linux and emscripten platforms")
     set(RDK_USE_BOOST_STACKTRACE OFF)
   endif(RDK_USE_BOOST_STACKTRACE)
 endif()
@@ -108,8 +114,12 @@ if(RDK_SWIG_STATIC AND RDK_BUILD_SWIG_WRAPPERS)
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
-
-if((NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))) AND NOT (WIN32 AND RDK_INSTALL_STATIC_LIBS))
+if ((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS) OR RDK_BUILD_MINIMAL_LIB)
+  set(RDK_BUILD_STATIC_LIBS_ONLY ON)
+else()
+  set(RDK_BUILD_STATIC_LIBS_ONLY OFF)
+endif()
+if(NOT RDK_BUILD_STATIC_LIBS_ONLY)
   add_definitions(-DRDKIT_DYN_LINK)
 endif()
 
@@ -246,12 +256,6 @@ endif()
 if(RDK_BUILD_YAEHMOP_SUPPORT)
     add_definitions(-DRDK_BUILD_YAEHMOP_SUPPORT)
 endif()
-
-# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
-# detect it.
-string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
-# Detect emcc
-string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")
