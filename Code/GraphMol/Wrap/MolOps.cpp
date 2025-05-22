@@ -905,10 +905,12 @@ python::tuple detectChemistryProblemsHelper(const ROMol &mol,
 }
 
 ROMol *canonicalizeStereoGroupsHelper(
-    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions) {
+    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions,
+    unsigned int maxStereoGroups) {
   auto mol_uptr = std::unique_ptr<ROMol>(new ROMol(mol));
 
-  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions);
+  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions,
+                                  maxStereoGroups);
   return mol_uptr.release();
   ;
 }
@@ -2636,13 +2638,15 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
             -StereoGroupAbsOptions outputAbsoluteGroups: controls output of abs groups: \n\
               one of: OnlyIncludeWhenOtherGroupsExist, NeverInclude, AlwaysInclude \n\
+             maxStereoGroups: maximm number of OR or AND stereo groups to process (default is 12): \n\
         \n\
         \n ";
     python::def(
         "CanonicalizeStereoGroups", canonicalizeStereoGroupsHelper,
         (python::arg("mol"),
          python::arg("outputAbsoluteGroups") =
-             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist),
+             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist,
+         python::arg("maxStereoGroups") = 12),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
 
