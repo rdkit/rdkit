@@ -2436,7 +2436,6 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
 void tokenizeV3000Line(std::string_view line,
                        std::vector<std::string_view> &tokens) {
   tokens.clear();
-  // bool inQuotes = false, inParens = false;
   bool inQuotes = false;
   unsigned int parenDepth = 0;
   unsigned int start = 0;
