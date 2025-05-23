@@ -7924,6 +7924,76 @@ M  END
       'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|'
     )
 
+  def testEnhancedStereoExceedsLimit(self):
+    m = Chem.MolFromSmiles(
+      'C[C@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29,&13:31,&14:33,&15:35,&16:37,&17:39,&18:41,&19:43,&20:45,&21:47,&22:51,&23:53,&24:56,&25:58,&26:59|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 61)
+
+    m2 = Chem.MolFromSmiles(
+      'C[C@@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29,&13:31,&14:33,&15:35,&16:37,&17:39,&18:41,&19:43,&20:45,&21:47,&22:51,&23:53,&24:56,&25:58,&26:59|'
+    )
+    self.assertTrue(m2 is not None)
+    self.assertTrue(m2.GetNumAtoms() == 61)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    m = Chem.CanonicalizeStereoGroups(m,Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,16)
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    smi2 = Chem.MolToCXSmiles(m2, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi == smi2
+    )
+
+
+  def testEnhancedStereoDoesNotExceedsLimit(self):
+    m = Chem.MolFromSmiles(
+      'C[C@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 61)
+
+    m2 = Chem.MolFromSmiles(
+      'C[C@@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29|'
+    )
+    self.assertTrue(m2 is not None)
+    self.assertTrue(m2.GetNumAtoms() == 61)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    m = Chem.CanonicalizeStereoGroups(m,Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,16)
+    # m2 = Chem.CanonicalizeStereoGroups(m2)
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    smi2 = Chem.MolToCXSmiles(m2, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi != smi2
+    )
+
+    m2 = Chem.CanonicalizeStereoGroups(m2)
+    smi2 = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi == smi2
+    )
+
+
+
   def test_picklingWithAddedAttribs(self):
     m = Chem.MolFromSmiles("C")
     m.foo = 1
