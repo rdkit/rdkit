@@ -56,18 +56,7 @@ void MultithreadedSDMolSupplier::initFromSettings(
   df_processPropertyLists = true;
 }
 
-MultithreadedSDMolSupplier::~MultithreadedSDMolSupplier() {
-  // end the threads and destroy all objects in the input queue
-  endThreads();
-    
-  d_inputQueue->clear();
-  if (df_started) {
-    std::tuple<RWMol *, std::string, unsigned int> r;
-    while (d_outputQueue->pop(r)) {
-      RWMol *m = std::get<0>(r);
-      delete m;
-    }
-  }
+void MultithreadedSDMolSupplier::closeStreams() {
   if (df_owner && dp_inStream) {
     delete dp_inStream;
     df_owner = false;

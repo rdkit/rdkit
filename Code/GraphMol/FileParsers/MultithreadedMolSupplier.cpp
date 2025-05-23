@@ -17,19 +17,40 @@ namespace RDKit {
 namespace v2 {
 namespace FileParsers {
 
-MultithreadedMolSupplier::~MultithreadedMolSupplier() {
+void MultithreadedMolSupplier::close() {
+  df_forceStop = true;
+  
+  if(df_started) {
+    // Clear the queues until they are empty
+    //  d_inputQueue->clear is not thread-safe
+    std::tuple<std::string, unsigned int, unsigned int> r;
+    while (d_inputQueue->pop(r)) {}
+  }
   endThreads();
-  // destroy all objects in the input queue
-  d_inputQueue->clear();
+  
+  // destroy all objects in the input and output queues
   if (df_started) {
+    d_inputQueue->clear();
     std::tuple<RWMol *, std::string, unsigned int> r;
     while (d_outputQueue->pop(r)) {
       RWMol *m = std::get<0>(r);
       delete m;
     }
+  } else {
+    // destroy all objects in the output queue
+    if(d_outputQueue) d_outputQueue->clear();
   }
-  // destroy all objects in the output queue
-  d_outputQueue->clear();
+  
+  // close external streams if any
+  //  destructors are called child to parent, however the threads
+  //  need to be ended before shutting down streams, so override this
+  //  in the child class.
+  closeStreams();
+  df_started = false;
+}
+    
+MultithreadedMolSupplier::~MultithreadedMolSupplier() {
+  close();
 }
 
 void MultithreadedMolSupplier::reader() {

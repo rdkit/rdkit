@@ -43,6 +43,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
   MultithreadedMolSupplier() {}
   ~MultithreadedMolSupplier() override;
+
+  //! shut down the supplier
+  virtual void close() override;
   //! pop elements from the output queue
   std::unique_ptr<RWMol> next() override;
 
@@ -95,6 +98,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   }
 
  protected:
+  //! Close down any external streams
+  virtual void closeStreams() {}
+
   //! starts reader and writer threads
   void startThreads();
   //! finalizes the reader and writer threads
