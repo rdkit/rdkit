@@ -60,6 +60,10 @@ void DrawMolMCHCircleAndLine::makeBondHighlights(
     std::vector<std::unique_ptr<DrawShape>> &bondHighlights) {
   for (auto hb : mcHighlightBondMap_) {
     auto bond_idx = hb.first;
+    if (bond_idx < 0 ||
+        static_cast<unsigned>(bond_idx) >= drawMol_->getNumBonds()) {
+      throw ValueErrorException("Bond index out of range");
+    }
     auto lineWidth = drawOptions_.bondLineWidth;
     if (!drawOptions_.fillHighlights) {
       lineWidth = getHighlightBondWidth(drawOptions_, bond_idx,
@@ -150,6 +154,11 @@ void DrawMolMCHCircleAndLine::makeBondHighlights(
 void DrawMolMCHCircleAndLine::makeAtomHighlights(
     std::vector<std::unique_ptr<DrawShape>> &atomHighlights) {
   for (auto &ha : mcHighlightAtomMap_) {
+    if (ha.first < 0 ||
+        static_cast<unsigned>(ha.first) >= drawMol_->getNumAtoms()) {
+      throw ValueErrorException("Atom index out of range");
+    }
+
     double xradius, yradius;
     Point2D centre;
     int lineWidth = getHighlightBondWidth(drawOptions_, -1, nullptr);

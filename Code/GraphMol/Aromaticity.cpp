@@ -415,7 +415,7 @@ void applyHuckelToFused(
       std::copy(curRs.begin(), curRs.end(),
                 std::inserter(aromRings, aromRings.begin()));
     }  // end check huckel rule
-  }    // end while(1)
+  }  // end while(1)
   narom += rdcast<int>(aromRings.size());
 }
 
@@ -682,6 +682,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   for (auto &sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
+
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
 
@@ -831,7 +832,6 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
         (maxRingSize && ringSz > maxRingSize)) {
       continue;
     }
-
     bool allAromatic = true;
     bool allDummy = true;
     for (auto firstIdx : sring) {

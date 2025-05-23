@@ -1222,11 +1222,9 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                       knownAtoms, knownBonds, fixedBonds, res);
     }
   }
-  if (cleanIt) {
-    for (const auto atom : mol.atoms()) {
-      atom->setProp<unsigned int>(common_properties::_ChiralAtomRank,
-                                  aranks[atom->getIdx()]);
-    }
+  for (const auto atom : mol.atoms()) {
+    atom->setProp<unsigned int>(common_properties::_ChiralAtomRank,
+                                aranks[atom->getIdx()], true);
   }
 
 #if LOCAL_CANON

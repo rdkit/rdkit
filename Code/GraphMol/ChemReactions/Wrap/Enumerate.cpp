@@ -52,8 +52,8 @@ std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(T bbs) {
     RDKit::MOL_SPTR_VECT &reacts = vect[i];
     reacts.reserve(len1);
     for (unsigned int j = 0; j < len1; ++j) {
-      RDKit::ROMOL_SPTR mol = python::extract<RDKit::ROMOL_SPTR>(bbs[i][j]);
-      if (mol) {
+      auto mol = python::extract<RDKit::ROMOL_SPTR>(bbs[i][j]);
+      if (mol.check()) {
         reacts.push_back(mol);
       } else {
         throw_value_error("reaction called with non molecule reactant");

@@ -421,7 +421,11 @@ struct filtercat_wrapper {
              python::args("self", "hierarchy"),
              "Add a child node to this hierarchy.");
 
-    python::register_ptr_to_python<boost::shared_ptr<FilterHierarchyMatcher>>();
+    if (!is_python_converter_registered<
+            boost::shared_ptr<const FilterHierarchyMatcher>>()) {
+      python::register_ptr_to_python<
+          boost::shared_ptr<FilterHierarchyMatcher>>();
+    }
 
     bool noproxy = true;
     RegisterVectorConverter<RDKit::ROMol *>("MolList", noproxy);
@@ -463,9 +467,6 @@ struct filtercat_wrapper {
                  FilterCatalogEntry::clearProp,
              python::args("self", "key"));
 
-    python::register_ptr_to_python<boost::shared_ptr<FilterCatalogEntry>>();
-    python::register_ptr_to_python<
-        boost::shared_ptr<const FilterCatalogEntry>>();
     python::def(
         "GetFunctionalGroupHierarchy", GetFunctionalGroupHierarchy,
         "Returns the functional group hierarchy filter catalog",

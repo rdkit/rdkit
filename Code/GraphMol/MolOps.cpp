@@ -185,13 +185,8 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
   }
 }
 
-bool isMetal(const Atom *atom) {
-  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
-  return q->Match(atom);
-}
-
 bool isHypervalentNonMetal(Atom *atom) {
-  if (isMetal(atom)) {
+  if (QueryOps::isMetal(*atom)) {
     return false;
   }
   atom->updatePropertyCache(false);
@@ -261,7 +256,7 @@ void metalBondCleanup(RWMol &mol, Atom *atom,
     // see if there are any metals bonded to it by a single bond
     for (auto bond : mol.atomBonds(atom)) {
       if (bond->getBondType() == Bond::BondType::SINGLE &&
-          isMetal(bond->getOtherAtom(atom))) {
+          QueryOps::isMetal(*bond->getOtherAtom(atom))) {
         metals.push_back(bond->getOtherAtom(atom));
       }
     }
@@ -317,7 +312,7 @@ void cleanUpOrganometallics(RWMol &mol) {
       // see if there are any metals bonded to it by a single bond
       for (auto bond : mol.atomBonds(atom)) {
         if (bond->getBondType() == Bond::BondType::SINGLE &&
-            isMetal(bond->getOtherAtom(atom))) {
+            QueryOps::isMetal(*bond->getOtherAtom(atom))) {
           needsFixing = true;
           break;
         }
@@ -497,33 +492,37 @@ void cleanupAtropisomers(RWMol &mol) {
   MolOps::cleanupAtropisomers(mol, hybs);
 }
 
-void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
-  // make sure that ring info is available
-  // (defensive, current calls have it available)
+namespace {
+void checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
   if (!mol.getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(mol);
   }
   const RingInfo *ri = mol.getRingInfo();
+  if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
+      hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
+      // do not clear bonds that part of a macrocycle
+      // because they can be linking actual atropisomeric portions
+      (ri->numBondRings(bond->getIdx()) > 0 &&
+       ri->minBondRingSize(bond->getIdx()) < 8)) {
+    bond->setStereo(Bond::BondStereo::STEREONONE);
+  }
+}
+}  // namespace
+
+void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
+  // make sure that ring info is available
+  // (defensive, current calls have it available)
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
-            hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
-            // do not clear bonds that part of a macrocycle
-            // because they can be linking actual atropisomeric portions
-            (ri->numBondRings(bond->getIdx()) > 0 &&
-             ri->minBondRingSize(bond->getIdx()) < 8)) {
-          bond->setStereo(Bond::BondStereo::STEREONONE);
-        }
+        checkBond(mol, bond, hybs);
         break;
-
       default:
         break;
     }
   }
 }
-
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);

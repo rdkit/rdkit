@@ -131,7 +131,7 @@ PAINS_A_FILENAME = os.path.join(DIRNAME, "pains_a.in")
 PAINS_B_FILENAME = os.path.join(DIRNAME, "pains_b.in")
 PAINS_C_FILENAME = os.path.join(DIRNAME, "pains_c.in")
 
-for fn in (PAINS_CSV, PAINS_A_FILENAME, PAINS_B_FILENAME, PAINS_B_FILENAME):
+for fn in (PAINS_CSV, PAINS_A_FILENAME, PAINS_B_FILENAME, PAINS_C_FILENAME):
   if not os.path.exists(fn):
     raise IOError("Could not find necessary file: %s", fn)
 

@@ -74,7 +74,7 @@ rdkit_headers(SmartsWrite.h
               CanonicalizeStereoGroups.h
               SmilesJSONParsers.h DEST GraphMol/SmilesParse)
             
-rdkit_test(smiTest1 test.cpp LINK_LIBRARIES FileParsers SmilesParse )
+rdkit_test(smiTest1 test.cpp LINK_LIBRARIES CIPLabeler FileParsers SmilesParse )
 rdkit_test(smiTest2 test2.cpp LINK_LIBRARIES SmilesParse )
 rdkit_catch_test(cxsmilesTest cxsmiles_test.cpp LINK_LIBRARIES FileParsers SmilesParse MarvinParser )
 
@@ -82,3 +82,4 @@ rdkit_test(smaTest1 smatest.cpp LINK_LIBRARIES SmilesParse SubstructMatch  )
 rdkit_catch_test(smiTestCatch catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse )
 rdkit_catch_test(nontetrahedralCatch nontetrahedral_tests.cpp LINK_LIBRARIES FileParsers SmilesParse )
 rdkit_catch_test(v2smiTestCatch v2catch_tests.cpp LINK_LIBRARIES SmilesParse )
+rdkit_catch_test(smartsTestCatch smarts_catch_tests.cpp LINK_LIBRARIES FileParsers SmilesParse )
