@@ -28,7 +28,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
       const Parameters &params = Parameters(),
       const SmilesMolSupplierParams &parseParams = SmilesMolSupplierParams());
   MultithreadedSmilesMolSupplier();
-  ~MultithreadedSmilesMolSupplier() override;
 
   void init() override {}
   //! returns df_end
@@ -41,6 +40,9 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSmilesMolSupplier
   //! parses the record and returns the resulting molecule
   RWMol *processMoleculeRecord(const std::string &record,
                                unsigned int lineNum) override;
+
+ protected:
+  void closeStreams() override;
 
  private:
   void initFromSettings(
