@@ -57,11 +57,23 @@ void MultithreadedSDMolSupplier::initFromSettings(
 }
 
 MultithreadedSDMolSupplier::~MultithreadedSDMolSupplier() {
+  // end the threads and destroy all objects in the input queue
+  endThreads();
+    
+  d_inputQueue->clear();
+  if (df_started) {
+    std::tuple<RWMol *, std::string, unsigned int> r;
+    while (d_outputQueue->pop(r)) {
+      RWMol *m = std::get<0>(r);
+      delete m;
+    }
+  }
   if (df_owner && dp_inStream) {
     delete dp_inStream;
     df_owner = false;
     dp_inStream = nullptr;
   }
+  df_started = false; // this is in the base constructor
 }
 
 // ensures that there is a line available to be read

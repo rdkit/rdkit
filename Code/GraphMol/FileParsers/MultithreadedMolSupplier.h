@@ -97,6 +97,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
  protected:
   //! starts reader and writer threads
   void startThreads();
+  //! finalizes the reader and writer threads
+  void endThreads();
 
  private:
   //! reads lines from input stream to populate the input queue
@@ -104,8 +106,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! parses lines from the input queue converting them to RWMol objects
   //! populating the output queue
   void writer();
-  //! finalizes the reader and writer threads
-  void endThreads();
   //! disable automatic copy constructors and assignment operators
   //! for this class and its subclasses.  They will likely be
   //! carrying around stream pointers and copying those is a recipe
@@ -129,6 +129,8 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
 
  protected:
   std::atomic<bool> df_started = false;
+  std::atomic<bool> df_forceStop = false;
+
   std::atomic<unsigned int> d_lastRecordId =
       0;                       //!< stores last extracted record id
   std::string d_lastItemText;  //!< stores last extracted record
@@ -147,6 +149,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
       writeCallback = nullptr;
   std::function<std::string(const std::string &, unsigned int)> readCallback =
       nullptr;
+
 };
 }  // namespace FileParsers
 }  // namespace v2
