@@ -17,25 +17,46 @@ namespace RDKit {
 namespace v2 {
 namespace FileParsers {
 
-MultithreadedMolSupplier::~MultithreadedMolSupplier() {
+void MultithreadedMolSupplier::close() {
+  df_forceStop = true;
+  
+  if(df_started) {
+    // Clear the queues until they are empty
+    //  d_inputQueue->clear is not thread-safe
+    std::tuple<std::string, unsigned int, unsigned int> r;
+    while (d_inputQueue->pop(r)) {}
+  }
   endThreads();
-  // destroy all objects in the input queue
-  d_inputQueue->clear();
+  
+  // destroy all objects in the input and output queues
   if (df_started) {
+    d_inputQueue->clear();
     std::tuple<RWMol *, std::string, unsigned int> r;
     while (d_outputQueue->pop(r)) {
       RWMol *m = std::get<0>(r);
       delete m;
     }
+  } else {
+    // destroy all objects in the output queue
+    if(d_outputQueue) d_outputQueue->clear();
   }
-  // destroy all objects in the output queue
-  d_outputQueue->clear();
+  
+  // close external streams if any
+  //  destructors are called child to parent, however the threads
+  //  need to be ended before shutting down streams, so override this
+  //  in the child class.
+  closeStreams();
+  df_started = false;
+}
+    
+MultithreadedMolSupplier::~MultithreadedMolSupplier() {
+  close();
 }
 
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;
-  while (extractNextRecord(record, lineNum, index)) {
+  while (!df_forceStop && extractNextRecord(record, lineNum, index)) {
     if (readCallback) {
       try {
         record = readCallback(record, index);
@@ -45,28 +66,28 @@ void MultithreadedMolSupplier::reader() {
       }
     }
     auto r = std::make_tuple(record, lineNum, index);
-    d_inputQueue->push(r);
+    if (!df_forceStop) d_inputQueue->push(r);
   }
   d_inputQueue->setDone();
 }
 
 void MultithreadedMolSupplier::writer() {
   std::tuple<std::string, unsigned int, unsigned int> r;
-  while (d_inputQueue->pop(r)) {
+  while (!df_forceStop && d_inputQueue->pop(r)) {
     try {
       std::unique_ptr<RWMol> mol(
           processMoleculeRecord(std::get<0>(r), std::get<1>(r)));
-      if (mol && writeCallback) {
+      if (!df_forceStop && mol && writeCallback) {
         writeCallback(*mol, std::get<0>(r), std::get<2>(r));
       }
       auto temp = std::tuple<RWMol *, std::string, unsigned int>{
           mol.release(), std::get<0>(r), std::get<2>(r)};
-      d_outputQueue->push(temp);
+      if(!df_forceStop) d_outputQueue->push(temp);
     } catch (...) {
       // fill the queue wih a null value
       auto nullValue = std::tuple<RWMol *, std::string, unsigned int>{
           nullptr, std::get<0>(r), std::get<2>(r)};
-      d_outputQueue->push(nullValue);
+      if(!df_forceStop) d_outputQueue->push(nullValue);
     }
   }
   if (d_threadCounter != d_params.numWriterThreads) {
@@ -102,7 +123,9 @@ void MultithreadedMolSupplier::endThreads() {
   if (!df_started) {
     return;
   }
+  df_forceStop = true;
   d_readerThread.join();
+
   for (auto &thread : d_writerThreads) {
     thread.join();
   }
