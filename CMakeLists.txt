@@ -475,9 +475,10 @@ endif()
 target_include_directories(rdkit_base INTERFACE
                            $<BUILD_INTERFACE:${RDKit_CodeDir}>
                            $<INSTALL_INTERFACE:${RDKit_HdrDir}>
-                           ${Boost_INCLUDE_DIRS}
                            )
-target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
+# linking against Boost::boost will add Boost to the include directories without
+# hard-coding Boost's path into the rdkit-targets.cmake that gets generated
+target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES} Boost::boost)
 
 
 if(RDK_BUILD_PGSQL)
