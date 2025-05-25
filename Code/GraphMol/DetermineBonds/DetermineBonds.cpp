@@ -25,6 +25,7 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 #include <GraphMol/FileParsers/ProximityBonds.h>
+#include <RDGeneral/ControlCHandler.h>
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS>
     Graph;
@@ -396,9 +397,16 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
   bool chargeValid = false;
   bool saturationValid = false;
 
+  ControlCHandler::reset();
+
   while (!valenceCombos.atEnd()) {
     if (--iterations == 0) {
       throw MaxFindBondOrdersItersExceeded();
+    }
+    if (ControlCHandler::getGotSignal()) {
+      BOOST_LOG(rdWarningLog)
+          << "Interrupted, cancelling determine Bond Orders" << std::endl;
+      return;
     }
 
     auto order = valenceCombos.next();
