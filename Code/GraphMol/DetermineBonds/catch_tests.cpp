@@ -563,7 +563,7 @@ TEST_CASE("test interrupt") {
     constexpr bool useAtomMap = false;
 
     // give the calculation a while to run (~12 s on my laptop)
-    // but still make sure it won'run forever
+    // but still make sure it won't run forever
     constexpr size_t maxIterations = 500000;
     determineBondOrders(*mol, charge, allowChargedFragments, embedChiral,
                         useAtomMap, maxIterations);
