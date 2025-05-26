@@ -137,10 +137,8 @@ void testGithub2144() {
 int main() {
   RDLog::InitLogs();
 
-#if 1
   test1();
   test2();
-#endif
   testQueryCopying();
   testConformerCopying();
   testGithub2144();

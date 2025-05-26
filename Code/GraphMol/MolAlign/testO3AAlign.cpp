@@ -748,7 +748,6 @@ int main() {
   std::cout << "***********************************************************\n";
   std::cout << "Testing O3AAlign\n";
 
-#if 1
   std::cout << "\t---------------------------------\n";
   std::cout << "\t testMMFFO3A \n\n";
   testMMFFO3A();
@@ -802,7 +801,6 @@ int main() {
   std::cout << "\t---------------------------------\n";
   std::cout << "\t test getO3AForProbeConfs\n\n";
   testGetO3AForProbeConfs();
-#endif
 
   std::cout << "***********************************************************\n";
 }

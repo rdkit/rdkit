@@ -226,12 +226,6 @@ unsigned int GetBondOrdering(INT_LIST &bondOrdering, const RDKit::RWMol *mol,
   INT_VECT ringClosures;
   atom->getPropIfPresent(common_properties::_RingClosures, ringClosures);
 
-#if 0
-  std::cerr << "CLOSURES: ";
-  std::copy(ringClosures.begin(), ringClosures.end(),
-            std::ostream_iterator<int>(std::cerr, " "));
-  std::cerr << std::endl;
-#endif
   std::list<SIZET_PAIR> neighbors;
   // push this atom onto the list of neighbors (we'll use this
   // to find our place later):

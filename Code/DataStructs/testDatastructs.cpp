@@ -439,14 +439,6 @@ void test4DiscreteVectOps1() {
   DiscreteValueVect vect4 = vect1 | vect2;
   TEST_ASSERT(vect4.getLength() == 8);
   TEST_ASSERT(vect4.getTotalVal() == 8);
-#if 0
-  DiscreteValueVect vect5=~vect1;
-  TEST_ASSERT(vect5.getLength() == 8);
-  TEST_ASSERT(vect5.getTotalVal() == 4);
-
-  TEST_ASSERT((vect5&vect1).getTotalVal()==0);
-  TEST_ASSERT((vect5&vect2).getTotalVal()==4);
-#endif
 }
 
 void test5DiscreteVectOps2() {
@@ -480,15 +472,6 @@ void test5DiscreteVectOps2() {
   TEST_ASSERT(vect5.getTotalVal() == 4);
   vect5 = vect2 - vect1;
   TEST_ASSERT(vect5.getTotalVal() == 8);
-
-#if 0
-  DiscreteValueVect vect5=~vect1;
-  TEST_ASSERT(vect5.getLength() == 8);
-  TEST_ASSERT(vect5.getTotalVal() == 16);
-
-  TEST_ASSERT((vect5&vect1).getTotalVal()==4);
-  TEST_ASSERT((vect5&vect2).getTotalVal()==12);
-#endif
 }
 
 void test6SparseIntVect() {
@@ -980,26 +963,6 @@ void test7SparseIntVectPickles() {
 }
 
 void test8BitVectPickles() {
-#if 0
-  {
-    std::string dirName = getenv("RDBASE");
-    dirName+="/Code/DataStructs/testData/";
-    std::string pklName = dirName+"test1.bin";
-    std::ofstream outS;
-    outS.open(pklName.c_str(),std::ios_base::binary);
-
-    ExplicitBitVect bv(32);
-    for(int i=0;i<32;i+=2){
-      bv.setBit(i);
-    }
-    std::string pkl=bv.toString();
-    unsigned int sz=pkl.size();
-    outS<<sz;
-    outS<<pkl;
-    outS.close();
-  }
-#endif
-
   {
     std::string dirName = getenv("RDBASE");
     dirName += "/Code/DataStructs/testData/";
