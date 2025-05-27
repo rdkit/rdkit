@@ -6,7 +6,7 @@ if(RDK_BUILD_MAEPARSER_SUPPORT OR RDK_BUILD_COORDGEN_SUPPORT)
     add_definitions(-DIN_MAEPARSER)
   endif()
 
-  find_package(maeparser MODULE QUIET)
+  find_package(maeparser QUIET)
 
   if(MAEPARSER_FORCE_BUILD OR (NOT maeparser_FOUND))
     if(NOT DEFINED MAEPARSER_DIR)
@@ -61,22 +61,22 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
     add_definitions(-DIN_COORDGEN)
   endif(MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))
 
-  find_package(coordgen MODULE QUIET)
+  find_package(coordgen QUIET)
   if(COORDGEN_FORCE_BUILD OR (NOT coordgen_FOUND))
     if(NOT DEFINED COORDGEN_DIR)
       set(COORDGEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/coordgen")
     endif()
 
     if(NOT EXISTS "${COORDGEN_DIR}/sketcherMinimizer.h")
-        set(RELEASE_NO "3.0.2")
-        set(MD5 "bc9dabbbb2b99ae426f3a1bf16c4d3cc")
-        downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
-              "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
-          ${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz
-          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      set(RELEASE_NO "3.0.2")
+      set(MD5 "bc9dabbbb2b99ae426f3a1bf16c4d3cc")
+      downloadAndCheckMD5("https://github.com/schrodinger/coordgenlibs/archive/v${RELEASE_NO}.tar.gz"
+            "${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz" ${MD5})
+      execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
+        ${CMAKE_CURRENT_SOURCE_DIR}/coordgenlibs-${RELEASE_NO}.tar.gz
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-        file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
+      file(RENAME "coordgenlibs-${RELEASE_NO}" "${COORDGEN_DIR}")
     else()
       message("-- Found coordgenlibs source in ${COORDGEN_DIR}")
     endif()
@@ -85,12 +85,12 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
         CACHE STRING "CoordGen Include File" FORCE)
     file(GLOB CGSOURCES "${COORDGEN_DIR}/*.cpp")
     rdkit_library(coordgen ${CGSOURCES} SHARED)
-if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
-    target_compile_options(coordgen PUBLIC -Wno-unused-but-set-variable)
-if(RDK_INSTALL_STATIC_LIBS)
-    target_compile_options(coordgen_static PUBLIC -Wno-unused-but-set-variable)
-endif()
-endif()
+    if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+      target_compile_options(coordgen PUBLIC -Wno-unused-but-set-variable)
+      if(RDK_INSTALL_STATIC_LIBS AND NOT RDK_BUILD_STATIC_LIBS_ONLY)
+        target_compile_options(coordgen_static PUBLIC -Wno-unused-but-set-variable)
+      endif()
+    endif()
     install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(RDK_COORDGEN_LIBS coordgen CACHE STRING "the external libraries" FORCE)
 
@@ -110,7 +110,7 @@ endif()
 
   rdkit_test(testCoordGen test.cpp
     LINK_LIBRARIES
-    "${RDK_COORDGEN_LIBS}" Depictor ChemTransforms
+    coordgen Depictor ChemTransforms
     FileParsers SmilesParse SubstructMatch GraphMol
     RDGeneral DataStructs RDGeneral RDGeometryLib
     ${RDKit_THREAD_LIBS})
