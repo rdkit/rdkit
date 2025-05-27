@@ -178,8 +178,6 @@ class ScsiMolTest {
 TEST_CASE("scsiTests", "scsiTests") {
   SECTION("basics") {
     std::list<ScsiMolTest::ScsiTest> scsiTests{
-        ScsiMolTest::ScsiTest("Ugly.mol", true, SCSRBaseHbondOptions::Auto, 140,
-                              151, 11, 140, 151, 11),
         ScsiMolTest::ScsiTest("ModifiedPeptide2.mol", true,
                               SCSRBaseHbondOptions::Auto, 438, 444, 81, 407,
                               413, 50),
@@ -293,6 +291,51 @@ TEST_CASE("scsiTests", "scsiTests") {
 
       scsiMolTest.testScsiFiles(&scsiTest);
     }
+  }
+}
+TEST_CASE("nestedParens", "nestedParens") {
+  SECTION("basics") {
+    BOOST_LOG(rdInfoLog) << "testing names with parens" << std::endl;
+    std::string filename = "Ugly.mol";
+    INFO(filename);
+
+    std::string rdbase = getenv("RDBASE");
+    std::string fName =
+        rdbase + "/Code/GraphMol/FileParsers/test_data/macromols/" + filename;
+
+    RDKit::v2::FileParsers::MolFileParserParams pp;
+    pp.sanitize = true;
+    pp.removeHs = false;
+    pp.strictParsing = true;
+
+    RDKit::v2::FileParsers::MolFromSCSRParams molFromSCSRParams;
+    molFromSCSRParams.includeLeavingGroups = true;
+    molFromSCSRParams.scsrBaseHbondOptions = SCSRBaseHbondOptions::Auto;
+
+    std::unique_ptr<RDKit::RWMol> mol;
+    REQUIRE_NOTHROW(mol = MolFromSCSRFile(fName, pp, molFromSCSRParams));
+
+    CHECK(mol != nullptr);
+    CHECK(mol->getNumAtoms() == 140);
+    CHECK(mol->getNumBonds() == 151);
+    CHECK(getSubstanceGroups(*mol).size() == 11);
+
+    // check that the macro atoms parsed have the correct names.  In the
+    // output mol these names will not appear in the SGROUP that defined the
+    // macroatom. we willcheck just a couple of them
+
+    std::string sgroupName;
+    getSubstanceGroups(*mol)[1].getProp("LABEL", sgroupName);
+    std::string expected = "((cPr)O(2S-Me)Et)NGly";
+    CHECK(sgroupName.substr(0, expected.length()) == expected);
+
+    getSubstanceGroups(*mol)[5].getProp("LABEL", sgroupName);
+    expected = "Phe(b-Me2)";
+    CHECK(sgroupName.substr(0, expected.length()) == expected);
+
+    getSubstanceGroups(*mol)[7].getProp("LABEL", sgroupName);
+    expected = "(PhO(2S-Me)Et)NGly";
+    CHECK(sgroupName.substr(0, expected.length()) == expected);
   }
 }
 

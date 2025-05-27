@@ -2453,10 +2453,8 @@ void tokenizeV3000Line(std::string_view line,
         ++pos;
       }
     } else if (line[pos] == ')' && parenDepth > 0) {
-      // tokens.push_back(line.substr(start, pos - start + 1));
       --parenDepth;
       ++pos;
-      // start = pos;
     } else if (line[pos] == '(' && !inQuotes) {
       ++parenDepth;
       ++pos;
