@@ -2436,7 +2436,8 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
 void tokenizeV3000Line(std::string_view line,
                        std::vector<std::string_view> &tokens) {
   tokens.clear();
-  bool inQuotes = false, inParens = false;
+  bool inQuotes = false;
+  unsigned int parenDepth = 0;
   unsigned int start = 0;
   unsigned int pos = 0;
   while (pos < line.size()) {
@@ -2444,22 +2445,20 @@ void tokenizeV3000Line(std::string_view line,
       if (start == pos) {
         ++start;
         ++pos;
-      } else if (!inQuotes && !inParens) {
+      } else if (!inQuotes && parenDepth == 0) {
         tokens.push_back(line.substr(start, pos - start));
         ++pos;
         start = pos;
       } else {
         ++pos;
       }
-    } else if (line[pos] == ')' && inParens) {
-      tokens.push_back(line.substr(start, pos - start + 1));
-      inParens = false;
+    } else if (line[pos] == ')' && parenDepth > 0) {
+      --parenDepth;
       ++pos;
-      start = pos;
     } else if (line[pos] == '(' && !inQuotes) {
-      inParens = true;
+      ++parenDepth;
       ++pos;
-    } else if (line[pos] == '"' && !inParens) {
+    } else if (line[pos] == '"' && parenDepth == 0) {
       if (pos + 1 < line.size() && line[pos + 1] == '"') {
         pos += 2;
       } else if (inQuotes) {
