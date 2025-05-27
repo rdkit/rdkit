@@ -42,7 +42,11 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   };
 
   MultithreadedMolSupplier() {}
-  ~MultithreadedMolSupplier() override;
+
+  
+  // Derived classes MUST have a destructor that calls close
+  //  to properly end threads while the instance is alive
+  virtual ~MultithreadedMolSupplier() {close();}
 
   //! shut down the supplier
   virtual void close() override;

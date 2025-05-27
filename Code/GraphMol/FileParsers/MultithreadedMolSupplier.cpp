@@ -49,10 +49,6 @@ void MultithreadedMolSupplier::close() {
   df_started = false;
 }
     
-MultithreadedMolSupplier::~MultithreadedMolSupplier() {
-  close();
-}
-
 void MultithreadedMolSupplier::reader() {
   std::string record;
   unsigned int lineNum, index;

@@ -30,6 +30,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedSDMolSupplier
       const MolFileParserParams &parseParams = MolFileParserParams());
 
   MultithreadedSDMolSupplier();
+  virtual ~MultithreadedSDMolSupplier() {close();}
   void init() override {}
 
   void checkForEnd();
