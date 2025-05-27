@@ -1,6 +1,16 @@
 if(RDK_BUILD_MAEPARSER_SUPPORT)
-    include_directories(${maeparser_INCLUDE_DIRS})
+    set(MAEPARSER_LIB maeparser)
     set(maesupplier MaeMolSupplier.cpp MaeWriter.cpp)
+    if ("${RDK_MAEPARSER_LIBS}" STREQUAL "")
+        # if we're not building maeparser as part of the RDKit build), then find
+        # the imported package
+        find_package(ZLIB QUIET)
+        find_package(${MAEPARSER_LIB})
+    else()
+        # if we built maeparser as part of the RDKit build, then we need to use
+        # the headers from the source directory
+        include_directories(${maeparser_INCLUDE_DIRS})
+    endif()
 endif()
 
 rdkit_library(FileParsers
@@ -24,7 +34,7 @@ rdkit_library(FileParsers
     MultithreadedMolSupplier.cpp
     MultithreadedSmilesMolSupplier.cpp
     MultithreadedSDMolSupplier.cpp
-    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${RDK_MAEPARSER_LIBS})
+    LINK_LIBRARIES GenericGroups Depictor SmilesParse ChemTransforms GraphMol SubstructMatch ${MAEPARSER_LIB})
 target_compile_definitions(FileParsers PRIVATE RDKIT_FILEPARSERS_BUILD)
 
 rdkit_headers(CDXMLParser.h
