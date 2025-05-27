@@ -395,6 +395,78 @@ void testPerformance() {
   }
 }
 
+void testThrowSDF() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/NCI_aids_few.sdf";
+  auto helper = [&fname](auto numToRead) {
+    v2::FileParsers::MultithreadedMolSupplier::Parameters params;
+    params.numWriterThreads = 3;
+    v2::FileParsers::MultithreadedSDMolSupplier multiSup(fname, params);
+    auto nRead = 0u;
+    while (!multiSup.atEnd()) {
+      std::unique_ptr<ROMol> mol{multiSup.next()};
+      ++nRead;
+      if (nRead >= numToRead) {
+        throw std::runtime_error("test");
+      }
+    }
+  };
+  bool ok = false;
+  try {
+    helper(0u);
+  } catch (const std::runtime_error &e) {
+    ok = true;
+  }
+  TEST_ASSERT(ok);
+  ok = false;
+  try {
+    helper(7u);
+  } catch (const std::runtime_error &e) {
+    ok = true;
+  }
+  TEST_ASSERT(ok);
+}
+
+void testThrowSmiles() {
+  std::string rdbase = getenv("RDBASE");
+  std::string fname =
+      rdbase + "/Code/GraphMol/FileParsers/test_data/first_200.tpsa.csv";
+  auto helper = [&fname](auto numToRead) {
+    v2::FileParsers::MultithreadedMolSupplier::Parameters params;
+    params.numWriterThreads = 3;
+    v2::FileParsers::SmilesMolSupplierParams smiParams;
+    smiParams.smilesColumn = 0;
+    smiParams.nameColumn = -1;
+    smiParams.delimiter = ",";
+    smiParams.titleLine = true;
+    v2::FileParsers::MultithreadedSmilesMolSupplier multiSup(fname, params,
+                                                             smiParams);
+    auto nRead = 0u;
+    while (!multiSup.atEnd()) {
+      std::unique_ptr<ROMol> mol{multiSup.next()};
+      ++nRead;
+      if (nRead >= numToRead) {
+        throw std::runtime_error("test");
+      }
+    }
+  };
+  bool ok = false;
+  try {
+    helper(0u);
+  } catch (const std::runtime_error &e) {
+    ok = true;
+  }
+  TEST_ASSERT(ok);
+  ok = false;
+  try {
+    helper(7u);
+  } catch (const std::runtime_error &e) {
+    ok = true;
+  }
+  TEST_ASSERT(ok);
+}
+
 int main() {
   RDLog::InitLogs();
 
@@ -408,6 +480,16 @@ int main() {
   BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
   testSDCorrectness();
   BOOST_LOG(rdErrorLog) << "Finished: testSDCorrectness()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  testThrowSDF();
+  BOOST_LOG(rdErrorLog) << "Finished: testThrowSDF()\n";
+  BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
+
+  BOOST_LOG(rdErrorLog) << "\n-----------------------------------------\n";
+  testThrowSmiles();
+  BOOST_LOG(rdErrorLog) << "Finished: testThrowSmiles()\n";
   BOOST_LOG(rdErrorLog) << "-----------------------------------------\n\n";
 
   /*

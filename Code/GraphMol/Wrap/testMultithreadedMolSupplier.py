@@ -134,7 +134,40 @@ class TestCase(unittest.TestCase):
       self.assertTrue(len(molNames) == i)
       self.assertTrue(sorted(confusedMolNames) == sorted(molNames))
 
+  def testMultiSmiMolSupplierThrow(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'first_200.tpsa.csv')
+    # fileN = "../FileParsers/test_data/first_200.tpsa.csv"
+    smiSup = Chem.MultithreadedSmilesMolSupplier(fileN, ",", 0, -1)
+
+    def helper(smiSup):
+      i = 0
+      while not smiSup.atEnd():
+        mol = next(smiSup)
+        if (mol):
+          i += 1
+        if i >= 10:
+          raise ValueError('hi')
+
+    self.assertRaises(ValueError, helper, smiSup)
+
+  def testMultiSDMolSupplierThrow(self):
+    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
+                         'NCI_aids_few.sdf')
+    # fileN = "../FileParsers/test_data/NCI_aids_few.sdf"
+    sdSup = Chem.MultithreadedSDMolSupplier(fileN)
+
+    def helper(sdSup):
+      i = 0
+      while not sdSup.atEnd():
+        mol = next(sdSup)
+        if (mol):
+          i += 1
+        if i >= 10:
+          raise ValueError('hi')
+
+    self.assertRaises(ValueError, helper, sdSup)
+
 
 if __name__ == '__main__':
-  print("Testing Smiles and SD MultithreadedMolSupplier")
   unittest.main()

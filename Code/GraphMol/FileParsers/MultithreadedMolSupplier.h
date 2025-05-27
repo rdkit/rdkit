@@ -42,7 +42,14 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   };
 
   MultithreadedMolSupplier() {}
-  ~MultithreadedMolSupplier() override;
+
+  
+  // Derived classes MUST have a destructor that calls close
+  //  to properly end threads while the instance is alive
+  virtual ~MultithreadedMolSupplier() {close();}
+
+  //! shut down the supplier
+  virtual void close() override;
   //! pop elements from the output queue
   std::unique_ptr<RWMol> next() override;
 
@@ -95,8 +102,13 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   }
 
  protected:
+  //! Close down any external streams
+  virtual void closeStreams() {}
+
   //! starts reader and writer threads
   void startThreads();
+  //! finalizes the reader and writer threads
+  void endThreads();
 
  private:
   //! reads lines from input stream to populate the input queue
@@ -104,8 +116,6 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   //! parses lines from the input queue converting them to RWMol objects
   //! populating the output queue
   void writer();
-  //! finalizes the reader and writer threads
-  void endThreads();
   //! disable automatic copy constructors and assignment operators
   //! for this class and its subclasses.  They will likely be
   //! carrying around stream pointers and copying those is a recipe
@@ -123,12 +133,15 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
   virtual RWMol *processMoleculeRecord(const std::string &record,
                                        unsigned int lineNum) = 0;
 
+  std::mutex d_threadCounterMutex;
   std::atomic<unsigned int> d_threadCounter{1};  //!< thread counter
   std::vector<std::thread> d_writerThreads;      //!< vector writer threads
   std::thread d_readerThread;                    //!< single reader thread
 
  protected:
   std::atomic<bool> df_started = false;
+  std::atomic<bool> df_forceStop = false;
+
   std::atomic<unsigned int> d_lastRecordId =
       0;                       //!< stores last extracted record id
   std::string d_lastItemText;  //!< stores last extracted record
@@ -147,6 +160,7 @@ class RDKIT_FILEPARSERS_EXPORT MultithreadedMolSupplier : public MolSupplier {
       writeCallback = nullptr;
   std::function<std::string(const std::string &, unsigned int)> readCallback =
       nullptr;
+
 };
 }  // namespace FileParsers
 }  // namespace v2
