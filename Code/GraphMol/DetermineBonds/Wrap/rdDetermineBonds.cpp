@@ -12,6 +12,7 @@
 #include <RDBoost/python.h>
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/Wrap.h>
+#include <RDGeneral/ControlCHandler.h>
 
 #include <GraphMol/DetermineBonds/DetermineBonds.h>
 
@@ -31,6 +32,10 @@ void determineBondOrdersHelper(ROMol &mol, int charge,
   auto &wmol = static_cast<RWMol &>(mol);
   determineBondOrders(wmol, charge, allowChargedFragments, embedChiral,
                       useAtomMap, maxIterations);
+  if (ControlCHandler::getGotSignal()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "Determine Bond Orders cancelled");
+    boost::python::throw_error_already_set();
+  }
 }
 void determineBondsHelper(ROMol &mol, bool useHueckel, int charge,
                           double covFactor, bool allowChargedFragments,
@@ -39,6 +44,10 @@ void determineBondsHelper(ROMol &mol, bool useHueckel, int charge,
   auto &wmol = static_cast<RWMol &>(mol);
   determineBonds(wmol, useHueckel, charge, covFactor, allowChargedFragments,
                  embedChiral, useAtomMap, useVdw, maxIterations);
+  if (ControlCHandler::getGotSignal()) {
+    PyErr_SetString(PyExc_KeyboardInterrupt, "Determine Bond Orders cancelled");
+    boost::python::throw_error_already_set();
+  }
 }
 bool hueckelSupportEnabled() {
 #ifdef RDK_BUILD_YAEHMOP_SUPPORT
