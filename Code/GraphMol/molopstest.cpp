@@ -5572,8 +5572,9 @@ void testGetMolFrags() {
                 m->getConformer(0).getAtomPos(24).z);
     delete m;
   }
-  { //confirm bond-only stereogroups are not removed during GetmolFrags
-    std::string smiles = "Cc1cccc(Cl)c1-c1c(C)cccc1I.Cc1cccc(F)c1-c1c(C)cccc1Cl |wD:8.15,wU:23.23,o1:23,&1:8|";
+  {  // confirm bond-only stereogroups are not removed during GetmolFrags
+    std::string smiles =
+        "Cc1cccc(Cl)c1-c1c(C)cccc1I.Cc1cccc(F)c1-c1c(C)cccc1Cl |wD:8.15,wU:23.23,o1:23,&1:8|";
     RWMol *m = SmilesToMol(smiles);
     TEST_ASSERT(m);
 
@@ -5581,13 +5582,23 @@ void testGetMolFrags() {
     VECT_INT_VECT fragsMolAtomMapping;
     std::vector<ROMOL_SPTR> frags =
         MolOps::getMolFrags(*m, false, &fragsMapping, &fragsMolAtomMapping);
-
     TEST_ASSERT(frags.size() == 2)
     TEST_ASSERT(fragsMapping.size() == m->getNumAtoms());
 
+    for (const auto &frag : frags) {
+      TEST_ASSERT(frag->getNumAtoms() == 16);
+      TEST_ASSERT(frag->getNumBonds() == 17);
+      TEST_ASSERT(frag->getStereoGroups().size() == 1);
+      TEST_ASSERT(frag->getStereoGroups()[0].getBonds().size() == 1);
+    }
+
     RDKit::SmilesWriteParams sps;
-    TEST_ASSERT(MolToCXSmiles(*frags[0], sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "Cc1cccc(Cl)c1-c1c(C)cccc1I |wU:7.6,&1:7|");
-    TEST_ASSERT(MolToCXSmiles(*frags[1], sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) == "Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.6,o1:7|");
+    TEST_ASSERT(MolToCXSmiles(*frags[0], sps,
+                              SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) ==
+                "Cc1cccc(Cl)c1-c1c(C)cccc1I |wU:7.6,&1:7|");
+    TEST_ASSERT(MolToCXSmiles(*frags[1], sps,
+                              SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) ==
+                "Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.6,o1:7|");
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -8719,7 +8730,6 @@ int main() {
   testGithubIssue432();
   testGithubIssue443();
   testGithubIssue447();
-  testGetMolFrags();
   testGithubIssue510();
   testGithubIssue526();
   testGithubIssue539();
@@ -8764,5 +8774,6 @@ int main() {
   testGithub5099();
   testHasQueryHs();
   testIsRingFused();
+  testGetMolFrags();
   return 0;
 }
