@@ -120,11 +120,14 @@ void MultithreadedMolSupplier::endThreads() {
     return;
   }
   df_forceStop = true;
-  d_readerThread.join();
 
+  // stop the writers before stopping the readers
+  //  otherwise there might be a deadlock
   for (auto &thread : d_writerThreads) {
     thread.join();
   }
+  d_readerThread.join();
+    
 }
 
 void MultithreadedMolSupplier::startThreads() {
