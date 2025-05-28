@@ -48,12 +48,9 @@ TEST_CASE("Simple test") {
         R"(F[C@]12C[C@]1(Cl)C[C@H](/C=C\Br)O2)",
     };
     std::unordered_set<std::string> got;
-    std::cout << "[";
     while (auto isomer = enu.next()) {
-      std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
       got.insert(MolToSmiles(*isomer));
     }
-    std::cout << "]" << std::endl;
     CHECK(got == expected);
   }
 }
@@ -76,12 +73,9 @@ TEST_CASE("Embedding") {
       R"(F[C@]12C[C@@]1(Cl)C[C@H](/C=C\Br)O2)",
   };
   std::unordered_set<std::string> got;
-  std::cout << "[";
   while (auto isomer = enu1.next()) {
-    std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
     got.insert(MolToSmiles(*isomer));
   }
-  std::cout << "]" << std::endl;
   CHECK(got == expected);
 
   // Check we get the right number even with maxIsomers.
@@ -123,12 +117,9 @@ TEST_CASE("Unique") {
       R"(F[C@H](Cl)/C=C\C=C\[C@H](F)Cl)",
   };
   std::unordered_set<std::string> got;
-  std::cout << "[";
   while (auto isomer = enu.next()) {
-    std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
     got.insert(MolToSmiles(*isomer));
   }
-  std::cout << "]" << std::endl;
   CHECK(got == expected);
 }
 
@@ -156,7 +147,6 @@ TEST_CASE("Unassigned") {
     std::string prop;
     CHECK(isomer->getPropIfPresent<std::string>("_MolFileChiralFlag", prop));
     CHECK(prop == "1");
-    std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
     got.insert(MolToSmiles(*isomer));
   }
   expected = std::unordered_set<std::string>{
@@ -179,13 +169,10 @@ TEST_CASE("Unassigned") {
       R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2)",
       R"(F[C@]12C[C@]1(Cl)C[C@@H](/C=C\Br)O2)",
   };
-  std::cout << "[";
   got.clear();
   while (auto isomer = enu2.next()) {
-    std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
     got.insert(MolToSmiles(*isomer));
   }
-  std::cout << "]" << std::endl;
   CHECK(got == expected);
 
   opts.onlyUnassigned = false;
@@ -212,13 +199,10 @@ TEST_CASE("Subset") {
       R"(F[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)Br)",
   };
   std::unordered_set<std::string> got;
-  std::cout << "[";
   for (int i = 0; i < 5; ++i) {
     auto isomer = enu1.next();
-    std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
     got.insert(MolToSmiles(*isomer));
   }
-  std::cout << "]" << std::endl;
   CHECK(got == expected1);
 
   opts.maxIsomers = 3;
@@ -228,12 +212,9 @@ TEST_CASE("Subset") {
       R"(F[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)Br)",
       R"(F[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)[C@H](Cl)Br)"};
   got.clear();
-  std::cout << "[";
   while (auto isomer = enu2.next()) {
-    std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
     got.insert(MolToSmiles(*isomer));
   }
-  std::cout << "]" << std::endl;
   CHECK(got == expected2);
 }
 
@@ -252,7 +233,6 @@ TEST_CASE("EnhancedStereo") {
     std::string prop;
     CHECK(isomer->getPropIfPresent<std::string>("_MolFileChiralFlag", prop));
     CHECK(prop == "1");
-    std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
     got.insert(MolToSmiles(*isomer));
   }
   CHECK(got == expected);
@@ -274,7 +254,6 @@ TEST_CASE("EnhancedStereo") {
     std::string prop;
     CHECK(isomer->getPropIfPresent<std::string>("_MolFileChiralFlag", prop));
     CHECK(prop == "1");
-    std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
     CHECK(got.insert(MolToSmiles(*isomer)).second);
   }
   CHECK(got.size() == 8);
@@ -334,12 +313,7 @@ TEST_CASE("Issue 3231") {
   }
   std::ranges::sort(chiCents);
   chiCents.erase(std::unique(chiCents.begin(), chiCents.end()), chiCents.end());
-  for (const auto &cc : chiCents) {
-    for (const auto &label : cc) {
-      std::cout << label.first << " " << label.second << " :: ";
-    }
-    std::cout << std::endl;
-  }
+
   std::vector<std::vector<std::pair<unsigned int, std::string>>> expCents{
       {{1, "R"}, {12, "R"}, {14, "R"}}, {{1, "R"}, {12, "R"}, {14, "S"}},
       {{1, "R"}, {12, "S"}, {14, "R"}}, {{1, "R"}, {12, "S"}, {14, "S"}},
@@ -458,17 +432,12 @@ TEST_CASE("Issue 7608") {
 
 TEST_CASE("Atropisomers") {
   auto m1 = "CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wD:7.7,wU:8.9|"_smiles;
-  std::cout << "Starting " << MolToCXSmiles(*m1) << std::endl;
   REQUIRE(m1);
   StereoEnumerationOptions opts;
   opts.onlyUnassigned = false;
   StereoisomerEnumerator enu1(*m1, opts);
   std::unordered_set<std::string> got;
   while (auto isomer = enu1.next()) {
-    std::cout << "Isomer : "
-              << MolToCXSmiles(*isomer, SmilesWriteParams(),
-                               SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS)
-              << std::endl;
     got.insert(MolToCXSmiles(*isomer, SmilesWriteParams(),
                              SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS));
   }
@@ -480,15 +449,8 @@ TEST_CASE("Atropisomers") {
   StereoisomerEnumerator enu2(*m2, opts);
   got.clear();
   while (auto isomer = enu2.next()) {
-    std::cout << "Isomer : "
-              << MolToCXSmiles(*isomer, SmilesWriteParams(),
-                               SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS)
-              << std::endl;
     got.insert(MolToCXSmiles(*isomer, SmilesWriteParams(),
                              SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS));
-  }
-  for (auto &g : got) {
-    std::cout << "r\"" << g << "\"," << std::endl;
   }
   CHECK(got.size() == 4);
 
@@ -552,17 +514,9 @@ M  END)CTAB"_ctab;
     StereoisomerEnumerator enu1(*m, opts);
     std::unordered_set<std::string> got;
     while (auto isomer = enu1.next()) {
-      std::cout << "Isomer : "
-                << MolToCXSmiles(*isomer, SmilesWriteParams(),
-                                 SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS)
-                << std::endl;
       got.insert(MolToCXSmiles(*isomer, SmilesWriteParams(),
                                SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS));
     }
-    for (auto &g : got) {
-      std::cout << "r\"" << g << "\"," << std::endl;
-    }
-
     CHECK(got.size() == 2);
   }
 }

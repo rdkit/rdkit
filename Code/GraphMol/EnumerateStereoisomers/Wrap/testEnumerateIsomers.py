@@ -46,9 +46,8 @@ class TestCase(unittest.TestCase):
     enum = rdEnumerateStereoisomers.StereoisomerEnumerator(mol)
     while True:
         iso = enum.next()
-        if iso is None or not iso:
+        if iso is None:
             break
-        print(iso, Chem.MolToSmiles(iso))
         smiles.add(Chem.MolToSmiles(iso))
     self.assertEqual(len(smiles), 4)
 

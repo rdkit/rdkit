@@ -78,28 +78,14 @@ AtropisomerFlipper::AtropisomerFlipper(RWMol &mol,
   d_ctrlAtoms =
       std::vector<unsigned int>{si.controllingAtoms[0], si.controllingAtoms[1],
                                 si.controllingAtoms[2], si.controllingAtoms[3]};
-  auto b1 = mol.getBondBetweenAtoms(dp_bond->getBeginAtomIdx(), d_ctrlAtoms[0]);
-  auto b2 = mol.getBondBetweenAtoms(dp_bond->getBeginAtomIdx(), d_ctrlAtoms[1]);
-  auto b3 = mol.getBondBetweenAtoms(dp_bond->getEndAtomIdx(), d_ctrlAtoms[2]);
-  auto b4 = mol.getBondBetweenAtoms(dp_bond->getEndAtomIdx(), d_ctrlAtoms[3]);
-  std::cout << "Making Atropisomer flipper" << std::endl;
-  std::cout << dp_bond->getStereo() << " : " << b1->getBondDir() << " : "
-            << b2->getBondDir() << " : " << b3->getBondDir() << " : "
-            << b4->getBondDir() << std::endl;
 }
 
 void AtropisomerFlipper::flip(bool flag) {
-  std::cout << "flipping : " << flag << std::endl;
   auto mol = dp_bond->getOwningMol();
   auto b1 = mol.getBondBetweenAtoms(dp_bond->getBeginAtomIdx(), d_ctrlAtoms[0]);
   auto b2 = mol.getBondBetweenAtoms(dp_bond->getBeginAtomIdx(), d_ctrlAtoms[1]);
   auto b3 = mol.getBondBetweenAtoms(dp_bond->getEndAtomIdx(), d_ctrlAtoms[2]);
   auto b4 = mol.getBondBetweenAtoms(dp_bond->getEndAtomIdx(), d_ctrlAtoms[3]);
-  std::cout << "\nCurrently" << std::endl;
-  std::cout << dp_bond->getStereo() << " : " << b1->getBondDir() << " : "
-            << b2->getBondDir() << " : " << b3->getBondDir() << " : "
-            << b4->getBondDir() << std::endl;
-  std::cout << MolToCXSmiles(mol) << std::endl;
   b3->setBondDir(Bond::BondDir::NONE);
   b4->setBondDir(Bond::BondDir::NONE);
   if (!flag) {
@@ -117,11 +103,6 @@ void AtropisomerFlipper::flip(bool flag) {
       b2->setBondDir(Bond::BondDir::BEGINWEDGE);
     }
   }
-  std::cout << "After" << std::endl;
-  std::cout << dp_bond->getStereo() << " : " << b1->getBondDir() << " : "
-            << b2->getBondDir() << " : " << b3->getBondDir() << " : "
-            << b4->getBondDir() << std::endl;
-  std::cout << MolToCXSmiles(mol) << std::endl;
 }
 
 }  // namespace RDKit::EnumerateStereoisomers::details

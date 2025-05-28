@@ -73,16 +73,6 @@ void StereoisomerEnumerator::buildFlippers() {
         si.specified != Chirality::StereoSpecified::Unspecified) {
       continue;
     }
-    std::cout << si.type << " : " << si.centeredOn;
-    if (si.controllingAtoms.empty()) {
-      std::cout << std::endl;
-    } else {
-      std::cout << " :: ";
-      for (auto ca : si.controllingAtoms) {
-        std::cout << ca << " ";
-      }
-      std::cout << std::endl;
-    }
     if (si.type == Chirality::StereoType::Atom_Tetrahedral) {
       d_flippers.push_back(std::unique_ptr<details::Flipper>(
           new details::AtomFlipper(d_mol, si)));
@@ -150,8 +140,8 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
           return isomer;
         }
         if (d_verbose) {
-          std::cout << MolToSmiles(*isomer) << "     failed to embed."
-                    << std::endl;
+          BOOST_LOG(rdInfoLog)
+              << MolToSmiles(*isomer) << "     failed to embed." << std::endl;
         }
       } else {
         return isomer;
