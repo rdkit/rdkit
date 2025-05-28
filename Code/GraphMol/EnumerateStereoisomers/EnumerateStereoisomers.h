@@ -45,14 +45,14 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
                                  // with the molecule.
   bool unique{true};  // If true, only stereoisomers that differ in canonical
                       // SMILES will be returned.
-  unsigned long int maxIsomers{0};  // The maximum number of isomers to yield.
-                                    // If the number of possible isomers is
-                                    // greater than maxIsomers, a random subset
-                                    // will be yielded.  If 0, all isomers are
-                                    // yielded.  Since every additional
-                                    // stereocenter doubles the number of results
-                                    // (and execution time) it's important to
-                                    // keep an eye on this.
+  std::uint64_t maxIsomers{0};  // The maximum number of isomers to yield.
+                                // If the number of possible isomers is
+                                // greater than maxIsomers, a random subset
+                                // will be yielded.  If 0, all isomers are
+                                // yielded.  Since every additional
+                                // stereocenter doubles the number of results
+                                // (and execution time) it's important to
+                                // keep an eye on this.
   int randomSeed{-1};  // Seed for random number generator.  -1 means don't
                        // seed.
 };
@@ -74,7 +74,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
       delete;
   StereoisomerEnumerator &operator=(StereoisomerEnumerator &&other) = delete;
 
-  unsigned long int getStereoisomerCount() const;
+  std::uint64_t getStereoisomerCount() const;
 
   // Return another stereoisomer, or an empty unique_ptr if we're done.
   std::unique_ptr<ROMol> next();
@@ -86,12 +86,12 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   // The number of isomers successfully returned so far.  This may be
   // lower than d_seen.size() if d_options.tryEmbedding is true and there
   // have been embedding failures.
-  unsigned long int d_numReturned{0};
+  std::uint64_t d_numReturned{0};
   // The number we need to return, the smaller of 2**N, where N is the
   // number of stereo centers, or d_options.maxIsomers.
-  unsigned long int d_numToReturn{1024};
+  std::uint64_t d_numToReturn{1024};
   // 2**N.
-  unsigned long int d_totalPoss{0};
+  std::uint64_t d_totalPoss{0};
   std::unordered_set<std::string> d_generatedIsomers;
 
   // For the random bools

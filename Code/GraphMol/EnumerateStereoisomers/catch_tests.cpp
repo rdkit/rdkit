@@ -50,13 +50,6 @@ TEST_CASE("Simple test") {
     std::unordered_set<std::string> got;
     while (auto isomer = enu.next()) {
       got.insert(MolToSmiles(*isomer));
-      std::cout << "r\"" << MolToSmiles(*isomer) << "\"," << std::endl;
-    }
-    std::cout << "missing" << std::endl;
-    for( const auto &e: expected) {
-      if (auto it = got.find(e); it == got.end()) {
-	std::cout << "r\"" << e << "\"," << std::endl;
-      }
     }
     CHECK(got == expected);
   }

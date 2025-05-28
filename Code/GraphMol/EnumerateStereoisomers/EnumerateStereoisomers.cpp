@@ -41,9 +41,10 @@ StereoisomerEnumerator::StereoisomerEnumerator(
   } else {
     d_mol.setProp<std::string>("_MolFileChiralFlag", "1");
     try {
-      d_totalPoss = boost::numeric_cast<unsigned long>(std::pow(2u, d_flippers.size()));
+      d_totalPoss = boost::numeric_cast<unsigned long>(std::pow(
+          std::uint64_t(2), static_cast<std::uint64_t>(d_flippers.size())));
     } catch (boost::numeric::positive_overflow &e) {
-      d_totalPoss = std::numeric_limits<unsigned long int>::max();
+      d_totalPoss = std::numeric_limits<std::uint64_t>::max();
     }
   }
 
@@ -57,19 +58,13 @@ StereoisomerEnumerator::StereoisomerEnumerator(
   } else {
     d_randGen.reset(new std::mt19937(d_options.randomSeed));
   }
-  std::cout << "unique : " << d_options.unique << std::endl;
-  std::cout << "embed : " << d_options.tryEmbedding << std::endl;
-  std::cout << "unass : " << d_options.onlyUnassigned << std::endl;
-  std::cout << "num flippers : " << d_flippers.size() << std::endl;
-  std::cout << "totalPoss : " << d_totalPoss  << " : " << std::pow(2u, d_flippers.size()) << std::endl;
 }
 
-unsigned long int StereoisomerEnumerator::getStereoisomerCount() const {
+std::uint64_t StereoisomerEnumerator::getStereoisomerCount() const {
   return d_totalPoss;
 }
 
 std::unique_ptr<ROMol> StereoisomerEnumerator::next() {
-  std::cout << "num returned : " << d_numReturned << " vs " << d_numToReturn << std::endl;
   if (d_numReturned == d_numToReturn) {
     return std::unique_ptr<ROMol>();
   }
@@ -120,7 +115,6 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       bool config = d_randDis(*d_randGen);
       nextConfig[i] = config;
     }
-    std::cout << "nextConfig : " << nextConfig << std::endl;
     if (auto it = d_seen.find(nextConfig); it == d_seen.end()) {
       d_seen.insert(nextConfig);
       for (size_t i = 0; i < d_flippers.size(); i++) {
@@ -137,25 +131,19 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       MolOps::setDoubleBondNeighborDirections(*isomer);
       isomer->clearComputedProps(false);
       MolOps::assignStereochemistry(*isomer, true, true, true);
-      std::cout << "initially : " << MolToSmiles(*isomer) << " : " << MolToCXSmiles(*isomer, SmilesWriteParams(),
-                          SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS)  << std::endl;
       if (d_options.unique) {
         auto smi =
             MolToCXSmiles(*isomer, SmilesWriteParams(),
                           SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
         if (auto it = d_generatedIsomers.find(smi);
             it != d_generatedIsomers.end()) {
-	  std::cout << "already had it" << std::endl;
           continue;
         }
         d_generatedIsomers.insert(smi);
       }
-      std::cout << "after unique : " << MolToSmiles(d_mol) << std::endl;
 
       if (d_options.tryEmbedding) {
         if (embeddable(*isomer)) {
-	        std::cout << "embedded : " << MolToSmiles(d_mol) << std::endl;
-
           return isomer;
         }
         if (d_verbose) {
@@ -163,10 +151,9 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
               << MolToSmiles(*isomer) << "     failed to embed." << std::endl;
         }
       } else {
-      std::cout << "finally : " << MolToSmiles(d_mol) << std::endl;
         return isomer;
       }
-    } 
+    }
   }
   return std::unique_ptr<ROMol>();
 }
