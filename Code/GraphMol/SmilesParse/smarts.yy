@@ -413,26 +413,26 @@ hydrogen_atom:	ATOM_OPEN_TOKEN H_TOKEN ATOM_CLOSE_TOKEN
 /* --------------------------------------------------------------- */
 atom_expr: atom_expr AND_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) { $1->setChiralTag($3->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps($1);
   delete $3;
 }
 | atom_expr OR_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_OR,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) { $1->setChiralTag($3->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps($1);
   $1->setAtomicNum(0);
   delete $3;
 }
 | atom_expr SEMI_TOKEN atom_expr {
   $1->expandQuery($3->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($3->getChiralTag());
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) { $1->setChiralTag($3->getChiralTag()); }
   SmilesParseOps::ClearAtomChemicalProps($1);
   delete $3;
 }
 | atom_expr point_query {
   $1->expandQuery($2->getQuery()->copy(),Queries::COMPOSITE_AND,true);
-  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) $1->setChiralTag($2->getChiralTag());
+  if($1->getChiralTag()==Atom::CHI_UNSPECIFIED) { $1->setChiralTag($2->getChiralTag()); }
   if($2->getNumExplicitHs()){
     if(!$1->getNumExplicitHs()){
       $1->setNumExplicitHs($2->getNumExplicitHs());
