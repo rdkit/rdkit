@@ -40,7 +40,7 @@ struct StereoEnumerationOptions {
                               // specified stereochemistry will not be
                               // perturbed unless they are part of a relative
                               // stereo group.
-  bool onlyStereoGroups{false};  // If true, only find stereoisomers tha
+  bool onlyStereoGroups{false};  // If true, only find stereoisomers that
                                  // differ at the StereoGroups associated
                                  // with the molecule.
   bool unique{true};  // If true, only stereoisomers that differ in canonical
@@ -53,7 +53,8 @@ struct StereoEnumerationOptions {
                                // stereocenter doubles the number of results
                                // (and execution time) it's important to
                                // keep an eye on this.
-  int randomSeed{-1};
+  int randomSeed{-1};  // Seed for random number generator.  -1 means don't
+                       // seed.
 };
 
 // Class that enumerates the stereoisomers of a molecule.  Acts like a

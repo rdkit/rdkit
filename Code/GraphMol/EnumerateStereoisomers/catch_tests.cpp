@@ -547,13 +547,6 @@ M  V30 END BOND
 M  V30 END CTAB
 M  END)CTAB"_ctab;
     REQUIRE(m);
-    CHECK(m->getBondWithIdx(3)->getStereo() == Bond::BondStereo::STEREOATROPCW);
-    // after reading in, there's no bond wedging:
-    for (const auto bnd : m->bonds()) {
-      INFO(bnd->getIdx());
-      CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
-    }
-    Chirality::wedgeMolBonds(*m, &m->getConformer());
     StereoEnumerationOptions opts;
     opts.onlyUnassigned = false;
     StereoisomerEnumerator enu1(*m, opts);

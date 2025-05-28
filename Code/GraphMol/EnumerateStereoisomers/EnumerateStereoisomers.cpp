@@ -20,6 +20,9 @@ namespace RDKit::EnumerateStereoisomers {
 StereoisomerEnumerator::StereoisomerEnumerator(
     const ROMol &mol, const StereoEnumerationOptions &options, bool verbose)
     : d_mol(mol), d_options(options), d_verbose(verbose) {
+  if (d_mol.getNumConformers()) {
+    Chirality::wedgeMolBonds(d_mol, &d_mol.getConformer());
+  }
   buildFlippers();
   // Clear unhelpful stuff out
   for (auto atom : d_mol.atoms()) {

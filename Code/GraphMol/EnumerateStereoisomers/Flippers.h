@@ -20,7 +20,7 @@ namespace RDKit::EnumerateStereoisomers::details {
 // The classes are called Flipper because that's what they were
 // called in the Python, but in fact they set a particular
 // stereochemistry at a centre according to whether a bool is
-// true or not.
+// true or not.  Setters would be a more accurate name.
 struct Flipper {
  public:
   Flipper() = default;
