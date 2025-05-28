@@ -455,3 +455,121 @@ TEST_CASE("Issue 7608") {
   }
   CHECK(got.size() == 1);
 }
+
+TEST_CASE("Atropisomers") {
+  auto m1 = "CC1=CC=CC(I)=C1N1C(C)=CC=C1Br |wD:7.7,wU:8.9|"_smiles;
+  std::cout << "Starting " << MolToCXSmiles(*m1) << std::endl;
+  REQUIRE(m1);
+  StereoEnumerationOptions opts;
+  opts.onlyUnassigned = false;
+  StereoisomerEnumerator enu1(*m1, opts);
+  std::unordered_set<std::string> got;
+  while (auto isomer = enu1.next()) {
+    std::cout << "Isomer : "
+              << MolToCXSmiles(*isomer, SmilesWriteParams(),
+                               SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS)
+              << std::endl;
+    got.insert(MolToCXSmiles(*isomer, SmilesWriteParams(),
+                             SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS));
+  }
+  CHECK(got.size() == 2);
+
+  auto m2 =
+      "C1=C(C2=CCCCCCCCCCC2)CCC1 |(-1.71835,-1.22732,;-1.61655,-0.232318,;-0.751953,0.270082,;-0.754753,1.27008,;0.109847,1.77248,;0.977247,1.27488,;1.84185,1.77728,;2.70925,1.27968,;2.71205,0.279682,;1.84745,-0.222718,;1.85025,-1.22272,;0.985647,-1.72512,;0.118247,-1.22752,;0.115447,-0.227518,;-2.53135,0.171882,;-3.19835,-0.573118,;-2.69595,-1.43772,),wU:1.14|"_smiles;
+  REQUIRE(m1);
+  StereoisomerEnumerator enu2(*m2, opts);
+  got.clear();
+  while (auto isomer = enu2.next()) {
+    std::cout << "Isomer : "
+              << MolToCXSmiles(*isomer, SmilesWriteParams(),
+                               SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS)
+              << std::endl;
+    got.insert(MolToCXSmiles(*isomer, SmilesWriteParams(),
+                             SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS));
+  }
+  for (auto &g : got) {
+    std::cout << "r\"" << g << "\"," << std::endl;
+  }
+  CHECK(got.size() == 4);
+
+  {
+    auto m = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 20 21 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 N -0.024300 -1.051200 0.000000 0
+M  V30 2 C 0.690200 -1.463700 0.000000 0
+M  V30 3 O 0.690200 -2.288700 0.000000 0
+M  V30 4 N 1.404500 -1.051200 0.000000 0
+M  V30 5 C 2.119100 -1.463700 0.000000 0
+M  V30 6 C 2.119100 -2.288700 0.000000 0
+M  V30 7 C 1.404500 -2.701200 0.000000 0
+M  V30 8 C 2.833500 -2.701200 0.000000 0
+M  V30 9 C 3.547900 -2.288700 0.000000 0
+M  V30 10 N 3.547900 -1.463700 0.000000 0
+M  V30 11 C 2.833600 -1.051200 0.000000 0
+M  V30 12 C 3.363800 -0.419100 0.000000 0
+M  V30 13 C 4.176300 -0.562300 0.000000 0
+M  V30 14 C 3.081600 0.356100 0.000000 0
+M  V30 15 C 1.404500 -0.226000 0.000000 0
+M  V30 16 N 2.155300 0.191900 0.000000 0
+M  V30 17 C 2.161900 1.051300 0.000000 0
+M  V30 18 C 1.417800 1.480900 0.000000 0
+M  V30 19 C 0.676800 1.045500 0.000000 0
+M  V30 20 C 0.690200 0.186400 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 2 2 3
+M  V30 3 1 4 2
+M  V30 4 1 4 5
+M  V30 5 2 5 6
+M  V30 6 1 6 7
+M  V30 7 1 6 8
+M  V30 8 2 8 9
+M  V30 9 1 9 10
+M  V30 10 2 10 11
+M  V30 11 1 11 12
+M  V30 12 1 12 13
+M  V30 13 1 12 14
+M  V30 14 1 4 15
+M  V30 15 2 15 16
+M  V30 16 1 16 17
+M  V30 17 2 17 18
+M  V30 18 1 18 19
+M  V30 19 2 19 20
+M  V30 20 1 5 11 CFG=1
+M  V30 21 1 20 15
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getBondWithIdx(3)->getStereo() == Bond::BondStereo::STEREOATROPCW);
+    // after reading in, there's no bond wedging:
+    for (const auto bnd : m->bonds()) {
+      INFO(bnd->getIdx());
+      CHECK(bnd->getBondDir() == Bond::BondDir::NONE);
+    }
+    Chirality::wedgeMolBonds(*m, &m->getConformer());
+    StereoEnumerationOptions opts;
+    opts.onlyUnassigned = false;
+    StereoisomerEnumerator enu1(*m, opts);
+    std::unordered_set<std::string> got;
+    while (auto isomer = enu1.next()) {
+      std::cout << "Isomer : "
+                << MolToCXSmiles(*isomer, SmilesWriteParams(),
+                                 SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS)
+                << std::endl;
+      got.insert(MolToCXSmiles(*isomer, SmilesWriteParams(),
+                               SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS));
+    }
+    for (auto &g : got) {
+      std::cout << "r\"" << g << "\"," << std::endl;
+    }
+
+    CHECK(got.size() == 2);
+  }
+}

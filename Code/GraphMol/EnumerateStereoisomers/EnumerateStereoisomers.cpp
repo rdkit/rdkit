@@ -89,6 +89,10 @@ void StereoisomerEnumerator::buildFlippers() {
       if (newFlipper->dp_bond) {
         d_flippers.push_back(std::move(newFlipper));
       }
+    } else if (si.type == Chirality::StereoType::Bond_Atropisomer) {
+      std::unique_ptr<details::AtropisomerFlipper> newFlipper(
+          new details::AtropisomerFlipper(d_mol, si));
+      d_flippers.push_back(std::move(newFlipper));
     }
   }
 
@@ -128,7 +132,9 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       MolOps::assignStereochemistry(*isomer, true, true, true);
 
       if (d_options.unique) {
-        auto smi = MolToSmiles(d_mol);
+        auto smi =
+            MolToCXSmiles(d_mol, SmilesWriteParams(),
+                          SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
         if (auto it = d_generatedIsomers.find(smi);
             it != d_generatedIsomers.end()) {
           continue;
