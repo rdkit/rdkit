@@ -92,15 +92,19 @@ void AtropisomerFlipper::flip(bool flag) {
     dp_bond->setStereo(Bond::STEREOATROPCW);
     if (d_ctrlAtoms[0] < d_ctrlAtoms[1]) {
       b1->setBondDir(Bond::BondDir::BEGINDASH);
+      b2->setBondDir(Bond::BondDir::NONE);
     } else {
       b2->setBondDir(Bond::BondDir::BEGINDASH);
+      b1->setBondDir(Bond::BondDir::NONE);
     }
   } else {
     dp_bond->setStereo(Bond::STEREOATROPCCW);
     if (d_ctrlAtoms[0] < d_ctrlAtoms[1]) {
       b1->setBondDir(Bond::BondDir::BEGINWEDGE);
+      b2->setBondDir(Bond::BondDir::NONE);
     } else {
       b2->setBondDir(Bond::BondDir::BEGINWEDGE);
+      b1->setBondDir(Bond::BondDir::NONE);
     }
   }
 }
