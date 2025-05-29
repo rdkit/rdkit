@@ -19,7 +19,8 @@
 #include <GraphMol/EnumerateStereoisomers/Flippers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
-namespace RDKit::EnumerateStereoisomers {
+namespace RDKit {
+namespace EnumerateStereoisomers {
 StereoisomerEnumerator::StereoisomerEnumerator(
     const ROMol &mol, const StereoEnumerationOptions &options, bool verbose)
     : d_mol(mol), d_options(options), d_verbose(verbose) {
@@ -171,4 +172,5 @@ bool StereoisomerEnumerator::embeddable(ROMol &isomer) {
   return cid >= 0;
 }
 
-}  // namespace RDKit::EnumerateStereoisomers
+}  // namespace EnumerateStereoisomers
+}  // namespace RDKit
