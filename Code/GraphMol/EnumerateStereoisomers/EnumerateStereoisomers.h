@@ -28,7 +28,7 @@
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
-struct StereoEnumerationOptions {
+struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
   bool tryEmbedding{false};   // If true, the process attempts to generate
                               // a standard RDKit distance geometry
                               // conformation for the stereoisomer.  If this
@@ -61,7 +61,7 @@ struct StereoEnumerationOptions {
 // Class that enumerates the stereoisomers of a molecule.  Acts like a
 // Python generator so in principle has no limit on the number of stereoisomers
 // it can produce.
-class StereoisomerEnumerator {
+class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
  public:
   StereoisomerEnumerator() = delete;
   StereoisomerEnumerator(

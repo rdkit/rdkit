@@ -13,6 +13,7 @@
 
 #include <boost/numeric/conversion/cast.hpp>
 
+#include <RDGeneral/export.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>

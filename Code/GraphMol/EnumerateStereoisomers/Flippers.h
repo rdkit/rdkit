@@ -11,6 +11,7 @@
 #ifndef FLIPPERS_H
 #define FLIPPERS_H
 
+#include <RDGeneral/export.h>
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
 #include <GraphMol/Chirality.h>
@@ -21,7 +22,7 @@ namespace RDKit::EnumerateStereoisomers::details {
 // called in the Python, but in fact they set a particular
 // stereochemistry at a centre according to whether a bool is
 // true or not.  Setters would be a more accurate name.
-struct Flipper {
+struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT Flipper {
  public:
   Flipper() = default;
   Flipper(const Flipper &other) = delete;
@@ -35,7 +36,7 @@ struct Flipper {
   virtual void flip(bool flag) = 0;
 };
 
-struct AtomFlipper : public Flipper {
+struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT AtomFlipper : public Flipper {
  public:
   AtomFlipper() = delete;
   AtomFlipper(RWMol &mol, const Chirality::StereoInfo &si);
@@ -50,7 +51,7 @@ struct AtomFlipper : public Flipper {
   Atom *dp_atom{nullptr};
 };
 
-struct BondFlipper : public Flipper {
+struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT BondFlipper : public Flipper {
  public:
   BondFlipper() = delete;
   // This c'tor may leave dp_bond as a nullptr if the bond
@@ -67,7 +68,7 @@ struct BondFlipper : public Flipper {
   Bond *dp_bond{nullptr};
 };
 
-struct StereoGroupFlipper : public Flipper {
+struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoGroupFlipper : public Flipper {
  public:
   StereoGroupFlipper() = delete;
   StereoGroupFlipper(const StereoGroup &sg);
@@ -82,7 +83,7 @@ struct StereoGroupFlipper : public Flipper {
   std::vector<std::pair<Atom *, Atom::ChiralType>> d_original_parities;
 };
 
-struct AtropisomerFlipper : public Flipper {
+struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT AtropisomerFlipper : public Flipper {
  public:
   AtropisomerFlipper() = delete;
   AtropisomerFlipper(RWMol &mol, const Chirality::StereoInfo &si);
