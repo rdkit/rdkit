@@ -26,7 +26,8 @@
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
 
-namespace RDKit::EnumerateStereoisomers {
+namespace RDKit {
+namespace EnumerateStereoisomers {
 struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
   bool tryEmbedding{false};   // If true, the process attempts to generate
                               // a standard RDKit distance geometry
@@ -108,6 +109,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   std::unique_ptr<ROMol> generateRandomIsomer();
   bool embeddable(ROMol &isomer);
 };
-}  // namespace RDKit::EnumerateStereoisomers
+}  // namespace RDKit
+}  // namespace EnumerateStereoisomers
 
 #endif  // RD_ENUMERATESTEREOISOMERS_H
