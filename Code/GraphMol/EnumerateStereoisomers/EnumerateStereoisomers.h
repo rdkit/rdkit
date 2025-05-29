@@ -23,38 +23,40 @@
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
 
 #include <RDGeneral/export.h>
-#include <GraphMol/ROMol.h>
-#include <GraphMol/RWMol.h>
 
-namespace RDKit::EnumerateStereoisomers {
+namespace RDKit {
+class ROMol;
+class RWMol;
+
+namespace EnumerateStereoisomers {
 struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
-  bool tryEmbedding{false};   // If true, the process attempts to generate
-                              // a standard RDKit distance geometry
-                              // conformation for the stereoisomer.  If this
-                              // fails, we assume that the stereoisomer is
-                              // non-physical and don't return it.  NOTE that
-                              // this is computationally expensive and is just
-                              // a heuristic that could result in
-                              // stereoisomers being lost.
+  bool tryEmbedding{false};  // If true, the process attempts to generate
+  // a standard RDKit distance geometry
+  // conformation for the stereoisomer.  If this
+  // fails, we assume that the stereoisomer is
+  // non-physical and don't return it.  NOTE that
+  // this is computationally expensive and is just
+  // a heuristic that could result in
+  // stereoisomers being lost.
   bool onlyUnassigned{true};  // If true, stereocenters which have a
-                              // specified stereochemistry will not be
-                              // perturbed unless they are part of a relative
-                              // stereo group.
+  // specified stereochemistry will not be
+  // perturbed unless they are part of a relative
+  // stereo group.
   bool onlyStereoGroups{false};  // If true, only find stereoisomers that
-                                 // differ at the StereoGroups associated
-                                 // with the molecule.
+  // differ at the StereoGroups associated
+  // with the molecule.
   bool unique{true};  // If true, only stereoisomers that differ in canonical
-                      // SMILES will be returned.
+  // SMILES will be returned.
   std::uint64_t maxIsomers{0};  // The maximum number of isomers to yield.
-                                // If the number of possible isomers is
-                                // greater than maxIsomers, a random subset
-                                // will be yielded.  If 0, all isomers are
-                                // yielded.  Since every additional
-                                // stereocenter doubles the number of results
-                                // (and execution time) it's important to
-                                // keep an eye on this.
+  // If the number of possible isomers is
+  // greater than maxIsomers, a random subset
+  // will be yielded.  If 0, all isomers are
+  // yielded.  Since every additional
+  // stereocenter doubles the number of results
+  // (and execution time) it's important to
+  // keep an eye on this.
   int randomSeed{-1};  // Seed for random number generator.  -1 means don't
-                       // seed.
+  // seed.
 };
 
 // Class that enumerates the stereoisomers of a molecule.  Acts like a
@@ -108,6 +110,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   std::unique_ptr<ROMol> generateRandomIsomer();
   bool embeddable(ROMol &isomer);
 };
-}  // namespace RDKit::EnumerateStereoisomers
+}  // namespace EnumerateStereoisomers
+}  // namespace RDKit
 
 #endif  // RD_ENUMERATESTEREOISOMERS_H
