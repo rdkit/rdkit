@@ -77,8 +77,6 @@ class ComputedData {
     DGeomHelpers::BIT_SET::size_type capacity =
         boost::numeric_cast<DGeomHelpers::BIT_SET::size_type>(
             static_cast<unsigned long>(nBonds) * nBonds * nBonds);
-    cisPaths.resize(capacity);
-    transPaths.resize(capacity);
     set15Atoms.resize(nAtoms * nAtoms);
   }
 
@@ -88,8 +86,8 @@ class ComputedData {
   SymmIntMatPtr bondAdj;  // bond adjacency matrix
   SymmDoubleMatPtr bondAngles;
   PATH14_VECT paths14;
-  BIT_SET cisPaths;
-  BIT_SET transPaths;
+  std::unordered_set<std::uint64_t> cisPaths;
+  std::unordered_set<std::uint64_t> transPaths;
   BIT_SET set15Atoms;
 };
 
@@ -678,18 +676,18 @@ void _setInRing14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
     path14.type = Path14Configuration::CIS;
-    accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb +
-                       bid3] = 1;
-    accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb +
-                       bid1] = 1;
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                              bid2 * nb + bid3);
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                              bid2 * nb + bid1);
   } else if (preferTrans) {
     dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
     du = dl + 2 * GEN_DIST_TOL;
     path14.type = Path14Configuration::TRANS;
-    accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                         bid2 * nb + bid3] = 1;
-    accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                         bid2 * nb + bid1] = 1;
+    accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                bid2 * nb + bid3);
+    accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                bid2 * nb + bid1);
 
   } else {
     // basically we will assume 0 to 180 allowed
@@ -771,10 +769,10 @@ void _setTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
     dl -= GEN_DIST_TOL;
     du += GEN_DIST_TOL;
     path14.type = Path14Configuration::TRANS;
-    accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                         bid2 * nb + bid3] = 1;
-    accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                         bid2 * nb + bid1] = 1;
+    accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                bid2 * nb + bid3);
+    accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                bid2 * nb + bid1);
 
   } else {
     // here we will assume anything is possible
@@ -1016,10 +1014,10 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
         dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
         du = dl + 2 * GEN_DIST_TOL;
         path14.type = Path14Configuration::CIS;
-        accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                           bid2 * nb + bid3] = 1;
-        accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                           bid2 * nb + bid1] = 1;
+        accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                  bid2 * nb + bid3);
+        accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                  bid2 * nb + bid1);
         // BOOST_LOG(rdDebugLog) << "Special 5 " << aid1 << " " << aid4 <<
         // "\n";
       } else if (bnd2->getStereo() > Bond::STEREOANY) {
@@ -1032,10 +1030,10 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
           // BOOST_LOG(rdDebugLog) << "Special 6 " <<  aid1 << " " << aid4
           // <<
           // "\n";
-          accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                             bid2 * nb + bid3] = 1;
-          accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                             bid2 * nb + bid1] = 1;
+          accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                    bid2 * nb + bid3);
+          accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                    bid2 * nb + bid1);
         } else {
           // BOOST_LOG(rdDebugLog) << "Special 7 " << aid1 << " " << aid4 <<
           // "\n";
@@ -1044,10 +1042,10 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
           path14.type = Path14Configuration::TRANS;
-          accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                               bid2 * nb + bid3] = 1;
-          accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                               bid2 * nb + bid1] = 1;
+          accumData.transPaths.insert(
+              static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
+          accumData.transPaths.insert(
+              static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
         }
       } else {
         // double bond with no stereo setting can be 0 or 180
@@ -1106,17 +1104,17 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
             // secondary amide, this is the H, it should be trans to the O
             dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
             path14.type = Path14Configuration::TRANS;
-            accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                                 bid2 * nb + bid3] = 1;
-            accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                                 bid2 * nb + bid1] = 1;
+            accumData.transPaths.insert(
+                static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
+            accumData.transPaths.insert(
+                static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
           } else {
             dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
             path14.type = Path14Configuration::CIS;
-            accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                               bid2 * nb + bid3] = 1;
-            accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                               bid2 * nb + bid1] = 1;
+            accumData.cisPaths.insert(
+                static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
+            accumData.cisPaths.insert(
+                static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
           }
           du = dl;
           dl -= GEN_DIST_TOL;
@@ -1152,17 +1150,17 @@ void _setChain14Bounds(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
             // secondary amide, this is the H, it's cis to atom 5
             dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
             path14.type = Path14Configuration::CIS;
-            accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                               bid2 * nb + bid3] = 1;
-            accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                               bid2 * nb + bid1] = 1;
+            accumData.cisPaths.insert(
+                static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
+            accumData.cisPaths.insert(
+                static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
           } else {
             dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
             path14.type = Path14Configuration::TRANS;
-            accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                                 bid2 * nb + bid3] = 1;
-            accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                                 bid2 * nb + bid1] = 1;
+            accumData.transPaths.insert(
+                static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
+            accumData.transPaths.insert(
+                static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
           }
           du = dl;
           dl -= GEN_DIST_TOL;
@@ -1209,10 +1207,10 @@ void _record14Path(const ROMol &mol, unsigned int bid1, unsigned int bid2,
   path14.bid3 = bid3;
   if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {  // FIX: check for trans
     path14.type = Path14Configuration::CIS;
-    accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb +
-                       bid3] = 1;
-    accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb +
-                       bid1] = 1;
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                              bid2 * nb + bid3);
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                              bid2 * nb + bid1);
   } else {
     path14.type = Path14Configuration::OTHER;
   }
@@ -1306,8 +1304,10 @@ void _setMacrocycleTwoInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
                                                  atm1))) {
     dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
     path14.type = Path14Configuration::CIS;
-    accumData.cisPaths[bid1 * nb * nb + bid2 * nb + bid3] = 1;
-    accumData.cisPaths[bid3 * nb * nb + bid2 * nb + bid1] = 1;
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                              bid2 * nb + bid3);
+    accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                              bid2 * nb + bid1);
     du = dl;
     dl -= GEN_DIST_TOL;
     du += GEN_DIST_TOL;
@@ -1385,10 +1385,10 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
         dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23) - GEN_DIST_TOL;
         du = dl + 2 * GEN_DIST_TOL;
         path14.type = Path14Configuration::CIS;
-        accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                           bid2 * nb + bid3] = 1;
-        accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                           bid2 * nb + bid1] = 1;
+        accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                  bid2 * nb + bid3);
+        accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                  bid2 * nb + bid1);
         // BOOST_LOG(rdDebugLog) << "Special 5 " << aid1 << " " << aid4 <<
         // "\n";
       } else if (bnd2->getStereo() > Bond::STEREOANY) {
@@ -1400,10 +1400,10 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
           path14.type = Path14Configuration::CIS;
           // BOOST_LOG(rdDebugLog) << "Special 6 " <<  aid1 << " " << aid4 <<
           // "\n";
-          accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                             bid2 * nb + bid3] = 1;
-          accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                             bid2 * nb + bid1] = 1;
+          accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                    bid2 * nb + bid3);
+          accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                    bid2 * nb + bid1);
         } else {
           // BOOST_LOG(rdDebugLog) << "Special 7 " << aid1 << " " << aid4 <<
           // "\n";
@@ -1412,10 +1412,10 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
           dl -= GEN_DIST_TOL;
           du += GEN_DIST_TOL;
           path14.type = Path14Configuration::TRANS;
-          accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                               bid2 * nb + bid3] = 1;
-          accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                               bid2 * nb + bid1] = 1;
+          accumData.transPaths.insert(
+              static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
+          accumData.transPaths.insert(
+              static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
         }
       } else {
         // double bond with no stereo setting can be 0 or 180
@@ -1449,10 +1449,10 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
                   // still a bit too short, thus we add an additional 0.1, which
                   // is the max that works without triangular smoothing error
         path14.type = Path14Configuration::TRANS;
-        accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                             bid2 * nb + bid3] = 1;
-        accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                             bid2 * nb + bid1] = 1;
+        accumData.transPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                    bid2 * nb + bid3);
+        accumData.transPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                    bid2 * nb + bid1);
 
         du = dl;
         dl -= GEN_DIST_TOL;
@@ -1468,10 +1468,10 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
         // amide is trans, we're cis:
         dl = RDGeom::compute14DistCis(bl1, bl2, bl3, ba12, ba23);
         path14.type = Path14Configuration::CIS;
-        accumData.cisPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                           bid2 * nb + bid3] = 1;
-        accumData.cisPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                           bid2 * nb + bid1] = 1;
+        accumData.cisPaths.insert(static_cast<unsigned long>(bid1) * nb * nb +
+                                  bid2 * nb + bid3);
+        accumData.cisPaths.insert(static_cast<unsigned long>(bid3) * nb * nb +
+                                  bid2 * nb + bid1);
 #else
         // amide is cis, we're trans:
         if (atm2->getAtomicNum() == 7 && atm2->getDegree() == 3 &&
@@ -1481,10 +1481,10 @@ void _setMacrocycleAllInSameRing14Bounds(const ROMol &mol, const Bond *bnd1,
         } else {
           dl = RDGeom::compute14DistTrans(bl1, bl2, bl3, ba12, ba23);
           path14.type = Path14Configuration::TRANS;
-          accumData.transPaths[static_cast<unsigned long>(bid1) * nb * nb +
-                               bid2 * nb + bid3] = 1;
-          accumData.transPaths[static_cast<unsigned long>(bid3) * nb * nb +
-                               bid2 * nb + bid1] = 1;
+          accumData.transPaths.insert(
+              static_cast<unsigned long>(bid1) * nb * nb + bid2 * nb + bid3);
+          accumData.transPaths.insert(
+              static_cast<unsigned long>(bid3) * nb * nb + bid2 * nb + bid1);
         }
 #endif
         du = dl;
@@ -1986,11 +1986,12 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
           unsigned long pathId =
               static_cast<unsigned long>(bid2) * nb * nb + (bid3)*nb + i;
           if (type == 0) {
-            if (accumData.cisPaths[pathId]) {
+            if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
               dl = _compute15DistsCisCis(d1, d2, d3, d4, ang12, ang23, ang34);
               du = dl + DIST15_TOL;
               dl -= DIST15_TOL;
-            } else if (accumData.transPaths[pathId]) {
+            } else if (accumData.transPaths.find(pathId) !=
+                       accumData.transPaths.end()) {
               dl = _compute15DistsCisTrans(d1, d2, d3, d4, ang12, ang23, ang34);
               du = dl + DIST15_TOL;
               dl -= DIST15_TOL;
@@ -2003,11 +2004,12 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
             }
 
           } else if (type == 1) {
-            if (accumData.cisPaths[pathId]) {
+            if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
               dl = _compute15DistsTransCis(d1, d2, d3, d4, ang12, ang23, ang34);
               du = dl + DIST15_TOL;
               dl -= DIST15_TOL;
-            } else if (accumData.transPaths[pathId]) {
+            } else if (accumData.transPaths.find(pathId) !=
+                       accumData.transPaths.end()) {
               dl = _compute15DistsTransTrans(d1, d2, d3, d4, ang12, ang23,
                                              ang34);
               du = dl + DIST15_TOL;
@@ -2021,13 +2023,14 @@ void _set15BoundsHelper(const ROMol &mol, unsigned int bid1, unsigned int bid2,
                    DIST15_TOL;
             }
           } else {
-            if (accumData.cisPaths[pathId]) {
+            if (accumData.cisPaths.find(pathId) != accumData.cisPaths.end()) {
               dl = _compute15DistsCisCis(d4, d3, d2, d1, ang34, ang23, ang12) -
                    DIST15_TOL;
               du =
                   _compute15DistsCisTrans(d4, d3, d2, d1, ang34, ang23, ang12) +
                   DIST15_TOL;
-            } else if (accumData.transPaths[pathId]) {
+            } else if (accumData.transPaths.find(pathId) !=
+                       accumData.transPaths.end()) {
               dl =
                   _compute15DistsTransCis(d4, d3, d2, d1, ang34, ang23, ang12) -
                   DIST15_TOL;
