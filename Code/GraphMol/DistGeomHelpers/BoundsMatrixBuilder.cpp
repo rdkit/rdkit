@@ -74,9 +74,6 @@ class ComputedData {
     bondAdj.reset(bAdj);
     auto *bAngles = new RDNumeric::DoubleSymmMatrix(nBonds, -1.0);
     bondAngles.reset(bAngles);
-    DGeomHelpers::BIT_SET::size_type capacity =
-        boost::numeric_cast<DGeomHelpers::BIT_SET::size_type>(
-            static_cast<unsigned long>(nBonds) * nBonds * nBonds);
     set15Atoms.resize(nAtoms * nAtoms);
   }
 
@@ -1670,6 +1667,15 @@ void setTopolBounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
   if (!na) {
     throw ValueErrorException("molecule has no atoms");
   }
+  // this is 2.6 million bonds, so it's extremly unlikely to ever occur, but we
+  // might as well check:
+  const size_t MAX_NUM_BONDS = static_cast<size_t>(
+      std::pow(std::numeric_limits<std::uint64_t>::max(), 1. / 3));
+  if (mol.getNumBonds() >= MAX_NUM_BONDS) {
+    throw ValueErrorException(
+        "Too many bonds in the molecule, cannot compute 1-4 bounds");
+  }
+
   ComputedData accumData(na, nb);
   double *distMatrix = nullptr;
   distMatrix = MolOps::getDistanceMat(mol);
