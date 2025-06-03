@@ -79,7 +79,9 @@ void MultithreadedMolSupplier::reader() {
       }
     }
     auto r = std::make_tuple(record, lineNum, index);
-    if (!df_forceStop) d_inputQueue->push(r);
+    if (!df_forceStop) {
+      d_inputQueue->push(r);
+    }
   }
   d_inputQueue->setDone();
 }
