@@ -180,13 +180,15 @@ void determineConnectivity(RWMol &mol, bool useHueckel, int charge,
         "The RDKit was not compiled with YAeHMOP support");
   }
 #endif
-  auto numAtoms = mol.getNumAtoms();
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    for (unsigned int j = i + 1; j < numAtoms; j++) {
-      mol.removeBond(i, j);
-      mol.getAtomWithIdx(i)->setNoImplicit(true);
-      mol.getAtomWithIdx(j)->setNoImplicit(true);
-    }
+  // remove all bonds
+  mol.beginBatchEdit();
+  for (auto bond : mol.bonds()) {
+    mol.removeBond(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
+  }
+  mol.commitBatchEdit();
+  // set all atoms to noImplicit
+  for (auto atom : mol.atoms()) {
+    atom->setNoImplicit(true);
   }
   if (useHueckel) {
     connectivityHueckel(mol, charge);
@@ -377,14 +379,17 @@ void determineBondOrders(RWMol &mol, int charge, bool allowChargedFragments,
   std::vector<std::vector<unsigned int>> conMat(
       numAtoms, std::vector<unsigned int>(numAtoms, 0));
   std::vector<unsigned int> origValency(numAtoms, 0);
-  for (unsigned int i = 0; i < numAtoms; i++) {
-    for (unsigned int j = i + 1; j < numAtoms; j++) {
-      if (mol.getBondBetweenAtoms(i, j)) {
-        conMat[i][j]++;
-        origValency[i]++;
-        origValency[j]++;
-      }
+
+  for (const auto bond : mol.bonds()) {
+    auto i = bond->getBeginAtomIdx();
+    auto j = bond->getEndAtomIdx();
+    // conMat is symmetric
+    if (i > j) {
+      std::swap(i, j);
     }
+    conMat[i][j]++;
+    origValency[i]++;
+    origValency[j]++;
   }
 
   std::vector<std::vector<unsigned int>> best(conMat);
