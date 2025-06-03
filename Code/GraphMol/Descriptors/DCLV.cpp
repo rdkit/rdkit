@@ -288,7 +288,7 @@ struct State {
     elem->radius2 = rad * rad;
 
     if (dotDensity) {
-      long count = ((4.0 * M_PI) * rad * rad * dotDensity);
+      unsigned long count = ((4.0 * M_PI) * rad * rad * dotDensity);
       std::vector<DotStruct> dots(count);
 
       unsigned int equat = sqrt(M_PI * count);
