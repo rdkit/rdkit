@@ -12,6 +12,7 @@
 #include <unordered_set>
 
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
 #include <GraphMol/FileParsers/FileParsers.h>

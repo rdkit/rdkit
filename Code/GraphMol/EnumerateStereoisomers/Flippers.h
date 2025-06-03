@@ -17,7 +17,9 @@
 #include <GraphMol/Chirality.h>
 #include <GraphMol/StereoGroup.h>
 
-namespace RDKit::EnumerateStereoisomers::details {
+namespace RDKit {
+namespace EnumerateStereoisomers {
+namespace details {
 // The classes are called Flipper because that's what they were
 // called in the Python, but in fact they set a particular
 // stereochemistry at a centre according to whether a bool is
@@ -99,6 +101,8 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT AtropisomerFlipper : public Flipper {
   std::vector<unsigned int> d_ctrlAtoms;
 };
 
-}  // namespace RDKit::EnumerateStereoisomers::details
+}  // namespace details
+}  // namespace EnumerateStereoisomers
+}  // namespace RDKit
 
 #endif  // FLIPPERS_H

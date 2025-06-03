@@ -28,6 +28,7 @@
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
+
 struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
   bool tryEmbedding{false};   // If true, the process attempts to generate
                               // a standard RDKit distance geometry

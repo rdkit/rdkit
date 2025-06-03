@@ -13,8 +13,9 @@
 #include <GraphMol/EnumerateStereoisomers/Flippers.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 
-namespace RDKit::EnumerateStereoisomers::details {
-
+namespace RDKit {
+namespace EnumerateStereoisomers {
+namespace details {
 AtomFlipper::AtomFlipper(RWMol &mol, const Chirality::StereoInfo &si)
     : Flipper() {
   dp_atom = mol.getAtomWithIdx(si.centeredOn);
@@ -109,4 +110,6 @@ void AtropisomerFlipper::flip(bool flag) {
   }
 }
 
-}  // namespace RDKit::EnumerateStereoisomers::details
+}  // namespace details
+}  // namespace EnumerateStereoisomers
+}  // namespace RDKit
