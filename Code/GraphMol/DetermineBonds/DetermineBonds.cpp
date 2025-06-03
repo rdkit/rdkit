@@ -302,9 +302,12 @@ void setAtomicRadicals(RWMol &mol, const std::vector<unsigned int> &valency,
 
 bool checkSaturation(const std::vector<unsigned int> &order,
                      const std::vector<unsigned int> &valency) {
-  std::vector<unsigned int> unsat;
-  getUnsaturated(order, valency, unsat);
-  return unsat.empty();
+  for (unsigned int i = 0; i < order.size(); i++) {
+    if (order[i] > valency[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void setAtomMap(RWMol &mol) {
