@@ -138,7 +138,39 @@ const std::unordered_map<std::string, std::string> three_character_codes({
     {"XXX", "X"} // Unknown
 });
 
+
+const std::unordered_map<std::string, std::string> single_to_three_letter({
+    {"A", "ALA"}, // Alanine
+    {"R", "ARG"}, // Arginine
+    {"N", "ASN"}, // Asparagine
+    {"D", "ASP"}, // Aspartic acid
+    {"C", "CYS"}, // Cysteine
+    {"Q", "GLN"}, // Glutamine
+    {"E", "GLU"}, // Glutamic acid
+    {"G", "GLY"}, // Glycine
+    {"H", "HIS"}, // Histidine
+    {"I", "ILE"}, // Isoleucine
+    {"L", "LEU"}, // Leucine
+    {"K", "LYS"}, // Lysine
+    {"M", "MET"}, // Methionine
+    {"F", "PHE"}, // Phenylalanine
+    {"P", "PRO"}, // Proline
+    {"S", "SER"}, // Serine
+    {"T", "THR"}, // Threonine
+    {"W", "TRP"}, // Tryptophan
+    {"Y", "TYR"}, // Tyrosine
+    {"V", "VAL"}, // Valine
+    {"U", "SEC"}, // Selenocysteine
+    {"O", "PYL"}  // Pyrrolysine
+});
+
 MonomerDatabase::MonomerDatabase([[maybe_unused]] std::string_view database_path)
+{
+    // TODO: integration with database
+    return;
+}
+
+MonomerDatabase::MonomerDatabase()
 {
     // TODO: integration with database
     return;
@@ -150,7 +182,7 @@ MonomerDatabase::~MonomerDatabase()
     return;
 }
 
-[[nodiscard]] MonomerDatabase::monomer_smiles_t
+[[nodiscard]] std::optional<std::string>
 MonomerDatabase::getMonomerSmiles(std::string monomer_id,
                                         [[maybe_unused]] ChainType monomer_type)
 {
@@ -166,9 +198,21 @@ MonomerDatabase::getHelmInfo(const std::string& pdb_code)
 {
     // currently everything is a peptide
     if (three_character_codes.find(pdb_code) != three_character_codes.end()) {
-        return std::make_pair(three_character_codes.at(pdb_code), ChainType::PEPTIDE);
+        std::string monomer_id = three_character_codes.at(pdb_code);
+        return std::make_tuple(monomer_id, monomer_to_smiles.at(monomer_id), ChainType::PEPTIDE);
     }
     return std::nullopt;
+}
+
+[[nodiscard]] std::optional<std::string>
+MonomerDatabase::getPdbCode(const std::string& helm_symbol,
+                                [[maybe_unused]] ChainType monomer_type)
+{
+    // currently everything is a peptide
+    if (single_to_three_letter.find(helm_symbol) != single_to_three_letter.end()) {
+         return single_to_three_letter.at(helm_symbol);
+    }
+    return "";
 }
 
 } // namespace RDKit

@@ -14,6 +14,7 @@
 
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <RDGeneral/export.h>
 
@@ -42,6 +43,15 @@ const std::string REPETITION_DUMMY_ID{"REPETITION_DUMMY_ID"};
 const std::string BRANCH_MONOMER{"isBranchMonomer"};
 const std::string SMILES_MONOMER{"isSmilesMonomer"};
 const std::string CUSTOM_BOND{"customBond"};
+
+// acts as a view to a polymer chain
+struct Chain {
+    std::vector<unsigned int> atoms;
+    std::vector<unsigned int> bonds;
+    std::string annotation;
+    // std::string polymer_id;
+};
+
 enum class ChainType { PEPTIDE, RNA, DNA, CHEM };
 enum class ConnectionType { FORWARD, SIDECHAIN };
 enum class MonomerType { REGULAR, /* LIST, WILDCARD, */ SMILES };
@@ -98,14 +108,17 @@ RDKIT_MONOMERMOL_EXPORT void addConnection(RDKit::RWMol& mol, size_t monomer1,
                                         const std::string& linkage,
                                         const bool is_custom_bond = false);
 
-RDKIT_MONOMERMOL_EXPORT [[nodiscard]] std::string
+[[nodiscard]] RDKIT_MONOMERMOL_EXPORT Chain
+getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id);
+
+[[nodiscard]] RDKIT_MONOMERMOL_EXPORT std::string
 getPolymerId(const RDKit::Atom* atom);
 
-RDKIT_MONOMERMOL_EXPORT [[nodiscard]] std::vector<std::string>
+[[nodiscard]] RDKIT_MONOMERMOL_EXPORT std::vector<std::string>
 getPolymerIds(const RDKit::ROMol& monomer_mol);
 
-RDKIT_MONOMERMOL_EXPORT [[nodiscard]] unsigned int
-getResidueNumber(RDKit::Atom* atom);
+[[nodiscard]] RDKIT_MONOMERMOL_EXPORT unsigned int
+getResidueNumber(const RDKit::Atom* atom);
 
 // Discards existing chains and reassigns monomers to sequential chains.
 // (in HELM world, "chains" are called "polymers")

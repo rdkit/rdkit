@@ -22,11 +22,6 @@ namespace RDKit
 
 namespace
 {
-namespace fs = boost::filesystem;
-
-const std::string SGROUP_PROP_CLASS{"CLASS"};
-const std::string SGROUP_PROP_LABEL{"LABEL"};
-const std::string SGROUP_PROP_RESNUM{"ID"};
 
 using AttachmentMap = std::map<std::pair<unsigned int, unsigned int>,
                                std::pair<unsigned int, unsigned int>>;
@@ -68,7 +63,7 @@ std::pair<unsigned int, unsigned int> getAttchpts(const std::string& linkage)
     auto dash = linkage.find('-');
     if (dash == std::string::npos) {
         throw std::runtime_error(
-            fmt::format("Invalid linkage format: {}", linkage));
+            "Invalid linkage format: " + linkage);
     }
     return {std::stoi(linkage.substr(1, dash - 1)),
             std::stoi(linkage.substr(dash + 2))};
@@ -88,8 +83,8 @@ void fillAttachmentPointMap(const RDKit::ROMol& new_monomer,
                 if (attachment_points.find({residue_num, map_num}) !=
                     attachment_points.end()) {
                     throw std::runtime_error(
-                        fmt::format("Invalid attachment point at index {}",
-                                    atom->getIdx()));
+                        "Invalid attachment point at index " +
+                        std::to_string(atom->getIdx()));
                 }
                 auto atom_to_bond_to =
                     old_mol_size + bnd->getOtherAtomIdx(atom->getIdx());
@@ -149,9 +144,9 @@ ChainType getChainType(std::string_view polymer_id)
     } else if (polymer_id.find("CHEM") == 0) {
         return ChainType::CHEM;
     } else {
-        throw std::out_of_range(fmt::format(
-            "Invalid polymer id: {}. Must be one of PEPTIDE, RNA, CHEM",
-            polymer_id));
+        throw std::out_of_range(
+            "Invalid polymer id: " + std::string(polymer_id) +
+            ". Must be one of PEPTIDE, RNA, CHEM");
     }
 }
 
@@ -166,23 +161,17 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
     // that should later be removed
     AttachmentMap attachment_point_map;
 
-    auto chain = get_polymer(monomer_mol, polymer_id);
+    auto chain = getPolymer(monomer_mol, polymer_id);
     auto chain_type = getChainType(polymer_id);
     bool sanitize = false;
 
-    auto path = getMonomerDbPath();
-    if (!path.has_value()) {
-        // This shouldn't happen since DEFAULT_MONOMER_DB_PATH_ENV_VAR points to
-        // mmshare/data/helm/core_monomerlib.db and that should always exist
-        throw std::runtime_error(fmt::format(
-            "Could not find monomer database, try setting env variable {}",
-            CUSTOM_MONOMER_DB_PATH_ENV_VAR));
-    }
-    MonomerDatabase db(*path);
+    // Eventually, this will be connecting to a database of monomers or accessing an
+    // in-memory datastructure
+    MonomerDatabase db;
 
     // Add the monomers to the atomistic mol
     for (const auto monomer_idx : chain.atoms) {
-        auto monomer = monomer_mol.getAtomWithIdx(monomer_idx);
+        const auto monomer = monomer_mol.getAtomWithIdx(monomer_idx);
         auto monomer_label = monomer->getProp<std::string>(ATOM_LABEL);
 
         std::string smiles;
@@ -192,9 +181,8 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
             auto monomer_smiles =
                 db.getMonomerSmiles(monomer_label, chain_type);
             if (!monomer_smiles) {
-                throw std::out_of_range(fmt::format(
-                    "Peptide Monomer {} not found in Monomer database",
-                    monomer_label));
+                throw std::out_of_range(
+                    "Peptide Monomer " + monomer_label + " not found in Monomer database");
             }
             smiles = *monomer_smiles;
         }
@@ -249,9 +237,10 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
             attachment_point_map.find({to_res, to_rgroup}) ==
                 attachment_point_map.end()) {
             // One of these attachment points is not present
-            throw std::runtime_error(fmt::format(
-                "Invalid linkage {} between monomers {} and {}",
-                bond->getProp<std::string>(LINKAGE), from_res, to_res));
+            throw std::runtime_error(
+                "Invalid linkage " + bond->getProp<std::string>(LINKAGE) +
+                " between monomers " + std::to_string(from_res) + " and " +
+                std::to_string(to_res));
         }
 
         auto [core_aid1, attachment_point1] =
@@ -259,9 +248,6 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
         auto [core_aid2, attachment_point2] =
             attachment_point_map.at({to_res, to_rgroup});
 
-        auto atomistic_bond_idx =
-            atomistic_mol.addBond(core_aid1, core_aid2, bond->getBondType()) -
-            1;
         remove_atoms.push_back(attachment_point1);
         remove_atoms.push_back(attachment_point2);
     }
@@ -270,7 +256,7 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
 }
 } // namespace
 
-boost::shared_ptr<RDKit::RWMol> mmToAtomistic(const RDKit::ROMol& monomer_mol)
+boost::shared_ptr<RDKit::RWMol> monomerMolToAtomsitic(const RDKit::ROMol& monomer_mol)
 {
     auto atomistic_mol = boost::make_shared<RDKit::RWMol>();
 

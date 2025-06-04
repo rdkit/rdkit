@@ -42,7 +42,7 @@ std::string to_fasta(const ROMol& mol)
     // make a set of all the chains in the molecule
     std::set<std::string> chains;
     for (auto atom : mol.atoms()) {
-        chains.insert(get_polymer_id(atom));
+        chains.insert(getPolymerId(atom));
     }
     std::stringstream fasta;
     bool first = true;
@@ -52,7 +52,7 @@ std::string to_fasta(const ROMol& mol)
         }
         first = false;
         fasta << ">Chain " << chain_id << "\n"; // add title
-        auto chain = get_polymer(mol, chain_id);
+        auto chain = getPolymer(mol, chain_id);
         for (auto atom : chain.atoms) {
             // Really there should be a lookup to ensure that these are all 1 letter
             // And a sort by residue number & connectivity

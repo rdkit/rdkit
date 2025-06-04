@@ -53,16 +53,16 @@ void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
 
         // If the linkage property isn't set, something went wrong
         if (!bond->getPropIfPresent(LINKAGE, old_linkage)) {
-            throw std::runtime_error(fmt::format(
-                "No linkage property on bond between atom={} and atom={}",
-                monomer1, monomer2));
+            throw std::runtime_error(
+                "No linkage property on bond between atom=" +
+                std::to_string(monomer1) + " and atom=" + std::to_string(monomer2));
         }
 
         // Make sure we're not recreating this same bond.
         if (old_linkage.find(linkage) != std::string::npos) {
-            throw std::runtime_error(fmt::format(
-                "Can't duplicate {} bond between atom={} and atom={}", linkage,
-                monomer1, monomer2));
+            throw std::runtime_error(
+                "Can't duplicate " + linkage + " bond between atom=" +
+                std::to_string(monomer1) + " and atom=" + std::to_string(monomer2));
         }
 
         // Since hydrogen bonding and covalent bonds are different types of bond
@@ -70,18 +70,16 @@ void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
         if (linkage.find("pair") == 0 ||
             old_linkage.find("pair") != std::string::npos) {
             throw std::runtime_error(
-                fmt::format("Multiple bonds can't include hydrogen bond for "
-                            "bond between atom={} and atom={}",
-                            monomer1, monomer2));
+                "Multiple bonds can't include hydrogen bond for bond between atom=" +
+                std::to_string(monomer1) + " and atom=" + std::to_string(monomer2));
         }
 
         // FIXME: For now, don't allow multiple custom bonds between the same
         // two atoms
         if (bond->hasProp(CUSTOM_BOND)) {
             throw std::runtime_error(
-                fmt::format("Multiple custom bonds not supported for "
-                            "bond between atom={} and atom={}",
-                            monomer1, monomer2));
+                "Multiple custom bonds not supported for bond between atom=" +
+                std::to_string(monomer1) + " and atom=" + std::to_string(monomer2));
         }
 
         // Update the linkage property
@@ -154,7 +152,7 @@ void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
         ->getResidueNumber();
 }
 
-std::unique_ptr<Monomer> makeMonomer(std::string_view name,
+std::unique_ptr<Atom> makeMonomer(std::string_view name,
                                      std::string_view chain_id,
                                      int residue_number, bool is_smiles)
 {
@@ -213,16 +211,52 @@ void setResidueNumber(RDKit::Atom* atom, int residue_number)
         static_cast<RDKit::AtomPDBResidueInfo*>(atom->getMonomerInfo());
     if (residue_info == nullptr) {
         throw std::runtime_error(
-            fmt::format("Atom {} does not have residue info", atom->getIdx()));
+            "Atom " + std::to_string(atom->getIdx()) + " does not have residue info");
     }
     residue_info->setResidueNumber(residue_number);
+}
+
+Chain getPolymer(const RDKit::ROMol& cg_mol, std::string_view polymer_id)
+{
+    std::vector<unsigned int> atoms;
+    for (auto atom : cg_mol.atoms()) {
+        if (getPolymerId(atom) == polymer_id) {
+            atoms.push_back(atom->getIdx());
+        }
+    }
+    // Sort by get_residue_num
+    std::sort(atoms.begin(), atoms.end(),
+              [&cg_mol](unsigned int a, unsigned int b) {
+                  return getResidueNumber(cg_mol.getAtomWithIdx(a)) <
+                         getResidueNumber(cg_mol.getAtomWithIdx(b));
+              });
+    std::vector<unsigned int> bonds;
+    for (auto bond : cg_mol.bonds()) {
+        if (getPolymerId(bond->getBeginAtom()) == polymer_id &&
+            getPolymerId(bond->getEndAtom()) == polymer_id) {
+            bonds.push_back(bond->getIdx());
+        }
+    }
+
+    std::string annotation{};
+    for (const auto& sg : ::RDKit::getSubstanceGroups(cg_mol)) {
+        if ((sg.getProp<std::string>("TYPE") != "COP") ||
+            !sg.hasProp(ANNOTATION) || !sg.hasProp("ID")) {
+            continue;
+        }
+        if (sg.getProp<std::string>("ID") == polymer_id) {
+            annotation = sg.getProp<std::string>(ANNOTATION);
+            break;
+        }
+    }
+    return {atoms, bonds, annotation};
 }
 
 bool isValidChain(const RDKit::RWMol& monomer_mol, std::string_view polymer_id)
 {
     // Check that the residue ordering is valid for this polymer. The residues
     // should be in connectivity order
-    const auto chain = get_polymer(monomer_mol, polymer_id);
+    const auto chain = getPolymer(monomer_mol, polymer_id);
     auto last_residue = chain.atoms[0];
     for (size_t i = 1; i < chain.atoms.size(); ++i) {
         const auto bond =
@@ -329,8 +363,8 @@ void assignChains(RDKit::RWMol& monomer_mol)
 {
     monomer_mol.setProp("HELM_MODEL", true);
 
-    // Currently, order_residues only works when there is a single chain
-    auto chain_ids = get_polymer_ids(monomer_mol);
+    // Currently, orderResidues only works when there is a single chain
+    auto chain_ids = getPolymerIds(monomer_mol);
     if (chain_ids.size() == 1 && !isValidChain(monomer_mol, chain_ids[0])) {
         orderResidues(monomer_mol);
     }

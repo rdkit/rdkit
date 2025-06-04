@@ -19,10 +19,12 @@ class RWMol;
  * be written to HELM format using the HELM writer.
  *
  * @param atomistic_mol Atomistic molecule to convert to MonomerMol
+ * @param use_residue_info Whether to use PDBAtomResidueInfo to determine
+ * monomer boundaries
  * @return MonomerMol
  */
 RDKIT_MONOMERMOL_EXPORT boost::shared_ptr<RDKit::RWMol>
-atomisticToMonomerMol(const RDKit::ROMol& atomistic_mol);
+atomisticToMonomerMol(const RDKit::ROMol& atomistic_mol, bool use_residue_info = true);
 
 /**
  * Build an atomistic molecule from a MonomerMol
