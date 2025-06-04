@@ -11,8 +11,10 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 # Enable CTest
 include(CTest)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
@@ -72,8 +74,9 @@ option(RDK_BUILD_MINIMAL_LIB_RXN "build support for reactions into MinimalLib" O
 option(RDK_BUILD_MINIMAL_LIB_SUBSTRUCTLIBRARY "build support for SubstructLibrary into MinimalLib" ON )
 option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
+option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
 
-set(RDK_BOOST_VERSION "1.70.0")
+set(RDK_BOOST_VERSION "1.81.0")
 
 if(NOT MSVC)
   if(RDK_OPTIMIZE_POPCNT)
@@ -87,9 +90,15 @@ if(NOT MSVC)
   endif()
 endif()
 
-if(NOT UNIX OR APPLE OR CYGWIN)
+# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
+# detect it.
+string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+# Detect emcc
+string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
+
+if(NOT UNIX OR APPLE OR CYGWIN OR CMAKE_COMPILER_IS_EMCC)
   if(RDK_USE_BOOST_STACKTRACE)
-    MESSAGE("Disabling boost::stacktrace on non-linux platform")
+    MESSAGE("Disabling boost::stacktrace on non-linux and emscripten platforms")
     set(RDK_USE_BOOST_STACKTRACE OFF)
   endif(RDK_USE_BOOST_STACKTRACE)
 endif()
@@ -105,8 +114,12 @@ if(RDK_SWIG_STATIC AND RDK_BUILD_SWIG_WRAPPERS)
     set(RDK_INSTALL_STATIC_LIBS ON CACHE BOOL "install the rdkit static libraries" FORCE)
   endif(NOT MSVC AND NOT RDK_INSTALL_STATIC_LIBS)
 endif()
-
-if((NOT (MSVC AND (NOT RDK_INSTALL_DLLS_MSVC))) AND NOT (WIN32 AND RDK_INSTALL_STATIC_LIBS))
+if ((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR (WIN32 AND RDK_INSTALL_STATIC_LIBS) OR RDK_BUILD_MINIMAL_LIB)
+  set(RDK_BUILD_STATIC_LIBS_ONLY ON)
+else()
+  set(RDK_BUILD_STATIC_LIBS_ONLY OFF)
+endif()
+if(NOT RDK_BUILD_STATIC_LIBS_ONLY)
   add_definitions(-DRDKIT_DYN_LINK)
 endif()
 
@@ -138,7 +151,7 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 #-------
 # Config variables:
 set(RDKit_Year "2025")
-set(RDKit_Month "03")
+set(RDKit_Month "09")
 set(RDKit_Revision "1")
 set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
@@ -165,17 +178,14 @@ if(NOT Catch2_FOUND)
   FetchContent_MakeAvailable(Catch2)
 endif()
 
-#include better-enums
-find_package(better_enums 0 QUIET)
-if(NOT better_enums)
-  Include(FetchContent)
+# make sure we have better_enums
+Include(FetchContent)
 
-  FetchContent_Declare(
-    better_enums
-    GIT_REPOSITORY https://github.com/aantron/better-enums.git
-    GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
-  )
-endif()
+FetchContent_Declare(
+  better_enums
+  GIT_REPOSITORY https://github.com/aantron/better-enums.git
+  GIT_TAG        c35576bed0295689540b39873126129adfa0b4c8 # 0.11.3
+)
 
 if(RDK_INSTALL_INTREE)
   set(RDKit_BinDir "${CMAKE_SOURCE_DIR}/bin")
@@ -247,12 +257,6 @@ if(RDK_BUILD_YAEHMOP_SUPPORT)
     add_definitions(-DRDK_BUILD_YAEHMOP_SUPPORT)
 endif()
 
-# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
-# detect it.
-string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
-# Detect emcc
-string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
-
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
   target_compile_definitions(rdkit_base INTERFACE "-DRDK_32BIT_BUILD")
 else()
@@ -305,8 +309,8 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   #-------
   # pull in python:
   find_package(Python3 COMPONENTS Interpreter Development.Module NumPy)
-  target_include_directories(rdkit_base INTERFACE ${Python3_INCLUDE_DIRS})
-  target_include_directories(rdkit_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
+  target_include_directories(rdkit_py_base INTERFACE ${Python3_INCLUDE_DIRS})
+  target_include_directories(rdkit_py_base INTERFACE ${Python3_NumPy_INCLUDE_DIRS})
 
   # determine linkage of python
   execute_process(
@@ -380,7 +384,7 @@ if(RDK_BUILD_PYTHON_WRAPPERS)
   endif()
 
 
-  install(TARGETS rdkit_py_base EXPORT ${RDKit_EXPORTED_TARGETS}
+  install(TARGETS rdkit_py_base EXPORT ${RDKitPython_EXPORTED_TARGETS}
           COMPONENT dev )
 
   # check to see if we can find nbval,
@@ -471,9 +475,10 @@ endif()
 target_include_directories(rdkit_base INTERFACE
                            $<BUILD_INTERFACE:${RDKit_CodeDir}>
                            $<INSTALL_INTERFACE:${RDKit_HdrDir}>
-                           ${Boost_INCLUDE_DIRS}
                            )
-target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES})
+# linking against Boost::boost will add Boost to the include directories without
+# hard-coding Boost's path into the rdkit-targets.cmake that gets generated
+target_link_libraries(rdkit_base INTERFACE ${BOOST_LIBRARIES} Boost::boost)
 
 
 if(RDK_BUILD_PGSQL)
@@ -604,6 +609,9 @@ if(RDK_BUILD_CONTRIB)
 endif(RDK_BUILD_CONTRIB)
 
 # export the project targets (to be included in the cmake package configuration)
+include(CMakePackageConfigHelpers)
+
+# first manage the targets for the base C++ toolkit
 install(
   EXPORT ${RDKit_EXPORTED_TARGETS}
   FILE ${RDKit_EXPORTED_TARGETS}.cmake
@@ -612,7 +620,6 @@ install(
 )
 
 # create and install package configuration and version files
-include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
   "${RDKit_BINARY_DIR}/rdkit-config-version.cmake"
   VERSION ${RDKit_RELEASENAME}
@@ -627,6 +634,31 @@ install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config.cmake
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkit)
+
+# then manage the targets for the python bindings
+if(RDK_BUILD_PYTHON_WRAPPERS)
+  install(
+    EXPORT ${RDKitPython_EXPORTED_TARGETS}
+    FILE ${RDKitPython_EXPORTED_TARGETS}.cmake
+    NAMESPACE RDKit::
+    DESTINATION ${RDKit_LibDir}/cmake/rdkitpython
+  )
+
+  write_basic_package_version_file(
+    "${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake"
+    VERSION ${RDKit_RELEASENAME}
+    COMPATIBILITY AnyNewerVersion
+  )
+
+  configure_file (
+    ${RDKit_SOURCE_DIR}/rdkitpython-config.cmake.in
+    ${RDKit_BINARY_DIR}/rdkitpython-config.cmake @ONLY)
+
+  install(FILES
+    ${RDKit_BINARY_DIR}/rdkitpython-config.cmake
+    ${RDKit_BINARY_DIR}/rdkitpython-config-version.cmake
+    DESTINATION ${RDKit_LibDir}/cmake/rdkitpython)
+endif(RDK_BUILD_PYTHON_WRAPPERS)
 
 # Memory testing setup
 FIND_PROGRAM(MEMORYCHECK_COMMAND valgrind)

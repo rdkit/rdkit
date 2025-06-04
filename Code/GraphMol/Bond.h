@@ -386,10 +386,14 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
   void initBond();
 };
 
-inline bool isDative(const Bond &bond) {
-  auto bt = bond.getBondType();
+inline bool isDative(const Bond::BondType bt) {
   return bt == Bond::BondType::DATIVE || bt == Bond::BondType::DATIVEL ||
          bt == Bond::BondType::DATIVER || bt == Bond::BondType::DATIVEONE;
+}
+
+inline bool isDative(const Bond &bond) {
+  auto bt = bond.getBondType();
+  return isDative(bt);
 }
 
 inline bool canSetDoubleBondStereo(const Bond &bond) {

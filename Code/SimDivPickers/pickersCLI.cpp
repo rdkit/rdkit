@@ -34,7 +34,7 @@ static unsigned int LoadDatabase(FILE *fp) {
   char buffer[32768];
   unsigned int result = 0;
 
-  while (fgets(buffer, 327666, fp)) {
+  while (fgets(buffer, sizeof(buffer), fp)) {
     if (buffer[0] == '#' || buffer[0] == ' ' || buffer[0] == '\t') continue;
     char *ptr = buffer;
     while (*ptr && *ptr != ' ' && *ptr != '\t') ptr++;

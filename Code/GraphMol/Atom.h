@@ -76,7 +76,8 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   friend class MolPickler;  //!< the pickler needs access to our privates
   friend class ROMol;
   friend class RWMol;
-  friend std::ostream &(::operator<<)(std::ostream &target, const Atom &at);
+  friend std::ostream &(::operator<<)(std::ostream &target,
+                                      const ::RDKit::Atom &at);
   friend int calculateImplicitValence(const Atom &, bool, bool);
 
  public:
@@ -190,12 +191,10 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   unsigned int getValence(ValenceType which) const;
 
   //! returns the explicit valence (including Hs) of this atom
-  [[deprecated("please use getValence(true)")]]
-  int getExplicitValence() const;
+  [[deprecated("please use getValence(true)")]] int getExplicitValence() const;
 
   //! returns the implicit valence for this Atom
-  [[deprecated("please use getValence(false)")]]
-  int getImplicitValence() const;
+  [[deprecated("please use getValence(false)")]] int getImplicitValence() const;
 
   //! returns whether the atom has a valency violation or not
   bool hasValenceViolation() const;
@@ -346,6 +345,7 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   void updatePropertyCache(bool strict = true);
 
   bool needsUpdatePropertyCache() const;
+  void clearPropertyCache();
 
   //! calculates and returns our explicit valence
   /*!

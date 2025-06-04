@@ -15,6 +15,7 @@
 #include <random>
 
 #include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -1421,117 +1422,169 @@ void test12() {
   BOOST_LOG(rdInfoLog)
       << "-----------------------\n Testing double bond stereochemistry"
       << std::endl;
-  ROMol *m;
-  RWMol *m2;
-  std::string smi = "F\\C=C/Cl";
-  std::string refSmi;
 
-  m = SmilesToMol(smi);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
-  TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
-  TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
+  for (const bool useLegacy : {true, false}) {
+    UseLegacyStereoPerceptionFixture fx(useLegacy);
 
-  delete m;
-  smi = "F/C=CCl";
-  m = SmilesToMol(smi);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    std::string smi = "F\\C=C/Cl";
+    auto m = v2::SmilesParse::MolFromSmiles(smi);
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(0)->getStereo() == Bond::STEREONONE);
+    if (useLegacy) {
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
+    TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREONONE);
 
-  delete m;
-  smi = "F/C=C/Cl";
-  m = SmilesToMol(smi);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    smi = "F/C=CCl";
+    m.reset(SmilesToMol(smi));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
-  delete m;
-  smi = "F/C=C(/Br)Cl";
-  m = SmilesToMol(smi);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    smi = "F/C=C/Cl";
+    m.reset(SmilesToMol(smi));
+    TEST_ASSERT(m);
+    if (useLegacy) {
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    } else {
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
 
-  delete m;
-  smi = "F/C=C(/Cl)Br";
-  m = SmilesToMol(smi);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    smi = "F/C=C(/Br)Cl";
+    m.reset(SmilesToMol(smi));
+    TEST_ASSERT(m);
+    if (useLegacy) {
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    } else {
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
 
-  delete m;
-  smi = "F/C(Br)=C/Cl";
-  m = SmilesToMol(smi);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+    smi = "F/C=C(/Cl)Br";
+    m.reset(SmilesToMol(smi));
+    TEST_ASSERT(m);
+    if (useLegacy) {
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
 
-  delete m;
-  smi = "F/C=C(/Cl)Cl";
-  m = SmilesToMol(smi);
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
+    smi = "F/C(Br)=C/Cl";
+    m.reset(SmilesToMol(smi));
+    TEST_ASSERT(m);
+    if (useLegacy) {
+      TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(m->getBondWithIdx(2)->getStereo() == Bond::STEREOTRANS);
+      TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m->getBondWithIdx(2)->getStereoAtoms()[1] == 4);
+    }
 
-  // build a molecule from scratch to test problems
-  // around Issue 180. The molecule corresponds to SMILES
-  // F/C=C(/Br)C
-  delete m;
-  m2 = new RWMol();
-  m2->addAtom(new Atom(9), true, true);
-  m2->addAtom(new Atom(6), true, true);
-  m2->addAtom(new Atom(6), true, true);
-  m2->addAtom(new Atom(35), true, true);
-  m2->addAtom(new Atom(6), true, true);
-  m2->addBond(0, 1, Bond::SINGLE);
-  m2->addBond(1, 2, Bond::DOUBLE);
-  m2->addBond(2, 3, Bond::SINGLE);
-  m2->addBond(2, 4, Bond::SINGLE);
-  m2->getBondWithIdx(0)->setBondDir(Bond::ENDUPRIGHT);
-  m2->getBondWithIdx(2)->setBondDir(Bond::ENDUPRIGHT);
-  m2->getBondWithIdx(3)->setBondDir(Bond::ENDDOWNRIGHT);
-  MolOps::sanitizeMol(*m2);
-  MolOps::assignStereochemistry(*m2);
-  TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    smi = "F/C=C(/Cl)Cl";
+    m.reset(SmilesToMol(smi));
+    TEST_ASSERT(m);
+    TEST_ASSERT(m->getBondWithIdx(1)->getStereo() == Bond::STEREONONE);
 
-  m2->getBondWithIdx(0)->setBondDir(Bond::ENDDOWNRIGHT);
-  MolOps::assignStereochemistry(*m2, true, true);
-  TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    // build a molecule from scratch to test problems
+    // around Issue 180. The molecule corresponds to SMILES
+    // F/C=C(/Br)C
+    auto m2 = std::make_unique<RWMol>();
+    m2->addAtom(new Atom(9), true, true);
+    m2->addAtom(new Atom(6), true, true);
+    m2->addAtom(new Atom(6), true, true);
+    m2->addAtom(new Atom(35), true, true);
+    m2->addAtom(new Atom(6), true, true);
+    m2->addBond(0, 1, Bond::SINGLE);
+    m2->addBond(1, 2, Bond::DOUBLE);
+    m2->addBond(2, 3, Bond::SINGLE);
+    m2->addBond(2, 4, Bond::SINGLE);
+    m2->getBondWithIdx(0)->setBondDir(Bond::ENDUPRIGHT);
+    m2->getBondWithIdx(2)->setBondDir(Bond::ENDUPRIGHT);
+    m2->getBondWithIdx(3)->setBondDir(Bond::ENDDOWNRIGHT);
+    MolOps::sanitizeMol(*m2);
+    MolOps::assignStereochemistry(*m2);
+    if (useLegacy) {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    } else {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
 
-  delete m2;
-  m2 = new RWMol();
-  m2->addAtom(new Atom(9), true, true);
-  m2->addAtom(new Atom(6), true, true);
-  m2->addAtom(new Atom(6), true, true);
-  m2->addAtom(new Atom(35), true, true);
-  m2->addAtom(new Atom(6), true, true);
-  m2->addBond(1, 0, Bond::SINGLE);
-  m2->addBond(1, 2, Bond::DOUBLE);
-  m2->addBond(2, 3, Bond::SINGLE);
-  m2->addBond(2, 4, Bond::SINGLE);
-  m2->getBondWithIdx(0)->setBondDir(Bond::ENDUPRIGHT);
-  m2->getBondWithIdx(2)->setBondDir(Bond::ENDUPRIGHT);
-  m2->getBondWithIdx(3)->setBondDir(Bond::ENDDOWNRIGHT);
-  MolOps::sanitizeMol(*m2);
-  MolOps::assignStereochemistry(*m2);
-  TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    m2->getBondWithIdx(0)->setBondDir(Bond::ENDDOWNRIGHT);
+    MolOps::assignStereochemistry(*m2, true, true);
+    if (useLegacy) {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
 
-  m2->getBondWithIdx(0)->setBondDir(Bond::ENDDOWNRIGHT);
-  MolOps::assignStereochemistry(*m2, true, true);
-  TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    m2.reset(new RWMol());
+    m2->addAtom(new Atom(9), true, true);
+    m2->addAtom(new Atom(6), true, true);
+    m2->addAtom(new Atom(6), true, true);
+    m2->addAtom(new Atom(35), true, true);
+    m2->addAtom(new Atom(6), true, true);
+    m2->addBond(1, 0, Bond::SINGLE);
+    m2->addBond(1, 2, Bond::DOUBLE);
+    m2->addBond(2, 3, Bond::SINGLE);
+    m2->addBond(2, 4, Bond::SINGLE);
+    m2->getBondWithIdx(0)->setBondDir(Bond::ENDUPRIGHT);
+    m2->getBondWithIdx(2)->setBondDir(Bond::ENDUPRIGHT);
+    m2->getBondWithIdx(3)->setBondDir(Bond::ENDDOWNRIGHT);
+    MolOps::sanitizeMol(*m2);
+    MolOps::assignStereochemistry(*m2);
+    if (useLegacy) {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOCIS);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
 
-  // ----------------------
-  // test Issue 174:
-  delete m2;
-  smi = "O\\N=C\\C=N/O";
-  m2 = SmilesToMol(smi);
-  TEST_ASSERT(m2);
-  TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
-  TEST_ASSERT(m2->getBondWithIdx(3)->getStereo() == Bond::STEREOZ);
-  refSmi = MolToSmiles(*m2, 1);
-  m = SmilesToMol(refSmi);
-  TEST_ASSERT(m);
-  smi = MolToSmiles(*m, 1);
-  TEST_ASSERT(refSmi == smi);
+    m2->getBondWithIdx(0)->setBondDir(Bond::ENDDOWNRIGHT);
+    MolOps::assignStereochemistry(*m2, true, true);
+    if (useLegacy) {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+    } else {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+    }
 
-  delete m;
-  delete m2;
+    // ----------------------
+    // test Issue 174:
+    smi = "O\\N=C\\C=N/O";
+    m2.reset(SmilesToMol(smi));
+    TEST_ASSERT(m2);
+    if (useLegacy) {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOE);
+      TEST_ASSERT(m2->getBondWithIdx(3)->getStereo() == Bond::STEREOZ);
+    } else {
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereo() == Bond::STEREOTRANS);
 
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[0] == 0);
+      TEST_ASSERT(m2->getBondWithIdx(1)->getStereoAtoms()[1] == 3);
+      TEST_ASSERT(m2->getBondWithIdx(3)->getStereo() == Bond::STEREOCIS);
+      TEST_ASSERT(m2->getBondWithIdx(3)->getStereoAtoms()[0] == 2);
+      TEST_ASSERT(m2->getBondWithIdx(3)->getStereoAtoms()[1] == 5);
+    }
+    auto refSmi = MolToSmiles(*m2, 1);
+    m.reset(SmilesToMol(refSmi));
+    TEST_ASSERT(m);
+    smi = MolToSmiles(*m, 1);
+    TEST_ASSERT(refSmi == smi);
+  }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
@@ -3498,13 +3551,7 @@ void testSFNetIssue2196817() {
   {
     ROMOL_SPTR m = "C1=CC2=CC=C3C=CC4=CC=C5C=CN1*1*2*3*4N51"_smiles;
     for (const auto a : m->atoms()) {
-      if (a->getAtomicNum() > 0 || a->getIdx() == 15 || a->getIdx() == 18) {
-        TEST_ASSERT(a->getIsAromatic());
-      } else if (a->getIdx() == 16 || a->getIdx() == 17) {
-        TEST_ASSERT(!a->getIsAromatic());
-      } else {
-        TEST_ASSERT(0);
-      }
+      TEST_ASSERT(a->getIsAromatic());
     }
     unsigned int nNonAromaticBonds = 0;
     for (const auto b : m->bonds()) {
@@ -5523,6 +5570,35 @@ void testGetMolFrags() {
                 m->getConformer(0).getAtomPos(24).y);
     TEST_ASSERT(frags[1]->getConformer(0).getAtomPos(0).z ==
                 m->getConformer(0).getAtomPos(24).z);
+    delete m;
+  }
+  {  // confirm bond-only stereogroups are not removed during GetmolFrags
+    std::string smiles =
+        "Cc1cccc(Cl)c1-c1c(C)cccc1I.Cc1cccc(F)c1-c1c(C)cccc1Cl |wD:8.15,wU:23.23,o1:23,&1:8|";
+    RWMol *m = SmilesToMol(smiles);
+    TEST_ASSERT(m);
+
+    INT_VECT fragsMapping;
+    VECT_INT_VECT fragsMolAtomMapping;
+    std::vector<ROMOL_SPTR> frags =
+        MolOps::getMolFrags(*m, false, &fragsMapping, &fragsMolAtomMapping);
+    TEST_ASSERT(frags.size() == 2)
+    TEST_ASSERT(fragsMapping.size() == m->getNumAtoms());
+
+    for (const auto &frag : frags) {
+      TEST_ASSERT(frag->getNumAtoms() == 16);
+      TEST_ASSERT(frag->getNumBonds() == 17);
+      TEST_ASSERT(frag->getStereoGroups().size() == 1);
+      TEST_ASSERT(frag->getStereoGroups()[0].getBonds().size() == 1);
+    }
+
+    RDKit::SmilesWriteParams sps;
+    TEST_ASSERT(MolToCXSmiles(*frags[0], sps,
+                              SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) ==
+                "Cc1cccc(Cl)c1-c1c(C)cccc1I |wU:7.6,&1:7|");
+    TEST_ASSERT(MolToCXSmiles(*frags[1], sps,
+                              SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS) ==
+                "Cc1cccc(F)c1-c1c(C)cccc1Cl |wU:7.6,o1:7|");
     delete m;
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
@@ -8654,7 +8730,6 @@ int main() {
   testGithubIssue432();
   testGithubIssue443();
   testGithubIssue447();
-  testGetMolFrags();
   testGithubIssue510();
   testGithubIssue526();
   testGithubIssue539();
@@ -8699,5 +8774,6 @@ int main() {
   testGithub5099();
   testHasQueryHs();
   testIsRingFused();
+  testGetMolFrags();
   return 0;
 }

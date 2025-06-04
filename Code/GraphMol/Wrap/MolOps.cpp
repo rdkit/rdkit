@@ -296,15 +296,21 @@ void addRecursiveQueriesHelper(ROMol &mol, python::dict replDict,
   addRecursiveQueries(mol, replacements, propName);
 }
 
-ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
-             python::object onlyOnAtoms, bool addResidueInfo) {
+ROMol *addHs2(const ROMol &orig, MolOps::AddHsParameters params,
+              python::object onlyOnAtoms) {
   std::unique_ptr<std::vector<unsigned int>> onlyOn;
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
-  ROMol *res = MolOps::addHs(orig, explicitOnly, addCoords, onlyOn.get(),
-                             addResidueInfo);
-  return res;
+  auto res = std::make_unique<RWMol>(orig);
+  MolOps::addHs(*res, params, onlyOn.get());
+  return static_cast<ROMol *>(res.release());
+}
+
+ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
+             python::object onlyOnAtoms, bool addResidueInfo) {
+  MolOps::AddHsParameters params{explicitOnly, addCoords, addResidueInfo};
+  return addHs2(orig, params, onlyOnAtoms);
 }
 
 VECT_INT_VECT getSSSR(ROMol &mol, bool includeDativeBonds) {
@@ -899,10 +905,12 @@ python::tuple detectChemistryProblemsHelper(const ROMol &mol,
 }
 
 ROMol *canonicalizeStereoGroupsHelper(
-    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions) {
+    ROMol &mol, RDKit::StereoGroupAbsOptions stereoGroupAbsOptions,
+    unsigned int maxStereoGroups) {
   auto mol_uptr = std::unique_ptr<ROMol>(new ROMol(mol));
 
-  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions);
+  RDKit::canonicalizeStereoGroups(mol_uptr, stereoGroupAbsOptions,
+                                  maxStereoGroups);
   return mol_uptr.release();
   ;
 }
@@ -1253,6 +1261,50 @@ struct molops_wrapper {
     python::def("FindRingFamilies", MolOps::findRingFamilies,
                 python::args("mol"), "generate Unique Ring Families");
 #endif
+
+    // ------------------------------------------------------------------------
+    docString = R"DOC(Parameters controlling H addition.)DOC";
+    python::class_<MolOps::AddHsParameters>("AddHsParameters",
+                                            docString.c_str())
+        .def_readwrite("explicitOnly", &MolOps::AddHsParameters::explicitOnly,
+                       "only add explict Hs")
+        .def_readwrite("addCoords", &MolOps::AddHsParameters::addCoords,
+                       "add coordinates for the Hs")
+        .def_readwrite("addResidueInfo",
+                       &MolOps::AddHsParameters::addResidueInfo,
+                       "add residue info to the Hs")
+        .def_readwrite(
+            "skipQueries", &MolOps::AddHsParameters::skipQueries,
+            "do not add Hs to query atoms or atoms with query bonds");
+
+    // ------------------------------------------------------------------------
+    docString =
+        R"DOC(Adds hydrogens to the graph of a molecule.
+
+  ARGUMENTS:
+
+    - mol: the molecule to be modified
+
+    - params: AddHsParameters object controlling the addition.
+
+    - onlyOnAtoms: (optional) if this sequence is provided, only these atoms will be
+      considered to have Hs added to them
+
+  RETURNS: a new molecule with added Hs
+
+  NOTES:
+
+    - The original molecule is *not* modified.
+
+    - Much of the code assumes that Hs are not included in the molecular
+      topology, so be *very* careful with the molecule that comes back from
+      this function.\n)DOC";
+    python::def("AddHs", addHs2,
+                (python::arg("mol"), python::arg("params"),
+                 python::arg("onlyOnAtoms") = python::object()),
+                docString.c_str(),
+                python::return_value_policy<python::manage_new_object>());
+
     // ------------------------------------------------------------------------
     docString =
         "Adds hydrogens to the graph of a molecule.\n\
@@ -2586,13 +2638,15 @@ ARGUMENTS:\n\
             - molecule: the molecule to update\n\
             -StereoGroupAbsOptions outputAbsoluteGroups: controls output of abs groups: \n\
               one of: OnlyIncludeWhenOtherGroupsExist, NeverInclude, AlwaysInclude \n\
+             maxStereoGroups: maximm number of OR or AND stereo groups to process (default is 12): \n\
         \n\
         \n ";
     python::def(
         "CanonicalizeStereoGroups", canonicalizeStereoGroupsHelper,
         (python::arg("mol"),
          python::arg("outputAbsoluteGroups") =
-             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist),
+             RDKit::StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist,
+         python::arg("maxStereoGroups") = 12),
         docString.c_str(),
         python::return_value_policy<python::manage_new_object>());
 
@@ -2861,19 +2915,19 @@ EXAMPLES:\n\n\
         .value("AtomType", MolzipLabel::AtomType);
 
     docString =
-        "Parameters controllnig how to zip molecules together\n\
+        "Parameters controlling how to zip molecules together\n\
 \n\
   OPTIONS:\n\
       label : set the MolzipLabel option [default MolzipLabel.AtomMapNumber]\n\
 \n\
   MolzipLabel.AtomMapNumber: atom maps are on dummy atoms, zip together the corresponding\n\
-     attaced atoms, i.e.  zip 'C[*:1]' 'N[*:1]' results in 'CN'\n\
+     attached atoms, i.e.  zip 'C[*:1]' 'N[*:1]' results in 'CN'\n\
 \n\
   MolzipLabel.Isotope: isotope labels are on dummy atoms, zip together the corresponding\n\
-     attaced atoms, i.e.  zip 'C[1*]' 'N[1*]' results in 'CN'\n\
+     attached atoms, i.e.  zip 'C[1*]' 'N[1*]' results in 'CN'\n\
 \n\
   MolzipLabel.FragmentOnBonds: zip together molecules generated by fragment on bonds.\n\
-    Note the atom indices cannot change or be reorderd from the output of fragmentOnBonds\n\
+    Note the atom indices cannot change or be reordered from the output of fragmentOnBonds\n\
 \n\
   MolzipLabel.AtomTypes: choose the atom types to act as matching dummy atoms.\n\
     i.e.  'C[V]' and 'N[Xe]' with atoms pairs [('V', 'Xe')] results in 'CN'\n\
@@ -2882,7 +2936,7 @@ EXAMPLES:\n\n\
     python::class_<MolzipParams>("MolzipParams", docString.c_str(),
                                  python::init<>(python::args("self")))
         .def_readwrite("label", &MolzipParams::label,
-                       "Set the atom labelling system to zip together")
+                       "Set the atom labeling system to zip together")
         .def_readwrite("enforceValenceRules",
                        &MolzipParams::enforceValenceRules,
                        "If true (default) enforce valences after zipping\n\
@@ -2897,7 +2951,7 @@ zipped molecule (for molzipFragments only)")
              "AtomType labeling");
 
     docString =
-        "molzip: zip two molecules together preserving bond and atom stereochemistry.\n\
+        "molzip: zip molecules together preserving bond and atom stereochemistry.\n\
 \n\
 This is useful when dealing with results from fragmentOnBonds, RGroupDecomposition and MMPs.\n\
 \n\
@@ -2906,6 +2960,14 @@ Example:\n\
     >>> a = MolFromSmiles('C=C[*:1]')\n\
     >>> b = MolFromSmiles('O/C=N/[*:1]')\n\
     >>> c = molzip(a,b)\n\
+    >>> MolToSmiles(c)\n\
+    'C=C/N=C/O'\n\
+\n\
+    >>> from rdkit.Chem import CombineMols, MolFromSmiles,  MolToSmiles, molzip\n\
+    >>> a = MolFromSmiles('C=C[*:1]')\n\
+    >>> b = MolFromSmiles('O/C=N/[*:1]')\n\
+    >>> combined = CombineMols(a, b)\n\
+    >>> c = molzip(combined)\n\
     >>> MolToSmiles(c)\n\
     'C=C/N=C/O'\n\
 \n\
@@ -2932,7 +2994,7 @@ The atoms to zip can be specified with the MolzipParams class.\n\
         "molzip",
         (ROMol * (*)(const ROMol &, const MolzipParams &)) & molzip_new,
         (python::arg("a"), python::arg("params") = MolzipParams()),
-        "zip together two molecules using the given matching parameters",
+        "zip together multiple molecules within a combined molecule using the given matching parameters",
         python::return_value_policy<python::manage_new_object>());
 
     python::def(

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+# Copyright (C) 2004-2008 Greg Landrum and other RDKit contributors
 #
 #   @@ All Rights Reserved @@
 #  This file is part of the RDKit.
@@ -1219,6 +1219,10 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     >>> from rdkit import RDConfig
     >>> dataDir = os.path.join(RDConfig.RDCodeDir,'Chem/Pharm3D/test_data')
 
+    This function only makes sense if we're using legacy stereo perception
+    >>> origVal = Chem.GetUseLegacyStereoPerception()
+    >>> Chem.SetUseLegacyStereoPerception(True)
+
     R configuration atoms give negative volumes:
 
     >>> mol = Chem.MolFromMolFile(os.path.join(dataDir, 'mol-r.mol'))
@@ -1258,6 +1262,7 @@ def ComputeChiralVolume(mol, centerIdx, confId=-1):
     >>> ComputeChiralVolume(mol, 1) > 0
     True
 
+    >>> Chem.SetUseLegacyStereoPerception(origVal)
 
   """
   conf = mol.GetConformer(confId)

@@ -264,6 +264,9 @@ PyEmbedParameters *getKDG() { return new PyEmbedParameters(DGeomHelpers::KDG); }
 PyEmbedParameters *getETDG() {
   return new PyEmbedParameters(DGeomHelpers::ETDG);
 }
+PyEmbedParameters *getETDGv2() {
+  return new PyEmbedParameters(DGeomHelpers::ETDGv2);
+}
 
 python::tuple getExpTorsHelper(const RDKit::ROMol &mol, bool useExpTorsions,
                                bool useSmallRingTorsions,
@@ -509,6 +512,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .def_readwrite("optimizerForceTol", &PyEmbedParameters::optimizerForceTol,
                      "the tolerance to be used during the distance-geometry "
                      "force field minimization")
+      .def_readwrite("basinThresh", &PyEmbedParameters::basinThresh,
+                     "set the basin threshold for the DGeom force field.")
       .def_readwrite("ignoreSmoothingFailures",
                      &PyEmbedParameters::ignoreSmoothingFailures,
                      "try and embed the molecule if if triangle smoothing of "
@@ -576,7 +581,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           &PyEmbedParameters::symmetrizeConjugatedTerminalGroupsForPruning,
           "symmetrize terminal conjugated groups for RMSD pruning")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
-           "sets the coordmap to be used");
+           "sets the coordmap to be used")
+      .def("__setattr__", &safeSetattr);
 
   docString =
       "Use distance geometry to obtain multiple sets of \n\
@@ -626,6 +632,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   python::def("ETDG", RDKit::getETDG,
               "Returns an EmbedParameters object for the ETDG method.",
               python::return_value_policy<python::manage_new_object>());
+  python::def(
+      "ETDGv2", RDKit::getETDGv2,
+      "Returns an EmbedParameters object for the ETDG method - version 2.",
+      python::return_value_policy<python::manage_new_object>());
   python::def("KDG", RDKit::getKDG,
               "Returns an EmbedParameters object for the KDG method.",
               python::return_value_policy<python::manage_new_object>());

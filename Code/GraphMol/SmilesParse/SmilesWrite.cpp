@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2002-2021 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2002-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -15,6 +15,7 @@
 #include <GraphMol/new_canon.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/Atropisomers.h>
+#include <GraphMol/QueryOps.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -88,6 +89,65 @@ std::string getAtomChiralityInfo(const Atom *atom) {
   }
   return atString;
 }
+
+// -----
+// figure out if we need to put a bracket around the atom,
+// the conditions for this are:
+//   - not in the organic subset
+//   - formal charge specified
+//   - chirality present and writing isomeric smiles
+//   - non-default isotope and writing isomeric smiles
+//   - atom-map information present
+//   - the atom has a nonstandard valence
+//   - bonded to a metal
+bool atomNeedsBracket(const Atom *atom, const std::string &atString,
+                      const SmilesWriteParams &params) {
+  PRECONDITION(atom, "null atom");
+  auto num = atom->getAtomicNum();
+  if (!inOrganicSubset(num)) {
+    return true;
+  }
+
+  if (atom->getFormalCharge()) {
+    return true;
+  }
+  if (params.doIsomericSmiles && (atom->getIsotope() || !atString.empty())) {
+    return true;
+  }
+  if (atom->hasProp(common_properties::molAtomMapNumber)) {
+    return true;
+  }
+
+  const INT_VECT &defaultVs = PeriodicTable::getTable()->getValenceList(num);
+  int totalValence = atom->getTotalValence();
+  bool nonStandard = false;
+  if (atom->getNumRadicalElectrons()) {
+    nonStandard = true;
+  } else if ((num == 7 || num == 15) && atom->getIsAromatic() &&
+             atom->getNumExplicitHs()) {
+    // another type of "nonstandard" valence is an aromatic N or P with
+    // explicit Hs indicated:
+    nonStandard = true;
+  } else {
+    nonStandard = (totalValence != defaultVs.front() && atom->getTotalNumHs());
+  }
+  if (nonStandard) {
+    return true;
+  }
+
+  // check for bonds to a metal
+  if (atom->hasOwningMol()) {
+    for (const auto bond : atom->getOwningMol().atomBonds(atom)) {
+      auto oatom = bond->getOtherAtom(atom);
+      if (QueryOps::isMetal(*oatom)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 }  // namespace
 
 std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
@@ -97,7 +157,6 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
   int num = atom->getAtomicNum();
   int isotope = atom->getIsotope();
 
-  bool needsBracket = false;
   std::string symb;
   bool hasCustomSymbol =
       atom->getPropIfPresent(common_properties::smilesSymbol, symb);
@@ -113,41 +172,9 @@ std::string GetAtomSmiles(const Atom *atom, const SmilesWriteParams &params) {
       atString = getAtomChiralityInfo(atom);
     }
   }
-  if (!params.allHsExplicit && inOrganicSubset(num)) {
-    // it's a member of the organic subset
-
-    // -----
-    // figure out if we need to put a bracket around the atom,
-    // the conditions for this are:
-    //   - formal charge specified
-    //   - the atom has a nonstandard valence
-    //   - chirality present and writing isomeric smiles
-    //   - non-default isotope and writing isomeric smiles
-    //   - atom-map information present
-    const INT_VECT &defaultVs = PeriodicTable::getTable()->getValenceList(num);
-    int totalValence = atom->getTotalValence();
-    bool nonStandard = false;
-
-    if (hasCustomSymbol || atom->getNumRadicalElectrons()) {
-      nonStandard = true;
-    } else if ((num == 7 || num == 15) && atom->getIsAromatic() &&
-               atom->getNumExplicitHs()) {
-      // another type of "nonstandard" valence is an aromatic N or P with
-      // explicit Hs indicated:
-      nonStandard = true;
-    } else {
-      nonStandard =
-          (totalValence != defaultVs.front() && atom->getTotalNumHs());
-    }
-
-    if (fc || nonStandard ||
-        atom->hasProp(common_properties::molAtomMapNumber)) {
-      needsBracket = true;
-    } else if (params.doIsomericSmiles && (isotope || atString != "")) {
-      needsBracket = true;
-    }
-  } else {
-    needsBracket = true;
+  bool needsBracket = true;
+  if (!hasCustomSymbol && !params.allHsExplicit) {
+    needsBracket = atomNeedsBracket(atom, atString, params);
   }
   if (needsBracket) {
     res += "[";
@@ -473,7 +500,8 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
           static_cast<unsigned int>(params.rootedAtAtom) < mol.getNumAtoms(),
       "rootedAtAtom must be less than the number of atoms");
 
-  int rootedAtAtom = params.rootedAtAtom;
+  int rootedAtAtom;
+  std::vector<int> fragsRootedAtAtom;
   std::vector<std::vector<int>> fragsMolAtomMapping;
   auto mols =
       MolOps::getMolFrags(mol, false, nullptr, &fragsMolAtomMapping, false);
@@ -488,6 +516,13 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
     for (auto aidx : atsInFrag) {
       atsPresent.set(aidx);
     }
+
+    rootedAtAtom = -1;
+    if (params.rootedAtAtom >= 0 && atsPresent[params.rootedAtAtom]) {
+        rootedAtAtom = params.rootedAtAtom - atsPresent.find_first();
+    }
+    fragsRootedAtAtom.push_back(rootedAtAtom);
+
     for (const auto bnd : mol.bonds()) {
       if (atsPresent[bnd->getBeginAtomIdx()] &&
           atsPresent[bnd->getEndAtomIdx()]) {
@@ -565,6 +600,22 @@ std::string MolToSmiles(const ROMol &mol, const SmilesWriteParams &params,
         }
       }
     }
+
+
+    // if we are doing CXSMILES, Hydrogen bonds are shown as single bonds
+    // in the smiles part, and are indicated with the H: block of the CX
+    // extensions
+
+    if (doingCXSmiles) {
+      for (auto bond : tmol->bonds()) {
+        if (bond->getBondType() == Bond::HYDROGEN) {
+          bond->setBondType(Bond::SINGLE);
+        }
+      }
+    }
+
+
+    rootedAtAtom = fragsRootedAtAtom[fragIdx];
 
     if (params.doRandom && rootedAtAtom == -1) {
       // need to find a random atom id between 0 and mol.getNumAtoms()
@@ -738,13 +789,21 @@ std::string MolToCXSmiles(const ROMol &romol,
       if (!canHaveDirection(*bond)) {
         continue;
       }
-      if (bond->getBondDir() != Bond::BondDir::NONE) {
-        bond->setBondDir(Bond::BondDir::NONE);
-      }
-      unsigned int cfg;
-      if (bond->getPropIfPresent<unsigned int>(
-              common_properties::_MolFileBondCfg, cfg)) {
-        bond->clearProp(common_properties::_MolFileBondCfg);
+
+      // we want to preserve wiggly bond information for discovery by
+      // CXSmilesOps::get_bond_config_block
+      using RDKit::common_properties::_MolFileBondCfg;
+      // this is a wiggly bond
+      if (auto cfg = 0u;
+          bond->getPropIfPresent<unsigned int>(_MolFileBondCfg, cfg) &&
+          cfg == 2) {
+        bond->setBondDir(Bond::BondDir::UNKNOWN);
+      } else {
+        if (bond->getBondDir() != Bond::BondDir::NONE) {
+          bond->setBondDir(Bond::BondDir::NONE);
+        }
+
+        bond->clearProp(_MolFileBondCfg);
       }
     }
   }

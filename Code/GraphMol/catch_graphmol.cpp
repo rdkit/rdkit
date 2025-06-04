@@ -1503,6 +1503,24 @@ TEST_CASE("needsHs function", "[chemistry]") {
     REQUIRE(m);
     CHECK(!MolOps::needsHs(*m));
   }
+  SECTION("edges") {
+    v2::SmilesParse::SmilesParserParams params;
+    params.removeHs = false;
+    {
+      const std::string smiles = "[H]OC([H])[H]";
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+      REQUIRE(m);
+      CHECK(m->getNumAtoms() == 5);
+      CHECK(MolOps::needsHs(*m));
+    }
+    {
+      const std::string smiles = "C([H])([H])[H]";
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+      REQUIRE(m);
+      CHECK(m->getNumAtoms() == 4);
+      CHECK(MolOps::needsHs(*m));
+    }
+  }
 }
 
 TEST_CASE(
@@ -2662,145 +2680,6 @@ TEST_CASE("Github #5055") {
     REQUIRE(m);
   }
 }
-
-TEST_CASE("Github #5134: Fused ring system not perceived as aromatic") {
-#if 1
-  SECTION("as reported") {
-    auto m = "C1=CC2=CC3=CC=C4C=C1C2C34"_smiles;
-    REQUIRE(m);
-    for (auto i = 0u; i < 10; ++i) {
-      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
-    }
-  }
-  SECTION("Related") {
-    auto m = "C1=CC2=CC=C3C=CC=C4C=CC(=C1)C2C34"_smiles;
-    REQUIRE(m);
-    for (auto i = 0u; i < 14; ++i) {
-      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
-    }
-  }
-  SECTION("some edge cases where the new rule does not apply") {
-    std::vector<std::string> smis = {"C1CC2C=C3C=CC4=CC1C2C34",
-                                     "C1C=C2C=CC3=CC=C1C23"};
-    for (const auto &smi : smis) {
-      std::unique_ptr<ROMol> mol(SmilesToMol(smi));
-      REQUIRE(mol);
-      for (auto atom : mol->atoms()) {
-        CHECK(!atom->getIsAromatic());
-      }
-    }
-  }
-  SECTION("no bridgeheads!") {
-    auto m = "O=C1C2=C(C=CC=C2)C(=O)C3=C1C4C5=C(C=CC=C5)C3C6=C4C=CC=C6"_smiles;
-    REQUIRE(m);
-    CHECK(!m->getAtomWithIdx(12)->getIsAromatic());
-    CHECK(!m->getAtomWithIdx(19)->getIsAromatic());
-  }
-  SECTION("Github #5078: Can't roundtrip CHEMBL4080644 through SMILES") {
-    auto m = R"CTAB(
-     RDKit          2D
-
- 22 25  0  0  0  0  0  0  0  0999 V2000
-    6.1174   -5.5956    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-    5.5355   -6.1734    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    5.9052   -6.9054    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    6.7157   -6.7800    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    6.8468   -5.9705    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    3.9896   -4.3666    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    3.9885   -5.1861    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    4.6965   -5.5951    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    4.6947   -3.9577    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    5.4033   -4.3630    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    5.4067   -5.1882    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    6.1123   -3.9452    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0
-    6.8293   -4.3571    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    6.8321   -5.1820    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    7.5468   -5.5902    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    8.2590   -5.1746    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    8.2522   -4.3466    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    7.5370   -3.9422    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    3.2804   -5.5941    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    8.9563   -3.9319    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
-    7.6601   -5.9680    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-    4.7196   -6.1277    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
-  2  3  1  0
-  3  4  2  0
-  4  5  1  0
-  5  1  1  0
-  6  7  2  0
-  7  8  1  0
-  8 11  2  0
- 10  9  2  0
-  9  6  1  0
- 10 11  1  0
- 10 12  1  0
- 11  1  1  0
-  1 14  1  0
- 13 12  1  0
- 13 14  2  0
- 14 15  1  0
- 15 16  2  0
- 16 17  1  0
- 17 18  2  0
- 18 13  1  0
-  7 19  1  0
- 17 20  1  0
-  5 21  2  0
-  2 22  2  0
-  2 12  1  0
-M  END)CTAB"_ctab;
-    REQUIRE(m);
-    CHECK(!m->getAtomWithIdx(11)->getIsAromatic());
-    CHECK(!m->getAtomWithIdx(0)->getIsAromatic());
-    auto smiles = MolToSmiles(*m);
-    std::unique_ptr<RWMol> m2(SmilesToMol(smiles));
-    REQUIRE(m2);
-  }
-  SECTION("trickier") {
-    auto m = "C1=CC2=CC=C3C=CC4=CC=C5C=CC=C6C5C4C3C2C6=C1"_smiles;
-    REQUIRE(m);
-    for (auto i = 0u; i < 16; ++i) {
-      CHECK(m->getAtomWithIdx(i)->getIsAromatic());
-    }
-    CHECK(m->getAtomWithIdx(20)->getIsAromatic());
-  }
-  SECTION("another odd edge case") {
-    auto m = "C2=CC1=S(S2)SC=C1"_smiles;
-    REQUIRE(m);
-    for (auto atom : m->atoms()) {
-      CHECK(!atom->getIsAromatic());
-    }
-  }
-  SECTION("macrocycle bridgehead edge case") {
-    auto m = "C2CCCCCCCCCN1C=C(CC2)C=CC1=O"_smiles;
-    REQUIRE(m);
-    CHECK(m->getAtomWithIdx(10)->getIsAromatic());
-    CHECK(m->getAtomWithIdx(11)->getIsAromatic());
-    CHECK(m->getAtomWithIdx(12)->getIsAromatic());
-  }
-  SECTION("found during testing") {
-    auto m =
-        "c1ccc2c(c1)c1cc[n+]2Cc2ccc(cc2)C[n+]2ccc(c3ccccc32)NCc2ccc(cc2)CN1"_smiles;
-    REQUIRE(m);
-    CHECK(m->getAtomWithIdx(6)->getIsAromatic());
-    CHECK(m->getAtomWithIdx(11)->getIsAromatic());
-    CHECK(m->getAtomWithIdx(18)->getIsAromatic());
-    CHECK(m->getAtomWithIdx(30)->getIsAromatic());
-
-    CHECK(!m->getAtomWithIdx(28)->getIsAromatic());
-    CHECK(!m->getAtomWithIdx(29)->getIsAromatic());
-  }
-#endif
-  SECTION("more testing fun") {
-    auto m = "CC1C2c3ccccc3C(c3ccccc32)C1CN"_smiles;
-    REQUIRE(m);
-    CHECK(m->getAtomWithIdx(4)->getIsAromatic());
-    CHECK(m->getAtomWithIdx(14)->getIsAromatic());
-    CHECK(!m->getAtomWithIdx(2)->getIsAromatic());
-    CHECK(!m->getAtomWithIdx(9)->getIsAromatic());
-  }
-}
-
 TEST_CASE("Iterators") {
   auto m = "CCCCCCC=N"_smiles;
   REQUIRE(m);
@@ -3101,52 +2980,35 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
   // Counting from 1, 4th mol is one that gave other problems during testing.
   std::vector<std::pair<std::string, std::string>> test_vals{
       {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4[n]3[Fe]35<-[N]2=C1C=c1c(C)c(CCC(=O)O)c([n]13)=CC1=[N]->5C(=C4)C(C)=C1CCC(=O)O"},
       {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
-       "C=Cc1c(C)c2cc3c(C)c(CCC(=O)[O-])c4cc5c(CCC(=O)[O-])c(C)c6cc7c(C=C)c(C)c8cc1n2[Fe-2](n65)([n+]87)[n+]34"},
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4[n]3[Fe-2]35[n]6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25"},
       {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
-       "C=Cc1c(C)c2cc3c(C)c(CCC(=O)O)c4cc5c(CCC(=O)O)c(C)c6cc7c(C=C)c(C)c8cc1n2[Fe-2](n65)([n+]87)[n+]34"},
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4[n]3[Fe-2]35[n]6c(c(C)c(CCC(=O)O)c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)O)=CC1=[N+]25"},
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
     INFO(test_vals[i].first);
     RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first));
     CHECK(MolToSmiles(*m) == test_vals[i].second);
-    // make sure the metal atoms are not aromatic and have no aromatic bonds:
-    for (auto atom : m->atoms()) {
-      if (atom->getAtomicNum() == 26 || atom->getAtomicNum() == 29) {
-        CHECK(!atom->getIsAromatic());
-        for (auto bond : m->atomBonds(atom)) {
-          CHECK(!bond->getIsAromatic());
-        }
-      }
-    }
   }
-
   // make sure we can call cleanupOrganometallics() on non-sanitized molecules
   for (size_t i = 0; i < test_vals.size(); ++i) {
     INFO(test_vals[i].first);
     bool sanitize = false;
     RWMOL_SPTR m(RDKit::SmilesToMol(test_vals[i].first, 0, sanitize));
     MolOps::cleanUpOrganometallics(*m);
-    MolOps::sanitizeMol(*m);
     CHECK(MolToSmiles(*m) == test_vals[i].second);
-    // make sure the metal atoms are not aromatic and have no aromatic bonds:
-    for (auto atom : m->atoms()) {
-      if (atom->getAtomicNum() == 26 || atom->getAtomicNum() == 29) {
-        CHECK(!atom->getIsAromatic());
-        for (auto bond : m->atomBonds(atom)) {
-          CHECK(!bond->getIsAromatic());
-        }
-      }
-    }
   }
 }
+
 TEST_CASE(
     "cleanUpOrganometallics should produce canonical output.  cf PR6292") {
   std::vector<std::pair<std::string, std::string>> test_vals{
-      {"F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl", "F[Pd]1(Cl)<-Cl[Pd](Cl)(Cl)<-Cl1"},
-      {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br", "F[Pt]1(Br)<-Cl[Pt](F)(F)<-[35Cl]1"},
+      {"F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl",
+       "[F][Pd]1([Cl])<-[Cl][Pd]([Cl])([Cl])<-[Cl]1"},
+      {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br",
+       "[F][Pt]1([Br])<-[Cl][Pt]([F])([F])<-[35Cl]1"},
   };
 
   for (size_t j = 0; j < test_vals.size(); ++j) {
@@ -3365,8 +3227,8 @@ M  END
     CHECK(distToTarget.lengthSq() < 0.1);
   }
 
-  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode
-                                 // (R) due to different ordering of atoms
+  SECTION("Counterclockwise") {  // Chiral Tag (CCW) Different from CIPCode (R)
+                                 // due to different ordering of atoms
     std::string mb = R"CTAB(testmol
   CT1066645023
 
@@ -4687,8 +4549,8 @@ M  END
           }
         }
       }
-      // if we aren't in a five-ring (where the results of kekulize are
-      // normally fixed), wedge the double bond and flatten the other one
+      // if we aren't in a five-ring (where the results of kekulize are normally
+      // fixed), wedge the double bond and flatten the other one
       if (wedgedBond && dblBond &&
           !m->getRingInfo()->isBondInRingOfSize(dblBond->getIdx(), 5) &&
           !m->getRingInfo()->isBondInRingOfSize(wedgedBond->getIdx(), 5)) {
@@ -4706,8 +4568,8 @@ M  END
           // }
           // std::cerr << "\n\nbefore kekulize:" << std::endl;
           // m->debugMol(std::cerr);
-          // kekulize again now that we wedged the bonds that were set to
-          // double before
+          // kekulize again now that we wedged the bonds that were set to double
+          // before
           MolOps::Kekulize(*m, clearAromaticFlags);
           // and make sure that those didn't end up double again:
           for (auto atm : {bnd->getBeginAtom(), bnd->getEndAtom()}) {
@@ -4868,7 +4730,7 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
      public:
       bool *deleted;
       FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {}
-      virtual ~FakeAtomMonomerInfo() { *deleted = true; }
+      ~FakeAtomMonomerInfo() override { *deleted = true; }
     };
 
     bool sanitize = true;
@@ -4885,5 +4747,93 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
     mol->getAtomWithIdx(0)->setMonomerInfo(res);
     mol->getAtomWithIdx(0)->setMonomerInfo(nullptr);
     CHECK(was_deleted == true);
+  }
+}
+
+TEST_CASE("Github #8304: addHs should ignore queries") {
+  SECTION("queryAtoms") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    MolOps::addHs(*m1);
+    CHECK(m1->getNumAtoms() == 8);
+    std::vector<std::tuple<std::string, unsigned int, unsigned int>> data = {
+        {"CC", 2, 2},
+        {"[CH3]C", 5, 2},
+        {"[CH3][CH3]", 8, 2},
+    };
+    for (const auto &[sma, def, noq] : data) {
+      INFO(sma);
+      auto m2 = v2::SmilesParse::MolFromSmarts(sma);
+      REQUIRE(m2);
+      m2->updatePropertyCache(false);
+      // by default we addHs:
+      {
+        RWMol m3(*m2);
+        MolOps::addHs(m3);
+        CHECK(m3.getNumAtoms() == def);
+      }
+      // but we can change that:
+      MolOps::AddHsParameters ps;
+      ps.skipQueries = true;
+      {
+        RWMol m3(*m2);
+        MolOps::addHs(m3, ps);
+        CHECK(m3.getNumAtoms() == noq);
+      }
+    }
+  }
+  SECTION("queryBonds make their atoms queries") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    auto qb = v2::SmilesParse::BondFromSmarts("!@");
+    REQUIRE(qb);
+    m1->replaceBond(0, qb.get());
+    // by default we addHs:
+    {
+      RWMol m2(*m1);
+      MolOps::addHs(m2);
+      CHECK(m2.getNumAtoms() == 8);
+    }
+    // but we can change that:
+    MolOps::AddHsParameters ps;
+    ps.skipQueries = true;
+    {
+      RWMol m2(*m1);
+      MolOps::addHs(m2, ps);
+      CHECK(m2.getNumAtoms() == 2);
+    }
+  }
+}
+
+TEST_CASE("stereogroups operator<<") {
+  SECTION("atoms and bonds in one") {
+    auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8,15|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getStereoGroups().size() == 1);
+    std::ostringstream oss;
+    oss << m->getStereoGroups()[0];
+    CHECK(oss.str() == "AND rId: 0 wId: 0 atoms: { 15 } bonds: { 7 }");
+  }
+  SECTION("just bonds in one") {
+    auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getStereoGroups().size() == 1);
+    std::ostringstream oss;
+    oss << m->getStereoGroups()[0];
+    CHECK(oss.str() == "AND rId: 0 wId: 0 bonds: { 7 }");
+  }
+}
+
+TEST_CASE("clearPropertyCache") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  CHECK(!m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(!atom->needsUpdatePropertyCache());
+  }
+  m->clearPropertyCache();
+  CHECK(m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(atom->needsUpdatePropertyCache());
   }
 }
