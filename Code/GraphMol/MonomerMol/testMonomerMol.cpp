@@ -87,16 +87,16 @@ TEST_CASE("FASTAConversions") {
   SECTION("SIMPLE") {
     // Build MonomerMol with a single chain
     RWMol monomer_mol;
-    add_monomer(monomer_mol, "R", 1, "PEPTIDE1");
-    add_monomer(monomer_mol, "D");
-    add_monomer(monomer_mol, "K");
-    add_monomer(monomer_mol, "I");
-    add_monomer(monomer_mol, "T");
+    addMonomer(monomer_mol, "R", 1, "PEPTIDE1");
+    addMonomer(monomer_mol, "D");
+    addMonomer(monomer_mol, "K");
+    addMonomer(monomer_mol, "I");
+    addMonomer(monomer_mol, "T");
 
-    add_connection(monomer_mol, 0, 1, ConnectionType::FORWARD);
-    add_connection(monomer_mol, 1, 2, ConnectionType::FORWARD);
-    add_connection(monomer_mol, 2, 3, ConnectionType::FORWARD);
-    add_connection(monomer_mol, 3, 4, ConnectionType::FORWARD);
+    addConnection(monomer_mol, 0, 1, ConnectionType::FORWARD);
+    addConnection(monomer_mol, 1, 2, ConnectionType::FORWARD);
+    addConnection(monomer_mol, 2, 3, ConnectionType::FORWARD);
+    addConnection(monomer_mol, 3, 4, ConnectionType::FORWARD);
 
     CHECK(std::string(">Chain PEPTIDE1\nRDKIT") == to_fasta(monomer_mol));
   }
@@ -104,16 +104,16 @@ TEST_CASE("FASTAConversions") {
   SECTION("MultipleChains") {
     // Build MonomerMol with two chains
     RWMol monomer_mol;
-    auto midx1 = add_monomer(monomer_mol, "R", 1, "A");
-    auto midx2 = add_monomer(monomer_mol, "D");
+    auto midx1 = addMonomer(monomer_mol, "R", 1, "A");
+    auto midx2 = addMonomer(monomer_mol, "D");
 
-    auto midx3 = add_monomer(monomer_mol, "K", 1, "B");
-    auto midx4 = add_monomer(monomer_mol, "I");
-    auto midx5 = add_monomer(monomer_mol, "T");
+    auto midx3 = addMonomer(monomer_mol, "K", 1, "B");
+    auto midx4 = addMonomer(monomer_mol, "I");
+    auto midx5 = addMonomer(monomer_mol, "T");
 
-    add_connection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
-    add_connection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
-    add_connection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
 
     CHECK(std::string(">Chain A\nRD\n>Chain B\nKIT") == to_fasta(monomer_mol));
   }
@@ -136,16 +136,16 @@ TEST_CASE("Conversions") {
     auto atomistic_mol = SequenceToMol(seq);
 
     RWMol monomer_mol;
-    auto midx1 = add_monomer(monomer_mol, "C", 1, "PEPTIDE1");
-    auto midx2 = add_monomer(monomer_mol, "G");
-    auto midx3 = add_monomer(monomer_mol, "C");
-    auto midx4 = add_monomer(monomer_mol, "G");
-    auto midx5 = add_monomer(monomer_mol, "A");
+    auto midx1 = addMonomer(monomer_mol, "C", 1, "PEPTIDE1");
+    auto midx2 = addMonomer(monomer_mol, "G");
+    auto midx3 = addMonomer(monomer_mol, "C");
+    auto midx4 = addMonomer(monomer_mol, "G");
+    auto midx5 = addMonomer(monomer_mol, "A");
 
-    add_connection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
-    add_connection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
-    add_connection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
-    add_connection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx1, midx2, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx2, midx3, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx3, midx4, ConnectionType::FORWARD);
+    addConnection(monomer_mol, midx4, midx5, ConnectionType::FORWARD);
     auto atomistic_mol2 = monomerMolToAtomsitic(monomer_mol);
 
     // atomistic structure is same as using sequence parser

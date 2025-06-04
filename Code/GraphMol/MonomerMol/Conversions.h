@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------
- * Declares RDKit atomistic ROMol -> MonomerMol conversion
+ * Declares RDKit atomistic ROMol <-> MonomerMol conversion
  *
  * Copyright Schrodinger LLC, All Rights Reserved.
  --------------------------------------------------------------------------- */
@@ -19,8 +19,6 @@ class RWMol;
  * be written to HELM format using the HELM writer.
  *
  * @param atomistic_mol Atomistic molecule to convert to MonomerMol
- * @param use_residue_info Whether to use PDBAtomResidueInfo to determine
- * monomer boundaries
  * @return MonomerMol
  */
 RDKIT_MONOMERMOL_EXPORT boost::shared_ptr<RDKit::RWMol>

@@ -151,7 +151,7 @@ MonomerDatabase::~MonomerDatabase()
 }
 
 [[nodiscard]] MonomerDatabase::monomer_smiles_t
-MonomerDatabase::get_monomer_smiles(std::string monomer_id,
+MonomerDatabase::getMonomerSmiles(std::string monomer_id,
                                         [[maybe_unused]] ChainType monomer_type)
 {
     // currently everything is a peptide
@@ -162,7 +162,7 @@ MonomerDatabase::get_monomer_smiles(std::string monomer_id,
 }
 
 [[nodiscard]] MonomerDatabase::helm_info_t
-MonomerDatabase::get_helm_info(const std::string& pdb_code)
+MonomerDatabase::getHelmInfo(const std::string& pdb_code)
 {
     // currently everything is a peptide
     if (three_character_codes.find(pdb_code) != three_character_codes.end()) {

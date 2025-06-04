@@ -1,14 +1,3 @@
-/* -------------------------------------------------------------------------
- * Declares schrodinger::rdkit_extensions:: tools for Coarse-grain ROMols
- *
- * A "coarse grain" (CG) ROMol uses RDKit atoms to represent monomers. Chains
- * are represented by COP Substance Groups on the ROMol.
- *
- * For use with functionality in schrodinger::rdkit_extensions
- *
- *
- * Copyright Schrodinger LLC, All Rights Reserved.
- --------------------------------------------------------------------------- */
 
 #include "MonomerMol.h"
 
@@ -20,90 +9,10 @@
 
 #include <boost/functional/hash.hpp>
 
-template <typename T>
-static bool is_dummy_obj([[maybe_unused]] const T& obj)
-{
-    // placeholder from HELM parser; represents a query/repeated monomer or bond
-    return false;
-}
-
 namespace RDKit
 {
 
-std::string get_polymer_id(const Atom* atom)
-{
-    const auto monomer_info = atom->getMonomerInfo();
-    if (monomer_info == nullptr) {
-        throw std::runtime_error("Atom does not have monomer info");
-    }
-
-    return static_cast<const RDKit::AtomPDBResidueInfo*>(monomer_info)
-        ->getChainId();
-}
-
-int get_residue_number(const Atom* atom)
-{
-    const auto monomer_info = atom->getMonomerInfo();
-    if (monomer_info == nullptr) {
-        throw std::runtime_error("Atom does not have monomer info");
-    }
-
-    return static_cast<const RDKit::AtomPDBResidueInfo*>(monomer_info)
-        ->getResidueNumber();
-}
-
-std::vector<std::string> get_polymer_ids(const RDKit::ROMol& monomer_mol)
-{
-    std::vector<std::string> polymer_ids;
-    for (auto atom : monomer_mol.atoms()) {
-        if (is_dummy_obj(*atom)) { // query/repeated monomer
-            continue;
-        }
-        auto id = get_polymer_id(atom);
-        // in vector to preseve order of polymers
-        if (std::find(polymer_ids.begin(), polymer_ids.end(), id) ==
-            polymer_ids.end()) {
-            polymer_ids.push_back(id);
-        }
-    }
-    return polymer_ids;
-}
-
-Chain get_polymer(const RDKit::ROMol& monomer_mol,
-                                       std::string_view polymer_id)
-{
-    std::vector<unsigned int> atoms;
-    for (auto atom : monomer_mol.atoms()) {
-        if (is_dummy_obj(*atom)) {
-            continue;
-        }
-        if (get_polymer_id(atom) == polymer_id) {
-            atoms.push_back(atom->getIdx());
-        }
-    }
-    // Sort by get_residue_num
-    std::sort(atoms.begin(), atoms.end(),
-              [&monomer_mol](unsigned int a, unsigned int b) {
-                  return get_residue_number(monomer_mol.getAtomWithIdx(a)) <
-                         get_residue_number(monomer_mol.getAtomWithIdx(b));
-              });
-    std::vector<unsigned int> bonds;
-    for (auto bond : monomer_mol.bonds()) {
-        if (is_dummy_obj(*bond)) {
-            continue;
-        }
-        if (get_polymer_id(bond->getBeginAtom()) == polymer_id &&
-            get_polymer_id(bond->getEndAtom()) == polymer_id) {
-            bonds.push_back(bond->getIdx());
-        }
-    }
-
-    // placeholder for HELM parser
-    std::string annotation{};
-    return {atoms, bonds, annotation};
-}
-
-ChainType to_chain_type(std::string_view chain_type)
+ChainType toChainType(std::string_view chain_type)
 {
     if (chain_type == "PEPTIDE") {
         return ChainType::PEPTIDE;
@@ -118,7 +27,7 @@ ChainType to_chain_type(std::string_view chain_type)
     }
 }
 
-std::string to_string(ChainType chain_type)
+std::string toString(ChainType chain_type)
 {
     switch (chain_type) {
         case ChainType::PEPTIDE:
@@ -134,44 +43,132 @@ std::string to_string(ChainType chain_type)
     }
 }
 
-void add_connection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
-                    const std::string& linkage)
+void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
+                   const std::string& linkage, const bool is_custom_bond)
 {
-    const auto new_total =
-        monomer_mol.addBond(monomer1, monomer2, ::RDKit::Bond::BondType::SINGLE);
-    monomer_mol.getBondWithIdx(new_total - 1)->setProp(LINKAGE, linkage);
-    if (linkage == BRANCH_LINKAGE) {
+    // if bond already exists, extend linkage information
+    if (auto bond = monomer_mol.getBondBetweenAtoms(monomer1, monomer2);
+        bond && is_custom_bond) {
+        std::string old_linkage;
+
+        // If the linkage property isn't set, something went wrong
+        if (!bond->getPropIfPresent(LINKAGE, old_linkage)) {
+            throw std::runtime_error(fmt::format(
+                "No linkage property on bond between atom={} and atom={}",
+                monomer1, monomer2));
+        }
+
+        // Make sure we're not recreating this same bond.
+        if (old_linkage.find(linkage) != std::string::npos) {
+            throw std::runtime_error(fmt::format(
+                "Can't duplicate {} bond between atom={} and atom={}", linkage,
+                monomer1, monomer2));
+        }
+
+        // Since hydrogen bonding and covalent bonds are different types of bond
+        // serializing them with the same bond type doesn't make too much sense.
+        if (linkage.find("pair") == 0 ||
+            old_linkage.find("pair") != std::string::npos) {
+            throw std::runtime_error(
+                fmt::format("Multiple bonds can't include hydrogen bond for "
+                            "bond between atom={} and atom={}",
+                            monomer1, monomer2));
+        }
+
+        // FIXME: For now, don't allow multiple custom bonds between the same
+        // two atoms
+        if (bond->hasProp(CUSTOM_BOND)) {
+            throw std::runtime_error(
+                fmt::format("Multiple custom bonds not supported for "
+                            "bond between atom={} and atom={}",
+                            monomer1, monomer2));
+        }
+
+        // Update the linkage property
+        bond->setProp(CUSTOM_BOND, linkage);
+    } else {
+        auto bond_type = (linkage.front() == 'p' ? ::RDKit::Bond::ZERO
+                                                 : ::RDKit::Bond::SINGLE);
+        const auto new_total = monomer_mol.addBond(monomer1, monomer2, bond_type);
+        bond = monomer_mol.getBondWithIdx(new_total - 1);
+        bond->setProp(LINKAGE, linkage);
+
+        if (is_custom_bond) {
+            bond->setProp(CUSTOM_BOND, linkage);
+        }
+    }
+
+    if (!is_custom_bond && linkage == BRANCH_LINKAGE) {
         // monomer2 is a branch monomer
         monomer_mol.getAtomWithIdx(monomer2)->setProp(BRANCH_MONOMER, true);
     }
 }
 
-void add_connection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
-                    ConnectionType connection_type)
+void addConnection(RDKit::RWMol& monomer_mol, size_t monomer1, size_t monomer2,
+                   ConnectionType connection_type)
 {
     switch (connection_type) {
         case ConnectionType::FORWARD:
-            add_connection(monomer_mol, monomer1, monomer2, BACKBONE_LINKAGE);
+            addConnection(monomer_mol, monomer1, monomer2, BACKBONE_LINKAGE);
             break;
         case ConnectionType::SIDECHAIN:
-            add_connection(monomer_mol, monomer1, monomer2, BRANCH_LINKAGE);
+            addConnection(monomer_mol, monomer1, monomer2, BRANCH_LINKAGE);
             break;
     }
 }
 
-std::unique_ptr<Monomer> make_monomer(std::string_view name,
-                                      std::string_view chain_id,
-                                      int residue_number, bool is_smiles)
+[[nodiscard]] std::string getPolymerId(const ::RDKit::Atom* atom)
+{
+    const auto monomer_info = atom->getMonomerInfo();
+    if (monomer_info == nullptr) {
+        throw std::runtime_error("Atom does not have monomer info");
+    }
+
+    return static_cast<const RDKit::AtomPDBResidueInfo*>(monomer_info)
+        ->getChainId();
+}
+
+
+[[nodiscard]] std::vector<std::string> getPolymerIds(const RDKit::ROMol& monomer_mol)
+{
+    std::vector<std::string> polymer_ids;
+    for (auto atom : monomer_mol.atoms()) {
+        auto id = getPolymerId(atom);
+        // in vector to preseve order of polymers
+        if (std::find(polymer_ids.begin(), polymer_ids.end(), id) ==
+            polymer_ids.end()) {
+            polymer_ids.push_back(id);
+        }
+    }
+    return polymer_ids;
+}
+
+[[nodiscard]] unsigned int getResidueNumber(const ::RDKit::Atom* atom)
+{
+    const auto monomer_info = atom->getMonomerInfo();
+    if (monomer_info == nullptr) {
+        throw std::runtime_error("Atom does not have monomer info");
+    }
+
+    return static_cast<const RDKit::AtomPDBResidueInfo*>(monomer_info)
+        ->getResidueNumber();
+}
+
+std::unique_ptr<Monomer> makeMonomer(std::string_view name,
+                                     std::string_view chain_id,
+                                     int residue_number, bool is_smiles)
 {
     auto a = std::make_unique<::RDKit::Atom>();
     std::string n{name};
-    a->setProp(ATOM_LABEL, n); // temporary, for image generation
+    a->setProp(ATOM_LABEL, n);
+    a->setProp("Name", n);
+    a->setProp("smilesSymbol", n);
     // Always start with BRANCH_MONOMER as false, will be set to
     // true if branch linkage is made to this monomer
     a->setProp(BRANCH_MONOMER, false);
     a->setProp(SMILES_MONOMER, is_smiles);
 
-    // hack to get some level of canonicalization for MonomerMols
+    // hack to get some level of canonicalization for monomer mols
     static boost::hash<std::string> hasher;
     a->setIsotope(hasher(n));
     a->setNoImplicit(true);
@@ -184,12 +181,12 @@ std::unique_ptr<Monomer> make_monomer(std::string_view name,
     return a;
 }
 
-size_t add_monomer(RDKit::RWMol& monomer_mol, std::string_view name,
-                   int residue_number, std::string_view chain_id,
-                   MonomerType monomer_type)
+size_t addMonomer(RDKit::RWMol& monomer_mol, std::string_view name,
+                  int residue_number, std::string_view chain_id,
+                  MonomerType monomer_type)
 {
-    auto monomer = make_monomer(name, chain_id, residue_number,
-                                monomer_type == MonomerType::SMILES);
+    auto monomer = makeMonomer(name, chain_id, residue_number,
+                               monomer_type == MonomerType::SMILES);
     bool update_label = true;
     bool take_ownership = true;
     auto new_index =
@@ -197,30 +194,31 @@ size_t add_monomer(RDKit::RWMol& monomer_mol, std::string_view name,
     return new_index;
 }
 
-size_t add_monomer(RDKit::RWMol& monomer_mol, std::string_view name,
-                   MonomerType monomer_type)
+size_t addMonomer(RDKit::RWMol& monomer_mol, std::string_view name,
+                  MonomerType monomer_type)
 {
     if (monomer_mol.getNumAtoms() == 0) {
         throw std::invalid_argument(
             "No atoms in molecule to determine chain ID");
     }
     const auto* last_monomer = monomer_mol.getAtomWithIdx(monomer_mol.getNumAtoms() - 1);
-    const auto chain_id = get_polymer_id(last_monomer);
-    const auto residue_number = get_residue_number(last_monomer) + 1;
-    return add_monomer(monomer_mol, name, residue_number, chain_id, monomer_type);
+    const auto chain_id = getPolymerId(last_monomer);
+    const auto residue_number = getResidueNumber(last_monomer) + 1;
+    return addMonomer(monomer_mol, name, residue_number, chain_id, monomer_type);
 }
 
-void set_residue_number(RDKit::Atom* atom, int residue_number)
+void setResidueNumber(RDKit::Atom* atom, int residue_number)
 {
     auto* residue_info =
         static_cast<RDKit::AtomPDBResidueInfo*>(atom->getMonomerInfo());
     if (residue_info == nullptr) {
-        throw std::runtime_error("some Atom does not have residue info");
+        throw std::runtime_error(
+            fmt::format("Atom {} does not have residue info", atom->getIdx()));
     }
     residue_info->setResidueNumber(residue_number);
 }
 
-bool is_valid_chain(const RDKit::RWMol& monomer_mol, std::string_view polymer_id)
+bool isValidChain(const RDKit::RWMol& monomer_mol, std::string_view polymer_id)
 {
     // Check that the residue ordering is valid for this polymer. The residues
     // should be in connectivity order
@@ -234,8 +232,8 @@ bool is_valid_chain(const RDKit::RWMol& monomer_mol, std::string_view polymer_id
         }
 
         // Bond direction should be in the same order as residues
-        if (get_residue_number(bond->getBeginAtom()) >
-                get_residue_number(bond->getEndAtom()) &&
+        if (getResidueNumber(bond->getBeginAtom()) >
+                getResidueNumber(bond->getEndAtom()) &&
             chain.atoms[i] != bond->getEndAtomIdx()) {
             return false;
         }
@@ -250,7 +248,7 @@ bool is_valid_chain(const RDKit::RWMol& monomer_mol, std::string_view polymer_id
     return true;
 }
 
-RDKit::Atom* find_chain_begin(RDKit::RWMol& monomer_mol)
+RDKit::Atom* findChainBegin(RDKit::RWMol& monomer_mol)
 {
     // Find the beginning of the chain by starting at an arbirtary atom
     // and following the backbone backwards until the 'source' (beginning of the
@@ -285,13 +283,13 @@ RDKit::Atom* find_chain_begin(RDKit::RWMol& monomer_mol)
     return chain_begin;
 }
 
-void order_residues(RDKit::RWMol& monomer_mol)
+void orderResidues(RDKit::RWMol& monomer_mol)
 {
     // Currently assumes that all monomers are in the same chain. We will
     // eventually want to order residues on a per-chain basis.
 
     // Find the beginning of the chain (must be a backbone monomer)
-    auto chain_begin = find_chain_begin(monomer_mol);
+    auto chain_begin = findChainBegin(monomer_mol);
 
     // Now re-order the residues beginning at chain_begin
     std::vector<RDKit::Atom*> queue;
@@ -303,7 +301,7 @@ void order_residues(RDKit::RWMol& monomer_mol)
     while (!queue.empty()) {
         auto current = queue.back();
         queue.pop_back();
-        set_residue_number(current, current_res_idx);
+        setResidueNumber(current, current_res_idx);
         ++current_res_idx;
 
         // When ordering residues, sidechain monomers should come before
@@ -318,11 +316,69 @@ void order_residues(RDKit::RWMol& monomer_mol)
             auto linkage = bond->getProp<std::string>(LINKAGE);
             if (linkage == BRANCH_LINKAGE) {
                 auto other = bond->getOtherAtom(current);
-                set_residue_number(other, current_res_idx);
+                setResidueNumber(other, current_res_idx);
                 ++current_res_idx;
             } else if (linkage == BACKBONE_LINKAGE) {
                 queue.push_back(bond->getOtherAtom(current));
             }
+        }
+    }
+}
+
+void assignChains(RDKit::RWMol& monomer_mol)
+{
+    monomer_mol.setProp("HELM_MODEL", true);
+
+    // Currently, order_residues only works when there is a single chain
+    auto chain_ids = get_polymer_ids(monomer_mol);
+    if (chain_ids.size() == 1 && !isValidChain(monomer_mol, chain_ids[0])) {
+        orderResidues(monomer_mol);
+    }
+
+    // Determine and mark the 'connection bonds'
+    if (!monomer_mol.getRingInfo()->isInitialized()) {
+        ::RDKit::MolOps::findSSSR(monomer_mol);
+    }
+    // get atom rings that belong to a single polymer
+    const auto& bnd_rings = monomer_mol.getRingInfo()->bondRings();
+
+    for (const auto& ring : bnd_rings) {
+        if (std::ranges::all_of(ring, [&](const auto& idx) {
+                auto begin_at = monomer_mol.getBondWithIdx(idx)->getBeginAtom();
+                auto end_at = monomer_mol.getBondWithIdx(idx)->getEndAtom();
+                return getPolymerId(begin_at) == getPolymerId(end_at);
+            })) {
+            // break this ring -- find bond between residue #s with largest
+            // difference
+            unsigned int connection_bond = monomer_mol.getNumBonds();
+            int max_diff = 0;
+            for (const auto& idx : ring) {
+                const auto bond = monomer_mol.getBondWithIdx(idx);
+                auto begin_at = bond->getBeginAtom();
+                auto end_at = bond->getEndAtom();
+                int diff =
+                    getResidueNumber(begin_at) - getResidueNumber(end_at);
+                if (std::abs(diff) > max_diff) {
+                    connection_bond = bond->getIdx();
+                    max_diff = std::abs(diff);
+                }
+            }
+            if (connection_bond != monomer_mol.getNumBonds()) {
+                std::string linkage = monomer_mol.getBondWithIdx(connection_bond)
+                                          ->getProp<std::string>(LINKAGE);
+                monomer_mol.getBondWithIdx(connection_bond)
+                    ->setProp(CUSTOM_BOND, linkage);
+            } else {
+                // temporary error handling
+                throw std::runtime_error("Could not find connection bond");
+            }
+        }
+    }
+    for (auto bond : monomer_mol.bonds()) {
+        if (getPolymerId(bond->getBeginAtom()) !=
+            getPolymerId(bond->getEndAtom())) {
+            std::string linkage = bond->getProp<std::string>(LINKAGE);
+            bond->setProp(CUSTOM_BOND, linkage);
         }
     }
 }
