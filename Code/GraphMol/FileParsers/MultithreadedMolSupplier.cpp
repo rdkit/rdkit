@@ -115,6 +115,11 @@ void MultithreadedMolSupplier::writer() {
     ++d_threadCounter;
     d_threadCounterMutex.unlock();
   } else {
+    // Here we need to unlock the threadCounterMutex before we setDone on the
+    //  outputQueue.  This causes a notification to the queue which may actually
+    //  have elements in it.  This notification may unblock the queue which
+    //  allows waiting threads to get their last attempt at adding to it
+    //  which will end up here and deadlock.
     d_threadCounterMutex.unlock();
     d_outputQueue->setDone();
   }
