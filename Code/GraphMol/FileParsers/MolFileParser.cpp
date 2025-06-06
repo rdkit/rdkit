@@ -2506,11 +2506,14 @@ bool calculate3dFlag(const RWMol &mol, const Conformer &conf,
     }
     return true;
   } else if (marked3d == 0 && nonzeroZ) {
-    BOOST_LOG(rdWarningLog)
-        << "Warning: molecule is tagged as 2D, but at least one Z coordinate is not zero. "
-           "Marking the mol as 3D."
-        << std::endl;
-    return true;
+    if (!chiralityPossible) {
+      BOOST_LOG(rdWarningLog)
+          << "Warning: molecule is tagged as 2D, but at least one Z coordinate is not zero "
+             "and 2D stereo markers have not been found. Marking the mol as 3D."
+          << std::endl;
+      return true;
+    }
+    return false;
   }
 
   return nonzeroZ;

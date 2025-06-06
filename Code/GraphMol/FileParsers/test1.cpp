@@ -5422,6 +5422,26 @@ void testAtomQueries() {
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
 
+void test3DCoordsIn2DMolFile() {
+  BOOST_LOG(rdInfoLog) << "testing bad chirality parsing" << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  rdbase += "/Code/GraphMol/FileParsers/";
+  std::string fName = rdbase + "test_data/2Dwith3Dcoords.mol";
+
+  RWMol *m;
+  std::string smi;
+
+  m = MolFileToMol(fName);
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumAtoms() == 6);
+
+  smi = MolToSmiles(*m, true);
+  TEST_ASSERT(smi == "CCC[C@H](Cl)Br");
+
+  delete m;
+}
+
 void RunTests() {
 #if 1
   test1();
@@ -5521,6 +5541,9 @@ void RunTests() {
   testGithub1615();
   testGithub2000();
   testAtomQueries();
+
+  test3DCoordsIn2DMolFile();
+
 #endif
 }
 
