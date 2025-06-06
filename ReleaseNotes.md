@@ -1,3 +1,105 @@
+# Release_2025.03.3
+(Changes relative to Release_2025.03.2)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+David Cosgrove, Genevieve Evans, Tad Hurst, Kevin Keating, Brian Kelley, Jakub
+Klinkovský, Niels Maeder, Jeremy Monat, Yakov Pechersky, Ricardo Rodriguez, Paul
+Thiessen, Yi-Shu Tu, Paolo Tosco, Inwan Yoo, paconius, jdavies-nurix,
+InvincibleZZH, Forrest, rwalroth
+
+## New Features and Enhancements:
+  - Add SCSR parsing to RDKit
+ (github pull #8147 from tadhurst-cdd)
+  - support clearPropertyCache() on ROMol and Atom
+ (github issue #8241 from greglandrum)
+  - Change default ETversion.
+ (github pull #8414 from DavidACosgrove)
+  - ShapeInput from subset of atoms in molecule
+ (github pull #8449 from DavidACosgrove)
+  - Method to remove enhanced stereo from an atom
+ (github issue #8467 from jdavies-nurix)
+  - Add Synthon space hit filters
+ (github pull #8473 from DavidACosgrove)
+  - Set default Eigen3 version to 3.4.0
+ (github pull #8477 from pechersky)
+  - A couple optimizations to when the ring finding code is called
+ (github pull #8482 from greglandrum)
+  - Allow single/double bonds to match aromatic in substructure search
+ (github issue #8485 from PaulThiessen)
+  - improve operator<< for stereogroups
+ (github pull #8489 from greglandrum)
+  - Print the version of InChI software being supported in RDKIt
+ (github issue #8508 from glevans)
+  - Explain DrawArrow and rawCoords=True
+ (github pull #8517 from bertiewooster)
+  - add support for allene- and cumulene-like structures to KDG
+ (github pull #8518 from greglandrum)
+  - allow limiting the  number of stereo groups to process
+ (github pull #8541 from tadhurst-cdd)
+  - Replace incorrect Freetype cmake flags with correct ones
+ (github pull #8543 from ptosco)
+  - Add missing default values to docker-compose configuration
+ (github pull #8544 from ptosco)
+  - Avoid a large number of warnings when building MinimalLib with emscripten
+ (github pull #8545 from ptosco)
+  - Add a "time out" to determineBondOrders
+ (github pull #8548 from ricrogz)
+  - rdkit-targets.cmake now uses cmake package names for external libraries instead of absolute paths
+ (github pull #8552 from KevKeating)
+  - Support Ctrl+C in determineBondOrders
+ (github pull #8557 from ricrogz)
+
+## Documentation:
+  - Add documentation for SynthonSpaceSearch.
+ (github pull #8293 from DavidACosgrove)
+  - Clarify Docstring of molzip when called with a Single mol object
+ (github pull #8470 from badisa)
+
+## Bug Fixes:
+  - GetAtomConjGrpIdx documentation indicates it returns a signed int, but actually returns unsigned int
+ (github issue #7112 from rwalroth)
+  - Chem.MolToSmiles: rootedAtAtom option not working properly with multiple fragments
+ (github issue #8327 from iwyoo)
+  - Inconsistent SMARTS representation for stereochemical aromatic bonds
+ (github issue #8424 from iwyoo)
+  - MolToJSON doesn't handle atropisomers
+ (github issue #8460 from paconius)
+  - Postgres Cartridge Equality Shouldn't use coordinates
+ (github issue #8465 from paconius)
+  - Build failure with GCC 15
+ (github issue #8491 from lahwaacz)
+  - TautomerQuery drops queries for some atoms
+ (github issue #8492 from ricrogz)
+  - rdkit/rdkit/Chem/Features /ShowFeats.py TypeError: not all arguments converted during string formatting
+ (github issue #8501 from InvincibleZZH)
+  - Synthon space substructure search failing for simple search
+ (github issue #8502 from greglandrum)
+  - Fix arrowhead8500
+ (github pull #8504 from DavidACosgrove)
+  - Invalid read in moldraw2DTestCatch
+ (github issue #8520 from ricrogz)
+  - Chem.GetMolFrags Destroys Stereogroups containing only bonds
+ (github issue #8527 from paconius)
+  - Fix ETKDG double bond check from #8518
+ (github pull #8528 from nmaeder)
+  - Explicitly wrap raw pointer into emscripten::val object with allow_raw_pointers() policy
+ (github pull #8555 from ptosco)
+
+## Cleanup work:
+  - Consolidate MinimalLib Dockerfiles to avoid code duplication
+ (github pull #8412 from ptosco)
+  - Modernization of some substructure code
+ (github pull #8450 from greglandrum)
+  - A few mem fixes in tests
+ (github pull #8521 from ricrogz)
+  - Fix irritating warning when DrawMolMCHLasso compiled.
+ (github pull #8540 from DavidACosgrove)
+
+
 # Release_2025.03.2
 (Changes relative to Release_2025.03.1)
 
@@ -6,7 +108,7 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
-Filip Chmielewski, David Cosgrove, Bryan Kelley, Niels Maeder, Dan
+Filip Chmielewski, David Cosgrove, Brian Kelley, Niels Maeder, Dan
 Nealschneider, Axel Pahl, Lauren Reid, Ricardo Rodriguez, Paolo Tosco, stewu5,
 yuri@FreeBSD
 
