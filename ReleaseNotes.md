@@ -86,6 +86,8 @@ InvincibleZZH, Forrest, rwalroth
  (github issue #8527 from paconius)
   - Fix ETKDG double bond check from #8518
  (github pull #8528 from nmaeder)
+  - SynthonSpaceSearch bad chiral atom count
+ (github issue #8554 from DavidACosgrove)
   - Explicitly wrap raw pointer into emscripten::val object with allow_raw_pointers() policy
  (github pull #8555 from ptosco)
 
