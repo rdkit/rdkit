@@ -224,10 +224,11 @@ static int soergeldistsign(bytea *a, bytea *b) {
 
 static int hemdist(bytea *a, bytea *b) {
   if (ISALLTRUE(a)) {
-    if (ISALLTRUE(b))
+    if (ISALLTRUE(b)) {
       return 0;
-    else
+    } else {
       return SIGLENBIT(b) - bitstringWeight(SIGLEN(b), (uint8 *)VARDATA(b));
+    }
   } else if (ISALLTRUE(b)) {
     return SIGLENBIT(a) - bitstringWeight(SIGLEN(a), (uint8 *)VARDATA(a));
   }
@@ -238,11 +239,12 @@ static int soergeldist(bytea *a, bytea *b) {
   double d;
 
   if (ISALLTRUE(a)) {
-    if (ISALLTRUE(b))
+    if (ISALLTRUE(b)) {
       return 0;
-    else
+    } else {
       // FIXME shouldn't it be double(sizebitvec(b))/SIGLENBIT(b); ?
       return SIGLENBIT(b) - bitstringWeight(SIGLEN(b), (uint8 *)VARDATA(b));
+    }
   } else if (ISALLTRUE(b)) {
     // FIXME shouldn't it be double(sizebitvec(a))/SIGLENBIT(a); ?
     return SIGLENBIT(a) - bitstringWeight(SIGLEN(a), (uint8 *)VARDATA(a));
