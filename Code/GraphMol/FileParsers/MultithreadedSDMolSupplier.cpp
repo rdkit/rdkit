@@ -56,12 +56,13 @@ void MultithreadedSDMolSupplier::initFromSettings(
   df_processPropertyLists = true;
 }
 
-MultithreadedSDMolSupplier::~MultithreadedSDMolSupplier() {
+void MultithreadedSDMolSupplier::closeStreams() {
   if (df_owner && dp_inStream) {
     delete dp_inStream;
     df_owner = false;
     dp_inStream = nullptr;
   }
+  df_started = false; // this is in the base constructor
 }
 
 // ensures that there is a line available to be read
@@ -131,6 +132,11 @@ bool MultithreadedSDMolSupplier::extractNextRecord(std::string &record,
       this->checkForEnd();
     }
   }
+
+  // ignore trailing new lines
+  if(record.find_first_not_of("\n\r") == std::string::npos)
+    return false;
+  
   index = d_currentRecordId;
   ++d_currentRecordId;
   return true;
