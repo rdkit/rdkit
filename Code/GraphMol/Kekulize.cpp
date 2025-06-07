@@ -140,7 +140,7 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
 
     auto numAtomRings = mol.getRingInfo()->numAtomRings(at->getIdx());
     const auto &riVect = mol.getRingInfo()->atomMembers(at->getIdx());
-    auto numNonCandRings = std::count_if(
+    size_t numNonCandRings = std::count_if(
         riVect.begin(), riVect.end(),
         [&isRingNotCand](int ri) { return isRingNotCand.test(ri); });
     if (!at->getAtomicNum() && nonArNonDummyNbr < numAtomRings &&

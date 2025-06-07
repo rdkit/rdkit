@@ -1797,20 +1797,22 @@ M  END
     child_bonds = bonds[1:]
     self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
     bond.SetStereo(Chem.BondStereo.STEREOTRANS)
-    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOTRANS],
+    for isomer in self.recursive_enumerate_stereo_bonds(mol,
+                                                        done_bonds + [Chem.BondStereo.STEREOTRANS],
                                                         child_bonds):
       yield isomer
 
     self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
     bond.SetStereo(Chem.BondStereo.STEREOCIS)
-    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOCIS],
+    for isomer in self.recursive_enumerate_stereo_bonds(mol,
+                                                        done_bonds + [Chem.BondStereo.STEREOCIS],
                                                         child_bonds):
       yield isomer
 
   def testBondSetStereoDifficultCase(self):
     origVal = Chem.GetUseLegacyStereoPerception()
     Chem.SetUseLegacyStereoPerception(False)
-    
+
     unspec_smiles = "CCC=CC(CO)=C(C)CC"
     mol = Chem.MolFromSmiles(unspec_smiles)
     Chem.FindPotentialStereoBonds(mol)
@@ -1839,7 +1841,6 @@ M  END
     self.assertEqual(len(isomers), 4)
     Chem.SetUseLegacyStereoPerception(origVal)
 
-
   def getNumUnspecifiedBondStereo(self, smi):
     mol = Chem.MolFromSmiles(smi)
     Chem.FindPotentialStereoBonds(mol)
@@ -1847,7 +1848,7 @@ M  END
     count = 0
     for bond in mol.GetBonds():
       if bond.GetStereo() != Chem.BondStereo.STEREONONE:
-        print(bond.GetIdx(),bond.GetStereo())
+        print(bond.GetIdx(), bond.GetStereo())
       if bond.GetStereo() == Chem.BondStereo.STEREOANY:
         count += 1
 
@@ -5370,15 +5371,15 @@ width='200px' height='200px' >
     self.assertEqual(atom0.GetChiralTag(), Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
   def testAssignStereochemistryFrom3D(self):
-    
+
     def _stereoTester(mol, expectedTag, expectedStereo):
       Chem.AssignStereochemistryFrom3D(mol)
-      self.assertEqual(mol.GetNumAtoms(), 9)     
+      self.assertEqual(mol.GetNumAtoms(), 9)
       self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), expectedTag)
       self.assertEqual(mol.GetBondWithIdx(3).GetStereo(), expectedStereo)
 
     origVal = Chem.GetUseLegacyStereoPerception()
-    for useLegacy in (True,False):
+    for useLegacy in (True, False):
       Chem.SetUseLegacyStereoPerception(useLegacy)
 
       fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'stereochem.sdf')
@@ -7924,6 +7925,76 @@ M  END
       'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|'
     )
 
+  def testEnhancedStereoExceedsLimit(self):
+    m = Chem.MolFromSmiles(
+      'C[C@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29,&13:31,&14:33,&15:35,&16:37,&17:39,&18:41,&19:43,&20:45,&21:47,&22:51,&23:53,&24:56,&25:58,&26:59|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 61)
+
+    m2 = Chem.MolFromSmiles(
+      'C[C@@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29,&13:31,&14:33,&15:35,&16:37,&17:39,&18:41,&19:43,&20:45,&21:47,&22:51,&23:53,&24:56,&25:58,&26:59|'
+    )
+    self.assertTrue(m2 is not None)
+    self.assertTrue(m2.GetNumAtoms() == 61)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    m = Chem.CanonicalizeStereoGroups(m,Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,16)
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    smi2 = Chem.MolToCXSmiles(m2, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi == smi2
+    )
+
+
+  def testEnhancedStereoDoesNotExceedsLimit(self):
+    m = Chem.MolFromSmiles(
+      'C[C@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 61)
+
+    m2 = Chem.MolFromSmiles(
+      'C[C@@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29|'
+    )
+    self.assertTrue(m2 is not None)
+    self.assertTrue(m2.GetNumAtoms() == 61)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    m = Chem.CanonicalizeStereoGroups(m,Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,16)
+    # m2 = Chem.CanonicalizeStereoGroups(m2)
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    smi2 = Chem.MolToCXSmiles(m2, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi != smi2
+    )
+
+    m2 = Chem.CanonicalizeStereoGroups(m2)
+    smi2 = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi == smi2
+    )
+
+
+
   def test_picklingWithAddedAttribs(self):
     m = Chem.MolFromSmiles("C")
     m.foo = 1
@@ -8117,8 +8188,9 @@ M  END
                           'ferrocene.mol')
     femol = Chem.MolFromMolFile(fefile)
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
-    self.assertEqual(Chem.MolToSmiles(newfemol),
-                     '[cH]12->[Fe+2]3456789(<-[cH]1[cH]->3[cH-]->4[cH]->52)<-[cH]1[cH]->6[cH]->7[cH-]->8[cH]->91')
+    self.assertEqual(
+      Chem.MolToSmiles(newfemol),
+      '[cH]12->[Fe+2]3456789(<-[cH]1[cH]->3[cH-]->4[cH]->52)<-[cH]1[cH]->6[cH]->7[cH-]->8[cH]->91')
 
   def test_DativeBondsToHaptic(self):
     fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
@@ -8382,7 +8454,17 @@ M  END
     m.GetAtomWithIdx(1).SetChiralTag(Chem.CHI_UNSPECIFIED)
     Chem.CleanupStereoGroups(m)
     self.assertEqual(len(m.GetStereoGroups()), 0)
-    
+
+  def testClearPropertyCache(self):
+    m = Chem.MolFromSmiles("CC")
+    self.assertFalse(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertFalse(atom.NeedsUpdatePropertyCache())
+    m.ClearPropertyCache()
+    self.assertTrue(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertTrue(atom.NeedsUpdatePropertyCache())
+
 
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:

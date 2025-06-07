@@ -1023,8 +1023,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
 
   return gotCoords;
 }
-
-void findDoubleBonds(
+// export this since we are going to be testing it
+RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
     const ROMol &mol,
     std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
         &doubleBondEnds,
@@ -1043,8 +1043,10 @@ void findDoubleBonds(
           if (nbr == oatm) {
             continue;
           }
-          const auto obnd = mol.getBondBetweenAtoms(atm->getIdx(), nbr->getIdx());
-          if (!obnd || obnd->getBondType() != Bond::BondType::SINGLE) {
+          const auto obnd =
+              mol.getBondBetweenAtoms(atm->getIdx(), nbr->getIdx());
+          if (!obnd || (obnd->getBondType() != Bond::BondType::SINGLE &&
+                        atm->getDegree() == 2)) {
             continue;
           }
           doubleBondEnds.emplace_back(nbr->getIdx(), atm->getIdx(),
@@ -1156,8 +1158,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {

@@ -725,12 +725,19 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
             }
           }
         }
-        // doesn't seem like this should be necessary, but in case
-        // we ever need stereogroups where the atoms aren't marked
-        // with stereo...
         for (auto stereoGroup : mol.getStereoGroups()) {
+          // doesn't seem like this should be necessary, but in case
+          // we ever need stereogroups where the atoms aren't marked
+          // with stereo...
           for (auto atom : stereoGroup.getAtoms()) {
             if (atomsInFrag[atom->getIdx()]) {
+              return true;
+            }
+          }
+          // same check for stereo groups involving bonds:
+          for (auto bond : stereoGroup.getBonds()) {
+            if (atomsInFrag[bond->getBeginAtomIdx()] &&
+                atomsInFrag[bond->getEndAtomIdx()]) {
               return true;
             }
           }
@@ -776,6 +783,7 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
       } else {
         res.emplace_back(new RWMol(mol));
         auto &frag = res.back();
+
         frag->beginBatchEdit();
         for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
           if (!atomsInFrag[idx]) {

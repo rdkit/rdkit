@@ -1190,3 +1190,59 @@ TEST_CASE("allenes and cumulenes") {
     }
   }
 }
+
+namespace RDKit {
+namespace DGeomHelpers {
+namespace EmbeddingOps {
+RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
+    const ROMol &mol,
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        &doubleBondEnds,
+    std::vector<std::pair<std::vector<unsigned int>, int>> &stereoDoubleBonds,
+    const std::map<int, RDGeom::Point3D> *coordMap);
+}
+}  // namespace DGeomHelpers
+}  // namespace RDKit
+
+TEST_CASE("FindDoubleBonds") {
+  SECTION("Allene") {
+    auto m = "C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    DGeomHelpers::EmbeddingOps::findDoubleBonds(*m, doubleBondEnds,
+                                                stereoDoubleBonds, nullptr);
+    // This is 4, we still have two double bonds to Hydrogens on each
+    // side that should not be linear but the C=C=C should be, so not 5.
+    CHECK(doubleBondEnds.size() == 4);
+    CHECK(stereoDoubleBonds.empty());
+  }
+  SECTION("Sulfone") {
+    auto m = "CS(=O)(=O)C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    DGeomHelpers::EmbeddingOps::findDoubleBonds(*m, doubleBondEnds,
+                                                stereoDoubleBonds, nullptr);
+    // We want 6 and not 4, the angle between O=S=O should not be linear
+    // (the current implementation counts it twice, hence not 5).
+    CHECK(doubleBondEnds.size() == 6);
+    CHECK(stereoDoubleBonds.empty());
+  }
+}
+
+TEST_CASE("Github #8559: seg fault in setTopolBounds") {
+  SECTION("as reported") {
+    auto mol =
+        "CC1CN([C@H]2C[C@H](O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CCC(N)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(O)NC(N)NC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(O)NC(N)NC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CNC5C(N)NCNC54)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CC(C)C(O)NC4O)C[C@@H]3O[PH](O)(O)OC[C@H]3O[C@@H](N4CCC(N)NC4O)C[C@@H]3O)[C@@H](CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CC(C)C(O)NC4O)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(N)NCNC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CNC5C(O)NC(N)NC54)O[C@@H]3CO[PH](O)(O)O[C@H]3C[C@H](N4CCC(N)NC4O)O[C@@H]3CO)O2)C(O)NC1O"_smiles;
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+  }
+}
