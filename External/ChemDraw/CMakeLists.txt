@@ -10,122 +10,22 @@ include(CMakePrintHelpers)
 #  and will need to be fixed in the future
 
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
-  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/CDXIO.h" )
-    set(RELEASE_NO "1.0.5")
-    set(MD5 "8172855b2e52e3335526123b134ed258")
+  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/chemdraw/CDXIO.h" )
+    set(RELEASE_NO "1.0.7")
+    set(MD5 "a7d5c49a21384278698946fb1051b474")
     downloadAndCheckMD5("https://codeload.github.com/Glysade/chemdraw/tar.gz/refs/tags/v${RELEASE_NO}"
               "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-v${RELEASE_NO}.tar.gz" ${MD5})
 	      
     execute_process(COMMAND ${CMAKE_COMMAND} -E tar zxf
           ${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-v${RELEASE_NO}.tar.gz
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-    file(RENAME "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-${RELEASE_NO}/chemdraw" "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw")
-    file(RENAME "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-${RELEASE_NO}/expatpp" "${CMAKE_CURRENT_SOURCE_DIR}/expatpp")
+    file(RENAME "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-${RELEASE_NO}" "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw")
    endif()
    
-    # Build expat
-    add_subdirectory(expatpp)
-
-    #
-    # ChemDraw library for reading/writing documents
-    rdkit_library(ChemDraw
-        chemdraw/Base64Converter.cpp
-        chemdraw/CDXAnnotation.cpp
-        chemdraw/CDXArrow.cpp
-        chemdraw/CDXAttachedDataHelper.cpp
-        chemdraw/CDXBandMarker.cpp
-        chemdraw/CDXBioDraw.cpp
-        chemdraw/CDXBond.cpp
-        chemdraw/CDXBorder.cpp
-        chemdraw/CDXBracketedGroup.cpp
-        chemdraw/CDXChemicalProperty.cpp
-        chemdraw/CDXColorTable.cpp
-        chemdraw/CDXColoredMolecularArea.cpp
-        chemdraw/CDXConstraint.cpp
-        chemdraw/CDXCurve.cpp
-        chemdraw/CDXDocument.cpp
-        chemdraw/CDXDocumentProperty.cpp
-        chemdraw/CDXDocumentPropertyCollection.cpp
-        chemdraw/CDXEmbeddedObject.cpp
-        chemdraw/CDXFontTable.cpp
-        chemdraw/CDXFragment.cpp
-        chemdraw/CDXGEPBand.cpp
-        chemdraw/CDXGEPPlate.cpp
-        chemdraw/CDXGeometry.cpp
-        chemdraw/CDXGraphic.cpp
-        chemdraw/CDXGraphicObject.cpp
-        chemdraw/CDXGroup.cpp
-        chemdraw/CDXGroupOrFragment.cpp
-        chemdraw/CDXIO.cpp
-        chemdraw/CDXIndicatorText.cpp
-        chemdraw/CDXMLParser.cpp
-        chemdraw/CDXNamedAlternativeGroup.cpp
-        chemdraw/CDXNode.cpp
-        chemdraw/CDXObject.cpp
-        chemdraw/CDXObjectTag.cpp
-        chemdraw/CDXPage.cpp
-        chemdraw/CDXPlasmidMap.cpp
-        chemdraw/CDXPlateBase.cpp
-        chemdraw/CDXPlateItemBase.cpp
-        chemdraw/CDXRLogic.cpp
-        chemdraw/CDXReactionStep.cpp
-        chemdraw/CDXSpectrum.cpp
-        chemdraw/CDXSplitter.cpp
-        chemdraw/CDXStdObjects.cpp
-        chemdraw/CDXStoichiometryGrid.cpp
-        chemdraw/CDXTLCLane.cpp
-        chemdraw/CDXTLCPlate.cpp
-        chemdraw/CDXTLCSpot.cpp
-        chemdraw/CDXTable.cpp
-        chemdraw/CDXTemplateGrid.cpp
-        chemdraw/CDXTest.cpp
-        chemdraw/CDXText.cpp
-        chemdraw/CDXUnicode.cpp
-        chemdraw/CDXUtils.cpp
-        chemdraw/CDXUtils_Win.cpp
-        chemdraw/XMLDoc.cpp
-        chemdraw/XMLParser.cpp
-	# ${EXPAT_SRC}
-	SHARED LINK_LIBRARIES expat
-	)
-
-    target_compile_definitions(ChemDraw PRIVATE RDKIT_CHEMDRAW_BUILD)
-    
-
-    # export all the symbols for ChemDraw on MSVC
-    if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
-        message("== ChemDraw exporting all symbols")
-        set_target_properties(ChemDraw PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-    endif()
-    
-    if(MSVC)
-      ADD_DEFINITIONS("-DTARGET_API_LIB -D_WINDOWS -DTARGET_OS_WIN32 -DHAVE_EXPAT_CONFIG_H")
-      # we don't really control chemdraw source code, so suppress warnings	
-      target_compile_options(ChemDraw PRIVATE "/W0")
-    else()
-      ADD_DEFINITIONS("-DTARGET_API_LIB -D__linux -DHAVE_EXPAT_CONFIG_H")
-      # we don't really control chemdraw source code, so suppress warnings
-      target_compile_options(ChemDraw PRIVATE -w -Wno-unknown-pragmas -Wno-error)
-      if(RDK_INSTALL_STATIC_LIBS)
-            target_compile_options(ChemDraw_static PRIVATE -w -Wno-unknown-pragmas -Wno-error)
-      endif(RDK_INSTALL_STATIC_LIBS)
-    endif()
-      
-    install(TARGETS ChemDraw DESTINATION ${RDKit_LibDir})
-
-
-
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-comment -Wno-parentheses -Wno-logical-op-parentheses -Wno-pointer-bool-conversion -Wno-unused-value -Wno-unsequenced -Wno-constant-logical-operand")
-  endif()
-
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wformat-overflow=0 -Wformat=0 -Wno-format-security")
-  endif()
-
-  #######################################################################################
-  # finally the RDKit library!
-  set(RDChemDrawLib_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
+   add_subdirectory(chemdraw)
+   include_directories(chemdraw)
+   
+     set(RDChemDrawLib_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
         CACHE STRING "RDChemDrawLib Include File" FORCE)
 
   rdkit_library(RDChemDrawLib
