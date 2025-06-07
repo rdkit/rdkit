@@ -594,18 +594,6 @@ if (MSVC)
   add_definitions( "/wd4267" )
 endif(MSVC)
 
-if(RDK_BUILD_CHEMDRAW_SUPPORT)
-    # get the endian flags for ChemDraw
-    test_big_endian(WORDS_BIGENDIAN)
-    #/* 1234 = LIL_ENDIAN, 4321 = BIGENDIAN */
-    if(WORDS_BIGENDIAN)
-          add_definitions("-DPLATFORM_BIGENDIAN")	
-    else(WORDS_BIGENDIAN)
-          add_definitions("-DPLATFORM_LITTLEENDIAN")
-    endif(WORDS_BIGENDIAN)
-    add_definitions(-DRDK_BUILD_CHEMDRAW_SUPPORT)
-endif(RDK_BUILD_CHEMDRAW_SUPPORT)
-
 add_subdirectory(External)
 add_subdirectory(Code)
 
