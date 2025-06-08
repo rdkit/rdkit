@@ -14,7 +14,7 @@
 #include <ForceField/MMFF/Params.h>
 #include <GraphMol/Trajectory/Snapshot.h>
 #include <boost/python/tuple.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 #include <algorithm>
 #include <Geometry/point.h>
@@ -36,7 +36,7 @@ class PyForceField {
   int addExtraPoint(double x, double y, double z, bool fixed = true) {
     PRECONDITION(this->field, "no force field");
     RDGeom::Point3D *pt = new RDGeom::Point3D(x, y, z);
-    this->extraPoints.push_back(boost::shared_ptr<RDGeom::Point3D>(pt));
+    this->extraPoints.push_back(std::shared_ptr<RDGeom::Point3D>(pt));
     unsigned int ptIdx = this->extraPoints.size() - 1;
     RDGeom::Point3D *ptr = this->extraPoints[ptIdx].get();
     this->field->positions().push_back(ptr);
@@ -79,8 +79,8 @@ class PyForceField {
   }
 
   // private:
-  std::vector<boost::shared_ptr<RDGeom::Point3D>> extraPoints;
-  boost::shared_ptr<ForceField> field;
+  std::vector<std::shared_ptr<RDGeom::Point3D>> extraPoints;
+  std::shared_ptr<ForceField> field;
 };
 
 class PyMMFFMolProperties {
@@ -153,7 +153,7 @@ class PyMMFFMolProperties {
   void setMMFFVerbosity(unsigned int verbosity) {
     mmffMolProperties->setMMFFVerbosity(verbosity);
   }
-  boost::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
+  std::shared_ptr<RDKit::MMFF::MMFFMolProperties> mmffMolProperties;
 };
 PyObject *getUFFBondStretchParams(const RDKit::ROMol &mol,
                                   const unsigned int idx1,

@@ -39,7 +39,7 @@ void _basicsTest(FPBReader &fps) {
     std::string nm = fps.getId(0);
     // std::cerr << " nm: >" << nm << "<" << std::endl;
     TEST_ASSERT(nm == "ZINC00902219");
-    boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(0);
+    std::shared_ptr<ExplicitBitVect> fp = fps.getFP(0);
     TEST_ASSERT(fp);
     TEST_ASSERT(fp->getNumBits() == 2048);
     TEST_ASSERT(fp->getNumOnBits() == 17);
@@ -50,8 +50,8 @@ void _basicsTest(FPBReader &fps) {
     }
   }
   {  // operator[] version
-    std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> tpl = fps[0];
-    boost::shared_ptr<ExplicitBitVect> fp = tpl.first;
+    std::pair<std::shared_ptr<ExplicitBitVect>, std::string> tpl = fps[0];
+    std::shared_ptr<ExplicitBitVect> fp = tpl.first;
     TEST_ASSERT(fp);
     TEST_ASSERT(fp->getNumBits() == 2048);
     TEST_ASSERT(fp->getNumOnBits() == 17);
@@ -63,7 +63,7 @@ void _basicsTest(FPBReader &fps) {
     TEST_ASSERT(tpl.second == "ZINC00902219");
   }
   {  // test another fp
-    boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(3);
+    std::shared_ptr<ExplicitBitVect> fp = fps.getFP(3);
     TEST_ASSERT(fp);
     TEST_ASSERT(fp->getNumBits() == 2048);
     TEST_ASSERT(fp->getNumOnBits() == 20);
@@ -220,7 +220,7 @@ void test4LazyFPBReaderBasics() {
     {  // get* version
       std::string nm = fps.getId(0);
       TEST_ASSERT(nm == "ZINC00902219");
-      boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(0);
+      std::shared_ptr<ExplicitBitVect> fp = fps.getFP(0);
       TEST_ASSERT(fp);
       TEST_ASSERT(fp->getNumBits() == 2048);
       TEST_ASSERT(fp->getNumOnBits() == 17);
@@ -231,8 +231,8 @@ void test4LazyFPBReaderBasics() {
       }
     }
     {  // operator[] version
-      std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> tpl = fps[0];
-      boost::shared_ptr<ExplicitBitVect> fp = tpl.first;
+      std::pair<std::shared_ptr<ExplicitBitVect>, std::string> tpl = fps[0];
+      std::shared_ptr<ExplicitBitVect> fp = tpl.first;
       TEST_ASSERT(fp);
       TEST_ASSERT(fp->getNumBits() == 2048);
       TEST_ASSERT(fp->getNumOnBits() == 17);
@@ -244,7 +244,7 @@ void test4LazyFPBReaderBasics() {
       TEST_ASSERT(tpl.second == "ZINC00902219");
     }
     {  // test another fp
-      boost::shared_ptr<ExplicitBitVect> fp = fps.getFP(3);
+      std::shared_ptr<ExplicitBitVect> fp = fps.getFP(3);
       TEST_ASSERT(fp);
       TEST_ASSERT(fp->getNumBits() == 2048);
       TEST_ASSERT(fp->getNumOnBits() == 20);
@@ -279,7 +279,7 @@ void test5LazyFPBReaderTanimoto() {
       TEST_ASSERT(feq(fps.getTanimoto(1, bytes), 0.3703));
     }
     {
-      boost::shared_ptr<ExplicitBitVect> ebv = fps.getFP(0);
+      std::shared_ptr<ExplicitBitVect> ebv = fps.getFP(0);
       TEST_ASSERT(ebv);
       TEST_ASSERT(feq(fps.getTanimoto(0, *ebv.get()), 1.0));
       TEST_ASSERT(feq(fps.getTanimoto(1, *ebv.get()), 0.3703));
@@ -339,7 +339,7 @@ void test6LazyFPBReaderTanimotoNeighbors() {
       TEST_ASSERT(nbrs[1].second == 89);
     }
     {  // ebv with a threshold
-      boost::shared_ptr<ExplicitBitVect> ebv = fps.getFP(95);
+      std::shared_ptr<ExplicitBitVect> ebv = fps.getFP(95);
       TEST_ASSERT(ebv);
       std::vector<std::pair<double, unsigned int>> nbrs =
           fps.getTanimotoNeighbors(*ebv.get(), 0.30);
@@ -454,7 +454,7 @@ void test8FPBReaderContains() {
       TEST_ASSERT(nbrs[3] == 88);
     }
     {
-      boost::shared_ptr<ExplicitBitVect> ebv = fps.getFP(87);
+      std::shared_ptr<ExplicitBitVect> ebv = fps.getFP(87);
       TEST_ASSERT(ebv);
       std::vector<unsigned int> nbrs = fps.getContainingNeighbors(*ebv.get());
       TEST_ASSERT(nbrs.size() == 4);
