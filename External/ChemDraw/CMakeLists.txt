@@ -11,8 +11,8 @@ include(CMakePrintHelpers)
 
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
   if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/chemdraw/CDXIO.h" )
-    set(RELEASE_NO "1.0.7")
-    set(MD5 "a7d5c49a21384278698946fb1051b474")
+    set(RELEASE_NO "1.0.8")
+    set(MD5 "b8f6b12e04845246bf0753d9ee389a31")
     downloadAndCheckMD5("https://codeload.github.com/Glysade/chemdraw/tar.gz/refs/tags/v${RELEASE_NO}"
               "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-v${RELEASE_NO}.tar.gz" ${MD5})
 	      
@@ -36,7 +36,7 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
    endif(WORDS_BIGENDIAN)
 
 
-   // we don't want to install expat, this is statically linked in to the ChemDraw lib
+   # we don't want to install expat, this is statically linked in to the ChemDraw lib
    set(CMAKE_SKIP_INSTALL_RULES ON)
    add_subdirectory(chemdraw/expatpp)
    set(CMAKE_SKIP_INSTALL_RULES OFF)
