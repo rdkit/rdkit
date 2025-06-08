@@ -275,17 +275,3 @@ class TestChemDraw(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
 
 
-if __name__ == '__main__':
-  asdf
-  if "RDTESTCASE" in os.environ:
-    suite = unittest.TestSuite()
-    testcases = os.environ["RDTESTCASE"]
-    for name in testcases.split(':'):
-      suite.addTest(TestCase(name))
-
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
-  else:
-    print("running")
-    unittest.main()
-    
