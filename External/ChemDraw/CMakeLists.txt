@@ -36,7 +36,10 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
    endif(WORDS_BIGENDIAN)
 
 
+   // we don't want to install expat, this is statically linked in to the ChemDraw lib
+   set(CMAKE_SKIP_INSTALL_RULES ON)
    add_subdirectory(chemdraw/expatpp)
+   set(CMAKE_SKIP_INSTALL_RULES OFF)
 
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/expatpp/expatpp-code-r6-trunk/src_pp)
 
