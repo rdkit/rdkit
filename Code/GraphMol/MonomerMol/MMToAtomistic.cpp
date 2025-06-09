@@ -248,6 +248,9 @@ AttachmentMap addPolymer(RDKit::RWMol& atomistic_mol,
         auto [core_aid2, attachment_point2] =
             attachment_point_map.at({to_res, to_rgroup});
 
+        [[maybe_unused]] auto atomistic_bond_idx = atomistic_mol.addBond(core_aid1, core_aid2, bond->getBondType()) -
+            1;
+        
         remove_atoms.push_back(attachment_point1);
         remove_atoms.push_back(attachment_point2);
     }

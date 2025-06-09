@@ -212,7 +212,7 @@ MonomerDatabase::getPdbCode(const std::string& helm_symbol,
     if (single_to_three_letter.find(helm_symbol) != single_to_three_letter.end()) {
          return single_to_three_letter.at(helm_symbol);
     }
-    return "";
+    return std::nullopt;
 }
 
 } // namespace RDKit
