@@ -29,7 +29,6 @@ namespace RDKit {
 namespace {
 const std::string NEEDS_FUSE("CDXML_NEEDS_FUSE");
 const std::string CDXML_FRAG_ID("CDXML_FRAG_ID");
-const std::string CDXML_GROUP_ID("CDXML_GROUP_ID");
 const std::string FUSE_LABEL("CDXML_NODE_ID");
 const std::string CDX_SCHEME_ID("CDX_SCHEME_ID");
 const std::string CDX_STEP_ID("CDX_STEP_ID");
@@ -39,7 +38,6 @@ const std::string CDX_AGENT_ID("CDX_AGENT_ID");
 const std::string CDX_ATOM_POS("CDX_ATOM_POS");
 const std::string CDX_ATOM_ID("_CDX_ATOM_ID");
 const std::string CDX_BOND_ID("_CDX_BOND_ID");
-const std::string CDX_BOND_ORDERING("CDXML_BOND_ORDERING");
 
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 
@@ -454,7 +452,7 @@ bool parse_fragment(RWMol &mol, ptree &frag,
         ids[bond.end]->setIsAromatic(true);
         ids[bond.start]->setIsAromatic(true);
       }
-      bnd->setProp("CDX_BOND_ID", bond.bond_id);
+      bnd->setProp(CDX_BOND_ID, bond.bond_id);
       if (bond.display == "WedgeBegin") {
         bnd->setBondDir(Bond::BondDir::BEGINWEDGE);
         bnd->setProp(common_properties::_MolFileBondCfg, 1);
@@ -647,7 +645,7 @@ void visit_children(
             unsigned int failedOp = 0;
             MolOps::sanitizeMol(*res, failedOp, MolOps::SANITIZE_CLEANUP);
             MolOps::detectBondStereochemistry(*res);
-            MolOps::removeHs(*res, false, false);
+            MolOps::removeHs(*res);
           } else {
             MolOps::sanitizeMol(*res);
             MolOps::detectBondStereochemistry(*res);

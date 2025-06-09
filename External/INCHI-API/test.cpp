@@ -938,6 +938,27 @@ void testGithub8123() {
   BOOST_LOG(rdInfoLog) << "done" << std::endl;
 }
 
+void testGithub8239() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdInfoLog) << "testing github #8239" << std::endl;
+
+  {
+    auto m = "CO[P@](=O)(OCC1C(C(CO1)O)O)OP(=O)(O)O"_smiles;
+    TEST_ASSERT(m);
+    ExtraInchiReturnValues tmp;
+    auto inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/C6H14O10P2/c1-13-18(12,16-17(9,10)11)15-3-5-6(8)4(7)2-14-5/h4-8H,2-3H2,1H3,(H2,9,10,11)/t4?,5?,6?,18-/m1/s1");
+  }
+  {
+    auto m = "CO[P@@](=O)(OCC1C(C(CO1)O)O)OP(=O)(O)O"_smiles;
+    TEST_ASSERT(m);
+    ExtraInchiReturnValues tmp;
+    auto inchi = MolToInchi(*m, tmp);
+    TEST_ASSERT(inchi == "InChI=1S/C6H14O10P2/c1-13-18(12,16-17(9,10)11)15-3-5-6(8)4(7)2-14-5/h4-8H,2-3H2,1H3,(H2,9,10,11)/t4?,5?,6?,18-/m0/s1");
+  }
+  BOOST_LOG(rdInfoLog) << "done" << std::endl;
+}
+
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
 //
 //-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
@@ -963,4 +984,5 @@ int main() {
   testGithub6172();
   testGithub5311();
   testGithub8123();
+  testGithub8239();
 }

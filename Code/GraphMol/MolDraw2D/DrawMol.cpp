@@ -457,7 +457,7 @@ void DrawMol::extractAtomNotes() {
         DrawAnnotation *annot = new DrawAnnotation(
             note, TextAlignType::MIDDLE, "note",
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+            drawOptions_.atomNoteColour, textDrawer_);
         calcAnnotationPosition(atom, *annot);
         annotations_.emplace_back(annot);
       }
@@ -512,7 +512,7 @@ void DrawMol::extractBondNotes() {
         DrawAnnotation *annot = new DrawAnnotation(
             note, TextAlignType::MIDDLE, "note",
             drawOptions_.annotationFontScale, Point2D(0.0, 0.0),
-            drawOptions_.annotationColour, textDrawer_);
+            drawOptions_.bondNoteColour, textDrawer_);
         calcAnnotationPosition(bond, *annot);
         annotations_.emplace_back(annot);
       }
@@ -3716,7 +3716,8 @@ DrawColour DrawMol::getColour(int atom_idx) const {
         retval = *highCol;
       }
     }
-  } else if (highlightedAtom) {
+  } else if (highlightedAtom &&
+             !drawOptions_.standardColoursForHighlightedAtoms) {
     // There's going to be a colour behind the atom, so if the
     // atom has a symbol, it should be the same colour as carbon.  This
     // function should only be called if there is an atom symbol.

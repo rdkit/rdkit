@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2003-2023  Greg Landrum and other RDKit contributors
+#  Copyright (C) 2003-2025  Greg Landrum and other RDKit contributors
 #         All Rights Reserved
 #
 """ This is a rough coverage test of the python wrapper
@@ -270,8 +270,10 @@ class TestCase(unittest.TestCase):
 
     self.assertTrue([x.GetTotalNumHs() for x in aList] == [0, 1, 2, 2])
     self.assertTrue([x.GetNumImplicitHs() for x in aList] == [0, 1, 2, 0])
-    self.assertTrue([x.GetExplicitValence() for x in aList] == [3, 3, 2, 3])
-    self.assertTrue([x.GetImplicitValence() for x in aList] == [0, 1, 2, 0])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.EXPLICIT) for x in aList] == [3, 3, 2, 3])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.IMPLICIT) for x in aList] == [0, 1, 2, 0])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.EXPLICIT) for x in aList] == [3, 3, 2, 3])
+    self.assertTrue([x.GetValence(which=Chem.ValenceType.IMPLICIT) for x in aList] == [0, 1, 2, 0])
     self.assertTrue([x.GetFormalCharge() for x in aList] == [0, 0, 0, -1])
     self.assertTrue([x.GetNoImplicit() for x in aList] == [0, 0, 0, 1])
     self.assertTrue([x.GetNumExplicitHs() for x in aList] == [0, 0, 0, 2])
@@ -486,6 +488,23 @@ class TestCase(unittest.TestCase):
     self.assertEqual(m.GetAtomWithIdx(0).GetDegree(), 4)
     self.assertEqual(m.GetAtomWithIdx(2).GetDegree(), 4)
     self.assertEqual(m.GetAtomWithIdx(1).GetDegree(), 2)
+
+    # AddHsParameters
+    params = Chem.AddHsParameters()
+    params.skipQueries = True
+    m = Chem.MolFromSmiles('CC')
+    self.assertIsNotNone(m)
+    nm = Chem.AddHs(m)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+    nm = Chem.AddHs(m, params)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+
+    m = Chem.MolFromSmarts('[CH3][CH3]')
+    self.assertIsNotNone(m)
+    nm = Chem.AddHs(m)
+    self.assertEqual(nm.GetNumAtoms(), 8)
+    nm = Chem.AddHs(m, params)
+    self.assertEqual(nm.GetNumAtoms(), 2)
 
   def test15Neighbors(self):
     m = Chem.MolFromSmiles('CC(=O)[OH]')
@@ -1651,8 +1670,9 @@ M  END
     """
     m = Chem.MolFromSmiles('F[C@]([C@])(Cl)Br')
     Chem.AssignStereochemistry(m, 1)
-    self.assertTrue(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
-    self.assertFalse(m.GetAtomWithIdx(2).HasProp('_CIPCode'))
+    if Chem.GetUseLegacyStereoPerception():
+      self.assertTrue(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
+      self.assertFalse(m.GetAtomWithIdx(2).HasProp('_CIPCode'))
     Chem.RemoveStereochemistry(m)
     self.assertFalse(m.GetAtomWithIdx(1).HasProp('_CIPCode'))
 
@@ -1663,7 +1683,10 @@ M  END
 
     m = Chem.MolFromSmiles('F\\C=C/Cl')
     self.assertTrue(m.GetBondWithIdx(0).GetStereo() == Chem.BondStereo.STEREONONE)
-    self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREOZ)
+    if Chem.GetUseLegacyStereoPerception():
+      self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREOZ)
+    else:
+      self.assertTrue(m.GetBondWithIdx(1).GetStereo() == Chem.BondStereo.STEREOCIS)
     atoms = m.GetBondWithIdx(1).GetStereoAtoms()
     self.assertTrue(0 in atoms)
     self.assertTrue(3 in atoms)
@@ -1748,7 +1771,10 @@ M  END
       smi = Chem.MolToSmiles(mol, isomericSmiles=True)
       self.allStereoBonds([bond])
       self.assertEqual(smi, "F/C=C/F")
-      self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOE)
+      if Chem.GetUseLegacyStereoPerception():
+        self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOE)
+      else:
+        self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOTRANS)
 
       bond.SetStereo(Chem.BondStereo.STEREOCIS)
       self.assertEqual(bond.GetStereo(), Chem.BondStereo.STEREOCIS)
@@ -1757,7 +1783,10 @@ M  END
       smi = Chem.MolToSmiles(mol, isomericSmiles=True)
       self.allStereoBonds([bond])
       self.assertEqual(smi, r"F/C=C\F")
-      self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
+      if Chem.GetUseLegacyStereoPerception():
+        self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOZ)
+      else:
+        self.assertDoubleBondStereo(smi, Chem.BondStereo.STEREOCIS)
 
   def recursive_enumerate_stereo_bonds(self, mol, done_bonds, bonds):
     if not bonds:
@@ -1768,17 +1797,22 @@ M  END
     child_bonds = bonds[1:]
     self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
     bond.SetStereo(Chem.BondStereo.STEREOTRANS)
-    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOE],
+    for isomer in self.recursive_enumerate_stereo_bonds(mol,
+                                                        done_bonds + [Chem.BondStereo.STEREOTRANS],
                                                         child_bonds):
       yield isomer
 
     self.assertEqual(len(list(bond.GetStereoAtoms())), 2)
     bond.SetStereo(Chem.BondStereo.STEREOCIS)
-    for isomer in self.recursive_enumerate_stereo_bonds(mol, done_bonds + [Chem.BondStereo.STEREOZ],
+    for isomer in self.recursive_enumerate_stereo_bonds(mol,
+                                                        done_bonds + [Chem.BondStereo.STEREOCIS],
                                                         child_bonds):
       yield isomer
 
   def testBondSetStereoDifficultCase(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(False)
+
     unspec_smiles = "CCC=CC(CO)=C(C)CC"
     mol = Chem.MolFromSmiles(unspec_smiles)
     Chem.FindPotentialStereoBonds(mol)
@@ -1805,6 +1839,7 @@ M  END
       self.assertEqual(bond_stereo, round_trip_stereo)
 
     self.assertEqual(len(isomers), 4)
+    Chem.SetUseLegacyStereoPerception(origVal)
 
   def getNumUnspecifiedBondStereo(self, smi):
     mol = Chem.MolFromSmiles(smi)
@@ -1812,6 +1847,8 @@ M  END
 
     count = 0
     for bond in mol.GetBonds():
+      if bond.GetStereo() != Chem.BondStereo.STEREONONE:
+        print(bond.GetIdx(), bond.GetStereo())
       if bond.GetStereo() == Chem.BondStereo.STEREOANY:
         count += 1
 
@@ -1821,7 +1858,7 @@ M  END
     # this one is much trickier because a double bond can gain and
     # lose it's stereochemistry based upon whether 2 other double
     # bonds have the same or different stereo chemistry.
-
+    Chem.SetUseLegacyStereoPerception(True)
     unspec_smiles = "CCC=CC(C=CCC)=C(CO)CC"
     mol = Chem.MolFromSmiles(unspec_smiles)
     Chem.FindPotentialStereoBonds(mol)
@@ -1837,6 +1874,7 @@ M  END
     for bond_stereo, isomer in self.recursive_enumerate_stereo_bonds(mol, [], stereo_bonds):
       isosmi = Chem.MolToSmiles(isomer, isomericSmiles=True)
       isomers.add(isosmi)
+      print(isosmi)
 
     self.assertEqual(len(isomers), 3)
 
@@ -1844,6 +1882,7 @@ M  END
     # introduction of a new symmetry
     counts = {}
     for isosmi in isomers:
+      print(isosmi)
       num_unspecified = self.getNumUnspecifiedBondStereo(isosmi)
       counts[num_unspecified] = counts.get(num_unspecified, 0) + 1
 
@@ -3340,7 +3379,7 @@ CAS<~>
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
     self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
-    self.assertEqual(atom.GetExplicitValence(), 0)
+    self.assertEqual(atom.GetValence(which=Chem.ValenceType.EXPLICIT), 0)
     bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
     self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
 
@@ -3349,7 +3388,7 @@ CAS<~>
     atom = mol.GetAtomWithIdx(40)
     self.assertEqual(atom.GetAtomicNum(), 30)  # is it Zn
     self.assertEqual(atom.GetDegree(), 4)  # Zn should have 4 zero-order bonds
-    self.assertEqual(atom.GetExplicitValence(), 0)
+    self.assertEqual(atom.GetValence(which=Chem.ValenceType.EXPLICIT), 0)
     bonds_order = [bond.GetBondType() for bond in atom.GetBonds()]
     self.assertEqual(bonds_order, [Chem.BondType.ZERO] * atom.GetDegree())
     # test unbinding HOHs
@@ -3889,7 +3928,7 @@ CAS<~>
     qps = Chem.AdjustQueryParameters()
     qps.makeAtomsGeneric = True
     am = Chem.AdjustQueryProperties(m, qps)
-    self.assertEqual(Chem.MolToSmarts(am), '*1-*-*-*-1-*-*')
+    self.assertEqual(Chem.MolToSmarts(am), '[D2]1-[D2]-[D2]-[D3]-1-*-*')
     qps.makeAtomsGenericFlags = Chem.ADJUST_IGNORERINGS
     am = Chem.AdjustQueryProperties(m, qps)
     self.assertEqual(Chem.MolToSmarts(am), '[#6&D2]1-[#6&D2]-[#6&D2]-[#6&D3]-1-*-*')
@@ -3913,7 +3952,7 @@ CAS<~>
     qps = Chem.AdjustQueryParameters()
     qps.makeAtomsGeneric = True
     am = Chem.AdjustQueryProperties(m, qps)
-    self.assertEqual(Chem.MolFragmentToSmarts(am, [0, 1, 2]), '*-*-*')
+    self.assertEqual(Chem.MolFragmentToSmarts(am, [3, 4, 5]), '[D3]-*-*')
 
   def testAdjustQueryPropertiesgithubIssue1474(self):
     core = Chem.MolFromSmiles('[*:1]C1N([*:2])C([*:3])O1')
@@ -4382,12 +4421,15 @@ $$$$
     self.assertTrue(resMolSuppl.WasCanceled())
 
   def testAtomBondProps(self):
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(True)
     m = Chem.MolFromSmiles('c1ccccc1')
     for atom in m.GetAtoms():
       d = atom.GetPropsAsDict()
       self.assertEqual(set(d.keys()), set(['_CIPRank', '__computedProps']))
       self.assertEqual(d['_CIPRank'], 0)
       self.assertEqual(list(d['__computedProps']), ['_CIPRank'])
+    Chem.SetUseLegacyStereoPerception(origVal)
 
     for bond in m.GetBonds():
       self.assertEqual(bond.GetPropsAsDict(), {})
@@ -5330,30 +5372,37 @@ width='200px' height='200px' >
 
   def testAssignStereochemistryFrom3D(self):
 
-    def _stereoTester(mol, expectedCIP, expectedStereo):
-      mol.UpdatePropertyCache()
-      self.assertEqual(mol.GetNumAtoms(), 9)
-      self.assertFalse(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
-      self.assertEqual(mol.GetBondWithIdx(3).GetStereo(), Chem.BondStereo.STEREONONE)
-      for bond in mol.GetBonds():
-        bond.SetBondDir(Chem.BondDir.NONE)
-
+    def _stereoTester(mol, expectedTag, expectedStereo):
       Chem.AssignStereochemistryFrom3D(mol)
-      self.assertTrue(mol.GetAtomWithIdx(1).HasProp("_CIPCode"))
-      self.assertEqual(mol.GetAtomWithIdx(1).GetProp("_CIPCode"), expectedCIP)
+      self.assertEqual(mol.GetNumAtoms(), 9)
+      self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), expectedTag)
       self.assertEqual(mol.GetBondWithIdx(3).GetStereo(), expectedStereo)
 
-    fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'stereochem.sdf')
-    suppl = Chem.SDMolSupplier(fileN, sanitize=False)
-    expected = (
-      ("R", Chem.BondStereo.STEREOZ),
-      ("R", Chem.BondStereo.STEREOE),
-      ("S", Chem.BondStereo.STEREOZ),
-      ("S", Chem.BondStereo.STEREOE),
-    )
-    for i, mol in enumerate(suppl):
-      cip, stereo = expected[i]
-      _stereoTester(mol, cip, stereo)
+    origVal = Chem.GetUseLegacyStereoPerception()
+    for useLegacy in (True, False):
+      Chem.SetUseLegacyStereoPerception(useLegacy)
+
+      fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'test_data', 'stereochem.sdf')
+      suppl = Chem.SDMolSupplier(fileN, sanitize=False)
+      if useLegacy:
+        expected = (
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOZ),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOE),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOZ),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOE),
+        )
+      else:
+        expected = (
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOCIS),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CW, Chem.BondStereo.STEREOTRANS),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOCIS),
+          (Chem.ChiralType.CHI_TETRAHEDRAL_CCW, Chem.BondStereo.STEREOTRANS),
+        )
+
+      for i, mol in enumerate(suppl):
+        cip, stereo = expected[i]
+        _stereoTester(mol, cip, stereo)
+    Chem.SetUseLegacyStereoPerception(origVal)
 
   def testGitHub2082(self):
     ctab = """
@@ -5476,6 +5525,10 @@ M  END
     # file is 1 indexed and says 5
     self.assertEqual(stereo_atoms[1].GetIdx(), 4)
 
+    # no bonds here:
+    stereo_bonds = group1.GetBonds()
+    self.assertEqual(len(stereo_bonds), 0)
+
     # make sure the atoms are connected to the parent molecule
     stereo_atoms[1].SetProp("foo", "bar")
     self.assertTrue(m.GetAtomWithIdx(4).HasProp("foo"))
@@ -5484,6 +5537,21 @@ M  END
     for at in stereo_atoms:
       at.SetProp("foo2", "bar2")
       self.assertTrue(m.GetAtomWithIdx(at.GetIdx()).HasProp("foo2"))
+
+  def testGetEnhancedStereoAtrop(self):
+
+    m = Chem.MolFromSmiles('Cc1cccc(O)c1-c1c(C)cccc1F |wU:7.7,&1:7|')
+
+    sg = m.GetStereoGroups()
+    self.assertEqual(len(sg), 1)
+    group1 = sg[0]
+    self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_AND)
+    stereo_atoms = group1.GetAtoms()
+    self.assertEqual(len(stereo_atoms), 0)
+
+    stereo_bonds = group1.GetBonds()
+    self.assertEqual(len(stereo_bonds), 1)
+    self.assertEqual(stereo_bonds[0].GetIdx(), 7)
 
   def testEnhancedStereoPreservesMol(self):
     """
@@ -6718,7 +6786,7 @@ M  END
 
   def test_get_set_positions(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
-    pos = np.zeros([3,3], np.double)
+    pos = np.zeros([3, 3], np.double)
     pos[0][1] = 1
     pos[0][2] = 2
     pos[1][0] = 3
@@ -6731,15 +6799,14 @@ M  END
     m.GetConformer(0).SetPositions(pos)
     pos2 = m.GetConformer(0).GetPositions()
 
-    self.assertTrue( (pos==pos2).all())
-
+    self.assertTrue((pos == pos2).all())
 
   def test_get_set_positions_stride(self):
     m = Chem.MolFromSmiles('CCC |(-1.29904,-0.25,;0,0.5,;1.29904,-0.25,)|')
     # to check stride walking in SetPositions
     # allocate a double size array, then slice every other element
     # numpy will mess with the striding to create the view onto the double size array
-    pos = np.zeros([6,3], np.double)[::2]
+    pos = np.zeros([6, 3], np.double)[::2]
     pos[0][1] = 1
     pos[0][2] = 2
     pos[1][0] = 3
@@ -6752,8 +6819,7 @@ M  END
     m.GetConformer(0).SetPositions(pos)
     pos2 = m.GetConformer(0).GetPositions()
 
-    self.assertTrue( (pos==pos2).all())
-
+    self.assertTrue((pos == pos2).all())
 
   def test_github3553(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
@@ -7587,6 +7653,9 @@ CAS<~>
     self.assertEqual(mae, iomae[ctBlockStart:])
 
   def test3dChiralMolFile(self):
+    # FIX: these tests need to be made to work with the new stereochemistry perception
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(True)
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'FileParsers', 'test_data',
                          'Cubane.sdf')
     with open(fileN, 'r') as inF:
@@ -7630,7 +7699,13 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
 
+    Chem.SetUseLegacyStereoPerception(origVal)
+
   def test3dChiralMrvFile(self):
+    # FIX: these tests need to be made to work with the new stereochemistry perception
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(True)
+
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
                          'Cubane.mrv')
     with open(fileN, 'r') as inF:
@@ -7677,7 +7752,13 @@ CAS<~>
     smi = Chem.MolToCXSmiles(m1)
     self.assertTrue(smi == inNoWedges)
 
+    Chem.SetUseLegacyStereoPerception(origVal)
+
   def test3dChiralCxsmiles(self):
+    # FIX: these tests need to be made to work with the new stereochemistry perception
+    origVal = Chem.GetUseLegacyStereoPerception()
+    Chem.SetUseLegacyStereoPerception(True)
+
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'SmilesParse', 'test_data',
                          'Cubane.cxsmi')
     with open(fileN, 'r') as inF:
@@ -7701,20 +7782,20 @@ CAS<~>
 
     m1 = Chem.MolFromSmiles(inD, ps)
     self.assertTrue(m1 is not None)
-    self.assertTrue(m1.GetNumAtoms() == 16)
+    self.assertEqual(m1.GetNumAtoms(), 16)
     smi = Chem.MolToCXSmiles(m1)
     sys.stdout.flush()
-    self.assertTrue(smi == inWedges)
+    self.assertEqual(smi, inWedges)
 
     m1 = Chem.MolFromSmiles(inD, ps)
     Chem.RemoveNonExplicit3DChirality(m1)
 
     self.assertTrue(m1 is not None)
-    self.assertTrue(m1.GetNumAtoms() == 16)
+    self.assertEqual(m1.GetNumAtoms(), 16)
     smi = Chem.MolToCXSmiles(m1)
-    print('inWedges: ', inNoWedges)
+    self.assertEqual(smi, inNoWedges)
 
-    self.assertTrue(smi == inNoWedges)
+    Chem.SetUseLegacyStereoPerception(origVal)
 
   def testReapplyMolBlockWedging(self):
     fileN = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MarvinParse', 'test_data',
@@ -7791,7 +7872,10 @@ M  END
     ps.canonical = True
 
     smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
-    self.assertTrue(smi == 'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|')
+    self.assertTrue(
+      smi ==
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,wU:8.10,&1:8|'
+    )
 
     flags = Chem.CXSmilesFields.CX_COORDS | \
                         Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
@@ -7803,7 +7887,8 @@ M  END
 
     self.assertTrue(
       smi ==
-      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,&1:8|')
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:2.11,&1:8|'
+    )
     flags = Chem.CXSmilesFields.CX_COORDS | \
                         Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
                         Chem.CXSmilesFields.CX_ATOM_PROPS | \
@@ -7835,7 +7920,80 @@ M  END
     m = Chem.CanonicalizeStereoGroups(m)
     smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
     print('smi: ', smi)
-    self.assertTrue(smi == 'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|')
+    self.assertTrue(
+      smi ==
+      'CC1=C(n2cccc2[C@H](C)Cl)C(C)CCC1 |(2.679,0.4142,;1.3509,1.181,;0.0229,0.4141,;0.0229,-1.1195,;1.2645,-2.0302,;0.7901,-3.4813,;-0.7446,-3.4813,;-1.219,-2.0302,;-2.679,-1.5609,;-3.0039,-0.0556,;-3.8202,-2.595,;-1.3054,1.1809,;-2.6335,0.4141,;-1.3054,2.7145,;0.0229,3.4813,;1.3509,2.7146,),wD:8.9,2.11,a:2,&1:8|'
+    )
+
+  def testEnhancedStereoExceedsLimit(self):
+    m = Chem.MolFromSmiles(
+      'C[C@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29,&13:31,&14:33,&15:35,&16:37,&17:39,&18:41,&19:43,&20:45,&21:47,&22:51,&23:53,&24:56,&25:58,&26:59|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 61)
+
+    m2 = Chem.MolFromSmiles(
+      'C[C@@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29,&13:31,&14:33,&15:35,&16:37,&17:39,&18:41,&19:43,&20:45,&21:47,&22:51,&23:53,&24:56,&25:58,&26:59|'
+    )
+    self.assertTrue(m2 is not None)
+    self.assertTrue(m2.GetNumAtoms() == 61)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    m = Chem.CanonicalizeStereoGroups(m,Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,16)
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    smi2 = Chem.MolToCXSmiles(m2, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi == smi2
+    )
+
+
+  def testEnhancedStereoDoesNotExceedsLimit(self):
+    m = Chem.MolFromSmiles(
+      'C[C@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29|'
+    )
+    self.assertTrue(m is not None)
+    self.assertTrue(m.GetNumAtoms() == 61)
+
+    m2 = Chem.MolFromSmiles(
+      'C[C@@H]1CC[C@]2(NC1)O[C@H]1C[C@H]3[C@H]4CC=C5C[C@H](O[C@H]6O[C@H](CO)[C@H](O[C@H]7O[C@H](C)[C@H](O)[C@H](O)[C@H]7O)[C@H](O)[C@H]6O[C@H]6O[C@H](C)[C@H](O)[C@H](O)[C@H]6O)CC[C@]5(C)[C@H]4CC[C@]3(C)[C@H]1[C@H]2C |&1:1,&2:4,&3:8,&4:10,&5:11,&6:16,&7:18,&8:20,&9:23,&10:25,&11:27,&12:29|'
+    )
+    self.assertTrue(m2 is not None)
+    self.assertTrue(m2.GetNumAtoms() == 61)
+
+    sys.stdout.flush()
+    flags = Chem.CXSmilesFields.CX_COORDS | \
+                        Chem.CXSmilesFields.CX_MOLFILE_VALUES | \
+                        Chem.CXSmilesFields.CX_ATOM_PROPS | \
+                        Chem.CXSmilesFields.CX_BOND_CFG | \
+                        Chem.CXSmilesFields.CX_ENHANCEDSTEREO
+
+    ps = Chem.SmilesWriteParams()
+    ps.canonical = True
+
+    m = Chem.CanonicalizeStereoGroups(m,Chem.StereoGroupAbsOptions.OnlyIncludeWhenOtherGroupsExist,16)
+    # m2 = Chem.CanonicalizeStereoGroups(m2)
+    smi = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    smi2 = Chem.MolToCXSmiles(m2, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi != smi2
+    )
+
+    m2 = Chem.CanonicalizeStereoGroups(m2)
+    smi2 = Chem.MolToCXSmiles(m, ps, flags, Chem.RestoreBondDirOption.RestoreBondDirOptionTrue)
+    self.assertTrue(
+      smi == smi2
+    )
+
+
 
   def test_picklingWithAddedAttribs(self):
     m = Chem.MolFromSmiles("C")
@@ -8030,8 +8188,9 @@ M  END
                           'ferrocene.mol')
     femol = Chem.MolFromMolFile(fefile)
     newfemol = Chem.rdmolops.HapticBondsToDative(femol)
-    self.assertEqual(Chem.MolToSmiles(newfemol),
-                     'c12->[Fe+2]3456789(<-c1c->3[cH-]->4c->52)<-c1c->6c->7[cH-]->8c->91')
+    self.assertEqual(
+      Chem.MolToSmiles(newfemol),
+      '[cH]12->[Fe+2]3456789(<-[cH]1[cH]->3[cH-]->4[cH]->52)<-[cH]1[cH]->6[cH]->7[cH-]->8[cH]->91')
 
   def test_DativeBondsToHaptic(self):
     fefile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'MolStandardize', 'test_data',
@@ -8256,15 +8415,13 @@ M  END
     ps = Chem.SmilesWriteParams()
     ps.ignoreAtomMapNumbers = True
     self.assertEqual(Chem.MolToSmiles(mol, ps), "[NH2:1]c1ccccc1")
-    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=True),
-                     "[NH2:1]c1ccccc1")
-    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False),
-                     "c1ccc([NH2:1])cc1")
+    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=True), "[NH2:1]c1ccccc1")
+    self.assertEqual(Chem.MolToSmiles(mol, ignoreAtomMapNumbers=False), "c1ccc([NH2:1])cc1")
 
   def github7873(self):
     # this used to segfault
     Chem.MolFromSmiles("C").GetAtomWithIdx(0).SetPDBResidueInfo(None)
-    
+
   def testSplitMolByPDB(self):
     mol = Chem.MolFromSmiles("C")
     res2mol = Chem.SplitMolByPDBResidues(mol)
@@ -8273,7 +8430,7 @@ M  END
     chain2mol = Chem.SplitMolByPDBChainId(mol)
     self.assertEqual(len(chain2mol), 1)
     self.assertIn("", chain2mol)
-    
+
   def testGithub4570(self):
     # test sending None to get/set prop
     m = Chem.Mol()
@@ -8283,14 +8440,32 @@ M  END
         getattr(m, func)(None)
       except Exception as e:
         assert "Python argument types" in str(e), f"{func}: {str(e)}"
-    
+
     for func, val in [("SetProp", ""), ("SetIntProp", 1), ("SetDoubleProp", 1.0)]:
       try:
         getattr(m, func)(None, val)
       except Exception as e:
         assert "Python argument types" in str(e), f"{func}: {str(e)}"
-      
-    
+
+  def testGithub8467(self):
+    m = Chem.MolFromSmiles('C[C@H](F)Cl |&1:1|')
+    self.assertIsNotNone(m)
+    self.assertEqual(len(m.GetStereoGroups()), 1)
+    m.GetAtomWithIdx(1).SetChiralTag(Chem.CHI_UNSPECIFIED)
+    Chem.CleanupStereoGroups(m)
+    self.assertEqual(len(m.GetStereoGroups()), 0)
+
+  def testClearPropertyCache(self):
+    m = Chem.MolFromSmiles("CC")
+    self.assertFalse(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertFalse(atom.NeedsUpdatePropertyCache())
+    m.ClearPropertyCache()
+    self.assertTrue(m.NeedsUpdatePropertyCache())
+    for atom in m.GetAtoms():
+      self.assertTrue(atom.NeedsUpdatePropertyCache())
+
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()

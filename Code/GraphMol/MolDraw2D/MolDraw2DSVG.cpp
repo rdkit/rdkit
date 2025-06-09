@@ -276,10 +276,11 @@ void MolDraw2DSVG::drawPolygon(const std::vector<Point2D> &cds,
     d_os << "' style='fill:none;";
   }
 
-  d_os << "stroke:" << col
-       << ";stroke-width:" << MolDraw2D_detail::formatDouble(width)
-       << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:"
-       << colour().a << ";" << dashString << "'";
+  d_os
+      << "stroke:" << col
+      << ";stroke-width:" << MolDraw2D_detail::formatDouble(width)
+      << "px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10;stroke-opacity:"
+      << colour().a << ";" << dashString << "'";
   d_os << " />\n";
 }
 
@@ -324,8 +325,8 @@ void MolDraw2DSVG::clearDrawing() {
   std::string col = DrawColourToSVG(drawOptions().backgroundColour);
   d_os << "<rect";
   d_os << " style='opacity:1.0;fill:" << col << ";stroke:none'";
-  d_os << " width='" << MolDraw2D_detail::formatDouble(width()) << "' height='"
-       << MolDraw2D_detail::formatDouble(height()) << "'";
+  d_os << " width='" << MolDraw2D_detail::formatDouble(panelWidth())
+       << "' height='" << MolDraw2D_detail::formatDouble(panelHeight()) << "'";
   d_os << " x='" << MolDraw2D_detail::formatDouble(offset().x) << "' y='"
        << MolDraw2D_detail::formatDouble(offset().y) << "'";
   d_os << "> </rect>\n";

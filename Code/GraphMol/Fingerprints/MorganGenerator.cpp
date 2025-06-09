@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2018-2024 Boran Adas and other RDKit contributors
+//  Copyright (C) 2018-2025 Boran Adas and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -17,10 +17,12 @@
 
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
-#include <tuple>
 #include <RDGeneral/BoostEndInclude.h>
+#include <tuple>
 
 #include <GraphMol/Fingerprints/FingerprintUtil.h>
+#include <GraphMol/Chirality.h>
+#include <GraphMol/CIPLabeler/CIPLabeler.h>
 
 namespace RDKit {
 namespace MorganFingerprint {
@@ -86,12 +88,30 @@ std::vector<std::uint32_t> *MorganBondInvGenerator::getBondInvariants(
           bond->getStereo() == Bond::STEREONONE) {
         bondInvariant = static_cast<int32_t>(bond->getBondType());
       } else {
+        auto bondStereo = static_cast<int32_t>(bond->getStereo());
+        if (!Chirality::getUseLegacyStereoPerception()) {
+          // if we aren't using legacy stereo, we need to compute the CIP codes
+          if (!mol.hasProp(common_properties::_CIPComputed)) {
+            CIPLabeler::assignCIPLabels(const_cast<ROMol &>(mol));
+          }
+
+          // for backwards compatibility, if we are E or Z, set those, otherwise
+          // just use whatever the bondStereo is set to.
+          std::string cipCode;
+          if (bond->getPropIfPresent(common_properties::_CIPCode, cipCode)) {
+            if (cipCode == "E") {
+              bondStereo = static_cast<int32_t>(Bond::STEREOE);
+            } else if (cipCode == "Z") {
+              bondStereo = static_cast<int32_t>(Bond::STEREOZ);
+            }
+          }
+        }
         const int32_t stereoOffset = 100;
         const int32_t bondTypeOffset = 10;
         bondInvariant =
             stereoOffset +
             bondTypeOffset * static_cast<int32_t>(bond->getBondType()) +
-            static_cast<int32_t>(bond->getStereo());
+            bondStereo;
       }
     }
     (*result)[bond->getIdx()] = static_cast<int32_t>(bondInvariant);
@@ -169,14 +189,22 @@ MorganEnvGenerator<OutputType>::getEnvironments(
                "bad atom invariants size");
   PRECONDITION(bondInvariants && (bondInvariants->size() >= mol.getNumBonds()),
                "bad bond invariants size");
-  unsigned int nAtoms = mol.getNumAtoms();
-
   auto *morganArguments = dynamic_cast<MorganArguments *>(arguments);
+  PRECONDITION(morganArguments, "bad arguments type");
+
+  unsigned int nAtoms = mol.getNumAtoms();
   const unsigned int maxNumResults = (morganArguments->d_radius + 1) * nAtoms;
 
   std::vector<AtomEnvironment<OutputType> *> result =
       std::vector<AtomEnvironment<OutputType> *>();
   result.reserve(maxNumResults);
+
+  // if we are using chirality, we need to make sure the atoms have R/S labels
+  if (morganArguments->df_includeChirality &&
+      !Chirality::getUseLegacyStereoPerception() &&
+      !mol.hasProp(common_properties::_CIPComputed)) {
+    CIPLabeler::assignCIPLabels(const_cast<ROMol &>(mol));
+  }
 
   std::vector<OutputType> currentInvariants(atomInvariants->size());
   std::copy(atomInvariants->begin(), atomInvariants->end(),

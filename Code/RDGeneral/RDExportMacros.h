@@ -16,7 +16,18 @@
 #pragma warning(disable : 4275)
 #endif
 
+#ifdef BOOST_NO_CXX98_FUNCTION_BASE
+#undef BOOST_NO_CXX98_FUNCTION_BASE
+#ifndef _SHOULD_DEFINE_BOOST_NO_CXX98_FUNCTION_BASE
+#define _SHOULD_DEFINE_BOOST_NO_CXX98_FUNCTION_BASE 1
+#endif
+#endif
 #include <boost/config.hpp>
+#ifdef _SHOULD_DEFINE_BOOST_NO_CXX98_FUNCTION_BASE
+#ifndef BOOST_NO_CXX98_FUNCTION_BASE
+#define BOOST_NO_CXX98_FUNCTION_BASE 1
+#endif
+#endif
 
 // RDKit export macro definitions
 #ifdef RDKIT_DYN_LINK

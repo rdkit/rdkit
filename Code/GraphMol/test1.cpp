@@ -9,6 +9,8 @@
 //
 
 #include <RDGeneral/test.h>
+#include <GraphMol/test_fixtures.h>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/RDKitQueries.h>
@@ -634,7 +636,8 @@ void testIssue2381580() {
     m->addBond(0, 3, Bond::SINGLE);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 0);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) ==
+                3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 0);
     delete m;
   }
@@ -653,7 +656,8 @@ void testIssue2381580() {
     m->getAtomWithIdx(0)->setFormalCharge(-1);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == -1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 4);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) ==
+                4);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 0);
     delete m;
   }
@@ -711,7 +715,8 @@ void testIssue2381580() {
     m->getAtomWithIdx(0)->setFormalCharge(+1);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 2);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) ==
+                2);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 0);
     delete m;
   }
@@ -728,20 +733,25 @@ void testIssue2381580() {
     m->getAtomWithIdx(0)->setFormalCharge(-1);
     MolOps::sanitizeMol(*m);
     TEST_ASSERT(m->getAtomWithIdx(0)->getFormalCharge() == -1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() == 3);
+    TEST_ASSERT(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) ==
+                3);
     TEST_ASSERT(m->getAtomWithIdx(0)->getNumImplicitHs() == 1);
-    TEST_ASSERT(m->getAtomWithIdx(0)->getExplicitValence() +
-                    m->getAtomWithIdx(0)->getImplicitValence() ==
-                rdcast<int>(m->getAtomWithIdx(0)->getTotalValence()));
-    TEST_ASSERT(m->getAtomWithIdx(1)->getExplicitValence() +
-                    m->getAtomWithIdx(1)->getImplicitValence() ==
-                rdcast<int>(m->getAtomWithIdx(1)->getTotalValence()));
-    TEST_ASSERT(m->getAtomWithIdx(2)->getExplicitValence() +
-                    m->getAtomWithIdx(2)->getImplicitValence() ==
-                rdcast<int>(m->getAtomWithIdx(2)->getTotalValence()));
-    TEST_ASSERT(m->getAtomWithIdx(3)->getExplicitValence() +
-                    m->getAtomWithIdx(3)->getImplicitValence() ==
-                rdcast<int>(m->getAtomWithIdx(3)->getTotalValence()));
+    TEST_ASSERT(
+        m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) +
+            m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) ==
+        m->getAtomWithIdx(0)->getTotalValence());
+    TEST_ASSERT(
+        m->getAtomWithIdx(1)->getValence(Atom::ValenceType::EXPLICIT) +
+            m->getAtomWithIdx(1)->getValence(Atom::ValenceType::IMPLICIT) ==
+        m->getAtomWithIdx(1)->getTotalValence());
+    TEST_ASSERT(
+        m->getAtomWithIdx(2)->getValence(Atom::ValenceType::EXPLICIT) +
+            m->getAtomWithIdx(2)->getValence(Atom::ValenceType::IMPLICIT) ==
+        m->getAtomWithIdx(2)->getTotalValence());
+    TEST_ASSERT(
+        m->getAtomWithIdx(3)->getValence(Atom::ValenceType::EXPLICIT) +
+            m->getAtomWithIdx(3)->getValence(Atom::ValenceType::IMPLICIT) ==
+        m->getAtomWithIdx(3)->getTotalValence());
     delete m;
   }
 
@@ -1025,7 +1035,8 @@ void testIssue267() {
     m.addAtom(new Atom(0), true, true);
     m.updatePropertyCache();
 
-    TEST_ASSERT(m.getAtomWithIdx(0)->getImplicitValence() == 0);
+    TEST_ASSERT(m.getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) ==
+                0);
   }
   {
     RWMol m;
@@ -1122,7 +1133,8 @@ void testNeedsUpdatePropertyCache() {
     TEST_ASSERT(m.needsUpdatePropertyCache() == true);
     m.updatePropertyCache();
 
-    TEST_ASSERT(m.getAtomWithIdx(0)->getImplicitValence() == 0);
+    TEST_ASSERT(m.getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) ==
+                0);
     TEST_ASSERT(m.needsUpdatePropertyCache() == false);
   }
   {
@@ -1331,24 +1343,40 @@ void testGithub608() {
   }
 
   {
-    INT_VECT nAtoms;
-    RWMol *m = SmilesToMol("N1NN1");
-    TEST_ASSERT(m);
-    TEST_ASSERT(m->getNumAtoms() == 3);
-    RWMol *f = SmilesToMol("C[C@]1(F)CC[C@](Cl)(Br)CC1");
-    TEST_ASSERT(f);
-    TEST_ASSERT(f->getNumAtoms() == 10);
-    TEST_ASSERT(f->getAtomWithIdx(1)->getPropIfPresent(
-        common_properties::_ringStereoAtoms, nAtoms));
-    TEST_ASSERT(std::find(nAtoms.begin(), nAtoms.end(), 6) != nAtoms.end());
-    m->insertMol(*f);
-    TEST_ASSERT(m->getNumAtoms() == 13);
-    TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(
-        common_properties::_ringStereoAtoms, nAtoms));
-    TEST_ASSERT(std::find(nAtoms.begin(), nAtoms.end(), 9) != nAtoms.end());
+    for (const bool useLegacy : {true, false}) {
+      // when useLegacy is false, this tests #8379
+      UseLegacyStereoPerceptionFixture fx(useLegacy);
 
-    delete m;
-    delete f;
+      INT_VECT nAtoms;
+      auto m = v2::SmilesParse::MolFromSmiles("N1NN1");
+      TEST_ASSERT(m);
+      TEST_ASSERT(m->getNumAtoms() == 3);
+      auto f = v2::SmilesParse::MolFromSmiles("C[C@]1(F)CC[C@](Cl)(Br)CC1");
+      TEST_ASSERT(f);
+      TEST_ASSERT(f->getNumAtoms() == 10);
+      if (useLegacy) {
+        TEST_ASSERT(f->getAtomWithIdx(1)->getPropIfPresent(
+            common_properties::_ringStereoAtoms, nAtoms));
+        TEST_ASSERT(std::find(nAtoms.begin(), nAtoms.end(), 6) != nAtoms.end());
+      } else {
+        unsigned int oatom = 0;
+        TEST_ASSERT(f->getAtomWithIdx(1)->getPropIfPresent(
+            common_properties::_ringStereoOtherAtom, oatom));
+        TEST_ASSERT(oatom == 5);
+      }
+      m->insertMol(*f);
+      TEST_ASSERT(m->getNumAtoms() == 13);
+      if (useLegacy) {
+        TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(
+            common_properties::_ringStereoAtoms, nAtoms));
+        TEST_ASSERT(std::find(nAtoms.begin(), nAtoms.end(), 9) != nAtoms.end());
+      } else {
+        unsigned oatom = 0;
+        TEST_ASSERT(m->getAtomWithIdx(4)->getPropIfPresent(
+            common_properties::_ringStereoOtherAtom, oatom));
+        TEST_ASSERT(oatom == 8);
+      }
+    }
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }

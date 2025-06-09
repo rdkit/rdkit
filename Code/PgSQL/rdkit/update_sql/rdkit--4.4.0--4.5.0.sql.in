@@ -1,8 +1,12 @@
+DROP FUNCTION IF EXISTS mol_to_smiles(mol);
+
 CREATE OR REPLACE FUNCTION mol_to_smiles(mol, isomeric bool DEFAULT true)
 RETURNS cstring
 PARALLEL SAFE
 AS 'MODULE_PATHNAME'
 LANGUAGE C STRICT IMMUTABLE;
+
+DROP FUNCTION IF EXISTS mol_to_cxsmiles(mol);
 
 CREATE OR REPLACE FUNCTION mol_to_cxsmiles(mol, isomeric bool DEFAULT true)
 RETURNS cstring

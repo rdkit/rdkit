@@ -167,7 +167,8 @@ void markDbondCands(RWMol &mol, const INT_VECT &allAtms,
       dv += chrg;
       int tbo = at->getTotalValence();
       int nRadicals = at->getNumRadicalElectrons();
-      int totalDegree = at->getDegree() + at->getImplicitValence() - nToIgnore;
+      int totalDegree = at->getDegree() +
+                        at->getValence(Atom::ValenceType::IMPLICIT) - nToIgnore;
 
       const auto &valList =
           PeriodicTable::getTable()->getValenceList(at->getAtomicNum());

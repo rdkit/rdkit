@@ -16,6 +16,7 @@
 #include <vector>
 #include <functional>
 #include <map>
+#include <span>
 #include <boost/dynamic_bitset.hpp>
 
 namespace RDKit {
@@ -603,7 +604,7 @@ RDKIT_GENERICGROUPS_EXPORT ROMol *adjustQueryPropertiesWithGenericGroups(
 /// the current match
 RDKIT_GENERICGROUPS_EXPORT bool genericAtomMatcher(
     const ROMol &mol, const ROMol &query,
-    const std::vector<unsigned int> &match);
+    const std::span<const unsigned int> &match);
 //! sets the apropriate generic query tags based on atom labels and/or SGroups
 /*
 

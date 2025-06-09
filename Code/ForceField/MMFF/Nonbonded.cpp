@@ -1,8 +1,4 @@
-// $Id$
-//
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2008 Greg Landrum and Rational Discovery LLC
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -90,26 +86,35 @@ double calcEleEnergy(unsigned int, unsigned int, double dist, double chargeTerm,
 }
 }  // namespace Utils
 
-VdWContrib::VdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-                       const MMFFVdWRijstarEps *mmffVdWConstants) {
+VdWContrib::VdWContrib(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
-  PRECONDITION(mmffVdWConstants, "bad MMFFVdW parameters");
-  URANGE_CHECK(idx1, owner->positions().size());
-  URANGE_CHECK(idx2, owner->positions().size());
-
   dp_forceField = owner;
-  d_at1Idx = idx1;
-  d_at2Idx = idx2;
-  d_R_ij_star = mmffVdWConstants->R_ij_star;
-  d_wellDepth = mmffVdWConstants->epsilon;
+}
+
+void VdWContrib::addTerm(unsigned int idx1, unsigned int idx2, const MMFFVdWRijstarEps *mmffVdWConstants) {
+  PRECONDITION(mmffVdWConstants, "bad MMFFVdW parameters");
+  URANGE_CHECK(idx1, dp_forceField->positions().size());
+  URANGE_CHECK(idx2, dp_forceField->positions().size());
+  d_at1Idxs.push_back(idx1);
+  d_at2Idxs.push_back(idx2);
+  d_R_ij_stars.push_back(mmffVdWConstants->R_ij_star);
+  d_wellDepths.push_back(mmffVdWConstants->epsilon);
 }
 
 double VdWContrib::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
+  double energySum = 0.0;
 
-  double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  return Utils::calcVdWEnergy(dist, d_R_ij_star, d_wellDepth);
+  const int numPairs = d_at1Idxs.size();
+  for (int i = 0; i < numPairs; ++i) {
+    unsigned int d_at1Idx = d_at1Idxs[i];
+    unsigned int d_at2Idx = d_at2Idxs[i];
+    double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+    double res = Utils::calcVdWEnergy(dist, d_R_ij_stars[i], d_wellDepths[i]);
+    energySum += res;
+  }
+  return energySum;
 }
 
 void VdWContrib::getGrad(double *pos, double *grad) const {
@@ -122,52 +127,77 @@ void VdWContrib::getGrad(double *pos, double *grad) const {
   double const vdw2 = 1.12;
   double const vdw2m1 = vdw2 - 1.0;
   double const vdw2t7 = vdw2 * 7.0;
-  double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  double *at1Coords = &(pos[3 * d_at1Idx]);
-  double *at2Coords = &(pos[3 * d_at2Idx]);
-  double *g1 = &(grad[3 * d_at1Idx]);
-  double *g2 = &(grad[3 * d_at2Idx]);
-  double q = dist / d_R_ij_star;
-  double q2 = q * q;
-  double q6 = q2 * q2 * q2;
-  double q7 = q6 * q;
-  double q7pvdw2m1 = q7 + vdw2m1;
-  double t = vdw1 / (q + vdw1 - 1.0);
-  double t2 = t * t;
-  double t7 = t2 * t2 * t2 * t;
-  double dE_dr = d_wellDepth / d_R_ij_star * t7 *
-                 (-vdw2t7 * q6 / (q7pvdw2m1 * q7pvdw2m1) +
-                  ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
-  for (unsigned int i = 0; i < 3; ++i) {
-    double dGrad;
-    dGrad = ((dist > 0.0) ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist)
-                          : d_R_ij_star * 0.01);
-    g1[i] += dGrad;
-    g2[i] -= dGrad;
+
+
+  const int numPairs = d_at1Idxs.size();
+  for (int pairIdx = 0; pairIdx < numPairs; ++pairIdx) {
+    const int d_at1Idx = d_at1Idxs[pairIdx];
+    const int d_at2Idx = d_at2Idxs[pairIdx];
+    const double d_R_ij_star = d_R_ij_stars[pairIdx];
+    const double d_wellDepth = d_wellDepths[pairIdx];
+
+    double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+    double *at1Coords = &(pos[3 * d_at1Idx]);
+    double *at2Coords = &(pos[3 * d_at2Idx]);
+    double *g1 = &(grad[3 * d_at1Idx]);
+    double *g2 = &(grad[3 * d_at2Idx]);
+    double q = dist / d_R_ij_star;
+    double q2 = q * q;
+    double q6 = q2 * q2 * q2;
+    double q7 = q6 * q;
+    double q7pvdw2m1 = q7 + vdw2m1;
+    double t = vdw1 / (q + vdw1 - 1.0);
+    double t2 = t * t;
+    double t7 = t2 * t2 * t2 * t;
+    double dE_dr = d_wellDepth / d_R_ij_star * t7 *
+                   (-vdw2t7 * q6 / (q7pvdw2m1 * q7pvdw2m1) +
+                    ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
+    for (unsigned int i = 0; i < 3; ++i) {
+      double dGrad;
+      dGrad = ((dist > 0.0) ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist)
+                            : d_R_ij_star * 0.01);
+      g1[i] += dGrad;
+      g2[i] -= dGrad;
+    }
   }
 }
 
-EleContrib::EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-                       double chargeTerm, std::uint8_t dielModel, bool is1_4) {
+EleContrib::EleContrib(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
-  URANGE_CHECK(idx1, owner->positions().size());
-  URANGE_CHECK(idx2, owner->positions().size());
-
   dp_forceField = owner;
-  d_at1Idx = idx1;
-  d_at2Idx = idx2;
-  d_chargeTerm = chargeTerm;
-  d_dielModel = dielModel;
-  d_is1_4 = is1_4;
 }
-
+void EleContrib::addTerm(unsigned int idx1, unsigned int idx2,
+             double chargeTerm, std::uint8_t dielModel, bool is1_4) {
+  URANGE_CHECK(idx1, dp_forceField->positions().size());
+  URANGE_CHECK(idx2, dp_forceField->positions().size());
+  d_at1Idxs.push_back(idx1);
+  d_at2Idxs.push_back(idx2);
+  d_chargeTerms.push_back(chargeTerm);
+  d_dielModels.push_back(dielModel);
+  d_is_1_4s.push_back(is1_4);
+}
 double EleContrib::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
 
-  return Utils::calcEleEnergy(d_at1Idx, d_at2Idx,
-                              dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
-                              d_chargeTerm, d_dielModel, d_is1_4);
+  double res = 0.0;
+  const int numPairs = d_at1Idxs.size();
+
+  for (int i = 0; i < numPairs; ++i) {
+    unsigned int d_at1Idx = d_at1Idxs[i];
+    unsigned int d_at2Idx = d_at2Idxs[i];
+    double d_chargeTerm = d_chargeTerms[i];
+    std::uint8_t d_dielModel = d_dielModels[i];
+    bool d_is1_4 = d_is_1_4s[i];
+
+    res += Utils::calcEleEnergy(d_at1Idx,
+                                d_at2Idx,
+                                dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
+                                d_chargeTerm,
+                                d_dielModel,
+                                d_is1_4);
+  }
+  return res;
 }
 
 void EleContrib::getGrad(double *pos, double *grad) const {
@@ -175,22 +205,31 @@ void EleContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
 
-  double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  double *at1Coords = &(pos[3 * d_at1Idx]);
-  double *at2Coords = &(pos[3 * d_at2Idx]);
-  double *g1 = &(grad[3 * d_at1Idx]);
-  double *g2 = &(grad[3 * d_at2Idx]);
-  double corr_dist = dist + 0.05;
-  corr_dist *= ((d_dielModel == RDKit::MMFF::DISTANCE) ? corr_dist * corr_dist
-                                                       : corr_dist);
-  double dE_dr = -332.0716 * (double)(d_dielModel)*d_chargeTerm / corr_dist *
-                 (d_is1_4 ? 0.75 : 1.0);
-  for (unsigned int i = 0; i < 3; ++i) {
-    double dGrad;
-    dGrad =
-        ((dist > 0.0) ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist) : 0.02);
-    g1[i] += dGrad;
-    g2[i] -= dGrad;
+  const int numPairs = d_at1Idxs.size();
+  for (int pairIdx = 0; pairIdx < numPairs; ++pairIdx) {
+    const int d_at1Idx = d_at1Idxs[pairIdx];
+    const int d_at2Idx = d_at2Idxs[pairIdx];
+    const double d_chargeTerm = d_chargeTerms[pairIdx];
+    const std::uint8_t d_dielModel = d_dielModels[pairIdx];
+    const bool d_is1_4 = d_is_1_4s[pairIdx];
+
+    double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+    double *at1Coords = &(pos[3 * d_at1Idx]);
+    double *at2Coords = &(pos[3 * d_at2Idx]);
+    double *g1 = &(grad[3 * d_at1Idx]);
+    double *g2 = &(grad[3 * d_at2Idx]);
+    double corr_dist = dist + 0.05;
+    corr_dist *= ((d_dielModel == RDKit::MMFF::DISTANCE) ? corr_dist * corr_dist
+                                                         : corr_dist);
+    double dE_dr = -332.0716 * (double)(d_dielModel)*d_chargeTerm / corr_dist *
+                   (d_is1_4 ? 0.75 : 1.0);
+    for (unsigned int i = 0; i < 3; ++i) {
+      double dGrad;
+      dGrad = ((dist > 0.0) ? (dE_dr * (at1Coords[i] - at2Coords[i]) / dist)
+                            : 0.02);
+      g1[i] += dGrad;
+      g2[i] -= dGrad;
+    }
   }
 }
 }  // namespace MMFF

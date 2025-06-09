@@ -70,6 +70,7 @@ void clearReactionProps(ROMol &mol) {
   mol.clearComputedProps(includeRings);
   for (auto atom : mol.atoms()) {
     atom->clearProp(common_properties::reactantAtomIdx);
+    atom->clearProp(common_properties::reactantIdx);
     atom->clearProp("was_dummy");
     atom->clearProp(common_properties::reactionMapNum);
   }

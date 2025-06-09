@@ -1,7 +1,4 @@
-//
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -27,19 +24,20 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
  public:
   AngleBendContrib() {}
   //! Constructor
-  /*!
-    The angle is between atom1 - atom2 - atom3
+  AngleBendContrib(ForceField *owner);
+  /*! Adds an angle to the contrib
+  The angle is between atom1 - atom2 - atom3
 
-    \param owner       pointer to the owning ForceField
-    \param idx1        index of atom1 in the ForceField's positions
-    \param idx2        index of atom2 in the ForceField's positions
-    \param idx3        index of atom3 in the ForceField's positions
-    \param angleType   MMFF type of the angle (as an unsigned int)
+  \param idx1        index of atom1 in the ForceField's positions
+  \param idx2        index of atom2 in the ForceField's positions
+  \param idx3        index of atom3 in the ForceField's positions
+  \param angleType   MMFF type of the angle (as an unsigned int)
 
   */
-  AngleBendContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-                   unsigned int idx3, const MMFFAngle *mmffAngleParams,
-                   const MMFFProp *mmffPropParamsCentralAtom);
+  void addTerm(unsigned int idx1, unsigned int idx2,
+               unsigned int idx3, const MMFFAngle *mmffAngleParams,
+               const MMFFProp *mmffPropParamsCentralAtom);
+
   double getEnergy(double *pos) const override;
   void getGrad(double *pos, double *grad) const override;
   AngleBendContrib *copy() const override {
@@ -47,9 +45,9 @@ class RDKIT_FORCEFIELD_EXPORT AngleBendContrib : public ForceFieldContrib {
   }
 
  private:
-  bool d_isLinear;
-  int d_at1Idx{-1}, d_at2Idx{-1}, d_at3Idx{-1};
-  double d_ka, d_theta0;
+  std::vector<bool> d_isLinear;
+  std::vector<int16_t> d_at1Idxs, d_at2Idxs, d_at3Idxs;
+  std::vector<double> d_ka, d_theta0;
 };
 namespace Utils {
 //! returns the MMFF rest value for an angle

@@ -27,6 +27,7 @@ Atom *QueryAtom::copy() const {
 void QueryAtom::expandQuery(QUERYATOM_QUERY *what,
                             Queries::CompositeQueryType how,
                             bool maintainOrder) {
+  PRECONDITION(dp_query, "Can't expand empty query");
   bool thisIsNullQuery = dp_query->getDescription() == "AtomNull";
   bool otherIsNullQuery = what->getDescription() == "AtomNull";
 

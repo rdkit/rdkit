@@ -19,6 +19,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/SmilesParse/SmartsWrite.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
 
@@ -62,6 +63,8 @@ static _IsSubstructOf IsSubstructOf(const ROMol &m, const std::string &smarts) {
 }
 
 TEST_CASE("handling of bondStereoCare in adjustQueryProperties") {
+  auto useLegacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
   SECTION("fully specified") {
     auto mol = R"CTAB(basic test
   Mrv1810 01292006422D          
@@ -85,13 +88,23 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
     MolOps::AdjustQueryParameters ps;
     ps.useStereoCareForBonds = true;
     MolOps::adjustQueryProperties(*mol, &ps);
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
   }
   SECTION("fully unspecified") {
     auto mol = R"CTAB(basic test
@@ -116,8 +129,13 @@ M  END
 )CTAB"_ctab;
     REQUIRE(mol);
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
     MolOps::AdjustQueryParameters ps;
     ps.useStereoCareForBonds = true;
     MolOps::adjustQueryProperties(*mol, &ps);
@@ -229,14 +247,24 @@ M  END
       std::unique_ptr<RWMol> mol{MolBlockToMol(mb)};
       REQUIRE(mol);
       REQUIRE(mol->getBondBetweenAtoms(0, 1));
-      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-            Bond::BondStereo::STEREOE);
+      if (useLegacy) {
+        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+              Bond::BondStereo::STEREOE);
+      } else {
+        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+              Bond::BondStereo::STEREOTRANS);
+      }
       MolOps::AdjustQueryParameters ps;
       ps.useStereoCareForBonds = true;
       MolOps::adjustQueryProperties(*mol, &ps);
       if (mol->getProp<std::string>(common_properties::_Name) == "keep") {
-        CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-              Bond::BondStereo::STEREOE);
+        if (useLegacy) {
+          CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+                Bond::BondStereo::STEREOE);
+        } else {
+          CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+                Bond::BondStereo::STEREOTRANS);
+        }
       } else {
         CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
               Bond::BondStereo::STEREONONE);
@@ -261,23 +289,38 @@ M  END
     CHECK(mol->getAtomWithIdx(0)->hasProp(common_properties::molStereoCare));
     CHECK(mol->getAtomWithIdx(1)->hasProp(common_properties::molStereoCare));
     REQUIRE(mol->getBondBetweenAtoms(0, 1));
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
     // property added by the CTAB parser:
     CHECK(mol->getBondBetweenAtoms(0, 1)->hasProp(
         common_properties::molStereoCare));
     MolOps::AdjustQueryParameters ps;
     ps.useStereoCareForBonds = true;
     MolOps::adjustQueryProperties(*mol, &ps);
-    CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(mol->getBondBetweenAtoms(0, 1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
   }
   SECTION("molecule from SMILES") {
     auto mol = "C/C=C/C"_smiles;
     REQUIRE(mol);
     REQUIRE(mol->getBondBetweenAtoms(2, 1));
-    CHECK(mol->getBondBetweenAtoms(2, 1)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(mol->getBondBetweenAtoms(2, 1)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(mol->getBondBetweenAtoms(2, 1)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
     MolOps::AdjustQueryParameters ps;
     ps.useStereoCareForBonds = true;
     // since stereoCare is not set on the bond from SMILES,
@@ -294,8 +337,13 @@ M  END
       molcp.getBondBetweenAtoms(2, 1)->setProp(common_properties::molStereoCare,
                                                1);
       MolOps::adjustQueryProperties(molcp, &ps);
-      CHECK(molcp.getBondBetweenAtoms(2, 1)->getStereo() ==
-            Bond::BondStereo::STEREOE);
+      if (useLegacy) {
+        CHECK(molcp.getBondBetweenAtoms(2, 1)->getStereo() ==
+              Bond::BondStereo::STEREOE);
+      } else {
+        CHECK(molcp.getBondBetweenAtoms(2, 1)->getStereo() ==
+              Bond::BondStereo::STEREOTRANS);
+      }
     }
   }
 }
@@ -813,5 +861,49 @@ TEST_CASE(
     CHECK(MolToSmarts(*mol) ==
           "[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1[#6]1-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:[#6]-,=,:1");
     // clang-format on
+  }
+}
+
+TEST_CASE(
+    "Github #8256: PR #8192 breaks AdjustQueryProperties / aromatizeIfPossible for some molecules") {
+  SECTION("between aromatic atoms") {
+    auto mol =
+        R"SMARTS([#6]1=[#6]-[#6]=[#6]-[#6]=[#6]-1/[#7](=[#7]\[#8])-*)SMARTS"_smarts;
+    REQUIRE(mol);
+    auto ps = MolOps::AdjustQueryParameters::noAdjustments();
+    ps.aromatizeIfPossible = true;
+    MolOps::adjustQueryProperties(*mol, &ps);
+    CHECK(MolToSmiles(*mol) == "*/N(=N/O)c1ccccc1");
+  }
+}
+
+TEST_CASE("makeAtomsGeneric and other operations") {
+  SECTION("makeAtomsGeneric and adjustDegree") {
+    MolOps::AdjustQueryParameters ps =
+        MolOps::AdjustQueryParameters::noAdjustments();
+    ps.makeAtomsGeneric = true;
+    ps.adjustDegree = true;
+    ps.adjustDegreeFlags = MolOps::ADJUST_IGNOREDUMMIES;
+    auto q = "CN"_smiles;
+    REQUIRE(q);
+    MolOps::adjustQueryProperties(*q, &ps);
+    std::vector<std::pair<std::string, bool>> examples = {
+        {"CC", true},
+        {"CN", true},
+        {"CCC", false},
+        {"CNC", false},
+    };
+    for (const auto &tpl : examples) {
+      auto smi = tpl.first;
+      auto shouldMatch = tpl.second;
+      INFO(smi);
+      auto m = v2::SmilesParse::MolFromSmiles(smi);
+      REQUIRE(m);
+      if (shouldMatch) {
+        CHECK(!SubstructMatch(*m, *q).empty());
+      } else {
+        CHECK(SubstructMatch(*m, *q).empty());
+      }
+    }
   }
 }

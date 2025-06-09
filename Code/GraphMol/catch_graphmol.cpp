@@ -1503,6 +1503,24 @@ TEST_CASE("needsHs function", "[chemistry]") {
     REQUIRE(m);
     CHECK(!MolOps::needsHs(*m));
   }
+  SECTION("edges") {
+    v2::SmilesParse::SmilesParserParams params;
+    params.removeHs = false;
+    {
+      const std::string smiles = "[H]OC([H])[H]";
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+      REQUIRE(m);
+      CHECK(m->getNumAtoms() == 5);
+      CHECK(MolOps::needsHs(*m));
+    }
+    {
+      const std::string smiles = "C([H])([H])[H]";
+      auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+      REQUIRE(m);
+      CHECK(m->getNumAtoms() == 4);
+      CHECK(MolOps::needsHs(*m));
+    }
+  }
 }
 
 TEST_CASE(
@@ -2203,7 +2221,7 @@ TEST_CASE("valence edge") {
     m->getAtomWithIdx(0)->setNoImplicit(false);
     m->updatePropertyCache(false);
     CHECK(m->getAtomWithIdx(0)->getFormalCharge() == -2);
-    CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+    CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
   }
   {
     SmilesParserParams ps;
@@ -2962,11 +2980,11 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
   // Counting from 1, 4th mol is one that gave other problems during testing.
   std::vector<std::pair<std::string, std::string>> test_vals{
       {"CC1=C(CCC(O)=O)C2=[N]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N]5[Fe]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe]35<-N2=C1C=c1c(C)c(CCC(=O)O)c(n13)=CC1=N->5C(=C4)C(C)=C1CCC(=O)O"},
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4[n]3[Fe]35<-[N]2=C1C=c1c(C)c(CCC(=O)O)c([n]13)=CC1=[N]->5C(=C4)C(C)=C1CCC(=O)O"},
       {"CC1=C(CCC([O-])=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC([O-])=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25"},
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4[n]3[Fe-2]35[n]6c(c(C)c(CCC(=O)[O-])c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)[O-])=CC1=[N+]25"},
       {"CC1=C(CCC(O)=O)C2=[N+]3C1=Cc1c(C)c(C=C)c4C=C5C(C)=C(C=C)C6=[N+]5[Fe--]3(n14)n1c(=C6)c(C)c(CCC(O)=O)c1=C2",
-       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4n3[Fe-2]35n6c(c(C)c(CCC(=O)O)c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)O)=CC1=[N+]25"},
+       "C=CC1=C(C)C2=Cc3c(C=C)c(C)c4[n]3[Fe-2]35[n]6c(c(C)c(CCC(=O)O)c6=CC6=[N+]3C(=C4)C(C)=C6CCC(=O)O)=CC1=[N+]25"},
       {"CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2",
        "CCC1=[O+][Cu]2([O+]=C(CC)C1)[O+]=C(CC)CC(CC)=[O+]2"}};
   for (size_t i = 0; i < test_vals.size(); ++i) {
@@ -2987,8 +3005,10 @@ TEST_CASE("molecules with single bond to metal atom use dative instead") {
 TEST_CASE(
     "cleanUpOrganometallics should produce canonical output.  cf PR6292") {
   std::vector<std::pair<std::string, std::string>> test_vals{
-      {"F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl", "F[Pd]1(Cl)<-Cl[Pd](Cl)(Cl)<-Cl1"},
-      {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br", "F[Pt]1(Br)<-Cl[Pt](F)(F)<-[35Cl]1"},
+      {"F[Pd](Cl)(Cl1)Cl[Pd]1(Cl)Cl",
+       "[F][Pd]1([Cl])<-[Cl][Pd]([Cl])([Cl])<-[Cl]1"},
+      {"F[Pt]1(F)[35Cl][Pt]([Cl]1)(F)Br",
+       "[F][Pt]1([Br])<-[Cl][Pt]([F])([F])<-[35Cl]1"},
   };
 
   for (size_t j = 0; j < test_vals.size(); ++j) {
@@ -4105,7 +4125,9 @@ M  END
   }
 }
 
-TEST_CASE("Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group", "[RWMol]") {
+TEST_CASE(
+    "Github Issue #7782: insertMol should not create an empty STEREO_ABSOLUTE group",
+    "[RWMol]") {
   {
     auto mol = "C1CC1"_smiles;
     REQUIRE(mol);
@@ -4582,8 +4604,8 @@ TEST_CASE("explicit valence handling of transition metals") {
     for (const auto &smiles : smileses) {
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(m);
-      CHECK(m->getAtomWithIdx(0)->getExplicitValence() == 1);
-      CHECK(m->getAtomWithIdx(0)->getImplicitValence() == 0);
+      CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::EXPLICIT) == 1);
+      CHECK(m->getAtomWithIdx(0)->getValence(Atom::ValenceType::IMPLICIT) == 0);
     }
   }
 }
@@ -4591,7 +4613,7 @@ TEST_CASE("explicit valence handling of transition metals") {
 TEST_CASE("valence handling of atoms with multiple possible valence states") {
   SECTION("basics") {
     // some of these examples are quite silly
-    std::vector<std::pair<std::string, int>> smileses = {
+    std::vector<std::pair<std::string, unsigned int>> smileses = {
         {"C[S-](=O)=O", 5},
         {"C[P-2](C)C", 3},
         {"C[Se-](=O)=O", 5},
@@ -4601,7 +4623,8 @@ TEST_CASE("valence handling of atoms with multiple possible valence states") {
       INFO(smiles);
       auto m = v2::SmilesParse::MolFromSmiles(smiles);
       CHECK(m);
-      CHECK(val == m->getAtomWithIdx(1)->getExplicitValence());
+      CHECK(val ==
+            m->getAtomWithIdx(1)->getValence(Atom::ValenceType::EXPLICIT));
       // now try figuring out the implicit valence
       m->getAtomWithIdx(1)->setNoImplicit(false);
       m->getAtomWithIdx(1)->calcImplicitValence(true);  // <- should not throw
@@ -4704,13 +4727,10 @@ TEST_CASE("Valences on Al, Si, P, As, Sb, Bi") {
 TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
   SECTION("basics") {
     class FakeAtomMonomerInfo : public AtomMonomerInfo {
-    public:
+     public:
       bool *deleted;
-      FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {
-      }
-      virtual ~FakeAtomMonomerInfo() {
-	*deleted = true;
-      }
+      FakeAtomMonomerInfo(bool *was_deleted) : deleted(was_deleted) {}
+      ~FakeAtomMonomerInfo() override { *deleted = true; }
     };
 
     bool sanitize = true;
@@ -4727,7 +4747,93 @@ TEST_CASE("Github #7873: monomer info segfaults and mem leaks", "[PDB]") {
     mol->getAtomWithIdx(0)->setMonomerInfo(res);
     mol->getAtomWithIdx(0)->setMonomerInfo(nullptr);
     CHECK(was_deleted == true);
-
   }
 }
 
+TEST_CASE("Github #8304: addHs should ignore queries") {
+  SECTION("queryAtoms") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    MolOps::addHs(*m1);
+    CHECK(m1->getNumAtoms() == 8);
+    std::vector<std::tuple<std::string, unsigned int, unsigned int>> data = {
+        {"CC", 2, 2},
+        {"[CH3]C", 5, 2},
+        {"[CH3][CH3]", 8, 2},
+    };
+    for (const auto &[sma, def, noq] : data) {
+      INFO(sma);
+      auto m2 = v2::SmilesParse::MolFromSmarts(sma);
+      REQUIRE(m2);
+      m2->updatePropertyCache(false);
+      // by default we addHs:
+      {
+        RWMol m3(*m2);
+        MolOps::addHs(m3);
+        CHECK(m3.getNumAtoms() == def);
+      }
+      // but we can change that:
+      MolOps::AddHsParameters ps;
+      ps.skipQueries = true;
+      {
+        RWMol m3(*m2);
+        MolOps::addHs(m3, ps);
+        CHECK(m3.getNumAtoms() == noq);
+      }
+    }
+  }
+  SECTION("queryBonds make their atoms queries") {
+    auto m1 = "CC"_smiles;
+    REQUIRE(m1);
+    auto qb = v2::SmilesParse::BondFromSmarts("!@");
+    REQUIRE(qb);
+    m1->replaceBond(0, qb.get());
+    // by default we addHs:
+    {
+      RWMol m2(*m1);
+      MolOps::addHs(m2);
+      CHECK(m2.getNumAtoms() == 8);
+    }
+    // but we can change that:
+    MolOps::AddHsParameters ps;
+    ps.skipQueries = true;
+    {
+      RWMol m2(*m1);
+      MolOps::addHs(m2, ps);
+      CHECK(m2.getNumAtoms() == 2);
+    }
+  }
+}
+
+TEST_CASE("stereogroups operator<<") {
+  SECTION("atoms and bonds in one") {
+    auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8,15|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getStereoGroups().size() == 1);
+    std::ostringstream oss;
+    oss << m->getStereoGroups()[0];
+    CHECK(oss.str() == "AND rId: 0 wId: 0 atoms: { 15 } bonds: { 7 }");
+  }
+  SECTION("just bonds in one") {
+    auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8|"_smiles;
+    REQUIRE(m);
+    REQUIRE(m->getStereoGroups().size() == 1);
+    std::ostringstream oss;
+    oss << m->getStereoGroups()[0];
+    CHECK(oss.str() == "AND rId: 0 wId: 0 bonds: { 7 }");
+  }
+}
+
+TEST_CASE("clearPropertyCache") {
+  auto m = "CC"_smiles;
+  REQUIRE(m);
+  CHECK(!m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(!atom->needsUpdatePropertyCache());
+  }
+  m->clearPropertyCache();
+  CHECK(m->needsUpdatePropertyCache());
+  for (const auto atom : m->atoms()) {
+    CHECK(atom->needsUpdatePropertyCache());
+  }
+}

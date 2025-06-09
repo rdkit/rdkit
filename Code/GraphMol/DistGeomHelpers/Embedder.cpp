@@ -156,6 +156,36 @@ const EmbedParameters ETDG(0,        // maxIterations
                            nullptr,  // CPCI
                            nullptr   // callback
 );
+//! Parameters corresponding to Sereina Riniker's ETDG approach with v2 of the
+//! torsion parameters
+const EmbedParameters ETDGv2(0,        // maxIterations
+                             1,        // numThreads
+                             -1,       // randomSeed
+                             true,     // clearConfs
+                             false,    // useRandomCoords
+                             2.0,      // boxSizeMult
+                             true,     // randNegEig
+                             1,        // numZeroFail
+                             nullptr,  // coordMap
+                             1e-3,     // optimizerForceTol
+                             false,    // ignoreSmoothingFailures
+                             false,    // enforceChirality
+                             true,     // useExpTorsionAnglePrefs
+                             false,    // useBasicKnowledge
+                             false,    // verbose
+                             5.0,      // basinThresh
+                             -1.0,     // pruneRmsThresh
+                             true,     // onlyHeavyAtomsForRMS
+                             2,        // ETversion
+                             nullptr,  // boundsMat
+                             true,     // embedFragmentsSeparately
+                             false,    // useSmallRingTorsions
+                             false,    // useMacrocycleTorsions
+                             false,    // useMacrocycle14config
+                             0,        // timeout
+                             nullptr,  // CPCI
+                             nullptr   // callback
+);
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 const EmbedParameters ETKDG(0,        // maxIterations
                             1,        // numThreads
@@ -837,16 +867,19 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     embedParams.basinThresh = 1e8;
   }
 
+  std::unique_ptr<RDKit::rng_type> generator;
+  std::unique_ptr<RDKit::uniform_double> distrib;
+  std::unique_ptr<RDKit::double_source_type> rngMgr;
+
   RDKit::double_source_type *rng = nullptr;
-  RDKit::rng_type *generator = nullptr;
-  RDKit::uniform_double *distrib = nullptr;
   CHECK_INVARIANT(seed >= -1,
                   "random seed must either be positive, zero, or negative one");
   if (seed > -1) {
-    generator = new RDKit::rng_type(42u);
+    generator.reset(new RDKit::rng_type(42u));
     generator->seed(seed);
-    distrib = new RDKit::uniform_double(0.0, 1.0);
-    rng = new RDKit::double_source_type(*generator, *distrib);
+    distrib.reset(new RDKit::uniform_double(0.0, 1.0));
+    rngMgr.reset(new RDKit::double_source_type(*generator, *distrib));
+    rng = rngMgr.get();
   } else {
     rng = &RDKit::getDoubleRandomSource();
   }
@@ -987,15 +1020,11 @@ bool embedPoints(RDGeom::PointPtrVect *positions, detail::EmbedArgs eargs,
     }
 
   }  // while
-  if (seed > -1) {
-    delete rng;
-    delete generator;
-    delete distrib;
-  }
+
   return gotCoords;
 }
-
-void findDoubleBonds(
+// export this since we are going to be testing it
+RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
     const ROMol &mol,
     std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
         &doubleBondEnds,
@@ -1012,6 +1041,12 @@ void findDoubleBonds(
         auto oatm = bnd->getOtherAtom(atm);
         for (const auto nbr : mol.atomNeighbors(atm)) {
           if (nbr == oatm) {
+            continue;
+          }
+          const auto obnd =
+              mol.getBondBetweenAtoms(atm->getIdx(), nbr->getIdx());
+          if (!obnd || (obnd->getBondType() != Bond::BondType::SINGLE &&
+                        atm->getDegree() == 2)) {
             continue;
           }
           doubleBondEnds.emplace_back(nbr->getIdx(), atm->getIdx(),
@@ -1123,8 +1158,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {

@@ -2228,3 +2228,41 @@ TEST_CASE("Structural fingerprints values") {
     CHECK(TanimotoSimilarity(*fp1, *fp2) == 0.4);
   }
 }
+
+TEST_CASE(
+    "Github #6015: react_idx property") {
+  SECTION("Ensure that atoms are marked with their reactant idx") {
+    std::unique_ptr<ChemicalReaction> rxn{
+        RxnSmartsToChemicalReaction("[C:1][O:2].[N:3][S:4]>>[C:1][O:2][N:3][S:4]C")};
+    REQUIRE(rxn);
+    rxn->initReactantMatchers();
+    ROMOL_SPTR mol1(SmilesToMol("CO"));
+    ROMOL_SPTR mol2(SmilesToMol("NSP"));
+    std::vector<ROMOL_SPTR> reactants{mol1, mol2};
+    REQUIRE(reactants.size() == 2);
+    REQUIRE(reactants[0]);
+    REQUIRE(reactants[1]);
+    
+    auto products = rxn->runReactants(reactants);
+    REQUIRE(products.size() == 1);
+    
+    CHECK(products[0][0]->getAtomWithIdx(0)->getProp<unsigned int>("react_idx") == 0);
+    CHECK(products[0][0]->getAtomWithIdx(0)->getProp<unsigned int>("react_atom_idx") == 0);
+    
+    CHECK(products[0][0]->getAtomWithIdx(1)->getProp<unsigned int>("react_idx") == 0);
+    CHECK(products[0][0]->getAtomWithIdx(1)->getProp<unsigned int>("react_atom_idx") == 1);
+    
+    CHECK(products[0][0]->getAtomWithIdx(2)->getProp<unsigned int>("react_idx") == 1);
+    CHECK(products[0][0]->getAtomWithIdx(2)->getProp<unsigned int>("react_atom_idx") == 0);
+    
+    CHECK(products[0][0]->getAtomWithIdx(3)->getProp<unsigned int>("react_idx") == 1);
+    CHECK(products[0][0]->getAtomWithIdx(3)->getProp<unsigned int>("react_atom_idx") == 1);
+    
+    CHECK(products[0][0]->getAtomWithIdx(4)->hasProp("react_atom_idx") == false);
+    CHECK(products[0][0]->getAtomWithIdx(4)->hasProp("react_idx") == false);
+    
+    CHECK(products[0][0]->getAtomWithIdx(5)->getProp<unsigned int>("react_idx") == 1);
+    CHECK(products[0][0]->getAtomWithIdx(5)->getProp<unsigned int>("react_atom_idx") == 2);
+    
+  }
+}

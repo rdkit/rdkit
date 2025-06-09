@@ -1,6 +1,5 @@
-//
-//  Copyright (C) 2004-2018 Greg Landrum and Rational Discovery LLC
-//
+//  Copyright (C) 2004-2025 Greg Landrum and other RDKit contributors
+
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
 //  The contents are covered by the terms of the BSD license
@@ -162,14 +161,14 @@ void testMMFFBuilder1() {
   TEST_ASSERT(mmffMolProperties);
   TEST_ASSERT(mmffMolProperties->isValid());
   field = new ForceFields::ForceField();
-  // add the atomic positions:
+  // add the atomic positions:f
   for (unsigned int i = 0; i < mol->getNumAtoms(); ++i) {
     field->positions().push_back(&(conf->getAtomPos(i)));
   }
 
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
 
-  TEST_ASSERT(field->contribs().size() == 3);
+  TEST_ASSERT(field->contribs().size() == 1);
 
   nbrMat = MMFF::Tools::buildNeighborMatrix(*mol);
   // the neighbor matrix is an upper triangular matrix
@@ -191,15 +190,15 @@ void testMMFFBuilder1() {
               MMFF::Tools::RELATION_1_3);
 
   MMFF::Tools::addAngles(*mol, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 6);
+  TEST_ASSERT(field->contribs().size() == 2);
 
   // there are no non-bonded terms here:
   MMFF::Tools::addVdW(*mol, cid, mmffMolProperties, field, nbrMat);
-  TEST_ASSERT(field->contribs().size() == 6);
+  TEST_ASSERT(field->contribs().size() == 2);
 
   // and no torsions either, until we add Hs:
   MMFF::Tools::addTorsions(*mol, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 6);
+  TEST_ASSERT(field->contribs().size() == 2);
 
   delete mol;
   delete field;
@@ -219,7 +218,7 @@ void testMMFFBuilder1() {
 
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
 
-  TEST_ASSERT(field->contribs().size() == 3);
+  TEST_ASSERT(field->contribs().size() == 1);
 
   nbrMat = MMFF::Tools::buildNeighborMatrix(*mol);
   TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 0) ==
@@ -232,11 +231,11 @@ void testMMFFBuilder1() {
               MMFF::Tools::RELATION_1_4);
 
   MMFF::Tools::addAngles(*mol, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 5);
+  TEST_ASSERT(field->contribs().size() == 2);
   MMFF::Tools::addVdW(*mol, cid, mmffMolProperties, field, nbrMat);
-  TEST_ASSERT(field->contribs().size() == 6);
+  TEST_ASSERT(field->contribs().size() == 3);
   MMFF::Tools::addTorsions(*mol, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 7);
+  TEST_ASSERT(field->contribs().size() == 4);
 
   delete mol;
   delete field;
@@ -291,15 +290,15 @@ void testMMFFBuilder1() {
   }
 
   MMFF::Tools::addBonds(*mol2, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 5);
+  TEST_ASSERT(field->contribs().size() == 1);
 
   nbrMat = MMFF::Tools::buildNeighborMatrix(*mol2);
   MMFF::Tools::addAngles(*mol2, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 12);
+  TEST_ASSERT(field->contribs().size() == 2);
   MMFF::Tools::addVdW(*mol2, cid, mmffMolProperties, field, nbrMat);
-  TEST_ASSERT(field->contribs().size() == 15);
+  TEST_ASSERT(field->contribs().size() == 3);
   MMFF::Tools::addTorsions(*mol2, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 18);
+  TEST_ASSERT(field->contribs().size() == 4);
   delete mol2;
 
   delete mol;
@@ -672,14 +671,14 @@ void testSFIssue1653802() {
   }
 
   MMFF::Tools::addBonds(*mol, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 8);
+  TEST_ASSERT(field->contribs().size() == 1);
 
   nbrMat = MMFF::Tools::buildNeighborMatrix(*mol);
   MMFF::Tools::addAngles(*mol, mmffMolProperties, field);
-  TEST_ASSERT(field->contribs().size() == 20);
+  TEST_ASSERT(field->contribs().size() == 2);
   MMFF::Tools::addTorsions(*mol, mmffMolProperties, field);
   // std::cout << field->contribs().size() << std::endl;
-  TEST_ASSERT(field->contribs().size() == 36);
+  TEST_ASSERT(field->contribs().size() == 3);
   MMFF::Tools::addVdW(*mol, 0, mmffMolProperties, field, nbrMat);
   delete field;
 

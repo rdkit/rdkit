@@ -264,13 +264,13 @@ bool incidentCyclicMultipleBond(const Atom *at) {
 bool incidentMultipleBond(const Atom *at) {
   PRECONDITION(at, "bad atom");
   const auto &mol = at->getOwningMol();
-  int deg = at->getDegree() + at->getNumExplicitHs();
+  auto deg = at->getDegree() + at->getNumExplicitHs();
   for (const auto bond : mol.atomBonds(at)) {
     if (!std::lround(bond->getValenceContrib(at))) {
       --deg;
     }
   }
-  return at->getExplicitValence() != deg;
+  return at->getValence(Atom::ValenceType::EXPLICIT) != deg;
 }
 
 bool applyHuckel(ROMol &, const INT_VECT &ring, const VECT_EDON_TYPE &edon,
@@ -471,7 +471,8 @@ bool isAtomCandForArom(const Atom *at, const ElectronDonorType edon,
   // than one double or triple bond. This is to handle
   // the situation:
   //   C1=C=NC=N1 (sf.net bug 1934360)
-  int nUnsaturations = at->getExplicitValence() - at->getDegree();
+  int nUnsaturations =
+      at->getValence(Atom::ValenceType::EXPLICIT) - at->getDegree();
   if (nUnsaturations > 1) {
     unsigned int nMult = 0;
     const auto &mol = at->getOwningMol();
@@ -597,10 +598,11 @@ ElectronDonorType getAtomDonorTypeArom(
 namespace RDKit {
 namespace MolOps {
 bool isBondOrderQuery(const Bond *bond) {
-  if (bond->getBondType() == Bond::BondType::UNSPECIFIED && bond->hasQuery()) {
-    auto label =
-        dynamic_cast<const QueryBond *>(bond)->getQuery()->getTypeLabel();
-    if (label == "BondOrder") {
+  if (bond->hasQuery()) {
+    auto q = dynamic_cast<const QueryBond *>(bond)->getQuery();
+    // complex bond type queries are also bond order queries!
+    if (q->getTypeLabel() == "BondOrder" ||
+        QueryOps::hasComplexBondTypeQuery(*q)) {
       return true;
     }
   }
@@ -622,7 +624,11 @@ int countAtomElec(const Atom *at) {
   const auto &mol = at->getOwningMol();
   for (const auto bond : mol.atomBonds(at)) {
     // don't count bonds that aren't actually contributing to the valence here:
-    if (!isBondOrderQuery(bond) && !std::lround(bond->getValenceContrib(at))) {
+    // if the bond is "real" (not undefined or zero), it always contributes to
+    // valence/degree, and in case the bond is a query bond with no order, we
+    // still need to check if the query is a bond query
+    if (!static_cast<Bond *>(bond)->getValenceContrib(at) &&
+        !isBondOrderQuery(bond)) {
       --degree;
     }
   }
@@ -649,7 +655,8 @@ int countAtomElec(const Atom *at) {
     // we detect this using the total unsaturation, because we
     // know that there aren't multiple unsaturations (detected
     // above in isAtomCandForArom())
-    int nUnsaturations = at->getExplicitValence() - at->getDegree();
+    int nUnsaturations =
+        at->getValence(Atom::ValenceType::EXPLICIT) - at->getDegree();
     if (nUnsaturations > 1) {
       res = 1;
     }
@@ -675,6 +682,7 @@ int mdlAromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings) {
   for (auto &sring : srings) {
     bool allAromatic = true;
     bool allDummy = true;
+
     for (auto firstIdx : sring) {
       const auto at = mol.getAtomWithIdx(firstIdx);
 
@@ -824,7 +832,6 @@ int aromaticityHelper(RWMol &mol, const VECT_INT_VECT &srings,
         (maxRingSize && ringSz > maxRingSize)) {
       continue;
     }
-
     bool allAromatic = true;
     bool allDummy = true;
     for (auto firstIdx : sring) {
@@ -970,8 +977,8 @@ void setMMFFAromaticity(RWMol &mol) {
           // if not, move on
           if ((atom->getAtomicNum() != 6) &&
               (!((atom->getAtomicNum() == 7) &&
-                 ((atom->getExplicitValence() + atom->getNumImplicitHs()) ==
-                  4)))) {
+                 ((atom->getValence(Atom::ValenceType::EXPLICIT) +
+                   atom->getNumImplicitHs()) == 4)))) {
             continue;
           }
           // loop over neighbors

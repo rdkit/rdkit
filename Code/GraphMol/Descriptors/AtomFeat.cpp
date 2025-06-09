@@ -96,7 +96,7 @@ void AtomFeatVector(const RDKit::Atom *atom, const ROMol *mol,
   }
 
   // one hot  Implicit Valence
-  int IV = atom->getImplicitValence();
+  int IV = atom->getValence(Atom::ValenceType::IMPLICIT);
   for (int i = 0; i < 7; ++i) {
     feats[indx] = IV == i;
     ++indx;

@@ -233,7 +233,10 @@ def MolToInchiKey(mol, options=""):
   return rdinchi.MolToInchiKey(mol, options)
 
 
+GetInchiVersion = rdinchi.GetInchiVersion
+
 __all__ = [
   'MolToInchiAndAuxInfo', 'MolToInchi', 'MolBlockToInchiAndAuxInfo', 'MolBlockToInchi',
-  'MolFromInchi', 'InchiReadWriteError', 'InchiToInchiKey', 'MolToInchiKey', 'INCHI_AVAILABLE'
+  'MolFromInchi', 'InchiReadWriteError', 'InchiToInchiKey', 'MolToInchiKey', 'GetInchiVersion',
+  'INCHI_AVAILABLE'
 ]

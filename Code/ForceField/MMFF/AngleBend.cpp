@@ -1,8 +1,4 @@
-// $Id$
-//
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -85,81 +81,102 @@ void calcAngleBendGrad(RDGeom::Point3D *r, double *dist, double **g,
 }
 }  // end of namespace Utils
 
-AngleBendContrib::AngleBendContrib(ForceField *owner, unsigned int idx1,
-                                   unsigned int idx2, unsigned int idx3,
-                                   const MMFFAngle *mmffAngleParams,
-                                   const MMFFProp *mmffPropParamsCentralAtom) {
+AngleBendContrib::AngleBendContrib(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
+  dp_forceField = owner;
+}
+
+void AngleBendContrib::addTerm(unsigned int idx1,
+                               unsigned int idx2,
+                               unsigned int idx3,
+                               const ForceFields::MMFF::MMFFAngle *mmffAngleParams,
+                               const ForceFields::MMFF::MMFFProp *mmffPropParamsCentralAtom) {
+  URANGE_CHECK(idx1, dp_forceField->positions().size());
+  URANGE_CHECK(idx2, dp_forceField->positions().size());
+  URANGE_CHECK(idx3, dp_forceField->positions().size());
   PRECONDITION(((idx1 != idx2) && (idx2 != idx3) && (idx1 != idx3)),
                "degenerate points");
-  URANGE_CHECK(idx1, owner->positions().size());
-  URANGE_CHECK(idx2, owner->positions().size());
-  URANGE_CHECK(idx3, owner->positions().size());
-
-  dp_forceField = owner;
-  d_at1Idx = idx1;
-  d_at2Idx = idx2;
-  d_at3Idx = idx3;
-  d_isLinear = mmffPropParamsCentralAtom->linh > 0u;
-
-  d_theta0 = mmffAngleParams->theta0;
-  d_ka = mmffAngleParams->ka;
+  d_at1Idxs.push_back(idx1);
+  d_at2Idxs.push_back(idx2);
+  d_at3Idxs.push_back(idx3);
+  d_isLinear.push_back(mmffPropParamsCentralAtom->linh > 0u);
+  d_theta0.push_back(mmffAngleParams->theta0);
+  d_ka.push_back(mmffAngleParams->ka);
 }
+
 
 double AngleBendContrib::getEnergy(double *pos) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
+  double res = 0.0;
+  const int numTerms = d_at1Idxs.size();
 
-  double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
-  double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
+  for (int i = 0; i < numTerms; i++) {
+    const int d_at1Idx = d_at1Idxs[i];
+    const int d_at2Idx = d_at2Idxs[i];
+    const int d_at3Idx = d_at3Idxs[i];
 
-  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                     pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                     pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                     pos[3 * d_at3Idx + 2]);
+    double dist1 = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+    double dist2 = dp_forceField->distance(d_at2Idx, d_at3Idx, pos);
 
-  return Utils::calcAngleBendEnergy(
-      d_theta0, d_ka, d_isLinear,
-      Utils::calcCosTheta(p1, p2, p3, dist1, dist2));
+    RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
+                       pos[3 * d_at1Idx + 2]);
+    RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
+                       pos[3 * d_at2Idx + 2]);
+    RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
+                       pos[3 * d_at3Idx + 2]);
+
+    res += Utils::calcAngleBendEnergy(
+        d_theta0[i], d_ka[i], d_isLinear[i],
+        Utils::calcCosTheta(p1, p2, p3, dist1, dist2));
+  }
+  return res;
 }
 
 void AngleBendContrib::getGrad(double *pos, double *grad) const {
   PRECONDITION(dp_forceField, "no owner");
   PRECONDITION(pos, "bad vector");
   PRECONDITION(grad, "bad vector");
-  double dist[2] = {dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
-                    dp_forceField->distance(d_at2Idx, d_at3Idx, pos)};
 
-  RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
-                     pos[3 * d_at1Idx + 2]);
-  RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
-                     pos[3 * d_at2Idx + 2]);
-  RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
-                     pos[3 * d_at3Idx + 2]);
-  double *g[3] = {&(grad[3 * d_at1Idx]), &(grad[3 * d_at2Idx]),
-                  &(grad[3 * d_at3Idx])};
-  RDGeom::Point3D r[2] = {(p1 - p2) / dist[0], (p3 - p2) / dist[1]};
-  double cosTheta = r[0].dotProduct(r[1]);
-  clipToOne(cosTheta);
-  double sinThetaSq = 1.0 - cosTheta * cosTheta;
-  double sinTheta =
-      std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
+  const int numTerms = d_at1Idxs.size();
+  for (int i =0; i < numTerms; i++) {
+    const int d_at1Idx = d_at1Idxs[i];
+    const int d_at2Idx = d_at2Idxs[i];
+    const int d_at3Idx = d_at3Idxs[i];
 
-  // use the chain rule:
-  // dE/dx = dE/dTheta * dTheta/dx
+    double dist[2] = {dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
+                      dp_forceField->distance(d_at2Idx, d_at3Idx, pos)};
 
-  // dE/dTheta is independent of cartesians:
-  double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0;
-  double const cb = -0.006981317;
-  double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
+    RDGeom::Point3D p1(pos[3 * d_at1Idx], pos[3 * d_at1Idx + 1],
+                       pos[3 * d_at1Idx + 2]);
+    RDGeom::Point3D p2(pos[3 * d_at2Idx], pos[3 * d_at2Idx + 1],
+                       pos[3 * d_at2Idx + 2]);
+    RDGeom::Point3D p3(pos[3 * d_at3Idx], pos[3 * d_at3Idx + 1],
+                       pos[3 * d_at3Idx + 2]);
+    double *g[3] = {&(grad[3 * d_at1Idx]), &(grad[3 * d_at2Idx]),
+                    &(grad[3 * d_at3Idx])};
+    RDGeom::Point3D r[2] = {(p1 - p2) / dist[0], (p3 - p2) / dist[1]};
+    double cosTheta = r[0].dotProduct(r[1]);
+    clipToOne(cosTheta);
+    double sinThetaSq = 1.0 - cosTheta * cosTheta;
+    double sinTheta =
+        std::max(((sinThetaSq > 0.0) ? sqrt(sinThetaSq) : 0.0), 1.0e-8);
 
-  double dE_dTheta = (d_isLinear ? -MDYNE_A_TO_KCAL_MOL * d_ka * sinTheta
-                                 : RAD2DEG * c2 * d_ka * angleTerm *
-                                       (1.0 + 1.5 * cb * angleTerm));
+    // use the chain rule:
+    // dE/dx = dE/dTheta * dTheta/dx
 
-  Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
+    // dE/dTheta is independent of cartesians:
+    double angleTerm = RAD2DEG * acos(cosTheta) - d_theta0[i];
+    double const cb = -0.006981317;
+    double const c2 = MDYNE_A_TO_KCAL_MOL * DEG2RAD * DEG2RAD;
+
+    double dE_dTheta = (d_isLinear[i] ? -MDYNE_A_TO_KCAL_MOL * d_ka[i] * sinTheta
+                                   : RAD2DEG * c2 * d_ka[i] * angleTerm *
+                                         (1.0 + 1.5 * cb * angleTerm));
+
+    Utils::calcAngleBendGrad(r, dist, g, dE_dTheta, cosTheta, sinTheta);
+  }
 }
+
 }  // namespace MMFF
 }  // namespace ForceFields

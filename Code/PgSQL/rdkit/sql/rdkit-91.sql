@@ -246,6 +246,7 @@ select 'CC(F)Cl'::mol@='CC(F)Cl'::mol;
 set rdkit.do_chiral_sss=false;
 
 -- Enhanced stereo
+-- Includes Issue# 8465: Demonstrate that modification of molecule coords does not impact identity
 set rdkit.do_chiral_sss=false;
 set rdkit.do_enhanced_stereo_sss=false; /* has no effect when do_chiral_sss is false */
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
@@ -256,6 +257,7 @@ select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'c1ccccc1 |(7.8993,-8.9847,;8.6138,-8.5722,;8.6138,-7.7472,;7.8993,-7.3347,;7.1848,-7.7472,;7.1848,-8.5722,)|'::mol@='c1ccccc1 |(10.3733,-8.9847,;11.0877,-8.5722,;11.0877,-7.7472,;10.3733,-7.3347,;9.6588,-7.7472,;9.6588,-8.5722,)|'::mol;
 set rdkit.do_enhanced_stereo_sss=true; /* has no effect when do_chiral_sss is false */
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
@@ -265,6 +267,7 @@ select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'c1ccccc1 |(7.8993,-8.9847,;8.6138,-8.5722,;8.6138,-7.7472,;7.8993,-7.3347,;7.1848,-7.7472,;7.1848,-8.5722,)|'::mol@='c1ccccc1 |(10.3733,-8.9847,;11.0877,-8.5722,;11.0877,-7.7472,;10.3733,-7.3347,;9.6588,-7.7472,;9.6588,-8.5722,)|'::mol;
 set rdkit.do_chiral_sss=true;
 set rdkit.do_enhanced_stereo_sss=false;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
@@ -275,6 +278,7 @@ select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'c1ccccc1 |(7.8993,-8.9847,;8.6138,-8.5722,;8.6138,-7.7472,;7.8993,-7.3347,;7.1848,-7.7472,;7.1848,-8.5722,)|'::mol@='c1ccccc1 |(10.3733,-8.9847,;11.0877,-8.5722,;11.0877,-7.7472,;10.3733,-7.3347,;9.6588,-7.7472,;9.6588,-8.5722,)|'::mol;
 set rdkit.do_enhanced_stereo_sss=true; /* now we expect to see an effect */
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol;
@@ -284,6 +288,7 @@ select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@@H](O)[C@@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |o1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
 select 'C[C@@H](O)[C@@H](C)F |&1:1,3,r|'::mol@>'C[C@H](O)[C@H](C)F'::mol;
+select 'c1ccccc1 |(7.8993,-8.9847,;8.6138,-8.5722,;8.6138,-7.7472,;7.8993,-7.3347,;7.1848,-7.7472,;7.1848,-8.5722,)|'::mol@='c1ccccc1 |(10.3733,-8.9847,;11.0877,-8.5722,;11.0877,-7.7472,;10.3733,-7.3347,;9.6588,-7.7472,;9.6588,-8.5722,)|'::mol;
 
 set rdkit.do_chiral_sss=false;
 set rdkit.do_enhanced_stereo_sss=false;
@@ -547,3 +552,100 @@ M  V30 3 1 4 5 ENDPTS=(3 1 2 3) ATTACH=ANY
 M  V30 END BOND
 M  V30 END CTAB
 M  END'));
+
+-- sanitization and Hs: do not sanitize, removing Hs has no effect
+select mol_to_smiles(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 F 1.299038 0.750000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false,false,true));
+-- sanitization and Hs: do not sanitize, do not remove Hs
+select mol_to_smiles(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 F 1.299038 0.750000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false,false,false));
+-- sanitization and Hs: sanitize, do not remove Hs
+select mol_to_smiles(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 O 1.299038 0.750000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false,true,false));
+-- sanitization and Hs: default is to sanitize and remove Hs
+select mol_to_smiles(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 O 1.299038 0.750000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false));
+-- sanitization and Hs: sanitize, do not remove Hs, input coords manipulated
+select mol_to_v3kctab(mol_from_ctab('
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C 0.000000 0.000000 0.000000 0
+M  V30 2 O 1.000000 0.500000 0.000000 0
+M  V30 3 H 2.598076 -0.000000 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+',false,true,false));
+

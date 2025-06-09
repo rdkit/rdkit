@@ -464,7 +464,8 @@ TEST_CASE("github #6679: suspicious value for atom pair code calculation") {
         {"C[I]", 7918328},  {"C[Te]", 7918456}, {"C[Sb]", 7918584},
         {"C[Sn]", 7918200}, {"C[Xe]", 7918200}, {"C[Li]", 7918200},
     };
-    auto fpg = AtomPair::getAtomPairGenerator<std::uint64_t>();
+    std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpg{
+        AtomPair::getAtomPairGenerator<std::uint64_t>()};
     for (const auto &pr : data) {
       auto mol = v2::SmilesParse::MolFromSmiles(pr.first);
       REQUIRE(mol);

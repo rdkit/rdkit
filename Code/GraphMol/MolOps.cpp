@@ -185,16 +185,12 @@ void halogenCleanup(RWMol &mol, Atom *atom) {
   }
 }
 
-bool isMetal(const Atom *atom) {
-  static const std::unique_ptr<ATOM_OR_QUERY> q(makeMAtomQuery());
-  return q->Match(atom);
-}
-
 bool isHypervalentNonMetal(Atom *atom) {
-  if (isMetal(atom)) {
+  if (QueryOps::isMetal(*atom)) {
     return false;
   }
-  auto ev = atom->calcExplicitValence(false);
+  atom->updatePropertyCache(false);
+  int ev = atom->getValence(Atom::ValenceType::EXPLICIT);
   // Check the explicit valence of the non-metal against the allowed
   // valences of the atom, adjusted by its formal charge.  This means that
   // N+ is treated the same as C, O+ the same as N.  This allows for,
@@ -207,14 +203,17 @@ bool isHypervalentNonMetal(Atom *atom) {
   if (effAtomicNum <= 0) {
     return false;
   }
-  // atom is a non-metal, so if its atomic number is > 2, it should
-  // obey the octet rule (2*ev <= 8).  If it doesn't, don't set the bond to
-  // dative, so the molecule is later flagged as having bad valence.
-  // [CH4]-[Na] being a case in point, line 1800 of
-  // FileParsers/file_parsers_catch.cpp.
+  // atom is a non-metal. If its explicit valence is greater than the
+  // maximum allowed valence then it is hypervalent.
+  //  We have a special case in here for aromatic atoms where the explicit
+  //  valence matches the max allowed and the degree is 4. This is there for
+  //  cases like cyclopentadienyl - metal systems. We need this special case
+  //  because the explicit valence on the C atoms there ends up being 4
   const auto &otherValens =
       PeriodicTable::getTable()->getValenceList(effAtomicNum);
-  if (otherValens.back() > 0 && ev > otherValens.back() && ev <= 4) {
+  auto maxV = otherValens.back();
+  if (maxV > 0 && (ev > maxV || (ev == maxV && atom->getIsAromatic() &&
+                                 atom->getTotalDegree() == 4))) {
     return true;
   }
 
@@ -257,7 +256,7 @@ void metalBondCleanup(RWMol &mol, Atom *atom,
     // see if there are any metals bonded to it by a single bond
     for (auto bond : mol.atomBonds(atom)) {
       if (bond->getBondType() == Bond::BondType::SINGLE &&
-          isMetal(bond->getOtherAtom(atom))) {
+          QueryOps::isMetal(*bond->getOtherAtom(atom))) {
         metals.push_back(bond->getOtherAtom(atom));
       }
     }
@@ -313,7 +312,7 @@ void cleanUpOrganometallics(RWMol &mol) {
       // see if there are any metals bonded to it by a single bond
       for (auto bond : mol.atomBonds(atom)) {
         if (bond->getBondType() == Bond::BondType::SINGLE &&
-            isMetal(bond->getOtherAtom(atom))) {
+            QueryOps::isMetal(*bond->getOtherAtom(atom))) {
           needsFixing = true;
           break;
         }
@@ -357,7 +356,7 @@ void adjustHs(RWMol &mol) {
   //  valence of everything has been calculated.
   //
   for (auto atom : mol.atoms()) {
-    int origImplicitV = atom->getImplicitValence();
+    int origImplicitV = atom->getValence(Atom::ValenceType::IMPLICIT);
     atom->calcExplicitValence(false);
     int origExplicitV = atom->getNumExplicitHs();
 
@@ -493,33 +492,37 @@ void cleanupAtropisomers(RWMol &mol) {
   MolOps::cleanupAtropisomers(mol, hybs);
 }
 
-void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
-  // make sure that ring info is available
-  // (defensive, current calls have it available)
+namespace {
+void checkBond(RWMol &mol, Bond *bond, MolOps::Hybridizations &hybs) {
   if (!mol.getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(mol);
   }
   const RingInfo *ri = mol.getRingInfo();
+  if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
+      hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
+      // do not clear bonds that part of a macrocycle
+      // because they can be linking actual atropisomeric portions
+      (ri->numBondRings(bond->getIdx()) > 0 &&
+       ri->minBondRingSize(bond->getIdx()) < 8)) {
+    bond->setStereo(Bond::BondStereo::STEREONONE);
+  }
+}
+}  // namespace
+
+void cleanupAtropisomers(RWMol &mol, MolOps::Hybridizations &hybs) {
+  // make sure that ring info is available
+  // (defensive, current calls have it available)
   for (auto bond : mol.bonds()) {
     switch (bond->getStereo()) {
       case Bond::BondStereo::STEREOATROPCW:
       case Bond::BondStereo::STEREOATROPCCW:
-        if (hybs[bond->getBeginAtomIdx()] != Atom::SP2 ||
-            hybs[bond->getEndAtomIdx()] != Atom::SP2 ||
-            // do not clear bonds that part of a macrocycle
-            // because they can be linking actual atropisomeric portions
-            (ri->numBondRings(bond->getIdx()) > 0 &&
-             ri->minBondRingSize(bond->getIdx()) < 8)) {
-          bond->setStereo(Bond::BondStereo::STEREONONE);
-        }
+        checkBond(mol, bond, hybs);
         break;
-
       default:
         break;
     }
   }
 }
-
 void sanitizeMol(RWMol &mol) {
   unsigned int failedOp = 0;
   sanitizeMol(mol, failedOp, SANITIZE_ALL);
@@ -722,12 +725,19 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
             }
           }
         }
-        // doesn't seem like this should be necessary, but in case
-        // we ever need stereogroups where the atoms aren't marked
-        // with stereo...
         for (auto stereoGroup : mol.getStereoGroups()) {
+          // doesn't seem like this should be necessary, but in case
+          // we ever need stereogroups where the atoms aren't marked
+          // with stereo...
           for (auto atom : stereoGroup.getAtoms()) {
             if (atomsInFrag[atom->getIdx()]) {
+              return true;
+            }
+          }
+          // same check for stereo groups involving bonds:
+          for (auto bond : stereoGroup.getBonds()) {
+            if (atomsInFrag[bond->getBeginAtomIdx()] &&
+                atomsInFrag[bond->getEndAtomIdx()]) {
               return true;
             }
           }
@@ -773,6 +783,7 @@ std::vector<std::unique_ptr<ROMol>> getTheFrags(
       } else {
         res.emplace_back(new RWMol(mol));
         auto &frag = res.back();
+
         frag->beginBatchEdit();
         for (unsigned int idx = 0; idx < mol.getNumAtoms(); ++idx) {
           if (!atomsInFrag[idx]) {

@@ -57,7 +57,9 @@ bool hasSingleHQuery(const Atom::QUERYATOM_QUERY *q) {
 }
 
 bool atomHasFourthValence(const Atom *atom) {
-  if (atom->getNumExplicitHs() == 1 || atom->getImplicitValence() == 1) {
+  if (atom->getNumExplicitHs() == 1 ||
+      (!atom->needsUpdatePropertyCache() &&
+       atom->getValence(Atom::ValenceType::IMPLICIT) == 1)) {
     return true;
   }
   if (atom->hasQuery()) {
@@ -220,8 +222,8 @@ void canonicalizeDoubleBond(Bond *dblBond, UINT_VECT &bondVisitOrders,
 
   // Make sure we found everything we need to find.
   //   This really shouldn't be a problem, but molecules can end up in odd
-  //   states; for example, allenes can end up here. Instead of checking for them
-  //   explicitly, exit early in any such possible state.
+  //   states; for example, allenes can end up here. Instead of checking for
+  //   them explicitly, exit early in any such possible state.
   if (!firstFromAtom1 || !firstFromAtom2) {
     return;
   }

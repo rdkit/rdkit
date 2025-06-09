@@ -193,31 +193,54 @@ TEST_CASE("update parameters from JSON") {
 TEST_CASE(
     "github #4346: Specified cis/trans stereo being ignored during "
     "conformation generation in macrocycles") {
+  auto useLegacy = GENERATE(true, false);
+  UseLegacyStereoPerceptionFixture fx(useLegacy);
+  CAPTURE(useLegacy);
   SECTION("basics 1") {
     auto m1 = "C1C/C=C/CCCCCCCC1"_smiles;
     REQUIRE(m1);
-    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
     MolOps::addHs(*m1);
     DGeomHelpers::EmbedParameters params = DGeomHelpers::KDG;
     params.randomSeed = 0xf00d;
     CHECK(DGeomHelpers::EmbedMolecule(*m1, params) != -1);
     MolOps::assignStereochemistryFrom3D(*m1);
-    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
-          Bond::BondStereo::STEREOE);
+    if (useLegacy) {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOE);
+    } else {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOTRANS);
+    }
   }
   SECTION("basics 2") {
     auto m1 = "C1C/C=C\\CCCCCCCC1"_smiles;
     REQUIRE(m1);
-    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
-          Bond::BondStereo::STEREOZ);
+    if (useLegacy) {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOZ);
+    } else {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOCIS);
+    }
     MolOps::addHs(*m1);
     DGeomHelpers::EmbedParameters params = DGeomHelpers::KDG;
     params.randomSeed = 0xf00d;
     CHECK(DGeomHelpers::EmbedMolecule(*m1, params) != -1);
     MolOps::assignStereochemistryFrom3D(*m1);
-    CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
-          Bond::BondStereo::STEREOZ);
+    if (useLegacy) {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOZ);
+    } else {
+      CHECK(m1->getBondBetweenAtoms(2, 3)->getStereo() ==
+            Bond::BondStereo::STEREOCIS);
+    }
   }
 }
 TEST_CASE("nontetrahedral stereo", "[nontetrahedral]") {
@@ -1068,3 +1091,146 @@ TEST_CASE("test interrupt") {
 }
 
 #endif
+
+TEST_CASE("github #8250: Seg fault in EmbedMultipleConfs") {
+  auto mol = R"CTAB(segmentation_fault
+     RDKit          3D
+
+ 14 16  0  0  1  0  0  0  0  0999 V2000
+   -2.6383   -1.3457   -2.3147 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -2.6416    0.2493   -2.4783 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -1.4682    0.5200    0.1489 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.1790   -1.5540   -0.8344 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.7790    3.4105   -1.7076 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.0867    2.1687   -1.5159 C   0  0  2  0  0  0  0  0  0  0  0  0
+   -2.2251   -0.8303   -3.3823 N   0  0  0  0  0  2  0  0  0  0  0  0
+   -1.3466    1.1554   -2.5476 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.6987   -0.4961   -0.2729 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.2293   -2.6650   -2.6584 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.3198   -2.6432   -0.3452 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.3334    1.7234   -0.1738 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.1653   -0.2280    0.9964 N   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.7484    0.9579   -2.1397 O   0  0  0  0  0  1  0  0  0  0  0  0
+  1 10  1  6
+  1  4  1  0
+  2  1  1  0
+  2 14  1  6
+  3  9  1  0
+  3 13  1  1
+  4 11  2  0
+  4  9  1  0
+  6  5  1  6
+ 12  6  1  0
+  7  2  1  0
+  7  1  1  0
+  8  2  1  0
+  8  6  1  0
+  9 13  1  0
+ 12  3  1  0
+M  RAD  2   7   2  14   2
+M  END)CTAB"_ctab;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 0xf00d;
+  // with the bug, this would segfault
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 10, ps);
+  CHECK(cids.size() == 10);
+}
+
+TEST_CASE("allenes and cumulenes") {
+  SECTION("allene") {
+    auto m = "C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+  SECTION("cumulene") {
+    auto m = "C=C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(0) - conf.getAtomPos(1);
+      auto v2 = conf.getAtomPos(2) - conf.getAtomPos(1);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+    {
+      auto v1 = conf.getAtomPos(1) - conf.getAtomPos(2);
+      auto v2 = conf.getAtomPos(3) - conf.getAtomPos(2);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+  SECTION("azide") {
+    auto m = "CN=[N+]=[N-]"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
+    ps.randomSeed = 0xf00d;
+    auto cid = DGeomHelpers::EmbedMolecule(*m, ps);
+    CHECK(cid >= 0);
+    auto conf = m->getConformer(cid);
+    {
+      auto v1 = conf.getAtomPos(1) - conf.getAtomPos(2);
+      auto v2 = conf.getAtomPos(3) - conf.getAtomPos(2);
+      CHECK_THAT(v1.angleTo(v2), Catch::Matchers::WithinAbs(M_PI, 0.2));
+    }
+  }
+}
+
+namespace RDKit {
+namespace DGeomHelpers {
+namespace EmbeddingOps {
+RDKIT_DISTGEOMHELPERS_EXPORT void findDoubleBonds(
+    const ROMol &mol,
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        &doubleBondEnds,
+    std::vector<std::pair<std::vector<unsigned int>, int>> &stereoDoubleBonds,
+    const std::map<int, RDGeom::Point3D> *coordMap);
+}
+}  // namespace DGeomHelpers
+}  // namespace RDKit
+
+TEST_CASE("FindDoubleBonds") {
+  SECTION("Allene") {
+    auto m = "C=C=C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    DGeomHelpers::EmbeddingOps::findDoubleBonds(*m, doubleBondEnds,
+                                                stereoDoubleBonds, nullptr);
+    // This is 4, we still have two double bonds to Hydrogens on each
+    // side that should not be linear but the C=C=C should be, so not 5.
+    CHECK(doubleBondEnds.size() == 4);
+    CHECK(stereoDoubleBonds.empty());
+  }
+  SECTION("Sulfone") {
+    auto m = "CS(=O)(=O)C"_smiles;
+    REQUIRE(m);
+    MolOps::addHs(*m);
+    std::vector<std::tuple<unsigned int, unsigned int, unsigned int>>
+        doubleBondEnds;
+    std::vector<std::pair<std::vector<unsigned int>, int>> stereoDoubleBonds;
+    DGeomHelpers::EmbeddingOps::findDoubleBonds(*m, doubleBondEnds,
+                                                stereoDoubleBonds, nullptr);
+    // We want 6 and not 4, the angle between O=S=O should not be linear
+    // (the current implementation counts it twice, hence not 5).
+    CHECK(doubleBondEnds.size() == 6);
+    CHECK(stereoDoubleBonds.empty());
+  }
+}

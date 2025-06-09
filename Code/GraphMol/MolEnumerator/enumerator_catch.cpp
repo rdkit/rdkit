@@ -137,7 +137,8 @@ M  END
     CHECK(bundle.size() == 3);
 
     CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getDegree() == 3);
-    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getImplicitValence() == 0);
+    CHECK(bundle.getMols()[0]->getAtomWithIdx(0)->getValence(
+              Atom::ValenceType::IMPLICIT) == 0);
 
     std::vector<std::string> tsmis = {"COc1ccncc1", "COc1ccccn1", "COc1cccnc1"};
     std::vector<std::string> smis;

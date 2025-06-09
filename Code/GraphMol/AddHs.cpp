@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2003-2022 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2003-2025 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -516,8 +516,21 @@ void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
   }
 }
 
-void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
-           const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
+namespace {
+bool isQueryAtom(const RWMol &mol, const Atom &atom) {
+  if (atom.hasQuery()) {
+    return true;
+  }
+  for (const auto bnd : mol.atomBonds(&atom)) {
+    if (bnd->hasQuery()) {
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+void addHs(RWMol &mol, const AddHsParameters &params,
+           const UINT_VECT *onlyOnAtoms) {
   // when we hit each atom, clear its computed properties
   // NOTE: it is essential that we not clear the ring info in the
   // molecule's computed properties.  We don't want to have to
@@ -528,11 +541,22 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
   // pre-allocate the necessary space on the conformations of the molecule
   // for their coordinates
   unsigned int numAddHyds = 0;
+  boost::dynamic_bitset<> onAtoms(mol.getNumAtoms());
+  if (onlyOnAtoms) {
+    for (auto atIdx : *onlyOnAtoms) {
+      onAtoms.set(atIdx);
+    }
+  } else {
+    onAtoms.set();
+  }
   for (auto at : mol.atoms()) {
-    if (!onlyOnAtoms || std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
-                                  at->getIdx()) != onlyOnAtoms->end()) {
+    if (onAtoms[at->getIdx()]) {
+      if (params.skipQueries && isQueryAtom(mol, *at)) {
+        onAtoms.set(at->getIdx(), 0);
+        continue;
+      }
       numAddHyds += at->getNumExplicitHs();
-      if (!explicitOnly) {
+      if (!params.explicitOnly) {
         numAddHyds += at->getNumImplicitHs();
       }
     }
@@ -548,8 +572,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
 
   unsigned int stopIdx = mol.getNumAtoms();
   for (unsigned int aidx = 0; aidx < stopIdx; ++aidx) {
-    if (onlyOnAtoms && std::find(onlyOnAtoms->begin(), onlyOnAtoms->end(),
-                                 aidx) == onlyOnAtoms->end()) {
+    if (!onAtoms[aidx]) {
       continue;
     }
 
@@ -569,7 +592,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
       mol.addBond(aidx, newIdx, Bond::SINGLE);
       auto hAtom = mol.getAtomWithIdx(newIdx);
       hAtom->updatePropertyCache();
-      if (addCoords) {
+      if (params.addCoords) {
         setTerminalAtomCoords(mol, newIdx, aidx);
       }
       if (isoH != isoHs.end()) {
@@ -580,7 +603,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     // clear the local property
     newAt->setNumExplicitHs(0);
 
-    if (!explicitOnly) {
+    if (!params.explicitOnly) {
       // take care of implicits
       for (unsigned int i = 0; i < mol.getAtomWithIdx(aidx)->getNumImplicitHs();
            i++) {
@@ -591,7 +614,7 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
         auto hAtom = mol.getAtomWithIdx(newIdx);
         hAtom->setProp(common_properties::isImplicit, 1);
         hAtom->updatePropertyCache();
-        if (addCoords) {
+        if (params.addCoords) {
           setTerminalAtomCoords(mol, newIdx, aidx);
         }
         if (isoH != isoHs.end()) {
@@ -609,17 +632,10 @@ void addHs(RWMol &mol, bool explicitOnly, bool addCoords,
     }
   }
   // take care of AtomPDBResidueInfo for Hs if root atom has it
-  if (addResidueInfo) {
+  if (params.addResidueInfo) {
     AssignHsResidueInfo(mol);
   }
 }
-
-ROMol *addHs(const ROMol &mol, bool explicitOnly, bool addCoords,
-             const UINT_VECT *onlyOnAtoms, bool addResidueInfo) {
-  auto *res = new RWMol(mol);
-  addHs(*res, explicitOnly, addCoords, onlyOnAtoms, addResidueInfo);
-  return static_cast<ROMol *>(res);
-};
 
 namespace {
 // returns whether or not an adjustment was made, in case we want that info
@@ -1067,8 +1083,11 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
   auto *res = new RWMol(mol);
+  RemoveHsParameters ps;
+  ps.removeNonimplicit = !implicitOnly;
+  ps.updateExplicitCount = updateExplicitCount;
   try {
-    removeHs(*res, implicitOnly, updateExplicitCount, sanitize);
+    removeHs(*res, ps, sanitize);
   } catch (const MolSanitizeException &) {
     delete res;
     throw;
@@ -1303,16 +1322,8 @@ ROMol *mergeQueryHs(const ROMol &mol, bool mergeUnmappedOnly,
 
 bool needsHs(const ROMol &mol) {
   for (const auto atom : mol.atoms()) {
-    unsigned int nHNbrs = 0;
-    for (const auto nbri :
-         boost::make_iterator_range(mol.getAtomNeighbors(atom))) {
-      const auto nbr = mol[nbri];
-      if (nbr->getAtomicNum() == 1) {
-        ++nHNbrs;
-      }
-    }
-    bool noNeighbors = false;
-    if (atom->getTotalNumHs(noNeighbors) > nHNbrs) {
+    bool includeNeighbors = false;
+    if (atom->getTotalNumHs(includeNeighbors)) {
       return true;
     }
   }

@@ -569,7 +569,7 @@ void set13Bounds(const ROMol &mol, DistGeom::BoundsMatPtr mmat,
 Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
                                 unsigned int aid4) {
   auto stype = bnd->getStereo();
-  if (stype > Bond::STEREOANY) {
+  if (stype > Bond::STEREOANY && bnd->getStereoAtoms().size() >= 2) {
     const auto &stAtoms = bnd->getStereoAtoms();
     if ((static_cast<unsigned int>(stAtoms[0]) != aid1) ^
         (static_cast<unsigned int>(stAtoms[1]) != aid4)) {
@@ -1712,10 +1712,6 @@ void collectBondsAndAngles(const ROMol &mol,
       }
       std::vector<int> tmp(4,
                            0);  // elements: aid1, aid2, flag for triple bonds
-      if ((bondi->getBondType() == Bond::TRIPLE) ||
-          (bondj->getBondType() == Bond::TRIPLE)) {
-        tmp[3] = 1;
-      }
 
       if (aid12 == aid21) {
         tmp[0] = aid11;
@@ -1734,6 +1730,18 @@ void collectBondsAndAngles(const ROMol &mol,
         tmp[1] = aid11;
         tmp[2] = aid21;
       }
+
+      if (bondi->getBondType() == Bond::TRIPLE ||
+          bondj->getBondType() == Bond::TRIPLE) {
+        // triple bond
+        tmp[3] = 1;
+      } else if (bondi->getBondType() == Bond::DOUBLE &&
+                 bondj->getBondType() == Bond::DOUBLE &&
+                 mol.getAtomWithIdx(tmp[1])->getDegree() == 2) {
+        // consecutive double bonds
+        tmp[3] = 1;
+      }
+
       angles.push_back(tmp);
     }
   }

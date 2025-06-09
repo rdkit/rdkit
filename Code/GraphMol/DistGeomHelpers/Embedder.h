@@ -138,7 +138,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   double basinThresh{5.0};
   double pruneRmsThresh{-1.0};
   bool onlyHeavyAtomsForRMS{true};
-  unsigned int ETversion{1};
+  unsigned int ETversion{2};
   boost::shared_ptr<const DistGeom::BoundsMatrix> boundsMat;
   bool embedFragmentsSeparately{true};
   bool useSmallRingTorsions{false};
@@ -335,7 +335,7 @@ inline int EmbedMolecule(
   \param res            Used to return the resulting conformer ids
   \param numConfs       Number of conformations to be generated
   \param numThreads     Sets the number of threads to use (more than one thread
-                        will only be used if the RDKit was build with
+                        will only be used if the RDKit was built with
   multithread
                         support). If set to zero, the max supported by the
   system
@@ -452,6 +452,8 @@ inline INT_VECT EmbedMultipleConfs(
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters KDG;
 //! Parameters corresponding to Sereina Riniker's ETDG approach
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETDG;
+//! Parameters corresponding to Sereina Riniker's ETDG approach - version 2
+RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETDGv2;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach
 RDKIT_DISTGEOMHELPERS_EXPORT extern const EmbedParameters ETKDG;
 //! Parameters corresponding to Sereina Riniker's ETKDG approach - version 2

@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-203 Tad hurst/CDD and other RDKit contributors
+//  Copyright (C) 2004-2025 Tad Hurst/CDD and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -37,6 +37,8 @@ RDKIT_GRAPHMOL_EXPORT void getAllAtomIdsForStereoGroup(
     std::vector<unsigned int> &atomIds,
     const std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
         &wedgeBonds);
+
+RDKIT_GRAPHMOL_EXPORT void cleanupAtropisomerStereoGroups(ROMol &mol);
 }  // namespace Atropisomers
 }  // namespace RDKit
 #endif

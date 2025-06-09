@@ -1,7 +1,4 @@
-//
-//  Copyright (C) 2013 Paolo Tosco
-//
-//  Copyright (C) 2004-2006 Rational Discovery LLC
+//  Copyright (C) 2013-2025 Paolo Tosco and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -24,24 +21,18 @@ class MMFFVdW;
 class RDKIT_FORCEFIELD_EXPORT VdWContrib : public ForceFieldContrib {
  public:
   VdWContrib() {}
-
-  //! Constructor
-  /*!
-    \param owner       pointer to the owning ForceField
-    \param idx1        index of end1 in the ForceField's positions
-    \param idx2        index of end2 in the ForceField's positions
-
-  */
-  VdWContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-             const MMFFVdWRijstarEps *mmffVdWConstants);
+  VdWContrib(ForceField *owner);
+  //! Track a new VdW pair
+  void addTerm(unsigned int idx1, unsigned int idx2, const MMFFVdWRijstarEps *mmffVdWConstants);
   double getEnergy(double *pos) const override;
   void getGrad(double *pos, double *grad) const override;
   VdWContrib *copy() const override { return new VdWContrib(*this); }
 
  private:
-  int d_at1Idx{-1}, d_at2Idx{-1};
-  double d_R_ij_star;  //!< the preferred length of the contact
-  double d_wellDepth;  //!< the vdW well depth (strength of the interaction)
+  std::vector<int16_t> d_at1Idxs;
+  std::vector<int16_t> d_at2Idxs;
+  std::vector<double> d_R_ij_stars; //!< the preferred length of the contact
+  std::vector<double> d_wellDepths; //!< the vdW well depth (strength of the interaction)
 };
 
 //! the electrostatic term for MMFF
@@ -56,19 +47,21 @@ class RDKIT_FORCEFIELD_EXPORT EleContrib : public ForceFieldContrib {
     \param idx2        index of end2 in the ForceField's positions
 
   */
-  EleContrib(ForceField *owner, unsigned int idx1, unsigned int idx2,
-             double chargeTerm, std::uint8_t dielModel, bool is1_4);
+  EleContrib(ForceField *owner);
+  void addTerm(unsigned int idx1, unsigned int idx2,
+               double chargeTerm, std::uint8_t dielModel, bool is1_4);
   double getEnergy(double *pos) const override;
   void getGrad(double *pos, double *grad) const override;
 
   EleContrib *copy() const override { return new EleContrib(*this); }
 
  private:
-  int d_at1Idx{-1}, d_at2Idx{-1};
-  double d_chargeTerm;  //!< q1 * q2 / D
-  std::uint8_t
-      d_dielModel;  //!< dielectric model (1: constant; 2: distance-dependent)
-  bool d_is1_4;     //!< flag set for atoms in a 1,4 relationship
+  std::vector<int16_t> d_at1Idxs;
+  std::vector<int16_t> d_at2Idxs;
+  std::vector<double> d_chargeTerms;
+  std::vector<std::uint8_t> d_is_1_4s;
+  std::vector<std::uint8_t>
+      d_dielModels;  //!< dielectric model (1: constant; 2: distance-dependent)
 };
 
 namespace Utils {
