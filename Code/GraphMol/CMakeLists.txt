@@ -86,6 +86,7 @@ add_subdirectory(MolHash)
 add_subdirectory(MMPA)
 add_subdirectory(RascalMCES)
 add_subdirectory(SynthonSpaceSearch)
+add_subdirectory(EnumerateStereoisomers)
 
 add_subdirectory(CIPLabeler)
 add_subdirectory(Deprotect)
