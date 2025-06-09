@@ -17,6 +17,13 @@
 #include <RDGeneral/export.h>
 
 namespace RDKit {
+
+class ControlCCaught : public std::runtime_error {
+ public:
+  explicit ControlCCaught()
+      : std::runtime_error("The process was interrupted with Ctrl+c"){};
+};
+
 //! This class catches a control-C/SIGINT and sets the flag d_gotSignal
 //! if one is received.  It is intended to be used inside a long
 //! C++ calculation called from Python which intercepts the signal
