@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------
- * Declares RDKit atomistic ROMol -> MonomerMol conversion
+ * Declares RDKit atomistic ROMol <-> MonomerMol conversion
  *
  * Copyright Schrodinger LLC, All Rights Reserved.
  --------------------------------------------------------------------------- */
@@ -24,15 +24,15 @@ class RWMol;
  * @return MonomerMol
  */
 RDKIT_MONOMERMOL_EXPORT boost::shared_ptr<RDKit::RWMol>
-atomisticToMonomerMol(const RDKit::ROMol& atomistic_mol);
+atomisticToMonomerMol(const RDKit::ROMol& atomistic_mol, bool use_residue_info = true);
 
 /**
  * Build an atomistic molecule from a MonomerMol
  *
- * @param monomer_mol CG molecule to convert to atomistic
+ * @param monomer_mol Monomeristic molecule to convert to atomistic
  * @return Atomistic molecule
  */
 RDKIT_MONOMERMOL_EXPORT boost::shared_ptr<RDKit::RWMol>
 monomerMolToAtomsitic(const RDKit::ROMol& monomer_mol);
 
-} // RDKit
+} // namespace RDKit
