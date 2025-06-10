@@ -12,7 +12,7 @@ include(CMakePrintHelpers)
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
   if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/chemdraw/CDXIO.h" )
     set(RELEASE_NO "1.0.8")
-    set(MD5 "b8f6b12e04845246bf0753d9ee389a31")
+    set(MD5 "21bd4fe00d96c4692cdd7aba1b9550ed")
     downloadAndCheckMD5("https://codeload.github.com/Glysade/chemdraw/tar.gz/refs/tags/v${RELEASE_NO}"
               "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-v${RELEASE_NO}.tar.gz" ${MD5})
 	      
@@ -37,15 +37,17 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 
 
    # we don't want to install expat, this is statically linked in to the ChemDraw lib
-   set(CMAKE_SKIP_INSTALL_RULES ON)
-   add_subdirectory(chemdraw/expatpp)
-   set(CMAKE_SKIP_INSTALL_RULES OFF)
+   #  however, we don't want to install it so use the undocumented EXCLUDE_FROM_ALL
+   #     set(CMAKE_SKIP_INSTALL_RULES TRUE) doesn't apparently work
+   add_subdirectory(chemdraw/expatpp EXCLUDE_FROM_ALL)
+   #     set(CMAKE_SKIP_INSTALL_RULES FALSE)
 
    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/expatpp/expatpp-code-r6-trunk/src_pp)
 
   # it's way easier to use the RDKIT machinery to build and link so let's do that
   file(GLOB CHEMDRAW_SOURCE "chemdraw/chemdraw/*.cpp")
   rdkit_library(ChemDraw ${CHEMDRAW_SOURCE} SHARED)
+  target_compile_definitions(ChemDraw PRIVATE CHEMDRAW_BUILD)
   target_link_libraries(ChemDraw PUBLIC expat)
 
   # export all the symbols for ChemDraw on MSVC
@@ -53,7 +55,29 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
       message("== ChemDraw exporting all symbols")
       set_target_properties(ChemDraw PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
   endif()
-  
+  # On Windows, define MYLIB_EXPORTS when building the DLL
+  if (WIN32)
+    target_compile_definitions(ChemDraw
+        PRIVATE CHEMDRAW_BUILD
+    )
+  endif()
+
+  # On Linux/macOS, hide all symbols by default and expose only our API
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "Emscripten")
+    # Require -fvisibility=hidden
+    set_target_properties(ChemDraw PROPERTIES
+        CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN ON
+    )
+ endif()
+
+
+# export all the symbols for ChemDraw on MSVC                                                 
+if((MSVC AND BUILD_SHARED_LIBS) OR ((NOT MSVC) AND WIN32))                                
+    set_target_properties(ChemDraw PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS TRUE)                
+endif()                                                                                     
   # Suppress warnings since we don't control the chedraw code and indicate
   #  we have the EXPAT_CONFIG created
   if(MSVC)
