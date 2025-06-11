@@ -26,6 +26,7 @@
 #include <boost/smart_ptr.hpp>
 
 namespace RDKit {
+class RDMol;
 class ROMol;
 class RWMol;
 class Bond;
@@ -275,6 +276,8 @@ RDKIT_GRAPHMOL_EXPORT std::vector<SubstanceGroup> &getSubstanceGroups(
     ROMol &mol);
 RDKIT_GRAPHMOL_EXPORT const std::vector<SubstanceGroup> &getSubstanceGroups(
     const ROMol &mol);
+std::vector<SubstanceGroup> &getSubstanceGroups(RDMol &mol);
+const std::vector<SubstanceGroup> &getSubstanceGroups(const RDMol &mol);
 
 //! Add a new SubstanceGroup. A copy is added, so we can be sure that no other
 //! references to the SubstanceGroup exist.
@@ -291,6 +294,8 @@ RDKIT_GRAPHMOL_EXPORT unsigned int addSubstanceGroup(ROMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingAtom(
     RWMol &mol, unsigned int idx);
+//! \overload
+void removeSubstanceGroupsReferencingAtom(RDMol &mol, unsigned int idx);
 //! Removes SubstanceGroups which reference a particular bond index
 /*!
   \param mol - molecule to be edited.
@@ -298,6 +303,9 @@ RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingAtom(
 */
 RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingBond(
     RWMol &mol, unsigned int idx);
+//! \overload
+RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingBond(
+    RDMol &mol, unsigned int idx);
 //! @}
 
 }  // namespace RDKit

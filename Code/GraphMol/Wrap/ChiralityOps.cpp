@@ -21,6 +21,10 @@ struct chiralityops_wrapper {
   static void wrap() {
     RegisterVectorConverter<Chirality::StereoInfo>();
 
+    // Chirality::cleanupStereoGroups is overloaded, so the ambiguity needs
+    // to be resolved.
+    void (*cleanupStereoGroups)(ROMol &) = Chirality::cleanupStereoGroups;
+
     python::def(
         "FindPotentialStereo",
         (std::vector<Chirality::StereoInfo>(*)(ROMol &, bool, bool)) &
@@ -31,7 +35,7 @@ struct chiralityops_wrapper {
 Note that this function is still somewhat experimental and the API\n\
 and results may change in a future release.",
         python::with_custodian_and_ward_postcall<0, 1>());
-    python::def("CleanupStereoGroups", &Chirality::cleanupStereoGroups,
+    python::def("CleanupStereoGroups", cleanupStereoGroups,
                 (python::arg("mol")),
                 "removes atoms without specified chirality from stereo groups");
   };

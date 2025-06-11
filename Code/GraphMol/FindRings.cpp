@@ -7,8 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <GraphMol/rdmol_throw.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Rings.h>
+#include <GraphMol/RDMol.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
 
@@ -139,6 +141,44 @@ void pickD2Nodes(const ROMol &tMol, INT_VECT &d2nodes, const INT_VECT &currFrag,
       break;
     } else {
       markUselessD2s(root, tMol, forb, atomDegrees, activeBonds);
+    }
+  }
+}
+
+void markUselessD2s(uint32_t rootAtomIndex, const RDMol &tMol,
+                    boost::dynamic_bitset<> &forb, const INT_VECT &atomDegrees,
+                    const boost::dynamic_bitset<> &activeBonds) {
+  // recursive function to mark any degree 2 nodes that are already represented
+  // by root for the purpose of finding smallest rings.
+  auto [beg, end] = tMol.getAtomBonds(rootAtomIndex);
+  for (; beg != end; ++beg) {
+    const uint32_t bondIndex = *beg;
+    if (!activeBonds[bondIndex]) {
+      continue;
+    }
+    const BondData &bond = tMol.getBond(bondIndex);
+    const uint32_t oIdx = bond.getOtherAtomIdx(rootAtomIndex);
+    if (!forb[oIdx] && atomDegrees[oIdx] == 2) {
+      forb.set(oIdx);
+      markUselessD2s(oIdx, tMol, forb, atomDegrees, activeBonds);
+    }
+  }
+}
+
+void pickD2Nodes(const RDMol &tMol, INT_VECT &d2nodes,
+                 const uint32_t *currFragBegin, const uint32_t *currFragEnd,
+                 const INT_VECT &atomDegrees,
+                 const boost::dynamic_bitset<> &activeBonds) {
+  d2nodes.resize(0);
+
+  // forb contains all d2 nodes, not just the ones we want to keep
+  boost::dynamic_bitset<> forb(tMol.getNumAtoms());
+  for (auto it = currFragBegin; it != currFragEnd; ++it) {
+    const uint32_t axci = *it;
+    if (atomDegrees[axci] == 2 && !forb[axci]) {
+      d2nodes.push_back(axci);
+      forb.set(axci);
+      markUselessD2s(axci, tMol, forb, atomDegrees, activeBonds);
     }
   }
 }
@@ -550,28 +590,6 @@ void findRingsD3Node(const ROMol &tMol, VECT_INT_VECT &res,
   }  // end of found less than 3 smallest ring for the degree 3 node
 }
 
-int greatestComFac(long curfac, long nfac) {
-  long small;
-  long large;
-  long rem;
-
-  // Determine which of the numbers is the larger, and which is the smaller
-  large = (curfac > nfac) ? curfac : nfac;
-  small = (curfac < nfac) ? curfac : nfac;
-
-  // Keep looping until no remainder, as this means it is a factor of both
-  while (small != 0) {
-    // Set the larger var to the smaller, and set the smaller to the remainder
-    // of (large / small)
-    rem = (large % small);
-    large = small;
-    small = rem;
-  }
-
-  // By here nLarge will hold the largest common factor, so just return it
-  return large;
-}
-
 /******************************************************************************
  * SUMMARY:
  *  remove the bond in the molecule that connect to the specified atom
@@ -600,6 +618,25 @@ void trimBonds(unsigned int cand, const ROMol &tMol, INT_SET &changed,
       changed.insert(oIdx);
     }
     activeBonds[bond->getIdx()] = 0;
+    atomDegrees[oIdx] -= 1;
+    atomDegrees[cand] -= 1;
+  }
+}
+void trimBonds(const uint32_t cand, const RDMol &tMol, std::vector<uint32_t> &changed,
+               INT_VECT &atomDegrees, boost::dynamic_bitset<> &activeBonds) {
+  auto [beg, end] = tMol.getAtomBonds(cand);
+  for (; beg != end; ++beg) {
+    const uint32_t bondIndex = *beg;
+    if (!activeBonds[bondIndex]) {
+      continue;
+    }
+    const BondData &bond = tMol.getBond(bondIndex);
+    const uint32_t oIdx = bond.getOtherAtomIdx(cand);
+    if (atomDegrees[oIdx] <= 2) {
+      changed.push_back(oIdx);
+      std::push_heap(changed.begin(), changed.end(), std::greater());
+    }
+    activeBonds.reset(bondIndex);
     atomDegrees[oIdx] -= 1;
     atomDegrees[cand] -= 1;
   }
@@ -1004,7 +1041,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
       // for this fix to apply we have to have at least one non-ring bond
       // that terminates in ring atoms. Find those bonds:
       std::vector<const Bond *> possibleBonds;
-      for (unsigned int i = 0; i < nbnds; ++i) {
+      for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
         if (!ringBonds[i]) {
           const Bond *bnd = mol.getBondWithIdx(i);
           if (ringAtoms[bnd->getBeginAtomIdx()] &&
@@ -1023,7 +1060,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
         }
         possibleBonds.clear();
         // check if we need to repeat the process:
-        for (unsigned int i = 0; i < nbnds; ++i) {
+        for (unsigned int i = 0; i < mol.getNumBonds(); ++i) {
           if (!ringBonds[i]) {
             const Bond *bnd = mol.getBondWithIdx(i);
             if (!deadBonds[bnd->getIdx()] &&
@@ -1241,6 +1278,182 @@ void fastFindRings(const ROMol &mol) {
   }
 
   FindRings::storeRingsInfo(mol, res);
+}
+void fastFindRings(const RDMol &mol, RingInfoCache& rings) {
+  std::vector<uint32_t> &ringBegins = rings.ringBegins;
+  std::vector<uint32_t> &atomsInRings = rings.atomsInRings;
+  std::vector<uint32_t> &bondsInRings = rings.bondsInRings;
+  ringBegins.resize(0);
+  atomsInRings.resize(0);
+  bondsInRings.resize(0);
+
+  uint32_t numAtoms = mol.getNumAtoms();
+  uint32_t numBonds = mol.getNumBonds();
+
+  // atomVisited:
+  // 0 = unvisited
+  // 1 = atom in traversalStack
+  // 2 = atom fully visited
+  INT_VECT &atomVisited = rings.tempPerAtomInts;
+  atomVisited.resize(0);
+  atomVisited.resize(numAtoms, 0);
+
+  std::vector<uint32_t> &atomRingCounts = rings.atomMembershipBegins;
+  std::vector<uint32_t> &bondRingCounts = rings.bondMembershipBegins;
+  atomRingCounts.resize(numAtoms);
+  bondRingCounts.resize(numBonds);
+  //struct RingStackEntry {
+  //  uint32_t atomIndex;
+  //  uint32_t atomNeighborIndex;
+  //};
+  // first is atomIndex, second is atomNeighborIndex
+  std::vector<std::pair<uint32_t, uint32_t>> &traversalStack =
+      rings.tempPerAtomPairs;
+
+  // First, mark all atoms with degree less than 2 as unvisitable.
+  for (uint32_t i = 0; i < numAtoms; ++i) {
+    if (mol.getAtomDegree(i) < 2) {
+      atomVisited[i] = 2;
+    }
+  }
+
+  for (uint32_t i = 0; i < numAtoms; ++i) {
+    if (atomVisited[i] != 0) {
+      continue;
+    }
+    atomVisited[i] = 1;
+    traversalStack.resize(1);
+    traversalStack[0] = std::make_pair(i, 0);
+    while (traversalStack.size() != 0) {
+      auto [atomIndex, atomNeighborIndex] = traversalStack.back();
+      uint32_t edgeIndex = mol.getAtomBondStarts()[atomIndex] + atomNeighborIndex;
+      const uint32_t endEdgeIndex = mol.getAtomBondStarts()[atomIndex + 1];
+      uint32_t nbrAtomIndex = mol.getOtherAtomIndices()[edgeIndex];
+      //uint32_t bondIndex = mol.getBondDataIndices()[edgeIndex];
+
+      if (atomVisited[nbrAtomIndex] == 0) {
+        // Unvisited atom, so recurse
+        atomVisited[nbrAtomIndex] = 1;
+        traversalStack.push_back(std::make_pair(nbrAtomIndex, 0));
+        continue;
+      }
+
+      if (atomVisited[nbrAtomIndex] == 1 && traversalStack.size() >= 3 &&
+          nbrAtomIndex != traversalStack[traversalStack.size() - 2].first) {
+        // Atom already in the traversal stack, but not the previous 2,
+        // so we have a cycle.
+        assert(traversalStack.back().first == atomIndex);
+        ringBegins.push_back(atomsInRings.size());
+        atomsInRings.push_back(atomIndex);
+        // FIXME: Double-check the order of the bonds in the rings matches the original code!!!
+        uint32_t bondIndex = mol.getBondDataIndices()[edgeIndex];
+        bondsInRings.push_back(bondIndex);
+        ++atomRingCounts[atomIndex];
+        ++bondRingCounts[bondIndex];
+        size_t i; 
+        for (i = traversalStack.size() - 2;
+             traversalStack[i].first != nbrAtomIndex; --i) {
+          auto [ringAtomIndex, ringNeighborIndex] = traversalStack[i];
+          atomsInRings.push_back(ringAtomIndex);
+          uint32_t ringEdgeIndex =
+              mol.getAtomBondStarts()[ringAtomIndex] + ringNeighborIndex;
+          uint32_t ringBondIndex = mol.getBondDataIndices()[ringEdgeIndex];
+          bondsInRings.push_back(ringBondIndex);
+          ++atomRingCounts[ringAtomIndex];
+          ++bondRingCounts[ringBondIndex];
+          // This shouldn't loop forever, but we can double-check in a debug
+          // build.
+          assert(i > 1 || traversalStack[0].first == nbrAtomIndex);
+        }
+        atomsInRings.push_back(nbrAtomIndex);
+        uint32_t ringEdgeIndex =
+            mol.getAtomBondStarts()[nbrAtomIndex] + traversalStack[i].second;
+        uint32_t ringBondIndex = mol.getBondDataIndices()[ringEdgeIndex];
+        bondsInRings.push_back(ringBondIndex);
+        ++atomRingCounts[nbrAtomIndex];
+        ++bondRingCounts[ringBondIndex];
+      }
+
+      // Pick the next available edge, possibly up the stack.
+      ++edgeIndex;
+      if (edgeIndex != endEdgeIndex) {
+        ++traversalStack.back().second;
+      } else {
+        while (true) {
+          traversalStack.pop_back();
+          if (traversalStack.size() == 0) {
+            break;
+          }
+          std::pair<uint32_t, uint32_t> &pair = traversalStack.back();
+          auto [atomIndex, atomNeighborIndex] = pair; 
+          const uint32_t numNeighbors = mol.getAtomDegree(atomIndex);
+          ++atomNeighborIndex;
+          if (atomNeighborIndex != numNeighbors) {
+            // Found an edge
+            pair.second = atomNeighborIndex;
+            break;
+          }
+        }
+      }
+    }
+    atomVisited[i] = 2;
+  }
+  const size_t numRings = ringBegins.size();
+  ringBegins.push_back(atomsInRings.size());
+
+  // Record the rings that each atom and bond are in, using
+  // atomRingCounts and bondRingCounts to preallocate,
+  // and then iterate through, filling the final arrays in.
+  assert(atomsInRings.size() == bondsInRings.size());
+  uint32_t sum = 0;
+  for (uint32_t i = 0; i < numAtoms; ++i) {
+    uint32_t newSum = sum + atomRingCounts[i];
+    atomRingCounts[i] = sum;
+    sum = newSum;
+  }
+  assert(sum == atomsInRings.size());
+  sum = 0;
+  for (uint32_t i = 0; i < numBonds; ++i) {
+    uint32_t newSum = sum + bondRingCounts[i];
+    bondRingCounts[i] = sum;
+    sum = newSum;
+  }
+  assert(sum == bondsInRings.size());
+
+  // Fill in the atom-to-ring and bond-to-ring mappings
+  std::vector<uint32_t> &atomMemberships = rings.atomMemberships;
+  std::vector<uint32_t> &bondMemberships = rings.bondMemberships;
+  atomMemberships.resize(atomsInRings.size());
+  bondMemberships.resize(bondsInRings.size());
+  for (size_t ring = 0; ring < numRings; ++ring) {
+    uint32_t ringBegin = ringBegins[ring];
+    uint32_t ringEnd = ringBegins[ring+1];
+    for (; ringBegin < ringEnd; ++ringBegin) {
+      uint32_t atom = atomsInRings[ringBegin];
+      uint32_t destIndex = atomRingCounts[atom];
+      atomMemberships[destIndex] = ring;
+      atomRingCounts[atom] = destIndex + 1;
+
+      uint32_t bond = bondsInRings[ringBegin];
+      destIndex = bondRingCounts[bond];
+      bondMemberships[destIndex] = ring;
+      bondRingCounts[bond] = destIndex + 1;
+    }
+  }
+  // atomRingCounts and bondRingCounts effectively got shifted over by
+  // the incrementing, so add back the 0 at the beginning.
+  atomRingCounts.push_back(0);
+  memmove(atomRingCounts.data() + 1, atomRingCounts.data(),
+          sizeof(uint32_t) * (atomRingCounts.size() - 1));
+  atomRingCounts[0] = 0;
+
+  bondRingCounts.push_back(0);
+  memmove(bondRingCounts.data() + 1, bondRingCounts.data(),
+          sizeof(uint32_t) * (bondRingCounts.size() - 1));
+  bondRingCounts[0] = 0;
+
+  rings.isInit = true;
+  rings.findRingType = FIND_RING_TYPE_FAST;
 }
 
 #ifdef RDK_USE_URF
