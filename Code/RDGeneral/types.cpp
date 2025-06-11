@@ -14,6 +14,7 @@
 namespace RDKit {
 namespace detail {
 const std::string computedPropName = "__computedProps";
+const PropToken computedPropNameToken = PropToken(computedPropName);
 }
 
 namespace common_properties {
@@ -148,6 +149,25 @@ const std::string _QueryAtomGenericLabel = "_QueryAtomGenericLabel";
 // molecule drawing
 const std::string _displayLabel = "_displayLabel";
 const std::string _displayLabelW = "_displayLabelW";
+
+const PropToken _hasMassQueryToken = PropToken(_hasMassQuery);
+
+const PropToken _ChiralityPossibleToken = PropToken(_ChiralityPossible);
+const PropToken _chiralPermutationToken = PropToken(_chiralPermutation);
+const PropToken _CIPCodeToken = PropToken(_CIPCode);
+const PropToken _CIPRankToken = PropToken(_CIPRank);
+const PropToken _isotopicHsToken = PropToken(_isotopicHs);
+const PropToken _MolFileRLabelToken = PropToken(_MolFileRLabel);
+const PropToken _ringStereoAtomsAllToken = PropToken("_ringStereoAtomsAll");
+const PropToken _ringStereoAtomsBeginsToken = PropToken("_ringStereoAtomsBegins");
+const PropToken _ringStereoGroupToken = PropToken("_ringStereoGroup");
+const PropToken _supplementalSmilesLabelToken = PropToken(_supplementalSmilesLabel);
+const PropToken _UnknownStereoToken = PropToken(_UnknownStereo);
+const PropToken dummyLabelToken = PropToken(dummyLabel);
+const PropToken isImplicitToken = PropToken(isImplicit);
+const PropToken molAtomMapNumberToken = PropToken(molAtomMapNumber);
+const PropToken molFileAliasToken = PropToken(molFileAlias);
+const PropToken molFileValueToken = PropToken(molFileValue);
 
 }  // namespace common_properties
 
