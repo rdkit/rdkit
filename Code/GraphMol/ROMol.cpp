@@ -19,7 +19,7 @@
 #include "MolPickler.h"
 #include "Conformer.h"
 #include "SubstanceGroup.h"
-
+#include <GraphMol/rdmol_throw.h>
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/archive/text_oarchive.hpp>
@@ -35,439 +35,141 @@ const int ci_RIGHTMOST_ATOM = -0xBADBEEF;
 const int ci_LEADING_BOND = -0xBADBEEF + 1;
 const int ci_ATOM_HOLDER = -0xDEADD06;
 
-void ROMol::destroy() {
-  d_atomBookmarks.clear();
-  d_bondBookmarks.clear();
-
-  auto atItP = boost::vertices(d_graph);
-  while (atItP.first != atItP.second) {
-    delete (d_graph)[*(atItP.first++)];
-  }
-
-  auto bondItP = boost::edges(d_graph);
-  while (bondItP.first != bondItP.second) {
-    delete (d_graph)[*(bondItP.first++)];
-  }
-
-  d_graph.clear();
-
-  delete dp_ringInfo;
-
-  d_sgroups.clear();
-  d_stereo_groups.clear();
+ROMol::ROMol() : d_ownedBySelf(true) {
+  // d_ownedBySelf must be initialized before dp_mol, because dp_mol
+  // compat data initialization depends on d_ownedBySelf.
+  dp_mol = new RDKit::RDMol(this);
 }
-
-ROMol::ROMol(const std::string &pickle) : RDProps() {
-  initMol();
-  numBonds = 0;
+ROMol::ROMol(const ROMol &other, bool quickCopy , int confId) {
+  // Self ownership must be set before dp_mol is created.
+  d_ownedBySelf = true;
+  dp_mol = new RDKit::RDMol(*other.dp_mol, quickCopy, confId, this);
+}
+ROMol::ROMol(const std::string &pickle) : ROMol() {
   MolPickler::molFromPickle(pickle, *this);
-  numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
 }
-
-ROMol::ROMol(const std::string &pickle, unsigned int propertyFlags)
-    : RDProps() {
-  initMol();
-  numBonds = 0;
+ROMol::ROMol(const std::string &pickle, unsigned int propertyFlags) : ROMol() {
   MolPickler::molFromPickle(pickle, *this, propertyFlags);
-  numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
+}
+ROMol::ROMol(ROMol&& other) noexcept{
+  dp_mol = other.dp_mol;
+  d_ownedBySelf = true;
+  if (other.d_ownedBySelf) {
+    dp_mol->releaseCompatMolOwnership();
+  }
+  dp_mol->setROMolPointerCompat(this);
+  dp_mol->setCompatPointersToSelf();
+  // Moved from object must be usable per unit tests
+  other.dp_mol = new RDKit::RDMol();
+  other.d_ownedBySelf = true;
 }
 
-void ROMol::initFromOther(const ROMol &other, bool quickCopy, int confId) {
+ROMol &ROMol::operator=(ROMol &&other) noexcept {
   if (this == &other) {
-    return;
+    return *this;
   }
-  numBonds = 0;
-  // std::cerr<<"    init from other: "<<this<<" "<<&other<<std::endl;
-  // copy over the atoms
-  for (const auto oatom : other.atoms()) {
-    constexpr bool updateLabel = false;
-    constexpr bool takeOwnership = true;
-    addAtom(oatom->copy(), updateLabel, takeOwnership);
-  }
-
-  // and the bonds:
-  for (const auto obond : other.bonds()) {
-    addBond(obond->copy(), true);
-  }
-
-  // ring information
-  delete dp_ringInfo;
-  if (other.dp_ringInfo) {
-    dp_ringInfo = new RingInfo(*(other.dp_ringInfo));
+  if (d_ownedBySelf && other.d_ownedBySelf) {
+    delete dp_mol;
+    dp_mol = other.dp_mol;
+    // Moved from object must be usable per unit tests
+    other.dp_mol = new RDKit::RDMol();
   } else {
-    dp_ringInfo = new RingInfo();
+    // In concept, something equivalent to this could happen:
+    // RDMol mol;
+    // mol.asROMol() = std::move(inputROMol);
+    // in which case, this can't own the RDMol, so dp_mol must stay
+    // the same and d_ownedBySelf must stay the same as before.
+    // To avoid dp_mol deleting this upon assignment, temporarily release ownership of this.
+    if (!d_ownedBySelf) {
+      dp_mol->releaseCompatMolOwnership();
+    }
+    // Can't fully transfer ownership, so use copy assignment
+    *dp_mol = *other.dp_mol;
   }
+  dp_mol->setROMolPointerCompat(this);
+  dp_mol->setCompatPointersToSelf();
 
-  // enhanced stereochemical information
-  d_stereo_groups.clear();
-  for (auto &otherGroup : other.d_stereo_groups) {
-    std::vector<Atom *> atoms;
-    for (auto &otherAtom : otherGroup.getAtoms()) {
-      atoms.push_back(getAtomWithIdx(otherAtom->getIdx()));
-    }
-    std::vector<Bond *> bonds;
-    for (auto &otherBond : otherGroup.getBonds()) {
-      bonds.push_back(getBondWithIdx(otherBond->getIdx()));
-    }
-    d_stereo_groups.emplace_back(otherGroup.getGroupType(), std::move(atoms),
-                                 std::move(bonds), otherGroup.getReadId());
-    d_stereo_groups.back().setWriteId(otherGroup.getWriteId());
-  }
-
-  if (other.dp_delAtoms) {
-    dp_delAtoms.reset(new boost::dynamic_bitset<>(*other.dp_delAtoms));
-  } else {
-    dp_delAtoms.reset(nullptr);
-  }
-  if (other.dp_delBonds) {
-    dp_delBonds.reset(new boost::dynamic_bitset<>(*other.dp_delBonds));
-  } else {
-    dp_delBonds.reset(nullptr);
-  }
-
-  if (!quickCopy) {
-    // copy conformations
-    for (const auto &conf : other.d_confs) {
-      if (confId < 0 || rdcast<int>(conf->getId()) == confId) {
-        this->addConformer(new Conformer(*conf));
-      }
-    }
-
-    // Copy sgroups
-    for (const auto &sg : getSubstanceGroups(other)) {
-      addSubstanceGroup(*this, sg);
-    }
-
-    d_props = other.d_props;
-
-    // Bookmarks should be copied as well:
-    for (auto abmI : other.d_atomBookmarks) {
-      for (const auto *aptr : abmI.second) {
-        setAtomBookmark(getAtomWithIdx(aptr->getIdx()), abmI.first);
-      }
-    }
-    for (auto bbmI : other.d_bondBookmarks) {
-      for (const auto *bptr : bbmI.second) {
-        setBondBookmark(getBondWithIdx(bptr->getIdx()), bbmI.first);
-      }
-    }
-  } else {
-    d_props.reset();
-    STR_VECT computed;
-    d_props.setVal(RDKit::detail::computedPropName, computed);
-  }
-
-  // std::cerr<<"---------    done init from other: "<<this<<"
-  // "<<&other<<std::endl;
+  return *this;
 }
 
-void ROMol::initMol() {
-  d_props.reset();
-  dp_ringInfo = new RingInfo();
-  // ok every molecule contains a property entry called
-  // RDKit::detail::computedPropName
-  // which provides
-  //  list of property keys that correspond to value that have been computed
-  // this can used to blow out all computed properties while leaving the rest
-  // along
-  // initialize this list to an empty vector of strings
-  STR_VECT computed;
-  d_props.setVal(RDKit::detail::computedPropName, computed);
+ROMol::~ROMol() {
+  if (d_ownedBySelf) {
+    delete dp_mol;
+  }
 }
 
-unsigned int ROMol::getAtomDegree(const Atom *at) const {
+RingInfo* ROMol::getRingInfo() const {
+  auto &ringInfo = dp_mol->getRingInfoCompat();
+  return &ringInfo;
+}
+
+unsigned int ROMol::getNumAtoms() const { return dp_mol->getNumAtoms(); }
+unsigned int ROMol::getNumAtoms(bool onlyExplicit) const {
+  return dp_mol->getNumAtoms(onlyExplicit);
+}
+unsigned int ROMol::getNumHeavyAtoms() const {
+  return dp_mol->getNumHeavyAtoms();
+}
+Atom* ROMol::getAtomWithIdx(unsigned int idx) {
+  PRECONDITION(getNumAtoms() > 0, "no atoms");
+  URANGE_CHECK(idx, getNumAtoms());
+  return dp_mol->getAtomCompat(idx);
+}
+const Atom* ROMol::getAtomWithIdx(unsigned int idx) const {
+  PRECONDITION(getNumAtoms() > 0, "no atoms");
+  URANGE_CHECK(idx, getNumAtoms());
+  return dp_mol->getAtomCompat(idx);
+}
+unsigned int ROMol::getAtomDegree(const Atom* at) const {
   PRECONDITION(at, "no atom");
+  PRECONDITION(at->hasOwningMol(), "atom not associated with a molecule");
   PRECONDITION(&at->getOwningMol() == this,
                "atom not associated with this molecule");
-  return rdcast<unsigned int>(boost::out_degree(at->getIdx(), d_graph));
-};
-
-unsigned int ROMol::getNumAtoms(bool onlyExplicit) const {
-  int res = rdcast<int>(boost::num_vertices(d_graph));
-  if (!onlyExplicit) {
-    // if we are interested in hydrogens as well add them up from
-    // each
-    for (const auto atom : atoms()) {
-      res += atom->getTotalNumHs();
-    }
-  }
-  return res;
-};
-unsigned int ROMol::getNumHeavyAtoms() const {
-  unsigned int res = 0;
-  for (const auto atom : atoms()) {
-    if (atom->getAtomicNum() > 1) {
-      ++res;
-    }
-  }
-  return res;
-};
-
-Atom *ROMol::getAtomWithIdx(unsigned int idx) {
-  URANGE_CHECK(idx, getNumAtoms());
-
-  auto vd = boost::vertex(idx, d_graph);
-  auto res = d_graph[vd];
-  POSTCONDITION(res, "");
-  return res;
+  return dp_mol->getAtomDegree(at->getIdx());
 }
-
-const Atom *ROMol::getAtomWithIdx(unsigned int idx) const {
-  URANGE_CHECK(idx, getNumAtoms());
-
-  auto vd = boost::vertex(idx, d_graph);
-  const auto res = d_graph[vd];
-
-  POSTCONDITION(res, "");
-  return res;
-}
-
-// returns the first inserted atom with the given bookmark
-Atom *ROMol::getAtomWithBookmark(int mark) {
-  auto lu = d_atomBookmarks.find(mark);
-  PRECONDITION((lu != d_atomBookmarks.end() && !lu->second.empty()),
-               "atom bookmark not found");
-  return lu->second.front();
-};
-
-// returns all atoms with the given bookmark
-ROMol::ATOM_PTR_LIST &ROMol::getAllAtomsWithBookmark(int mark) {
-  auto lu = d_atomBookmarks.find(mark);
-  PRECONDITION(lu != d_atomBookmarks.end(), "atom bookmark not found");
-  return lu->second;
-};
-
-// returns the unique atom with the given bookmark
-Atom *ROMol::getUniqueAtomWithBookmark(int mark) {
-  auto lu = d_atomBookmarks.find(mark);
-  PRECONDITION((lu != d_atomBookmarks.end()), "bookmark not found");
-  return lu->second.front();
-}
-
-// returns the first inserted bond with the given bookmark
-Bond *ROMol::getBondWithBookmark(int mark) {
-  auto lu = d_bondBookmarks.find(mark);
-  PRECONDITION((lu != d_bondBookmarks.end() && !lu->second.empty()),
-               "bond bookmark not found");
-  return lu->second.front();
-};
-
-// returns all bonds with the given bookmark
-ROMol::BOND_PTR_LIST &ROMol::getAllBondsWithBookmark(int mark) {
-  auto lu = d_bondBookmarks.find(mark);
-  PRECONDITION(lu != d_bondBookmarks.end(), "bond bookmark not found");
-  return lu->second;
-};
-
-// returns the unique bond with the given bookmark
-Bond *ROMol::getUniqueBondWithBookmark(int mark) {
-  auto lu = d_bondBookmarks.find(mark);
-  PRECONDITION((lu != d_bondBookmarks.end()), "bookmark not found");
-  return lu->second.front();
-}
-
-void ROMol::clearAtomBookmark(const int mark) { d_atomBookmarks.erase(mark); }
-
-void ROMol::clearAtomBookmark(int mark, const Atom *atom) {
-  PRECONDITION(atom, "no atom");
-  auto lu = d_atomBookmarks.find(mark);
-  if (lu != d_atomBookmarks.end()) {
-    auto &marks = lu->second;
-    unsigned int tgtIdx = atom->getIdx();
-    auto entry = std::find_if(marks.begin(), marks.end(), [&tgtIdx](auto ptr) {
-      return ptr->getIdx() == tgtIdx;
-    });
-    if (entry != marks.end()) {
-      marks.erase(entry);
-    }
-    if (marks.empty()) {
-      d_atomBookmarks.erase(mark);
-    }
-  }
-}
-
-void ROMol::clearBondBookmark(int mark) { d_bondBookmarks.erase(mark); }
-void ROMol::clearBondBookmark(int mark, const Bond *bond) {
-  PRECONDITION(bond, "no bond");
-  auto lu = d_bondBookmarks.find(mark);
-  if (lu != d_bondBookmarks.end()) {
-    auto &marks = lu->second;
-    unsigned int tgtIdx = bond->getIdx();
-    auto entry = std::find_if(marks.begin(), marks.end(), [&tgtIdx](auto ptr) {
-      return ptr->getIdx() == tgtIdx;
-    });
-    if (entry != marks.end()) {
-      marks.erase(entry);
-    }
-    if (marks.empty()) {
-      d_bondBookmarks.erase(mark);
-    }
-  }
-}
-
 unsigned int ROMol::getNumBonds(bool onlyHeavy) const {
-  // By default return the bonds that connect only the heavy atoms
-  // hydrogen connecting bonds are ignores
-  auto res = numBonds;
-  if (!onlyHeavy) {
-    // If we need hydrogen connecting bonds add them up
-    for (const auto atom : atoms()) {
-      res += atom->getTotalNumHs();
-    }
-  }
-  return res;
+  return dp_mol->getNumBonds(onlyHeavy);
 }
-
-Bond *ROMol::getBondWithIdx(unsigned int idx) {
-  return const_cast<Bond *>(static_cast<const ROMol *>(this)->getBondWithIdx(
-      idx));  // avoid code duplication
-}
-
-const Bond *ROMol::getBondWithIdx(unsigned int idx) const {
+Bond* ROMol::getBondWithIdx(unsigned int idx) {
+  PRECONDITION(getNumBonds() > 0, "no bonds");
   URANGE_CHECK(idx, getNumBonds());
-
-  // boost::graph doesn't give us random-access to edges,
-  // so we have to iterate to it
-  auto [iter, end] = getEdges();
-  for (unsigned int i = 0; i < idx; i++) {
-    ++iter;
-  }
-  const Bond *res = d_graph[*iter];
-
-  POSTCONDITION(res != nullptr, "Invalid bond requested");
-  return res;
+  return dp_mol->getBondCompat(idx);
 }
-
-Bond *ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
-  return const_cast<Bond *>(
-      static_cast<const ROMol *>(this)->getBondBetweenAtoms(
-          idx1, idx2));  // avoid code duplication
+const Bond* ROMol::getBondWithIdx(unsigned int idx) const {
+  PRECONDITION(getNumBonds() > 0, "no bonds");
+  URANGE_CHECK(idx, getNumBonds());
+  return dp_mol->getBondCompat(idx);
 }
-
-const Bond *ROMol::getBondBetweenAtoms(unsigned int idx1,
-                                       unsigned int idx2) const {
+Bond* ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) {
   URANGE_CHECK(idx1, getNumAtoms());
   URANGE_CHECK(idx2, getNumAtoms());
-  const Bond *res = nullptr;
-
-  auto [edge, found] = boost::edge(boost::vertex(idx1, d_graph),
-                                   boost::vertex(idx2, d_graph), d_graph);
-  if (found) {
-    res = d_graph[edge];
-  }
-  return res;
+  const uint32_t bondIndex = dp_mol->getBondIndexBetweenAtoms(idx1, idx2);
+  return (bondIndex == std::numeric_limits<std::uint32_t>::max())
+             ? nullptr
+             : getBondWithIdx(bondIndex);
 }
-
-ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const *at) const {
-  PRECONDITION(at, "no atom");
-  PRECONDITION(&at->getOwningMol() == this,
-               "atom not associated with this molecule");
-  return boost::adjacent_vertices(at->getIdx(), d_graph);
-};
-
-ROMol::OBOND_ITER_PAIR ROMol::getAtomBonds(Atom const *at) const {
-  PRECONDITION(at, "no atom");
-  PRECONDITION(&at->getOwningMol() == this,
-               "atom not associated with this molecule");
-  return boost::out_edges(at->getIdx(), d_graph);
+const Bond* ROMol::getBondBetweenAtoms(unsigned int idx1, unsigned int idx2) const {
+  URANGE_CHECK(idx1, getNumAtoms());
+  URANGE_CHECK(idx2, getNumAtoms());
+  const uint32_t bondIndex = dp_mol->getBondIndexBetweenAtoms(idx1, idx2);
+  return (bondIndex == std::numeric_limits<std::uint32_t>::max())
+             ? nullptr
+             : getBondWithIdx(bondIndex);
 }
-
-ROMol::ATOM_ITER_PAIR ROMol::getVertices() { return boost::vertices(d_graph); }
-ROMol::BOND_ITER_PAIR ROMol::getEdges() { return boost::edges(d_graph); }
+ROMol::ADJ_ITER_PAIR ROMol::getAtomNeighbors(Atom const* at) const {
+  auto [beginNeighbors, endNeighbors] = dp_mol->getAtomNeighbors(at->getIdx());
+  return ADJ_ITER_PAIR{ADJ_ITER{beginNeighbors}, ADJ_ITER{endNeighbors}};
+}
+ROMol::OBOND_ITER_PAIR ROMol::getAtomBonds(Atom const* at) const {
+  auto [beginBonds, endBonds] = dp_mol->getAtomBonds(at->getIdx());
+  return OBOND_ITER_PAIR{OEDGE_ITER{beginBonds}, OEDGE_ITER{endBonds}};
+}
 ROMol::ATOM_ITER_PAIR ROMol::getVertices() const {
-  return boost::vertices(d_graph);
+  return ATOM_ITER_PAIR{VERTEX_ITER{0}, VERTEX_ITER{getNumAtoms()}};
 }
-ROMol::BOND_ITER_PAIR ROMol::getEdges() const { return boost::edges(d_graph); }
-
-unsigned int ROMol::addAtom(Atom *atom_pin, bool updateLabel,
-                            bool takeOwnership) {
-  PRECONDITION(atom_pin, "null atom passed in");
-  PRECONDITION(!takeOwnership || !atom_pin->hasOwningMol() ||
-                   &atom_pin->getOwningMol() == this,
-               "cannot take ownership of an atom which already has an owner");
-  Atom *atom_p;
-  if (!takeOwnership) {
-    atom_p = atom_pin->copy();
-  } else {
-    atom_p = atom_pin;
-  }
-
-  atom_p->setOwningMol(this);
-  auto which = boost::add_vertex(d_graph);
-  d_graph[which] = atom_p;
-  atom_p->setIdx(which);
-  if (updateLabel) {
-    replaceAtomBookmark(atom_p, ci_RIGHTMOST_ATOM);
-  }
-  for (auto &conf : d_confs) {
-    conf->setAtomPos(which, RDGeom::Point3D(0.0, 0.0, 0.0));
-  }
-  return rdcast<unsigned int>(which);
-};
-
-unsigned int ROMol::addBond(Bond *bond_pin, bool takeOwnership) {
-  PRECONDITION(bond_pin, "null bond passed in");
-  PRECONDITION(!takeOwnership || !bond_pin->hasOwningMol() ||
-                   &bond_pin->getOwningMol() == this,
-               "cannot take ownership of an bond which already has an owner");
-  URANGE_CHECK(bond_pin->getBeginAtomIdx(), getNumAtoms());
-  URANGE_CHECK(bond_pin->getEndAtomIdx(), getNumAtoms());
-  PRECONDITION(bond_pin->getBeginAtomIdx() != bond_pin->getEndAtomIdx(),
-               "attempt to add self-bond");
-  PRECONDITION(!(boost::edge(bond_pin->getBeginAtomIdx(),
-                             bond_pin->getEndAtomIdx(), d_graph)
-                     .second),
-               "bond already exists");
-
-  Bond *bond_p;
-  if (!takeOwnership) {
-    bond_p = bond_pin->copy();
-  } else {
-    bond_p = bond_pin;
-  }
-
-  bond_p->setOwningMol(this);
-  auto [which, ok] = boost::add_edge(bond_p->getBeginAtomIdx(),
-                                     bond_p->getEndAtomIdx(), d_graph);
-  CHECK_INVARIANT(ok, "bond could not be added");
-  d_graph[which] = bond_p;
-  bond_p->setIdx(numBonds);
-  numBonds++;
-  return numBonds;
-}
-
-void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
-  d_stereo_groups = std::move(stereo_groups);
-}
-
-void ROMol::debugMol(std::ostream &str) const {
-  str << "Atoms:" << std::endl;
-  for (const auto atom : atoms()) {
-    str << "\t" << *atom << std::endl;
-  }
-
-  str << "Bonds:" << std::endl;
-  for (const auto bond : bonds()) {
-    str << "\t" << *bond << std::endl;
-  }
-
-  const auto &sgs = getSubstanceGroups(*this);
-  if (!sgs.empty()) {
-    str << "Substance Groups:" << std::endl;
-    for (const auto &sg : sgs) {
-      str << "\t" << sg << std::endl;
-    }
-  }
-
-  const auto &stgs = getStereoGroups();
-  if (!stgs.empty()) {
-    unsigned idx = 0;
-    str << "Stereo Groups:" << std::endl;
-    for (const auto &stg : stgs) {
-      str << "\t" << idx << ' ' << stg << std::endl;
-      ++idx;
-    }
-  }
+ROMol::BOND_ITER_PAIR ROMol::getEdges() const {
+  return BOND_ITER_PAIR{EDGE_ITER{edge_descriptor{0}},
+                        EDGE_ITER{edge_descriptor{getNumBonds()}}};
 }
 
 // --------------------------------------------
@@ -526,11 +228,11 @@ bool ROMol::hasQuery() const {
   return false;
 }
 
-ROMol::QueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const *what) {
+ROMol::QueryAtomIterator ROMol::beginQueryAtoms(QueryAtom const* what) {
   return QueryAtomIterator(this, what);
 }
 ROMol::ConstQueryAtomIterator ROMol::beginQueryAtoms(
-    QueryAtom const *what) const {
+    QueryAtom const* what) const {
   return ConstQueryAtomIterator(this, what);
 }
 ROMol::QueryAtomIterator ROMol::endQueryAtoms() {
@@ -539,11 +241,11 @@ ROMol::QueryAtomIterator ROMol::endQueryAtoms() {
 ROMol::ConstQueryAtomIterator ROMol::endQueryAtoms() const {
   return ConstQueryAtomIterator(this, getNumAtoms());
 }
-ROMol::MatchingAtomIterator ROMol::beginMatchingAtoms(bool (*what)(Atom *)) {
+ROMol::MatchingAtomIterator ROMol::beginMatchingAtoms(bool (*what)(Atom*)) {
   return MatchingAtomIterator(this, what);
 }
 ROMol::ConstMatchingAtomIterator ROMol::beginMatchingAtoms(
-    bool (*what)(const Atom *)) const {
+    bool (*what)(const Atom*)) const {
   return ConstMatchingAtomIterator(this, what);
 }
 ROMol::MatchingAtomIterator ROMol::endMatchingAtoms() {
@@ -566,59 +268,317 @@ ROMol::ConstBondIterator ROMol::endBonds() const {
   return ConstBondIterator(this, end);
 }
 
-void ROMol::clearComputedProps(bool includeRings) const {
-  // the SSSR information:
-  if (includeRings) {
-    this->dp_ringInfo->reset();
-  }
-
-  RDProps::clearComputedProps();
-
-  for (auto atom : atoms()) {
-    atom->clearComputedProps();
-  }
-
-  for (auto bond : bonds()) {
-    bond->clearComputedProps();
-  }
+unsigned int ROMol::getNumConformers() const {
+  return dp_mol->getNumConformers();
 }
 
-void ROMol::updatePropertyCache(bool strict) {
-  for (auto atom : atoms()) {
-    atom->updatePropertyCache(strict);
-  }
-  for (auto bond : bonds()) {
-    bond->updatePropertyCache(strict);
-  }
+void ROMol::clearComputedProps(bool includeRings) const {
+  dp_mol->clearComputedProps(includeRings);
 }
 
 bool ROMol::needsUpdatePropertyCache() const {
-  for (const auto atom : atoms()) {
-    if (atom->needsUpdatePropertyCache()) {
-      return true;
-    }
-  }
-  // there is no test for bonds yet since they do not obtain a valence property
-  return false;
+  return dp_mol->needsUpdatePropertyCache();
+}
+
+void ROMol::updatePropertyCache(bool strict) {
+  dp_mol->updatePropertyCache(strict);
 }
 
 void ROMol::clearPropertyCache() {
-  for (auto atom : atoms()) {
-    atom->clearPropertyCache();
+  dp_mol->clearPropertyCache();
+}
+
+const std::vector<StereoGroup> &ROMol::getStereoGroups() const {
+  return dp_mol->getStereoGroupsCompat();
+}
+
+void ROMol::setStereoGroups(std::vector<StereoGroup> stereo_groups) {
+  auto newGroups = std::make_unique<StereoGroups>();
+  std::vector<StereoGroupType> &types = newGroups->stereoTypes;
+  std::vector<uint32_t> &atomIndices = newGroups->atoms;
+  std::vector<uint32_t> &bondIndices = newGroups->bonds;
+  std::vector<uint32_t> &atomBegins = newGroups->atomBegins;
+  std::vector<uint32_t> &bondBegins = newGroups->bondBegins;
+  std::vector<uint32_t> &readIds = newGroups->readIds;
+  std::vector<uint32_t> &writeIds = newGroups->writeIds;
+
+  for (const auto &group : stereo_groups) {
+    types.push_back(group.getGroupType());
+
+    const auto &atoms = group.getAtoms();
+    for (const auto *atom : atoms) {
+      atomIndices.push_back(atom->getIdx());
+    }
+    const auto &bonds = group.getBonds();
+    for (const auto *bond : bonds) {
+      bondIndices.push_back(bond->getIdx());
+    }
+
+    atomBegins.push_back(atoms.size() + atomBegins.back());
+    bondBegins.push_back(bonds.size() + bondBegins.back());
+    readIds.push_back(group.getReadId());
+    writeIds.push_back(group.getWriteId());
+  }
+  dp_mol->setStereoGroups(std::move(newGroups));
+}
+
+STR_VECT ROMol::getPropList(bool includePrivate, bool includeComputed) const {
+  STR_VECT res = dp_mol->getPropList(includePrivate, includeComputed);
+  if (includePrivate && includeComputed) {
+    res.push_back(detail::computedPropName);
+  }
+  return res;
+}
+
+bool ROMol::hasProp(const std::string &key) const {
+  PropToken token(key);
+  if (token == detail::computedPropNameToken) {
+    return true;
+  }
+  return dp_mol->hasProp(token);
+}
+
+void ROMol::clearProp(const std::string &key) const {
+  dp_mol->clearMolPropIfPresent(PropToken(key));
+}
+
+void ROMol::updateProps(const RDKit::ROMol &source, bool preserveExisting) {
+  if (&source == this) {
+    return;
+  }
+  // Remove all properties if !preserveExisting
+  if (!preserveExisting) {
+    dp_mol->clearProps();
+  }
+
+  for (const RDMol::Property &prop : source.asRDMol().properties) {
+    if (prop.scope == RDMol::Scope::MOL) {
+      dp_mol->setMolProp(prop.name, prop.inPlaceData, prop.isComputed);
+    }
   }
 }
 
-const Conformer &ROMol::getConformer(int id) const {
-  // make sure we have more than one conformation
-  if (d_confs.size() == 0) {
+void ROMol::updateProps(const RDProps &source, bool preserveExisting) {
+  // Remove all properties if !preserveExisting
+  if (!preserveExisting) {
+    dp_mol->clearProps();
+  }
+
+  const STR_VECT keys = source.getPropList();
+  std::vector<std::string> computedPropList;
+  source.getPropIfPresent<std::vector<std::string>>(
+      RDKit::detail::computedPropName, computedPropList);
+  for (const auto &key : keys) {
+    if (key == RDKit::detail::computedPropName) {
+      continue;
+    }
+    const PropToken token(key);
+    const RDValue &val = source.getPropRDValue(key);
+    bool isComputed =
+        std::find(computedPropList.begin(), computedPropList.end(), key) !=
+        computedPropList.end();
+    dp_mol->setMolProp(token, val, isComputed);
+  }
+}
+
+void ROMol::clear(){dp_mol->clearProps();}
+
+void ROMol::debugMol(std::ostream& str) const {
+  str << "Atoms:" << std::endl;
+  for (const auto atom : atoms()) {
+    str << "\t" << *atom << std::endl;
+  }
+
+  str << "Bonds:" << std::endl;
+  for (const auto bond : bonds()) {
+    str << "\t" << *bond << std::endl;
+  }
+
+  const auto &sgs = getSubstanceGroups(*this);
+  if (!sgs.empty()) {
+    str << "Substance Groups:" << std::endl;
+    for (const auto &sg : sgs) {
+      str << "\t" << sg << std::endl;
+    }
+  }
+
+  const auto &stgs = getStereoGroups();
+  if (!stgs.empty()) {
+    unsigned idx = 0;
+    str << "Stereo Groups:" << std::endl;
+    for (const auto &stg : stgs) {
+      str << "\t" << idx << ' ' << stg << std::endl;
+      ++idx;
+    }
+  }
+}
+
+// --------------
+// Atom bookmarks
+// --------------
+
+void ROMol::setAtomBookmark(Atom *at, int mark) {
+  // The atom may not be added to its owning molecule yet if it's an isolated
+  // atom, but the ROMol still needs to be able to store a bookmark for it,
+  // even though this isn't supported by the public RDMol interface.
+  PRECONDITION(
+      (&at->getOwningMol() == this &&
+       ((&at->getOwningMol().asRDMol() != &at->getDataRDMol()) ||
+        at->getOwningMol().getAtomWithIdx(at->getIdx()) == at)),
+      "Bookmark atom must be for this ROMol, even if it's not added to the ROMol");
+
+  auto &marks = (*dp_mol->getAtomBookmarksCompat())[mark];
+  marks.push_back(at);
+}
+
+void ROMol::replaceAtomBookmark(Atom *at, int mark) {
+  // The atom may not be added to its owning molecule yet if it's an isolated
+  // atom, but the ROMol still needs to be able to store a bookmark for it,
+  // even though this isn't supported by the public RDMol interface.
+  PRECONDITION(
+      (&at->getOwningMol() == this &&
+       ((&at->getOwningMol().asRDMol() != &at->getDataRDMol()) ||
+        at->getOwningMol().getAtomWithIdx(at->getIdx()) == at)),
+      "Bookmark atom must be for this ROMol, even if it's not added to the ROMol");
+
+  auto &marks = (*dp_mol->getAtomBookmarksCompat())[mark];
+  marks.clear();
+  marks.push_back(at);
+}
+Atom * ROMol::getAtomWithBookmark(int mark) {
+  auto *allMarks = dp_mol->getAtomBookmarksCompat();
+  PRECONDITION(allMarks != nullptr, "null atom bookmarks map");
+  auto it = allMarks->find(mark);
+  PRECONDITION(it != allMarks->end(), "atom bookmark not found");
+  auto &marks = it->second;
+  PRECONDITION(marks.size() != 0, "atom bookmark not found");
+  return marks.front();
+}
+
+Atom * ROMol::getUniqueAtomWithBookmark(int mark) {
+  return getAtomWithBookmark(mark);
+}
+
+ROMol::ATOM_PTR_LIST & ROMol::getAllAtomsWithBookmark(int mark) {
+  return dp_mol->getAtomBookmarksCompat(mark);
+}
+void ROMol::clearAtomBookmark(int mark) {
+  dp_mol->clearAtomBookmark(mark);
+}
+void ROMol::clearAtomBookmark(int mark, const Atom *at) {
+  // The atom may not be added to its owning molecule yet if it's an isolated
+  // atom, but the ROMol still needs to be able to store a bookmark for it,
+  // even though this isn't supported by the public RDMol interface.
+  PRECONDITION(
+      (&at->getOwningMol() == this &&
+       ((&at->getOwningMol().asRDMol() != &at->getDataRDMol()) ||
+        at->getOwningMol().getAtomWithIdx(at->getIdx()) == at)),
+      "Bookmark atom must be for this ROMol, even if it's not added to the ROMol");
+  if (!dp_mol->hasAtomBookmark(mark)) {
+    return;
+  }
+
+  auto &marks = dp_mol->getAtomBookmarksCompat(mark);
+  auto removeIt = std::find(marks.begin(), marks.end(), at);
+  if (removeIt != marks.end()) {
+    marks.erase(removeIt);
+    if (marks.size() == 0) {
+      dp_mol->clearAtomBookmark(mark);
+    }
+  }
+}
+
+void ROMol::clearAllAtomBookmarks() {
+  dp_mol->clearAllAtomBookmarks();
+}
+
+bool ROMol::hasAtomBookmark(int mark) const {
+  return dp_mol->hasAtomBookmark(mark);
+}
+ROMol::ATOM_BOOKMARK_MAP *ROMol::getAtomBookmarks() {
+  return dp_mol->getAtomBookmarksCompat();
+}
+
+// --------------
+// Bond bookmarks
+// --------------
+
+void ROMol::setBondBookmark(Bond *bond, int mark) {
+  // The bond may not be added to its owning molecule yet if it's an isolated
+  // bond, but the ROMol still needs to be able to store a bookmark for it,
+  // even though this isn't supported by the public RDMol interface.
+  PRECONDITION(
+      (&bond->getOwningMol() == this &&
+       ((&bond->getOwningMol().asRDMol() != &bond->getDataRDMol()) ||
+        bond->getOwningMol().getBondWithIdx(bond->getIdx()) == bond)),
+      "Bookmark bond must be for this ROMol, even if it's not added to the ROMol");
+
+  auto &marks = (*dp_mol->getBondBookmarksCompat())[mark];
+  marks.push_back(bond);
+}
+Bond * ROMol::getBondWithBookmark(int mark) {
+  auto *allMarks = dp_mol->getBondBookmarksCompat();
+  PRECONDITION(allMarks != nullptr, "null bond bookmarks map");
+  auto it = allMarks->find(mark);
+  PRECONDITION(it != allMarks->end(), "bond bookmark not found");
+  auto &marks = it->second;
+  PRECONDITION(marks.size() != 0, "bond bookmark not found");
+  return marks.front();
+}
+
+Bond * ROMol::getUniqueBondWithBookmark(int mark) {
+  return getBondWithBookmark(mark);
+}
+ROMol::BOND_PTR_LIST & ROMol::getAllBondsWithBookmark(int mark) {
+  return dp_mol->getBondBookmarksCompat(mark);
+}
+void ROMol::clearBondBookmark(int mark) {
+  dp_mol->clearBondBookmark(mark);
+}
+void ROMol::clearBondBookmark(int mark, const Bond *bond) {
+  // The bond may not be added to its owning molecule yet if it's an isolated
+  // bond, but the ROMol still needs to be able to store a bookmark for it,
+  // even though this isn't supported by the public RDMol interface.
+  PRECONDITION(
+      (&bond->getOwningMol() == this &&
+       ((&bond->getOwningMol().asRDMol() != &bond->getDataRDMol()) ||
+        bond->getOwningMol().getBondWithIdx(bond->getIdx()) == bond)),
+      "Bookmark bond must be for this ROMol, even if it's not added to the ROMol");
+  if (!dp_mol->hasBondBookmark(mark)) {
+    return;
+  }
+
+  auto &marks = dp_mol->getBondBookmarksCompat(mark);
+  auto removeIt = std::find(marks.begin(), marks.end(), bond);
+  if (removeIt != marks.end()) {
+    marks.erase(removeIt);
+    if (marks.size() == 0) {
+      dp_mol->clearBondBookmark(mark);
+    }
+  }
+}
+void ROMol::clearAllBondBookmarks() {
+  dp_mol->clearAllBondBookmarks();
+}
+bool ROMol::hasBondBookmark(int mark) const {
+  return dp_mol->hasBondBookmark(mark);
+}
+ROMol::BOND_BOOKMARK_MAP * ROMol::getBondBookmarks() {
+  return dp_mol->getBondBookmarksCompat();
+}
+
+
+const Conformer& ROMol::getConformer(int id) const {
+  const auto& confs = dp_mol->getConformersCompat();
+  if (confs.size() == 0) {
     throw ConformerException("No conformations available on the molecule");
   }
 
   if (id < 0) {
-    return *(d_confs.front());
+    return *(confs.front());
   }
   auto cid = (unsigned int)id;
-  for (auto conf : d_confs) {
+  for (auto& conf : confs) {
     if (conf->getId() == cid) {
       return *conf;
     }
@@ -629,36 +589,117 @@ const Conformer &ROMol::getConformer(int id) const {
   throw ConformerException(mesg);
 }
 
-Conformer &ROMol::getConformer(int id) {
-  return const_cast<Conformer &>(
-      static_cast<const ROMol *>(this)->getConformer(id));
+Conformer& ROMol::getConformer(int id) {
+  auto& confs = dp_mol->getConformersCompat();
+  if (confs.size() == 0) {
+    throw ConformerException("No conformations available on the molecule");
+  }
+
+  if (id < 0) {
+    return *(confs.front());
+  }
+  auto cid = (unsigned int)id;
+  for (auto& conf : confs) {
+    if (conf->getId() == cid) {
+      return *conf;
+    }
+  }
+  // we did not find a conformation with the specified ID
+  std::string mesg = "Can't find conformation with ID: ";
+  mesg += id;
+  throw ConformerException(mesg);
 }
 
 void ROMol::removeConformer(unsigned int id) {
-  for (auto ci = d_confs.begin(); ci != d_confs.end(); ++ci) {
-    if ((*ci)->getId() == id) {
-      d_confs.erase(ci);
-      return;
-    }
-  }
+  dp_mol->removeConformer(id);
 }
 
-unsigned int ROMol::addConformer(Conformer *conf, bool assignId) {
+void ROMol::clearConformers() {
+  dp_mol->clearConformers();
+}
+
+unsigned int ROMol::addConformer(Conformer* conf, bool assignId) {
   PRECONDITION(conf, "bad conformer");
   PRECONDITION(conf->getNumAtoms() == this->getNumAtoms(),
                "Number of atom mismatch");
+  auto& confs = dp_mol->getConformersCompat();
+  int maxId = -1;
   if (assignId) {
-    int maxId = -1;
-    for (auto cptr : d_confs) {
+    for (const auto& cptr : confs) {
       maxId = std::max((int)(cptr->getId()), maxId);
     }
     maxId++;
     conf->setId((unsigned int)maxId);
+  } else {
+    maxId = conf->getId();
   }
   conf->setOwningMol(this);
-  CONFORMER_SPTR nConf(conf);
-  d_confs.push_back(nConf);
+  confs.push_back(CONFORMER_SPTR(conf));
+
+  auto [returnId, confData] = dp_mol->addConformer(maxId, conf->is3D());
+  PRECONDITION(int(returnId) == maxId, "Id mismatch");
+  PRECONDITION(getNumAtoms() == 0 || confData != nullptr, "Null conformer positions");
+
+  // Special case of addConformer - non-const confData means that it marked the
+  // conformer as being out of sync after synchronizing the positions, but
+  // they're actually in sync. However, the caller may modify the positions from
+  // the Conformer pointer it passed in without requesting it again, so mark
+  // it as being modified.
+  dp_mol->markConformersAsCompatModified();
+
   return conf->getId();
+}
+
+void ROMol::clearSubstanceGroups() {
+  dp_mol->getSubstanceGroups().clear();
+}
+
+unsigned int ROMol::addAtom(Atom* atom, bool updateLabel, bool takeOwnership) {
+  PRECONDITION(atom, "NULL atom provided");
+
+  const uint32_t newAtomIdx = dp_mol->getNumAtoms();
+  dp_mol->addAtom();
+  getAtomWithIdx(newAtomIdx)->initFromOther(*atom);
+
+  if (takeOwnership) {
+    // Allow for stable pointer by resetting the compat entry.
+    dp_mol->replaceAtomPointerCompat(atom, newAtomIdx);
+  } else if (atom->hasQuery()) {
+    dp_mol->setAtomQueryCompatFull(newAtomIdx, atom->getQuery()->copy());
+  }
+
+  if (updateLabel) {
+    dp_mol->clearAtomBookmark(ci_RIGHTMOST_ATOM);
+    dp_mol->setAtomBookmark(newAtomIdx, ci_RIGHTMOST_ATOM);
+  }
+  return newAtomIdx;
+}
+
+unsigned int ROMol::addBond(Bond* bond, bool takeOwnership) {
+  PRECONDITION(bond, "NULL bond passed in");
+  const uint32_t newBondIdx = getNumBonds();
+  // Note that the ROMol version does not do aromaticity updates.
+  dp_mol->addBond(bond->getBeginAtomIdx(),
+                  bond->getEndAtomIdx(),
+                  BondEnums::BondType(bond->getBondType()),
+                  /*updateAromaticity=*/false);
+  getBondWithIdx(newBondIdx)->initFromOther(*bond);
+
+  if (takeOwnership) {
+    // Allow for stable pointer by resetting the compat entry.
+    dp_mol->replaceBondPointerCompat(bond, newBondIdx);
+  } else if (bond->hasQuery()) {
+    dp_mol->setBondQueryCompatFull(newBondIdx, bond->getQuery()->copy());
+  }
+
+  return getNumBonds();
+}
+
+void ROMol::initFromOther(
+    [[maybe_unused]] const ROMol& other,
+    [[maybe_unused]] bool quickCopy,
+    [[maybe_unused]] int confId) {
+  raiseNonImplementedFunction("initFromOther");
 }
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -674,18 +715,22 @@ void ROMol::load(Archive &ar, const unsigned int) {
   std::string pkl;
   ar >> pkl;
 
-  delete dp_ringInfo;
-  initMol();
-
-  numBonds = 0;
   MolPickler::molFromPickle(pkl, *this, PicklerOps::AllProps);
-  numBonds = rdcast<unsigned int>(boost::num_edges(d_graph));
 }
 
 template RDKIT_GRAPHMOL_EXPORT void ROMol::save<boost::archive::text_oarchive>(
     boost::archive::text_oarchive &, const unsigned int) const;
 template RDKIT_GRAPHMOL_EXPORT void ROMol::load<boost::archive::text_iarchive>(
     boost::archive::text_iarchive &, const unsigned int);
-#endif
+#endif // RDK_USE_BOOST_SERIALIZATION
+
+
+uint32_t num_vertices(const ROMol& mol) {
+  return mol.getNumAtoms();
+}
+
+uint32_t num_edges(const ROMol& mol) {
+  return mol.getNumBonds();
+}
 
 }  // namespace RDKit

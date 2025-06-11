@@ -10,6 +10,7 @@
 #include <cmath>
 
 #include "ROMol.h"
+#include "RDMol.h"
 #include "Atom.h"
 #include "PeriodicTable.h"
 #include "SanitException.h"
@@ -20,9 +21,24 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/types.h>
 #include <RDGeneral/Dict.h>
+#include <GraphMol/rdmol_throw.h>
 
 namespace RDKit {
 
+bool isAromaticAtom(ConstRDMolAtom atom) {
+  if (atom.data().getIsAromatic()) {
+    return true;
+  }
+  auto [begin, end] = atom.mol().getAtomBonds(atom.index());
+  for (; begin != end; ++begin) {
+    const auto &bond = atom.mol().getBond(*begin);
+    if (bond.getIsAromatic() ||
+        bond.getBondType() == BondEnums::BondType::AROMATIC) {
+      return true;
+    }
+  }
+  return false;
+}
 bool isAromaticAtom(const Atom &atom) {
   if (atom.getIsAromatic()) {
     return true;
@@ -179,47 +195,21 @@ bool isEarlyAtom(int atomicNum) {
   return ((unsigned int)atomicNum < 119) && table[atomicNum];
 }
 
-Atom::Atom() : RDProps() {
-  d_atomicNum = 0;
-  initAtom();
+Atom::Atom() {
+  dp_dataMol = new RDMol();
+  dp_dataMol->addAtom();
+  dp_owningMol = nullptr;
 }
 
-Atom::Atom(unsigned int num) : RDProps() {
-  d_atomicNum = num;
-  initAtom();
+Atom::Atom(unsigned int num): Atom() { setAtomicNum(num); }
+
+Atom::Atom(const std::string &what) : Atom() {
+  setAtomicNum(PeriodicTable::getTable()->getAtomicNumber(what));
 };
 
-Atom::Atom(const std::string &what) : RDProps() {
-  d_atomicNum = PeriodicTable::getTable()->getAtomicNumber(what);
-  initAtom();
-};
-
-void Atom::initFromOther(const Atom &other) {
-  RDProps::operator=(other);
-  // NOTE: we do *not* copy ownership!
-  dp_mol = nullptr;
-  d_atomicNum = other.d_atomicNum;
-  d_index = 0;
-  d_formalCharge = other.d_formalCharge;
-  df_noImplicit = other.df_noImplicit;
-  df_isAromatic = other.df_isAromatic;
-  d_numExplicitHs = other.d_numExplicitHs;
-  d_numRadicalElectrons = other.d_numRadicalElectrons;
-  d_isotope = other.d_isotope;
-  // d_pos = other.d_pos;
-  d_chiralTag = other.d_chiralTag;
-  d_hybrid = other.d_hybrid;
-  d_implicitValence = other.d_implicitValence;
-  d_explicitValence = other.d_explicitValence;
-  if (other.dp_monomerInfo) {
-    dp_monomerInfo = other.dp_monomerInfo->copy();
-  } else {
-    dp_monomerInfo = nullptr;
-  }
-  d_flags = other.d_flags;
+Atom::Atom(const Atom &other): Atom() {
+  initFromOther(other);
 }
-
-Atom::Atom(const Atom &other) : RDProps() { initFromOther(other); }
 
 Atom &Atom::operator=(const Atom &other) {
   if (this == &other) {
@@ -229,481 +219,192 @@ Atom &Atom::operator=(const Atom &other) {
   return *this;
 }
 
-void Atom::initAtom() {
-  df_isAromatic = false;
-  df_noImplicit = false;
-  d_numExplicitHs = 0;
-  d_numRadicalElectrons = 0;
-  d_formalCharge = 0;
-  d_index = 0;
-  d_isotope = 0;
-  d_chiralTag = CHI_UNSPECIFIED;
-  d_hybrid = UNSPECIFIED;
-  dp_mol = nullptr;
-  dp_monomerInfo = nullptr;
-
-  d_implicitValence = -1;
-  d_explicitValence = -1;
+Atom::Atom(Atom &&other) {
+  dp_dataMol = other.dp_dataMol;
+  dp_owningMol = other.dp_owningMol;
+  d_index = other.d_index;
+  other.dp_dataMol = nullptr;
+  other.dp_owningMol = nullptr;
+  other.d_index = 0;
 }
 
-Atom::~Atom() { delete dp_monomerInfo; }
+Atom &Atom::operator=(Atom &&other) {
+  if (this == &other) {
+    return *this;
+  }
+  if (dp_dataMol != dp_owningMol) {
+    delete dp_dataMol;
+  }
+  dp_dataMol = other.dp_dataMol;
+  dp_owningMol = other.dp_owningMol;
+  d_index = other.d_index;
+  other.dp_dataMol = nullptr;
+  other.dp_owningMol = nullptr;
+  return *this;
+}
+
+void Atom::initFromOther(const Atom &other, const bool preserveProps) {
+  dp_dataMol->getAtom(d_index) = other.dp_dataMol->getAtom(other.d_index);
+  if (!preserveProps) {
+    dp_dataMol->clearSingleAtomAllProps(d_index);
+    for (auto it = other.dp_dataMol->beginProps(true, RDMol::Scope::ATOM,
+                                                other.d_index),
+              end = other.dp_dataMol->endProps();
+         it != end; ++it) {
+      dp_dataMol->copySingleProp(*it, d_index, *other.dp_dataMol, *it,
+                                 other.d_index, RDMol::Scope::ATOM);
+    }
+  }
+  const auto &otherMonomerInfo = other.dp_dataMol->monomerInfo;
+  if (auto it = otherMonomerInfo.find(other.d_index); it != otherMonomerInfo.end()) {
+    AtomMonomerInfo* monomerInfo = it->second.get();
+    auto monomerInfoCopy = std::unique_ptr<AtomMonomerInfo>(monomerInfo->copy());
+    dp_dataMol->monomerInfo[d_index] = std::move(monomerInfoCopy);
+  } else {
+    // If the atom doesn't have monomer info, remove it from the copy. Useful in
+    // the case of replacement, where atomMonomerInfo should now not exist.
+    dp_dataMol->monomerInfo.erase(d_index);
+  }
+}
+
+Atom::~Atom() {
+  if (dp_dataMol != dp_owningMol) {
+    delete dp_dataMol;
+  }
+}
 
 Atom *Atom::copy() const {
   auto *res = new Atom(*this);
   return res;
 }
 
-void Atom::setOwningMol(ROMol *other) {
-  // NOTE: this operation does not update the topology of the owning
-  // molecule (i.e. this atom is not added to the graph).  Only
-  // molecules can add atoms to themselves.
-  dp_mol = other;
+int Atom::getAtomicNum() const {
+  return dp_dataMol->getAtom(d_index).getAtomicNum();
 }
-
+void Atom::setAtomicNum(int newNum) {
+  dp_dataMol->getAtom(d_index).setAtomicNum(newNum);
+}
 std::string Atom::getSymbol() const {
-  std::string res;
-  // handle dummies differently:
-  if (d_atomicNum != 0 ||
-      !getPropIfPresent<std::string>(common_properties::dummyLabel, res)) {
-    res = PeriodicTable::getTable()->getElementSymbol(d_atomicNum);
+  int atomicNum = getAtomicNum();
+  if (atomicNum == 0) {
+    // handle dummies differently:
+    std::string res;
+    dp_dataMol->getAtomPropIfPresent<std::string>(
+        common_properties::dummyLabelToken, d_index, res);
+    return res;
   }
-  return res;
+  return PeriodicTable::getTable()->getElementSymbol(atomicNum);
 }
-
+ROMol &Atom::getOwningMol() const {
+  PRECONDITION(dp_owningMol != nullptr, "no owner");
+  return dp_owningMol->asROMol();
+}
 unsigned int Atom::getDegree() const {
-  return dp_mol ? getOwningMol().getAtomDegree(this) : 0;
+  return dp_owningMol ? dp_owningMol->getAtomDegree(d_index) : 0;
 }
-
 unsigned int Atom::getTotalDegree() const {
-  unsigned int res = this->getTotalNumHs(false) + this->getDegree();
-  return res;
+  return getTotalNumHs(false) + getDegree();
 }
-
-//
-//  If includeNeighbors is set, we'll loop over our neighbors
-//   and include any of them that are Hs in the count here
-//
 unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
-  int res = getNumExplicitHs() + getNumImplicitHs();
-  if (includeNeighbors && dp_mol) {
-    auto nbrs = dp_mol->atomNeighbors(this);
-    res += std::count_if(nbrs.begin(), nbrs.end(), [](const auto nbr) {
-      return (nbr->getAtomicNum() == 1);
-    });
-  }
-  return res;
+  // Support for isolated Atoms by using data mol, instead of owning mol.
+  return dp_dataMol->getTotalNumHs(d_index, includeNeighbors);
 }
-
-unsigned int Atom::getNumImplicitHs() const {
-  if (df_noImplicit) {
-    return 0;
-  }
-
-  PRECONDITION(d_implicitValence > -1,
-               "getNumImplicitHs() called without preceding call to "
-               "calcImplicitValence()");
-  return getValence(ValenceType::IMPLICIT);
-}
-
-int Atom::getExplicitValence() const {
-  return getValence(ValenceType::EXPLICIT);
-}
-
-int Atom::getImplicitValence() const {
-  return getValence(ValenceType::IMPLICIT);
-}
-
-unsigned int Atom::getValence(ValenceType which) const {
-  if (!dp_mol) {
-    return 0;
-  }
-  PRECONDITION(
-      (which == ValenceType::IMPLICIT || d_explicitValence > -1),
-      "getValence(ValenceType::EXPLICIT) called without call to calcExplicitValence()");
-  PRECONDITION(
-      (which == ValenceType::EXPLICIT || df_noImplicit ||
-       d_implicitValence > -1),
-      "getValence(ValenceType::IMPLICIT) called without call to calcImplicitValence()");
-  if (which == ValenceType::EXPLICIT) {
-    return d_explicitValence;
-  } else {
-    return df_noImplicit ? 0 : d_implicitValence;
-  }
-}
-
 unsigned int Atom::getTotalValence() const {
   return getValence(ValenceType::EXPLICIT) + getValence(ValenceType::IMPLICIT);
 }
-
-namespace {
-
-bool canBeHypervalent(const Atom &atom, unsigned int effectiveAtomicNum) {
-  return (effectiveAtomicNum > 16 &&
-          (atom.getAtomicNum() == 15 || atom.getAtomicNum() == 16)) ||
-         (effectiveAtomicNum > 34 &&
-          (atom.getAtomicNum() == 33 || atom.getAtomicNum() == 34));
+unsigned int Atom::getNumImplicitHs() const {
+  return dp_dataMol->getAtom(d_index).getNumImplicitHs();
 }
 
-int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
-  // FIX: contributions of bonds to valence are being done at best
-  // approximately
-  double accum = 0;
-  for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
-    accum += bnd->getValenceContrib(&atom);
-  }
-  accum += atom.getNumExplicitHs();
-
-  const auto &ovalens =
-      PeriodicTable::getTable()->getValenceList(atom.getAtomicNum());
-  // if we start with an atom that doesn't have specified valences, we stick
-  // with that. otherwise we will use the effective valence
-  unsigned int effectiveAtomicNum = atom.getAtomicNum();
-  if (ovalens.size() > 1 || ovalens[0] != -1) {
-    effectiveAtomicNum = getEffectiveAtomicNum(atom, checkIt);
-  }
-  unsigned int dv =
-      PeriodicTable::getTable()->getDefaultValence(effectiveAtomicNum);
-  const auto &valens =
-      PeriodicTable::getTable()->getValenceList(effectiveAtomicNum);
-  if (accum > dv && isAromaticAtom(atom)) {
-    // this needs some explanation : if the atom is aromatic and
-    // accum > dv we assume that no hydrogen can be added
-    // to this atom.  We set x = (v + chr) such that x is the
-    // closest possible integer to "accum" but less than
-    // "accum".
-    //
-    // "v" here is one of the allowed valences. For example:
-    //    sulfur here : O=c1ccs(=O)cc1
-    //    nitrogen here : c1cccn1C
-
-    int pval = dv;
-    for (auto val : valens) {
-      if (val == -1) {
-        break;
-      }
-      if (val > accum) {
-        break;
-      } else {
-        pval = val;
-      }
-    }
-    // if we're within 1.5 of the allowed valence, go ahead and take it.
-    // this reflects things like the N in c1cccn1C, which starts with
-    // accum of 4, but which can be kekulized to C1=CC=CN1C, where
-    // the valence is 3 or the bridging N in c1ccn2cncc2c1, which starts
-    // with a valence of 4.5, but can be happily kekulized down to a valence
-    // of 3
-    if (accum - pval <= 1.5) {
-      accum = pval;
-    }
-  }
-  // despite promising to not to blame it on him - this a trick Greg
-  // came up with: if we have a bond order sum of x.5 (i.e. 1.5, 2.5
-  // etc) we would like it to round to the higher integer value --
-  // 2.5 to 3 instead of 2 -- so we will add 0.1 to accum.
-  // this plays a role in the number of hydrogen that are implicitly
-  // added. This will only happen when the accum is a non-integer
-  // value and less than the default valence (otherwise the above if
-  // statement should have caught it). An example of where this can
-  // happen is the following smiles:
-  //    C1ccccC1
-  // Daylight accepts this smiles and we should be able to Kekulize
-  // correctly.
-  accum += 0.1;
-
-  auto res = static_cast<int>(std::round(accum));
-
-  if (strict || checkIt) {
-    int maxValence = valens.back();
-    int offset = 0;
-    // we have to include a special case here for negatively charged P, S, As,
-    // and Se, which all support "hypervalent" forms, but which can be
-    // isoelectronic to Cl/Ar or Br/Kr, which do not support hypervalent forms.
-    if (canBeHypervalent(atom, effectiveAtomicNum)) {
-      maxValence = ovalens.back();
-      offset -= atom.getFormalCharge();
-    }
-    // we have historically accepted two-coordinate [H-] as a valid atom. This
-    // is highly questionable, but changing it requires some thought. For now we
-    // will just keep accepting it
-    if (atom.getAtomicNum() == 1 && atom.getFormalCharge() == -1) {
-      maxValence = 2;
-    }
-    // maxValence == -1 signifies that we'll take anything at the high end
-    if (maxValence >= 0 && ovalens.back() >= 0 && (res + offset) > maxValence) {
-      // the explicit valence is greater than any
-      // allowed valence for the atoms
-
-      if (strict) {
-        // raise an error
-        std::ostringstream errout;
-        errout << "Explicit valence for atom # " << atom.getIdx() << " "
-               << PeriodicTable::getTable()->getElementSymbol(
-                      atom.getAtomicNum())
-               << ", " << res << ", is greater than permitted";
-        std::string msg = errout.str();
-        BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw AtomValenceException(msg, atom.getIdx());
-      } else {
-        return -1;
-      }
-    }
-  }
-  return res;
-}
-}  // namespace
-
-// NOTE: this uses the explicitValence, so it will call
-// calculateExplicitValence if it is not set on the given atom
-int calculateImplicitValence(const Atom &atom, bool strict, bool checkIt) {
-  if (atom.df_noImplicit) {
+unsigned int Atom::getValence(ValenceType which) const {
+  if (!dp_owningMol) {
     return 0;
   }
-  auto explicitValence = atom.d_explicitValence;
-  if (explicitValence == -1) {
-    explicitValence = calculateExplicitValence(atom, strict, checkIt);
-  }
-  // special cases
-  auto atomicNum = atom.d_atomicNum;
-  if (atomicNum == 0) {
-    return 0;
-  }
-  for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
-    if (QueryOps::hasComplexBondTypeQuery(*bnd)) {
-      return 0;
-    }
-  }
-
-  auto formalCharge = atom.d_formalCharge;
-  auto numRadicalElectrons = atom.d_numRadicalElectrons;
-  if (explicitValence == 0 && numRadicalElectrons == 0 && atomicNum == 1) {
-    if (formalCharge == 1 || formalCharge == -1) {
-      return 0;
-    } else if (formalCharge == 0) {
-      return 1;
-    } else {
-      if (strict) {
-        std::ostringstream errout;
-        errout << "Unreasonable formal charge on atom # " << atom.getIdx()
-               << ".";
-        std::string msg = errout.str();
-        BOOST_LOG(rdErrorLog) << msg << std::endl;
-        throw AtomValenceException(msg, atom.getIdx());
-      } else if (checkIt) {
-        return -1;
-      } else {
-        return 0;
-      }
-    }
-  }
-  int explicitPlusRadV = atom.d_explicitValence + atom.d_numRadicalElectrons;
-
-  const auto &ovalens =
-      PeriodicTable::getTable()->getValenceList(atom.d_atomicNum);
-  // if we start with an atom that doesn't have specified valences, we stick
-  // with that. otherwise we will use the effective valence for the rest of
-  // this.
-  unsigned int effectiveAtomicNum = atom.d_atomicNum;
-  if (ovalens.size() > 1 || ovalens[0] != -1) {
-    effectiveAtomicNum = getEffectiveAtomicNum(atom, checkIt);
-  }
-  if (effectiveAtomicNum == 0) {
-    return 0;
-  }
-
-  // this is basically the difference between the allowed valence of
-  // the atom and the explicit valence already specified - tells how
-  // many Hs to add
-  //
-
-  // The d-block and f-block of the periodic table (i.e. transition metals,
-  // lanthanoids and actinoids) have no default valence.
-  int dv = PeriodicTable::getTable()->getDefaultValence(effectiveAtomicNum);
-  if (dv == -1) {
-    return 0;
-  }
-
-  // here is how we are going to deal with the possibility of
-  // multiple valences
-  // - check the explicit valence "ev"
-  // - if it is already equal to one of the allowed valences for the
-  //    atom return 0
-  // - otherwise take return difference between next larger allowed
-  //   valence and "ev"
-  // if "ev" is greater than all allowed valences for the atom raise an
-  // exception
-  // finally aromatic cases are dealt with differently - these atoms are allowed
-  // only default valences
-
-  // we have to include a special case here for negatively charged P, S, As,
-  // and Se, which all support "hypervalent" forms, but which can be
-  // isoelectronic to Cl/Ar or Br/Kr, which do not support hypervalent forms.
-  if (canBeHypervalent(atom, effectiveAtomicNum)) {
-    effectiveAtomicNum = atomicNum;
-    explicitPlusRadV -= atom.d_formalCharge;
-  }
-  const auto &valens =
-      PeriodicTable::getTable()->getValenceList(effectiveAtomicNum);
-
-  int res = 0;
-  // if we have an aromatic case treat it differently
-  if (isAromaticAtom(atom)) {
-    if (explicitPlusRadV <= dv) {
-      res = dv - explicitPlusRadV;
-    } else {
-      // As we assume when finding the explicitPlusRadValence if we are
-      // aromatic we should not be adding any hydrogen and already
-      // be at an accepted valence state,
-
-      // FIX: this is just ERROR checking and probably moot - the
-      // explicitPlusRadValence function called above should assure us that
-      // we satisfy one of the accepted valence states for the
-      // atom. The only diff I can think of is in the way we handle
-      // formal charge here vs the explicit valence function.
-      bool satis = false;
-      for (auto vi = valens.begin(); vi != valens.end() && *vi > 0; ++vi) {
-        if (explicitPlusRadV == *vi) {
-          satis = true;
-          break;
-        }
-      }
-      if (!satis && (strict || checkIt)) {
-        if (strict) {
-          std::ostringstream errout;
-          errout << "Explicit valence for aromatic atom # " << atom.getIdx()
-                 << " not equal to any accepted valence\n";
-          std::string msg = errout.str();
-          BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw AtomValenceException(msg, atom.getIdx());
-        } else {
-          return -1;
-        }
-      }
-      res = 0;
-    }
-  } else {
-    // non-aromatic case we are allowed to have non default valences
-    // and be able to add hydrogens
-    res = -1;
-    for (auto vi = valens.begin(); vi != valens.end() && *vi >= 0; ++vi) {
-      int tot = *vi;
-      if (explicitPlusRadV <= tot) {
-        res = tot - explicitPlusRadV;
-        break;
-      }
-    }
-    if (res < 0) {
-      if ((strict || checkIt) && valens.back() != -1 && ovalens.back() > 0) {
-        // this means that the explicit valence is greater than any
-        // allowed valence for the atoms
-        if (strict) {
-          // raise an error
-          std::ostringstream errout;
-          errout << "Explicit valence for atom # " << atom.getIdx() << " "
-                 << PeriodicTable::getTable()->getElementSymbol(atomicNum)
-                 << " greater than permitted";
-          std::string msg = errout.str();
-          BOOST_LOG(rdErrorLog) << msg << std::endl;
-          throw AtomValenceException(msg, atom.getIdx());
-        } else {
-          return -1;
-        }
-      } else {
-        res = 0;
-      }
-    }
-  }
-  return res;
+  const uint32_t valence = dp_dataMol->getAtom(d_index).getValence(which);
+  return valence == AtomData::unsetValenceVal ? (unsigned int)-1 : valence;
 }
 
-int Atom::calcExplicitValence(bool strict) {
-  bool checkIt = false;
-  d_explicitValence = calculateExplicitValence(*this, strict, checkIt);
-  return d_explicitValence;
+int Atom::getExplicitValence() const {
+  const uint32_t explicitValence =
+      dp_dataMol->getAtom(d_index).getExplicitValence();
+  return explicitValence == AtomData::unsetValenceVal ? -1 : explicitValence;
 }
-
-int Atom::calcImplicitValence(bool strict) {
-  if (d_explicitValence == -1) {
-    calcExplicitValence(strict);
-  }
-  bool checkIt = false;
-  d_implicitValence = calculateImplicitValence(*this, strict, checkIt);
-  return d_implicitValence;
+int Atom::getImplicitValence() const {
+  // RDMol returns a uint32_t, but we want to return -1 for the default value
+  const uint32_t implicitValence =
+      dp_dataMol->getAtom(d_index).getImplicitValence();
+  return implicitValence == AtomData::unsetValenceVal ? -1 : implicitValence;
 }
-
-void Atom::setMonomerInfo(AtomMonomerInfo *info) {
-  delete dp_monomerInfo;
-  dp_monomerInfo = info;
+unsigned int Atom::getNumRadicalElectrons() const {
+  return dp_dataMol->getAtom(d_index).getNumRadicalElectrons();
 }
-
-void Atom::setIsotope(unsigned int what) { d_isotope = what; }
-
+void Atom::setNumRadicalElectrons(unsigned int num) {
+  dp_dataMol->getAtom(d_index).setNumRadicalElectrons(num);
+}
+int Atom::getFormalCharge() const {
+  return dp_dataMol->getAtom(d_index).getFormalCharge();
+}
+void Atom::setFormalCharge(int what) {
+  dp_dataMol->getAtom(d_index).setFormalCharge(what);
+}
+void Atom::setNoImplicit(bool what) {
+  dp_dataMol->getAtom(d_index).setNoImplicit(what);
+}
+bool Atom::getNoImplicit() const {
+  return dp_dataMol->getAtom(d_index).getNoImplicit();
+}
+void Atom::setNumExplicitHs(unsigned int what) {
+  dp_dataMol->getAtom(d_index).setNumExplicitHs(what);
+}
+unsigned int Atom::getNumExplicitHs() const {
+  return dp_dataMol->getAtom(d_index).getNumExplicitHs();
+}
+void Atom::setIsAromatic(bool what) {
+  dp_dataMol->getAtom(d_index).setIsAromatic(what);
+}
+bool Atom::getIsAromatic() const {
+  return dp_dataMol->getAtom(d_index).getIsAromatic();
+}
 double Atom::getMass() const {
-  if (d_isotope) {
-    double res =
-        PeriodicTable::getTable()->getMassForIsotope(d_atomicNum, d_isotope);
-    if (d_atomicNum != 0 && res == 0.0) {
-      res = d_isotope;
-    }
-    return res;
-  } else {
-    return PeriodicTable::getTable()->getAtomicWeight(d_atomicNum);
-  }
+  return dp_dataMol->getAtom(d_index).getMass();
+}
+void Atom::setIsotope(unsigned int what) {
+  dp_dataMol->getAtom(d_index).setIsotope(what);
+}
+unsigned int Atom::getIsotope() const {
+  return dp_dataMol->getAtom(d_index).getIsotope();
+}
+void Atom::setChiralTag(ChiralType what) {
+  dp_dataMol->getAtom(d_index).setChiralTag(
+      static_cast<RDKit::AtomEnums::ChiralType>(what));
+}
+bool Atom::invertChirality() {
+  return dp_dataMol->invertAtomChirality(d_index);
+}
+Atom::ChiralType Atom::getChiralTag() const {
+  return static_cast<ChiralType>(dp_dataMol->getAtom(d_index).getChiralTag());
+}
+void Atom::setHybridization(HybridizationType what) {
+  dp_dataMol->getAtom(d_index).setHybridization(
+      static_cast<RDKit::AtomEnums::HybridizationType>(what));
+}
+Atom::HybridizationType Atom::getHybridization() const {
+  return static_cast<HybridizationType>(
+      dp_dataMol->getAtom(d_index).getHybridization());
 }
 
-bool Atom::hasValenceViolation() const {
-  // Ignore dummy atoms, query atoms, or atoms attached to query bonds
-  auto bonds = getOwningMol().atomBonds(this);
-  auto is_query = [](auto b) { return b->hasQuery(); };
-  if (getAtomicNum() == 0 || hasQuery() ||
-      std::any_of(bonds.begin(), bonds.end(), is_query)) {
-    return false;
-  }
-
-  unsigned int effectiveAtomicNum;
-  try {
-    bool checkIt = true;
-    effectiveAtomicNum = getEffectiveAtomicNum(*this, checkIt);
-  } catch (const AtomValenceException &) {
-    return true;
-  }
-
-  // special case for H:
-  if (getAtomicNum() == 1) {
-    if (getFormalCharge() > 1 || getFormalCharge() < -1) {
-      return true;
-    }
-  } else {
-    // Non-H checks for absurd charge values:
-    //   1. the formal charge is larger than the atomic number
-    //   2. the formal charge moves us to a different row of the periodic table
-    if (getFormalCharge() > getAtomicNum() ||
-        PeriodicTable::getTable()->getRow(d_atomicNum) !=
-            PeriodicTable::getTable()->getRow(effectiveAtomicNum)) {
-      return true;
-    }
-  }
-
-  bool strict = false;
-  bool checkIt = true;
-  if (calculateExplicitValence(*this, strict, checkIt) == -1 ||
-      calculateImplicitValence(*this, strict, checkIt) == -1) {
-    return true;
-  }
-  return false;
-}
-
-void Atom::setQuery(Atom::QUERYATOM_QUERY *) {
+void Atom::setQuery([[maybe_unused]] QUERYATOM_QUERY* what) {
   //  Atoms don't have complex queries so this has to fail
   PRECONDITION(0, "plain atoms have no Query");
 }
-Atom::QUERYATOM_QUERY *Atom::getQuery() const { return nullptr; };
-void Atom::expandQuery(Atom::QUERYATOM_QUERY *, Queries::CompositeQueryType,
-                       bool) {
+Atom::QUERYATOM_QUERY* Atom::getQuery() const { return nullptr; }
+void Atom::expandQuery(
+    [[maybe_unused]] QUERYATOM_QUERY* what,
+    [[maybe_unused]] Queries::CompositeQueryType how,
+    [[maybe_unused]] bool maintainOrder) {
   PRECONDITION(0, "plain atoms have no Query");
 }
-
-bool Atom::Match(Atom const *what) const {
+bool Atom::Match(Atom const* what) const {
   PRECONDITION(what, "bad query atom");
   bool res = getAtomicNum() == what->getAtomicNum();
 
@@ -711,7 +412,13 @@ bool Atom::Match(Atom const *what) const {
   //   [*] matches [*],[1*],[2*],etc.
   //   [1*] only matches [*] and [1*]
   if (res) {
-    if (!this->getAtomicNum()) {
+    if (hasOwningMol() && what->hasOwningMol() &&
+        this->getOwningMol().getRingInfo()->isInitialized() &&
+        what->getOwningMol().getRingInfo()->isInitialized() &&
+        this->getOwningMol().getRingInfo()->numAtomRings(d_index) >
+            what->getOwningMol().getRingInfo()->numAtomRings(what->d_index)) {
+      res = false;
+    } else if (!this->getAtomicNum()) {
       // this is the new behavior, based on the isotopes:
       int tgt = this->getIsotope();
       int test = what->getIsotope();
@@ -733,202 +440,146 @@ bool Atom::Match(Atom const *what) const {
   }
   return res;
 }
+int Atom::getPerturbationOrder(const INT_LIST &probe) const {
+  PRECONDITION(
+      dp_owningMol != nullptr,
+      "perturbation order not defined for atoms not associated with molecules");
+  const size_t numBonds = dp_owningMol->getAtomDegree(d_index);
+  PRECONDITION(numBonds == probe.size(), "size mismatch");
+
+  auto [beginBonds, endBonds] = dp_owningMol->getAtomBonds(d_index);
+
+  std::vector<int> copy(probe.begin(), probe.end());
+
+  // The bond list on the atom should be sorted, but check just in case.
+  bool isSorted = true;
+  for (size_t i = 0; numBonds > 0 && i < numBonds - 1; ++i) {
+    isSorted = isSorted && (beginBonds[i] < beginBonds[i + 1]);
+  }
+
+  if (isSorted) {
+    // This is effectively selection sort, which minimizes the number of swaps,
+    // so we can just count the number of swaps here.
+    int nSwaps = 0;
+    for (size_t desti = 0, n = copy.size(); desti < n; ++desti) {
+      size_t besti = desti;
+      for (size_t srci = desti + 1; srci < n; ++srci) {
+        if (copy[srci] < copy[besti]) {
+          besti = srci;
+        }
+      }
+      if (besti != desti) {
+        ++nSwaps;
+        std::swap(copy[besti], copy[desti]);
+      }
+    }
+    return nSwaps;
+  }
+
+  std::vector<int> bondsCopy(beginBonds, endBonds);
+  int nSwaps = static_cast<int>(countSwapsToInterconvert(bondsCopy, copy));
+  return nSwaps;
+}
 void Atom::updatePropertyCache(bool strict) {
   calcExplicitValence(strict);
   calcImplicitValence(strict);
 }
 
 bool Atom::needsUpdatePropertyCache() const {
-  return !(this->d_explicitValence >= 0 &&
-           (this->df_noImplicit || this->d_implicitValence >= 0));
+  return dp_dataMol->getAtom(d_index).needsUpdatePropertyCache();
 }
-
 void Atom::clearPropertyCache() {
-  d_explicitValence = -1;
-  d_implicitValence = -1;
+  dp_dataMol->getAtom(d_index).clearPropertyCache();
+}
+int Atom::calcExplicitValence(bool strict) {
+  PRECONDITION(dp_owningMol,
+               "calcExplicitValence requires an owning molecule");
+  return dp_owningMol->calcExplicitValence(d_index, strict);
+}
+int Atom::calcImplicitValence(bool strict) {
+  PRECONDITION(dp_owningMol,
+               "calcImplicitValence requires an owning molecule");
+  return dp_owningMol->calcImplicitValence(d_index, strict);
 }
 
-// returns the number of swaps required to convert the ordering
-// of the probe list to match the order of our incoming bonds:
-//
-//  e.g. if our incoming bond order is: [0,1,2,3]:
-//   getPerturbationOrder([1,0,2,3]) = 1
-//   getPerturbationOrder([1,2,3,0]) = 3
-//   getPerturbationOrder([1,2,0,3]) = 2
-int Atom::getPerturbationOrder(const INT_LIST &probe) const {
-  INT_LIST ref;
-  for (const auto bnd : getOwningMol().atomBonds(this)) {
-    ref.push_back(bnd->getIdx());
-  }
-  return static_cast<int>(countSwapsToInterconvert(probe, ref));
+bool Atom::hasValenceViolation() const {
+  PRECONDITION(dp_owningMol, "hasValenceViolation requires an owning molecule");
+  return dp_owningMol->hasValenceViolation(d_index);
 }
 
-static const unsigned char octahedral_invert[31] = {
-    0,   //  0 -> 0
-    2,   //  1 -> 2
-    1,   //  2 -> 1
-    16,  //  3 -> 16
-    14,  //  4 -> 14
-    15,  //  5 -> 15
-    18,  //  6 -> 18
-    17,  //  7 -> 17
-    10,  //  8 -> 10
-    11,  //  9 -> 11
-    8,   // 10 -> 8
-    9,   // 11 -> 9
-    13,  // 12 -> 13
-    12,  // 13 -> 12
-    4,   // 14 -> 4
-    5,   // 15 -> 5
-    3,   // 16 -> 3
-    7,   // 17 -> 7
-    6,   // 18 -> 6
-    24,  // 19 -> 24
-    23,  // 20 -> 23
-    22,  // 21 -> 22
-    21,  // 22 -> 21
-    20,  // 23 -> 20
-    19,  // 24 -> 19
-    30,  // 25 -> 30
-    29,  // 26 -> 29
-    28,  // 27 -> 28
-    27,  // 28 -> 27
-    26,  // 29 -> 26
-    25   // 30 -> 25
-};
-
-static const unsigned char trigonalbipyramidal_invert[21] = {
-    0,   //  0 -> 0
-    2,   //  1 -> 2
-    1,   //  2 -> 1
-    4,   //  3 -> 4
-    3,   //  4 -> 3
-    6,   //  5 -> 6
-    5,   //  6 -> 5
-    8,   //  7 -> 8
-    7,   //  8 -> 7
-    11,  //  9 -> 11
-    12,  // 10 -> 12
-    9,   // 11 -> 9
-    10,  // 12 -> 10
-    14,  // 13 -> 14
-    13,  // 14 -> 13
-    20,  // 15 -> 20
-    19,  // 16 -> 19
-    18,  // 17 -> 28
-    17,  // 18 -> 17
-    16,  // 19 -> 16
-    15   // 20 -> 15
-};
-
-bool Atom::invertChirality() {
-  unsigned int perm;
-  switch (getChiralTag()) {
-    case CHI_TETRAHEDRAL_CW:
-      setChiralTag(CHI_TETRAHEDRAL_CCW);
-      return true;
-    case CHI_TETRAHEDRAL_CCW:
-      setChiralTag(CHI_TETRAHEDRAL_CW);
-      return true;
-    case CHI_TETRAHEDRAL:
-      if (getPropIfPresent(common_properties::_chiralPermutation, perm)) {
-        if (perm == 1) {
-          perm = 2;
-        } else if (perm == 2) {
-          perm = 1;
-        } else {
-          perm = 0;
-        }
-        setProp(common_properties::_chiralPermutation, perm);
-        return perm != 0;
-      }
-      break;
-    case CHI_TRIGONALBIPYRAMIDAL:
-      if (getPropIfPresent(common_properties::_chiralPermutation, perm)) {
-        perm = (perm <= 20) ? trigonalbipyramidal_invert[perm] : 0;
-        setProp(common_properties::_chiralPermutation, perm);
-        return perm != 0;
-      }
-      break;
-    case CHI_OCTAHEDRAL:
-      if (getPropIfPresent(common_properties::_chiralPermutation, perm)) {
-        perm = (perm <= 30) ? octahedral_invert[perm] : 0;
-        setProp(common_properties::_chiralPermutation, perm);
-        return perm != 0;
-      }
-      break;
-    default:
-      break;
-  }
-  return false;
+int Atom::getExplicitValencePrivate() const {
+  PRECONDITION(dp_dataMol,
+               "valence not defined for atoms not associated with molecules");
+  return dp_dataMol->getAtom(d_index).explicitValence;
+}
+int Atom::getImplicitValencePrivate() const {
+  PRECONDITION(dp_dataMol,
+               "valence not defined for atoms not associated with molecules");
+  return dp_dataMol->getAtom(d_index).implicitValence;
 }
 
-void setAtomRLabel(Atom *atm, int rlabel) {
-  PRECONDITION(atm, "bad atom");
+void setAtomRLabel(Atom *atom, int rlabel) {
+  PRECONDITION(atom, "bad atom");
   // rlabel ==> n2 => 0..99
   PRECONDITION(rlabel >= 0 && rlabel < 100,
                "rlabel out of range for MDL files");
-  if (rlabel) {
-    atm->setProp(common_properties::_MolFileRLabel,
-                 static_cast<unsigned int>(rlabel));
-  } else {
-    atm->clearProp(common_properties::_MolFileRLabel);
+  uint32_t *prop = atom->getRDMol().getAtomPropArrayIfPresent<uint32_t>(
+        common_properties::_MolFileRLabelToken);
+  // Default of zero indicates no RLabel
+  if (rlabel != 0 && prop == nullptr) {
+    prop = atom->getRDMol().addAtomProp<uint32_t>(common_properties::_MolFileRLabelToken, 0);
+  } else if (prop != nullptr) {
+    // TODO: Consider removing prop if will now be all zeros
+  }
+  if (prop != nullptr) {
+    prop[atom->getIdx()] = static_cast<uint32_t>(rlabel);
   }
 }
 //! Gets the atom's RLabel
 int getAtomRLabel(const Atom *atom) {
   PRECONDITION(atom, "bad atom");
-  unsigned int rlabel = 0;
-  atom->getPropIfPresent(common_properties::_MolFileRLabel, rlabel);
-  return static_cast<int>(rlabel);
+  const uint32_t *prop =
+      atom->getDataRDMol().getAtomPropArrayIfPresent<uint32_t>(
+      common_properties::_MolFileRLabelToken);
+  return (prop != nullptr) ? prop[atom->getIdx()] : 0;
+}
+
+void setAtomStringProp(Atom* atom, const PropToken& token, const std::string& value) {
+  PRECONDITION(atom, "bad atom");
+  atom->getDataRDMol().setSingleAtomProp<PropToken>(token, atom->getIdx(),
+                                                    PropToken(value), false, true);
+}
+
+std::string getAtomStringProp(const Atom* atom, const PropToken& token) {
+  PRECONDITION(atom, "bad atom");
+  PropToken prop;
+  bool found = atom->getDataRDMol().getAtomPropIfPresent<PropToken>(
+      token, atom->getIdx(), prop);
+  return found ? prop.getString() : std::string();
 }
 
 void setAtomAlias(Atom *atom, const std::string &alias) {
-  PRECONDITION(atom, "bad atom");
-  if (alias != "") {
-    atom->setProp(common_properties::molFileAlias, alias);
-  } else {
-    atom->clearProp(common_properties::molFileAlias);
-  }
+  setAtomStringProp(atom, common_properties::molFileAliasToken, alias);
 }
 
 std::string getAtomAlias(const Atom *atom) {
-  PRECONDITION(atom, "bad atom");
-  std::string alias;
-  atom->getPropIfPresent(common_properties::molFileAlias, alias);
-  return alias;
+  return getAtomStringProp(atom, common_properties::molFileAliasToken);
 }
 
 void setAtomValue(Atom *atom, const std::string &value) {
-  PRECONDITION(atom, "bad atom");
-  if (value != "") {
-    atom->setProp(common_properties::molFileValue, value);
-  } else {
-    atom->clearProp(common_properties::molFileValue);
-  }
+  setAtomStringProp(atom, common_properties::molFileValueToken, value);
 }
 
 std::string getAtomValue(const Atom *atom) {
-  PRECONDITION(atom, "bad atom");
-  std::string value;
-  atom->getPropIfPresent(common_properties::molFileValue, value);
-  return value;
+  return getAtomStringProp(atom, common_properties::molFileValueToken);
 }
 
 void setSupplementalSmilesLabel(Atom *atom, const std::string &label) {
-  PRECONDITION(atom, "bad atom");
-  if (label != "") {
-    atom->setProp(common_properties::_supplementalSmilesLabel, label);
-  } else {
-    atom->clearProp(common_properties::_supplementalSmilesLabel);
-  }
+  setAtomStringProp(atom, common_properties::_supplementalSmilesLabelToken, label);
 }
 
 std::string getSupplementalSmilesLabel(const Atom *atom) {
-  PRECONDITION(atom, "bad atom");
-  std::string label;
-  atom->getPropIfPresent(common_properties::_supplementalSmilesLabel, label);
-  return label;
+  return getAtomStringProp(atom, common_properties::_supplementalSmilesLabelToken);
 }
 
 unsigned int numPiElectrons(const Atom &atom) {
@@ -1007,14 +658,16 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   target << " chg: " << at.getFormalCharge();
   target << "  deg: " << at.getDegree();
   target << " exp: ";
-  target << (at.d_explicitValence >= 0 ? std::to_string(at.d_explicitValence)
+  target << (at.getExplicitValencePrivate() >= 0
+                 ? std::to_string(at.getExplicitValencePrivate())
                                        : "N/A");
 
   target << " imp: ";
-  if (at.df_noImplicit) {
+  if (at.getNoImplicit()) {
     target << "0";
   } else {
-    target << (at.d_implicitValence >= 0 ? std::to_string(at.d_implicitValence)
+    target << (at.getImplicitValencePrivate() >= 0
+                   ? std::to_string(at.getImplicitValencePrivate())
                                          : "N/A");
   }
   target << " hyb: " << hybridizationToString(at.getHybridization());
@@ -1054,3 +707,127 @@ std::ostream &operator<<(std::ostream &target, const RDKit::Atom &at) {
   }
   return target;
 };
+
+namespace RDKit {
+
+AtomMonomerInfo * Atom::getMonomerInfo() {
+  auto found = dp_dataMol->monomerInfo.find(d_index);
+  if (found != dp_dataMol->monomerInfo.end()) {
+    return found->second.get();
+  }
+  return nullptr;
+}
+
+const AtomMonomerInfo * Atom::getMonomerInfo() const {
+  const auto found = dp_dataMol->monomerInfo.find(d_index);
+  if (found != dp_dataMol->monomerInfo.end()) {
+    return found->second.get();
+  }
+  return nullptr;
+}
+
+void Atom::setMonomerInfo(AtomMonomerInfo *info) {
+  dp_dataMol->monomerInfo[d_index].reset(info);
+}
+
+void Atom::setAtomMapNum(int mapno, bool strict) {
+  PRECONDITION(
+      !strict || (mapno >= 0 && mapno < 1000),
+      "atom map number out of range [0..1000], use strict=false to override");
+  const uint32_t idx = getIdx();
+  if (mapno != 0) {
+    dp_dataMol->setSingleAtomProp(common_properties::molAtomMapNumberToken, idx, mapno, false, true);
+  } else if (dp_dataMol->hasAtomProp(common_properties::molAtomMapNumberToken, idx)) {
+    dp_dataMol->clearSingleAtomProp(common_properties::molAtomMapNumberToken, idx);
+  }
+}
+
+int Atom::getAtomMapNum() const {
+  int mapno = 0;
+  dp_dataMol->getAtomPropIfPresent(common_properties::molAtomMapNumberToken,
+                                   getIdx(), mapno);
+  return mapno;
+}
+
+void Atom::setFlags(std::uint64_t flags) {
+  dp_dataMol->getAtom(d_index).setFlags(flags);
+}
+std::uint64_t Atom::getFlags() const {
+  return dp_dataMol->getAtom(d_index).getFlags();
+}
+std::uint64_t &Atom::getFlags() {
+  return dp_dataMol->getAtom(d_index).getFlags();
+}
+
+STR_VECT Atom::getPropList(bool includePrivate, bool includeComputed) const {
+  STR_VECT res = dp_dataMol->getPropList(includePrivate, includeComputed,
+                                         RDMol::Scope::ATOM, d_index);
+  if (includePrivate && includeComputed) {
+    res.push_back(detail::computedPropName);
+  }
+  return res;
+}
+
+
+bool Atom::hasProp(const std::string &key) const {
+  PropToken token(key);
+  if (token == detail::computedPropNameToken) {
+    return true;
+  }
+  return dp_dataMol->hasAtomProp(token, getIdx());
+}
+
+void Atom::clearProp(const std::string &key) const {
+  dp_dataMol->clearSingleAtomProp(PropToken(key), getIdx());
+}
+
+void Atom::clearComputedProps() const {
+  dp_dataMol->clearSingleAtomAllProps(getIdx(), true);
+}
+
+void Atom::updateProps(const RDProps &source, bool preserveExisting) {
+  if (!preserveExisting) {
+    clear();
+  }
+  std::vector<std::string> computedPropList;
+  source.getPropIfPresent<std::vector<std::string>>(
+      RDKit::detail::computedPropName, computedPropList);
+  const STR_VECT keys = source.getPropList();
+  for (const auto &key : keys) {
+    if (key == RDKit::detail::computedPropName) {
+      continue;
+    }
+    const RDValue &val = source.getPropRDValue(key);
+    bool isComputed =
+        std::find(computedPropList.begin(), computedPropList.end(), key) !=
+        computedPropList.end();
+    getDataRDMol().setSingleAtomProp(PropToken(key), getIdx(), val, isComputed, true);
+  }
+}
+
+void Atom::updateProps(const Atom &source, bool preserveExisting) {
+  if (!preserveExisting) {
+    clear();
+  }
+  for (auto it = source.dp_dataMol->beginProps(true, RDMol::Scope::ATOM,
+                                               source.d_index),
+            end = source.dp_dataMol->endProps();
+       it != end; ++it) {
+    dp_dataMol->copySingleProp(*it, d_index, *source.dp_dataMol, *it,
+                               source.d_index, RDMol::Scope::ATOM);
+  }
+}
+
+void Atom::clear() { dp_dataMol->clearSingleAtomAllProps(getIdx(), false); }
+
+void Atom::setOwningMol(ROMol *other) {
+  setOwningMol(&other->asRDMol());
+}
+
+void Atom::setOwningMol(RDKit::RDMol *other) {
+  PRECONDITION(dp_owningMol == nullptr || dp_owningMol == other,
+               "setOwningMol called twice");
+  dp_owningMol = other;
+}
+
+}  // namespace RDKit

@@ -56,7 +56,7 @@ class RDKIT_QUERY_EXPORT Query {
   virtual ~Query() { this->d_children.clear(); }
 
   //! sets whether or not we are negated
-  void setNegation(bool what) { this->df_negate = what; }
+  virtual void setNegation(bool what) { this->df_negate = what; }
   //! returns whether or not we are negated
   bool getNegation() const { return this->df_negate; }
 
@@ -85,13 +85,13 @@ class RDKIT_QUERY_EXPORT Query {
   const std::string &getTypeLabel() const { return this->d_queryType; }
 
   //! sets our match function
-  void setMatchFunc(bool (*what)(MatchFuncArgType)) {
+  virtual void setMatchFunc(bool (*what)(MatchFuncArgType)) {
     this->d_matchFunc = what;
   }
   //! returns our match function:
   bool (*getMatchFunc() const)(MatchFuncArgType) { return this->d_matchFunc; }
   //! sets our data function
-  void setDataFunc(MatchFuncArgType (*what)(DataFuncArgType)) {
+  virtual void setDataFunc(MatchFuncArgType (*what)(DataFuncArgType)) {
     this->d_dataFunc = what;
   }
   //! returns our data function:
@@ -100,7 +100,7 @@ class RDKIT_QUERY_EXPORT Query {
   }
 
   //! adds a child to our list of children
-  void addChild(CHILD_TYPE child) { this->d_children.push_back(child); }
+  virtual void addChild(CHILD_TYPE child) { this->d_children.push_back(child); }
   //! returns an iterator for the beginning of our child vector
   CHILD_VECT_CI beginChildren() const { return this->d_children.begin(); }
   //! returns an iterator for the end of our child vector
@@ -205,6 +205,14 @@ int queryCmp(const T1 v1, const T2 v2, const T1 tol) {
   } else {
     return 1;
   }
-};
+}
+
+template <>
+inline int queryCmp(const bool v1, const bool v2, const bool tol) {
+  if (v1 == v2 || tol) {
+    return 0;
+  }
+  return v1 ? 1 : -1;
+}
 }  // namespace Queries
 #endif

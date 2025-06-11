@@ -76,3 +76,6 @@ rdkit_catch_test(dictTestsCatch catch_dict.cpp
 
 rdkit_catch_test(logTestsCatch catch_logs.cpp
         LINK_LIBRARIES RDGeneral)
+
+rdkit_catch_test(vectorUtilsCatch catch_vector_utils.cpp
+        LINK_LIBRARIES RDGeneral )

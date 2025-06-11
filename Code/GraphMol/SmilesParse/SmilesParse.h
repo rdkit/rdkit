@@ -11,6 +11,9 @@
 #ifndef RD_SMILESPARSE_H
 #define RD_SMILESPARSE_H
 
+#include <GraphMol/RWMol.h>
+#include <GraphMol/RDMol.h>
+#include <GraphMol/Chirality.h>
 #include <GraphMol/SanitException.h>
 #include <string>
 #include <exception>
@@ -140,6 +143,36 @@ inline Atom *SmilesToAtom(const std::string &smi) {
 inline Bond *SmilesToBond(const std::string &smi) {
   return RDKit::v2::SmilesParse::BondFromSmiles(smi).release();
 }
+struct SmilesParseTemp {
+  std::vector<uint32_t> branchStack;
+  std::vector<uint32_t> openBondTable;
+  size_t numOpenBonds;
+
+  std::vector<int> atomMapNumbers;
+  std::vector<uint32_t> chiralityPermutations;
+
+  constexpr static uint32_t INVALID_OPEN_BOND = uint32_t(-1);
+
+  SmilesParseTemp() {
+    branchStack.reserve(16);
+    openBondTable.reserve(100);
+    numOpenBonds = 0;
+  }
+
+  void clearForError() {
+    branchStack.resize(0);
+    if (numOpenBonds > 0) {
+      numOpenBonds = 0;
+      std::fill(openBondTable.begin(), openBondTable.end(), INVALID_OPEN_BOND);
+    }
+    atomMapNumbers.resize(0);
+    chiralityPermutations.resize(0);
+  }
+};
+
+RDKIT_SMILESPARSE_EXPORT bool SmilesToMol(const char *smiles,
+                                          const SmilesParserParams &params,
+                                          RDMol &mol, SmilesParseTemp &temp);
 
 //! Construct a molecule from a SMILES string
 /*!

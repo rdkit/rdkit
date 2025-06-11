@@ -312,8 +312,9 @@ void mapMolProperties(const ROMol &mol, const STR_VECT &propNames,
   };
 
   int fake_idx = 0;
-  copyProperties(mol, propNames, fake_idx, boolSetter, intSetter, realSetter,
-                 stringSetter);
+  raiseNonImplementedDetail("Properties");
+  //copyProperties(mol, propNames, fake_idx, boolSetter, intSetter, realSetter,
+  //               stringSetter);
 }
 void mapAtom(
     const Conformer &conformer, const Atom &atom, const STR_VECT &propNames,
@@ -368,8 +369,10 @@ void mapAtom(
   }
 
   // Custom properties
-  copyProperties(atom, propNames, idx, boolSetter, intSetter, realSetter,
-                 stringSetter);
+  raiseNonImplementedDetail("Properties");
+
+  // copyProperties(atom, propNames, idx, boolSetter, intSetter, realSetter,
+   //              stringSetter);
 }
 
 void mapAtoms(const ROMol &mol, const STR_VECT &propNames, int confId,
@@ -442,8 +445,9 @@ void mapBond(
   }
 
   // Custom properties
-  copyProperties(bond, propNames, idx, boolSetter, intSetter, realSetter,
-                 stringSetter);
+  raiseNonImplementedDetail("Properties");
+  //copyProperties(bond, propNames, idx, boolSetter, intSetter, realSetter,
+   //              stringSetter);
 }
 
 void mapBonds(const ROMol &mol, const STR_VECT &propNames,

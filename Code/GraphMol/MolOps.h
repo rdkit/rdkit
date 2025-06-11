@@ -11,6 +11,9 @@
 #ifndef RD_MOL_OPS_H
 #define RD_MOL_OPS_H
 
+#include <GraphMol/Atom.h> // Needed for Atom::HybridizationType
+#include <GraphMol/RWMol.h>
+
 #include <vector>
 #include <map>
 #include <list>
@@ -22,17 +25,24 @@
 #include <RDGeneral/BetterEnums.h>
 #include "SanitException.h"
 #include <RDGeneral/FileParseException.h>
+#include "details.h"
 
 RDKIT_GRAPHMOL_EXPORT extern const int ci_LOCAL_INF;
 namespace RDKit {
 class ROMol;
 class RWMol;
+class RDMol;
+class RingInfoCache;
 class Atom;
 class Bond;
 class Conformer;
 typedef std::vector<double> INVAR_VECT;
 typedef INVAR_VECT::iterator INVAR_VECT_I;
 typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
+
+namespace Chirality {
+struct ChiralityTempData;
+}
 
 //! \brief Groups a variety of molecular query and transformation operations.
 namespace MolOps {
@@ -50,12 +60,16 @@ namespace MolOps {
    \return the number of electrons
 */
 RDKIT_GRAPHMOL_EXPORT int countAtomElec(const Atom *at);
+RDKIT_GRAPHMOL_EXPORT int countAtomElec(const RDMol &mol,
+                                        const atomindex_t atomIndex);
 
 //! sums up all atomic formal charges and returns the result
 RDKIT_GRAPHMOL_EXPORT int getFormalCharge(const ROMol &mol);
 
 //! returns whether or not the given Atom is involved in a conjugated bond
 RDKIT_GRAPHMOL_EXPORT bool atomHasConjugatedBond(const Atom *at);
+RDKIT_GRAPHMOL_EXPORT bool atomHasConjugatedBond(const RDMol &mol,
+                                                 const atomindex_t atomIndex);
 
 //! find fragments (disconnected components of the molecular graph)
 /*!
@@ -83,6 +97,34 @@ RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(const ROMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT unsigned int getMolFrags(
     const ROMol &mol, std::vector<std::vector<int>> &frags);
+
+//! find fragments (disconnected components of the molecular graph)
+/*!
+
+  \param mol     the molecule of interest
+  \param mapping used to return the mapping of Atoms->fragments.
+     \c mapping must be pre-allocated to <tt>mol->getNumAtoms()</tt> long
+     and on return, it will contain the fragment assignment for each Atom
+
+  \return the number of fragments found.
+
+*/
+RDKIT_GRAPHMOL_EXPORT uint32_t getMolFrags(const RDMol &mol,
+                                           uint32_t *mapping);
+
+//! find fragments (disconnected components of the molecular graph)
+/*!
+
+  \param mol     the molecule of interest
+  \param mapping used to return the mapping of Atoms->fragments.
+     On return \c mapping will be <tt>mol->getNumAtoms()</tt> long
+     and will contain the fragment assignment for each Atom
+
+  \return the number of fragments found.
+
+*/
+RDKIT_GRAPHMOL_EXPORT uint32_t getMolFrags(const RDMol &mol,
+                                               std::vector<uint32_t> &mapping);
 
 //! splits a molecule into its component fragments
 /// (disconnected components of the molecular graph)
@@ -267,6 +309,11 @@ inline void addHs(RWMol &mol, bool explicitOnly = false, bool addCoords = false,
 RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
                                                  unsigned int otherIdx);
 
+struct RDKIT_GRAPHMOL_EXPORT SanitizeTemp {
+  std::vector<uint64_t> hydrogenIsotopeMap;
+  std::vector<uint64_t> bitSet0;
+};
+
 //! returns a copy of a molecule with hydrogens removed
 /*!
     \param mol          the molecule to remove Hs from
@@ -307,6 +354,10 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(const ROMol &mol, bool implicitOnly,
 RDKIT_GRAPHMOL_EXPORT void removeHs(RWMol &mol, bool implicitOnly,
                                     bool updateExplicitCount = false,
                                     bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT void removeHs(RDMol &mol, MolOps::SanitizeTemp &temp,
+                                    bool implicitOnly = false,
+                                    bool updateExplicitCount = false,
+                                    bool sanitize = true);
 struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
   bool removeDegreeZero = false;    /**< hydrogens that have no bonds */
   bool removeHigherDegrees = false; /**< hydrogens with two (or more) bonds */
@@ -343,6 +394,9 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
 RDKIT_GRAPHMOL_EXPORT void removeHs(
     RWMol &mol, const RemoveHsParameters &ps = RemoveHsParameters(),
     bool sanitize = true);
+RDKIT_GRAPHMOL_EXPORT void removeHs(RDMol &mol, const RemoveHsParameters &ps,
+                                    MolOps::SanitizeTemp &temp,
+                                    bool sanitize = true);
 //! \overload
 /// The caller owns the pointer this returns
 RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(
@@ -847,6 +901,8 @@ RDKIT_GRAPHMOL_EXPORT int findSSSR(const ROMol &mol,
   return values >0
 */
 RDKIT_GRAPHMOL_EXPORT void fastFindRings(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void fastFindRings(const RDMol &mol,
+                                         RingInfoCache &rings);
 
 RDKIT_GRAPHMOL_EXPORT void findRingFamilies(const ROMol &mol);
 
@@ -1123,6 +1179,7 @@ RDKIT_GRAPHMOL_EXPORT void clearDirFlags(ROMol &mol,
 //! Assign CIS/TRANS bond stereochemistry tags based on neighboring
 //! directions
 RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(RDMol &mol);
 
 //! Assign stereochemistry tags to atoms and bonds.
 /*!
@@ -1156,6 +1213,9 @@ RDKIT_GRAPHMOL_EXPORT void setBondStereoFromDirections(ROMol &mol);
 RDKIT_GRAPHMOL_EXPORT void assignStereochemistry(
     ROMol &mol, bool cleanIt = false, bool force = false,
     bool flagPossibleStereoCenters = false);
+RDKIT_GRAPHMOL_EXPORT void assignStereochemistry(
+    RDMol &mol, Chirality::ChiralityTempData &temp, bool cleanIt = false,
+    bool force = false, bool flagPossibleStereoCenters = false);
 //! Removes all stereochemistry information from atoms (i.e. R/S) and bonds
 /// i.e. Z/E)
 /*!

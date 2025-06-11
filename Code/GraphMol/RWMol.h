@@ -30,6 +30,12 @@ namespace RDKit {
 
  */
 class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
+  friend class RDMol;
+  friend class ROMol;
+
+ protected:
+  RWMol(RDMol *mol) : ROMol(mol) {}
+
  public:
   RWMol() : ROMol() {}
   //! copy constructor with a twist
@@ -80,9 +86,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     \return the index of the added atom
   */
   unsigned int addAtom(Atom *atom, bool updateLabel = true,
-                       bool takeOwnership = false) {
-    return ROMol::addAtom(atom, updateLabel, takeOwnership);
-  }
+                       bool takeOwnership = false);
 
   //! adds an Atom to our collection
 
@@ -92,6 +96,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     \param atom         the new atom, which will be copied.
     \param updateLabel   (optional) if this is true, the new Atom will be
                          our \c activeAtom
+                         NOTE: This parameter is currently ignored.
     \param preserveProps if true preserve the original atom property data
 
   */
@@ -140,9 +145,7 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
 
     \return the new number of bonds
   */
-  unsigned int addBond(Bond *bond, bool takeOwnership = false) {
-    return ROMol::addBond(bond, takeOwnership);
-  }
+  unsigned int addBond(Bond *bond, bool takeOwnership = false);
 
   //! starts a Bond and sets its beginAtomIdx
   /*!
@@ -200,23 +203,13 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   //! @}
 
   //! removes all atoms, bonds, properties, bookmarks, etc.
-  void clear() {
-    destroy();
-    d_confs.clear();
-    ROMol::initMol();  // make sure we have a "fresh" ready to go copy
-    numBonds = 0;
-  }
 
   void beginBatchEdit();
-  void rollbackBatchEdit() {
-    dp_delAtoms.reset();
-    dp_delBonds.reset();
-  }
+  void rollbackBatchEdit();
   void commitBatchEdit();
 
- private:
-  void batchRemoveBonds();
-  void batchRemoveAtoms();
+  //! Clear underlying molecule. Note that this deliberately hides ROMol clear.
+  void clear() {dp_mol->clear(); }
 };
 
 typedef boost::shared_ptr<RWMol> RWMOL_SPTR;

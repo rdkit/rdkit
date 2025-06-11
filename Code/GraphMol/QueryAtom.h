@@ -14,6 +14,7 @@
 #include <utility>
 #include "Atom.h"
 #include <Query/QueryObjects.h>
+#include <GraphMol/RDMol.h>
 #include <GraphMol/QueryOps.h>
 
 namespace RDKit {
@@ -26,9 +27,16 @@ namespace RDKit {
 
  */
 class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
- public:
-  typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
+  friend class RDMol;
 
+ public:
+  using QUERYATOM_QUERY = Atom::QUERYATOM_QUERY;
+
+ protected:
+  QueryAtom(RDMol *mol, atomindex_t atomIndex, QUERYATOM_QUERY *query)
+      : Atom(mol, atomIndex), dp_query(query) {}
+
+ public:
   QueryAtom() : Atom() {}
   explicit QueryAtom(int num) : Atom(num), dp_query(makeAtomNumQuery(num)) {}
   explicit QueryAtom(const Atom &other)
@@ -49,9 +57,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   }
   QueryAtom(const QueryAtom &other) : Atom(other) {
     if (other.dp_query) {
-      dp_query = other.dp_query->copy();
-    } else {
-      dp_query = nullptr;
+      dp_query.reset(other.dp_query->copy());
     }
   }
   QueryAtom &operator=(const QueryAtom &other) {
@@ -59,45 +65,37 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
       return *this;
     }
     Atom::operator=(other);
-    delete dp_query;
-    if (other.dp_query) {
-      dp_query = other.dp_query->copy();
-    } else {
-      dp_query = nullptr;
-    }
+    setQuery(other.dp_query ? other.dp_query->copy() : nullptr);
     return *this;
   }
 
-  QueryAtom(QueryAtom &&other) noexcept : Atom(std::move(other)) {
-    dp_query = std::exchange(other.dp_query, nullptr);
-  }
-  QueryAtom &operator=(QueryAtom &&other) noexcept {
-    if (this == &other) {
-      return *this;
-    }
-    QueryAtom::operator=(std::move(other));
-    dp_query = std::exchange(other.dp_query, nullptr);
-    return *this;
-  }
+  QueryAtom(QueryAtom &&other) noexcept = default;
+  QueryAtom &operator=(QueryAtom &&other) noexcept = default;
 
-  ~QueryAtom() override;
+  ~QueryAtom() override = default;
 
   //! returns a copy of this query, owned by the caller
   Atom *copy() const override;
 
   // This method can be used to distinguish query atoms from standard atoms:
-  bool hasQuery() const override { return dp_query != nullptr; }
+  bool hasQuery() const override { return dp_query.get() != nullptr; }
 
   //! returns the label associated to this query
   std::string getQueryType() const override { return dp_query->getTypeLabel(); }
 
-  //! replaces our current query with the value passed in
-  void setQuery(QUERYATOM_QUERY *what) override {
-    delete dp_query;
-    dp_query = what;
-  }
   //! returns our current query
-  QUERYATOM_QUERY *getQuery() const override { return dp_query; }
+  QUERYATOM_QUERY *getQuery() const override { return dp_query.get(); }
+  //! replaces our current query with the value passed in, updating the RDMol
+  void setQuery(QUERYATOM_QUERY *what) override;
+
+ protected:
+  //! replaces our current query with the value passed in, without updating
+  //! the RDMol. To be called from RDMol
+  void setQueryPrivate(QUERYATOM_QUERY *what) {
+    dp_query.reset(what);
+  }
+
+ public:
 
   //! expands our current query
   /*!
@@ -127,7 +125,7 @@ class RDKIT_GRAPHMOL_EXPORT QueryAtom : public Atom {
   bool QueryMatch(QueryAtom const *what) const;
 
  private:
-  QUERYATOM_QUERY *dp_query{nullptr};
+  std::unique_ptr<QUERYATOM_QUERY> dp_query;
 
 };  // end o' class
 

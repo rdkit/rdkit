@@ -212,6 +212,15 @@ class RDKIT_RDGENERAL_EXPORT Dict {
     throw KeyErrorException(what);
   }
 
+  const RDValue &getRDValue(const std::string &what) const {
+    for (auto &data : _data) {
+      if (data.key == what) {
+        return data.val;
+      }
+    }
+    throw KeyErrorException(what);
+  }
+
   //----------------------------------------------------------
   //! \brief Potentially gets the value associated with a particular key
   //!        returns true on success/false on failure.

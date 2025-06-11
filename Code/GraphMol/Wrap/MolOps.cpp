@@ -1062,6 +1062,7 @@ void _testSetProps(RDProps &props, const std::string &prefix) {
 }
 
 void testSetProps(ROMol &mol) {
+  raiseNonImplementedFunction("romol props");/*
   _testSetProps(mol, "mol_");
   for (auto &atom : mol.atoms()) {
     _testSetProps(*atom, std::string("atom_") + std::to_string(atom->getIdx()));
@@ -1072,7 +1073,7 @@ void testSetProps(ROMol &mol) {
   for (unsigned conf_idx = 0; conf_idx < mol.getNumConformers(); ++conf_idx) {
     _testSetProps(mol.getConformer(conf_idx),
                   "conf_" + std::to_string(conf_idx));
-  }
+  }*/
 }
 
 void expandAttachmentPointsHelper(ROMol &mol, bool addAsQueries,
@@ -1162,7 +1163,7 @@ struct molops_wrapper {
   \n\
     - mol: the molecule to be modified\n\
 \n";
-    python::def("SetBondStereoFromDirections",
+    python::def<void(ROMol&)>("SetBondStereoFromDirections",
                 MolOps::setBondStereoFromDirections, (python::arg("mol")),
                 docString.c_str());
 
@@ -1255,7 +1256,7 @@ struct molops_wrapper {
 \n\
   RETURNS: Nothing\n\
 \n";
-    python::def("FastFindRings", MolOps::fastFindRings, docString.c_str(),
+    python::def<void(const ROMol&)>("FastFindRings", MolOps::fastFindRings, docString.c_str(),
                 python::args("mol"));
 #ifdef RDK_USE_URF
     python::def("FindRingFamilies", MolOps::findRingFamilies,
@@ -2217,7 +2218,7 @@ RETURNS:
     - flagPossibleStereoCenters (optional)   set the _ChiralityPossible property on
       atoms that are possible stereocenters
 )DOC";
-    python::def("AssignStereochemistry", MolOps::assignStereochemistry,
+    python::def<void(ROMol&, bool, bool, bool)>("AssignStereochemistry", MolOps::assignStereochemistry,
                 (python::arg("mol"), python::arg("cleanIt") = false,
                  python::arg("force") = false,
                  python::arg("flagPossibleStereoCenters") = false),
@@ -3320,10 +3321,10 @@ enantiomer" or "OR enantiomer". CIP labels, if present, are removed.
     python::def("_TestSetProps", testSetProps, python::arg("mol"));
     python::def("NeedsHs", MolOps::needsHs, (python::arg("mol")),
                 "returns whether or not the molecule needs to have Hs added");
-    python::def(
+    python::def<int(const Atom*)>(
         "CountAtomElec", MolOps::countAtomElec, (python::arg("atom")),
         "returns the number of electrons available on an atom to donate for aromaticity");
-    python::def(
+    python::def<bool(const Atom*)>(
         "AtomHasConjugatedBond", MolOps::atomHasConjugatedBond,
         (python::arg("atom")),
         "returns whether or not the atom is involved in a conjugated bond");

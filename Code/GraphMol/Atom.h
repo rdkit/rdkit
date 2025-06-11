@@ -22,6 +22,9 @@
 #include <RDGeneral/types.h>
 #include <RDGeneral/RDProps.h>
 #include <GraphMol/details.h>
+#include <GraphMol/RDMol.h>
+#include <GraphMol/rdmol_throw.h>
+#include "GraphMolEnums.h"
 
 namespace RDKit {
 class Atom;
@@ -34,6 +37,7 @@ namespace RDKit {
 class ROMol;
 class RWMol;
 class AtomMonomerInfo;
+class ConstRDMolAtom;
 
 //! The class for representing atoms
 /*!
@@ -69,49 +73,80 @@ class AtomMonomerInfo;
   at the *end* of the list of other bonds.
 
 */
-class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
-  friend class MolPickler;  //!< the pickler needs access to our privates
+class RDKIT_GRAPHMOL_EXPORT Atom {
+  friend class RDMol;
   friend class ROMol;
   friend class RWMol;
-  friend std::ostream &(::operator<<)(std::ostream &target,
-                                      const ::RDKit::Atom &at);
-  friend int calculateImplicitValence(const Atom &, bool, bool);
+  friend class MolPickler;
+  friend std::ostream &(::operator<<)(std::ostream &target, const Atom &at);
+
+  // When an atom is created on its own, it owns dp_dataMol to store its data
+  // and dp_owningMol is nullptr. Calling setOwningMol will set dp_owningMol,
+  // but as before, this does not actually insert the Atom's data into the
+  // owning RDMol, so dp_dataMol will continue keeping the data until
+  // ROMol::addAtom copies the data and frees dp_dataMol, setting dp_dataMol
+  // to be equal to dp_owningMol, to indicate that dp_dataMol is no longer
+  // owned by this Atom, and setting d_index accordingly.
+  //
+  // The 3 states are:
+  // 1) dp_owningMol == nullptr: dp_dataMol owned by this & no owning mol
+  // 2) else if dp_dataMol != dp_owningMol: dp_dataMol owned by this
+  // 3) dp_dataMol == dp_owningMol: dp_owningMol owns this
+  //
+  // This is necessary for compatibility with previous workflows that would
+  // call setOwningMol and separately ROMol::addAtom.
+  RDMol *dp_dataMol = nullptr;
+  RDMol *dp_owningMol = nullptr;
+  atomindex_t d_index = 0;
+
+ protected:
+  Atom(RDMol *mol, atomindex_t atomIndex)
+      : dp_dataMol(mol), dp_owningMol(mol), d_index(atomIndex) {}
 
  public:
   // FIX: grn...
   typedef Queries::Query<int, Atom const *, true> QUERYATOM_QUERY;
+  //typedef Queries::Query<int, ConstRDMolAtom, true> QUERYATOM_QUERY;
 
   //! store hybridization
-  typedef enum {
-    UNSPECIFIED = 0,  //!< hybridization that hasn't been specified
-    S,
-    SP,
-    SP2,
-    SP3,
-    SP2D,
-    SP3D,
-    SP3D2,
-    OTHER  //!< unrecognized hybridization
-  } HybridizationType;
+  enum HybridizationType {
+    //!< hybridization that hasn't been specified
+    UNSPECIFIED = AtomEnums::HybridizationType::UNSPECIFIED,
+    S = AtomEnums::HybridizationType::S,
+    SP = AtomEnums::HybridizationType::SP,
+    SP2 = AtomEnums::HybridizationType::SP2,
+    SP3 = AtomEnums::HybridizationType::SP3,
+    SP2D = AtomEnums::HybridizationType::SP2D,
+    SP3D = AtomEnums::HybridizationType::SP3D,
+    SP3D2 = AtomEnums::HybridizationType::SP3D2,
+    OTHER = AtomEnums::HybridizationType::OTHER //!< unrecognized hybridization
+  };
 
   //! store type of chirality
-  typedef enum {
-    CHI_UNSPECIFIED = 0,  //!< chirality that hasn't been specified
-    CHI_TETRAHEDRAL_CW,   //!< tetrahedral: clockwise rotation (SMILES \@\@)
-    CHI_TETRAHEDRAL_CCW,  //!< tetrahedral: counter-clockwise rotation (SMILES
-                          //\@)
-    CHI_OTHER,            //!< some unrecognized type of chirality
-    CHI_TETRAHEDRAL,      //!< tetrahedral, use permutation flag
-    CHI_ALLENE,           //!< allene, use permutation flag
-    CHI_SQUAREPLANAR,     //!< square planar, use permutation flag
-    CHI_TRIGONALBIPYRAMIDAL,  //!< trigonal bipyramidal, use permutation flag
-    CHI_OCTAHEDRAL            //!< octahedral, use permutation flag
-  } ChiralType;
-
-  enum class ValenceType : std::uint8_t {
-    IMPLICIT = 0,
-    EXPLICIT
+  enum ChiralType {
+    //!< chirality that hasn't been specified
+    CHI_UNSPECIFIED = AtomEnums::ChiralType::CHI_UNSPECIFIED,
+    //!< tetrahedral: clockwise rotation (SMILES \@\@)
+    CHI_TETRAHEDRAL_CW = AtomEnums::ChiralType::CHI_TETRAHEDRAL_CW,
+    //!< tetrahedral: counter-clockwise rotation (SMILES \@)
+    CHI_TETRAHEDRAL_CCW = AtomEnums::ChiralType::CHI_TETRAHEDRAL_CCW,
+    //!< some unrecognized type of chirality
+    CHI_OTHER = AtomEnums::ChiralType::CHI_OTHER,
+    //!< tetrahedral, use permutation flag
+    CHI_TETRAHEDRAL = AtomEnums::ChiralType::CHI_TETRAHEDRAL,
+    //!< allene, use permutation flag
+    CHI_ALLENE = AtomEnums::ChiralType::CHI_ALLENE,
+    //!< square planar, use permutation flag
+    CHI_SQUAREPLANAR = AtomEnums::ChiralType::CHI_SQUAREPLANAR,
+    //!< trigonal bipyramidal, use permutation flag
+    CHI_TRIGONALBIPYRAMIDAL = AtomEnums::ChiralType::CHI_TRIGONALBIPYRAMIDAL,
+    //!< octahedral, use permutation flag
+    CHI_OCTAHEDRAL = AtomEnums::ChiralType::CHI_OCTAHEDRAL
   };
+
+  // A "using" statement works for ValenceType, because it's an enum class,
+  // so needs ValenceType::IMPLICIT instead of just IMPLICIT, for example.
+  using ValenceType = AtomData::ValenceType;
 
   Atom();
   //! construct an Atom with a particular atomic number
@@ -123,8 +158,12 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   Atom &operator=(const Atom &other);
   // NOTE: the move methods are somewhat fraught for atoms associated with
   // molecules since the molecule will still be pointing to the original object
-  Atom(Atom &&other) = default;
-  Atom &operator=(Atom &&other) = default;
+  Atom(Atom && other);
+  Atom& operator=(Atom&& other);
+
+ private:
+  void initFromOther(const Atom &other, bool preserveProps = false);
+ public:
 
   virtual ~Atom();
 
@@ -134,26 +173,58 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   */
   virtual Atom *copy() const;
 
+  //! makes a copy of this Atom and returns a pointer to it.
+  //! FIXME: Should this be private or deleted?
+  /*!
+    <b>Note:</b> the caller is responsible for <tt>delete</tt>ing the result
+  */
+  //virtual Atom *copy() const;
+
   //! returns our atomic number
-  int getAtomicNum() const { return d_atomicNum; }
+  int getAtomicNum() const;
   //! sets our atomic number
-  void setAtomicNum(int newNum) { d_atomicNum = newNum; }
+  void setAtomicNum(int newNum);
 
   //! returns our symbol (determined by our atomic number)
   std::string getSymbol() const;
 
   //! returns whether or not this instance belongs to a molecule
-  bool hasOwningMol() const { return dp_mol != nullptr; }
+  bool hasOwningMol() const { return dp_owningMol != nullptr; }
 
   //! returns a reference to the ROMol that owns this instance
-  ROMol &getOwningMol() const {
-    PRECONDITION(dp_mol, "no owner");
-    return *dp_mol;
+  ROMol &getOwningMol() const;
+
+  //! returns a reference to the RDMol that owns this instance
+  const RDMol &getRDMol() const {
+    PRECONDITION(dp_owningMol, "no owner");
+    return *dp_owningMol;
   }
+  //! overload
+  RDMol &getRDMol() {
+    PRECONDITION(dp_owningMol, "no owner");
+    return *dp_owningMol;
+  }
+
+ protected:
+  //! returns a reference to the RDMol that contains the data for this atom,
+  //! for internal use only
+  const RDMol &getDataRDMol() const {
+    return *dp_dataMol;
+  }
+  //! overload
+  RDMol &getDataRDMol() {
+    return *dp_dataMol;
+  }
+  friend RDKIT_GRAPHMOL_EXPORT int getAtomRLabel(const Atom *atom);
+  friend std::string getAtomStringProp(const Atom *atom, const PropToken &token);
+  friend void setAtomStringProp(Atom *atom, const PropToken &token,
+                                const std::string &value);
+ public:
 
   //! returns our index within the ROMol
   unsigned int getIdx() const { return d_index; }
   //! sets our index within the ROMol
+  //! FIXME: Should this be private or deleted?
   /*!
     <b>Notes:</b>
       - this makes no sense if we do not have an owning molecule
@@ -161,10 +232,12 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   */
   void setIdx(unsigned int index) { d_index = index; }
   //! overload
+  //! FIXME: Should this be private or deleted?
   template <class U>
   void setIdx(const U index) {
     setIdx(rdcast<unsigned int>(index));
   }
+
   //! returns the explicit degree of the Atom (number of bonded
   //!   neighbors in the graph)
   unsigned int getDegree() const;
@@ -188,38 +261,40 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   unsigned int getValence(ValenceType which) const;
 
   //! returns the explicit valence (including Hs) of this atom
-  [[deprecated("please use getValence(true)")]] int getExplicitValence() const;
+  [[deprecated("please use getValence(ValenceType::EXPLICIT)")]]
+  int getExplicitValence() const;
 
   //! returns the implicit valence for this Atom
-  [[deprecated("please use getValence(false)")]] int getImplicitValence() const;
+  [[deprecated("please use getValence(ValenceType::IMPLICIT)")]]
+  int getImplicitValence() const;
 
   //! returns whether the atom has a valency violation or not
   bool hasValenceViolation() const;
 
   //! returns the number of radical electrons for this Atom
-  unsigned int getNumRadicalElectrons() const { return d_numRadicalElectrons; }
-  void setNumRadicalElectrons(unsigned int num) { d_numRadicalElectrons = num; }
+  unsigned int getNumRadicalElectrons() const;
+  void setNumRadicalElectrons(unsigned int num);
 
   //! returns the formal charge of this atom
-  int getFormalCharge() const { return d_formalCharge; }
+  int getFormalCharge() const;
   //! set's the formal charge of this atom
-  void setFormalCharge(int what) { d_formalCharge = what; }
+  void setFormalCharge(int what);
 
   //! \brief sets our \c noImplicit flag, indicating whether or not
   //!  we are allowed to have implicit Hs
-  void setNoImplicit(bool what) { df_noImplicit = what; }
+  void setNoImplicit(bool what);
   //! returns the \c noImplicit flag
-  bool getNoImplicit() const { return df_noImplicit; }
+  bool getNoImplicit() const;
 
   //! sets our number of explicit Hs
-  void setNumExplicitHs(unsigned int what) { d_numExplicitHs = what; }
+  void setNumExplicitHs(unsigned int what);
   //! returns our number of explicit Hs
-  unsigned int getNumExplicitHs() const { return d_numExplicitHs; }
+  unsigned int getNumExplicitHs() const;
 
   //! sets our \c isAromatic flag, indicating whether or not we are aromatic
-  void setIsAromatic(bool what) { df_isAromatic = what; }
+  void setIsAromatic(bool what);
   //! returns our \c isAromatic flag
-  bool getIsAromatic() const { return df_isAromatic; }
+  bool getIsAromatic() const;
 
   //! returns our mass
   double getMass() const;
@@ -227,23 +302,19 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   //! sets our isotope number
   void setIsotope(unsigned int what);
   //! returns our isotope number
-  unsigned int getIsotope() const { return d_isotope; }
+  unsigned int getIsotope() const;
 
   //! sets our \c chiralTag
-  void setChiralTag(ChiralType what) { d_chiralTag = what; }
+  void setChiralTag(ChiralType what);
   //! inverts our \c chiralTag, returns whether or not a change was made
   bool invertChirality();
   //! returns our \c chiralTag
-  ChiralType getChiralTag() const {
-    return static_cast<ChiralType>(d_chiralTag);
-  }
+  ChiralType getChiralTag() const;
 
   //! sets our hybridization
-  void setHybridization(HybridizationType what) { d_hybrid = what; }
+  void setHybridization(HybridizationType what);
   //! returns our hybridization
-  HybridizationType getHybridization() const {
-    return static_cast<HybridizationType>(d_hybrid);
-  }
+  HybridizationType getHybridization() const;
 
   // ------------------------------------
   // Some words of explanation before getting down into
@@ -358,71 +429,183 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   */
   int calcImplicitValence(bool strict = true);
 
-  AtomMonomerInfo *getMonomerInfo() { return dp_monomerInfo; }
-  const AtomMonomerInfo *getMonomerInfo() const { return dp_monomerInfo; }
+  AtomMonomerInfo *getMonomerInfo();
+  const AtomMonomerInfo *getMonomerInfo() const;
   //! takes ownership of the pointer
   void setMonomerInfo(AtomMonomerInfo *info);
 
   //! Set the atom map Number of the atom
-  void setAtomMapNum(int mapno, bool strict = true) {
-    PRECONDITION(
-        !strict || (mapno >= 0 && mapno < 1000),
-        "atom map number out of range [0..1000], use strict=false to override");
-    if (mapno) {
-      setProp(common_properties::molAtomMapNumber, mapno);
-    } else if (hasProp(common_properties::molAtomMapNumber)) {
-      clearProp(common_properties::molAtomMapNumber);
-    }
-  }
+  void setAtomMapNum(int mapno, bool strict = true);
   //! Gets the atom map Number of the atom, if no atom map exists, 0 is
   //! returned.
-  int getAtomMapNum() const {
-    int mapno = 0;
-    getPropIfPresent(common_properties::molAtomMapNumber, mapno);
-    return mapno;
-  }
+  int getAtomMapNum() const;
 
   //! Flags that can be used by to store information on atoms.
   //!   These are not serialized and should be treated as temporary values.
   //!   No guarantees are made about preserving these flags across library
   //!   calls.
-  void setFlags(std::uint64_t flags) { d_flags = flags; }
-  std::uint64_t getFlags() const { return d_flags; }
-  std::uint64_t &getFlags() { return d_flags; }
+  void setFlags(std::uint64_t flags);
+  std::uint64_t getFlags() const;
+  std::uint64_t &getFlags();
 
+  //! returns a list with the names of our \c properties
+  STR_VECT getPropList(bool includePrivate = true,
+                       bool includeComputed = true) const;
+
+  //! sets a \c property value
+  /*!
+    \param key the name under which the \c property should be stored.
+    If a \c property is already stored under this name, it will be
+    replaced.
+    \param val the value to be stored
+    \param computed (optional) allows the \c property to be flagged
+    \c computed.
+
+    <b>Notes:</b>
+    - This must be allowed on a const Atom for backward compatibility,
+    but DO NOT call this while this atom might be being modified in another
+    thread, NOR while any properties on the same molecule might be being read or
+    written.
+  */
+  //! \overload
+  template <typename T>
+  void setProp(const std::string &key, T val, bool computed = false) const {
+    // Continue support for mixed-type cases like:
+    // atom0->setProp("a", 1.7); atom1->setProp("a", 123);
+    // If there is a type mismatch, this option will convert to RDValue
+    dp_dataMol->setSingleAtomProp(PropToken(key), getIdx(), val, computed, true);
+  }
+  void setProp(const std::string &key, const char *val,
+               bool computed = false) const {
+    std::string sv(val);
+    // Continue support for mixed-type cases like:
+    // atom0->setProp("a", 1.7); atom1->setProp("a", 123);
+    // If there is a type mismatch, this option will convert to RDValue
+    dp_dataMol->setSingleAtomProp(PropToken(key), getIdx(), sv, computed, true);
+  }
+
+  //! allows retrieval of a particular property value
+  /*!
+    \param key the name under which the \c property should be stored.
+    If a \c property is already stored under this name, it will be
+    replaced.
+    \param res a reference to the storage location for the value.
+
+    <b>Notes:</b>
+    - if no \c property with name \c key exists, a KeyErrorException will be
+    thrown.
+    - the \c boost::lexical_cast machinery is used to attempt type
+    conversions.
+    If this fails, a \c boost::bad_lexical_cast exception will be thrown.
+  */
+  //! \overload
+  template <typename T>
+  void getProp(const std::string &key, T &res) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        dp_dataMol->getComputedPropList(res, RDMol::Scope::ATOM, getIdx());
+        return;
+      }
+    }
+    bool found = dp_dataMol->getAtomPropIfPresent(token, getIdx(), res);
+    if (!found) {
+      throw KeyErrorException(key);
+    }
+  }
+
+  //! \overload
+  template <typename T>
+  T getProp(const std::string &key) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        STR_VECT res;
+        dp_dataMol->getComputedPropList(res, RDMol::Scope::ATOM, getIdx());
+        return res;
+      }
+    }
+    return dp_dataMol->getAtomProp<T>(token, getIdx());
+  }
+
+  //! returns whether or not we have a \c property with name \c key
+  //!  and assigns the value if we do
+  //! \overload
+  template <typename T>
+  bool getPropIfPresent(const std::string &key, T &res) const {
+    PropToken token(key);
+    if constexpr (std::is_same_v<T, STR_VECT>) {
+      if (token == detail::computedPropNameToken) {
+        dp_dataMol->getComputedPropList(res, RDMol::Scope::ATOM, getIdx());
+        return true;
+      }
+    }
+    return dp_dataMol->getAtomPropIfPresent(token, getIdx(), res);
+  }
+
+  //! \overload
+  bool hasProp(const std::string &key) const;
+
+  //! clears the value of a \c property
+  /*!
+    <b>Notes:</b>
+    - if no \c property with name \c key exists, a KeyErrorException
+    will be thrown.
+    - if the \c property is marked as \c computed, it will also be removed
+    from our list of \c computedProperties
+
+    <b>Notes:</b>
+    - This must be allowed on a const Atom for backward compatibility,
+    but DO NOT call this while this atom might be being modified in another
+    thread, NOR while any properties on the same molecule might be being read or
+    written.
+  */
+  //! \overload
+  void clearProp(const std::string &key) const;
+
+  //! clears all of our \c computed \c properties
+  /*!
+    <b>Notes:</b>
+    - This must be allowed on a const Atom for backward compatibility,
+    but DO NOT call this while this atom might be being modified in another
+    thread, NOR while any properties on the same molecule might be being read or
+    written.
+  */
+  void clearComputedProps() const;
+
+  //! update the properties from another
+  /*
+    \param source    Source to update the properties from
+    \param preserve  Existing If true keep existing data, else override from
+    the source
+  */
+  void updateProps(const Atom& source, bool preserveExisting = false);
+  void updateProps(const RDProps& source, bool preserveExisting = false);
+
+  //! Clears all properties of this Atom, but leaves everything else
+  void clear();
+  [[noreturn]] Dict &getDict() {
+    raiseNonImplementedFunction("GetDict");
+  }
+  [[noreturn]] const Dict &getDict() const {
+    raiseNonImplementedFunction("GetDict");
+  }
  protected:
   //! sets our owning molecule
   void setOwningMol(ROMol *other);
-  //! sets our owning molecule
+  //! \overload
   void setOwningMol(ROMol &other) { setOwningMol(&other); }
+  //! \overload
+  void setOwningMol(RDMol* other);
 
-  bool df_isAromatic;
-  bool df_noImplicit;
-  std::uint8_t d_numExplicitHs;
-  std::int8_t d_formalCharge;
-  std::uint8_t d_atomicNum;
-  // NOTE that these cannot be signed, they are calculated using
-  // a lazy scheme and are initialized to -1 to indicate that the
-  // calculation has not yet been done.
-  std::int8_t d_implicitValence, d_explicitValence;
-  std::uint8_t d_numRadicalElectrons;
-  std::uint8_t d_chiralTag;
-  std::uint8_t d_hybrid;
-
-  std::uint16_t d_isotope;
-  atomindex_t d_index;
-  std::uint64_t d_flags = 0ul;
-
-  ROMol *dp_mol;
-  AtomMonomerInfo *dp_monomerInfo;
-  void initAtom();
-  void initFromOther(const Atom &other);
+  int getExplicitValencePrivate() const;
+  int getImplicitValencePrivate() const;
 };
 
 //! Set the atom's MDL integer RLabel
 ///  Setting to 0 clears the rlabel.  Rlabel must be in the range [0..99]
-RDKIT_GRAPHMOL_EXPORT void setAtomRLabel(Atom *atm, int rlabel);
-RDKIT_GRAPHMOL_EXPORT int getAtomRLabel(const Atom *atm);
+RDKIT_GRAPHMOL_EXPORT void setAtomRLabel(Atom *atom, int rlabel);
+RDKIT_GRAPHMOL_EXPORT int getAtomRLabel(const Atom *atom);
 
 //! Set the atom's MDL atom alias
 ///  Setting to an empty string clears the alias
@@ -441,10 +624,11 @@ RDKIT_GRAPHMOL_EXPORT void setSupplementalSmilesLabel(Atom *atom,
                                                       const std::string &label);
 RDKIT_GRAPHMOL_EXPORT std::string getSupplementalSmilesLabel(const Atom *atom);
 
-//! returns true if the atom is to the left of C
-RDKIT_GRAPHMOL_EXPORT bool isEarlyAtom(int atomicNum);
 //! returns true if the atom is aromatic or has an aromatic bond
 RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(const Atom &atom);
+//! overload
+RDKIT_GRAPHMOL_EXPORT bool isAromaticAtom(ConstRDMolAtom atom);
+
 //! returns the number of pi electrons on the atom
 RDKIT_GRAPHMOL_EXPORT unsigned int numPiElectrons(const Atom &atom);
 };  // namespace RDKit

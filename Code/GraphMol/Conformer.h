@@ -11,6 +11,8 @@
 #ifndef _RD_CONFORMER_H
 #define _RD_CONFORMER_H
 
+#include <GraphMol/RDMol.h>
+
 #include <Geometry/point.h>
 #include <RDGeneral/types.h>
 #include <boost/smart_ptr.hpp>
@@ -46,6 +48,8 @@ class RDKIT_GRAPHMOL_EXPORT ConformerException : public std::exception {
 class RDKIT_GRAPHMOL_EXPORT Conformer : public RDProps {
  public:
   friend class ROMol;
+  // CompatibilityData needs private access for setOwningMol
+  friend struct RDMol::CompatibilityData;
 
   //! Constructor
   Conformer() = default;
