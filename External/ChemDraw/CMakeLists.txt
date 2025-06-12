@@ -11,8 +11,8 @@ include(CMakePrintHelpers)
 
 if(RDK_BUILD_CHEMDRAW_SUPPORT)
   if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/chemdraw/CDXIO.h" )
-    set(RELEASE_NO "1.0.8")
-    set(MD5 "21bd4fe00d96c4692cdd7aba1b9550ed")
+    set(RELEASE_NO "1.0.9")
+    set(MD5 "a41bb1abb2df2082274b74dccee19fb4")
     downloadAndCheckMD5("https://codeload.github.com/Glysade/chemdraw/tar.gz/refs/tags/v${RELEASE_NO}"
               "${CMAKE_CURRENT_SOURCE_DIR}/chemdraw-v${RELEASE_NO}.tar.gz" ${MD5})
 	      
@@ -38,17 +38,17 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
 
    # we don't want to install expat, this is statically linked in to the ChemDraw lib
    #  however, we don't want to install it so use the undocumented EXCLUDE_FROM_ALL
-   #     set(CMAKE_SKIP_INSTALL_RULES TRUE) doesn't apparently work
    add_subdirectory(chemdraw/expatpp EXCLUDE_FROM_ALL)
-   #     set(CMAKE_SKIP_INSTALL_RULES FALSE)
 
-   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/expatpp/expatpp-code-r6-trunk/src_pp)
-
+   include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/expatpp/expatpp-code-r6-trunk/src_pp
+    ${CMAKE_CURRENT_SOURCE_DIR}/chemdraw/expatpp/expatpp-code-r6-trunk/expat/lib)
+   
   # it's way easier to use the RDKIT machinery to build and link so let's do that
   file(GLOB CHEMDRAW_SOURCE "chemdraw/chemdraw/*.cpp")
   rdkit_library(ChemDraw ${CHEMDRAW_SOURCE} SHARED)
   target_compile_definitions(ChemDraw PRIVATE CHEMDRAW_BUILD)
-  target_link_libraries(ChemDraw PUBLIC expat)
+  target_link_libraries(ChemDraw PRIVATE expat)
 
   # export all the symbols for ChemDraw on MSVC
   if((MSVC AND RDK_INSTALL_DLLS_MSVC) OR ((NOT MSVC) AND WIN32))
