@@ -3272,3 +3272,20 @@ TEST_CASE("ZOB cx smiles extension", "[smiles][cxsmiles]") {
     REQUIRE(MolToCXSmiles(*m) == smi);
   }
 }
+
+TEST_CASE("github #8471: fail on bad characters in SMILES") {
+  SECTION("as reported") {
+    v2::SmilesParse::SmilesParserParams sp;
+    std::vector<std::string> badSmiles = {
+        "CCl₂O",
+        "CCl₂OZr"
+        "₂CClO",
+    };
+    for (const auto &smi : badSmiles) {
+      auto m = v2::SmilesParse::MolFromSmiles(smi, sp);
+      REQUIRE(!m);
+      m = v2::SmilesParse::MolFromSmarts(smi);
+      REQUIRE(!m);
+    }
+  }
+}

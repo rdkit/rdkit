@@ -367,7 +367,7 @@ s		    {	yylval->atom = new Atom( 16 );
 \n		return 0;
 
 <<EOF>>		{ return EOS_TOKEN; }
-.		return yytext[0];
+.		return BAD_CHARACTER;
 
 %%
 
