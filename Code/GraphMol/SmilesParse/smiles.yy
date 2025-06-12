@@ -106,6 +106,7 @@ yysmiles_error( const char *input,
 %type <bond> bondd
 %type <ival> nonzero_number number ring_number digit branch_open_token
 %token ATOM_OPEN_TOKEN ATOM_CLOSE_TOKEN
+%token BAD_CHARACTER
 %token EOS_TOKEN
 
 %destructor { delete $$; } <atom>
@@ -136,6 +137,11 @@ START_MOL mol {
   YYABORT;
 }
 | START_BOND {
+  YYABORT;
+}
+| meta_start BAD_CHARACTER {
+  yyerrok;
+  yyErrorCleanup(molList);
   YYABORT;
 }
 | meta_start error EOS_TOKEN{

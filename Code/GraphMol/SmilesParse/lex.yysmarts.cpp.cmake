@@ -1,6 +1,6 @@
-#line 1 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 1 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
-#line 3 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 3 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 #define  YY_INT_ALIGNED short int
 
@@ -794,8 +794,8 @@ static const flex_int16_t yy_chk[363] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "smarts.ll"
-#line 9 "smarts.ll"
+#line 1 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
+#line 9 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 
 //
 //  Copyright (C) 2003-2018 Greg Landrum and Rational Discovery LLC
@@ -873,9 +873,9 @@ size_t setup_smarts_string(const std::string &text,yyscan_t yyscanner){
 
 }
 
-#line 876 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 876 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
-#line 878 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 878 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 #define INITIAL 0
 #define IN_ATOM_STATE 1
@@ -1158,11 +1158,11 @@ YY_DECL
 		}
 
 	{
-#line 91 "smarts.ll"
+#line 91 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 
 
 
-#line 95 "smarts.ll"
+#line 95 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
   if (start_token)
     {
       int t = start_token;
@@ -1171,7 +1171,7 @@ YY_DECL
     }
 
 
-#line 1174 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 1174 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1226,252 +1226,252 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 103 "smarts.ll"
+#line 103 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_TETRAHEDRAL; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 104 "smarts.ll"
+#line 104 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_ALLENE; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 105 "smarts.ll"
+#line 105 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_SQUAREPLANAR; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 106 "smarts.ll"
+#line 106 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_TRIGONALBIPYRAMIDAL; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 107 "smarts.ll"
+#line 107 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->chiraltype = Atom::ChiralType::CHI_OCTAHEDRAL; return CHI_CLASS_TOKEN; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 109 "smarts.ll"
+#line 109 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return AT_TOKEN; }
 	YY_BREAK
 case 7:
-#line 113 "smarts.ll"
+#line 113 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 8:
-#line 114 "smarts.ll"
+#line 114 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 9:
-#line 115 "smarts.ll"
+#line 115 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 10:
-#line 116 "smarts.ll"
+#line 116 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 11:
-#line 117 "smarts.ll"
+#line 117 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 12:
-#line 118 "smarts.ll"
+#line 118 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 13:
-#line 119 "smarts.ll"
+#line 119 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 14:
-#line 120 "smarts.ll"
+#line 120 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 15:
-#line 121 "smarts.ll"
+#line 121 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 16:
-#line 122 "smarts.ll"
+#line 122 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 17:
-#line 123 "smarts.ll"
+#line 123 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 18:
-#line 124 "smarts.ll"
+#line 124 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 19:
-#line 125 "smarts.ll"
+#line 125 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 20:
-#line 126 "smarts.ll"
+#line 126 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 21:
-#line 127 "smarts.ll"
+#line 127 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 22:
-#line 128 "smarts.ll"
+#line 128 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 23:
-#line 129 "smarts.ll"
+#line 129 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 24:
-#line 130 "smarts.ll"
+#line 130 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 25:
-#line 131 "smarts.ll"
+#line 131 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 26:
-#line 132 "smarts.ll"
+#line 132 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 27:
-#line 133 "smarts.ll"
+#line 133 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 28:
-#line 134 "smarts.ll"
+#line 134 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 29:
-#line 135 "smarts.ll"
+#line 135 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 30:
-#line 136 "smarts.ll"
+#line 136 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 31:
-#line 137 "smarts.ll"
+#line 137 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 32:
-#line 138 "smarts.ll"
+#line 138 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 33:
-#line 139 "smarts.ll"
+#line 139 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 34:
-#line 140 "smarts.ll"
+#line 140 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 35:
-#line 141 "smarts.ll"
+#line 141 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 36:
-#line 142 "smarts.ll"
+#line 142 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 37:
-#line 143 "smarts.ll"
+#line 143 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 38:
-#line 144 "smarts.ll"
+#line 144 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 39:
-#line 145 "smarts.ll"
+#line 145 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 40:
-#line 146 "smarts.ll"
+#line 146 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 41:
-#line 147 "smarts.ll"
+#line 147 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 42:
-#line 148 "smarts.ll"
+#line 148 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 43:
-#line 149 "smarts.ll"
+#line 149 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 44:
-#line 150 "smarts.ll"
+#line 150 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 45:
-#line 151 "smarts.ll"
+#line 151 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 46:
-#line 152 "smarts.ll"
+#line 152 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 47:
-#line 153 "smarts.ll"
+#line 153 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 48:
-#line 154 "smarts.ll"
+#line 154 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 49:
-#line 155 "smarts.ll"
+#line 155 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 50:
-#line 156 "smarts.ll"
+#line 156 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 51:
-#line 157 "smarts.ll"
+#line 157 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 52:
-#line 158 "smarts.ll"
+#line 158 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 53:
-#line 159 "smarts.ll"
+#line 159 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 54:
-#line 160 "smarts.ll"
+#line 160 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 55:
-#line 161 "smarts.ll"
+#line 161 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 56:
-#line 162 "smarts.ll"
+#line 162 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 57:
-#line 163 "smarts.ll"
+#line 163 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 58:
-#line 164 "smarts.ll"
+#line 164 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 59:
-#line 165 "smarts.ll"
+#line 165 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 60:
-#line 166 "smarts.ll"
+#line 166 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 61:
-#line 167 "smarts.ll"
+#line 167 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 62:
-#line 168 "smarts.ll"
+#line 168 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 63:
-#line 169 "smarts.ll"
+#line 169 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 64:
-#line 170 "smarts.ll"
+#line 170 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 65:
-#line 171 "smarts.ll"
+#line 171 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 66:
-#line 172 "smarts.ll"
+#line 172 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 67:
-#line 173 "smarts.ll"
+#line 173 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 68:
-#line 174 "smarts.ll"
+#line 174 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 69:
-#line 175 "smarts.ll"
+#line 175 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 70:
-#line 176 "smarts.ll"
+#line 176 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 71:
-#line 177 "smarts.ll"
+#line 177 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 72:
-#line 178 "smarts.ll"
+#line 178 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 73:
-#line 179 "smarts.ll"
+#line 179 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 74:
-#line 180 "smarts.ll"
+#line 180 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 75:
-#line 181 "smarts.ll"
+#line 181 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 76:
-#line 182 "smarts.ll"
+#line 182 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 77:
-#line 183 "smarts.ll"
+#line 183 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 78:
-#line 184 "smarts.ll"
+#line 184 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 79:
-#line 185 "smarts.ll"
+#line 185 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 80:
-#line 186 "smarts.ll"
+#line 186 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 81:
-#line 187 "smarts.ll"
+#line 187 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 82:
-#line 188 "smarts.ll"
+#line 188 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 83:
-#line 189 "smarts.ll"
+#line 189 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 84:
-#line 190 "smarts.ll"
+#line 190 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 85:
-#line 191 "smarts.ll"
+#line 191 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 86:
-#line 192 "smarts.ll"
+#line 192 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 87:
-#line 193 "smarts.ll"
+#line 193 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 88:
-#line 194 "smarts.ll"
+#line 194 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 89:
-#line 195 "smarts.ll"
+#line 195 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 90:
-#line 196 "smarts.ll"
+#line 196 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 91:
-#line 197 "smarts.ll"
+#line 197 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 92:
-#line 198 "smarts.ll"
+#line 198 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 93:
-#line 199 "smarts.ll"
+#line 199 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 94:
-#line 200 "smarts.ll"
+#line 200 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 95:
-#line 201 "smarts.ll"
+#line 201 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 96:
-#line 202 "smarts.ll"
+#line 202 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 97:
-#line 203 "smarts.ll"
+#line 203 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 98:
-#line 204 "smarts.ll"
+#line 204 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 99:
-#line 205 "smarts.ll"
+#line 205 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 100:
-#line 206 "smarts.ll"
+#line 206 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 101:
-#line 207 "smarts.ll"
+#line 207 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 102:
-#line 208 "smarts.ll"
+#line 208 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 103:
-#line 209 "smarts.ll"
+#line 209 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 104:
-#line 210 "smarts.ll"
+#line 210 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 105:
-#line 211 "smarts.ll"
+#line 211 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 106:
-#line 212 "smarts.ll"
+#line 212 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 107:
-#line 213 "smarts.ll"
+#line 213 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 108:
-#line 214 "smarts.ll"
+#line 214 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 109:
-#line 215 "smarts.ll"
+#line 215 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 110:
-#line 216 "smarts.ll"
+#line 216 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 case 111:
 YY_RULE_SETUP
-#line 216 "smarts.ll"
+#line 216 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {   yylval->atom = new QueryAtom( PeriodicTable::getTable()->getAtomicNumber( yytext ) );
 				return ATOM_TOKEN;
 			}
 	YY_BREAK
 case 112:
 YY_RULE_SETUP
-#line 219 "smarts.ll"
+#line 219 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomExplicitDegreeQuery(1));
@@ -1480,7 +1480,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 113:
 YY_RULE_SETUP
-#line 224 "smarts.ll"
+#line 224 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomNonHydrogenDegreeQuery(1));
@@ -1489,7 +1489,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 114:
 YY_RULE_SETUP
-#line 230 "smarts.ll"
+#line 230 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomTotalDegreeQuery(1));
@@ -1498,7 +1498,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 115:
 YY_RULE_SETUP
-#line 236 "smarts.ll"
+#line 236 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHasRingBondQuery());
@@ -1507,7 +1507,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 116:
 YY_RULE_SETUP
-#line 242 "smarts.ll"
+#line 242 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomTotalValenceQuery(1));
@@ -1516,7 +1516,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 117:
 YY_RULE_SETUP
-#line 248 "smarts.ll"
+#line 248 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHasHeteroatomNbrsQuery());
@@ -1525,7 +1525,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 118:
 YY_RULE_SETUP
-#line 254 "smarts.ll"
+#line 254 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHasAliphaticHeteroatomNbrsQuery());
@@ -1534,7 +1534,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 119:
 YY_RULE_SETUP
-#line 260 "smarts.ll"
+#line 260 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
         yylval->atom->setQuery(makeAtomHasImplicitHQuery());
@@ -1543,7 +1543,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 120:
 YY_RULE_SETUP
-#line 266 "smarts.ll"
+#line 266 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(new AtomRingQuery(-1));
@@ -1552,7 +1552,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 121:
 YY_RULE_SETUP
-#line 272 "smarts.ll"
+#line 272 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomInRingQuery());
@@ -1561,112 +1561,112 @@ YY_RULE_SETUP
 	YY_BREAK
 case 122:
 YY_RULE_SETUP
-#line 278 "smarts.ll"
+#line 278 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  return H_TOKEN;  }
 	YY_BREAK
 case 123:
 YY_RULE_SETUP
-#line 281 "smarts.ll"
+#line 281 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 5;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 124:
 YY_RULE_SETUP
-#line 283 "smarts.ll"
+#line 283 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 6;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 125:
 YY_RULE_SETUP
-#line 285 "smarts.ll"
+#line 285 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 7;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 126:
 YY_RULE_SETUP
-#line 287 "smarts.ll"
+#line 287 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 8;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 127:
 YY_RULE_SETUP
-#line 289 "smarts.ll"
+#line 289 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 9;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 128:
 YY_RULE_SETUP
-#line 291 "smarts.ll"
+#line 291 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 15;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 129:
 YY_RULE_SETUP
-#line 293 "smarts.ll"
+#line 293 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 16;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 130:
 YY_RULE_SETUP
-#line 295 "smarts.ll"
+#line 295 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 17;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 131:
 YY_RULE_SETUP
-#line 297 "smarts.ll"
+#line 297 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 35;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 132:
 YY_RULE_SETUP
-#line 299 "smarts.ll"
+#line 299 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 53;  return ORGANIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 133:
 YY_RULE_SETUP
-#line 302 "smarts.ll"
+#line 302 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 5;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 134:
 YY_RULE_SETUP
-#line 304 "smarts.ll"
+#line 304 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 6;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 135:
 YY_RULE_SETUP
-#line 306 "smarts.ll"
+#line 306 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 7;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 136:
 YY_RULE_SETUP
-#line 308 "smarts.ll"
+#line 308 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 8;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 137:
 YY_RULE_SETUP
-#line 310 "smarts.ll"
+#line 310 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 15;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 138:
 YY_RULE_SETUP
-#line 312 "smarts.ll"
+#line 312 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 16;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 139:
 YY_RULE_SETUP
-#line 314 "smarts.ll"
+#line 314 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 14;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 140:
 YY_RULE_SETUP
-#line 316 "smarts.ll"
+#line 316 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 33;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 141:
 YY_RULE_SETUP
-#line 318 "smarts.ll"
+#line 318 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 34;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 142:
 YY_RULE_SETUP
-#line 320 "smarts.ll"
+#line 320 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {  yylval->ival = 52;  return AROMATIC_ATOM_TOKEN;  }
 	YY_BREAK
 case 143:
 YY_RULE_SETUP
-#line 324 "smarts.ll"
+#line 324 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomNullQuery());
@@ -1675,7 +1675,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 144:
 YY_RULE_SETUP
-#line 330 "smarts.ll"
+#line 330 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomAromaticQuery());
@@ -1685,7 +1685,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 145:
 YY_RULE_SETUP
-#line 337 "smarts.ll"
+#line 337 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomAliphaticQuery());
@@ -1694,43 +1694,43 @@ YY_RULE_SETUP
 	YY_BREAK
 case 146:
 YY_RULE_SETUP
-#line 344 "smarts.ll"
+#line 344 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return COLON_TOKEN; }
 	YY_BREAK
 case 147:
 YY_RULE_SETUP
-#line 346 "smarts.ll"
+#line 346 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return UNDERSCORE_TOKEN; }
 	YY_BREAK
 case 148:
 YY_RULE_SETUP
-#line 348 "smarts.ll"
+#line 348 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return HASH_TOKEN; }
 	YY_BREAK
 case 149:
 YY_RULE_SETUP
-#line 350 "smarts.ll"
+#line 350 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->bond = new QueryBond(Bond::DOUBLE);
 	yylval->bond->setQuery(makeBondOrderEqualsQuery(Bond::DOUBLE));
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 150:
 YY_RULE_SETUP
-#line 354 "smarts.ll"
+#line 354 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->bond = new QueryBond();
 	yylval->bond->setQuery(makeBondNullQuery());
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 151:
 YY_RULE_SETUP
-#line 358 "smarts.ll"
+#line 358 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->bond = new QueryBond(Bond::QUADRUPLE);
 	yylval->bond->setQuery(makeBondOrderEqualsQuery(Bond::QUADRUPLE));
     return BOND_TOKEN; }
 	YY_BREAK
 case 152:
 YY_RULE_SETUP
-#line 362 "smarts.ll"
+#line 362 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDDOWNRIGHT);
 	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());
@@ -1738,15 +1738,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case 153:
 YY_RULE_SETUP
-#line 366 "smarts.ll"
+#line 367 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->bond = new QueryBond(Bond::SINGLE);
 	yylval->bond->setBondDir(Bond::ENDUPRIGHT);
-	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());
+	yylval->bond->setQuery(makeSingleOrAromaticBondQuery());	
 	return BOND_TOKEN;  }
 	YY_BREAK
 case 154:
 YY_RULE_SETUP
-#line 370 "smarts.ll"
+#line 372 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
     yylval->bond = new QueryBond(Bond::DATIVER);
     return BOND_TOKEN;
@@ -1754,7 +1754,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 155:
 YY_RULE_SETUP
-#line 374 "smarts.ll"
+#line 376 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
     yylval->bond = new QueryBond(Bond::DATIVEL);
     return BOND_TOKEN;
@@ -1762,57 +1762,57 @@ YY_RULE_SETUP
 	YY_BREAK
 case 156:
 YY_RULE_SETUP
-#line 379 "smarts.ll"
+#line 381 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return MINUS_TOKEN; }
 	YY_BREAK
 case 157:
 YY_RULE_SETUP
-#line 381 "smarts.ll"
+#line 383 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return PLUS_TOKEN; }
 	YY_BREAK
 case 158:
 YY_RULE_SETUP
-#line 383 "smarts.ll"
+#line 385 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yy_push_state(IN_RECURSION_STATE,yyscanner); return BEGIN_RECURSE; }
 	YY_BREAK
 case 159:
 YY_RULE_SETUP
-#line 385 "smarts.ll"
+#line 387 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yy_push_state(IN_BRANCH_STATE,yyscanner); return GROUP_OPEN_TOKEN; }
 	YY_BREAK
 case 160:
 YY_RULE_SETUP
-#line 386 "smarts.ll"
+#line 388 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yy_pop_state(yyscanner); return GROUP_CLOSE_TOKEN; }
 	YY_BREAK
 case 161:
 YY_RULE_SETUP
-#line 387 "smarts.ll"
+#line 389 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yy_pop_state(yyscanner); return END_RECURSE; }
 	YY_BREAK
 case 162:
 YY_RULE_SETUP
-#line 389 "smarts.ll"
+#line 391 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return RANGE_OPEN_TOKEN; }
 	YY_BREAK
 case 163:
 YY_RULE_SETUP
-#line 390 "smarts.ll"
+#line 392 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return RANGE_CLOSE_TOKEN; }
 	YY_BREAK
 case 164:
 YY_RULE_SETUP
-#line 394 "smarts.ll"
+#line 396 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yy_push_state(IN_ATOM_STATE,yyscanner); return ATOM_OPEN_TOKEN; }
 	YY_BREAK
 case 165:
 YY_RULE_SETUP
-#line 395 "smarts.ll"
+#line 397 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yy_pop_state(yyscanner); return ATOM_CLOSE_TOKEN; }
 	YY_BREAK
 case 166:
 YY_RULE_SETUP
-#line 396 "smarts.ll"
+#line 398 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { /* FIX: ???
                            This rule is here because otherwise recursive SMARTS queries like:
 	                   [$(C(=O)[O,N])] lex improperly (no ATOM_CLOSE token is returned).
@@ -1824,47 +1824,47 @@ YY_RULE_SETUP
 	YY_BREAK
 case 167:
 YY_RULE_SETUP
-#line 405 "smarts.ll"
+#line 407 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return SEPARATOR_TOKEN; }
 	YY_BREAK
 case 168:
 YY_RULE_SETUP
-#line 407 "smarts.ll"
+#line 409 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return PERCENT_TOKEN; }
 	YY_BREAK
 case 169:
 YY_RULE_SETUP
-#line 409 "smarts.ll"
+#line 411 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->ival = 0;  return ZERO_TOKEN; }
 	YY_BREAK
 case 170:
 YY_RULE_SETUP
-#line 410 "smarts.ll"
+#line 412 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { yylval->ival = yytext[0]-'0';  return NONZERO_DIGIT_TOKEN; }
 	YY_BREAK
 case 171:
 YY_RULE_SETUP
-#line 412 "smarts.ll"
+#line 414 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return NOT_TOKEN; }
 	YY_BREAK
 case 172:
 YY_RULE_SETUP
-#line 414 "smarts.ll"
+#line 416 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return SEMI_TOKEN; }
 	YY_BREAK
 case 173:
 YY_RULE_SETUP
-#line 416 "smarts.ll"
+#line 418 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return AND_TOKEN; }
 	YY_BREAK
 case 174:
 YY_RULE_SETUP
-#line 418 "smarts.ll"
+#line 420 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return OR_TOKEN; }
 	YY_BREAK
 case 175:
 YY_RULE_SETUP
-#line 420 "smarts.ll"
+#line 422 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::S));
@@ -1873,7 +1873,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 176:
 YY_RULE_SETUP
-#line 426 "smarts.ll"
+#line 428 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP));
@@ -1882,7 +1882,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 177:
 YY_RULE_SETUP
-#line 432 "smarts.ll"
+#line 434 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP2));
@@ -1891,7 +1891,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 178:
 YY_RULE_SETUP
-#line 438 "smarts.ll"
+#line 440 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3));
@@ -1900,7 +1900,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 179:
 YY_RULE_SETUP
-#line 443 "smarts.ll"
+#line 445 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3D));
@@ -1909,7 +1909,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 180:
 YY_RULE_SETUP
-#line 448 "smarts.ll"
+#line 450 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 {
 	yylval->atom = new QueryAtom();
 	yylval->atom->setQuery(makeAtomHybridizationQuery(Atom::SP3D2));
@@ -1919,27 +1919,27 @@ YY_RULE_SETUP
 case 181:
 /* rule 181 can match eol */
 YY_RULE_SETUP
-#line 453 "smarts.ll"
+#line 455 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 return EOS_TOKEN;
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(IN_ATOM_STATE):
 case YY_STATE_EOF(IN_BRANCH_STATE):
 case YY_STATE_EOF(IN_RECURSION_STATE):
-#line 455 "smarts.ll"
+#line 457 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 { return EOS_TOKEN; }
 	YY_BREAK
 case 182:
 YY_RULE_SETUP
-#line 456 "smarts.ll"
-return yytext[0];
+#line 458 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
+return BAD_CHARACTER;
 	YY_BREAK
 case 183:
 YY_RULE_SETUP
-#line 458 "smarts.ll"
+#line 460 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1940 "/localhome/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
+#line 1942 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/lex.yysmarts.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2154,7 +2154,7 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 				}
 			else
 				/* Can't grow it, we don't own it. */
-				b->yy_ch_buf = nullptr;
+				b->yy_ch_buf = NULL;
 
 			if ( ! b->yy_ch_buf )
 				YY_FATAL_ERROR(
@@ -2499,7 +2499,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
 		return;
 
 	if ( b == YY_CURRENT_BUFFER ) /* Not sure if we should pop here. */
-		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) nullptr;
+		YY_CURRENT_BUFFER_LVALUE = (YY_BUFFER_STATE) 0;
 
 	if ( b->yy_is_our_buffer )
 		yyfree( (void *) b->yy_ch_buf , yyscanner );
@@ -2573,7 +2573,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
 void yypush_buffer_state (YY_BUFFER_STATE new_buffer , yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
-	if (new_buffer == nullptr)
+	if (new_buffer == NULL)
 		return;
 
 	yyensure_buffer_stack(yyscanner);
@@ -2608,7 +2608,7 @@ void yypop_buffer_state (yyscan_t yyscanner)
 		return;
 
 	yy_delete_buffer(YY_CURRENT_BUFFER , yyscanner);
-	YY_CURRENT_BUFFER_LVALUE = nullptr;
+	YY_CURRENT_BUFFER_LVALUE = NULL;
 	if (yyg->yy_buffer_stack_top > 0)
 		--yyg->yy_buffer_stack_top;
 
@@ -2679,7 +2679,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscann
 	     base[size-2] != YY_END_OF_BUFFER_CHAR ||
 	     base[size-1] != YY_END_OF_BUFFER_CHAR )
 		/* They forgot to leave room for the EOB's. */
-		return nullptr;
+		return NULL;
 
 	b = (YY_BUFFER_STATE) yyalloc( sizeof( struct yy_buffer_state ) , yyscanner );
 	if ( ! b )
@@ -2688,7 +2688,7 @@ YY_BUFFER_STATE yy_scan_buffer  (char * base, yy_size_t  size , yyscan_t yyscann
 	b->yy_buf_size = (int) (size - 2);	/* "- 2" to take care of EOB's */
 	b->yy_buf_pos = b->yy_ch_buf = base;
 	b->yy_is_our_buffer = 0;
-	b->yy_input_file = nullptr;
+	b->yy_input_file = NULL;
 	b->yy_n_chars = b->yy_buf_size;
 	b->yy_is_interactive = 0;
 	b->yy_at_bol = 1;
@@ -2987,14 +2987,14 @@ void yyset_lval (YYSTYPE *  yylval_param , yyscan_t yyscanner)
  */
 int yylex_init(yyscan_t* ptr_yy_globals)
 {
-    if (ptr_yy_globals == nullptr){
+    if (ptr_yy_globals == NULL){
         errno = EINVAL;
         return 1;
     }
 
-    *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), nullptr );
+    *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), NULL );
 
-    if (*ptr_yy_globals == nullptr){
+    if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
@@ -3018,14 +3018,14 @@ int yylex_init_extra( YY_EXTRA_TYPE yy_user_defined, yyscan_t* ptr_yy_globals )
 
     yyset_extra (yy_user_defined, &dummy_yyguts);
 
-    if (ptr_yy_globals == nullptr){
+    if (ptr_yy_globals == NULL){
         errno = EINVAL;
         return 1;
     }
 
     *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
 
-    if (*ptr_yy_globals == nullptr){
+    if (*ptr_yy_globals == NULL){
         errno = ENOMEM;
         return 1;
     }
@@ -3046,24 +3046,24 @@ static int yy_init_globals (yyscan_t yyscanner)
      * This function is called from yylex_destroy(), so don't allocate here.
      */
 
-    yyg->yy_buffer_stack = nullptr;
+    yyg->yy_buffer_stack = NULL;
     yyg->yy_buffer_stack_top = 0;
     yyg->yy_buffer_stack_max = 0;
-    yyg->yy_c_buf_p = nullptr;
+    yyg->yy_c_buf_p = NULL;
     yyg->yy_init = 0;
     yyg->yy_start = 0;
 
     yyg->yy_start_stack_ptr = 0;
     yyg->yy_start_stack_depth = 0;
-    yyg->yy_start_stack =  nullptr;
+    yyg->yy_start_stack =  NULL;
 
 /* Defined in main.c */
 #ifdef YY_STDINIT
     yyin = stdin;
     yyout = stdout;
 #else
-    yyin = nullptr;
-    yyout = nullptr;
+    yyin = NULL;
+    yyout = NULL;
 #endif
 
     /* For future reference: Set errno on error, since we are called by
@@ -3080,17 +3080,17 @@ int yylex_destroy  (yyscan_t yyscanner)
     /* Pop the buffer stack, destroying each element. */
 	while(YY_CURRENT_BUFFER){
 		yy_delete_buffer( YY_CURRENT_BUFFER , yyscanner );
-		YY_CURRENT_BUFFER_LVALUE = nullptr;
+		YY_CURRENT_BUFFER_LVALUE = NULL;
 		yypop_buffer_state(yyscanner);
 	}
 
 	/* Destroy the stack itself. */
 	yyfree(yyg->yy_buffer_stack , yyscanner);
-	yyg->yy_buffer_stack = nullptr;
+	yyg->yy_buffer_stack = NULL;
 
     /* Destroy the start condition stack. */
         yyfree( yyg->yy_start_stack , yyscanner );
-        yyg->yy_start_stack = nullptr;
+        yyg->yy_start_stack = NULL;
 
     /* Reset the globals. This is important in a non-reentrant scanner so the next time
      * yylex() is called, initialization will occur. */
@@ -3098,7 +3098,7 @@ int yylex_destroy  (yyscan_t yyscanner)
 
     /* Destroy the main struct (reentrant only). */
     yyfree ( yyscanner , yyscanner );
-    yyscanner = nullptr;
+    yyscanner = NULL;
     return 0;
 }
 
@@ -3160,7 +3160,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 458 "smarts.ll"
+#line 460 "/home/glandrum/RDKit_git/Code/GraphMol/SmilesParse/smarts.ll"
 
 
 #undef yysmarts_wrap
