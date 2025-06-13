@@ -28,7 +28,7 @@ std::string stereoGroupClassDoc =
     "is a mix\nof diastereomers.\n";
 
 StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
-                               python::object atomIds, unsigned readId) {
+                               python::object atomIds, python::object bondIds, unsigned readId) {
   std::vector<Atom *> cppAtoms;
   std::vector<Bond *> cppBonds;
   python::stl_input_iterator<unsigned int> beg(atomIds), end;
@@ -38,6 +38,15 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
       throw_value_error("atom index exceeds mol.GetNumAtoms()");
     }
     cppAtoms.push_back(mol.getAtomWithIdx(v));
+    ++beg;
+  }
+  python::stl_input_iterator<unsigned int> beg(bondIds), end;
+  while (beg != end) {
+    unsigned int v = *beg;
+    if (v >= mol.getNumBonds()) {
+      throw_value_error("bond index exceeds mol.GetNumBonds()");
+    }
+    cppBonds.push_back(mol.getBondWithIdx(v));
     ++beg;
   }
   auto *sg = new StereoGroup(typ, cppAtoms, cppBonds, readId);
