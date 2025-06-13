@@ -40,14 +40,14 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
     cppAtoms.push_back(mol.getAtomWithIdx(v));
     ++beg;
   }
-  python::stl_input_iterator<unsigned int> beg(bondIds), end;
-  while (beg != end) {
-    unsigned int v = *beg;
+  python::stl_input_iterator<unsigned int> bbeg(bondIds), bend;
+  while (bbeg != bend) {
+    unsigned int v = *bbeg;
     if (v >= mol.getNumBonds()) {
       throw_value_error("bond index exceeds mol.GetNumBonds()");
     }
     cppBonds.push_back(mol.getBondWithIdx(v));
-    ++beg;
+    ++bbeg;
   }
   auto *sg = new StereoGroup(typ, cppAtoms, cppBonds, readId);
   return sg;
