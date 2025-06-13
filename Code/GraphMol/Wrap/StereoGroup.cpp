@@ -99,7 +99,8 @@ struct stereogroup_wrap {
                 "creates a StereoGroup associated with a molecule from a list "
                 "of atom Ids",
                 (python::arg("stereoGroupType"), python::arg("mol"),
-                 python::arg("atomIds"), python::arg("readId") = 0),
+                 python::arg("atomIds"), python::arg("bondIds"),
+                 python::arg("readId") = 0),
                 python::return_value_policy<
                     python::manage_new_object,
                     python::with_custodian_and_ward_postcall<0, 2>>());
