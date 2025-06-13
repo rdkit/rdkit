@@ -5596,7 +5596,7 @@ M  END
     self.assertEqual(len(groups), 0)
 
     # Can add new bond-only StereoGroups
-    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABS, m2, [], [7])
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [7])
     m2.SetStereoGroups([group1])
     self.assertEqual(len(m2.GetStereoGroups()), 1)
 
@@ -5608,7 +5608,7 @@ M  END
     self.assertEqual(len(groups), 0)
 
     # Can add new atom&bond StereoGroup
-    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABS, m2, [13], [7])
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [13], [7])
     m2.SetStereoGroups([group1])
     self.assertEqual(len(m2.GetStereoGroups()), 1)
 
