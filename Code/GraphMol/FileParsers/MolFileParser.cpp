@@ -2210,6 +2210,21 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
                          bool strictParsing) {
   PRECONDITION(mol, "bad molecule");
   PRECONDITION(atom, "bad atom");
+
+  // Initialize common properties to avoid use-of-uninitialized-value issues
+  if (!atom->hasProp(common_properties::molStereoCare)) {
+    atom->setProp(common_properties::molStereoCare, 0);
+  }
+  if (!atom->hasProp(common_properties::molRxnExactChange)) {
+    atom->setProp(common_properties::molRxnExactChange, 0);
+  }
+  if (!atom->hasProp(common_properties::molSubstCount)) {
+    atom->setProp(common_properties::molSubstCount, 0);
+  }
+  if (!atom->hasProp(common_properties::molRingBondCount)) {
+    atom->setProp(common_properties::molRingBondCount, 0);
+  }
+
   std::ostringstream errout;
   while (token != tokens.end()) {
     std::string prop;
@@ -2219,6 +2234,7 @@ void ParseV3000AtomProps(RWMol *mol, Atom *&atom, typename T::iterator &token,
              << atom->getIdx() + 1 << " on line " << line << std::endl;
       throw FileParseException(errout.str());
     }
+
 
     if (prop == "CHG") {
       auto charge = FileParserUtils::toInt(val);
