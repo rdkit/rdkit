@@ -49,6 +49,9 @@ StereoGroup *createStereoGroup(StereoGroupType typ, ROMol &mol,
     cppBonds.push_back(mol.getBondWithIdx(v));
     ++bbeg;
   }
+  if (cppAtoms.empty() && cppBonds.empty()) {
+    throw_value_error("New StereoGroup must contain at least one atom or bond.");
+  }
   auto *sg = new StereoGroup(typ, cppAtoms, cppBonds, readId);
   return sg;
 }
