@@ -5595,6 +5595,15 @@ M  END
     groups = m2.GetStereoGroups()
     self.assertEqual(len(groups), 0)
 
+    #Creating new StereoGroup with no atoms or bonds should not be allowed
+    try:
+      group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [])
+    except ValueError:
+      ok = 1
+    else:
+      ok = 0
+    self.assertTrue(ok)
+      
     # Can add new bond-only StereoGroups
     group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [7])
     m2.SetStereoGroups([group1])
