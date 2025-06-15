@@ -718,6 +718,29 @@ void testMorganCodeHashChargeShift() {
   }
 }
 
+void testGithub8569() {
+  auto mol = "C\\C=C\\C=C\\C"_smiles;
+  std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>> res;
+  TEST_ASSERT(RDKit::MMPA::fragmentMol(*mol, res, 3));
+  TEST_ASSERT(res.size() == 4);
+  std::vector<std::pair<std::string, std::string>> resAsSmiles(res.size());
+  std::transform(
+      res.begin(), res.end(), resAsSmiles.begin(), [](const auto &pair) {
+        return std::make_pair(pair.first ? MolToSmiles(*pair.first) : "null",
+                              pair.second ? MolToSmiles(*pair.second) : "null");
+      });
+  std::vector<std::pair<std::string, std::string>> expected = {
+      {"null", "C/C=C/C=C/[*:1].C[*:1]"},
+      {"C(=C/[*:2])\\[*:1]", "C/C=C/[*:1].C[*:2]"},
+      {"C(/C=C/[*:2])=C\\[*:1]", "C[*:1].C[*:2]"},
+      {"null", "C/C=C/[*:1].C/C=C/[*:1]"},
+  };
+  for (unsigned int i = 0; i < resAsSmiles.size(); ++i) {
+    TEST_ASSERT(resAsSmiles[i].first == expected[i].first);
+    TEST_ASSERT(resAsSmiles[i].second == expected[i].second);
+  }
+}
+
 int main() {
   BOOST_LOG(rdInfoLog)
       << "*******************************************************\n";
@@ -741,6 +764,7 @@ int main() {
   test3();
 
   testMorganCodeHashChargeShift();
+  testGithub8569();
 
   //    test4();
   // */
