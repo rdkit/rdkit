@@ -454,7 +454,7 @@ A			{
 \n		return EOS_TOKEN;
 
 <<EOF>>		{ return EOS_TOKEN; }
-.		return yytext[0];
+.		return BAD_CHARACTER;
 
 %%
 
