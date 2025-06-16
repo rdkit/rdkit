@@ -5587,6 +5587,39 @@ M  END
     m2.SetStereoGroups([group1])
     self.assertEqual(len(m2.GetStereoGroups()), 1)
 
+    #test creation of bond-only stereogroup
+    m = Chem.MolFromSmiles('Cc1cccc(F)c1-c1c(C)cc([C@H](C)O)cc1Cl |wU:7.7|')
+    m2 = Chem.RWMol(m)
+
+    groups = m2.GetStereoGroups()
+    self.assertEqual(len(groups), 0)
+
+    #Creating new StereoGroup with no atoms or bonds should not be allowed
+    try:
+      group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [])
+    except ValueError:
+      ok = 1
+    else:
+      ok = 0
+    self.assertTrue(ok)
+      
+    # Can add new bond-only StereoGroups
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [], [7])
+    m2.SetStereoGroups([group1])
+    self.assertEqual(len(m2.GetStereoGroups()), 1)
+
+    #test creation of bond&atom stereogroup
+    m = Chem.MolFromSmiles('Cc1cccc(F)c1-c1c(C)cc([C@H](C)O)cc1Cl |wU:7.7|')
+    m2 = Chem.RWMol(m)
+
+    groups = m2.GetStereoGroups()
+    self.assertEqual(len(groups), 0)
+
+    # Can add new atom&bond StereoGroup
+    group1 = Chem.rdchem.CreateStereoGroup(Chem.rdchem.StereoGroupType.STEREO_ABSOLUTE, m2, [13], [7])
+    m2.SetStereoGroups([group1])
+    self.assertEqual(len(m2.GetStereoGroups()), 1)
+
   def testSetEnhancedStereoGroupOwnershipCheck(self):
     # make sure that the object returned by CreateStereoGroup()
     # preserves the owning molecule:
