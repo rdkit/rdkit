@@ -143,8 +143,7 @@ void testFilterCatalog() {
                it != matches.end(); ++it) {
             // Get the FilterMatcherBase that matched
             const FilterMatch &fm = (*it);
-            boost::shared_ptr<FilterMatcherBase> matchingFilter =
-                fm.filterMatch;
+            std::shared_ptr<FilterMatcherBase> matchingFilter = fm.filterMatch;
 
             // Get the matching atom indices
             const MatchVectType &vect = fm.atomPairs;
@@ -172,7 +171,7 @@ void testFilterCatalog() {
 
 void testFilterCatalogEntry() {
   SmartsMatcher *sm = new SmartsMatcher("Aromatic carbon chain");
-  boost::shared_ptr<FilterMatcherBase> matcher(sm);
+  std::shared_ptr<FilterMatcherBase> matcher(sm);
   TEST_ASSERT(!matcher->isValid());
   const int debugParse = 0;
   const bool mergeHs = true;

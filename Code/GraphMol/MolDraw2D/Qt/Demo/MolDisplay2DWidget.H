@@ -11,7 +11,7 @@
 
 #include <QWidget>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
@@ -38,8 +38,8 @@ public :
 
   void set_display_mol( ROMOL_SPTR new_mol );
   ROMOL_SPTR display_mol() { return disp_mol_; }
-  boost::shared_ptr<MolDraw2D> mol_drawer() { return mol_drawer_; }
-  const boost::shared_ptr<MolDraw2D> mol_drawer() const { return mol_drawer_; }
+  std::shared_ptr<MolDraw2D> mol_drawer() { return mol_drawer_; }
+  const std::shared_ptr<MolDraw2D> mol_drawer() const { return mol_drawer_; }
 
   void set_atom_picking( bool new_val );
   std::vector<int> selected_atoms() const { return picked_atoms_; }
@@ -64,7 +64,7 @@ protected :
 private :
 
   RWMOL_SPTR disp_mol_;
-  boost::shared_ptr<MolDraw2D> mol_drawer_;
+  std::shared_ptr<MolDraw2D> mol_drawer_;
   mutable int pick_circle_rad_;
   bool atom_picking_;
   std::vector<int> picked_atoms_;
