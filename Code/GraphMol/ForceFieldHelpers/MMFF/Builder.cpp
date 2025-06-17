@@ -133,9 +133,6 @@ std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
 //   2: if atoms i and j are in a 1,4 relationship
 //   3: otherwise
 //
-//  NOTE: the caller is responsible for calling delete []
-//  on the result
-//
 // ------------------------------------------------------------------------
 boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
   const std::uint8_t RELATION_1_X_INIT = RELATION_1_X | (RELATION_1_X << 2) |
@@ -145,6 +142,7 @@ boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
   unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
   boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
+#if 0  
   for (ROMol::ConstBondIterator bondi = mol.beginBonds();
        bondi != mol.endBonds(); ++bondi) {
     setTwoBitCell(res,
@@ -210,6 +208,26 @@ boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
       }
     }
   }
+#else
+  constexpr bool useBO = false;
+  constexpr bool useAtomWts = false;
+  auto dmat = MolOps::getDistanceMat(mol, useBO, useAtomWts);
+  for (unsigned i = 0; i < nAtoms; ++i) {
+    for (unsigned j = i + 1; j < nAtoms; ++j) {
+      if (dmat[i * nAtoms + j] == 1.0) {
+        setTwoBitCell(res, twoBitCellPos(nAtoms, i, j), RELATION_1_2);
+      } else if (dmat[i * nAtoms + j] == 2.0) {
+        setTwoBitCell(res, twoBitCellPos(nAtoms, i, j), RELATION_1_3);
+      } else if (dmat[i * nAtoms + j] == 3.0) {
+        setTwoBitCell(res, twoBitCellPos(nAtoms, i, j), RELATION_1_4);
+      } else if (dmat[i * nAtoms + j] < 1e7) {
+        // the distance matrix sets the distance to 1e8 for atoms that have no
+        // connecting path
+        setTwoBitCell(res, twoBitCellPos(nAtoms, i, j), RELATION_1_X);
+      }
+    }
+  }
+#endif
   return res;
 }
 
@@ -275,8 +293,8 @@ void addAngles(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
         if (mmffMolProperties->getMMFFAngleBendParams(
                 mol, idx[0], idx[1], idx[2], angleType, mmffAngleParams)) {
           hasContrib = true;
-          contrib->addTerm(idx[0], idx[1], idx[2],
-                           &mmffAngleParams, mmffPropParamsCentralAtom);
+          contrib->addTerm(idx[0], idx[1], idx[2], &mmffAngleParams,
+                           mmffPropParamsCentralAtom);
           if (mmffMolProperties->getMMFFVerbosity()) {
             unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(idx[0]);
             unsigned int kAtomType = mmffMolProperties->getMMFFAtomType(idx[2]);
@@ -563,7 +581,8 @@ void addOop(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
           n[3] = 0;
           break;
       }
-      contrib->addTerm(idx[n[0]], idx[n[1]], idx[n[2]], idx[n[3]], &mmffOopParams);
+      contrib->addTerm(idx[n[0]], idx[n[1]], idx[n[2]], idx[n[3]],
+                       &mmffOopParams);
       hasContrib = true;
       if (mmffMolProperties->getMMFFVerbosity()) {
         const RDGeom::Point3D p1((*(points[idx[n[0]]]))[0],
@@ -975,6 +994,169 @@ void addEle(const ROMol &mol, int confId, MMFFMolProperties *mmffMolProperties,
   }
 }
 
+void addNonbonded(const ROMol &mol, int confId,
+                  MMFFMolProperties *mmffMolProperties,
+                  ForceFields::ForceField *field,
+                  boost::shared_array<std::uint8_t> neighborMatrix,
+                  double nonBondedThresh, bool ignoreInterfragInteractions) {
+  PRECONDITION(field, "bad ForceField");
+  PRECONDITION(mmffMolProperties, "bad MMFFMolProperties");
+  PRECONDITION(mmffMolProperties->isValid(),
+               "missing atom types - invalid force-field");
+
+  INT_VECT fragMapping;
+  if (ignoreInterfragInteractions) {
+    std::vector<ROMOL_SPTR> molFrags =
+        MolOps::getMolFrags(mol, true, &fragMapping);
+  }
+
+  unsigned int nAtoms = mol.getNumAtoms();
+  // FIX: need a solution for the verbosity here
+  // std::ostream &oStream = mmffMolProperties->getMMFFOStream();
+  std::stringstream vdwStream;
+  std::stringstream eleStream;
+  double totalVdWEnergy = 0.0;
+  double totalEleEnergy = 0.0;
+  if (mmffMolProperties->getMMFFVerbosity()) {
+    if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+      vdwStream
+          << "\n"
+             "V A N   D E R   W A A L S\n\n"
+             "------ATOMS------   ATOM TYPES                               "
+             "  WELL\n"
+             "  I        J          I    J    DISTANCE   ENERGY     R*     "
+             " DEPTH\n"
+             "-------------------------------------------------------------"
+             "-------"
+          << std::endl;
+    }
+    if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+      eleStream << "\n"
+                   "E L E C T R O S T A T I C\n\n"
+                   "------ATOMS------   ATOM TYPES\n"
+                   "  I        J          I    J    DISTANCE   ENERGY\n"
+                   "--------------------------------------------------"
+                << std::endl;
+    }
+  }
+  const Conformer &conf = mol.getConformer(confId);
+  auto contrib = std::make_unique<NonbondedContrib>(field);
+  bool hasContrib = false;
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    for (unsigned int j = i + 1; j < nAtoms; ++j) {
+      std::uint8_t cell =
+          getTwoBitCell(neighborMatrix, twoBitCellPos(nAtoms, i, j));
+#if 1
+      if (ignoreInterfragInteractions && (fragMapping[i] != fragMapping[j])) {
+        continue;
+      }
+#else
+      if (ignoreInterfragInteractions && cell) {
+        continue;
+      }
+
+#endif
+      if (cell >= RELATION_1_4) {
+        bool is1_4 = (cell == RELATION_1_4);
+        double dist = (conf.getAtomPos(i) - conf.getAtomPos(j)).length();
+        if (dist > nonBondedThresh) {
+          continue;
+        }
+        MMFFVdWRijstarEps *vdwConstants = nullptr;
+        MMFFVdWRijstarEps mmffVdWConstants;
+        if (mmffMolProperties->getMMFFVdWTerm() &&
+            mmffMolProperties->getMMFFVdWParams(i, j, mmffVdWConstants)) {
+          vdwConstants = &mmffVdWConstants;
+          hasContrib = true;
+          if (mmffMolProperties->getMMFFVerbosity()) {
+            const Atom *iAtom = mol.getAtomWithIdx(i);
+            const Atom *jAtom = mol.getAtomWithIdx(j);
+            const double vdWEnergy = MMFF::Utils::calcVdWEnergy(
+                dist, mmffVdWConstants.R_ij_star, mmffVdWConstants.epsilon);
+            if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+              unsigned int iAtomType = mmffMolProperties->getMMFFAtomType(i);
+              unsigned int jAtomType = mmffMolProperties->getMMFFAtomType(j);
+              vdwStream << std::left << std::setw(2) << iAtom->getSymbol()
+                        << " #" << std::setw(5) << i + 1 << std::setw(2)
+                        << jAtom->getSymbol() << " #" << std::setw(5) << j + 1
+                        << std::right << std::setw(5) << iAtomType
+                        << std::setw(5) << jAtomType << "  " << std::fixed
+                        << std::setprecision(3) << std::setw(9) << dist
+                        << std::setw(10) << vdWEnergy << std::setw(9)
+                        << mmffVdWConstants.R_ij_star << std::setw(9)
+                        << mmffVdWConstants.epsilon << std::endl;
+            }
+            totalVdWEnergy += vdWEnergy;
+          }
+        }
+
+        bool hasEle = false;
+        double dielConst = 0;
+        std::uint8_t dielModel = 0;
+        double chargeTerm = 0.0;
+
+        if (mmffMolProperties->getMMFFEleTerm() &&
+            !isDoubleZero(mmffMolProperties->getMMFFPartialCharge(i)) &&
+            !isDoubleZero(mmffMolProperties->getMMFFPartialCharge(j))) {
+          dielConst = mmffMolProperties->getMMFFDielectricConstant();
+          dielModel = mmffMolProperties->getMMFFDielectricModel();
+          chargeTerm = mmffMolProperties->getMMFFPartialCharge(i) *
+                       mmffMolProperties->getMMFFPartialCharge(j) / dielConst;
+          hasEle = true;
+          hasContrib = true;
+
+          if (mmffMolProperties->getMMFFVerbosity()) {
+            const unsigned int iAtomType =
+                mmffMolProperties->getMMFFAtomType(i);
+            const unsigned int jAtomType =
+                mmffMolProperties->getMMFFAtomType(j);
+            const Atom *iAtom = mol.getAtomWithIdx(i);
+            const Atom *jAtom = mol.getAtomWithIdx(j);
+            const double eleEnergy = MMFF::Utils::calcEleEnergy(
+                i, j, dist, chargeTerm, dielModel, is1_4);
+            if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+              eleStream << std::left << std::setw(2) << iAtom->getSymbol()
+                        << " #" << std::setw(5) << i + 1 << std::setw(2)
+                        << jAtom->getSymbol() << " #" << std::setw(5) << j + 1
+                        << std::right << std::setw(5) << iAtomType
+                        << std::setw(5) << jAtomType << "  " << std::fixed
+                        << std::setprecision(3) << std::setw(9) << dist
+                        << std::setw(10) << eleEnergy << std::endl;
+            }
+            totalEleEnergy += eleEnergy;
+          }
+        }
+        if (vdwConstants || hasEle) {
+          contrib->addTerm(i, j, vdwConstants, hasEle, chargeTerm, dielModel,
+                           is1_4);
+        }
+      }
+    }
+  }
+  if (hasContrib) {
+    field->contribs().push_back(ForceFields::ContribPtr(contrib.release()));
+  }
+
+  if (mmffMolProperties->getMMFFVerbosity()) {
+    std::ostream &oStream = mmffMolProperties->getMMFFOStream();
+    oStream << vdwStream.str();
+    if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+      oStream << std::endl;
+    }
+    oStream << "TOTAL VAN DER WAALS ENERGY     =" << std::right << std::setw(16)
+            << std::fixed << std::setprecision(4) << totalVdWEnergy
+            << std::endl;
+
+    oStream << eleStream.str();
+    if (mmffMolProperties->getMMFFVerbosity() == MMFF_VERBOSITY_HIGH) {
+      oStream << std::endl;
+    }
+    oStream << "TOTAL ELECTROSTATIC ENERGY     =" << std::right << std::setw(16)
+            << std::fixed << std::setprecision(4) << totalEleEnergy
+            << std::endl;
+  }
+}
+
 }  // end of namespace Tools
 
 // ------------------------------------------------------------------------
@@ -1034,6 +1216,7 @@ ForceFields::ForceField *constructForceField(
       mmffMolProperties->getMMFFEleTerm()) {
     boost::shared_array<std::uint8_t> neighborMat =
         Tools::buildNeighborMatrix(mol);
+#if 0
     if (mmffMolProperties->getMMFFVdWTerm()) {
       Tools::addVdW(mol, confId, mmffMolProperties, res.get(), neighborMat,
                     nonBondedThresh, ignoreInterfragInteractions);
@@ -1042,6 +1225,10 @@ ForceFields::ForceField *constructForceField(
       Tools::addEle(mol, confId, mmffMolProperties, res.get(), neighborMat,
                     nonBondedThresh, ignoreInterfragInteractions);
     }
+#else
+    Tools::addNonbonded(mol, confId, mmffMolProperties, res.get(), neighborMat,
+                        nonBondedThresh, ignoreInterfragInteractions);
+#endif
   }
 
   return res.release();

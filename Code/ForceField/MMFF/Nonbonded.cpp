@@ -91,7 +91,8 @@ VdWContrib::VdWContrib(ForceField *owner) {
   dp_forceField = owner;
 }
 
-void VdWContrib::addTerm(unsigned int idx1, unsigned int idx2, const MMFFVdWRijstarEps *mmffVdWConstants) {
+void VdWContrib::addTerm(unsigned int idx1, unsigned int idx2,
+                         const MMFFVdWRijstarEps *mmffVdWConstants) {
   PRECONDITION(mmffVdWConstants, "bad MMFFVdW parameters");
   URANGE_CHECK(idx1, dp_forceField->positions().size());
   URANGE_CHECK(idx2, dp_forceField->positions().size());
@@ -127,7 +128,6 @@ void VdWContrib::getGrad(double *pos, double *grad) const {
   double const vdw2 = 1.12;
   double const vdw2m1 = vdw2 - 1.0;
   double const vdw2t7 = vdw2 * 7.0;
-
 
   const int numPairs = d_at1Idxs.size();
   for (int pairIdx = 0; pairIdx < numPairs; ++pairIdx) {
@@ -167,7 +167,8 @@ EleContrib::EleContrib(ForceField *owner) {
   dp_forceField = owner;
 }
 void EleContrib::addTerm(unsigned int idx1, unsigned int idx2,
-             double chargeTerm, std::uint8_t dielModel, bool is1_4) {
+                         double chargeTerm, std::uint8_t dielModel,
+                         bool is1_4) {
   URANGE_CHECK(idx1, dp_forceField->positions().size());
   URANGE_CHECK(idx2, dp_forceField->positions().size());
   d_at1Idxs.push_back(idx1);
@@ -182,20 +183,15 @@ double EleContrib::getEnergy(double *pos) const {
 
   double res = 0.0;
   const int numPairs = d_at1Idxs.size();
-
   for (int i = 0; i < numPairs; ++i) {
     unsigned int d_at1Idx = d_at1Idxs[i];
     unsigned int d_at2Idx = d_at2Idxs[i];
     double d_chargeTerm = d_chargeTerms[i];
     std::uint8_t d_dielModel = d_dielModels[i];
     bool d_is1_4 = d_is_1_4s[i];
-
-    res += Utils::calcEleEnergy(d_at1Idx,
-                                d_at2Idx,
-                                dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
-                                d_chargeTerm,
-                                d_dielModel,
-                                d_is1_4);
+    res += Utils::calcEleEnergy(
+        d_at1Idx, d_at2Idx, dp_forceField->distance(d_at1Idx, d_at2Idx, pos),
+        d_chargeTerm, d_dielModel, d_is1_4);
   }
   return res;
 }
@@ -232,5 +228,150 @@ void EleContrib::getGrad(double *pos, double *grad) const {
     }
   }
 }
+
+NonbondedContrib::NonbondedContrib(ForceField *owner) {
+  PRECONDITION(owner, "bad owner");
+  dp_forceField = owner;
+}
+
+void NonbondedContrib::addTerm(unsigned int idx1, unsigned int idx2,
+                               const MMFFVdWRijstarEps *mmffVdWConstants,
+                               bool includeCharge, double chargeTerm,
+                               std::uint8_t dielModel, bool is1_4) {
+  if (!mmffVdWConstants && !includeCharge) {
+    return;  // no term to add
+  }
+  URANGE_CHECK(idx1, dp_forceField->positions().size());
+  URANGE_CHECK(idx2, dp_forceField->positions().size());
+  d_at1Idxs.push_back(idx1);
+  d_at2Idxs.push_back(idx2);
+  d_contribTypes.push_back(0);
+  if (mmffVdWConstants) {
+    d_contribTypes.back() |= 0x1;  // vdW
+    d_R_ij_stars.push_back(mmffVdWConstants->R_ij_star);
+    d_wellDepths.push_back(mmffVdWConstants->epsilon);
+  } else {
+    d_R_ij_stars.push_back(0.0);
+    d_wellDepths.push_back(0.0);
+  }
+  if (includeCharge) {
+    d_contribTypes.back() |= 0x2;  // electrostatic
+    d_chargeTerms.push_back(chargeTerm);
+    d_dielModels.push_back(dielModel);
+    d_is_1_4s.push_back(is1_4);
+  } else {
+    d_chargeTerms.push_back(0.0);
+    d_dielModels.push_back(0);
+    d_is_1_4s.push_back(false);
+  }
+}
+
+// we duplicate some code in the next two member functions
+// but we'll eventually retire the VdWContrib and EleContrib classes, so the
+// duplication will go away.
+double NonbondedContrib::getEnergy(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+  double energySum = 0.0;
+
+  const int numPairs = d_at1Idxs.size();
+  for (int i = 0; i < numPairs; ++i) {
+    unsigned int d_at1Idx = d_at1Idxs[i];
+    unsigned int d_at2Idx = d_at2Idxs[i];
+    double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+
+    if (d_contribTypes[i] & 0x1) {  // vdW
+      const auto res =
+          Utils::calcVdWEnergy(dist, d_R_ij_stars[i], d_wellDepths[i]);
+      energySum += res;
+    }
+    if (d_contribTypes[i] & 0x2) {  // electrostatic
+      const double d_chargeTerm = d_chargeTerms[i];
+      const std::uint8_t d_dielModel = d_dielModels[i];
+      const bool d_is1_4 = d_is_1_4s[i];
+      const auto res = Utils::calcEleEnergy(d_at1Idx, d_at2Idx, dist,
+                                            d_chargeTerm, d_dielModel, d_is1_4);
+      energySum += res;
+    }
+  }
+  return energySum;
+}
+
+void NonbondedContrib::getGrad(double *pos, double *grad) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+  PRECONDITION(grad, "bad vector");
+
+  constexpr double vdw1 = 1.07;
+  constexpr double vdw1m1 = vdw1 - 1.0;
+  constexpr double vdw2 = 1.12;
+  constexpr double vdw2m1 = vdw2 - 1.0;
+  constexpr double vdw2t7 = vdw2 * 7.0;
+
+  const int numPairs = d_at1Idxs.size();
+  for (int pairIdx = 0; pairIdx < numPairs; ++pairIdx) {
+    const int d_at1Idx = d_at1Idxs[pairIdx];
+    const int d_at2Idx = d_at2Idxs[pairIdx];
+    const double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
+    const double *at1Coords = &(pos[3 * d_at1Idx]);
+    const double *at2Coords = &(pos[3 * d_at2Idx]);
+    double *g1 = &(grad[3 * d_at1Idx]);
+    double *g2 = &(grad[3 * d_at2Idx]);
+
+    if (d_contribTypes[pairIdx] & 0x1) {  // vdW
+      const double d_R_ij_star = d_R_ij_stars[pairIdx];
+      if (dist <= 0.0) {
+        for (unsigned int i = 0; i < 3; ++i) {
+          g1[i] += d_R_ij_star * 0.01;
+          g2[i] -= d_R_ij_star * 0.01;
+        }
+      } else {
+        const double d_wellDepth = d_wellDepths[pairIdx];
+
+        const double q = dist / d_R_ij_star;
+        const double q2 = q * q;
+        const double q6 = q2 * q2 * q2;
+        const double q7 = q6 * q;
+        const double q7pvdw2m1 = q7 + vdw2m1;
+        const double t = vdw1 / (q + vdw1 - 1.0);
+        const double t2 = t * t;
+        const double t7 = t2 * t2 * t2 * t;
+        const double dE_dr = d_wellDepth / d_R_ij_star * t7 *
+                             (-vdw2t7 * q6 / (q7pvdw2m1 * q7pvdw2m1) +
+                              ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
+        for (unsigned int i = 0; i < 3; ++i) {
+          const double dGrad = (dE_dr * (at1Coords[i] - at2Coords[i]) / dist);
+          g1[i] += dGrad;
+          g2[i] -= dGrad;
+        }
+      }
+    }
+    if (d_contribTypes[pairIdx] & 0x2) {  // electrostatic
+      if (dist <= 0.0) {
+        for (unsigned int i = 0; i < 3; ++i) {
+          g1[i] += 0.02;
+          g2[i] -= 0.02;
+        }
+      } else {
+        const double d_chargeTerm = d_chargeTerms[pairIdx];
+        const std::uint8_t d_dielModel = d_dielModels[pairIdx];
+        const bool d_is1_4 = d_is_1_4s[pairIdx];
+
+        double corr_dist = dist + 0.05;
+        corr_dist *=
+            ((d_dielModel == RDKit::MMFF::DISTANCE) ? corr_dist * corr_dist
+                                                    : corr_dist);
+        const double dE_dr = -332.0716 * (double)(d_dielModel)*d_chargeTerm /
+                             corr_dist * (d_is1_4 ? 0.75 : 1.0);
+        for (unsigned int i = 0; i < 3; ++i) {
+          const double dGrad = dE_dr * (at1Coords[i] - at2Coords[i]) / dist;
+          g1[i] += dGrad;
+          g2[i] -= dGrad;
+        }
+      }
+    }
+  }
+}
+
 }  // namespace MMFF
 }  // namespace ForceFields
