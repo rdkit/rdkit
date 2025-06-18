@@ -100,29 +100,22 @@ void addBonds(const ROMol &mol, MMFFMolProperties *mmffMolProperties,
   }
 }
 
-unsigned int twoBitCellPos(unsigned int nAtoms, int i, int j) {
+unsigned int twoBitCellPos(unsigned int N, int i, int j) {
   if (j < i) {
     std::swap(i, j);
   }
 
-  return i * (nAtoms - 1) + i * (1 - i) / 2 + j;
+  return i * (N-1) - (i - 1) * i / 2 + j;
 }
 
 void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
                    std::uint8_t value) {
-  unsigned int twoBitPos = pos / 4;
-  unsigned int shift = 2 * (pos % 4);
-  std::uint8_t twoBitMask = 3 << shift;
-  res[twoBitPos] = ((res[twoBitPos] & (~twoBitMask)) | (value << shift));
+  res[pos] = value;
 }
 
 std::uint8_t getTwoBitCell(boost::shared_array<std::uint8_t> &res,
                            unsigned int pos) {
-  unsigned int twoBitPos = pos / 4;
-  unsigned int shift = 2 * (pos % 4);
-  std::uint8_t twoBitMask = 3 << shift;
-
-  return ((res[twoBitPos] & twoBitMask) >> shift);
+  return res[pos];
 }
 
 // ------------------------------------------------------------------------
@@ -139,7 +132,7 @@ boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
                                          (RELATION_1_X << 4) |
                                          (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
-  unsigned nTwoBitCells = (nAtoms * (nAtoms + 1) - 1) / 8 + 1;
+  unsigned nTwoBitCells = nAtoms * (nAtoms+1) / 2;
   boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
 #if 0  
@@ -222,7 +215,7 @@ boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
         setTwoBitCell(res, twoBitCellPos(nAtoms, i, j), RELATION_1_4);
       } else if (dmat[i * nAtoms + j] < 1e7) {
         // the distance matrix sets the distance to 1e8 for atoms that have no
-        // connecting path
+        // connecting path, so here we know that there's at least a connection
         setTwoBitCell(res, twoBitCellPos(nAtoms, i, j), RELATION_1_X);
       }
     }

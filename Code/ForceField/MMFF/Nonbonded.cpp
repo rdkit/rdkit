@@ -318,6 +318,9 @@ void NonbondedContrib::getGrad(double *pos, double *grad) const {
     double *g1 = &(grad[3 * d_at1Idx]);
     double *g2 = &(grad[3 * d_at2Idx]);
 
+    double vdwGrad = 0.0;
+    double eleGrad = 0.0;
+
     if (d_contribTypes[pairIdx] & 0x1) {  // vdW
       const double d_R_ij_star = d_R_ij_stars[pairIdx];
       if (dist <= 0.0) {
@@ -339,11 +342,7 @@ void NonbondedContrib::getGrad(double *pos, double *grad) const {
         const double dE_dr = d_wellDepth / d_R_ij_star * t7 *
                              (-vdw2t7 * q6 / (q7pvdw2m1 * q7pvdw2m1) +
                               ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
-        for (unsigned int i = 0; i < 3; ++i) {
-          const double dGrad = (dE_dr * (at1Coords[i] - at2Coords[i]) / dist);
-          g1[i] += dGrad;
-          g2[i] -= dGrad;
-        }
+        vdwGrad = dE_dr / dist;
       }
     }
     if (d_contribTypes[pairIdx] & 0x2) {  // electrostatic
@@ -363,11 +362,15 @@ void NonbondedContrib::getGrad(double *pos, double *grad) const {
                                                     : corr_dist);
         const double dE_dr = -332.0716 * (double)(d_dielModel)*d_chargeTerm /
                              corr_dist * (d_is1_4 ? 0.75 : 1.0);
-        for (unsigned int i = 0; i < 3; ++i) {
-          const double dGrad = dE_dr * (at1Coords[i] - at2Coords[i]) / dist;
-          g1[i] += dGrad;
-          g2[i] -= dGrad;
-        }
+        eleGrad = dE_dr / dist;
+      }
+    }
+    if (vdwGrad != 0.0 || eleGrad != 0.0) {
+      const auto dE_dr = vdwGrad + eleGrad;
+      for (unsigned int i = 0; i < 3; ++i) {
+        const double dGrad = dE_dr * (at1Coords[i] - at2Coords[i]);
+        g1[i] += dGrad;
+        g2[i] -= dGrad;
       }
     }
   }
