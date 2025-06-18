@@ -320,58 +320,57 @@ void NonbondedContrib::getGrad(double *pos, double *grad) const {
 
     double vdwGrad = 0.0;
     double eleGrad = 0.0;
-
-    if (d_contribTypes[pairIdx] & 0x1) {  // vdW
-      const double d_R_ij_star = d_R_ij_stars[pairIdx];
-      if (dist <= 0.0) {
+    if (dist <= 0.0) {
+      if (d_contribTypes[pairIdx] & 0x1) {  // vdW
+        const double d_R_ij_star = d_R_ij_stars[pairIdx];
         for (unsigned int i = 0; i < 3; ++i) {
           g1[i] += d_R_ij_star * 0.01;
           g2[i] -= d_R_ij_star * 0.01;
         }
-      } else {
-        const double d_wellDepth = d_wellDepths[pairIdx];
-
-        const double q = dist / d_R_ij_star;
-        const double q2 = q * q;
-        const double q6 = q2 * q2 * q2;
-        const double q7 = q6 * q;
-        const double q7pvdw2m1 = q7 + vdw2m1;
-        const double t = vdw1 / (q + vdw1 - 1.0);
-        const double t2 = t * t;
-        const double t7 = t2 * t2 * t2 * t;
-        const double dE_dr = d_wellDepth / d_R_ij_star * t7 *
-                             (-vdw2t7 * q6 / (q7pvdw2m1 * q7pvdw2m1) +
-                              ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
-        vdwGrad = dE_dr / dist;
       }
-    }
-    if (d_contribTypes[pairIdx] & 0x2) {  // electrostatic
-      if (dist <= 0.0) {
+      if (d_contribTypes[pairIdx] & 0x2) {  // electrostatic
         for (unsigned int i = 0; i < 3; ++i) {
           g1[i] += 0.02;
           g2[i] -= 0.02;
         }
-      } else {
-        const double d_chargeTerm = d_chargeTerms[pairIdx];
-        const std::uint8_t d_dielModel = d_dielModels[pairIdx];
-        const bool d_is1_4 = d_is_1_4s[pairIdx];
-
-        double corr_dist = dist + 0.05;
-        corr_dist *=
-            ((d_dielModel == RDKit::MMFF::DISTANCE) ? corr_dist * corr_dist
-                                                    : corr_dist);
-        const double dE_dr = -332.0716 * (double)(d_dielModel)*d_chargeTerm /
-                             corr_dist * (d_is1_4 ? 0.75 : 1.0);
-        eleGrad = dE_dr / dist;
       }
+      return;
     }
-    if (vdwGrad != 0.0 || eleGrad != 0.0) {
-      const auto dE_dr = vdwGrad + eleGrad;
-      for (unsigned int i = 0; i < 3; ++i) {
-        const double dGrad = dE_dr * (at1Coords[i] - at2Coords[i]);
-        g1[i] += dGrad;
-        g2[i] -= dGrad;
-      }
+    if (d_contribTypes[pairIdx] & 0x1) {  // vdW
+      const double d_R_ij_star = d_R_ij_stars[pairIdx];
+      const double d_wellDepth = d_wellDepths[pairIdx];
+
+      const double q = dist / d_R_ij_star;
+      const double q2 = q * q;
+      const double q6 = q2 * q2 * q2;
+      const double q7 = q6 * q;
+      const double q7pvdw2m1 = q7 + vdw2m1;
+      const double t = vdw1 / (q + vdw1 - 1.0);
+      const double t2 = t * t;
+      const double t7 = t2 * t2 * t2 * t;
+      const double dE_dr = d_wellDepth / d_R_ij_star * t7 *
+                           (-vdw2t7 * q6 / (q7pvdw2m1 * q7pvdw2m1) +
+                            ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
+      vdwGrad = dE_dr / dist;
+    }
+    if (d_contribTypes[pairIdx] & 0x2) {  // electrostatic
+      const double d_chargeTerm = d_chargeTerms[pairIdx];
+      const std::uint8_t d_dielModel = d_dielModels[pairIdx];
+      const bool d_is1_4 = d_is_1_4s[pairIdx];
+
+      double corr_dist = dist + 0.05;
+      corr_dist *=
+          ((d_dielModel == RDKit::MMFF::DISTANCE) ? corr_dist * corr_dist
+                                                  : corr_dist);
+      const double dE_dr = -332.0716 * (double)(d_dielModel)*d_chargeTerm /
+                           corr_dist * (d_is1_4 ? 0.75 : 1.0);
+      eleGrad = dE_dr / dist;
+    }
+    const auto dE_dr = vdwGrad + eleGrad;
+    for (unsigned int i = 0; i < 3; ++i) {
+      const double dGrad = dE_dr * (at1Coords[i] - at2Coords[i]);
+      g1[i] += dGrad;
+      g2[i] -= dGrad;
     }
   }
 }

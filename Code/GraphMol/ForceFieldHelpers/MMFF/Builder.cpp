@@ -105,7 +105,7 @@ unsigned int twoBitCellPos(unsigned int N, int i, int j) {
     std::swap(i, j);
   }
 
-  return i * (N-1) - (i - 1) * i / 2 + j;
+  return i * (N - 1) - (i - 1) * i / 2 + j;
 }
 
 void setTwoBitCell(boost::shared_array<std::uint8_t> &res, unsigned int pos,
@@ -132,7 +132,7 @@ boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
                                          (RELATION_1_X << 4) |
                                          (RELATION_1_X << 6);
   unsigned int nAtoms = mol.getNumAtoms();
-  unsigned nTwoBitCells = nAtoms * (nAtoms+1) / 2;
+  unsigned nTwoBitCells = nAtoms * (nAtoms + 1) / 2;
   boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
 #if 0  
