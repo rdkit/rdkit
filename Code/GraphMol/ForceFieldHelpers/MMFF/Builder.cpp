@@ -135,77 +135,12 @@ boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
   unsigned nTwoBitCells = nAtoms * (nAtoms + 1) / 2;
   boost::shared_array<std::uint8_t> res(new std::uint8_t[nTwoBitCells]);
   std::memset(res.get(), RELATION_1_X_INIT, nTwoBitCells);
-#if 0  
-  for (ROMol::ConstBondIterator bondi = mol.beginBonds();
-       bondi != mol.endBonds(); ++bondi) {
-    setTwoBitCell(res,
-                  twoBitCellPos(nAtoms, (*bondi)->getBeginAtomIdx(),
-                                (*bondi)->getEndAtomIdx()),
-                  RELATION_1_2);
-    unsigned int bondiBeginAtomIdx = (*bondi)->getBeginAtomIdx();
-    unsigned int bondiEndAtomIdx = (*bondi)->getEndAtomIdx();
-    for (ROMol::ConstBondIterator bondj = bondi; ++bondj != mol.endBonds();) {
-      int idx1 = -1;
-      int idx3 = -1;
-      unsigned int bondjBeginAtomIdx = (*bondj)->getBeginAtomIdx();
-      unsigned int bondjEndAtomIdx = (*bondj)->getEndAtomIdx();
-      if (bondiBeginAtomIdx == bondjBeginAtomIdx) {
-        idx1 = bondiEndAtomIdx;
-        idx3 = bondjEndAtomIdx;
-      } else if (bondiBeginAtomIdx == bondjEndAtomIdx) {
-        idx1 = bondiEndAtomIdx;
-        idx3 = bondjBeginAtomIdx;
-      } else if (bondiEndAtomIdx == bondjBeginAtomIdx) {
-        idx1 = bondiBeginAtomIdx;
-        idx3 = bondjEndAtomIdx;
-      } else if (bondiEndAtomIdx == bondjEndAtomIdx) {
-        idx1 = bondiBeginAtomIdx;
-        idx3 = bondjBeginAtomIdx;
-      } else {
-        // check if atoms i and j are in a 1,4-relationship
-        if ((mol.getBondBetweenAtoms(bondiBeginAtomIdx, bondjBeginAtomIdx)) &&
-            (getTwoBitCell(res, twoBitCellPos(nAtoms, bondiEndAtomIdx,
-                                              bondjEndAtomIdx)) ==
-             RELATION_1_X)) {
-          setTwoBitCell(res,
-                        twoBitCellPos(nAtoms, bondiEndAtomIdx, bondjEndAtomIdx),
-                        RELATION_1_4);
-        } else if ((mol.getBondBetweenAtoms(bondiBeginAtomIdx,
-                                            bondjEndAtomIdx)) &&
-                   (getTwoBitCell(res, twoBitCellPos(nAtoms, bondiEndAtomIdx,
-                                                     bondjBeginAtomIdx)) ==
-                    RELATION_1_X)) {
-          setTwoBitCell(
-              res, twoBitCellPos(nAtoms, bondiEndAtomIdx, bondjBeginAtomIdx),
-              RELATION_1_4);
-        } else if ((mol.getBondBetweenAtoms(bondiEndAtomIdx,
-                                            bondjBeginAtomIdx)) &&
-                   (getTwoBitCell(res, twoBitCellPos(nAtoms, bondiBeginAtomIdx,
-                                                     bondjEndAtomIdx)) ==
-                    RELATION_1_X)) {
-          setTwoBitCell(
-              res, twoBitCellPos(nAtoms, bondiBeginAtomIdx, bondjEndAtomIdx),
-              RELATION_1_4);
-        } else if ((mol.getBondBetweenAtoms(bondiEndAtomIdx,
-                                            bondjEndAtomIdx)) &&
-                   (getTwoBitCell(res, twoBitCellPos(nAtoms, bondiBeginAtomIdx,
-                                                     bondjBeginAtomIdx)) ==
-                    RELATION_1_X)) {
-          setTwoBitCell(
-              res, twoBitCellPos(nAtoms, bondiBeginAtomIdx, bondjBeginAtomIdx),
-              RELATION_1_4);
-        }
-      }
-      if (idx1 > -1) {
-        setTwoBitCell(res, twoBitCellPos(nAtoms, idx1, idx3), RELATION_1_3);
-      }
-    }
-  }
-#else
+
   constexpr bool useBO = false;
   constexpr bool useAtomWts = false;
   auto dmat = MolOps::getDistanceMat(mol, useBO, useAtomWts);
   for (unsigned i = 0; i < nAtoms; ++i) {
+    setTwoBitCell(res, twoBitCellPos(nAtoms, i, i), RELATION_1_X);
     for (unsigned j = i + 1; j < nAtoms; ++j) {
       if (dmat[i * nAtoms + j] == 1.0) {
         setTwoBitCell(res, twoBitCellPos(nAtoms, i, j), RELATION_1_2);
@@ -220,7 +155,6 @@ boost::shared_array<std::uint8_t> buildNeighborMatrix(const ROMol &mol) {
       }
     }
   }
-#endif
   return res;
 }
 
@@ -1209,19 +1143,8 @@ ForceFields::ForceField *constructForceField(
       mmffMolProperties->getMMFFEleTerm()) {
     boost::shared_array<std::uint8_t> neighborMat =
         Tools::buildNeighborMatrix(mol);
-#if 0
-    if (mmffMolProperties->getMMFFVdWTerm()) {
-      Tools::addVdW(mol, confId, mmffMolProperties, res.get(), neighborMat,
-                    nonBondedThresh, ignoreInterfragInteractions);
-    }
-    if (mmffMolProperties->getMMFFEleTerm()) {
-      Tools::addEle(mol, confId, mmffMolProperties, res.get(), neighborMat,
-                    nonBondedThresh, ignoreInterfragInteractions);
-    }
-#else
     Tools::addNonbonded(mol, confId, mmffMolProperties, res.get(), neighborMat,
                         nonBondedThresh, ignoreInterfragInteractions);
-#endif
   }
 
   return res.release();

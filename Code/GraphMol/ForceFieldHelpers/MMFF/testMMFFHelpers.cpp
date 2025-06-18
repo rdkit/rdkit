@@ -177,17 +177,17 @@ void testMMFFBuilder1() {
   //     4  5  6
   //        7  8
   //           9
-  // TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 1, 1) == 4);
-  // TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 2, 1) == 5);
-  // TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 1, 2) == 5);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 0) ==
-  //             MMFF::Tools::RELATION_1_X);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 1) ==
-  //             MMFF::Tools::RELATION_1_2);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 2) ==
-  //             MMFF::Tools::RELATION_1_3);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 3) ==
-  //             MMFF::Tools::RELATION_1_3);
+  TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 1, 1) == 4);
+  TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 2, 1) == 5);
+  TEST_ASSERT(MMFF::Tools::twoBitCellPos(mol->getNumAtoms(), 1, 2) == 5);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 0) ==
+              MMFF::Tools::RELATION_1_X);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 1) ==
+              MMFF::Tools::RELATION_1_2);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 2) ==
+              MMFF::Tools::RELATION_1_3);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 3) ==
+              MMFF::Tools::RELATION_1_3);
 
   MMFF::Tools::addAngles(*mol, mmffMolProperties, field);
   TEST_ASSERT(field->contribs().size() == 2);
@@ -221,14 +221,14 @@ void testMMFFBuilder1() {
   TEST_ASSERT(field->contribs().size() == 1);
 
   nbrMat = MMFF::Tools::buildNeighborMatrix(*mol);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 0) ==
-  //             MMFF::Tools::RELATION_1_X);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 1) ==
-  //             MMFF::Tools::RELATION_1_2);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 2) ==
-  //             MMFF::Tools::RELATION_1_3);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 3) ==
-  //             MMFF::Tools::RELATION_1_4);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 0) ==
+              MMFF::Tools::RELATION_1_X);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 1) ==
+              MMFF::Tools::RELATION_1_2);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 2) ==
+              MMFF::Tools::RELATION_1_3);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 3) ==
+              MMFF::Tools::RELATION_1_4);
 
   MMFF::Tools::addAngles(*mol, mmffMolProperties, field);
   TEST_ASSERT(field->contribs().size() == 2);
@@ -259,10 +259,10 @@ void testMMFFBuilder1() {
   TEST_ASSERT(field->contribs().size() == 1);
 
   nbrMat = MMFF::Tools::buildNeighborMatrix(*mol);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 0) ==
-  //             MMFF::Tools::RELATION_1_X);
-  // TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 1) ==
-  //             MMFF::Tools::RELATION_1_2);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 0) ==
+              MMFF::Tools::RELATION_1_X);
+  TEST_ASSERT(MMFF::Tools::getTwoBitCell(nbrMat, 1) ==
+              MMFF::Tools::RELATION_1_2);
 
   MMFF::Tools::addAngles(*mol, mmffMolProperties, field);
   TEST_ASSERT(field->contribs().size() == 1);
