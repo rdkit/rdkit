@@ -89,7 +89,9 @@ endif()
       # we don't really control chemdraw source code, so suppress warnings
       target_compile_options(ChemDraw PRIVATE -w -Wno-unknown-pragmas -Wno-error)
       if(RDK_INSTALL_STATIC_LIBS)
+        if(TARGET ChemDraw_static)
           target_compile_options(ChemDraw_static PRIVATE -w -Wno-unknown-pragmas -Wno-error)
+	endif()
       endif(RDK_INSTALL_STATIC_LIBS)
   endif()
 
