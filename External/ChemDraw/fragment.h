@@ -44,6 +44,7 @@
 #include "utils.h"
 
 namespace RDKit {
+namespace ChemDraw {
 struct PageData {
   PageData()
       : atom_ids(),
@@ -89,6 +90,7 @@ struct PageData {
 //!                   external node's are normally NickNames or  new Fragments
 bool parse_fragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
                     int &missing_frag_id, int external_attachment = -1);
+}
 }  // namespace RDKit
 
 #endif

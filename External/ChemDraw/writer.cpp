@@ -66,7 +66,7 @@ bool needsExplicitHs(const Atom *atom) {
 }
 }  // namespace
 
-std::string MolToChemDraw(const ROMol &mol, CDXFormat format) {
+std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
   RWMol trmol(mol);
   MolOps::Kekulize(trmol);
   if (!trmol.getNumConformers()) {

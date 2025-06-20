@@ -39,6 +39,7 @@
 
 namespace RDKit
 {
+namespace v2 {
 //---------------------------------------------------------------------------
 //! \name Chemdraw rxn Support
 ///@{
@@ -57,5 +58,6 @@ ChemDrawDataStreamToChemicalReactions(std::istream &rxnStream,
 				      bool sanitize = false,
 				      bool removeHs = false);
 
+}
 }  // namespace RDKit
 #endif

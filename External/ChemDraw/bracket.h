@@ -44,7 +44,9 @@
 #include "fragment.h"
 
 namespace RDKit {
+namespace ChemDraw {
 bool parse_bracket(CDXBracketedGroup &bracket, PageData &pagedata);
+}
 }
 
 #endif

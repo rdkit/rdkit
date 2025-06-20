@@ -45,6 +45,7 @@
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 
 using namespace RDKit;
+using namespace RDKit::v2;
 
 TEST_CASE("Round TRIP") {
   std::string path =
@@ -71,7 +72,7 @@ TEST_CASE("Round TRIP") {
     {
       auto fname2 =
           code_path + "/Code/GraphMol/FileParsers/test_data/Issue3514824.cdxml";
-      auto mols = ChemDrawToMols(fname2);
+      auto mols = MolsFromChemDrawFile(fname2);
       auto &conf2 = mols[0]->getConformer(0);
       for (auto bond : mols[0]->bonds()) {
         auto p1 = conf2.getAtomPos(bond->getBeginAtomIdx());
@@ -82,10 +83,8 @@ TEST_CASE("Round TRIP") {
     }
     std::cerr << "----------" << std::endl;
     {
-      auto cdx = MolToChemDraw(*mol);
-      std::stringstream cdxin;
-      cdxin << cdx;
-      auto mols = ChemDrawToMols(cdxin);
+      auto cdx = MolToChemDrawBlock(*mol);
+      auto mols = MolsFromChemDrawBlock(cdx);
       auto &conf2 = mols[0]->getConformer(0);
       for (auto bond : mols[0]->bonds()) {
         auto p1 = conf2.getAtomPos(bond->getBeginAtomIdx());

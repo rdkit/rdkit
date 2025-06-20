@@ -53,6 +53,7 @@
 #include <filesystem>
 
 using namespace RDKit;
+using namespace RDKit::v2;
 namespace {
 std::string replace(std::string &istr, const std::string &from,
                     const std::string &to) {
@@ -232,11 +233,11 @@ TEST_CASE("Round TRIP") {
         std::vector<std::unique_ptr<RWMol>> mols;
         bool santizationFailure = false;
         try {
-          mols = ChemDrawToMols(entry.path().string());
+          mols = MolsFromChemDrawFile(entry.path().string());
           if (mols.size() == 0) {
             ChemDrawParserParams params;
             params.sanitize = false;
-            mols = ChemDrawToMols(entry.path().string(), params);
+            mols = MolsFromChemDrawFile(entry.path().string(), params);
             santizationFailure = true;
           }
           if (!mols.size()) {

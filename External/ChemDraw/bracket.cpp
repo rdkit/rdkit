@@ -33,7 +33,7 @@
 #include "bracket.h"
 
 namespace RDKit {
-
+namespace ChemDraw {
 // This is currently unimplemented waiting on full bracket support in the rdkit
 //  or support for expansion inside the RDChemDrawLib
 bool parse_bracket(CDXBracketedGroup &bracket, PageData &/*pagedata*/) {
@@ -101,5 +101,6 @@ bool parse_bracket(CDXBracketedGroup &bracket, PageData &/*pagedata*/) {
       break;
   }
   return true;
+}
 }
 }  // namespace RDKit

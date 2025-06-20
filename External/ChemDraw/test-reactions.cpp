@@ -44,6 +44,7 @@
 
 #include <filesystem>
 using namespace RDKit;
+using namespace RDKit::v2;
 
 TEST_CASE("CDXML Parser") {
   std::string cdxmlbase =

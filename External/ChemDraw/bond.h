@@ -44,8 +44,9 @@
 #include "fragment.h"
 
 namespace RDKit {
+namespace ChemDraw {
 bool parse_bond(RWMol &mol, unsigned int fragemnt_id, CDXBond &bond,
                 PageData &pagedata);
 }
-
+}
 #endif

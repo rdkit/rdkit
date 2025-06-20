@@ -66,11 +66,11 @@ std::string pyObjectToString(python::object input) {
   return std::string(ws.begin(), ws.end());
 }
 
-python::object MolsFromChemDrawFile(const std::string &filename, bool sanitize,
+python::object MolsFromChemDrawBlockHelper(const std::string &filename, bool sanitize,
                                  bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
-    mols = ChemDrawToMols(filename, {sanitize, removeHs});
+    mols = RDKit::v2::MolsFromChemDrawBlock(filename, {sanitize, removeHs});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -87,9 +87,9 @@ python::object MolsFromChemDrawFile(const std::string &filename, bool sanitize,
   return python::tuple(res);
 }
 
-python::tuple MolsFromChemDraw(python::object cdxml, bool sanitize,
+python::tuple MolsFromChemDrawFileHelper(python::object cdxml, bool sanitize,
                             bool removeHs) {
-  auto mols = ChemDrawToMols(pyObjectToString(cdxml), {sanitize, removeHs});
+  auto mols = RDKit::v2::MolsFromChemDrawFile(pyObjectToString(cdxml), {sanitize, removeHs});
   python::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -99,11 +99,11 @@ python::tuple MolsFromChemDraw(python::object cdxml, bool sanitize,
   return python::tuple(res);
 }
 
-python::object ReactionsFromChemDrawFile(const char *filename, bool sanitize,
+python::object ReactionsFromChemDrawFileHelper(const char *filename, bool sanitize,
                                       bool removeHs) {
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
-    rxns = ChemDrawFileToChemicalReactions(filename, sanitize, removeHs);
+    rxns = RDKit::v2::ChemDrawFileToChemicalReactions(filename, sanitize, removeHs);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw python::error_already_set();
@@ -119,12 +119,12 @@ python::object ReactionsFromChemDrawFile(const char *filename, bool sanitize,
   return python::tuple(res);
 }
 
-python::object ReactionsFromChemDrawBlock(python::object imolBlock, bool sanitize,
+python::object ReactionsFromChemDrawBlockHelper(python::object imolBlock, bool sanitize,
                                        bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
-    rxns = ChemDrawDataStreamToChemicalReactions(inStream, sanitize, removeHs);
+    rxns = RDKit::v2::ChemDrawDataStreamToChemicalReactions(inStream, sanitize, removeHs);
   } catch (RDKit::FileParseException &e) {
     BOOST_LOG(rdWarningLog) << e.what() << std::endl;
   } catch (...) {
@@ -161,11 +161,34 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
      RETURNS:
        an iterator of parsed Mol objects.)DOC";
 
-  python::def("MolsFromChemDrawFile", MolsFromChemDrawFile,
+  python::def("MolsFromChemDrawFile", MolsFromChemDrawFileHelper,
               (python::arg("filename"), python::arg("sanitize") = true,
                python::arg("removeHs") = true),
               docString.c_str());
 
+  docString =
+      R"DOC(Extract all molecules from a ChemDraw file.
+
+     Note that the ChemDraw format is large and complex, the RDKit doesn't support
+     full functionality, just the base ones required for molecule and
+     reaction parsing.
+
+     ARGUMENTS:
+
+       - block: the CDX/CDXML block
+
+       - sanitize: if True, sanitize the molecules [default True]
+
+       - removeHs: if True, convert explicit Hs into implicit Hs. [default True]
+
+     RETURNS:
+       an iterator of parsed Mol objects.)DOC";
+
+  python::def("MolsFromChemDrawBlock", MolsFromChemDrawBlockHelper,
+              (python::arg("block"), python::arg("sanitize") = true,
+               python::arg("removeHs") = true),
+              docString.c_str());
+  
   docString =
       R"DOC(Extract all reactions from a ChemDraw file.
 
@@ -185,13 +208,13 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
        an iterator of parsed ChemicalReaction objects.)DOC";
 
   // Reaction Interface
-  python::def("ReactionsFromChemDrawFile", ReactionsFromChemDrawFile,
+  python::def("ReactionsFromChemDrawFile", ReactionsFromChemDrawFileHelper,
               (python::arg("filename"), python::arg("sanitize") = false,
                python::arg("removeHs") = false),
               "construct a tuple of ChemicalReactions from a ChemDraw rxn file");
 
   python::def(
-      "ReactionsFromChemDrawBlock", ReactionsFromChemDrawBlock,
+      "ReactionsFromChemDrawBlock", ReactionsFromChemDrawBlockHelper,
       (python::arg("rxnblock"), python::arg("sanitize") = false,
        python::arg("removeHs") = false),
       "construct a tuple of ChemicalReactions from a string in ChemDraw format");
@@ -202,7 +225,7 @@ BOOST_PYTHON_MODULE(rdChemDraw) {
     .value("CDXML", CDXFormat::CDXML);
 
     python::def(
-	"MolToChemDraw", RDKit::MolToChemDraw,
+	"MolToChemDrawBlock", RDKit::MolToChemDrawBlock,
 	(python::arg("mol"), python::arg("format")=CDXFormat::CDXML),
 	 "Convert a molecule into a chemdraw string using the specified format");
 }

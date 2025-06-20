@@ -33,7 +33,7 @@
 #include "fragment.h"
 
 namespace RDKit {
-
+namespace ChemDraw {
 bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
                 PageData &pagedata) {
   int bond_id = bond.GetObjectID();
@@ -222,5 +222,6 @@ bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
     }
   }
   return true;
+}
 }
 }  // namespace RDKit

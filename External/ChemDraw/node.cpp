@@ -33,7 +33,7 @@
 #include "utils.h"
 
 namespace RDKit {
-
+namespace ChemDraw {
 bool parse_node(
     RWMol &mol, unsigned int fragment_id, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
@@ -318,5 +318,6 @@ bool parse_node(
     }
   }
   return true;
+}
 }
 }  // namespace RDKit

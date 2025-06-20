@@ -61,7 +61,8 @@
 // #define DEBUG 1
 namespace {
 using namespace RDKit;
-
+using namespace RDKit::v2;
+using namespace RDKit::ChemDraw;
 // The parsing of fragments needed to be moved to a recursive function since
 // they may be embedded further in the document, i.e. a group may hold multiple
 //  fragments
@@ -313,7 +314,8 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
   throw FileParseException(msg.c_str());
 }
 
-std::vector<std::unique_ptr<RWMol>> ChemDrawToMols(
+namespace v2 {
+std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawDataStream(
     std::istream &inStream, const ChemDrawParserParams &params) {
   auto chemdrawmols = molsFromCDXMLDataStream(inStream, params);
   std::vector<std::unique_ptr<RWMol>> mols;
@@ -325,7 +327,14 @@ std::vector<std::unique_ptr<RWMol>> ChemDrawToMols(
   return mols;
 }
 
-std::vector<std::unique_ptr<RWMol>> ChemDrawToMols(
+std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawBlock(
+    const std::string &block, const ChemDrawParserParams &params) {
+  std::stringstream ss;
+  ss << block;
+  return MolsFromChemDrawDataStream(ss, params);
+}
+
+std::vector<std::unique_ptr<RWMol>> MolsFromChemDrawFile(
     const std::string &filename, const ChemDrawParserParams &params) {
   CDXMLParser parser;
   std::vector<std::unique_ptr<RWMol>> mols;
@@ -343,5 +352,6 @@ std::vector<std::unique_ptr<RWMol>> ChemDrawToMols(
     mols.push_back(std::unique_ptr<RWMol>(m));
   }
   return mols;
+}
 }
 }  // namespace RDKit

@@ -38,11 +38,13 @@
 #include <string>
 
 namespace RDKit {
+
 enum CDXFormat {
   CDX = 1,
   CDXML = 2
 };
-  
+
+namespace v2 {
 struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
   bool sanitize = true;
   bool removeHs = true;
@@ -50,15 +52,20 @@ struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
 };
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToMols(std::istream &inStream,
+MolsFromChemDrawDataStream(std::istream &inStream,
                const ChemDrawParserParams &params = ChemDrawParserParams());
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToMols(const std::string &filename,
+MolsFromChemDrawFile(const std::string &filename,
                const ChemDrawParserParams &params = ChemDrawParserParams());
 
+std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
+MolsFromChemDrawBlock(const std::string &block,
+               const ChemDrawParserParams &params = ChemDrawParserParams());
+
+}
 std::string RDKIT_RDCHEMDRAWLIB_EXPORT
-MolToChemDraw(const ROMol &mol, CDXFormat format = CDXFormat::CDXML);
+MolToChemDrawBlock(const ROMol &mol, CDXFormat format = CDXFormat::CDXML);
 
 }  // namespace RDKit
 #endif

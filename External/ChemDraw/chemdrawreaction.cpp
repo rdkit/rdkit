@@ -41,6 +41,8 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 namespace RDKit {
+using namespace RDKit::v2;
+using namespace RDKit::ChemDraw;
 
 // ChemDraw reaction API
 // Convert reaction information to RDKIT reactions
@@ -63,6 +65,7 @@ void add_template(const std::string &prop, std::map<int, ROMOL_SPTR> &templates,
 }
 }  // namespace
 
+namespace v2 {
 //! Parse a text stream with ChemDraw data into a ChemicalReaction
 std::vector<std::unique_ptr<ChemicalReaction>>
 ChemDrawDataStreamToChemicalReactions(std::istream &inStream, bool sanitize,
@@ -70,7 +73,7 @@ ChemDrawDataStreamToChemicalReactions(std::istream &inStream, bool sanitize,
   ChemDrawParserParams params;
   params.sanitize = sanitize;
   params.removeHs = removeHs;
-  auto mols = ChemDrawToMols(inStream, params);
+  auto mols = MolsFromChemDrawDataStream(inStream, params);
   std::vector<std::unique_ptr<ChemicalReaction>> result;
 
   std::map<std::pair<unsigned int, unsigned int>, std::vector<unsigned int>>
@@ -160,5 +163,5 @@ std::vector<std::unique_ptr<ChemicalReaction>> ChemDrawFileToChemicalReactions(
   return res;
 }
   
-  
+}  
 }  // namespace RDKit

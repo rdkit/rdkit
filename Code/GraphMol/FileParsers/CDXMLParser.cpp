@@ -850,7 +850,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLDataStream(
   ChemDrawParserParams chemdraw_params;
   chemdraw_params.sanitize = params.sanitize;
   chemdraw_params.removeHs = params.removeHs;
-  return ChemDrawToMols(inStream, chemdraw_params);
+  return MolsFromChemDrawDataStream(inStream, chemdraw_params);
 }
 
 std::vector<std::unique_ptr<RWMol>> MolsFromCDXMLFile(

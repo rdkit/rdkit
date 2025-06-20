@@ -42,7 +42,7 @@
 #include <vector>
 
 namespace RDKit {
-
+namespace ChemDraw {
 struct ReactionStepInfo {
   // Holds the current reaction step information so that we can convert
   // chemdraw molecules into rdkit reactions
@@ -81,6 +81,7 @@ class ReactionInfo {
       std::map<unsigned int, std::vector<int>> &grouped_fragments,
       const std::vector<std::unique_ptr<RWMol>> &mols) const;
 };
+}
 }  // namespace RDKit
 
 #endif
