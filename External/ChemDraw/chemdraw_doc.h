@@ -32,6 +32,7 @@
 //
 #ifndef RDKIT_CHEMDRAW_DOC_H
 #define RDKIT_CHEMDRAW_DOC_H
+
 #include "chemdraw.h"
 #include "ChemDrawStartInclude.h"
 #include "chemdraw/CDXStdObjects.h"
