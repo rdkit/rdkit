@@ -40,6 +40,7 @@
 
 
 namespace RDKit {
+namespace ChemDraw {
 const double DEFAULT_CDX_BOND_LENGTH = 14.4;
 
 namespace {
@@ -290,5 +291,6 @@ std::string MolToChemDraw(const ROMol &mol, CDXFormat format) {
     CDXWriteDocToStorage(&document, ds);
   }
   return os.str();
+}
 }
 }  // namespace RDKit

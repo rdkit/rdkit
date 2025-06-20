@@ -41,7 +41,7 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 namespace RDKit {
-
+namespace ChemDraw {
 void ReactionStepInfo::set_reaction_data(
     std::string type, std::string prop, const std::vector<int> &frag_ids,
     const std::map<unsigned int, size_t> &fragments,
@@ -161,5 +161,5 @@ void ReactionInfo::set_reaction_steps(
     }
   }
 }
-  
+}  
 }  // namespace RDKit

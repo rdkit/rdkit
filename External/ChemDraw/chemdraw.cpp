@@ -61,7 +61,7 @@
 // #define DEBUG 1
 namespace {
 using namespace RDKit;
-
+using namespace RDKit::ChemDraw;
 // The parsing of fragments needed to be moved to a recursive function since
 // they may be embedded further in the document, i.e. a group may hold multiple
 //  fragments

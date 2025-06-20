@@ -42,6 +42,7 @@
 #include "ChemDrawEndInclude.h"
 
 namespace RDKit {
+namespace ChemDraw {
 constexpr double RDKIT_DEPICT_BONDLENGTH = 1.5;
 const std::string NEEDS_FUSE("CDX_NEEDS_FUSE");
 const std::string CDX_FRAG_ID("CDX_FRAG_ID");
@@ -103,6 +104,7 @@ struct StereoGroupInfo {
 // check to see if we have a tetrahedral flag and ChemDraw CIP set but no
 //  stereo assigned, if so check the bond ordering for CW and CCW
 void checkChemDrawTetrahedralGeometries(RWMol &mol);
+}
 }  // namespace RDKit
 
 #endif

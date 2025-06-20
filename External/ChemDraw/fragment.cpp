@@ -34,6 +34,7 @@
 #include "node.h"
 
 namespace RDKit {
+namespace ChemDraw {
 namespace {
 const char *sequenceTypeToName(CDXSeqType seqtype) {
   switch (seqtype) {
@@ -581,5 +582,5 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
 
   return !skip_fragment;
 }
-
+}
 }  // namespace RDKit

@@ -41,6 +41,7 @@
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 
 namespace RDKit {
+using namespace RDKit::ChemDraw;
 
 // ChemDraw reaction API
 // Convert reaction information to RDKIT reactions

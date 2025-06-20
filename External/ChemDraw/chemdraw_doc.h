@@ -1,5 +1,6 @@
+
 //
-//  Copyright (c) 2024, Glysade Inc
+//  Copyright (c) 2025, Glysade Inc
 //  All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,26 +30,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-#ifndef CHEMDRAW_NODE_H
-#define CHEMDRAW_NODE_H
-
-#include <GraphMol/RDKitBase.h>
-#include <GraphMol/QueryAtom.h>
-#include <GraphMol/QueryOps.h>
+#ifndef RDKIT_CHEMDRAW_DOC_H
+#define RDKIT_CHEMDRAW_DOC_H
 
 #include "ChemDrawStartInclude.h"
 #include "chemdraw/CDXStdObjects.h"
 #include "ChemDrawEndInclude.h"
 
-#include "utils.h"
-#include "fragment.h"
-
 namespace RDKit {
-namespace ChemDraw {
-bool parse_node(
-    RWMol &mol, unsigned int fragment_id, CDXNode &node, PageData &pagedata,
-    std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
-    int &missing_frag_id, int external_attachment);
-}
-}
+
+std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
+ChemDrawToDocument(std::istream &inStream, CDXFormat format);
+
+std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
+ChemDrawToDocument(const std::string &filename);
+
+}  // namespace RDKit
 #endif

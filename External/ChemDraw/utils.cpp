@@ -6,7 +6,7 @@
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/FileWriters.h>
 namespace RDKit {
-
+namespace ChemDraw {
 std::string NodeType(CDXNodeType nodetype) {
   switch (nodetype) {
     case kCDXNodeType_Unspecified:
@@ -320,5 +320,6 @@ void checkChemDrawTetrahedralGeometries(RWMol &mol) {
     const bool force = true;
     MolOps::assignStereochemistry(mol, cleanIt, force);
   }
+}
 }
 }  // namespace RDKit
