@@ -32,7 +32,7 @@
 //
 #ifndef RDKIT_CHEMDRAW_DOC_H
 #define RDKIT_CHEMDRAW_DOC_H
-
+#include "chemdraw.h"
 #include "ChemDrawStartInclude.h"
 #include "chemdraw/CDXStdObjects.h"
 #include "ChemDrawEndInclude.h"
@@ -40,7 +40,7 @@
 namespace RDKit {
 
 std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToDocument(std::istream &inStream, CDXFormat format);
+ChemDrawToDocument(std::istream &inStream, v2::CDXFormat format);
 
 std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
 ChemDrawToDocument(const std::string &filename);

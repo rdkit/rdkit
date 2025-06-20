@@ -40,6 +40,7 @@
 
 
 namespace RDKit {
+namespace v2 {
 const double DEFAULT_CDX_BOND_LENGTH = 14.4;
 
 namespace {
@@ -281,7 +282,7 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
       .clear();  // if this isn't empty something fails.
   
   std::ostringstream os;
-  if(format == CDXML) {
+  if(format == CDXFormat::CDXML) {
     os << kCDXML_HeaderString;
     XMLDataSink ds(os);
     document.XMLWrite(ds);
@@ -290,5 +291,6 @@ std::string MolToChemDrawBlock(const ROMol &mol, CDXFormat format) {
     CDXWriteDocToStorage(&document, ds);
   }
   return os.str();
+}
 }
 }  // namespace RDKit
