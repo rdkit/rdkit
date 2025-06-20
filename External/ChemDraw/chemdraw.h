@@ -37,10 +37,6 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <string>
 
-#include "ChemDrawStartInclude.h"
-#include "chemdraw/CDXStdObjects.h"
-#include "ChemDrawEndInclude.h"
-
 namespace RDKit {
 enum CDXFormat {
   CDX = 1,
@@ -52,12 +48,6 @@ struct RDKIT_RDCHEMDRAWLIB_EXPORT ChemDrawParserParams {
   bool removeHs = true;
   CDXFormat format = CDXML;
 };
-
-std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToDocument(std::istream &inStream, CDXFormat format);
-
-std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
-ChemDrawToDocument(const std::string &filename);
 
 std::vector<std::unique_ptr<RWMol>> RDKIT_RDCHEMDRAWLIB_EXPORT
 ChemDrawToMols(std::istream &inStream,

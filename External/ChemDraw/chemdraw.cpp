@@ -42,6 +42,7 @@
 
 #include "bracket.h"
 #include "chemdraw.h"
+#include "chemdraw_doc.h"
 #include "fragment.h"
 #include "reaction.h"
 #include "utils.h"
