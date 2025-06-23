@@ -103,7 +103,7 @@ bool hasNonSupportedFeatures(CDXDocument &document, const std::string &fname) {
 }
 
 bool hasNonSupportedFeatures(const std::string &fname) {
-  auto doc = ChemDrawToDocument(fname);
+  auto doc = ChemDraw::ChemDrawToDocument(fname);
   return hasNonSupportedFeatures(*doc, fname);
 }
 

@@ -39,12 +39,13 @@
 #include "ChemDrawEndInclude.h"
 
 namespace RDKit {
-
+namespace ChemDraw {
 std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
 ChemDrawToDocument(std::istream &inStream, v2::CDXFormat format);
 
 std::unique_ptr<CDXDocument> RDKIT_RDCHEMDRAWLIB_EXPORT
 ChemDrawToDocument(const std::string &filename);
 
+}
 }  // namespace RDKit
 #endif

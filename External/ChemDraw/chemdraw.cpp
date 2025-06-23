@@ -294,6 +294,7 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
 }  // namespace
 
 namespace RDKit {
+namespace ChemDraw {
 std::unique_ptr<CDXDocument> ChemDrawToDocument(std::istream &inStream,
                                                 CDXFormat format) {
   return streamToCDXDocument(inStream, format);
@@ -312,6 +313,7 @@ std::unique_ptr<CDXDocument> ChemDrawToDocument(const std::string &filename) {
       std::string("Unknoen filetype ") +
       (std::string)std::filesystem::path(filename).extension().string();
   throw FileParseException(msg.c_str());
+}
 }
 
 namespace v2 {
