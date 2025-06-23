@@ -1,5 +1,5 @@
 //
-// Copyright (C) David Cosgrove 2025.
+// Copyright (C) 2025 David Cosgrove and other RDKit contributors.
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -520,5 +520,36 @@ M  END)CTAB"_ctab;
                                SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS));
     }
     CHECK(got.size() == 2);
+  }
+}
+
+TEST_CASE("wiggly bonds and EnumerateStereoisomers") {
+  SECTION("as reported (bonds)") {
+    auto m1 = "CC=CC |w:1.0|"_smiles;
+    REQUIRE(m1);
+    StereoEnumerationOptions opts;
+    opts.onlyUnassigned = false;
+    StereoisomerEnumerator enu1(*m1, opts);
+    std::vector<std::string> got;
+    while (auto isomer = enu1.next()) {
+      got.push_back(MolToSmiles(*isomer));
+    }
+    CHECK(got.size() == 2);
+    CHECK(std::find(got.begin(), got.end(), "C/C=C/C") != got.end());
+    CHECK(std::find(got.begin(), got.end(), "C/C=C\\C") != got.end());
+  }
+  SECTION("chiral centers") {
+    auto m1 = "CC(F)(Cl)(Br) |w:1.0|"_smiles;
+    REQUIRE(m1);
+    StereoEnumerationOptions opts;
+    opts.onlyUnassigned = false;
+    StereoisomerEnumerator enu1(*m1, opts);
+    std::vector<std::string> got;
+    while (auto isomer = enu1.next()) {
+      got.push_back(MolToSmiles(*isomer));
+    }
+    CHECK(got.size() == 2);
+    CHECK(std::find(got.begin(), got.end(), "C[C@](F)(Cl)Br") != got.end());
+    CHECK(std::find(got.begin(), got.end(), "C[C@@](F)(Cl)Br") != got.end());
   }
 }
