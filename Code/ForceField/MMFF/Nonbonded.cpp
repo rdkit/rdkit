@@ -247,7 +247,7 @@ void NonbondedContrib::addTerm(unsigned int idx1, unsigned int idx2,
   d_at2Idxs.push_back(idx2);
   d_contribTypes.push_back(0);
   if (mmffVdWConstants) {
-    d_contribTypes.back() |= 0x1;  // vdW
+    d_contribTypes.back() |= ContribType::VDW;
     d_R_ij_stars.push_back(mmffVdWConstants->R_ij_star);
     d_wellDepths.push_back(mmffVdWConstants->epsilon);
   } else {
@@ -255,7 +255,7 @@ void NonbondedContrib::addTerm(unsigned int idx1, unsigned int idx2,
     d_wellDepths.push_back(0.0);
   }
   if (includeCharge) {
-    d_contribTypes.back() |= 0x2;  // electrostatic
+    d_contribTypes.back() |= ContribType::ELECTROSTATIC;
     d_chargeTerms.push_back(chargeTerm);
     d_dielModels.push_back(dielModel);
     d_is_1_4s.push_back(is1_4);
@@ -280,12 +280,12 @@ double NonbondedContrib::getEnergy(double *pos) const {
     unsigned int d_at2Idx = d_at2Idxs[i];
     double dist = dp_forceField->distance(d_at1Idx, d_at2Idx, pos);
 
-    if (d_contribTypes[i] & 0x1) {  // vdW
+    if (d_contribTypes[i] & ContribType::VDW) {
       const auto res =
           Utils::calcVdWEnergy(dist, d_R_ij_stars[i], d_wellDepths[i]);
       energySum += res;
     }
-    if (d_contribTypes[i] & 0x2) {  // electrostatic
+    if (d_contribTypes[i] & ContribType::ELECTROSTATIC) {
       const double d_chargeTerm = d_chargeTerms[i];
       const std::uint8_t d_dielModel = d_dielModels[i];
       const bool d_is1_4 = d_is_1_4s[i];
@@ -321,14 +321,14 @@ void NonbondedContrib::getGrad(double *pos, double *grad) const {
     double vdwGrad = 0.0;
     double eleGrad = 0.0;
     if (dist <= 0.0) {
-      if (d_contribTypes[pairIdx] & 0x1) {  // vdW
+      if (d_contribTypes[pairIdx] & ContribType::VDW) {
         const double d_R_ij_star = d_R_ij_stars[pairIdx];
         for (unsigned int i = 0; i < 3; ++i) {
           g1[i] += d_R_ij_star * 0.01;
           g2[i] -= d_R_ij_star * 0.01;
         }
       }
-      if (d_contribTypes[pairIdx] & 0x2) {  // electrostatic
+      if (d_contribTypes[pairIdx] & ContribType::ELECTROSTATIC) {
         for (unsigned int i = 0; i < 3; ++i) {
           g1[i] += 0.02;
           g2[i] -= 0.02;
@@ -336,7 +336,7 @@ void NonbondedContrib::getGrad(double *pos, double *grad) const {
       }
       return;
     }
-    if (d_contribTypes[pairIdx] & 0x1) {  // vdW
+    if (d_contribTypes[pairIdx] & ContribType::VDW) {
       const double d_R_ij_star = d_R_ij_stars[pairIdx];
       const double d_wellDepth = d_wellDepths[pairIdx];
 
@@ -353,7 +353,7 @@ void NonbondedContrib::getGrad(double *pos, double *grad) const {
                             ((-vdw2t7 / q7pvdw2m1 + 14.0) / (q + vdw1m1)));
       vdwGrad = dE_dr / dist;
     }
-    if (d_contribTypes[pairIdx] & 0x2) {  // electrostatic
+    if (d_contribTypes[pairIdx] & ContribType::ELECTROSTATIC) {
       const double d_chargeTerm = d_chargeTerms[pairIdx];
       const std::uint8_t d_dielModel = d_dielModels[pairIdx];
       const bool d_is1_4 = d_is_1_4s[pairIdx];
