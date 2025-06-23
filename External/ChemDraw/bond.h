@@ -45,8 +45,8 @@
 
 namespace RDKit {
 namespace ChemDraw {
-bool parse_bond(RWMol &mol, unsigned int fragemnt_id, CDXBond &bond,
-                PageData &pagedata);
+bool parseBond(RWMol &mol, unsigned int fragemntId, CDXBond &bond,
+               PageData &pagedata);
 }
 }
 #endif

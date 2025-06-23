@@ -36,7 +36,7 @@ namespace RDKit {
 namespace ChemDraw {
 // This is currently unimplemented waiting on full bracket support in the rdkit
 //  or support for expansion inside the RDChemDrawLib
-bool parse_bracket(CDXBracketedGroup &bracket, PageData &/*pagedata*/) {
+bool parseBracket(CDXBracketedGroup &bracket, PageData &/*pagedata*/) {
   // Get the contained atoms/bonds in the bracket
   for (auto &attachment : bracket.ContainedObjects()) {
     CDXDatumID childid = (CDXDatumID)attachment.second->GetTag();

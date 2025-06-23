@@ -34,10 +34,10 @@
 
 namespace RDKit {
 namespace ChemDraw {
-bool parse_node(
-    RWMol &mol, unsigned int fragment_id, CDXNode &node, PageData &pagedata,
+bool parseNode(
+    RWMol &mol, unsigned int fragmentId, CDXNode &node, PageData &pagedata,
     std::map<std::pair<int, StereoGroupType>, StereoGroupInfo> &sgroups,
-    int &missing_frag_id, int external_attachment) {
+    int &missingFragId, int externalAttachment) {
   int atom_id = node.GetObjectID();
   int elemno = node.m_elementNum;  // default to carbon
   // UINT16 max is not addigned?
@@ -84,7 +84,7 @@ bool parse_node(
       break;
     }
     case kCDXNodeType_ExternalConnectionPoint: {
-      if (external_attachment <= 0) {
+      if (externalAttachment <= 0) {
         // sometimes this is a dummy atom, but I don't know when.
         if (node.m_externalConnectionType == kCDXExternalConnection_Diamond) {
           elemno = 0;
@@ -92,7 +92,7 @@ bool parse_node(
         atommap = atom_id;
       } else {
         elemno = 0;
-        atommap = external_attachment;
+        atommap = externalAttachment;
       }
       break;
     }
@@ -297,7 +297,7 @@ bool parse_node(
     stereo.atoms.push_back(rd_atom);
   }
 
-  pagedata.atom_ids[atom_id] =
+  pagedata.atomIds[atom_id] =
       rd_atom;  // The mol has ownership so this can't leak
   if (node.m_nodeType == kCDXNodeType_Nickname ||
       node.m_nodeType == kCDXNodeType_Fragment) {
@@ -305,15 +305,15 @@ bool parse_node(
     //  the external_id is the node's atom_id
     for (auto fragment : node.ContainedObjects()) {
       if (fragment.second->GetTag() == kCDXObj_Fragment) {
-        if (!parse_fragment(mol, (CDXFragment &)(*fragment.second), pagedata,
-                            missing_frag_id, atom_id)) {
+        if (!parseFragment(mol, (CDXFragment &)(*fragment.second), pagedata,
+                           missingFragId, atom_id)) {
           return false;
         }
         mol.setProp<bool>(NEEDS_FUSE, true);
         // might need to reset to OUR frag_id since parse_fragment will
         // set
         //  it to the fragments
-        mol.setProp(CDX_FRAG_ID, fragment_id);
+        mol.setProp(CDX_FRAG_ID, fragmentId);
       }
     }
   }

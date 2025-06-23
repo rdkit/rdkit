@@ -90,16 +90,16 @@ void visit_children(
     CDXDatumID id = (CDXDatumID)frag.second->GetTag();
     if (id == kCDXObj_Fragment) {
       std::unique_ptr<RWMol> mol = std::make_unique<RWMol>();
-      if (!parse_fragment(*mol, (CDXFragment &)(*frag.second), pagedata,
+      if (!parseFragment(*mol, (CDXFragment &)(*frag.second), pagedata,
                           missing_frag_id)) {
         continue;
       }
       unsigned int frag_id = mol->getProp<int>(CDX_FRAG_ID);
-      pagedata.fragment_lookup[frag_id] = pagedata.mols.size();
+      pagedata.fragmentLookup[frag_id] = pagedata.mols.size();
       if (group_id != -1) {
-        pagedata.grouped_fragments[group_id].push_back(frag_id);
+        pagedata.groupedFragments[group_id].push_back(frag_id);
       } else {
-        pagedata.grouped_fragments[frag_id].push_back(frag_id);
+        pagedata.groupedFragments[frag_id].push_back(frag_id);
       }
 
       if (mol->hasProp(NEEDS_FUSE)) {
@@ -232,7 +232,7 @@ void visit_children(
                      group_id);
     } else if (id == kCDXObj_BracketedGroup) {
       CDXBracketedGroup &bracketgroup = (CDXBracketedGroup &)(*frag.second);
-      parse_bracket(bracketgroup, pagedata);
+      parseBracket(bracketgroup, pagedata);
     }
   }
 }
@@ -285,7 +285,7 @@ std::vector<std::unique_ptr<RWMol>> molsFromCDXMLDataStream(
     }
   }
   for (auto &scheme : pagedata.schemes) {
-    scheme.set_reaction_steps(pagedata.grouped_fragments, pagedata.mols);
+    scheme.set_reaction_steps(pagedata.groupedFragments, pagedata.mols);
   }
   pagedata.clearCDXProps();
 

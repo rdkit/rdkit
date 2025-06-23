@@ -47,22 +47,22 @@ namespace RDKit {
 namespace ChemDraw {
 struct PageData {
   PageData()
-      : atom_ids(),
-        bond_ids(),
+      : atomIds(),
+        bondIds(),
         mols(),
-        fragment_lookup(),
-        grouped_fragments(),
+        fragmentLookup(),
+        groupedFragments(),
         schemes() {}
 
   PageData(const PageData &) = delete;
 
-  std::map<unsigned int, Atom *> atom_ids;
-  std::map<unsigned int, Bond *> bond_ids;
+  std::map<unsigned int, Atom *> atomIds;
+  std::map<unsigned int, Bond *> bondIds;
   std::vector<std::unique_ptr<RWMol>> mols;  // All molecules found in the doc
   std::map<unsigned int, size_t>
-      fragment_lookup;  // fragment.id->molecule index
+      fragmentLookup;  // fragment.id->molecule index
   std::map<unsigned int, std::vector<int>>
-      grouped_fragments;              // grouped.id -> [fragment.id]
+      groupedFragments;              // grouped.id -> [fragment.id]
   std::vector<ReactionInfo> schemes;  // reaction schemes found
 
   void clearCDXProps() {
@@ -88,8 +88,8 @@ struct PageData {
 //! external_attachment:: if this fragment has a external node, this it it's id,
 //! otherwise -1
 //!                   external node's are normally NickNames or  new Fragments
-bool parse_fragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
-                    int &missing_frag_id, int external_attachment = -1);
+bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
+                   int &missingFragId, int externalAttachment = -1);
 }
 }  // namespace RDKit
 

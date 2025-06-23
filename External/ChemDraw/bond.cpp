@@ -34,14 +34,14 @@
 
 namespace RDKit {
 namespace ChemDraw {
-bool parse_bond(RWMol &mol, unsigned int fragment_id, CDXBond &bond,
-                PageData &pagedata) {
+bool parseBond(RWMol &mol, unsigned int fragmentId, CDXBond &bond,
+               PageData &pagedata) {
   int bond_id = bond.GetObjectID();
-  Atom *start_atom = pagedata.atom_ids[bond.m_beginNodeID];
-  Atom *end_atom = pagedata.atom_ids[bond.m_endNodeID];
+  Atom *start_atom = pagedata.atomIds[bond.m_beginNodeID];
+  Atom *end_atom = pagedata.atomIds[bond.m_endNodeID];
   if ((!start_atom || !end_atom)) {
     BOOST_LOG(rdErrorLog) << "Bad bond in CDXML skipping fragment "
-                          << fragment_id << "..." << std::endl;
+                          << fragmentId << "..." << std::endl;
     return false;
   }
   Bond::BondType order = Bond::UNSPECIFIED;

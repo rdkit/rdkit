@@ -61,8 +61,8 @@ const char *sequenceTypeToName(CDXSeqType seqtype) {
   }
 }
 }  // namespace
-bool parse_fragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
-                    int &missing_frag_id, int external_attachment) {
+bool parseFragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
+                   int &missingFragId, int externalAttachment) {
   int frag_id = fragment.GetObjectID();
   if (fragment.m_sequenceType != kCDXSeqType_Unknown) {
     BOOST_LOG(rdWarningLog)
@@ -75,8 +75,8 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
     BOOST_LOG(rdWarningLog)
         << "Invalid or missing fragment id from CDXML fragment, assigning new one..."
         << std::endl;
-    frag_id = missing_frag_id;
-    missing_frag_id--;
+    frag_id = missingFragId;
+    missingFragId--;
   }
   mol.setProp(CDX_FRAG_ID, frag_id);
 
@@ -96,15 +96,15 @@ bool parse_fragment(RWMol &mol, CDXFragment &fragment, PageData &pagedata,
     switch (id) {
       case kCDXObj_Node: {
         CDXNode &node = (CDXNode &)(*child.second);
-        if (!parse_node(mol, frag_id, node, pagedata, sgroups, missing_frag_id,
-                        external_attachment)) {
+        if (!parseNode(mol, frag_id, node, pagedata, sgroups, missingFragId,
+                       externalAttachment)) {
           skip_fragment = true;
         }
         break;
       }
       case kCDXObj_Bond: {
         CDXBond &bond = (CDXBond &)(*child.second);
-        if (!parse_bond(mol, frag_id, bond, pagedata)) {
+        if (!parseBond(mol, frag_id, bond, pagedata)) {
           skip_fragment = true;
           break;
         }
