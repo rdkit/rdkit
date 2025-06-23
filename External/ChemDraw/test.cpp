@@ -49,17 +49,6 @@
 using namespace RDKit;
 using namespace RDKit::v2;
 
-TEST_CASE("CDXML", "[unittest]") {
-  std::string cdxmlbase =
-      std::string(getenv("RDBASE")) + "/Code/GraphMol/test_data/CDXML/";
-
-  SECTION("basics") {
-    std::string fname = cdxmlbase + "ring-stereo1.cdxml";
-    auto mols = MolsFromChemDrawFile(fname);
-    auto smi = MolToSmiles(*mols[0]);
-  }
-}
-
 std::string canon(const std::string &smi) {
   auto *m = SmilesToMol(smi);
   auto res = MolToSmiles(*m);
@@ -808,13 +797,6 @@ TEST_CASE("CDXML Advanced") {
       auto mols = MolsFromChemDrawFile(fname);
       CHECK(mols.size() == 0);
     }
-    // unknown orders get converted to SingleBond?
-    //
-    //{
-    //  auto fname = cdxmlbase + "bad-bondorder.cdxml";
-    //  auto mols = MolsFromChemDrawFile(fname);
-    //  CHECK(mols.size() == 0);
-    //}
     {
       auto fname = cdxmlbase + "bad-bondorder2.cdxml";
       auto mols = MolsFromChemDrawFile(fname);
